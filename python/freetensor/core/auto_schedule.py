@@ -12,9 +12,33 @@ class AutoSchedule(ffi.AutoSchedule):
                  device,
                  n_measured,
                  *,
+                 population=64,
+                 rand_ratio=0.1,
                  tag="",
                  min_block_size=0,
                  verbose=0):
+        '''
+        Automatic scheduler
+
+        Parameters
+        ----------
+        schedule : Schedule
+            A Schedule object to apply schedules onto
+        target : Target
+            The type of devices to compile to
+        population : int
+            How many programs to test in each iteration
+        rand_ratio : float
+            Portion of random programs in the population. Higher ratio focuses on
+            exploration, while lower ratio focuses on exploitation
+        verbose : int
+            Verbosity level. 0 = print nothing, 1 = print tuning progress, 2 = print
+            extra info mation of each rule
+        '''
+
+        self.population = population
+        self.n_random = population * rand_ratio
+        self.n_inherited = population - self.n_random
         self.model = None
         self.xgb_params = {}
         self.save_file_name = tag + "_xgb.model"
@@ -40,7 +64,8 @@ class AutoSchedule(ffi.AutoSchedule):
         for i in range(iteration):
             if self.verbose >= 1:
                 print("Iteration ", i)
-            self.search_one_round(64)
+            self.search_one_round(self.population, self.n_inherited,
+                                  self.n_random)
         return self.get_best_schedule()
 
     def predict(self, features):
