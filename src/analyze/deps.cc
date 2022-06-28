@@ -497,7 +497,7 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
         // at all. This will save time for Presburger solver
         for (auto c = common; c.isValid(); c = c->parentStmt()) {
             if (c->nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, expr, c->id())) {
+                if (isVariant(*variantExpr_, expr, c->id())) {
                     goto found;
                 }
                 goto do_compute_constraint;
@@ -511,7 +511,7 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
         auto require = makeExternalEq(presburger, iterDim, pStr, oStr);
         for (auto c = common; c.isValid(); c = c->parentStmt()) {
             if (c->nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, expr, c->id())) {
+                if (isVariant(*variantExpr_, expr, c->id())) {
                     // Since idx[i] must be inside loop i, we only have
                     // to call makeIneqBetweenOps, but no need to call
                     // makeConstraintOfSingleLoop
@@ -972,7 +972,7 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
     accFinder(op);
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
-    auto variantExpr = findLoopVariance(op).first;
+    auto variantExpr = LAZY(findLoopVariance(op).first);
     AnalyzeDeps analyzer(
         accFinder.reads(), accFinder.writes(), accFinder.allDefs(),
         accFinder.scope2coord(), noDepsFinder.results(), variantExpr,
