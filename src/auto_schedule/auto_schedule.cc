@@ -26,7 +26,8 @@ AutoSchedule::AutoSchedule(
     const Ref<Device> &device, int measuredSize,
     const std::function<Predicts(const Features &)> &predictFunc,
     const std::function<void(const Features &, const Predicts &)> &updateFunc,
-    std::string tag, int minBlockSize, int verbose)
+    std::string tag, int minBlockSize,
+    const std::optional<std::unordered_set<std::string>> &ruleSet, int verbose)
     : original_(schedule.clone()), target_(target), device_(device),
       measuredSize_(measuredSize), paramsSet_(false),
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)),
@@ -37,21 +38,30 @@ AutoSchedule::AutoSchedule(
     for (auto cnt : opCnt) {
         flop_ += cnt.second;
     }
-    if (target->type() == TargetType::CPU) {
-        rules_.push_back(Ref<CacheWriteRule>::make(target->type(), verbose_));
-        rules_.push_back(
-            Ref<MultiLevelTilingWithFusionRule>::make(target->type()));
-        rules_.push_back(Ref<MultiLevelTilingRule>::make(target->type()));
-        rules_.push_back(Ref<ParallelizeRule>::make());
-        rules_.push_back(Ref<UnrollRule>::make(target->type()));
-    } else {
-        rules_.push_back(Ref<CacheWriteRule>::make(target->type(), verbose_));
-        rules_.push_back(Ref<MultiLevelTilingWithFusionRule>::make(
-            target->type(), minBlockSize));
-        rules_.push_back(Ref<ThreadBindRule>::make());
-        rules_.push_back(Ref<UnrollRule>::make(target->type()));
+
+#define ADD_RULE(name, RuleType, ...)                                          \
+    if (!ruleSet || ruleSet->count(name)) {                                    \
+        rules_.emplace_back(name, Ref<RuleType>::make(__VA_ARGS__));           \
     }
-    rules_.push_back(Ref<SkipRule>::make());
+
+    if (target->type() == TargetType::CPU) {
+        ADD_RULE("cache_write", CacheWriteRule, target->type(), verbose_);
+        ADD_RULE("multi_level_tiling_with_fusion",
+                 MultiLevelTilingWithFusionRule, target->type());
+        ADD_RULE("multi_level_tiling", MultiLevelTilingRule, target->type());
+        ADD_RULE("parallelize", ParallelizeRule);
+        ADD_RULE("unroll", UnrollRule, target->type());
+    } else {
+        ADD_RULE("cache_write", CacheWriteRule, target->type(), verbose_);
+        ADD_RULE("multi_level_tiling_with_fusion",
+                 MultiLevelTilingWithFusionRule, target->type(), minBlockSize);
+        ADD_RULE("thread_bind", ThreadBindRule);
+        ADD_RULE("unroll", UnrollRule, target->type());
+    }
+
+#undef ADD_RULE
+
+    rules_.emplace_back("skip", Ref<SkipRule>::make());
     std::random_device rd;
     randGen_ = std::default_random_engine(rd());
 }
@@ -419,9 +429,10 @@ AutoSchedule::getPrediction(std::vector<Ref<Sketch>> &sketches_in) {
     }
     return ret;
 }
+
 void AutoSchedule::genSketches() {
     auto targets = findMultiLevelTiling(original_.ast());
-    if (!targets.size()) {
+    if (targets.empty()) {
         return;
     }
     Sketch initSketch(original_, targets);
@@ -430,7 +441,7 @@ void AutoSchedule::genSketches() {
     while (!q.empty()) {
         auto nowSketch = std::move(q.front());
         q.pop();
-        for (auto &rule : rules_) {
+        for (auto &[name, rule] : rules_) {
             if (auto status = rule->analyze(nowSketch);
                 status != RuleStatus::Skip) {
                 auto sketches = rule->genPart(nowSketch);
@@ -458,110 +469,25 @@ Sketch AutoSchedule::getInitSketch() {
     return {original_, targets};
 }
 
-Stmt AutoSchedule::testCacheWrite() {
-    auto sketch = getInitSketch();
-    CacheWriteRule rule(target_->type());
-    if (rule.analyze(sketch) == RuleStatus::Skip) {
-        return sketch.schedule().ast();
-    }
-    auto newSketch = rule.genPart(sketch).front();
-    return newSketch.schedule().ast();
-}
-
-Schedule AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
+Schedule
+AutoSchedule::testRound(const std::unordered_map<std::string, int> &nthSketch) {
     std::default_random_engine rng;
     auto sketch = getInitSketch();
-    MultiLevelTilingWithFusionRule rule(target_->type());
-    if (rule.analyze(sketch) == RuleStatus::Skip) {
-        return sketch.schedule();
+    for (auto &[name, rule] : rules_) {
+        if (auto status = rule->analyze(sketch); status != RuleStatus::Skip) {
+            auto newSketches = rule->genPart(sketch);
+            if (nthSketch.count(name)) {
+                sketch = std::move(newSketches.at(nthSketch.at(name)));
+            } else {
+                ASSERT(!newSketches.empty());
+                sketch = std::move(newSketches.front());
+            }
+        }
     }
-    Sketch newSketch = rule.genPart(sketch)[nLevel];
-    std::cout << toString(newSketch.schedule().ast()) << std::endl;
-    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion];
-    part->genFakeAnnotation(rng);
-    auto schedule = newSketch.genSchedule();
-    return schedule;
-}
-
-Schedule AutoSchedule::testThreadBind() {
-    std::default_random_engine rng;
-    auto sketch = getInitSketch();
-    MultiLevelTilingWithFusionRule rule(target_->type());
-    if (rule.analyze(sketch) == RuleStatus::Skip) {
-        return sketch.schedule();
+    for (auto &&[type, part] : sketch.part(0)) {
+        part->genFakeAnnotation(rng);
     }
-    Sketch newSketch = rule.genPart(sketch)[0];
-    std::cout << toString(newSketch.schedule().ast()) << std::endl;
-    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion];
-    part->genFakeAnnotation(rng);
-    newSketch.addPart(Ref<ThreadBindPart>::make());
-    auto schedule = newSketch.genSchedule();
-    return schedule;
-}
-
-Schedule AutoSchedule::testCacheRead() {
-    std::default_random_engine rng;
-    auto sketch = getInitSketch();
-    MultiLevelTilingWithFusionRule rule(target_->type());
-    if (rule.analyze(sketch) == RuleStatus::Skip) {
-        return sketch.schedule();
-    }
-    Sketch newSketch = rule.genPart(sketch)[0];
-    std::cout << toString(newSketch.schedule().ast()) << std::endl;
-    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion];
-    part->genRandAnnotation(randGen_);
-    newSketch.addPart(Ref<ThreadBindPart>::make());
-    auto schedule = newSketch.genSchedule();
-    std::vector<Ref<Sketch>> v;
-    v.push_back(Ref<Sketch>::make(newSketch));
-    auto pred = getPrediction(v);
-    std::cout << toString(schedule.ast()) << std::endl;
-    part.as<MultiLevelTilingWithFusionPart>()->printAnnotation();
-    auto func = lower(schedule.func(), target_);
-    std::cout << toString(func->body_) << std::endl;
-    std::cout << "lower done" << std::endl;
-    return {};
-}
-
-Schedule AutoSchedule::testUnroll() {
-    std::default_random_engine rng;
-    auto sketch = getInitSketch();
-    MultiLevelTilingWithFusionRule rule(target_->type());
-    if (rule.analyze(sketch) == RuleStatus::Skip) {
-        return sketch.schedule();
-    }
-    Sketch newSketch = rule.genPart(sketch)[0];
-    std::cout << toString(newSketch.schedule().ast()) << std::endl;
-    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion];
-    part->genFakeAnnotation(rng);
-    newSketch.addPart(Ref<ThreadBindPart>::make());
-    newSketch.addPart(Ref<UnrollPart>::make(target_->type(), 16));
-    auto schedule = newSketch.genSchedule();
-    return schedule;
-}
-
-Schedule AutoSchedule::testParallelize() {
-    std::default_random_engine rng;
-    auto sketch = getInitSketch();
-    MultiLevelTilingRule rule(target_->type());
-    if (rule.analyze(sketch) == RuleStatus::Skip) {
-        return sketch.schedule();
-    }
-    sketch = rule.genPart(sketch)[0];
-    auto part = sketch.part(0)[SketchPartType::MultiLevelTiling]
-                    .as<MultiLevelTilingPart>();
-    part->genFakeAnnotation(rng);
-    ParallelizeRule par;
-    if (par.analyze(sketch) == RuleStatus::Skip) {
-        return sketch.schedule();
-    };
-    sketch = par.genPart(sketch)[0];
-    auto parPart =
-        sketch.part(0)[SketchPartType::Parallelize].as<ParallelizePart>();
-    parPart->parallelSize_ = parPart->maxSize_;
-    auto schedule = sketch.genSchedule();
-    std::cout << toString(schedule.ast()) << std::endl;
-    return schedule;
+    return sketch.genSchedule();
 }
 
 } // namespace freetensor

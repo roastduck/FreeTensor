@@ -12,21 +12,30 @@ class ThreadBindRule : public Rule {
 };
 
 class ThreadBindPart : public SketchPartNode {
-  public:
     ID lastParallelizedID_;
     int vthreadSize_;
+
+  public:
     void genRandAnnotation(std::default_random_engine &gen) override{};
+
     void apply(Schedule &schedule, SketchTarget &target) override;
+
     SketchPartType partType() override { return SketchPartType::ThreadBind; }
+
     [[nodiscard]] std::vector<int> getAnnotation() const override {
         return {};
     };
+
     [[nodiscard]] size_t hash() const override {
         return std::hash<std::string>{}("thread bind");
     }
+
     [[nodiscard]] SketchPart clone() const override {
         return Ref<ThreadBindPart>::make();
     };
+
+    const ID &lastParallelizedID() const { return lastParallelizedID_; }
+    int vthreadSize() const { return vthreadSize_; }
 };
 
 } // namespace freetensor

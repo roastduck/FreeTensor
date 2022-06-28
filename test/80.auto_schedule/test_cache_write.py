@@ -56,8 +56,8 @@ def test_cache_write():
     std = ft.make_reduction(std)
 
     s = ft.Schedule(test)
-    s = ft.AutoSchedule(s, target, device, 8)
-    ast = s.test_cache_write()
+    s = ft.AutoSchedule(s, target, device, 8, rule_set={"cache_write"})
+    ast = s.test_round().ast()
     assert std.match(ast)
 
 
@@ -81,9 +81,10 @@ def test_non_perfect_loop():
     s = ft.pop_ast()
 
     s = ft.Schedule(s)
-    s = ft.AutoSchedule(s, target, device, 8)
-    ast = s.test_cache_write()
+    s = ft.AutoSchedule(s, target, device, 8, rule_set={"cache_write"})
+    ast = s.test_round().ast()
     print(ast)
+
     with ft.VarDef([("w", (m, m, a, b), "int32", "input", "cpu"),
                     ("x", (m, m, b, a), "int32", "input", "cpu"),
                     ("y", (m, m, a, a), "int32", "output", "cpu"),
@@ -109,8 +110,9 @@ def test_non_perfect_loop():
     std = ft.make_reduction(std)
     print(std)
     assert std.match(ast)
+
     s = ft.Schedule(std)
-    s = ft.AutoSchedule(s, target, device, 8)
-    ast = s.test_cache_write()
+    s = ft.AutoSchedule(s, target, device, 8, rule_set={"cache_write"})
+    ast = s.test_round().ast()
     print(ast)
     assert std.match(ast)

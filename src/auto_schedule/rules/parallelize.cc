@@ -36,6 +36,10 @@ void ParallelizePart::genRandAnnotation(std::default_random_engine &gen) {
     parallelSize_ = randomInt(maxSize_ - 1, gen) + 1;
 }
 
+void ParallelizePart::genFakeAnnotation(std::default_random_engine &gen) {
+    parallelSize_ = maxSize_;
+}
+
 bool ParallelizePart::mutate(std::default_random_engine &gen) {
     parallelSize_ = randomInt(maxSize_ - 1, gen) + 1;
     return true;

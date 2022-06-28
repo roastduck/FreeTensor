@@ -36,8 +36,12 @@ def test_fusion():
 
     s = ft.Schedule(test)
     print(s.ast())
-    s = ft.AutoSchedule(s, target, device, 8)
-    sch = s.test_multi_level_tiling_with_fusion(1)
+    s = ft.AutoSchedule(s,
+                        target,
+                        device,
+                        8,
+                        rule_set={"multi_level_tiling_with_fusion"})
+    sch = s.test_round({"multi_level_tiling_with_fusion": 1})
     func = ft.lower(sch.func(), target)
     print(func)
     code = ft.codegen(func, target, verbose=True)

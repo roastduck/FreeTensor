@@ -33,10 +33,11 @@ class AutoSchedule {
     std::default_random_engine randGen_;
     std::function<Predicts(const Features &)> predictFunc_;
     std::function<void(const Features &, const Predicts &)> updateFunc_;
-    std::vector<Ref<Rule>> rules_;
+    std::vector<std::pair<std::string, Ref<Rule>>> rules_; // (name, rule)
     double flop_;
     std::string tag_;
     int minBlockSize_{0};
+    std::optional<std::unordered_set<std::string>> ruleSet_;
     int verbose_ = 0;
 
   private:
@@ -48,7 +49,10 @@ class AutoSchedule {
                  const std::function<Predicts(const Features &)> &predictFunc,
                  const std::function<void(const Features &, const Predicts &)>
                      &updateFunc,
-                 std::string tag = "", int minBlockSize = 0, int verbose = 0);
+                 std::string tag = "", int minBlockSize = 0,
+                 const std::optional<std::unordered_set<std::string>> &ruleSet =
+                     std::nullopt,
+                 int verbose = 0);
 
     size_t measuredSize() const { return measuredSize_; }
 
@@ -76,12 +80,14 @@ class AutoSchedule {
 
     void genSketches();
     Sketch getInitSketch();
-    Stmt testCacheWrite();
-    Schedule testMultiLevelTilingWithFusion(int nLevel);
-    Schedule testThreadBind();
-    Schedule testCacheRead();
-    Schedule testUnroll();
-    Schedule testParallelize();
+
+    /**
+     * Exercise on fake annotations, for test only
+     *
+     * @param nthSketch : A map from rule name to integer: which sketch to pick
+     */
+    Schedule
+    testRound(const std::unordered_map<std::string, int> &nthSketch = {});
 };
 
 } // namespace freetensor
