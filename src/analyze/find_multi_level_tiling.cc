@@ -3,10 +3,8 @@
 #include <hash.h>
 #include <iostream>
 
-using std::cout;
-using std::endl;
-
 namespace freetensor {
+
 void FindMultiLevelTiling::visit(const For &op) {
     if (op->len_->nodeType() != ASTNodeType::IntConst) {
         throw Error("Auto scheduling of non-constant for loop is not yet "
@@ -123,18 +121,6 @@ void FindMultiLevelTiling::storeBuf() {
         buf_.clear();
         nowFor_ = {};
         nowInit_ = nullptr;
-
-        // if (hasDataReuse) {
-        //     const auto &nw = found_.back();
-        //     std::cout << "found ";
-        //     for (const auto &loop : nw.spaceLoops) {
-        //         std::cout << "S " << loop.id << " ";
-        //     }
-        //     for (const auto &loop : nw.reductionLoops) {
-        //         std::cout << "R " << loop.id << " ";
-        //     }
-        //     std::cout << std::endl;
-        // }
     }
 }
 
@@ -185,4 +171,5 @@ void FindHasStore::visit(const Load &op) {
             "A load node appearing without a store node is not supported yet.");
     }
 }
+
 } // namespace freetensor

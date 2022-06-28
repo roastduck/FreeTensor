@@ -26,11 +26,11 @@ AutoSchedule::AutoSchedule(
     const Ref<Device> &device, int measuredSize,
     const std::function<Predicts(const Features &)> &predictFunc,
     const std::function<void(const Features &, const Predicts &)> &updateFunc,
-    std::string tag, int minBlockSize)
+    std::string tag, int minBlockSize, int verbose)
     : original_(schedule.clone()), target_(target), device_(device),
       measuredSize_(measuredSize), paramsSet_(false),
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)),
-      tag_(std::move(tag)), minBlockSize_(minBlockSize) {
+      tag_(std::move(tag)), minBlockSize_(minBlockSize), verbose_(verbose) {
     flop_ = 0;
     auto opCnt =
         structuralFeature(original_.ast())[original_.ast()->id()].opCnt_;
@@ -38,14 +38,14 @@ AutoSchedule::AutoSchedule(
         flop_ += cnt.second;
     }
     if (target->type() == TargetType::CPU) {
-        rules_.push_back(Ref<CacheWriteRule>::make(target->type()));
+        rules_.push_back(Ref<CacheWriteRule>::make(target->type(), verbose_));
         rules_.push_back(
             Ref<MultiLevelTilingWithFusionRule>::make(target->type()));
         rules_.push_back(Ref<MultiLevelTilingRule>::make(target->type()));
         rules_.push_back(Ref<ParallelizeRule>::make());
         rules_.push_back(Ref<UnrollRule>::make(target->type()));
     } else {
-        rules_.push_back(Ref<CacheWriteRule>::make(target->type()));
+        rules_.push_back(Ref<CacheWriteRule>::make(target->type(), verbose_));
         rules_.push_back(Ref<MultiLevelTilingWithFusionRule>::make(
             target->type(), minBlockSize));
         rules_.push_back(Ref<ThreadBindRule>::make());
@@ -110,11 +110,15 @@ void AutoSchedule::searchOneRound(size_t n) {
         genSketches();
         firstTime = true;
     }
-    std::cout << "get init population" << std::endl;
     if (!firstTime) {
+        if (verbose_ >= 1) {
+            logger() << "Getting init population" << std::endl;
+        }
         std::vector<Ref<Sketch>> init =
             getInitPopulation(EVOLUTIONARY_SEARCH_POPULATION);
-        std::cout << "evolutionary search" << std::endl;
+        if (verbose_ >= 1) {
+            logger() << "Evolutionary search" << std::endl;
+        }
         std::vector<Ref<Sketch>> best = evolutionarySearch(init, n * 0.9);
         testAndAdd(best);
     }
@@ -122,14 +126,15 @@ void AutoSchedule::searchOneRound(size_t n) {
         getRandPopulation(firstTime ? n : n - size_t(n * 0.9));
     testAndAdd(rand);
     auto bs = getBestSchedule();
-    auto logs = bs.logs();
-    for (auto log : logs) {
-        std::cout << log << std::endl;
+    if (verbose_ >= 1) {
+        logger() << "Best schedule:" << std::endl;
+        for (auto log : bs.logs()) {
+            logger() << log << std::endl;
+        }
+        logger() << "Best AST: " << std::endl
+                 << toString(measuredSketches_[0]->genSchedule().ast())
+                 << std::endl;
     }
-
-    std::cout << "now best: "
-              << toString(measuredSketches_[0]->genSchedule().ast())
-              << std::endl;
 }
 
 std::vector<std::vector<double>>
@@ -154,7 +159,9 @@ AutoSchedule::genFeatures(std::vector<Ref<Sketch>> &sketches) {
 
 std::vector<double>
 AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
-    std::cout << "schedule" << std::endl;
+    if (verbose_ >= 1) {
+        logger() << "Lowering code" << std::endl;
+    }
     std::vector<Ref<Sketch>> sketches;
     size_t nIn = sketches_in.size();
 #pragma omp parallel for
@@ -169,7 +176,9 @@ AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
             sketches.push_back(sketches_in[i]);
         }
     }
-    std::cout << "feature" << std::endl;
+    if (verbose_ >= 1) {
+        logger() << "Generating features" << std::endl;
+    }
     auto features = genFeatures(sketches);
     size_t n = sketches.size();
     ASSERT(sketches.size() == n);
@@ -212,10 +221,12 @@ AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
     avg /= cnt;
     std::sort(times.begin(), times.end());
     std::sort(measuredSketches_.begin(), measuredSketches_.end(), cmp);
-    std::cout << "min " << measuredSketches_.front()->time() << " max "
-              << measuredSketches_.back()->time() << std::endl;
-    std::cout << "this round: min: " << times[0] << " avg: " << avg
-              << "mid: " << times[(times.size() - 1) / 2] << std::endl;
+    if (verbose_ >= 1) {
+        logger() << "global: min " << measuredSketches_.front()->time()
+                 << " max " << measuredSketches_.back()->time() << std::endl;
+        logger() << "this round: min: " << times[0] << " avg: " << avg
+                 << "mid: " << times[(times.size() - 1) / 2] << std::endl;
+    }
     return times;
 }
 
@@ -303,7 +314,9 @@ AutoSchedule::evolutionarySearch(std::vector<Ref<Sketch>> init,
         gens.emplace_back((i + i) * randGen_());
     }
     for (int i = 0; i <= EVOLUTIONARY_SEARCH_ITERS; i++) {
-        std::cout << "search round " << i << std::endl;
+        if (verbose_ >= 1) {
+            logger() << "search round " << i << std::endl;
+        }
         auto pred = getPrediction(v1);
         auto probSum = getProbSum(pred);
         for (size_t j = 0; j < v1.size(); j++) {
@@ -329,7 +342,9 @@ AutoSchedule::evolutionarySearch(std::vector<Ref<Sketch>> init,
 
         while (v2.size() < EVOLUTIONARY_SEARCH_POPULATION) {
             std::vector<Ref<Sketch>> now(EVOLUTIONARY_SEARCH_POPULATION);
-            std::cout << "evo " << v2.size() << std::endl;
+            if (verbose_ >= 1) {
+                logger() << "evo " << v2.size() << std::endl;
+            }
 #pragma omp parallel for
             for (int j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
                 double r = randomDouble(gens[j]);
@@ -397,9 +412,13 @@ AutoSchedule::getPrediction(std::vector<Ref<Sketch>> &sketches_in) {
             ret[i] = -1e30;
         }
     }
-    std::cout << "get prediction" << std::endl;
+    if (verbose_ >= 1) {
+        logger() << "get prediction" << std::endl;
+    }
     auto featureList = genFeatures(sketches);
-    std::cout << "got prediction" << std::endl;
+    if (verbose_ >= 1) {
+        logger() << "got prediction" << std::endl;
+    }
     auto predList = predictFunc_(featureList);
     for (size_t i = 0; i < predList.size(); i++) {
         ret[index[i]] = predList[i];
@@ -509,6 +528,7 @@ Schedule AutoSchedule::testCacheRead() {
     std::cout << "lower done" << std::endl;
     return {};
 }
+
 Schedule AutoSchedule::testUnroll() {
     auto sketch = getInitSketch();
     MultiLevelTilingWithFusionRule rule(target_->type());
@@ -525,6 +545,7 @@ Schedule AutoSchedule::testUnroll() {
     auto schedule = newSketch.genSchedule();
     return schedule;
 }
+
 Schedule AutoSchedule::testParallelize() {
     auto sketch = getInitSketch();
     MultiLevelTilingRule rule(target_->type());
