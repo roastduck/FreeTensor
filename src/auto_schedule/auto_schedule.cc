@@ -23,15 +23,15 @@ namespace freetensor {
 
 AutoSchedule::AutoSchedule(
     const Schedule &schedule, const Ref<Target> &target,
-    const Ref<Device> &device, int measuredSize,
+    const Ref<Device> &device,
     const std::function<Predicts(const Features &)> &predictFunc,
     const std::function<void(const Features &, const Predicts &)> &updateFunc,
     std::string tag, int minBlockSize,
     const std::optional<std::unordered_set<std::string>> &ruleSet, int verbose)
     : original_(schedule.clone()), target_(target), device_(device),
-      measuredSize_(measuredSize), paramsSet_(false),
-      predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)),
-      tag_(std::move(tag)), minBlockSize_(minBlockSize), verbose_(verbose) {
+      paramsSet_(false), predictFunc_(std::move(predictFunc)),
+      updateFunc_(std::move(updateFunc)), tag_(std::move(tag)),
+      minBlockSize_(minBlockSize), verbose_(verbose) {
     flop_ = 0;
     auto opCnt =
         structuralFeature(original_.ast())[original_.ast()->id()].opCnt_;
@@ -189,10 +189,6 @@ AutoSchedule::testAndAdd(const std::vector<Ref<Sketch>> &sketches_in) {
         flopsList.emplace_back(flop_ / times[i]);
     }
     updateFunc_(features, flopsList);
-    auto cmp = [](const Ref<Sketch> &a, const Ref<Sketch> &b) {
-        return *a < *b;
-    };
-    std::make_heap(measuredSketches_.begin(), measuredSketches_.end(), cmp);
     double avg = 0;
     int cnt = 0;
     for (size_t i = 0; i < n; i++) {
@@ -201,29 +197,19 @@ AutoSchedule::testAndAdd(const std::vector<Ref<Sketch>> &sketches_in) {
         }
         cnt++;
         avg += times[i];
-        if (measuredSketches_.size() < measuredSize_) {
-            measuredSketches_.emplace_back(sketches[i]);
-            measuredSketches_.back()->setTime(times[i]);
-            std::push_heap(measuredSketches_.begin(), measuredSketches_.end(),
-                           cmp);
-        } else if (times[i] < measuredSketches_[0]->time()) {
-            std::pop_heap(measuredSketches_.begin(), measuredSketches_.end(),
-                          cmp);
-            measuredSketches_.back() = sketches[i];
-            measuredSketches_.back()->setTime(times[i]);
-            std::push_heap(measuredSketches_.begin(), measuredSketches_.end(),
-                           cmp);
-        }
+        measuredSketches_.emplace_back(sketches[i]);
+        measuredSketches_.back()->setTime(times[i]);
         measuredHashes_.insert(sketches[i]->hash());
     }
     avg /= cnt;
     std::sort(times.begin(), times.end());
-    std::sort(measuredSketches_.begin(), measuredSketches_.end(), cmp);
+    std::sort(measuredSketches_.begin(), measuredSketches_.end(),
+              [](const auto &a, const auto &b) { return *a < *b; });
     if (verbose_ >= 1) {
-        logger() << "global: min " << measuredSketches_.front()->time()
-                 << " max " << measuredSketches_.back()->time() << std::endl;
+        logger() << "global min: " << measuredSketches_.front()->time()
+                 << std::endl;
         logger() << "this round: min: " << times[0] << " avg: " << avg
-                 << "mid: " << times[(times.size() - 1) / 2] << std::endl;
+                 << " mid: " << times[(times.size() - 1) / 2] << std::endl;
     }
     return times;
 }
@@ -301,8 +287,11 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
         getRandPopulation(EVOLUTIONARY_SEARCH_POPULATION * INIT_RAND_RATIO);
     size_t nMeasured = std::min(EVOLUTIONARY_SEARCH_POPULATION - init.size(),
                                 measuredSketches_.size());
+    if (nMeasured > 0 && nMeasured < measuredSketches_.size()) {
+        measuredSketches_.resize(nMeasured);
+    }
     for (size_t i = 0; i < nMeasured; i++) {
-        init.push_back(measuredSketches_[i]);
+        init.emplace_back(measuredSketches_[i]);
     }
     std::vector<Ref<Sketch>> v1 = std::move(init);
     std::vector<Ref<Sketch>> v2;

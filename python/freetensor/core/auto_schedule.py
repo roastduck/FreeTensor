@@ -10,7 +10,6 @@ class AutoSchedule(ffi.AutoSchedule):
                  schedule,
                  target,
                  device,
-                 n_measured,
                  *,
                  population=64,
                  rand_ratio=0.1,
@@ -56,7 +55,7 @@ class AutoSchedule(ffi.AutoSchedule):
         def update_func(features, times):
             return self.update(features, times)
 
-        super(AutoSchedule, self).__init__(schedule, target, device, n_measured,
+        super(AutoSchedule, self).__init__(schedule, target, device,
                                            predict_func, update_func, tag,
                                            min_block_size, rule_set, verbose)
 

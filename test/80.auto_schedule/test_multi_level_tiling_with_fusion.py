@@ -39,7 +39,6 @@ def test_fusion():
     s = ft.AutoSchedule(s,
                         target,
                         device,
-                        8,
                         rule_set={"multi_level_tiling_with_fusion"})
     sch = s.test_round({"multi_level_tiling_with_fusion": 1})
     func = ft.lower(sch.func(), target)

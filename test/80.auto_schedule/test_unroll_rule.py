@@ -42,7 +42,6 @@ def test_unroll():
         s,
         target,
         device,
-        8,
         rule_set={"multi_level_tiling_with_fusion", "thread_bind", "unroll"})
     sch = s.test_round()
     func = ft.lower(sch.func(), target)

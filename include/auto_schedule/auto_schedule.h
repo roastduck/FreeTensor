@@ -23,12 +23,11 @@ class AutoSchedule {
     Schedule original_;
     Ref<Target> target_;
     Ref<Device> device_;
-    size_t measuredSize_;
     std::vector<Ref<Sketch>> baseSketches_;
     std::vector<Ref<Array>> args_;
     std::unordered_map<std::string, Ref<Array>> kws_;
     bool paramsSet_;
-    std::vector<Ref<Sketch>> measuredSketches_;
+    std::vector<Ref<Sketch>> measuredSketches_; // sorted from fast to slow
     std::set<size_t> measuredHashes_;
     std::default_random_engine randGen_;
     std::function<Predicts(const Features &)> predictFunc_;
@@ -45,7 +44,7 @@ class AutoSchedule {
 
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
-                 const Ref<Device> &device, int measuredSize,
+                 const Ref<Device> &device,
                  const std::function<Predicts(const Features &)> &predictFunc,
                  const std::function<void(const Features &, const Predicts &)>
                      &updateFunc,
@@ -53,8 +52,6 @@ class AutoSchedule {
                  const std::optional<std::unordered_set<std::string>> &ruleSet =
                      std::nullopt,
                  int verbose = 0);
-
-    size_t measuredSize() const { return measuredSize_; }
 
     void setParams(const std::vector<Ref<Array>> &args,
                    const std::unordered_map<std::string, Ref<Array>> &kws);
