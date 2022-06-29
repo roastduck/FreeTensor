@@ -10,10 +10,9 @@ class AutoSchedule(ffi.AutoSchedule):
                  schedule,
                  target,
                  device,
-                 n_measured,
                  *,
                  population=64,
-                 rand_ratio=0.1,
+                 explore_ratio=0.1,
                  tag="",
                  min_block_size=0,
                  rule_set=None,
@@ -29,7 +28,7 @@ class AutoSchedule(ffi.AutoSchedule):
             The type of devices to compile to
         population : int
             How many programs to test in each iteration
-        rand_ratio : float
+        explore_ratio : float
             Portion of random programs in the population. Higher ratio focuses on
             exploration, while lower ratio focuses on exploitation
         rule_set : Optional[set]
@@ -40,8 +39,8 @@ class AutoSchedule(ffi.AutoSchedule):
         '''
 
         self.population = population
-        self.n_random = int(population * rand_ratio)
-        self.n_inherited = population - self.n_random
+        self.n_explore = int(population * explore_ratio)
+        self.n_exploit = population - self.n_explore
         self.model = None
         self.xgb_params = {}
         self.save_file_name = tag + "_xgb.model"
@@ -56,7 +55,7 @@ class AutoSchedule(ffi.AutoSchedule):
         def update_func(features, times):
             return self.update(features, times)
 
-        super(AutoSchedule, self).__init__(schedule, target, device, n_measured,
+        super(AutoSchedule, self).__init__(schedule, target, device,
                                            predict_func, update_func, tag,
                                            min_block_size, rule_set, verbose)
 
@@ -66,9 +65,9 @@ class AutoSchedule(ffi.AutoSchedule):
     def run(self, iteration):
         for i in range(iteration):
             if self.verbose >= 1:
-                print("Iteration ", i)
-            self.search_one_round(self.population, self.n_inherited,
-                                  self.n_random)
+                print("Iteration", i)
+            self.search_one_round(self.population, self.n_exploit,
+                                  self.n_explore)
         return self.get_best_schedule()
 
     def predict(self, features):
