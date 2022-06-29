@@ -65,7 +65,7 @@ class AutoSchedule(ffi.AutoSchedule):
     def run(self, iteration):
         for i in range(iteration):
             if self.verbose >= 1:
-                print("Iteration ", i)
+                print("Iteration", i)
             self.search_one_round(self.population, self.n_inherited,
                                   self.n_random)
         return self.get_best_schedule()

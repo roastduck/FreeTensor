@@ -114,14 +114,14 @@ std::vector<double> AutoSchedule::measure(std::vector<Ref<Sketch>> &sketches) {
     return times;
 }
 
-void AutoSchedule::searchOneRound(size_t n, size_t n_inherited,
-                                  size_t n_random) {
+void AutoSchedule::searchOneRound(size_t n, size_t nInherited, size_t nRandom) {
+    ASSERT(n == nInherited + nRandom);
     if (baseSketches_.empty()) { // first time
         genSketches();
         testAndAdd(getRandPopulation(n));
     } else {
-        testAndAdd(evolutionarySearch(n_inherited));
-        testAndAdd(getRandPopulation(n_random));
+        testAndAdd(evolutionarySearch(nInherited));
+        testAndAdd(getRandPopulation(nRandom));
     }
     auto bs = getBestSchedule();
     if (verbose_ >= 1) {
@@ -277,14 +277,14 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
     constexpr int EVOLUTIONARY_SEARCH_ITERS = 4;
     constexpr double EVOLUTIONARY_SEARCH_MUTATION_PROB = 0.6;
     constexpr double EVOLUTIONARY_SEARCH_CROSSOVER_PROB = 0.3;
-    constexpr double INIT_RAND_RATIO = 0.7;
+    constexpr double EVOLUTIONARY_SEARCH_INIT_RAND_RATIO = 0.7;
 
     if (verbose_ >= 1) {
         logger() << "Evolutionary search" << std::endl;
     }
 
-    std::vector<Ref<Sketch>> init =
-        getRandPopulation(EVOLUTIONARY_SEARCH_POPULATION * INIT_RAND_RATIO);
+    std::vector<Ref<Sketch>> init = getRandPopulation(
+        EVOLUTIONARY_SEARCH_POPULATION * EVOLUTIONARY_SEARCH_INIT_RAND_RATIO);
     size_t nMeasured = std::min(EVOLUTIONARY_SEARCH_POPULATION - init.size(),
                                 measuredSketches_.size());
     if (nMeasured > 0 && nMeasured < measuredSketches_.size()) {
