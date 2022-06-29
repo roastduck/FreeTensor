@@ -68,7 +68,6 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="classfreetensor_1_1ParallelizePart-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">freetensor::ParallelizePart Class Reference</div></div>
 </div><!--header-->
@@ -89,9 +88,8 @@ Collaboration diagram for freetensor::ParallelizePart:</div>
 <div class="dyncontent">
 <div class="center"><img src="classfreetensor_1_1ParallelizePart__coll__graph.png" border="0" usemap="#afreetensor_1_1ParallelizePart_coll__map" alt="Collaboration graph"/></div>
 <map name="afreetensor_1_1ParallelizePart_coll__map" id="afreetensor_1_1ParallelizePart_coll__map">
-<area shape="rect" title=" " alt="" coords="99,95,289,121"/>
+<area shape="rect" title=" " alt="" coords="10,80,199,107"/>
 <area shape="rect" href="classfreetensor_1_1SketchPartNode.html" title=" " alt="" coords="5,5,204,32"/>
-<area shape="rect" href="classfreetensor_1_1ID.html" title=" " alt="" coords="228,5,339,32"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -101,6 +99,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a155a3fbbde94cdefdcb646ad16773308"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a126dad37a2dd3d9ee1a136207c254b00"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ParallelizePart.html#a126dad37a2dd3d9ee1a136207c254b00">genRandAnnotation</a> (std::default_random_engine &amp;gen) override</td></tr>
 <tr class="separator:a126dad37a2dd3d9ee1a136207c254b00"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4cb6cc6ceac013cf037b83a2ed7f965e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ParallelizePart.html#a4cb6cc6ceac013cf037b83a2ed7f965e">genFakeAnnotation</a> (std::default_random_engine &amp;gen) override</td></tr>
+<tr class="separator:a4cb6cc6ceac013cf037b83a2ed7f965e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acbcad5cb47192cdd46b98c62dd1c5900"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ParallelizePart.html#acbcad5cb47192cdd46b98c62dd1c5900">mutate</a> (std::default_random_engine &amp;gen) override</td></tr>
 <tr class="separator:acbcad5cb47192cdd46b98c62dd1c5900"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae786e5aa5aeda3493db8bf3c183dd75f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ParallelizePart.html#ae786e5aa5aeda3493db8bf3c183dd75f">crossover</a> (const <a class="el" href="namespacefreetensor.html#abfc2360a99c4b94133850b2662e3360a">SketchPart</a> &amp;part, std::default_random_engine &amp;gen) override</td></tr>
@@ -115,9 +115,15 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a1384f11f3ce56d24960064643a6ea68c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0770e88d750191b0d7bef362da0b6d70"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#abfc2360a99c4b94133850b2662e3360a">SketchPart</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ParallelizePart.html#a0770e88d750191b0d7bef362da0b6d70">clone</a> () const override</td></tr>
 <tr class="separator:a0770e88d750191b0d7bef362da0b6d70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34785eceab025e520a32da02376d2837"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ParallelizePart.html#a34785eceab025e520a32da02376d2837">lastParallelizedID</a> () const</td></tr>
+<tr class="separator:a34785eceab025e520a32da02376d2837"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1SketchPartNode"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1SketchPartNode')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1SketchPartNode.html">freetensor::SketchPartNode</a></td></tr>
+<tr class="memitem:a72e0a27f9b0312407e358af0a9fe7497 inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a72e0a27f9b0312407e358af0a9fe7497">~SketchPartNode</a> ()=default</td></tr>
+<tr class="separator:a72e0a27f9b0312407e358af0a9fe7497 inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a328aab6e8a5993055b7b66f1dc6ee310 inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a328aab6e8a5993055b7b66f1dc6ee310">genRandAnnotation</a> (std::default_random_engine &amp;gen)=0</td></tr>
 <tr class="separator:a328aab6e8a5993055b7b66f1dc6ee310 inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8cb9f01f3b6305a640a39bfcaa742cbf inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a8cb9f01f3b6305a640a39bfcaa742cbf">genFakeAnnotation</a> (std::default_random_engine &amp;gen)</td></tr>
+<tr class="separator:a8cb9f01f3b6305a640a39bfcaa742cbf inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a480db7dcb4b102a49d6ec9e3d5fe74a3 inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a480db7dcb4b102a49d6ec9e3d5fe74a3">mutate</a> (std::default_random_engine &amp;gen)</td></tr>
 <tr class="separator:a480db7dcb4b102a49d6ec9e3d5fe74a3 inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af4d2df3538c8ac6f87da2a317d18b099 inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#af4d2df3538c8ac6f87da2a317d18b099">crossover</a> (const <a class="el" href="namespacefreetensor.html#abfc2360a99c4b94133850b2662e3360a">SketchPart</a> &amp;part, std::default_random_engine &amp;gen)</td></tr>
@@ -128,21 +134,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a6abd6e7684adf321eb8d370b0f831066 inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab20cae1832b0880ec91dbefbf3ecb1b0 inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#ab20cae1832b0880ec91dbefbf3ecb1b0">getAnnotation</a> () const =0</td></tr>
 <tr class="separator:ab20cae1832b0880ec91dbefbf3ecb1b0 inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a72e0a27f9b0312407e358af0a9fe7497 inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a72e0a27f9b0312407e358af0a9fe7497">~SketchPartNode</a> ()=default</td></tr>
-<tr class="separator:a72e0a27f9b0312407e358af0a9fe7497 inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a04fff5237a443fb09d992f7328c1969f inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a04fff5237a443fb09d992f7328c1969f">hash</a> () const =0</td></tr>
 <tr class="separator:a04fff5237a443fb09d992f7328c1969f inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a775aedcacffcdb07e5dfbc00003586ea inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespacefreetensor.html#abfc2360a99c4b94133850b2662e3360a">SketchPart</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a775aedcacffcdb07e5dfbc00003586ea">clone</a> () const =0</td></tr>
 <tr class="separator:a775aedcacffcdb07e5dfbc00003586ea inherit pub_methods_classfreetensor_1_1SketchPartNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a6931bf0bddd0bb1cb2d7eae1da8bc696"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ParallelizePart.html#a6931bf0bddd0bb1cb2d7eae1da8bc696">maxSize_</a></td></tr>
-<tr class="separator:a6931bf0bddd0bb1cb2d7eae1da8bc696"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4a0eb2d0a3a8bdf55bc54830b742cdf4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ParallelizePart.html#a4a0eb2d0a3a8bdf55bc54830b742cdf4">parallelSize_</a></td></tr>
-<tr class="separator:a4a0eb2d0a3a8bdf55bc54830b742cdf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aef3a35cd0cdcb69fc6de296b166b714c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1ID.html">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ParallelizePart.html#aef3a35cd0cdcb69fc6de296b166b714c">lastParallelizedID_</a> {}</td></tr>
-<tr class="separator:aef3a35cd0cdcb69fc6de296b166b714c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a155a3fbbde94cdefdcb646ad16773308" name="a155a3fbbde94cdefdcb646ad16773308"></a>
@@ -215,6 +210,7 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p >Make actual transformations on a <a class="el" href="classfreetensor_1_1Schedule.html">Schedule</a>, according to the annotation </p>
 
 <p>Implements <a class="el" href="classfreetensor_1_1SketchPartNode.html#acb9a7cbb37c215c8e892d6b1ca38306e">freetensor::SketchPartNode</a>.</p>
 
@@ -280,8 +276,39 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p >Crossbreed with another part </p>
 
 <p>Reimplemented from <a class="el" href="classfreetensor_1_1SketchPartNode.html#af4d2df3538c8ac6f87da2a317d18b099">freetensor::SketchPartNode</a>.</p>
+
+</div>
+</div>
+<a id="a4cb6cc6ceac013cf037b83a2ed7f965e" name="a4cb6cc6ceac013cf037b83a2ed7f965e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4cb6cc6ceac013cf037b83a2ed7f965e">&#9670;&nbsp;</a></span>genFakeAnnotation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::ParallelizePart::genFakeAnnotation </td>
+          <td>(</td>
+          <td class="paramtype">std::default_random_engine &amp;&#160;</td>
+          <td class="paramname"><em>gen</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p >Fake annotation only used for testing</p>
+<p >Defaults to a random annotation </p>
+
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1SketchPartNode.html#a8cb9f01f3b6305a640a39bfcaa742cbf">freetensor::SketchPartNode</a>.</p>
 
 </div>
 </div>
@@ -308,6 +335,7 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p >Randomly annotate the part </p>
 
 <p>Implements <a class="el" href="classfreetensor_1_1SketchPartNode.html#a328aab6e8a5993055b7b66f1dc6ee310">freetensor::SketchPartNode</a>.</p>
 
@@ -367,6 +395,31 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a34785eceab025e520a32da02376d2837" name="a34785eceab025e520a32da02376d2837"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a34785eceab025e520a32da02376d2837">&#9670;&nbsp;</a></span>lastParallelizedID()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp; freetensor::ParallelizePart::lastParallelizedID </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="acbcad5cb47192cdd46b98c62dd1c5900" name="acbcad5cb47192cdd46b98c62dd1c5900"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acbcad5cb47192cdd46b98c62dd1c5900">&#9670;&nbsp;</a></span>mutate()</h2>
 
@@ -390,6 +443,7 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p >Randomly mutate the part </p>
 
 <p>Reimplemented from <a class="el" href="classfreetensor_1_1SketchPartNode.html#a480db7dcb4b102a49d6ec9e3d5fe74a3">freetensor::SketchPartNode</a>.</p>
 
@@ -419,49 +473,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Implements <a class="el" href="classfreetensor_1_1SketchPartNode.html#a6abd6e7684adf321eb8d370b0f831066">freetensor::SketchPartNode</a>.</p>
-
-</div>
-</div>
-<h2 class="groupheader">Member Data Documentation</h2>
-<a id="aef3a35cd0cdcb69fc6de296b166b714c" name="aef3a35cd0cdcb69fc6de296b166b714c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aef3a35cd0cdcb69fc6de296b166b714c">&#9670;&nbsp;</a></span>lastParallelizedID_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classfreetensor_1_1ID.html">ID</a> freetensor::ParallelizePart::lastParallelizedID_ {}</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a6931bf0bddd0bb1cb2d7eae1da8bc696" name="a6931bf0bddd0bb1cb2d7eae1da8bc696"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6931bf0bddd0bb1cb2d7eae1da8bc696">&#9670;&nbsp;</a></span>maxSize_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int freetensor::ParallelizePart::maxSize_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a4a0eb2d0a3a8bdf55bc54830b742cdf4" name="a4a0eb2d0a3a8bdf55bc54830b742cdf4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4a0eb2d0a3a8bdf55bc54830b742cdf4">&#9670;&nbsp;</a></span>parallelSize_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int freetensor::ParallelizePart::parallelSize_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
 
 </div>
 </div>

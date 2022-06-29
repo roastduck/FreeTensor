@@ -8,7 +8,7 @@ var searchData=
   ['unload_5',['unload',['../classfreetensor_1_1Driver.html#a56e74712c389b5cd9835430c8c2aa824',1,'freetensor::Driver']]],
   ['unmangle_6',['unmangle',['../namespacefreetensor.html#ad49048b0f5a7d44b5e690b466f6bb4b9',1,'freetensor']]],
   ['unroll_7',['unroll',['../classfreetensor_1_1Schedule.html#a3ae9bde8c67ec254ea7ea1542ef74660',1,'freetensor::Schedule::unroll()'],['../namespacefreetensor.html#a66e93e7608d6a70a80992cf8abbedb40',1,'freetensor::unroll()']]],
-  ['unrollpart_8',['UnrollPart',['../classfreetensor_1_1UnrollPart.html#a03eeb063a34d7d16e8ccd90645cb9720',1,'freetensor::UnrollPart']]],
+  ['unrollpart_8',['UnrollPart',['../classfreetensor_1_1UnrollPart.html#a9c94ae096fce4a65a7d0919b66a3e7bd',1,'freetensor::UnrollPart']]],
   ['unrollrule_9',['UnrollRule',['../classfreetensor_1_1UnrollRule.html#af089f7ade5108ed056b84a721784e053',1,'freetensor::UnrollRule']]],
   ['upcast_10',['upCast',['../namespacefreetensor.html#ae3e7d62718efb88e4851a4ebacc0e437',1,'freetensor']]],
   ['updlower_11',['updLower',['../classfreetensor_1_1CompUniqueBounds.html#a2f20b8d9ac973b682d5426a6d278dc9a',1,'freetensor::CompUniqueBounds']]],

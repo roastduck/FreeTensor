@@ -20,7 +20,7 @@ var searchData=
   ['unroll_2ecc_17',['unroll.cc',['../auto__schedule_2rules_2unroll_8cc.html',1,'(Global Namespace)'],['../schedule_2unroll_8cc.html',1,'(Global Namespace)']]],
   ['unroll_2eh_18',['unroll.h',['../schedule_2unroll_8h.html',1,'(Global Namespace)'],['../auto__schedule_2rules_2unroll_8h.html',1,'(Global Namespace)']]],
   ['unroll_5f_19',['unroll_',['../structfreetensor_1_1ForProperty.html#a4a7615cd6d07436564da290e52c619fa',1,'freetensor::ForProperty']]],
-  ['unrollpart_20',['UnrollPart',['../classfreetensor_1_1UnrollPart.html',1,'freetensor::UnrollPart'],['../classfreetensor_1_1UnrollPart.html#a03eeb063a34d7d16e8ccd90645cb9720',1,'freetensor::UnrollPart::UnrollPart()']]],
+  ['unrollpart_20',['UnrollPart',['../classfreetensor_1_1UnrollPart.html',1,'freetensor::UnrollPart'],['../classfreetensor_1_1UnrollPart.html#a9c94ae096fce4a65a7d0919b66a3e7bd',1,'freetensor::UnrollPart::UnrollPart()']]],
   ['unrollrule_21',['UnrollRule',['../classfreetensor_1_1UnrollRule.html',1,'freetensor::UnrollRule'],['../classfreetensor_1_1UnrollRule.html#af089f7ade5108ed056b84a721784e053',1,'freetensor::UnrollRule::UnrollRule()']]],
   ['upcast_22',['upCast',['../namespacefreetensor.html#ae3e7d62718efb88e4851a4ebacc0e437',1,'freetensor']]],
   ['updateclosure_5f_23',['updateClosure_',['../structfreetensor_1_1FuncParam.html#a657b414414f85e299eae8b34fd2049d3',1,'freetensor::FuncParam']]],

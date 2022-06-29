@@ -729,9 +729,36 @@ AutoSchedule            (<span title="freetensor_ffi.AutoSchedule">AutoSchedule<
                  <span class="n">device</span><span class="p">,</span>
                  <span class="n">n_measured</span><span class="p">,</span>
                  <span class="o">*</span><span class="p">,</span>
+                 <span class="n">population</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+                 <span class="n">rand_ratio</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
                  <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
                  <span class="n">min_block_size</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                 <span class="n">rule_set</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Automatic scheduler</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        schedule : Schedule</span>
+<span class="sd">            A Schedule object to apply schedules onto</span>
+<span class="sd">        target : Target</span>
+<span class="sd">            The type of devices to compile to</span>
+<span class="sd">        population : int</span>
+<span class="sd">            How many programs to test in each iteration</span>
+<span class="sd">        rand_ratio : float</span>
+<span class="sd">            Portion of random programs in the population. Higher ratio focuses on</span>
+<span class="sd">            exploration, while lower ratio focuses on exploitation</span>
+<span class="sd">        rule_set : Optional[set]</span>
+<span class="sd">            Explicitly control over what rules to use. None for defualt rules</span>
+<span class="sd">        verbose : int</span>
+<span class="sd">            Verbosity level. 0 = print nothing, 1 = print tuning progress, 2 = print</span>
+<span class="sd">            extra info mation of each rule</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">population</span> <span class="o">=</span> <span class="n">population</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_random</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">population</span> <span class="o">*</span> <span class="n">rand_ratio</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_inherited</span> <span class="o">=</span> <span class="n">population</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_random</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">xgb_params</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_file_name</span> <span class="o">=</span> <span class="n">tag</span> <span class="o">+</span> <span class="s2">&quot;_xgb.model&quot;</span>
@@ -746,9 +773,9 @@ AutoSchedule            (<span title="freetensor_ffi.AutoSchedule">AutoSchedule<
         <span class="k">def</span> <span class="nf">update_func</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">times</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">times</span><span class="p">)</span>
 
-        <span class="nb">super</span><span class="p">(</span><span class="n">AutoSchedule</span><span class="p">,</span>
-              <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">schedule</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">n_measured</span><span class="p">,</span> <span class="n">predict_func</span><span class="p">,</span>
-                             <span class="n">update_func</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">min_block_size</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AutoSchedule</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">schedule</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">n_measured</span><span class="p">,</span>
+                                           <span class="n">predict_func</span><span class="p">,</span> <span class="n">update_func</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span>
+                                           <span class="n">min_block_size</span><span class="p">,</span> <span class="n">rule_set</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">set_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">AutoSchedule</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kws</span><span class="p">)</span>
@@ -757,7 +784,8 @@ AutoSchedule            (<span title="freetensor_ffi.AutoSchedule">AutoSchedule<
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iteration</span><span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Iteration &quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">search_one_round</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">search_one_round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">population</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_inherited</span><span class="p">,</span>
+                                  <span class="bp">self</span><span class="o">.</span><span class="n">n_random</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_best_schedule</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
@@ -783,6 +811,108 @@ AutoSchedule            (<span title="freetensor_ffi.AutoSchedule">AutoSchedule<
 
 
 
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.auto_schedule.AutoSchedule.__init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schedule</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">n_measured</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">population</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">rand_ratio</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">min_block_size</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">rule_set</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Automatic scheduler</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>schedule</strong> (<code>Schedule</code>) – A Schedule object to apply schedules onto</p></li>
+            <li><p><strong>target</strong> (<code>Target</code>) – The type of devices to compile to</p></li>
+            <li><p><strong>population</strong> (<code>int</code>) – How many programs to test in each iteration</p></li>
+            <li><p><strong>rand_ratio</strong> (<code>float</code>) – Portion of random programs in the population. Higher ratio focuses on
+exploration, while lower ratio focuses on exploitation</p></li>
+            <li><p><strong>rule_set</strong> (<code>Optional[set]</code>) – Explicitly control over what rules to use. None for defualt rules</p></li>
+            <li><p><strong>verbose</strong> (<code>int</code>) – Verbosity level. 0 = print nothing, 1 = print tuning progress, 2 = print
+extra info mation of each rule</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/auto_schedule.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+             <span class="n">schedule</span><span class="p">,</span>
+             <span class="n">target</span><span class="p">,</span>
+             <span class="n">device</span><span class="p">,</span>
+             <span class="n">n_measured</span><span class="p">,</span>
+             <span class="o">*</span><span class="p">,</span>
+             <span class="n">population</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+             <span class="n">rand_ratio</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+             <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+             <span class="n">min_block_size</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+             <span class="n">rule_set</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Automatic scheduler</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    schedule : Schedule</span>
+<span class="sd">        A Schedule object to apply schedules onto</span>
+<span class="sd">    target : Target</span>
+<span class="sd">        The type of devices to compile to</span>
+<span class="sd">    population : int</span>
+<span class="sd">        How many programs to test in each iteration</span>
+<span class="sd">    rand_ratio : float</span>
+<span class="sd">        Portion of random programs in the population. Higher ratio focuses on</span>
+<span class="sd">        exploration, while lower ratio focuses on exploitation</span>
+<span class="sd">    rule_set : Optional[set]</span>
+<span class="sd">        Explicitly control over what rules to use. None for defualt rules</span>
+<span class="sd">    verbose : int</span>
+<span class="sd">        Verbosity level. 0 = print nothing, 1 = print tuning progress, 2 = print</span>
+<span class="sd">        extra info mation of each rule</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">population</span> <span class="o">=</span> <span class="n">population</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">n_random</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">population</span> <span class="o">*</span> <span class="n">rand_ratio</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">n_inherited</span> <span class="o">=</span> <span class="n">population</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_random</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">xgb_params</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">save_file_name</span> <span class="o">=</span> <span class="n">tag</span> <span class="o">+</span> <span class="s2">&quot;_xgb.model&quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_file_name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">Booster</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_file_name</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+
+    <span class="k">def</span> <span class="nf">predict_func</span><span class="p">(</span><span class="n">features</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">update_func</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">times</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">times</span><span class="p">)</span>
+
+    <span class="nb">super</span><span class="p">(</span><span class="n">AutoSchedule</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">schedule</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">n_measured</span><span class="p">,</span>
+                                       <span class="n">predict_func</span><span class="p">,</span> <span class="n">update_func</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span>
+                                       <span class="n">min_block_size</span><span class="p">,</span> <span class="n">rule_set</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 

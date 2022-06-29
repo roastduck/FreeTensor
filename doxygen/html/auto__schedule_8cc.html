@@ -67,7 +67,8 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#namespaces">Namespaces</a>  </div>
+<a href="#namespaces">Namespaces</a> &#124;
+<a href="#define-members">Macros</a>  </div>
   <div class="headertitle"><div class="title">auto_schedule.cc File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -152,7 +153,50 @@ Include dependency graph for auto_schedule.cc:</div>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacefreetensor"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html">freetensor</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:ad6de34becbf8b11194bb2adeb6b8fda8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="auto__schedule_8cc.html#ad6de34becbf8b11194bb2adeb6b8fda8">ADD_RULE</a>(name,  RuleType, ...)</td></tr>
+<tr class="separator:ad6de34becbf8b11194bb2adeb6b8fda8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="ad6de34becbf8b11194bb2adeb6b8fda8" name="ad6de34becbf8b11194bb2adeb6b8fda8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad6de34becbf8b11194bb2adeb6b8fda8">&#9670;&nbsp;</a></span>ADD_RULE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define ADD_RULE</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">name, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">RuleType, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line">    <span class="keywordflow">if</span> (!ruleSet || ruleSet-&gt;count(name)) {                                    \</div>
+<div class="line">        rules_.emplace_back(name, Ref&lt;RuleType&gt;::make(__VA_ARGS__));           \</div>
+<div class="line">    }</div>
+</div><!-- fragment -->
+</div>
+</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

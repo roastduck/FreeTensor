@@ -90,8 +90,12 @@ Inheritance diagram for freetensor::SketchPartNode:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a72e0a27f9b0312407e358af0a9fe7497"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a72e0a27f9b0312407e358af0a9fe7497">~SketchPartNode</a> ()=default</td></tr>
+<tr class="separator:a72e0a27f9b0312407e358af0a9fe7497"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a328aab6e8a5993055b7b66f1dc6ee310"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a328aab6e8a5993055b7b66f1dc6ee310">genRandAnnotation</a> (std::default_random_engine &amp;gen)=0</td></tr>
 <tr class="separator:a328aab6e8a5993055b7b66f1dc6ee310"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8cb9f01f3b6305a640a39bfcaa742cbf"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a8cb9f01f3b6305a640a39bfcaa742cbf">genFakeAnnotation</a> (std::default_random_engine &amp;gen)</td></tr>
+<tr class="separator:a8cb9f01f3b6305a640a39bfcaa742cbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a480db7dcb4b102a49d6ec9e3d5fe74a3"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a480db7dcb4b102a49d6ec9e3d5fe74a3">mutate</a> (std::default_random_engine &amp;gen)</td></tr>
 <tr class="separator:a480db7dcb4b102a49d6ec9e3d5fe74a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af4d2df3538c8ac6f87da2a317d18b099"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#af4d2df3538c8ac6f87da2a317d18b099">crossover</a> (const <a class="el" href="namespacefreetensor.html#abfc2360a99c4b94133850b2662e3360a">SketchPart</a> &amp;part, std::default_random_engine &amp;gen)</td></tr>
@@ -102,8 +106,6 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a6abd6e7684adf321eb8d370b0f831066"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab20cae1832b0880ec91dbefbf3ecb1b0"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#ab20cae1832b0880ec91dbefbf3ecb1b0">getAnnotation</a> () const =0</td></tr>
 <tr class="separator:ab20cae1832b0880ec91dbefbf3ecb1b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a72e0a27f9b0312407e358af0a9fe7497"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a72e0a27f9b0312407e358af0a9fe7497">~SketchPartNode</a> ()=default</td></tr>
-<tr class="separator:a72e0a27f9b0312407e358af0a9fe7497"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a04fff5237a443fb09d992f7328c1969f"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a04fff5237a443fb09d992f7328c1969f">hash</a> () const =0</td></tr>
 <tr class="separator:a04fff5237a443fb09d992f7328c1969f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a775aedcacffcdb07e5dfbc00003586ea"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespacefreetensor.html#abfc2360a99c4b94133850b2662e3360a">SketchPart</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SketchPartNode.html#a775aedcacffcdb07e5dfbc00003586ea">clone</a> () const =0</td></tr>
@@ -169,6 +171,7 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p >Make actual transformations on a <a class="el" href="classfreetensor_1_1Schedule.html">Schedule</a>, according to the annotation </p>
 
 <p>Implemented in <a class="el" href="classfreetensor_1_1MultiLevelTilingPart.html#a39c27c2be50261048ad1b1fd03c4d9dc">freetensor::MultiLevelTilingPart</a>, <a class="el" href="classfreetensor_1_1MultiLevelTilingWithFusionPart.html#aa287c54aa85e969d620d01409fd2e214">freetensor::MultiLevelTilingWithFusionPart</a>, <a class="el" href="classfreetensor_1_1ParallelizePart.html#a8a693130f46760ea6b3515b5b798dde6">freetensor::ParallelizePart</a>, <a class="el" href="classfreetensor_1_1ThreadBindPart.html#ab68fe81519391c068f49d1ce2f2ddba7">freetensor::ThreadBindPart</a>, and <a class="el" href="classfreetensor_1_1UnrollPart.html#a66aed1eaa1407fbe62ec56a59282e7eb">freetensor::UnrollPart</a>.</p>
 
@@ -234,8 +237,39 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p >Crossbreed with another part </p>
 
 <p>Reimplemented in <a class="el" href="classfreetensor_1_1MultiLevelTilingPart.html#a8e3c15de46d0cdb58273e9759d1fa5c4">freetensor::MultiLevelTilingPart</a>, <a class="el" href="classfreetensor_1_1MultiLevelTilingWithFusionPart.html#a343b4be5279cf3f80eee94cf1f9c6a4e">freetensor::MultiLevelTilingWithFusionPart</a>, <a class="el" href="classfreetensor_1_1ParallelizePart.html#ae786e5aa5aeda3493db8bf3c183dd75f">freetensor::ParallelizePart</a>, and <a class="el" href="classfreetensor_1_1UnrollPart.html#a65c8c0a5a01814c56e9658b205f47021">freetensor::UnrollPart</a>.</p>
+
+</div>
+</div>
+<a id="a8cb9f01f3b6305a640a39bfcaa742cbf" name="a8cb9f01f3b6305a640a39bfcaa742cbf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8cb9f01f3b6305a640a39bfcaa742cbf">&#9670;&nbsp;</a></span>genFakeAnnotation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void freetensor::SketchPartNode::genFakeAnnotation </td>
+          <td>(</td>
+          <td class="paramtype">std::default_random_engine &amp;&#160;</td>
+          <td class="paramname"><em>gen</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p >Fake annotation only used for testing</p>
+<p >Defaults to a random annotation </p>
+
+<p>Reimplemented in <a class="el" href="classfreetensor_1_1MultiLevelTilingPart.html#ac77f81445b9e364acb76eae23a05475f">freetensor::MultiLevelTilingPart</a>, <a class="el" href="classfreetensor_1_1ParallelizePart.html#a4cb6cc6ceac013cf037b83a2ed7f965e">freetensor::ParallelizePart</a>, and <a class="el" href="classfreetensor_1_1UnrollPart.html#a8ca3131d71f06fa546e79a0ae3f704c0">freetensor::UnrollPart</a>.</p>
 
 </div>
 </div>
@@ -262,6 +296,7 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p >Randomly annotate the part </p>
 
 <p>Implemented in <a class="el" href="classfreetensor_1_1MultiLevelTilingPart.html#a3f8130f43ff3d7af4645ebd0ae207888">freetensor::MultiLevelTilingPart</a>, <a class="el" href="classfreetensor_1_1MultiLevelTilingWithFusionPart.html#afd3fae61ee39cf1e362b5187c77d0a4b">freetensor::MultiLevelTilingWithFusionPart</a>, <a class="el" href="classfreetensor_1_1ParallelizePart.html#a126dad37a2dd3d9ee1a136207c254b00">freetensor::ParallelizePart</a>, <a class="el" href="classfreetensor_1_1ThreadBindPart.html#a99cb9ef526fb54b168f69c1eaa9d5e14">freetensor::ThreadBindPart</a>, and <a class="el" href="classfreetensor_1_1UnrollPart.html#a0ea255db780b6d6bbba1f2133db7df1f">freetensor::UnrollPart</a>.</p>
 
@@ -344,6 +379,7 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p >Randomly mutate the part </p>
 
 <p>Reimplemented in <a class="el" href="classfreetensor_1_1MultiLevelTilingPart.html#ab85c70a8e61d597f5cf2d6c637574906">freetensor::MultiLevelTilingPart</a>, <a class="el" href="classfreetensor_1_1MultiLevelTilingWithFusionPart.html#a4494c593af50b8738e3fab69b4f5a6e4">freetensor::MultiLevelTilingWithFusionPart</a>, <a class="el" href="classfreetensor_1_1ParallelizePart.html#acbcad5cb47192cdd46b98c62dd1c5900">freetensor::ParallelizePart</a>, and <a class="el" href="classfreetensor_1_1UnrollPart.html#a52b894545467985628e2123352cbacb3">freetensor::UnrollPart</a>.</p>
 
