@@ -114,14 +114,14 @@ std::vector<double> AutoSchedule::measure(std::vector<Ref<Sketch>> &sketches) {
     return times;
 }
 
-void AutoSchedule::searchOneRound(size_t n, size_t nInherited, size_t nRandom) {
-    ASSERT(n == nInherited + nRandom);
+void AutoSchedule::searchOneRound(size_t n, size_t nExploit, size_t nExplore) {
+    ASSERT(n == nExploit + nExplore);
     if (baseSketches_.empty()) { // first time
         genSketches();
         testAndAdd(getRandPopulation(n));
     } else {
-        testAndAdd(evolutionarySearch(nInherited));
-        testAndAdd(getRandPopulation(nRandom));
+        testAndAdd(evolutionarySearch(nExploit));
+        testAndAdd(getRandPopulation(nExplore));
     }
     auto bs = getBestSchedule();
     if (verbose_ >= 1) {
@@ -269,30 +269,36 @@ std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
             break;
         }
     }
+    ASSERT(ret.size() == nRand);
     return ret;
 }
 
 std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
-    constexpr int EVOLUTIONARY_SEARCH_POPULATION = 512;
+    // Meta-parameters used for evolutionary search. Population in an
+    // evolutionary search is different from the global population
+    constexpr size_t EVOLUTIONARY_SEARCH_POPULATION = 512;
+    constexpr size_t EVOLUTIONARY_SEARCH_INIT_EXPLORE_CNT = 358;
+    constexpr size_t EVOLUTIONARY_SEARCH_INIT_EXPLOIT_CNT = 128;
     constexpr int EVOLUTIONARY_SEARCH_ITERS = 4;
     constexpr double EVOLUTIONARY_SEARCH_MUTATION_PROB = 0.6;
     constexpr double EVOLUTIONARY_SEARCH_CROSSOVER_PROB = 0.3;
-    constexpr double EVOLUTIONARY_SEARCH_INIT_RAND_RATIO = 0.7;
 
     if (verbose_ >= 1) {
         logger() << "Evolutionary search" << std::endl;
     }
 
-    std::vector<Ref<Sketch>> init = getRandPopulation(
-        EVOLUTIONARY_SEARCH_POPULATION * EVOLUTIONARY_SEARCH_INIT_RAND_RATIO);
-    size_t nMeasured = std::min(EVOLUTIONARY_SEARCH_POPULATION - init.size(),
-                                measuredSketches_.size());
-    if (nMeasured > 0 && nMeasured < measuredSketches_.size()) {
-        measuredSketches_.resize(nMeasured);
+    std::vector<Ref<Sketch>> init =
+        getRandPopulation(EVOLUTIONARY_SEARCH_INIT_EXPLORE_CNT);
+    if (measuredSketches_.size() > EVOLUTIONARY_SEARCH_INIT_EXPLOIT_CNT) {
+        ASSERT(EVOLUTIONARY_SEARCH_INIT_EXPLOIT_CNT > 0);
+        measuredSketches_.resize(EVOLUTIONARY_SEARCH_INIT_EXPLOIT_CNT);
     }
-    for (size_t i = 0; i < nMeasured; i++) {
+    for (size_t i = 0; i < EVOLUTIONARY_SEARCH_INIT_EXPLOIT_CNT &&
+                       i < measuredSketches_.size();
+         i++) {
         init.emplace_back(measuredSketches_[i]);
     }
+
     std::vector<Ref<Sketch>> v1 = std::move(init);
     std::vector<Ref<Sketch>> v2;
     v2.reserve(v1.size());
@@ -339,7 +345,7 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
                 logger() << "evo " << v2.size() << std::endl;
             }
 #pragma omp parallel for
-            for (int j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
+            for (size_t j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
                 double r = randomDouble(gens[j]);
                 if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
                     int a = randWithProb(probSum, gens[j]);
@@ -369,7 +375,7 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
                     now[j] = v1[randomInt(v1.size() - 1, gens[j])];
                 }
             }
-            for (int j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
+            for (size_t j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
                 if (now[j].isValid() && !now[j]->code().empty()) {
                     v2.push_back(now[j]);
                 }

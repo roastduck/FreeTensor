@@ -56,7 +56,7 @@ class AutoSchedule {
     void setParams(const std::vector<Ref<Array>> &args,
                    const std::unordered_map<std::string, Ref<Array>> &kws);
 
-    void searchOneRound(size_t n, size_t nInherited, size_t nRandom);
+    void searchOneRound(size_t n, size_t nExploit, size_t nExplore);
 
     std::vector<Ref<Sketch>> evolutionarySearch(size_t outSize);
 
