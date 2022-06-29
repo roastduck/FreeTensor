@@ -38,8 +38,12 @@ def test_cache_write():
                         z[i, j, p, q] = y[0, 0, p, q]
 
     s = ft.Schedule(test)
-    s = ft.AutoSchedule(s, target, device, 8)
-    sch = s.test_parallelize()
+    s = ft.AutoSchedule(s,
+                        target,
+                        device,
+                        8,
+                        rule_set={"multi_level_tiling", "parallelize"})
+    sch = s.test_round()
     func = ft.lower(sch.func(), target)
     print(func)
     code = ft.codegen(func, target, verbose=True)

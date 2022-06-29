@@ -40,8 +40,13 @@ def test_thread_bind():
 
     s = ft.Schedule(test)
     print(s.ast())
-    s = ft.AutoSchedule(s, target, device, 8)
-    sch = s.test_thread_bind()
+    s = ft.AutoSchedule(
+        s,
+        target,
+        device,
+        8,
+        rule_set={"multi_level_tiling_with_fusion", "thread_bind"})
+    sch = s.test_round()
     func = ft.lower(sch.func(), target)
     print(func)
     code = ft.codegen(func, target, verbose=True)

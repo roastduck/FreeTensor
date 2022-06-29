@@ -26,16 +26,42 @@ struct SketchTarget;
 
 class SketchPartNode {
   public:
+    virtual ~SketchPartNode() = default;
+
+    /**
+     * Randomly annotate the part
+     */
     virtual void genRandAnnotation(std::default_random_engine &gen) = 0;
+
+    /**
+     * Fake annotation only used for testing
+     *
+     * Defaults to a random annotation
+     */
+    virtual void genFakeAnnotation(std::default_random_engine &gen) {
+        genRandAnnotation(gen);
+    }
+
+    /**
+     * Randomly mutate the part
+     */
     virtual bool mutate(std::default_random_engine &gen) { return false; }
+
+    /**
+     * Crossbreed with another part
+     */
     virtual bool crossover(const SketchPart &part,
                            std::default_random_engine &gen) {
         return false;
     };
+
+    /**
+     * Make actual transformations on a Schedule, according to the annotation
+     */
     virtual void apply(Schedule &schedule, SketchTarget &target) = 0;
+
     virtual SketchPartType partType() = 0;
     virtual std::vector<int> getAnnotation() const = 0;
-    virtual ~SketchPartNode() = default;
     virtual size_t hash() const = 0;
     virtual SketchPart clone() const = 0;
 };

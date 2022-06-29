@@ -39,7 +39,7 @@ class MultiLevelTilingPart : public SketchPartNode {
 
   public:
     void genRandAnnotation(std::default_random_engine &gen) override;
-    void genSampleAnnotation();
+    void genFakeAnnotation(std::default_random_engine &gen) override;
     std::vector<std::pair<ID, int>> &tiles() { return tiles_; }
     explicit MultiLevelTilingPart(ForsWithDataReuse fors,
                                   std::string pat = "SSRSRS");

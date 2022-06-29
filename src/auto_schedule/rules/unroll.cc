@@ -15,15 +15,16 @@ void UnrollPart::apply(Schedule &schedule, SketchTarget &target) {
     int vthreadSize = 1;
     if (targetType_ == TargetType::GPU) {
         SketchPart part = target.getPart(SketchPartType::ThreadBind);
-        ID lastParallelizedID = part.as<ThreadBindPart>()->lastParallelizedID_;
+        ID lastParallelizedID = part.as<ThreadBindPart>()->lastParallelizedID();
         if (!lastParallelizedID.isValid()) {
             return;
         }
         root = schedule.find(lastParallelizedID).as<ForNode>()->body_;
-        vthreadSize = part.as<ThreadBindPart>()->vthreadSize_;
+        vthreadSize = part.as<ThreadBindPart>()->vthreadSize();
     } else {
         SketchPart part = target.getPart(SketchPartType::Parallelize);
-        ID lastParallelizedID = part.as<ParallelizePart>()->lastParallelizedID_;
+        ID lastParallelizedID =
+            part.as<ParallelizePart>()->lastParallelizedID();
         if (!lastParallelizedID.isValid()) {
             return;
         }
@@ -57,6 +58,10 @@ void UnrollPart::genRandAnnotation(std::default_random_engine &gen) {
     std::vector<int> &unrollConfigs =
         targetType_ == TargetType::GPU ? unrollConfigsGpu : unrollConfigsCpu;
     maxSize_ = unrollConfigs[randomInt(unrollConfigs.size() - 1, gen)];
+}
+
+void UnrollPart::genFakeAnnotation(std::default_random_engine &gen) {
+    maxSize_ = 16;
 }
 
 bool UnrollPart::mutate(std::default_random_engine &gen) {
