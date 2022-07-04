@@ -81,6 +81,7 @@ template <class T> GPUScalar<T> gpuScalar(const T &ref) {
     return GPUScalar<T>(ref);
 }
 
+// NVCC does not support C++20
 template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
 __host__ __device__ T floorDiv(T a, T b) {
     T res = a / b, rem = a % b;

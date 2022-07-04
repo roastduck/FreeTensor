@@ -4,12 +4,13 @@
 
 - Linux
 - Python (>= 3.8, for the Python frontend)
-- GCC (>= 8, to support C++17 and the "unroll" pragma)
-- CUDA (>= 10.2, to support GCC 8, Optional)
+- GCC (>= 10, to support C++20 and the "unroll" pragma)
+- CUDA (>= 11.4.1, to support GCC 10, Optional)
 - MKL (Optional)
-- Java (Build-time dependency only)
+- PyTorch (Optional, see below)
+- Java (= 11, Build-time dependency only)
 
-Python dependencies:
+Other Python dependencies:
 
 ```sh
 pip3 install --user numpy sourceinspect astor Pygments xgboost
@@ -18,8 +19,9 @@ pip3 install --user numpy sourceinspect astor Pygments xgboost
 !!! note "Note on Python version"
     Because we are analyzing Python AST, which is sensitive to Python version, there may be potential bugs for Python strictly later than 3.8. Please file an issue if something goes wrong
 
-!!! note "Note on future changes"
-    We have a plan to migrade to C++20 in a near future, which requires GCC >= 10
+!!! note "PyTorch support"
+    FreeTensor can optionally link PyTorch to support a copy-free interface between FreeTensor and PyTorch. Please note that, if you are using CUDA, FreeTensor and PyTorch should link CUDA
+    of *the same version*. PyTorch can be installed in any way you like, see [PyTorch's guide](https://pytorch.org/get-started/locally/).
 
 ## Build
 
@@ -42,6 +44,7 @@ There are some options to `cmake`:
 
 - `-DFT_WITH_CUDA=ON/OFF`: build with/without CUDA (defaults to `ON`).
 - `-DFT_WITH_MKL=<path/to/mkl/root>`: build with MKL (path to MKL is required, defaults to building without it).
+- `-DFT_WITH_PYTORCH=ON/OFF`: build with/without copy-free interface from/to PyTorch, requring PyTorch installed on the system (defaults to `OFF`).
 - `-DFT_DEBUG_LOG_NODE=ON` (for developers): enables tracing to tell by which pass a specific AST node is modified.
 - `-DFT_DEBUG_PROFILE` (for developers): profiles some heavy functions in the compiler.
 
@@ -64,6 +67,8 @@ There are serveral global configurations can be set via environment variables:
 - `FT_PRETTY_PRINT=ON/OFF`. Enable/disable colored printing.
 - `FT_PRINT_ALL_ID=ON/OFF`. Print (or not) IDs of all statements in an AST.
 - `FT_WERROR=ON/OFF`. Treat warnings as errors (or not).
+- `FT_BACKEND_COMPILER_CXX`. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself.
+- `FT_BACKEND_COMPILER_NVCC`. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself.
 
 This configurations can also set at runtime in [`ft.config`](../../api/#freetensor.core.config).
 
@@ -106,21 +111,21 @@ PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 00.hello_world/test_basic.py
 First install some dependencies:
 
 ```sh
-pip3 install --user mkdocs mkdocstrings "pytkdocs[numpy-style]"
+pip3 install --user mkdocs mkdocstrings==0.18.1 "pytkdocs[numpy-style]"
 ```
 
-From the root directory of FreeTensor, run a HTTP server to serve the document (recommended):
+From the root directory of FreeTensor, run a HTTP server to serve the document (recommended, but without document on C++ interface due to [a limitation](https://github.com/mkdocs/mkdocs/issues/1901)):
 
 ```sh
 PYTHONPATH=./python:./build:$PYTHONPATH mkdocs serve
 ```
 
-Or build and save the pages:
+Or build and save the pages (with document on C++ interface, requiring Doxygen and Graphviz):
 
 ```sh
-PYTHONPATH=./python:./build:$PYTHONPATH mkdocs build
+doxygen Doxyfile && PYTHONPATH=./python:./build:$PYTHONPATH mkdocs build
 ```
 
 !!! note "Publish the documents to GitHub Pages (for developers)"
 
-    `PYTHONPATH=./python:./build:$PYTHONPATH mkdocs gh-deploy`
+    `doxygen Doxyfile && PYTHONPATH=./python:./build:$PYTHONPATH mkdocs gh-deploy`

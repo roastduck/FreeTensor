@@ -1,11 +1,47 @@
 import freetensor_ffi as ffi
 import functools
+import numpy as np
 
 from typing import Optional, Sequence
 from freetensor_ffi import CPU, GPU, Array
 
 from . import config
 from .codegen import NativeCode
+
+
+def array(data):
+    '''
+    Factory function for Array
+
+    It converts more data format to Array
+    '''
+
+    if type(data) is Array:
+        return data
+
+    # For NumPy, Although Pybind11's `array_t` type provides a flag `forcecast` to
+    # cast from a strided array to a contiguous one. But it always casts to a specific
+    # type, e.g. float64. I have no idea how to support multiple types. Therfore,
+    # we have to call NumPy's `.copy(order='C')` to make a new NumPy array. This
+    # function can only be called from Python side (not from PyBind11's `py::array`
+    # type).
+    if type(data) is np.ndarray:
+        if not data.flags['C_CONTIGUOUS']:
+            data = data.copy(order='C')
+        return Array(data)
+
+    if data.__class__.__module__ == 'torch':
+        import torch
+        if type(data) is torch.Tensor:
+            if not config.with_pytorch():
+                raise ffi.DriverError(
+                    "FreeTensor should be built with WITH_PYTORCH to accept a PyTorch tensor"
+                )
+            if not data.is_contiguous():
+                data = data.contiguous()
+            return Array(data)
+
+    raise ffi.DriverError(f"Unsupported data type {type(data)} for Array")
 
 
 class Target(ffi.Target):
@@ -110,7 +146,9 @@ class Driver(ffi.Driver):
     def __init__(self,
                  func: ffi.Func,
                  src: str,
-                 device: Optional[Device] = None):
+                 device: Optional[Device] = None,
+                 host_device: Optional[Device] = None,
+                 verbose: Optional[bool] = None):
         '''
         Compile a program using a backend compiler and load it into memory
 
@@ -126,15 +164,29 @@ class Driver(ffi.Driver):
         device : Device (Optional)
             The device to run the program. If omitted, use the default device
             in config
+        verbose : bool (Optional)
+            True to print extra infomation
         '''
         src = str(src)
         if device is None:
             device = config.default_device()
-        super(Driver, self).__init__(func, src, device)
+        if verbose is None:
+            verbose = False
+        if host_device is None:
+            super(Driver, self).__init__(func, src, device, verbose)
+        else:
+            super(Driver, self).__init__(func, src, device, host_device,
+                                         verbose)
         self.func = func
 
     def set_args(self, *args, **kws):
         ''' Set argument for an invocation '''
+        args = list(args)
+        kws = dict(kws)
+        for i in range(len(args)):
+            args[i] = array(args[i])
+        for key in kws:
+            kws[key] = array(kws[key])
         super(Driver, self).set_args(args, kws)
 
     def collect_returns(self):
@@ -175,7 +227,9 @@ class Driver(ffi.Driver):
 
 
 def build_binary(code: Optional[NativeCode] = None,
-                 device: Optional[Device] = None):
+                 device: Optional[Device] = None,
+                 host_device: Optional[Device] = None,
+                 verbose: Optional[bool] = None):
     '''
     Compile a program using a backend compiler and load it into memory
 
@@ -196,9 +250,13 @@ def build_binary(code: Optional[NativeCode] = None,
             raise ffi.DriverError(
                 f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"
             )
-        return Driver(code.func, code.code, device)
+        return Driver(code.func, code.code, device, host_device, verbose)
     else:
         f = build_binary
         if device is not None:
             f = functools.partial(f, device=device)
+        if host_device is not None:
+            f = functools.partial(f, host_device=host_device)
+        if verbose is not None:
+            f = functools.partial(f, verbose=verbose)
         return f

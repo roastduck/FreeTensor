@@ -154,38 +154,44 @@ std::pair<std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
 analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
     auto op = flattenStmtSeq(_op);
 
-    std::vector<FindDepsCond> conds;
+    std::vector<FindDepsDir> direction;
     for (auto &&scope : findAllLoops(op)) {
-        conds.push_back({{scope, DepDirection::Normal}});
+        direction.push_back({{scope, DepDirection::Normal}});
     }
     std::unordered_map<ID, std::unordered_set<ID>> affectingScopes, needTapes;
-    auto filter1 = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return intermediates.count(earlier.def_->id());
-    };
     auto found1 = [&](const Dependency &d) {
         ASSERT(d.earlier()->nodeType() != ASTNodeType::Load);
         if (d.later()->nodeType() != ASTNodeType::ReduceTo) {
             needTapes[d.defId()].insert(d.earlier().as<StmtNode>()->id());
         }
     };
-    auto filter2 = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return needTapes.count(earlier.def_->id()) &&
-               (needTapes.at(earlier.def_->id()).count(earlier.stmt_->id()) ||
-                needTapes.at(earlier.def_->id()).count(later.stmt_->id()));
-    };
     auto found2 = [&](const Dependency &d) {
         if ((d.earlier()->nodeType() == ASTNodeType::Load &&
              d.later()->nodeType() != ASTNodeType::Load) ||
             (d.later()->nodeType() == ASTNodeType::Load &&
              d.earlier()->nodeType() != ASTNodeType::Load)) {
-            ASSERT(d.cond_.size() == 1);
-            affectingScopes[d.defId()].insert(d.cond_[0].first.id_);
+            ASSERT(d.dir_.size() == 1);
+            affectingScopes[d.defId()].insert(d.dir_[0].first.id_);
         }
     };
-    findDeps(op, {{}}, found1, FindDepsMode::Dep, DEP_RAW, filter1, true,
-             false);
-    findDeps(op, conds, found2, FindDepsMode::Dep, DEP_RAW | DEP_WAR, filter2,
-             true, false);
+    FindDeps()
+        .type(DEP_RAW)
+        .filterAccess([&](const AccessPoint &acc) {
+            return intermediates.count(acc.def_->id());
+        })
+        .eraseOutsideVarDef(false)(op, found1);
+    FindDeps()
+        .direction(direction)
+        .type(DEP_RAW | DEP_WAR)
+        .filterAccess([&](const AccessPoint &acc) {
+            return needTapes.count(acc.def_->id());
+        })
+        .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
+            return needTapes.at(earlier.def_->id())
+                       .count(earlier.stmt_->id()) ||
+                   needTapes.at(earlier.def_->id()).count(later.stmt_->id());
+        })
+        .eraseOutsideVarDef(false)(op, found2);
 
     std::unordered_map<ID, Expr> versions;
     std::unordered_map<ID, Expr> totLens;

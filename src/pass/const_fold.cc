@@ -95,11 +95,8 @@ Expr ConstFold::visit(const Cast &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Cast);
     auto op = __op.as<CastNode>();
-    if (op->expr_->isConst() &&
-        (op->dtype_ == DataType::Bool || op->dtype_ == DataType::Float32 ||
-         op->dtype_ == DataType::Float64 || op->dtype_ == DataType::Int64 ||
-         op->dtype_ == DataType::Int32)) {
-        return castType(op->dtype_, op->expr_.as<ConstNode>());
+    if (op->expr_->isConst() && (op->destType_ != DataType::Custom)) {
+        return castType(op->destType_, op->expr_.as<ConstNode>());
     }
     return op;
 }

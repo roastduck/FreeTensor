@@ -7,7 +7,45 @@
 
 namespace freetensor {
 
-Stmt SwapFor::visit(const For &_op) {
+std::vector<FindDepsDir> notLexLessAfterPermu(const std::vector<ID> &permu) {
+    // Not lexicographically less <==> there is no such dependence that the
+    // out-most non-'=' carrying loop is not a '>'
+    std::vector<FindDepsDir> direction;
+    for (size_t i = 0, n = permu.size(); i < n; i++) {
+        FindDepsDir dir;
+        for (size_t j = 0; j < i; j++) {
+            dir.emplace_back(permu[j], DepDirection::Same);
+        }
+        dir.emplace_back(permu[i], DepDirection::Inv);
+        direction.emplace_back(std::move(dir));
+    }
+    return direction;
+}
+
+Expr RenameIter::visit(const Var &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Var);
+    auto op = __op.as<VarNode>();
+    if (op->name_ == oldName_) {
+        op->name_ = newName_;
+    }
+    return op;
+}
+
+Stmt RenameIter::visit(const For &_op) {
+    if (_op->iter_ == oldName_) {
+        newName_ = oldName_ + "." + _op->id().strId();
+        auto __op = Mutator::visit(_op);
+        ASSERT(__op->nodeType() == ASTNodeType::For);
+        auto op = __op.as<ForNode>();
+        op->iter_ = newName_;
+        return op;
+    } else {
+        return Mutator::visit(_op);
+    }
+}
+
+Stmt Reorder::visit(const For &_op) {
     if (_op->id() == oldOuter_->id()) {
         insideOuter_ = true;
         auto body = Mutator::visit(_op);
@@ -28,7 +66,7 @@ Stmt SwapFor::visit(const For &_op) {
     }
 }
 
-Stmt SwapFor::visit(const StmtSeq &_op) {
+Stmt Reorder::visit(const StmtSeq &_op) {
     if (insideOuter_) {
         if (insideInner_) {
             return Mutator::visit(_op);
@@ -56,20 +94,22 @@ Stmt SwapFor::visit(const StmtSeq &_op) {
                 throw InvalidSchedule("Imperfect nesting is not allowed when "
                                       "the inner loop is parallelized");
             }
-            before =
-                makeIf("", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                       beforeStmts.size() == 1 ? beforeStmts[0]
-                                               : makeStmtSeq("", beforeStmts));
+            before = makeIf(
+                "", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
+                RenameIter{oldInner_->iter_}(
+                    beforeStmts.size() == 1 ? beforeStmts[0]
+                                            : makeStmtSeq("", beforeStmts)));
         }
         if (!afterStmts.empty()) {
             if (oldInner_->property_->parallel_ != serialScope) {
                 throw InvalidSchedule("Imperfect nesting is not allowed when "
                                       "the inner loop is parallelized");
             }
-            after =
-                makeIf("", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                       afterStmts.size() == 1 ? afterStmts[0]
-                                              : makeStmtSeq("", afterStmts));
+            after = makeIf(
+                "", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
+                RenameIter{oldInner_->iter_}(
+                    afterStmts.size() == 1 ? afterStmts[0]
+                                           : makeStmtSeq("", afterStmts)));
         }
 
         std::vector<Stmt> stmts;
@@ -103,34 +143,35 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
             dstOrder.begin());
     }
 
-    // A reorder is leagal if and only if, after transformation, there is no
-    // such dependence that the out-most non-'=' carrying loop is not a '>'
-    std::vector<FindDepsCond> conds;
-    for (size_t i = 0, n = dstOrder.size(); i < n; i++) {
-        FindDepsCond cond;
-        for (size_t j = 0; j < i; j++) {
-            cond.emplace_back(dstOrder[j], DepDirection::Same);
-        }
-        cond.emplace_back(dstOrder[i], DepDirection::Inv);
-        conds.emplace_back(std::move(cond));
+    // A reorder is leagal if and only if, after transformation, for each
+    // dependence pair, `earlier` is still earlier (lexicographically less) than
+    // `later`.
+    std::vector<ID> dstLoopAndStmtSeqOrder;
+    for (auto &&seq : checker.stmtSeqInBetween()) {
+        dstLoopAndStmtSeqOrder.emplace_back(seq->id());
     }
-    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.stmt_->ancestorById(curOrder.front()->id()).isValid() &&
-               later.stmt_->ancestorById(curOrder.front()->id()).isValid();
-    };
-    auto found = [&](const Dependency &d) {
-        throw InvalidSchedule("Loops are not permutable: " + toString(d) +
-                              " cannot be resolved");
-    };
-    findDeps(ast, conds, found, FindDepsMode::Dep, DEP_ALL, filter);
+    dstLoopAndStmtSeqOrder.insert(dstLoopAndStmtSeqOrder.end(),
+                                  dstOrder.begin(), dstOrder.end());
+    FindDeps()
+        .direction(notLexLessAfterPermu(dstLoopAndStmtSeqOrder))
+        .filterEarlier([&](const AccessPoint &earlier) {
+            return earlier.stmt_->ancestorById(curOrder.front()->id())
+                .isValid();
+        })
+        .filterLater([&](const AccessPoint &later) {
+            return later.stmt_->ancestorById(curOrder.front()->id()).isValid();
+        })(ast, [&](const Dependency &d) {
+            throw InvalidSchedule("Loops are not permutable: " + toString(d) +
+                                  " cannot be resolved");
+        });
 
     // Bubble Sort
     size_t n = index.size();
     for (size_t i = 0; i < n; i++) {
         for (size_t j = 0; j + 1 < n; j++) {
             if (index[j] > index[j + 1]) {
-                SwapFor swapper(curOrder[j], curOrder[j + 1]);
-                ast = swapper(ast);
+                Reorder mutator(curOrder[j], curOrder[j + 1]);
+                ast = mutator(ast);
                 std::swap(index[j], index[j + 1]);
                 std::swap(curOrder[j], curOrder[j + 1]);
             }

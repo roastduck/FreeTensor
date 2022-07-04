@@ -17,11 +17,11 @@ def test_basic():
         libop.conv_(x, w, None, y, auto_pad='VALID')
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     w_torch = torch.rand(8, 3, 3, 3, dtype=torch.float32)
-    w_arr = ft.Array(w_torch.numpy(), device)
+    w_arr = ft.Array(w_torch.numpy())
     y_torch = torch.zeros(2, 8, 12, 12, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, w_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -42,13 +42,13 @@ def test_bias():
         libop.conv_(x, w, b, y, auto_pad='VALID')
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     w_torch = torch.rand(8, 3, 3, 3, dtype=torch.float32)
-    w_arr = ft.Array(w_torch.numpy(), device)
+    w_arr = ft.Array(w_torch.numpy())
     b_torch = torch.rand(8, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy())
     y_torch = torch.zeros(2, 8, 12, 12, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, w_arr, b_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -68,11 +68,11 @@ def test_same_pad():
         libop.conv_(x, w, None, y, kernel_shape=(3, 3), auto_pad='SAME_UPPER')
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     w_torch = torch.rand(8, 3, 3, 3, dtype=torch.float32)
-    w_arr = ft.Array(w_torch.numpy(), device)
+    w_arr = ft.Array(w_torch.numpy())
     y_torch = torch.zeros(2, 8, 14, 14, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, w_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -92,11 +92,11 @@ def test_stride():
         libop.conv_(x, w, None, y, auto_pad='VALID', strides=(2, 2))
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     w_torch = torch.rand(8, 3, 3, 3, dtype=torch.float32)
-    w_arr = ft.Array(w_torch.numpy(), device)
+    w_arr = ft.Array(w_torch.numpy())
     y_torch = torch.zeros(2, 8, 6, 6, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, w_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -116,11 +116,11 @@ def test_group():
         libop.conv_(x, w, None, y, auto_pad='VALID', group=2)
 
     x_torch = torch.rand(2, 4, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     w_torch = torch.rand(8, 2, 3, 3, dtype=torch.float32)
-    w_arr = ft.Array(w_torch.numpy(), device)
+    w_arr = ft.Array(w_torch.numpy())
     y_torch = torch.zeros(2, 8, 12, 12, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, w_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -140,11 +140,11 @@ def test_dilation():
         libop.conv_(x, w, None, y, auto_pad='VALID', dilations=(2, 2))
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     w_torch = torch.rand(8, 3, 3, 3, dtype=torch.float32)
-    w_arr = ft.Array(w_torch.numpy(), device)
+    w_arr = ft.Array(w_torch.numpy())
     y_torch = torch.zeros(2, 8, 10, 10, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, w_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -163,9 +163,9 @@ def test_out_of_place():
         return libop.conv(x, w, auto_pad='VALID')
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     w_torch = torch.rand(8, 3, 3, 3, dtype=torch.float32)
-    w_arr = ft.Array(w_torch.numpy(), device)
+    w_arr = ft.Array(w_torch.numpy())
     y_arr = f(x_arr, w_arr)
     y_torch = torch.tensor(y_arr.numpy())
 

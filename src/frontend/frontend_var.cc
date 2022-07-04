@@ -42,6 +42,23 @@ Expr FrontendVar::shape(const Expr &idx) const {
     return ret;
 }
 
+std::vector<Expr> FrontendVar::shape() const {
+    std::vector<Expr> ret;
+    for (size_t i = 0, n = fullShape_.size(); i < n; i++) {
+        if (i < indices_.size() &&
+            indices_[i].type() == FrontendVarIdxType::Single) {
+            continue;
+        }
+        Expr dimLen = fullShape_.at(i);
+        if (i < indices_.size() &&
+            indices_[i].type() == FrontendVarIdxType::Slice) {
+            dimLen = makeSub(indices_[i].stop(), indices_[i].start());
+        }
+        ret.emplace_back(dimLen);
+    }
+    return ret;
+}
+
 Expr FrontendVar::asLoad() const {
     if (ndim() != 0) {
         throw InvalidProgram(
@@ -55,7 +72,7 @@ Expr FrontendVar::asLoad() const {
         ASSERT(idx.type() == FrontendVarIdxType::Single);
         indices.emplace_back(idx.single());
     }
-    return makeLoad(name_, std::move(indices));
+    return makeLoad(name_, std::move(indices), dtype_);
 }
 
 Stmt FrontendVar::asStore(const ID &id, const Expr &value) const {

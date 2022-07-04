@@ -48,9 +48,8 @@ class FindSerialLoopsOverReduce : public Visitor {
     void visit(const ReduceTo &op) override;
 };
 
-class MakeParallelReduction
-    : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
-    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
+class MakeParallelReduction : public CompTransientBounds<SymbolTable<Mutator>> {
+    typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
     struct ReductionItemFactors {
         ReduceOp op_;
@@ -82,8 +81,8 @@ class MakeParallelReduction
         const std::unordered_map<ID, std::unordered_set<ID>> &toAlter,
         const std::unordered_map<ID, std::vector<For>> &serialOverRed,
         const LoopVariExprMap &variantMap)
-        : unique_(*this, *this), toAlter_(toAlter),
-          serialOverRed_(serialOverRed), variantMap_(variantMap) {}
+        : unique_(*this), toAlter_(toAlter), serialOverRed_(serialOverRed),
+          variantMap_(variantMap) {}
 
   protected:
     using BaseClass::visit;

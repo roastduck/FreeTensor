@@ -3,10 +3,8 @@
 #include <hash.h>
 #include <iostream>
 
-using std::cout;
-using std::endl;
-
 namespace freetensor {
+
 void FindMultiLevelTiling::visit(const For &op) {
     if (op->len_->nodeType() != ASTNodeType::IntConst) {
         throw Error("Auto scheduling of non-constant for loop is not yet "
@@ -51,14 +49,12 @@ void FindMultiLevelTiling::storeBuf() {
     if (!buf_.empty()) {
         auto &bufCheckDataReuseIndices = nowFor_.checkDataReuseIndices;
         bool hasDataReuse = false;
+
         for (const auto &infoItem : bufCheckDataReuseIndices) {
             std::vector<bool> checkAppear(buf_.size());
             for (unsigned i = 0; i < infoItem.size(); i++) {
-                const auto &mapItem =
-                    loopVariExprMap_.at(infoItem[i].as<ExprNode>());
                 for (unsigned j = 0; j < buf_.size(); j++) {
-                    if (mapItem.count(buf_[j].id) &&
-                        mapItem.at(buf_[j].id) == LoopVariability::Variance) {
+                    if (isVariant(loopVariExprMap_, infoItem[i], buf_[j].id)) {
                         checkAppear[j] = true;
                     }
                 }
@@ -73,7 +69,9 @@ void FindMultiLevelTiling::storeBuf() {
                 break;
             }
         }
-
+        if (!nowFor_.readsItself) {
+            hasDataReuse = false;
+        }
         if (hasDataReuse) {
             ForsWithDataReuse tmp;
             tmp.dest = nowFor_.dest;
@@ -83,11 +81,9 @@ void FindMultiLevelTiling::storeBuf() {
             tmp.dimIterated = std::vector<bool>(bufIndices.size(), false);
             std::vector<bool> checkAppear(buf_.size());
             for (unsigned i = 0; i < bufIndices.size(); i++) {
-                const auto &mapItem =
-                    loopVariExprMap_.at(bufIndices[i].as<ExprNode>());
                 for (unsigned j = 0; j < buf_.size(); j++) {
-                    if (mapItem.count(buf_[j].id) &&
-                        mapItem.at(buf_[j].id) == LoopVariability::Variance) {
+                    if (isVariant(loopVariExprMap_, bufIndices[i],
+                                  buf_[j].id)) {
                         checkAppear[j] = true;
                         tmp.dimIterated[i] = true;
                         buf_[j].index = i;
@@ -125,18 +121,6 @@ void FindMultiLevelTiling::storeBuf() {
         buf_.clear();
         nowFor_ = {};
         nowInit_ = nullptr;
-
-        // if (hasDataReuse) {
-        //     const auto &nw = found_.back();
-        //     std::cout << "found ";
-        //     for (const auto &loop : nw.spaceLoops) {
-        //         std::cout << "S " << loop.id << " ";
-        //     }
-        //     for (const auto &loop : nw.reductionLoops) {
-        //         std::cout << "R " << loop.id << " ";
-        //     }
-        //     std::cout << std::endl;
-        // }
     }
 }
 
@@ -167,7 +151,8 @@ void FindHasStore::visit(const Store &op) {
                         op->var_,
                         {},
                         op->indices_,
-                        std::vector<std::vector<Expr>>(1, op->indices_)}});
+                        std::vector<std::vector<Expr>>(1, op->indices_),
+                        false}});
     }
     Visitor::visit(op);
 }
@@ -178,10 +163,13 @@ void FindHasStore::visit(const Load &op) {
         forWithStore.checkDataReuseIndices.push_back(op->indices_);
         if (op->var_ != forWithStore.dest) {
             forWithStore.reads.push_back(op->var_);
+        } else {
+            forWithStore.readsItself = true;
         }
     } else {
         throw Error(
             "A load node appearing without a store node is not supported yet.");
     }
 }
+
 } // namespace freetensor

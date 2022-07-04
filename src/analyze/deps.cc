@@ -48,7 +48,9 @@ void CountBandNodeWidth::visit(const ReduceTo &op) {
     lastIsLoad_ = false;
 }
 
-FindAccessPoint::FindAccessPoint(const Stmt &root) {
+FindAccessPoint::FindAccessPoint(const Stmt &root,
+                                 const FindDepsAccFilter &accFilter)
+    : accFilter_(accFilter) {
     if (int width = countBandNodeWidth(root); width > 1) {
         cur_.emplace_back(makeIntConst(-1));
     }
@@ -154,9 +156,10 @@ void FindAccessPoint::visit(const Load &op) {
            defAxis_.at(op->var_),
            cur_,
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
-           conds_,
-           symbolTableSnapshot()};
-    reads_[def(op->var_)->id()].emplace_back(ap);
+           conds_};
+    if (accFilter_ == nullptr || accFilter_(*ap)) {
+        reads_[def(op->var_)->id()].emplace_back(ap);
+    }
 }
 
 std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
@@ -257,7 +260,7 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
                               int iterDim, int accDim, RelaxMode relax,
                               const std::string &extSuffix,
                               GenPBExpr::VarMap &externals) {
-    GenPBExpr genPBExpr(p.symbolTable_, extSuffix);
+    GenPBExpr genPBExpr(extSuffix);
     auto ret = makeIterList(p.iter_, iterDim) + " -> ";
     if (auto str = makeAccList(genPBExpr, p.access_, relax, externals);
         str.isValid()) {
@@ -494,7 +497,7 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
         // at all. This will save time for Presburger solver
         for (auto c = common; c.isValid(); c = c->parentStmt()) {
             if (c->nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, expr, c->id())) {
+                if (isVariant(*variantExpr_, expr, c->id())) {
                     goto found;
                 }
                 goto do_compute_constraint;
@@ -508,7 +511,7 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
         auto require = makeExternalEq(presburger, iterDim, pStr, oStr);
         for (auto c = common; c.isValid(); c = c->parentStmt()) {
             if (c->nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, expr, c->id())) {
+                if (isVariant(*variantExpr_, expr, c->id())) {
                     // Since idx[i] must be inside loop i, we only have
                     // to call makeIneqBetweenOps, but no need to call
                     // makeConstraintOfSingleLoop
@@ -608,7 +611,7 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         return;
     }
 
-    for (auto &&item : cond_) {
+    for (auto &&item : direction_) {
         std::vector<PBMap> _requires;
         for (auto &&[nodeOrParallel, dir] : item) {
             if (nodeOrParallel.isNode_) {
@@ -878,34 +881,61 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
 
 void AnalyzeDeps::genTasks() {
     for (auto &&def : allDefs_) {
-        if (writes_.count(def->id())) {
-            auto &&allWrites = writes_.at(def->id());
-            if (reads_.count(def->id())) {
-                for (auto &&read : reads_.at(def->id())) {
-                    if (depType_ & DEP_RAW) {
+        // Store / ReduceTo -> Load : RAW
+        if (depType_ & DEP_RAW) {
+            if (writesAsEarlier_.count(def->id())) {
+                auto &&allWrites = writesAsEarlier_.at(def->id());
+                if (readsAsLater_.count(def->id())) {
+                    for (auto &&read : readsAsLater_.at(def->id())) {
                         checkDepLatestEarlier(read, allWrites);
                     }
-                    if (depType_ & DEP_WAR) {
+                }
+            }
+        }
+
+        // Load -> Store / ReduceTo : WAR
+        if (depType_ & DEP_WAR) {
+            if (writesAsLater_.count(def->id())) {
+                auto &&allWrites = writesAsLater_.at(def->id());
+                if (readsAsEarlier_.count(def->id())) {
+                    for (auto &&read : readsAsEarlier_.at(def->id())) {
                         checkDepEarliestLater(allWrites, read);
                     }
                 }
             }
+        }
 
-            for (auto &&write : allWrites) {
-                // Store    -> Store    : WAW
-                // ReduceTo -> Store    : WAW, WAR
-                // Store    -> ReduceTo : WAW, RAW
-                // ReduceTo -> ReduceTo : WAW, RAW, WAR
+        // Store    -> Store    : WAW
+        // ReduceTo -> Store    : WAW, WAR
+        // Store    -> ReduceTo : WAW, RAW
+        // ReduceTo -> ReduceTo : WAW, RAW, WAR
+        if (writesAsLater_.count(def->id())) {
+            auto &&allWritesAsLater = writesAsLater_.at(def->id());
+            if (writesAsEarlier_.count(def->id())) {
+                auto &&allWritesAsEarlier = writesAsEarlier_.at(def->id());
                 if (depType_ & DEP_WAW) {
-                    // Every Store checks its immediate predecessor, so we do
-                    // not have to check its follower
-                    checkDepLatestEarlier(write, allWrites);
-                } else if (write->op_->nodeType() == ASTNodeType::ReduceTo) {
+                    // Every Store checks its immediate predecessor, so we
+                    // do not have to check its follower
+                    for (auto &&write : allWritesAsLater) {
+                        checkDepLatestEarlier(write, allWritesAsEarlier);
+                    }
+                } else {
                     if (depType_ & DEP_RAW) {
-                        checkDepLatestEarlier(write, allWrites);
+                        for (auto &&write : allWritesAsLater) {
+                            if (write->op_->nodeType() ==
+                                ASTNodeType::ReduceTo) {
+                                checkDepLatestEarlier(write,
+                                                      allWritesAsEarlier);
+                            }
+                        }
                     }
                     if (depType_ & DEP_WAR) {
-                        checkDepEarliestLater(allWrites, write);
+                        for (auto &&write : allWritesAsEarlier) {
+                            if (write->op_->nodeType() ==
+                                ASTNodeType::ReduceTo) {
+                                checkDepEarliestLater(allWritesAsLater, write);
+                            }
+                        }
                     }
                 }
             }
@@ -929,28 +959,25 @@ PBMap Dependency::extraCheck(PBMap dep,
     return dep;
 }
 
-void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
-              const FindDepsCallback &found, FindDepsMode mode, DepType depType,
-              const FindDepsFilter &filter, bool ignoreReductionWAW,
-              bool eraseOutsideVarDef, bool noProjectOutProvateAxis) {
-    if (cond.empty()) {
+void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
+    if (direction_.empty()) {
         return;
     }
 
-    if (mode != FindDepsMode::Dep) {
-        noProjectOutProvateAxis = true;
+    if (mode_ != FindDepsMode::Dep) {
+        noProjectOutProvateAxis_ = true;
     }
 
-    FindAccessPoint accFinder(op);
+    FindAccessPoint accFinder(op, accFilter_);
     accFinder(op);
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
-    auto variantExpr = findLoopVariance(op).first;
-    AnalyzeDeps analyzer(accFinder.reads(), accFinder.writes(),
-                         accFinder.allDefs(), accFinder.scope2coord(),
-                         noDepsFinder.results(), variantExpr, cond, found, mode,
-                         depType, filter, ignoreReductionWAW,
-                         eraseOutsideVarDef, noProjectOutProvateAxis);
+    auto variantExpr = LAZY(findLoopVariance(op).first);
+    AnalyzeDeps analyzer(
+        accFinder.reads(), accFinder.writes(), accFinder.allDefs(),
+        accFinder.scope2coord(), noDepsFinder.results(), variantExpr,
+        direction_, found, mode_, type_, earlierFilter_, laterFilter_, filter_,
+        ignoreReductionWAW_, eraseOutsideVarDef_, noProjectOutProvateAxis_);
     analyzer.genTasks();
     size_t n = analyzer.tasks().size();
     std::vector<std::exception_ptr> exceptions(n, nullptr);
@@ -984,7 +1011,7 @@ std::string toString(const Dependency &dep) {
         os << " in " << dep.earlier_.stmt_;
     }
     bool first = true;
-    for (auto &&[scope, dir] : dep.cond_) {
+    for (auto &&[scope, dir] : dep.dir_) {
         os << (first ? " along " : " and ");
         first = false;
         if (scope.isNode_) {

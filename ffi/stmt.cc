@@ -118,24 +118,17 @@ void init_ffi_ast_stmt(py::module_ &m) {
                                const Ref<Buffer> &, const Ref<Tensor> &,
                                const Stmt &, bool)>(&_makeVarDef),
           "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a);
-    m.def("makeVar", &_makeVar, "name"_a);
     m.def("makeStore",
           static_cast<Stmt (*)(const ID &, const std::string &,
                                const std::vector<Expr> &, const Expr &)>(
               &_makeStore<const Expr &>),
           "nid"_a, "var"_a, "indices"_a, "expr"_a);
-    m.def("makeLoad",
-          static_cast<Expr (*)(const std::string &, const std::vector<Expr> &)>(
-              &_makeLoad),
-          "var"_a, "indices"_a);
     m.def("makeAlloc",
           static_cast<Stmt (*)(const ID &, const std::string &)>(&_makeAlloc),
           "nid"_a, "var"_a);
     m.def("makeFree",
           static_cast<Stmt (*)(const ID &, const std::string &)>(&_makeFree),
           "nid"_a, "var"_a);
-    m.def("makeIntConst", &_makeIntConst, "val"_a);
-    m.def("makeFloatConst", &_makeFloatConst, "val"_a);
     m.def("makeFor",
           static_cast<Stmt (*)(const ID &, const std::string &, const Expr &,
                                const Expr &, const Expr &, const Expr &,

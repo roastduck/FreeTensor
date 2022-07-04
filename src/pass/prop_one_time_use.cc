@@ -20,7 +20,37 @@ struct ReplaceInfo {
     std::string funcStr_;
 };
 
-} // namespace
+std::vector<std::pair<AST, std::pair<Stmt, ReplaceInfo>>>
+topoSort(const std::unordered_map<AST, std::pair<Stmt, ReplaceInfo>> &r2w,
+         const std::unordered_map<AST, Stmt> &stmts) {
+    // DFS post order of a reversed DAG is the original DAG's topogical order
+    // We need to find a topogical order of a write-to-read graph, which is the
+    // DFS post order of the reversed write-to-read graph, or the DFS post order
+    // of the read-to-write graph
+    std::vector<std::pair<AST, std::pair<Stmt, ReplaceInfo>>> topo;
+    std::unordered_set<AST> visited;
+    std::function<void(const AST &x)> recur = [&](const AST &r) {
+        if (visited.count(r)) {
+            return;
+        }
+        visited.insert(r);
+        if (r2w.count(r)) {
+            auto &&w = r2w.at(r).first;
+            for (auto &&[nextR, nextRStmt] : stmts) {
+                if (nextRStmt == w) {
+                    recur(nextR);
+                }
+            }
+            topo.emplace_back(r, r2w.at(r));
+        }
+    };
+    for (auto &&[r, w] : r2w) {
+        recur(r);
+    }
+    return topo;
+}
+
+} // Anonymous namespace
 
 Stmt propOneTimeUse(const Stmt &_op) {
     auto op = makeReduction(_op);
@@ -33,27 +63,17 @@ Stmt propOneTimeUse(const Stmt &_op) {
     // nodes back to a proper size.
     op = hoistVarOverStmtSeq(op);
 
-    std::unordered_map<AST, std::vector<std::pair<Stmt, ReplaceInfo>>> r2w;
+    std::unordered_map<AST, std::vector<std::pair<Stmt, ReplaceInfo>>>
+        r2wCandidates;
     std::unordered_map<AST, std::vector<Stmt>> r2wMay;
     std::unordered_map<Stmt, std::vector<AST>> w2r, w2rMay;
     std::unordered_map<AST, Stmt> stmts;
-    auto filterMust = [&](const AccessPoint &later,
-                          const AccessPoint &earlier) {
-        if (earlier.op_->nodeType() != ASTNodeType::Store) {
-            return false;
-        }
-        if (earlier.def_->buffer_->atype() != AccessType::Cache) {
-            return false;
-        }
-        if (later.op_->nodeType() == ASTNodeType::ReduceTo) {
-            return false; // pass/remove_write will deal with it
-        }
-        return true;
-    };
     auto foundMust = [&](const Dependency &d) {
-        if (d.later2EarlierIter_
-                .isSingleValued()) { // Check before converting into PBFunc
-            r2w[d.later()].emplace_back(
+        if (d.later2EarlierIter_.isBijective()) {
+            // Check before converting into PBFunc. In prop_one_time_use, we
+            // not only need `singleValued`, but also `bijective`, to ensure
+            // it is really used "one time"
+            r2wCandidates[d.later()].emplace_back(
                 d.earlier().as<StmtNode>(),
                 ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
                             toString(PBFunc(d.later2EarlierIter_))});
@@ -61,39 +81,73 @@ Stmt propOneTimeUse(const Stmt &_op) {
             stmts[d.later()] = d.later_.stmt_;
         }
     };
-    auto filterMay = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return r2w.count(later.op_) || w2r.count(earlier.op_.as<StmtNode>());
-    };
     auto foundMay = [&](const Dependency &d) {
         r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
         w2rMay[d.earlier().as<StmtNode>()].emplace_back(d.later());
     };
-    findDeps(op, {{}}, foundMust, FindDepsMode::KillLater, DEP_RAW, filterMust);
-    findDeps(op, {{}}, foundMay, FindDepsMode::Dep, DEP_RAW, filterMay, false);
+    FindDeps()
+        .mode(FindDepsMode::KillLater)
+        .type(DEP_RAW)
+        .filterAccess([&](const AccessPoint &acc) {
+            return acc.def_->buffer_->atype() == AccessType::Cache;
+        })
+        .filterEarlier([&](const AccessPoint &earlier) {
+            return earlier.op_->nodeType() == ASTNodeType::Store;
+        })
+        .filterLater([&](const AccessPoint &later) {
+            // pass/remove_write will deal with it (TODO: Really? What if we
+            // want to do interleaved prop_one_time_use and remove_write?)
+            return later.op_->nodeType() != ASTNodeType::ReduceTo;
+        })(op, foundMust);
+    FindDeps()
+        .type(DEP_RAW)
+        .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
+            return r2wCandidates.count(later.op_) ||
+                   w2r.count(earlier.op_.as<StmtNode>());
+        })
+        .ignoreReductionWAW(false)(op, foundMay);
+
+    // Filter one-time use
+    std::unordered_map<AST, std::pair<Stmt, ReplaceInfo>> r2w;
+    for (auto &&[read, writes] : r2wCandidates) {
+        if (writes.size() > 1) {
+            continue;
+        }
+        ASSERT(writes.size() == 1);
+        auto &&write = writes.front();
+        if (!r2wMay.count(read) || r2wMay.at(read).size() > 1 ||
+            r2wMay.at(read)[0] != write.first) {
+            continue;
+        }
+        if (!w2rMay.count(write.first) || w2rMay.at(write.first).size() > 1 ||
+            w2rMay.at(write.first)[0] != read) {
+            continue;
+        }
+
+        r2w[read] = writes.front();
+    }
+
+    // To deal with chained propagation, e.g.
+    // a = x + 1  // (1)
+    // b = a + 1  // (2)
+    // c = b + 1  // (3)
+    // I. We first apply a topological sort to eusure we handle (1)->(2) before
+    // (2)->(3).
+    // II. When we are handling (2)->(3), there is already replace[b] = a + 1,
+    // so we apply replace on toProp
+    auto r2wTopo = topoSort(r2w, stmts);
 
     std::unordered_map<AST, Expr> replace;
-    for (auto &&item : r2w) {
-        if (item.second.size() > 1) {
-            continue;
-        }
-        ASSERT(item.second.size() == 1);
-        if (!r2wMay.count(item.first) || r2wMay.at(item.first).size() > 1 ||
-            r2wMay.at(item.first)[0] != item.second.front().first) {
-            continue;
-        }
-        if (!w2rMay.count(item.second.front().first) ||
-            w2rMay.at(item.second.front().first).size() > 1 ||
-            w2rMay.at(item.second.front().first)[0] != item.first) {
-            continue;
-        }
-        ASSERT(item.second.front().first->nodeType() == ASTNodeType::Store);
-        auto &&store = item.second.front().first.as<StoreNode>();
-        auto &&repInfo = item.second.front().second;
+    for (auto &&[read, write] : r2wTopo) {
+        ASSERT(write.first->nodeType() == ASTNodeType::Store);
+        auto &&toProp =
+            ReplaceUses(replace)(write.first.as<StoreNode>()->expr_);
+        auto &&repInfo = write.second;
 
-        if (!allIters(store->expr_).empty()) {
+        if (!allIters(toProp).empty()) {
             try {
                 auto &&[args, values, cond] =
-                    parsePBFunc(repInfo.funcStr_); // later -> earlier
+                    parseSimplePBFunc(repInfo.funcStr_); // later -> earlier
                 ASSERT(repInfo.earlierIters_.size() <=
                        values.size()); // maybe padded
                 ASSERT(repInfo.laterIters_.size() <= args.size());
@@ -110,23 +164,23 @@ Stmt propOneTimeUse(const Stmt &_op) {
                             ReplaceIter(islVarToNewIter)(value);
                     }
                 }
-                auto newExpr = ReplaceIter(oldIterToNewIter)(store->expr_);
-                if (!checkNotModified(op, store->expr_, newExpr,
-                                      CheckNotModifiedSide::Before, store->id(),
-                                      CheckNotModifiedSide::Before,
-                                      stmts.at(item.first)->id())) {
+                auto newExpr = ReplaceIter(oldIterToNewIter)(toProp);
+                if (!checkNotModified(
+                        op, toProp, newExpr, CheckNotModifiedSide::Before,
+                        write.first->id(), CheckNotModifiedSide::Before,
+                        stmts.at(read)->id())) {
                     goto fail;
                 }
-                replace[item.first] = std::move(newExpr);
+                replace[read] = std::move(newExpr);
             } catch (const ParserError &e) {
                 // do nothing
             }
         fail:;
         } else {
-            if (checkNotModified(op, store->expr_, CheckNotModifiedSide::Before,
-                                 store->id(), CheckNotModifiedSide::Before,
-                                 stmts.at(item.first)->id())) {
-                replace[item.first] = store->expr_;
+            if (checkNotModified(
+                    op, toProp, CheckNotModifiedSide::Before, write.first->id(),
+                    CheckNotModifiedSide::Before, stmts.at(read)->id())) {
+                replace[read] = toProp;
             }
         }
     }

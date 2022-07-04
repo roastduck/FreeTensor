@@ -80,10 +80,12 @@ class VarRef(ffi.FrontendVar):
         return self[indices]
 
     def _parse_key(self, key):
+        if key is None or key is ...:
+            key = ()
         if not isinstance(key, collections.abc.Sequence):
             key = (key,)
         ffiIdx = []
-        for idx, length in zip(key, self.full_shape):
+        for idx, length in zip(key, self.shape()):
             if isinstance(idx, slice):
                 start = idx.start if idx.start is not None else 0
                 stop = idx.stop if idx.stop is not None else length
@@ -1066,17 +1068,23 @@ def ndim(var):
         return 0
 
 
-def shape(var, i):
-    ''' Get all dimensions of a variable '''
+def shape(var, i=None):
+    ''' shape(var, i): Get size of specified dimension of a variable
+        shape(var): Get sizes of all dimensions of a variable '''
     if isinstance(var, VarRef):
         return var.shape(i)
     else:
-        return []
+        if i is None:
+            return ()
+        else:
+            raise Exception(f'Getting size of dimension {i} of scalar {var}')
 
 
 def dtype(var):
     ''' Get element data type of a variable '''
     if isinstance(var, VarRef):
+        return var.dtype
+    elif isinstance(var, ffi.Expr):
         return var.dtype
     else:
         # TODO: Config default type

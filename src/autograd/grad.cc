@@ -20,7 +20,7 @@
 namespace freetensor {
 
 void PropagateRequire::visit(const Load &op) {
-    if (isFloat(dtype(op)) && curTarget_.isValid() &&
+    if (isFloat(op->dtype()) && curTarget_.isValid() &&
         buffer(op->var_)->atype() == AccessType::Cache) {
         affectedDefs_.insert(def(op->var_)->id());
         // No need to recurse deeper
@@ -285,9 +285,10 @@ Stmt Grad::visit(const Store &op) {
             if (!allReads(op->expr_).count(op->var_)) {
                 ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
                 // Quick path for acyclic assignment
-                GradExpr exprVisitor(replaceByTape, gradNames_, op->expr_,
-                                     makeLoad(grad, indices),
-                                     makeLoad(op->var_, indices));
+                GradExpr exprVisitor(
+                    replaceByTape, gradNames_, op->expr_,
+                    makeLoad(grad, indices, b->tensor()->dtype()),
+                    makeLoad(op->var_, indices, b->tensor()->dtype()));
                 exprVisitor(op->expr_);
 
                 for (auto &&stmt : exprVisitor.appends()) {
@@ -306,14 +307,16 @@ Stmt Grad::visit(const Store &op) {
                 // deduce d_x[i] and d_y[i] using d_y.old
                 auto oldGrad = grad + ".old";
                 stmts.emplace_back(
-                    makeStore("", oldGrad, {}, makeLoad(grad, indices)));
+                    makeStore("", oldGrad, {},
+                              makeLoad(grad, indices, b->tensor()->dtype())));
                 stmts.emplace_back(
                     makeStore("", grad, indices, makeIntConst(0)));
 
                 ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
-                GradExpr exprVisitor(replaceByTape, gradNames_, op->expr_,
-                                     makeLoad(oldGrad, {}),
-                                     makeLoad(op->var_, indices));
+                GradExpr exprVisitor(
+                    replaceByTape, gradNames_, op->expr_,
+                    makeLoad(oldGrad, {}, b->tensor()->dtype()),
+                    makeLoad(op->var_, indices, b->tensor()->dtype()));
                 exprVisitor(op->expr_);
 
                 for (auto &&stmt : exprVisitor.appends()) {
@@ -356,9 +359,10 @@ Stmt Grad::visit(const ReduceTo &op) {
                 !allReads(op->expr_).count(op->var_)) {
                 ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
                 // Quick path for canonical reduce sum
-                GradExpr exprVisitor(replaceByTape, gradNames_, op->expr_,
-                                     makeLoad(grad, indices),
-                                     makeLoad(op->var_, indices));
+                GradExpr exprVisitor(
+                    replaceByTape, gradNames_, op->expr_,
+                    makeLoad(grad, indices, b->tensor()->dtype()),
+                    makeLoad(op->var_, indices, b->tensor()->dtype()));
                 exprVisitor(op->expr_);
 
                 for (auto &&stmt : exprVisitor.appends()) {
@@ -537,7 +541,7 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     auto foundWAW = [&](const Dependency &d) {
         notSingleWrite.insert(d.earlier().as<StmtNode>());
     };
-    findDeps(op, {{}}, foundWAW, FindDepsMode::Dep, DEP_WAW, nullptr, false);
+    FindDeps().type(DEP_WAW).ignoreReductionWAW(false)(op, foundWAW);
 
     Grad mutator(_requires, provides, tapes, propagator.affectedDefs(), tapeMap,
                  versions, totLens, notSingleWrite);

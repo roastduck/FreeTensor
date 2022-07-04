@@ -26,6 +26,7 @@ GE:         '>=';
 EQ:         '=';
 NE:         '!=';
 COLON:      ':';
+SEMICOLON:  ';';
 LPAREN:     '(';
 RPAREN:     ')';
 LBRACK:     '[';

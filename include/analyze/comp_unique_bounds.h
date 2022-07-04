@@ -4,7 +4,6 @@
 #include <unordered_set>
 
 #include <analyze/comp_transient_bounds.h>
-#include <analyze/type_infer.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -26,8 +25,8 @@ namespace freetensor {
  * This pass is not accurate. Simplifying passes using this analysis may need
  * to run for multiple rounds
  */
-class CompUniqueBounds : public WithTypeInfer<Visitor> {
-    typedef WithTypeInfer<Visitor> BaseClass;
+class CompUniqueBounds : public Visitor {
+    typedef Visitor BaseClass;
 
   public:
     typedef std::vector<LowerBound> LowerBoundsList;
@@ -42,9 +41,8 @@ class CompUniqueBounds : public WithTypeInfer<Visitor> {
     UpperBoundsMap upper_;
 
   public:
-    CompUniqueBounds(const SymbolTableInterface &symbolTable,
-                     const CompTransientBoundsInterface &transients)
-        : WithTypeInfer<Visitor>(symbolTable), transients_(transients) {}
+    CompUniqueBounds(const CompTransientBoundsInterface &transients)
+        : transients_(transients) {}
 
     LowerBoundsList getLower(const Expr &op) {
         (*this)(op);

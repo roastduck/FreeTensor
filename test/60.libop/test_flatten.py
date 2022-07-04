@@ -16,9 +16,9 @@ def test_static():
         libop.flatten_(x, y)
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = torch.zeros(3, 20, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -36,9 +36,9 @@ def test_axis():
         libop.flatten_(x, y, axis=2)
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = torch.zeros(12, 5, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -55,7 +55,7 @@ def test_out_of_place():
         return libop.flatten(x)
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
 

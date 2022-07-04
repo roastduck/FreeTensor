@@ -242,3 +242,27 @@ def test_grad():
     assert y.numpy() == 4
     assert np.array_equal(dzda.numpy(), [3, 2, 1, 0])
     assert np.array_equal(dzdb.numpy(), [0, 1, 2, 3])
+
+
+@pytest.mark.skipif(not freetensor.with_pytorch(), reason="requires PyTorch")
+def test_vector_add_pytorch():
+    # Used in docs/index.md and docs/guide/schedules.md
+
+    import freetensor as ft
+    import torch
+
+    n = 4
+
+    # Change this line to ft.optimize(verbose=1) to see the resulting native code
+    @ft.optimize
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
+        y = ft.empty((n,), "int32")
+        for i in range(n):
+            y[i] = a[i] + b[i]
+        return y
+
+    y = test(torch.tensor([1, 2, 3, 4], dtype=torch.int32),
+             torch.tensor([2, 3, 4, 5], dtype=torch.int32)).torch()
+    print(y)
+
+    assert torch.all(y == torch.tensor([3, 5, 7, 9], dtype=torch.int32))

@@ -49,14 +49,14 @@ _multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
         }
     }
     std::vector<ID> labels;
-    //    std::cout << "tiles: ";
     for (const auto &tile : tiles) {
         if (tile.second > 1) {
             labels.push_back(tile.first);
-            //            std::cout << tile.first.strId() << " ";
         }
     }
-    schedule.reorder(labels);
+    if (!labels.empty()) {
+        schedule.reorder(labels);
+    }
     return tiles;
 }
 std::vector<std::pair<ID, int>>
@@ -102,13 +102,16 @@ multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
                     firstTiles[i].second;
             }
         }
-        auto mp = fissionLoops(schedule, fissionIDs, target.initStmt);
-        for (auto &spaceLoop : secondTarget.spaceLoops) {
-            spaceLoop.id = mp[spaceLoop.id];
+        if (!fissionIDs.empty()) {
+            auto mp = fissionLoops(schedule, fissionIDs, target.initStmt);
+            for (auto &spaceLoop : secondTarget.spaceLoops) {
+                spaceLoop.id = mp[spaceLoop.id];
+            }
+            for (auto &reductionLoop : secondTarget.reductionLoops) {
+                reductionLoop.id = mp[reductionLoop.id];
+            }
         }
-        for (auto &reductionLoop : secondTarget.reductionLoops) {
-            reductionLoop.id = mp[reductionLoop.id];
-        }
+
         auto secondPat = pat.substr(level);
         for (size_t i = 0; i < target.spaceLoops.size(); i++) {
             std::vector<int> tiling(spaceTileSize - level);
@@ -126,10 +129,12 @@ multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
     return tiles;
 }
 
-std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
-    Schedule &schedule, const ForsWithDataReuse &target,
-    const MultiLevelTilingAnnotation &annotation, const std::string &pat,
-    const ElementWiseInfo &toFuse, int level, TargetType targetType) {
+std::vector<std::pair<ID, int>>
+multiLevelTilingWithFusion(Schedule &schedule, const ForsWithDataReuse &target,
+                           const MultiLevelTilingAnnotation &annotation,
+                           const std::string &pat,
+                           const ElementWiseInfo &toFuse, int level,
+                           TargetType targetType, bool doCacheRead) {
     std::vector<std::pair<ID, int>> tiles =
         multiLevelTiling(schedule, target, annotation, pat, level);
     std::string fusePat = pat.substr(0, level) + "S";
@@ -149,10 +154,8 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
     }
     auto fuseTiles =
         _multiLevelTiling(schedule, fuseTarget, fuseAnnotation, fusePat);
-    //    std::cout << toString(schedule.ast()) << std::endl;
     size_t fuseTileSize = fuseTiles.size() - fuseTarget.spaceLoops.size();
     ID lastFuse;
-    //    std::cout << "before fuse: " << toString(schedule.ast()) << std::endl;
     for (size_t i = 0; i < fuseTileSize; i++) {
         if (fuseTiles[i].second > 1) {
             lastFuse = tiles[i].first =
@@ -166,19 +169,23 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
                                                      : MemType::GPULocal);
     } catch (const InvalidSchedule &e) {
     }
-    ID firstReduction = lastFuse;
-    for (int i = target.reductionLoops.size() - 1; i >= 0; i--) {
-        if (tiles[fuseTileSize + i].second > 1) {
-            firstReduction = tiles[fuseTileSize + i].first;
-            break;
+    if (doCacheRead) {
+        ID firstReduction = lastFuse;
+        for (int i = target.reductionLoops.size() - 1; i >= 0; i--) {
+            if (tiles[fuseTileSize + i].second > 1) {
+                firstReduction = tiles[fuseTileSize + i].first;
+                break;
+            }
         }
-    }
-    if (targetType == TargetType::GPU) {
-        for (auto &read : target.reads) {
-            try {
-                body = schedule.find(firstReduction).as<ForNode>()->body_->id();
-                schedule.cache(body, read, MemType::GPUShared);
-            } catch (const InvalidSchedule &e) {
+        if (targetType == TargetType::GPU) {
+            for (auto &read : target.reads) {
+                try {
+                    body = schedule.find(firstReduction)
+                               .as<ForNode>()
+                               ->body_->id();
+                    schedule.cache(body, read, MemType::GPUShared);
+                } catch (const InvalidSchedule &e) {
+                }
             }
         }
     }

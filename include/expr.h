@@ -17,6 +17,7 @@ namespace freetensor {
 class AnyExprNode : public ExprNode {
   public:
     void compHash() override;
+    void inferDType() override { ASSERT(false); }
     DEFINE_NODE_TRAIT(AnyExpr);
 };
 typedef Ref<AnyExprNode> AnyExpr;
@@ -27,6 +28,7 @@ class VarNode : public ExprNode {
   public:
     std::string name_;
     void compHash() override;
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Var);
 };
 typedef Ref<VarNode> Var;
@@ -41,23 +43,27 @@ class LoadNode : public ExprNode {
   public:
     std::string var_;
     SubTreeList<ExprNode> indices_ = ChildOf{this};
+    DataType loadType_;
     void compHash() override;
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Load);
 };
 typedef Ref<LoadNode> Load;
 #define makeLoad(...) makeNode(Load, __VA_ARGS__)
 template <class Tindices>
-Expr _makeLoad(const std::string &var, Tindices &&indices) {
+Expr _makeLoad(const std::string &var, Tindices &&indices, DataType loadType) {
     Load l = Load::make();
     l->var_ = var;
     l->indices_ = std::forward<Tindices>(indices);
+    l->loadType_ = loadType;
     return l;
 }
-inline Expr _makeLoad(const std::string &var,
-                      const std::vector<Expr> &indices) {
+inline Expr _makeLoad(const std::string &var, const std::vector<Expr> &indices,
+                      DataType loadType) {
     Load l = Load::make();
     l->var_ = var;
     l->indices_ = indices;
+    l->loadType_ = loadType;
     return l;
 }
 
@@ -71,6 +77,7 @@ class IntConstNode : public ConstNode {
   public:
     int64_t val_;
     void compHash() override;
+    void inferDType() override;
     DEFINE_NODE_TRAIT(IntConst);
 };
 typedef Ref<IntConstNode> IntConst;
@@ -85,6 +92,7 @@ class FloatConstNode : public ConstNode {
   public:
     double val_;
     void compHash() override;
+    void inferDType() override;
     DEFINE_NODE_TRAIT(FloatConst);
 };
 typedef Ref<FloatConstNode> FloatConst;
@@ -99,6 +107,7 @@ class BoolConstNode : public ConstNode {
   public:
     bool val_;
     void compHash() override;
+    void inferDType() override;
     DEFINE_NODE_TRAIT(BoolConst);
 };
 typedef Ref<BoolConstNode> BoolConst;
@@ -133,6 +142,7 @@ class NonCommutativeBinaryExprNode : public BinaryExprNode {
 typedef Ref<NonCommutativeBinaryExprNode> NonCommutativeBinaryExpr;
 
 class AddNode : public CommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Add);
 };
 typedef Ref<AddNode> Add;
@@ -144,6 +154,7 @@ template <class T, class U> Expr _makeAdd(T &&lhs, U &&rhs) {
 }
 
 class SubNode : public NonCommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Sub);
 };
 typedef Ref<SubNode> Sub;
@@ -155,6 +166,7 @@ template <class T, class U> Expr _makeSub(T &&lhs, U &&rhs) {
 }
 
 class MulNode : public CommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Mul);
 };
 typedef Ref<MulNode> Mul;
@@ -169,6 +181,7 @@ template <class T, class U> Expr _makeMul(T &&lhs, U &&rhs) {
  * Floating-point division
  */
 class RealDivNode : public NonCommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(RealDiv);
 };
 typedef Ref<RealDivNode> RealDiv;
@@ -186,6 +199,7 @@ template <class T, class U> Expr _makeRealDiv(T &&lhs, U &&rhs) {
  * nodes before codegen if possible
  */
 class FloorDivNode : public NonCommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(FloorDiv);
 };
 typedef Ref<FloorDivNode> FloorDiv;
@@ -203,6 +217,7 @@ template <class T, class U> Expr _makeFloorDiv(T &&lhs, U &&rhs) {
  * nodes before codegen if possible
  */
 class CeilDivNode : public NonCommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(CeilDiv);
 };
 typedef Ref<CeilDivNode> CeilDiv;
@@ -220,6 +235,7 @@ template <class T, class U> Expr _makeCeilDiv(T &&lhs, U &&rhs) {
  * have minimal runtime overhead, but are hard to analyze
  */
 class RoundTowards0DivNode : public NonCommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(RoundTowards0Div);
 };
 typedef Ref<RoundTowards0DivNode> RoundTowards0Div;
@@ -236,6 +252,7 @@ template <class T, class U> Expr _makeRoundTowards0Div(T &&lhs, U &&rhs) {
  * Mod(-3, 5) = 2
  */
 class ModNode : public NonCommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Mod);
 };
 typedef Ref<ModNode> Mod;
@@ -252,6 +269,7 @@ template <class T, class U> Expr _makeMod(T &&lhs, U &&rhs) {
  * Remainder(-3, 5) = -3
  */
 class RemainderNode : public NonCommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Remainder);
 };
 typedef Ref<RemainderNode> Remainder;
@@ -263,6 +281,7 @@ template <class T, class U> Expr _makeRemainder(T &&lhs, U &&rhs) {
 }
 
 class MinNode : public CommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Min);
 };
 typedef Ref<MinNode> Min;
@@ -274,6 +293,7 @@ template <class T, class U> Expr _makeMin(T &&lhs, U &&rhs) {
 }
 
 class MaxNode : public CommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Max);
 };
 typedef Ref<MaxNode> Max;
@@ -285,6 +305,7 @@ template <class T, class U> Expr _makeMax(T &&lhs, U &&rhs) {
 }
 
 class LTNode : public NonCommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(LT);
 };
 typedef Ref<LTNode> LT;
@@ -296,6 +317,7 @@ template <class T, class U> Expr _makeLT(T &&lhs, U &&rhs) {
 }
 
 class LENode : public NonCommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(LE);
 };
 typedef Ref<LENode> LE;
@@ -307,6 +329,7 @@ template <class T, class U> Expr _makeLE(T &&lhs, U &&rhs) {
 }
 
 class GTNode : public NonCommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(GT);
 };
 typedef Ref<GTNode> GT;
@@ -318,6 +341,7 @@ template <class T, class U> Expr _makeGT(T &&lhs, U &&rhs) {
 }
 
 class GENode : public NonCommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(GE);
 };
 typedef Ref<GENode> GE;
@@ -329,6 +353,7 @@ template <class T, class U> Expr _makeGE(T &&lhs, U &&rhs) {
 }
 
 class EQNode : public CommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(EQ);
 };
 typedef Ref<EQNode> EQ;
@@ -340,6 +365,7 @@ template <class T, class U> Expr _makeEQ(T &&lhs, U &&rhs) {
 }
 
 class NENode : public CommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(NE);
 };
 typedef Ref<NENode> NE;
@@ -351,6 +377,7 @@ template <class T, class U> Expr _makeNE(T &&lhs, U &&rhs) {
 }
 
 class LAndNode : public CommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(LAnd);
 };
 typedef Ref<LAndNode> LAnd;
@@ -362,6 +389,7 @@ template <class T, class U> Expr _makeLAnd(T &&lhs, U &&rhs) {
 }
 
 class LOrNode : public CommutativeBinaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(LOr);
 };
 typedef Ref<LOrNode> LOr;
@@ -382,6 +410,7 @@ class UnaryExprNode : public ExprNode {
 typedef Ref<UnaryExprNode> UnaryExpr;
 
 class LNotNode : public UnaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(LNot);
 };
 typedef Ref<LNotNode> LNot;
@@ -393,6 +422,7 @@ template <class T> Expr _makeLNot(T &&expr) {
 }
 
 class SqrtNode : public UnaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Sqrt);
 };
 typedef Ref<SqrtNode> Sqrt;
@@ -404,6 +434,7 @@ template <class T> Expr _makeSqrt(T &&expr) {
 }
 
 class ExpNode : public UnaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Exp);
 };
 typedef Ref<ExpNode> Exp;
@@ -415,6 +446,7 @@ template <class T> Expr _makeExp(T &&expr) {
 }
 
 class SquareNode : public UnaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Square);
 };
 typedef Ref<SquareNode> Square;
@@ -426,6 +458,7 @@ template <class T> Expr _makeSquare(T &&expr) {
 }
 
 class SigmoidNode : public UnaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Sigmoid);
 };
 typedef Ref<SigmoidNode> Sigmoid;
@@ -437,6 +470,7 @@ template <class T> Expr _makeSigmoid(T &&expr) {
 }
 
 class TanhNode : public UnaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Tanh);
 };
 typedef Ref<TanhNode> Tanh;
@@ -448,6 +482,7 @@ template <class T> Expr _makeTanh(T &&expr) {
 }
 
 class AbsNode : public UnaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Abs);
 };
 typedef Ref<AbsNode> Abs;
@@ -459,6 +494,7 @@ template <class T> Expr _makeAbs(T &&expr) {
 }
 
 class FloorNode : public UnaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Floor);
 };
 typedef Ref<FloorNode> Floor;
@@ -470,6 +506,7 @@ template <class T> Expr _makeFloor(T &&expr) {
 }
 
 class CeilNode : public UnaryExprNode {
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Ceil);
 };
 typedef Ref<CeilNode> Ceil;
@@ -486,6 +523,7 @@ class IfExprNode : public ExprNode {
     SubTree<ExprNode> thenCase_ = ChildOf{this};
     SubTree<ExprNode> elseCase_ = ChildOf{this};
     void compHash() override;
+    void inferDType() override;
     DEFINE_NODE_TRAIT(IfExpr);
 };
 typedef Ref<IfExprNode> IfExpr;
@@ -502,16 +540,17 @@ Expr _makeIfExpr(T &&cond, U &&thenCase, V &&elseCase) {
 class CastNode : public ExprNode {
   public:
     SubTree<ExprNode> expr_ = ChildOf{this};
-    DataType dtype_;
+    DataType destType_;
     void compHash() override;
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Cast);
 };
 typedef Ref<CastNode> Cast;
 #define makeCast(...) makeNode(Cast, __VA_ARGS__)
-template <class T> Expr _makeCast(T &&expr, DataType dtype) {
+template <class T> Expr _makeCast(T &&expr, DataType destType) {
     Cast e = Cast::make();
     e->expr_ = std::forward<T>(expr);
-    e->dtype_ = dtype;
+    e->destType_ = destType;
     return e;
 }
 
@@ -526,6 +565,7 @@ class IntrinsicNode : public ExprNode {
     DataType retType_;
     bool hasSideEffect_;
     void compHash() override;
+    void inferDType() override;
     DEFINE_NODE_TRAIT(Intrinsic);
 };
 typedef Ref<IntrinsicNode> Intrinsic;

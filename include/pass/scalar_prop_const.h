@@ -22,33 +22,42 @@ class ScalarPropConst : public SymbolTable<ConstFold> {
   protected:
     typedef SymbolTable<ConstFold> BaseClass;
 
+    struct ScalarIndex : public std::variant<int64_t, std::string> {
+        template <class... Args>
+        ScalarIndex(Args &&...args)
+            : std::variant<int64_t, std::string>(std::forward<Args>(args)...) {}
+
+        std::strong_ordering operator<=>(const ScalarIndex &other) const {
+            switch (index() * 2 + other.index()) {
+            case 0: // int int
+                return std::get<int64_t>(*this) <=> std::get<int64_t>(other);
+            case 1: // int str
+                return std::strong_ordering::less;
+            case 2: // str int
+                return std::strong_ordering::greater;
+            case 3: // str str
+                return std::get<std::string>(*this) <=>
+                       std::get<std::string>(other);
+            default:
+                ASSERT(false);
+            }
+        }
+    };
+
     /**
      * @brief Indices to a scalar, includes a sequence of constant offsets.
      */
     struct ScalarIndices {
-        std::vector<int64_t> offset;
+        std::vector<ScalarIndex> offset;
 
         /// Support comparison to use `std::map`.
-        bool operator<(const ScalarIndices &other) const {
+        std::strong_ordering operator<=>(const ScalarIndices &other) const {
             ASSERT(offset.size() == other.offset.size() &&
                    "Index count should be identical for same tensor");
-            for (size_t i = 0; i < offset.size(); ++i)
-                if (offset[i] < other.offset[i])
-                    return true;
-                else if (offset[i] > other.offset[i])
-                    return false;
-            return false;
+            return offset <=> other.offset;
         }
 
-        /// Support equivalence check
-        bool operator==(const ScalarIndices &other) const {
-            ASSERT(offset.size() == other.offset.size() &&
-                   "Index count should be identical for same tensor");
-            for (size_t i = 0; i < offset.size(); ++i)
-                if (offset[i] != other.offset[i])
-                    return false;
-            return true;
-        }
+        bool operator==(const ScalarIndices &) const = default;
     };
 
     /**
@@ -64,7 +73,8 @@ class ScalarPropConst : public SymbolTable<ConstFold> {
     /// second indexing indices
     std::unordered_map<std::string, std::map<ScalarIndices, Expr>> constants_;
 
-    /// Constant entries dependent on each iteration variable
+    /// Constant entries dependent on each iteration variable, mapping one
+    /// iteration variable to multiple (var name, indices) pairs dependent on it
     std::unordered_multimap<std::string, std::pair<std::string, ScalarIndices>>
         iter_dep_constants_;
 

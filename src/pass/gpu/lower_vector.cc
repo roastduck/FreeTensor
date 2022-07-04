@@ -162,7 +162,7 @@ Expr LowerVector::visit(const Load &op) {
             auto dtype = buffer(op->var_)->tensor()->dtype();
             auto vtype = vecType(dtype);
             return makeIntrinsic("*((" + vtype + "*)&(%))",
-                                 {makeLoad(op->var_, {index})},
+                                 {makeLoad(op->var_, {index}, dtype)},
                                  DataType::Custom, false);
         }
     }
@@ -178,9 +178,10 @@ Stmt LowerVector::visit(const Store &op) {
             auto vtype = vecType(dtype);
             return makeEval(
                 "",
-                makeIntrinsic("*((" + vtype + "*)&(%)) = make_" + vtype + "(%)",
-                              {makeLoad(op->var_, {index}), (*this)(op->expr_)},
-                              DataType::Void, false));
+                makeIntrinsic(
+                    "*((" + vtype + "*)&(%)) = make_" + vtype + "(%)",
+                    {makeLoad(op->var_, {index}, dtype), (*this)(op->expr_)},
+                    DataType::Void, false));
         }
     }
     return BaseClass::visit(op);
@@ -193,7 +194,7 @@ Stmt LowerVector::visit(const ReduceTo &op) {
             Expr index = getIndex(op->indices_[0]);
             auto dtype = buffer(op->var_)->tensor()->dtype();
             auto vtype = vecType(dtype);
-            auto newLoad = makeLoad(op->var_, {index});
+            auto newLoad = makeLoad(op->var_, {index}, dtype);
             switch (op->op_) {
             case ReduceOp::Add:
                 return makeEval("", makeIntrinsic("*((" + vtype +

@@ -68,10 +68,6 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
     ast = hoistVarOverStmtSeq(ast);
 
     std::unordered_map<Load, Expr> replace;
-    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return later.op_->nodeType() == ASTNodeType::Load &&
-               earlier.def_->id() == def;
-    };
     auto found = [&](const Dependency &dep) {
         if (replace.count(dep.later().as<LoadNode>())) {
             throw InvalidSchedule("Multiple writes correspond to one read");
@@ -87,8 +83,8 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                                                   // into PBFunc
                         throw ParserError("ISL map is not single-valued");
                     }
-                    auto &&[args, values, cond] =
-                        parsePBFunc(toString(PBFunc(dep.later2EarlierIter_)));
+                    auto &&[args, values, cond] = parseSimplePBFunc(
+                        toString(PBFunc(dep.later2EarlierIter_)));
                     ASSERT(dep.earlier_.iter_.size() <=
                            values.size()); // maybe padded
                     ASSERT(dep.later_.iter_.size() <= args.size());
@@ -153,8 +149,15 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
         }
         replace[later] = std::move(newExpr);
     };
-    findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter, true,
-             true, true);
+    FindDeps()
+        .mode(FindDepsMode::KillLater)
+        .type(DEP_RAW)
+        .filterAccess(
+            [&](const AccessPoint &acc) { return acc.def_->id() == def; })
+        .filterLater([&](const AccessPoint &later) {
+            return later.op_->nodeType() == ASTNodeType::Load;
+        })
+        .noProjectOutProvateAxis(true)(ast, found);
     ast = MakeInline(def, replace)(ast);
 
     ast = sinkVar(ast);

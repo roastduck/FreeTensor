@@ -38,8 +38,12 @@ def test_unroll():
 
     s = ft.Schedule(test)
     print(s.ast())
-    s = ft.AutoSchedule(s, target, device, 8)
-    sch = s.test_unroll()
+    s = ft.AutoSchedule(
+        s,
+        target,
+        device,
+        rule_set={"multi_level_tiling_with_fusion", "thread_bind", "unroll"})
+    sch = s.test_round()
     func = ft.lower(sch.func(), target)
     print(func)
     code = ft.codegen(func, target, verbose=True)
@@ -47,10 +51,10 @@ def test_unroll():
     x_np = np.zeros((m, m, b, a), dtype="int32")
     y_np = np.zeros((1, 1, a, a), dtype="int32")
     z_np = np.zeros((m, m, a, a), dtype="int32")
-    w_arr = ft.Array(w_np, device)
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
-    z_arr = ft.Array(z_np, device)
+    w_arr = ft.Array(w_np)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    z_arr = ft.Array(z_np)
     ft.build_binary(code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
         'split(L4, factor=2, nparts=-1, shift=0)',
@@ -74,15 +78,14 @@ def test_unroll():
         'fuse(L4.0.0.0.0, L6.0.0.0)', 'fuse(L5.0.0.0.0, L7.0.0.0)',
         'fuse(L4.0.0.0.1, L6.0.0.1)', 'fuse(L5.0.0.0.1, L7.0.0.1)',
         'fuse(L4.0.0.1, L6.0.1)', 'fuse(L5.0.0.1, L7.0.1)', 'cache(#34, y)',
-        'cache(L3.0.1, w)', 'cache(#58, x)',
         'merge(fused.L4.0.0.0.0.L6.0.0.0, fused.L5.0.0.0.0.L7.0.0.0)',
         'merge(fused.L4.0.0.0.1.L6.0.0.1, fused.L5.0.0.0.1.L7.0.0.1)',
         'merge(fused.L4.0.0.1.L6.0.1, fused.L5.0.0.1.L7.0.1)',
         'parallelize(merged.fused.L4.0.0.0.0.L6.0.0.0.fused.L5.0.0.0.0.L7.0.0.0, blockIdx.x)',
         'blend(merged.fused.L4.0.0.0.1.L6.0.0.1.fused.L5.0.0.0.1.L7.0.0.1)',
         'parallelize(merged.fused.L4.0.0.1.L6.0.1.fused.L5.0.0.1.L7.0.1, threadIdx.x)',
-        'unroll(#37)', 'unroll(#81)', 'unroll(#60)', 'unroll(L5.1)',
-        'unroll(L4.1)', 'unroll(L7.1)', 'unroll(#43)'
+        'unroll(#37)', 'unroll(L5.1)', 'unroll(L4.1)', 'unroll(L7.1)',
+        'unroll(#43)'
     ]
     sch_log = sch.logs()
     print(sch_log)

@@ -85,12 +85,52 @@ def test_stmt_in_between():
     assert std.match(ast)
 
 
+def test_loop_in_between():
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4, 8), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("i", 0, 4, nid="L1") as i:
+            with ft.For("j", 0, 8, nid="L2") as j:
+                z[i, j] = i * j
+            with ft.For("j", 0, 8, nid="L3") as j:
+                y[i, j] = i + j
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L3", "L1"]), verbose=1)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4, 8), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("j", 0, 8) as j:
+            with ft.For("i", 0, 4) as i:
+                with ft.If(j == 0):
+                    with ft.For("j1", 0, 8) as j1:
+                        z[i, j1] = i * j1
+                y[i, j] = i + j
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_dependency():
     with ft.VarDef("y", (1,), "int32", "output", "cpu") as y:
         y[0] = 0
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[0] = y[0] * i + j
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    with pytest.raises(ft.InvalidSchedule):
+        s.reorder(["L2", "L1"])
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ast)
+
+
+def test_dependency_of_stmt_in_between():
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (), "int32", "cache", "cpu")]) as (y, z):
+        with ft.For("i", 0, 4, nid="L1") as i:
+            z[()] = i * i
+            with ft.For("j", 0, 8, nid="L2") as j:
+                y[i, j] = z[()] + j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):

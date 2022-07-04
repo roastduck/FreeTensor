@@ -43,7 +43,7 @@ To read or write tensors in a function, just write `for ... in range(...)` loops
 
 !!! note "Special note on tensor assignments"
 
-    We follow Python convention for tensor assignments, but sometimes it is a little counterintuitive. Suppose you have two `list`s in Python: `a` and `b`. `a = b` *replaces* the object `a` with the object `b`, while `a[:] = b` *assigns* data in `b` to `a`. FreeTensor does not support replacing a tensor object with another one. It supports assignments only. Therefore, we need to write `a[:] = b` to assign a non-scalar tensor, and `a[()] = b` to assign a scalar (0-D) tensor.
+    We follow Python convention for tensor assignments, but sometimes it is a little counterintuitive. Suppose you have two `list`s in Python: `a` and `b`. `a = b` *replaces* the object `a` with the object `b`, while `a[...] = b` *assigns* data in `b` to `a`. FreeTensor does not support replacing a tensor object with another one. It supports assignments only. Therefore, we need to write `a[...] = b` to assign tensor. `a[:] = b` (for non-scalars), `a[None] = b` and `a[()] = b` is also supported.
 
 ## Dynamic or Static
 
@@ -114,3 +114,26 @@ assert np.array_equal(y, [3, 5, 7, 9])
 ```
 
 In this way, in only have to compile your program once. But you will expect a longer compiling time, and some optimizations are not possible with dynamic shapes.
+
+## Copy-free interface from/to PyTorch
+
+If FreeTensor is built with `WITH_PYTORCH=ON`, you can directly pass PyTorch tensors to or get them from FreeTensor. For example,
+
+```python
+import freetensor as ft
+import torch
+
+n = 4
+
+# Change this line to ft.optimize(verbose=1) to see the resulting native code
+@ft.optimize
+def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
+    y = ft.empty((n,), "int32")
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(torch.tensor([1, 2, 3, 4], dtype=torch.int32),
+         torch.tensor([2, 3, 4, 5], dtype=torch.int32)).torch()
+print(y)
+```

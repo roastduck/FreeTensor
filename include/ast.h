@@ -5,6 +5,7 @@
 #include <functional>
 #include <string>
 
+#include <data_type.h>
 #include <ref.h>
 #include <sub_tree.h>
 
@@ -142,6 +143,9 @@ typedef Ref<ASTNode> AST;
  * Base class of all expression nodes in an AST
  */
 class ExprNode : public ASTNode {
+  protected:
+    DataType dtype_ = DataType::Invalid;
+
   public:
     bool isExpr() const override { return true; }
 
@@ -150,6 +154,15 @@ class ExprNode : public ASTNode {
     virtual bool isUnary() const { return false; }
 
     Ref<ExprNode> parentExpr() const;
+
+    void modifiedHook() override {
+        ASTNode::modifiedHook();
+        resetDType();
+    }
+
+    DataType dtype();
+    void resetDType();
+    virtual void inferDType() = 0;
 
     DEFINE_NODE_ACCESS(Expr);
 };

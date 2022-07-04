@@ -68,7 +68,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
                          asVec<Expr>(iter::imap(
                              [](auto &&x, auto &&y) { return makeAdd(x, y); },
                              r->begins_, indices)),
-                         r->op_, makeLoad(workspace, indices), false);
+                         r->op_, makeLoad(workspace, indices, dtype), false);
         initStmt = makeNestedLoops(
             indices, iter::repeat(makeIntConst(0)), workspaceShape,
             iter::repeat(makeIntConst(1)), workspaceShape,

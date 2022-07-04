@@ -31,9 +31,9 @@ def test_static_shape(libop_func, torch_func, require_positive):
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = torch.zeros(4, 4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -66,7 +66,7 @@ def test_out_of_place(libop_func, torch_func, require_positive):
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -106,19 +106,19 @@ def test_inplace_grad_of_inplace_func(libop_func, torch_func, require_positive):
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     x_torch.requires_grad = True
     y_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch_ours.numpy(), device)
+    y_arr = ft.Array(y_torch_ours.numpy())
     f(x_arr, y_arr)
     y_torch_ours = torch.tensor(y_arr.numpy())
     y_torch = torch_func(x_torch)
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
 
     y_torch.grad = torch.rand(4, 4, dtype=torch.float32)
-    d_y_arr = ft.Array(y_torch.grad.numpy(), device)
+    d_y_arr = ft.Array(y_torch.grad.numpy())
     x_grad_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
-    d_x_arr = ft.Array(x_grad_torch_ours.numpy(), device)
+    d_x_arr = ft.Array(x_grad_torch_ours.numpy())
     g(**{provides['y']: d_y_arr, requires['x']: d_x_arr})
     x_grad_torch_ours = torch.tensor(d_x_arr.numpy())
     y_torch.backward(y_torch.grad)
@@ -157,7 +157,7 @@ def test_inplace_grad_of_out_of_place_func(libop_func, torch_func,
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     x_torch.requires_grad = True
     y_arr = f(x_arr)
     y_torch_ours = torch.tensor(y_arr.numpy())
@@ -165,9 +165,9 @@ def test_inplace_grad_of_out_of_place_func(libop_func, torch_func,
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
 
     y_torch.grad = torch.rand(4, 4, dtype=torch.float32)
-    d_y_arr = ft.Array(y_torch.grad.numpy(), device)
+    d_y_arr = ft.Array(y_torch.grad.numpy())
     x_grad_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
-    d_x_arr = ft.Array(x_grad_torch_ours.numpy(), device)
+    d_x_arr = ft.Array(x_grad_torch_ours.numpy())
     g(**{provides['y']: d_y_arr, requires['x']: d_x_arr})
     x_grad_torch_ours = torch.tensor(d_x_arr.numpy())
     y_torch.backward(y_torch.grad)
@@ -206,7 +206,7 @@ def test_out_of_place_grad_of_out_of_place_func(libop_func, torch_func,
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     x_torch.requires_grad = True
     y_arr = f(x_arr)
     y_torch_ours = torch.tensor(y_arr.numpy())
@@ -214,7 +214,7 @@ def test_out_of_place_grad_of_out_of_place_func(libop_func, torch_func,
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
 
     y_torch.grad = torch.rand(4, 4, dtype=torch.float32)
-    d_y_arr = ft.Array(y_torch.grad.numpy(), device)
+    d_y_arr = ft.Array(y_torch.grad.numpy())
     d_x_arr = g(**{provides[ft.Return()]: d_y_arr})
     x_grad_torch_ours = torch.tensor(d_x_arr.numpy())
     y_torch.backward(y_torch.grad)

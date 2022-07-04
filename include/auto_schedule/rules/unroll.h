@@ -16,12 +16,12 @@ class UnrollRule : public Rule {
 
 class UnrollPart : public SketchPartNode {
     TargetType targetType_;
-    int maxSize_;
+    int maxSize_ = 0;
 
   public:
-    UnrollPart(TargetType targetType, size_t maxSize = 0)
-        : targetType_(targetType), maxSize_(maxSize) {}
+    UnrollPart(TargetType targetType) : targetType_(targetType) {}
     void genRandAnnotation(std::default_random_engine &gen) override;
+    void genFakeAnnotation(std::default_random_engine &gen) override;
     bool mutate(std::default_random_engine &gen) override;
     bool crossover(const SketchPart &part,
                    std::default_random_engine &gen) override;
@@ -35,7 +35,7 @@ class UnrollPart : public SketchPartNode {
                            std::hash<int>{}(maxSize_));
     }
     [[nodiscard]] SketchPart clone() const override {
-        return Ref<UnrollPart>::make(targetType_, maxSize_);
+        return Ref<UnrollPart>::make(*this);
     };
 };
 

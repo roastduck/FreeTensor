@@ -19,7 +19,7 @@ void PBCompBounds::visitExpr(const Expr &op) {
     }
     visited_.insert(op);
 
-    if (!isInt(dtype(op))) {
+    if (!isInt(op->dtype())) {
         return;
     }
     if (auto &&expr = genPBExpr_.gen(op); expr.isValid()) {

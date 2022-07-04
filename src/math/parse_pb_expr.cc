@@ -7,8 +7,7 @@
 
 namespace freetensor {
 
-std::tuple<std::vector<std::string>, std::vector<Expr>, Expr>
-parsePBFunc(const std::string &str) {
+PBFuncAST parsePBFunc(const std::string &str) {
     try {
         antlr4::ANTLRInputStream charStream(str);
         pb_lexer lexer(&charStream);
@@ -16,10 +15,18 @@ parsePBFunc(const std::string &str) {
         pb_parser parser(&tokens);
         parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
         auto &&func = parser.func();
-        return std::make_tuple(func->args, func->values, func->cond);
+        return func->ast;
     } catch (const antlr4::ParseCancellationException &e) {
         throw ParserError((std::string) "Parser error: " + e.what());
     }
+}
+
+SimplePBFuncAST parseSimplePBFunc(const std::string &str) {
+    auto ret = parsePBFunc(str);
+    if (ret.size() != 1) {
+        throw ParserError(str + " is not a simple PBFunc");
+    }
+    return ret.front();
 }
 
 } // namespace freetensor

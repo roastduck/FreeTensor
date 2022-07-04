@@ -90,8 +90,11 @@ class FrontendVar {
 
     /**
      * shape of each dimension after slicing
+     * @{
      */
     Expr shape(const Expr &idx) const;
+    std::vector<Expr> shape() const;
+    /** @} */
 
     Expr asLoad() const;
     Stmt asStore(const ID &id, const Expr &value) const;

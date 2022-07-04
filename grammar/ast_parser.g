@@ -2,12 +2,14 @@ parser grammar ast_parser;
 
 options {
     tokenVocab = ast_lexer;
+    superClass = ASTParserBase;
 }
 
 @parser::postinclude {
     #include <string>
     #include <vector>
 
+    #include <serialize/ast_parser_base.h>
     #include <container_utils.h>
     #include <stmt.h>
     #include <func.h>
@@ -208,9 +210,13 @@ reduceTo returns [Stmt node]
     ;
 
 load returns [Expr node]
-    : var indices
+    : var indices ':' dtype
       {
-        $node = makeLoad($var.name, $indices.exprs);
+        $node = makeLoad($var.name, $indices.exprs, $dtype.type);
+      }
+    | var indices
+      {
+        $node = makeLoad($var.name, $indices.exprs, name2dtype_.at($var.name));
       }
     ;
 
@@ -222,8 +228,12 @@ varDef returns [Stmt node]
     : atype mtype var ':' dtype shape
         (IO_TENSOR '=' io_dtype=dtype io_shape=shape { ioTensor = makeTensor($io_shape.vec, $io_dtype.type); })?
         (PINNED { pinned = true; })?
+      {
+        name2dtype_[$var.name] = $dtype.type;
+      }
         '{' stmts '}'
       {
+        name2dtype_.erase($var.name);
         Ref<Tensor> t = makeTensor($shape.vec, $dtype.type);
         Ref<Buffer> b = makeBuffer(std::move(t), $atype.type, $mtype.type);
         Expr sizeLim = nullptr;

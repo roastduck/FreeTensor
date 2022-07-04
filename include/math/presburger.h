@@ -99,6 +99,7 @@ class PBMap {
         return isl_map_is_empty(get());
     }
     bool isSingleValued() const { return isl_map_is_single_valued(get()); }
+    bool isBijective() const { return isl_map_is_bijective(get()); }
 
     isl_size nBasic() const { return isl_map_n_basic_map(map_); }
 

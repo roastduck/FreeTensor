@@ -10,7 +10,7 @@ std::vector<ID> allNoReuseDefs(const Stmt &_op,
     auto op = makeReduction(_op);
     std::unordered_set<ID> reusing;
     auto found = [&](const Dependency &d) { reusing.insert(d.defId()); };
-    findDeps(op, {{}}, found, FindDepsMode::Dep, DEP_WAR, nullptr, true, false);
+    FindDeps().type(DEP_WAR).eraseOutsideVarDef(false)(op, found);
     std::vector<ID> ret;
     for (auto &&[id, name] : allDefs(op, atypes)) {
         if (!reusing.count(id)) {

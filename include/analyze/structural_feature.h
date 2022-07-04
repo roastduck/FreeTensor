@@ -8,7 +8,6 @@
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
-#include <analyze/type_infer.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -35,9 +34,8 @@ struct NodeFeature {
  * This Visitor generate a NodeFeature for each node, depicting the performance
  * feature of running the subtree rooted at the node
  */
-class StructuralFeature
-    : public CompTransientBounds<WithTypeInfer<SymbolTable<Visitor>>> {
-    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Visitor>>> BaseClass;
+class StructuralFeature : public CompTransientBounds<SymbolTable<Visitor>> {
+    typedef CompTransientBounds<SymbolTable<Visitor>> BaseClass;
 
     /**
      * Info about an AST node, but not necessarily a feature
@@ -62,7 +60,7 @@ class StructuralFeature
     std::unordered_map<AST, NodeInfo> info_;       // AST -> info
 
   public:
-    StructuralFeature() : bound_(*this, *this) {}
+    StructuralFeature() : bound_(*this) {}
 
     const std::unordered_map<ID, NodeFeature> &features() const {
         return features_;

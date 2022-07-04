@@ -36,8 +36,11 @@ def test_fusion():
 
     s = ft.Schedule(test)
     print(s.ast())
-    s = ft.AutoSchedule(s, target, device, 8)
-    sch = s.test_multi_level_tiling_with_fusion(1)
+    s = ft.AutoSchedule(s,
+                        target,
+                        device,
+                        rule_set={"multi_level_tiling_with_fusion"})
+    sch = s.test_round({"multi_level_tiling_with_fusion": 1})
     func = ft.lower(sch.func(), target)
     print(func)
     code = ft.codegen(func, target, verbose=True)
@@ -45,10 +48,10 @@ def test_fusion():
     x_np = np.zeros((m, m, b, a), dtype="int32")
     y_np = np.zeros((1, 1, a, a), dtype="int32")
     z_np = np.zeros((m, m, a, a), dtype="int32")
-    w_arr = ft.Array(w_np, device)
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
-    z_arr = ft.Array(z_np, device)
+    w_arr = ft.Array(w_np)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    z_arr = ft.Array(z_np)
     ft.build_binary(code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
         'split(L4, factor=2, nparts=-1, shift=0)',

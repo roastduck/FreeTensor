@@ -17,11 +17,11 @@ def test_mm():
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy())
     b_torch = torch.rand(5, 6, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy())
     y_torch = torch.zeros(4, 6, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(a_arr, b_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -41,11 +41,11 @@ def test_bmm_1():
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(2, 4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy())
     b_torch = torch.rand(2, 5, 6, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy())
     y_torch = torch.zeros(2, 4, 6, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(a_arr, b_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -65,11 +65,11 @@ def test_bmm_2():
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(2, 4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy())
     b_torch = torch.rand(5, 6, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy())
     y_torch = torch.zeros(2, 4, 6, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(a_arr, b_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -89,11 +89,11 @@ def test_mv():
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy())
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy())
     y_torch = torch.zeros(4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(a_arr, b_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -113,15 +113,57 @@ def test_vm():
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy())
     b_torch = torch.rand(5, 6, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy())
     y_torch = torch.zeros(6, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(a_arr, b_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
+    assert torch.all(torch.isclose(y_torch, y_std))
+
+
+def test_scalar_multiply_scalar():
+    device = ft.Device(ft.CPU())
+
+    @ft.optimize(device=device, verbose=1)
+    def f(a, b, y):
+        a: ft.Var[(), "float32", "input", "cpu"]
+        b: ft.Var[(), "float32", "input", "cpu"]
+        y: ft.Var[(), "float32", "output", "cpu"]
+        #! nid: einsum
+        libop.matmul_(a, b, y)
+
+    a_arr = ft.Array(np.array(2, dtype="float32"))
+    b_arr = ft.Array(np.array(3, dtype="float32"))
+    y_arr = ft.Array(np.array(0, dtype="float32"))
+    f(a_arr, b_arr, y_arr)
+
+    assert y_arr.numpy() == 6
+
+
+def test_scalar_multiply_matrix():
+    device = ft.Device(ft.CPU())
+
+    @ft.optimize(device=device, verbose=1)
+    def f(a, b, y):
+        a: ft.Var[(), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        y: ft.Var[(5, 6), "float32", "output", "cpu"]
+        #! nid: einsum
+        libop.matmul_(a, b, y)
+
+    a_arr = ft.Array(np.array(2, dtype="float32"))
+    b_torch = torch.rand(5, 6, dtype=torch.float32)
+    b_arr = ft.Array(b_torch.numpy())
+    y_torch = torch.zeros(5, 6, dtype=torch.float32)
+    y_arr = ft.Array(y_torch.numpy())
+    f(a_arr, b_arr, y_arr)
+    y_torch = torch.tensor(y_arr.numpy())
+
+    y_std = 2 * b_torch
     assert torch.all(torch.isclose(y_torch, y_std))
 
 
@@ -136,9 +178,9 @@ def test_out_of_place():
         return libop.matmul(a, b)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy())
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy())
     y_arr = f(a_arr, b_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -158,12 +200,34 @@ def test_operator_overload():
         return a @ b
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy())
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy())
     y_arr = f(a_arr, b_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
+    assert np.array_equal(y_arr.shape, [4])
+    assert torch.all(torch.isclose(y_torch, y_std))
+
+
+def test_subtensor():
+    device = ft.Device(ft.CPU())
+
+    @ft.optimize(device=device, verbose=1)
+    def f(a, b):
+        a: ft.Var[(2, 2, 2, 4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(2, 2, 2, 5), "float32", "input", "cpu"]
+        #! nid: gemm
+        return a[0, 0, 0] @ b[0, 0, 0]
+
+    a_torch = torch.rand(2, 2, 2, 4, 5, dtype=torch.float32)
+    a_arr = ft.Array(a_torch.numpy())
+    b_torch = torch.rand(2, 2, 2, 5, dtype=torch.float32)
+    b_arr = ft.Array(b_torch.numpy())
+    y_arr = f(a_arr, b_arr)
+    y_torch = torch.tensor(y_arr.numpy())
+
+    y_std = torch.matmul(a_torch[0, 0, 0], b_torch[0, 0, 0])
     assert np.array_equal(y_arr.shape, [4])
     assert torch.all(torch.isclose(y_torch, y_std))

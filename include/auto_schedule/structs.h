@@ -37,6 +37,7 @@ struct ForWithStore {
     std::vector<std::string> reads;
     std::vector<Expr> indices;
     std::vector<std::vector<Expr>> checkDataReuseIndices;
+    bool readsItself{false};
 };
 
 struct ElementWiseInfo {

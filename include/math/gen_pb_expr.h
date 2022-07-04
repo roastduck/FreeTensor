@@ -23,7 +23,6 @@ class GenPBExpr : public Visitor {
     typedef ASTHashMap<Expr, std::string> VarMap;
 
   private:
-    const SymbolTableInterface &symbolTable_;
     std::unordered_map<Expr, std::string> results_;
     std::unordered_set<Expr> visited_;
     std::unordered_map<Expr, int> constants_;
@@ -32,9 +31,7 @@ class GenPBExpr : public Visitor {
     std::string varSuffix_;
 
   public:
-    GenPBExpr(const SymbolTableInterface &symbolTable,
-              const std::string &varSuffix = "")
-        : symbolTable_(symbolTable), varSuffix_(varSuffix) {}
+    GenPBExpr(const std::string &varSuffix = "") : varSuffix_(varSuffix) {}
 
     const VarMap &vars(const Expr &op) { return vars_[op]; }
 

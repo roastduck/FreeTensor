@@ -39,21 +39,6 @@ Stmt tensorPropConst(const Stmt &_op) {
         // pass/remove_writes can not, because statement (1) cannot be removed
         std::unordered_map<AST, std::vector<std::pair<Stmt, ReplaceInfo>>> r2w;
         std::unordered_map<AST, std::vector<Stmt>> r2wMay;
-        auto filterMust = [&](const AccessPoint &later,
-                              const AccessPoint &earlier) {
-            if (later.buffer_->tensor()->isScalar()) {
-                return false;
-            }
-            if (earlier.op_->nodeType() != ASTNodeType::Store) {
-                return false;
-            }
-            auto &&expr = earlier.op_.as<StoreNode>()->expr_;
-            if (!allReads(expr).empty()) {
-                // Expressions should contain only constants and iterating vars
-                return false;
-            }
-            return true;
-        };
         auto foundMust = [&](const Dependency &d) {
             auto &&expr = d.earlier().as<StoreNode>()->expr_;
             auto &&iters = allIters(expr);
@@ -82,17 +67,33 @@ Stmt tensorPropConst(const Stmt &_op) {
                                 toString(PBFunc(d.later2EarlierIter_))});
             }
         };
-        auto filterMay = [&](const AccessPoint &later,
-                             const AccessPoint &earlier) {
-            return r2w.count(later.op_);
-        };
         auto foundMay = [&](const Dependency &d) {
             r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
         };
-        findDeps(op, {{}}, foundMust, FindDepsMode::KillLater, DEP_RAW,
-                 filterMust, true, true, true);
-        findDeps(op, {{}}, foundMay, FindDepsMode::Dep, DEP_RAW, filterMay,
-                 false);
+        FindDeps()
+            .mode(FindDepsMode::KillLater)
+            .type(DEP_RAW)
+            .filterAccess([&](const AccessPoint &acc) {
+                return !acc.buffer_->tensor()->isScalar();
+            })
+            .filterEarlier([&](const AccessPoint &earlier) {
+                if (earlier.op_->nodeType() != ASTNodeType::Store) {
+                    return false;
+                }
+                auto &&expr = earlier.op_.as<StoreNode>()->expr_;
+                if (!allReads(expr).empty()) {
+                    // Expressions should contain only constants and iterating
+                    // vars
+                    return false;
+                }
+                return true;
+            })
+            .noProjectOutProvateAxis(true)(op, foundMust);
+        FindDeps()
+            .type(DEP_RAW)
+            .filterLater(
+                [&](const AccessPoint &later) { return r2w.count(later.op_); })
+            .ignoreReductionWAW(false)(op, foundMay);
 
         std::unordered_map<AST, Expr> replace;
         for (auto &&item : r2w) {
@@ -111,7 +112,7 @@ Stmt tensorPropConst(const Stmt &_op) {
             if (!allIters(store->expr_).empty()) {
                 try {
                     auto &&[args, values, cond] =
-                        parsePBFunc(repInfo.funcStr_); // later -> earlier
+                        parseSimplePBFunc(repInfo.funcStr_); // later -> earlier
                     ASSERT(repInfo.earlierIters_.size() <=
                            values.size()); // maybe padded
                     ASSERT(repInfo.laterIters_.size() <= args.size());
@@ -141,8 +142,8 @@ Stmt tensorPropConst(const Stmt &_op) {
 
         if (replace.empty() || i > 100) {
             if (i > 100) {
-                WARNING(
-                    "propConst iterates over 100 rounds. Maybe there is a bug");
+                WARNING("tensor_prop_const iterates over 100 rounds. Maybe "
+                        "there is a bug");
             }
             break;
         }

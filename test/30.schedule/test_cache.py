@@ -62,11 +62,12 @@ def test_cache_write():
 
 
 def test_reduction():
-    with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
+    with ft.VarDef([("x", (4, 8, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
-                y[i, j] = y[i, j] + x[i, j] * 2
+                with ft.For("k", 0, 8, nid="L3") as k:
+                    y[i, j] = y[i, j] + x[i, j, k] * 2
     ast = ft.make_reduction(ft.pop_ast())
     print(ast)
     s = ft.Schedule(ast)
@@ -75,14 +76,15 @@ def test_reduction():
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
+    with ft.VarDef([("x", (4, 8, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             with ft.VarDef("b", (1, 8), "int32", "cache", "cpu") as b:
                 with ft.For("j1", 0, 8) as j:
                     b[0, j] = y[i, j]
                 with ft.For("j", 0, 8) as j:
-                    b[0, j] += x[i, j] * 2
+                    with ft.For("k", 0, 8) as k:
+                        b[0, j] += x[i, j, k] * 2
                 with ft.For("j1", 0, 8) as j:
                     y[i, j] = b[0, j]
     std = ft.make_reduction(ft.pop_ast())

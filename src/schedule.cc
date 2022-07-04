@@ -825,8 +825,9 @@ Schedule::multiLevelTiling(const ForsWithDataReuse &target,
 std::vector<std::pair<ID, int>> Schedule::multiLevelTilingWithFusion(
     const ForsWithDataReuse &target,
     const MultiLevelTilingAnnotation &annotation, const std::string &pat,
-    const ElementWiseInfo &toFuse, int level, TargetType targetType) {
+    const ElementWiseInfo &toFuse, int level, TargetType targetType,
+    bool doCacheRead) {
     return freetensor::multiLevelTilingWithFusion(
-        *this, target, annotation, pat, toFuse, level, targetType);
+        *this, target, annotation, pat, toFuse, level, targetType, doCacheRead);
 }
 } // namespace freetensor

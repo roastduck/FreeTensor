@@ -11,16 +11,15 @@ namespace freetensor {
  * Some backends do not support local variables with dynamic shapes. This pass
  * relaxed selected shapes to constants
  */
-class MakeConstShape
-    : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
-    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
+class MakeConstShape : public CompTransientBounds<SymbolTable<Mutator>> {
+    typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
     PBCompBounds unique_;
     const std::vector<MemType> &mtypes_;
 
   public:
     MakeConstShape(const std::vector<MemType> &mtypes)
-        : unique_(*this, *this), mtypes_(mtypes) {}
+        : unique_(*this), mtypes_(mtypes) {}
 
   protected:
     using BaseClass::visit;

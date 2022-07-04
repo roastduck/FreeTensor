@@ -8,11 +8,13 @@ namespace freetensor {
 
 class CacheWriteRule : public Rule {
     MemType memType_;
+    int verbose_;
 
   public:
-    explicit CacheWriteRule(TargetType target)
+    explicit CacheWriteRule(TargetType target, int verbose = 0)
         : memType_(target == TargetType::CPU ? MemType::CPU
-                                             : MemType::GPULocal) {}
+                                             : MemType::GPULocal),
+          verbose_(verbose) {}
     RuleStatus analyze(const Sketch &sketch) override;
     std::vector<Sketch> genPart(const Sketch &sketch) override;
 };

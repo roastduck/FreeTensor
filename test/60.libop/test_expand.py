@@ -16,9 +16,9 @@ def test_static():
         libop.expand_(x, y)
 
     x_torch = torch.rand(3, 1, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = torch.zeros(3, 5, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -33,11 +33,10 @@ def test_out_of_place():
         x: ft.Var[(3, 1), "float32", "input", "cpu"]
         #! nid: expand
         return libop.expand(
-            x, ft.capture_var(ft.Array(np.array([3, 5], dtype=np.int32),
-                                       device)))
+            x, ft.capture_var(ft.Array(np.array([3, 5], dtype=np.int32))))
 
     x_torch = torch.rand(3, 1, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
 

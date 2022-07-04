@@ -5,13 +5,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include <analyze/type_infer.h>
 #include <codegen/code_gen.h>
 
 namespace freetensor {
 
-template <class Stream> class CodeGenC : public WithTypeInfer<CodeGen<Stream>> {
-    typedef WithTypeInfer<CodeGen<Stream>> BaseClass;
+template <class Stream> class CodeGenC : public CodeGen<Stream> {
+    typedef CodeGen<Stream> BaseClass;
 
     const std::vector<FuncParam> &params_;
     const std::vector<FuncRet> &returns_;

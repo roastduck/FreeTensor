@@ -37,8 +37,8 @@ def test_parallel_reduction():
     assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -71,9 +71,9 @@ def test_parallel_reduction_on_2_vars():
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     z_np = np.zeros((4,), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
-    z_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    z_arr = ft.Array(z_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr, z=z_arr)
     y_np = y_arr.numpy()
     z_np = z_arr.numpy()
@@ -108,8 +108,8 @@ def test_parallel_reduction_on_array():
     assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -141,8 +141,8 @@ def test_parallel_reduction_on_array_range():
     assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (64, 64)).astype("int32")
     y_np = np.zeros((64,), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -175,8 +175,8 @@ def test_parallel_reduction_multiple_statements():
     assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -214,8 +214,8 @@ def test_atomic_reduction():
     assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 2), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -247,8 +247,8 @@ def test_atomic_reduction_2_stmts_on_1_var():
     assert str(code).count("+=") == 2
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -281,8 +281,8 @@ def test_atomic_reduction_cache():
     assert str(code).count("+=") == 2
     x_np = np.random.randint(0, 100, (4, 64, 10)).astype("int32")
     y_np = np.zeros((4, 2), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -316,8 +316,8 @@ def test_atomic_reduction_cache_array():
     assert str(code).count("+=") == 2
     x_np = np.random.randint(0, 100, (4, 64, 10, 3)).astype("int32")
     y_np = np.zeros((4, 2, 3), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -382,8 +382,8 @@ def test_simultenous_parallel_and_atomic_reduction():
     assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 2), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -422,8 +422,8 @@ def test_serial_reduction_1():
     print(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -457,8 +457,8 @@ def test_serial_reduction_2():
     print(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 

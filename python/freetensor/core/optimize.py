@@ -62,7 +62,7 @@ def optimize(func=None,
         ast = schedule(ast, schedule_callback, verbose=verbose)
         ast = lower(ast, target, verbose=verbose)
         code = codegen(ast, target, verbose=verbose)
-        exe = build_binary(code, device)
+        exe = build_binary(code, device, verbose=verbose)
         return exe
 
     else:

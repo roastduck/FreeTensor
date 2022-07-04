@@ -58,20 +58,21 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
     }
 
     {
-        FindDepsCond findDepsCond{{loop, DepDirection::Normal}};
+        FindDepsDir findDepsDir{{loop, DepDirection::Normal}};
         for (auto &&outerLoop : mutator.outerLoops()) {
-            findDepsCond.push_back({outerLoop, DepDirection::Same});
+            findDepsDir.push_back({outerLoop, DepDirection::Same});
         }
-        auto filter = [&](const AccessPoint &later,
-                          const AccessPoint &earlier) {
-            return earlier.stmt_->ancestorById(loop).isValid() &&
-                   later.stmt_->ancestorById(loop).isValid();
-        };
         auto found = [&](const Dependency &d) {
             throw InvalidSchedule(toString(d) + " cannot be resolved");
         };
-        findDeps(oldAst, {findDepsCond}, found, FindDepsMode::Dep, DEP_ALL,
-                 filter);
+        FindDeps()
+            .direction({findDepsDir})
+            .filterEarlier([&](const AccessPoint &earlier) {
+                return earlier.stmt_->ancestorById(loop).isValid();
+            })
+            .filterLater([&](const AccessPoint &later) {
+                return later.stmt_->ancestorById(loop).isValid();
+            })(oldAst, found);
     }
 
     {
@@ -94,12 +95,13 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
             return false;
         };
         auto found = [&](const Dependency &d) {
-            ASSERT(d.cond_.size() == 1);
+            ASSERT(d.dir_.size() == 1);
             throw InvalidSchedule(toString(d) + " cannot be resolved");
         };
-        findDeps(ast,
-                 {{{NodeIDOrParallelScope(parallel), DepDirection::Different}}},
-                 found, FindDepsMode::Dep, DEP_ALL, filter);
+        FindDeps()
+            .direction(
+                {{{NodeIDOrParallelScope(parallel), DepDirection::Different}}})
+            .filter(filter)(ast, found);
     }
     return ast;
 }

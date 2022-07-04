@@ -440,7 +440,7 @@ void MatchVisitor::visit(const Cast &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Cast);
     auto instance = instance_.as<CastNode>();
     RECURSE(op->expr_, instance->expr_);
-    CHECK(op->dtype_ == instance->dtype_);
+    CHECK(op->destType_ == instance->destType_);
 }
 
 void MatchVisitor::visit(const For &op) {
