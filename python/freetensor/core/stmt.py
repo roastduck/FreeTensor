@@ -346,12 +346,12 @@ def Invoke(func, *args, **kvs):
     top.append_stmt(ffi.inlined_invoke(top.get_next_nid(), func, args, kvs))
 
 
-def Alloc(var : str):
+def Alloc(var: str):
     top = ctx_stack.top()
     top.append_stmt(ffi.makeAlloc(top.get_next_nid(), var))
 
 
-def Free(var : str):
+def Free(var: str):
     top = ctx_stack.top()
     top.append_stmt(ffi.makeFree(top.get_next_nid(), var))
 

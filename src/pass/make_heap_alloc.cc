@@ -6,12 +6,13 @@ namespace freetensor {
 Stmt InsertAlloc::visit(const StmtSeq &_op) {
     bool tmp_insert = is_insert;
     is_insert = false;
-    
+
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
     auto op = __op.as<StmtSeqNode>();
-    
-    if (!tmp_insert) return op;
+
+    if (!tmp_insert)
+        return op;
     is_insert = true;
 
     int i = 0;
@@ -42,7 +43,8 @@ Stmt InsertFree::visit(const StmtSeq &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
     auto op = __op.as<StmtSeqNode>();
 
-    if (!tmp_insert) return op;
+    if (!tmp_insert)
+        return op;
     is_insert = true;
 
     int i = op->stmts_.size() - 1;
@@ -50,14 +52,14 @@ Stmt InsertFree::visit(const StmtSeq &_op) {
         --i;
 
     assert(i >= 0);
-    
+
     if (op->stmts_[i]->nodeType() == ASTNodeType::For ||
         op->stmts_[i]->nodeType() == ASTNodeType::If ||
         op->stmts_[i]->nodeType() == ASTNodeType::Store ||
         op->stmts_[i]->nodeType() == ASTNodeType::Load ||
         op->stmts_[i]->nodeType() == ASTNodeType::ReduceTo ||
         op->stmts_[i]->isExpr()) {
-        op->stmts_.insert(op->stmts_.begin() + i+1, makeFree(op->id(), var_));
+        op->stmts_.insert(op->stmts_.begin() + i + 1, makeFree(op->id(), var_));
     } else {
         op->stmts_[i] = (*this)(op->stmts_[i]);
     }
