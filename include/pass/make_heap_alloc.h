@@ -8,31 +8,23 @@
 
 namespace freetensor {
 
-class InsertAlloc: public Mutator {
+class InsertAlloc : public Mutator {
     std::string var_;
+    bool is_insert;
 
   public:
-    InsertAlloc(const std::string &var) : var_(var) {}
-  
+    InsertAlloc(const std::string &var) : var_(var), is_insert(true) {}
+
   protected:
     Stmt visit(const StmtSeq &op) override;
 };
 
-class InsertFree: public Mutator {
+class InsertFree : public Mutator {
     std::string var_;
-  
-  public:
-    InsertFree(const std::string &var) : var_(var) {}
-  
-  protected:
-    Stmt visit(const StmtSeq &op) override;
-};
+    bool is_insert;
 
-class InsertAllocFree: public Mutator {
-    std::string var_;
-  
   public:
-    InsertAllocFree(const std::string &var) : var_(var) {}
+    InsertFree(const std::string &var) : var_(var), is_insert(true) {}
 
   protected:
     Stmt visit(const StmtSeq &op) override;
@@ -44,7 +36,7 @@ class MakeHeapAlloc : public Mutator {
 };
 
 Stmt makeHeapAlloc(const Stmt &op);
-	
+
 DEFINE_PASS_FOR_FUNC(makeHeapAlloc);
 
 } // namespace freetensor

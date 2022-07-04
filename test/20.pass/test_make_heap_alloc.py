@@ -2,36 +2,36 @@ import freetensor as ft
 
 
 def test_basic():
-    with ft.VarDef([("x", (), "int32", "cache", "cpu/heap"),
+    with ft.VarDef([("x", (), "int32", "cache", "cpu"),
+                    ("y", (2,2,), "int32", "cache", "cpu/heap"),
+                    ("t", (), "int32", "cache", "cpu/heap"),
+                    ("i", (), "int32", "input", "cpu"),
+                    ("o", (), "int32", "output", "cpu")]) as (x, y, t, i, o):
+        x[()] = i[()] * 2
+        t[()] = x[()] + 1
+        y[0, 1] = t + 1
+        y[1, 0] = t + 1
+        x[()] = y[0, 1] + y[1, 0] + 1
+        o[()] = x[()] + 1
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1, skip_passes=["prop_one_time_use"])
+    
+    # func = ft.lower(ft.Func("main", ["i"], [], ft.pop_ast()), verbose=1, skip_passes=["prop_one_time_use"])
+    # code = ft.codegen(func, verbose=True)
+
+    with ft.VarDef([("x", (), "int32", "cache", "cpu"),
                     ("i", (), "int32", "input", "cpu"),
                     ("o", (), "int32", "output", "cpu")]) as (x, i, o):
-        with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
-            t[()] = i[()] * 7
-            x[()] = t[()] + 2
-        o[()] = x[()] * 2
-        o[()] *= 2
-    ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
-
-    with ft.VarDef([("i", (), "int32", "input", "cpu"),
-                    ("o", (), "int32", "output", "cpu")]) as (i, o):
-        o[()] = 28 * i[()] + 8
+        x[()] = i[()] * 2
+        with ft.VarDef("y", (2,2,), "int32", "cache", "cpu/heap") as y:
+            with ft.VarDef("t", (), "int32", "cache", "cpu/heap") as t:
+                t[()] = x[()] + 1
+                ft.Alloc(y.name)
+                y[0, 1] = t[()] + 1
+                y[1, 0] = t[()] + 1
+            x[()] = y[0, 1] + y[1, 0] + 1
+            ft.Free(y.name)
+        o[()] = x[()] + 1
     std = ft.pop_ast()
 
     assert std.match(ast)
-
-# def test_basic_origin():
-#     with ft.VarDef([("x", (), "int32", "inout", "cpu"),
-#                     ("y", (), "int32", "output", "cpu")]) as (x, y):
-#         with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
-#             a[()] = x[()] + 1
-#         y[()] = x[()] + 1
-#     ast = ft.pop_ast(verbose=True)
-#     ast = ft.lower(ast, verbose=1)
-
-#     with ft.VarDef([("x", (), "int32", "inout", "cpu"),
-#                     ("y", (), "int32", "output", "cpu")]) as (x, y):
-#         y[()] = x[()] + 1
-#     std = ft.pop_ast()
-
-#     assert std.match(ast)

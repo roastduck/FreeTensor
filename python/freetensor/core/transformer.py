@@ -20,7 +20,7 @@ import freetensor_ffi as ffi
 
 from .context import pop_ast
 from .expr import (ndim, intrinsic, l_and, l_or, l_not, if_then_else)
-from .stmt import (_VarDef, VarRef, For, If, Else, MarkNid, ctx_stack, Func,
+from .stmt import (_VarDef, VarRef, For, If, Else, Alloc, Free, MarkNid, ctx_stack, Func,
                    Assert)
 
 assert sys.version_info >= (3,

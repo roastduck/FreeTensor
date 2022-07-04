@@ -8,7 +8,6 @@
 #include <pass/remove_writes.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
-#include <pass/make_heap_alloc.h>
 #include <schedule/cache.h>
 #include <schedule/check_var_cross_parallel.h>
 
@@ -268,7 +267,6 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
     ast = simplify(ast);
     ast = shrinkSingleVar(ast, newDef);
     ast = removeWrites(ast, newDef);
-    ast = makeHeapAlloc(ast);
     checkVarCrossParallel(ast, newDef, mtype);
     return std::make_pair(
         ast, std::make_tuple(std::move(fillStmt), std::move(flushStmt),

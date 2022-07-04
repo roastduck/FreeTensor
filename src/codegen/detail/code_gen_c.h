@@ -47,38 +47,47 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
 
     if (op->buffer_->atype() == AccessType::Cache) {
         // e.g. float x[5][5][5];
-        this->os() << gen(tensor->dtype()) << " " << name;
-        if (op->buffer_->mtype() == MemType::GPUWarp) {
-            if ((int)shape.size() && shape[0]->isConst() &&
-                shape[0].as<IntConstNode>()->val_ == 32) {
-                for (int i = 1; i < (int)shape.size(); i++) {
-                    this->os() << "[";
-                    (*this)(shape[i]);
-                    this->os() << "]";
-                }
-            } else {
-                ERROR("GPUWarp type must have a 32-size dimension");
-            }
-        } else {
-            for (auto &&dim : shape) {
+        if (op->buffer_->mtype() == MemType::CPUHeap && shape.size() != 0) {
+            this->os() << gen(tensor->dtype()) << " (*" << name << ")";
+            for (auto i = 1lu; i < shape.size(); ++ i) {
                 this->os() << "[";
-                (*this)(dim);
+                (*this)(shape[i]);
                 this->os() << "]";
             }
-        }
-        if (op->buffer_->mtype() == MemType::CPU) {
-            // Alignment (TODO: Move to CodeGenCPU)
-            bool isSingle = true;
-            for (auto &&dim : shape) {
-                if (dim->nodeType() != ASTNodeType::IntConst ||
-                    dim.as<IntConstNode>()->val_ != 1) {
-                    isSingle = false;
-                    break;
+        } else {
+            this->os() << gen(tensor->dtype()) << " " << name;
+            if (op->buffer_->mtype() == MemType::GPUWarp) {
+                if ((int)shape.size() && shape[0]->isConst() &&
+                    shape[0].as<IntConstNode>()->val_ == 32) {
+                    for (int i = 1; i < (int)shape.size(); i++) {
+                        this->os() << "[";
+                        (*this)(shape[i]);
+                        this->os() << "]";
+                    }
+                } else {
+                    ERROR("GPUWarp type must have a 32-size dimension");
+                }
+            } else {
+                for (auto &&dim : shape) {
+                    this->os() << "[";
+                    (*this)(dim);
+                    this->os() << "]";
                 }
             }
-            if (!isSingle) {
-                // TODO adjust the value according to the cache line size
-                this->os() << " __attribute__((aligned(64)))";
+            if (op->buffer_->mtype() == MemType::CPU) {
+                // Alignment (TODO: Move to CodeGenCPU)
+                bool isSingle = true;
+                for (auto &&dim : shape) {
+                    if (dim->nodeType() != ASTNodeType::IntConst ||
+                        dim.as<IntConstNode>()->val_ != 1) {
+                        isSingle = false;
+                        break;
+                    }
+                }
+                if (!isSingle) {
+                    // TODO adjust the value according to the cache line size
+                    this->os() << " __attribute__((aligned(64)))";
+                }
             }
         }
         this->os() << ";" << std::endl;
@@ -244,15 +253,8 @@ template <class Stream> void CodeGenC<Stream>::visit(const Alloc &op) {
     auto &&tensor = BaseClass::buffer(op->var_)->tensor();
     auto &&shape = tensor->shape();
     auto &&dtype = tensor->dtype();
-    int sz = shape.size();
 
-    this->os() << gen(dtype) << "(*" << mangle(op->var_) << ")";
-
-    for (int i = 1; i < sz; ++ i) {
-        this->os() << "[";
-        (*this)(shape[i]);
-        this->os() << "]";
-    }
+    this->os() << mangle(op->var_);
 
     this->os() << " = new " << gen(dtype);
     for (auto &&dim : shape) {
@@ -260,11 +262,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const Alloc &op) {
         (*this)(dim);
         this->os() << "]";
     }
-    this->os() << ";";
+    this->os() << ";" << std::endl;
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Free &op) {
-    this->os() << "delete " << mangle(op->var_) << ";";
+    this->makeIndent();
+    this->os() << "delete " << mangle(op->var_) << ";" << std::endl;
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {

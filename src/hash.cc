@@ -616,6 +616,8 @@ bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
         DISPATCH(VarDef);
         DISPATCH(Store);
         DISPATCH(ReduceTo);
+        DISPATCH(Alloc);
+        DISPATCH(Free);
         DISPATCH(For);
         DISPATCH(If);
         DISPATCH(Assert);
