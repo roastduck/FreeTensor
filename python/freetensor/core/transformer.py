@@ -253,35 +253,68 @@ def annotate_stmt(name: str, ty):
     return None
 
 
+class StagedPredicate(abc.ABC):
+
+    @abc.abstractmethod
+    def if_then_else_stmt(self, then_body: Callable[[], None],
+                          else_body: Optional[Callable[[], None]]):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def if_then_else_expr(self, then_expr: Callable[[], Any],
+                          else_expr: Callable[[], Any]):
+        raise NotImplementedError()
+
+
+def _staged_if_then_else_stmt(pred: Union[VarRef, ffi.Expr],
+                              then_body: Callable[[], None],
+                              else_body: Optional[Callable[[], None]]):
+    with If(pred):
+        with LifetimeScope():
+            then_body()
+    if else_body:
+        with Else():
+            with LifetimeScope():
+                return else_body()
+
+
+def _staged_if_then_else_expr(pred: Union[VarRef, ffi.Expr],
+                              then_expr: Callable[[], VarRef],
+                              else_expr: Callable[[], VarRef]):
+    return if_then_else(pred, then_expr(), else_expr())
+
+
+StagedPredicate.register(VarRef)
+VarRef.if_then_else_stmt = _staged_if_then_else_stmt
+VarRef.if_then_else_expr = _staged_if_then_else_expr
+StagedPredicate.register(ffi.Expr)
+ffi.Expr.if_then_else_stmt = _staged_if_then_else_stmt
+ffi.Expr.if_then_else_expr = _staged_if_then_else_expr
+
+
 def if_then_else_stmt(predicate, then_body, else_body=None):
     '''If-then-else statement staging tool.
     When predicate is deterministic in staging, only one branch is generated.
     Otherwise, a If node in IR is generated.
     '''
-    if type(predicate) == bool:
+    if isinstance(predicate, StagedPredicate):
+        predicate.if_then_else_stmt(then_body, else_body)
+    else:
         if predicate:
             then_body()
         elif else_body:
             else_body()
-    else:
-        with If(predicate):
-            with LifetimeScope():
-                then_body()
-        if else_body:
-            with Else():
-                with LifetimeScope():
-                    return else_body()
 
 
 def if_then_else_expr(predicate, then_expr, else_expr):
     '''If-then-else expression staging tool.'''
-    if type(predicate) == bool:
-        if predicate:
-            return then_expr
-        else:
-            return else_expr
+    if isinstance(predicate, StagedPredicate):
+        return predicate.if_then_else_expr(then_expr, else_expr)
     else:
-        return if_then_else(predicate, then_expr, else_expr)
+        if predicate:
+            return then_expr()
+        else:
+            return else_expr()
 
 
 def return_stmt(value, funcname):
@@ -615,6 +648,15 @@ class NonlocalTransformingScope:
         self.t.nonlocals.pop()
 
 
+_empty_args = ast.arguments(args=[],
+                            vararg=None,
+                            kwarg=None,
+                            posonlyargs=[],
+                            defaults=[],
+                            kwonlyargs=[],
+                            kw_defaults=[])
+
+
 @dataclass
 class Transformer(ast.NodeTransformer):
     filename: str
@@ -770,7 +812,9 @@ class Transformer(ast.NodeTransformer):
     def visit_IfExp(self, old_node: ast.IfExp):
         '''Rule: `body if test else orelse` -> `if_then_else_expr(test, body, orelse)`'''
         node = self.generic_visit(old_node)
-        node = call_helper(if_then_else_expr, node.test, node.body, node.orelse)
+        node = call_helper(if_then_else_expr, node.test,
+                           ast.Lambda(_empty_args, node.body),
+                           ast.Lambda(_empty_args, node.orelse))
         return location_helper(node, old_node)
 
     def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
@@ -827,15 +871,8 @@ class Transformer(ast.NodeTransformer):
             libfunc = or_expr
         else:
             return location_helper(node, old_node)
-        empty_args = ast.arguments(args=[],
-                                   vararg=None,
-                                   kwarg=None,
-                                   posonlyargs=[],
-                                   defaults=[],
-                                   kwonlyargs=[],
-                                   kw_defaults=[])
         node = call_helper(libfunc,
-                           *[ast.Lambda(empty_args, v) for v in node.values])
+                           *[ast.Lambda(_empty_args, v) for v in node.values])
         return location_helper(node, old_node)
 
     def visit_UnaryOp(self, old_node: ast.UnaryOp) -> Any:
