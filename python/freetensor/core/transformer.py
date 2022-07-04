@@ -266,10 +266,8 @@ class StagedPredicate(abc.ABC):
         raise NotImplementedError()
 
 
-StagedPredicate.register(VarRef)
-
-
-def _varref_if_then_else_stmt(pred: VarRef, then_body: Callable[[], None],
+def _staged_if_then_else_stmt(pred: Union[VarRef, ffi.Expr],
+                              then_body: Callable[[], None],
                               else_body: Optional[Callable[[], None]]):
     with If(pred):
         with LifetimeScope():
@@ -280,13 +278,18 @@ def _varref_if_then_else_stmt(pred: VarRef, then_body: Callable[[], None],
                 return else_body()
 
 
-def _varref_if_then_else_expr(pred: VarRef, then_expr: Callable[[], VarRef],
+def _staged_if_then_else_expr(pred: Union[VarRef, ffi.Expr],
+                              then_expr: Callable[[], VarRef],
                               else_expr: Callable[[], VarRef]):
     return if_then_else(pred, then_expr(), else_expr())
 
 
-VarRef.if_then_else_stmt = _varref_if_then_else_stmt
-VarRef.if_then_else_expr = _varref_if_then_else_expr
+StagedPredicate.register(VarRef)
+VarRef.if_then_else_stmt = _staged_if_then_else_stmt
+VarRef.if_then_else_expr = _staged_if_then_else_expr
+StagedPredicate.register(ffi.Expr)
+ffi.Expr.if_then_else_stmt = _staged_if_then_else_stmt
+ffi.Expr.if_then_else_expr = _staged_if_then_else_expr
 
 
 def if_then_else_stmt(predicate, then_body, else_body=None):
@@ -295,7 +298,7 @@ def if_then_else_stmt(predicate, then_body, else_body=None):
     Otherwise, a If node in IR is generated.
     '''
     if isinstance(predicate, StagedPredicate):
-        predicate.if_then_else_stmt(predicate, then_body, else_body)
+        predicate.if_then_else_stmt(then_body, else_body)
     else:
         if predicate:
             then_body()
@@ -306,7 +309,7 @@ def if_then_else_stmt(predicate, then_body, else_body=None):
 def if_then_else_expr(predicate, then_expr, else_expr):
     '''If-then-else expression staging tool.'''
     if isinstance(predicate, StagedPredicate):
-        return predicate.if_then_else_expr(predicate, then_expr, else_expr)
+        return predicate.if_then_else_expr(then_expr, else_expr)
     else:
         if predicate:
             return then_expr()
