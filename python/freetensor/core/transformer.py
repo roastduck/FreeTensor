@@ -614,7 +614,7 @@ def mark_position(base_lineno: int, line_offset: int):
 def module_helper(callee):
     '''Helper to get an AST node with full path to given symbol, which should be in current module.'''
     return ast.Attribute(
-        ast.Attribute(ast.Name('freetensor', ast.Load()), 'transformer',
+        ast.Attribute(ast.Name('__freetensor__', ast.Load()), 'transformer',
                       ast.Load()), callee.__name__, ast.Load())
 
 
@@ -979,19 +979,6 @@ def _remove_indent(lines: List[str]) -> str:
     return ''.join(line[spaces_to_remove:] for line in lines)
 
 
-def _get_caller_env(depth: int):
-    frame = inspect.currentframe()
-    try:
-        parent = frame
-        for _ in range(depth + 1):
-            parent = parent.f_back
-        caller_env = copy.copy(parent.f_globals)
-        caller_env.update(parent.f_locals)
-    finally:
-        del frame
-    return caller_env
-
-
 def process_annotating_comments(src: str):
     new_src = []
     for line in src.splitlines():
@@ -999,14 +986,14 @@ def process_annotating_comments(src: str):
         rest_line = line[len(indent):]
         if rest_line.startswith('#! '):
             arg = rest_line[3:].replace('"', '\\"')
-            new_src.append(f'{indent}freetensor.metadata("{arg}")')
+            new_src.append(f'{indent}__freetensor__.metadata("{arg}")')
         else:
             new_src.append(line)
     new_src = '\n'.join(new_src)
     return new_src
 
 
-def into_staging(func, caller_env, src: str = None, verbose=False):
+def into_staging(func, src: str = None, verbose=False):
     if src is None:
         lines, lineno = ins.getsourcelines(func)
         src = _remove_indent(lines)
@@ -1015,13 +1002,50 @@ def into_staging(func, caller_env, src: str = None, verbose=False):
         lineno = 1
         file = f'<staging:{func.__name__}>'
 
-    tree = ast.parse(process_annotating_comments(src))
-    tree = ast.fix_missing_locations(Transformer(file, lineno).visit(tree))
+    func.__globals__['__freetensor__'] = sys.modules['freetensor']
+    if func.__closure__:
+        func_locals = {
+            name: cell.cell_contents
+            for name, cell in zip(func.__code__.co_freevars, func.__closure__)
+        }
+    else:
+        func_locals = {}
 
-    import astor
-    source = astor.to_source(tree)
+    tree = ast.parse(process_annotating_comments(src))
+    tree = Transformer(file, lineno).visit(tree)
+
+    # Wrap the staging function.
+    # This is to workaround an issue of CPython.
+    # (See https://github.com/python/cpython/issues/86084)
+    # Without a context, CPython has no idea whether a name is from globals or
+    # locals, thus it uses LOAD_GLOBAL for variables from the closure.
+    # To avoid this, we wrap the staging function with the closure variables
+    # passed as arguments to the wrapper.
+    WRAPPER_NAME = '__freetensor_staging_wrapper__'
+    tree.body = [
+        ast.FunctionDef(
+            name=WRAPPER_NAME,
+            args=ast.arguments(
+                posonlyargs=[],
+                args=[ast.arg(name, None) for name in func_locals.keys()],
+                vararg=None,
+                kwonlyargs=[],
+                kw_defaults=[],
+                kwarg=None,
+                defaults=[]),
+            body=[
+                *tree.body,
+                ast.Return(value=ast.Name(id=func.__name__, ctx=ast.Load()))
+            ],
+            decorator_list=[],
+            returns=None),
+    ]
+    tree = ast.fix_missing_locations(tree)
 
     if verbose:
+        import astor
+        source = astor.to_source(tree)
+
         from pygments import highlight
         from pygments.lexers import PythonLexer
         from pygments.formatters import TerminalFormatter
@@ -1029,12 +1053,19 @@ def into_staging(func, caller_env, src: str = None, verbose=False):
                         TerminalFormatter(bg='dark', linenos=True)),
               file=sys.stderr)
 
-    caller_env['freetensor'] = sys.modules['freetensor']
-    exec(compile(source, f'<staging:{func.__name__}>', 'exec'), caller_env)
-    return caller_env[func.__name__], file, func.__name__
+    # Create an empty locals dict to avoid polluting the original globals.
+    empty_locals = {}
+    exec(compile(tree, f'<staging:{func.__name__}>', 'exec'), func.__globals__,
+         empty_locals)
+    f_wrapper = empty_locals[WRAPPER_NAME]
+    # Pass the closure to the wrapper and retrieve the staging function with
+    # correct captured variables.
+    f_staging = f_wrapper(**func_locals)
+
+    return f_staging, file, func.__name__
 
 
-def transform(func=None, verbose: int = 0, depth: int = 1, caller_env=None):
+def transform(func=None, verbose: int = 0):
     '''
     Transform a user function to an AST
 
@@ -1050,13 +1081,10 @@ def transform(func=None, verbose: int = 0, depth: int = 1, caller_env=None):
 
     if verbose is None:
         verbose = 0
-    if caller_env is None:
-        caller_env = _get_caller_env(depth)
 
     def decorator(func):
         params = list(inspect.signature(func).parameters)
         staging_func, filename, funcname = into_staging(func,
-                                                        caller_env,
                                                         verbose=verbose >= 2)
 
         try:
@@ -1113,7 +1141,7 @@ def transform(func=None, verbose: int = 0, depth: int = 1, caller_env=None):
         return decorator
 
 
-def inline(func=None, src=None, fallback=None, verbose=False, caller_env=None):
+def inline(func=None, src=None, fallback=None, verbose=False):
     '''
     Enable a user function to be called by a transformed function at run time
 
@@ -1128,13 +1156,9 @@ def inline(func=None, src=None, fallback=None, verbose=False, caller_env=None):
         True to print the generated Python code that is used for transforming
     '''
 
-    if caller_env is None:
-        caller_env = _get_caller_env(1)
-
     def decorator(func):
         return functools.wraps(func)(staged_callable(
-            into_staging(func, caller_env, src, verbose=verbose)[0], fallback or
-            func))
+            into_staging(func, src, verbose=verbose)[0], fallback or func))
 
     if callable(func):
         return decorator(func)

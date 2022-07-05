@@ -56,7 +56,7 @@ def optimize(func=None,
             target = device.target()
 
         if not issubclass(type(func), ffi.AST):
-            ast = transform(func, verbose=verbose, depth=2)
+            ast = transform(func, verbose=verbose)
         else:
             ast = func
         ast = schedule(ast, schedule_callback, verbose=verbose)

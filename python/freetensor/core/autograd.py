@@ -66,7 +66,7 @@ def _grad_func(impl,
                verbose: Optional[int] = None):
 
     if not issubclass(type(func), ffi.AST):
-        func = transform(func, verbose=verbose, depth=3)
+        func = transform(func, verbose=verbose)
     req = set(requires)
     prov = set([])
     for p in provides:
