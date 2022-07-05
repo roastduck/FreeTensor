@@ -46,15 +46,17 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
     auto name = mangle(op->name_);
 
     if (op->buffer_->atype() == AccessType::Cache) {
-        // e.g. float x[5][5][5];
         if (op->buffer_->mtype() == MemType::CPUHeap && shape.size() != 0) {
+            // e.g. float (*x)[5][5] = nullptr;
             this->os() << gen(tensor->dtype()) << " (*" << name << ")";
-            for (auto i = 1lu; i < shape.size(); ++ i) {
+            for (auto i = 1lu; i < shape.size(); ++i) {
                 this->os() << "[";
                 (*this)(shape[i]);
                 this->os() << "]";
             }
+            this->os() << " = nullptr";
         } else {
+            // e.g. float x[5][5][5];
             this->os() << gen(tensor->dtype()) << " " << name;
             if (op->buffer_->mtype() == MemType::GPUWarp) {
                 if ((int)shape.size() && shape[0]->isConst() &&
@@ -249,25 +251,37 @@ template <class Stream> void CodeGenC<Stream>::visit(const Alloc &op) {
     this->markUseBuffer(op->var_);
     this->makeIndent();
 
-    // e.g. float (*x)[8][11] = new float[5][8][11];
+    // e.g.
+    // int (*x)[m][l];
+    // x = reinterpret_cast<int(*)[m][l]>(new int[n*m*l]);
     auto &&tensor = BaseClass::buffer(op->var_)->tensor();
     auto &&shape = tensor->shape();
     auto &&dtype = tensor->dtype();
 
     this->os() << mangle(op->var_);
 
-    this->os() << " = new " << gen(dtype);
-    for (auto &&dim : shape) {
+    this->os() << " = reinterpret_cast<" << gen(dtype) << "(*)";
+    for (auto i = 1lu; i < shape.size(); ++i) {
         this->os() << "[";
-        (*this)(dim);
+        (*this)(shape[i]);
         this->os() << "]";
     }
-    this->os() << ";" << std::endl;
+    this->os() << ">(new " << gen(dtype) << "[";
+    for (auto i = 0lu; i < shape.size(); ++i) {
+        if (i != 0lu)
+            this->os() << "*";
+        this->os() << "(";
+        (*this)(shape[i]);
+        this->os() << ")";
+    }
+    this->os() << "]);" << std::endl;
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Free &op) {
     this->makeIndent();
-    this->os() << "delete " << mangle(op->var_) << ";" << std::endl;
+
+    // e.g. delete[] x;
+    this->os() << "delete[] " << mangle(op->var_) << ";" << std::endl;
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {

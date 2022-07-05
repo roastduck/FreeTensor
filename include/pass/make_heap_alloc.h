@@ -8,6 +8,12 @@
 
 namespace freetensor {
 
+/**
+ * For any variable with memory type of cpu/heap or gpu/global/heap, we allocate
+ * memory for it as late as possible, and deallocate memory as early as
+ * possible. Similar operations will not be performed on scalars cause of few
+ * memory they used.
+ */
 class InsertAlloc : public Mutator {
     std::string var_;
     bool is_insert;

@@ -19,7 +19,7 @@ Stmt InsertAlloc::visit(const StmtSeq &_op) {
     while (allUses(op->stmts_[i]).count(var_) == 0)
         ++i;
 
-    assert(i < (int)op->stmts_.size());
+    ASSERT(i < (int)op->stmts_.size());
 
     if (op->stmts_[i]->nodeType() == ASTNodeType::For ||
         op->stmts_[i]->nodeType() == ASTNodeType::If ||
@@ -51,7 +51,7 @@ Stmt InsertFree::visit(const StmtSeq &_op) {
     while (allUses(op->stmts_[i]).count(var_) == 0)
         --i;
 
-    assert(i >= 0);
+    ASSERT(i >= 0);
 
     if (op->stmts_[i]->nodeType() == ASTNodeType::For ||
         op->stmts_[i]->nodeType() == ASTNodeType::If ||

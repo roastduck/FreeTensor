@@ -209,13 +209,13 @@ void PrintVisitor::visit(const Store &op) {
 
 void PrintVisitor::visit(const Alloc &op) {
     makeIndent();
-    os() << "@!Alloc(" << prettyVarDefName(op->var_) << ")";
+    os() << "@!alloc(" << prettyVarDefName(op->var_) << ")";
     os() << std::endl;
 }
 
 void PrintVisitor::visit(const Free &op) {
     makeIndent();
-    os() << "@!Free(" << prettyVarDefName(op->var_) << ")";
+    os() << "@!free(" << prettyVarDefName(op->var_) << ")";
     os() << std::endl;
 }
 
