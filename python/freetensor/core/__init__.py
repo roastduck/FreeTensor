@@ -28,7 +28,7 @@ from .config import *
 
 from .transformer import (transform, inline, empty, var, capture_var, metadata,
                           Var, StagingError, StagedAssignable, StagedIterable,
-                          StagedTypeAnnotation)
+                          StagedPredicate, StagedTypeAnnotation)
 
 from .meta import *
 from .auto_schedule import *

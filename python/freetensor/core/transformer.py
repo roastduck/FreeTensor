@@ -265,6 +265,10 @@ class StagedPredicate(abc.ABC):
                           else_expr: Callable[[], Any]):
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def while_stmt(self, body: Callable[[], None]):
+        raise NotImplementedError()
+
 
 def _staged_if_then_else_stmt(pred: Union[VarRef, ffi.Expr],
                               then_body: Callable[[], None],
@@ -284,12 +288,18 @@ def _staged_if_then_else_expr(pred: Union[VarRef, ffi.Expr],
     return if_then_else(pred, then_expr(), else_expr())
 
 
+def _staged_while_stmt(pred: Union[VarRef, ffi.Expr], body: Callable[[], None]):
+    raise NotImplementedError()
+
+
 StagedPredicate.register(VarRef)
 VarRef.if_then_else_stmt = _staged_if_then_else_stmt
 VarRef.if_then_else_expr = _staged_if_then_else_expr
+VarRef.while_stmt = _staged_while_stmt
 StagedPredicate.register(ffi.Expr)
 ffi.Expr.if_then_else_stmt = _staged_if_then_else_stmt
 ffi.Expr.if_then_else_expr = _staged_if_then_else_expr
+ffi.Expr.while_stmt = _staged_while_stmt
 
 
 def if_then_else_stmt(predicate, then_body, else_body=None):
@@ -315,6 +325,18 @@ def if_then_else_expr(predicate, then_expr, else_expr):
             return then_expr()
         else:
             return else_expr()
+
+
+def while_stmt(fpred, body):
+    '''While statement staging tool.'''
+    first_pred = fpred()
+    if isinstance(first_pred, StagedPredicate):
+        first_pred.while_stmt(body)
+    else:
+        if first_pred:
+            body()
+        while fpred():
+            body()
 
 
 def return_stmt(value, funcname):
@@ -755,6 +777,28 @@ class Transformer(ast.NodeTransformer):
                 ]
         else:
             node = self.generic_visit(old_node)
+        return location_helper(node, old_node)
+
+    def visit_While(self, old_node: ast.While) -> Any:
+        '''Rule:
+        ```
+        while pred:
+            body
+        ```
+        ->
+        ```
+        def while_body():
+            body
+        while_stmt(lambda: pred, while_body)
+        ```'''
+        with NonlocalTransformingScope(self) as nonlocals:
+            node: ast.While = self.generic_visit(old_node)
+            node = [
+                function_helper('while_body', [], node.body, nonlocals),
+                ast.Expr(
+                    call_helper(while_stmt, ast.Lambda(_empty_args, node.test),
+                                ast.Name('while_body', ast.Load())))
+            ]
         return location_helper(node, old_node)
 
     def visit_Call(self, old_node: ast.Call):
