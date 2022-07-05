@@ -236,6 +236,35 @@ void CodeGenCUDA::visit(const Load &op) {
     }
 }
 
+void CodeGenCUDA::visit(const Alloc &op) {
+    ASSERT(buffer(op->var_)->mtype() == MemType::GPUGlobalHeap);
+
+    // e.g.
+    // Alloc:   cudaMalloc((void**)&x, n*m*sizeof(float));
+
+    auto id = mangle(op->var_);
+    auto &&tensor = buffer(op->var_)->tensor();
+    auto &&shape = tensor->shape();
+    makeIndent();
+    os() << "checkCudaError(cudaMalloc((void**)&" << id << ", ";
+    for (auto &&dim : shape) {
+        (*this)(dim);
+        os() << " * ";
+    }
+    os() << "sizeof(" << gen(tensor->dtype()) << ")));" << std::endl;
+}
+
+void CodeGenCUDA::visit(const Free &op) {
+    ASSERT(buffer(op->var_)->mtype() == MemType::GPUGlobalHeap);
+
+    // e.g.
+    // Free:    cudaFree(x);
+
+    auto id = mangle(op->var_);
+    makeIndent();
+    os() << "cudaFree(" << id << ");" << std::endl;
+}
+
 void CodeGenCUDA::visit(const ReduceTo &op) {
     markUseBuffer(op->var_);
     makeIndent();
@@ -494,6 +523,38 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
                 makeIndent();
                 os() << "cudaFree(" << mangle(op->name_) << ");" << std::endl;
+            }
+
+            markUndefBuffer(op);
+            break;
+        }
+
+        case MemType::GPUGlobalHeap: {
+            markDefBuffer(op);
+
+            if (inKernel()) {
+                ASSERT(false);
+            } else {
+                // e.g.
+                // VarDef:  float (*x)[m];  (same as cpu)
+                auto &&tensor = op->buffer_->tensor();
+                auto &&shape = tensor->shape();
+                makeIndent();
+                auto shape_size = shape.size();
+                if (shape_size == 0) { // scalar
+                    os() << gen(tensor->dtype()) << " " << mangle(op->name_);
+                } else {
+                    os() << gen(tensor->dtype()) << " (*";
+                    os() << mangle(op->name_) << ")";
+                    for (size_t i = 1; i < shape_size; i++) { // No shape[0]
+                        os() << "[";
+                        (*this)(shape[i]);
+                        os() << "]";
+                    }
+                }
+                os() << ";" << std::endl;
+
+                (*this)(op->body_);
             }
 
             markUndefBuffer(op);
