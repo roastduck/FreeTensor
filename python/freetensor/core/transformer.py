@@ -801,17 +801,6 @@ class Transformer(ast.NodeTransformer):
             ]
         return location_helper(node, old_node)
 
-    def visit_Call(self, old_node: ast.Call):
-        '''Rule:
-        `range(...)` -> `dynamic_range(...)`
-        '''
-        node: ast.Call = self.generic_visit(old_node)
-        if isinstance(node.func, ast.Name):
-            if node.func.id == 'range':
-                node = ast.Call(module_helper(dynamic_range), node.args,
-                                node.keywords)
-        return location_helper(node, old_node)
-
     def visit_If(self, old_node: ast.If):
         '''Rule:
         ```
@@ -993,7 +982,7 @@ def process_annotating_comments(src: str):
     return new_src
 
 
-def into_staging(func, src: str = None, verbose=False):
+def into_staging(func, extra_locals={}, src: str = None, verbose=False):
     if src is None:
         lines, lineno = ins.getsourcelines(func)
         src = _remove_indent(lines)
@@ -1003,13 +992,12 @@ def into_staging(func, src: str = None, verbose=False):
         file = f'<staging:{func.__name__}>'
 
     func.__globals__['__freetensor__'] = sys.modules['freetensor']
+    func_locals = extra_locals
     if func.__closure__:
-        func_locals = {
+        func_locals.update({
             name: cell.cell_contents
             for name, cell in zip(func.__code__.co_freevars, func.__closure__)
-        }
-    else:
-        func_locals = {}
+        })
 
     tree = ast.parse(process_annotating_comments(src))
     tree = Transformer(file, lineno).visit(tree)
@@ -1065,7 +1053,7 @@ def into_staging(func, src: str = None, verbose=False):
     return f_staging, file, func.__name__
 
 
-def transform(func=None, verbose: int = 0):
+def transform(func=None, default_dynamic_range=True, verbose: int = 0):
     '''
     Transform a user function to an AST
 
@@ -1074,6 +1062,9 @@ def transform(func=None, verbose: int = 0):
     func : Python function
         The user function to transform. If not specified, a partial function will
         be returend, which can be used as a decorator
+    default_dynamic_range : bool
+        If True, the built-in range is replaced with freetensor.dynamic_range.
+        Defaults to True
     verbose : int
         0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
         Python code that is used for transforming
@@ -1082,9 +1073,15 @@ def transform(func=None, verbose: int = 0):
     if verbose is None:
         verbose = 0
 
+    if default_dynamic_range:
+        extra_locals = {'range': dynamic_range}
+    else:
+        extra_locals = {}
+
     def decorator(func):
         params = list(inspect.signature(func).parameters)
         staging_func, filename, funcname = into_staging(func,
+                                                        extra_locals,
                                                         verbose=verbose >= 2)
 
         try:
@@ -1141,7 +1138,11 @@ def transform(func=None, verbose: int = 0):
         return decorator
 
 
-def inline(func=None, src=None, fallback=None, verbose=False):
+def inline(func=None,
+           src=None,
+           fallback=None,
+           default_dynamic_range=True,
+           verbose=False):
     '''
     Enable a user function to be called by a transformed function at run time
 
@@ -1152,13 +1153,22 @@ def inline(func=None, src=None, fallback=None, verbose=False):
     src : str (Optional)
         The source code of `func`. This parameter is only required if the source
         code cannot be get automatically, e.g., if `func` is generated from a `exec`
+    default_dynamic_range : bool
+        If True, the built-in range is replaced with freetensor.dynamic_range.
+        Defaults to True
     verbose : bool
         True to print the generated Python code that is used for transforming
     '''
 
+    if default_dynamic_range:
+        extra_locals = {'range': dynamic_range}
+    else:
+        extra_locals = {}
+
     def decorator(func):
         return functools.wraps(func)(staged_callable(
-            into_staging(func, src, verbose=verbose)[0], fallback or func))
+            into_staging(func, extra_locals, src, verbose=verbose)[0],
+            fallback or func))
 
     if callable(func):
         return decorator(func)
