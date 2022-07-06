@@ -35,10 +35,11 @@ var searchData=
   ['forproperty_32',['ForProperty',['../structfreetensor_1_1ForProperty.html',1,'freetensor']]],
   ['forswithdatareuse_33',['ForsWithDataReuse',['../structfreetensor_1_1ForsWithDataReuse.html',1,'freetensor']]],
   ['forwithstore_34',['ForWithStore',['../structfreetensor_1_1ForWithStore.html',1,'freetensor']]],
-  ['frontendvar_35',['FrontendVar',['../classfreetensor_1_1FrontendVar.html',1,'freetensor']]],
-  ['frontendvaridx_36',['FrontendVarIdx',['../classfreetensor_1_1FrontendVarIdx.html',1,'freetensor']]],
-  ['funcnode_37',['FuncNode',['../classfreetensor_1_1FuncNode.html',1,'freetensor']]],
-  ['funcparam_38',['FuncParam',['../structfreetensor_1_1FuncParam.html',1,'freetensor']]],
-  ['funcret_39',['FuncRet',['../structfreetensor_1_1FuncRet.html',1,'freetensor']]],
-  ['fusefor_40',['FuseFor',['../classfreetensor_1_1FuseFor.html',1,'freetensor']]]
+  ['freenode_35',['FreeNode',['../classfreetensor_1_1FreeNode.html',1,'freetensor']]],
+  ['frontendvar_36',['FrontendVar',['../classfreetensor_1_1FrontendVar.html',1,'freetensor']]],
+  ['frontendvaridx_37',['FrontendVarIdx',['../classfreetensor_1_1FrontendVarIdx.html',1,'freetensor']]],
+  ['funcnode_38',['FuncNode',['../classfreetensor_1_1FuncNode.html',1,'freetensor']]],
+  ['funcparam_39',['FuncParam',['../structfreetensor_1_1FuncParam.html',1,'freetensor']]],
+  ['funcret_40',['FuncRet',['../structfreetensor_1_1FuncRet.html',1,'freetensor']]],
+  ['fusefor_41',['FuseFor',['../classfreetensor_1_1FuseFor.html',1,'freetensor']]]
 ];

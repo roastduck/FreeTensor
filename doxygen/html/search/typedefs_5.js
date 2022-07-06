@@ -9,5 +9,6 @@ var searchData=
   ['floor_6',['Floor',['../namespacefreetensor.html#a6ae11b6abeedd07ff8fd109dff1e688e',1,'freetensor']]],
   ['floordiv_7',['FloorDiv',['../namespacefreetensor.html#a71c3acc86346abec2d5aae295f516f53',1,'freetensor']]],
   ['for_8',['For',['../namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d',1,'freetensor']]],
-  ['func_9',['Func',['../namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f',1,'freetensor']]]
+  ['free_9',['Free',['../namespacefreetensor.html#a0a2d7af969695e7c216587d7431d921b',1,'freetensor']]],
+  ['func_10',['Func',['../namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f',1,'freetensor']]]
 ];
