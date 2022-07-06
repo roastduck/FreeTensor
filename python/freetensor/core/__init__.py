@@ -28,7 +28,8 @@ from .config import *
 
 from .transformer import (transform, inline, empty, var, capture_var, metadata,
                           Var, StagingError, StagedAssignable, StagedIterable,
-                          StagedPredicate, StagedTypeAnnotation)
+                          StagedPredicate, StagedTypeAnnotation, dynamic_range,
+                          static_range)
 
 from .meta import *
 from .auto_schedule import *

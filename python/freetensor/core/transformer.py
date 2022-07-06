@@ -538,6 +538,9 @@ class dynamic_range(StagedIterable):
                 body(iter_var)
 
 
+static_range = range
+
+
 def boolop_expr(native_reducer, ir_reducer, lazy_args):
     result = lazy_args[0]()
     for f in lazy_args[1:]:
