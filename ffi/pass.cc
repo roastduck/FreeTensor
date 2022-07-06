@@ -12,13 +12,13 @@
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_1d_var.h>
 #include <pass/make_const_shape.h>
+#include <pass/make_heap_alloc.h>
 #include <pass/make_parallel_reduction.h>
 #include <pass/make_reduction.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
-#include <pass/make_heap_alloc.h>
 #include <pass/remove_writes.h>
 #include <pass/scalar_prop_const.h>
 #include <pass/shrink_for.h>

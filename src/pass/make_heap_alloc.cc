@@ -67,10 +67,16 @@ Stmt InsertFree::visit(const StmtSeq &_op) {
     return op;
 }
 
+bool MakeHeapAlloc::inKernel() const { return for_depth != 0 || inCublas_; }
+
 Stmt MakeHeapAlloc::visit(const VarDef &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
+
+    if (op->buffer_->mtype() == MemType::GPUGlobalHeap) {
+        ASSERT(!inKernel());
+    }
 
     if (op->buffer_->mtype() == MemType::CPUHeap ||
         op->buffer_->mtype() == MemType::GPUGlobalHeap) {
@@ -80,6 +86,29 @@ Stmt MakeHeapAlloc::visit(const VarDef &_op) {
         }
     }
 
+    return op;
+}
+
+Stmt MakeHeapAlloc::visit(const For &_op) {
+    bool delta_depth =
+        ((_op->property_->parallel_ != serialScope) &&
+         std::holds_alternative<CUDAScope>(_op->property_->parallel_));
+    if (delta_depth)
+        ++for_depth;
+    auto __op = Mutator::visit(_op);
+    if (delta_depth)
+        --for_depth;
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.as<ForNode>();
+    return op;
+}
+
+Stmt MakeHeapAlloc::visit(const MatMul &_op) {
+    inCublas_ = true;
+    auto __op = Mutator::visit(_op);
+    inCublas_ = false;
+    ASSERT(__op->nodeType() == ASTNodeType::MatMul);
+    auto op = __op.as<MatMulNode>();
     return op;
 }
 
