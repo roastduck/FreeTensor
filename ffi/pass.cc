@@ -12,6 +12,7 @@
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_1d_var.h>
 #include <pass/make_const_shape.h>
+#include <pass/make_heap_alloc.h>
 #include <pass/make_parallel_reduction.h>
 #include <pass/make_reduction.h>
 #include <pass/merge_and_hoist_if.h>
@@ -114,6 +115,11 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Func (*)(const Func &)>(&removeDeadVar), "func"_a);
     m.def("remove_dead_var",
           static_cast<Stmt (*)(const Stmt &)>(&removeDeadVar), "stmt"_a);
+      
+    m.def("make_heap_alloc",
+          static_cast<Func (*)(const Func &)>(&makeHeapAlloc), "func"_a);
+    m.def("make_heap_alloc",
+          static_cast<Stmt (*)(const Stmt &)>(&makeHeapAlloc), "stmt"_a);
 
     m.def("make_const_shape",
           static_cast<Func (*)(const Func &, const std::vector<MemType> &)>(

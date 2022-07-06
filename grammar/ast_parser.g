@@ -128,6 +128,14 @@ stmtWithoutID returns [Stmt node]
       {
         $node = $varDef.node;
       }
+    | alloc
+      {
+        $node = $alloc.node;
+      }
+    | free
+      {
+        $node = $free.node;
+      }
     | for
       {
         $node = $for.node;
@@ -230,6 +238,20 @@ varDef returns [Stmt node]
         Ref<Buffer> b = makeBuffer(std::move(t), $atype.type, $mtype.type);
         Expr sizeLim = nullptr;
         $node = makeVarDef(ID(), $var.name, std::move(b), std::move(ioTensor), $stmts.node, pinned);
+      }
+    ;
+
+alloc returns [Stmt node]
+    : ALLOC LPAREN var RPAREN
+      {
+        $node = makeAlloc(ID(), $var.name);
+      }
+    ;
+
+free returns [Stmt node]
+    : FREE LPAREN var RPAREN
+      {
+        $node = makeFree(ID(), $var.name);
       }
     ;
 

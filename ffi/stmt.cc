@@ -57,6 +57,10 @@ void init_ffi_ast_stmt(py::module_ &m) {
             [](const Store &op) -> std::vector<Expr> { return op->indices_; })
         .def_property_readonly(
             "expr", [](const Store &op) -> Expr { return op->expr_; });
+    py::class_<AllocNode, Alloc>(m, "Alloc", pyStmt)
+        .def_readonly("var", &AllocNode::var_);
+    py::class_<FreeNode, Free>(m, "Free", pyStmt)
+        .def_readonly("var", &FreeNode::var_);
     py::class_<ReduceToNode, ReduceTo>(m, "ReduceTo", pyStmt)
         .def_readonly("var", &ReduceToNode::var_)
         .def_property_readonly("indices",
@@ -119,6 +123,12 @@ void init_ffi_ast_stmt(py::module_ &m) {
                                const std::vector<Expr> &, const Expr &)>(
               &_makeStore<const Expr &>),
           "nid"_a, "var"_a, "indices"_a, "expr"_a);
+    m.def("makeAlloc",
+          static_cast<Stmt (*)(const ID &, const std::string &)>(&_makeAlloc),
+          "nid"_a, "var"_a);
+    m.def("makeFree",
+          static_cast<Stmt (*)(const ID &, const std::string &)>(&_makeFree),
+          "nid"_a, "var"_a);
     m.def("makeFor",
           static_cast<Stmt (*)(const ID &, const std::string &, const Expr &,
                                const Expr &, const Expr &, const Expr &,

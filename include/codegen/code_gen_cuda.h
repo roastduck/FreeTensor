@@ -61,6 +61,8 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     void visit(const MatMul &op) override;
     void visit(const Load &op) override;
     void visit(const Store &op) override;
+    void visit(const Alloc &op) override;
+    void visit(const Free &op) override;
 };
 
 /**

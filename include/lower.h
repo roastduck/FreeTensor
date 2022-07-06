@@ -21,6 +21,7 @@
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_cyclic_assign.h>
 #include <pass/remove_dead_var.h>
+#include <pass/make_heap_alloc.h>
 #include <pass/remove_writes.h>
 #include <pass/scalar_prop_const.h>
 #include <pass/shrink_for.h>
@@ -87,6 +88,7 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
     ast = APPLY("make_parallel_reduction", makeParallelReduction, ast);
     ast = APPLY("shrink_for", shrinkFor,
                 ast); // After remove_writes and make_parallel_reduction
+    ast = APPLY("make_heap_alloc", makeHeapAlloc, ast);
 
     switch (target->type()) {
     case TargetType::GPU:

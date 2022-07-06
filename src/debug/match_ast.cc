@@ -74,6 +74,18 @@ void MatchVisitor::visit(const VarDef &op) {
     clearName(op->name_);
 }
 
+void MatchVisitor::visit(const Alloc &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Alloc);
+    auto instance = instance_.as<AllocNode>();
+    CHECK(matchName(op->var_, instance->var_));
+}
+
+void MatchVisitor::visit(const Free &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Free);
+    auto instance = instance_.as<FreeNode>();
+    CHECK(matchName(op->var_, instance->var_));
+}
+
 void MatchVisitor::visit(const Var &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Var);
     auto instance = instance_.as<VarNode>();

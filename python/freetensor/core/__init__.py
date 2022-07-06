@@ -10,6 +10,8 @@ from .stmt import (
     For,
     If,
     Else,
+    Alloc,
+    Free,
     Assert,
     MarkNid,
     NamedScope,
