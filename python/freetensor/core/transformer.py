@@ -721,6 +721,25 @@ class Transformer(ast.NodeTransformer):
                     node.targets,
                     call_helper(assign_stmt, ast.Constant(name), node.value))
         return location_helper(node, old_node)
+    
+    def handleType_AnnAssign(self, node: ast.AnnAssign) -> Any:
+        x = node.target
+        assert isinstance(x, ast.Name)
+        assert node.value is None
+        x_str = ast.Constant(x.id)
+        Ty = node.annotation
+
+        intermediate = f'freetensor__annotate__{x.id}'
+        intermediate_store = ast.Name(intermediate, ast.Store())
+        intermediate_load = ast.Name(intermediate, ast.Load())
+        node = [
+            ast.Assign([intermediate_store],
+                        call_helper(annotate_stmt, x_str, Ty)),
+            ast.If(intermediate_load, [ast.Assign([x], intermediate_load)],
+                    [])
+        ]
+        
+        return node
 
     def visit_AnnAssign(self, old_node: ast.AnnAssign) -> Any:
         '''Rule:
@@ -732,19 +751,7 @@ class Transformer(ast.NodeTransformer):
         '''
         node: ast.AnnAssign = self.generic_visit(old_node)
         if isinstance(node.target, ast.Name) and node.value is None:
-            x = node.target
-            x_str = ast.Constant(x.id)
-            Ty = node.annotation
-
-            intermediate = f'freetensor__annotate__{x.id}'
-            intermediate_store = ast.Name(intermediate, ast.Store())
-            intermediate_load = ast.Name(intermediate, ast.Load())
-            node = [
-                ast.Assign([intermediate_store],
-                           call_helper(annotate_stmt, x_str, Ty)),
-                ast.If(intermediate_load, [ast.Assign([x], intermediate_load)],
-                       [])
-            ]
+            node = self.handleType_AnnAssign(node)
         return node
 
     def visit_For(self, old_node: ast.For):
@@ -883,12 +890,17 @@ class Transformer(ast.NodeTransformer):
                     ],
                     body=[
                         stmt for arg in node.args.posonlyargs + node.args.args
-                        if arg.annotation for stmt in self.visit_AnnAssign(
+                        if arg.annotation for stmt in self.handleType_AnnAssign(
                             location_helper(
                                 ast.AnnAssign(ast.Name(arg.arg, ast.Store(
                                 )), arg.annotation, None, 1), old_node))
                     ] + node.body)
             ]
+            for arg in [
+                    node.args.vararg, node.args.kwarg
+            ] + node.args.posonlyargs + node.args.args + node.args.kwonlyargs:
+                if arg is not None:
+                    arg.annotation = None
 
         self.curr_func = prev_func
         self.nonlocals = prev_nonlocals
@@ -993,6 +1005,7 @@ def ast_index(idx):
 
 
 class LocalsDictWrapper:
+
     def __init__(self, closure: Dict[str, Any]):
         self.__dict__['closure'] = closure
 

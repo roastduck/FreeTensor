@@ -11,7 +11,7 @@ def test_vector_add():
     n = 4
 
     # Change this line to ft.optimize(verbose=1) to see the resulting native code
-    @ft.optimize
+    @ft.optimize(verbose=2)
     def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
         y = ft.empty((n,), "int32")
         for i in range(n):
