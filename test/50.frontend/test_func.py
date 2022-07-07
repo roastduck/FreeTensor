@@ -512,3 +512,44 @@ def test_no_deps_on_returned_tensor():
 
     s = ft.Schedule(test)
     assert s.find('Lj').property.no_deps[0] == s.find('Vc').name
+
+
+def test_late_definition():
+
+    @ft.inline
+    def caller(x):
+        callee(x)
+
+    @ft.inline
+    def callee(x):
+        x[()] = x[()] + 1
+
+    @ft.transform
+    def test(x: ft.Var[(), "int32", "inout"]):
+        caller(x)
+
+    @ft.transform
+    def test_expected(x: ft.Var[(), "int32", "inout"]):
+        x[()] = x[()] + 1
+
+    assert test.body.match(test_expected.body)
+
+@ft.inline
+def caller_global(x):
+    callee_global(x)
+
+@ft.inline
+def callee_global(x):
+    x[()] = x[()] + 1
+
+def test_late_definition_global():
+
+    @ft.transform
+    def test(x: ft.Var[(), "int32", "inout"]):
+        caller_global(x)
+
+    @ft.transform
+    def test_expected(x: ft.Var[(), "int32", "inout"]):
+        x[()] = x[()] + 1
+
+    assert test.body.match(test_expected.body)

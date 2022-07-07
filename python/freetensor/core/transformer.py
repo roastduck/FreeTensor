@@ -985,7 +985,30 @@ def process_annotating_comments(src: str):
     return new_src
 
 
-def into_staging(func, extra_locals={}, src: str = None, verbose=False):
+def ast_index(idx):
+    if sys.version_info < (3, 9):
+        return ast.Index(idx)
+    else:
+        return idx
+
+
+class LocalsDictWrapper:
+    def __init__(self, closure: Dict[str, Any]):
+        self.__dict__['closure'] = closure
+
+    def __getattr__(self, name: str) -> Any:
+        return self.__dict__['closure'][name].cell_contents
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        self.__dict__['closure'][name].cell_contents = value
+
+
+def into_staging(func,
+                 extra_locals: Dict[str, Any] = {},
+                 src: str = None,
+                 verbose=False):
+    assert inspect.isfunction(func)
+
     if src is None:
         lines, lineno = ins.getsourcelines(func)
         src = _remove_indent(lines)
@@ -995,12 +1018,14 @@ def into_staging(func, extra_locals={}, src: str = None, verbose=False):
         file = f'<staging:{func.__name__}>'
 
     func.__globals__['__freetensor__'] = sys.modules['freetensor']
-    func_locals = extra_locals
     if func.__closure__:
-        func_locals.update({
-            name: cell.cell_contents
+        assert len(func.__code__.co_freevars) == len(func.__closure__)
+        func_locals = {
+            name: cell
             for name, cell in zip(func.__code__.co_freevars, func.__closure__)
-        })
+        }
+    else:
+        func_locals = {}
 
     tree = ast.parse(process_annotating_comments(src))
     tree = Transformer(file, lineno).visit(tree)
@@ -1013,21 +1038,83 @@ def into_staging(func, extra_locals={}, src: str = None, verbose=False):
     # To avoid this, we wrap the staging function with the closure variables
     # passed as arguments to the wrapper.
     WRAPPER_NAME = '__freetensor_staging_wrapper__'
+    assert isinstance(tree, ast.Module)
+    assert len(tree.body) == 1 and isinstance(tree.body[0], ast.FunctionDef)
+
+    # Below codes modifys the function and wraps it to support closure variables.
+    # The sketch is:
+    # ```
+    # def __freetensor_staging_wrapper__(__freetensor_extra_locals__,
+    #                                    __freetensor_local_cells__):
+    #     some_extra_local = __freetensor_extra_locals__['some_extra_local']
+    #     some_captured = None
+    #
+    #     def original_func():
+    #         nonlocal some_captured
+    #         some_captured = __freetensor_local_cells__.some_captured
+    #         try:
+    #             ...  # original function body
+    #         finally:
+    #             __freetensor_local_cells__.some_captured = some_captured
+    #
+    #     return original_func
+    # ```
+    # By passing in the specified extra locals and local cells extracted from the
+    # code object, we can access the closure variables and modify the captured ones
+    # as well.
+
+    # Modify function body.
+    if len(func_locals) > 0:
+        tree.body[0].body = ([
+            # Declare them as nonlocals to assign to outer scope.
+            ast.Nonlocal(list(func_locals.keys())),
+        ] + [
+            # Fetch latest values of the closure variables.
+            ast.Assign([ast.Name(name, ast.Store())],
+                       ast.Attribute(
+                           ast.Name('__freetensor_local_cells__', ast.Load()),
+                           name, ast.Load())) for name in func_locals.keys()
+        ] + [
+            # Use a try-finally to ensure closure write back.
+            ast.Try(body=tree.body[0].body,
+                    handlers=[],
+                    orelse=[],
+                    finalbody=[
+                        ast.Assign([
+                            ast.Attribute(
+                                ast.Name('__freetensor_local_cells__',
+                                         ast.Load()), name, ast.Store())
+                        ], ast.Name(name, ast.Load()))
+                        for name in func_locals.keys()
+                    ])
+        ])
     tree.body = [
         ast.FunctionDef(
             name=WRAPPER_NAME,
-            args=ast.arguments(
-                posonlyargs=[],
-                args=[ast.arg(name, None) for name in func_locals.keys()],
-                vararg=None,
-                kwonlyargs=[],
-                kw_defaults=[],
-                kwarg=None,
-                defaults=[]),
+            args=ast.arguments(posonlyargs=[],
+                               args=[
+                                   ast.arg('__freetensor_extra_locals__', None),
+                                   ast.arg('__freetensor_local_cells__', None)
+                               ],
+                               vararg=None,
+                               kwonlyargs=[],
+                               kw_defaults=[],
+                               kwarg=None,
+                               defaults=[]),
             body=[
-                *tree.body,
-                ast.Return(value=ast.Name(id=func.__name__, ctx=ast.Load()))
-            ],
+                # Captured closure variables are not fetched here, only declared.
+                ast.Assign([ast.Name(name, ast.Store())], ast.Constant(None))
+                for name in func_locals.keys()
+            ] + [
+                # Extra locals are fetched here.
+                ast.Assign([ast.Name(name, ast.Store())],
+                           ast.Subscript(
+                               ast.Name('__freetensor_extra_locals__',
+                                        ast.Load()),
+                               ast_index(ast.Constant(name)), ast.Load()))
+                for name in extra_locals.keys()
+            ] + tree.body +
+            [ast.Return(value=ast.Name(id=func.__name__, ctx=ast.Load()))],
             decorator_list=[],
             returns=None),
     ]
@@ -1051,7 +1138,7 @@ def into_staging(func, extra_locals={}, src: str = None, verbose=False):
     f_wrapper = empty_locals[WRAPPER_NAME]
     # Pass the closure to the wrapper and retrieve the staging function with
     # correct captured variables.
-    f_staging = f_wrapper(**func_locals)
+    f_staging = f_wrapper(extra_locals, LocalsDictWrapper(func_locals))
 
     return f_staging, file, func.__name__
 
