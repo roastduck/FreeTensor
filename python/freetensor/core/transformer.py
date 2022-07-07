@@ -617,7 +617,7 @@ def mark_position(base_lineno: int, line_offset: int):
 def module_helper(callee):
     '''Helper to get an AST node with full path to given symbol, which should be in current module.'''
     return ast.Attribute(
-        ast.Attribute(ast.Name('__freetensor__', ast.Load()), 'transformer',
+        ast.Attribute(ast.Name('__ft__', ast.Load()), 'transformer',
                       ast.Load()), callee.__name__, ast.Load())
 
 
@@ -721,7 +721,7 @@ class Transformer(ast.NodeTransformer):
                     node.targets,
                     call_helper(assign_stmt, ast.Constant(name), node.value))
         return location_helper(node, old_node)
-    
+
     def handleType_AnnAssign(self, node: ast.AnnAssign) -> Any:
         x = node.target
         assert isinstance(x, ast.Name)
@@ -734,11 +734,10 @@ class Transformer(ast.NodeTransformer):
         intermediate_load = ast.Name(intermediate, ast.Load())
         node = [
             ast.Assign([intermediate_store],
-                        call_helper(annotate_stmt, x_str, Ty)),
-            ast.If(intermediate_load, [ast.Assign([x], intermediate_load)],
-                    [])
+                       call_helper(annotate_stmt, x_str, Ty)),
+            ast.If(intermediate_load, [ast.Assign([x], intermediate_load)], [])
         ]
-        
+
         return node
 
     def visit_AnnAssign(self, old_node: ast.AnnAssign) -> Any:
@@ -990,7 +989,7 @@ def process_annotating_comments(src: str):
         rest_line = line[len(indent):]
         if rest_line.startswith('#! '):
             arg = rest_line[3:].replace('"', '\\"')
-            new_src.append(f'{indent}__freetensor__.metadata("{arg}")')
+            new_src.append(f'{indent}__ft__.metadata("{arg}")')
         else:
             new_src.append(line)
     new_src = '\n'.join(new_src)
@@ -1041,7 +1040,6 @@ def into_staging(func,
     #    function cannot write to globals and get later updates in the global.
     # Thus, we have to pass the globals and locals to the transformed function separately.
 
-    func.__globals__['__freetensor__'] = sys.modules['freetensor']
     if func.__closure__:
         assert len(func.__code__.co_freevars) == len(func.__closure__)
         func_locals = {
@@ -1163,6 +1161,13 @@ def into_staging(func,
     return f_staging, file, func.__name__
 
 
+def _prepare_extra_locals(default_dynamic_range):
+    extra_locals = {'__ft__': sys.modules['freetensor']}
+    if default_dynamic_range:
+        extra_locals['range'] = dynamic_range
+    return extra_locals
+
+
 def transform(func=None, default_dynamic_range=True, verbose: int = 0):
     '''
     Transform a user function to an AST
@@ -1183,10 +1188,7 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
     if verbose is None:
         verbose = 0
 
-    if default_dynamic_range:
-        extra_locals = {'range': dynamic_range}
-    else:
-        extra_locals = {}
+    extra_locals = _prepare_extra_locals(default_dynamic_range)
 
     def decorator(func):
         params = list(inspect.signature(func).parameters)
@@ -1270,10 +1272,7 @@ def inline(func=None,
         True to print the generated Python code that is used for transforming
     '''
 
-    if default_dynamic_range:
-        extra_locals = {'range': dynamic_range}
-    else:
-        extra_locals = {}
+    extra_locals = _prepare_extra_locals(default_dynamic_range)
 
     def decorator(func):
         return functools.wraps(func)(staged_callable(
