@@ -1017,6 +1017,17 @@ def into_staging(func,
         lineno = 1
         file = f'<staging:{func.__name__}>'
 
+    # To transform a function, except essential AST transformation, we have to pass the
+    # globals and locals (actually captured outer local variables) to the transformed
+    # function properly.
+    # Note that:
+    # 1. We have to pass both globals and locals to `exec`.
+    # 2. We cannot insert locals to the globals `dict`, otherwise it will pollute the
+    #    globals `dict`.
+    # 3. We cannot copy the globals `dict` before passing it to exec, otherwise the staged
+    #    function cannot write to globals and get later updates in the global.
+    # Thus, we have to pass the globals and locals to the transformed function separately.
+
     func.__globals__['__freetensor__'] = sys.modules['freetensor']
     if func.__closure__:
         assert len(func.__code__.co_freevars) == len(func.__closure__)
@@ -1030,18 +1041,10 @@ def into_staging(func,
     tree = ast.parse(process_annotating_comments(src))
     tree = Transformer(file, lineno).visit(tree)
 
-    # Wrap the staging function.
-    # This is to workaround an issue of CPython.
-    # (See https://github.com/python/cpython/issues/86084)
-    # Without a context, CPython has no idea whether a name is from globals or
-    # locals, thus it uses LOAD_GLOBAL for variables from the closure.
-    # To avoid this, we wrap the staging function with the closure variables
-    # passed as arguments to the wrapper.
-    WRAPPER_NAME = '__freetensor_staging_wrapper__'
-    assert isinstance(tree, ast.Module)
-    assert len(tree.body) == 1 and isinstance(tree.body[0], ast.FunctionDef)
+    # Instead of passing the `func_local` directly to `exec`, we instead wrap the
+    # staging function. This is to workaround an issue of CPython.(See
+    # https://github.com/python/cpython/issues/86084).
 
-    # Below codes modifys the function and wraps it to support closure variables.
     # The sketch is:
     # ```
     # def __freetensor_staging_wrapper__(__freetensor_extra_locals__,
@@ -1059,9 +1062,13 @@ def into_staging(func,
     #
     #     return original_func
     # ```
-    # By passing in the specified extra locals and local cells extracted from the
-    # code object, we can access the closure variables and modify the captured ones
-    # as well.
+    # Note that `__freetensor_local_cells__` is a `LocalsDictWrapper` object.
+    # It in-turn accesses cell.cell_contents to get/set the value of the local variable.
+    # The `LocalsDictWrapper` is a helper class to reduce code generation complexity.
+
+    WRAPPER_NAME = '__freetensor_staging_wrapper__'
+    assert isinstance(tree, ast.Module)
+    assert len(tree.body) == 1 and isinstance(tree.body[0], ast.FunctionDef)
 
     # Modify function body.
     if len(func_locals) > 0:
