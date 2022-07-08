@@ -344,6 +344,8 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.transformer.var">var()</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.transformer.while_stmt">while_stmt()</a>
+    </li>
         </ul>
     </li>
         </ul>
@@ -3361,6 +3363,7 @@ on <code>VarRef</code> objects generates AST nodes</p>
 
 
 
+
   </div>
 
     </div>
@@ -6096,7 +6099,7 @@ it calls libop.truediv</p>
 
 
 <h4 id="freetensor.core.optimize.optimize" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">optimize</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">schedule_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">optimize</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">schedule_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 </h4>
@@ -6133,6 +6136,8 @@ be returend, which can be used as a decorator</p></li>
             <li><p><strong>schedule_callback</strong> (<code>Optional[Callable[[freetensor.core.schedule.Schedule], NoneType]]</code>) – Schedule(s) to apply</p></li>
             <li><p><strong>target</strong> (<code>Optional[freetensor.core.driver.Target]</code>) – The target architecture. You don't have to set target if you set device</p></li>
             <li><p><strong>device</strong> (<code>Optional[freetensor.core.driver.Device]</code>) – Where to run the program</p></li>
+            <li><p><strong>default_dynamic_range</strong> (<code>bool</code>) – If True, the built-in range is replaced with freetensor.dynamic_range.
+Defaults to True</p></li>
             <li><p><strong>verbose</strong> (<code>Optional[int]</code>) – Verbosity level. Can be 0, 1 or 2</p></li>
         </ul>
       </td>
@@ -6145,6 +6150,7 @@ be returend, which can be used as a decorator</p></li>
              <span class="n">schedule_callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Schedule</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
              <span class="n">target</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Target</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
              <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">default_dynamic_range</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
              <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    An one-click optimization from Python function to binary executable</span>
@@ -6179,6 +6185,9 @@ be returend, which can be used as a decorator</p></li>
 <span class="sd">        The target architecture. You don&#39;t have to set target if you set device</span>
 <span class="sd">    device : Device (Optional)</span>
 <span class="sd">        Where to run the program</span>
+<span class="sd">    default_dynamic_range : bool</span>
+<span class="sd">        If True, the built-in range is replaced with freetensor.dynamic_range.</span>
+<span class="sd">        Defaults to True</span>
 <span class="sd">    verbose : int (Optional)</span>
 <span class="sd">        Verbosity level. Can be 0, 1 or 2</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -6187,7 +6196,9 @@ be returend, which can be used as a decorator</p></li>
             <span class="n">target</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">target</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">func</span><span class="p">),</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AST</span><span class="p">):</span>
-            <span class="n">ast</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">ast</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
+                            <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
+                            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ast</span> <span class="o">=</span> <span class="n">func</span>
         <span class="n">ast</span> <span class="o">=</span> <span class="n">schedule</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">schedule_callback</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
@@ -9968,6 +9979,7 @@ instead, which supports generic types</p>
 
 
 
+
   <div class="doc doc-object doc-class">
 
 
@@ -10032,6 +10044,7 @@ FunctionScope        </code>
     </div>
 
   </div>
+
 
 
 
@@ -10866,6 +10879,10 @@ StagedPredicate            (<span title="abc.ABC">ABC</span>)
     <span class="k">def</span> <span class="nf">if_then_else_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">then_expr</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Any</span><span class="p">],</span>
                           <span class="n">else_expr</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Any</span><span class="p">]):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">while_stmt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 </code></pre></div>
         </details>
 
@@ -11108,6 +11125,7 @@ even via super()).</p>
     </div>
 
   </div>
+
 
 
 
@@ -12138,6 +12156,24 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
                     <span class="n">call_helper</span><span class="p">(</span><span class="n">assign_stmt</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">handleType_AnnAssign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">AnnAssign</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">target</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="n">x_str</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="n">Ty</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">annotation</span>
+
+        <span class="n">intermediate</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;freetensor__annotate__</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">intermediate_store</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">intermediate</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Store</span><span class="p">())</span>
+        <span class="n">intermediate_load</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">intermediate</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">())</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">([</span><span class="n">intermediate_store</span><span class="p">],</span>
+                       <span class="n">call_helper</span><span class="p">(</span><span class="n">annotate_stmt</span><span class="p">,</span> <span class="n">x_str</span><span class="p">,</span> <span class="n">Ty</span><span class="p">)),</span>
+            <span class="n">ast</span><span class="o">.</span><span class="n">If</span><span class="p">(</span><span class="n">intermediate_load</span><span class="p">,</span> <span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">([</span><span class="n">x</span><span class="p">],</span> <span class="n">intermediate_load</span><span class="p">)],</span> <span class="p">[])</span>
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">node</span>
+
     <span class="k">def</span> <span class="nf">visit_AnnAssign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">AnnAssign</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="sd">&#39;&#39;&#39;Rule:</span>
 <span class="sd">        `x: Ty` -&gt; ```</span>
@@ -12148,19 +12184,7 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">AnnAssign</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">target</span>
-            <span class="n">x_str</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-            <span class="n">Ty</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">annotation</span>
-
-            <span class="n">intermediate</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;freetensor__annotate__</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s1">&#39;</span>
-            <span class="n">intermediate_store</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">intermediate</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Store</span><span class="p">())</span>
-            <span class="n">intermediate_load</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">intermediate</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">())</span>
-            <span class="n">node</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">([</span><span class="n">intermediate_store</span><span class="p">],</span>
-                           <span class="n">call_helper</span><span class="p">(</span><span class="n">annotate_stmt</span><span class="p">,</span> <span class="n">x_str</span><span class="p">,</span> <span class="n">Ty</span><span class="p">)),</span>
-                <span class="n">ast</span><span class="o">.</span><span class="n">If</span><span class="p">(</span><span class="n">intermediate_load</span><span class="p">,</span> <span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">([</span><span class="n">x</span><span class="p">],</span> <span class="n">intermediate_load</span><span class="p">)],</span>
-                       <span class="p">[])</span>
-            <span class="p">]</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handleType_AnnAssign</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">visit_For</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">For</span><span class="p">):</span>
@@ -12198,15 +12222,26 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
             <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">visit_Call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">visit_While</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">While</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="sd">&#39;&#39;&#39;Rule:</span>
-<span class="sd">        `range(...)` -&gt; `dynamic_range(...)`</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span>
-                <span class="n">node</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">(</span><span class="n">module_helper</span><span class="p">(</span><span class="n">dynamic_range</span><span class="p">),</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
-                                <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+<span class="sd">        ```</span>
+<span class="sd">        while pred:</span>
+<span class="sd">            body</span>
+<span class="sd">        ```</span>
+<span class="sd">        -&gt;</span>
+<span class="sd">        ```</span>
+<span class="sd">        def while_body():</span>
+<span class="sd">            body</span>
+<span class="sd">        while_stmt(lambda: pred, while_body)</span>
+<span class="sd">        ```&#39;&#39;&#39;</span>
+        <span class="k">with</span> <span class="n">NonlocalTransformingScope</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">as</span> <span class="n">nonlocals</span><span class="p">:</span>
+            <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">While</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">function_helper</span><span class="p">(</span><span class="s1">&#39;while_body&#39;</span><span class="p">,</span> <span class="p">[],</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="n">nonlocals</span><span class="p">),</span>
+                <span class="n">ast</span><span class="o">.</span><span class="n">Expr</span><span class="p">(</span>
+                    <span class="n">call_helper</span><span class="p">(</span><span class="n">while_stmt</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Lambda</span><span class="p">(</span><span class="n">_empty_args</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">test</span><span class="p">),</span>
+                                <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="s1">&#39;while_body&#39;</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">())))</span>
+            <span class="p">]</span>
         <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">visit_If</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">If</span><span class="p">):</span>
@@ -12288,12 +12323,17 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
                     <span class="p">],</span>
                     <span class="n">body</span><span class="o">=</span><span class="p">[</span>
                         <span class="n">stmt</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">posonlyargs</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span>
-                        <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span> <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">visit_AnnAssign</span><span class="p">(</span>
+                        <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span> <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">handleType_AnnAssign</span><span class="p">(</span>
                             <span class="n">location_helper</span><span class="p">(</span>
                                 <span class="n">ast</span><span class="o">.</span><span class="n">AnnAssign</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">arg</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Store</span><span class="p">(</span>
                                 <span class="p">)),</span> <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">old_node</span><span class="p">))</span>
                     <span class="p">]</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
             <span class="p">]</span>
+            <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="p">[</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">vararg</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">kwarg</span>
+            <span class="p">]</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">posonlyargs</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">arg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">curr_func</span> <span class="o">=</span> <span class="n">prev_func</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nonlocals</span> <span class="o">=</span> <span class="n">prev_nonlocals</span>
@@ -12438,6 +12478,7 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
 
 
 
+
   <div class="doc doc-object doc-method">
 
 
@@ -12502,19 +12543,7 @@ if freetensor__annotate__x:
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">AnnAssign</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">target</span>
-        <span class="n">x_str</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-        <span class="n">Ty</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">annotation</span>
-
-        <span class="n">intermediate</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;freetensor__annotate__</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s1">&#39;</span>
-        <span class="n">intermediate_store</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">intermediate</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Store</span><span class="p">())</span>
-        <span class="n">intermediate_load</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">intermediate</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">())</span>
-        <span class="n">node</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">([</span><span class="n">intermediate_store</span><span class="p">],</span>
-                       <span class="n">call_helper</span><span class="p">(</span><span class="n">annotate_stmt</span><span class="p">,</span> <span class="n">x_str</span><span class="p">,</span> <span class="n">Ty</span><span class="p">)),</span>
-            <span class="n">ast</span><span class="o">.</span><span class="n">If</span><span class="p">(</span><span class="n">intermediate_load</span><span class="p">,</span> <span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">([</span><span class="n">x</span><span class="p">],</span> <span class="n">intermediate_load</span><span class="p">)],</span>
-                   <span class="p">[])</span>
-        <span class="p">]</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handleType_AnnAssign</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">node</span>
 </code></pre></div>
         </details>
@@ -12571,41 +12600,6 @@ if freetensor__annotate__x:
 
 
 
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h5 id="freetensor.core.transformer.Transformer.visit_Call" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">visit_Call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span></code>
-
-
-</h5>
-
-    <div class="doc doc-contents ">
-
-      <p>Rule:</p>
-<p><code>range(...)</code> -&gt; <code>dynamic_range(...)</code></p>
-
-        <details class="quote">
-          <summary>Source code in <code>freetensor/core/transformer.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">visit_Call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Rule:</span>
-<span class="sd">    `range(...)` -&gt; `dynamic_range(...)`</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span>
-            <span class="n">node</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">(</span><span class="n">module_helper</span><span class="p">(</span><span class="n">dynamic_range</span><span class="p">),</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
-                            <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
 
 
 
@@ -12820,6 +12814,59 @@ if_then_else_stmt(pred, then_body, else_body)
 
 
 
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.transformer.Transformer.visit_While" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">visit_While</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span></code>
+
+
+</h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Rule:</p>
+<pre><code>while pred:
+    body
+</code></pre>
+<p>-&gt;</p>
+<pre><code>def while_body():
+    body
+while_stmt(lambda: pred, while_body)
+</code></pre>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/transformer.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">visit_While</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">While</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Rule:</span>
+<span class="sd">    ```</span>
+<span class="sd">    while pred:</span>
+<span class="sd">        body</span>
+<span class="sd">    ```</span>
+<span class="sd">    -&gt;</span>
+<span class="sd">    ```</span>
+<span class="sd">    def while_body():</span>
+<span class="sd">        body</span>
+<span class="sd">    while_stmt(lambda: pred, while_body)</span>
+<span class="sd">    ```&#39;&#39;&#39;</span>
+    <span class="k">with</span> <span class="n">NonlocalTransformingScope</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">as</span> <span class="n">nonlocals</span><span class="p">:</span>
+        <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">While</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">function_helper</span><span class="p">(</span><span class="s1">&#39;while_body&#39;</span><span class="p">,</span> <span class="p">[],</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="n">nonlocals</span><span class="p">),</span>
+            <span class="n">ast</span><span class="o">.</span><span class="n">Expr</span><span class="p">(</span>
+                <span class="n">call_helper</span><span class="p">(</span><span class="n">while_stmt</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Lambda</span><span class="p">(</span><span class="n">_empty_args</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">test</span><span class="p">),</span>
+                            <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="s1">&#39;while_body&#39;</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">())))</span>
+        <span class="p">]</span>
+    <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
@@ -13821,6 +13868,7 @@ This wrapper is used for initializing a variable.</p>
 
 
 
+
   <div class="doc doc-object doc-function">
 
 
@@ -14087,7 +14135,7 @@ Otherwise, a If node in IR is generated.</p>
 
 
 <h4 id="freetensor.core.transformer.inline" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">inline</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">caller_env</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">inline</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 
 </h4>
@@ -14109,6 +14157,8 @@ Otherwise, a If node in IR is generated.</p>
             <li><p><strong>func</strong> (<code>Python function</code>) – The user function</p></li>
             <li><p><strong>src</strong> (<code>str (Optional)</code>) – The source code of <code>func</code>. This parameter is only required if the source
 code cannot be get automatically, e.g., if <code>func</code> is generated from a <code>exec</code></p></li>
+            <li><p><strong>default_dynamic_range</strong> (<code>bool</code>) – If True, the built-in range is replaced with freetensor.dynamic_range.
+Defaults to True</p></li>
             <li><p><strong>verbose</strong> (<code>bool</code>) – True to print the generated Python code that is used for transforming</p></li>
         </ul>
       </td>
@@ -14117,7 +14167,11 @@ code cannot be get automatically, e.g., if <code>func</code> is generated from a
 </table>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/transformer.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">inline</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">caller_env</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">inline</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+           <span class="n">src</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+           <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+           <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+           <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Enable a user function to be called by a transformed function at run time</span>
 
@@ -14128,17 +14182,19 @@ code cannot be get automatically, e.g., if <code>func</code> is generated from a
 <span class="sd">    src : str (Optional)</span>
 <span class="sd">        The source code of `func`. This parameter is only required if the source</span>
 <span class="sd">        code cannot be get automatically, e.g., if `func` is generated from a `exec`</span>
+<span class="sd">    default_dynamic_range : bool</span>
+<span class="sd">        If True, the built-in range is replaced with freetensor.dynamic_range.</span>
+<span class="sd">        Defaults to True</span>
 <span class="sd">    verbose : bool</span>
 <span class="sd">        True to print the generated Python code that is used for transforming</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">if</span> <span class="n">caller_env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">caller_env</span> <span class="o">=</span> <span class="n">_get_caller_env</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">extra_locals</span> <span class="o">=</span> <span class="n">_prepare_extra_locals</span><span class="p">(</span><span class="n">default_dynamic_range</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)(</span><span class="n">staged_callable</span><span class="p">(</span>
-            <span class="n">into_staging</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">caller_env</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">fallback</span> <span class="ow">or</span>
-            <span class="n">func</span><span class="p">))</span>
+            <span class="n">into_staging</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">extra_locals</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">fallback</span> <span class="ow">or</span> <span class="n">func</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
@@ -14213,7 +14269,7 @@ code cannot be get automatically, e.g., if <code>func</code> is generated from a
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">module_helper</span><span class="p">(</span><span class="n">callee</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Helper to get an AST node with full path to given symbol, which should be in current module.&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">(</span>
-        <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="s1">&#39;freetensor&#39;</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">()),</span> <span class="s1">&#39;transformer&#39;</span><span class="p">,</span>
+        <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="s1">&#39;__ft__&#39;</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">()),</span> <span class="s1">&#39;transformer&#39;</span><span class="p">,</span>
                       <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">()),</span> <span class="n">callee</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">())</span>
 </code></pre></div>
         </details>
@@ -14265,7 +14321,7 @@ code cannot be get automatically, e.g., if <code>func</code> is generated from a
 
 
 <h4 id="freetensor.core.transformer.transform" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">transform</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">caller_env</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">transform</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
 
 
 </h4>
@@ -14286,6 +14342,8 @@ code cannot be get automatically, e.g., if <code>func</code> is generated from a
         <ul class="first simple">
             <li><p><strong>func</strong> (<code>Python function</code>) – The user function to transform. If not specified, a partial function will
 be returend, which can be used as a decorator</p></li>
+            <li><p><strong>default_dynamic_range</strong> (<code>bool</code>) – If True, the built-in range is replaced with freetensor.dynamic_range.
+Defaults to True</p></li>
             <li><p><strong>verbose</strong> (<code>int</code>) – 0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
 Python code that is used for transforming</p></li>
         </ul>
@@ -14295,7 +14353,7 @@ Python code that is used for transforming</p></li>
 </table>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/transformer.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">caller_env</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Transform a user function to an AST</span>
 
@@ -14304,6 +14362,9 @@ Python code that is used for transforming</p></li>
 <span class="sd">    func : Python function</span>
 <span class="sd">        The user function to transform. If not specified, a partial function will</span>
 <span class="sd">        be returend, which can be used as a decorator</span>
+<span class="sd">    default_dynamic_range : bool</span>
+<span class="sd">        If True, the built-in range is replaced with freetensor.dynamic_range.</span>
+<span class="sd">        Defaults to True</span>
 <span class="sd">    verbose : int</span>
 <span class="sd">        0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated</span>
 <span class="sd">        Python code that is used for transforming</span>
@@ -14311,13 +14372,13 @@ Python code that is used for transforming</p></li>
 
     <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">verbose</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">if</span> <span class="n">caller_env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">caller_env</span> <span class="o">=</span> <span class="n">_get_caller_env</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span>
+
+    <span class="n">extra_locals</span> <span class="o">=</span> <span class="n">_prepare_extra_locals</span><span class="p">(</span><span class="n">default_dynamic_range</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
         <span class="n">params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
         <span class="n">staging_func</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">funcname</span> <span class="o">=</span> <span class="n">into_staging</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
-                                                        <span class="n">caller_env</span><span class="p">,</span>
+                                                        <span class="n">extra_locals</span><span class="p">,</span>
                                                         <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
@@ -14429,6 +14490,40 @@ default Target in config will be used</p></li>
   </div>
 
 
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.transformer.while_stmt" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">while_stmt</span><span class="p">(</span><span class="n">fpred</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>While statement staging tool.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/transformer.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">while_stmt</span><span class="p">(</span><span class="n">fpred</span><span class="p">,</span> <span class="n">body</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;While statement staging tool.&#39;&#39;&#39;</span>
+    <span class="n">first_pred</span> <span class="o">=</span> <span class="n">fpred</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first_pred</span><span class="p">,</span> <span class="n">StagedPredicate</span><span class="p">):</span>
+        <span class="n">first_pred</span><span class="o">.</span><span class="n">while_stmt</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">first_pred</span><span class="p">:</span>
+            <span class="n">body</span><span class="p">()</span>
+        <span class="k">while</span> <span class="n">fpred</span><span class="p">():</span>
+            <span class="n">body</span><span class="p">()</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
