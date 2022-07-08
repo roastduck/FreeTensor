@@ -47,6 +47,7 @@ There are some options to `cmake`:
 - `-DFT_WITH_PYTORCH=ON/OFF`: build with/without copy-free interface from/to PyTorch, requring PyTorch installed on the system (defaults to `OFF`).
 - `-DFT_DEBUG_LOG_NODE=ON` (for developers): enables tracing to tell by which pass a specific AST node is modified.
 - `-DFT_DEBUG_PROFILE` (for developers): profiles some heavy functions in the compiler.
+- `-DFT_DEBUG_SANITIZE` (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).
 
 It will build a shared library with a name like `freetensor_ffi.cpython-37m-x86_64-linux-gnu.so`, which can be used in Python via `import freetensor`.
 
@@ -100,11 +101,13 @@ PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 00.hello_world/test_basic.py
     PYTHONPATH=../python:../build:$PYTHONPATH PYTHONMALLOC=malloc valgrind python3 -m pytest
     ```
 
-    Sometimes Valgrind is not enough to detect some errors. An alternative is to use the sanitizer from GCC. To use it, first edit `CMakeLists.txt` to add a `-fsanitize=address` compiler flag (or other mode like `-fsanitize=undefined`), then:
+    Sometimes Valgrind is not enough to detect some errors. An alternative is to use the sanitizer from GCC. For example, if you are using the "address" sanitizer, first set `-DFT_DEBUG_SANITIZE=address` to `cmake`, and then:
 
     ```
     PYTHONPATH=../python:../build:$PYTHONPATH LD_PRELOAD=`gcc -print-file-name=libasan.so` pytest -s
     ```
+
+    If you are using another sanitizer, change the string set to `FT_DEBUG_SANITIZE` and the library's name. For example, `-DFT_DEBUG_SANITIZE=undefined` and `libubsan.so`.
 
 ## Build this Document
 
