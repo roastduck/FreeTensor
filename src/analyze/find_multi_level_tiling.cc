@@ -17,8 +17,8 @@ void FindMultiLevelTiling::visit(const For &op) {
     stack_.push_back({op->id(), -1, op->len_.as<IntConstNode>()->val_});
     stackMarkBranch_.push_back(false);
     downward = true;
-    if (auto seq = op->body_.as<StmtSeqNode>();
-        seq.isValid() && seq->nodeType() == ASTNodeType::StmtSeq) {
+    if (op->body_->nodeType() == ASTNodeType::StmtSeq) {
+        auto seq = op->body_.as<StmtSeqNode>();
         if (seq->stmts_.size() == 2) {
             if (auto st = seq->stmts_[0].as<StoreNode>();
                 st.isValid() && st->nodeType() == ASTNodeType::Store) {
