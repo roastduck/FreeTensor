@@ -158,6 +158,7 @@ make -j  # Or use Ninja
 <li><code>-DFT_WITH_PYTORCH=ON/OFF</code>: build with/without copy-free interface from/to PyTorch, requring PyTorch installed on the system (defaults to <code>OFF</code>).</li>
 <li><code>-DFT_DEBUG_LOG_NODE=ON</code> (for developers): enables tracing to tell by which pass a specific AST node is modified.</li>
 <li><code>-DFT_DEBUG_PROFILE</code> (for developers): profiles some heavy functions in the compiler.</li>
+<li><code>-DFT_DEBUG_SANITIZE</code> (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).</li>
 </ul>
 <p>It will build a shared library with a name like <code>freetensor_ffi.cpython-37m-x86_64-linux-gnu.so</code>, which can be used in Python via <code>import freetensor</code>.</p>
 <h2 id="run-a-program-with-freetensor">Run a Program with FreeTensor</h2>
@@ -188,8 +189,9 @@ make -j  # Or use Ninja
 <p><code>PYTHONPATH=../python:../build:$PYTHONPATH gdb --args python3 -m pytest</code></p>
 <p>If using Valgrind, one should set Python to use the system malloc:</p>
 <p><code>PYTHONPATH=../python:../build:$PYTHONPATH PYTHONMALLOC=malloc valgrind python3 -m pytest</code></p>
-<p>Sometimes Valgrind is not enough to detect some errors. An alternative is to use the sanitizer from GCC. To use it, first edit <code>CMakeLists.txt</code> to add a <code>-fsanitize=address</code> compiler flag (or other mode like <code>-fsanitize=undefined</code>), then:</p>
+<p>Sometimes Valgrind is not enough to detect some errors. An alternative is to use the sanitizer from GCC. For example, if you are using the "address" sanitizer, first set <code>-DFT_DEBUG_SANITIZE=address</code> to <code>cmake</code>, and then:</p>
 <p><code>PYTHONPATH=../python:../build:$PYTHONPATH LD_PRELOAD=`gcc -print-file-name=libasan.so` pytest -s</code></p>
+<p>If you are using another sanitizer, change the string set to <code>FT_DEBUG_SANITIZE</code> and the library's name. For example, <code>-DFT_DEBUG_SANITIZE=undefined</code> and <code>libubsan.so</code>.</p>
 </div>
 <h2 id="build-this-document">Build this Document</h2>
 <p>First install some dependencies:</p>
