@@ -101,11 +101,13 @@ PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 00.hello_world/test_basic.py
     PYTHONPATH=../python:../build:$PYTHONPATH PYTHONMALLOC=malloc valgrind python3 -m pytest
     ```
 
-    Sometimes Valgrind is not enough to detect some errors. An alternative is to use the sanitizer from GCC. To use it, first set `-DFT_DEBUG_SANITIZE=address` to `cmake` (or other mode like `-DFT_DEBUG_SANITIZE=undefined`), then:
+    Sometimes Valgrind is not enough to detect some errors. An alternative is to use the sanitizer from GCC. For example, if you are using the "address" sanitizer, first set `-DFT_DEBUG_SANITIZE=address` to `cmake`, and then:
 
     ```
     PYTHONPATH=../python:../build:$PYTHONPATH LD_PRELOAD=`gcc -print-file-name=libasan.so` pytest -s
     ```
+
+    If you are using another sanitizer, change the string set to `FT_DEBUG_SANITIZE` and the library's name. For example, `-DFT_DEBUG_SANITIZE=undefined` and `libubsan.so`.
 
 ## Build this Document
 
