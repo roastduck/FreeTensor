@@ -14,6 +14,7 @@ def optimize(func=None,
              schedule_callback: Optional[Callable[[Schedule], None]] = None,
              target: Optional[Target] = None,
              device: Optional[Device] = None,
+             default_dynamic_range: bool = True,
              verbose: Optional[int] = None):
     '''
     An one-click optimization from Python function to binary executable
@@ -48,6 +49,9 @@ def optimize(func=None,
         The target architecture. You don't have to set target if you set device
     device : Device (Optional)
         Where to run the program
+    default_dynamic_range : bool
+        If True, the built-in range is replaced with freetensor.dynamic_range.
+        Defaults to True
     verbose : int (Optional)
         Verbosity level. Can be 0, 1 or 2
     '''
@@ -56,7 +60,9 @@ def optimize(func=None,
             target = device.target()
 
         if not issubclass(type(func), ffi.AST):
-            ast = transform(func, verbose=verbose, depth=2)
+            ast = transform(func,
+                            default_dynamic_range=default_dynamic_range,
+                            verbose=verbose)
         else:
             ast = func
         ast = schedule(ast, schedule_callback, verbose=verbose)
