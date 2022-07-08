@@ -534,13 +534,16 @@ def test_late_definition():
 
     assert test.body.match(test_expected.body)
 
+
 @ft.inline
 def caller_global(x):
     callee_global(x)
 
+
 @ft.inline
 def callee_global(x):
     x[()] = x[()] + 1
+
 
 def test_late_definition_global():
 
