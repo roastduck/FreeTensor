@@ -143,7 +143,6 @@ if(FT_WITH_PYTORCH)
 endif()
 
 # THIS PROJECT
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -fsanitize=address")
 if(FT_WITH_MKL)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_WITH_MKL=${FT_WITH_MKL}")
 endif()
