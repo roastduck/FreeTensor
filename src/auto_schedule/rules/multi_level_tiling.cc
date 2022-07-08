@@ -20,7 +20,7 @@ std::vector<Sketch> MultiLevelTilingRule::genPart(const Sketch &sketch) {
     return {newSketch};
 }
 
-void MultiLevelTilingPart::genRandAnnotation(std::default_random_engine &gen) {
+void MultiLevelTilingPart::genRandAnnotation(RNG &gen) {
     int spaceLoopLength = target_.spaceLoops.size();
     int reductionLoopLength = target_.reductionLoops.size();
     std::vector<std::vector<int>> spaceLoopTiling(spaceLoopLength);
@@ -63,7 +63,7 @@ void MultiLevelTilingPart::apply(Schedule &schedule, SketchTarget &target) {
                                        frontSpaceLoopTimes_);
 }
 
-bool MultiLevelTilingPart::mutate(std::default_random_engine &gen) {
+bool MultiLevelTilingPart::mutate(RNG &gen) {
     int mutPart = randomInt(1, gen);
     int spaceSize = target_.spaceLoops.size();
     int reduceSize = target_.reductionLoops.size();
@@ -85,8 +85,7 @@ bool MultiLevelTilingPart::mutate(std::default_random_engine &gen) {
     return true;
 }
 
-bool MultiLevelTilingPart::crossover(const SketchPart &part,
-                                     std::default_random_engine &gen) {
+bool MultiLevelTilingPart::crossover(const SketchPart &part, RNG &gen) {
     if (part->partType() != SketchPartType::MultiLevelTiling)
         return false;
     auto p = part.as<MultiLevelTilingPart>();
@@ -127,7 +126,7 @@ size_t MultiLevelTilingPart::hash() const {
     return h;
 }
 
-void MultiLevelTilingPart::genFakeAnnotation(std::default_random_engine &gen) {
+void MultiLevelTilingPart::genFakeAnnotation(RNG &gen) {
     int spaceLoopLength = target_.spaceLoops.size();
     int reductionLoopLength = target_.reductionLoops.size();
     std::vector<std::vector<int>> spaceLoopTiling(spaceLoopLength);

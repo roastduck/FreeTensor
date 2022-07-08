@@ -11,8 +11,9 @@
 
 namespace freetensor {
 
-inline std::vector<int> _randomFillArray(int total, int n,
-                                         std::default_random_engine &gen) {
+template <class RNG>
+requires std::uniform_random_bit_generator<RNG> std::vector<int>
+_randomFillArray(int total, int n, RNG &gen) {
     double log_total = log2(total);
     std::uniform_real_distribution<> dis(
         0, std::nextafter(log_total, std::numeric_limits<double>::max()));
@@ -33,12 +34,16 @@ inline std::vector<int> _randomFillArray(int total, int n,
     return result;
 }
 
-inline int randomInt(int mx, std::default_random_engine &gen) {
+template <class RNG>
+requires std::uniform_random_bit_generator<RNG>
+int randomInt(int mx, RNG &gen) {
     std::uniform_int_distribution<> dis(0, mx);
     return dis(gen);
 }
 
-inline double randomDouble(std::default_random_engine &gen) {
+template <class RNG>
+requires std::uniform_random_bit_generator<RNG>
+double randomDouble(RNG &gen) {
     std::uniform_real_distribution<> dis(0, 1);
     return dis(gen);
 }
@@ -61,15 +66,17 @@ inline std::vector<double> getProbSum(const std::vector<double> &pred) {
     return sum;
 }
 
-inline int randWithProb(const std::vector<double> &probSum,
-                        std::default_random_engine &gen) {
+template <class RNG>
+requires std::uniform_random_bit_generator<RNG>
+int randWithProb(const std::vector<double> &probSum, RNG &gen) {
     std::uniform_real_distribution<> dis(0, 1);
     return std::upper_bound(probSum.begin(), probSum.end(), dis(gen)) -
            probSum.begin();
 }
 
-inline std::vector<int> randomFillArray(int total, int n,
-                                        std::default_random_engine &gen) {
+template <class RNG>
+requires std::uniform_random_bit_generator<RNG> std::vector<int>
+randomFillArray(int total, int n, RNG &gen) {
     const auto &candidates = FactorSplitter::get(total, n);
     return candidates[randomInt(candidates.size() - 1, gen)];
 }

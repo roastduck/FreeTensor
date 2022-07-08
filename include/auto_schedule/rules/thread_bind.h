@@ -16,7 +16,7 @@ class ThreadBindPart : public SketchPartNode {
     int vthreadSize_;
 
   public:
-    void genRandAnnotation(std::default_random_engine &gen) override{};
+    void genRandAnnotation(RNG &gen) override{};
 
     void apply(Schedule &schedule, SketchTarget &target) override;
 

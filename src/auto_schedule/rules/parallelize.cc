@@ -32,20 +32,17 @@ void ParallelizePart::apply(Schedule &schedule, SketchTarget &target) {
     schedule.parallelize(lastParallelizedID_, OpenMPScope{});
 }
 
-void ParallelizePart::genRandAnnotation(std::default_random_engine &gen) {
+void ParallelizePart::genRandAnnotation(RNG &gen) {
     parallelSize_ = randomInt(maxSize_ - 1, gen) + 1;
 }
 
-void ParallelizePart::genFakeAnnotation(std::default_random_engine &gen) {
-    parallelSize_ = maxSize_;
-}
+void ParallelizePart::genFakeAnnotation(RNG &gen) { parallelSize_ = maxSize_; }
 
-bool ParallelizePart::mutate(std::default_random_engine &gen) {
+bool ParallelizePart::mutate(RNG &gen) {
     parallelSize_ = randomInt(maxSize_ - 1, gen) + 1;
     return true;
 }
-bool ParallelizePart::crossover(const SketchPart &part,
-                                std::default_random_engine &gen) {
+bool ParallelizePart::crossover(const SketchPart &part, RNG &gen) {
     if (auto p = part.as<ParallelizePart>();
         p.isValid() && p->partType() == SketchPartType::Parallelize) {
         parallelSize_ = p->parallelSize_;
