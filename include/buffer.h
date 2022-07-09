@@ -58,12 +58,15 @@ enum class MemType : size_t {
     GPULocal,
     GPUWarp,
     // ------
+    CPUHeap, // AccessType must be Cache
+    GPUGlobalHeap, // ditto
+    // ------
     NumTypes,
 };
 
 // First deduce array length, then assert, to ensure the length
 constexpr std::array memTypeNames = {
-    "byvalue", "cpu", "gpu/global", "gpu/shared", "gpu/local", "gpu/warp",
+    "byvalue", "cpu", "gpu/global", "gpu/shared", "gpu/local", "gpu/warp", "cpu/heap", "gpu/global/heap",
 };
 static_assert(memTypeNames.size() == (size_t)MemType::NumTypes);
 

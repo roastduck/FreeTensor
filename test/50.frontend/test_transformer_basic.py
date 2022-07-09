@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from typing import Callable, Union
 import freetensor as ft
 from freetensor import debug
 import numpy as np
@@ -356,3 +358,35 @@ def test_inline_annotation():
     test(x_func)
     assert np.array_equal(x_np, x_std)
     assert np.array_equal(x_func, x_std)
+
+
+def test_while():
+
+    @dataclass
+    class WhilePredicate(ft.StagedPredicate):
+        inner: ft.StagedPredicate
+
+        def if_then_else_stmt(self, then_stmt, else_stmt):
+            self.inner.if_then_else_stmt(then_stmt, else_stmt)
+
+        def if_then_else_expr(self, then_expr, else_expr):
+            return self.inner.if_then_else_expr(then_expr, else_expr)
+
+        @ft.inline
+        def while_stmt(self, body: Callable[[], None]):
+            for _ in range(2**31 - 1):
+                if self.inner:
+                    body()
+
+    @ft.transform
+    def test(x: ft.Var[(), "float32", "output"]):
+        while WhilePredicate(x[()] > 0):
+            x[()] -= 1
+
+    @ft.transform
+    def test_expected(x: ft.Var[(), "float32", "output"]):
+        for _ in range(2**31 - 1):
+            if x[()] > 0:
+                x[()] -= 1
+
+    assert test.body.match(test_expected.body)

@@ -32,6 +32,8 @@ class Hasher {
     static size_t compHash(const StmtSeqNode &op);
     static size_t compHash(const VarDefNode &op);
     static size_t compHash(const StoreNode &op);
+    static size_t compHash(const AllocNode &op);
+    static size_t compHash(const FreeNode &op);
     static size_t compHash(const ReduceToNode &op);
     static size_t compHash(const ForNode &op);
     static size_t compHash(const IfNode &op);
@@ -66,6 +68,8 @@ class HashComparator {
     bool compare(const StmtSeq &lhs, const StmtSeq &rhs) const;
     bool compare(const VarDef &lhs, const VarDef &rhs) const;
     bool compare(const Store &lhs, const Store &rhs) const;
+    bool compare(const Alloc &lhs, const Alloc &rhs) const;
+    bool compare(const Free &lhs, const Free &rhs) const;
     bool compare(const ReduceTo &lhs, const ReduceTo &rhs) const;
     bool compare(const For &lhs, const For &rhs) const;
     bool compare(const If &lhs, const If &rhs) const;

@@ -107,6 +107,36 @@ Stmt _makeStore(const ID &id, const std::string &var,
     return s;
 }
 
+class AllocNode : public StmtNode {
+  public:
+    std::string var_;
+    void compHash() override;
+    DEFINE_NODE_TRAIT(Alloc);
+};
+typedef Ref<AllocNode> Alloc;
+#define makeAlloc(...) makeNode(Alloc, __VA_ARGS__)
+inline Stmt _makeAlloc(const ID &id, const std::string &var) {
+    Alloc a = Alloc::make();
+    a->setId(id);
+    a->var_ = var;
+    return a;
+}
+
+class FreeNode : public StmtNode {
+  public:
+    std::string var_;
+    void compHash() override;
+    DEFINE_NODE_TRAIT(Free);
+};
+typedef Ref<FreeNode> Free;
+#define makeFree(...) makeNode(Free, __VA_ARGS__)
+inline Stmt _makeFree(const ID &id, const std::string &var) {
+    Free f = Free::make();
+    f->setId(id);
+    f->var_ = var;
+    return f;
+}
+
 class ReduceToNode : public StmtNode {
   public:
     std::string var_;

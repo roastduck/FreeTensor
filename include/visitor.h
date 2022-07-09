@@ -65,6 +65,10 @@ class Visitor {
         (*this)(op->expr_);
     }
 
+    virtual void visit(const Alloc &op) {}
+
+    virtual void visit(const Free &op) {}
+
     virtual void visit(const Load &op) {
         for (auto &&index : op->indices_) {
             (*this)(index);

@@ -21,8 +21,8 @@ import freetensor_ffi as ffi
 from .context import pop_ast
 from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
                    if_then_else, shape)
-from .stmt import (_VarDef, VarRef, For, If, Else, MarkNid, ctx_stack, Func,
-                   Assert)
+from .stmt import (_VarDef, VarRef, For, If, Else, Alloc, Free, MarkNid,
+                   ctx_stack, Func, Assert)
 
 assert sys.version_info >= (3,
                             8), "Python version lower than 3.8 is not supported"
@@ -253,35 +253,90 @@ def annotate_stmt(name: str, ty):
     return None
 
 
+class StagedPredicate(abc.ABC):
+
+    @abc.abstractmethod
+    def if_then_else_stmt(self, then_body: Callable[[], None],
+                          else_body: Optional[Callable[[], None]]):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def if_then_else_expr(self, then_expr: Callable[[], Any],
+                          else_expr: Callable[[], Any]):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def while_stmt(self, body: Callable[[], None]):
+        raise NotImplementedError()
+
+
+def _staged_if_then_else_stmt(pred: Union[VarRef, ffi.Expr],
+                              then_body: Callable[[], None],
+                              else_body: Optional[Callable[[], None]]):
+    with If(pred):
+        with LifetimeScope():
+            then_body()
+    if else_body:
+        with Else():
+            with LifetimeScope():
+                return else_body()
+
+
+def _staged_if_then_else_expr(pred: Union[VarRef, ffi.Expr],
+                              then_expr: Callable[[], VarRef],
+                              else_expr: Callable[[], VarRef]):
+    return if_then_else(pred, then_expr(), else_expr())
+
+
+def _staged_while_stmt(pred: Union[VarRef, ffi.Expr], body: Callable[[], None]):
+    raise NotImplementedError()
+
+
+StagedPredicate.register(VarRef)
+VarRef.if_then_else_stmt = _staged_if_then_else_stmt
+VarRef.if_then_else_expr = _staged_if_then_else_expr
+VarRef.while_stmt = _staged_while_stmt
+StagedPredicate.register(ffi.Expr)
+ffi.Expr.if_then_else_stmt = _staged_if_then_else_stmt
+ffi.Expr.if_then_else_expr = _staged_if_then_else_expr
+ffi.Expr.while_stmt = _staged_while_stmt
+
+
 def if_then_else_stmt(predicate, then_body, else_body=None):
     '''If-then-else statement staging tool.
     When predicate is deterministic in staging, only one branch is generated.
     Otherwise, a If node in IR is generated.
     '''
-    if type(predicate) == bool:
+    if isinstance(predicate, StagedPredicate):
+        predicate.if_then_else_stmt(then_body, else_body)
+    else:
         if predicate:
             then_body()
         elif else_body:
             else_body()
-    else:
-        with If(predicate):
-            with LifetimeScope():
-                then_body()
-        if else_body:
-            with Else():
-                with LifetimeScope():
-                    return else_body()
 
 
 def if_then_else_expr(predicate, then_expr, else_expr):
     '''If-then-else expression staging tool.'''
-    if type(predicate) == bool:
-        if predicate:
-            return then_expr
-        else:
-            return else_expr
+    if isinstance(predicate, StagedPredicate):
+        return predicate.if_then_else_expr(then_expr, else_expr)
     else:
-        return if_then_else(predicate, then_expr, else_expr)
+        if predicate:
+            return then_expr()
+        else:
+            return else_expr()
+
+
+def while_stmt(fpred, body):
+    '''While statement staging tool.'''
+    first_pred = fpred()
+    if isinstance(first_pred, StagedPredicate):
+        first_pred.while_stmt(body)
+    else:
+        if first_pred:
+            body()
+        while fpred():
+            body()
 
 
 def return_stmt(value, funcname):
@@ -483,6 +538,9 @@ class dynamic_range(StagedIterable):
                 body(iter_var)
 
 
+static_range = range
+
+
 def boolop_expr(native_reducer, ir_reducer, lazy_args):
     result = lazy_args[0]()
     for f in lazy_args[1:]:
@@ -559,7 +617,7 @@ def mark_position(base_lineno: int, line_offset: int):
 def module_helper(callee):
     '''Helper to get an AST node with full path to given symbol, which should be in current module.'''
     return ast.Attribute(
-        ast.Attribute(ast.Name('freetensor', ast.Load()), 'transformer',
+        ast.Attribute(ast.Name('__ft__', ast.Load()), 'transformer',
                       ast.Load()), callee.__name__, ast.Load())
 
 
@@ -615,6 +673,15 @@ class NonlocalTransformingScope:
         self.t.nonlocals.pop()
 
 
+_empty_args = ast.arguments(args=[],
+                            vararg=None,
+                            kwarg=None,
+                            posonlyargs=[],
+                            defaults=[],
+                            kwonlyargs=[],
+                            kw_defaults=[])
+
+
 @dataclass
 class Transformer(ast.NodeTransformer):
     filename: str
@@ -655,6 +722,24 @@ class Transformer(ast.NodeTransformer):
                     call_helper(assign_stmt, ast.Constant(name), node.value))
         return location_helper(node, old_node)
 
+    def handleType_AnnAssign(self, node: ast.AnnAssign) -> Any:
+        x = node.target
+        assert isinstance(x, ast.Name)
+        assert node.value is None
+        x_str = ast.Constant(x.id)
+        Ty = node.annotation
+
+        intermediate = f'freetensor__annotate__{x.id}'
+        intermediate_store = ast.Name(intermediate, ast.Store())
+        intermediate_load = ast.Name(intermediate, ast.Load())
+        node = [
+            ast.Assign([intermediate_store],
+                       call_helper(annotate_stmt, x_str, Ty)),
+            ast.If(intermediate_load, [ast.Assign([x], intermediate_load)], [])
+        ]
+
+        return node
+
     def visit_AnnAssign(self, old_node: ast.AnnAssign) -> Any:
         '''Rule:
         `x: Ty` -> ```
@@ -665,19 +750,7 @@ class Transformer(ast.NodeTransformer):
         '''
         node: ast.AnnAssign = self.generic_visit(old_node)
         if isinstance(node.target, ast.Name) and node.value is None:
-            x = node.target
-            x_str = ast.Constant(x.id)
-            Ty = node.annotation
-
-            intermediate = f'freetensor__annotate__{x.id}'
-            intermediate_store = ast.Name(intermediate, ast.Store())
-            intermediate_load = ast.Name(intermediate, ast.Load())
-            node = [
-                ast.Assign([intermediate_store],
-                           call_helper(annotate_stmt, x_str, Ty)),
-                ast.If(intermediate_load, [ast.Assign([x], intermediate_load)],
-                       [])
-            ]
+            node = self.handleType_AnnAssign(node)
         return node
 
     def visit_For(self, old_node: ast.For):
@@ -715,15 +788,26 @@ class Transformer(ast.NodeTransformer):
             node = self.generic_visit(old_node)
         return location_helper(node, old_node)
 
-    def visit_Call(self, old_node: ast.Call):
+    def visit_While(self, old_node: ast.While) -> Any:
         '''Rule:
-        `range(...)` -> `dynamic_range(...)`
-        '''
-        node: ast.Call = self.generic_visit(old_node)
-        if isinstance(node.func, ast.Name):
-            if node.func.id == 'range':
-                node = ast.Call(module_helper(dynamic_range), node.args,
-                                node.keywords)
+        ```
+        while pred:
+            body
+        ```
+        ->
+        ```
+        def while_body():
+            body
+        while_stmt(lambda: pred, while_body)
+        ```'''
+        with NonlocalTransformingScope(self) as nonlocals:
+            node: ast.While = self.generic_visit(old_node)
+            node = [
+                function_helper('while_body', [], node.body, nonlocals),
+                ast.Expr(
+                    call_helper(while_stmt, ast.Lambda(_empty_args, node.test),
+                                ast.Name('while_body', ast.Load())))
+            ]
         return location_helper(node, old_node)
 
     def visit_If(self, old_node: ast.If):
@@ -770,7 +854,9 @@ class Transformer(ast.NodeTransformer):
     def visit_IfExp(self, old_node: ast.IfExp):
         '''Rule: `body if test else orelse` -> `if_then_else_expr(test, body, orelse)`'''
         node = self.generic_visit(old_node)
-        node = call_helper(if_then_else_expr, node.test, node.body, node.orelse)
+        node = call_helper(if_then_else_expr, node.test,
+                           ast.Lambda(_empty_args, node.body),
+                           ast.Lambda(_empty_args, node.orelse))
         return location_helper(node, old_node)
 
     def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
@@ -803,12 +889,17 @@ class Transformer(ast.NodeTransformer):
                     ],
                     body=[
                         stmt for arg in node.args.posonlyargs + node.args.args
-                        if arg.annotation for stmt in self.visit_AnnAssign(
+                        if arg.annotation for stmt in self.handleType_AnnAssign(
                             location_helper(
                                 ast.AnnAssign(ast.Name(arg.arg, ast.Store(
                                 )), arg.annotation, None, 1), old_node))
                     ] + node.body)
             ]
+            for arg in [
+                    node.args.vararg, node.args.kwarg
+            ] + node.args.posonlyargs + node.args.args + node.args.kwonlyargs:
+                if arg is not None:
+                    arg.annotation = None
 
         self.curr_func = prev_func
         self.nonlocals = prev_nonlocals
@@ -827,15 +918,8 @@ class Transformer(ast.NodeTransformer):
             libfunc = or_expr
         else:
             return location_helper(node, old_node)
-        empty_args = ast.arguments(args=[],
-                                   vararg=None,
-                                   kwarg=None,
-                                   posonlyargs=[],
-                                   defaults=[],
-                                   kwonlyargs=[],
-                                   kw_defaults=[])
         node = call_helper(libfunc,
-                           *[ast.Lambda(empty_args, v) for v in node.values])
+                           *[ast.Lambda(_empty_args, v) for v in node.values])
         return location_helper(node, old_node)
 
     def visit_UnaryOp(self, old_node: ast.UnaryOp) -> Any:
@@ -898,19 +982,6 @@ def _remove_indent(lines: List[str]) -> str:
     return ''.join(line[spaces_to_remove:] for line in lines)
 
 
-def _get_caller_env(depth: int):
-    frame = inspect.currentframe()
-    try:
-        parent = frame
-        for _ in range(depth + 1):
-            parent = parent.f_back
-        caller_env = copy.copy(parent.f_globals)
-        caller_env.update(parent.f_locals)
-    finally:
-        del frame
-    return caller_env
-
-
 def process_annotating_comments(src: str):
     new_src = []
     for line in src.splitlines():
@@ -918,14 +989,38 @@ def process_annotating_comments(src: str):
         rest_line = line[len(indent):]
         if rest_line.startswith('#! '):
             arg = rest_line[3:].replace('"', '\\"')
-            new_src.append(f'{indent}freetensor.metadata("{arg}")')
+            new_src.append(f'{indent}__ft__.metadata("{arg}")')
         else:
             new_src.append(line)
     new_src = '\n'.join(new_src)
     return new_src
 
 
-def into_staging(func, caller_env, src: str = None, verbose=False):
+def ast_index(idx):
+    if sys.version_info < (3, 9):
+        return ast.Index(idx)
+    else:
+        return idx
+
+
+class LocalsDictWrapper:
+
+    def __init__(self, closure: Dict[str, Any]):
+        self.__dict__['closure'] = closure
+
+    def __getattr__(self, name: str) -> Any:
+        return self.__dict__['closure'][name].cell_contents
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        self.__dict__['closure'][name].cell_contents = value
+
+
+def into_staging(func,
+                 extra_locals: Dict[str, Any] = {},
+                 src: str = None,
+                 verbose=False):
+    assert inspect.isfunction(func)
+
     if src is None:
         lines, lineno = ins.getsourcelines(func)
         src = _remove_indent(lines)
@@ -934,13 +1029,119 @@ def into_staging(func, caller_env, src: str = None, verbose=False):
         lineno = 1
         file = f'<staging:{func.__name__}>'
 
-    tree = ast.parse(process_annotating_comments(src))
-    tree = ast.fix_missing_locations(Transformer(file, lineno).visit(tree))
+    # To transform a function, except essential AST transformation, we have to pass the
+    # globals and locals (actually captured outer local variables) to the transformed
+    # function properly.
+    # Note that:
+    # 1. We have to pass both globals and locals to `exec`.
+    # 2. We cannot insert locals to the globals `dict`, otherwise it will pollute the
+    #    globals `dict`.
+    # 3. We cannot copy the globals `dict` before passing it to exec, otherwise the staged
+    #    function cannot write to globals and get later updates in the global.
+    # Thus, we have to pass the globals and locals to the transformed function separately.
 
-    import astor
-    source = astor.to_source(tree)
+    if func.__closure__:
+        assert len(func.__code__.co_freevars) == len(func.__closure__)
+        func_locals = {
+            name: cell
+            for name, cell in zip(func.__code__.co_freevars, func.__closure__)
+        }
+    else:
+        func_locals = {}
+
+    tree = ast.parse(process_annotating_comments(src))
+    tree = Transformer(file, lineno).visit(tree)
+
+    # Instead of passing the `func_local` directly to `exec`, we instead wrap the
+    # staging function. This is to workaround an issue of CPython.(See
+    # https://github.com/python/cpython/issues/86084).
+
+    # The sketch is:
+    # ```
+    # def __freetensor_staging_wrapper__(__freetensor_extra_locals__,
+    #                                    __freetensor_local_cells__):
+    #     some_extra_local = __freetensor_extra_locals__['some_extra_local']
+    #     some_captured = None
+    #
+    #     def original_func():
+    #         nonlocal some_captured
+    #         some_captured = __freetensor_local_cells__.some_captured
+    #         try:
+    #             ...  # original function body
+    #         finally:
+    #             __freetensor_local_cells__.some_captured = some_captured
+    #
+    #     return original_func
+    # ```
+    # Note that `__freetensor_local_cells__` is a `LocalsDictWrapper` object.
+    # It in-turn accesses cell.cell_contents to get/set the value of the local variable.
+    # The `LocalsDictWrapper` is a helper class to reduce code generation complexity.
+
+    WRAPPER_NAME = '__freetensor_staging_wrapper__'
+    assert isinstance(tree, ast.Module)
+    assert len(tree.body) == 1 and isinstance(tree.body[0], ast.FunctionDef)
+
+    # Modify function body.
+    if len(func_locals) > 0:
+        tree.body[0].body = ([
+            # Declare them as nonlocals to assign to outer scope.
+            ast.Nonlocal(list(func_locals.keys())),
+        ] + [
+            # Fetch latest values of the closure variables.
+            ast.Assign([ast.Name(name, ast.Store())],
+                       ast.Attribute(
+                           ast.Name('__freetensor_local_cells__', ast.Load()),
+                           name, ast.Load())) for name in func_locals.keys()
+        ] + [
+            # Use a try-finally to ensure closure write back.
+            ast.Try(body=tree.body[0].body,
+                    handlers=[],
+                    orelse=[],
+                    finalbody=[
+                        ast.Assign([
+                            ast.Attribute(
+                                ast.Name('__freetensor_local_cells__',
+                                         ast.Load()), name, ast.Store())
+                        ], ast.Name(name, ast.Load()))
+                        for name in func_locals.keys()
+                    ])
+        ])
+    tree.body = [
+        ast.FunctionDef(
+            name=WRAPPER_NAME,
+            args=ast.arguments(posonlyargs=[],
+                               args=[
+                                   ast.arg('__freetensor_extra_locals__', None),
+                                   ast.arg('__freetensor_local_cells__', None)
+                               ],
+                               vararg=None,
+                               kwonlyargs=[],
+                               kw_defaults=[],
+                               kwarg=None,
+                               defaults=[]),
+            body=[
+                # Captured closure variables are not fetched here, only declared.
+                ast.Assign([ast.Name(name, ast.Store())], ast.Constant(None))
+                for name in func_locals.keys()
+            ] + [
+                # Extra locals are fetched here.
+                ast.Assign([ast.Name(name, ast.Store())],
+                           ast.Subscript(
+                               ast.Name('__freetensor_extra_locals__',
+                                        ast.Load()),
+                               ast_index(ast.Constant(name)), ast.Load()))
+                for name in extra_locals.keys()
+            ] + tree.body +
+            [ast.Return(value=ast.Name(id=func.__name__, ctx=ast.Load()))],
+            decorator_list=[],
+            returns=None),
+    ]
+    tree = ast.fix_missing_locations(tree)
 
     if verbose:
+        import astor
+        source = astor.to_source(tree)
+
         from pygments import highlight
         from pygments.lexers import PythonLexer
         from pygments.formatters import TerminalFormatter
@@ -948,12 +1149,26 @@ def into_staging(func, caller_env, src: str = None, verbose=False):
                         TerminalFormatter(bg='dark', linenos=True)),
               file=sys.stderr)
 
-    caller_env['freetensor'] = sys.modules['freetensor']
-    exec(compile(source, f'<staging:{func.__name__}>', 'exec'), caller_env)
-    return caller_env[func.__name__], file, func.__name__
+    # Create an empty locals dict to avoid polluting the original globals.
+    empty_locals = {}
+    exec(compile(tree, f'<staging:{func.__name__}>', 'exec'), func.__globals__,
+         empty_locals)
+    f_wrapper = empty_locals[WRAPPER_NAME]
+    # Pass the closure to the wrapper and retrieve the staging function with
+    # correct captured variables.
+    f_staging = f_wrapper(extra_locals, LocalsDictWrapper(func_locals))
+
+    return f_staging, file, func.__name__
 
 
-def transform(func=None, verbose: int = 0, depth: int = 1, caller_env=None):
+def _prepare_extra_locals(default_dynamic_range):
+    extra_locals = {'__ft__': sys.modules['freetensor']}
+    if default_dynamic_range:
+        extra_locals['range'] = dynamic_range
+    return extra_locals
+
+
+def transform(func=None, default_dynamic_range=True, verbose: int = 0):
     '''
     Transform a user function to an AST
 
@@ -962,6 +1177,9 @@ def transform(func=None, verbose: int = 0, depth: int = 1, caller_env=None):
     func : Python function
         The user function to transform. If not specified, a partial function will
         be returend, which can be used as a decorator
+    default_dynamic_range : bool
+        If True, the built-in range is replaced with freetensor.dynamic_range.
+        Defaults to True
     verbose : int
         0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
         Python code that is used for transforming
@@ -969,13 +1187,13 @@ def transform(func=None, verbose: int = 0, depth: int = 1, caller_env=None):
 
     if verbose is None:
         verbose = 0
-    if caller_env is None:
-        caller_env = _get_caller_env(depth)
+
+    extra_locals = _prepare_extra_locals(default_dynamic_range)
 
     def decorator(func):
         params = list(inspect.signature(func).parameters)
         staging_func, filename, funcname = into_staging(func,
-                                                        caller_env,
+                                                        extra_locals,
                                                         verbose=verbose >= 2)
 
         try:
@@ -1032,7 +1250,11 @@ def transform(func=None, verbose: int = 0, depth: int = 1, caller_env=None):
         return decorator
 
 
-def inline(func=None, src=None, fallback=None, verbose=False, caller_env=None):
+def inline(func=None,
+           src=None,
+           fallback=None,
+           default_dynamic_range=True,
+           verbose=False):
     '''
     Enable a user function to be called by a transformed function at run time
 
@@ -1043,17 +1265,19 @@ def inline(func=None, src=None, fallback=None, verbose=False, caller_env=None):
     src : str (Optional)
         The source code of `func`. This parameter is only required if the source
         code cannot be get automatically, e.g., if `func` is generated from a `exec`
+    default_dynamic_range : bool
+        If True, the built-in range is replaced with freetensor.dynamic_range.
+        Defaults to True
     verbose : bool
         True to print the generated Python code that is used for transforming
     '''
 
-    if caller_env is None:
-        caller_env = _get_caller_env(1)
+    extra_locals = _prepare_extra_locals(default_dynamic_range)
 
     def decorator(func):
         return functools.wraps(func)(staged_callable(
-            into_staging(func, caller_env, src, verbose=verbose)[0], fallback or
-            func))
+            into_staging(func, extra_locals, src, verbose=verbose)[0],
+            fallback or func))
 
     if callable(func):
         return decorator(func)

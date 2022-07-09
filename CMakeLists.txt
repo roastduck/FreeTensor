@@ -5,6 +5,7 @@ include(ExternalProject)
 
 option(FT_DEBUG_LOG_NODE "Log where each AST node is created" OFF)
 option(FT_DEBUG_PROFILE "Profile some heavy functions in the compiler" OFF)
+option(FT_DEBUG_SANITIZE "Build with GCC sanitizer. Can be set to OFF or a sanitizer name (e.g. address)" OFF)
 option(FT_WITH_CUDA "Build with CUDA (ON / OFF)" ON)
 option(FT_WITH_MKL "Build with MKL (Path to MKL / OFF)" OFF)
 option(FT_WITH_PYTORCH "Build with PyTorch interface" OFF)
@@ -152,6 +153,9 @@ endif()
 if(FT_DEBUG_PROFILE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_DEBUG_PROFILE")
 endif()
+if(FT_DEBUG_SANITIZE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=${FT_DEBUG_SANITIZE}")
+endif()
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 20)
@@ -211,7 +215,8 @@ target_include_directories(freetensor_ffi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ff
 
 # Pybind11 stubgen
 find_program(PYBIND11_STUBGEN pybind11-stubgen)
-if (PYBIND11_STUBGEN)
+if (PYBIND11_STUBGEN AND NOT FT_DEBUG_SANITIZE)
+    # Disable stubgen when building with a sanitizer, beacuse using such a library from Python requires preloading libasan.so
     message(STATUS "Enabling pybind11-stubgen step to generate typing stub for IDEs.")
     add_custom_command(
         TARGET freetensor_ffi POST_BUILD

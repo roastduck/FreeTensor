@@ -22,6 +22,8 @@ void init_ffi_ast(py::module_ &m) {
         .value("VarDef", ASTNodeType::VarDef)
         .value("Var", ASTNodeType::Var)
         .value("Store", ASTNodeType::Store)
+        .value("Alloc", ASTNodeType::Alloc)
+        .value("Free", ASTNodeType::Free)
         .value("Load", ASTNodeType::Load)
         .value("ReduceTo", ASTNodeType::ReduceTo)
         .value("IntConst", ASTNodeType::IntConst)
@@ -122,6 +124,8 @@ template <> struct polymorphic_type_hook<freetensor::ASTNode> {
             DISPATCH(StmtSeq);
             DISPATCH(VarDef);
             DISPATCH(Store);
+            DISPATCH(Alloc);
+            DISPATCH(Free);
             DISPATCH(ReduceTo);
             DISPATCH(For);
             DISPATCH(If);
@@ -188,6 +192,8 @@ template <> struct polymorphic_type_hook<freetensor::StmtNode> {
             DISPATCH(VarDef);
             DISPATCH(Store);
             DISPATCH(ReduceTo);
+            DISPATCH(Alloc);
+            DISPATCH(Free);
             DISPATCH(For);
             DISPATCH(If);
             DISPATCH(Assert);
