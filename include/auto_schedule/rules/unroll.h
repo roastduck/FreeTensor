@@ -20,11 +20,10 @@ class UnrollPart : public SketchPartNode {
 
   public:
     UnrollPart(TargetType targetType) : targetType_(targetType) {}
-    void genRandAnnotation(std::default_random_engine &gen) override;
-    void genFakeAnnotation(std::default_random_engine &gen) override;
-    bool mutate(std::default_random_engine &gen) override;
-    bool crossover(const SketchPart &part,
-                   std::default_random_engine &gen) override;
+    void genRandAnnotation(RNG &gen) override;
+    void genFakeAnnotation(RNG &gen) override;
+    bool mutate(RNG &gen) override;
+    bool crossover(const SketchPart &part, RNG &gen) override;
     void apply(Schedule &schedule, SketchTarget &target) override;
     SketchPartType partType() override { return SketchPartType::Unroll; }
     [[nodiscard]] std::vector<int> getAnnotation() const override {

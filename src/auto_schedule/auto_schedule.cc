@@ -29,9 +29,9 @@ AutoSchedule::AutoSchedule(
     std::string tag, int minBlockSize,
     const std::optional<std::unordered_set<std::string>> &ruleSet, int verbose)
     : original_(schedule.clone()), target_(target), device_(device),
-      paramsSet_(false), predictFunc_(std::move(predictFunc)),
-      updateFunc_(std::move(updateFunc)), tag_(std::move(tag)),
-      minBlockSize_(minBlockSize), verbose_(verbose) {
+      paramsSet_(false), rng_(std::random_device{}()),
+      predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)),
+      tag_(std::move(tag)), minBlockSize_(minBlockSize), verbose_(verbose) {
     flop_ = 0;
     auto opCnt =
         structuralFeature(original_.ast())[original_.ast()->id()].opCnt_;
@@ -62,8 +62,6 @@ AutoSchedule::AutoSchedule(
 #undef ADD_RULE
 
     rules_.emplace_back("skip", Ref<SkipRule>::make());
-    std::random_device rd;
-    randGen_ = std::default_random_engine(rd());
 }
 
 void AutoSchedule::setParams(
@@ -231,10 +229,6 @@ double AutoSchedule::getBestTime() {
 std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
     std::vector<Ref<Sketch>> ret;
     std::set<size_t> used(measuredHashes_);
-    std::vector<std::default_random_engine> gens;
-    for (size_t i = 0; i < nRand; i++) {
-        gens.emplace_back((i + i) * randGen_());
-    }
     int roundUnchanged = 0;
     while (ret.size() < nRand) {
         std::vector<Ref<Sketch>> now(nRand);
@@ -242,8 +236,8 @@ std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
 #pragma omp parallel for
         for (size_t i = 0; i < nThisTurn; i++) {
             now[i] = Ref<Sketch>::make(
-                baseSketches_[randomInt(baseSketches_.size() - 1, gens[i])]
-                    ->genRandAnnotation(gens[i]));
+                baseSketches_[randomInt(baseSketches_.size() - 1, rng_)]
+                    ->genRandAnnotation(rng_));
             try {
                 now[i]->genCode(target_);
             } catch (const std::exception &e) {
@@ -308,10 +302,6 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
     auto cmp = [](const SketchPred &a, const SketchPred &b) {
         return a.second > b.second;
     };
-    std::vector<std::default_random_engine> gens;
-    for (size_t i = 0; i < EVOLUTIONARY_SEARCH_POPULATION; i++) {
-        gens.emplace_back((i + i) * randGen_());
-    }
     for (int i = 0; i <= EVOLUTIONARY_SEARCH_ITERS; i++) {
         if (verbose_ >= 1) {
             logger() << "search round " << i << std::endl;
@@ -346,10 +336,10 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
             }
 #pragma omp parallel for
             for (size_t j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
-                double r = randomDouble(gens[j]);
+                double r = randomDouble(rng_);
                 if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
-                    int a = randWithProb(probSum, gens[j]);
-                    auto nw = v1[a]->genMutation(gens[j]);
+                    int a = randWithProb(probSum, rng_);
+                    auto nw = v1[a]->genMutation(rng_);
                     if (nw.first) {
                         try {
                             nw.second.genCode(target_);
@@ -359,11 +349,11 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
                     }
                 } else if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB +
                                    EVOLUTIONARY_SEARCH_CROSSOVER_PROB) {
-                    int a = randWithProb(probSum, gens[j]);
-                    int b = randWithProb(probSum, gens[j]);
+                    int a = randWithProb(probSum, rng_);
+                    int b = randWithProb(probSum, rng_);
                     while (b == a)
-                        b = randWithProb(probSum, gens[j]);
-                    auto nw = v1[a].get()->genCrossover(*v1[b], gens[j]);
+                        b = randWithProb(probSum, rng_);
+                    auto nw = v1[a].get()->genCrossover(*v1[b], rng_);
                     if (nw.first) {
                         try {
                             nw.second.genCode(target_);
@@ -372,7 +362,7 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
                         }
                     }
                 } else {
-                    now[j] = v1[randomInt(v1.size() - 1, gens[j])];
+                    now[j] = v1[randomInt(v1.size() - 1, rng_)];
                 }
             }
             for (size_t j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
@@ -466,7 +456,6 @@ Sketch AutoSchedule::getInitSketch() {
 
 Schedule
 AutoSchedule::testRound(const std::unordered_map<std::string, int> &nthSketch) {
-    std::default_random_engine rng;
     auto sketch = getInitSketch();
     for (auto &[name, rule] : rules_) {
         if (auto status = rule->analyze(sketch); status != RuleStatus::Skip) {
@@ -480,7 +469,7 @@ AutoSchedule::testRound(const std::unordered_map<std::string, int> &nthSketch) {
         }
     }
     for (auto &&[type, part] : sketch.part(0)) {
-        part->genFakeAnnotation(rng);
+        part->genFakeAnnotation(rng_);
     }
     return sketch.genSchedule();
 }

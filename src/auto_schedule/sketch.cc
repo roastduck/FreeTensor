@@ -9,7 +9,7 @@
 
 namespace freetensor {
 
-Sketch Sketch::genRandAnnotation(std::default_random_engine &gen) const {
+Sketch Sketch::genRandAnnotation(RNG &gen) const {
     Sketch sketch = clone();
     for (auto &target : sketch.targets_) {
         for (auto &part : target.parts) {
@@ -38,8 +38,7 @@ Schedule Sketch::genSchedule() {
 
 bool Sketch::operator<(const Sketch &a) const { return time_ < a.time_; }
 
-std::pair<bool, Sketch>
-Sketch::genMutation(std::default_random_engine &gen) const {
+std::pair<bool, Sketch> Sketch::genMutation(RNG &gen) const {
     Sketch ret = clone();
     int mutTarget = randomInt(ret.targets_.size() - 1, gen);
     int mutPart = randomInt(ret.targets_[mutTarget].parts.size() - 1, gen);
@@ -51,9 +50,8 @@ Sketch::genMutation(std::default_random_engine &gen) const {
     return std::make_pair(true, ret);
 }
 
-std::pair<bool, Sketch>
-Sketch::genCrossover(const Sketch &sketch,
-                     std::default_random_engine &gen) const {
+std::pair<bool, Sketch> Sketch::genCrossover(const Sketch &sketch,
+                                             RNG &gen) const {
     Sketch ret = clone();
 
     int mutTarget = randomInt(ret.targets_.size() - 1, gen);

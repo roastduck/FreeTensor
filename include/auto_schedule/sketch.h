@@ -1,12 +1,13 @@
 #ifndef FREE_TENSOR_SKETCH_H
 #define FREE_TENSOR_SKETCH_H
 
-#include <analyze/find_multi_level_tiling.h>
 #include <map>
-#include <random>
-#include <schedule.h>
 #include <utility>
 #include <vector>
+
+#include <analyze/find_multi_level_tiling.h>
+#include <random.h>
+#include <schedule.h>
 
 namespace freetensor {
 
@@ -25,35 +26,33 @@ enum class SketchPartType : int {
 struct SketchTarget;
 
 class SketchPartNode {
+  protected:
+    typedef OpenMPRandomEngine RNG;
+
   public:
     virtual ~SketchPartNode() = default;
 
     /**
      * Randomly annotate the part
      */
-    virtual void genRandAnnotation(std::default_random_engine &gen) = 0;
+    virtual void genRandAnnotation(RNG &gen) = 0;
 
     /**
      * Fake annotation only used for testing
      *
      * Defaults to a random annotation
      */
-    virtual void genFakeAnnotation(std::default_random_engine &gen) {
-        genRandAnnotation(gen);
-    }
+    virtual void genFakeAnnotation(RNG &gen) { genRandAnnotation(gen); }
 
     /**
      * Randomly mutate the part
      */
-    virtual bool mutate(std::default_random_engine &gen) { return false; }
+    virtual bool mutate(RNG &gen) { return false; }
 
     /**
      * Crossbreed with another part
      */
-    virtual bool crossover(const SketchPart &part,
-                           std::default_random_engine &gen) {
-        return false;
-    };
+    virtual bool crossover(const SketchPart &part, RNG &gen) { return false; };
 
     /**
      * Make actual transformations on a Schedule, according to the annotation
@@ -107,6 +106,8 @@ struct SketchTarget {
 };
 
 class Sketch {
+    typedef OpenMPRandomEngine RNG;
+
     Schedule schedule_;
     Schedule generatedSchedule_;
     std::vector<SketchTarget> targets_;
@@ -135,7 +136,7 @@ class Sketch {
         return ret;
     }
 
-    Sketch genRandAnnotation(std::default_random_engine &gen) const;
+    Sketch genRandAnnotation(RNG &gen) const;
 
     Schedule genSchedule();
 
@@ -146,11 +147,10 @@ class Sketch {
 
     std::vector<int> getAnnotation() const;
 
-    [[nodiscard]] std::pair<bool, Sketch>
-    genMutation(std::default_random_engine &gen) const;
+    [[nodiscard]] std::pair<bool, Sketch> genMutation(RNG &gen) const;
 
-    [[nodiscard]] std::pair<bool, Sketch>
-    genCrossover(const Sketch &sketch, std::default_random_engine &gen) const;
+    [[nodiscard]] std::pair<bool, Sketch> genCrossover(const Sketch &sketch,
+                                                       RNG &gen) const;
 
     void setTime(double time) { time_ = time; }
     double time() const { return time_; }

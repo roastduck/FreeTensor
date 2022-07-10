@@ -1,14 +1,13 @@
 #ifndef FREE_TENSOR_MULTI_LEVEL_TILING_WITH_FUSION_H
 #define FREE_TENSOR_MULTI_LEVEL_TILING_WITH_FUSION_H
 
+#include <array>
+
 #include <analyze/find_multi_level_tiling.h>
 #include <auto_schedule/rule.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/sketch.h>
 #include <auto_schedule/structs.h>
-
-#include <array>
-#include <random>
 
 namespace freetensor {
 
@@ -42,16 +41,15 @@ class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
     bool doCacheRead_{false};
 
   public:
-    void genRandAnnotation(std::default_random_engine &gen) override;
+    void genRandAnnotation(RNG &gen) override;
     explicit MultiLevelTilingWithFusionPart(ForsWithDataReuse fors,
                                             ElementWiseInfo toFuse, int level,
                                             std::string pat,
                                             TargetType targetType,
                                             int minBlockSize);
     void apply(Schedule &schedule, SketchTarget &target) override;
-    bool mutate(std::default_random_engine &gen) override;
-    bool crossover(const SketchPart &part,
-                   std::default_random_engine &gen) override;
+    bool mutate(RNG &gen) override;
+    bool crossover(const SketchPart &part, RNG &gen) override;
     [[nodiscard]] std::vector<int> getAnnotation() const override;
     [[nodiscard]] size_t hash() const override;
     SketchPartType partType() override {

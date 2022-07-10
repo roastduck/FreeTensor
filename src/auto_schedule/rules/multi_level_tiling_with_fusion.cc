@@ -35,8 +35,7 @@ MultiLevelTilingWithFusionRule::genPart(const Sketch &sketch) {
     return ret;
 }
 
-void MultiLevelTilingWithFusionPart::genRandAnnotation(
-    std::default_random_engine &gen) {
+void MultiLevelTilingWithFusionPart::genRandAnnotation(RNG &gen) {
     int spaceLoopLength = target_.spaceLoops.size();
     int reductionLoopLength = target_.reductionLoops.size();
     std::vector<std::vector<int>> spaceLoopTiling(spaceLoopLength);
@@ -87,7 +86,7 @@ void MultiLevelTilingWithFusionPart::apply(Schedule &schedule,
         target_, annotation_, pat_, toFuse_, level_, targetType_, doCacheRead_);
 }
 
-bool MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
+bool MultiLevelTilingWithFusionPart::mutate(RNG &gen) {
     MultiLevelTilingAnnotation mut = annotation_;
     int mutPart = randomInt(1, gen);
     int spaceSize = target_.spaceLoops.size();
@@ -124,8 +123,8 @@ bool MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
     return true;
 }
 
-bool MultiLevelTilingWithFusionPart::crossover(
-    const SketchPart &part, std::default_random_engine &gen) {
+bool MultiLevelTilingWithFusionPart::crossover(const SketchPart &part,
+                                               RNG &gen) {
     if (part->partType() != SketchPartType::MultiLevelTilingWithFusion)
         return false;
     auto p = part.as<MultiLevelTilingWithFusionPart>();

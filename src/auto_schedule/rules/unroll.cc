@@ -54,24 +54,21 @@ void UnrollPart::apply(Schedule &schedule, SketchTarget &target) {
     visitNest(getLoopNestTree(root));
 }
 
-void UnrollPart::genRandAnnotation(std::default_random_engine &gen) {
+void UnrollPart::genRandAnnotation(RNG &gen) {
     std::vector<int> &unrollConfigs =
         targetType_ == TargetType::GPU ? unrollConfigsGpu : unrollConfigsCpu;
     maxSize_ = unrollConfigs[randomInt(unrollConfigs.size() - 1, gen)];
 }
 
-void UnrollPart::genFakeAnnotation(std::default_random_engine &gen) {
-    maxSize_ = 16;
-}
+void UnrollPart::genFakeAnnotation(RNG &gen) { maxSize_ = 16; }
 
-bool UnrollPart::mutate(std::default_random_engine &gen) {
+bool UnrollPart::mutate(RNG &gen) {
     std::vector<int> &unrollConfigs =
         targetType_ == TargetType::GPU ? unrollConfigsGpu : unrollConfigsCpu;
     maxSize_ = unrollConfigs[randomInt(unrollConfigs.size() - 1, gen)];
     return true;
 }
-bool UnrollPart::crossover(const SketchPart &part,
-                           std::default_random_engine &gen) {
+bool UnrollPart::crossover(const SketchPart &part, RNG &gen) {
     if (auto p = part.as<UnrollPart>(); p.isValid()) {
         maxSize_ = p->maxSize_;
         return true;

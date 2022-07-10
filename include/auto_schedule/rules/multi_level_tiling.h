@@ -1,14 +1,13 @@
 #ifndef FREE_TENSOR_MULTI_LEVEL_TILING_H
 #define FREE_TENSOR_MULTI_LEVEL_TILING_H
 
+#include <array>
+#include <utility>
+
 #include <analyze/find_multi_level_tiling.h>
 #include <auto_schedule/rule.h>
 #include <auto_schedule/sketch.h>
 #include <auto_schedule/structs.h>
-
-#include <array>
-#include <random>
-#include <utility>
 
 namespace freetensor {
 
@@ -38,15 +37,14 @@ class MultiLevelTilingPart : public SketchPartNode {
     std::vector<std::pair<ID, int>> tiles_;
 
   public:
-    void genRandAnnotation(std::default_random_engine &gen) override;
-    void genFakeAnnotation(std::default_random_engine &gen) override;
+    void genRandAnnotation(RNG &gen) override;
+    void genFakeAnnotation(RNG &gen) override;
     std::vector<std::pair<ID, int>> &tiles() { return tiles_; }
     explicit MultiLevelTilingPart(ForsWithDataReuse fors,
                                   std::string pat = "SSRSRS");
     void apply(Schedule &schedule, SketchTarget &target) override;
-    bool mutate(std::default_random_engine &gen) override;
-    bool crossover(const SketchPart &part,
-                   std::default_random_engine &gen) override;
+    bool mutate(RNG &gen) override;
+    bool crossover(const SketchPart &part, RNG &gen) override;
     [[nodiscard]] std::vector<int> getAnnotation() const override;
     size_t spaceLoopLength() const { return target_.spaceLoops.size(); }
     size_t frontSpaceLoopTimes() const { return frontSpaceLoopTimes_; }

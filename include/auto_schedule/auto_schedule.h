@@ -1,16 +1,18 @@
 #ifndef FREE_TENSOR_AUTO_SCHEDULE_H
 #define FREE_TENSOR_AUTO_SCHEDULE_H
 
-#include <auto_schedule/rule.h>
-#include <auto_schedule/sketch.h>
-#include <driver/array.h>
-#include <driver/device.h>
-#include <driver/target.h>
 #include <functional>
 #include <random>
 #include <schedule.h>
 #include <set>
 #include <unordered_map>
+
+#include <auto_schedule/rule.h>
+#include <auto_schedule/sketch.h>
+#include <driver/array.h>
+#include <driver/device.h>
+#include <driver/target.h>
+#include <random.h>
 
 namespace freetensor {
 
@@ -29,7 +31,7 @@ class AutoSchedule {
     bool paramsSet_;
     std::vector<Ref<Sketch>> measuredSketches_; // sorted from fast to slow
     std::set<size_t> measuredHashes_;
-    std::default_random_engine randGen_;
+    OpenMPRandomEngine rng_;
     std::function<Predicts(const Features &)> predictFunc_;
     std::function<void(const Features &, const Predicts &)> updateFunc_;
     std::vector<std::pair<std::string, Ref<Rule>>> rules_; // (name, rule)
