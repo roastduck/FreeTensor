@@ -112,9 +112,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="optimize-a-program-with-schedules">Optimize a Program with Schedules</h1>
+                <h1 id="optimize-a-program-with-schedules">Optimize a Program with Schedules<a class="headerlink" href="#optimize-a-program-with-schedules" title="Permanent link">&para;</a></h1>
 <p>Oftentimes, only compiling your programs to native code is not enough, and you need further optimizations. This can be done by applying "schedules" (explicit program transformations) to you program.</p>
-<h2 id="example-parallel-vector-addition">Example: Parallel Vector addition</h2>
+<h2 id="example-parallel-vector-addition">Example: Parallel Vector addition<a class="headerlink" href="#example-parallel-vector-addition" title="Permanent link">&para;</a></h2>
 <pre><code class="language-python">import freetensor as ft
 import numpy as np
 
@@ -141,7 +141,7 @@ print(y)
 </ol>
 <p>And you are done. You can have a look at the generated OpenMP multithreaded code by setting <code>verbose=1</code>.</p>
 <p>Parameter <code>s</code> in <code>schedule_callback</code> is a <a href="../../api/#freetensor.core.schedule.Schedule"><code>Schedule</code></a> object. Besides <code>parallelize</code>, there are more supported scheduling primitives.</p>
-<h2 id="combining-multiple-schdules">Combining Multiple Schdules</h2>
+<h2 id="combining-multiple-schdules">Combining Multiple Schdules<a class="headerlink" href="#combining-multiple-schdules" title="Permanent link">&para;</a></h2>
 <p>Some optimizations can be done by applying multiple schedules. For example, a tiled matrix-multiplication can be done by first <code>split</code> the loops, then <code>reorder</code> them, and finally apply <code>cache</code>s to create tile tensors.</p>
 <p>In order to demonstrate the idea, we show a simplier example here: still a vector addtion, but with the loop <code>split</code> and only the outer one <code>parallelize</code>d. Please note that this is an example only for demonstration. Usually you do not need it because OpenMP has its own "schedule(static)" for parallelized loops.</p>
 <pre><code class="language-python">import freetensor as ft
@@ -168,7 +168,7 @@ y = test(np.array(np.arange(1024), dtype=&quot;int32&quot;),
 print(y)
 </code></pre>
 <p>One important thing is to track names of the loops, because the names will change after schedules. You get names of new loops generated from one schedule from its return values (<code>outer</code> and <code>inner</code> in this case), and pass them to a next schedule.</p>
-<h2 id="auto-scheduling-experimental">Auto Scheduling (Experimental)</h2>
+<h2 id="auto-scheduling-experimental">Auto Scheduling (Experimental)<a class="headerlink" href="#auto-scheduling-experimental" title="Permanent link">&para;</a></h2>
 <p>Manually scheduling a program requires a lot of efforts. We provide an experimental automatic scheduling functions in <a href="../../api/#freetensor.core.schedule.Schedule"><code>Schedule</code></a>. You can call <code>s.auto_schedule</code> to pick schedules fully automatically. <code>s.auto_schedule</code> calls other <code>s.auto_xxxxxx</code> functions internally, you can also call one or some of them instead. Please note that these auto-scheduling functions are experimental, and their API is subject to changes.</p>
               
             </div>

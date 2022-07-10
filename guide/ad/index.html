@@ -108,9 +108,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="automatic-differentiation">Automatic Differentiation</h1>
+                <h1 id="automatic-differentiation">Automatic Differentiation<a class="headerlink" href="#automatic-differentiation" title="Permanent link">&para;</a></h1>
 <p>Automatic Differentiation (AD) transforms a program to another program that computes the original one's derivative or gradient. FreeTensor supports Reverse-Mode AD, and there is a plan to support Forward-Mode AD in the future.</p>
-<h2 id="reverse-mode-ad">Reverse-Mode AD</h2>
+<h2 id="reverse-mode-ad">Reverse-Mode AD<a class="headerlink" href="#reverse-mode-ad" title="Permanent link">&para;</a></h2>
 <p>Suppose there is a program <code>x -&gt; y -&gt; z -&gt; w</code> that computes an output <code>w</code> from intermediate variables <code>z</code> and <code>y</code>, and an input variable <code>x</code>. Reverse-Mode AD generates a gradient program <code>dw/dw=1 -&gt; dw/dz -&gt; dw/dy -&gt; dw/dx</code> that computes <code>dw/dx</code> by Chain Rule. <code>y</code>, <code>z</code> and <code>w</code> may be saved in a "tape" when evaluation the original program, to be reused in the gradient one.</p>
 <p>Here is an example of Reverse-Mode AD in FreeTensor:</p>
 <pre><code class="language-python">import freetensor as ft

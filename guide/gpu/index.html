@@ -110,8 +110,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="running-on-a-gpu">Running on a GPU</h1>
-<h2 id="example-vector-addition-on-a-gpu">Example: Vector addition on a GPU</h2>
+                <h1 id="running-on-a-gpu">Running on a GPU<a class="headerlink" href="#running-on-a-gpu" title="Permanent link">&para;</a></h1>
+<h2 id="example-vector-addition-on-a-gpu">Example: Vector addition on a GPU<a class="headerlink" href="#example-vector-addition-on-a-gpu" title="Permanent link">&para;</a></h2>
 <p>If FreeTensor is built with a CUDA backend, you can compile your program to a GPU. We still take a vector addition as an example:</p>
 <pre><code class="language-python">import freetensor as ft
 import numpy as np
@@ -153,7 +153,7 @@ with ft.Device(ft.GPU(), 0):
 <li>(Experimental) Leave them to the default <code>"gpu/global"</code> first, and modify them automatically using <a href="../../api/#freetensor.core.schedule.Schedule.auto_schedule"><code>auto_schedule</code></a>, or the <a href="../../api/#freetensor.core.schedule.Schedule.auto_set_mem_type"><code>auto_set_mem_type</code></a> schedule (which is a part of <code>auto_schedule</code>).</li>
 <li>Set them explicitly in the program by setting an optional <code>mtype</code> parameter of <code>ft.Var</code>, <code>ft.empty</code>, etc.</li>
 </ol>
-<h2 id="mtypebyvalue-for-dynamic-tensor-shapes"><code>mtype="byvalue"</code> for Dynamic Tensor Shapes</h2>
+<h2 id="mtypebyvalue-for-dynamic-tensor-shapes"><code>mtype="byvalue"</code> for Dynamic Tensor Shapes<a class="headerlink" href="#mtypebyvalue-for-dynamic-tensor-shapes" title="Permanent link">&para;</a></h2>
 <p>Tensors with normal <code>mtypes</code> (<code>"cpu"</code>, <code>"gpu/global"</code>, etc.) are passed by references, which means a <code>"cpu"</code> tensor can only be accessed from a CPU, and a <code>"gpu/global"</code> tensor can only be accessed from a GPU. However, sometimes, and especially for dynamic tensor shapes, we want the shapes to be passed by values, and accessible from both CPUs and GPUs (remember we need tensor's shape both when launching a kernel from the CPU side, and during actual computatoin on the GPU side). In this case, we can set the shape-related tensors a <code>"byvalue"</code> <code>mtype</code>, and here is an example:</p>
 <pre><code class="language-python">import freetensor as ft
 import numpy as np

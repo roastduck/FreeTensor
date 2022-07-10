@@ -118,9 +118,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="your-first-program-with-freetenor">Your First Program with FreeTenor</h1>
+                <h1 id="your-first-program-with-freetenor">Your First Program with FreeTenor<a class="headerlink" href="#your-first-program-with-freetenor" title="Permanent link">&para;</a></h1>
 <p>In this page, we introduce some basic concepts of FreeTensor.</p>
-<h2 id="example-vector-addition">Example: Vector addition</h2>
+<h2 id="example-vector-addition">Example: Vector addition<a class="headerlink" href="#example-vector-addition" title="Permanent link">&para;</a></h2>
 <pre><code class="language-python">import freetensor as ft
 import numpy as np
 
@@ -140,18 +140,18 @@ print(y)
 </code></pre>
 <p>Here is a basic example program in FreeTensor. You write a Python function that manipulates FreeTensor's tensor type <code>ft.Var</code>, decorate the function with <code>ft.optimize</code>, and finally invoke the decorated function. FreeTensor will generate C++ code for this vector addition, compile it using a native compiler, and finally load it back to Python. Set <code>verbose = 1</code> to <code>optimize</code> if you are interested in the generated native code.</p>
 <p>To write such a function, you need to follow some basic concept described in this page.</p>
-<h2 id="declare-and-define-tensors">Declare and Define Tensors</h2>
+<h2 id="declare-and-define-tensors">Declare and Define Tensors<a class="headerlink" href="#declare-and-define-tensors" title="Permanent link">&para;</a></h2>
 <p>All tensors, including function parameters, intermediate tensors and return values should be properly declared or defined. Scalars are 0-D tensors in FreeTensor. Declare or define a tensor with an empty shape, and you will get a scalar.</p>
 <p>Function parameters should be declared like <a href="../../api/#freetensor.core.transformer.Var"><code>x : ft.Var[shape, data_type]</code></a>. Declaring a parameter either in the function signature or as a stand-alone statment is acceptable. If your parameter uses another parameter as shape, you will need the latter manner. An optional parameter <code>atype</code> can be set to <code>"output"</code> or <code>"inout"</code> if you want to mutate a function argument.</p>
 <p>Intermediate and returning tensors can be created by <a href="../../api/#freetensor.core.transformer.empty"><code>ft.empty</code></a>, <a href="../../api/#freetensor.core.transformer.var"><code>ft.var</code></a> or <a href="../../api/#freetensor.libop.constant.zeros"><code>ft.zeros</code></a>. If you are using FreeTensor for GPU computing, an optional parameter <code>mtype</code> can be set to specify where to store the tensor. It defaults to the main memory of your currently chosen computing device.</p>
 <p>All tensors and their slices are implemented by an internal <a href="../../api/#freetensor.core.expr.VarRef"><code>ft.VarRef</code></a> type. If you are looking for a tensor's API, <code>ft.VarRef</code> is the right place.</p>
-<h2 id="manipulating-tensors">Manipulating Tensors</h2>
+<h2 id="manipulating-tensors">Manipulating Tensors<a class="headerlink" href="#manipulating-tensors" title="Permanent link">&para;</a></h2>
 <p>To read or write tensors in a function, just write <code>for ... in range(...)</code> loops that iterate through elements in the tensors, and do arithmetic operations on them. We also provide some functions that operates on a whole tensor or a tensor slice in <a href="../../api/#freetensor.libop"><code>libop</code></a>.</p>
 <div class="admonition note">
 <p class="admonition-title">Special note on tensor assignments</p>
 <p>We follow Python convention for tensor assignments, but sometimes it is a little counterintuitive. Suppose you have two <code>list</code>s in Python: <code>a</code> and <code>b</code>. <code>a = b</code> <em>replaces</em> the object <code>a</code> with the object <code>b</code>, while <code>a[...] = b</code> <em>assigns</em> data in <code>b</code> to <code>a</code>. FreeTensor does not support replacing a tensor object with another one. It supports assignments only. Therefore, we need to write <code>a[...] = b</code> to assign tensor. <code>a[:] = b</code> (for non-scalars), <code>a[None] = b</code> and <code>a[()] = b</code> is also supported.</p>
 </div>
-<h2 id="dynamic-or-static">Dynamic or Static</h2>
+<h2 id="dynamic-or-static">Dynamic or Static<a class="headerlink" href="#dynamic-or-static" title="Permanent link">&para;</a></h2>
 <p>Another concept is that statements and expressions in your program are divided into two categories: <em>dynamic</em> and <em>static</em>. Dynamic statements or expressions are restricted to a small subset of Python, and are <em>compiled</em> to native code. Static statements or expressions can be any Python statements or expressions, and are executed <em>before</em> compilation. In other words, static statements or expressions are like macros or templates in C++, while dynamic ones are actually quotations in <a href="https://en.wikipedia.org/wiki/Multi-stage_programming">Multi-Stage Programming</a>.</p>
 <p>The following statements and expressions are considered dynamic:</p>
 <ul>
@@ -186,7 +186,7 @@ print(y)
 for i in range(10):  # Dynamic
     lst.append(i)  # Static. Appends only once
 </code></pre>
-<h2 id="dynamic-tensor-shapes">Dynamic Tensor Shapes</h2>
+<h2 id="dynamic-tensor-shapes">Dynamic Tensor Shapes<a class="headerlink" href="#dynamic-tensor-shapes" title="Permanent link">&para;</a></h2>
 <p>In the example of vector addition above, we support <em>any</em> vector length, but only in a <em>static</em> way. This means each time you change the vector length <code>n</code>, you need to recompile (run <code>optimize</code> again) the function. FreeTensor supports defining tensors with <em>dynamic</em> shapes, just by setting their shapes to a dynamic values. The following code shows an example:</p>
 <pre><code class="language-python">import freetensor as ft
 import numpy as np
@@ -207,7 +207,7 @@ print(y)
 assert np.array_equal(y, [3, 5, 7, 9])
 </code></pre>
 <p>In this way, in only have to compile your program once. But you will expect a longer compiling time, and some optimizations are not possible with dynamic shapes.</p>
-<h2 id="copy-free-interface-fromto-pytorch">Copy-free interface from/to PyTorch</h2>
+<h2 id="copy-free-interface-fromto-pytorch">Copy-free interface from/to PyTorch<a class="headerlink" href="#copy-free-interface-fromto-pytorch" title="Permanent link">&para;</a></h2>
 <p>If FreeTensor is built with <code>WITH_PYTORCH=ON</code>, you can directly pass PyTorch tensors to or get them from FreeTensor. For example,</p>
 <pre><code class="language-python">import freetensor as ft
 import torch
