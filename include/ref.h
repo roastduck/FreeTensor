@@ -55,12 +55,10 @@ template <class T> class Ref {
     /**
      * Shared with any compatible references
      */
-    template <class U>
-    requires std::derived_from<U, T> Ref(const Ref<U> &other)
-        : ptr_(std::static_pointer_cast<T>(other.ptr_)) {}
+    template <std::derived_from<T> U>
+    Ref(const Ref<U> &other) : ptr_(std::static_pointer_cast<T>(other.ptr_)) {}
 
-    template <class U>
-    requires std::derived_from<U, T> Ref &operator=(const Ref<U> &other) {
+    template <std::derived_from<T> U> Ref &operator=(const Ref<U> &other) {
         ptr_ = std::static_pointer_cast<T>(other.ptr_);
         return *this;
     }
@@ -121,9 +119,8 @@ template <class T> class Weak {
     Weak() {}
     Weak(std::nullptr_t) {}
 
-    template <class U>
-    requires std::derived_from<U, T> Weak(const Ref<U> &ref)
-        : ptr_(ref.ptr_), notNull_(ref.isValid()) {}
+    template <std::derived_from<T> U>
+    Weak(const Ref<U> &ref) : ptr_(ref.ptr_), notNull_(ref.isValid()) {}
 
     /**
      * Return true if this is not a null pointer. If you are checking whether
