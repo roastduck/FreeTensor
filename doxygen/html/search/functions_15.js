@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['weak_0',['Weak',['../classfreetensor_1_1Weak.html#a006620c3f2de826d05ca792da8d1ddaa',1,'freetensor::Weak::Weak()'],['../classfreetensor_1_1Weak.html#a18ea80b000b516e84b9c6dd9502fd47b',1,'freetensor::Weak::Weak(std::nullptr_t)'],['../classfreetensor_1_1Weak.html#a5d0378217441fee1633d77f40fe9331f',1,'freetensor::Weak::Weak(const Ref&lt; U &gt; &amp;ref)']]],
+  ['weak_0',['Weak',['../classfreetensor_1_1Weak.html#a006620c3f2de826d05ca792da8d1ddaa',1,'freetensor::Weak::Weak()'],['../classfreetensor_1_1Weak.html#a18ea80b000b516e84b9c6dd9502fd47b',1,'freetensor::Weak::Weak(std::nullptr_t)'],['../classfreetensor_1_1Weak.html#aaa5553a5cb757edcf798f58698afb51e',1,'freetensor::Weak::Weak(const Ref&lt; U &gt; &amp;ref)']]],
   ['werror_1',['werror',['../classfreetensor_1_1Config.html#aea20c85bd756044eff7a61a9dd69da2e',1,'freetensor::Config']]],
   ['width_2',['width',['../classfreetensor_1_1CountBandNodeWidth.html#a76a9807bcbce353c64590db079da96d9',1,'freetensor::CountBandNodeWidth']]],
   ['withcuda_3',['withCUDA',['../classfreetensor_1_1Config.html#ad64e4c1d5e60393af43aa683e24fa3a7',1,'freetensor::Config']]],

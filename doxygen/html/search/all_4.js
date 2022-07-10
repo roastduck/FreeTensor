@@ -17,7 +17,7 @@ var searchData=
   ['cat_14',['cat',['../namespacefreetensor.html#ac0031db496e4ad1f6e4ae729835ae653',1,'freetensor']]],
   ['ceil_15',['Ceil',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fab95a01ffffa8fcdd2a9af961937c097c',1,'freetensor::Ceil()'],['../namespacefreetensor.html#a649db9a36cd064e6d1102185c07447a1',1,'freetensor::Ceil()']]],
   ['ceildiv_16',['CeilDiv',['../namespacefreetensor.html#a1f2558f7c7f6a5eca1883c599b8af34e',1,'freetensor']]],
-  ['ceildiv_17',['ceilDiv',['../namespacefreetensor.html#ab8e10f2a0fea7779e2af6bb24dda132d',1,'freetensor::ceilDiv(T a, T b)'],['../namespacefreetensor.html#a1d9b688b7acfde8110230e7b4f81728b',1,'freetensor::ceilDiv(const UpperBound &amp;b, int k)']]],
+  ['ceildiv_17',['ceilDiv',['../namespacefreetensor.html#a37a465e07397f5c395cee045801f9722',1,'freetensor::ceilDiv(T a, T b)'],['../namespacefreetensor.html#a1d9b688b7acfde8110230e7b4f81728b',1,'freetensor::ceilDiv(const UpperBound &amp;b, int k)']]],
   ['ceildiv_18',['CeilDiv',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa30c212eb3184a5ed41f01a25c8124e8a',1,'freetensor']]],
   ['ceildiv_19',['ceilDiv',['../namespacefreetensor.html#a5005b61816d225c79de45228db14112a',1,'freetensor']]],
   ['ceildivnode_20',['CeilDivNode',['../classfreetensor_1_1CeilDivNode.html',1,'freetensor']]],

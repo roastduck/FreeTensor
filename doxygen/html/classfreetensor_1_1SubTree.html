@@ -84,14 +84,12 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a089ec3128dc12a6f8da2b084786a5b35"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a529e5d06505ca903dd6629eeb71a9251"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SubTree.html#a529e5d06505ca903dd6629eeb71a9251">SubTree</a> (std::nullptr_t)</td></tr>
 <tr class="separator:a529e5d06505ca903dd6629eeb71a9251"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aacbd46619cc21d08fd87d2de82f48a4c"><td class="memTemplParams" colspan="2">template&lt;class U &gt; <br />
-requires std::derived_from&lt;U, T&gt;</td></tr>
-<tr class="memitem:aacbd46619cc21d08fd87d2de82f48a4c"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SubTree.html#aacbd46619cc21d08fd87d2de82f48a4c">SubTree</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; U &gt; &amp;obj)</td></tr>
-<tr class="separator:aacbd46619cc21d08fd87d2de82f48a4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8cfd86ba822bb59d2bf48ab3be051e10"><td class="memTemplParams" colspan="2">template&lt;class U &gt; <br />
-requires std::derived_from&lt;U, T&gt;</td></tr>
-<tr class="memitem:a8cfd86ba822bb59d2bf48ab3be051e10"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SubTree.html#a8cfd86ba822bb59d2bf48ab3be051e10">SubTree</a> (<a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; U &gt; &amp;&amp;obj)</td></tr>
-<tr class="separator:a8cfd86ba822bb59d2bf48ab3be051e10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3dd17351b5f8cfa595de4fdb7905583"><td class="memTemplParams" colspan="2">template&lt;std::derived_from&lt; T &gt; U&gt; </td></tr>
+<tr class="memitem:ae3dd17351b5f8cfa595de4fdb7905583"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SubTree.html#ae3dd17351b5f8cfa595de4fdb7905583">SubTree</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; U &gt; &amp;obj)</td></tr>
+<tr class="separator:ae3dd17351b5f8cfa595de4fdb7905583"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4dbc36e3a24b1737f873eacab50e8f82"><td class="memTemplParams" colspan="2">template&lt;std::derived_from&lt; T &gt; U&gt; </td></tr>
+<tr class="memitem:a4dbc36e3a24b1737f873eacab50e8f82"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SubTree.html#a4dbc36e3a24b1737f873eacab50e8f82">SubTree</a> (<a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; U &gt; &amp;&amp;obj)</td></tr>
+<tr class="separator:a4dbc36e3a24b1737f873eacab50e8f82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afdbae483804504bb9cd870ee4ce8fce2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SubTree.html#afdbae483804504bb9cd870ee4ce8fce2">SubTree</a> (<a class="el" href="classfreetensor_1_1SubTree.html">SubTree</a> &amp;&amp;other)</td></tr>
 <tr class="separator:afdbae483804504bb9cd870ee4ce8fce2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a617b89d547591c69e9165e9af79fc1aa"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespacefreetensor.html#af95889187755480d15e840d24f445312">NullPolicy</a> OTHER_POLICY&gt; </td></tr>
@@ -220,16 +218,15 @@ template&lt;class T , <a class="el" href="namespacefreetensor.html#af95889187755
 
 </div>
 </div>
-<a id="aacbd46619cc21d08fd87d2de82f48a4c" name="aacbd46619cc21d08fd87d2de82f48a4c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aacbd46619cc21d08fd87d2de82f48a4c">&#9670;&nbsp;</a></span>SubTree() <span class="overload">[3/8]</span></h2>
+<a id="ae3dd17351b5f8cfa595de4fdb7905583" name="ae3dd17351b5f8cfa595de4fdb7905583"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae3dd17351b5f8cfa595de4fdb7905583">&#9670;&nbsp;</a></span>SubTree() <span class="overload">[3/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class T , <a class="el" href="namespacefreetensor.html#af95889187755480d15e840d24f445312">NullPolicy</a> POLICY = NullPolicy::NotNull&gt; </div>
 <div class="memtemplate">
-template&lt;class U &gt; <br />
-requires std::derived_from&lt;U, T&gt;</div>
+template&lt;std::derived_from&lt; T &gt; U&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -251,16 +248,15 @@ requires std::derived_from&lt;U, T&gt;</div>
 
 </div>
 </div>
-<a id="a8cfd86ba822bb59d2bf48ab3be051e10" name="a8cfd86ba822bb59d2bf48ab3be051e10"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8cfd86ba822bb59d2bf48ab3be051e10">&#9670;&nbsp;</a></span>SubTree() <span class="overload">[4/8]</span></h2>
+<a id="a4dbc36e3a24b1737f873eacab50e8f82" name="a4dbc36e3a24b1737f873eacab50e8f82"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4dbc36e3a24b1737f873eacab50e8f82">&#9670;&nbsp;</a></span>SubTree() <span class="overload">[4/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class T , <a class="el" href="namespacefreetensor.html#af95889187755480d15e840d24f445312">NullPolicy</a> POLICY = NullPolicy::NotNull&gt; </div>
 <div class="memtemplate">
-template&lt;class U &gt; <br />
-requires std::derived_from&lt;U, T&gt;</div>
+template&lt;std::derived_from&lt; T &gt; U&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
