@@ -13,8 +13,7 @@ namespace freetensor {
 /**
  * Wrapper for thread safe OpenMP parallel for
  */
-template <class T>
-requires std::integral<T>
+template <std::integral T>
 void exceptSafeParallelFor(T begin, T end, T step,
                            const std::function<void(T)> &body,
                            omp_sched_t schedKind,
