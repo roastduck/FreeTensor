@@ -157,8 +157,8 @@ make -j  # Or use Ninja
 <li><code>-DFT_WITH_MKL=&lt;path/to/mkl/root&gt;</code>: build with MKL (path to MKL is required, defaults to building without it).</li>
 <li><code>-DFT_WITH_PYTORCH=ON/OFF</code>: build with/without copy-free interface from/to PyTorch, requring PyTorch installed on the system (defaults to <code>OFF</code>).</li>
 <li><code>-DFT_DEBUG_LOG_NODE=ON</code> (for developers): enables tracing to tell by which pass a specific AST node is modified.</li>
-<li><code>-DFT_DEBUG_PROFILE</code> (for developers): profiles some heavy functions in the compiler.</li>
-<li><code>-DFT_DEBUG_SANITIZE</code> (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).</li>
+<li><code>-DFT_DEBUG_PROFILE=ON</code> (for developers): profiles some heavy functions in the compiler.</li>
+<li><code>-DFT_DEBUG_SANITIZE=sanitizer_name</code> (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).</li>
 </ul>
 <p>It will build a shared library with a name like <code>freetensor_ffi.cpython-37m-x86_64-linux-gnu.so</code>, which can be used in Python via <code>import freetensor</code>.</p>
 <h2 id="run-a-program-with-freetensor">Run a Program with FreeTensor<a class="headerlink" href="#run-a-program-with-freetensor" title="Permanent link">&para;</a></h2>
@@ -172,8 +172,8 @@ make -j  # Or use Ninja
 <li><code>FT_PRETTY_PRINT=ON/OFF</code>. Enable/disable colored printing.</li>
 <li><code>FT_PRINT_ALL_ID=ON/OFF</code>. Print (or not) IDs of all statements in an AST.</li>
 <li><code>FT_WERROR=ON/OFF</code>. Treat warnings as errors (or not).</li>
-<li><code>FT_BACKEND_COMPILER_CXX</code>. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself.</li>
-<li><code>FT_BACKEND_COMPILER_NVCC</code>. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself.</li>
+<li><code>FT_BACKEND_COMPILER_CXX=path_to_compiler</code>. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself.</li>
+<li><code>FT_BACKEND_COMPILER_NVCC=path_to_compiler</code>. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself.</li>
 </ul>
 <p>This configurations can also set at runtime in <a href="../../api/#freetensor.core.config"><code>ft.config</code></a>.</p>
 <h2 id="run-the-tests">Run the Tests<a class="headerlink" href="#run-the-tests" title="Permanent link">&para;</a></h2>
