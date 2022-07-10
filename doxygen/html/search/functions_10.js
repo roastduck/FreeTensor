@@ -1,9 +1,9 @@
 var searchData=
 [
-  ['randomdouble_0',['randomDouble',['../namespacefreetensor.html#a09745015eb8a8b58fb4cf56eb04bd331',1,'freetensor']]],
-  ['randomfillarray_1',['randomFillArray',['../namespacefreetensor.html#a608db9e923a4d45fac83ff24c75932db',1,'freetensor']]],
-  ['randomint_2',['randomInt',['../namespacefreetensor.html#acf63aab80b179161b3ce09c1ce29f0fa',1,'freetensor']]],
-  ['randwithprob_3',['randWithProb',['../namespacefreetensor.html#aac3a0f4cc6e69f5f488c2bd166cb8817',1,'freetensor']]],
+  ['randomdouble_0',['randomDouble',['../namespacefreetensor.html#a1d976fba160c513611bdd40e1de77711',1,'freetensor']]],
+  ['randomfillarray_1',['randomFillArray',['../namespacefreetensor.html#adbe259984c11731379dab45544b36390',1,'freetensor']]],
+  ['randomint_2',['randomInt',['../namespacefreetensor.html#a78694332c7a55d9a92d8fa57700e89f8',1,'freetensor']]],
+  ['randwithprob_3',['randWithProb',['../namespacefreetensor.html#a2a650b9a1ec42e49cb0e0248007ee306',1,'freetensor']]],
   ['range_4',['range',['../namespacefreetensor.html#a103b43010631b355bba28157225335a1',1,'freetensor::range(PBMap &amp;&amp;map)'],['../namespacefreetensor.html#a111425c4bbc5c0a17379a3559724a77a',1,'freetensor::range(const PBMap &amp;map)']]],
   ['rational_5',['Rational',['../structfreetensor_1_1Rational.html#a1e755e76c313c3a1f167f5a59541dafb',1,'freetensor::Rational']]],
   ['rawinitto_6',['rawInitTo',['../classfreetensor_1_1Array.html#a3c0a6a35f713cbb1d8dffddedc0fd060',1,'freetensor::Array']]],

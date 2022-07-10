@@ -125,9 +125,10 @@ var searchData=
   ['auto_5fschedule_2eh_122',['auto_schedule.h',['../auto__schedule_8h.html',1,'']]],
   ['autofuse_123',['autoFuse',['../classfreetensor_1_1Schedule.html#af6c1cee0944a78f2662996607cf4ffe0',1,'freetensor::Schedule']]],
   ['autoparallelize_124',['autoParallelize',['../classfreetensor_1_1Schedule.html#aab49e422d97c96d24081406de659e121',1,'freetensor::Schedule']]],
-  ['autoschedule_125',['autoSchedule',['../classfreetensor_1_1Schedule.html#a9c73e1f8cd59b196aa495c56fb141d8f',1,'freetensor::Schedule']]],
-  ['autoschedule_126',['AutoSchedule',['../classfreetensor_1_1AutoSchedule.html#a4770181807337519eec4b477276c82a3',1,'freetensor::AutoSchedule::AutoSchedule()'],['../classfreetensor_1_1AutoSchedule.html',1,'freetensor::AutoSchedule']]],
-  ['autosetmemtype_127',['autoSetMemType',['../classfreetensor_1_1Schedule.html#aeb4eeb733444a7566604e4f19f657b07',1,'freetensor::Schedule']]],
-  ['autounroll_128',['autoUnroll',['../classfreetensor_1_1Schedule.html#a7f5c6509535b6636e718d7e3fdbc267f',1,'freetensor::Schedule']]],
-  ['autouselib_129',['autoUseLib',['../classfreetensor_1_1Schedule.html#a7f6e8a418824aeaf48e5966d9046e8b4',1,'freetensor::Schedule']]]
+  ['autoschedule_125',['AutoSchedule',['../classfreetensor_1_1AutoSchedule.html#a4770181807337519eec4b477276c82a3',1,'freetensor::AutoSchedule']]],
+  ['autoschedule_126',['autoSchedule',['../classfreetensor_1_1Schedule.html#a9c73e1f8cd59b196aa495c56fb141d8f',1,'freetensor::Schedule']]],
+  ['autoschedule_127',['AutoSchedule',['../classfreetensor_1_1AutoSchedule.html',1,'freetensor']]],
+  ['autosetmemtype_128',['autoSetMemType',['../classfreetensor_1_1Schedule.html#aeb4eeb733444a7566604e4f19f657b07',1,'freetensor::Schedule']]],
+  ['autounroll_129',['autoUnroll',['../classfreetensor_1_1Schedule.html#a7f5c6509535b6636e718d7e3fdbc267f',1,'freetensor::Schedule']]],
+  ['autouselib_130',['autoUseLib',['../classfreetensor_1_1Schedule.html#a7f6e8a418824aeaf48e5966d9046e8b4',1,'freetensor::Schedule']]]
 ];

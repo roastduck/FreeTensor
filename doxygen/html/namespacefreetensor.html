@@ -450,6 +450,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1NonCommutativeBinaryExprNode.html">NonCommutativeBinaryExprNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1OpenMPRandomEngine.html">OpenMPRandomEngine</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1OpenMPScope.html">OpenMPScope</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Opt.html">Opt</a></td></tr>
@@ -1075,18 +1077,18 @@ Functions</h2></td></tr>
 <tr class="separator:a7122c05d95e3819de959c839f4178342"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7af0844b2754bd8f87415c6e47bfc5e7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7af0844b2754bd8f87415c6e47bfc5e7">lcaStmt</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;lhs, const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;rhs)</td></tr>
 <tr class="separator:a7af0844b2754bd8f87415c6e47bfc5e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2bb5b23b0fca62e8cf1a9d15f8f86325"><td class="memItemLeft" align="right" valign="top">std::vector&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2bb5b23b0fca62e8cf1a9d15f8f86325">_randomFillArray</a> (int total, int n, std::default_random_engine &amp;gen)</td></tr>
-<tr class="separator:a2bb5b23b0fca62e8cf1a9d15f8f86325"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acf63aab80b179161b3ce09c1ce29f0fa"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#acf63aab80b179161b3ce09c1ce29f0fa">randomInt</a> (int mx, std::default_random_engine &amp;gen)</td></tr>
-<tr class="separator:acf63aab80b179161b3ce09c1ce29f0fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a09745015eb8a8b58fb4cf56eb04bd331"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a09745015eb8a8b58fb4cf56eb04bd331">randomDouble</a> (std::default_random_engine &amp;gen)</td></tr>
-<tr class="separator:a09745015eb8a8b58fb4cf56eb04bd331"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae508b4bca4f3eb72e0a438d228b560d6"><td class="memItemLeft" align="right" valign="top">std::vector&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae508b4bca4f3eb72e0a438d228b560d6">_randomFillArray</a> (int total, int n, std::uniform_random_bit_generator auto &amp;gen)</td></tr>
+<tr class="separator:ae508b4bca4f3eb72e0a438d228b560d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78694332c7a55d9a92d8fa57700e89f8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a78694332c7a55d9a92d8fa57700e89f8">randomInt</a> (int mx, std::uniform_random_bit_generator auto &amp;gen)</td></tr>
+<tr class="separator:a78694332c7a55d9a92d8fa57700e89f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d976fba160c513611bdd40e1de77711"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1d976fba160c513611bdd40e1de77711">randomDouble</a> (std::uniform_random_bit_generator auto &amp;gen)</td></tr>
+<tr class="separator:a1d976fba160c513611bdd40e1de77711"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee5858ad444905a091ba136f9ab5705b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aee5858ad444905a091ba136f9ab5705b">getProbSum</a> (const std::vector&lt; double &gt; &amp;pred)</td></tr>
 <tr class="separator:aee5858ad444905a091ba136f9ab5705b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac3a0f4cc6e69f5f488c2bd166cb8817"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aac3a0f4cc6e69f5f488c2bd166cb8817">randWithProb</a> (const std::vector&lt; double &gt; &amp;probSum, std::default_random_engine &amp;gen)</td></tr>
-<tr class="separator:aac3a0f4cc6e69f5f488c2bd166cb8817"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a608db9e923a4d45fac83ff24c75932db"><td class="memItemLeft" align="right" valign="top">std::vector&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a608db9e923a4d45fac83ff24c75932db">randomFillArray</a> (int total, int n, std::default_random_engine &amp;gen)</td></tr>
-<tr class="separator:a608db9e923a4d45fac83ff24c75932db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a650b9a1ec42e49cb0e0248007ee306"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2a650b9a1ec42e49cb0e0248007ee306">randWithProb</a> (const std::vector&lt; double &gt; &amp;probSum, std::uniform_random_bit_generator auto &amp;gen)</td></tr>
+<tr class="separator:a2a650b9a1ec42e49cb0e0248007ee306"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adbe259984c11731379dab45544b36390"><td class="memItemLeft" align="right" valign="top">std::vector&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adbe259984c11731379dab45544b36390">randomFillArray</a> (int total, int n, std::uniform_random_bit_generator auto &amp;gen)</td></tr>
+<tr class="separator:adbe259984c11731379dab45544b36390"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a213f39e210e90988e2d9a6a911d051c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1ID.html">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a213f39e210e90988e2d9a6a911d051c6">mergeLoops</a> (<a class="el" href="classfreetensor_1_1Schedule.html">Schedule</a> &amp;schedule, std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; loops)</td></tr>
 <tr class="separator:a213f39e210e90988e2d9a6a911d051c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc95cd1260f6ce4dd8e56c3cb9083bc0"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afc95cd1260f6ce4dd8e56c3cb9083bc0">splitLoop</a> (<a class="el" href="classfreetensor_1_1Schedule.html">Schedule</a> &amp;schedule, <a class="el" href="classfreetensor_1_1ID.html">ID</a> loop, std::vector&lt; int &gt; tiling)</td></tr>
@@ -5590,8 +5592,8 @@ template&lt;class Tbuffer , class TioTensor , class Tbody &gt; </div>
 
 </div>
 </div>
-<a id="a2bb5b23b0fca62e8cf1a9d15f8f86325" name="a2bb5b23b0fca62e8cf1a9d15f8f86325"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2bb5b23b0fca62e8cf1a9d15f8f86325">&#9670;&nbsp;</a></span>_randomFillArray()</h2>
+<a id="ae508b4bca4f3eb72e0a438d228b560d6" name="ae508b4bca4f3eb72e0a438d228b560d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae508b4bca4f3eb72e0a438d228b560d6">&#9670;&nbsp;</a></span>_randomFillArray()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -5614,7 +5616,7 @@ template&lt;class Tbuffer , class TioTensor , class Tbody &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::default_random_engine &amp;&#160;</td>
+          <td class="paramtype">std::uniform_random_bit_generator auto &amp;&#160;</td>
           <td class="paramname"><em>gen</em>&#160;</td>
         </tr>
         <tr>
@@ -12457,8 +12459,8 @@ template&lt;class T &gt; </div>
 </div><!-- fragment --> 
 </div>
 </div>
-<a id="a09745015eb8a8b58fb4cf56eb04bd331" name="a09745015eb8a8b58fb4cf56eb04bd331"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a09745015eb8a8b58fb4cf56eb04bd331">&#9670;&nbsp;</a></span>randomDouble()</h2>
+<a id="a1d976fba160c513611bdd40e1de77711" name="a1d976fba160c513611bdd40e1de77711"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d976fba160c513611bdd40e1de77711">&#9670;&nbsp;</a></span>randomDouble()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12469,7 +12471,7 @@ template&lt;class T &gt; </div>
         <tr>
           <td class="memname">double freetensor::randomDouble </td>
           <td>(</td>
-          <td class="paramtype">std::default_random_engine &amp;&#160;</td>
+          <td class="paramtype">std::uniform_random_bit_generator auto &amp;&#160;</td>
           <td class="paramname"><em>gen</em></td><td>)</td>
           <td></td>
         </tr>
@@ -12483,8 +12485,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a608db9e923a4d45fac83ff24c75932db" name="a608db9e923a4d45fac83ff24c75932db"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a608db9e923a4d45fac83ff24c75932db">&#9670;&nbsp;</a></span>randomFillArray()</h2>
+<a id="adbe259984c11731379dab45544b36390" name="adbe259984c11731379dab45544b36390"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adbe259984c11731379dab45544b36390">&#9670;&nbsp;</a></span>randomFillArray()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12507,7 +12509,7 @@ template&lt;class T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::default_random_engine &amp;&#160;</td>
+          <td class="paramtype">std::uniform_random_bit_generator auto &amp;&#160;</td>
           <td class="paramname"><em>gen</em>&#160;</td>
         </tr>
         <tr>
@@ -12525,8 +12527,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="acf63aab80b179161b3ce09c1ce29f0fa" name="acf63aab80b179161b3ce09c1ce29f0fa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acf63aab80b179161b3ce09c1ce29f0fa">&#9670;&nbsp;</a></span>randomInt()</h2>
+<a id="a78694332c7a55d9a92d8fa57700e89f8" name="a78694332c7a55d9a92d8fa57700e89f8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78694332c7a55d9a92d8fa57700e89f8">&#9670;&nbsp;</a></span>randomInt()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12543,7 +12545,7 @@ template&lt;class T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::default_random_engine &amp;&#160;</td>
+          <td class="paramtype">std::uniform_random_bit_generator auto &amp;&#160;</td>
           <td class="paramname"><em>gen</em>&#160;</td>
         </tr>
         <tr>
@@ -12561,8 +12563,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="aac3a0f4cc6e69f5f488c2bd166cb8817" name="aac3a0f4cc6e69f5f488c2bd166cb8817"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aac3a0f4cc6e69f5f488c2bd166cb8817">&#9670;&nbsp;</a></span>randWithProb()</h2>
+<a id="a2a650b9a1ec42e49cb0e0248007ee306" name="a2a650b9a1ec42e49cb0e0248007ee306"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a650b9a1ec42e49cb0e0248007ee306">&#9670;&nbsp;</a></span>randWithProb()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12579,7 +12581,7 @@ template&lt;class T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::default_random_engine &amp;&#160;</td>
+          <td class="paramtype">std::uniform_random_bit_generator auto &amp;&#160;</td>
           <td class="paramname"><em>gen</em>&#160;</td>
         </tr>
         <tr>
