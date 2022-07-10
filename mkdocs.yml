@@ -17,6 +17,8 @@ plugins:
 
 markdown_extensions:
     - admonition
+    - toc:
+        permalink: true
 
 nav:
     - 'FreeTensor':
