@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cmath>   // sqrt
 #include <cstdio>  // remove
 #include <cstdlib> // mkdtemp, system
 #include <cstring> // memset
@@ -337,10 +338,11 @@ std::vector<Ref<Array>> Driver::collectReturns() {
     return ret;
 }
 
-double Driver::time(int rounds, int warmups) {
+std::pair<double, double> Driver::time(int rounds, int warmups) {
     namespace ch = std::chrono;
 
-    double tot = 0;
+    std::vector<double> times(rounds);
+
     auto tgtType = dev_->type();
     for (int i = 0; i < warmups; i++) {
         run();
@@ -377,9 +379,23 @@ double Driver::time(int rounds, int warmups) {
         }
 #endif // FT_WITH_CUDA
 
-        tot += dur;
+        times[i] = dur;
     }
-    return tot / rounds;
+
+    double avg = 0, varAvgX = 0;
+    for (auto t : times) {
+        avg += t;
+    }
+    avg /= rounds;
+    if (rounds > 1) {
+        double varX = 0;
+        for (auto t : times) {
+            varX += (t - avg) * (t - avg);
+        }
+        varX /= (rounds - 1);    // Var[X] = n/(n-1) sigma^2
+        varAvgX = varX / rounds; // Var[X1 + X2 + ... + Xn] = 1/n Var[X]
+    }
+    return std::make_pair(avg, sqrt(varAvgX));
 }
 
 void Driver::unload() {

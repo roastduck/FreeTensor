@@ -2,6 +2,8 @@
 #include <queue>
 #include <utility>
 
+#include <itertools.hpp>
+
 #include <analyze/find_elementwise.h>
 #include <analyze/fixed_length_feature.h>
 #include <analyze/structural_feature.h>
@@ -21,15 +23,28 @@
 
 namespace freetensor {
 
+static size_t decideSeed(std::optional<size_t> seed, int verbose) {
+    size_t ret;
+    if (seed.has_value()) {
+        ret = *seed;
+    } else {
+        ret = std::random_device{}();
+    }
+    if (verbose >= 1) {
+        logger() << "Random seed: " << ret << std::endl;
+    }
+    return ret;
+}
+
 AutoSchedule::AutoSchedule(
     const Schedule &schedule, const Ref<Target> &target,
     const Ref<Device> &device,
     const std::function<Predicts(const Features &)> &predictFunc,
     const std::function<void(const Features &, const Predicts &)> &updateFunc,
-    std::string tag, int minBlockSize,
+    std::string tag, int minBlockSize, std::optional<size_t> randomSeed,
     const std::optional<std::unordered_set<std::string>> &ruleSet, int verbose)
     : original_(schedule.clone()), target_(target), device_(device),
-      paramsSet_(false), rng_(std::random_device{}()),
+      paramsSet_(false), rng_(decideSeed(randomSeed, verbose)),
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)),
       tag_(std::move(tag)), minBlockSize_(minBlockSize), verbose_(verbose) {
     flop_ = 0;
@@ -72,7 +87,7 @@ void AutoSchedule::setParams(
     paramsSet_ = true;
 }
 
-std::vector<double>
+std::pair<std::vector<double>, std::vector<double>>
 AutoSchedule::measure(const std::vector<Ref<Sketch>> &sketches) {
     // Compile in parallel, and measure sequentially
     // TODO: Parallel among computing nodes
@@ -98,25 +113,29 @@ AutoSchedule::measure(const std::vector<Ref<Sketch>> &sketches) {
     if (verbose_ >= 1) {
         logger() << "Measuring time" << std::endl;
     }
-    std::vector<double> times;
+    std::vector<double> times, stddevs;
     times.reserve(n);
+    stddevs.reserve(n);
     for (size_t i = 0; i < n; i++) {
         ASSERT(paramsSet_);
         try {
             if (!drivers[i].isValid()) {
-                times.emplace_back(1e30);
+                times.emplace_back(INFINITY);
+                stddevs.emplace_back(0);
                 continue;
             }
             drivers[i]->setArgs(args_, kws_);
-            double t = drivers[i]->time(5, 20);
-            times.emplace_back(t);
+            auto [avg, stddev] = drivers[i]->time(100, 10);
+            times.emplace_back(avg);
+            stddevs.emplace_back(stddev);
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR measure: " << e.what() << std::endl;
-            times.emplace_back(1e30);
+            times.emplace_back(INFINITY);
+            stddevs.emplace_back(0);
         }
     }
-    return times;
+    return std::make_pair(times, stddevs);
 }
 
 void AutoSchedule::searchOneRound(size_t n, size_t nExploit, size_t nExplore) {
@@ -162,36 +181,38 @@ AutoSchedule::testAndAdd(const std::vector<Ref<Sketch>> &sketches) {
     auto features = genFeatures(sketches);
     size_t n = sketches.size();
     ASSERT(features.size() == n);
-    std::vector<double> times = measure(sketches);
+    auto &&[times, stddevs] = measure(sketches);
     std::vector<double> flopsList;
-    for (size_t i = 0; i < times.size(); i++) {
-        if (times[i] > 1e20) {
-            continue;
+    for (auto [t, stddev] : iter::zip(times, stddevs)) {
+        if (t < 1e20) {
+            flopsList.emplace_back(flop_ / t);
         }
-        flopsList.emplace_back(flop_ / times[i]);
     }
     updateFunc_(features, flopsList);
-    double avg = 0;
+    double allAvg = 0, maxStddevPercent = 0;
     int cnt = 0;
-    for (size_t i = 0; i < n; i++) {
-        if (times[i] > 1e20) {
-            continue;
+    for (auto &&[t, stddev, sketch] : iter::zip(times, stddevs, sketches)) {
+        if (t < 1e20) {
+            cnt++;
+            allAvg += t;
+            maxStddevPercent = std::max(maxStddevPercent, stddev / t);
+            measuredSketches_.emplace_back(sketch);
+            measuredSketches_.back()->setTime(t);
+            measuredHashes_.insert(sketch->hash());
         }
-        cnt++;
-        avg += times[i];
-        measuredSketches_.emplace_back(sketches[i]);
-        measuredSketches_.back()->setTime(times[i]);
-        measuredHashes_.insert(sketches[i]->hash());
     }
-    avg /= cnt;
+    allAvg /= cnt;
     std::sort(times.begin(), times.end());
     std::sort(measuredSketches_.begin(), measuredSketches_.end(),
               [](const auto &a, const auto &b) { return *a < *b; });
     if (verbose_ >= 1) {
-        logger() << "global min: " << measuredSketches_.front()->time()
+        logger() << "Global min: " << measuredSketches_.front()->time()
                  << std::endl;
-        logger() << "this round: min: " << times[0] << " avg: " << avg
+        logger() << "This round: min: " << times[0] << " avg: " << allAvg
                  << " mid: " << times[(times.size() - 1) / 2] << std::endl;
+        logger() << "Max_sketch(estimated standard deviation of average "
+                    "measurements / average measurements) = "
+                 << (maxStddevPercent * 100) << "%" << std::endl;
     }
     return times;
 }
@@ -205,7 +226,7 @@ Schedule AutoSchedule::getBestSchedule() {
 
 double AutoSchedule::getBestTime() {
     if (measuredSketches_.empty()) {
-        return 1e30;
+        return INFINITY;
     }
     return measuredSketches_[0]->time();
 }
@@ -217,7 +238,8 @@ std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
     while (ret.size() < nRand) {
         std::vector<Ref<Sketch>> now(nRand);
         size_t nThisTurn = nRand;
-#pragma omp parallel for
+        // Use static schedule for deterministic random numbers
+#pragma omp parallel for schedule(static)
         for (size_t i = 0; i < nThisTurn; i++) {
             now[i] = baseSketches_[randomInt(baseSketches_.size() - 1, rng_)]
                          ->genRandAnnotation(rng_);
@@ -312,7 +334,8 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
             if (verbose_ >= 1) {
                 logger() << "evo " << v2.size() << std::endl;
             }
-#pragma omp parallel for
+            // Use static schedule for deterministic random numbers
+#pragma omp parallel for schedule(static)
             for (size_t j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
                 double r = randomDouble(rng_);
                 if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
@@ -359,7 +382,7 @@ AutoSchedule::getPrediction(std::vector<Ref<Sketch>> &sketches_in) {
     std::vector<double> ret(sketches_in.size());
     index.reserve(sketches_in.size());
     std::vector<Ref<Sketch>> sketches;
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic)
     for (size_t i = 0; i < sketches_in.size(); i++) {
         sketches_in[i]->genSchedule();
     }
@@ -368,7 +391,7 @@ AutoSchedule::getPrediction(std::vector<Ref<Sketch>> &sketches_in) {
             index.push_back(i);
             sketches.push_back(sketches_in[i]);
         } else {
-            ret[i] = -1e30;
+            ret[i] = -INFINITY;
         }
     }
     auto featureList = genFeatures(sketches);

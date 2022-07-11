@@ -17,11 +17,12 @@ void init_ffi_auto_schedule(py::module_ &m) {
                      const AutoSchedule::Features &)> &,
                  const std::function<void(const AutoSchedule::Features &,
                                           const AutoSchedule::Predicts &)> &,
-                 std::string, int,
+                 std::string, int, std::optional<size_t>,
                  const std::optional<std::unordered_set<std::string>> &, int>(),
              "schedule"_a, "target"_a, "device"_a, "predict_func"_a,
              "update_func"_a, "tag"_a = "", "min_block_size"_a = 0,
-             "rule_set"_a, "verbose"_a = 0)
+             "random_seed"_a = std::nullopt, "rule_set"_a = std::nullopt,
+             "verbose"_a = 0)
         .def("set_params", &AutoSchedule::setParams, "args"_a,
              "kws"_a = std::unordered_map<std::string, Ref<Array>>())
         .def("search_one_round", &AutoSchedule::searchOneRound, "n"_a,
