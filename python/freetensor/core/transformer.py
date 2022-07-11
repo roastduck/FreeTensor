@@ -212,15 +212,13 @@ class FreeTensorOverload(StagingOverload):
             ctx_stack.top().set_next_nid(self.fullid(f'{filename}:{lineno}'))
 
 
-_overload: FreeTensorOverload = None
+_overload: FreeTensorOverload = FreeTensorOverload()
 
 def _init_overload():
     global _overload
-    _overload = FreeTensorOverload()
-
-def _reset_overload():
-    global _overload
-    _overload = None
+    # We need to keep the overload the same across all functions.
+    # Otherwise, inline and transform functions will use different overload instances.
+    _overload.__init__()
 
 
 def _staged_if_then_else_stmt(pred: Union[VarRef, ffi.Expr],
@@ -512,8 +510,6 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
     finally:
         # Despite whether the exception is raised, we need to clean up the ctx_stack
         staged_ast = pop_ast()
-        # Always cleanup the overload object
-        _reset_overload()
 
     staged = Func(func.__name__, params + list(closure.keys()), returns,
                   staged_ast, closure)
@@ -558,12 +554,9 @@ def inline(func=None,
     extra_locals = _prepare_extra_locals(default_dynamic_range)
 
     _init_overload()
-    try:
-        transformed = _overload.into_staging(func,
-                                             extra_locals,
-                                             src,
-                                             verbose=verbose)
-    finally:
-        _reset_overload()
+    transformed = _overload.into_staging(func,
+                                            extra_locals,
+                                            src,
+                                            verbose=verbose)
 
     return functools.wraps(func)(staged_callable(transformed, fallback or func))

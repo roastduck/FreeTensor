@@ -68,7 +68,7 @@ def process_annotating_comments(src: str):
         rest_line = line[len(indent):]
         if rest_line.startswith('#! '):
             arg = rest_line[3:].replace('"', '\\"')
-            new_src.append(f'{indent}__ft__.staging.metadata("{arg}")')
+            new_src.append(f'{indent}__staging_overload__.metadata("{arg}")')
         else:
             new_src.append(line)
     new_src = '\n'.join(new_src)
@@ -811,8 +811,10 @@ class Transformer(ast.NodeTransformer):
     def visit_Attribute(self, old_node: ast.Attribute) -> Any:
         node: ast.Attribute = self.generic_visit(old_node)
         if isinstance(node.ctx, ast.Load):
-            node = call_helper(StagingOverload.load_attr, node.value,
-                               ast.Constant(node.attr))
+            if not (isinstance(node.value, ast.Name) and
+                    node.value.id == '__staging_overload__'):
+                node = call_helper(StagingOverload.load_attr, node.value,
+                                   ast.Constant(node.attr))
         return location_helper(node, old_node)
 
     def visit_Return(self, old_node: ast.Return) -> Any:
