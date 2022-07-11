@@ -8,6 +8,7 @@
 #include <container_utils.h>
 #include <except.h>
 #include <mutator.h>
+#include <omp_utils.h>
 #include <pass/simplify.h>
 #include <serialize/mangle.h>
 
@@ -979,21 +980,9 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
         direction_, found, mode_, type_, earlierFilter_, laterFilter_, filter_,
         ignoreReductionWAW_, eraseOutsideVarDef_, noProjectOutProvateAxis_);
     analyzer.genTasks();
-    size_t n = analyzer.tasks().size();
-    std::vector<std::exception_ptr> exceptions(n, nullptr);
-#pragma omp parallel for schedule(dynamic)
-    for (size_t i = 0; i < n; i++) {
-        try {
-            analyzer.tasks()[i]();
-        } catch (...) {
-            exceptions[i] = std::current_exception();
-        }
-    }
-    for (size_t i = 0; i < n; i++) {
-        if (exceptions[i]) {
-            std::rethrow_exception(exceptions[i]);
-        }
-    }
+    exceptSafeParallelFor<size_t>(
+        0, analyzer.tasks().size(), 1, [&](size_t i) { analyzer.tasks()[i](); },
+        omp_sched_dynamic);
 }
 
 std::string toString(const Dependency &dep) {

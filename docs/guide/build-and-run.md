@@ -46,8 +46,8 @@ There are some options to `cmake`:
 - `-DFT_WITH_MKL=<path/to/mkl/root>`: build with MKL (path to MKL is required, defaults to building without it).
 - `-DFT_WITH_PYTORCH=ON/OFF`: build with/without copy-free interface from/to PyTorch, requring PyTorch installed on the system (defaults to `OFF`).
 - `-DFT_DEBUG_LOG_NODE=ON` (for developers): enables tracing to tell by which pass a specific AST node is modified.
-- `-DFT_DEBUG_PROFILE` (for developers): profiles some heavy functions in the compiler.
-- `-DFT_DEBUG_SANITIZE` (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).
+- `-DFT_DEBUG_PROFILE=ON` (for developers): profiles some heavy functions in the compiler.
+- `-DFT_DEBUG_SANITIZE=sanitizer_name` (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).
 
 It will build a shared library with a name like `freetensor_ffi.cpython-37m-x86_64-linux-gnu.so`, which can be used in Python via `import freetensor`.
 
@@ -68,8 +68,8 @@ There are serveral global configurations can be set via environment variables:
 - `FT_PRETTY_PRINT=ON/OFF`. Enable/disable colored printing.
 - `FT_PRINT_ALL_ID=ON/OFF`. Print (or not) IDs of all statements in an AST.
 - `FT_WERROR=ON/OFF`. Treat warnings as errors (or not).
-- `FT_BACKEND_COMPILER_CXX`. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself.
-- `FT_BACKEND_COMPILER_NVCC`. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself.
+- `FT_BACKEND_COMPILER_CXX=path_to_compiler`. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself.
+- `FT_BACKEND_COMPILER_NVCC=path_to_compiler`. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself.
 
 This configurations can also set at runtime in [`ft.config`](../../api/#freetensor.core.config).
 

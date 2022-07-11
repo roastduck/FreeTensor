@@ -1,4 +1,6 @@
 #include <cmath>
+#include <queue>
+#include <utility>
 
 #include <analyze/find_elementwise.h>
 #include <analyze/fixed_length_feature.h>
@@ -16,8 +18,7 @@
 #include <codegen/code_gen_cuda.h>
 #include <driver.h>
 #include <lower.h>
-#include <queue>
-#include <utility>
+#include <omp_utils.h>
 
 namespace freetensor {
 
@@ -135,17 +136,9 @@ void AutoSchedule::searchOneRound(size_t n, size_t nExploit, size_t nExplore) {
 
 std::vector<std::vector<double>>
 AutoSchedule::genFeatures(std::vector<Ref<Sketch>> &sketches) {
-    size_t n = sketches.size();
-#pragma omp parallel for
-    for (size_t i = 0; i < n; i++) {
-        try {
-            sketches[i]->genFeature(target_);
-        } catch (const std::exception &e) {
-            // OpenMP threads won't report an exception message
-            std::cerr << "ERROR feature: " << e.what() << std::endl;
-            exit(-1);
-        }
-    }
+    exceptSafeParallelFor<size_t>(
+        0, sketches.size(), 1,
+        [&](size_t i) { sketches[i]->genFeature(target_); }, omp_sched_dynamic);
     std::vector<std::vector<double>> featureList;
     for (auto &i : sketches) {
         featureList.emplace_back(i->feature());

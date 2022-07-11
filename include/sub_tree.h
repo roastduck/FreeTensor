@@ -141,8 +141,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
 
     SubTree(std::nullptr_t) { ASSERT(POLICY == NullPolicy::Nullable); }
 
-    template <class U>
-    requires std::derived_from<U, T> SubTree(const Ref<U> &obj) : obj_(obj) {
+    template <std::derived_from<T> U> SubTree(const Ref<U> &obj) : obj_(obj) {
         if (obj_.isValid()) {
             if (obj_->isSubTree()) {
                 obj_ = deepCopy(obj).template as<T>();
@@ -151,8 +150,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
         }
         checkNull();
     }
-    template <class U>
-    requires std::derived_from<U, T> SubTree(Ref<U> &&obj) : obj_(obj) {
+    template <std::derived_from<T> U> SubTree(Ref<U> &&obj) : obj_(obj) {
         if (obj_.isValid()) {
             if (obj_->isSubTree()) {
                 obj_ = deepCopy(obj).template as<T>();
@@ -267,8 +265,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
   public:
     SubTreeList(const ChildOf &c) : parent_(c.parent_) {}
 
-    template <class U>
-    requires std::derived_from<U, T>
+    template <std::derived_from<T> U>
     SubTreeList(const std::vector<Ref<U>> &objs) {
         objs_.reserve(objs.size());
         for (auto &&item : objs) {
@@ -277,8 +274,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
             objs_.emplace_back(std::move(newItem));
         }
     }
-    template <class U>
-    requires std::derived_from<U, T> SubTreeList(std::vector<Ref<U>> &&objs) {
+    template <std::derived_from<T> U> SubTreeList(std::vector<Ref<U>> &&objs) {
         objs_.reserve(objs.size());
         for (auto &&item : objs) {
             SubTree<T, POLICY> newItem = ChildOf{parent_};
@@ -286,8 +282,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
             objs_.emplace_back(std::move(newItem));
         }
     }
-    template <class U>
-    requires std::derived_from<U, T>
+    template <std::derived_from<T> U>
     SubTreeList(std::initializer_list<Ref<U>> objs) {
         objs_.reserve(objs.size());
         for (auto &&item : objs) {
