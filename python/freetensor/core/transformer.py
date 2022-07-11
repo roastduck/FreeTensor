@@ -131,6 +131,9 @@ class FreeTensorOverload(StagingOverload):
         return self.lifetime_stack[-1].register_inner_scope(
             _VarDef(fullname, shape, dtype, atype, mtype))
 
+    def register_assert(self, pred):
+        self.lifetime_stack[-1].register_inner_scope(Assert(pred))
+
     def fullid(self, nid: str) -> str:
         '''Get namespace-prepended full nid of given short nid.'''
         return self.id_stack[-1].fullid(nid)
@@ -212,6 +215,7 @@ class FreeTensorOverload(StagingOverload):
 
 _overload: FreeTensorOverload = FreeTensorOverload()
 
+
 def _init_overload():
     global _overload
     # We need to keep the overload the same across all functions.
@@ -219,42 +223,40 @@ def _init_overload():
     _overload.__init__()
 
 
-def _staged_if_then_else_stmt(pred: Union[VarRef, ffi.Expr],
-                              then_body: Callable[[], None],
-                              else_body: Optional[Callable[[], None]]):
-    with If(pred):
-        with LifetimeScope():
-            then_body()
-    if else_body:
-        with Else():
+def _register_as_predicate(ty):
+
+    def _staged_if_then_else_stmt(pred: ty, then_body: Callable[[], None],
+                                  else_body: Optional[Callable[[], None]]):
+        with If(pred):
             with LifetimeScope():
-                return else_body()
+                then_body()
+        if else_body:
+            with Else():
+                with LifetimeScope():
+                    return else_body()
+
+    def _staged_if_then_else_expr(pred: ty, then_expr: Callable[[], VarRef],
+                                  else_expr: Callable[[], VarRef]):
+        return if_then_else(pred, then_expr(), else_expr())
+
+    def _staged_while_stmt(pred: ty, body: Callable[[], None]):
+        raise NotImplementedError()
+
+    def _staged_assert_stmt(pred: ty):
+        _overload.register_assert(pred)
+
+    StagedPredicate.register(ty)
+    ty.logical_and = l_and
+    ty.logical_or = l_or
+    ty.logical_not = l_not
+    ty.assert_stmt = _staged_assert_stmt
+    ty.if_then_else_stmt = _staged_if_then_else_stmt
+    ty.if_then_else_expr = _staged_if_then_else_expr
+    ty.while_stmt = _staged_while_stmt
 
 
-def _staged_if_then_else_expr(pred: Union[VarRef, ffi.Expr],
-                              then_expr: Callable[[], VarRef],
-                              else_expr: Callable[[], VarRef]):
-    return if_then_else(pred, then_expr(), else_expr())
-
-
-def _staged_while_stmt(pred: Union[VarRef, ffi.Expr], body: Callable[[], None]):
-    raise NotImplementedError()
-
-
-StagedPredicate.register(VarRef)
-VarRef.if_then_else_stmt = _staged_if_then_else_stmt
-VarRef.if_then_else_expr = _staged_if_then_else_expr
-VarRef.while_stmt = _staged_while_stmt
-VarRef.logical_and = l_and
-VarRef.logical_or = l_or
-VarRef.logical_not = l_not
-StagedPredicate.register(ffi.Expr)
-ffi.Expr.if_then_else_stmt = _staged_if_then_else_stmt
-ffi.Expr.if_then_else_expr = _staged_if_then_else_expr
-ffi.Expr.while_stmt = _staged_while_stmt
-ffi.Expr.logical_and = l_and
-ffi.Expr.logical_or = l_or
-ffi.Expr.logical_not = l_not
+_register_as_predicate(VarRef)
+_register_as_predicate(ffi.Expr)
 
 
 @dataclass
@@ -462,8 +464,9 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
     params = list(inspect.signature(func).parameters)
 
     _init_overload()
-    staging_func = _overload.into_staging(
-        func, extra_locals, verbose=verbose >= 2)
+    staging_func = _overload.into_staging(func,
+                                          extra_locals,
+                                          verbose=verbose >= 2)
 
     try:
         # Create a new scope for the function
@@ -553,8 +556,8 @@ def inline(func=None,
 
     _init_overload()
     transformed = _overload.into_staging(func,
-                                            extra_locals,
-                                            src,
-                                            verbose=verbose)
+                                         extra_locals,
+                                         src,
+                                         verbose=verbose)
 
     return functools.wraps(func)(staged_callable(transformed, fallback or func))
