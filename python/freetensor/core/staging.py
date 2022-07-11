@@ -210,7 +210,7 @@ class StagingOverload:
 
         def reducer(a, fb):
             if isinstance(a, StagedPredicate):
-                return a.logical_and(fb())
+                return a.logical_and(fb)
             else:
                 # This is not a simple logical and; it's equivalent to a if-then-else.
                 # Thus, if a is True, fb() is returned, preserving the original value,
@@ -223,7 +223,7 @@ class StagingOverload:
 
         def reducer(a, fb):
             if isinstance(a, StagedPredicate):
-                return a.logical_or(fb())
+                return a.logical_or(fb)
             else:
                 return a or fb()
 
@@ -455,11 +455,11 @@ class StagedTypeAnnotation(metaclass=StagedTypeAnnotationMeta):
 class StagedPredicate(abc.ABC):
 
     @abc.abstractmethod
-    def logical_and(self, other: StagedPredicate):
+    def logical_and(self, lazy_other: Callable[[], StagedPredicate]) -> StagedPredicate:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def logical_or(self, other: StagedPredicate):
+    def logical_or(self, lazy_other: Callable[[], StagedPredicate]) -> StagedPredicate:
         raise NotImplementedError()
 
     @abc.abstractmethod

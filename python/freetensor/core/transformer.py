@@ -223,8 +223,17 @@ def _init_overload():
 
 
 def _register_as_predicate(ty):
+    
+    def _logical_and(a: ty, fb: Callable[[], StagedPredicate]):
+        return l_and(a, fb())
+    
+    def _logical_or(a: ty, fb: Callable[[], StagedPredicate]):
+        return l_or(a, fb())
+    
+    def _logical_not(a: ty):
+        return l_not(a)
 
-    def _staged_if_then_else_stmt(pred: ty, then_body: Callable[[], None],
+    def _if_then_else_stmt(pred: ty, then_body: Callable[[], None],
                                   else_body: Optional[Callable[[], None]]):
         with If(pred):
             with LifetimeScope():
@@ -234,24 +243,24 @@ def _register_as_predicate(ty):
                 with LifetimeScope():
                     return else_body()
 
-    def _staged_if_then_else_expr(pred: ty, then_expr: Callable[[], VarRef],
+    def _if_then_else_expr(pred: ty, then_expr: Callable[[], VarRef],
                                   else_expr: Callable[[], VarRef]):
         return if_then_else(pred, then_expr(), else_expr())
 
-    def _staged_while_stmt(pred: ty, body: Callable[[], None]):
+    def _while_stmt(pred: ty, body: Callable[[], None]):
         raise NotImplementedError()
 
-    def _staged_assert_stmt(pred: ty):
+    def _assert_stmt(pred: ty):
         _overload.register_assert(pred)
 
     StagedPredicate.register(ty)
-    ty.logical_and = l_and
-    ty.logical_or = l_or
-    ty.logical_not = l_not
-    ty.assert_stmt = _staged_assert_stmt
-    ty.if_then_else_stmt = _staged_if_then_else_stmt
-    ty.if_then_else_expr = _staged_if_then_else_expr
-    ty.while_stmt = _staged_while_stmt
+    ty.logical_and = _logical_and
+    ty.logical_or = _logical_or
+    ty.logical_not = _logical_not
+    ty.assert_stmt = _assert_stmt
+    ty.if_then_else_stmt = _if_then_else_stmt
+    ty.if_then_else_expr = _if_then_else_expr
+    ty.while_stmt = _while_stmt
 
 
 _register_as_predicate(VarRef)
