@@ -1110,6 +1110,8 @@ Functions</h2></td></tr>
 <tr class="separator:a3af432ef5377c66cb03ca6fff6afc933"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97a466dfc5df7c4515c39dfe8c813c24"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Buffer.html">Buffer</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a97a466dfc5df7c4515c39dfe8c813c24">deepCopy</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Buffer.html">Buffer</a> &gt; &amp;b)</td></tr>
 <tr class="separator:a97a466dfc5df7c4515c39dfe8c813c24"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf63738e4f6d16949b99e2efebd20b7d"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adf63738e4f6d16949b99e2efebd20b7d">codeGen</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
+<tr class="separator:adf63738e4f6d16949b99e2efebd20b7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af3bece5a6090415b60d33eb4e0a039c4"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af3bece5a6090415b60d33eb4e0a039c4">codeGenCPU</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func)</td></tr>
 <tr class="separator:af3bece5a6090415b60d33eb4e0a039c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a01d31b51cc50a3614d3da791c7b56909"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a01d31b51cc50a3614d3da791c7b56909">codeGenCUDA</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func)</td></tr>
@@ -7157,6 +7159,42 @@ template&lt;std::integral T&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="adf63738e4f6d16949b99e2efebd20b7d" name="adf63738e4f6d16949b99e2efebd20b7d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adf63738e4f6d16949b99e2efebd20b7d">&#9670;&nbsp;</a></span>codeGen()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string freetensor::codeGen </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;&#160;</td>
+          <td class="paramname"><em>func</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>target</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Generate native code</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">func</td><td>: The AST to be lowered. It must includes function signature to determine parameters and return values </td></tr>
+    <tr><td class="paramname">target</td><td>: The target architecture </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

@@ -1,10 +1,10 @@
 <map id="include/codegen/code_gen_c.h" name="include/codegen/code_gen_c.h">
-<area shape="rect" id="node1" title=" " alt="" coords="331,5,494,47"/>
-<area shape="rect" id="node2" href="$code__gen__cpu_8h.html" title=" " alt="" coords="331,95,494,136"/>
-<area shape="rect" id="node6" href="$code__gen__cuda_8h.html" title=" " alt="" coords="145,95,307,136"/>
-<area shape="rect" id="node8" href="$src_2codegen_2detail_2code__gen__c_8h.html" title=" " alt="" coords="518,95,659,136"/>
+<area shape="rect" id="node1" title=" " alt="" coords="318,5,481,47"/>
+<area shape="rect" id="node2" href="$code__gen__cpu_8h.html" title=" " alt="" coords="318,95,481,136"/>
+<area shape="rect" id="node6" href="$code__gen__cuda_8h.html" title=" " alt="" coords="131,95,294,136"/>
+<area shape="rect" id="node8" href="$src_2codegen_2detail_2code__gen__c_8h.html" title=" " alt="" coords="505,95,646,136"/>
 <area shape="rect" id="node3" href="$auto__schedule_8cc.html" title=" " alt="" coords="5,184,177,225"/>
-<area shape="rect" id="node4" href="$sketch_8cc.html" title=" " alt="" coords="202,191,405,218"/>
-<area shape="rect" id="node5" href="$code__gen__cpu_8cc.html" title=" " alt="" coords="620,184,787,225"/>
-<area shape="rect" id="node7" href="$code__gen__cuda_8cc.html" title=" " alt="" coords="429,184,596,225"/>
+<area shape="rect" id="node4" href="$code__gen_8cc.html" title=" " alt="" coords="202,191,386,218"/>
+<area shape="rect" id="node5" href="$code__gen__cpu_8cc.html" title=" " alt="" coords="601,184,768,225"/>
+<area shape="rect" id="node7" href="$code__gen__cuda_8cc.html" title=" " alt="" coords="411,184,577,225"/>
 </map>

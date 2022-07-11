@@ -1501,14 +1501,7 @@ returned, which can be used as a decorator</p></li>
 
         <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">target</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_target</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="n">ffi</span><span class="o">.</span><span class="n">TargetType</span><span class="o">.</span><span class="n">CPU</span><span class="p">:</span>
-            <span class="n">raw_code</span> <span class="o">=</span> <span class="n">ffi</span><span class="o">.</span><span class="n">code_gen_cpu</span><span class="p">(</span><span class="n">ast</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">target</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="n">ffi</span><span class="o">.</span><span class="n">TargetType</span><span class="o">.</span><span class="n">GPU</span><span class="p">:</span>
-            <span class="n">raw_code</span> <span class="o">=</span> <span class="n">ffi</span><span class="o">.</span><span class="n">code_gen_cuda</span><span class="p">(</span><span class="n">ast</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Unrecognized target </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">target</span>
-
+        <span class="n">raw_code</span> <span class="o">=</span> <span class="n">ffi</span><span class="o">.</span><span class="n">code_gen</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">debug</span><span class="o">.</span><span class="n">with_line_no</span><span class="p">(</span><span class="n">raw_code</span><span class="p">),</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
 
