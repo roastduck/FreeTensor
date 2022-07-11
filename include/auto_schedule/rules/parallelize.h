@@ -28,7 +28,7 @@ class ParallelizePart : public SketchPartNode {
 
     bool crossover(const SketchPart &part, RNG &gen) override;
 
-    void apply(Schedule &schedule, SketchTarget &target) override;
+    void apply(Schedule &schedule, SubSketch &subSketch) override;
 
     SketchPartType partType() override { return SketchPartType::Parallelize; }
 

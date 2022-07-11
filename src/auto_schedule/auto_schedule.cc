@@ -424,7 +424,7 @@ void AutoSchedule::genSketches() {
                 status != RuleStatus::Skip) {
                 auto sketches = rule->genPart(nowSketch);
                 for (auto &sketch : sketches) {
-                    if (sketch.nowTargetNum() == -1) {
+                    if (sketch.nowSubNum() == -1) {
                         baseSketches_.push_back(
                             Ref<Sketch>::make(std::move(sketch)));
                     } else {

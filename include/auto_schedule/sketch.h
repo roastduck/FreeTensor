@@ -23,8 +23,11 @@ enum class SketchPartType : int {
     Parallelize = 4,
 };
 
-struct SketchTarget;
+struct SubSketch;
 
+/**
+ * How a sub-program is scheduled by a `Rule`
+ */
 class SketchPartNode {
   protected:
     typedef OpenMPRandomEngine RNG;
@@ -57,7 +60,7 @@ class SketchPartNode {
     /**
      * Make actual transformations on a Schedule, according to the annotation
      */
-    virtual void apply(Schedule &schedule, SketchTarget &target) = 0;
+    virtual void apply(Schedule &schedule, SubSketch &subSketch) = 0;
 
     virtual SketchPartType partType() = 0;
     virtual std::vector<int> getAnnotation() const = 0;
@@ -67,18 +70,23 @@ class SketchPartNode {
 
 typedef std::map<SketchPartType, SketchPart> PartMap;
 
-struct SketchTarget {
+/**
+ * How a sub-program is scheduled
+ *
+ * A sub-program is scheduled by several `Rule`s. `Rule`s are applied to the
+ * sub-program one by one. In each `Rule`, the sub-program is scheduled
+ * according to the information saved in a `SketchPart`
+ */
+struct SubSketch {
     ForsWithDataReuse target;
     PartMap parts;
     std::string log;
-    explicit SketchTarget(ForsWithDataReuse target)
-        : target(std::move(target)) {}
-    [[nodiscard]] bool canCrossOver(const SketchTarget &other) const {
+    explicit SubSketch(ForsWithDataReuse target) : target(std::move(target)) {}
+    [[nodiscard]] bool canCrossOver(const SubSketch &other) const {
         return log == other.log;
     }
 
-    SketchTarget(const SketchTarget &other)
-        : target(other.target), log(other.log) {
+    SubSketch(const SubSketch &other) : target(other.target), log(other.log) {
         for (auto &&[type, part] : other.parts) {
             parts.emplace(type, part->clone());
         }
@@ -105,13 +113,19 @@ struct SketchTarget {
     }
 };
 
+/**
+ * How a `Func` is scheduled
+ *
+ * A `Func` is decomposed as several sub-programs, each is scheduled according
+ * to the information saved in a `SubSketch`
+ */
 class Sketch {
     typedef OpenMPRandomEngine RNG;
 
     Schedule schedule_;
     Schedule generatedSchedule_;
-    std::vector<SketchTarget> targets_;
-    int nowTargetNum_{0};
+    std::vector<SubSketch> subs_;
+    int nowSubNum_{0};
     double time_{0};
     bool scheduleGenerated_{false};
     std::string code_;
@@ -121,18 +135,18 @@ class Sketch {
   public:
     Sketch() = default;
     Sketch(const Sketch &) = default;
-    Sketch(const Schedule &schedule, std::vector<ForsWithDataReuse> targets)
-        : schedule_(schedule.clone()), nowTargetNum_(targets.size() - 1) {
-        for (auto &target : targets) {
-            targets_.emplace_back(std::move(target));
+    Sketch(const Schedule &schedule, std::vector<ForsWithDataReuse> subs)
+        : schedule_(schedule.clone()), nowSubNum_(subs.size() - 1) {
+        for (auto &sub : subs) {
+            subs_.emplace_back(std::move(sub));
         }
     }
 
     [[nodiscard]] Sketch clone() const {
         Sketch ret;
         ret.schedule_ = schedule_.clone();
-        ret.targets_ = targets_;
-        ret.nowTargetNum_ = nowTargetNum_;
+        ret.subs_ = subs_;
+        ret.nowSubNum_ = nowSubNum_;
         return ret;
     }
 
@@ -141,7 +155,7 @@ class Sketch {
     Schedule genSchedule();
 
     void addPart(const SketchPart &p);
-    PartMap &part(int i) { return targets_[i].parts; }
+    PartMap &part(int i) { return subs_[i].parts; }
 
     bool operator<(const Sketch &a) const;
 
@@ -157,17 +171,17 @@ class Sketch {
 
     size_t hash() const;
 
-    SketchTarget &nowTarget() { return targets_[nowTargetNum_]; }
-    [[nodiscard]] const SketchTarget &nowTarget() const {
-        return targets_[nowTargetNum_];
+    SubSketch &nowSubSketch() { return subs_[nowSubNum_]; }
+    [[nodiscard]] const SubSketch &nowSubSketch() const {
+        return subs_[nowSubNum_];
     }
 
-    void moveToNextTarget() { nowTargetNum_--; }
+    void moveToNextSub() { nowSubNum_--; }
 
-    int nowTargetNum() const { return nowTargetNum_; }
+    int nowSubNum() const { return nowSubNum_; }
 
     void addLog(const std::string &name) {
-        targets_[nowTargetNum_].log += name + ";\n";
+        subs_[nowSubNum_].log += name + ";\n";
     }
 
     Schedule &schedule() { return schedule_; }

@@ -5,13 +5,13 @@
 
 namespace freetensor {
 RuleStatus MultiLevelTilingWithFusionRule::analyze(const Sketch &sketch) {
-    if (sketch.nowTarget().hasPart(
+    if (sketch.nowSubSketch().hasPart(
             SketchPartType::MultiLevelTilingWithFusion) ||
-        sketch.nowTarget().hasPart(SketchPartType::MultiLevelTiling)) {
+        sketch.nowSubSketch().hasPart(SketchPartType::MultiLevelTiling)) {
         return RuleStatus::Skip;
     }
-    if (auto toFuse = findSingleElementWiseConsumer(sketch.schedule().ast(),
-                                                    sketch.nowTarget().target);
+    if (auto toFuse = findSingleElementWiseConsumer(
+            sketch.schedule().ast(), sketch.nowSubSketch().target);
         toFuse.isValid()) {
         toFuse_ = toFuse;
         return targetType_ == TargetType::CPU ? RuleStatus::Apply
@@ -26,7 +26,7 @@ MultiLevelTilingWithFusionRule::genPart(const Sketch &sketch) {
     for (size_t i = 0; i < fuseLevels_.size(); i++) {
         Sketch newSketch = sketch.clone();
         newSketch.addPart(Ref<MultiLevelTilingWithFusionPart>::make(
-            sketch.nowTarget().target, toFuse_, fuseLevels_[i], pat_,
+            sketch.nowSubSketch().target, toFuse_, fuseLevels_[i], pat_,
             targetType_, minBlockSize_));
         newSketch.addLog("multi_level_tiling_with_fusion " +
                          std::to_string(fuseLevels_[i]));
@@ -81,7 +81,7 @@ MultiLevelTilingWithFusionPart::MultiLevelTilingWithFusionPart(
 }
 
 void MultiLevelTilingWithFusionPart::apply(Schedule &schedule,
-                                           SketchTarget &target) {
+                                           SubSketch &subSketch) {
     tiles_ = schedule.multiLevelTilingWithFusion(
         target_, annotation_, pat_, toFuse_, level_, targetType_, doCacheRead_);
 }

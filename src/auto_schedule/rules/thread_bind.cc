@@ -14,9 +14,9 @@ ID mergeLoops(Schedule &schedule, std::vector<ID> loops) {
     return outermost;
 }
 
-void ThreadBindPart::apply(Schedule &schedule, SketchTarget &target) {
+void ThreadBindPart::apply(Schedule &schedule, SubSketch &subSketch) {
     SketchPart part =
-        target.getPart(SketchPartType::MultiLevelTilingWithFusion);
+        subSketch.getPart(SketchPartType::MultiLevelTilingWithFusion);
     ASSERT(part.isValid());
     auto mltPart = part.as<MultiLevelTilingPart>();
     auto &tiles = mltPart->tiles();
@@ -65,9 +65,10 @@ std::vector<Sketch> ThreadBindRule::genPart(const Sketch &sketch) {
 }
 
 RuleStatus ThreadBindRule::analyze(const Sketch &sketch) {
-    if (sketch.nowTarget().hasPart(SketchPartType::ThreadBind))
+    if (sketch.nowSubSketch().hasPart(SketchPartType::ThreadBind))
         return RuleStatus::Skip;
-    if (sketch.nowTarget().hasPart(SketchPartType::MultiLevelTilingWithFusion))
+    if (sketch.nowSubSketch().hasPart(
+            SketchPartType::MultiLevelTilingWithFusion))
         return RuleStatus::ApplyAndSkipRest;
     return RuleStatus::Skip;
 }

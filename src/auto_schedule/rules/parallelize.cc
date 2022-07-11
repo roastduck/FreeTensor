@@ -5,12 +5,12 @@
 
 namespace freetensor {
 
-void ParallelizePart::apply(Schedule &schedule, SketchTarget &target) {
+void ParallelizePart::apply(Schedule &schedule, SubSketch &subSketch) {
     Ref<MultiLevelTilingPart> part =
-        target.getPart(SketchPartType::MultiLevelTiling)
+        subSketch.getPart(SketchPartType::MultiLevelTiling)
             .as<MultiLevelTilingPart>();
     if (!part.isValid()) {
-        part = target.getPart(SketchPartType::MultiLevelTilingWithFusion)
+        part = subSketch.getPart(SketchPartType::MultiLevelTilingWithFusion)
                    .as<MultiLevelTilingPart>();
     }
     std::vector<ID> toFuse;
@@ -54,11 +54,11 @@ bool ParallelizePart::crossover(const SketchPart &part, RNG &gen) {
 std::vector<Sketch> ParallelizeRule::genPart(const Sketch &sketch) {
     Sketch newSketch = sketch.clone();
     Ref<MultiLevelTilingPart> part =
-        sketch.nowTarget()
+        sketch.nowSubSketch()
             .getPart(SketchPartType::MultiLevelTiling)
             .as<MultiLevelTilingPart>();
     if (!part.isValid()) {
-        part = sketch.nowTarget()
+        part = sketch.nowSubSketch()
                    .getPart(SketchPartType::MultiLevelTilingWithFusion)
                    .as<MultiLevelTilingPart>();
     }
@@ -69,10 +69,11 @@ std::vector<Sketch> ParallelizeRule::genPart(const Sketch &sketch) {
 }
 
 RuleStatus ParallelizeRule::analyze(const Sketch &sketch) {
-    if (sketch.nowTarget().hasPart(SketchPartType::Parallelize))
+    if (sketch.nowSubSketch().hasPart(SketchPartType::Parallelize))
         return RuleStatus::Skip;
-    if (sketch.nowTarget().hasPart(SketchPartType::MultiLevelTiling) ||
-        sketch.nowTarget().hasPart(SketchPartType::MultiLevelTilingWithFusion))
+    if (sketch.nowSubSketch().hasPart(SketchPartType::MultiLevelTiling) ||
+        sketch.nowSubSketch().hasPart(
+            SketchPartType::MultiLevelTilingWithFusion))
         return RuleStatus::ApplyAndSkipRest;
     return RuleStatus::Skip;
 }

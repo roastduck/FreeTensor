@@ -5,7 +5,7 @@
 namespace freetensor {
 RuleStatus CacheWriteRule::analyze(const Sketch &sketch) {
     if (!findSingleElementWiseConsumer(sketch.schedule().ast(),
-                                       sketch.nowTarget().target)
+                                       sketch.nowSubSketch().target)
              .isValid()) {
         return memType_ == MemType::CPU ? RuleStatus::Apply
                                         : RuleStatus::ApplyAndSkipRest;
@@ -15,7 +15,7 @@ RuleStatus CacheWriteRule::analyze(const Sketch &sketch) {
 
 std::vector<Sketch> CacheWriteRule::genPart(const Sketch &sketch) {
     Sketch newSketch = sketch.clone();
-    auto &target = newSketch.nowTarget().target;
+    auto &target = newSketch.nowSubSketch().target;
     if (verbose_ >= 2) {
         logger() << "cache: " << target.outermost.strId() << " " << target.dest
                  << std::endl;

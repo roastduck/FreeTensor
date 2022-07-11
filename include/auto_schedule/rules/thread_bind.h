@@ -18,7 +18,7 @@ class ThreadBindPart : public SketchPartNode {
   public:
     void genRandAnnotation(RNG &gen) override{};
 
-    void apply(Schedule &schedule, SketchTarget &target) override;
+    void apply(Schedule &schedule, SubSketch &subSketch) override;
 
     SketchPartType partType() override { return SketchPartType::ThreadBind; }
 
