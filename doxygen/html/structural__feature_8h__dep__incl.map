@@ -1,8 +1,7 @@
 <map id="include/analyze/structural_feature.h" name="include/analyze/structural_feature.h">
-<area shape="rect" id="node1" title=" " alt="" coords="402,5,593,47"/>
-<area shape="rect" id="node2" href="$fixed__length__feature_8h.html" title=" " alt="" coords="277,95,435,136"/>
-<area shape="rect" id="node4" href="$auto__schedule_8cc.html" title=" " alt="" coords="435,184,607,225"/>
-<area shape="rect" id="node6" href="$structural__feature_8cc.html" title=" " alt="" coords="535,95,697,136"/>
+<area shape="rect" id="node1" title=" " alt="" coords="199,5,390,47"/>
+<area shape="rect" id="node2" href="$fixed__length__feature_8h.html" title=" " alt="" coords="98,95,257,136"/>
+<area shape="rect" id="node4" href="$auto__schedule_8cc.html" title=" " alt="" coords="209,184,381,225"/>
+<area shape="rect" id="node5" href="$structural__feature_8cc.html" title=" " alt="" coords="332,95,495,136"/>
 <area shape="rect" id="node3" href="$fixed__length__feature_8cc.html" title=" " alt="" coords="5,184,184,225"/>
-<area shape="rect" id="node5" href="$sketch_8cc.html" title=" " alt="" coords="208,191,411,218"/>
 </map>

@@ -1,6 +1,5 @@
 <map id="include/codegen/code_gen_cuda.h" name="include/codegen/code_gen_cuda.h">
-<area shape="rect" id="node1" title=" " alt="" coords="213,5,375,47"/>
-<area shape="rect" id="node2" href="$auto__schedule_8cc.html" title=" " alt="" coords="5,95,177,136"/>
-<area shape="rect" id="node3" href="$code__gen_8cc.html" title=" " alt="" coords="202,102,386,129"/>
-<area shape="rect" id="node4" href="$code__gen__cuda_8cc.html" title=" " alt="" coords="411,95,577,136"/>
+<area shape="rect" id="node1" title=" " alt="" coords="116,5,279,47"/>
+<area shape="rect" id="node2" href="$code__gen_8cc.html" title=" " alt="" coords="5,102,189,129"/>
+<area shape="rect" id="node3" href="$code__gen__cuda_8cc.html" title=" " alt="" coords="214,95,381,136"/>
 </map>

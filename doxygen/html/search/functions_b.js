@@ -28,7 +28,7 @@ var searchData=
   ['loops_25',['loops',['../classfreetensor_1_1FindAllLoops.html#a98e3649ce0bc3817dd66f46b33af1f29',1,'freetensor::FindAllLoops::loops()'],['../classfreetensor_1_1gpu_1_1FindParallelLoops.html#aad8c0109cb4846eed025a6fe16ff871f',1,'freetensor::gpu::FindParallelLoops::loops()']]],
   ['lower_26',['lower',['../namespacefreetensor.html#a233f6693038504afd4a7895d8d8cf77a',1,'freetensor']]],
   ['lowerbound_27',['LowerBound',['../classfreetensor_1_1LowerBound.html#a27e9932386d24b242331319549e1f30c',1,'freetensor::LowerBound::LowerBound(const LinearExpr&lt; Rational&lt; int64_t &gt; &gt; &amp;lin)'],['../classfreetensor_1_1LowerBound.html#a5a5a53d9e54afbe2de43e737450568e4',1,'freetensor::LowerBound::LowerBound(LinearExpr&lt; Rational&lt; int64_t &gt; &gt; &amp;&amp;lin)'],['../classfreetensor_1_1LowerBound.html#a0c9b39bf7ea6a470083ac59f2c6afd04',1,'freetensor::LowerBound::LowerBound(const Expr &amp;expr)']]],
-  ['lowered_28',['lowered',['../classfreetensor_1_1Sketch.html#a71274fecf32e2e6cda722370195c4b56',1,'freetensor::Sketch']]],
+  ['lowered_28',['lowered',['../classfreetensor_1_1Sketch.html#a6f8b3f190955c581d0acecf2c02fb8c7',1,'freetensor::Sketch']]],
   ['lowerparallelreduction_29',['lowerParallelReduction',['../namespacefreetensor_1_1cpu.html#adafd27952c309e72aa9fa984d2520def',1,'freetensor::cpu::lowerParallelReduction()'],['../namespacefreetensor_1_1gpu.html#a24d238d276af2db1acdc594f2411ab46',1,'freetensor::gpu::lowerParallelReduction(const Stmt &amp;op)']]],
   ['lowervector_30',['lowerVector',['../namespacefreetensor_1_1gpu.html#a654b4755a056f8f55a04882b03f61b1d',1,'freetensor::gpu']]]
 ];
