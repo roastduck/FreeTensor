@@ -186,22 +186,20 @@ class FreeTensorOverload(StagingOverload):
         if key == 'nid':
             ctx_stack.top().set_next_nid(self.fullid(val))
         elif key == 'no_deps':
-            var_name = key
-
             back = inspect.currentframe().f_back
 
-            if var_name in back.f_locals:
-                var = back.f_locals[var_name]
-            elif var_name in back.f_globals:
-                var = back.f_globals[var_name]
+            if val in back.f_locals:
+                var = back.f_locals[val]
+            elif val in back.f_globals:
+                var = back.f_globals[val]
             else:
                 raise self.error(
-                    f'Local variable {var_name} not found for annotating comment ({key}: {val})'
+                    f'Variable {val} not found for annotating comment ({key}: {val})'
                 )
 
             if not isinstance(var, VarRef):
                 raise self.error(
-                    f'Local variable {var_name} = {var} is not a VarRef, which is required by annotating comment ({key}: {val})'
+                    f'Variable {val} = {var} is not a VarRef, which is required by annotating comment ({key}: {val})'
                 )
             ctx_stack.top().add_next_no_deps(var.name)
         elif key == 'prefer_libs':
