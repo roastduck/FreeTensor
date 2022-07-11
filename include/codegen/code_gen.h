@@ -70,6 +70,15 @@ template <class Stream> class CodeGen : public SymbolTable<Visitor> {
     toString(const std::function<std::string(const Stream &)> &action);
 };
 
+/**
+ * Generate native code
+ *
+ * @param func : The AST to be lowered. It must includes function signature to
+ * determine parameters and return values
+ * @param target : The target architecture
+ */
+std::string codeGen(const Func &func, const Ref<Target> &target);
+
 } // namespace freetensor
 
 #endif // FREE_TENSOR_CODE_GEN_H

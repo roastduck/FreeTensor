@@ -177,7 +177,7 @@ AutoSchedule::testAndAdd(const std::vector<Ref<Sketch>> &sketches_in) {
     }
     auto features = genFeatures(sketches);
     size_t n = sketches.size();
-    ASSERT(sketches.size() == n);
+    ASSERT(features.size() == n);
     std::vector<double> times = measure(sketches);
     std::vector<double> flopsList;
     for (size_t i = 0; i < times.size(); i++) {

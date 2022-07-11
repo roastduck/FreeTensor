@@ -39,14 +39,7 @@ def codegen(ast=None,
 
         if target is None:
             target = config.default_target()
-
-        if target.type() == ffi.TargetType.CPU:
-            raw_code = ffi.code_gen_cpu(ast)
-        elif target.type() == ffi.TargetType.GPU:
-            raw_code = ffi.code_gen_cuda(ast)
-        else:
-            assert False, "Unrecognized target %s" % target
-
+        raw_code = ffi.code_gen(ast, target)
         if verbose:
             print(debug.with_line_no(raw_code), file=sys.stderr)
 
