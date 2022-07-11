@@ -35,7 +35,7 @@ class StagingError(Exception):
     def __init__(self, overload: StagingOverload, message: str) -> None:
         # TODO: add output of StagingContext.call_stack
         super().__init__(
-            f'{message}:\n{"".join(traceback.format_list(overload.debug_call_stack[1:]))}'
+            f'{message}:\n{"".join(traceback.format_list(overload.debug_call_stack))}'
             .lstrip())
 
 

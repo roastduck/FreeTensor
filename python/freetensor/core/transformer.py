@@ -164,17 +164,16 @@ class FreeTensorOverload(StagingOverload):
     def functiondef_wrapper(self, filename: str, func):
         basic_wrapped = super().functiondef_wrapper(filename, func)
 
-        namespace = ctx_stack.top().get_next_nid()
-        ctx_stack.top().set_next_nid('')
-        if namespace == '':
-            return basic_wrapped
-        else:
-
-            def wrapped(*args, **kwargs):
+        def wrapped(*args, **kwargs):
+            namespace = ctx_stack.top().get_next_nid()
+            ctx_stack.top().set_next_nid('')
+            if namespace == '':
+                return basic_wrapped(*args, **kwargs)
+            else:
                 with NamingScope(namespace):
                     return basic_wrapped(*args, **kwargs)
 
-            return wrapped
+        return wrapped
 
     def metadata(self, entry: str) -> None:
         parts = entry.split()
