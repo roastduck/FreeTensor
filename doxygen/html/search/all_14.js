@@ -5,7 +5,7 @@ var searchData=
   ['tapename_2',['tapeName',['../classfreetensor_1_1AnalyzeVersion.html#ac15b8b5d100616dcc7207fa0e41fba2e',1,'freetensor::AnalyzeVersion']]],
   ['tapenames_3',['tapeNames',['../classfreetensor_1_1OutputIntermediates.html#a37c31fcf5a2df36e0eeeca14328d45c5',1,'freetensor::OutputIntermediates']]],
   ['target_4',['Target',['../classfreetensor_1_1Target.html',1,'freetensor']]],
-  ['target_5',['target',['../structfreetensor_1_1SketchTarget.html#a49f136872b3086d7c3700cb280d677df',1,'freetensor::SketchTarget']]],
+  ['target_5',['target',['../structfreetensor_1_1SubSketch.html#ac2590e6daa595f48aca773ec3e677cf6',1,'freetensor::SubSketch']]],
   ['target_6',['Target',['../classfreetensor_1_1Target.html#a2713a16e93eefda0f7953c00d1fd6b68',1,'freetensor::Target']]],
   ['target_7',['target',['../classfreetensor_1_1Device.html#a7bf383e0fa4b52c457dd4278a45e8f73',1,'freetensor::Device']]],
   ['target_2ecc_8',['target.cc',['../target_8cc.html',1,'']]],

@@ -53,7 +53,7 @@ var searchData=
   ['loadnode_50',['LoadNode',['../classfreetensor_1_1LoadNode.html',1,'freetensor']]],
   ['loadtype_5f_51',['loadType_',['../classfreetensor_1_1LoadNode.html#ae86a871651ef7b4cf71cab64ac92cd7c',1,'freetensor::LoadNode']]],
   ['lock_52',['lock',['../classfreetensor_1_1Weak.html#a0eef48b8c5fd6bc7befe341520880416',1,'freetensor::Weak']]],
-  ['log_53',['log',['../structfreetensor_1_1SketchTarget.html#a0df2b593c3c0ddd40c29146cfb93bde6',1,'freetensor::SketchTarget']]],
+  ['log_53',['log',['../structfreetensor_1_1SubSketch.html#a86534c36a09b6c232c5b0fbab175e338',1,'freetensor::SubSketch']]],
   ['logctrl_54',['LogCtrl',['../classfreetensor_1_1LogCtrl.html',1,'freetensor']]],
   ['logger_55',['Logger',['../classfreetensor_1_1Logger.html',1,'freetensor::Logger'],['../classfreetensor_1_1Logger.html#a96fa8e3a6c60d29df1b1ed255b5c39b2',1,'freetensor::Logger::Logger(const Logger &amp;)=delete'],['../classfreetensor_1_1Logger.html#a4ccafd82136a76aba549cecf3c839ab8',1,'freetensor::Logger::Logger(Logger &amp;&amp;other)=default']]],
   ['logger_56',['logger',['../namespacefreetensor.html#a5ba7246af1695e374f117991cdcbd660',1,'freetensor']]],

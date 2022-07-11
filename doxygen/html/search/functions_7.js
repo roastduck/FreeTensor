@@ -32,7 +32,7 @@ var searchData=
   ['getloopnesttree_29',['getLoopNestTree',['../namespacefreetensor.html#a1ce8a9933598d18d4a656ccaee1110e8',1,'freetensor']]],
   ['getloopnesttree_30',['GetLoopNestTree',['../classfreetensor_1_1GetLoopNestTree.html#aa0c65537ed71ee6da6fcfe4e5ecf03e9',1,'freetensor::GetLoopNestTree']]],
   ['getlower_31',['getLower',['../classfreetensor_1_1CompUniqueBounds.html#a5265962fab0e27f8a228139c692512e1',1,'freetensor::CompUniqueBounds']]],
-  ['getpart_32',['getPart',['../structfreetensor_1_1SketchTarget.html#a895192f2ceba33cd6295fd51683cf6dd',1,'freetensor::SketchTarget']]],
+  ['getpart_32',['getPart',['../structfreetensor_1_1SubSketch.html#a2b27587f5c2938be59cb9df352a9966f',1,'freetensor::SubSketch']]],
   ['getprediction_33',['getPrediction',['../classfreetensor_1_1AutoSchedule.html#a48ad762385634f586ef3d7b7ad39a484',1,'freetensor::AutoSchedule']]],
   ['getprobsum_34',['getProbSum',['../namespacefreetensor.html#aee5858ad444905a091ba136f9ab5705b',1,'freetensor']]],
   ['getrandpopulation_35',['getRandPopulation',['../classfreetensor_1_1AutoSchedule.html#afbc3b454a3fe98052302f864847f700a',1,'freetensor::AutoSchedule']]],

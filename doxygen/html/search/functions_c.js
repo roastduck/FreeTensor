@@ -53,7 +53,7 @@ var searchData=
   ['movefromraw_50',['moveFromRaw',['../classfreetensor_1_1Array.html#ae86e4085b1908391f150b50a47742014',1,'freetensor::Array']]],
   ['moveoutfirstorlastiter_51',['moveOutFirstOrLastIter',['../namespacefreetensor.html#aa7120fe32e8d80979a3fd0cce5d79082',1,'freetensor']]],
   ['moveto_52',['moveTo',['../classfreetensor_1_1Schedule.html#a28085136b3ac2b360e10aa30b51a9fdb',1,'freetensor::Schedule']]],
-  ['movetonexttarget_53',['moveToNextTarget',['../classfreetensor_1_1Sketch.html#aecfe8f6ce7672122aa3f26b83bc088bd',1,'freetensor::Sketch']]],
+  ['movetonextsub_53',['moveToNextSub',['../classfreetensor_1_1Sketch.html#ab020095fdb648abdb2357f6ee84bd6a8',1,'freetensor::Sketch']]],
   ['mtype_54',['mtype',['../classfreetensor_1_1Buffer.html#a4bffc4c05e37ebcaaa5149b3675011e1',1,'freetensor::Buffer::mtype()'],['../classfreetensor_1_1FrontendVar.html#a4f195031711ae83116413ead90699437',1,'freetensor::FrontendVar::mtype()'],['../classfreetensor_1_1FindMemType.html#a1a1bc346dc7cb18a5627a0a85815cfae',1,'freetensor::FindMemType::mtype()']]],
   ['mul_55',['mul',['../namespacefreetensor.html#aab4ffa30bac375fbb3c98a920cfdc6b0',1,'freetensor::mul(const LinearExpr&lt; T &gt; &amp;lin, const T &amp;k)'],['../namespacefreetensor.html#a979b956b6aed9730458065c36e0f3b0a',1,'freetensor::mul(const LowerBound &amp;b, int k)'],['../namespacefreetensor.html#a877f3819ff85ca093423733a4cd135d2',1,'freetensor::mul(const UpperBound &amp;b, int k)']]],
   ['multileveltiling_56',['multiLevelTiling',['../namespacefreetensor.html#ab6a535f15a554730984beaa2ea54d24d',1,'freetensor::multiLevelTiling()'],['../classfreetensor_1_1Schedule.html#a09dd211db7d4944ec50c6ed69fc5ccf9',1,'freetensor::Schedule::multiLevelTiling()']]],

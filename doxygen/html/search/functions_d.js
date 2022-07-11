@@ -21,8 +21,8 @@ var searchData=
   ['normalizethreads_18',['NormalizeThreads',['../classfreetensor_1_1gpu_1_1NormalizeThreads.html#af8483decf7a9a27f23444ce478f6e9bc',1,'freetensor::gpu::NormalizeThreads']]],
   ['normalizethreads_19',['normalizeThreads',['../namespacefreetensor_1_1gpu.html#aa39f5c0b8c1a5c6ae03ec2d5a733d9e9',1,'freetensor::gpu']]],
   ['notlexlessafterpermu_20',['notLexLessAfterPermu',['../namespacefreetensor.html#ad726f1132d7b442ddb91f2e28c53e440',1,'freetensor']]],
-  ['nowtarget_21',['nowTarget',['../classfreetensor_1_1Sketch.html#a5ff85002ea3a8879db2198eb3b0607f3',1,'freetensor::Sketch::nowTarget()'],['../classfreetensor_1_1Sketch.html#ac5dcf8de3b0647c787fa8e4eaed9710a',1,'freetensor::Sketch::nowTarget() const']]],
-  ['nowtargetnum_22',['nowTargetNum',['../classfreetensor_1_1Sketch.html#a520b683570991670b1875302eccf9b79',1,'freetensor::Sketch']]],
+  ['nowsubnum_21',['nowSubNum',['../classfreetensor_1_1Sketch.html#adde45ed793cf85e181b62134645022be',1,'freetensor::Sketch']]],
+  ['nowsubsketch_22',['nowSubSketch',['../classfreetensor_1_1Sketch.html#aa45221226e616bb1330d168cb2fecb75',1,'freetensor::Sketch::nowSubSketch()'],['../classfreetensor_1_1Sketch.html#a751b9aab36ae535323bec9db51224c17',1,'freetensor::Sketch::nowSubSketch() const']]],
   ['num_23',['num',['../classfreetensor_1_1Device.html#ad486f37f8f8d4ef1b8a1421f3ae83ddf',1,'freetensor::Device']]],
   ['numsi_24',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]]
 ];

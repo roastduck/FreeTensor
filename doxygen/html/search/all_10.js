@@ -32,7 +32,7 @@ var searchData=
   ['parsesimplepbfunc_29',['parseSimplePBFunc',['../namespacefreetensor.html#a34838394ebf8a8f18c9c20a8fdf9f57a',1,'freetensor']]],
   ['part_30',['part',['../classfreetensor_1_1Sketch.html#a40e1784156d0399090f5270c574a3944',1,'freetensor::Sketch']]],
   ['partmap_31',['PartMap',['../namespacefreetensor.html#ab23d8042ffec81ba7475dbcf7a74bb65',1,'freetensor']]],
-  ['parts_32',['parts',['../structfreetensor_1_1SketchTarget.html#a8fb880c14585cd13a8cb90653ff66ea7',1,'freetensor::SketchTarget']]],
+  ['parts_32',['parts',['../structfreetensor_1_1SubSketch.html#ae7d48201cff46e6d4a02697a9020e987',1,'freetensor::SubSketch']]],
   ['parttype_33',['partType',['../classfreetensor_1_1SketchPartNode.html#a6abd6e7684adf321eb8d370b0f831066',1,'freetensor::SketchPartNode::partType()'],['../classfreetensor_1_1MultiLevelTilingPart.html#afa8bc7c65ba1c947a1b16ac8157f71c6',1,'freetensor::MultiLevelTilingPart::partType()'],['../classfreetensor_1_1MultiLevelTilingWithFusionPart.html#affe3abfbcbb9bd069884f6271959aef6',1,'freetensor::MultiLevelTilingWithFusionPart::partType()'],['../classfreetensor_1_1ParallelizePart.html#a4a386b87b67c33ff7b0157fb9c3be15c',1,'freetensor::ParallelizePart::partType()'],['../classfreetensor_1_1ThreadBindPart.html#a69ad1a525bb60727c5aea8248ea5345e',1,'freetensor::ThreadBindPart::partType()'],['../classfreetensor_1_1UnrollPart.html#a6d8fb3fda3a8a0ac9eae41321fbfad8d',1,'freetensor::UnrollPart::partType()']]],
   ['pat_5f_34',['pat_',['../classfreetensor_1_1MultiLevelTilingPart.html#ad6a177f8d7ac5c623f7c8b1334d33cce',1,'freetensor::MultiLevelTilingPart']]],
   ['pb_5fsimplify_2ecc_35',['pb_simplify.cc',['../pb__simplify_8cc.html',1,'']]],
