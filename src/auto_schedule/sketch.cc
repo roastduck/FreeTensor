@@ -2,8 +2,7 @@
 #include <auto_schedule/rule.h>
 #include <auto_schedule/sketch.h>
 #include <auto_schedule/utils.h>
-#include <codegen/code_gen_cpu.h>
-#include <codegen/code_gen_cuda.h>
+#include <codegen/code_gen.h>
 #include <hash.h>
 #include <lower.h>
 
@@ -99,10 +98,7 @@ std::string Sketch::genCode(const Ref<Target> &target) {
         return "";
     }
     lowered_ = lower(generatedSchedule_.func(), target);
-    if (target->type() == TargetType::GPU)
-        code_ = codeGenCUDA(lowered_);
-    else
-        code_ = codeGenCPU(lowered_);
+    code_ = codeGen(lowered_, target);
     return code_;
 }
 std::vector<double> &Sketch::genFeature(const Ref<Target> &target) {
