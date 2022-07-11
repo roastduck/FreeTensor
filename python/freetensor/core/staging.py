@@ -100,17 +100,62 @@ class StagingOverload:
         self.is_return_allowed: bool = True
         self.debug_call_stack: List[traceback.FrameSummary] = []
 
-    @abc.abstractmethod
     def custom_attr(self, obj: Any, attr: str) -> Any:
-        raise NotImplementedError()
+        '''
+        Customized attribute accessor.
 
-    @abc.abstractmethod
-    def metadata(self, entry) -> None:
-        raise NotImplementedError()
+        The framework first looks for a Python native attribute. If not found, it looks
+        for this overloaded custom attribute resolver.
 
-    @abc.abstractmethod
+        The default implementation provides no custom attribute.
+        Can be overridden by subclasses.
+
+        Parameters
+        ----------
+        obj : Any
+            Object to access attribute.
+        attr : str
+            Attribute name.
+
+        Returns
+        -------
+        Any :
+            The attribute value. None if not found.
+        '''
+        return None
+
+    def metadata(self, content) -> None:
+        '''
+        Metadata handler.
+
+        A metadata line is a comment starting with `#! ` and followed by a metadata,
+        represented as a string parameter.
+
+        Defaults to a no-op.
+        Can be overridden by subclasses.
+
+        Parameters
+        ----------
+        content : str
+            The metadata content.
+        '''
+        pass
+
     def at_position(self, filename: str, lineno: int) -> None:
-        raise NotImplementedError()
+        '''
+        Code position handler.
+
+        Defaults to a no-op.
+        Can be overridden by subclasses.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file containing code for the next statement.
+        lineno : int
+            Line number of the next statement.
+        '''
+        pass
 
     def error(self, content: str):
         return StagingError(self, content)
@@ -455,11 +500,13 @@ class StagedTypeAnnotation(metaclass=StagedTypeAnnotationMeta):
 class StagedPredicate(abc.ABC):
 
     @abc.abstractmethod
-    def logical_and(self, lazy_other: Callable[[], StagedPredicate]) -> StagedPredicate:
+    def logical_and(
+            self, lazy_other: Callable[[], StagedPredicate]) -> StagedPredicate:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def logical_or(self, lazy_other: Callable[[], StagedPredicate]) -> StagedPredicate:
+    def logical_or(
+            self, lazy_other: Callable[[], StagedPredicate]) -> StagedPredicate:
         raise NotImplementedError()
 
     @abc.abstractmethod
