@@ -47,7 +47,7 @@ class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
                                             std::string pat,
                                             TargetType targetType,
                                             int minBlockSize);
-    void apply(Schedule &schedule, SketchTarget &target) override;
+    void apply(Schedule &schedule, SubSketch &subSketch) override;
     bool mutate(RNG &gen) override;
     bool crossover(const SketchPart &part, RNG &gen) override;
     [[nodiscard]] std::vector<int> getAnnotation() const override;

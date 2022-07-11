@@ -11,7 +11,7 @@ class SkipRule : public Rule {
     }
     std::vector<Sketch> genPart(const Sketch &sketch) override {
         Sketch newSketch = sketch.clone();
-        newSketch.moveToNextTarget();
+        newSketch.moveToNextSub();
         return {newSketch};
     };
 };

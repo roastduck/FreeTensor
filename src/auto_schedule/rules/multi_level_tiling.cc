@@ -4,9 +4,9 @@
 
 namespace freetensor {
 RuleStatus MultiLevelTilingRule::analyze(const Sketch &sketch) {
-    if (sketch.nowTarget().hasPart(
+    if (sketch.nowSubSketch().hasPart(
             SketchPartType::MultiLevelTilingWithFusion) ||
-        sketch.nowTarget().hasPart(SketchPartType::MultiLevelTiling)) {
+        sketch.nowSubSketch().hasPart(SketchPartType::MultiLevelTiling)) {
         return RuleStatus::Skip;
     }
     return RuleStatus::Apply;
@@ -15,7 +15,7 @@ RuleStatus MultiLevelTilingRule::analyze(const Sketch &sketch) {
 std::vector<Sketch> MultiLevelTilingRule::genPart(const Sketch &sketch) {
     Sketch newSketch = sketch.clone();
     newSketch.addPart(
-        Ref<MultiLevelTilingPart>::make(sketch.nowTarget().target, pat_));
+        Ref<MultiLevelTilingPart>::make(sketch.nowSubSketch().target, pat_));
     newSketch.addLog("multi_level_tiling");
     return {newSketch};
 }
@@ -58,7 +58,7 @@ MultiLevelTilingPart::MultiLevelTilingPart(ForsWithDataReuse fors,
     }
 }
 
-void MultiLevelTilingPart::apply(Schedule &schedule, SketchTarget &target) {
+void MultiLevelTilingPart::apply(Schedule &schedule, SubSketch &subSketch) {
     tiles_ = schedule.multiLevelTiling(target_, annotation_, pat_,
                                        frontSpaceLoopTimes_);
 }

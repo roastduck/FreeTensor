@@ -24,7 +24,7 @@ class UnrollPart : public SketchPartNode {
     void genFakeAnnotation(RNG &gen) override;
     bool mutate(RNG &gen) override;
     bool crossover(const SketchPart &part, RNG &gen) override;
-    void apply(Schedule &schedule, SketchTarget &target) override;
+    void apply(Schedule &schedule, SubSketch &subSketch) override;
     SketchPartType partType() override { return SketchPartType::Unroll; }
     [[nodiscard]] std::vector<int> getAnnotation() const override {
         return {maxSize_};

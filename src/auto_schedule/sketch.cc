@@ -10,8 +10,8 @@ namespace freetensor {
 
 Sketch Sketch::genRandAnnotation(RNG &gen) const {
     Sketch sketch = clone();
-    for (auto &target : sketch.targets_) {
-        for (auto &part : target.parts) {
+    for (auto &sub : sketch.subs_) {
+        for (auto &part : sub.parts) {
             part.second->genRandAnnotation(gen);
         }
     }
@@ -19,16 +19,16 @@ Sketch Sketch::genRandAnnotation(RNG &gen) const {
 }
 
 void Sketch::addPart(const SketchPart &p) {
-    targets_[nowTargetNum_].parts.emplace(p->partType(), p);
+    subs_[nowSubNum_].parts.emplace(p->partType(), p);
 }
 
 Schedule Sketch::genSchedule() {
     if (scheduleGenerated_)
         return generatedSchedule_;
     generatedSchedule_ = schedule_.clone();
-    for (auto &target : targets_) {
-        for (auto &part : target.parts) {
-            part.second->apply(generatedSchedule_, target);
+    for (auto &sub : subs_) {
+        for (auto &part : sub.parts) {
+            part.second->apply(generatedSchedule_, sub);
         }
     }
     scheduleGenerated_ = true;
@@ -39,9 +39,9 @@ bool Sketch::operator<(const Sketch &a) const { return time_ < a.time_; }
 
 std::pair<bool, Sketch> Sketch::genMutation(RNG &gen) const {
     Sketch ret = clone();
-    int mutTarget = randomInt(ret.targets_.size() - 1, gen);
-    int mutPart = randomInt(ret.targets_[mutTarget].parts.size() - 1, gen);
-    auto mut = std::next(ret.targets_[mutTarget].parts.begin(), mutPart)
+    int mutSub = randomInt(ret.subs_.size() - 1, gen);
+    int mutPart = randomInt(ret.subs_[mutSub].parts.size() - 1, gen);
+    auto mut = std::next(ret.subs_[mutSub].parts.begin(), mutPart)
                    ->second->mutate(gen);
     if (!mut) {
         return std::make_pair(false, Sketch());
@@ -53,16 +53,15 @@ std::pair<bool, Sketch> Sketch::genCrossover(const Sketch &sketch,
                                              RNG &gen) const {
     Sketch ret = clone();
 
-    int mutTarget = randomInt(ret.targets_.size() - 1, gen);
-    if (!ret.targets_[mutTarget].canCrossOver(sketch.targets_[mutTarget])) {
+    int mutSub = randomInt(ret.subs_.size() - 1, gen);
+    if (!ret.subs_[mutSub].canCrossOver(sketch.subs_[mutSub])) {
         return std::make_pair(false, Sketch());
     }
-    int mutPart = randomInt(ret.targets_[mutTarget].parts.size() - 1, gen);
+    int mutPart = randomInt(ret.subs_[mutSub].parts.size() - 1, gen);
     auto mut =
-        std::next(ret.targets_[mutTarget].parts.begin(), mutPart)
+        std::next(ret.subs_[mutSub].parts.begin(), mutPart)
             ->second->crossover(
-                std::next(sketch.targets_[mutTarget].parts.begin(), mutPart)
-                    ->second,
+                std::next(sketch.subs_[mutSub].parts.begin(), mutPart)->second,
                 gen);
     if (!mut) {
         return std::make_pair(false, Sketch());
@@ -72,8 +71,8 @@ std::pair<bool, Sketch> Sketch::genCrossover(const Sketch &sketch,
 
 std::vector<int> Sketch::getAnnotation() const {
     std::vector<int> ret;
-    for (const auto &target : targets_) {
-        for (const auto &part : target.parts) {
+    for (const auto &sub : subs_) {
+        for (const auto &part : sub.parts) {
             auto nw = part.second->getAnnotation();
             ret.insert(ret.end(), nw.begin(), nw.end());
         }
@@ -83,7 +82,7 @@ std::vector<int> Sketch::getAnnotation() const {
 
 size_t Sketch::hash() const {
     size_t h = 0;
-    for (const auto &target : targets_) {
+    for (const auto &target : subs_) {
         h = hashCombine(h, target.hash());
     }
     return h;

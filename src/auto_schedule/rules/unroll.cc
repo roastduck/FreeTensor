@@ -10,11 +10,11 @@ namespace freetensor {
 static std::vector<int> unrollConfigsCpu = {0, 16, 64, 512};
 static std::vector<int> unrollConfigsGpu = {0, 16, 64, 512, 1024};
 
-void UnrollPart::apply(Schedule &schedule, SketchTarget &target) {
+void UnrollPart::apply(Schedule &schedule, SubSketch &subSketch) {
     Stmt root;
     int vthreadSize = 1;
     if (targetType_ == TargetType::GPU) {
-        SketchPart part = target.getPart(SketchPartType::ThreadBind);
+        SketchPart part = subSketch.getPart(SketchPartType::ThreadBind);
         ID lastParallelizedID = part.as<ThreadBindPart>()->lastParallelizedID();
         if (!lastParallelizedID.isValid()) {
             return;
@@ -22,7 +22,7 @@ void UnrollPart::apply(Schedule &schedule, SketchTarget &target) {
         root = schedule.find(lastParallelizedID).as<ForNode>()->body_;
         vthreadSize = part.as<ThreadBindPart>()->vthreadSize();
     } else {
-        SketchPart part = target.getPart(SketchPartType::Parallelize);
+        SketchPart part = subSketch.getPart(SketchPartType::Parallelize);
         ID lastParallelizedID =
             part.as<ParallelizePart>()->lastParallelizedID();
         if (!lastParallelizedID.isValid()) {
@@ -84,11 +84,12 @@ std::vector<Sketch> UnrollRule::genPart(const Sketch &sketch) {
 }
 
 RuleStatus UnrollRule::analyze(const Sketch &sketch) {
-    if (sketch.nowTarget().hasPart(SketchPartType::Unroll))
+    if (sketch.nowSubSketch().hasPart(SketchPartType::Unroll))
         return RuleStatus::Skip;
-    if (sketch.nowTarget().hasPart(
+    if (sketch.nowSubSketch().hasPart(
             SketchPartType::MultiLevelTilingWithFusion) ||
-        sketch.nowTarget().hasPart(SketchPartType::MultiLevelTilingWithFusion))
+        sketch.nowSubSketch().hasPart(
+            SketchPartType::MultiLevelTilingWithFusion))
         return RuleStatus::ApplyAndSkipRest;
     return RuleStatus::Skip;
 }

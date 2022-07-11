@@ -42,7 +42,7 @@ class MultiLevelTilingPart : public SketchPartNode {
     std::vector<std::pair<ID, int>> &tiles() { return tiles_; }
     explicit MultiLevelTilingPart(ForsWithDataReuse fors,
                                   std::string pat = "SSRSRS");
-    void apply(Schedule &schedule, SketchTarget &target) override;
+    void apply(Schedule &schedule, SubSketch &subSketch) override;
     bool mutate(RNG &gen) override;
     bool crossover(const SketchPart &part, RNG &gen) override;
     [[nodiscard]] std::vector<int> getAnnotation() const override;
