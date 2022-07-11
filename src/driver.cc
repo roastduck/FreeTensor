@@ -393,7 +393,7 @@ std::pair<double, double> Driver::time(int rounds, int warmups) {
             varX += (t - avg) * (t - avg);
         }
         varX /= (rounds - 1);    // Var[X] = n/(n-1) sigma^2
-        varAvgX = varX / rounds; // Var[X1 + X2 + ... + Xn] = 1/n Var[X]
+        varAvgX = varX / rounds; // Var[(X1 + X2 + ... + Xn) / n] = 1/n Var[X]
     }
     return std::make_pair(avg, sqrt(varAvgX));
 }
