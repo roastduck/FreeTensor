@@ -76,10 +76,10 @@ bool UnrollPart::crossover(const SketchPart &part, RNG &gen) {
     return false;
 }
 
-std::vector<Sketch> UnrollRule::genPart(const Sketch &sketch) {
-    Sketch newSketch = sketch.clone();
-    newSketch.addPart(Ref<UnrollPart>::make(targetType_));
-    newSketch.addLog("unroll");
+std::vector<Ref<Sketch>> UnrollRule::genPart(const Sketch &sketch) {
+    auto newSketch = sketch.clone();
+    newSketch->addPart(Ref<UnrollPart>::make(targetType_));
+    newSketch->addLog("unroll");
     return {newSketch};
 }
 

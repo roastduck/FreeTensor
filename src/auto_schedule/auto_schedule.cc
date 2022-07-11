@@ -14,8 +14,7 @@
 #include <auto_schedule/rules/thread_bind.h>
 #include <auto_schedule/rules/unroll.h>
 #include <auto_schedule/utils.h>
-#include <codegen/code_gen_cpu.h>
-#include <codegen/code_gen_cuda.h>
+#include <codegen/code_gen.h>
 #include <driver.h>
 #include <lower.h>
 #include <omp_utils.h>
@@ -73,17 +72,22 @@ void AutoSchedule::setParams(
     paramsSet_ = true;
 }
 
-std::vector<double> AutoSchedule::measure(std::vector<Ref<Sketch>> &sketches) {
+std::vector<double>
+AutoSchedule::measure(const std::vector<Ref<Sketch>> &sketches) {
     // Compile in parallel, and measure sequentially
     // TODO: Parallel among computing nodes
 
+    if (verbose_ >= 1) {
+        logger() << "Compiling code" << std::endl;
+    }
     size_t n = sketches.size();
     std::vector<Ref<Driver>> drivers(n);
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic)
     for (size_t i = 0; i < n; i++) {
         try {
-            drivers[i] = Ref<Driver>::make(sketches[i]->lowered(),
-                                           sketches[i]->code(), device_);
+            auto lowered = sketches[i]->lowered(target_);
+            auto code = codeGen(lowered, target_);
+            drivers[i] = Ref<Driver>::make(lowered, code, device_);
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR measure: " << e.what() << std::endl;
@@ -91,6 +95,9 @@ std::vector<double> AutoSchedule::measure(std::vector<Ref<Sketch>> &sketches) {
         }
     }
 
+    if (verbose_ >= 1) {
+        logger() << "Measuring time" << std::endl;
+    }
     std::vector<double> times;
     times.reserve(n);
     for (size_t i = 0; i < n; i++) {
@@ -106,7 +113,6 @@ std::vector<double> AutoSchedule::measure(std::vector<Ref<Sketch>> &sketches) {
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR measure: " << e.what() << std::endl;
-            std::cerr << toString(sketches[i]->code()) << std::endl;
             times.emplace_back(1e30);
         }
     }
@@ -135,39 +141,24 @@ void AutoSchedule::searchOneRound(size_t n, size_t nExploit, size_t nExplore) {
 }
 
 std::vector<std::vector<double>>
-AutoSchedule::genFeatures(std::vector<Ref<Sketch>> &sketches) {
+AutoSchedule::genFeatures(const std::vector<Ref<Sketch>> &sketches) {
+    if (verbose_ >= 1) {
+        logger() << "Generating features" << std::endl;
+    }
+    auto n = sketches.size();
+    std::vector<std::vector<double>> featureList(n);
     exceptSafeParallelFor<size_t>(
         0, sketches.size(), 1,
-        [&](size_t i) { sketches[i]->genFeature(target_); }, omp_sched_dynamic);
-    std::vector<std::vector<double>> featureList;
-    for (auto &i : sketches) {
-        featureList.emplace_back(i->feature());
-    }
+        [&](size_t i) {
+            featureList[i] =
+                fixedLengthFeature(sketches[i]->lowered(target_)->body_);
+        },
+        omp_sched_dynamic);
     return featureList;
 }
 
 std::vector<double>
-AutoSchedule::testAndAdd(const std::vector<Ref<Sketch>> &sketches_in) {
-    if (verbose_ >= 1) {
-        logger() << "Lowering code" << std::endl;
-    }
-    std::vector<Ref<Sketch>> sketches;
-    size_t nIn = sketches_in.size();
-#pragma omp parallel for
-    for (size_t i = 0; i < nIn; i++) {
-        try {
-            sketches_in[i]->genCode(target_);
-        } catch (const std::exception &e) {
-        }
-    }
-    for (size_t i = 0; i < nIn; i++) {
-        if (!sketches_in[i]->code().empty()) {
-            sketches.push_back(sketches_in[i]);
-        }
-    }
-    if (verbose_ >= 1) {
-        logger() << "Generating features" << std::endl;
-    }
+AutoSchedule::testAndAdd(const std::vector<Ref<Sketch>> &sketches) {
     auto features = genFeatures(sketches);
     size_t n = sketches.size();
     ASSERT(features.size() == n);
@@ -228,18 +219,12 @@ std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
         size_t nThisTurn = nRand;
 #pragma omp parallel for
         for (size_t i = 0; i < nThisTurn; i++) {
-            now[i] = Ref<Sketch>::make(
-                baseSketches_[randomInt(baseSketches_.size() - 1, rng_)]
-                    ->genRandAnnotation(rng_));
-            try {
-                now[i]->genCode(target_);
-            } catch (const std::exception &e) {
-                now[i] = nullptr;
-            };
+            now[i] = baseSketches_[randomInt(baseSketches_.size() - 1, rng_)]
+                         ->genRandAnnotation(rng_);
         }
         roundUnchanged++;
         for (size_t i = 0; i < nThisTurn; i++) {
-            if (!now[i].isValid() || now[i]->code().empty()) {
+            if (!now[i].isValid()) {
                 continue;
             }
             size_t h = now[i]->hash();
@@ -332,13 +317,9 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
                 double r = randomDouble(rng_);
                 if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
                     int a = randWithProb(probSum, rng_);
-                    auto nw = v1[a]->genMutation(rng_);
-                    if (nw.first) {
-                        try {
-                            nw.second.genCode(target_);
-                            now[j] = Ref<Sketch>::make(std::move(nw.second));
-                        } catch (const std::exception &e) {
-                        }
+                    if (auto mutated = v1[a]->genMutation(rng_);
+                        mutated.isValid()) {
+                        now[j] = mutated;
                     }
                 } else if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB +
                                    EVOLUTIONARY_SEARCH_CROSSOVER_PROB) {
@@ -346,20 +327,16 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
                     int b = randWithProb(probSum, rng_);
                     while (b == a)
                         b = randWithProb(probSum, rng_);
-                    auto nw = v1[a].get()->genCrossover(*v1[b], rng_);
-                    if (nw.first) {
-                        try {
-                            nw.second.genCode(target_);
-                            now[j] = Ref<Sketch>::make(std::move(nw.second));
-                        } catch (const std::exception &e) {
-                        }
+                    if (auto crossed = v1[a].get()->genCrossover(*v1[b], rng_);
+                        crossed.isValid()) {
+                        now[j] = crossed;
                     }
                 } else {
                     now[j] = v1[randomInt(v1.size() - 1, rng_)];
                 }
             }
             for (size_t j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
-                if (now[j].isValid() && !now[j]->code().empty()) {
+                if (now[j].isValid()) {
                     v2.push_back(now[j]);
                 }
             }
@@ -394,12 +371,9 @@ AutoSchedule::getPrediction(std::vector<Ref<Sketch>> &sketches_in) {
             ret[i] = -1e30;
         }
     }
-    if (verbose_ >= 1) {
-        logger() << "get prediction" << std::endl;
-    }
     auto featureList = genFeatures(sketches);
     if (verbose_ >= 1) {
-        logger() << "got prediction" << std::endl;
+        logger() << "Getting predictions" << std::endl;
     }
     auto predList = predictFunc_(featureList);
     for (size_t i = 0; i < predList.size(); i++) {
@@ -409,24 +383,23 @@ AutoSchedule::getPrediction(std::vector<Ref<Sketch>> &sketches_in) {
 }
 
 void AutoSchedule::genSketches() {
-    auto targets = findMultiLevelTiling(original_.ast());
-    if (targets.empty()) {
+    auto subs = findMultiLevelTiling(original_.ast());
+    if (subs.empty()) {
         return;
     }
-    Sketch initSketch(original_, targets);
-    std::queue<Sketch> q;
+    auto initSketch = Ref<Sketch>::make(original_, subs);
+    std::queue<Ref<Sketch>> q;
     q.push(std::move(initSketch));
     while (!q.empty()) {
         auto nowSketch = std::move(q.front());
         q.pop();
         for (auto &[name, rule] : rules_) {
-            if (auto status = rule->analyze(nowSketch);
+            if (auto status = rule->analyze(*nowSketch);
                 status != RuleStatus::Skip) {
-                auto sketches = rule->genPart(nowSketch);
+                auto sketches = rule->genPart(*nowSketch);
                 for (auto &sketch : sketches) {
-                    if (sketch.nowSubNum() == -1) {
-                        baseSketches_.push_back(
-                            Ref<Sketch>::make(std::move(sketch)));
+                    if (sketch->nowSubNum() == -1) {
+                        baseSketches_.emplace_back(sketch);
                     } else {
                         q.push(std::move(sketch));
                     }
@@ -439,20 +412,14 @@ void AutoSchedule::genSketches() {
     }
 }
 
-Sketch AutoSchedule::getInitSketch() {
-    auto targets = findMultiLevelTiling(original_.ast());
-    if (!targets.size()) {
-        return {};
-    }
-    return {original_, targets};
-}
-
 Schedule
 AutoSchedule::testRound(const std::unordered_map<std::string, int> &nthSketch) {
-    auto sketch = getInitSketch();
+    auto subs = findMultiLevelTiling(original_.ast());
+    ASSERT(!subs.empty());
+    auto sketch = Ref<Sketch>::make(original_, subs);
     for (auto &[name, rule] : rules_) {
-        if (auto status = rule->analyze(sketch); status != RuleStatus::Skip) {
-            auto newSketches = rule->genPart(sketch);
+        if (auto status = rule->analyze(*sketch); status != RuleStatus::Skip) {
+            auto newSketches = rule->genPart(*sketch);
             if (nthSketch.count(name)) {
                 sketch = std::move(newSketches.at(nthSketch.at(name)));
             } else {
@@ -461,10 +428,10 @@ AutoSchedule::testRound(const std::unordered_map<std::string, int> &nthSketch) {
             }
         }
     }
-    for (auto &&[type, part] : sketch.part(0)) {
+    for (auto &&[type, part] : sketch->part(0)) {
         part->genFakeAnnotation(rng_);
     }
-    return sketch.genSchedule();
+    return sketch->genSchedule();
 }
 
 } // namespace freetensor

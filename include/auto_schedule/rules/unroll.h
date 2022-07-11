@@ -11,7 +11,7 @@ class UnrollRule : public Rule {
   public:
     UnrollRule(TargetType targetType) : targetType_(targetType) {}
     RuleStatus analyze(const Sketch &sketch) override;
-    std::vector<Sketch> genPart(const Sketch &sketch) override;
+    std::vector<Ref<Sketch>> genPart(const Sketch &sketch) override;
 };
 
 class UnrollPart : public SketchPartNode {

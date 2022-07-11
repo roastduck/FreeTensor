@@ -9,7 +9,7 @@ class ParallelizeRule : public Rule {
 
   public:
     RuleStatus analyze(const Sketch &sketch) override;
-    std::vector<Sketch> genPart(const Sketch &sketch) override;
+    std::vector<Ref<Sketch>> genPart(const Sketch &sketch) override;
 };
 
 class ParallelizePart : public SketchPartNode {

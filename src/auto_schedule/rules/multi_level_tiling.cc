@@ -12,11 +12,11 @@ RuleStatus MultiLevelTilingRule::analyze(const Sketch &sketch) {
     return RuleStatus::Apply;
 }
 
-std::vector<Sketch> MultiLevelTilingRule::genPart(const Sketch &sketch) {
-    Sketch newSketch = sketch.clone();
-    newSketch.addPart(
+std::vector<Ref<Sketch>> MultiLevelTilingRule::genPart(const Sketch &sketch) {
+    auto newSketch = sketch.clone();
+    newSketch->addPart(
         Ref<MultiLevelTilingPart>::make(sketch.nowSubSketch().target, pat_));
-    newSketch.addLog("multi_level_tiling");
+    newSketch->addLog("multi_level_tiling");
     return {newSketch};
 }
 

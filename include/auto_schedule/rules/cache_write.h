@@ -16,7 +16,7 @@ class CacheWriteRule : public Rule {
                                              : MemType::GPULocal),
           verbose_(verbose) {}
     RuleStatus analyze(const Sketch &sketch) override;
-    std::vector<Sketch> genPart(const Sketch &sketch) override;
+    std::vector<Ref<Sketch>> genPart(const Sketch &sketch) override;
 };
 
 } // namespace freetensor

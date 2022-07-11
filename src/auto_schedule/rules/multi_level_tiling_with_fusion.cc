@@ -20,16 +20,16 @@ RuleStatus MultiLevelTilingWithFusionRule::analyze(const Sketch &sketch) {
     return RuleStatus::Skip;
 }
 
-std::vector<Sketch>
+std::vector<Ref<Sketch>>
 MultiLevelTilingWithFusionRule::genPart(const Sketch &sketch) {
-    std::vector<Sketch> ret;
+    std::vector<Ref<Sketch>> ret;
     for (size_t i = 0; i < fuseLevels_.size(); i++) {
-        Sketch newSketch = sketch.clone();
-        newSketch.addPart(Ref<MultiLevelTilingWithFusionPart>::make(
+        auto newSketch = sketch.clone();
+        newSketch->addPart(Ref<MultiLevelTilingWithFusionPart>::make(
             sketch.nowSubSketch().target, toFuse_, fuseLevels_[i], pat_,
             targetType_, minBlockSize_));
-        newSketch.addLog("multi_level_tiling_with_fusion " +
-                         std::to_string(fuseLevels_[i]));
+        newSketch->addLog("multi_level_tiling_with_fusion " +
+                          std::to_string(fuseLevels_[i]));
         ret.push_back(newSketch);
     }
     return ret;
