@@ -366,6 +366,15 @@ def test_while():
     class WhilePredicate(ft.StagedPredicate):
         inner: ft.StagedPredicate
 
+        def logical_and(self, other: ft.StagedPredicate):
+            return self.inner.logical_and(other)
+
+        def logical_or(self, other: ft.StagedPredicate):
+            return self.inner.logical_or(other)
+
+        def logical_not(self):
+            return self.inner.logical_not()
+
         def if_then_else_stmt(self, then_stmt, else_stmt):
             self.inner.if_then_else_stmt(then_stmt, else_stmt)
 
@@ -377,6 +386,9 @@ def test_while():
             for _ in range(2**31 - 1):
                 if self.inner:
                     body()
+
+        def assert_stmt(self):
+            self.inner.assert_stmt()
 
     @ft.transform
     def test(x: ft.Var[(), "float32", "output"]):
