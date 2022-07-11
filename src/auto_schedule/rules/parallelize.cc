@@ -51,8 +51,8 @@ bool ParallelizePart::crossover(const SketchPart &part, RNG &gen) {
     return false;
 }
 
-std::vector<Sketch> ParallelizeRule::genPart(const Sketch &sketch) {
-    Sketch newSketch = sketch.clone();
+std::vector<Ref<Sketch>> ParallelizeRule::genPart(const Sketch &sketch) {
+    auto newSketch = sketch.clone();
     Ref<MultiLevelTilingPart> part =
         sketch.nowSubSketch()
             .getPart(SketchPartType::MultiLevelTiling)
@@ -62,9 +62,9 @@ std::vector<Sketch> ParallelizeRule::genPart(const Sketch &sketch) {
                    .getPart(SketchPartType::MultiLevelTilingWithFusion)
                    .as<MultiLevelTilingPart>();
     }
-    newSketch.addPart(Ref<ParallelizePart>::make(part->spaceLoopLength() *
-                                                 part->frontSpaceLoopTimes()));
-    newSketch.addLog("parallelize");
+    newSketch->addPart(Ref<ParallelizePart>::make(part->spaceLoopLength() *
+                                                  part->frontSpaceLoopTimes()));
+    newSketch->addLog("parallelize");
     return {newSketch};
 }
 

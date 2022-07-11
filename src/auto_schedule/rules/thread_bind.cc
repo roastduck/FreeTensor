@@ -57,10 +57,10 @@ void ThreadBindPart::apply(Schedule &schedule, SubSketch &subSketch) {
     }
 }
 
-std::vector<Sketch> ThreadBindRule::genPart(const Sketch &sketch) {
-    Sketch newSketch = sketch.clone();
-    newSketch.addPart(Ref<ThreadBindPart>::make());
-    newSketch.addLog("thread_bind");
+std::vector<Ref<Sketch>> ThreadBindRule::genPart(const Sketch &sketch) {
+    auto newSketch = sketch.clone();
+    newSketch->addPart(Ref<ThreadBindPart>::make());
+    newSketch->addLog("thread_bind");
     return {newSketch};
 }
 

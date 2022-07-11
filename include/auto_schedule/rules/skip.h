@@ -9,9 +9,9 @@ class SkipRule : public Rule {
     RuleStatus analyze(const Sketch &sketch) override {
         return RuleStatus::Apply;
     }
-    std::vector<Sketch> genPart(const Sketch &sketch) override {
-        Sketch newSketch = sketch.clone();
-        newSketch.moveToNextSub();
+    std::vector<Ref<Sketch>> genPart(const Sketch &sketch) override {
+        auto newSketch = sketch.clone();
+        newSketch->moveToNextSub();
         return {newSketch};
     };
 };

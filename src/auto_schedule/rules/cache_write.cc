@@ -13,18 +13,18 @@ RuleStatus CacheWriteRule::analyze(const Sketch &sketch) {
     return RuleStatus::Skip;
 }
 
-std::vector<Sketch> CacheWriteRule::genPart(const Sketch &sketch) {
-    Sketch newSketch = sketch.clone();
-    auto &target = newSketch.nowSubSketch().target;
+std::vector<Ref<Sketch>> CacheWriteRule::genPart(const Sketch &sketch) {
+    auto newSketch = sketch.clone();
+    auto &target = newSketch->nowSubSketch().target;
     if (verbose_ >= 2) {
         logger() << "cache: " << target.outermost.strId() << " " << target.dest
                  << std::endl;
     }
     std::string name = std::get<2>(
-        newSketch.schedule().cache(target.outermost, target.dest, memType_));
+        newSketch->schedule().cache(target.outermost, target.dest, memType_));
     target.dest = name;
-    newSketch.addLog("cache_write_" +
-                     std::to_string(std::hash<ForsWithDataReuse>{}(target)));
+    newSketch->addLog("cache_write_" +
+                      std::to_string(std::hash<ForsWithDataReuse>{}(target)));
     return {newSketch};
 }
 

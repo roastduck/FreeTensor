@@ -128,9 +128,8 @@ class Sketch {
     int nowSubNum_{0};
     double time_{0};
     bool scheduleGenerated_{false};
-    std::string code_;
-    Func lowered_;
-    std::vector<double> feature_;
+    Func lowered_; // Cached lowered AST, used for both generating features and
+                   // generating code
 
   public:
     Sketch() = default;
@@ -142,15 +141,15 @@ class Sketch {
         }
     }
 
-    [[nodiscard]] Sketch clone() const {
-        Sketch ret;
-        ret.schedule_ = schedule_.clone();
-        ret.subs_ = subs_;
-        ret.nowSubNum_ = nowSubNum_;
+    [[nodiscard]] Ref<Sketch> clone() const {
+        auto ret = Ref<Sketch>::make();
+        ret->schedule_ = schedule_.clone();
+        ret->subs_ = subs_;
+        ret->nowSubNum_ = nowSubNum_;
         return ret;
     }
 
-    Sketch genRandAnnotation(RNG &gen) const;
+    Ref<Sketch> genRandAnnotation(RNG &gen) const;
 
     Schedule genSchedule();
 
@@ -161,10 +160,10 @@ class Sketch {
 
     std::vector<int> getAnnotation() const;
 
-    [[nodiscard]] std::pair<bool, Sketch> genMutation(RNG &gen) const;
+    [[nodiscard]] Ref<Sketch> genMutation(RNG &gen) const;
 
-    [[nodiscard]] std::pair<bool, Sketch> genCrossover(const Sketch &sketch,
-                                                       RNG &gen) const;
+    [[nodiscard]] Ref<Sketch> genCrossover(const Sketch &sketch,
+                                           RNG &gen) const;
 
     void setTime(double time) { time_ = time; }
     double time() const { return time_; }
@@ -187,13 +186,7 @@ class Sketch {
     Schedule &schedule() { return schedule_; }
     const Schedule &schedule() const { return schedule_; }
 
-    std::string genCode(const Ref<Target> &target);
-
-    const std::string &code() const { return code_; }
-    Func lowered() const { return lowered_; }
-
-    std::vector<double> &genFeature(const Ref<Target> &target);
-    std::vector<double> &feature() { return feature_; }
+    const Func &lowered(const Ref<Target> &target);
 };
 
 } // namespace freetensor

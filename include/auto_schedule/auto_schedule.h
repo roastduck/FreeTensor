@@ -42,7 +42,7 @@ class AutoSchedule {
     int verbose_ = 0;
 
   private:
-    std::vector<double> measure(std::vector<Ref<Sketch>> &sketches);
+    std::vector<double> measure(const std::vector<Ref<Sketch>> &sketches);
 
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
@@ -65,7 +65,7 @@ class AutoSchedule {
     std::vector<Ref<Sketch>> getRandPopulation(size_t nRand);
 
     std::vector<std::vector<double>>
-    genFeatures(std::vector<Ref<Sketch>> &sketches);
+    genFeatures(const std::vector<Ref<Sketch>> &sketches);
 
     std::vector<double> getPrediction(std::vector<Ref<Sketch>> &sketches_in);
 
@@ -78,7 +78,6 @@ class AutoSchedule {
     std::string getTag() { return tag_; }
 
     void genSketches();
-    Sketch getInitSketch();
 
     /**
      * Exercise on fake annotations, for test only

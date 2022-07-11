@@ -23,7 +23,7 @@ class MultiLevelTilingRule : public Rule {
         }
     }
     RuleStatus analyze(const Sketch &sketch) override;
-    std::vector<Sketch> genPart(const Sketch &sketch) override;
+    std::vector<Ref<Sketch>> genPart(const Sketch &sketch) override;
 };
 
 class MultiLevelTilingPart : public SketchPartNode {
