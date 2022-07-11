@@ -365,13 +365,13 @@ def test_while():
     @dataclass
     class WhilePredicate(ft.StagedPredicate):
         inner: ft.StagedPredicate
-        
+
         def logical_and(self, other: ft.StagedPredicate):
             return self.inner.logical_and(other)
-        
+
         def logical_or(self, other: ft.StagedPredicate):
             return self.inner.logical_or(other)
-        
+
         def logical_not(self):
             return self.inner.logical_not()
 
