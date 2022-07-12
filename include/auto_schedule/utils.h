@@ -39,34 +39,19 @@ inline int randomInt(int mx, std::uniform_random_bit_generator auto &gen) {
     return dis(gen);
 }
 
-inline double randomDouble(std::uniform_random_bit_generator auto &gen) {
-    std::uniform_real_distribution<> dis(0, 1);
-    return dis(gen);
-}
-
-inline std::vector<double> getProbSum(const std::vector<double> &pred) {
-    std::vector<double> sum = pred;
-    int sz = sum.size();
-    for (int i = 0; i < sz; i++) {
-        if (sum[i] > -1e20) {
-            sum[i] = std::max(sum[i], 1.);
+inline std::vector<double> getProbFromPredict(const std::vector<double> &pred) {
+    std::vector<double> prob;
+    prob.reserve(pred.size());
+    for (auto x : pred) {
+        if (x > -1e20) {
+            // Valid sketch gets at least weight 1 to pick
+            prob.emplace_back(std::max(x, 1.));
+        } else {
+            // Invalid sketch gets no chance to pick
+            prob.emplace_back(0);
         }
     }
-    sum[0] = (sum[0] <= -1e20 ? 0 : sum[0]);
-    for (int i = 1; i < sz; i++) {
-        sum[i] = sum[i - 1] + (sum[i] <= -1e20 ? 0 : sum[i]);
-    }
-    for (int i = 0; i < sz; i++) {
-        sum[i] /= sum[sz - 1];
-    }
-    return sum;
-}
-
-inline int randWithProb(const std::vector<double> &probSum,
-                        std::uniform_random_bit_generator auto &gen) {
-    std::uniform_real_distribution<> dis(0, 1);
-    return std::upper_bound(probSum.begin(), probSum.end(), dis(gen)) -
-           probSum.begin();
+    return prob;
 }
 
 inline std::vector<int>
