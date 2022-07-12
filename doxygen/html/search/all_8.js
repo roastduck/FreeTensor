@@ -38,7 +38,7 @@ var searchData=
   ['getlower_35',['getLower',['../classfreetensor_1_1CompUniqueBounds.html#a5265962fab0e27f8a228139c692512e1',1,'freetensor::CompUniqueBounds']]],
   ['getpart_36',['getPart',['../structfreetensor_1_1SubSketch.html#a2b27587f5c2938be59cb9df352a9966f',1,'freetensor::SubSketch']]],
   ['getprediction_37',['getPrediction',['../classfreetensor_1_1AutoSchedule.html#a48ad762385634f586ef3d7b7ad39a484',1,'freetensor::AutoSchedule']]],
-  ['getprobsum_38',['getProbSum',['../namespacefreetensor.html#aee5858ad444905a091ba136f9ab5705b',1,'freetensor']]],
+  ['getprobfrompredict_38',['getProbFromPredict',['../namespacefreetensor.html#a5091c9de8938ecaf78f75897d4278436',1,'freetensor']]],
   ['getrandpopulation_39',['getRandPopulation',['../classfreetensor_1_1AutoSchedule.html#afbc3b454a3fe98052302f864847f700a',1,'freetensor::AutoSchedule']]],
   ['gettag_40',['getTag',['../classfreetensor_1_1AutoSchedule.html#a321e19a95eaac7ccb52244d978280503',1,'freetensor::AutoSchedule']]],
   ['getupper_41',['getUpper',['../classfreetensor_1_1CompUniqueBounds.html#a2fafcb1d095ef9f3fa7c96c388eaa878',1,'freetensor::CompUniqueBounds']]],

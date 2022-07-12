@@ -1081,12 +1081,8 @@ Functions</h2></td></tr>
 <tr class="separator:ae508b4bca4f3eb72e0a438d228b560d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78694332c7a55d9a92d8fa57700e89f8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a78694332c7a55d9a92d8fa57700e89f8">randomInt</a> (int mx, std::uniform_random_bit_generator auto &amp;gen)</td></tr>
 <tr class="separator:a78694332c7a55d9a92d8fa57700e89f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1d976fba160c513611bdd40e1de77711"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1d976fba160c513611bdd40e1de77711">randomDouble</a> (std::uniform_random_bit_generator auto &amp;gen)</td></tr>
-<tr class="separator:a1d976fba160c513611bdd40e1de77711"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aee5858ad444905a091ba136f9ab5705b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aee5858ad444905a091ba136f9ab5705b">getProbSum</a> (const std::vector&lt; double &gt; &amp;pred)</td></tr>
-<tr class="separator:aee5858ad444905a091ba136f9ab5705b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2a650b9a1ec42e49cb0e0248007ee306"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2a650b9a1ec42e49cb0e0248007ee306">randWithProb</a> (const std::vector&lt; double &gt; &amp;probSum, std::uniform_random_bit_generator auto &amp;gen)</td></tr>
-<tr class="separator:a2a650b9a1ec42e49cb0e0248007ee306"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5091c9de8938ecaf78f75897d4278436"><td class="memItemLeft" align="right" valign="top">std::vector&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5091c9de8938ecaf78f75897d4278436">getProbFromPredict</a> (const std::vector&lt; double &gt; &amp;pred)</td></tr>
+<tr class="separator:a5091c9de8938ecaf78f75897d4278436"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adbe259984c11731379dab45544b36390"><td class="memItemLeft" align="right" valign="top">std::vector&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adbe259984c11731379dab45544b36390">randomFillArray</a> (int total, int n, std::uniform_random_bit_generator auto &amp;gen)</td></tr>
 <tr class="separator:adbe259984c11731379dab45544b36390"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a213f39e210e90988e2d9a6a911d051c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1ID.html">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a213f39e210e90988e2d9a6a911d051c6">mergeLoops</a> (<a class="el" href="classfreetensor_1_1Schedule.html">Schedule</a> &amp;schedule, std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; loops)</td></tr>
@@ -8713,8 +8709,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="aee5858ad444905a091ba136f9ab5705b" name="aee5858ad444905a091ba136f9ab5705b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aee5858ad444905a091ba136f9ab5705b">&#9670;&nbsp;</a></span>getProbSum()</h2>
+<a id="a5091c9de8938ecaf78f75897d4278436" name="a5091c9de8938ecaf78f75897d4278436"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5091c9de8938ecaf78f75897d4278436">&#9670;&nbsp;</a></span>getProbFromPredict()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -8723,7 +8719,7 @@ template&lt;class T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt; double &gt; freetensor::getProbSum </td>
+          <td class="memname">std::vector&lt; double &gt; freetensor::getProbFromPredict </td>
           <td>(</td>
           <td class="paramtype">const std::vector&lt; double &gt; &amp;&#160;</td>
           <td class="paramname"><em>pred</em></td><td>)</td>
@@ -12545,32 +12541,6 @@ template&lt;class T &gt; </div>
 </div><!-- fragment --> 
 </div>
 </div>
-<a id="a1d976fba160c513611bdd40e1de77711" name="a1d976fba160c513611bdd40e1de77711"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1d976fba160c513611bdd40e1de77711">&#9670;&nbsp;</a></span>randomDouble()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">double freetensor::randomDouble </td>
-          <td>(</td>
-          <td class="paramtype">std::uniform_random_bit_generator auto &amp;&#160;</td>
-          <td class="paramname"><em>gen</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="adbe259984c11731379dab45544b36390" name="adbe259984c11731379dab45544b36390"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#adbe259984c11731379dab45544b36390">&#9670;&nbsp;</a></span>randomFillArray()</h2>
 
@@ -12627,42 +12597,6 @@ template&lt;class T &gt; </div>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>mx</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">std::uniform_random_bit_generator auto &amp;&#160;</td>
-          <td class="paramname"><em>gen</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a2a650b9a1ec42e49cb0e0248007ee306" name="a2a650b9a1ec42e49cb0e0248007ee306"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2a650b9a1ec42e49cb0e0248007ee306">&#9670;&nbsp;</a></span>randWithProb()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">int freetensor::randWithProb </td>
-          <td>(</td>
-          <td class="paramtype">const std::vector&lt; double &gt; &amp;&#160;</td>
-          <td class="paramname"><em>probSum</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
