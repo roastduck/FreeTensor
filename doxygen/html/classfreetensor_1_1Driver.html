@@ -97,8 +97,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a6d1e788d588cfdebe6198a79066231dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a736d2d159365aca5628ce664f7418579"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Array.html">Array</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Driver.html#a736d2d159365aca5628ce664f7418579">collectReturns</a> ()</td></tr>
 <tr class="separator:a736d2d159365aca5628ce664f7418579"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a947bf87da833908d9a47fc3cc5e467bb"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Driver.html#a947bf87da833908d9a47fc3cc5e467bb">time</a> (int rounds=10, int warmups=3)</td></tr>
-<tr class="separator:a947bf87da833908d9a47fc3cc5e467bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0bb32ad603ce6b0b1d0af7fcda0f08b"><td class="memItemLeft" align="right" valign="top">std::pair&lt; double, double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Driver.html#ac0bb32ad603ce6b0b1d0af7fcda0f08b">time</a> (int rounds=10, int warmups=3)</td></tr>
+<tr class="separator:ac0bb32ad603ce6b0b1d0af7fcda0f08b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a56e74712c389b5cd9835430c8c2aa824"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Driver.html#a56e74712c389b5cd9835430c8c2aa824">unload</a> ()</td></tr>
 <tr class="separator:a56e74712c389b5cd9835430c8c2aa824"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
@@ -449,14 +449,14 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a947bf87da833908d9a47fc3cc5e467bb" name="a947bf87da833908d9a47fc3cc5e467bb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a947bf87da833908d9a47fc3cc5e467bb">&#9670;&nbsp;</a></span>time()</h2>
+<a id="ac0bb32ad603ce6b0b1d0af7fcda0f08b" name="ac0bb32ad603ce6b0b1d0af7fcda0f08b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac0bb32ad603ce6b0b1d0af7fcda0f08b">&#9670;&nbsp;</a></span>time()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double freetensor::Driver::time </td>
+          <td class="memname">std::pair&lt; double, double &gt; freetensor::Driver::time </td>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>rounds</em> = <code>10</code>, </td>
@@ -482,7 +482,7 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>: The time, in ms </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>: (average time, estimated standard deviation of the average time = sqrt(Var(X1 + X2 + ... + Xn))), in ms </dd></dl>
 
 </div>
 </div>
