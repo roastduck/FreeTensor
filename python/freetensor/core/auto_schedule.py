@@ -15,6 +15,8 @@ class AutoSchedule(ffi.AutoSchedule):
                  explore_ratio=0.1,
                  tag="",
                  min_block_size=0,
+                 continue_training=False,
+                 random_seed=None,
                  rule_set=None,
                  verbose=0):
         '''
@@ -31,6 +33,14 @@ class AutoSchedule(ffi.AutoSchedule):
         explore_ratio : float
             Portion of random programs in the population. Higher ratio focuses on
             exploration, while lower ratio focuses on exploitation
+        continue_trianing : bool
+            Continue to train an existing XGBoost model file if found
+        random_seed : Optional[int]
+            Random seed. Setting a deterministic random seed and using a fixed OpenMP
+            thread count (since we are using thread-local random number generators)
+            resulting deterministic pseudo random numbers, but please note that the
+            whole auto-scheduling procedure is still non-deterministic, becuase it
+            measures real performance. Default to a non-deterministic seed
         rule_set : Optional[set]
             Explicitly control over what rules to use. None for defualt rules
         verbose : int
@@ -44,7 +54,7 @@ class AutoSchedule(ffi.AutoSchedule):
         self.model = None
         self.xgb_params = {}
         self.save_file_name = tag + "_xgb.model"
-        if os.path.isfile(self.save_file_name):
+        if continue_training and os.path.isfile(self.save_file_name):
             self.model = xgb.Booster()
             self.model.load_model(self.save_file_name)
         self.verbose = verbose
@@ -55,9 +65,10 @@ class AutoSchedule(ffi.AutoSchedule):
         def update_func(features, times):
             return self.update(features, times)
 
-        super(AutoSchedule, self).__init__(schedule, target, device,
-                                           predict_func, update_func, tag,
-                                           min_block_size, rule_set, verbose)
+        super(AutoSchedule,
+              self).__init__(schedule, target, device, predict_func,
+                             update_func, tag, min_block_size, random_seed,
+                             rule_set, verbose)
 
     def set_params(self, *args, **kws):
         super(AutoSchedule, self).set_params(args, kws)

@@ -44,7 +44,7 @@ def test_manual_static():
         B_arr = ft.Array(B_np)
         driver.set_args(A=A_arr, W=W_arr, B=B_arr)
         if time:
-            t = driver.time()
+            t, _ = driver.time()
             print("time: %s ms" % t)
         else:
             driver.run()

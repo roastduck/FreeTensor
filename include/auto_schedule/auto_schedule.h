@@ -42,7 +42,13 @@ class AutoSchedule {
     int verbose_ = 0;
 
   private:
-    std::vector<double> measure(const std::vector<Ref<Sketch>> &sketches);
+    /**
+     * Compile and measure all the sketches
+     *
+     * @return : list of average time, list of standard deviation
+     */
+    std::pair<std::vector<double>, std::vector<double>>
+    measure(const std::vector<Ref<Sketch>> &sketches);
 
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
@@ -51,6 +57,7 @@ class AutoSchedule {
                  const std::function<void(const Features &, const Predicts &)>
                      &updateFunc,
                  std::string tag = "", int minBlockSize = 0,
+                 std::optional<size_t> randomSeed = std::nullopt,
                  const std::optional<std::unordered_set<std::string>> &ruleSet =
                      std::nullopt,
                  int verbose = 0);

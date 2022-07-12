@@ -100,9 +100,10 @@ class Driver {
      *
      * @param rounds : Run this amount of rounds, and report the average
      * @param warmups : Run this amount of rounds before actual measurement
-     * @return : The time, in ms
+     * @return : (average time, estimated standard deviation of the average
+     * time = sqrt(Var(X1 + X2 + ... + Xn))), in ms
      */
-    double time(int rounds = 10, int warmups = 3);
+    std::pair<double, double> time(int rounds = 10, int warmups = 3);
 
     void unload();
 };
