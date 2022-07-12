@@ -281,6 +281,7 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
         logger() << "Evolutionary search" << std::endl;
     }
 
+    // init is not necessarily of full population
     std::vector<Ref<Sketch>> init =
         getRandPopulation(EVOLUTIONARY_SEARCH_INIT_EXPLORE_CNT);
     if (measuredSketches_.size() > EVOLUTIONARY_SEARCH_INIT_EXPLOIT_CNT) {
@@ -293,9 +294,7 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
         init.emplace_back(measuredSketches_[i]);
     }
 
-    std::vector<Ref<Sketch>> v1 = std::move(init);
-    std::vector<Ref<Sketch>> v2;
-    v2.reserve(v1.size());
+    std::vector<Ref<Sketch>> v1 = std::move(init), v2;
     typedef std::pair<Ref<Sketch>, double> SketchPred;
     std::vector<SketchPred> heap;
     std::set<size_t> heapHashes(measuredHashes_);
@@ -307,7 +306,6 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
             logger() << "search round " << i << std::endl;
         }
         auto pred = getPrediction(v1);
-        auto probSum = getProbSum(pred);
         for (size_t j = 0; j < v1.size(); j++) {
             size_t hash = v1[j]->hash();
             auto flops = pred[j];
@@ -329,44 +327,55 @@ std::vector<Ref<Sketch>> AutoSchedule::evolutionarySearch(size_t outSize) {
             break;
         }
 
-        while (v2.size() < EVOLUTIONARY_SEARCH_POPULATION) {
-            std::vector<Ref<Sketch>> now(EVOLUTIONARY_SEARCH_POPULATION);
-            if (verbose_ >= 1) {
-                logger() << "evo " << v2.size() << std::endl;
-            }
-            // Use static schedule for deterministic random numbers
+        auto prob =
+            getProbFromPredict(pred); // Sketches with higher performance are
+                                      // picked with higher probabilities
+        std::discrete_distribution<int> probDist(prob.begin(), prob.end());
+
+        v2.resize(EVOLUTIONARY_SEARCH_POPULATION);
+        // Use static schedule for deterministic random numbers
 #pragma omp parallel for schedule(static)
-            for (size_t j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
-                double r = randomDouble(rng_);
-                if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
-                    int a = randWithProb(probSum, rng_);
+        for (size_t j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
+            std::discrete_distribution<int> actionDist(
+                {EVOLUTIONARY_SEARCH_MUTATION_PROB,
+                 EVOLUTIONARY_SEARCH_CROSSOVER_PROB,
+                 1 - EVOLUTIONARY_SEARCH_MUTATION_PROB -
+                     EVOLUTIONARY_SEARCH_CROSSOVER_PROB});
+            switch (actionDist(rng_)) {
+            case 0: // Mutation
+                while (true) {
+                    int a = probDist(rng_);
                     if (auto mutated = v1[a]->genMutation(rng_);
                         mutated.isValid()) {
-                        now[j] = mutated;
+                        v2[j] = mutated;
+                        break;
                     }
-                } else if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB +
-                                   EVOLUTIONARY_SEARCH_CROSSOVER_PROB) {
-                    int a = randWithProb(probSum, rng_);
-                    int b = randWithProb(probSum, rng_);
-                    while (b == a)
-                        b = randWithProb(probSum, rng_);
-                    if (auto crossed = v1[a].get()->genCrossover(*v1[b], rng_);
-                        crossed.isValid()) {
-                        now[j] = crossed;
-                    }
-                } else {
-                    now[j] = v1[randomInt(v1.size() - 1, rng_)];
                 }
+                break;
+            case 1: // Crossover
+                while (true) {
+                    int a = probDist(rng_), b = probDist(rng_);
+                    if (a != b) {
+                        if (auto crossed = v1[a]->genCrossover(*v1[b], rng_);
+                            crossed.isValid()) {
+                            v2[j] = crossed;
+                            break;
+                        }
+                    }
+                }
+                break;
+            case 2: { // Direct inheritance
+                int a = probDist(rng_);
+                ASSERT(v1[a].isValid());
+                v2[j] = v1[a];
+                break;
             }
-            for (size_t j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
-                if (now[j].isValid()) {
-                    v2.push_back(now[j]);
-                }
+            default:
+                ASSERT(false);
             }
         }
 
-        v1.swap(v2);
-        v2.clear();
+        std::swap(v1, v2);
     }
     std::sort(heap.begin(), heap.end(), cmp);
     std::vector<Ref<Sketch>> ret;
