@@ -131,7 +131,9 @@ class Sketch {
     Schedule schedule_; // Original schedule (before genSchedule)
 
     // Cached schedule, lower and feature result. Data flow:
-    // schedule -> lowered -> feature ----+-> upd model
+    // schedule -> lowered -> feature -> evolutionary search
+    //                |          |
+    //                |          +--------+-> upd model
     //                |                   |
     //                +-----> code ----> time
     Opt<Schedule> genSchedule_;
