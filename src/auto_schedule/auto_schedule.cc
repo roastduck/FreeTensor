@@ -5,7 +5,6 @@
 #include <itertools.hpp>
 
 #include <analyze/find_elementwise.h>
-#include <analyze/fixed_length_feature.h>
 #include <analyze/structural_feature.h>
 #include <auto_schedule/auto_schedule.h>
 #include <auto_schedule/rules/cache_write.h>
@@ -100,7 +99,7 @@ AutoSchedule::measure(const std::vector<Ref<Sketch>> &sketches) {
 #pragma omp parallel for schedule(dynamic)
     for (size_t i = 0; i < n; i++) {
         try {
-            auto lowered = sketches[i]->lowered(target_);
+            auto lowered = sketches[i]->lowered();
             auto code = codeGen(lowered, target_);
             drivers[i] = Ref<Driver>::make(lowered, code, device_);
         } catch (const std::exception &e) {
@@ -168,10 +167,7 @@ AutoSchedule::genFeatures(const std::vector<Ref<Sketch>> &sketches) {
     std::vector<std::vector<double>> featureList(n);
     exceptSafeParallelFor<size_t>(
         0, sketches.size(), 1,
-        [&](size_t i) {
-            featureList[i] =
-                fixedLengthFeature(sketches[i]->lowered(target_)->body_);
-        },
+        [&](size_t i) { featureList[i] = sketches[i]->feature(); },
         omp_sched_dynamic);
     return featureList;
 }
@@ -419,7 +415,7 @@ void AutoSchedule::genSketches() {
     if (subs.empty()) {
         return;
     }
-    auto initSketch = Ref<Sketch>::make(original_, subs);
+    auto initSketch = Ref<Sketch>::make(target_, original_, subs);
     std::queue<Ref<Sketch>> q;
     q.push(std::move(initSketch));
     while (!q.empty()) {
@@ -448,7 +444,7 @@ Schedule
 AutoSchedule::testRound(const std::unordered_map<std::string, int> &nthSketch) {
     auto subs = findMultiLevelTiling(original_.ast());
     ASSERT(!subs.empty());
-    auto sketch = Ref<Sketch>::make(original_, subs);
+    auto sketch = Ref<Sketch>::make(target_, original_, subs);
     for (auto &[name, rule] : rules_) {
         if (auto status = rule->analyze(*sketch); status != RuleStatus::Skip) {
             auto newSketches = rule->genPart(*sketch);

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <analyze/find_multi_level_tiling.h>
+#include <opt.h>
 #include <random.h>
 #include <schedule.h>
 
@@ -122,20 +123,30 @@ struct SubSketch {
 class Sketch {
     typedef OpenMPRandomEngine RNG;
 
-    Schedule schedule_;
-    Schedule generatedSchedule_;
+    Ref<Target> target_;
     std::vector<SubSketch> subs_;
     int nowSubNum_{0};
     double time_{0};
-    bool scheduleGenerated_{false};
-    Func lowered_; // Cached lowered AST, used for both generating features and
-                   // generating code
+
+    Schedule schedule_; // Original schedule (before genSchedule)
+
+    // Cached schedule, lower and feature result. Data flow:
+    // schedule -> lowered -> feature -> evolutionary search
+    //                |          |
+    //                |          +--------+-> upd model
+    //                |                   |
+    //                +-----> code ----> time
+    Opt<Schedule> genSchedule_;
+    Func lowered_;
+    Opt<std::vector<double>> feature_;
 
   public:
     Sketch() = default;
     Sketch(const Sketch &) = default;
-    Sketch(const Schedule &schedule, std::vector<ForsWithDataReuse> subs)
-        : schedule_(schedule.clone()), nowSubNum_(subs.size() - 1) {
+    Sketch(const Ref<Target> &target, const Schedule &schedule,
+           std::vector<ForsWithDataReuse> subs)
+        : target_(target), nowSubNum_(subs.size() - 1),
+          schedule_(schedule.clone()) {
         for (auto &sub : subs) {
             subs_.emplace_back(std::move(sub));
         }
@@ -143,6 +154,7 @@ class Sketch {
 
     [[nodiscard]] Ref<Sketch> clone() const {
         auto ret = Ref<Sketch>::make();
+        ret->target_ = target_;
         ret->schedule_ = schedule_.clone();
         ret->subs_ = subs_;
         ret->nowSubNum_ = nowSubNum_;
@@ -150,8 +162,6 @@ class Sketch {
     }
 
     Ref<Sketch> genRandAnnotation(RNG &gen) const;
-
-    Schedule genSchedule();
 
     void addPart(const SketchPart &p);
     PartMap &part(int i) { return subs_[i].parts; }
@@ -183,10 +193,35 @@ class Sketch {
         subs_[nowSubNum_].log += name + ";\n";
     }
 
+    /**
+     * Get original (before genSchedule) schedule
+     *
+     * Rules can apply some preprocessing schedules during the `genPart` stage.
+     * To do this, they can directly modify this "original" schedule.
+     *
+     * Later in the `genSchedule` staged, the "original" schedule will be copied
+     * and further modified by tuning.
+     *
+     * @{
+     */
     Schedule &schedule() { return schedule_; }
     const Schedule &schedule() const { return schedule_; }
+    /** @} */
 
-    const Func &lowered(const Ref<Target> &target);
+    /**
+     * Generate a Schedule. The result is cached
+     */
+    const Schedule &genSchedule();
+
+    /**
+     * Lower a generated Schedule to an AST. The result is cached
+     */
+    const Func &lowered();
+
+    /**
+     * Generate a feature from a lowered AST. The result is cached
+     */
+    const std::vector<double> &feature();
 };
 
 } // namespace freetensor

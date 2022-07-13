@@ -85,6 +85,10 @@ inline std::vector<double> fixedLengthFeature(const Stmt &op) {
     return visitor.features(op);
 }
 
+inline std::vector<double> fixedLengthFeature(const Func &func) {
+    return fixedLengthFeature(func->body_);
+}
+
 } // namespace freetensor
 
 #endif // FREE_TENSOR_FIXED_LENGTH_FEATURE_H
