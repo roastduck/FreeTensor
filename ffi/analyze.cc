@@ -19,7 +19,12 @@ void init_ffi_analyze(py::module_ &m) {
         .def_readonly("access_area", &NodeFeature::accessArea_);
     m.def("structural_feature", structuralFeature);
 
-    m.def("fixed_length_feature", fixedLengthFeature);
+    m.def(
+        "fixed_length_feature",
+        static_cast<std::vector<double> (*)(const Stmt &)>(fixedLengthFeature));
+    m.def(
+        "fixed_length_feature",
+        static_cast<std::vector<double> (*)(const Func &)>(fixedLengthFeature));
 
     m.def("feature_length", FixedLengthFeature::featureLen);
 

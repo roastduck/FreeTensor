@@ -1,3 +1,4 @@
+#include <analyze/fixed_length_feature.h>
 #include <auto_schedule/rule.h>
 #include <auto_schedule/sketch.h>
 #include <auto_schedule/utils.h>
@@ -20,17 +21,16 @@ void Sketch::addPart(const SketchPart &p) {
     subs_[nowSubNum_].parts.emplace(p->partType(), p);
 }
 
-Schedule Sketch::genSchedule() {
-    if (scheduleGenerated_)
-        return generatedSchedule_;
-    generatedSchedule_ = schedule_.clone();
+const Schedule &Sketch::genSchedule() {
+    if (genSchedule_.isValid())
+        return *genSchedule_;
+    genSchedule_ = Opt<Schedule>::make(schedule_.clone());
     for (auto &sub : subs_) {
         for (auto &part : sub.parts) {
-            part.second->apply(generatedSchedule_, sub);
+            part.second->apply(*genSchedule_, sub);
         }
     }
-    scheduleGenerated_ = true;
-    return generatedSchedule_;
+    return *genSchedule_;
 }
 
 bool Sketch::operator<(const Sketch &a) const { return time_ < a.time_; }
@@ -79,14 +79,19 @@ size_t Sketch::hash() const {
     return h;
 }
 
-const Func &Sketch::lowered(const Ref<Target> &target) {
+const Func &Sketch::lowered() {
     if (!lowered_.isValid()) {
-        genSchedule();
-        if (generatedSchedule_.ast().isValid()) {
-            lowered_ = lower(generatedSchedule_.func(), target);
-        }
+        lowered_ = lower(genSchedule().func(), target_);
     }
     return lowered_;
+}
+
+const std::vector<double> &Sketch::feature() {
+    if (!feature_.isValid()) {
+        feature_ =
+            Opt<std::vector<double>>::make(fixedLengthFeature(lowered()));
+    }
+    return *feature_;
 }
 
 } // namespace freetensor
