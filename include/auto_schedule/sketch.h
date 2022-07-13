@@ -201,9 +201,12 @@ class Sketch {
      *
      * Later in the `genSchedule` staged, the "original" schedule will be copied
      * and further modified by tuning.
+     *
+     * @{
      */
     Schedule &schedule() { return schedule_; }
     const Schedule &schedule() const { return schedule_; }
+    /** @} */
 
     /**
      * Generate a Schedule. The result is cached
