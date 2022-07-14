@@ -120,7 +120,12 @@ class StagingOverload:
         Returns
         -------
         Any :
-            The attribute value. None if not found.
+            The attribute value.
+        
+        Throws
+        ------
+        AttributeError :
+            If the attribute is not found.
         '''
         return None
 
@@ -246,10 +251,18 @@ class StagingOverload:
         try:
             return getattr(obj, attr)
         except AttributeError:
-            loaded = self.custom_attr(obj, attr)
-            if loaded:
-                return loaded
-            raise
+            try:
+                # Have to use AttributeError again, since a custom attribute might have
+                # a None value
+                result = self.custom_attr(obj, attr)
+                successful = True
+            except AttributeError:
+                successful = False
+
+            if successful:
+                return result
+            else:
+                raise
 
     def and_expr(self, *lazy_args):
 

@@ -159,7 +159,7 @@ class FreeTensorOverload(StagingOverload):
             return dtype(obj)
         if attr == "mtype":
             return mtype(obj)
-        return None
+        raise AttributeError()
 
     def functiondef_wrapper(self, filename: str, func):
         basic_wrapped = super().functiondef_wrapper(filename, func)
@@ -234,7 +234,7 @@ def _register_as_predicate(ty):
         if else_body:
             with Else():
                 with LifetimeScope():
-                    else_body() 
+                    else_body()
 
     def _if_then_else_expr(pred: ty, then_expr: Callable[[], VarRef],
                            else_expr: Callable[[], VarRef]):
