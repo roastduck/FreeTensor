@@ -10792,7 +10792,12 @@ StagingOverload        </code>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        Any :</span>
-<span class="sd">            The attribute value. None if not found.</span>
+<span class="sd">            The attribute value.</span>
+
+<span class="sd">        Throws</span>
+<span class="sd">        ------</span>
+<span class="sd">        AttributeError :</span>
+<span class="sd">            If the attribute is not found.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="kc">None</span>
 
@@ -10918,10 +10923,18 @@ StagingOverload        </code>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-            <span class="n">loaded</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_attr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">loaded</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">loaded</span>
-            <span class="k">raise</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Have to use AttributeError again, since a custom attribute might have</span>
+                <span class="c1"># a None value</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_attr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+                <span class="n">successful</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="n">successful</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="k">if</span> <span class="n">successful</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">result</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span>
 
     <span class="k">def</span> <span class="nf">and_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">lazy_args</span><span class="p">):</span>
 
@@ -11329,7 +11342,7 @@ Can be overridden by subclasses.</p>
     <th class="field-name">Returns:</th>
     <td class="field-body">
         <ul class="first simple">
-          <li><p><code>Any</code> – The attribute value. None if not found.</p></li>
+          <li><p><code>Any</code> – The attribute value.</p></li>
         </ul>
     </td>
     </tr>
@@ -11357,7 +11370,12 @@ Can be overridden by subclasses.</p>
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    Any :</span>
-<span class="sd">        The attribute value. None if not found.</span>
+<span class="sd">        The attribute value.</span>
+
+<span class="sd">    Throws</span>
+<span class="sd">    ------</span>
+<span class="sd">    AttributeError :</span>
+<span class="sd">        If the attribute is not found.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div>
@@ -11548,10 +11566,18 @@ Otherwise, a If node in IR is generated.</p>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-        <span class="n">loaded</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_attr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">loaded</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">loaded</span>
-        <span class="k">raise</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Have to use AttributeError again, since a custom attribute might have</span>
+            <span class="c1"># a None value</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_attr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+            <span class="n">successful</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">successful</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">successful</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span>
 </code></pre></div>
         </details>
     </div>
@@ -13380,7 +13406,7 @@ FreeTensorOverload            (<a class="autorefs autorefs-internal" title="free
             <span class="k">return</span> <span class="n">dtype</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;mtype&quot;</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">mtype</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">functiondef_wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
         <span class="n">basic_wrapped</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">functiondef_wrapper</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
@@ -13613,7 +13639,7 @@ Can be overridden by subclasses.</p>
     <th class="field-name">Returns:</th>
     <td class="field-body">
         <ul class="first simple">
-          <li><p><code>Any</code> – The attribute value. None if not found.</p></li>
+          <li><p><code>Any</code> – The attribute value.</p></li>
         </ul>
     </td>
     </tr>
@@ -13630,7 +13656,7 @@ Can be overridden by subclasses.</p>
         <span class="k">return</span> <span class="n">dtype</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;mtype&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">mtype</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">()</span>
 </code></pre></div>
         </details>
     </div>
@@ -13885,10 +13911,18 @@ Otherwise, a If node in IR is generated.</p>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-        <span class="n">loaded</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_attr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">loaded</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">loaded</span>
-        <span class="k">raise</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Have to use AttributeError again, since a custom attribute might have</span>
+            <span class="c1"># a None value</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_attr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+            <span class="n">successful</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">successful</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">successful</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span>
 </code></pre></div>
         </details>
     </div>
@@ -15595,7 +15629,9 @@ Defaults to True</p></li>
 
     <span class="n">extra_locals</span> <span class="o">=</span> <span class="n">_prepare_extra_locals</span><span class="p">(</span><span class="n">default_dynamic_range</span><span class="p">)</span>
 
-    <span class="n">_init_overload</span><span class="p">()</span>
+    <span class="c1"># Do not initialize _overload here, since `into_staging` does not use the context.</span>
+    <span class="c1"># Keep the context as-is to support adding new inline functions during transforming.</span>
+    <span class="c1"># Such a case occurs when a transformed function dynamically imports a new inline.</span>
     <span class="n">transformed</span> <span class="o">=</span> <span class="n">_overload</span><span class="o">.</span><span class="n">into_staging</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
                                          <span class="n">extra_locals</span><span class="p">,</span>
                                          <span class="n">src</span><span class="p">,</span>
@@ -15677,12 +15713,13 @@ Python code that is used for transforming</p></li>
 
     <span class="n">params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
 
-    <span class="n">_init_overload</span><span class="p">()</span>
     <span class="n">staging_func</span> <span class="o">=</span> <span class="n">_overload</span><span class="o">.</span><span class="n">into_staging</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
                                           <span class="n">extra_locals</span><span class="p">,</span>
                                           <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Initialize _overload to prepare for staging.</span>
+        <span class="n">_overload</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="c1"># Create a new scope for the function</span>
         <span class="k">with</span> <span class="n">LifetimeScope</span><span class="p">():</span>
             <span class="k">with</span> <span class="n">NamingScope</span><span class="p">(</span><span class="kc">None</span><span class="p">):</span>
