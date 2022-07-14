@@ -215,13 +215,6 @@ class FreeTensorOverload(StagingOverload):
 _overload: FreeTensorOverload = FreeTensorOverload()
 
 
-def _init_overload():
-    global _overload
-    # We need to keep the overload the same across all functions.
-    # Otherwise, inline and transform functions will use different overload instances.
-    _overload.__init__()
-
-
 def _register_as_predicate(ty):
 
     def _logical_and(a: ty, fb: Callable[[], StagedPredicate]):
@@ -241,7 +234,7 @@ def _register_as_predicate(ty):
         if else_body:
             with Else():
                 with LifetimeScope():
-                    return else_body()
+                    else_body() 
 
     def _if_then_else_expr(pred: ty, then_expr: Callable[[], VarRef],
                            else_expr: Callable[[], VarRef]):
@@ -471,12 +464,13 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
 
     params = list(inspect.signature(func).parameters)
 
-    _init_overload()
     staging_func = _overload.into_staging(func,
                                           extra_locals,
                                           verbose=verbose >= 2)
 
     try:
+        # Initialize _overload to prepare for staging.
+        _overload.__init__()
         # Create a new scope for the function
         with LifetimeScope():
             with NamingScope(None):
@@ -562,7 +556,9 @@ def inline(func=None,
 
     extra_locals = _prepare_extra_locals(default_dynamic_range)
 
-    _init_overload()
+    # Do not initialize _overload here, since `into_staging` does not use the context.
+    # Keep the context as-is to support adding new inline functions during transforming.
+    # Such a case occurs when a transformed function dynamically imports a new inline.
     transformed = _overload.into_staging(func,
                                          extra_locals,
                                          src,
