@@ -115,7 +115,7 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Func (*)(const Func &)>(&removeDeadVar), "func"_a);
     m.def("remove_dead_var",
           static_cast<Stmt (*)(const Stmt &)>(&removeDeadVar), "stmt"_a);
-      
+
     m.def("make_heap_alloc",
           static_cast<Func (*)(const Func &)>(&makeHeapAlloc), "func"_a);
     m.def("make_heap_alloc",
@@ -188,16 +188,23 @@ void init_ffi_pass(py::module_ &m) {
 
     m.def("lower",
           static_cast<Func (*)(const Func &, const Ref<Target> &,
-                               const std::unordered_set<std::string> &, int)>(
+                               const std::unordered_set<std::string> &, int,
+                               const std::function<std::string(const std::string &)> &)>(
               &lower),
           "func"_a, "target"_a = nullptr,
-          "skip_passes"_a = std::unordered_set<std::string>{}, "verbose"_a = 0);
+          "skip_passes"_a = std::unordered_set<std::string>{}, "verbose"_a = 0,
+          "lower_func_submit_api"_a = std::function<std::string(const std::string &)>{});
+
+    // `lower_func_submit_api` is for multi-machine-parallel
+
     m.def("lower",
           static_cast<Stmt (*)(const Stmt &, const Ref<Target> &,
-                               const std::unordered_set<std::string> &, int)>(
+                               const std::unordered_set<std::string> &, int,
+                               const std::function<std::string(const std::string &)> &)>(
               &lower),
           "stmt"_a, "target"_a = nullptr,
-          "skip_passes"_a = std::unordered_set<std::string>{}, "verbose"_a = 0);
+          "skip_passes"_a = std::unordered_set<std::string>{}, "verbose"_a = 0,
+          "lower_func_submit_api"_a = std::function<std::string(const std::string &)>{});
 }
 
 } // namespace freetensor

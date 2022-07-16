@@ -32,6 +32,12 @@
 #include <pass/use_builtin_div.h>
 #include <pass/z3_simplify.h>
 
+// for multi-machine-parallel
+#include <ast.h>
+#include <serialize/load_ast.h>
+#include <serialize/print_ast.h>
+
+
 namespace freetensor {
 
 /**
@@ -51,7 +57,14 @@ namespace freetensor {
 template <class T>
 T lower(const T &_ast, const Ref<Target> &_target = nullptr,
         const std::unordered_set<std::string> &skipPasses = {},
-        int verbose = 0) {
+        int verbose = 0,
+        const std::function<std::string(const std::string &)> &lowerFuncSubmitAPI = {}
+        ) {
+
+    // for multi-machine-parallel
+    if (lowerFuncSubmitAPI) {
+        return loadAST(lowerFuncSubmitAPI(dumpAST(_ast))).template as<typename T::Object>();
+    }
 
     auto target = _target.isValid() ? _target : Config::defaultTarget();
 
