@@ -10,7 +10,7 @@ Ref<Target> loadTarget(const std::string &txt) {
 
     std::istringstream iss(txt);
 
-    Ref<Target> ret;
+    auto ret = Ref<GPU>::make();
     std::string type, has_extra;
     bool arg0;
     int arg1, arg2;
@@ -25,9 +25,7 @@ Ref<Target> loadTarget(const std::string &txt) {
         ASSERT(iss >> has_extra);
         if (has_extra == ":") {
             ASSERT(iss >> arg1 >> arg2);
-            auto _ret = ret.as<GPU>();
-            _ret->setComputeCapability(arg1, arg2);
-            ret = _ret.as<Target>();
+            ret->setComputeCapability(arg1, arg2);
         }
         break; // GPU
     case 'C':
@@ -36,7 +34,8 @@ Ref<Target> loadTarget(const std::string &txt) {
     default:
         ASSERT(false);
     }
-    return ret;
+
+    return ret.as<Target>();
 }
 
 } // namespace freetensor
