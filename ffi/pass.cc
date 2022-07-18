@@ -189,22 +189,22 @@ void init_ffi_pass(py::module_ &m) {
     m.def("lower",
           static_cast<Func (*)(const Func &, const Ref<Target> &,
                                const std::unordered_set<std::string> &, int,
-                               const std::function<std::string(const std::string &)> &)>(
+                               const std::function<std::string(const std::string &, const std::string &)> &)>(
               &lower),
           "func"_a, "target"_a = nullptr,
           "skip_passes"_a = std::unordered_set<std::string>{}, "verbose"_a = 0,
-          "lower_func_submit_api"_a = std::function<std::string(const std::string &)>{});
+          "lower_func_submit_api"_a = std::function<std::string(const std::string &, const std::string &)>{});
 
     // `lower_func_submit_api` is for multi-machine-parallel
 
     m.def("lower",
           static_cast<Stmt (*)(const Stmt &, const Ref<Target> &,
                                const std::unordered_set<std::string> &, int,
-                               const std::function<std::string(const std::string &)> &)>(
+                               const std::function<std::string(const std::string &, const std::string &)> &)>(
               &lower),
           "stmt"_a, "target"_a = nullptr,
           "skip_passes"_a = std::unordered_set<std::string>{}, "verbose"_a = 0,
-          "lower_func_submit_api"_a = std::function<std::string(const std::string &)>{});
+          "lower_func_submit_api"_a = std::function<std::string(const std::string &, const std::string &)>{});
 }
 
 } // namespace freetensor
