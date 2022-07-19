@@ -86,13 +86,13 @@ $(function() {
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;<a class="code" href="simplex__buffers_8h.html">pass/gpu/simplex_buffers.h</a>&gt;</span></div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;<a class="code" href="make__1d__var_8h.html">pass/make_1d_var.h</a>&gt;</span></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &lt;<a class="code" href="make__const__shape_8h.html">pass/make_const_shape.h</a>&gt;</span></div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &lt;<a class="code" href="make__parallel__reduction_8h.html">pass/make_parallel_reduction.h</a>&gt;</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &lt;<a class="code" href="merge__and__hoist__if_8h.html">pass/merge_and_hoist_if.h</a>&gt;</span></div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#include &lt;<a class="code" href="move__out__first__or__last__iter_8h.html">pass/move_out_first_or_last_iter.h</a>&gt;</span></div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="preprocessor">#include &lt;<a class="code" href="prop__one__time__use_8h.html">pass/prop_one_time_use.h</a>&gt;</span></div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="preprocessor">#include &lt;<a class="code" href="remove__cyclic__assign_8h.html">pass/remove_cyclic_assign.h</a>&gt;</span></div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="preprocessor">#include &lt;<a class="code" href="remove__dead__var_8h.html">pass/remove_dead_var.h</a>&gt;</span></div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="preprocessor">#include &lt;<a class="code" href="make__heap__alloc_8h.html">pass/make_heap_alloc.h</a>&gt;</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &lt;<a class="code" href="make__heap__alloc_8h.html">pass/make_heap_alloc.h</a>&gt;</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &lt;<a class="code" href="make__parallel__reduction_8h.html">pass/make_parallel_reduction.h</a>&gt;</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#include &lt;<a class="code" href="merge__and__hoist__if_8h.html">pass/merge_and_hoist_if.h</a>&gt;</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="preprocessor">#include &lt;<a class="code" href="move__out__first__or__last__iter_8h.html">pass/move_out_first_or_last_iter.h</a>&gt;</span></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="preprocessor">#include &lt;<a class="code" href="prop__one__time__use_8h.html">pass/prop_one_time_use.h</a>&gt;</span></div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="preprocessor">#include &lt;<a class="code" href="remove__cyclic__assign_8h.html">pass/remove_cyclic_assign.h</a>&gt;</span></div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="preprocessor">#include &lt;<a class="code" href="remove__dead__var_8h.html">pass/remove_dead_var.h</a>&gt;</span></div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="preprocessor">#include &lt;<a class="code" href="remove__writes_8h.html">pass/remove_writes.h</a>&gt;</span></div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="preprocessor">#include &lt;<a class="code" href="scalar__prop__const_8h.html">pass/scalar_prop_const.h</a>&gt;</span></div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="preprocessor">#include &lt;<a class="code" href="shrink__for_8h.html">pass/shrink_for.h</a>&gt;</span></div>
@@ -115,7 +115,7 @@ $(function() {
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="keyword">auto</span> maybePrint = [&amp;](<span class="keyword">const</span> std::string &amp;name, <span class="keyword">const</span> T &amp;ast) -&gt; T {</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        <span class="keywordflow">if</span> (verbose &gt;= 2) {</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>            <a class="code hl_function" href="namespacefreetensor.html#a5ba7246af1695e374f117991cdcbd660">logger</a>() &lt;&lt; <span class="stringliteral">&quot;AST after &quot;</span> &lt;&lt; name &lt;&lt; <span class="stringliteral">&quot; is:&quot;</span> &lt;&lt; std::endl</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                     &lt;&lt; <a class="code hl_function" href="namespacefreetensor.html#a086379b42964273979633b97124e1098">toString</a>(ast) &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                     &lt;&lt; ast &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        }</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>        <span class="keywordflow">return</span> ast;</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    };</div>
@@ -188,16 +188,15 @@ $(function() {
 <div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span><span class="preprocessor">#undef APPLY</span></div>
 <div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span> </div>
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    <span class="keywordflow">if</span> (verbose &gt;= 1) {</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>        <a class="code hl_function" href="namespacefreetensor.html#a5ba7246af1695e374f117991cdcbd660">logger</a>() &lt;&lt; <span class="stringliteral">&quot;The lowered AST is:&quot;</span> &lt;&lt; std::endl</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>                 &lt;&lt; <a class="code hl_function" href="namespacefreetensor.html#a086379b42964273979633b97124e1098">toString</a>(ast) &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    }</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    <span class="keywordflow">return</span> ast;</div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>}</div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span> </div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>} <span class="comment">// namespace freetensor</span></div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span> </div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_LOWER_H</span></div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>        <a class="code hl_function" href="namespacefreetensor.html#a5ba7246af1695e374f117991cdcbd660">logger</a>() &lt;&lt; <span class="stringliteral">&quot;The lowered AST is:&quot;</span> &lt;&lt; std::endl &lt;&lt; ast &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    }</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span> </div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    <span class="keywordflow">return</span> ast;</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>}</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span> </div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_LOWER_H</span></div>
 <div class="ttc" id="aclassfreetensor_1_1Config_html_a1ccf72f1e0b61702abefaa8b8a0e2980"><div class="ttname"><a href="classfreetensor_1_1Config.html#a1ccf72f1e0b61702abefaa8b8a0e2980">freetensor::Config::defaultTarget</a></div><div class="ttdeci">static Ref&lt; Target &gt; defaultTarget()</div><div class="ttdef"><b>Definition:</b> config.h:69</div></div>
 <div class="ttc" id="aclassfreetensor_1_1Ref_html"><div class="ttname"><a href="classfreetensor_1_1Ref.html">freetensor::Ref</a></div><div class="ttdef"><b>Definition:</b> ref.h:24</div></div>
 <div class="ttc" id="aconfig_8h_html"><div class="ttname"><a href="config_8h.html">config.h</a></div></div>
@@ -225,7 +224,6 @@ $(function() {
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a000c2c313211c04f40116e7f8117d66ba2b55387dd066c5bac646ac61543d152d"><div class="ttname"><a href="namespacefreetensor.html#a000c2c313211c04f40116e7f8117d66ba2b55387dd066c5bac646ac61543d152d">freetensor::TargetType::CPU</a></div><div class="ttdeci">@ CPU</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a000c2c313211c04f40116e7f8117d66ba52f9ec21735243ad9917cda3ca077d32"><div class="ttname"><a href="namespacefreetensor.html#a000c2c313211c04f40116e7f8117d66ba52f9ec21735243ad9917cda3ca077d32">freetensor::TargetType::GPU</a></div><div class="ttdeci">@ GPU</div></div>
-<div class="ttc" id="anamespacefreetensor_html_a086379b42964273979633b97124e1098"><div class="ttname"><a href="namespacefreetensor.html#a086379b42964273979633b97124e1098">freetensor::toString</a></div><div class="ttdeci">std::string toString(const Dependency &amp;dep)</div><div class="ttdef"><b>Definition:</b> deps.cc:988</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a1a48994880ee7750e6ce3d25e44b2468"><div class="ttname"><a href="namespacefreetensor.html#a1a48994880ee7750e6ce3d25e44b2468">freetensor::propOneTimeUse</a></div><div class="ttdeci">Stmt propOneTimeUse(const Stmt &amp;op)</div><div class="ttdef"><b>Definition:</b> prop_one_time_use.cc:55</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a1bb10b57f04a2b9bc03bdd78d4be9de6"><div class="ttname"><a href="namespacefreetensor.html#a1bb10b57f04a2b9bc03bdd78d4be9de6">freetensor::removeDeadVar</a></div><div class="ttdeci">Stmt removeDeadVar(const Stmt &amp;op)</div><div class="ttdef"><b>Definition:</b> remove_dead_var.cc:51</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a1d7e8385e1c871b2c861b2f70a041196"><div class="ttname"><a href="namespacefreetensor.html#a1d7e8385e1c871b2c861b2f70a041196">freetensor::useBuiltinDiv</a></div><div class="ttdeci">Stmt useBuiltinDiv(const Stmt &amp;op)</div><div class="ttdef"><b>Definition:</b> use_builtin_div.cc:86</div></div>
