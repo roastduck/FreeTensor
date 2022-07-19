@@ -1004,9 +1004,9 @@ std::string toString(const Dependency &dep) {
         os << (first ? " along " : " and ");
         first = false;
         if (scope.isNode_) {
-            os << toString(scope.id_);
+            os << scope.id_;
         } else {
-            os << toString(scope.parallel_);
+            os << scope.parallel_;
         }
     }
     return std::regex_replace(os.str(), std::regex("\n"), "");

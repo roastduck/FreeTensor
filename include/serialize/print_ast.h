@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_PRINT_AST_H
 #define FREE_TENSOR_PRINT_AST_H
 
+#include <iostream>
 #include <unordered_set>
 
 #include <codegen/code_gen.h>
@@ -115,17 +116,39 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void visit(const MatMul &op) override;
 };
 
-// Print functions for debugging
+/**
+ * Print functions for debugging
+ *
+ * @{
+ */
 std::string toString(const AST &op);
 std::string toString(const AST &op, bool pretty);
 std::string toString(const AST &op, bool pretty, bool printAllId);
 std::string toString(const AST &op, bool pretty, bool printAllId,
                      bool dtypeInLoad);
+/** @} */
 
-// Serialize function for storing an AST and loading it back
+/**
+ * Serialize function for storing an AST and loading it back
+ */
 inline std::string dumpAST(const AST &op, bool dtypeInLoad = false) {
     return toString(op, false, false, dtypeInLoad);
 }
+
+/**
+ * Control over whether to allow pretty print in a stream
+ *
+ * This option overrides `Config::prettyPrint()`
+ */
+extern int OSTREAM_NO_PRETTY;
+
+/**
+ * Print an AST
+ *
+ * `OSTREAM_NO_PRETTY` can be set via `std::ostream::iword()` to disable pretty
+ * print for a specific stream
+ */
+std::ostream &operator<<(std::ostream &os, const AST &op);
 
 } // namespace freetensor
 

@@ -108,10 +108,6 @@ class PBMap {
     }
 };
 
-inline std::ostream &operator<<(std::ostream &os, const PBMap &map) {
-    return os << toString(map);
-}
-
 class PBVal {
     isl_val *val_ = nullptr;
 
@@ -156,10 +152,6 @@ class PBVal {
         return isl_val_to_str(val.val_);
     }
 };
-
-inline std::ostream &operator<<(std::ostream &os, const PBVal &val) {
-    return os << toString(val);
-}
 
 class PBSet {
     isl_set *set_ = nullptr;
@@ -215,10 +207,6 @@ class PBSet {
     }
 };
 
-inline std::ostream &operator<<(std::ostream &os, const PBSet &set) {
-    return os << toString(set);
-}
-
 class PBSpace {
     isl_space *space_ = nullptr;
 
@@ -260,10 +248,6 @@ class PBSpace {
         return isl_space_to_str(space.space_);
     }
 };
-
-inline std::ostream &operator<<(std::ostream &os, const PBSpace &space) {
-    return os << toString(space);
-}
 
 class PBFunc {
     isl_pw_multi_aff *func_ = nullptr;
@@ -307,10 +291,6 @@ class PBFunc {
         return isl_pw_multi_aff_to_str(func.func_);
     }
 };
-
-inline std::ostream &operator<<(std::ostream &os, const PBFunc &func) {
-    return os << toString(func);
-}
 
 inline PBSet complement(PBSet &&set) {
     DEBUG_PROFILE("complement");
