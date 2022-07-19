@@ -153,8 +153,7 @@ void AutoSchedule::searchOneRound(size_t n, size_t nExploit, size_t nExplore) {
             logger() << log << std::endl;
         }
         logger() << "Best AST: " << std::endl
-                 << toString(measuredSketches_[0]->genSchedule().ast())
-                 << std::endl;
+                 << measuredSketches_[0]->genSchedule().ast() << std::endl;
     }
 }
 

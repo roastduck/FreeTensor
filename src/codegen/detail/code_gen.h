@@ -2,8 +2,11 @@
 #define DETAIL_CODE_GEN_H
 
 #include <codegen/code_gen.h>
+#include <serialize/print_ast.h>
 
 namespace freetensor {
+
+inline CodeGenStream::CodeGenStream() { os_.iword(OSTREAM_NO_PRETTY) = true; }
 
 template <class Stream>
 CodeGen<Stream>::CodeGen(int indentSize) : indentSize_(indentSize) {

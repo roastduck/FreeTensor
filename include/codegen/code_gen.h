@@ -21,6 +21,8 @@ struct CodeGenStream {
     int nIndent_ = 0;
     std::unordered_map<std::string, Ref<Buffer>> useBuffers_;
     std::unordered_set<std::string> useIters_;
+
+    CodeGenStream();
 };
 
 template <class Stream> class CodeGen : public SymbolTable<Visitor> {

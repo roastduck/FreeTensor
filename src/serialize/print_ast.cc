@@ -721,4 +721,15 @@ std::string toString(const AST &op, bool pretty, bool printAllId,
         [](const CodeGenStream &stream) { return stream.os_.str(); });
 }
 
+int OSTREAM_NO_PRETTY = std::ostream::xalloc();
+
+std::ostream &operator<<(std::ostream &os, const AST &op) {
+    if (os.iword(OSTREAM_NO_PRETTY)) {
+        os << toString(op, false); // Disable pretty print
+    } else {
+        os << toString(op); // Follow Config::prettyPrint()
+    }
+    return os;
+}
+
 } // namespace freetensor

@@ -15,13 +15,13 @@
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/make_1d_var.h>
 #include <pass/make_const_shape.h>
+#include <pass/make_heap_alloc.h>
 #include <pass/make_parallel_reduction.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_cyclic_assign.h>
 #include <pass/remove_dead_var.h>
-#include <pass/make_heap_alloc.h>
 #include <pass/remove_writes.h>
 #include <pass/scalar_prop_const.h>
 #include <pass/shrink_for.h>
@@ -58,7 +58,7 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
     auto maybePrint = [&](const std::string &name, const T &ast) -> T {
         if (verbose >= 2) {
             logger() << "AST after " << name << " is:" << std::endl
-                     << toString(ast) << std::endl;
+                     << ast << std::endl;
         }
         return ast;
     };
@@ -131,8 +131,7 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
 #undef APPLY
 
     if (verbose >= 1) {
-        logger() << "The lowered AST is:" << std::endl
-                 << toString(ast) << std::endl;
+        logger() << "The lowered AST is:" << std::endl << ast << std::endl;
     }
 
     return ast;

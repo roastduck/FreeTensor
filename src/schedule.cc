@@ -44,14 +44,13 @@ void Schedule::appendLog(const std::string &log) {
     logs_.emplace_back(log);
     if (verbose_ >= 2) {
         logger() << "AST after " + log + " is:" << std::endl
-                 << toString(ast_) << std::endl;
+                 << ast_ << std::endl;
     }
 }
 
 Stmt Schedule::ast() const {
     if (verbose_ >= 1) {
-        logger() << "The scheduled AST is:" << std::endl
-                 << toString(ast_) << std::endl;
+        logger() << "The scheduled AST is:" << std::endl << ast_ << std::endl;
     }
     return ast_;
 }
