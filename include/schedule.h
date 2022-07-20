@@ -13,6 +13,55 @@
 
 namespace freetensor {
 
+enum class ScheduleType : int {
+    Split = 0,
+    Reorder,
+    Merge,
+    Fission,
+    Fuse,
+    Swap,
+    Blend,
+    Cache,
+    CacheReduction,
+    SetMemType,
+    VarSplit,
+    VarMerge,
+    VarReorder,
+    Inline,
+    Parallelize,
+    Unroll,
+    Vectorize,
+    SeparateTail,
+    AsMatMul,
+    // ------
+    NumTypes,
+};
+
+constexpr std::array scheduleTypeNames = {
+    "split",        "reorder",   "merge",
+    "fission",      "fuse",      "swap",
+    "blend",        "cache",     "cache_reduction",
+    "set_mem_type", "var_split", "var_merge",
+    "var_reorder",  "inline",    "parallelize",
+    "unroll",       "vectorize", "separate_tail",
+    "as_matmul",
+};
+static_assert(scheduleTypeNames.size() == (size_t)ScheduleType::NumTypes);
+
+inline std::ostream &operator<<(std::ostream &os, ScheduleType type) {
+    return os << scheduleTypeNames.at((size_t)type);
+}
+
+class ScheduleLogItem {
+  public:
+    virtual ~ScheduleLogItem() {}
+    virtual ScheduleType type() const = 0;
+    virtual std::string toString() const = 0;
+};
+inline std::ostream &operator<<(std::ostream &os, const ScheduleLogItem &log) {
+    return os << log.toString();
+}
+
 enum class MoveToSide : int { Before, After };
 
 class Schedule {
@@ -21,10 +70,10 @@ class Schedule {
 
     int verbose_ = 0;
 
-    std::vector<std::string> logs_;
+    std::vector<Ref<ScheduleLogItem>> logs_;
 
   private:
-    void appendLog(const std::string &log);
+    void appendLog(const Ref<ScheduleLogItem> &log);
 
   public:
     Schedule() = default;
@@ -56,7 +105,7 @@ class Schedule {
     /**
      * @return : Logs of all schedules applied
      */
-    std::vector<std::string> logs() const { return logs_; }
+    std::vector<Ref<ScheduleLogItem>> logs() const { return logs_; }
 
     /**
      * Find all nodes in the current AST satisfying a given condition

@@ -23,7 +23,16 @@ void init_ffi_schedule(py::module_ &m) {
         .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)
-        .def("logs", &Schedule::logs)
+        .def("logs",
+             [](const Schedule &s) {
+                 auto &&log = s.logs();
+                 std::vector<std::string> ret;
+                 ret.reserve(log.size());
+                 for (auto &&item : log) {
+                     ret.emplace_back(toString(*item));
+                 }
+                 return ret;
+             })
         .def("find", static_cast<Stmt (Schedule::*)(
                          const std::function<bool(const Stmt &)> &) const>(
                          &Schedule::find))
