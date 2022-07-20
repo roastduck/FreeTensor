@@ -43,6 +43,16 @@ def array(data):
 
     raise ffi.DriverError(f"Unsupported data type {type(data)} for Array")
 
+def load_target(target_str):
+    seri = target_str.split()
+    ret = ffi.default_target()
+    if seri[0] == 'GPU':
+        ret = GPU(bool(seri[1]))
+        if seri[2] == ':':
+            ret.set_compute_capability(int(seri[3]), int(seri[4]))
+    if seri[0] == 'CPU':
+        ret = CPU(bool(seri[1]))
+    return ret
 
 class Target(ffi.Target):
     '''
