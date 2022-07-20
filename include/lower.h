@@ -63,12 +63,12 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
         const std::function<std::string(const std::string &, const std::string &)> &lowerFuncSubmitAPI = {}
         ) {
 
+    auto target = _target.isValid() ? _target : Config::defaultTarget();
+
     // for multi-machine-parallel
     if (lowerFuncSubmitAPI) {
-        return loadAST(lowerFuncSubmitAPI(dumpAST(_ast), dumpTarget(_target))).template as<typename T::Object>();
+        return loadAST(lowerFuncSubmitAPI(dumpAST(_ast), dumpTarget(target))).template as<typename T::Object>();
     }
-
-    auto target = _target.isValid() ? _target : Config::defaultTarget();
 
     auto maybePrint = [&](const std::string &name, const T &ast) -> T {
         if (verbose >= 2) {

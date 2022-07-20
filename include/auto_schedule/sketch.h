@@ -216,12 +216,12 @@ class Sketch {
     /**
      * Lower a generated Schedule to an AST. The result is cached
      */
-    const Func &lowered();
+    const Func &lowered(const std::function<std::string(const std::string &, const std::string &)> &);
 
     /**
      * Generate a feature from a lowered AST. The result is cached
      */
-    const std::vector<double> &feature();
+    const std::vector<double> &feature(const std::function<std::string(const std::string &, const std::string &)> &);
 };
 
 } // namespace freetensor

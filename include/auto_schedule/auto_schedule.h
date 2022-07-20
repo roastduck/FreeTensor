@@ -40,6 +40,7 @@ class AutoSchedule {
     int minBlockSize_{0};
     std::optional<std::unordered_set<std::string>> ruleSet_;
     int verbose_ = 0;
+    std::function<std::string(const std::string &, const std::string &)> lowerFuncSubmitAPI_ = {};
 
   private:
     /**
@@ -60,7 +61,9 @@ class AutoSchedule {
                  std::optional<size_t> randomSeed = std::nullopt,
                  const std::optional<std::unordered_set<std::string>> &ruleSet =
                      std::nullopt,
-                 int verbose = 0);
+                 int verbose = 0,
+                 const std::function<std::string(const std::string &, const std::string &)> &lowerFuncSubmitAPI = {}
+                 );
 
     void setParams(const std::vector<Ref<Array>> &args,
                    const std::unordered_map<std::string, Ref<Array>> &kws);

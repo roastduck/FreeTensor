@@ -34,7 +34,8 @@ from freetensor_ffi import lower
 def lower(ast=None,
           target: Optional[ffi.Target] = None,
           skip_passes: Optional[Sequence[str]] = None,
-          verbose: Optional[int] = None):
+          verbose: Optional[int] = None,
+          lower_func_submit_api=None):
     '''
     Lower an AST using a series of passes
 
@@ -60,7 +61,8 @@ def lower(ast=None,
     if ast is not None:
         return ffi.lower(ast, target,
                          set() if skip_passes is None else set(skip_passes),
-                         0 if verbose is None else verbose)
+                         0 if verbose is None else verbose,
+                         lower_func_submit_api)
     else:
         _lower = lower
         if target is not None:
@@ -69,4 +71,6 @@ def lower(ast=None,
             _lower = functools.partial(_lower, skip_passes=skip_passes)
         if verbose is not None:
             _lower = functools.partial(_lower, verbose=verbose)
+        if lower_func_submit_api is not None:
+            _lower = functools.partial(_lower, lower_func_submit_api=lower_func_submit_api)
         return _lower

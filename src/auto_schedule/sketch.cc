@@ -79,17 +79,19 @@ size_t Sketch::hash() const {
     return h;
 }
 
-const Func &Sketch::lowered() {
+const Func &Sketch::lowered(
+        const std::function<std::string(const std::string &, const std::string &)> &lowerFuncSubmitAPI = {}) {
     if (!lowered_.isValid()) {
-        lowered_ = lower(genSchedule().func(), target_);
+        lowered_ = lower(genSchedule().func(), target_, {}, 0, lowerFuncSubmitAPI);
     }
     return lowered_;
 }
 
-const std::vector<double> &Sketch::feature() {
+const std::vector<double> &Sketch::feature(
+        const std::function<std::string(const std::string &, const std::string &)> &lowerFuncSubmitAPI = {}) {
     if (!feature_.isValid()) {
         feature_ =
-            Opt<std::vector<double>>::make(fixedLengthFeature(lowered()));
+            Opt<std::vector<double>>::make(fixedLengthFeature(lowered(lowerFuncSubmitAPI)));
     }
     return *feature_;
 }
