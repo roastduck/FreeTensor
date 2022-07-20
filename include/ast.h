@@ -3,10 +3,12 @@
 
 #include <atomic>
 #include <functional>
+#include <iostream>
 #include <string>
 
 #include <data_type.h>
 #include <ref.h>
+#include <serialize/to_string.h>
 #include <sub_tree.h>
 
 namespace freetensor {
@@ -84,7 +86,7 @@ enum class ASTNodeType : int {
     Intrinsic,
 };
 
-std::string toString(ASTNodeType type);
+std::ostream &operator<<(std::ostream &os, ASTNodeType type);
 
 #define DEFINE_NODE_ACCESS(name) DEFINE_AST_PART_ACCESS(name##Node)
 
@@ -201,13 +203,13 @@ class ID {
 
     const std::string &strId() const;
 
-    friend std::string toString(const ID &id);
+    friend std::ostream &operator<<(std::ostream &os, const ID &id);
     friend bool operator==(const ID &lhs, const ID &rhs);
     friend bool operator!=(const ID &lhs, const ID &rhs);
     friend struct ::std::hash<ID>;
 };
 
-std::string toString(const ID &id);
+std::ostream &operator<<(std::ostream &os, const ID &id);
 
 /**
  * Base class of all statement nodes in an AST

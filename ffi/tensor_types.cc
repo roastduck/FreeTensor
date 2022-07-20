@@ -8,7 +8,8 @@ void init_ffi_tensor_types(py::module_ &m) {
     py::class_<AccessType>(m, "AccessType")
         .def(py::init<AccessType>())
         .def(py::init(&parseAType))
-        .def("__str__", static_cast<std::string (*)(AccessType)>(&toString))
+        .def("__str__",
+             static_cast<std::string (*)(const AccessType &)>(&toString))
         .def("__hash__", [](AccessType atype) { return (size_t)atype; })
         .def("__eq__",
              [](AccessType lhs, AccessType rhs) { return lhs == rhs; })
@@ -20,7 +21,8 @@ void init_ffi_tensor_types(py::module_ &m) {
     py::class_<MemType>(m, "MemType")
         .def(py::init<MemType>())
         .def(py::init(&parseMType))
-        .def("__str__", static_cast<std::string (*)(MemType)>(&toString))
+        .def("__str__",
+             static_cast<std::string (*)(const MemType &)>(&toString))
         .def("__hash__", [](MemType mtype) { return (size_t)mtype; })
         .def("__eq__", [](MemType lhs, MemType rhs) { return lhs == rhs; })
         .def("__eq__", [](MemType lhs, const std::string &rhs) {
@@ -31,7 +33,8 @@ void init_ffi_tensor_types(py::module_ &m) {
     py::class_<DataType>(m, "DataType")
         .def(py::init<DataType>())
         .def(py::init(&parseDType))
-        .def("__str__", static_cast<std::string (*)(DataType)>(&toString))
+        .def("__str__",
+             static_cast<std::string (*)(const DataType &)>(&toString))
         .def("__repr__",
              [](DataType dtype) {
                  auto str = toString(dtype);

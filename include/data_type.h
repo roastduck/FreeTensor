@@ -7,6 +7,7 @@
 
 #include <container_utils.h>
 #include <except.h>
+#include <serialize/to_string.h>
 
 namespace freetensor {
 
@@ -28,8 +29,8 @@ constexpr std::array dataTypeNames = {
 };
 static_assert(dataTypeNames.size() == (size_t)DataType::NumTypes);
 
-inline std::string toString(DataType dtype) {
-    return dataTypeNames.at((size_t)dtype);
+inline std::ostream &operator<<(std::ostream &os, DataType dtype) {
+    return os << dataTypeNames.at((size_t)dtype);
 }
 
 inline DataType parseDType(const std::string &_str) {

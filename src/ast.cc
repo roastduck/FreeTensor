@@ -6,11 +6,11 @@
 
 namespace freetensor {
 
-std::string toString(ASTNodeType type) {
+std::ostream &operator<<(std::ostream &os, ASTNodeType type) {
     switch (type) {
 #define DISPATCH(name)                                                         \
     case ASTNodeType::name:                                                    \
-        return #name;
+        return os << #name;
 
         DISPATCH(Func);
         DISPATCH(StmtSeq);
@@ -203,11 +203,11 @@ const std::string &ID::strId() const {
     return stmtId_;
 }
 
-std::string toString(const ID &id) {
+std::ostream &operator<<(std::ostream &os, const ID &id) {
     if (id.expr_.isValid()) {
-        return toString(id.expr_) + " in " + id.stmtId_;
+        return os << id.expr_ << " in " << id.stmtId_;
     } else {
-        return id.stmtId_;
+        return os << id.stmtId_;
     }
 }
 

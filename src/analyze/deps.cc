@@ -985,7 +985,7 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
         omp_sched_dynamic);
 }
 
-std::string toString(const Dependency &dep) {
+std::ostream &operator<<(std::ostream &_os, const Dependency &dep) {
     std::ostringstream os;
     os << "Dependency ";
     os << (dep.later()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
@@ -1009,7 +1009,7 @@ std::string toString(const Dependency &dep) {
             os << scope.parallel_;
         }
     }
-    return std::regex_replace(os.str(), std::regex("\n"), "");
+    return _os << std::regex_replace(os.str(), std::regex("\n"), "");
 }
 
 } // namespace freetensor

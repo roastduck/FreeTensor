@@ -1,10 +1,13 @@
 #ifndef FREE_TENSOR_FRONTEND_VAR
 #define FREE_TENSOR_FRONTEND_VAR
 
+#include <iostream>
+
 #include <itertools.hpp>
 
 #include <debug.h>
 #include <expr.h>
+#include <serialize/to_string.h>
 #include <stmt.h>
 
 namespace freetensor {
@@ -49,11 +52,11 @@ class FrontendVarIdx {
     }
 };
 
-inline std::string toString(const FrontendVarIdx &idx) {
+inline std::ostream &operator<<(std::ostream &os, const FrontendVarIdx &idx) {
     if (idx.type() == FrontendVarIdxType::Single) {
-        return toString(idx.single());
+        return os << idx.single();
     } else {
-        return "(" + toString(idx.start()) + ", " + toString(idx.stop()) + ")";
+        return os << "(" << idx.start() << ", " << idx.stop() << ")";
     }
 }
 
@@ -103,13 +106,12 @@ class FrontendVar {
     chainIndices(const std::vector<FrontendVarIdx> &next) const;
 };
 
-inline std::string toString(const FrontendVar &var) {
-    std::string ret = var.name() + "[";
+inline std::ostream &operator<<(std::ostream &os, const FrontendVar &var) {
+    os << var.name() << "[";
     for (auto &&[i, idx] : iter::enumerate(var.indices())) {
-        ret += (i == 0 ? "" : ", ") + toString(idx);
+        os << (i == 0 ? "" : ", ") << idx;
     }
-    ret += "]";
-    return ret;
+    return os << "]";
 }
 
 std::unordered_set<std::string> allReads(const FrontendVarIdx &idx);

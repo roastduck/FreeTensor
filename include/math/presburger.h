@@ -14,6 +14,7 @@
 
 #include <debug/profile.h>
 #include <except.h>
+#include <serialize/to_string.h>
 
 namespace freetensor {
 
@@ -103,8 +104,8 @@ class PBMap {
 
     isl_size nBasic() const { return isl_map_n_basic_map(map_); }
 
-    friend std::string toString(const PBMap &map) {
-        return isl_map_to_str(map.map_);
+    friend std::ostream &operator<<(std::ostream &os, const PBMap &map) {
+        return os << isl_map_to_str(map.map_);
     }
 };
 
@@ -148,8 +149,8 @@ class PBVal {
     int numSi() const { return isl_val_get_num_si(get()); }
     int denSi() const { return isl_val_get_den_si(get()); }
 
-    friend std::string toString(const PBVal &val) {
-        return isl_val_to_str(val.val_);
+    friend std::ostream &operator<<(std::ostream &os, const PBVal &val) {
+        return os << isl_val_to_str(val.val_);
     }
 };
 
@@ -202,8 +203,8 @@ class PBSet {
 
     isl_size nBasic() const { return isl_set_n_basic_set(set_); }
 
-    friend std::string toString(const PBSet &set) {
-        return isl_set_to_str(set.set_);
+    friend std::ostream &operator<<(std::ostream &os, const PBSet &set) {
+        return os << isl_set_to_str(set.set_);
     }
 };
 
@@ -244,8 +245,8 @@ class PBSpace {
     isl_space *copy() const { return COPY_ISL_PTR(space_, space); }
     isl_space *move() { return MOVE_ISL_PTR(space_); }
 
-    friend std::string toString(const PBSpace &space) {
-        return isl_space_to_str(space.space_);
+    friend std::ostream &operator<<(std::ostream &os, const PBSpace &space) {
+        return os << isl_space_to_str(space.space_);
     }
 };
 
@@ -287,8 +288,8 @@ class PBFunc {
     isl_pw_multi_aff *copy() const { return COPY_ISL_PTR(func_, pw_multi_aff); }
     isl_pw_multi_aff *move() { return MOVE_ISL_PTR(func_); }
 
-    friend std::string toString(const PBFunc &func) {
-        return isl_pw_multi_aff_to_str(func.func_);
+    friend std::ostream &operator<<(std::ostream &os, const PBFunc &func) {
+        return os << isl_pw_multi_aff_to_str(func.func_);
     }
 };
 
