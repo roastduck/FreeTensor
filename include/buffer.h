@@ -2,11 +2,13 @@
 #define FREE_TENSOR_BUFFER_H
 
 #include <array>
+#include <iostream>
 #include <string>
 
 #include <itertools.hpp>
 
 #include <container_utils.h>
+#include <serialize/to_string.h>
 #include <sub_tree.h>
 #include <tensor.h>
 
@@ -30,8 +32,8 @@ constexpr std::array accessTypeNames = {
 };
 static_assert(accessTypeNames.size() == (size_t)AccessType::NumTypes);
 
-inline std::string toString(AccessType atype) {
-    return accessTypeNames.at((size_t)atype);
+inline std::ostream &operator<<(std::ostream &os, AccessType atype) {
+    return os << accessTypeNames.at((size_t)atype);
 }
 
 inline AccessType parseAType(const std::string &_str) {
@@ -58,7 +60,7 @@ enum class MemType : size_t {
     GPULocal,
     GPUWarp,
     // ------
-    CPUHeap, // AccessType must be Cache
+    CPUHeap,       // AccessType must be Cache
     GPUGlobalHeap, // ditto
     // ------
     NumTypes,
@@ -66,12 +68,13 @@ enum class MemType : size_t {
 
 // First deduce array length, then assert, to ensure the length
 constexpr std::array memTypeNames = {
-    "byvalue", "cpu", "gpu/global", "gpu/shared", "gpu/local", "gpu/warp", "cpu/heap", "gpu/global/heap",
+    "byvalue",   "cpu",      "gpu/global", "gpu/shared",
+    "gpu/local", "gpu/warp", "cpu/heap",   "gpu/global/heap",
 };
 static_assert(memTypeNames.size() == (size_t)MemType::NumTypes);
 
-inline std::string toString(MemType mtype) {
-    return memTypeNames.at((size_t)mtype);
+inline std::ostream &operator<<(std::ostream &os, MemType mtype) {
+    return os << memTypeNames.at((size_t)mtype);
 }
 
 inline MemType parseMType(const std::string &_str) {

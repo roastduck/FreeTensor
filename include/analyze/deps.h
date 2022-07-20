@@ -16,6 +16,7 @@
 #include <lazy.h>
 #include <math/gen_pb_expr.h>
 #include <math/presburger.h>
+#include <serialize/to_string.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -597,7 +598,7 @@ class FindDeps {
     void operator()(const Stmt &op, const FindDepsCallback &found);
 };
 
-std::string toString(const Dependency &dep);
+std::ostream &operator<<(std::ostream &os, const Dependency &dep);
 
 }; // namespace freetensor
 

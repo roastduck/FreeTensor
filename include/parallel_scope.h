@@ -1,12 +1,14 @@
 #ifndef FREE_TENSOR_PARALLEL_SCOPE_H
 #define FREE_TENSOR_PARALLEL_SCOPE_H
 
+#include <iostream>
 #include <string>
 #include <variant>
 
 #include <container_utils.h>
 #include <except.h>
 #include <hash_combine.h>
+#include <serialize/to_string.h>
 
 namespace freetensor {
 
@@ -25,7 +27,9 @@ inline bool operator==(const OpenMPScope &lhs, const OpenMPScope &rhs) {
 inline bool operator!=(const OpenMPScope &lhs, const OpenMPScope &rhs) {
     return false;
 }
-inline std::string toString(const OpenMPScope &parallel) { return "openmp"; }
+inline std::ostream &operator<<(std::ostream &os, const OpenMPScope &parallel) {
+    return os << "openmp";
+}
 
 struct CUDAStreamScope {};
 inline bool operator==(const CUDAStreamScope &lhs, const CUDAStreamScope &rhs) {
@@ -34,8 +38,9 @@ inline bool operator==(const CUDAStreamScope &lhs, const CUDAStreamScope &rhs) {
 inline bool operator!=(const CUDAStreamScope &lhs, const CUDAStreamScope &rhs) {
     return false;
 }
-inline std::string toString(const CUDAStreamScope &parallel) {
-    return "cudastream";
+inline std::ostream &operator<<(std::ostream &os,
+                                const CUDAStreamScope &parallel) {
+    return os << "cudastream";
 }
 
 struct CUDAScope {
@@ -48,47 +53,47 @@ inline bool operator==(const CUDAScope &lhs, const CUDAScope &rhs) {
 inline bool operator!=(const CUDAScope &lhs, const CUDAScope &rhs) {
     return !(lhs == rhs);
 }
-inline std::string toString(const CUDAScope &parallel) {
-    std::string ret;
+inline std::ostream &operator<<(std::ostream &os, const CUDAScope &parallel) {
     switch (parallel.level_) {
     case CUDAScope::Level::Block:
-        ret = "blockIdx";
+        os << "blockIdx";
         break;
     case CUDAScope::Level::Thread:
-        ret = "threadIdx";
+        os << "threadIdx";
         break;
     default:
         ASSERT(false);
     }
     switch (parallel.dim_) {
     case CUDAScope::Dim::X:
-        ret += ".x";
+        os << ".x";
         break;
     case CUDAScope::Dim::Y:
-        ret += ".y";
+        os << ".y";
         break;
     case CUDAScope::Dim::Z:
-        ret += ".z";
+        os << ".z";
         break;
     default:
         ASSERT(false);
     }
-    return ret;
+    return os;
 }
 
 // The first type is default
 typedef std::variant<SerialScope, OpenMPScope, CUDAStreamScope, CUDAScope>
     ParallelScope;
 
-inline std::string toString(const ParallelScope &parallel) {
+inline std::ostream &operator<<(std::ostream &os,
+                                const ParallelScope &parallel) {
     if (std::holds_alternative<SerialScope>(parallel)) {
-        return "";
+        return os;
     } else if (std::holds_alternative<OpenMPScope>(parallel)) {
-        return toString(std::get<OpenMPScope>(parallel));
+        return os << std::get<OpenMPScope>(parallel);
     } else if (std::holds_alternative<CUDAScope>(parallel)) {
-        return toString(std::get<CUDAScope>(parallel));
+        return os << std::get<CUDAScope>(parallel);
     } else if (std::holds_alternative<CUDAStreamScope>(parallel)) {
-        return toString(std::get<CUDAStreamScope>(parallel));
+        return os << std::get<CUDAStreamScope>(parallel);
     } else {
         ASSERT(false);
     }
