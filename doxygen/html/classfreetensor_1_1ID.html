@@ -99,8 +99,8 @@ Public Member Functions</h2></td></tr>
 Friends</h2></td></tr>
 <tr class="memitem:a90b1c6168b357cd843cb71cc2ac6914d"><td class="memItemLeft" align="right" valign="top">struct&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ID.html#a90b1c6168b357cd843cb71cc2ac6914d">::std::hash&lt; ID &gt;</a></td></tr>
 <tr class="separator:a90b1c6168b357cd843cb71cc2ac6914d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad45bde6f0754dd044c03f9cb6dcfe3ba"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ID.html#ad45bde6f0754dd044c03f9cb6dcfe3ba">toString</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id)</td></tr>
-<tr class="separator:ad45bde6f0754dd044c03f9cb6dcfe3ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01c8caff8f377c9160c5d8cdb0629396"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ID.html#a01c8caff8f377c9160c5d8cdb0629396">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id)</td></tr>
+<tr class="separator:a01c8caff8f377c9160c5d8cdb0629396"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a722acf82e802a9b768bd3214aac7e6d9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ID.html#a722acf82e802a9b768bd3214aac7e6d9">operator==</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;lhs, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;rhs)</td></tr>
 <tr class="separator:a722acf82e802a9b768bd3214aac7e6d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a71b363442f9543ab2e2ec42888bf8108"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ID.html#a71b363442f9543ab2e2ec42888bf8108">operator!=</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;lhs, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;rhs)</td></tr>
@@ -356,6 +356,42 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
+<a id="a01c8caff8f377c9160c5d8cdb0629396" name="a01c8caff8f377c9160c5d8cdb0629396"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a01c8caff8f377c9160c5d8cdb0629396">&#9670;&nbsp;</a></span>operator&lt;&lt;</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::ostream &amp; operator&lt;&lt; </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>id</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a722acf82e802a9b768bd3214aac7e6d9" name="a722acf82e802a9b768bd3214aac7e6d9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a722acf82e802a9b768bd3214aac7e6d9">&#9670;&nbsp;</a></span>operator==</h2>
 
@@ -381,32 +417,6 @@ template&lt;class T &gt; </div>
           <td></td>
           <td>)</td>
           <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="ad45bde6f0754dd044c03f9cb6dcfe3ba" name="ad45bde6f0754dd044c03f9cb6dcfe3ba"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad45bde6f0754dd044c03f9cb6dcfe3ba">&#9670;&nbsp;</a></span>toString</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::string toString </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
-          <td class="paramname"><em>id</em></td><td>)</td>
-          <td></td>
         </tr>
       </table>
   </td>

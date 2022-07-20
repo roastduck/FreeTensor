@@ -78,16 +78,18 @@ $(function() {
 <code>#include &lt;itertools.hpp&gt;</code><br />
 <code>#include &lt;<a class="el" href="container__utils_8h_source.html">container_utils.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="except_8h_source.html">except.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="to__string_8h_source.html">serialize/to_string.h</a>&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for data_type.h:</div>
 <div class="dyncontent">
 <div class="center"><img src="data__type_8h__incl.png" border="0" usemap="#ainclude_2data__type_8h" alt=""/></div>
 <map name="ainclude_2data__type_8h" id="ainclude_2data__type_8h">
-<area shape="rect" title=" " alt="" coords="235,5,386,32"/>
-<area shape="rect" title=" " alt="" coords="108,80,164,107"/>
-<area shape="rect" title=" " alt="" coords="188,80,292,107"/>
-<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="316,80,447,107"/>
+<area shape="rect" title=" " alt="" coords="387,5,538,32"/>
+<area shape="rect" title=" " alt="" coords="189,80,245,107"/>
+<area shape="rect" title=" " alt="" coords="269,80,373,107"/>
+<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="397,80,528,107"/>
 <area shape="rect" href="except_8h.html" title=" " alt="" coords="631,155,710,181"/>
+<area shape="rect" href="to__string_8h.html" title=" " alt="" coords="673,80,823,107"/>
 <area shape="rect" title=" " alt="" coords="5,155,91,181"/>
 <area shape="rect" title=" " alt="" coords="115,155,181,181"/>
 <area shape="rect" title=" " alt="" coords="368,229,427,256"/>
@@ -96,6 +98,7 @@ Include dependency graph for data_type.h:</div>
 <area shape="rect" title=" " alt="" coords="545,155,607,181"/>
 <area shape="rect" title=" " alt="" coords="576,229,656,256"/>
 <area shape="rect" title=" " alt="" coords="681,229,767,256"/>
+<area shape="rect" title=" " alt="" coords="735,155,809,181"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -183,8 +186,8 @@ Enumerations</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a3209d5714f22df36a2a518f532e010fa"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3209d5714f22df36a2a518f532e010fa">freetensor::toString</a> (DataType dtype)</td></tr>
-<tr class="separator:a3209d5714f22df36a2a518f532e010fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27e78f8af26958b3bb99cb6618887bfa"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a27e78f8af26958b3bb99cb6618887bfa">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, DataType dtype)</td></tr>
+<tr class="separator:a27e78f8af26958b3bb99cb6618887bfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad79b4b517a22affb229c0950f35e9cce"><td class="memItemLeft" align="right" valign="top">DataType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad79b4b517a22affb229c0950f35e9cce">freetensor::parseDType</a> (const std::string &amp;_str)</td></tr>
 <tr class="separator:ad79b4b517a22affb229c0950f35e9cce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae50b4200b841e89fa1546c1f9a8acd5a"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae50b4200b841e89fa1546c1f9a8acd5a">freetensor::sizeOf</a> (DataType dtype)</td></tr>

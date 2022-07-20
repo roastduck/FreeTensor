@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['hastostring_0',['HasToString',['../conceptfreetensor_1_1HasToString.html',1,'freetensor']]]
+  ['hasstreamoutput_0',['HasStreamOutput',['../conceptfreetensor_1_1HasStreamOutput.html',1,'freetensor']]]
 ];

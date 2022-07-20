@@ -75,30 +75,34 @@ $(function() {
   <div class="headertitle"><div class="title">parallel_scope.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;string&gt;</code><br />
+<div class="textblock"><code>#include &lt;iostream&gt;</code><br />
+<code>#include &lt;string&gt;</code><br />
 <code>#include &lt;variant&gt;</code><br />
 <code>#include &lt;<a class="el" href="container__utils_8h_source.html">container_utils.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="except_8h_source.html">except.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="hash__combine_8h_source.html">hash_combine.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="to__string_8h_source.html">serialize/to_string.h</a>&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for parallel_scope.h:</div>
 <div class="dyncontent">
 <div class="center"><img src="parallel__scope_8h__incl.png" border="0" usemap="#ainclude_2parallel__scope_8h" alt=""/></div>
 <map name="ainclude_2parallel__scope_8h" id="ainclude_2parallel__scope_8h">
-<area shape="rect" title=" " alt="" coords="275,5,453,32"/>
-<area shape="rect" title=" " alt="" coords="5,229,64,256"/>
-<area shape="rect" title=" " alt="" coords="206,80,274,107"/>
-<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="299,80,429,107"/>
-<area shape="rect" href="except_8h.html" title=" " alt="" coords="646,155,725,181"/>
-<area shape="rect" href="hash__combine_8h.html" title=" " alt="" coords="687,80,815,107"/>
-<area shape="rect" title=" " alt="" coords="72,155,157,181"/>
-<area shape="rect" title=" " alt="" coords="182,155,247,181"/>
-<area shape="rect" title=" " alt="" coords="271,155,395,181"/>
-<area shape="rect" title=" " alt="" coords="420,155,535,181"/>
-<area shape="rect" title=" " alt="" coords="559,155,622,181"/>
-<area shape="rect" title=" " alt="" coords="591,229,671,256"/>
-<area shape="rect" title=" " alt="" coords="695,229,782,256"/>
-<area shape="rect" title=" " alt="" coords="749,155,814,181"/>
+<area shape="rect" title=" " alt="" coords="304,5,483,32"/>
+<area shape="rect" title=" " alt="" coords="5,229,85,256"/>
+<area shape="rect" title=" " alt="" coords="221,229,280,256"/>
+<area shape="rect" title=" " alt="" coords="483,80,551,107"/>
+<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="328,80,459,107"/>
+<area shape="rect" href="except_8h.html" title=" " alt="" coords="98,155,177,181"/>
+<area shape="rect" href="hash__combine_8h.html" title=" " alt="" coords="691,80,819,107"/>
+<area shape="rect" href="to__string_8h.html" title=" " alt="" coords="901,80,1051,107"/>
+<area shape="rect" title=" " alt="" coords="679,155,764,181"/>
+<area shape="rect" title=" " alt="" coords="789,155,854,181"/>
+<area shape="rect" title=" " alt="" coords="303,155,427,181"/>
+<area shape="rect" title=" " alt="" coords="452,155,567,181"/>
+<area shape="rect" title=" " alt="" coords="591,155,654,181"/>
+<area shape="rect" title=" " alt="" coords="110,229,197,256"/>
+<area shape="rect" title=" " alt="" coords="878,155,943,181"/>
+<area shape="rect" title=" " alt="" coords="968,155,1043,181"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -203,22 +207,22 @@ Functions</h2></td></tr>
 <tr class="separator:a32f929f212138c650bdf64981ef90138"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a51d012a3e3be545e52214cf8979b6ed7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a51d012a3e3be545e52214cf8979b6ed7">freetensor::operator!=</a> (const OpenMPScope &amp;lhs, const OpenMPScope &amp;rhs)</td></tr>
 <tr class="separator:a51d012a3e3be545e52214cf8979b6ed7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aef3bb41f5b89ab872531a6a39942cc15"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aef3bb41f5b89ab872531a6a39942cc15">freetensor::toString</a> (const OpenMPScope &amp;parallel)</td></tr>
-<tr class="separator:aef3bb41f5b89ab872531a6a39942cc15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a114f7b22d112f62b48e7e07cd5dd6b7b"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a114f7b22d112f62b48e7e07cd5dd6b7b">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, const OpenMPScope &amp;parallel)</td></tr>
+<tr class="separator:a114f7b22d112f62b48e7e07cd5dd6b7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac734cc388c252e18c29c4196cad0667d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac734cc388c252e18c29c4196cad0667d">freetensor::operator==</a> (const CUDAStreamScope &amp;lhs, const CUDAStreamScope &amp;rhs)</td></tr>
 <tr class="separator:ac734cc388c252e18c29c4196cad0667d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a437aafa48b4c5f30665aec353eb5341e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a437aafa48b4c5f30665aec353eb5341e">freetensor::operator!=</a> (const CUDAStreamScope &amp;lhs, const CUDAStreamScope &amp;rhs)</td></tr>
 <tr class="separator:a437aafa48b4c5f30665aec353eb5341e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4be70fe8f6ab90c58f2494f91f421170"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4be70fe8f6ab90c58f2494f91f421170">freetensor::toString</a> (const CUDAStreamScope &amp;parallel)</td></tr>
-<tr class="separator:a4be70fe8f6ab90c58f2494f91f421170"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b86a8d2db3c5cbb7783684bb8692812"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1b86a8d2db3c5cbb7783684bb8692812">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, const CUDAStreamScope &amp;parallel)</td></tr>
+<tr class="separator:a1b86a8d2db3c5cbb7783684bb8692812"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0bbe75deabbfa7ac202cd78986124e0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af0bbe75deabbfa7ac202cd78986124e0">freetensor::operator==</a> (const CUDAScope &amp;lhs, const CUDAScope &amp;rhs)</td></tr>
 <tr class="separator:af0bbe75deabbfa7ac202cd78986124e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8054e890cc6cb6e62d99f23d275850ae"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8054e890cc6cb6e62d99f23d275850ae">freetensor::operator!=</a> (const CUDAScope &amp;lhs, const CUDAScope &amp;rhs)</td></tr>
 <tr class="separator:a8054e890cc6cb6e62d99f23d275850ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3298e18421ec14dc9ec1e1287ecb4d76"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3298e18421ec14dc9ec1e1287ecb4d76">freetensor::toString</a> (const CUDAScope &amp;parallel)</td></tr>
-<tr class="separator:a3298e18421ec14dc9ec1e1287ecb4d76"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac79de2a9a335a14de43289d1d3b89c2a"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac79de2a9a335a14de43289d1d3b89c2a">freetensor::toString</a> (const ParallelScope &amp;parallel)</td></tr>
-<tr class="separator:ac79de2a9a335a14de43289d1d3b89c2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad299e88504cc68e98ab17560718072a"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aad299e88504cc68e98ab17560718072a">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, const CUDAScope &amp;parallel)</td></tr>
+<tr class="separator:aad299e88504cc68e98ab17560718072a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1dd9f020873a496a9086f0bc7a2109c6"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1dd9f020873a496a9086f0bc7a2109c6">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, const ParallelScope &amp;parallel)</td></tr>
+<tr class="separator:a1dd9f020873a496a9086f0bc7a2109c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7aa02bfdb2a3c83bdb3b9f1187ec35ec"><td class="memItemLeft" align="right" valign="top">ParallelScope&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7aa02bfdb2a3c83bdb3b9f1187ec35ec">freetensor::parseParallelScope</a> (const std::string &amp;_str)</td></tr>
 <tr class="separator:a7aa02bfdb2a3c83bdb3b9f1187ec35ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
