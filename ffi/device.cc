@@ -1,6 +1,5 @@
 #include <vector>
 
-#include <serialize/load_target.h>
 #include <serialize/print_target.h>
 #include <driver/device.h>
 #include <ffi.h>
@@ -56,7 +55,6 @@ void init_ffi_device(py::module_ &m) {
 
     // serialize target for multi-machine-parallel
     m.def("dump_target", &dumpTarget, "target"_a);
-    m.def("load_target", &loadTarget);
 
 }
 
