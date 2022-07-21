@@ -73,7 +73,7 @@ $(function() {
 <p><code>#include &lt;<a class="el" href="to__string_8h_source.html">to_string.h</a>&gt;</code></p>
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</div>
-<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptfreetensor_1_1HasStreamOutput.html">freetensor::HasStreamOutput</a> =  <span class="keyword">requires</span>(std::ostream &amp;os, T obj) {</div>
+<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptfreetensor_1_1HasStreamOutput.html">freetensor::HasStreamOutput</a> =  <span class="keyword">requires</span>(std::ostream &amp;os, <span class="keyword">const</span> T &amp;obj) {</div>
 <div class="line">    os &lt;&lt; obj;</div>
 <div class="line">}</div>
 <div class="ttc" id="aconceptfreetensor_1_1HasStreamOutput_html"><div class="ttname"><a href="conceptfreetensor_1_1HasStreamOutput.html">freetensor::HasStreamOutput</a></div><div class="ttdef"><b>Definition:</b> to_string.h:14</div></div>

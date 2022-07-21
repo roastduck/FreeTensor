@@ -48,5 +48,5 @@ var searchData=
   ['nullpolicy_45',['NullPolicy',['../namespacefreetensor.html#af95889187755480d15e840d24f445312',1,'freetensor']]],
   ['num_46',['num',['../classfreetensor_1_1Device.html#ad486f37f8f8d4ef1b8a1421f3ae83ddf',1,'freetensor::Device']]],
   ['numsi_47',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]],
-  ['numtypes_48',['NumTypes',['../namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4a86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()']]]
+  ['numtypes_48',['NumTypes',['../namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4a86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()']]]
 ];

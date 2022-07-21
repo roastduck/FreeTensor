@@ -68,21 +68,24 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#namespaces">Namespaces</a> &#124;
 <a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">lazy.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;functional&gt;</code><br />
+<code>#include &lt;mutex&gt;</code><br />
 <code>#include &lt;type_traits&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for lazy.h:</div>
 <div class="dyncontent">
 <div class="center"><img src="lazy_8h__incl.png" border="0" usemap="#ainclude_2lazy_8h" alt=""/></div>
 <map name="ainclude_2lazy_8h" id="ainclude_2lazy_8h">
-<area shape="rect" title=" " alt="" coords="49,5,160,32"/>
+<area shape="rect" title=" " alt="" coords="93,5,204,32"/>
 <area shape="rect" title=" " alt="" coords="5,80,92,107"/>
-<area shape="rect" title=" " alt="" coords="116,80,208,107"/>
+<area shape="rect" title=" " alt="" coords="117,80,181,107"/>
+<area shape="rect" title=" " alt="" coords="205,80,297,107"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -122,19 +125,24 @@ This graph shows which files directly or indirectly include this file:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLazy.html">Lazy&lt; T &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Lazy.html">freetensor::Lazy&lt; T &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
+Namespaces</h2></td></tr>
+<tr class="memitem:namespacefreetensor"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html">freetensor</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:ae6beb247712f86c3f1e132d8f0070f28"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lazy_8h.html#ae6beb247712f86c3f1e132d8f0070f28">LAZY</a>(expr)&#160;&#160;&#160;(<a class="el" href="classLazy.html">Lazy</a>([&amp;]() { return (expr); }))</td></tr>
+<tr class="memitem:ae6beb247712f86c3f1e132d8f0070f28"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lazy_8h.html#ae6beb247712f86c3f1e132d8f0070f28">LAZY</a>(expr)&#160;&#160;&#160;(Lazy([&amp;]() { return (expr); }))</td></tr>
 <tr class="separator:ae6beb247712f86c3f1e132d8f0070f28"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:aa37f29860f973e0371732eacfa89f7ff"><td class="memTemplParams" colspan="2">template&lt;typename F &gt; </td></tr>
-<tr class="memitem:aa37f29860f973e0371732eacfa89f7ff"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="lazy_8h.html#aa37f29860f973e0371732eacfa89f7ff">Lazy</a> (F delayedInit) -&gt; <a class="el" href="classLazy.html">Lazy</a>&lt; std::decay_t&lt; decltype(std::declval&lt; F &gt;()())&gt; &gt;</td></tr>
-<tr class="separator:aa37f29860f973e0371732eacfa89f7ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa17b63e472b2e62270355b9808c79c72"><td class="memTemplParams" colspan="2">template&lt;typename F &gt; </td></tr>
+<tr class="memitem:aa17b63e472b2e62270355b9808c79c72"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa17b63e472b2e62270355b9808c79c72">freetensor::Lazy</a> (F delayedInit) -&gt; Lazy&lt; std::decay_t&lt; decltype(std::declval&lt; F &gt;()())&gt; &gt;</td></tr>
+<tr class="separator:aa17b63e472b2e62270355b9808c79c72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="ae6beb247712f86c3f1e132d8f0070f28" name="ae6beb247712f86c3f1e132d8f0070f28"></a>
@@ -148,28 +156,7 @@ Functions</h2></td></tr>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname">expr</td><td>)</td>
-          <td>&#160;&#160;&#160;(<a class="el" href="classLazy.html">Lazy</a>([&amp;]() { return (expr); }))</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<h2 class="groupheader">Function Documentation</h2>
-<a id="aa37f29860f973e0371732eacfa89f7ff" name="aa37f29860f973e0371732eacfa89f7ff"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa37f29860f973e0371732eacfa89f7ff">&#9670;&nbsp;</a></span>Lazy()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename F &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classLazy.html">Lazy</a> </td>
-          <td>(</td>
-          <td class="paramtype">F&#160;</td>
-          <td class="paramname"><em>delayedInit</em></td><td>)</td>
-          <td> -&gt;  <a class="el" href="classLazy.html">Lazy</a>&lt; std::decay_t&lt; decltype(std::declval&lt; F &gt;()())&gt; &gt;</td>
+          <td>&#160;&#160;&#160;(Lazy([&amp;]() { return (expr); }))</td>
         </tr>
       </table>
 </div><div class="memdoc">

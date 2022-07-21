@@ -82,18 +82,18 @@ $(function() {
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="comment">// Define an `toString` function for all objects having `ostream &lt;&lt;` defined</span></div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno"><a class="line" href="conceptfreetensor_1_1HasStreamOutput.html">   14</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptfreetensor_1_1HasStreamOutput.html">HasStreamOutput</a> = <span class="keyword">requires</span>(std::ostream &amp;os, T obj) {</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno"><a class="line" href="conceptfreetensor_1_1HasStreamOutput.html">   14</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptfreetensor_1_1HasStreamOutput.html">HasStreamOutput</a> = <span class="keyword">requires</span>(std::ostream &amp;os, <span class="keyword">const</span> T &amp;obj) {</div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    os &lt;&lt; obj;</div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>};</div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">requires</span> <span class="keyword">requires</span>(T obj) {</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">requires</span> <span class="keyword">requires</span>(<span class="keyword">const</span> T &amp;obj) {</div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <span class="keyword">requires</span> <a class="code hl_concept" href="conceptfreetensor_1_1HasStreamOutput.html">HasStreamOutput&lt;T&gt;</a>;</div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="comment">// We have a special version for AST and its subclasses</span></div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keyword">requires</span> !std::convertible_to&lt;T, Ref&lt;ASTNode&gt;&gt;;</div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>}</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="namespacefreetensor.html#ac2f846ea555860c3e2a51d92af53ab34">   25</a></span>std::string <a class="code hl_function" href="namespacefreetensor.html#a472a884dd71c57ad337f27094accba53">toString</a>(<span class="keyword">const</span> T &amp;obj) {</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="namespacefreetensor.html#a2c490189ddd347553322eb51f8e945dc">   25</a></span>std::string <a class="code hl_function" href="namespacefreetensor.html#a472a884dd71c57ad337f27094accba53">toString</a>(<span class="keyword">const</span> T &amp;obj) {</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    std::ostringstream os;</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    os &lt;&lt; obj;</div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keywordflow">return</span> os.str();</div>

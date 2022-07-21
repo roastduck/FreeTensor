@@ -9,6 +9,7 @@ var searchData=
   ['anyexpr_6',['AnyExpr',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915faa5c8f4fa866e425fc9b24d53575d07fb',1,'freetensor']]],
   ['apply_7',['Apply',['../namespacefreetensor.html#a92f7d9ca7e30164fef68ed70a3036ec9a9639e32cab248434a17ab32237cb3b71',1,'freetensor']]],
   ['applyandskiprest_8',['ApplyAndSkipRest',['../namespacefreetensor.html#a92f7d9ca7e30164fef68ed70a3036ec9a960566f55fee970abc00710842aa2572',1,'freetensor']]],
-  ['assert_9',['Assert',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fad530f9d1b94f864f2238775b0e19e48c',1,'freetensor']]],
-  ['assume_10',['Assume',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa4822c96fc1eebe031cde975d10a29e12',1,'freetensor']]]
+  ['asmatmul_9',['AsMatMul',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a3a9092b0d0f68da544f01b7535e742da',1,'freetensor']]],
+  ['assert_10',['Assert',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fad530f9d1b94f864f2238775b0e19e48c',1,'freetensor']]],
+  ['assume_11',['Assume',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa4822c96fc1eebe031cde975d10a29e12',1,'freetensor']]]
 ];

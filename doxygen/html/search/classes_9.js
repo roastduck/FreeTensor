@@ -1,8 +1,8 @@
 var searchData=
 [
   ['landnode_0',['LAndNode',['../classfreetensor_1_1LAndNode.html',1,'freetensor']]],
-  ['lazy_1',['Lazy',['../classLazy.html',1,'']]],
-  ['lazy_3c_20loopvariexprmap_20_3e_2',['Lazy&lt; LoopVariExprMap &gt;',['../classLazy.html',1,'']]],
+  ['lazy_1',['Lazy',['../classfreetensor_1_1Lazy.html',1,'freetensor']]],
+  ['lazy_3c_20loopvariexprmap_20_3e_2',['Lazy&lt; LoopVariExprMap &gt;',['../classfreetensor_1_1Lazy.html',1,'freetensor']]],
   ['lenode_3',['LENode',['../classfreetensor_1_1LENode.html',1,'freetensor']]],
   ['linearexpr_4',['LinearExpr',['../structfreetensor_1_1LinearExpr.html',1,'freetensor']]],
   ['linearexpr_3c_20freetensor_3a_3arational_3c_20int64_5ft_20_3e_20_3e_5',['LinearExpr&lt; freetensor::Rational&lt; int64_t &gt; &gt;',['../structfreetensor_1_1LinearExpr.html',1,'freetensor']]],
