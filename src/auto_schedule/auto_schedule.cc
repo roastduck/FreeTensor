@@ -104,10 +104,8 @@ void AutoSchedule::sketchesBatchSubmit(
     }
     std::vector<std::string> ast_str = multicallResultAPI_();
 
-    if (tmp.size() != ast_str.size()) {
-        logger() << tmp.size() << ' ' << ast_str.size() << std::endl;
-    }
     ASSERT(tmp.size() == ast_str.size());
+
     for (size_t i = 0; i < tmp.size(); i++) {
         tmp[i]->setLowered(loadAST(ast_str[i]).as<Func::Object>());
     }
@@ -136,7 +134,6 @@ AutoSchedule::measure(const std::vector<Ref<Sketch>> &sketches) {
     for (size_t i = 0; i < n; i++) {
         try {
             auto lowered = sketches[i]->lowered({});
-            logger() << "ast is:" << std::endl << dumpAST(lowered) << std::endl;
             auto code = codeGen(lowered, target_);
             drivers[i] = Ref<Driver>::make(lowered, code, device_);
         } catch (const std::exception &e) {
