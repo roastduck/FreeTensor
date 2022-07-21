@@ -42,13 +42,15 @@ AutoSchedule::AutoSchedule(
     const std::function<void(const Features &, const Predicts &)> &updateFunc,
     std::string tag, int minBlockSize, std::optional<size_t> randomSeed,
     const std::optional<std::unordered_set<std::string>> &ruleSet, int verbose,
-    const std::function<std::string(const std::string &, const std::string &)> &lowerFuncSubmitAPI
+    const std::function<void(const std::string &, const std::string &)> &lowerFuncMulticallAPI,
+    const std::function<std::vector<std::string>()> &multicallResultAPI
     )
     : original_(schedule.fork()), target_(target), device_(device),
       paramsSet_(false), rng_(decideSeed(randomSeed, verbose)),
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)),
       tag_(std::move(tag)), minBlockSize_(minBlockSize), verbose_(verbose),
-      lowerFuncSubmitAPI_(lowerFuncSubmitAPI)
+      lowerFuncMulticallAPI_(lowerFuncMulticallAPI),
+      multicallResultAPI_(multicallResultAPI)
     {
     flop_ = 0;
     auto opCnt =
@@ -89,6 +91,33 @@ void AutoSchedule::setParams(
     kws_ = kws;
     paramsSet_ = true;
 }
+void AutoSchedule::sketchesBatchSubmit(
+        const std::vector<Ref<Sketch>> &sketches, int type = 0) {
+    // type == 0: gen lower; type == 1: gen feature
+
+    std::vector<Ref<Sketch>> tmp;
+    for (size_t i = 0; i < sketches.size(); i++) {
+        if (!sketches[i]->isLoweredValid()) {
+            lowerFuncMulticallAPI_(dumpAST(sketches[i]->genSchedule().func()), dumpTarget(sketches[i]->target()));
+            tmp.push_back(sketches[i]);
+        }
+    }
+    std::vector<std::string> ast_str = multicallResultAPI_();
+
+    if (tmp.size() != ast_str.size()) {
+        logger() << tmp.size() << ' ' << ast_str.size() << std::endl;
+    }
+    ASSERT(tmp.size() == ast_str.size());
+    for (size_t i = 0; i < tmp.size(); i++) {
+        tmp[i]->setLowered(loadAST(ast_str[i]).as<Func::Object>());
+    }
+    if (type == 1) {
+        for (size_t i = 0; i < sketches.size(); i++) {
+            sketches[i]->feature({});
+        }
+    }
+}
+
 
 std::pair<std::vector<double>, std::vector<double>>
 AutoSchedule::measure(const std::vector<Ref<Sketch>> &sketches) {
@@ -100,10 +129,14 @@ AutoSchedule::measure(const std::vector<Ref<Sketch>> &sketches) {
     }
     size_t n = sketches.size();
     std::vector<Ref<Driver>> drivers(n);
+
+    sketchesBatchSubmit(sketches);
+
 #pragma omp parallel for schedule(dynamic)
     for (size_t i = 0; i < n; i++) {
         try {
-            auto lowered = sketches[i]->lowered(lowerFuncSubmitAPI_);
+            auto lowered = sketches[i]->lowered({});
+            logger() << "ast is:" << std::endl << dumpAST(lowered) << std::endl;
             auto code = codeGen(lowered, target_);
             drivers[i] = Ref<Driver>::make(lowered, code, device_);
         } catch (const std::exception &e) {
@@ -168,9 +201,12 @@ AutoSchedule::genFeatures(const std::vector<Ref<Sketch>> &sketches) {
     }
     auto n = sketches.size();
     std::vector<std::vector<double>> featureList(n);
+
+    sketchesBatchSubmit(sketches, 1);
+
     exceptSafeParallelFor<size_t>(
         0, sketches.size(), 1,
-        [&](size_t i) { featureList[i] = sketches[i]->feature(lowerFuncSubmitAPI_); },
+        [&](size_t i) { featureList[i] = sketches[i]->feature({}); },
         omp_sched_dynamic);
     return featureList;
 }

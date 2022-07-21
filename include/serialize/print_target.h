@@ -6,11 +6,14 @@
 #include <string>
 
 #include <ref.h>
+#include <config.h>
 #include <driver/target.h>
 
 namespace freetensor{
 
-inline std::string dumpTarget(const Ref<Target> &target) {
+inline std::string dumpTarget(const Ref<Target> &_target) {
+
+    auto target = _target.isValid() ? _target : Config::defaultTarget();
 
     std::string ret = target->toString() + " " + std::to_string(target->useNativeArch());
 

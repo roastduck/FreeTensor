@@ -189,6 +189,12 @@ class Sketch {
 
     int nowSubNum() const { return nowSubNum_; }
 
+    bool isLoweredValid() const { return lowered_.isValid(); }
+    bool isFeatureValid() const { return feature_.isValid(); }
+    Ref<Target> target() const { return target_; }
+    void setLowered(Func lowered) { lowered_ = lowered; }
+    void setFeature(Opt<std::vector<double>> feature) { feature_ = feature; }
+
     void addLog(const std::string &name) {
         subs_[nowSubNum_].log += name + ";\n";
     }
@@ -222,6 +228,7 @@ class Sketch {
      * Generate a feature from a lowered AST. The result is cached
      */
     const std::vector<double> &feature(const std::function<std::string(const std::string &, const std::string &)> &);
+
 };
 
 } // namespace freetensor
