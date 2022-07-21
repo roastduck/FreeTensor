@@ -55,6 +55,14 @@ class AllowReturnScope:
         self.overload.is_return_allowed = self.prev
 
 
+class ReturnException(Exception):
+    '''Exception to be raised by StagingOverload.return_stmt.
+    Holds a return value that will be passed through to the function wrapper.'''
+
+    def __init__(self, value: Any) -> None:
+        self.value = value
+
+
 def _remove_indent(lines: List[str]) -> str:
     spaces_to_remove = next((i for i, x in enumerate(lines[0]) if x != ' '),
                             len(lines[0]))
@@ -244,7 +252,7 @@ class StagingOverload:
             )
         if isinstance(value, StagedAssignable):
             value = value.assign(funcname)
-        return value
+        raise ReturnException(value)
 
     def load_attr(self, obj, attr: str):
         '''Load attribute staging tool. Allows customization of reading attributes.'''
@@ -309,7 +317,13 @@ class StagingOverload:
             # The called function can now return from itself, despite what the outer
             # control flow is.
             with self._allow_return_scope(True):
-                result = func(*args, **kwargs)
+                try:
+                    func(*args, **kwargs)
+                except ReturnException as e:
+                    result = e.value
+                else:
+                    # No return_stmt was called, naturally returns None
+                    result = None
             # Pop debug call stack.
             self.debug_call_stack.pop()
             return result
@@ -880,7 +894,7 @@ class Transformer(ast.NodeTransformer):
     def visit_Return(self, old_node: ast.Return) -> Any:
         node: ast.Return = self.generic_visit(old_node)
         assert self.curr_func is not None
-        node = ast.Return(
+        node = ast.Expr(
             call_helper(StagingOverload.return_stmt, node.value,
                         ast.Constant(self.curr_func)))
         return location_helper(node, old_node)

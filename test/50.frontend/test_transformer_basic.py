@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, Union
+
+import pytest
 import freetensor as ft
 from freetensor import debug
 import numpy as np
@@ -402,3 +404,37 @@ def test_while():
                 x[()] -= 1
 
     assert test.body.match(test_expected.body)
+
+
+def test_return_in_static_if():
+    do_add = True
+
+    @ft.transform
+    def test(x: ft.Var[(), 'float32']):
+        if do_add:
+            y = ft.empty((), 'float32')
+            y[()] = x[()] + 1
+            return y
+        else:
+            return x
+
+    @ft.transform
+    def test_expected(x: ft.Var[(), 'float32']):
+        y = ft.empty((), 'float32')
+        y[()] = x[()] + 1
+        return y
+
+    assert test.body.match(test_expected.body)
+
+
+def test_error_return_in_dynamic_if():
+    with pytest.raises(ft.StagingError):
+
+        @ft.transform
+        def test(x: ft.Var[(), 'float32'], do_add: ft.Var[(), 'int32']):
+            if do_add == 1:
+                y = ft.empty((), 'float32')
+                y[()] = x[()] + 1
+                return y
+            else:
+                return x
