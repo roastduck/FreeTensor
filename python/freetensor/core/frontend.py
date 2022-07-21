@@ -1,5 +1,5 @@
 '''
-Transform user Python functions to ASTs via generating staging functions.
+A frontend transforming user Python functions to ASTs via staging.
 '''
 
 import abc

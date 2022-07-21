@@ -1,5 +1,5 @@
 '''
-A staging framework to support the transformer.
+A staging framework to support the FreeTensor frontend.
 '''
 from __future__ import annotations
 

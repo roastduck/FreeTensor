@@ -28,7 +28,7 @@ from .codegen import NativeCode, codegen
 from .driver import *
 from .config import *
 
-from .transformer import (transform, inline, empty, var, capture_var, Var,
+from .frontend import (transform, inline, empty, var, capture_var, Var,
                           dynamic_range, static_range)
 from .staging import (StagingError, StagedAssignable, StagedIterable,
                       StagedPredicate, StagedTypeAnnotation)
