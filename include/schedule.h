@@ -8,7 +8,7 @@
 #include <driver/target.h>
 #include <func.h>
 #include <schedule/fission.h>
-#include <schedule/memorized_schedules.h>
+#include <schedule/memoized_schedules.h>
 #include <schedule/schedule_log.h>
 #include <schedule/var_split.h>
 #include <stmt.h>
@@ -24,7 +24,7 @@ class Schedule {
     int verbose_ = 0;
 
     ScheduleLog logs_;
-    Ref<MemorizedSchedules> memorized_;
+    Ref<MemoizedSchedules> memoized_;
 
   private:
     void saveSuccessLog(const ScheduleLog &logs);
@@ -41,7 +41,7 @@ class Schedule {
      * Copy the `Schedule` object for trying different scheduling decisions in
      * the future
      *
-     * The `fork`ed object shares the same `MemorizedSchedule` with the original
+     * The `fork`ed object shares the same `MemoizedSchedule` with the original
      * one, so common decisions can be saved and reused
      */
     Schedule fork() const { return *this; }

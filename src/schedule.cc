@@ -38,7 +38,7 @@ namespace freetensor {
 
 Schedule::Schedule(const Stmt &ast, int verbose)
     : ast_(ast), verbose_(verbose),
-      memorized_(Ref<MemorizedSchedules>::make()) {
+      memoized_(Ref<MemoizedSchedules>::make()) {
     ast_ = simplify(ast_);
 }
 
@@ -98,15 +98,15 @@ Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
         return Ref<ScheduleLogItem##TYPE>::make(func, params);                 \
     })(FUNC, std::make_tuple(__VA_ARGS__))
 
-// - Try looking up an identical schedule from `MemorizedSchedules`
+// - Try looking up an identical schedule from `MemoizedSchedules`
 // - If not found, do the schedule (if found, `run` directly returns)
 // - Save the result (including exceptions, if any) back to `MemoziedSchedules`
 #define RUN_SCHEDULE_MEMORIZEDLY(logs, log)                                    \
-    logs = memorized_->lookup(logs);                                           \
+    logs = memoized_->lookup(logs);                                           \
     ASSERT(logs.top()->type() == log->type());                                 \
     log = logs.top().as<decltype(log)::Object>();                              \
     log->run();                                                                \
-    memorized_->save(logs);
+    memoized_->save(logs);
 
 std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts,
                                   int shift) {

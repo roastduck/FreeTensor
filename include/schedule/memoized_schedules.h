@@ -22,21 +22,21 @@ namespace freetensor {
  * This class is not named cache or storage, to avoid confusion with hardware
  * features
  */
-class MemorizedSchedules {
-    std::unordered_set<ScheduleLog> memorized_;
+class MemoizedSchedules {
+    std::unordered_set<ScheduleLog> memoized_;
     std::mutex lock_;
 
   public:
     /**
      * Lookup for a particular schedule
      *
-     * If there is a memorized result, return the memorized one to save memory
+     * If there is a memoized result, return the memoized one to save memory
      * (so the shared linked lists form a tree). If not found, return the new
      * log
      */
     ScheduleLog lookup(const ScheduleLog &log) {
         std::lock_guard<std::mutex> guard(lock_);
-        if (auto it = memorized_.find(log); it != memorized_.end()) {
+        if (auto it = memoized_.find(log); it != memoized_.end()) {
             return *it;
         } else {
             return log;
@@ -48,7 +48,7 @@ class MemorizedSchedules {
      */
     void save(const ScheduleLog &log) {
         std::lock_guard<std::mutex> guard(lock_);
-        memorized_.insert(log);
+        memoized_.insert(log);
     }
 };
 
