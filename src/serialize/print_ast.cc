@@ -280,7 +280,7 @@ void PrintVisitor::visit(const Add &op) {
     priority_enclose(Priority::ADD, [&] {
         recur(op->lhs_);
         os() << " + ";
-        recur(op->rhs_);
+        priority_enclose(Priority::ADD_RHS, [&] { recur(op->rhs_); });
     });
 }
 
@@ -288,7 +288,7 @@ void PrintVisitor::visit(const Sub &op) {
     priority_enclose(Priority::ADD, [&] {
         recur(op->lhs_);
         os() << " - ";
-        recur(op->rhs_);
+        priority_enclose(Priority::ADD_RHS, [&] { recur(op->rhs_); });
     });
 }
 
@@ -296,7 +296,7 @@ void PrintVisitor::visit(const Mul &op) {
     priority_enclose(Priority::MUL, [&] {
         recur(op->lhs_);
         os() << " * ";
-        recur(op->rhs_);
+        priority_enclose(Priority::MUL_RHS, [&] { recur(op->rhs_); });
     });
 }
 
@@ -304,12 +304,13 @@ void PrintVisitor::visit(const RealDiv &op) {
     priority_enclose(Priority::MUL, [&] {
         recur(op->lhs_);
         os() << " / ";
-        recur(op->rhs_);
+        priority_enclose(Priority::MUL_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const FloorDiv &op) {
-    priority_new(
+    priority_enclose(
+        Priority::MUL_RHS,
         [&] {
             os() << "@!floor(";
             recur(op->lhs_);
@@ -317,11 +318,12 @@ void PrintVisitor::visit(const FloorDiv &op) {
             recur(op->rhs_);
             os() << ")";
         },
-        Priority::MUL);
+        false);
 }
 
 void PrintVisitor::visit(const CeilDiv &op) {
-    priority_new(
+    priority_enclose(
+        Priority::MUL_RHS,
         [&] {
             os() << "@!ceil(";
             recur(op->lhs_);
@@ -329,11 +331,12 @@ void PrintVisitor::visit(const CeilDiv &op) {
             recur(op->rhs_);
             os() << ")";
         },
-        Priority::MUL);
+        false);
 }
 
 void PrintVisitor::visit(const RoundTowards0Div &op) {
-    priority_new(
+    priority_enclose(
+        Priority::MUL_RHS,
         [&] {
             os() << "@!towards0(";
             recur(op->lhs_);
@@ -341,14 +344,14 @@ void PrintVisitor::visit(const RoundTowards0Div &op) {
             recur(op->rhs_);
             os() << ")";
         },
-        Priority::MUL);
+        false);
 }
 
 void PrintVisitor::visit(const Mod &op) {
     priority_enclose(Priority::MUL, [&] {
         recur(op->lhs_);
         os() << " % ";
-        recur(op->rhs_);
+        priority_enclose(Priority::MUL_RHS, [&] { recur(op->rhs_); });
     });
 }
 
@@ -356,7 +359,7 @@ void PrintVisitor::visit(const Remainder &op) {
     priority_enclose(Priority::MUL, [&] {
         recur(op->lhs_);
         os() << " %% ";
-        recur(op->rhs_);
+        priority_enclose(Priority::MUL_RHS, [&] { recur(op->rhs_); });
     });
 }
 
@@ -384,7 +387,7 @@ void PrintVisitor::visit(const LT &op) {
     priority_enclose(Priority::COMP, [&] {
         recur(op->lhs_);
         os() << " < ";
-        recur(op->rhs_);
+        priority_enclose(Priority::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
 
@@ -392,7 +395,7 @@ void PrintVisitor::visit(const LE &op) {
     priority_enclose(Priority::COMP, [&] {
         recur(op->lhs_);
         os() << " <= ";
-        recur(op->rhs_);
+        priority_enclose(Priority::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
 
@@ -400,7 +403,7 @@ void PrintVisitor::visit(const GT &op) {
     priority_enclose(Priority::COMP, [&] {
         recur(op->lhs_);
         os() << " > ";
-        recur(op->rhs_);
+        priority_enclose(Priority::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
 
@@ -408,7 +411,7 @@ void PrintVisitor::visit(const GE &op) {
     priority_enclose(Priority::COMP, [&] {
         recur(op->lhs_);
         os() << " >= ";
-        recur(op->rhs_);
+        priority_enclose(Priority::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
 
@@ -416,7 +419,7 @@ void PrintVisitor::visit(const EQ &op) {
     priority_enclose(Priority::COMP, [&] {
         recur(op->lhs_);
         os() << " == ";
-        recur(op->rhs_);
+        priority_enclose(Priority::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
 
@@ -424,7 +427,7 @@ void PrintVisitor::visit(const NE &op) {
     priority_enclose(Priority::COMP, [&] {
         recur(op->lhs_);
         os() << " != ";
-        recur(op->rhs_);
+        priority_enclose(Priority::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
 
@@ -432,7 +435,7 @@ void PrintVisitor::visit(const LAnd &op) {
     priority_enclose(Priority::BINARY_LOGIC, [&] {
         recur(op->lhs_);
         os() << " && ";
-        recur(op->rhs_);
+        priority_enclose(Priority::BINARY_LOGIC_RHS, [&] { recur(op->rhs_); });
     });
 }
 
@@ -440,7 +443,7 @@ void PrintVisitor::visit(const LOr &op) {
     priority_enclose(Priority::BINARY_LOGIC, [&] {
         recur(op->lhs_);
         os() << " || ";
-        recur(op->rhs_);
+        priority_enclose(Priority::BINARY_LOGIC_RHS, [&] { recur(op->rhs_); });
     });
 }
 

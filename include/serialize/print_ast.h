@@ -18,28 +18,30 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
         ANY,
         TRINARY,
         BINARY_LOGIC,
+        BINARY_LOGIC_RHS,
         COMP,
+        COMP_RHS,
         ADD,
+        ADD_RHS,
         MUL,
+        MUL_RHS,
         UNARY_LOGIC,
     } priority_ = Priority::ANY;
 
-    void priority_enclose(Priority new_priority, auto inner) {
+    void priority_enclose(Priority new_priority, auto inner,
+                          bool parentheses = true) {
         auto old_priority = priority_;
         priority_ = new_priority;
-        if (old_priority > priority_)
+        if (parentheses && old_priority > priority_)
             os() << "(";
         inner();
-        if (old_priority > priority_)
+        if (parentheses && old_priority > priority_)
             os() << ")";
         priority_ = old_priority;
     }
 
-    void priority_new(auto inner, Priority new_priority = Priority::ANY) {
-        auto old_priority = priority_;
-        priority_ = new_priority;
-        inner();
-        priority_ = old_priority;
+    void priority_new(auto inner) {
+        priority_enclose(Priority::ANY, inner, false);
     }
 
   public:
