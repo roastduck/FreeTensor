@@ -1,5 +1,5 @@
 '''
-A staging framework to support the transformer.
+A staging framework to support the FreeTensor frontend.
 '''
 from __future__ import annotations
 
@@ -53,6 +53,14 @@ class AllowReturnScope:
 
     def __exit__(self, exc_class, exc_value, traceback):
         self.overload.is_return_allowed = self.prev
+
+
+class ReturnException(Exception):
+    '''Exception to be raised by StagingOverload.return_stmt.
+    Holds a return value that will be passed through to the function wrapper.'''
+
+    def __init__(self, value: Any) -> None:
+        self.value = value
 
 
 def _remove_indent(lines: List[str]) -> str:
@@ -165,7 +173,7 @@ class StagingOverload:
     def error(self, content: str):
         return StagingError(self, content)
 
-    def _allow_return_scope(self, allow: bool):
+    def allow_return_scope(self, allow: bool):
         return AllowReturnScope(self, allow)
 
     def foreach(self, name: str, iter, body: Callable[[Any], None]) -> None:
@@ -175,8 +183,7 @@ class StagingOverload:
         Otherwise, we try to execute the loop as usual.
         '''
         if isinstance(iter, StagedIterable):
-            with self._allow_return_scope(False):
-                iter.foreach(name, body)
+            iter.foreach(name, body)
         else:
             for iter_var in iter:
                 body(iter_var)
@@ -198,8 +205,7 @@ class StagingOverload:
         Otherwise, a If node in IR is generated.
         '''
         if isinstance(predicate, StagedPredicate):
-            with self._allow_return_scope(False):
-                predicate.if_then_else_stmt(then_body, else_body)
+            predicate.if_then_else_stmt(then_body, else_body)
         else:
             if predicate:
                 then_body()
@@ -209,8 +215,7 @@ class StagingOverload:
     def if_then_else_expr(self, predicate, then_expr, else_expr):
         '''If-then-else expression staging tool.'''
         if isinstance(predicate, StagedPredicate):
-            with self._allow_return_scope(False):
-                return predicate.if_then_else_expr(then_expr, else_expr)
+            return predicate.if_then_else_expr(then_expr, else_expr)
         else:
             if predicate:
                 return then_expr()
@@ -221,8 +226,7 @@ class StagingOverload:
         '''While statement staging tool.'''
         first_pred = fpred()
         if isinstance(first_pred, StagedPredicate):
-            with self._allow_return_scope(False):
-                first_pred.while_stmt(body)
+            first_pred.while_stmt(body)
         else:
             if first_pred:
                 body()
@@ -244,7 +248,7 @@ class StagingOverload:
             )
         if isinstance(value, StagedAssignable):
             value = value.assign(funcname)
-        return value
+        raise ReturnException(value)
 
     def load_attr(self, obj, attr: str):
         '''Load attribute staging tool. Allows customization of reading attributes.'''
@@ -308,8 +312,14 @@ class StagingOverload:
                 traceback.FrameSummary(filename, 1, func.__name__))
             # The called function can now return from itself, despite what the outer
             # control flow is.
-            with self._allow_return_scope(True):
-                result = func(*args, **kwargs)
+            with self.allow_return_scope(True):
+                try:
+                    func(*args, **kwargs)
+                except ReturnException as e:
+                    result = e.value
+                else:
+                    # No return_stmt was called, naturally returns None
+                    result = None
             # Pop debug call stack.
             self.debug_call_stack.pop()
             return result
@@ -880,7 +890,7 @@ class Transformer(ast.NodeTransformer):
     def visit_Return(self, old_node: ast.Return) -> Any:
         node: ast.Return = self.generic_visit(old_node)
         assert self.curr_func is not None
-        node = ast.Return(
+        node = ast.Expr(
             call_helper(StagingOverload.return_stmt, node.value,
                         ast.Constant(self.curr_func)))
         return location_helper(node, old_node)
