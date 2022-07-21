@@ -422,7 +422,7 @@ class dynamic_range(StagedIterable):
         '''Customized foreach behavior. Creates a For loop.'''
         with _overload.allow_return_scope(False):
             with For(_overload.fullname(name), self.start, self.stop,
-                    self.step) as iter_var:
+                     self.step) as iter_var:
                 with LifetimeScope():
                     body(iter_var)
 
