@@ -72,6 +72,11 @@ class SharedLinkedList {
                            const SharedLinkedList &rhs) {
         auto l = lhs, r = rhs;
         while (!l.empty() && !r.empty()) {
+            if (l.tail_ == r.tail_) {
+                // Same object, which means two shared linked list form a tree,
+                // and this is their common ancestor, so no need to compare
+                return true;
+            }
             if (l.hash() != r.hash()) {
                 return false;
             }
