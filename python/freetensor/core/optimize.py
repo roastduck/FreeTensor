@@ -3,7 +3,7 @@ from typing import Optional, Callable
 
 import freetensor_ffi as ffi
 
-from .transformer import transform
+from .frontend import transform
 from .schedule import Schedule, schedule
 from .passes import lower
 from .codegen import codegen

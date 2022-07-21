@@ -1,5 +1,5 @@
 '''
-Transform user Python functions to ASTs via generating staging functions.
+A frontend transforming user Python functions to ASTs via staging.
 '''
 
 import abc
@@ -228,13 +228,14 @@ def _register_as_predicate(ty):
 
     def _if_then_else_stmt(pred: ty, then_body: Callable[[], None],
                            else_body: Optional[Callable[[], None]]):
-        with If(pred):
-            with LifetimeScope():
-                then_body()
-        if else_body:
-            with Else():
+        with _overload.allow_return_scope(False):
+            with If(pred):
                 with LifetimeScope():
-                    else_body()
+                    then_body()
+            if else_body:
+                with Else():
+                    with LifetimeScope():
+                        else_body()
 
     def _if_then_else_expr(pred: ty, then_expr: Callable[[], VarRef],
                            else_expr: Callable[[], VarRef]):
@@ -419,10 +420,11 @@ class dynamic_range(StagedIterable):
 
     def foreach(self, name: str, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
-        with For(_overload.fullname(name), self.start, self.stop,
-                 self.step) as iter_var:
-            with LifetimeScope():
-                body(iter_var)
+        with _overload.allow_return_scope(False):
+            with For(_overload.fullname(name), self.start, self.stop,
+                     self.step) as iter_var:
+                with LifetimeScope():
+                    body(iter_var)
 
 
 static_range = range
