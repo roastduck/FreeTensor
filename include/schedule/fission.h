@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_FISSION_H
 #define FREE_TENSOR_FISSION_H
 
+#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -11,6 +12,9 @@
 namespace freetensor {
 
 enum class FissionSide : int { Before, After };
+inline std::ostream &operator<<(std::ostream &os, FissionSide side) {
+    return os << (side == FissionSide::Before ? "before" : "after");
+}
 
 class HoistVar : public Mutator {
     ID loop_, before_, after_;

@@ -21,9 +21,19 @@ void init_ffi_schedule(py::module_ &m) {
     py::class_<Schedule>(m, "Schedule")
         .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
         .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
+        .def("fork", &Schedule::fork)
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)
-        .def("logs", &Schedule::logs)
+        .def("logs",
+             [](const Schedule &s) {
+                 auto &&log = s.logs();
+                 std::vector<std::string> ret;
+                 ret.reserve(log.size());
+                 for (auto &&item : log) {
+                     ret.emplace_back(toString(*item));
+                 }
+                 return ret;
+             })
         .def("find", static_cast<Stmt (Schedule::*)(
                          const std::function<bool(const Stmt &)> &) const>(
                          &Schedule::find))

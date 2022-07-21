@@ -4,12 +4,20 @@
 #include <config.h>
 #include <debug.h>
 #include <except.h>
+#include <schedule.h>
 #include <stmt.h>
 
 namespace freetensor {
 
-InvalidSchedule::InvalidSchedule(const std::string &msg, const Stmt &ast)
+InvalidSchedule::InvalidSchedule(const Stmt &ast, const std::string &msg)
     : InvalidSchedule("Apply schedule on this AST is invalid: \n\n" +
+                      toString(ast, Config::prettyPrint(), true) +
+                      "\nThe reason is: " + msg) {}
+
+InvalidSchedule::InvalidSchedule(const Ref<ScheduleLogItem> &log,
+                                 const Stmt &ast, const std::string &msg)
+    : InvalidSchedule("Apply schedule " + toString(*log) +
+                      " on this AST is invalid: \n\n" +
                       toString(ast, Config::prettyPrint(), true) +
                       "\nThe reason is: " + msg) {}
 

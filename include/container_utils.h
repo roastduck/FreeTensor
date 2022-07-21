@@ -3,12 +3,18 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iostream>
+#include <ranges>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
+#include <itertools.hpp>
+
 #include <except.h>
+#include <serialize/to_string.h>
 
 namespace freetensor {
 
@@ -142,6 +148,33 @@ inline std::string slice(const std::string &s, int _begin, int _end) {
 }
 inline std::string slice(const std::string &s, int begin) {
     return slice(s, begin, s.length());
+}
+
+// clang-format off
+/**
+ * Comma-joined print of any range
+ */
+template <class T>
+requires std::ranges::range<T> && (!std::convertible_to<T, std::string>)
+std::ostream &operator<<(std::ostream &os, const T &r) {
+    for (auto &&[i, item] : iter::enumerate(r)) {
+        os << (i > 0 ? ", " : "") << item;
+    }
+    return os;
+}
+// clang-format on
+
+/**
+ * Comma-joined print of any tuple
+ */
+template <typename... Ts>
+std::ostream &operator<<(std::ostream &os, std::tuple<Ts...> const &tuple) {
+    return std::apply(
+        [&os](Ts const &...t) -> std::ostream & {
+            int i = 0;
+            return ((os << (i++ > 0 ? ", " : "") << t), ...);
+        },
+        tuple);
 }
 
 } // namespace freetensor

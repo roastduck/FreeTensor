@@ -9,6 +9,7 @@
 #include <analyze/find_stmt.h>
 #include <analyze/get_loop_nest_tree.h>
 #include <auto_schedule/utils.h>
+#include <container_utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/simplify.h>
@@ -36,14 +37,15 @@
 namespace freetensor {
 
 Schedule::Schedule(const Stmt &ast, int verbose)
-    : ast_(ast), verbose_(verbose) {
+    : ast_(ast), verbose_(verbose),
+      memoized_(Ref<MemoizedSchedules>::make()) {
     ast_ = simplify(ast_);
 }
 
-void Schedule::appendLog(const std::string &log) {
-    logs_.emplace_back(log);
+void Schedule::saveSuccessLog(const ScheduleLog &logs) {
+    logs_ = logs;
     if (verbose_ >= 2) {
-        logger() << "AST after " + log + " is:" << std::endl
+        logger() << "AST after " << *logs.top() << " is:" << std::endl
                  << ast_ << std::endl;
     }
 }
@@ -53,6 +55,14 @@ Stmt Schedule::ast() const {
         logger() << "The scheduled AST is:" << std::endl << ast_ << std::endl;
     }
     return ast_;
+}
+
+std::vector<Ref<ScheduleLogItem>> Schedule::logs() const {
+    std::vector<Ref<ScheduleLogItem>> revRet;
+    for (auto it = logs_; !it.empty(); it = it.pop()) {
+        revRet.emplace_back(it.top());
+    }
+    return std::vector<Ref<ScheduleLogItem>>(revRet.rbegin(), revRet.rend());
 }
 
 std::vector<Stmt>
@@ -70,73 +80,107 @@ Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
     return ret[0];
 }
 
+// Make a log item with specifc parameter and result types
+#define MAKE_LOG(TYPE, FUNC, ...)                                              \
+    ([&](const auto &func, const auto &params) {                               \
+        /* decay is required: we must not store an reference */                \
+        typedef ScheduleLogItemImpl<                                           \
+            ScheduleType::TYPE, std::decay_t<decltype(func)>,                  \
+            std::decay_t<decltype(params)>,                                    \
+            std::decay_t<decltype(std::apply(func, params))>>                  \
+            BaseClass;                                                         \
+        class ScheduleLogItem##TYPE : public BaseClass {                       \
+          public:                                                              \
+            ScheduleLogItem##TYPE(const typename BaseClass::Invocable &f,      \
+                                  const typename BaseClass::Params &p)         \
+                : BaseClass(f, p) {}                                           \
+        };                                                                     \
+        return Ref<ScheduleLogItem##TYPE>::make(func, params);                 \
+    })(FUNC, std::make_tuple(__VA_ARGS__))
+
+// - Try looking up an identical schedule from `MemoizedSchedules`
+// - If not found, do the schedule (if found, `run` directly returns)
+// - Save the result (including exceptions, if any) back to `MemoziedSchedules`
+#define RUN_SCHEDULE_MEMORIZEDLY(logs, log)                                    \
+    logs = memoized_->lookup(logs);                                           \
+    ASSERT(logs.top()->type() == log->type());                                 \
+    log = logs.top().as<decltype(log)::Object>();                              \
+    log->run();                                                                \
+    memoized_->save(logs);
+
 std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts,
                                   int shift) {
-    auto log = "split(" + toString(id) + ", factor=" + std::to_string(factor) +
-               ", nparts=" + std::to_string(nparts) +
-               ", shift=" + std::to_string(shift) + ")";
+    auto log = MAKE_LOG(Split, std::bind_front(freetensor::split, ast_), id,
+                        factor, nparts, shift);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        auto ret = freetensor::split(ast_, id, factor, nparts, shift);
+        auto ret = log->getResult();
         ast_ = ret.first;
-        appendLog(log);
+        saveSuccessLog(logs);
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 void Schedule::reorder(const std::vector<ID> &order) {
-    std::string log = "reorder(";
-    for (auto &&[i, item] : iter::enumerate(order)) {
-        log += (i > 0 ? ", " : "") + toString(item);
-    }
-    log += ")";
+    auto log =
+        MAKE_LOG(Reorder, std::bind_front(freetensor::reorder, ast_), order);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        ast_ = freetensor::reorder(ast_, order);
-        appendLog(log);
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 ID Schedule::merge(const ID &loop1, const ID &loop2) {
-    auto log = "merge(" + toString(loop1) + ", " + toString(loop2) + ")";
+    auto log =
+        MAKE_LOG(Merge, std::bind_front(freetensor::merge, ast_), loop1, loop2);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        auto ret = freetensor::merge(ast_, loop1, loop2);
+        auto ret = log->getResult();
         ast_ = ret.first;
-        appendLog(log);
+        saveSuccessLog(logs);
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
                   const std::string &suffix0, const std::string &suffix1) {
-    auto log = "fission(" + toString(loop) + ", " +
-               (side == FissionSide::Before ? "BEFORE, " : "AFTER, ") +
-               toString(splitter) + ")";
+    auto log = MAKE_LOG(Fission, std::bind_front(freetensor::fission, ast_),
+                        loop, side, splitter, suffix0, suffix1);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        auto ret =
-            freetensor::fission(ast_, loop, side, splitter, suffix0, suffix1);
+        auto ret = log->getResult();
         ast_ = ret.first;
-        appendLog(log);
+        saveSuccessLog(logs);
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict) {
-    auto log = "fuse(" + toString(loop0) + ", " + toString(loop1) + ")";
+    auto log = MAKE_LOG(Fuse, std::bind_front(freetensor::fuse, ast_), loop0,
+                        loop1, strict);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        auto ret = freetensor::fuse(ast_, loop0, loop1, strict);
+        auto ret = log->getResult();
         ast_ = ret.first;
-        appendLog(log);
+        saveSuccessLog(logs);
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
@@ -200,102 +244,113 @@ ID Schedule::fuse(const ID &loop0, bool strict) {
 }
 
 void Schedule::swap(const std::vector<ID> &order) {
-    std::string log = "swap(";
-    for (auto &&[i, item] : iter::enumerate(order)) {
-        log += (i > 0 ? ", " : "") + toString(item);
-    }
-    log += ")";
+    auto log = MAKE_LOG(Swap, std::bind_front(freetensor::swap, ast_), order);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        ast_ = freetensor::swap(ast_, order);
-        appendLog(log);
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 void Schedule::blend(const ID &loop) {
-    auto log = "blend(" + toString(loop) + ")";
+    auto log = MAKE_LOG(Blend, std::bind_front(freetensor::blend, ast_), loop);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        ast_ = freetensor::blend(ast_, loop);
-        appendLog(log);
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 std::tuple<ID, ID, std::string, ID>
 Schedule::cache(const ID &stmt, const std::string &var, MemType mtype) {
-    auto log = "cache(" + toString(stmt) + ", " + var + ")";
+    auto log = MAKE_LOG(Cache, std::bind_front(freetensor::cache, ast_), stmt,
+                        var, mtype);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        auto ret = freetensor::cache(ast_, stmt, var, mtype);
+        auto ret = log->getResult();
         ast_ = ret.first;
-        appendLog(log);
+        saveSuccessLog(logs);
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 std::tuple<ID, ID, std::string, ID>
 Schedule::cacheReduction(const ID &stmt, const std::string &var,
                          MemType mtype) {
-    auto log = "cache_reduction(" + toString(stmt) + ", " + var + ")";
+    auto log = MAKE_LOG(CacheReduction,
+                        std::bind_front(freetensor::cacheReduction, ast_), stmt,
+                        var, mtype);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        auto ret = freetensor::cacheReduction(ast_, stmt, var, mtype);
+        auto ret = log->getResult();
         ast_ = ret.first;
-        appendLog(log);
+        saveSuccessLog(logs);
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 void Schedule::setMemType(const ID &def, MemType mtype) {
-    auto log = "set_mem_type(" + toString(def) + ", " + toString(mtype) + ")";
+    auto log = MAKE_LOG(
+        SetMemType, std::bind_front(freetensor::setMemType, ast_), def, mtype);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        ast_ = freetensor::setMemType(ast_, def, mtype);
-        appendLog(log);
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 void Schedule::varSplit(const ID &def, int dim, VarSplitMode mode, int factor,
                         int nparts) {
-    auto log =
-        "var_split(" + toString(def) + ", " + std::to_string(dim) +
-        (mode == VarSplitMode::FixedSize ? ", FixedSize" : ", RelaxedSize") +
-        ", factor=" + std::to_string(factor) +
-        ", nparts=" + std::to_string(nparts) + ")";
+    auto log = MAKE_LOG(VarSplit, std::bind_front(freetensor::varSplit, ast_),
+                        def, dim, mode, factor, nparts);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        ast_ = freetensor::varSplit(ast_, def, dim, mode, factor, nparts);
-        appendLog(log);
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 void Schedule::varMerge(const ID &def, int dim) {
-    auto log = "var_merge(" + toString(def) + ", " + std::to_string(dim) + ")";
+    auto log = MAKE_LOG(VarMerge, std::bind_front(freetensor::varMerge, ast_),
+                        def, dim);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        ast_ = freetensor::varMerge(ast_, def, dim);
-        appendLog(log);
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 void Schedule::varReorder(const ID &def, const std::vector<int> &order) {
-    std::string log = "var_reorder(" + toString(def) + ", ";
-    for (auto &&[i, item] : iter::enumerate(order)) {
-        log += (i > 0 ? ", " : "") + std::to_string(item);
-    }
-    log += ")";
+    auto log = MAKE_LOG(
+        VarReorder, std::bind_front(freetensor::varReorder, ast_), def, order);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        ast_ = freetensor::varReorder(ast_, def, order);
-        appendLog(log);
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + "): " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
@@ -345,9 +400,9 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                     }
                     if (s->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
+                            ast_,
                             "Fission a If node in a StmtSeq is not currently "
-                            "supported in moveTo",
-                            ast_);
+                            "supported in moveTo");
                         // TODO: Fission IfNode
                     }
                     // Leave IDs of the other statements unchanged
@@ -373,9 +428,9 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                     }
                     if (s->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
+                            ast_,
                             "Fission a If node in a StmtSeq is not currently "
-                            "supported in moveTo",
-                            ast_);
+                            "supported in moveTo");
                         // TODO: Fission IfNode
                     }
                     // Leave IDs of the other statements unchanged
@@ -392,64 +447,89 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
         }
     } catch (const InvalidSchedule &e) {
         ast_ = bak;
-        throw InvalidSchedule("Invalid move_to(" + toString(_stmt) + ", " +
-                                  toString(_dst) + "): " + e.what(),
-                              ast_);
+        throw InvalidSchedule(ast_, "Invalid move_to(" + toString(_stmt) +
+                                        ", " + toString(_dst) +
+                                        "): " + e.what());
     }
 }
 
 void Schedule::inlining(const ID &def) {
-    auto log = "inline(" + toString(def) + ")";
+    auto log =
+        MAKE_LOG(Inline, std::bind_front(freetensor::inlining, ast_), def);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        ast_ = freetensor::inlining(ast_, def);
-        appendLog(log);
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 void Schedule::parallelize(const ID &loop, const ParallelScope &parallel) {
     auto log =
-        "parallelize(" + toString(loop) + ", " + toString(parallel) + ")";
+        MAKE_LOG(Parallelize, std::bind_front(freetensor::parallelize, ast_),
+                 loop, parallel);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        ast_ = freetensor::parallelize(ast_, loop, parallel);
-        appendLog(log);
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 void Schedule::unroll(const ID &loop, bool immediate) {
-    auto log = "unroll(" + toString(loop) + ")";
+    auto log = MAKE_LOG(Unroll, std::bind_front(freetensor::unroll, ast_), loop,
+                        immediate);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        ast_ = freetensor::unroll(ast_, loop, immediate);
-        appendLog(log);
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 void Schedule::vectorize(const ID &loop) {
-    auto log = "vectorize(" + toString(loop) + ")";
+    auto log =
+        MAKE_LOG(Vectorize, std::bind_front(freetensor::vectorize, ast_), loop);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        ast_ = freetensor::vectorize(ast_, loop);
-        appendLog(log);
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 
 void Schedule::separateTail(bool noDuplicateVarDefs) {
-    ast_ = freetensor::separateTail(ast_, noDuplicateVarDefs);
+    auto log =
+        MAKE_LOG(SeparateTail, std::bind_front(freetensor::separateTail, ast_),
+                 noDuplicateVarDefs);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    try {
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule(log, ast_, e.what());
+    }
 }
 
 void Schedule::asMatMul(const ID &loop) {
-    auto log = "as_matmul(" + toString(loop) + ")";
+    auto log =
+        MAKE_LOG(AsMatMul, std::bind_front(freetensor::asMatMul, ast_), loop);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        ast_ = freetensor::asMatMul(ast_, loop);
-        appendLog(log);
+        ast_ = log->getResult();
+        saveSuccessLog(logs);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 

@@ -54,23 +54,20 @@ def test_fusion():
     z_arr = ft.Array(z_np)
     ft.build_binary(code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
-        'split(L4, factor=2, nparts=-1, shift=0)',
-        'split(L4.0, factor=2, nparts=-1, shift=0)',
-        'split(L4.0.0, factor=2, nparts=-1, shift=0)',
-        'split(L5, factor=2, nparts=-1, shift=0)',
-        'split(L5.0, factor=2, nparts=-1, shift=0)',
-        'split(L5.0.0, factor=2, nparts=-1, shift=0)',
-        'split(L3, factor=2, nparts=-1, shift=0)',
+        'split(L4, 2, -1, 0)', 'split(L4.0, 2, -1, 0)',
+        'split(L4.0.0, 2, -1, 0)', 'split(L5, 2, -1, 0)',
+        'split(L5.0, 2, -1, 0)', 'split(L5.0.0, 2, -1, 0)',
+        'split(L3, 2, -1, 0)',
         'reorder(L4.0.0.0, L5.0.0.0, L4.0.0.1, L5.0.0.1, L3.0, L4.0.1, L5.0.1, L3.1, L4.1, L5.1)',
-        'split(L6, factor=4, nparts=-1, shift=0)',
-        'split(L6.0, factor=2, nparts=-1, shift=0)',
-        'split(L7, factor=4, nparts=-1, shift=0)',
-        'split(L7.0, factor=2, nparts=-1, shift=0)',
+        'split(L6, 4, -1, 0)', 'split(L6.0, 2, -1, 0)', 'split(L7, 4, -1, 0)',
+        'split(L7.0, 2, -1, 0)',
         'reorder(L6.0.0, L7.0.0, L6.0.1, L7.0.1, L6.1, L7.1)',
-        'fuse(L4.0.0.0, L6.0.0)', 'fuse(L5.0.0.0, L7.0.0)',
-        'fuse(L4.0.0.1, L6.0.1)', 'fuse(L5.0.0.1, L7.0.1)', 'cache(#23, y)'
+        'fuse(L4.0.0.0, L6.0.0, false)', 'fuse(L5.0.0.0, L7.0.0, false)',
+        'fuse(L4.0.0.1, L6.0.1, false)', 'fuse(L5.0.0.1, L7.0.1, false)',
+        'cache(*, y, cpu)'
     ]
     sch_log = sch.logs()
     print(sch_log)
     assert std_log[:-1] == sch_log[:-1]
-    assert sch_log[-1][:6] == 'cache(' and sch_log[-1][-4:] == ', y)'
+    assert sch_log[-1].startswith('cache(') and sch_log[-1].endswith(
+        ', y, cpu)')

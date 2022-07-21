@@ -11,12 +11,12 @@ template <class T> class Ref;
 // Define an `toString` function for all objects having `ostream <<` defined
 
 template <class T>
-concept HasStreamOutput = requires(std::ostream &os, T obj) {
+concept HasStreamOutput = requires(std::ostream &os, const T &obj) {
     os << obj;
 };
 
 template <class T>
-requires requires(T obj) {
+requires requires(const T &obj) {
     requires HasStreamOutput<T>;
 
     // We have a special version for AST and its subclasses

@@ -24,7 +24,7 @@ void Sketch::addPart(const SketchPart &p) {
 const Schedule &Sketch::genSchedule() {
     if (genSchedule_.isValid())
         return *genSchedule_;
-    genSchedule_ = Opt<Schedule>::make(schedule_.clone());
+    genSchedule_ = Opt<Schedule>::make(schedule_.fork());
     for (auto &sub : subs_) {
         for (auto &part : sub.parts) {
             part.second->apply(*genSchedule_, sub);

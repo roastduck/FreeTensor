@@ -8,6 +8,8 @@
 #include <driver/target.h>
 #include <func.h>
 #include <schedule/fission.h>
+#include <schedule/memoized_schedules.h>
+#include <schedule/schedule_log.h>
 #include <schedule/var_split.h>
 #include <stmt.h>
 
@@ -21,10 +23,11 @@ class Schedule {
 
     int verbose_ = 0;
 
-    std::vector<std::string> logs_;
+    ScheduleLog logs_;
+    Ref<MemoizedSchedules> memoized_;
 
   private:
-    void appendLog(const std::string &log);
+    void saveSuccessLog(const ScheduleLog &logs);
 
   public:
     Schedule() = default;
@@ -34,11 +37,14 @@ class Schedule {
         func_ = func;
     }
 
-    Schedule clone() const {
-        if (func_.isValid())
-            return Schedule(deepCopy(func()));
-        return Schedule(deepCopy(ast_));
-    }
+    /**
+     * Copy the `Schedule` object for trying different scheduling decisions in
+     * the future
+     *
+     * The `fork`ed object shares the same `MemoizedSchedule` with the original
+     * one, so common decisions can be saved and reused
+     */
+    Schedule fork() const { return *this; }
 
     /**
      * @return : The function being transformed
@@ -56,7 +62,7 @@ class Schedule {
     /**
      * @return : Logs of all schedules applied
      */
-    std::vector<std::string> logs() const { return logs_; }
+    std::vector<Ref<ScheduleLogItem>> logs() const;
 
     /**
      * Find all nodes in the current AST satisfying a given condition

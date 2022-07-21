@@ -2,7 +2,10 @@
 #define FREE_TENSOR_LAZY_H
 
 #include <functional>
+#include <mutex>
 #include <type_traits>
+
+namespace freetensor {
 
 template <typename T> class Lazy {
     std::optional<T> container_;
@@ -32,5 +35,7 @@ template <typename F>
 Lazy(F delayedInit) -> Lazy<std::decay_t<decltype(std::declval<F>()())>>;
 
 #define LAZY(expr) (Lazy([&]() { return (expr); }))
+
+} // namespace freetensor
 
 #endif // FREE_TENSOR_LAZY_H

@@ -56,15 +56,12 @@ def test_cache_write():
     z_arr = ft.Array(z_np)
     ft.build_binary(code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
-        'split(L4, factor=4, nparts=-1, shift=0)',
-        'split(L4.0, factor=2, nparts=-1, shift=0)',
-        'split(L5, factor=4, nparts=-1, shift=0)',
-        'split(L5.0, factor=2, nparts=-1, shift=0)',
+        'split(L4, 4, -1, 0)', 'split(L4.0, 2, -1, 0)', 'split(L5, 4, -1, 0)',
+        'split(L5.0, 2, -1, 0)',
         'reorder(L4.0.0, L5.0.0, L4.0.1, L5.0.1, L4.1, L5.1)',
-        'fission(L5.1, AFTER, Init)', 'fission(L4.1, AFTER, L5.1.a)',
-        'split(L4.1.b, factor=2, nparts=-1, shift=0)',
-        'split(L5.1.b.b, factor=2, nparts=-1, shift=0)',
-        'split(L3.b.b, factor=2, nparts=-1, shift=0)',
+        'fission(L5.1, after, Init, .a, .b)',
+        'fission(L4.1, after, L5.1.a, .a, .b)', 'split(L4.1.b, 2, -1, 0)',
+        'split(L5.1.b.b, 2, -1, 0)', 'split(L3.b.b, 2, -1, 0)',
         'reorder(L3.b.b.0, L4.1.b.0, L5.1.b.b.0, L3.b.b.1, L4.1.b.1, L5.1.b.b.1)',
         'merge(L4.0.0, L5.0.0)', 'parallelize(merged.L4.0.0.L5.0.0, openmp)'
     ]

@@ -13,13 +13,16 @@ class Error : public std::runtime_error {
 };
 
 class StmtNode;
+class ScheduleLogItem;
 template <class T> class Ref;
 typedef Ref<StmtNode> Stmt;
 
 class InvalidSchedule : public Error {
   public:
     InvalidSchedule(const std::string &msg) : Error(msg) {}
-    InvalidSchedule(const std::string &msg, const Stmt &ast);
+    InvalidSchedule(const Stmt &ast, const std::string &msg);
+    InvalidSchedule(const Ref<ScheduleLogItem> &log, const Stmt &ast,
+                    const std::string &msg);
 };
 
 class DriverError : public Error {
