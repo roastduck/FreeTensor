@@ -39,7 +39,7 @@ class SmallItemAllocator {
     std::atomic_flag spinLock_ = ATOMIC_FLAG_INIT;
 
     // We must define instance_ as a static pointer of an dynamic object,
-    // instead of a static object, and dynamic object shall never be free'd.
+    // instead of a static object, and the dynamic object shall never be free'd.
     // Otherwise, some static variables that use the allocator may be free'd
     // after the allocator
     static thread_local SmallItemAllocator *instance_;

@@ -42,7 +42,7 @@ AutoSchedule::AutoSchedule(
     const std::function<void(const Features &, const Predicts &)> &updateFunc,
     std::string tag, int minBlockSize, std::optional<size_t> randomSeed,
     const std::optional<std::unordered_set<std::string>> &ruleSet, int verbose)
-    : original_(schedule.clone()), target_(target), device_(device),
+    : original_(schedule.fork()), target_(target), device_(device),
       paramsSet_(false), rng_(decideSeed(randomSeed, verbose)),
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)),
       tag_(std::move(tag)), minBlockSize_(minBlockSize), verbose_(verbose) {

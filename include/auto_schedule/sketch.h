@@ -146,7 +146,7 @@ class Sketch {
     Sketch(const Ref<Target> &target, const Schedule &schedule,
            std::vector<ForsWithDataReuse> subs)
         : target_(target), nowSubNum_(subs.size() - 1),
-          schedule_(schedule.clone()) {
+          schedule_(schedule.fork()) {
         for (auto &sub : subs) {
             subs_.emplace_back(std::move(sub));
         }
@@ -155,7 +155,7 @@ class Sketch {
     [[nodiscard]] Ref<Sketch> clone() const {
         auto ret = Ref<Sketch>::make();
         ret->target_ = target_;
-        ret->schedule_ = schedule_.clone();
+        ret->schedule_ = schedule_.fork();
         ret->subs_ = subs_;
         ret->nowSubNum_ = nowSubNum_;
         return ret;

@@ -123,6 +123,43 @@ template <class T, class U> class hash<std::pair<T, U>> {
     }
 };
 
+template <class... Ts> class hash<std::tuple<Ts...>> {
+  private:
+    template <class T> static size_t hashManyImpl(const T &first) {
+        return std::hash<T>()(first);
+    }
+
+    template <class T, class... Args>
+    static size_t hashManyImpl(const T &first, const Args &...others) {
+        return freetensor::hashCombine(std::hash<T>()(first),
+                                       hashManyImpl(others...));
+    }
+
+    // std::apply needs an unoverloaded invocable
+    static size_t hashMany(const Ts &...args) { return hashManyImpl(args...); }
+
+  public:
+    size_t operator()(const std::tuple<Ts...> &t) const {
+        return std::apply(hashMany, t);
+    }
+};
+
+template <class T> class hash<std::vector<T>> {
+    std::hash<T> hash_;
+
+  public:
+    size_t operator()(const std::vector<T> &vec) const {
+        // Encode the size first, to distinguish between one vector and several
+        // consecutive or nested vectors
+        size_t h = std::hash<size_t>()(vec.size());
+
+        for (auto &&item : vec) {
+            h = freetensor::hashCombine(h, hash_(item));
+        }
+        return h;
+    }
+};
+
 } // namespace std
 
 #endif // FREE_TENSOR_HASH_H

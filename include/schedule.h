@@ -8,59 +8,12 @@
 #include <driver/target.h>
 #include <func.h>
 #include <schedule/fission.h>
+#include <schedule/memorized_schedules.h>
+#include <schedule/schedule_log.h>
 #include <schedule/var_split.h>
 #include <stmt.h>
 
 namespace freetensor {
-
-enum class ScheduleType : int {
-    Split = 0,
-    Reorder,
-    Merge,
-    Fission,
-    Fuse,
-    Swap,
-    Blend,
-    Cache,
-    CacheReduction,
-    SetMemType,
-    VarSplit,
-    VarMerge,
-    VarReorder,
-    Inline,
-    Parallelize,
-    Unroll,
-    Vectorize,
-    SeparateTail,
-    AsMatMul,
-    // ------
-    NumTypes,
-};
-
-constexpr std::array scheduleTypeNames = {
-    "split",        "reorder",   "merge",
-    "fission",      "fuse",      "swap",
-    "blend",        "cache",     "cache_reduction",
-    "set_mem_type", "var_split", "var_merge",
-    "var_reorder",  "inline",    "parallelize",
-    "unroll",       "vectorize", "separate_tail",
-    "as_matmul",
-};
-static_assert(scheduleTypeNames.size() == (size_t)ScheduleType::NumTypes);
-
-inline std::ostream &operator<<(std::ostream &os, ScheduleType type) {
-    return os << scheduleTypeNames.at((size_t)type);
-}
-
-class ScheduleLogItem {
-  public:
-    virtual ~ScheduleLogItem() {}
-    virtual ScheduleType type() const = 0;
-    virtual std::string toString() const = 0;
-};
-inline std::ostream &operator<<(std::ostream &os, const ScheduleLogItem &log) {
-    return os << log.toString();
-}
 
 enum class MoveToSide : int { Before, After };
 
@@ -70,10 +23,11 @@ class Schedule {
 
     int verbose_ = 0;
 
-    std::vector<Ref<ScheduleLogItem>> logs_;
+    ScheduleLog logs_;
+    Ref<MemorizedSchedules> memorized_;
 
   private:
-    void appendLog(const Ref<ScheduleLogItem> &log);
+    void saveSuccessLog(const ScheduleLog &logs);
 
   public:
     Schedule() = default;
@@ -83,11 +37,14 @@ class Schedule {
         func_ = func;
     }
 
-    Schedule clone() const {
-        if (func_.isValid())
-            return Schedule(deepCopy(func()));
-        return Schedule(deepCopy(ast_));
-    }
+    /**
+     * Copy the `Schedule` object for trying different scheduling decisions in
+     * the future
+     *
+     * The `fork`ed object shares the same `MemorizedSchedule` with the original
+     * one, so common decisions can be saved and reused
+     */
+    Schedule fork() const { return *this; }
 
     /**
      * @return : The function being transformed
@@ -105,7 +62,7 @@ class Schedule {
     /**
      * @return : Logs of all schedules applied
      */
-    std::vector<Ref<ScheduleLogItem>> logs() const { return logs_; }
+    std::vector<Ref<ScheduleLogItem>> logs() const;
 
     /**
      * Find all nodes in the current AST satisfying a given condition
