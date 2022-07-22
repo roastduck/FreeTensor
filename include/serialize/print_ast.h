@@ -14,7 +14,14 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
         "if", "else", "for", "in", "assert", "assume", "func", "true", "false",
     };
 
-    enum class Priority {
+    /**
+     * @brief Precedence of operators.
+     *
+     * RHS is for the right hand side of the operator. They require a slightly
+     * higher precedence than the operator itself to correctly print parentheses
+     * in case of A op (B op C).
+     */
+    enum class Precedence {
         ANY,
         TRINARY,
         LOR,
@@ -28,22 +35,43 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
         MUL,
         MUL_RHS,
         UNARY_LOGIC,
-    } priority_ = Priority::ANY;
+    };
 
-    void priority_enclose(Priority new_priority, auto inner,
-                          bool parentheses = true) {
-        auto old_priority = priority_;
-        priority_ = new_priority;
-        if (parentheses && old_priority > priority_)
+    /**
+     * @brief Current precedence of the operator.
+     *
+     * This is used to determine whether to print parentheses.
+     */
+    Precedence precedence_ = Precedence::ANY;
+
+    /**
+     * @brief Enclose the expression printed by inner with correct parentheses.
+     *
+     * @param new_priority The precedence of the operator in the expression.
+     * @param inner The function that prints the expression to enclose.
+     * @param parentheses Whether to print parentheses if the precedence is
+     * lower than before.
+     */
+    void precedence_enclose(Precedence new_priority, auto inner,
+                            bool parentheses = true) {
+        auto old_priority = precedence_;
+        precedence_ = new_priority;
+        if (parentheses && old_priority > precedence_)
             os() << "(";
         inner();
-        if (parentheses && old_priority > priority_)
+        if (parentheses && old_priority > precedence_)
             os() << ")";
-        priority_ = old_priority;
+        precedence_ = old_priority;
     }
 
-    void priority_new(auto inner) {
-        priority_enclose(Priority::ANY, inner, false);
+    /**
+     * @brief Start a new precedence context. Used in enforced parentheses or
+     * root expressions.
+     *
+     * @param inner The function that prints the expression.
+     */
+    void precedence_new(auto inner) {
+        precedence_enclose(Precedence::ANY, inner, false);
     }
 
   public:
