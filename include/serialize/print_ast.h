@@ -17,8 +17,10 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     enum class Priority {
         ANY,
         TRINARY,
-        BINARY_LOGIC,
-        BINARY_LOGIC_RHS,
+        LOR,
+        LOR_RHS,
+        LAND,
+        LAND_RHS,
         COMP,
         COMP_RHS,
         ADD,

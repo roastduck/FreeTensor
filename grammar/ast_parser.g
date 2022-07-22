@@ -448,17 +448,13 @@ expr returns [Expr node]
           case 6: $node = makeNE($expr0.node, $expr1.node); break;
         }
       }
-    | expr0 = expr
-      {int ty;} (
-        '&&' {ty = 1;}
-        | '||' {ty = 2;}
-      ) expr1 = expr
+    | expr0 = expr '&&' expr1 = expr
       {
-        switch (ty)
-        {
-          case 1: $node = makeLAnd($expr0.node, $expr1.node); break;
-          case 2: $node = makeLOr($expr0.node, $expr1.node); break;
-        }
+        $node = makeLAnd($expr0.node, $expr1.node);
+      }
+    | expr0 = expr '||' expr1 = expr
+      {
+        $node = makeLOr($expr0.node, $expr1.node);
       }
     | MIN '(' expr0=expr ',' expr1=expr ')'
       {

@@ -432,18 +432,18 @@ void PrintVisitor::visit(const NE &op) {
 }
 
 void PrintVisitor::visit(const LAnd &op) {
-    priority_enclose(Priority::BINARY_LOGIC, [&] {
+    priority_enclose(Priority::LAND, [&] {
         recur(op->lhs_);
         os() << " && ";
-        priority_enclose(Priority::BINARY_LOGIC_RHS, [&] { recur(op->rhs_); });
+        priority_enclose(Priority::LAND_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const LOr &op) {
-    priority_enclose(Priority::BINARY_LOGIC, [&] {
+    priority_enclose(Priority::LOR, [&] {
         recur(op->lhs_);
         os() << " || ";
-        priority_enclose(Priority::BINARY_LOGIC_RHS, [&] { recur(op->rhs_); });
+        priority_enclose(Priority::LOR_RHS, [&] { recur(op->rhs_); });
     });
 }
 
