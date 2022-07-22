@@ -398,53 +398,55 @@ expr returns [Expr node]
       {
         $node = makeCeil($expr.node);
       }
-    | expr0=expr '*' expr1=expr
+    | expr0=expr
+      {int ty;} (
+        '*' {ty = 1;}
+        | '/' {ty = 2;}
+        | '%' {ty = 3;}
+        | '%%' {ty = 4;}
+      )
+      expr1=expr
       {
-        $node = makeMul($expr0.node, $expr1.node);
+        switch (ty)
+        {
+          case 1: $node = makeMul($expr0.node, $expr1.node); break;
+          case 2: $node = makeRealDiv($expr0.node, $expr1.node); break;
+          case 3: $node = makeMod($expr0.node, $expr1.node); break;
+          case 4: $node = makeRemainder($expr0.node, $expr1.node); break;
+        }
       }
-    | expr0=expr '/' expr1=expr
+    | expr0=expr
+      {int ty;} (
+        '+' {ty = 1;}
+        | '-' {ty = 2;}
+      )
+      expr1=expr
       {
-        $node = makeRealDiv($expr0.node, $expr1.node);
+        switch (ty)
+        {
+          case 1: $node = makeAdd($expr0.node, $expr1.node); break;
+          case 2: $node = makeSub($expr0.node, $expr1.node); break;
+        }
       }
-    | expr0=expr '%' expr1=expr
+    | expr0=expr
+      {int ty;} (
+        '<=' {ty = 1;}
+        | '<' {ty = 2;}
+        | '>=' {ty = 3;}
+        | '>' {ty = 4;}
+        | '==' {ty = 5;}
+        | '!=' {ty = 6;}
+      ) expr1=expr
       {
-        $node = makeMod($expr0.node, $expr1.node);
-      }
-    | expr0=expr '%%' expr1=expr
-      {
-        $node = makeRemainder($expr0.node, $expr1.node);
-      }
-    | expr0=expr '+' expr1=expr
-      {
-        $node = makeAdd($expr0.node, $expr1.node);
-      }
-    | expr0=expr '-' expr1=expr
-      {
-        $node = makeSub($expr0.node, $expr1.node);
-      }
-    | expr0=expr '<=' expr1=expr
-      {
-        $node = makeLE($expr0.node, $expr1.node);
-      }
-    | expr0=expr '<' expr1=expr
-      {
-        $node = makeLT($expr0.node, $expr1.node);
-      }
-    | expr0=expr '>=' expr1=expr
-      {
-        $node = makeGE($expr0.node, $expr1.node);
-      }
-    | expr0=expr '>' expr1=expr
-      {
-        $node = makeGT($expr0.node, $expr1.node);
-      }
-    | expr0=expr '==' expr1=expr
-      {
-        $node = makeEQ($expr0.node, $expr1.node);
-      }
-    | expr0=expr '!=' expr1=expr
-      {
-        $node = makeNE($expr0.node, $expr1.node);
+        switch (ty)
+        {
+          case 1: $node = makeLE($expr0.node, $expr1.node); break;
+          case 2: $node = makeLT($expr0.node, $expr1.node); break;
+          case 3: $node = makeGE($expr0.node, $expr1.node); break;
+          case 4: $node = makeGT($expr0.node, $expr1.node); break;
+          case 5: $node = makeEQ($expr0.node, $expr1.node); break;
+          case 6: $node = makeNE($expr0.node, $expr1.node); break;
+        }
       }
     | expr0=expr '&&' expr1=expr
       {

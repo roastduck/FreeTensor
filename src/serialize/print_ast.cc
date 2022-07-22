@@ -277,39 +277,40 @@ void PrintVisitor::visit(const BoolConst &op) {
 }
 
 void PrintVisitor::visit(const Add &op) {
-    priority_enclose(Priority::ADD, [&] {
+    precedence_enclose(Precedence::ADD, [&] {
         recur(op->lhs_);
         os() << " + ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::ADD_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const Sub &op) {
-    priority_enclose(Priority::ADD, [&] {
+    precedence_enclose(Precedence::ADD, [&] {
         recur(op->lhs_);
         os() << " - ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::ADD_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const Mul &op) {
-    priority_enclose(Priority::MUL, [&] {
+    precedence_enclose(Precedence::MUL, [&] {
         recur(op->lhs_);
         os() << " * ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::MUL_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const RealDiv &op) {
-    priority_enclose(Priority::MUL, [&] {
+    precedence_enclose(Precedence::MUL, [&] {
         recur(op->lhs_);
         os() << " / ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::MUL_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const FloorDiv &op) {
-    priority_new(
+    precedence_enclose(
+        Precedence::MUL_RHS,
         [&] {
             os() << "@!floor(";
             recur(op->lhs_);
@@ -317,11 +318,12 @@ void PrintVisitor::visit(const FloorDiv &op) {
             recur(op->rhs_);
             os() << ")";
         },
-        Priority::MUL);
+        false);
 }
 
 void PrintVisitor::visit(const CeilDiv &op) {
-    priority_new(
+    precedence_enclose(
+        Precedence::MUL_RHS,
         [&] {
             os() << "@!ceil(";
             recur(op->lhs_);
@@ -329,11 +331,12 @@ void PrintVisitor::visit(const CeilDiv &op) {
             recur(op->rhs_);
             os() << ")";
         },
-        Priority::MUL);
+        false);
 }
 
 void PrintVisitor::visit(const RoundTowards0Div &op) {
-    priority_new(
+    precedence_enclose(
+        Precedence::MUL_RHS,
         [&] {
             os() << "@!towards0(";
             recur(op->lhs_);
@@ -341,27 +344,27 @@ void PrintVisitor::visit(const RoundTowards0Div &op) {
             recur(op->rhs_);
             os() << ")";
         },
-        Priority::MUL);
+        false);
 }
 
 void PrintVisitor::visit(const Mod &op) {
-    priority_enclose(Priority::MUL, [&] {
+    precedence_enclose(Precedence::MUL, [&] {
         recur(op->lhs_);
         os() << " % ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::MUL_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const Remainder &op) {
-    priority_enclose(Priority::MUL, [&] {
+    precedence_enclose(Precedence::MUL, [&] {
         recur(op->lhs_);
         os() << " %% ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::MUL_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const Min &op) {
-    priority_new([&] {
+    precedence_new([&] {
         os() << "@!min(";
         recur(op->lhs_);
         os() << ", ";
@@ -371,7 +374,7 @@ void PrintVisitor::visit(const Min &op) {
 }
 
 void PrintVisitor::visit(const Max &op) {
-    priority_new([&] {
+    precedence_new([&] {
         os() << "@!max(";
         recur(op->lhs_);
         os() << ", ";
@@ -381,76 +384,76 @@ void PrintVisitor::visit(const Max &op) {
 }
 
 void PrintVisitor::visit(const LT &op) {
-    priority_enclose(Priority::COMP, [&] {
+    precedence_enclose(Precedence::COMP, [&] {
         recur(op->lhs_);
         os() << " < ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const LE &op) {
-    priority_enclose(Priority::COMP, [&] {
+    precedence_enclose(Precedence::COMP, [&] {
         recur(op->lhs_);
         os() << " <= ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const GT &op) {
-    priority_enclose(Priority::COMP, [&] {
+    precedence_enclose(Precedence::COMP, [&] {
         recur(op->lhs_);
         os() << " > ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const GE &op) {
-    priority_enclose(Priority::COMP, [&] {
+    precedence_enclose(Precedence::COMP, [&] {
         recur(op->lhs_);
         os() << " >= ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const EQ &op) {
-    priority_enclose(Priority::COMP, [&] {
+    precedence_enclose(Precedence::COMP, [&] {
         recur(op->lhs_);
         os() << " == ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const NE &op) {
-    priority_enclose(Priority::COMP, [&] {
+    precedence_enclose(Precedence::COMP, [&] {
         recur(op->lhs_);
         os() << " != ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const LAnd &op) {
-    priority_enclose(Priority::BINARY_LOGIC, [&] {
+    precedence_enclose(Precedence::LAND, [&] {
         recur(op->lhs_);
         os() << " && ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::LAND_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const LOr &op) {
-    priority_enclose(Priority::BINARY_LOGIC, [&] {
+    precedence_enclose(Precedence::LOR, [&] {
         recur(op->lhs_);
         os() << " || ";
-        recur(op->rhs_);
+        precedence_enclose(Precedence::LOR_RHS, [&] { recur(op->rhs_); });
     });
 }
 
 void PrintVisitor::visit(const LNot &op) {
     os() << "!";
-    priority_enclose(Priority::UNARY_LOGIC, [&] { recur(op->expr_); });
+    precedence_enclose(Precedence::UNARY_LOGIC, [&] { recur(op->expr_); });
 }
 
 void PrintVisitor::visit(const Sqrt &op) {
-    priority_new([&] {
+    precedence_new([&] {
         os() << "@!sqrt(";
         recur(op->expr_);
         os() << ")";
@@ -458,7 +461,7 @@ void PrintVisitor::visit(const Sqrt &op) {
 }
 
 void PrintVisitor::visit(const Exp &op) {
-    priority_new([&] {
+    precedence_new([&] {
         os() << "@!exp(";
         recur(op->expr_);
         os() << ")";
@@ -466,7 +469,7 @@ void PrintVisitor::visit(const Exp &op) {
 }
 
 void PrintVisitor::visit(const Square &op) {
-    priority_new([&] {
+    precedence_new([&] {
         os() << "@!square(";
         recur(op->expr_);
         os() << ")";
@@ -474,7 +477,7 @@ void PrintVisitor::visit(const Square &op) {
 }
 
 void PrintVisitor::visit(const Sigmoid &op) {
-    priority_new([&] {
+    precedence_new([&] {
         os() << "@!sigmoid(";
         recur(op->expr_);
         os() << ")";
@@ -482,7 +485,7 @@ void PrintVisitor::visit(const Sigmoid &op) {
 }
 
 void PrintVisitor::visit(const Tanh &op) {
-    priority_new([&] {
+    precedence_new([&] {
         os() << "@!tanh(";
         recur(op->expr_);
         os() << ")";
@@ -490,7 +493,7 @@ void PrintVisitor::visit(const Tanh &op) {
 }
 
 void PrintVisitor::visit(const Abs &op) {
-    priority_new([&] {
+    precedence_new([&] {
         os() << "@!abs(";
         recur(op->expr_);
         os() << ")";
@@ -498,7 +501,7 @@ void PrintVisitor::visit(const Abs &op) {
 }
 
 void PrintVisitor::visit(const Floor &op) {
-    priority_new([&] {
+    precedence_new([&] {
         os() << "@!floor(";
         recur(op->expr_);
         os() << ")";
@@ -506,7 +509,7 @@ void PrintVisitor::visit(const Floor &op) {
 }
 
 void PrintVisitor::visit(const Ceil &op) {
-    priority_new([&] {
+    precedence_new([&] {
         os() << "@!ceil(";
         recur(op->expr_);
         os() << ")";
@@ -514,7 +517,7 @@ void PrintVisitor::visit(const Ceil &op) {
 }
 
 void PrintVisitor::visit(const IfExpr &op) {
-    priority_enclose(Priority::TRINARY, [&] {
+    precedence_enclose(Precedence::TRINARY, [&] {
         recur(op->cond_);
         os() << " ? ";
         recur(op->thenCase_);
@@ -524,7 +527,7 @@ void PrintVisitor::visit(const IfExpr &op) {
 }
 
 void PrintVisitor::visit(const Cast &op) {
-    priority_new([&] {
+    precedence_new([&] {
         os() << ::freetensor::toString(op->destType_) << "(";
         recur(op->expr_);
         os() << ")";

@@ -79,18 +79,6 @@ expr returns [Expr node]
       {
         $node = $expr.node;
       }
-    | expr0=expr '+' expr1=expr
-      {
-        $node = makeAdd($expr0.node, $expr1.node);
-      }
-    | expr0=expr '-' expr1=expr
-      {
-        $node = makeSub($expr0.node, $expr1.node);
-      }
-    | expr0=expr '*' expr1=expr
-      {
-        $node = makeMul($expr0.node, $expr1.node);
-      }
     | FLOOR '(' expr0=expr '/' expr1=expr ')'
       {
         $node = makeFloorDiv($expr0.node, $expr1.node);
@@ -99,9 +87,31 @@ expr returns [Expr node]
       {
         $node = makeCeilDiv($expr0.node, $expr1.node);
       }
-    | expr0=expr ('%' | MOD) expr1=expr
+    | expr0=expr
+      {int ty;} (
+        '*' {ty = 1;}
+        | ('%' | MOD) {ty = 2;}
+      )
+      expr1=expr
       {
-        $node = makeMod($expr0.node, $expr1.node);
+        switch (ty)
+        {
+          case 1: $node = makeMul($expr0.node, $expr1.node); break;
+          case 2: $node = makeMod($expr0.node, $expr1.node); break;
+        }
+      }
+    | expr0=expr
+      {int ty;} (
+        '+' {ty = 1;}
+        | '-' {ty = 2;}
+      )
+      expr1=expr
+      {
+        switch (ty)
+        {
+          case 1: $node = makeAdd($expr0.node, $expr1.node); break;
+          case 2: $node = makeSub($expr0.node, $expr1.node); break;
+        }
       }
     | MIN '(' expr0=expr ',' expr1=expr ')'
       {

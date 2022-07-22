@@ -294,3 +294,42 @@ def test_var_name_be_same_with_keyword():
     ast2 = ft.load_ast(txt)
     print(ast2)
     assert ast2.match(ast)
+
+
+def test_assoc_priority_1():
+    with ft.VarDef([("y", (), "int32", "output", "cpu"),
+                    ("x", (), "int32", "input", "cpu")]) as (y, x):
+        y[()] = x[()] * (x[()] / x[()])
+    ast = ft.pop_ast()
+    txt = ft.dump_ast(ast)
+    print(txt)
+    assert 'x[] * (x[] / x[])' in txt
+    ast2 = ft.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+
+def test_assoc_priority_2():
+    with ft.VarDef([("y", (), "int32", "output", "cpu"),
+                    ("x", (), "int32", "input", "cpu")]) as (y, x):
+        y[()] = x[()] / x[()] * x[()]
+    ast = ft.pop_ast()
+    txt = ft.dump_ast(ast)
+    print(txt)
+    assert 'x[] / x[] * x[]' in txt
+    ast2 = ft.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+
+def test_assoc_priority_3():
+    with ft.VarDef([("y", (), "int32", "output", "cpu"),
+                    ("x", (), "int32", "input", "cpu")]) as (y, x):
+        y[()] = (x[()] / x[()]) // (x[()] * x[()])
+    ast = ft.pop_ast()
+    txt = ft.dump_ast(ast)
+    print(txt)
+    assert '@!floor((x[] / x[]) / (x[] * x[]))' in txt
+    ast2 = ft.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
