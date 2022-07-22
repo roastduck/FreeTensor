@@ -780,8 +780,8 @@ class Transformer(ast.NodeTransformer):
                 node: ast.For = self.generic_visit(old_node)
                 node = [
                     function_helper('for_body', ['__item__'], [
-                        ast.Assign([node.target], ast.Name(
-                            '__item__', ast.Load()))
+                        ast.Assign([node.target],
+                                   ast.Name('__item__', ast.Load()))
                     ] + node.body, nonlocals),
                     ast.Expr(
                         call_helper(StagingOverload.foreach,
