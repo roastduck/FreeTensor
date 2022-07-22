@@ -482,6 +482,8 @@ class StagingOverload:
                             TerminalFormatter(bg='dark', linenos=True)),
                   file=sys.stderr)
 
+            tree = source  # make debug info match dumped source
+
         # Create an empty locals dict to avoid polluting the original globals.
         empty_locals = {}
         exec(compile(tree, f'<staging:{func.__name__}>', 'exec'),
