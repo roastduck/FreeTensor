@@ -497,3 +497,23 @@ def test_continue_from_dynamic_loop():
                 if i == 3:
                     continue
                 x[()] += i
+
+
+def test_tuple_for():
+
+    @ft.transform(verbose=2)
+    def test(x: ft.Var[(), 'float32']):
+        y = ft.empty((), 'float32')
+        for u, (a, b) in [(x[()], (1, 2)), (x[()], (3, 4))]:
+            print(u, a, b)
+            y[()] += a * u + b
+        return y
+
+    @ft.transform
+    def test_expected(x: ft.Var[(), 'float32']):
+        y = ft.empty((), 'float32')
+        y[()] += 1 * x[()] + 2
+        y[()] += 3 * x[()] + 4
+        return y
+
+    assert test.body.match(test_expected.body)

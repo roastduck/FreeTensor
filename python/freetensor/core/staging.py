@@ -192,14 +192,14 @@ class StagingOverload:
         context. Need to be closed by `with` statement.'''
         return AllowShortcutScope(self, allow)
 
-    def foreach(self, name: str, iter, body: Callable[[Any], None]) -> None:
+    def foreach(self, names, iter, body: Callable[[Any], None]) -> None:
         '''Customized foreach wrapper.
         If `value` is instance of `StagedIterable`, its regarded as a customized foreach
         behavior and used to generate code for the python for loop.
         Otherwise, we try to execute the loop as usual.
         '''
         if isinstance(iter, StagedIterable):
-            iter.foreach(name, body)
+            iter.foreach(names, body)
         else:
             for iter_var in iter:
                 try:
@@ -537,7 +537,7 @@ class StagingOverload:
 
 class StagedIterable:
 
-    def foreach(self, name: str, f: Callable[[Any], None]):
+    def foreach(self, names, f: Callable[[Any], None]):
         raise NotImplementedError()
 
 
@@ -746,23 +746,46 @@ class Transformer(ast.NodeTransformer):
             body
         foreach('x', iter, for_body)
         ```'''
-        if isinstance(old_node.target, ast.Name) and len(old_node.orelse) == 0:
+        if len(old_node.orelse) == 0:
             with NonlocalTransformingScope(self) as nonlocals:
                 # While opening a fake function, For loops initiates an iter name as
                 # well. Need to remove it from the outer nonlocals list to implement
                 # shadowing. Only For loops behaves as such, so handle it specially here.
                 nonlocals = set(nonlocals)
-                if old_node.target.id in nonlocals:
-                    nonlocals.remove(old_node.target.id)
+
+                def recursive_remove_id(target):
+                    if isinstance(target, ast.Name):
+                        if target.id in nonlocals:
+                            nonlocals.remove(target.id)
+                    else:
+                        assert isinstance(target, ast.Tuple)
+                        for t in target.elts:
+                            recursive_remove_id(t)
+
+                recursive_remove_id(old_node.target)
                 nonlocals = list(nonlocals)
 
-                node = self.generic_visit(old_node)
+                def recursive_get_names(target):
+                    if isinstance(target, ast.Name):
+                        return ast.Constant(target.id)
+                    else:
+                        l = []
+                        assert isinstance(target, ast.Tuple)
+                        for t in target.elts:
+                            l.append(recursive_get_names(t))
+                        return ast.Tuple(l, ast.Load())
+
+                target_names = recursive_get_names(old_node.target)
+
+                node: ast.For = self.generic_visit(old_node)
                 node = [
-                    function_helper('for_body', [node.target.id], node.body,
-                                    nonlocals),
+                    function_helper('for_body', ['__item__'], [
+                        ast.Assign([node.target], ast.Name(
+                            '__item__', ast.Load()))
+                    ] + node.body, nonlocals),
                     ast.Expr(
                         call_helper(StagingOverload.foreach,
-                                    ast.Constant(node.target.id), node.iter,
+                                    target_names, node.iter,
                                     ast.Name('for_body', ast.Load())))
                 ]
         else:

@@ -409,7 +409,8 @@ class dynamic_range(StagedIterable):
     '''Dynamic range that generates For loop in IR tree.'''
 
     def __init__(self, start, stop=None, step=1) -> None:
-        '''Initialize a dynamic range. Arguments semantic identical to builtin `range`.'''
+        '''Initialize a dynamic range.
+        Arguments semantic identical to builtin `range`.'''
         if stop:
             self.start = start
             self.stop = stop
@@ -418,8 +419,11 @@ class dynamic_range(StagedIterable):
             self.stop = start
         self.step = step
 
-    def foreach(self, name: str, body: Callable[[Any], None]) -> None:
+    def foreach(self, name, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
+        if not isinstance(name, str):
+            raise StagingError(
+                'dynamic_range only supports exactly one target variable')
         with _overload.allow_shortcut_scope(False):
             with For(_overload.fullname(name), self.start, self.stop,
                      self.step) as iter_var:
