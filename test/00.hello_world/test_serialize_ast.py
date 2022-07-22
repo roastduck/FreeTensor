@@ -333,3 +333,17 @@ def test_assoc_priority_3():
     ast2 = ft.load_ast(txt)
     print(ast2)
     assert ast2.match(ast)
+
+
+def test_io_tensor():
+    with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
+        x[2, 3] = 2.0
+        x[1, 0] = 3.0
+    ast = ft.pop_ast()
+    ast = ft.make_1d_var(ast)
+    txt = ft.dump_ast(ast)
+    print(txt)
+    assert '@!io_tensor' in txt
+    ast2 = ft.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)

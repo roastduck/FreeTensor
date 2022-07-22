@@ -225,7 +225,7 @@ varDef returns [Stmt node]
         Ref<Tensor> ioTensor;
         bool pinned = false;
     }
-    : atype mtype var ':' dtype shape
+    : atype mtype var ':' dtype actual_shape=shape
         (IO_TENSOR '=' io_dtype=dtype io_shape=shape { ioTensor = makeTensor($io_shape.vec, $io_dtype.type); })?
         (PINNED { pinned = true; })?
       {
@@ -234,7 +234,7 @@ varDef returns [Stmt node]
         '{' stmts '}'
       {
         name2dtype_.erase($var.name);
-        Ref<Tensor> t = makeTensor($shape.vec, $dtype.type);
+        Ref<Tensor> t = makeTensor($actual_shape.vec, $dtype.type);
         Ref<Buffer> b = makeBuffer(std::move(t), $atype.type, $mtype.type);
         Expr sizeLim = nullptr;
         $node = makeVarDef(ID(), $var.name, std::move(b), std::move(ioTensor), $stmts.node, pinned);
