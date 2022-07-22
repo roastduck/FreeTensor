@@ -228,7 +228,7 @@ def _register_as_predicate(ty):
 
     def _if_then_else_stmt(pred: ty, then_body: Callable[[], None],
                            else_body: Optional[Callable[[], None]]):
-        with _overload.allow_return_scope(False):
+        with _overload.allow_shortcut_scope(False):
             with If(pred):
                 with LifetimeScope():
                     then_body()
@@ -420,7 +420,7 @@ class dynamic_range(StagedIterable):
 
     def foreach(self, name: str, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
-        with _overload.allow_return_scope(False):
+        with _overload.allow_shortcut_scope(False):
             with For(_overload.fullname(name), self.start, self.stop,
                      self.step) as iter_var:
                 with LifetimeScope():
