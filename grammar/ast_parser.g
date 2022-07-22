@@ -398,14 +398,14 @@ expr returns [Expr node]
       {
         $node = makeCeil($expr.node);
       }
-    | expr0 = expr
+    | expr0=expr
       {int ty;} (
         '*' {ty = 1;}
         | '/' {ty = 2;}
         | '%' {ty = 3;}
         | '%%' {ty = 4;}
       )
-      expr1 = expr
+      expr1=expr
       {
         switch (ty)
         {
@@ -415,12 +415,12 @@ expr returns [Expr node]
           case 4: $node = makeRemainder($expr0.node, $expr1.node); break;
         }
       }
-    | expr0 = expr
+    | expr0=expr
       {int ty;} (
         '+' {ty = 1;}
         | '-' {ty = 2;}
       )
-      expr1 = expr
+      expr1=expr
       {
         switch (ty)
         {
@@ -428,7 +428,7 @@ expr returns [Expr node]
           case 2: $node = makeSub($expr0.node, $expr1.node); break;
         }
       }
-    | expr0 = expr
+    | expr0=expr
       {int ty;} (
         '<=' {ty = 1;}
         | '<' {ty = 2;}
@@ -436,7 +436,7 @@ expr returns [Expr node]
         | '>' {ty = 4;}
         | '==' {ty = 5;}
         | '!=' {ty = 6;}
-      ) expr1 = expr
+      ) expr1=expr
       {
         switch (ty)
         {
@@ -448,11 +448,11 @@ expr returns [Expr node]
           case 6: $node = makeNE($expr0.node, $expr1.node); break;
         }
       }
-    | expr0 = expr '&&' expr1 = expr
+    | expr0=expr '&&' expr1=expr
       {
         $node = makeLAnd($expr0.node, $expr1.node);
       }
-    | expr0 = expr '||' expr1 = expr
+    | expr0=expr '||' expr1=expr
       {
         $node = makeLOr($expr0.node, $expr1.node);
       }
