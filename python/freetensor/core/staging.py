@@ -21,7 +21,8 @@ assert sys.version_info >= (3,
 
 
 class TransformError(Exception):
-    '''Error occurred during AST transforming from python function to staging function that generates IR tree.'''
+    '''Error occurred during AST transforming from python function to staging function
+    that generates IR tree.'''
 
     def __init__(self, message: str, filename: str, base_lineno: int,
                  error_node: ast.AST) -> None:
@@ -40,19 +41,20 @@ class StagingError(Exception):
 
 
 @dataclass
-class AllowReturnScope:
+class AllowShortcutScope:
     '''Allow return scope.
-    This is a context manager that allows return in statically deterministic control flow.
+    This is a context manager that allows return in statically deterministic control
+    flow.
     '''
     overload: StagingOverload
     should_allow: bool
 
     def __enter__(self):
-        self.prev = self.overload.is_return_allowed
-        self.overload.is_return_allowed = self.should_allow
+        self.prev = self.overload.is_shortcut_allowed
+        self.overload.is_shortcut_allowed = self.should_allow
 
     def __exit__(self, exc_class, exc_value, traceback):
-        self.overload.is_return_allowed = self.prev
+        self.overload.is_shortcut_allowed = self.prev
 
 
 class ReturnException(Exception):
@@ -61,6 +63,18 @@ class ReturnException(Exception):
 
     def __init__(self, value: Any) -> None:
         self.value = value
+
+
+class BreakException(Exception):
+    '''Exception to be raised by StagingOverload.break_stmt.
+    Breaks from a for loop.'''
+    pass
+
+
+class ContinueException(Exception):
+    '''Exception to be raised by StagingOverload.continue_stmt.
+    Continues a for loop.'''
+    pass
 
 
 def _remove_indent(lines: List[str]) -> str:
@@ -105,7 +119,7 @@ class LocalsDictWrapper:
 class StagingOverload:
 
     def __init__(self) -> None:
-        self.is_return_allowed: bool = True
+        self.is_shortcut_allowed: bool = True
         self.debug_call_stack: List[traceback.FrameSummary] = []
 
     def custom_attr(self, obj: Any, attr: str) -> Any:
@@ -173,25 +187,32 @@ class StagingOverload:
     def error(self, content: str):
         return StagingError(self, content)
 
-    def allow_return_scope(self, allow: bool):
-        return AllowReturnScope(self, allow)
+    def allow_shortcut_scope(self, allow: bool):
+        '''Opens a scope that allows shortcut control flows in a statically deterministic
+        context. Need to be closed by `with` statement.'''
+        return AllowShortcutScope(self, allow)
 
-    def foreach(self, name: str, iter, body: Callable[[Any], None]) -> None:
+    def foreach(self, names, iter, body: Callable[[Any], None]) -> None:
         '''Customized foreach wrapper.
-        If `value` is instance of `StagedIterable`, its regarded as a customized foreach behavior and
-        used to generate code for the python for loop.
+        If `value` is instance of `StagedIterable`, its regarded as a customized foreach
+        behavior and used to generate code for the python for loop.
         Otherwise, we try to execute the loop as usual.
         '''
         if isinstance(iter, StagedIterable):
-            iter.foreach(name, body)
+            iter.foreach(names, body)
         else:
             for iter_var in iter:
-                body(iter_var)
+                try:
+                    body(iter_var)
+                except BreakException:
+                    break
+                except ContinueException:
+                    continue
 
     def assign_stmt(self, name: str, value):
         '''Customized assign wrapper.
-        If `value` is instance of `StagedAssignable`, it's regarded as a customized assign behavior and
-        gets executed with the assigned target variable name.
+        If `value` is instance of `StagedAssignable`, it's regarded as a customized
+        assign behavior and gets executed with the assigned target variable name.
         This wrapper is used for initializing a variable.
         '''
         if isinstance(value, StagedAssignable):
@@ -242,13 +263,29 @@ class StagingOverload:
 
     def return_stmt(self, value, funcname):
         '''Return staging tool. Only allow return in static control flow.'''
-        if not self.is_return_allowed:
+        if not self.is_shortcut_allowed:
             raise self.error(
                 'Return is only allowed in statically deterministic control flow.'
             )
         if isinstance(value, StagedAssignable):
             value = value.assign(funcname)
         raise ReturnException(value)
+
+    def break_stmt(self):
+        '''Break staging tool. Only allow break in static control flow.'''
+        if not self.is_shortcut_allowed:
+            raise self.error(
+                'Break is only allowed in statically deterministic control flow.'
+            )
+        raise BreakException()
+
+    def continue_stmt(self):
+        '''Continue staging tool. Only allow continue in static control flow.'''
+        if not self.is_shortcut_allowed:
+            raise self.error(
+                'Continue is only allowed in statically deterministic control flow.'
+            )
+        raise ContinueException()
 
     def load_attr(self, obj, attr: str):
         '''Load attribute staging tool. Allows customization of reading attributes.'''
@@ -312,7 +349,7 @@ class StagingOverload:
                 traceback.FrameSummary(filename, 1, func.__name__))
             # The called function can now return from itself, despite what the outer
             # control flow is.
-            with self.allow_return_scope(True):
+            with self.allow_shortcut_scope(True):
                 try:
                     func(*args, **kwargs)
                 except ReturnException as e:
@@ -358,16 +395,17 @@ class StagingOverload:
         # Inject overload to extra_locals.
         extra_locals['__staging_overload__'] = self
 
-        # To transform a function, except essential AST transformation, we have to pass the
-        # globals and locals (actually captured outer local variables) to the transformed
-        # function properly.
+        # To transform a function, except essential AST transformation, we have to pass
+        # the globals and locals (actually captured outer local variables) to the
+        # transformed function properly.
         # Note that:
         # 1. We have to pass both globals and locals to `exec`.
-        # 2. We cannot insert locals to the globals `dict`, otherwise it will pollute the
-        #    globals `dict`.
-        # 3. We cannot copy the globals `dict` before passing it to exec, otherwise the staged
-        #    function cannot write to globals and get later updates in the global.
-        # Thus, we have to pass the globals and locals to the transformed function separately.
+        # 2. We cannot insert locals to the globals `dict`, otherwise it will pollute
+        #    the globals `dict`.
+        # 3. We cannot copy the globals `dict` before passing it to exec, otherwise the
+        #    staged function cannot write to globals and get later updates in the global.
+        # Thus, we have to pass the globals and locals to the transformed function
+        # separately.
 
         if func.__closure__:
             assert len(func.__code__.co_freevars) == len(func.__closure__)
@@ -403,7 +441,8 @@ class StagingOverload:
         #     return original_func
         # ```
         # Note that `__freetensor_local_cells__` is a `LocalsDictWrapper` object.
-        # It in-turn accesses cell.cell_contents to get/set the value of the local variable.
+        # It in-turn accesses cell.cell_contents to get/set the value of the local
+        # variable.
         # The `LocalsDictWrapper` is a helper class to reduce code generation complexity.
 
         WRAPPER_NAME = '__freetensor_staging_wrapper__'
@@ -482,6 +521,8 @@ class StagingOverload:
                             TerminalFormatter(bg='dark', linenos=True)),
                   file=sys.stderr)
 
+            tree = source  # make debug info match dumped source
+
         # Create an empty locals dict to avoid polluting the original globals.
         empty_locals = {}
         exec(compile(tree, f'<staging:{func.__name__}>', 'exec'),
@@ -496,7 +537,7 @@ class StagingOverload:
 
 class StagedIterable:
 
-    def foreach(self, name: str, f: Callable[[Any], None]):
+    def foreach(self, names, f: Callable[[Any], None]):
         raise NotImplementedError()
 
 
@@ -556,7 +597,8 @@ class StagedPredicate(abc.ABC):
 
 
 def call_helper(callee, *args: ast.expr, **kwargs: ast.expr):
-    '''Call helper that generates a python AST Call node with given callee (overload member) and arguments AST node.'''
+    '''Call helper that generates a python AST Call node with given callee (overload
+    member) and arguments AST node.'''
     return ast.Call(
         ast.Attribute(ast.Name('__staging_overload__',
                                ast.Load()), callee.__name__, ast.Load()),
@@ -565,7 +607,8 @@ def call_helper(callee, *args: ast.expr, **kwargs: ast.expr):
 
 def function_helper(name: str, args: Sequence[str], body: List[ast.stmt],
                     nonlocals: List[str]):
-    '''Function helper that generates a python AST FunctionDef node with given name, arguments name, and body.'''
+    '''Function helper that generates a python AST FunctionDef node with given name,
+    arguments name, and body.'''
     nonlocal_body = ([ast.Nonlocal(nonlocals)]
                      if len(nonlocals) > 0 else []) + body
     return ast.FunctionDef(name=name,
@@ -703,23 +746,46 @@ class Transformer(ast.NodeTransformer):
             body
         foreach('x', iter, for_body)
         ```'''
-        if isinstance(old_node.target, ast.Name) and len(old_node.orelse) == 0:
+        if len(old_node.orelse) == 0:
             with NonlocalTransformingScope(self) as nonlocals:
-                # while opening a fake function, For loops initiates an iter name as well.
-                # need to remove it from the outer nonlocals list to implement shadowing.
-                # only For loops behaves as such, so handle it specially here.
+                # While opening a fake function, For loops initiates an iter name as
+                # well. Need to remove it from the outer nonlocals list to implement
+                # shadowing. Only For loops behaves as such, so handle it specially here.
                 nonlocals = set(nonlocals)
-                if old_node.target.id in nonlocals:
-                    nonlocals.remove(old_node.target.id)
+
+                def recursive_remove_id(target):
+                    if isinstance(target, ast.Name):
+                        if target.id in nonlocals:
+                            nonlocals.remove(target.id)
+                    else:
+                        assert isinstance(target, ast.Tuple)
+                        for t in target.elts:
+                            recursive_remove_id(t)
+
+                recursive_remove_id(old_node.target)
                 nonlocals = list(nonlocals)
 
-                node = self.generic_visit(old_node)
+                def recursive_get_names(target):
+                    if isinstance(target, ast.Name):
+                        return ast.Constant(target.id)
+                    else:
+                        l = []
+                        assert isinstance(target, ast.Tuple)
+                        for t in target.elts:
+                            l.append(recursive_get_names(t))
+                        return ast.Tuple(l, ast.Load())
+
+                target_names = recursive_get_names(old_node.target)
+
+                node: ast.For = self.generic_visit(old_node)
                 node = [
-                    function_helper('for_body', [node.target.id], node.body,
-                                    nonlocals),
+                    function_helper('for_body', ['__item__'], [
+                        ast.Assign([node.target],
+                                   ast.Name('__item__', ast.Load()))
+                    ] + node.body, nonlocals),
                     ast.Expr(
                         call_helper(StagingOverload.foreach,
-                                    ast.Constant(node.target.id), node.iter,
+                                    target_names, node.iter,
                                     ast.Name('for_body', ast.Load())))
                 ]
         else:
@@ -917,3 +983,15 @@ class Transformer(ast.NodeTransformer):
     def visit_ClassDef(self, node: ast.ClassDef) -> Any:
         raise TransformError('Class definitions not supported.', self.filename,
                              self.base_lineno, node)
+
+    def visit_Yield(self, node: ast.Yield) -> Any:
+        raise NotImplementedError()
+
+    def visit_YieldFrom(self, node: ast.YieldFrom) -> Any:
+        raise NotImplementedError()
+
+    def visit_Break(self, node: ast.Break) -> Any:
+        return ast.Expr(call_helper(StagingOverload.break_stmt))
+
+    def visit_Continue(self, node: ast.Continue) -> Any:
+        return ast.Expr(call_helper(StagingOverload.continue_stmt))
