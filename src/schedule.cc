@@ -9,7 +9,11 @@
 #include <analyze/find_stmt.h>
 #include <analyze/get_loop_nest_tree.h>
 #include <auto_schedule/utils.h>
+#include <codegen/code_gen.h>
 #include <container_utils.h>
+#include <driver.h>
+#include <lower.h>
+#include <omp_utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/simplify.h>
@@ -37,8 +41,9 @@
 namespace freetensor {
 
 Schedule::Schedule(const Stmt &ast, int verbose)
-    : ast_(ast), verbose_(verbose),
-      memoized_(Ref<MemoizedSchedules>::make()) {
+    : ast_(ast), verbose_(verbose), memoized_(Ref<MemoizedSchedules>::make()),
+      rng_(Ref<OpenMPRandomEngine>::make(0)) /* TODO: set seed */,
+      randCtx_(Ref<RandCtx<OpenMPRandomEngine>>::make(*rng_)) {
     ast_ = simplify(ast_);
 }
 
@@ -102,7 +107,7 @@ Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
 // - If not found, do the schedule (if found, `run` directly returns)
 // - Save the result (including exceptions, if any) back to `MemoziedSchedules`
 #define RUN_SCHEDULE_MEMORIZEDLY(logs, log)                                    \
-    logs = memoized_->lookup(logs);                                           \
+    logs = memoized_->lookup(logs);                                            \
     ASSERT(logs.top()->type() == log->type());                                 \
     log = logs.top().as<decltype(log)::Object>();                              \
     log->run();                                                                \
@@ -533,9 +538,9 @@ void Schedule::asMatMul(const ID &loop) {
     }
 }
 
-void Schedule::autoSchedule(const Target &target) {
+void Schedule::autoSchedule(const Target &target, const Ref<RandTrace> &trace) {
     autoUseLib(target);
-    autoFuse(target);
+    autoFuse(target, trace);
     autoParallelize(target);
     autoSetMemType(target);
     autoUnroll(target);
@@ -599,7 +604,7 @@ void Schedule::autoUseLib(const Target &target) {
     }
 }
 
-void Schedule::autoFuse(const Target &target) {
+void Schedule::autoFuse(const Target &target, const Ref<RandTrace> &trace) {
     // Try to fuse each pair of consecutive loops
     std::function<void(const Ref<LoopNest> &nest)> visitNest =
         [&, this](const Ref<LoopNest> &nest) {
@@ -607,7 +612,8 @@ void Schedule::autoFuse(const Target &target) {
             ID lastId;
             for (auto &&subNest : nest->subLoops_) {
                 auto thisId = subNest->loop_->id();
-                if (last.isValid()) {
+                if (last.isValid() &&
+                    randCtx_->decide(PROGRAM_POSITION, "fuse", {0, 1}, trace)) {
                     auto bak = ast_;
                     auto logBak = logs_;
                     try {
@@ -893,6 +899,51 @@ void Schedule::autoUnroll(const Target &target) {
             }
         };
     visitNest(getLoopNestTree(ast_));
+}
+
+std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
+    int nBatch, int batchSize, const Ref<Device> &device,
+    const std::vector<Ref<Array>> &args,
+    const std::unordered_map<std::string, Ref<Array>> &kws,
+    const std::regex &toLearn) {
+    try {
+        randCtx_->setLearn();
+        randCtx_->setLearnFilter(toLearn);
+        std::vector<AutoScheduleTuneTrial> trials(nBatch * batchSize);
+        for (int i = 0; i < nBatch; i++) {
+            if (verbose_ >= 1) {
+                logger() << "Tuning auto_schedule: Batch " << i << std::endl;
+            }
+            exceptSafeParallelFor<size_t>(
+                0, batchSize, 1,
+                [&](size_t j) {
+                    auto &[trace, lowered, code, _1, _2] =
+                        trials[i * batchSize + j];
+                    auto s = this->fork();
+                    trace = Ref<RandTrace>::make();
+                    s.autoSchedule(*device->target(), trace);
+                    lowered = lower(s.func(), device->target());
+                    code = codeGen(lowered, device->target());
+                },
+                omp_sched_static); // use schedule(static) to guarantee
+                                   // deterministic RNG
+            for (int j = 0; j < batchSize; j++) {
+                auto &[trace, lowered, code, t, stddev] =
+                    trials[i * batchSize + j];
+                Driver d(lowered, code, device);
+                d.setArgs(args, kws);
+                // TODO: Allow setting measuring repeats
+                std::tie(t, stddev) = d.time();
+                d.collectReturns();
+                randCtx_->observeTrace(trace, t, stddev);
+            }
+        }
+        randCtx_->setInfer();
+        return trials;
+    } catch (...) {
+        randCtx_->setInfer();
+        return {};
+    }
 }
 
 std::vector<std::pair<ID, int>>

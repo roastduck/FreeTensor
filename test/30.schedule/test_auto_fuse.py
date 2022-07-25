@@ -1,5 +1,6 @@
 import freetensor as ft
 import pytest
+import numpy as np
 
 
 def test_basic():
@@ -83,3 +84,47 @@ def test_stmt_in_between_2():
     print(s.ast())
     print(s.logs())
     assert s.logs() == ["swap(L2, S1)", "fuse(L1, L2, true)"]
+
+
+def test_tune():
+    # We fuse the fusable loop by default. But fusing these loops will make
+    # it impossible to parallelize. After tuning, we will end up in not fusing
+    # them
+    with ft.VarDef([("a", (100, 100, 100), "int32", "input", "cpu"),
+                    ("b", (100, 100, 100), "int32", "output", "cpu"),
+                    ("c", (100, 100, 100), "int32", "output", "cpu")]) as (a, b,
+                                                                           c):
+        with ft.For("i", 0, 100, nid="Li1") as i:
+            with ft.For("j", 0, 100, nid="Lj1") as j:
+                with ft.For("k", 0, 100, nid="Lk1") as k:
+                    b[i, j, k] = ft.if_then_else(
+                        j > 0 and k > 0, b[i, j - 1, k - 1], 0) + a[i, j, k]
+        with ft.For("i", 0, 100, nid="Li2") as i:
+            with ft.For("j", 0, 100, nid="Lj2") as j:
+                with ft.For("k", 0, 100, nid="Lk2") as k:
+                    c[i, j, k] = ft.if_then_else(i > 0, c[i - 1, j, k - 1],
+                                                 0) + a[i, j, k]
+
+    func = ft.Func("main", ["a", "b", "c"], [], ft.pop_ast(verbose=True))
+    s = ft.Schedule(func)
+    a = ft.Array(np.random.randint(0, 100, (100, 100, 100)).astype("int32"))
+    b = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
+    c = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
+    trials = s.tune_auto_schedule(10,
+                                  1,
+                                  ft.Device(ft.CPU()), (a, b, c),
+                                  to_learn="fuse")
+    traces = [
+        "{}: t={}, stddev={}".format(
+            "\n".join([str(obs)
+                       for obs in trial.trace]), trial.time, trial.stddev)
+        for trial in trials
+    ]
+    print("\n-------\n".join(traces))
+
+    s.auto_schedule(ft.CPU())
+    print(s.func())
+    print(s.logs())
+
+    for log in s.logs():
+        assert "fuse" not in log

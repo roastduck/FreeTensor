@@ -7,6 +7,8 @@
 #include <auto_schedule/structs.h>
 #include <driver/target.h>
 #include <func.h>
+#include <probability/rand_ctx.h>
+#include <random.h>
 #include <schedule/fission.h>
 #include <schedule/memoized_schedules.h>
 #include <schedule/schedule_log.h>
@@ -17,6 +19,13 @@ namespace freetensor {
 
 enum class MoveToSide : int { Before, After };
 
+struct AutoScheduleTuneTrial {
+    Ref<RandTrace> trace_;
+    Func lowered_;
+    std::string code_;
+    double time_, stddev_;
+};
+
 class Schedule {
     Func func_;
     Stmt ast_;
@@ -25,6 +34,9 @@ class Schedule {
 
     ScheduleLog logs_;
     Ref<MemoizedSchedules> memoized_;
+
+    Ref<OpenMPRandomEngine> rng_;
+    Ref<RandCtx<OpenMPRandomEngine>> randCtx_;
 
   private:
     void saveSuccessLog(const ScheduleLog &logs);
@@ -43,6 +55,9 @@ class Schedule {
      *
      * The `fork`ed object shares the same `MemoizedSchedule` with the original
      * one, so common decisions can be saved and reused
+     *
+     * The `fork`ed object shares the same `RandCtx` objects, so it can learn
+     * from multiple scheduling trials
      */
     Schedule fork() const { return *this; }
 
@@ -474,8 +489,10 @@ class Schedule {
      * (Experimental) Automatic scheduling using some heuristics
      *
      * @param target : Target architecture
+     * @param trace : Random decision tarce
      */
-    void autoSchedule(const Target &target);
+    void autoSchedule(const Target &target,
+                      const Ref<RandTrace> &trace = nullptr);
 
     /**
      * (Experimental) Automatically use external libs using some heuristics
@@ -488,8 +505,9 @@ class Schedule {
      * (Experimental) Automatically fuse consecutive loops using some heuristics
      *
      * @param target : Target architecture
+     * @param trace : Random decision tarce
      */
-    void autoFuse(const Target &target);
+    void autoFuse(const Target &target, const Ref<RandTrace> &trace = nullptr);
 
     /**
      * (Experimental) Automatically parallelize some loops using some heuristics
@@ -511,6 +529,12 @@ class Schedule {
      * @param target : Target architecture
      */
     void autoUnroll(const Target &target);
+
+    std::vector<AutoScheduleTuneTrial> tuneAutoSchedule(
+        int nBatch, int batchSize, const Ref<Device> &device,
+        const std::vector<Ref<Array>> &args,
+        const std::unordered_map<std::string, Ref<Array>> &kws = {},
+        const std::regex &toLearn = std::regex{".*"});
 
     std::vector<std::pair<ID, int>>
     multiLevelTiling(const ForsWithDataReuse &target,

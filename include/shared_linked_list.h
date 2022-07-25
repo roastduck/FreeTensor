@@ -3,6 +3,7 @@
 
 #include <functional>
 
+#include <hash_combine.h>
 #include <ref.h>
 
 namespace freetensor {
