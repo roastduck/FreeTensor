@@ -103,9 +103,6 @@ template <class T> class Ref {
     friend bool operator==(const Ref &lhs, const Ref &rhs) {
         return lhs.ptr_ == rhs.ptr_;
     }
-    friend bool operator!=(const Ref &lhs, const Ref &rhs) {
-        return lhs.ptr_ != rhs.ptr_;
-    }
     friend bool operator<(const Ref &lhs, const Ref &rhs) {
         return lhs.ptr_ < rhs.ptr_;
     }

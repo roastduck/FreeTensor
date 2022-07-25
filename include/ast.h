@@ -205,7 +205,6 @@ class ID {
 
     friend std::ostream &operator<<(std::ostream &os, const ID &id);
     friend bool operator==(const ID &lhs, const ID &rhs);
-    friend bool operator!=(const ID &lhs, const ID &rhs);
     friend struct ::std::hash<ID>;
 };
 
