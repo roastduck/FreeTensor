@@ -8,5 +8,9 @@ var searchData=
   ['threadidxy_5',['threadIdxY',['../namespacefreetensor.html#a1bc50ad6c725128a16500945100f3bda',1,'freetensor']]],
   ['threadidxz_6',['threadIdxZ',['../namespacefreetensor.html#a6a55b505024520e349013b99eb97805b',1,'freetensor']]],
   ['tiles_5f_7',['tiles_',['../classfreetensor_1_1MultiLevelTilingPart.html#a70dd0eb10d3e54795fa31d0b0d2bc317',1,'freetensor::MultiLevelTilingPart']]],
-  ['type_5f_8',['type_',['../structfreetensor_1_1ParallelInfo.html#a7c7fd34bbce45bd7d3bf57f3b8ad9ec3',1,'freetensor::ParallelInfo']]]
+  ['time_5f_8',['time_',['../structfreetensor_1_1AutoScheduleTuneTrial.html#aef06a3b1b63dd5d0a8d14abbeb033f92',1,'freetensor::AutoScheduleTuneTrial']]],
+  ['tolearn_5f_9',['toLearn_',['../classfreetensor_1_1RandCtxImpl.html#a34a694bf5c009f27b8630849b0f318b8',1,'freetensor::RandCtxImpl']]],
+  ['trace_5f_10',['trace_',['../structfreetensor_1_1AutoScheduleTuneTrial.html#a911fdb624e1d7c8dadec5f445abd4a20',1,'freetensor::AutoScheduleTuneTrial']]],
+  ['traces_5f_11',['traces_',['../classfreetensor_1_1RandCtxImpl.html#ae17006673357530a1fe0a976e8770a29',1,'freetensor::RandCtxImpl']]],
+  ['type_5f_12',['type_',['../structfreetensor_1_1ParallelInfo.html#a7c7fd34bbce45bd7d3bf57f3b8ad9ec3',1,'freetensor::ParallelInfo']]]
 ];

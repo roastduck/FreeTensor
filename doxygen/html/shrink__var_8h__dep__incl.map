@@ -1,10 +1,11 @@
 <map id="include/pass/shrink_var.h" name="include/pass/shrink_var.h">
-<area shape="rect" id="node1" title=" " alt="" coords="473,5,619,47"/>
-<area shape="rect" id="node2" href="$lower_8h.html" title=" " alt="" coords="137,102,257,129"/>
-<area shape="rect" id="node5" href="$simplex__buffers_8cc.html" title=" " alt="" coords="281,95,440,136"/>
-<area shape="rect" id="node6" href="$shrink__var_8cc.html" title=" " alt="" coords="464,102,628,129"/>
-<area shape="rect" id="node7" href="$cache_8cc.html" title=" " alt="" coords="653,102,815,129"/>
-<area shape="rect" id="node8" href="$fuse_8cc.html" title=" " alt="" coords="840,102,993,129"/>
+<area shape="rect" id="node1" title=" " alt="" coords="579,5,726,47"/>
+<area shape="rect" id="node2" href="$lower_8h.html" title=" " alt="" coords="243,102,363,129"/>
+<area shape="rect" id="node6" href="$simplex__buffers_8cc.html" title=" " alt="" coords="388,95,547,136"/>
+<area shape="rect" id="node7" href="$shrink__var_8cc.html" title=" " alt="" coords="571,102,735,129"/>
+<area shape="rect" id="node8" href="$cache_8cc.html" title=" " alt="" coords="759,102,922,129"/>
+<area shape="rect" id="node9" href="$fuse_8cc.html" title=" " alt="" coords="947,102,1100,129"/>
 <area shape="rect" id="node3" href="$auto__schedule_8cc.html" title=" " alt="" coords="5,184,177,225"/>
 <area shape="rect" id="node4" href="$sketch_8cc.html" title=" " alt="" coords="202,191,405,218"/>
+<area shape="rect" id="node5" href="$schedule_8cc.html" title=" " alt="" coords="429,191,551,218"/>
 </map>

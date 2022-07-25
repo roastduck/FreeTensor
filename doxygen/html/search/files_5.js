@@ -30,6 +30,7 @@ var searchData=
   ['frontend_5fvar_2eh_27',['frontend_var.h',['../frontend__var_8h.html',1,'']]],
   ['func_2ecc_28',['func.cc',['../func_8cc.html',1,'']]],
   ['func_2eh_29',['func.h',['../func_8h.html',1,'']]],
-  ['fuse_2ecc_30',['fuse.cc',['../fuse_8cc.html',1,'']]],
-  ['fuse_2eh_31',['fuse.h',['../fuse_8h.html',1,'']]]
+  ['func_5futils_2eh_30',['func_utils.h',['../func__utils_8h.html',1,'']]],
+  ['fuse_2ecc_31',['fuse.cc',['../fuse_8cc.html',1,'']]],
+  ['fuse_2eh_32',['fuse.h',['../fuse_8h.html',1,'']]]
 ];

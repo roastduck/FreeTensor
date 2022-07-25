@@ -9,8 +9,9 @@ var searchData=
   ['initstmt_6',['initStmt',['../structfreetensor_1_1ForsWithDataReuse.html#a1dc109e3431174e0fcb9c99f5063d7ae',1,'freetensor::ForsWithDataReuse']]],
   ['inwarp_5f_7',['inWarp_',['../structfreetensor_1_1gpu_1_1ThreadInfo.html#ad8ccf3e9a981373a9b9dd6ddd39db585',1,'freetensor::gpu::ThreadInfo::inWarp_()'],['../structfreetensor_1_1gpu_1_1CrossThreadDep.html#ab0a58becaef355bb916df4b543404f1c',1,'freetensor::gpu::CrossThreadDep::inWarp_()']]],
   ['iotensor_5f_8',['ioTensor_',['../classfreetensor_1_1VarDefNode.html#ad16030712273ec96d4ad63cb700cff90',1,'freetensor::VarDefNode']]],
-  ['isnode_5f_9',['isNode_',['../structfreetensor_1_1NodeIDOrParallelScope.html#a91180360905949408f590f5995bf0782',1,'freetensor::NodeIDOrParallelScope']]],
-  ['iter_5f_10',['iter_',['../structfreetensor_1_1IterAxis.html#aed2eb36b71bdc7e48dbe48d890e39fa7',1,'freetensor::IterAxis::iter_()'],['../structfreetensor_1_1AccessPoint.html#ace563128de58d365ee834cc5028ceb3f',1,'freetensor::AccessPoint::iter_()'],['../classfreetensor_1_1ForNode.html#ae7a0ab11858f63e444d7e0dfd2e399bf',1,'freetensor::ForNode::iter_()']]],
-  ['iter_5fdep_5fconstants_5f_11',['iter_dep_constants_',['../classfreetensor_1_1ScalarPropConst.html#a9913a60a4547b9ec5801dbea240cd05d',1,'freetensor::ScalarPropConst']]],
-  ['iterdim_5f_12',['iterDim_',['../structfreetensor_1_1Dependency.html#a86c36d6bbdaf7b948dd650305ae0470e',1,'freetensor::Dependency']]]
+  ['isinfer_5f_9',['isInfer_',['../classfreetensor_1_1RandCtxImpl.html#a828a86527dc9840642d05eac14f5dd84',1,'freetensor::RandCtxImpl']]],
+  ['isnode_5f_10',['isNode_',['../structfreetensor_1_1NodeIDOrParallelScope.html#a91180360905949408f590f5995bf0782',1,'freetensor::NodeIDOrParallelScope']]],
+  ['iter_5f_11',['iter_',['../structfreetensor_1_1IterAxis.html#aed2eb36b71bdc7e48dbe48d890e39fa7',1,'freetensor::IterAxis::iter_()'],['../structfreetensor_1_1AccessPoint.html#ace563128de58d365ee834cc5028ceb3f',1,'freetensor::AccessPoint::iter_()'],['../classfreetensor_1_1ForNode.html#ae7a0ab11858f63e444d7e0dfd2e399bf',1,'freetensor::ForNode::iter_()']]],
+  ['iter_5fdep_5fconstants_5f_12',['iter_dep_constants_',['../classfreetensor_1_1ScalarPropConst.html#a9913a60a4547b9ec5801dbea240cd05d',1,'freetensor::ScalarPropConst']]],
+  ['iterdim_5f_13',['iterDim_',['../structfreetensor_1_1Dependency.html#a86c36d6bbdaf7b948dd650305ae0470e',1,'freetensor::Dependency']]]
 ];

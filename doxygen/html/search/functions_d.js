@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['name_0',['name',['../classfreetensor_1_1FrontendVar.html#a3deb24f103d9c5e04073e3345e38f817',1,'freetensor::FrontendVar']]],
+  ['name_0',['name',['../classfreetensor_1_1DiscreteRandVar.html#ae547e15fce9e40c46fd5601b133a8028',1,'freetensor::DiscreteRandVar::name()'],['../classfreetensor_1_1FrontendVar.html#a3deb24f103d9c5e04073e3345e38f817',1,'freetensor::FrontendVar::name()']]],
   ['name2def_1',['name2def',['../classfreetensor_1_1CheckNameToDefMapping.html#a86629b0c5868d8a86127c7a97c7f59ac',1,'freetensor::CheckNameToDefMapping']]],
   ['names_2',['names',['../classfreetensor_1_1SymbolTableInterface.html#a763772d4c13f55e5b0b389226e729a66',1,'freetensor::SymbolTableInterface::names()'],['../classfreetensor_1_1SymbolTableData.html#abbb4e5d2c2aadc5d6164de387c1d93d2',1,'freetensor::SymbolTableData::names()'],['../classfreetensor_1_1SymbolTable.html#a561988d97f4dfc67660c5db005fed564',1,'freetensor::SymbolTable::names()'],['../classfreetensor_1_1Z3SimplifyWithSymbolTable.html#a3563a3cf96c6b7f432fd3777ff5fc95d',1,'freetensor::Z3SimplifyWithSymbolTable::names()']]],
   ['nbasic_3',['nBasic',['../classfreetensor_1_1PBMap.html#a83f9525551503fdeca743d758e911b38',1,'freetensor::PBMap::nBasic()'],['../classfreetensor_1_1PBSet.html#a8840a4392202d342c45a88615ed4a148',1,'freetensor::PBSet::nBasic()']]],

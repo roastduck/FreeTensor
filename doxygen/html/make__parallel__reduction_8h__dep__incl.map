@@ -1,7 +1,8 @@
 <map id="include/pass/make_parallel_reduction.h" name="include/pass/make_parallel_reduction.h">
-<area shape="rect" id="node1" title=" " alt="" coords="181,5,380,47"/>
-<area shape="rect" id="node2" href="$lower_8h.html" title=" " alt="" coords="137,102,257,129"/>
-<area shape="rect" id="node5" href="$make__parallel__reduction_8cc.html" title=" " alt="" coords="281,95,451,136"/>
+<area shape="rect" id="node1" title=" " alt="" coords="288,5,487,47"/>
+<area shape="rect" id="node2" href="$lower_8h.html" title=" " alt="" coords="243,102,363,129"/>
+<area shape="rect" id="node6" href="$make__parallel__reduction_8cc.html" title=" " alt="" coords="387,95,558,136"/>
 <area shape="rect" id="node3" href="$auto__schedule_8cc.html" title=" " alt="" coords="5,184,177,225"/>
 <area shape="rect" id="node4" href="$sketch_8cc.html" title=" " alt="" coords="202,191,405,218"/>
+<area shape="rect" id="node5" href="$schedule_8cc.html" title=" " alt="" coords="429,191,551,218"/>
 </map>

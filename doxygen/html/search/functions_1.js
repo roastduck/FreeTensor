@@ -51,10 +51,10 @@ var searchData=
   ['astpart_48',['ASTPart',['../classfreetensor_1_1ASTPart.html#a4666de60a62a3c88edf13e3969dd4dd5',1,'freetensor::ASTPart::ASTPart(ASTPart &amp;&amp;other)'],['../classfreetensor_1_1ASTPart.html#a3cd259c95117a5327a512a55aee9dbc0',1,'freetensor::ASTPart::ASTPart(const ASTPart &amp;other)']]],
   ['at_49',['at',['../classfreetensor_1_1SubTreeList.html#a0d4f7192378bfd4b66feae58b1a66140',1,'freetensor::SubTreeList::at(U &amp;&amp;i)'],['../classfreetensor_1_1SubTreeList.html#acd19b1f6a914cd03197ab26973350756',1,'freetensor::SubTreeList::at(U &amp;&amp;i) const']]],
   ['atype_50',['atype',['../classfreetensor_1_1Buffer.html#a9e0702bde51c66d8df667d18b122aa84',1,'freetensor::Buffer']]],
-  ['autofuse_51',['autoFuse',['../classfreetensor_1_1Schedule.html#af6c1cee0944a78f2662996607cf4ffe0',1,'freetensor::Schedule']]],
+  ['autofuse_51',['autoFuse',['../classfreetensor_1_1Schedule.html#ac78ab0a3587fc753a96468c6ad85186f',1,'freetensor::Schedule']]],
   ['autoparallelize_52',['autoParallelize',['../classfreetensor_1_1Schedule.html#aab49e422d97c96d24081406de659e121',1,'freetensor::Schedule']]],
   ['autoschedule_53',['AutoSchedule',['../classfreetensor_1_1AutoSchedule.html#af63772d26bdd3e696d0e158843a8ec7c',1,'freetensor::AutoSchedule']]],
-  ['autoschedule_54',['autoSchedule',['../classfreetensor_1_1Schedule.html#a9c73e1f8cd59b196aa495c56fb141d8f',1,'freetensor::Schedule']]],
+  ['autoschedule_54',['autoSchedule',['../classfreetensor_1_1Schedule.html#ab07b305c56ef33cab76de9e874c295c3',1,'freetensor::Schedule']]],
   ['autosetmemtype_55',['autoSetMemType',['../classfreetensor_1_1Schedule.html#aeb4eeb733444a7566604e4f19f657b07',1,'freetensor::Schedule']]],
   ['autounroll_56',['autoUnroll',['../classfreetensor_1_1Schedule.html#a7f5c6509535b6636e718d7e3fdbc267f',1,'freetensor::Schedule']]],
   ['autouselib_57',['autoUseLib',['../classfreetensor_1_1Schedule.html#a7f6e8a418824aeaf48e5966d9046e8b4',1,'freetensor::Schedule']]]
