@@ -18,6 +18,18 @@ void init_ffi_schedule(py::module_ &m) {
         .value("FixedSize", VarSplitMode::FixedSize)
         .value("RelaxedSize", VarSplitMode::RelaxedSize);
 
+    py::class_<DiscreteObservation>(m, "DiscreteObservation")
+        .def("__str__",
+             [](const DiscreteObservation &obs) { return toString(obs); });
+    py::class_<AutoScheduleTuneTrial>(m, "AutoScheduleTuneTrial")
+        .def_property_readonly(
+            "trace",
+            [](const AutoScheduleTuneTrial &trial) { return *trial.trace_; })
+        .def_readonly("lowered", &AutoScheduleTuneTrial::lowered_)
+        .def_readonly("code", &AutoScheduleTuneTrial::code_)
+        .def_readonly("time", &AutoScheduleTuneTrial::time_)
+        .def_readonly("stddev", &AutoScheduleTuneTrial::stddev_);
+
     py::class_<Schedule>(m, "Schedule")
         .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
         .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
@@ -76,12 +88,32 @@ void init_ffi_schedule(py::module_ &m) {
         .def("separate_tail", &Schedule::separateTail,
              "noDuplicateVarDefs"_a = false)
         .def("as_matmul", &Schedule::asMatMul)
-        .def("auto_schedule", &Schedule::autoSchedule)
+        .def("auto_schedule",
+             [](Schedule &s, const Target &target) {
+                 // Pybind11 doesn't support Ref<std::vector>, need lambda
+                 return s.autoSchedule(target);
+             })
         .def("auto_use_lib", &Schedule::autoUseLib)
-        .def("auto_fuse", &Schedule::autoFuse)
+        .def("auto_fuse",
+             [](Schedule &s, const Target &target) {
+                 // Pybind11 doesn't support Ref<std::vector>, need lambda
+                 return s.autoFuse(target);
+             })
         .def("auto_parallelize", &Schedule::autoParallelize)
         .def("auto_set_mem_type", &Schedule::autoSetMemType)
-        .def("auto_unroll", &Schedule::autoUnroll);
+        .def("auto_unroll", &Schedule::autoUnroll)
+        .def(
+            "tune_auto_schedule",
+            [](Schedule &s, int nBatch, int batchSize,
+               const Ref<Device> &device, const std::vector<Ref<Array>> &args,
+               const std::unordered_map<std::string, Ref<Array>> &kvs,
+               const std::string &toLearn) {
+                return s.tuneAutoSchedule(nBatch, batchSize, device, args, kvs,
+                                          std::regex(toLearn));
+            },
+            "n_batch"_a, "batch_size"_a, "device"_a, "args"_a,
+            "kvs"_a = std::unordered_map<std::string, Ref<Array>>{},
+            "to_learn"_a = ".*");
 }
 
 } // namespace freetensor
