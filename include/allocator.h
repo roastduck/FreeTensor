@@ -100,10 +100,6 @@ template <class T>
 bool operator==(const Allocator<T> &lhs, const Allocator<T> &rhs) {
     return true;
 }
-template <class T>
-bool operator!=(const Allocator<T> &lhs, const Allocator<T> &rhs) {
-    return false;
-}
 
 } // namespace freetensor
 

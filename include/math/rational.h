@@ -26,10 +26,6 @@ template <class T> struct Rational {
         return lhs.p_ == rhs.p_ && lhs.q_ == rhs.q_;
     }
 
-    friend bool operator!=(const Rational<T> &lhs, const Rational<T> &rhs) {
-        return lhs.p_ != rhs.p_ || lhs.q_ != rhs.q_;
-    }
-
     friend Rational operator+(const Rational<T> &lhs, const Rational<T> &rhs) {
         T g = gcd(lhs.q_, rhs.q_);
         T p = rhs.q_ / g * lhs.p_ + lhs.q_ / g * rhs.p_;
@@ -61,22 +57,9 @@ template <class T> struct Rational {
         return os;
     }
 
-    friend bool operator<(const Rational<T> &lhs, const Rational<T> &rhs) {
+    friend auto operator<=>(const Rational<T> &lhs, const Rational<T> &rhs) {
         T g = gcd(lhs.q_, rhs.q_);
-        return rhs.q_ / g * lhs.p_ < lhs.q_ / g * rhs.p_;
-    }
-
-    friend bool operator>(const Rational<T> &lhs, const Rational<T> &rhs) {
-        T g = gcd(lhs.q_, rhs.q_);
-        return rhs.q_ / g * lhs.p_ > lhs.q_ / g * rhs.p_;
-    }
-
-    friend bool operator<=(const Rational<T> &lhs, const Rational<T> &rhs) {
-        return !(lhs > rhs);
-    }
-
-    friend bool operator>=(const Rational<T> &lhs, const Rational<T> &rhs) {
-        return !(lhs < rhs);
+        return rhs.q_ / g * lhs.p_ <=> lhs.q_ / g * rhs.p_;
     }
 
     Rational &operator+=(const Rational<T> &other) {

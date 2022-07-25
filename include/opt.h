@@ -44,9 +44,6 @@ template <class T> class Opt {
     friend bool operator==(const Opt &lhs, const Opt &rhs) {
         return lhs.opt_ == rhs.opt_;
     }
-    friend bool operator!=(const Opt &lhs, const Opt &rhs) {
-        return lhs.opt_ != rhs.opt_;
-    }
 };
 
 } // namespace freetensor

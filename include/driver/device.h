@@ -31,9 +31,6 @@ class Device {
     friend bool operator==(const Device &lhs, const Device &rhs) {
         return isSame(lhs.target_, rhs.target_) && lhs.num_ == rhs.num_;
     }
-    friend bool operator!=(const Device &lhs, const Device &rhs) {
-        return !(lhs == rhs);
-    }
 };
 
 } // namespace freetensor

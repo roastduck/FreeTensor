@@ -215,11 +215,6 @@ bool operator==(const ID &lhs, const ID &rhs) {
     return lhs.stmtId_ == rhs.stmtId_ && HashComparator()(lhs.expr_, rhs.expr_);
 }
 
-bool operator!=(const ID &lhs, const ID &rhs) {
-    return lhs.stmtId_ != rhs.stmtId_ ||
-           !HashComparator()(lhs.expr_, rhs.expr_);
-}
-
 std::atomic<uint64_t> StmtNode::idCnt_ = 0;
 
 std::string StmtNode::newId() { return "#" + std::to_string(idCnt_++); }

@@ -611,22 +611,10 @@ inline bool operator==(const PBSet &lhs, const PBSet &rhs) {
     return isl_set_is_equal(lhs.get(), rhs.get());
 }
 
-inline bool operator!=(const PBSet &lhs, const PBSet &rhs) {
-    DEBUG_PROFILE_VERBOSE("inequal", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                         "," + std::to_string(rhs.nBasic()));
-    return !isl_set_is_equal(lhs.get(), rhs.get());
-}
-
 inline bool operator==(const PBMap &lhs, const PBMap &rhs) {
     DEBUG_PROFILE_VERBOSE("equal", "nBasic=" + std::to_string(lhs.nBasic()) +
                                        "," + std::to_string(rhs.nBasic()));
     return isl_map_is_equal(lhs.get(), rhs.get());
-}
-
-inline bool operator!=(const PBMap &lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("inequal", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                         "," + std::to_string(rhs.nBasic()));
-    return !isl_map_is_equal(lhs.get(), rhs.get());
 }
 
 } // namespace freetensor

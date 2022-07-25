@@ -16,16 +16,10 @@ struct SerialScope {};
 inline bool operator==(const SerialScope &lhs, const SerialScope &rhs) {
     return true;
 }
-inline bool operator!=(const SerialScope &lhs, const SerialScope &rhs) {
-    return false;
-}
 
 struct OpenMPScope {};
 inline bool operator==(const OpenMPScope &lhs, const OpenMPScope &rhs) {
     return true;
-}
-inline bool operator!=(const OpenMPScope &lhs, const OpenMPScope &rhs) {
-    return false;
 }
 inline std::ostream &operator<<(std::ostream &os, const OpenMPScope &parallel) {
     return os << "openmp";
@@ -34,9 +28,6 @@ inline std::ostream &operator<<(std::ostream &os, const OpenMPScope &parallel) {
 struct CUDAStreamScope {};
 inline bool operator==(const CUDAStreamScope &lhs, const CUDAStreamScope &rhs) {
     return true;
-}
-inline bool operator!=(const CUDAStreamScope &lhs, const CUDAStreamScope &rhs) {
-    return false;
 }
 inline std::ostream &operator<<(std::ostream &os,
                                 const CUDAStreamScope &parallel) {
@@ -49,9 +40,6 @@ struct CUDAScope {
 };
 inline bool operator==(const CUDAScope &lhs, const CUDAScope &rhs) {
     return lhs.level_ == rhs.level_ && lhs.dim_ == rhs.dim_;
-}
-inline bool operator!=(const CUDAScope &lhs, const CUDAScope &rhs) {
-    return !(lhs == rhs);
 }
 inline std::ostream &operator<<(std::ostream &os, const CUDAScope &parallel) {
     switch (parallel.level_) {
