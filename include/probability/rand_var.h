@@ -35,14 +35,10 @@ class DiscreteRandVar {
         // (https://en.wikipedia.org/wiki/Dirichlet_distribution#Computational_methods)
         auto n = obs_.size();
         std::vector<double> ret(n);
-        double sum = 0;
         for (size_t i = 0; i < n; i++) {
             ret[i] = std::gamma_distribution<double>{obs_[i] + 1., 1.}(rng);
-            sum += ret[i];
         }
-        for (size_t i = 0; i < n; i++) {
-            ret[i] /= sum;
-        }
+        // std::discrete_distribution will normalize it for us
         return ret;
     }
 
