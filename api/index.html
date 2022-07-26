@@ -13793,11 +13793,11 @@ StagingOverload        </code>
             <span class="k">return</span> <span class="n">ty</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">mark_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_lineno</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">line_offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">mark_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lineno</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="c1"># FrameSummary is immutable, so we have to initialize a new one with updated</span>
         <span class="c1"># line number.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">debug_call_stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">FrameSummary</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">debug_call_stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">base_lineno</span> <span class="o">+</span> <span class="n">line_offset</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">debug_call_stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">debug_call_stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">at_position</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">debug_call_stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span>
                          <span class="bp">self</span><span class="o">.</span><span class="n">debug_call_stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lineno</span><span class="p">)</span>
@@ -13811,7 +13811,7 @@ StagingOverload        </code>
 
         <span class="k">if</span> <span class="n">src</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">lines</span><span class="p">,</span> <span class="n">lineno</span> <span class="o">=</span> <span class="n">ins</span><span class="o">.</span><span class="n">getsourcelines</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-            <span class="n">src</span> <span class="o">=</span> <span class="n">_remove_indent</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
             <span class="n">file</span> <span class="o">=</span> <span class="n">ins</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">lineno</span> <span class="o">=</span> <span class="mi">1</span>
@@ -13841,7 +13841,19 @@ StagingOverload        </code>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">func_locals</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">process_annotating_comments</span><span class="p">(</span><span class="n">src</span><span class="p">))</span>
+        <span class="c1"># Translate `#! ` comments to metadata calls.</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">process_annotating_comments</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="c1"># Wrap the code if it has a indentation.</span>
+        <span class="k">if</span> <span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39; &#39;</span> <span class="ow">or</span> <span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="s1">&#39;if True:</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">src</span>
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ast</span><span class="o">.</span><span class="n">If</span><span class="p">)</span>
+            <span class="c1"># Replace with the real body to eliminate the faked if.</span>
+            <span class="n">tree</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">body</span>
+            <span class="c1"># Modify lineno to match with the location.</span>
+            <span class="n">lineno</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
         <span class="n">tree</span> <span class="o">=</span> <span class="n">Transformer</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">lineno</span><span class="p">)</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
 
         <span class="c1"># Instead of passing the `func_local` directly to `exec`, we instead wrap the</span>
@@ -14717,12 +14729,12 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
                 <span class="n">new_node</span> <span class="o">=</span> <span class="p">[</span><span class="n">new_node</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">location_helper</span><span class="p">([</span>
+            <span class="k">return</span> <span class="p">[</span>
                 <span class="n">ast</span><span class="o">.</span><span class="n">Expr</span><span class="p">(</span>
-                    <span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">mark_position</span><span class="p">,</span>
-                                <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_lineno</span><span class="p">),</span>
-                                <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="p">)))</span>
-            <span class="p">]</span> <span class="o">+</span> <span class="n">new_node</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+                    <span class="n">call_helper</span><span class="p">(</span>
+                        <span class="n">StagingOverload</span><span class="o">.</span><span class="n">mark_position</span><span class="p">,</span>
+                        <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_lineno</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">lineno</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
+            <span class="p">]</span> <span class="o">+</span> <span class="n">new_node</span>
         <span class="k">return</span> <span class="n">new_node</span>
 
     <span class="k">def</span> <span class="nf">visit_Assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">:</span>
@@ -14745,7 +14757,7 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
                     <span class="n">node</span><span class="o">.</span><span class="n">targets</span><span class="p">,</span>
                     <span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">assign_stmt</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
                                 <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">handleType_AnnAssign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">AnnAssign</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">target</span>
@@ -14834,7 +14846,7 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
                 <span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">visit_While</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">While</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="sd">&#39;&#39;&#39;Rule:</span>
@@ -14857,7 +14869,7 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
                                 <span class="n">ast</span><span class="o">.</span><span class="n">Lambda</span><span class="p">(</span><span class="n">_EMPTY_ARGS</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">test</span><span class="p">),</span>
                                 <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="s1">&#39;while_body&#39;</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">())))</span>
             <span class="p">]</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">visit_If</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">If</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Rule:</span>
@@ -14899,7 +14911,7 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
             <span class="n">ast</span><span class="o">.</span><span class="n">Expr</span><span class="p">(</span>
                 <span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">if_then_else_stmt</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">then_body</span><span class="p">,</span>
                             <span class="n">else_body</span><span class="p">)))</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">new_node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_node</span>
 
     <span class="k">def</span> <span class="nf">visit_IfExp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">IfExp</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Rule: `body if test else orelse` -&gt; `if_then_else_expr(test, body, orelse)`&#39;&#39;&#39;</span>
@@ -14907,7 +14919,7 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
         <span class="n">node</span> <span class="o">=</span> <span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">if_then_else_expr</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">test</span><span class="p">,</span>
                            <span class="n">ast</span><span class="o">.</span><span class="n">Lambda</span><span class="p">(</span><span class="n">_EMPTY_ARGS</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">),</span>
                            <span class="n">ast</span><span class="o">.</span><span class="n">Lambda</span><span class="p">(</span><span class="n">_EMPTY_ARGS</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">orelse</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">visit_FunctionDef</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">prev_func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curr_func</span>
@@ -14938,9 +14950,8 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
             <span class="n">node</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">stmt</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">posonlyargs</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span>
                 <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span> <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">handleType_AnnAssign</span><span class="p">(</span>
-                    <span class="n">location_helper</span><span class="p">(</span>
-                        <span class="n">ast</span><span class="o">.</span><span class="n">AnnAssign</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">arg</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Store</span><span class="p">()),</span>
-                                      <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">old_node</span><span class="p">))</span>
+                    <span class="n">ast</span><span class="o">.</span><span class="n">AnnAssign</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">arg</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Store</span><span class="p">()),</span>
+                                  <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
             <span class="p">]</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span>
 
             <span class="c1"># Cleanup annotations; we don&#39;t need them anymore</span>
@@ -14952,12 +14963,12 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">curr_func</span> <span class="o">=</span> <span class="n">prev_func</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nonlocals</span> <span class="o">=</span> <span class="n">prev_nonlocals</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">visit_Assert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Assert</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Assert</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
         <span class="n">node</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Expr</span><span class="p">(</span><span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">assert_stmt</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">test</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">visit_BoolOp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">BoolOp</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">BoolOp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
@@ -14966,16 +14977,16 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Or</span><span class="p">):</span>
             <span class="n">libfunc</span> <span class="o">=</span> <span class="n">StagingOverload</span><span class="o">.</span><span class="n">or_expr</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">node</span>
         <span class="n">node</span> <span class="o">=</span> <span class="n">call_helper</span><span class="p">(</span><span class="n">libfunc</span><span class="p">,</span>
                            <span class="o">*</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">Lambda</span><span class="p">(</span><span class="n">_EMPTY_ARGS</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">values</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">visit_UnaryOp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">UnaryOp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Not</span><span class="p">):</span>
             <span class="n">node</span> <span class="o">=</span> <span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">not_expr</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">operand</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">visit_Compare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Compare</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="sd">&#39;&#39;&#39;Expand multiple comparison into `and` expression.&#39;&#39;&#39;</span>
@@ -14986,7 +14997,7 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
         <span class="k">for</span> <span class="n">op</span><span class="p">,</span> <span class="n">rhs</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">old_node</span><span class="o">.</span><span class="n">ops</span><span class="p">,</span> <span class="n">old_node</span><span class="o">.</span><span class="n">comparators</span><span class="p">):</span>
             <span class="n">node</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">Compare</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="p">[</span><span class="n">op</span><span class="p">],</span> <span class="p">[</span><span class="n">rhs</span><span class="p">]))</span>
             <span class="n">lhs</span> <span class="o">=</span> <span class="n">rhs</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">visit_Attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
@@ -14995,7 +15006,7 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
                     <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s1">&#39;__staging_overload__&#39;</span><span class="p">):</span>
                 <span class="n">node</span> <span class="o">=</span> <span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">load_attr</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                                    <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">attr</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">visit_Return</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Return</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Return</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
@@ -15003,17 +15014,17 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
         <span class="n">node</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Expr</span><span class="p">(</span>
             <span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">return_stmt</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                         <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">curr_func</span><span class="p">)))</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">visit_Lambda</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Lambda</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">NonlocalTransformingScope</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Lambda</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">visit_comprehension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">comprehension</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">NonlocalTransformingScope</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">comprehension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">visit_Name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Store</span><span class="p">):</span>
@@ -15131,12 +15142,12 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="n">new_node</span> <span class="o">=</span> <span class="p">[</span><span class="n">new_node</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">location_helper</span><span class="p">([</span>
+        <span class="k">return</span> <span class="p">[</span>
             <span class="n">ast</span><span class="o">.</span><span class="n">Expr</span><span class="p">(</span>
-                <span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">mark_position</span><span class="p">,</span>
-                            <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_lineno</span><span class="p">),</span>
-                            <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="p">)))</span>
-        <span class="p">]</span> <span class="o">+</span> <span class="n">new_node</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+                <span class="n">call_helper</span><span class="p">(</span>
+                    <span class="n">StagingOverload</span><span class="o">.</span><span class="n">mark_position</span><span class="p">,</span>
+                    <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_lineno</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">lineno</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
+        <span class="p">]</span> <span class="o">+</span> <span class="n">new_node</span>
     <span class="k">return</span> <span class="n">new_node</span>
 </code></pre></div>
         </details>
@@ -15224,7 +15235,7 @@ if freetensor__annotate__x:
                 <span class="n">node</span><span class="o">.</span><span class="n">targets</span><span class="p">,</span>
                 <span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">assign_stmt</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
                             <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">node</span>
 </code></pre></div>
         </details>
     </div>
@@ -15263,7 +15274,7 @@ if freetensor__annotate__x:
     <span class="k">for</span> <span class="n">op</span><span class="p">,</span> <span class="n">rhs</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">old_node</span><span class="o">.</span><span class="n">ops</span><span class="p">,</span> <span class="n">old_node</span><span class="o">.</span><span class="n">comparators</span><span class="p">):</span>
         <span class="n">node</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">Compare</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="p">[</span><span class="n">op</span><span class="p">],</span> <span class="p">[</span><span class="n">rhs</span><span class="p">]))</span>
         <span class="n">lhs</span> <span class="o">=</span> <span class="n">rhs</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">))</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -15354,7 +15365,7 @@ foreach('x', iter, for_body)
             <span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">node</span>
 </code></pre></div>
         </details>
     </div>
@@ -15432,7 +15443,7 @@ if_then_else_stmt(pred, then_body, else_body)
         <span class="n">ast</span><span class="o">.</span><span class="n">Expr</span><span class="p">(</span>
             <span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">if_then_else_stmt</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">then_body</span><span class="p">,</span>
                         <span class="n">else_body</span><span class="p">)))</span>
-    <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">new_node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_node</span>
 </code></pre></div>
         </details>
     </div>
@@ -15463,7 +15474,7 @@ if_then_else_stmt(pred, then_body, else_body)
     <span class="n">node</span> <span class="o">=</span> <span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">if_then_else_expr</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">test</span><span class="p">,</span>
                        <span class="n">ast</span><span class="o">.</span><span class="n">Lambda</span><span class="p">(</span><span class="n">_EMPTY_ARGS</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">),</span>
                        <span class="n">ast</span><span class="o">.</span><span class="n">Lambda</span><span class="p">(</span><span class="n">_EMPTY_ARGS</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">orelse</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">node</span>
 </code></pre></div>
         </details>
     </div>
@@ -15521,7 +15532,7 @@ while_stmt(lambda: pred, while_body)
                             <span class="n">ast</span><span class="o">.</span><span class="n">Lambda</span><span class="p">(</span><span class="n">_EMPTY_ARGS</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">test</span><span class="p">),</span>
                             <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="s1">&#39;while_body&#39;</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">())))</span>
         <span class="p">]</span>
-    <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">node</span>
 </code></pre></div>
         </details>
     </div>
@@ -15617,7 +15628,6 @@ while_stmt(lambda: pred, while_body)
     </div>
 
   </div>
-
 
 
 
