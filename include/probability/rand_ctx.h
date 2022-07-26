@@ -2,13 +2,14 @@
 #define FREE_TENSOR_RAND_CTX_H
 
 #include <map>
+#include <mutex>
 #include <regex>
 #include <string>
 #include <unordered_map>
 
 #include <func_utils.h>
+#include <probability/rand_cond.h>
 #include <probability/rand_var.h>
-#include <shared_linked_list.h>
 
 namespace freetensor {
 
@@ -31,10 +32,8 @@ typedef std::vector<DiscreteObservation> RandTrace;
  */
 class RandCtxImpl {
   protected:
-    SharedLinkedList<int> condStack_;
-    std::unordered_map<
-        ProgramPosition,
-        std::unordered_map<SharedLinkedList<int>, Ref<DiscreteRandVar>>>
+    std::unordered_map<ProgramPosition,
+                       std::unordered_map<RandCondStack, Ref<DiscreteRandVar>>>
         randVars_;
 
     std::multimap<Ref<RandTrace>, std::pair<double, double>,
@@ -44,11 +43,19 @@ class RandCtxImpl {
     bool isInfer_ = true;
     std::regex toLearn_{".*"};
 
+    std::mutex lock_;
+
   public:
-    void pushCond(int value) { condStack_ = condStack_.push(value); }
-
-    void popCond() { condStack_ = condStack_.pop(); }
-
+    /**
+     * Learn from a trace
+     *
+     * This trace is compared with existing traces. For each two trace being
+     * compared, the first different decision will be found, whose random
+     * variable will be upadated to perfer the decision from the trace of the
+     * lower value
+     *
+     * This function must be called from the master thread
+     */
     void observeTrace(const Ref<RandTrace> &trace, double value, double stddev);
 
     /**
@@ -57,16 +64,22 @@ class RandCtxImpl {
      * A pattern can be set, and then only the variables matching this pattern
      * is set to learning. This is useful when testing some of the random
      * decisions with few learning trials
+     *
+     * This function must be called from the master thread
      */
     void setLearnFilter(const std::regex &toLearn) { toLearn_ = toLearn; }
 
     /**
      * When `decide` later, randomly sample a decision
+     *
+     * This function must be called from the master thread
      */
     void setLearn() { isInfer_ = false; }
 
     /**
      * When `decide` later, pick a most likely decision
+     *
+     * This function must be called from the master thread
      */
     void setInfer() { isInfer_ = true; }
 };
@@ -92,19 +105,23 @@ class RandCtx : public RandCtxImpl {
      *
      * If learning, sample a random variable and record it as a trace. If
      * infering, pick a most likely decision
+     *
+     * This function is thread-safe
      */
     int decide(ProgramPosition pos, const std::string &name,
-               const std::vector<int> &initObs, const Ref<RandTrace> &trace) {
-        if (!randVars_.count(pos) || !randVars_.at(pos).count(condStack_)) {
-            randVars_[pos][condStack_] =
-                Ref<DiscreteRandVar>::make(name, initObs);
+               const RandCondStack &condStack, const std::vector<int> &initObs,
+               const Ref<RandTrace> &trace, const std::string &message = "") {
+        std::lock_guard<std::mutex> guard(lock_);
+        if (!randVars_.count(pos) || !randVars_.at(pos).count(condStack)) {
+            randVars_[pos][condStack] =
+                Ref<DiscreteRandVar>::make(name, condStack, initObs);
         }
-        auto &&var = randVars_.at(pos).at(condStack_);
+        auto &&var = randVars_.at(pos).at(condStack);
         auto value = isInfer_ || !std::regex_match(var->name(), toLearn_)
                          ? var->mostLikely()
                          : var->sample(rng_);
         if (trace.isValid()) {
-            trace->emplace_back(var, value);
+            trace->emplace_back(var, value, message);
         }
         return value;
     }

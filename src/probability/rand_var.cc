@@ -4,9 +4,20 @@
 namespace freetensor {
 
 std::ostream &operator<<(std::ostream &os, const DiscreteRandVar &var) {
-    // TODO: Pring conditions
-    return os << "P(" << var.name_ << ") ~ Bernoulli(p ~ Dir({" << var.obs_
-              << "} + 1))";
+    os << "P(" << var.name_;
+    if (!var.conds_.empty()) {
+        os << " | " << var.conds_.asVector();
+    }
+    os << ") ~ Bernoulli(p ~ Dir({" << var.obs_ << "} + 1))";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const DiscreteObservation &obs) {
+    os << "(" << *obs.varSnapshot_ << ") = " << obs.value_;
+    if (!obs.message_.empty()) {
+        os << " /* " << obs.message_ << " */";
+    }
+    return os;
 }
 
 } // namespace freetensor

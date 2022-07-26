@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include <probability/rand_cond.h>
 #include <ref.h>
 
 namespace freetensor {
@@ -26,6 +27,7 @@ namespace freetensor {
  */
 class DiscreteRandVar {
     std::string name_;
+    RandCondStack conds_;
     std::vector<int> obs_;
 
   private:
@@ -43,8 +45,9 @@ class DiscreteRandVar {
     }
 
   public:
-    DiscreteRandVar(const std::string &name, const std::vector<int> &initObs)
-        : name_(name), obs_(initObs) {}
+    DiscreteRandVar(const std::string &name, const RandCondStack &conds,
+                    const std::vector<int> &initObs)
+        : name_(name), conds_(conds), obs_(initObs) {}
 
     void observe(int value, int cnt = 1) { obs_.at(value) += cnt; }
 
@@ -84,19 +87,27 @@ struct DiscreteObservation {
     Ref<DiscreteRandVar> varSnapshot_; // Freeze the distribution at the time of
                                        // observation, used for debugging
     int value_;
+    std::string message_; // Debug info
 
-    DiscreteObservation(const Ref<DiscreteRandVar> &var, int value)
-        : var_(var), varSnapshot_(var->clone()), value_(value) {}
+    DiscreteObservation(const Ref<DiscreteRandVar> &var, int value,
+                        const std::string &message = "")
+        : var_(var), varSnapshot_(var->clone()), value_(value),
+          message_(message) {}
 
-    friend auto operator<=>(const DiscreteObservation &,
-                            const DiscreteObservation &) = default;
-    friend bool operator==(const DiscreteObservation &,
-                           const DiscreteObservation &) = default;
+    friend auto operator<=>(const DiscreteObservation &lhs,
+                            const DiscreteObservation &rhs) {
+        if (auto cmp = lhs.var_ <=> rhs.var_; cmp != 0) {
+            return cmp;
+        }
+        return lhs.value_ <=> rhs.value_;
+    }
+    friend bool operator==(const DiscreteObservation &lhs,
+                           const DiscreteObservation &rhs) {
+        return lhs.var_ == rhs.var_ && lhs.value_ == rhs.value_;
+    }
 
     friend std::ostream &operator<<(std::ostream &os,
-                                    const DiscreteObservation &obs) {
-        return os << "(" << *obs.varSnapshot_ << ") = " << obs.value_;
-    }
+                                    const DiscreteObservation &obs);
 };
 
 } // namespace freetensor

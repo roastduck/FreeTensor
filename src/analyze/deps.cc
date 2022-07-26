@@ -985,6 +985,16 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
         omp_sched_dynamic);
 }
 
+bool FindDeps::exists(const Stmt &op) {
+    struct DepExistsExcept {};
+    try {
+        (*this)(op, [](const Dependency &dep) { throw DepExistsExcept(); });
+    } catch (const DepExistsExcept &e) {
+        return true;
+    }
+    return false;
+}
+
 std::ostream &operator<<(std::ostream &_os, const Dependency &dep) {
     std::ostringstream os;
     os << "Dependency ";

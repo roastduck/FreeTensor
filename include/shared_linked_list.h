@@ -67,6 +67,14 @@ class SharedLinkedList {
         return ret;
     }
 
+    std::vector<T> asVector() const {
+        std::vector<T> revRet;
+        for (auto it = *this; !it.empty(); it = it.pop()) {
+            revRet.emplace_back(it.top());
+        }
+        return std::vector<T>(revRet.rbegin(), revRet.rend());
+    }
+
     size_t hash() const { return empty() ? 0 : tail_->hash_; }
 
     friend bool operator==(const SharedLinkedList &lhs,

@@ -115,7 +115,7 @@ def test_tune():
                                   ft.Device(ft.CPU()), (a, b, c),
                                   to_learn="fuse")
     traces = [
-        "{}: t={}, stddev={}".format(
+        "{}:\n t={}, stddev={}".format(
             "\n".join([str(obs)
                        for obs in trial.trace]), trial.time, trial.stddev)
         for trial in trials
@@ -128,3 +128,60 @@ def test_tune():
 
     for log in s.logs():
         assert "fuse" not in log
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_tune_with_cond():
+    # Fuse loops that can parallelize. Don't fuse loops that can't
+    with ft.VarDef([("a", (100, 100, 100), "int32", "input", "gpu/global"),
+                    ("b", (100, 100, 100), "int32", "output", "gpu/global"),
+                    ("c", (100, 100, 100), "int32", "output", "gpu/global"),
+                    ("y", (100, 100, 100), "int32", "output", "gpu/global")
+                   ]) as (a, b, c, y):
+        # Fusing L1 and L2 leads to poor parallelization, which is not preferred
+        with ft.For("i", 0, 100, nid="Li1") as i:
+            with ft.For("j", 0, 100, nid="Lj1") as j:
+                with ft.For("k", 0, 100, nid="Lk1") as k:
+                    b[i, j, k] = ft.if_then_else(
+                        j > 0 and k > 0, b[i, j - 1, k - 1], 0) + a[i, j, k]
+        with ft.For("i", 0, 100, nid="Li2") as i:
+            with ft.For("j", 0, 100, nid="Lj2") as j:
+                with ft.For("k", 0, 100, nid="Lk2") as k:
+                    c[i, j, k] = ft.if_then_else(i > 0, c[i - 1, j, k - 1],
+                                                 0) + a[i, j, k]
+        # Fusing L3 and L4 is favorable to reduce kernel launch count
+        with ft.VarDef("t", (100, 100, 100), "int32", "cache",
+                       "gpu/global") as t:
+            with ft.For("i", 0, 100, nid="Li3") as i:
+                with ft.For("j", 0, 100, nid="Lj3") as j:
+                    with ft.For("k", 0, 100, nid="Lk3") as k:
+                        t[i, j, k] = a[i, j, k] * i
+            with ft.For("i", 0, 100, nid="Li4") as i:
+                with ft.For("j", 0, 100, nid="Lj4") as j:
+                    with ft.For("k", 0, 100, nid="Lk4") as k:
+                        y[i, j, k] = t[i, j, k] * t[i, j, k]
+
+    func = ft.Func("main", ["a", "b", "c", "y"], [], ft.pop_ast(verbose=True))
+    s = ft.Schedule(func)
+    a = ft.Array(np.random.randint(0, 100, (100, 100, 100)).astype("int32"))
+    b = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
+    c = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
+    y = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
+    trials = s.tune_auto_schedule(10,
+                                  1,
+                                  ft.Device(ft.GPU()), (a, b, c, y),
+                                  to_learn="fuse")
+    traces = [
+        "{}:\n t={}, stddev={}".format(
+            "\n".join([str(obs)
+                       for obs in trial.trace]), trial.time, trial.stddev)
+        for trial in trials
+    ]
+    print("\n-------\n".join(traces))
+
+    s.auto_schedule(ft.GPU())
+    print(s.func())
+    print(s.logs())
+
+    assert "fuse(Li1, Li2, true)" not in s.logs()
+    assert "fuse(Li3, Li4, true)" in s.logs()

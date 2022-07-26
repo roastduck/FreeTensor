@@ -5,6 +5,7 @@
 #include <analyze/all_defs.h>
 #include <analyze/all_stmts.h>
 #include <analyze/count_contig_access_loops.h>
+#include <analyze/deps.h>
 #include <analyze/find_indexing_loops.h>
 #include <analyze/find_stmt.h>
 #include <analyze/get_loop_nest_tree.h>
@@ -63,11 +64,7 @@ Stmt Schedule::ast() const {
 }
 
 std::vector<Ref<ScheduleLogItem>> Schedule::logs() const {
-    std::vector<Ref<ScheduleLogItem>> revRet;
-    for (auto it = logs_; !it.empty(); it = it.pop()) {
-        revRet.emplace_back(it.top());
-    }
-    return std::vector<Ref<ScheduleLogItem>>(revRet.rbegin(), revRet.rend());
+    return logs_.asVector();
 }
 
 std::vector<Stmt>
@@ -605,6 +602,7 @@ void Schedule::autoUseLib(const Target &target) {
 }
 
 void Schedule::autoFuse(const Target &target, const Ref<RandTrace> &trace) {
+    RandCondStack conds;
     // Try to fuse each pair of consecutive loops
     std::function<void(const Ref<LoopNest> &nest)> visitNest =
         [&, this](const Ref<LoopNest> &nest) {
@@ -612,24 +610,53 @@ void Schedule::autoFuse(const Target &target, const Ref<RandTrace> &trace) {
             ID lastId;
             for (auto &&subNest : nest->subLoops_) {
                 auto thisId = subNest->loop_->id();
-                if (last.isValid() &&
-                    randCtx_->decide(PROGRAM_POSITION, "fuse", {0, 1}, trace)) {
-                    auto bak = ast_;
-                    auto logBak = logs_;
-                    try {
-                        try {
-                            lastId = moveTo(lastId, MoveToSide::Before, thisId);
-                        } catch (const InvalidSchedule &e) {
-                            thisId = moveTo(thisId, MoveToSide::After, lastId);
+                if (last.isValid()) {
+                    bool thisHasDep =
+                        FindDeps()
+                            .direction({{{thisId, DepDirection::Different}}})
+                            .filterAccess([&](const AccessPoint &acc) {
+                                return acc.stmt_->ancestorById(thisId)
+                                    .isValid();
+                            })
+                            .exists(ast_);
+                    bool lastHasDep =
+                        FindDeps()
+                            .direction({{{lastId, DepDirection::Different}}})
+                            .filterAccess([&](const AccessPoint &acc) {
+                                return acc.stmt_->ancestorById(lastId)
+                                    .isValid();
+                            })
+                            .exists(ast_);
+                    {
+                        bool depDiff = thisHasDep != lastHasDep;
+                        RandCondGuard _(conds, "depDiff", depDiff);
+                        if (randCtx_->decide(
+                                PROGRAM_POSITION, "fuse", conds,
+                                {depDiff ? 1 : 0, depDiff ? 0 : 1}, trace,
+                                "fuse " + toString(lastId) + " and " +
+                                    toString(thisId) + "?")) {
+                            auto bak = ast_;
+                            auto logBak = logs_;
+                            try {
+                                try {
+                                    lastId = moveTo(lastId, MoveToSide::Before,
+                                                    thisId);
+                                } catch (const InvalidSchedule &e) {
+                                    thisId = moveTo(thisId, MoveToSide::After,
+                                                    lastId);
+                                }
+                                thisId = fuse(lastId, thisId, true);
+                                subNest->subLoops_.insert(
+                                    subNest->subLoops_.begin(),
+                                    last->subLoops_.begin(),
+                                    last->subLoops_.end());
+                                last->subLoops_.clear();
+                            } catch (const InvalidSchedule &e) {
+                                ast_ = std::move(bak),
+                                logs_ = std::move(logBak);
+                                visitNest(last);
+                            }
                         }
-                        thisId = fuse(lastId, thisId, true);
-                        subNest->subLoops_.insert(subNest->subLoops_.begin(),
-                                                  last->subLoops_.begin(),
-                                                  last->subLoops_.end());
-                        last->subLoops_.clear();
-                    } catch (const InvalidSchedule &e) {
-                        ast_ = std::move(bak), logs_ = std::move(logBak);
-                        visitNest(last);
                     }
                 }
                 lastId = thisId, last = subNest;
@@ -942,7 +969,7 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
         return trials;
     } catch (...) {
         randCtx_->setInfer();
-        return {};
+        throw;
     }
 }
 
