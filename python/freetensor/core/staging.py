@@ -77,12 +77,30 @@ class ContinueException(Exception):
     pass
 
 
+def _get_num_spaces(line: str):
+    cnt = 0
+    for c in line:
+        if c == ' ':
+            cnt += 1
+        elif c == '\t':
+            cnt = (cnt + 7) // 8 * 8
+        else:
+            break
+    return cnt
+
+
 def _remove_indent(lines: List[str]) -> str:
-    spaces_to_remove = next((i for i, x in enumerate(lines[0]) if x != ' '),
-                            len(lines[0]))
-    return '\n'.join(
-        line[spaces_to_remove:(-1 if line[-1] == '\n' else len(line))]
-        for line in lines)
+    spaces_to_remove = _get_num_spaces(lines[0])
+    result_lines = []
+    for line in lines:
+        curr_spaces = _get_num_spaces(line)
+        if curr_spaces >= spaces_to_remove:
+            result_lines.append(line[spaces_to_remove:])
+        else:
+            # Less than beginning indentation only occurs when the line does not start
+            # as a new "logical line". In this case, we do not modify the indentation.
+            result_lines.append(line)
+    return ''.join(result_lines)
 
 
 def process_annotating_comments(src: str):
