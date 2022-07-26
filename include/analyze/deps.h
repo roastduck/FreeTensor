@@ -580,10 +580,9 @@ class FindDeps {
      */
     FindDeps filterSubAST(const ID &subAST) {
         FindDeps ret = *this;
-        ret.filterAccess([subAST](const AccessPoint &acc) {
+        return ret.filterAccess([subAST](const AccessPoint &acc) {
             return acc.stmt_->ancestorById(subAST).isValid();
         });
-        return ret;
     }
 
     /**
