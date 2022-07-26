@@ -20,8 +20,8 @@ void FindMultiLevelTiling::visit(const For &op) {
     if (op->body_->nodeType() == ASTNodeType::StmtSeq) {
         auto seq = op->body_.as<StmtSeqNode>();
         if (seq->stmts_.size() == 2) {
-            if (auto st = seq->stmts_[0].as<StoreNode>();
-                st.isValid() && st->nodeType() == ASTNodeType::Store) {
+            if (seq->stmts_[0]->nodeType() == ASTNodeType::Store) {
+                auto st = seq->stmts_[0].as<StoreNode>();
                 if (st->expr_->isConst()) {
                     nowInit_ = st;
                 }
