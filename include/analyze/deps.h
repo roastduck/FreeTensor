@@ -627,6 +627,16 @@ class FindDeps {
      * @param found : callback
      */
     void operator()(const Stmt &op, const FindDepsCallback &found);
+
+    /**
+     * Helper function to run FindDeps
+     *
+     * Only to check whether there is a dependence satisfying given conditions,
+     * but not cared about what dependence it is
+     *
+     * @param op : AST root
+     */
+    bool exists(const Stmt &op);
 };
 
 std::ostream &operator<<(std::ostream &os, const Dependency &dep);

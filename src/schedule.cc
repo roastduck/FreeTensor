@@ -5,6 +5,7 @@
 #include <analyze/all_defs.h>
 #include <analyze/all_stmts.h>
 #include <analyze/count_contig_access_loops.h>
+#include <analyze/deps.h>
 #include <analyze/find_indexing_loops.h>
 #include <analyze/find_stmt.h>
 #include <analyze/get_loop_nest_tree.h>
@@ -63,11 +64,7 @@ Stmt Schedule::ast() const {
 }
 
 std::vector<Ref<ScheduleLogItem>> Schedule::logs() const {
-    std::vector<Ref<ScheduleLogItem>> revRet;
-    for (auto it = logs_; !it.empty(); it = it.pop()) {
-        revRet.emplace_back(it.top());
-    }
-    return std::vector<Ref<ScheduleLogItem>>(revRet.rbegin(), revRet.rend());
+    return logs_.asVector();
 }
 
 std::vector<Stmt>
@@ -605,6 +602,7 @@ void Schedule::autoUseLib(const Target &target) {
 }
 
 void Schedule::autoFuse(const Target &target, const Ref<RandTrace> &trace) {
+    RandCondStack conds;
     // Try to fuse each pair of consecutive loops
     std::function<void(const Ref<LoopNest> &nest)> visitNest =
         [&, this](const Ref<LoopNest> &nest) {
@@ -612,24 +610,59 @@ void Schedule::autoFuse(const Target &target, const Ref<RandTrace> &trace) {
             ID lastId;
             for (auto &&subNest : nest->subLoops_) {
                 auto thisId = subNest->loop_->id();
-                if (last.isValid() &&
-                    randCtx_->decide(PROGRAM_POSITION, "fuse", {0, 1}, trace)) {
-                    auto bak = ast_;
-                    auto logBak = logs_;
-                    try {
-                        try {
-                            lastId = moveTo(lastId, MoveToSide::Before, thisId);
-                        } catch (const InvalidSchedule &e) {
-                            thisId = moveTo(thisId, MoveToSide::After, lastId);
+                if (last.isValid()) {
+                    bool thisHasDep =
+                        FindDeps()
+                            .direction({{{thisId, DepDirection::Different}}})
+                            .filterSubAST(thisId)
+                            .exists(ast_);
+                    bool lastHasDep =
+                        FindDeps()
+                            .direction({{{lastId, DepDirection::Different}}})
+                            .filterSubAST(lastId)
+                            .exists(ast_);
+                    {
+                        // Fusing two may reduce parallelizing opportunities,
+                        // which is related to dependences on the two loops
+                        // being fused:
+                        //
+                        // - If neither loop has dependence: It doesn't matter
+                        // - If both loops have dependence: It doesn't matter,
+                        // too
+                        // - If exactly one of the loop: It may have bad
+                        // influence on parallelizing
+                        //
+                        // Therefore, we add "the two loops having different
+                        // dependences" as a condition of our decision
+                        bool depDiff = thisHasDep != lastHasDep;
+                        RandCondGuard _(conds, "depDiff", depDiff);
+                        if (randCtx_->decide(
+                                PROGRAM_POSITION, "fuse", conds,
+                                {depDiff ? 1 : 0, depDiff ? 0 : 1}, trace,
+                                "fuse " + toString(lastId) + " and " +
+                                    toString(thisId) + "?")) {
+                            auto bak = ast_;
+                            auto logBak = logs_;
+                            try {
+                                try {
+                                    lastId = moveTo(lastId, MoveToSide::Before,
+                                                    thisId);
+                                } catch (const InvalidSchedule &e) {
+                                    thisId = moveTo(thisId, MoveToSide::After,
+                                                    lastId);
+                                }
+                                thisId = fuse(lastId, thisId, true);
+                                subNest->subLoops_.insert(
+                                    subNest->subLoops_.begin(),
+                                    last->subLoops_.begin(),
+                                    last->subLoops_.end());
+                                last->subLoops_.clear();
+                            } catch (const InvalidSchedule &e) {
+                                ast_ = std::move(bak),
+                                logs_ = std::move(logBak);
+                                visitNest(last);
+                            }
                         }
-                        thisId = fuse(lastId, thisId, true);
-                        subNest->subLoops_.insert(subNest->subLoops_.begin(),
-                                                  last->subLoops_.begin(),
-                                                  last->subLoops_.end());
-                        last->subLoops_.clear();
-                    } catch (const InvalidSchedule &e) {
-                        ast_ = std::move(bak), logs_ = std::move(logBak);
-                        visitNest(last);
                     }
                 }
                 lastId = thisId, last = subNest;
@@ -914,6 +947,7 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
             if (verbose_ >= 1) {
                 logger() << "Tuning auto_schedule: Batch " << i << std::endl;
             }
+            std::vector<Ref<Driver>> drivers(batchSize);
             exceptSafeParallelFor<size_t>(
                 0, batchSize, 1,
                 [&](size_t j) {
@@ -924,13 +958,13 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
                     s.autoSchedule(*device->target(), trace);
                     lowered = lower(s.func(), device->target());
                     code = codeGen(lowered, device->target());
+                    drivers[j] = Ref<Driver>::make(lowered, code, device);
                 },
                 omp_sched_static); // use schedule(static) to guarantee
                                    // deterministic RNG
             for (int j = 0; j < batchSize; j++) {
-                auto &[trace, lowered, code, t, stddev] =
-                    trials[i * batchSize + j];
-                Driver d(lowered, code, device);
+                auto &d = *drivers[j];
+                auto &[trace, _1, _2, t, stddev] = trials[i * batchSize + j];
                 d.setArgs(args, kws);
                 // TODO: Allow setting measuring repeats
                 std::tie(t, stddev) = d.time();
@@ -942,7 +976,7 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
         return trials;
     } catch (...) {
         randCtx_->setInfer();
-        return {};
+        throw;
     }
 }
 
