@@ -43,7 +43,7 @@ template <class T> class GPUScalar {
     explicit GPUScalar(const T *ptr) : ptr_(const_cast<T *>(ptr)) {}
     explicit GPUScalar(const T &ref) : ptr_(const_cast<T *>(&ref)) {}
 
-    operator T() {
+    operator T() const {
         T ret;
         checkCudaError(cudaMemcpy(&ret, ptr_, sizeof(T), cudaMemcpyDefault));
         return ret;

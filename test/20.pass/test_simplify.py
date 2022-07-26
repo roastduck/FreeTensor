@@ -102,6 +102,29 @@ def test_redundant_if_3(p):
 
 
 @pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
+def test_int_max(p):
+    with ft.VarDef([("a", (5, 32), "int32", "input", "cpu"),
+                    ("b", (5, 32), "int32", "output", "cpu")]) as (a, b):
+        with ft.For("i", 0, 5) as i:
+            with ft.For("j", 0, 2147483647) as j:
+                with ft.If(j < ft.min(-32 * (i % 4) + 100, 32)):
+                    b[i, j] = a[i, j] + 1
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef([("a", (5, 32), "int32", "input", "cpu"),
+                    ("b", (5, 32), "int32", "output", "cpu")]) as (a, b):
+        with ft.For("i", 0, 5) as i:
+            with ft.For("j", 0, 2147483647) as j:
+                with ft.If(j < ft.min(-32 * (i % 4) + 100, 32)):
+                    b[i, j] = a[i, j] + 1
+    std = ft.pop_ast()
+
+    assert std.match(ast)  # Unchanged
+
+
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_redundant_min(p):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:

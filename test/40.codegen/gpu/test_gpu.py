@@ -162,6 +162,35 @@ def test_split_by_block_and_bind():
     assert np.array_equal(y_np, y_std)
 
 
+def test_not_remove_necessary_range_guard():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(5, 32), "int32", "input", "gpu/global"]
+        y: ft.Var[(5, 32), "int32", "output", "gpu/global"]
+        #! nid: L1
+        for i in range(0, 5):
+            #! nid: L2
+            for j in range(0, 32):
+                if i % 4 * 32 + j < 100:
+                    y[i, j] = x[i, j] + 1
+
+    s = ft.Schedule(test)
+    s.parallelize('L1', "threadIdx.y")
+    s.parallelize('L2', "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=2, skip_passes=['make_1d_var'])
+
+    with ft.VarDef([
+        ("x", (5, 32), "int32", "input", "gpu/global"),
+        ("y", (5, 32), "int32", "output", "gpu/global"),
+    ]) as (x, y):
+        with ft.For(".blockIdx.x", 0, 5) as i:
+            with ft.For(".threadIdx.x", 0, 32) as j:
+                with ft.If(ft.any()):
+                    ft.Any()
+    assert ft.pop_ast().match(func.body)
+
+
 def test_shmem():
 
     @ft.transform

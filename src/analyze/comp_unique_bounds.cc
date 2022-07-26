@@ -51,34 +51,32 @@ void CompUniqueBounds::updUpper(UpperBoundsList &list,
     list.emplace_back(bound);
 }
 
-int CompUniqueBounds::getIntLower(const Expr &op) {
-    int ret = INT_MIN;
+int64_t CompUniqueBounds::getIntLower(const Expr &op) {
+    int64_t ret = LLONG_MIN;
     for (auto &&b : getLower(op)) {
         if (b.lin().isConst()) {
             auto bias = b.lin().bias_;
-            ret =
-                std::max(ret, (int)ceilDiv(bias.p_, bias.q_)); // FIXME: int64_t
+            ret = std::max(ret, ceilDiv(bias.p_, bias.q_));
         }
     }
     return ret;
 }
 
-int CompUniqueBounds::getIntUpper(const Expr &op) {
-    int ret = INT_MAX;
+int64_t CompUniqueBounds::getIntUpper(const Expr &op) {
+    int64_t ret = LLONG_MAX;
     for (auto &&b : getUpper(op)) {
         if (b.lin().isConst()) {
             auto bias = b.lin().bias_;
-            ret = std::min(ret,
-                           (int)floorDiv(bias.p_, bias.q_)); // FIXME: int64_t
+            ret = std::min(ret, floorDiv(bias.p_, bias.q_));
         }
     }
     return ret;
 }
 
-Opt<int> CompUniqueBounds::getInt(const Expr &op) {
+Opt<int64_t> CompUniqueBounds::getInt(const Expr &op) {
     int lower = getIntLower(op);
     int upper = getIntUpper(op);
-    return lower == upper ? Opt<int>::make(lower) : nullptr;
+    return lower == upper ? Opt<int64_t>::make(lower) : nullptr;
 }
 
 CompUniqueBounds::LowerBoundsList CompUniqueBounds::getDefinedLower(

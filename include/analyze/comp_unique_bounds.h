@@ -53,9 +53,9 @@ class CompUniqueBounds : public Visitor {
         return upper_.at(op);
     }
 
-    int getIntLower(const Expr &op);
-    int getIntUpper(const Expr &op);
-    Opt<int> getInt(const Expr &op);
+    int64_t getIntLower(const Expr &op);
+    int64_t getIntUpper(const Expr &op);
+    Opt<int64_t> getInt(const Expr &op);
 
     /**
      * Get all bounds defined by only variables or iterators in `names`
