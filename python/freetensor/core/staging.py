@@ -80,7 +80,9 @@ class ContinueException(Exception):
 def _remove_indent(lines: List[str]) -> str:
     spaces_to_remove = next((i for i, x in enumerate(lines[0]) if x != ' '),
                             len(lines[0]))
-    return ''.join(line[spaces_to_remove:] for line in lines)
+    return '\n'.join(
+        line[spaces_to_remove:(-1 if line[-1] == '\n' else len(line))]
+        for line in lines)
 
 
 def process_annotating_comments(src: str):
@@ -368,11 +370,11 @@ class StagingOverload:
             return ty.annotate(name)
         return None
 
-    def mark_position(self, base_lineno: int, line_offset: int):
+    def mark_position(self, lineno: int):
         # FrameSummary is immutable, so we have to initialize a new one with updated
         # line number.
         self.debug_call_stack[-1] = traceback.FrameSummary(
-            self.debug_call_stack[-1].filename, base_lineno + line_offset - 1,
+            self.debug_call_stack[-1].filename, lineno,
             self.debug_call_stack[-1].name)
         self.at_position(self.debug_call_stack[-1].filename,
                          self.debug_call_stack[-1].lineno)
@@ -625,17 +627,6 @@ def function_helper(name: str, args: Sequence[str], body: List[ast.stmt],
                            decorator_list=[])
 
 
-def location_helper(new_nodes, old_node):
-    if not isinstance(new_nodes, list):
-        ast.copy_location(new_nodes, old_node)
-        ast.fix_missing_locations(new_nodes)
-    else:
-        for n in new_nodes:
-            ast.copy_location(n, old_node)
-            ast.fix_missing_locations(n)
-    return new_nodes
-
-
 class NonlocalTransformingScope:
 
     def __init__(self, t):
@@ -673,12 +664,12 @@ class Transformer(ast.NodeTransformer):
         if isinstance(node, ast.stmt) and not isinstance(node, ast.FunctionDef):
             if not isinstance(new_node, list):
                 new_node = [new_node]
-            return location_helper([
+            return [
                 ast.Expr(
-                    call_helper(StagingOverload.mark_position,
-                                ast.Constant(self.base_lineno),
-                                ast.Constant(node.lineno)))
-            ] + new_node, node)
+                    call_helper(
+                        StagingOverload.mark_position,
+                        ast.Constant(self.base_lineno + node.lineno - 1)))
+            ] + new_node
         return new_node
 
     def visit_Assign(self, old_node: ast.Assign) -> ast.Assign:
@@ -701,7 +692,7 @@ class Transformer(ast.NodeTransformer):
                     node.targets,
                     call_helper(StagingOverload.assign_stmt, ast.Constant(name),
                                 node.value))
-        return location_helper(node, old_node)
+        return node
 
     def handleType_AnnAssign(self, node: ast.AnnAssign) -> Any:
         x = node.target
@@ -790,7 +781,7 @@ class Transformer(ast.NodeTransformer):
                 ]
         else:
             node = self.generic_visit(old_node)
-        return location_helper(node, old_node)
+        return node
 
     def visit_While(self, old_node: ast.While) -> Any:
         '''Rule:
@@ -813,7 +804,7 @@ class Transformer(ast.NodeTransformer):
                                 ast.Lambda(_EMPTY_ARGS, node.test),
                                 ast.Name('while_body', ast.Load())))
             ]
-        return location_helper(node, old_node)
+        return node
 
     def visit_If(self, old_node: ast.If):
         '''Rule:
@@ -855,7 +846,7 @@ class Transformer(ast.NodeTransformer):
             ast.Expr(
                 call_helper(StagingOverload.if_then_else_stmt, test, then_body,
                             else_body)))
-        return location_helper(new_node, old_node)
+        return new_node
 
     def visit_IfExp(self, old_node: ast.IfExp):
         '''Rule: `body if test else orelse` -> `if_then_else_expr(test, body, orelse)`'''
@@ -863,7 +854,7 @@ class Transformer(ast.NodeTransformer):
         node = call_helper(StagingOverload.if_then_else_expr, node.test,
                            ast.Lambda(_EMPTY_ARGS, node.body),
                            ast.Lambda(_EMPTY_ARGS, node.orelse))
-        return location_helper(node, old_node)
+        return node
 
     def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
         prev_func = self.curr_func
@@ -894,9 +885,8 @@ class Transformer(ast.NodeTransformer):
             node.body = [
                 stmt for arg in node.args.posonlyargs + node.args.args
                 if arg.annotation for stmt in self.handleType_AnnAssign(
-                    location_helper(
-                        ast.AnnAssign(ast.Name(arg.arg, ast.Store()),
-                                      arg.annotation, None, 1), old_node))
+                    ast.AnnAssign(ast.Name(arg.arg, ast.Store()),
+                                  arg.annotation, None, 1))
             ] + node.body
 
             # Cleanup annotations; we don't need them anymore
@@ -908,12 +898,12 @@ class Transformer(ast.NodeTransformer):
 
         self.curr_func = prev_func
         self.nonlocals = prev_nonlocals
-        return location_helper(node, old_node)
+        return node
 
     def visit_Assert(self, old_node: ast.Assert) -> Any:
         node: ast.Assert = self.generic_visit(old_node)
         node = ast.Expr(call_helper(StagingOverload.assert_stmt, node.test))
-        return location_helper(node, old_node)
+        return node
 
     def visit_BoolOp(self, old_node: ast.BoolOp) -> Any:
         node: ast.BoolOp = self.generic_visit(old_node)
@@ -922,16 +912,16 @@ class Transformer(ast.NodeTransformer):
         elif isinstance(node.op, ast.Or):
             libfunc = StagingOverload.or_expr
         else:
-            return location_helper(node, old_node)
+            return node
         node = call_helper(libfunc,
                            *[ast.Lambda(_EMPTY_ARGS, v) for v in node.values])
-        return location_helper(node, old_node)
+        return node
 
     def visit_UnaryOp(self, old_node: ast.UnaryOp) -> Any:
         node: ast.UnaryOp = self.generic_visit(old_node)
         if isinstance(node.op, ast.Not):
             node = call_helper(StagingOverload.not_expr, node.operand)
-        return location_helper(node, old_node)
+        return node
 
     def visit_Compare(self, old_node: ast.Compare) -> Any:
         '''Expand multiple comparison into `and` expression.'''
@@ -942,7 +932,7 @@ class Transformer(ast.NodeTransformer):
         for op, rhs in zip(old_node.ops, old_node.comparators):
             node.values.append(ast.Compare(lhs, [op], [rhs]))
             lhs = rhs
-        return self.visit(location_helper(node, old_node))
+        return self.visit(node)
 
     def visit_Attribute(self, old_node: ast.Attribute) -> Any:
         node: ast.Attribute = self.generic_visit(old_node)
@@ -951,7 +941,7 @@ class Transformer(ast.NodeTransformer):
                     node.value.id == '__staging_overload__'):
                 node = call_helper(StagingOverload.load_attr, node.value,
                                    ast.Constant(node.attr))
-        return location_helper(node, old_node)
+        return node
 
     def visit_Return(self, old_node: ast.Return) -> Any:
         node: ast.Return = self.generic_visit(old_node)
@@ -959,17 +949,17 @@ class Transformer(ast.NodeTransformer):
         node = ast.Expr(
             call_helper(StagingOverload.return_stmt, node.value,
                         ast.Constant(self.curr_func)))
-        return location_helper(node, old_node)
+        return node
 
     def visit_Lambda(self, old_node: ast.Lambda) -> Any:
         with NonlocalTransformingScope(self):
             node: ast.Lambda = self.generic_visit(old_node)
-        return location_helper(node, old_node)
+        return node
 
     def visit_comprehension(self, old_node: ast.comprehension) -> Any:
         with NonlocalTransformingScope(self):
             node: ast.comprehension = self.generic_visit(old_node)
-        return location_helper(node, old_node)
+        return node
 
     def visit_Name(self, node: ast.Name) -> Any:
         if isinstance(node.ctx, ast.Store):
