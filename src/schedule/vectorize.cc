@@ -25,12 +25,7 @@ Stmt vectorize(const Stmt &_ast, const ID &loop) {
     };
     FindDeps()
         .direction({{{loop, DepDirection::Normal}}})
-        .filterLater([&](const AccessPoint &later) {
-            return later.stmt_->ancestorById(loop).isValid();
-        })
-        .filterEarlier([&](const AccessPoint &earlier) {
-            return earlier.stmt_->ancestorById(loop).isValid();
-        })(ast, found);
+        .filterSubAST(loop)(ast, found);
     return ast;
 }
 
