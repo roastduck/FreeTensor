@@ -154,13 +154,7 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
                                   dstOrder.begin(), dstOrder.end());
     FindDeps()
         .direction(notLexLessAfterPermu(dstLoopAndStmtSeqOrder))
-        .filterEarlier([&](const AccessPoint &earlier) {
-            return earlier.stmt_->ancestorById(curOrder.front()->id())
-                .isValid();
-        })
-        .filterLater([&](const AccessPoint &later) {
-            return later.stmt_->ancestorById(curOrder.front()->id()).isValid();
-        })(ast, [&](const Dependency &d) {
+        .filterSubAST(curOrder.front()->id())(ast, [&](const Dependency &d) {
             throw InvalidSchedule("Loops are not permutable: " + toString(d) +
                                   " cannot be resolved");
         });

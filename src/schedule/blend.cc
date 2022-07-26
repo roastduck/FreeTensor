@@ -186,14 +186,7 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
         ASSERT(d.dir_.size() == 2);
         throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
-    FindDeps()
-        .direction(direction)
-        .filterEarlier([&](const AccessPoint &earlier) {
-            return earlier.stmt_->ancestorById(loop).isValid();
-        })
-        .filterLater([&](const AccessPoint &later) {
-            return later.stmt_->ancestorById(loop).isValid();
-        })(ast, found);
+    FindDeps().direction(direction).filterSubAST(loop)(ast, found);
 
     auto loopVari = findLoopVariance(ast);
     ast = BlendPass(loop, loopVari.first, loopVari.second)(ast);

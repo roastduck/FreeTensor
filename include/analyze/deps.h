@@ -507,7 +507,12 @@ class FindDeps {
      */
     FindDeps filterAccess(const FindDepsAccFilter &f) {
         FindDeps ret = *this;
-        ret.accFilter_ = f;
+        ret.accFilter_ =
+            ret.accFilter_ == nullptr
+                ? f
+                : [f0 = ret.accFilter_, &f1 = f](const AccessPoint &acc) {
+                      return f0(acc) && f1(acc);
+                  };
         return ret;
     }
 
@@ -521,7 +526,12 @@ class FindDeps {
      */
     FindDeps filterEarlier(const FindDepsAccFilter &f) {
         FindDeps ret = *this;
-        ret.earlierFilter_ = f;
+        ret.earlierFilter_ =
+            ret.earlierFilter_ == nullptr
+                ? f
+                : [f0 = ret.earlierFilter_, &f1 = f](const AccessPoint &acc) {
+                      return f0(acc) && f1(acc);
+                  };
         return ret;
     }
 
@@ -535,7 +545,12 @@ class FindDeps {
      */
     FindDeps filterLater(const FindDepsAccFilter &f) {
         FindDeps ret = *this;
-        ret.laterFilter_ = f;
+        ret.laterFilter_ =
+            ret.laterFilter_ == nullptr
+                ? f
+                : [f0 = ret.laterFilter_, &f1 = f](const AccessPoint &acc) {
+                      return f0(acc) && f1(acc);
+                  };
         return ret;
     }
 
@@ -550,6 +565,24 @@ class FindDeps {
     FindDeps filter(const FindDepsFilter &f) {
         FindDeps ret = *this;
         ret.filter_ = f;
+        ret.filter_ =
+            ret.filter_ == nullptr
+                ? f
+                : [f0 = ret.filter_, &f1 = f](const AccessPoint &later,
+                                              const AccessPoint &earlier) {
+                      return f0(later, earlier) && f1(later, earlier);
+                  };
+        return ret;
+    }
+
+    /**
+     * Help function to analyze a sub-AST only
+     */
+    FindDeps filterSubAST(const ID &subAST) {
+        FindDeps ret = *this;
+        ret.filterAccess([subAST](const AccessPoint &acc) {
+            return acc.stmt_->ancestorById(subAST).isValid();
+        });
         return ret;
     }
 

@@ -65,14 +65,7 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
         auto found = [&](const Dependency &d) {
             throw InvalidSchedule(toString(d) + " cannot be resolved");
         };
-        FindDeps()
-            .direction({findDepsDir})
-            .filterEarlier([&](const AccessPoint &earlier) {
-                return earlier.stmt_->ancestorById(loop).isValid();
-            })
-            .filterLater([&](const AccessPoint &later) {
-                return later.stmt_->ancestorById(loop).isValid();
-            })(oldAst, found);
+        FindDeps().direction({findDepsDir}).filterSubAST(loop)(oldAst, found);
     }
 
     {
