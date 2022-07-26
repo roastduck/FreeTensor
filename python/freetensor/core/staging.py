@@ -77,32 +77,6 @@ class ContinueException(Exception):
     pass
 
 
-def _get_num_spaces(line: str):
-    cnt = 0
-    for c in line:
-        if c == ' ':
-            cnt += 1
-        elif c == '\t':
-            cnt = (cnt + 7) // 8 * 8
-        else:
-            break
-    return cnt
-
-
-def _remove_indent(lines: List[str]) -> str:
-    spaces_to_remove = _get_num_spaces(lines[0])
-    result_lines = []
-    for line in lines:
-        curr_spaces = _get_num_spaces(line)
-        if curr_spaces >= spaces_to_remove:
-            result_lines.append(line[spaces_to_remove:])
-        else:
-            # Less than beginning indentation only occurs when the line does not start
-            # as a new "logical line". In this case, we do not modify the indentation.
-            result_lines.append(line)
-    return ''.join(result_lines)
-
-
 def process_annotating_comments(src: str):
     new_src = []
     for line in src.splitlines():
@@ -406,7 +380,7 @@ class StagingOverload:
 
         if src is None:
             lines, lineno = ins.getsourcelines(func)
-            src = _remove_indent(lines)
+            src = ''.join(lines)
             file = ins.getfile(func)
         else:
             lineno = 1
@@ -436,7 +410,19 @@ class StagingOverload:
         else:
             func_locals = {}
 
-        tree = ast.parse(process_annotating_comments(src))
+        # Translate `#! ` comments to metadata calls.
+        src = process_annotating_comments(src)
+        # Wrap the code if it has a indentation.
+        if src[0] == ' ' or src[0] == '\t':
+            src = 'if True:\n' + src
+            tree = ast.parse(src)
+            assert len(tree.body) == 1 and isinstance(tree.body[0], ast.If)
+            # Replace with the real body to eliminate the faked if.
+            tree.body = tree.body[0].body
+            # Modify lineno to match with the location.
+            lineno -= 1
+        else:
+            tree = ast.parse(src)
         tree = Transformer(file, lineno).visit(tree)
 
         # Instead of passing the `func_local` directly to `exec`, we instead wrap the
