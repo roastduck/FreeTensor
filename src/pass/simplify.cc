@@ -563,8 +563,8 @@ Stmt SimplifyPass::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     varScope_.erase(_op->iter_), curScope_--;
 
-    if (auto intLen_ = unique_.getInt(op->len_); intLen_.isValid()) {
-        auto intLen = *intLen_;
+    if (auto _intLen = unique_.getInt(op->len_); _intLen.isValid()) {
+        auto intLen = *_intLen;
         if (intLen == 1) {
             auto body = ReplaceIter(_op->iter_, op->begin_)(_op->body_);
             return (*this)(body);
