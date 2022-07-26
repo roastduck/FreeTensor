@@ -614,18 +614,12 @@ void Schedule::autoFuse(const Target &target, const Ref<RandTrace> &trace) {
                     bool thisHasDep =
                         FindDeps()
                             .direction({{{thisId, DepDirection::Different}}})
-                            .filterAccess([&](const AccessPoint &acc) {
-                                return acc.stmt_->ancestorById(thisId)
-                                    .isValid();
-                            })
+                            .filterSubAST(thisId)
                             .exists(ast_);
                     bool lastHasDep =
                         FindDeps()
                             .direction({{{lastId, DepDirection::Different}}})
-                            .filterAccess([&](const AccessPoint &acc) {
-                                return acc.stmt_->ancestorById(lastId)
-                                    .isValid();
-                            })
+                            .filterSubAST(lastId)
                             .exists(ast_);
                     {
                         bool depDiff = thisHasDep != lastHasDep;
@@ -941,6 +935,7 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
             if (verbose_ >= 1) {
                 logger() << "Tuning auto_schedule: Batch " << i << std::endl;
             }
+            std::vector<Ref<Driver>> drivers(batchSize);
             exceptSafeParallelFor<size_t>(
                 0, batchSize, 1,
                 [&](size_t j) {
@@ -951,13 +946,13 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
                     s.autoSchedule(*device->target(), trace);
                     lowered = lower(s.func(), device->target());
                     code = codeGen(lowered, device->target());
+                    drivers[j] = Ref<Driver>::make(lowered, code, device);
                 },
                 omp_sched_static); // use schedule(static) to guarantee
                                    // deterministic RNG
             for (int j = 0; j < batchSize; j++) {
-                auto &[trace, lowered, code, t, stddev] =
-                    trials[i * batchSize + j];
-                Driver d(lowered, code, device);
+                auto &d = *drivers[j];
+                auto &[trace, _1, _2, t, stddev] = trials[i * batchSize + j];
                 d.setArgs(args, kws);
                 // TODO: Allow setting measuring repeats
                 std::tie(t, stddev) = d.time();
