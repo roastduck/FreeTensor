@@ -579,8 +579,7 @@ class FindDeps {
      * Help function to analyze a sub-AST only
      */
     FindDeps filterSubAST(const ID &subAST) {
-        FindDeps ret = *this;
-        return ret.filterAccess([subAST](const AccessPoint &acc) {
+        return filterAccess([subAST](const AccessPoint &acc) {
             return acc.stmt_->ancestorById(subAST).isValid();
         });
     }
