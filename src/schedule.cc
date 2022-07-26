@@ -622,6 +622,18 @@ void Schedule::autoFuse(const Target &target, const Ref<RandTrace> &trace) {
                             .filterSubAST(lastId)
                             .exists(ast_);
                     {
+                        // Fusing two may reduce parallelizing opportunities,
+                        // which is related to dependences on the two loops
+                        // being fused:
+                        //
+                        // - If neither loop has dependence: It doesn't matter
+                        // - If both loops have dependence: It doesn't matter,
+                        // too
+                        // - If exactly one of the loop: It may have bad
+                        // influence on parallelizing
+                        //
+                        // Therefore, we add "the two loops having different
+                        // dependences" as a condition of our decision
                         bool depDiff = thisHasDep != lastHasDep;
                         RandCondGuard _(conds, "depDiff", depDiff);
                         if (randCtx_->decide(
