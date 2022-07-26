@@ -33,6 +33,7 @@ def test_variable_not_declared():
     assert f"File \"{file}\", line {line_bar}" in e.value.args[0]
     assert f"File \"{file}\", line {line_ab}" in e.value.args[0]
 
+
 def test_empty_line():
 
     @ft.inline
