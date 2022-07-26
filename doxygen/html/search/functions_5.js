@@ -14,7 +14,7 @@ var searchData=
   ['error_11',['Error',['../classfreetensor_1_1Error.html#a9871bc3d3fdb06911d59c80dccebe644',1,'freetensor::Error']]],
   ['evolutionarysearch_12',['evolutionarySearch',['../classfreetensor_1_1AutoSchedule.html#ad66aa15edb4ac91b2c13b7fe55415561',1,'freetensor::AutoSchedule']]],
   ['exceptsafeparallelfor_13',['exceptSafeParallelFor',['../namespacefreetensor.html#ac3d565eb01f9334350522df497cf9e7a',1,'freetensor']]],
-  ['exists_14',['exists',['../classfreetensor_1_1Z3Simplify.html#a723bb1caea26d9519af537ae06632740',1,'freetensor::Z3Simplify']]],
+  ['exists_14',['exists',['../classfreetensor_1_1Z3Simplify.html#a723bb1caea26d9519af537ae06632740',1,'freetensor::Z3Simplify::exists()'],['../classfreetensor_1_1FindDeps.html#a2508e6af289012eb9fe994bd7cd52667',1,'freetensor::FindDeps::exists()']]],
   ['expr_15',['expr',['../classfreetensor_1_1UpperBound.html#ac6c3ae2e0ccd064bfa8603605a3a5006',1,'freetensor::UpperBound::expr()'],['../classfreetensor_1_1LowerBound.html#a4a87b5029c7960bfb87f865ad37c71fa',1,'freetensor::LowerBound::expr()']]],
   ['exprinfo_16',['exprInfo',['../classfreetensor_1_1FindLoopVariance.html#aa01c53d4bcc2a2378245a8e04dbb74a0',1,'freetensor::FindLoopVariance']]],
   ['extracheck_17',['extraCheck',['../structfreetensor_1_1Dependency.html#a98d2c578630cb0df810fc3aa7e6fe95a',1,'freetensor::Dependency']]]

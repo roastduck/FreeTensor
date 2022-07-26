@@ -12,11 +12,12 @@ var searchData=
   ['_7epbset_9',['~PBSet',['../classfreetensor_1_1PBSet.html#ae4a43a3b302292e070be9f22db4596d3',1,'freetensor::PBSet']]],
   ['_7epbspace_10',['~PBSpace',['../classfreetensor_1_1PBSpace.html#af4824c683307b65e5f250250f1696ee7',1,'freetensor::PBSpace']]],
   ['_7epbval_11',['~PBVal',['../classfreetensor_1_1PBVal.html#ad9be39c1c2e5a3c5d45502e1ab0e1581',1,'freetensor::PBVal']]],
-  ['_7erule_12',['~Rule',['../classfreetensor_1_1Rule.html#a0a4d14612ca067416862d7d0355a58e8',1,'freetensor::Rule']]],
-  ['_7eschedulelogitem_13',['~ScheduleLogItem',['../classfreetensor_1_1ScheduleLogItem.html#abb6edd7672013007b9e71d5ef5ffbbcc',1,'freetensor::ScheduleLogItem']]],
-  ['_7esketchpartnode_14',['~SketchPartNode',['../classfreetensor_1_1SketchPartNode.html#a72e0a27f9b0312407e358af0a9fe7497',1,'freetensor::SketchPartNode']]],
-  ['_7esmallitemallocator_15',['~SmallItemAllocator',['../classfreetensor_1_1SmallItemAllocator.html#aea885cf7853cee5d3701ef336ca6b214',1,'freetensor::SmallItemAllocator']]],
-  ['_7esubtree_16',['~SubTree',['../classfreetensor_1_1SubTree.html#a089ec3128dc12a6f8da2b084786a5b35',1,'freetensor::SubTree']]],
-  ['_7etarget_17',['~Target',['../classfreetensor_1_1Target.html#a6f0719ce33d2178164d9f0d1e5ff54bb',1,'freetensor::Target']]],
-  ['_7evisitor_18',['~Visitor',['../classfreetensor_1_1Visitor.html#a70f0b0cec974275d2f3cc485d1e84461',1,'freetensor::Visitor']]]
+  ['_7erandcondguard_12',['~RandCondGuard',['../classfreetensor_1_1RandCondGuard.html#a83c3182476ced697c95b297890ae68a5',1,'freetensor::RandCondGuard']]],
+  ['_7erule_13',['~Rule',['../classfreetensor_1_1Rule.html#a0a4d14612ca067416862d7d0355a58e8',1,'freetensor::Rule']]],
+  ['_7eschedulelogitem_14',['~ScheduleLogItem',['../classfreetensor_1_1ScheduleLogItem.html#abb6edd7672013007b9e71d5ef5ffbbcc',1,'freetensor::ScheduleLogItem']]],
+  ['_7esketchpartnode_15',['~SketchPartNode',['../classfreetensor_1_1SketchPartNode.html#a72e0a27f9b0312407e358af0a9fe7497',1,'freetensor::SketchPartNode']]],
+  ['_7esmallitemallocator_16',['~SmallItemAllocator',['../classfreetensor_1_1SmallItemAllocator.html#aea885cf7853cee5d3701ef336ca6b214',1,'freetensor::SmallItemAllocator']]],
+  ['_7esubtree_17',['~SubTree',['../classfreetensor_1_1SubTree.html#a089ec3128dc12a6f8da2b084786a5b35',1,'freetensor::SubTree']]],
+  ['_7etarget_18',['~Target',['../classfreetensor_1_1Target.html#a6f0719ce33d2178164d9f0d1e5ff54bb',1,'freetensor::Target']]],
+  ['_7evisitor_19',['~Visitor',['../classfreetensor_1_1Visitor.html#a70f0b0cec974275d2f3cc485d1e84461',1,'freetensor::Visitor']]]
 ];

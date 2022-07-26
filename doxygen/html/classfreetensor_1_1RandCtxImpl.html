@@ -90,21 +90,17 @@ Collaboration diagram for freetensor::RandCtxImpl:</div>
 <div class="dyncontent">
 <div class="center"><img src="classfreetensor_1_1RandCtxImpl__coll__graph.png" border="0" usemap="#afreetensor_1_1RandCtxImpl_coll__map" alt="Collaboration graph"/></div>
 <map name="afreetensor_1_1RandCtxImpl_coll__map" id="afreetensor_1_1RandCtxImpl_coll__map">
-<area shape="rect" title=" " alt="" coords="687,107,868,134"/>
-<area shape="rect" href="classfreetensor_1_1SharedLinkedList.html" title=" " alt="" coords="340,5,524,47"/>
-<area shape="rect" title=" " alt="" coords="304,71,560,171"/>
-<area shape="rect" href="structfreetensor_1_1ProgramPositionHelper.html" title=" " alt="" coords="11,100,215,141"/>
-<area shape="rect" title=" " alt="" coords="323,195,541,281"/>
-<area shape="rect" href="classfreetensor_1_1Ref.html" title=" " alt="" coords="5,225,221,251"/>
+<area shape="rect" title=" " alt="" coords="649,159,831,186"/>
+<area shape="rect" title=" " alt="" coords="304,5,532,105"/>
+<area shape="rect" href="structfreetensor_1_1ProgramPositionHelper.html" title=" " alt="" coords="11,35,215,76"/>
+<area shape="rect" title=" " alt="" coords="309,130,527,215"/>
+<area shape="rect" href="classfreetensor_1_1Ref.html" title=" " alt="" coords="5,159,221,186"/>
+<area shape="rect" title=" " alt="" coords="372,239,464,266"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:afdcae0f320209f62b5da2985013cfe21"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCtxImpl.html#afdcae0f320209f62b5da2985013cfe21">pushCond</a> (int value)</td></tr>
-<tr class="separator:afdcae0f320209f62b5da2985013cfe21"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a52b60b22164213eddf3f4cfb373e1c97"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCtxImpl.html#a52b60b22164213eddf3f4cfb373e1c97">popCond</a> ()</td></tr>
-<tr class="separator:a52b60b22164213eddf3f4cfb373e1c97"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8fb9c78cb6ee02cf2fee35d0ea1decac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCtxImpl.html#a8fb9c78cb6ee02cf2fee35d0ea1decac">observeTrace</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a> &gt; &amp;trace, double value, double stddev)</td></tr>
 <tr class="separator:a8fb9c78cb6ee02cf2fee35d0ea1decac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7894b6f510e5bc8bc65ed4172e5159ab"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCtxImpl.html#a7894b6f510e5bc8bc65ed4172e5159ab">setLearnFilter</a> (const std::regex &amp;toLearn)</td></tr>
@@ -116,16 +112,16 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:aa69a995d785f6510730c1e10e567d803"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1SharedLinkedList.html">SharedLinkedList</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCtxImpl.html#aa69a995d785f6510730c1e10e567d803">condStack_</a></td></tr>
-<tr class="separator:aa69a995d785f6510730c1e10e567d803"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7014c8e3210604e4540559d67c3d7730"><td class="memItemLeft" align="right" valign="top">std::unordered_map&lt; <a class="el" href="namespacefreetensor.html#a277b0ec64110585443507028957648ba">ProgramPosition</a>, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1SharedLinkedList.html">SharedLinkedList</a>&lt; int &gt;, <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1DiscreteRandVar.html">DiscreteRandVar</a> &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCtxImpl.html#a7014c8e3210604e4540559d67c3d7730">randVars_</a></td></tr>
-<tr class="separator:a7014c8e3210604e4540559d67c3d7730"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8378717e9212b53d00c87be42509876a"><td class="memItemLeft" align="right" valign="top">std::unordered_map&lt; <a class="el" href="namespacefreetensor.html#a277b0ec64110585443507028957648ba">ProgramPosition</a>, std::unordered_map&lt; <a class="el" href="namespacefreetensor.html#a0ba6af26083f73ba32d699c459bc4969">RandCondStack</a>, <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1DiscreteRandVar.html">DiscreteRandVar</a> &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCtxImpl.html#a8378717e9212b53d00c87be42509876a">randVars_</a></td></tr>
+<tr class="separator:a8378717e9212b53d00c87be42509876a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae17006673357530a1fe0a976e8770a29"><td class="memItemLeft" align="right" valign="top">std::multimap&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a> &gt;, std::pair&lt; double, double &gt;, <a class="el" href="classfreetensor_1_1PtrInvocable.html">PtrInvocable</a>&lt; std::less&lt; <a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a> &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCtxImpl.html#ae17006673357530a1fe0a976e8770a29">traces_</a></td></tr>
 <tr class="separator:ae17006673357530a1fe0a976e8770a29"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a828a86527dc9840642d05eac14f5dd84"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCtxImpl.html#a828a86527dc9840642d05eac14f5dd84">isInfer_</a> = true</td></tr>
 <tr class="separator:a828a86527dc9840642d05eac14f5dd84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a34a694bf5c009f27b8630849b0f318b8"><td class="memItemLeft" align="right" valign="top">std::regex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCtxImpl.html#a34a694bf5c009f27b8630849b0f318b8">toLearn_</a> {&quot;.*&quot;}</td></tr>
 <tr class="separator:a34a694bf5c009f27b8630849b0f318b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45045a7ba7b310a9f6d0c0a4028e15fe"><td class="memItemLeft" align="right" valign="top">std::mutex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCtxImpl.html#a45045a7ba7b310a9f6d0c0a4028e15fe">lock_</a></td></tr>
+<tr class="separator:a45045a7ba7b310a9f6d0c0a4028e15fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Non-template base class for <code><a class="el" href="classfreetensor_1_1RandCtx.html">RandCtx</a></code> </p>
@@ -161,57 +157,9 @@ Protected Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-</div>
-</div>
-<a id="a52b60b22164213eddf3f4cfb373e1c97" name="a52b60b22164213eddf3f4cfb373e1c97"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a52b60b22164213eddf3f4cfb373e1c97">&#9670;&nbsp;</a></span>popCond()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void freetensor::RandCtxImpl::popCond </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="afdcae0f320209f62b5da2985013cfe21" name="afdcae0f320209f62b5da2985013cfe21"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afdcae0f320209f62b5da2985013cfe21">&#9670;&nbsp;</a></span>pushCond()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void freetensor::RandCtxImpl::pushCond </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>value</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
+<p >Learn from a trace</p>
+<p >This trace is compared with existing traces. For each two trace being compared, the first different decision will be found, whose random variable will be upadated to perfer the decision from the trace of the lower value</p>
+<p >This function must be called from the master thread </p>
 
 </div>
 </div>
@@ -237,7 +185,8 @@ Protected Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p >When <code>decide</code> later, pick a most likely decision </p>
+<p >When <code>decide</code> later, pick a most likely decision</p>
+<p >This function must be called from the master thread </p>
 
 </div>
 </div>
@@ -263,7 +212,8 @@ Protected Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p >When <code>decide</code> later, randomly sample a decision </p>
+<p >When <code>decide</code> later, randomly sample a decision</p>
+<p >This function must be called from the master thread </p>
 
 </div>
 </div>
@@ -291,33 +241,12 @@ Protected Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <p >Set to learn some of the random variables only</p>
-<p >A pattern can be set, and then only the variables matching this pattern is set to learning. This is useful when testing some of the random decisions with few learning trials </p>
+<p >A pattern can be set, and then only the variables matching this pattern is set to learning. This is useful when testing some of the random decisions with few learning trials</p>
+<p >This function must be called from the master thread </p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="aa69a995d785f6510730c1e10e567d803" name="aa69a995d785f6510730c1e10e567d803"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa69a995d785f6510730c1e10e567d803">&#9670;&nbsp;</a></span>condStack_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classfreetensor_1_1SharedLinkedList.html">SharedLinkedList</a>&lt;int&gt; freetensor::RandCtxImpl::condStack_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a828a86527dc9840642d05eac14f5dd84" name="a828a86527dc9840642d05eac14f5dd84"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a828a86527dc9840642d05eac14f5dd84">&#9670;&nbsp;</a></span>isInfer_</h2>
 
@@ -340,8 +269,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a7014c8e3210604e4540559d67c3d7730" name="a7014c8e3210604e4540559d67c3d7730"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7014c8e3210604e4540559d67c3d7730">&#9670;&nbsp;</a></span>randVars_</h2>
+<a id="a45045a7ba7b310a9f6d0c0a4028e15fe" name="a45045a7ba7b310a9f6d0c0a4028e15fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45045a7ba7b310a9f6d0c0a4028e15fe">&#9670;&nbsp;</a></span>lock_</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -350,7 +279,29 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::unordered_map&lt; <a class="el" href="namespacefreetensor.html#a277b0ec64110585443507028957648ba">ProgramPosition</a>, std::unordered_map&lt;<a class="el" href="classfreetensor_1_1SharedLinkedList.html">SharedLinkedList</a>&lt;int&gt;, <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt;<a class="el" href="classfreetensor_1_1DiscreteRandVar.html">DiscreteRandVar</a>&gt; &gt; &gt; freetensor::RandCtxImpl::randVars_</td>
+          <td class="memname">std::mutex freetensor::RandCtxImpl::lock_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8378717e9212b53d00c87be42509876a" name="a8378717e9212b53d00c87be42509876a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8378717e9212b53d00c87be42509876a">&#9670;&nbsp;</a></span>randVars_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::unordered_map&lt;<a class="el" href="namespacefreetensor.html#a277b0ec64110585443507028957648ba">ProgramPosition</a>, std::unordered_map&lt;<a class="el" href="namespacefreetensor.html#a0ba6af26083f73ba32d699c459bc4969">RandCondStack</a>, <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt;<a class="el" href="classfreetensor_1_1DiscreteRandVar.html">DiscreteRandVar</a>&gt; &gt; &gt; freetensor::RandCtxImpl::randVars_</td>
         </tr>
       </table>
   </td>

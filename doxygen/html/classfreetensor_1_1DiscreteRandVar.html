@@ -78,8 +78,8 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a6cac6644e2baec40d0eed90d9dbc10ec"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DiscreteRandVar.html#a6cac6644e2baec40d0eed90d9dbc10ec">DiscreteRandVar</a> (const std::string &amp;<a class="el" href="classfreetensor_1_1DiscreteRandVar.html#ae547e15fce9e40c46fd5601b133a8028">name</a>, const std::vector&lt; int &gt; &amp;initObs)</td></tr>
-<tr class="separator:a6cac6644e2baec40d0eed90d9dbc10ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0239c3ef04335812d0a3af9085104030"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DiscreteRandVar.html#a0239c3ef04335812d0a3af9085104030">DiscreteRandVar</a> (const std::string &amp;<a class="el" href="classfreetensor_1_1DiscreteRandVar.html#ae547e15fce9e40c46fd5601b133a8028">name</a>, const <a class="el" href="namespacefreetensor.html#a0ba6af26083f73ba32d699c459bc4969">RandCondStack</a> &amp;conds, const std::vector&lt; int &gt; &amp;initObs)</td></tr>
+<tr class="separator:a0239c3ef04335812d0a3af9085104030"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f7915a24304333cd06354be0a08e019"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DiscreteRandVar.html#a8f7915a24304333cd06354be0a08e019">observe</a> (int value, int cnt=1)</td></tr>
 <tr class="separator:a8f7915a24304333cd06354be0a08e019"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a813086b3d0acbe3689bc5b0c6e13c0fc"><td class="memTemplParams" colspan="2">template&lt;std::uniform_random_bit_generator RNG&gt; </td></tr>
@@ -102,8 +102,8 @@ Friends</h2></td></tr>
 <p >A random variable that can be sampled (infered) and observed (learnt) using Bayesian statistics</p>
 <p >The more observations is observed for a value, the value will have a higher probability of being sampled. Specifically, when sampled, the distribution follows a Categorical (or Bernoulli for n=2) distribution, where the probability of the i-th value is <code>P(X=i) = p_i</code>. <code>p_i</code> itself is another random variables follows Dirichlet (or Beta for n=2) distribution <code>p_i ~ Dir(alpha)</code>, where <code>alpha</code> is the observations + 1 </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a6cac6644e2baec40d0eed90d9dbc10ec" name="a6cac6644e2baec40d0eed90d9dbc10ec"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6cac6644e2baec40d0eed90d9dbc10ec">&#9670;&nbsp;</a></span>DiscreteRandVar()</h2>
+<a id="a0239c3ef04335812d0a3af9085104030" name="a0239c3ef04335812d0a3af9085104030"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0239c3ef04335812d0a3af9085104030">&#9670;&nbsp;</a></span>DiscreteRandVar()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -116,6 +116,12 @@ Friends</h2></td></tr>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a0ba6af26083f73ba32d699c459bc4969">RandCondStack</a> &amp;&#160;</td>
+          <td class="paramname"><em>conds</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>

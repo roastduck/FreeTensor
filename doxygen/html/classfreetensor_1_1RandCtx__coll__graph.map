@@ -1,9 +1,9 @@
 <map id="freetensor::RandCtx&lt; RNG &gt;" name="freetensor::RandCtx&lt; RNG &gt;">
-<area shape="rect" id="node1" title=" " alt="" coords="917,100,1069,141"/>
-<area shape="rect" id="node2" href="$classfreetensor_1_1RandCtxImpl.html" title=" " alt="" coords="687,107,868,134"/>
-<area shape="rect" id="node3" href="$classfreetensor_1_1SharedLinkedList.html" title=" " alt="" coords="340,5,524,47"/>
-<area shape="rect" id="node4" title=" " alt="" coords="304,71,560,171"/>
-<area shape="rect" id="node5" href="$structfreetensor_1_1ProgramPositionHelper.html" title=" " alt="" coords="11,100,215,141"/>
-<area shape="rect" id="node6" title=" " alt="" coords="323,195,541,281"/>
-<area shape="rect" id="node7" href="$classfreetensor_1_1Ref.html" title=" " alt="" coords="5,225,221,251"/>
+<area shape="rect" id="node1" title=" " alt="" coords="880,152,1032,193"/>
+<area shape="rect" id="node2" href="$classfreetensor_1_1RandCtxImpl.html" title=" " alt="" coords="649,159,831,186"/>
+<area shape="rect" id="node3" title=" " alt="" coords="304,5,532,105"/>
+<area shape="rect" id="node4" href="$structfreetensor_1_1ProgramPositionHelper.html" title=" " alt="" coords="11,35,215,76"/>
+<area shape="rect" id="node5" title=" " alt="" coords="309,130,527,215"/>
+<area shape="rect" id="node6" href="$classfreetensor_1_1Ref.html" title=" " alt="" coords="5,159,221,186"/>
+<area shape="rect" id="node7" title=" " alt="" coords="372,239,464,266"/>
 </map>

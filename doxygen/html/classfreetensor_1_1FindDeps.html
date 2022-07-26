@@ -101,6 +101,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ac60c7bb079a0aa635accc44c1acfff2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac9474d370890b193671f63f8541d8833"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html#ac9474d370890b193671f63f8541d8833">operator()</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="namespacefreetensor.html#ae26309bbb0c35ef579635c1c3c032463">FindDepsCallback</a> &amp;found)</td></tr>
 <tr class="separator:ac9474d370890b193671f63f8541d8833"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2508e6af289012eb9fe994bd7cd52667"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html#a2508e6af289012eb9fe994bd7cd52667">exists</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
+<tr class="separator:a2508e6af289012eb9fe994bd7cd52667"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Find dependences in an AST satisfiying given conditions</p>
@@ -162,6 +164,32 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 <p >Ignore all dependencies outside the VarDef</p>
 <p >Defaults to true </p>
+
+</div>
+</div>
+<a id="a2508e6af289012eb9fe994bd7cd52667" name="a2508e6af289012eb9fe994bd7cd52667"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2508e6af289012eb9fe994bd7cd52667">&#9670;&nbsp;</a></span>exists()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::FindDeps::exists </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Helper function to run <a class="el" href="classfreetensor_1_1FindDeps.html">FindDeps</a></p>
+<p >Only to check whether there is a dependence satisfying given conditions, but not cared about what dependence it is</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">op</td><td>: AST root </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

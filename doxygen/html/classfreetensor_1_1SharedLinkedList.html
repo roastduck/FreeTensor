@@ -87,6 +87,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a7e646c6c621511cec2ab1da0bf364b91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1379ad59a249f25d573b5b87768999f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1SharedLinkedList.html">SharedLinkedList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SharedLinkedList.html#ab1379ad59a249f25d573b5b87768999f">pop</a> () const</td></tr>
 <tr class="separator:ab1379ad59a249f25d573b5b87768999f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0162e7abf872d01ba99229f9c2206310"><td class="memItemLeft" align="right" valign="top">std::vector&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SharedLinkedList.html#a0162e7abf872d01ba99229f9c2206310">asVector</a> () const</td></tr>
+<tr class="separator:a0162e7abf872d01ba99229f9c2206310"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d3a90488976def5d76c8b6d4424a1c4"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SharedLinkedList.html#a3d3a90488976def5d76c8b6d4424a1c4">hash</a> () const</td></tr>
 <tr class="separator:a3d3a90488976def5d76c8b6d4424a1c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -101,6 +103,33 @@ class freetensor::SharedLinkedList&lt; T, Hash, Equal &gt;</div><p >Read-only st
 <p >A linked list linked from the stack top to the bottom. A <code><a class="el" href="classfreetensor_1_1SharedLinkedList.html">SharedLinkedList</a></code> can be copied, and then all the common contents are shared, i.e., multiple linked lists form a tree rooted at the stack bottom</p>
 <p >A <code><a class="el" href="classfreetensor_1_1SharedLinkedList.html">SharedLinkedList</a></code> can be hashed. Two <code><a class="el" href="classfreetensor_1_1SharedLinkedList.html">SharedLinkedList</a></code>s can be compared </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a0162e7abf872d01ba99229f9c2206310" name="a0162e7abf872d01ba99229f9c2206310"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0162e7abf872d01ba99229f9c2206310">&#9670;&nbsp;</a></span>asVector()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T , class Hash  = std::hash&lt;T&gt;, class Equal  = std::equal_to&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; T &gt; <a class="el" href="classfreetensor_1_1SharedLinkedList.html">freetensor::SharedLinkedList</a>&lt; T, Hash, Equal &gt;::asVector </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ac77a9909d429980b5c5e345d5dab9f61" name="ac77a9909d429980b5c5e345d5dab9f61"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac77a9909d429980b5c5e345d5dab9f61">&#9670;&nbsp;</a></span>empty()</h2>
 
