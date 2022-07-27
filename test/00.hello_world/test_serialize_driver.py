@@ -2,6 +2,7 @@ import freetensor as ft
 import pytest
 from random import randint
 
+
 def test_basic():
     l, r = -2147483648, 2147483647
     for i in range(10000):
@@ -44,7 +45,3 @@ def test_basic():
         print(txt)
         device2 = ft.load_device(txt)
         assert device == device2
-
-
-
-
