@@ -36,28 +36,27 @@ void init_ffi_ast_func(py::module_ &m) {
             std::vector<FuncRet> returns;
             params.reserve(_params.size());
             returns.reserve(_returns.size());
-            for (auto &&name : _params) {
-                if (closure.count(name)) {
-                    auto arr = closure.at(name);
+            for (auto &&p : _params) {
+                if (closure.count(p)) {
+                    auto arr = closure.at(p);
                     arr->makePrivateCopy(); // Because we load Array back to C++
                                             // part, we cannot keep tracking
                                             // user data with py::keep_alive
-                    params.emplace_back(name, Ref<Ref<Array>>::make(arr),
-                                        false);
+                    params.emplace_back(p, Ref<Ref<Array>>::make(arr), false);
                 } else {
-                    params.emplace_back(name, nullptr, false);
+                    params.emplace_back(p, nullptr, false);
                 }
             }
-            for (auto &&[name, dtype] : _returns) {
-                if (closure.count(name)) {
-                    auto arr = closure.at(name);
+            for (auto &&[p, dtype] : _returns) {
+                if (closure.count(p)) {
+                    auto arr = closure.at(p);
                     arr->makePrivateCopy(); // Because we load Array back to C++
                                             // part, we cannot keep tracking
                                             // user data with py::keep_alive
-                    returns.emplace_back(name, dtype,
-                                         Ref<Ref<Array>>::make(arr), false);
+                    returns.emplace_back(p, dtype, Ref<Ref<Array>>::make(arr),
+                                         false);
                 } else {
-                    returns.emplace_back(name, dtype, nullptr, false);
+                    returns.emplace_back(p, dtype, nullptr, false);
                 }
             }
             return makeFunc(name, std::move(params), std::move(returns), body);

@@ -29,6 +29,12 @@ template <typename T> class Lazy {
     Lazy(const Lazy &other)
         : container_(other.container_), delayedInit_(other.delayedInit_),
           mutex_() {}
+
+    Lazy &operator=(const Lazy &other) {
+        container_ = other.container_;
+        delayedInit_ = other.delayedInit_;
+        return *this;
+    }
 };
 
 template <typename F>
