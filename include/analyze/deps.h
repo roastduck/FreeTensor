@@ -255,7 +255,7 @@ class AnalyzeDeps {
         const std::vector<VarDef> &allDefs,
         const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord,
         const std::unordered_map<std::string, std::vector<ID>> &noDepsLists,
-        Lazy<LoopVariExprMap> variantExpr,
+        const Lazy<LoopVariExprMap> &variantExpr,
         const std::vector<FindDepsDir> &direction,
         const FindDepsCallback &found, FindDepsMode mode, DepType depType,
         const FindDepsAccFilter &earlierFilter,

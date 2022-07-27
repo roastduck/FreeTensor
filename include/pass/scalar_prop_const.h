@@ -87,12 +87,6 @@ class ScalarPropConst : public SymbolTable<ConstFold> {
                        const std::optional<ScalarIndices> &indices);
     void kill_iter(const std::string &it_var);
 
-    auto backup_state() { return std::pair{constants_, iter_dep_constants_}; }
-    void restore_state(
-        std::pair<decltype(constants_), decltype(iter_dep_constants_)> state) {
-        std::tie(constants_, iter_dep_constants_) = state;
-    }
-
     /**
      * @brief Intersect currently recorded scalar constants with provided map.
      *

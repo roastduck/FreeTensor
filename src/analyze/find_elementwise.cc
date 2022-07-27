@@ -48,7 +48,7 @@ ElementWiseInfo FindSingleElementWise::isElementWise(const Store &st,
             if (!comp(st->indices_[i], ld->indices_[i])) {
                 return {};
             }
-            for (size_t j = stack_.size() - 1; j >= 0; j--) {
+            for (int j = (int)stack_.size() - 1; j >= 0; j--) {
                 if (comp(makeVar(stack_[j].second), st->indices_[i])) {
                     stack_[j].first.index = i;
                     forInfos.push_back(stack_[j].first);
@@ -107,7 +107,7 @@ ElementWiseInfo FindSingleElementWise::isElementWise(const ReduceTo &st,
             if (!comp(st->indices_[i], ld->indices_[i])) {
                 return {};
             }
-            for (size_t j = stack_.size() - 1; j >= 0; j--) {
+            for (int j = (int)stack_.size() - 1; j >= 0; j--) {
                 if (comp(makeVar(stack_[j].second), st->indices_[i])) {
                     stack_[j].first.index = i;
                     forInfos.push_back(stack_[j].first);
