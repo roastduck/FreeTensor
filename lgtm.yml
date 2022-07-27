@@ -1,0 +1,18 @@
+extraction:
+  cpp:
+    prepare:
+      packages:
+        - g++-10
+        - libgmp-dev
+    after_prepare:
+      - export CC=gcc-10
+      - export CXX=g++-10
+    configure:
+      command:
+        - mkdir -p $LGTM_SRC/build
+        - cd $LGTM_SRC/build
+        - cmake -G Ninja -DFT_WITH_CUDA=OFF -DFT_WITH_PYTORCH=OFF $LGTM_SRC
+    index:
+      build_command:
+        - cd $LGTM_SRC/build
+        - ninja
