@@ -1,4 +1,3 @@
-import itertools
 import functools
 from typing import Optional, Sequence
 
@@ -36,7 +35,6 @@ def _einsum_(lefts: Sequence[str], right: str, order: str, init: bool, *args):
             core.max,
             [arg.shape(offset) for arg, offset in zip(iter_args, iter_offsets)])
 
-        assert_exprs = []
         if right != '':
             assert offsets[-1] != -1
             iter_left_args, iter_left_offset = zip(

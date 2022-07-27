@@ -7,7 +7,7 @@ End users are encouraged to use `transformer`, instead of this module.
 '''
 
 import sys
-from typing import Sequence, Tuple, Any, Optional
+from typing import Sequence, Optional
 
 import freetensor_ffi as ffi
 

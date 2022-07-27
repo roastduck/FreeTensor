@@ -2,18 +2,11 @@
 A frontend transforming user Python functions to ASTs via staging.
 '''
 
-import abc
-import re
-import tokenize
 import sys
-import ast
 import numpy as np
 import functools
 import inspect
-import traceback
-import sourceinspect as ins
-import copy
-from typing import Callable, Dict, List, Sequence, Optional, Any, TypeVar, Union
+from typing import Callable, Dict, List, Sequence, Optional, Any, Union
 from dataclasses import dataclass
 
 import freetensor_ffi as ffi
@@ -24,10 +17,12 @@ from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
 from .stmt import (_VarDef, VarRef, For, If, Else, MarkNid, ctx_stack, Func,
                    Assert)
 
-from .staging import StagedPredicate, StagedTypeAnnotation, StagedAssignable, StagedIterable, StagingError, StagingOverload, TransformError
+from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
+                      StagedIterable, StagingError, StagingOverload,
+                      TransformError)
 
-assert sys.version_info >= (3,
-                            8), "Python version lower than 3.8 is not supported"
+assert sys.version_info >= (3, 8), \
+    "Python version lower than 3.8 is not supported"
 
 
 def staged_callable(staging, original, doc: Optional[str] = None):
@@ -422,7 +417,7 @@ class dynamic_range(StagedIterable):
     def foreach(self, name, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
         if not isinstance(name, str):
-            raise StagingError(
+            raise _overload.error(
                 'dynamic_range only supports exactly one target variable')
         with _overload.allow_shortcut_scope(False):
             with For(_overload.fullname(name), self.start, self.stop,

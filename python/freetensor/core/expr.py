@@ -8,7 +8,7 @@ and also exposed to users via multi-stage programming
 import collections
 import builtins
 import math
-from typing import Sequence, Tuple, Any, Optional
+from typing import Sequence
 
 import freetensor_ffi as ffi
 
