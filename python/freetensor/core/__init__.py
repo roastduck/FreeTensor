@@ -27,6 +27,7 @@ from .schedule import *
 from .codegen import NativeCode, codegen
 from .driver import *
 from .config import *
+from .serialize import *
 
 from .frontend import (transform, inline, empty, var, capture_var, Var,
                        dynamic_range, static_range)

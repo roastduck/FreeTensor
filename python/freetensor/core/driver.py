@@ -3,7 +3,7 @@ import functools
 import numpy as np
 
 from typing import Optional, Sequence
-from freetensor_ffi import CPU, GPU, Array
+from freetensor_ffi import CPU, GPU, Device, Array
 
 from . import config
 from .codegen import NativeCode
@@ -44,15 +44,30 @@ def array(data):
     raise ffi.DriverError(f"Unsupported data type {type(data)} for Array")
 
 def load_target(target_str):
-    seri = target_str.split()
+    data = target_str.split()
     ret = ffi.default_target()
-    if seri[0] == 'GPU':
-        ret = GPU(bool(seri[1]))
-        if seri[2] == ':':
-            ret.set_compute_capability(int(seri[3]), int(seri[4]))
-    if seri[0] == 'CPU':
-        ret = CPU(bool(seri[1]))
+    if data[0] == 'GPU':
+        ret = GPU(bool(int(data[1])))
+        if data[2] == ':':
+            ret.set_compute_capability(int(data[3]), int(data[4]))
+    elif data[0] == 'CPU':
+        ret = CPU(bool(int(data[1])))
+    elif data[0] == 'DEV':
+        raise ffi.DriverError("load_target: You may want to load a device, try load_device")
+    else:
+        raise ffi.DriverError("load_target: Unknown target {}".format(target_str))
     return ret
+
+def load_device(device_str):
+    data = device_str.split(' ', 2);
+    ret = ffi.default_device()
+    if data[0] == 'DEV':
+        ret = Device(load_target(str(data[2])), int(data[1]))
+    else:
+        ffi.DriverError("load_device: Unknown device {}".format(device_str))
+    return ret
+
+
 
 class Target(ffi.Target):
     '''
