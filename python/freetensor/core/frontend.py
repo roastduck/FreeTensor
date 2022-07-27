@@ -2,18 +2,11 @@
 A frontend transforming user Python functions to ASTs via staging.
 '''
 
-import abc
-import re
-import tokenize
 import sys
-import ast
 import numpy as np
 import functools
 import inspect
-import traceback
-import sourceinspect as ins
-import copy
-from typing import Callable, Dict, List, Sequence, Optional, Any, TypeVar, Union
+from typing import Callable, Dict, List, Sequence, Optional, Any, Union
 from dataclasses import dataclass
 
 import freetensor_ffi as ffi
@@ -423,6 +416,7 @@ class dynamic_range(StagedIterable):
         '''Customized foreach behavior. Creates a For loop.'''
         if not isinstance(name, str):
             raise StagingError(
+                _overload,
                 'dynamic_range only supports exactly one target variable')
         with _overload.allow_shortcut_scope(False):
             with For(_overload.fullname(name), self.start, self.stop,
