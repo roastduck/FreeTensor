@@ -43,6 +43,7 @@ def array(data):
 
     raise ffi.DriverError(f"Unsupported data type {type(data)} for Array")
 
+
 def load_target(target_str):
     data = target_str.split()
     ret = ffi.default_target()
@@ -53,20 +54,22 @@ def load_target(target_str):
     elif data[0] == 'CPU':
         ret = CPU(bool(int(data[1])))
     elif data[0] == 'DEV':
-        raise ffi.DriverError("load_target: You may want to load a device, try load_device")
+        raise ffi.DriverError(
+            "load_target: You may want to load a device, try load_device")
     else:
-        raise ffi.DriverError("load_target: Unknown target {}".format(target_str))
+        raise ffi.DriverError(
+            "load_target: Unknown target {}".format(target_str))
     return ret
 
+
 def load_device(device_str):
-    data = device_str.split(' ', 2);
+    data = device_str.split(' ', 2)
     ret = ffi.default_device()
     if data[0] == 'DEV':
         ret = Device(load_target(str(data[2])), int(data[1]))
     else:
         ffi.DriverError("load_device: Unknown device {}".format(device_str))
     return ret
-
 
 
 class Target(ffi.Target):

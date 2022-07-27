@@ -33,7 +33,6 @@ class Device {
     }
 };
 
-
 } // namespace freetensor
 
 #endif // FREE_TENSOR_DEVICE_H
