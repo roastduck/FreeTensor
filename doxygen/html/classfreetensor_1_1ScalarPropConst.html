@@ -138,10 +138,6 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:a9986433956681fd5f067c2a151caad51"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a905605c10ff48d153c028beea63948d5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScalarPropConst.html#a905605c10ff48d153c028beea63948d5">kill_iter</a> (const std::string &amp;it_var)</td></tr>
 <tr class="separator:a905605c10ff48d153c028beea63948d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a81c84b0ecb73a8f10384b613fc8d6da6"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScalarPropConst.html#a81c84b0ecb73a8f10384b613fc8d6da6">backup_state</a> ()</td></tr>
-<tr class="separator:a81c84b0ecb73a8f10384b613fc8d6da6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acf00a391ea29947c57363ae781c66a20"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScalarPropConst.html#acf00a391ea29947c57363ae781c66a20">restore_state</a> (std::pair&lt; decltype(<a class="el" href="classfreetensor_1_1ScalarPropConst.html#a4e45d6d899eec4215017f8bee3140f02">constants_</a>), decltype(<a class="el" href="classfreetensor_1_1ScalarPropConst.html#a9913a60a4547b9ec5801dbea240cd05d">iter_dep_constants_</a>)&gt; state)</td></tr>
-<tr class="separator:acf00a391ea29947c57363ae781c66a20"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4897196206aaf5a42e100135c6e20fa3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScalarPropConst.html#a4897196206aaf5a42e100135c6e20fa3">intersect_constants_with</a> (std::unordered_map&lt; std::string, std::map&lt; <a class="el" href="structfreetensor_1_1ScalarPropConst_1_1ScalarIndices.html">ScalarIndices</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; other)</td></tr>
 <tr class="memdesc:a4897196206aaf5a42e100135c6e20fa3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Intersect currently recorded scalar constants with provided map.  <a href="classfreetensor_1_1ScalarPropConst.html#a4897196206aaf5a42e100135c6e20fa3">More...</a><br /></td></tr>
 <tr class="separator:a4897196206aaf5a42e100135c6e20fa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -532,31 +528,6 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a81c84b0ecb73a8f10384b613fc8d6da6" name="a81c84b0ecb73a8f10384b613fc8d6da6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a81c84b0ecb73a8f10384b613fc8d6da6">&#9670;&nbsp;</a></span>backup_state()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">auto freetensor::ScalarPropConst::backup_state </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a83e58bee500f6331e09094bc70cde46c" name="a83e58bee500f6331e09094bc70cde46c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a83e58bee500f6331e09094bc70cde46c">&#9670;&nbsp;</a></span>gen_constant()</h2>
 
@@ -729,32 +700,6 @@ false The current constants remain unchanged in this intersection </dd></dl>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="acf00a391ea29947c57363ae781c66a20" name="acf00a391ea29947c57363ae781c66a20"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acf00a391ea29947c57363ae781c66a20">&#9670;&nbsp;</a></span>restore_state()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void freetensor::ScalarPropConst::restore_state </td>
-          <td>(</td>
-          <td class="paramtype">std::pair&lt; decltype(<a class="el" href="classfreetensor_1_1ScalarPropConst.html#a4e45d6d899eec4215017f8bee3140f02">constants_</a>), decltype(<a class="el" href="classfreetensor_1_1ScalarPropConst.html#a9913a60a4547b9ec5801dbea240cd05d">iter_dep_constants_</a>)&gt;&#160;</td>
-          <td class="paramname"><em>state</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
