@@ -8,7 +8,7 @@ def dump_ast(ast, dtype_in_load=False):
 def load_ast(ast_str):
     return ffi.load_ast(ast_str)
 
-def remote_lower_ast(ast_str, target_str):
+def lower_ast_through_str(ast_str, target_str):
     return dump_ast(passes.lower(load_ast(ast_str), driver.load_target(target_str)))
 
 
