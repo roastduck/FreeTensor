@@ -17,10 +17,12 @@ from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
 from .stmt import (_VarDef, VarRef, For, If, Else, MarkNid, ctx_stack, Func,
                    Assert)
 
-from .staging import StagedPredicate, StagedTypeAnnotation, StagedAssignable, StagedIterable, StagingError, StagingOverload, TransformError
+from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
+                      StagedIterable, StagingError, StagingOverload,
+                      TransformError)
 
-assert sys.version_info >= (3,
-                            8), "Python version lower than 3.8 is not supported"
+assert sys.version_info >= (3, 8), \
+    "Python version lower than 3.8 is not supported"
 
 
 def staged_callable(staging, original, doc: Optional[str] = None):
@@ -415,8 +417,7 @@ class dynamic_range(StagedIterable):
     def foreach(self, name, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
         if not isinstance(name, str):
-            raise StagingError(
-                _overload,
+            raise _overload.error(
                 'dynamic_range only supports exactly one target variable')
         with _overload.allow_shortcut_scope(False):
             with For(_overload.fullname(name), self.start, self.stop,
