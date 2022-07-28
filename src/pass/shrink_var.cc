@@ -43,14 +43,14 @@ Stmt ShrinkVar::visit(const Store &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     auto op = __op.as<StoreNode>();
-    return addCheck(op, modifyAccess(op));
+    return addCheck(_op, modifyAccess(op));
 }
 
 Stmt ShrinkVar::visit(const ReduceTo &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
-    return addCheck(op, modifyAccess(op));
+    return addCheck(_op, modifyAccess(op));
 }
 
 Stmt shrinkVar(const Stmt &_op) {

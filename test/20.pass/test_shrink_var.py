@@ -113,6 +113,30 @@ def test_bound_only_on_reads():
     assert std.match(ast)
 
 
+def test_read_bound_with_offset():
+    with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
+                    ("y", (6,), "int32", "output", "cpu"),
+                    ("z", (8,), "int32", "cache", "cpu")]) as (x, y, z):
+        with ft.For("i", 0, 8) as i:
+            z[i] = x[i] * 2
+        with ft.For("i", 0, 6) as i:
+            y[i] = z[i + 1]
+
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1, skip_passes=['prop_one_time_use'])
+    print(ast)
+
+    with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
+                    ("y", (6,), "int32", "output", "cpu"),
+                    ("z", (6,), "int32", "cache", "cpu")]) as (x, y, z):
+        with ft.For("i", 1, 7) as i:
+            z[i - 1] = x[i] * 2
+        with ft.For("i", 0, 6) as i:
+            y[i] = z[i]
+
+    assert ft.pop_ast().match(ast)
+
+
 # FIXME: Fix this test
 #def test_const_in_branch_1():
 #    with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
