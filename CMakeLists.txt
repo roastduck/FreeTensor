@@ -97,7 +97,7 @@ endmacro(ANTLR_TARGET)
 # CUDA
 if(FT_WITH_CUDA)
     find_package(CUDA REQUIRED)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_WITH_CUDA")
+    add_definitions(-DFT_WITH_CUDA)
 endif()
 
 # PyTorch
@@ -145,13 +145,13 @@ endif()
 # THIS PROJECT
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 if(FT_WITH_MKL)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_WITH_MKL=${FT_WITH_MKL}")
+    add_definitions(-DFT_WITH_MKL="${FT_WITH_MKL}")
 endif()
 if(FT_DEBUG_LOG_NODE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_DEBUG_LOG_NODE")
+    add_definitions(-DFT_DEBUG_LOG_NODE)
 endif()
 if(FT_DEBUG_PROFILE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_DEBUG_PROFILE")
+    add_definitions(-DFT_DEBUG_PROFILE)
 endif()
 if(FT_DEBUG_SANITIZE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=${FT_DEBUG_SANITIZE}")
@@ -168,11 +168,7 @@ if(FT_WITH_CUDA)
 endif()
 
 # OpenMP used to parallelize the compilation of different instances
-find_package(OpenMP)
-if (OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif()
+find_package(OpenMP REQUIRED)
 
 file(GLOB_RECURSE SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc)
 
@@ -200,6 +196,7 @@ target_link_libraries(freetensor PUBLIC
     isl::isl
     libz3 # See 3rd-party/z3/src/CMakeLists.txt
     antlr4_shared # See 3rd-party/antlr/antlr4/runtime/Cpp/runtime/CMakeLists.txt
+    OpenMP::OpenMP_CXX
     ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 target_include_directories(freetensor PUBLIC
     ${CUDA_INCLUDE_DIRS}
