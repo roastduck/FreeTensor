@@ -11,30 +11,38 @@ namespace freetensor {
 
 class InsertAlloc : public Mutator {
     std::string var_;
-    bool is_insert;
+    bool isOuterMost_ = true, delayed_ = false;
 
   public:
-    InsertAlloc(const std::string &var) : var_(var), is_insert(true) {}
+    InsertAlloc(const std::string &var) : var_(var) {}
+
+    bool delayed() const { return delayed_; }
 
   protected:
     Stmt visit(const StmtSeq &op) override;
+    Stmt visit(const For &op) override { return op; }
+    Stmt visit(const If &op) override { return op; }
 };
 
 class InsertFree : public Mutator {
     std::string var_;
-    bool is_insert;
+    bool isOuterMost_ = true, madeEarly_ = false;
 
   public:
-    InsertFree(const std::string &var) : var_(var), is_insert(true) {}
+    InsertFree(const std::string &var) : var_(var) {}
+
+    bool madeEarly() const { return madeEarly_; }
 
   protected:
     Stmt visit(const StmtSeq &op) override;
+    Stmt visit(const For &op) override { return op; }
+    Stmt visit(const If &op) override { return op; }
 };
 
 class MakeHeapAlloc : public Mutator {
   private:
     bool inCublas_ = false;
-    int for_depth = 0;
+    int forDepth_ = 0;
     bool inKernel() const;
 
   protected:
@@ -44,10 +52,19 @@ class MakeHeapAlloc : public Mutator {
 };
 
 /**
- * For any variable with memory type of cpu/heap or gpu/global/heap, we allocate
- * memory for it as late as possible, and deallocate memory as early as
- * possible. Similar operations will not be performed on scalars cause of few
- * memory they used.
+ * Insert Alloc and Free node for heap-allocated varialbes, and turn
+ * stack-allocated variables to heap-allocated is beneficial
+ *
+ * Varaibles with `MemType::CPUHeap` or `MemType::GPUGlobalHeap` are allocated
+ * on the heap by some allocators. Other variables are allocated in a stack
+ * manner, not allocated by an allocator, but they may also be on the heap
+ * physically
+ *
+ * If we can delay a variable's allocation or free them earlier, we allocate
+ * them on the heap. The delation or making early will not cross any control
+ * flow
+ *
+ * This transformation is not applied to scalars
  */
 Stmt makeHeapAlloc(const Stmt &op);
 
