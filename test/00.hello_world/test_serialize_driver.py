@@ -3,45 +3,70 @@ import pytest
 from random import randint
 
 
-def test_basic():
-    l, r = -2147483648, 2147483647
-    for i in range(10000):
-        # CPU
-        target = ft.CPU(randint(0, 1))
+def test_target_cpu():
+    for use_native_arch in range(2):
+        target = ft.CPU(use_native_arch)
         txt = ft.dump_target(target)
         print(txt)
         target2 = ft.load_target(txt)
         assert target == target2
 
-        device = ft.Device(target, randint(0, r))
-        txt = ft.dump_device(device)
-        print(txt)
-        device2 = ft.load_device(txt)
-        assert device == device2
 
-        # GPU
-        target = ft.GPU(randint(0, 1))
+def test_target_gpu():
+    for use_native_arch in range(2):
+        target = ft.GPU(use_native_arch)
         txt = ft.dump_target(target)
         print(txt)
         target2 = ft.load_target(txt)
         assert target == target2
 
-        device = ft.Device(target, randint(0, r))
-        txt = ft.dump_device(device)
-        print(txt)
-        device2 = ft.load_device(txt)
-        assert device == device2
 
-        # GPU with compute_capability
-        target = ft.GPU(randint(0, 1))
-        target.set_compute_capability(randint(l, r), randint(l, r))
+def test_target_gpu_with_compute_capability():
+    for use_native_arch in range(2):
+        target = ft.GPU(use_native_arch)
+        target.set_compute_capability(7, 0)
         txt = ft.dump_target(target)
         print(txt)
         target2 = ft.load_target(txt)
         assert target == target2
 
-        device = ft.Device(target, randint(0, r))
-        txt = ft.dump_device(device)
+        target = ft.GPU(use_native_arch)
+        target.set_compute_capability(2147483647, -2147483648)
+        txt = ft.dump_target(target)
         print(txt)
-        device2 = ft.load_device(txt)
-        assert device == device2
+        target2 = ft.load_target(txt)
+        assert target == target2
+
+
+def test_device_cpu():
+    for device_num in range(4):
+        for use_native_arch in range(2):
+            target = ft.CPU(use_native_arch)
+            device = ft.Device(target, device_num)
+            txt = ft.dump_device(device)
+            print(txt)
+            device2 = ft.load_device(txt)
+            assert device == device2
+
+
+def test_device_gpu():
+    for device_num in range(4):
+        for use_native_arch in range(2):
+            target = ft.GPU(use_native_arch)
+            device = ft.Device(target, device_num)
+            txt = ft.dump_device(device)
+            print(txt)
+            device2 = ft.load_device(txt)
+            assert device == device2
+
+
+def test_device_gpu_with_compute_capability():
+    for device_num in range(4):
+        for use_native_arch in range(2):
+            target = ft.GPU(use_native_arch)
+            target.set_compute_capability(7, 0)
+            device = ft.Device(target, device_num)
+            txt = ft.dump_device(device)
+            print(txt)
+            device2 = ft.load_device(txt)
+            assert device == device2
