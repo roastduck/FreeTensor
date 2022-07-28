@@ -244,9 +244,19 @@ class StagingOverload:
             first_pred.while_stmt(body)
         else:
             if first_pred:
-                body()
+                try:
+                    body()
+                except BreakException:
+                    return
+                except ContinueException:
+                    pass
             while fpred():
-                body()
+                try:
+                    body()
+                except BreakException:
+                    break
+                except ContinueException:
+                    continue
 
     def assert_stmt(self, test):
         '''Assert staging tool.'''
