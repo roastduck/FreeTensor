@@ -98,6 +98,8 @@ Collaboration diagram for freetensor::InsertAlloc:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ae96bcdd002e3e509bfef2eceed4cdce4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1InsertAlloc.html#ae96bcdd002e3e509bfef2eceed4cdce4">InsertAlloc</a> (const std::string &amp;var)</td></tr>
 <tr class="separator:ae96bcdd002e3e509bfef2eceed4cdce4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a061fa1ecd455c48dc655d80db45ed337"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1InsertAlloc.html#a061fa1ecd455c48dc655d80db45ed337">delayed</a> () const</td></tr>
+<tr class="separator:a061fa1ecd455c48dc655d80db45ed337"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1Mutator"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1Mutator')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1Mutator.html">freetensor::Mutator</a></td></tr>
 <tr class="memitem:adcaee6847cdd522223786ddd9eaf2ec4 inherit pub_methods_classfreetensor_1_1Mutator"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Mutator.html#adcaee6847cdd522223786ddd9eaf2ec4">~Mutator</a> ()</td></tr>
 <tr class="separator:adcaee6847cdd522223786ddd9eaf2ec4 inherit pub_methods_classfreetensor_1_1Mutator"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -110,6 +112,10 @@ Public Member Functions</h2></td></tr>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:ab311e6db76533a51306c598421616388"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1InsertAlloc.html#ab311e6db76533a51306c598421616388">visit</a> (const <a class="el" href="namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96">StmtSeq</a> &amp;op) override</td></tr>
 <tr class="separator:ab311e6db76533a51306c598421616388"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad253b0c172208271886e9acb43a51f19"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1InsertAlloc.html#ad253b0c172208271886e9acb43a51f19">visit</a> (const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) override</td></tr>
+<tr class="separator:ad253b0c172208271886e9acb43a51f19"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5612dc592ae409dbce0fa35b235734da"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1InsertAlloc.html#a5612dc592ae409dbce0fa35b235734da">visit</a> (const <a class="el" href="namespacefreetensor.html#a4cc9fa73027c8534e97d51f54349f0b1">If</a> &amp;op) override</td></tr>
+<tr class="separator:a5612dc592ae409dbce0fa35b235734da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classfreetensor_1_1Mutator"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classfreetensor_1_1Mutator')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classfreetensor_1_1Mutator.html">freetensor::Mutator</a></td></tr>
 <tr class="memitem:a7d3b751ab7d0aa59ad3ef269ea314135 inherit pro_methods_classfreetensor_1_1Mutator"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Mutator.html#a7d3b751ab7d0aa59ad3ef269ea314135">visitExpr</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;op)</td></tr>
 <tr class="separator:a7d3b751ab7d0aa59ad3ef269ea314135 inherit pro_methods_classfreetensor_1_1Mutator"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -252,8 +258,89 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a061fa1ecd455c48dc655d80db45ed337" name="a061fa1ecd455c48dc655d80db45ed337"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a061fa1ecd455c48dc655d80db45ed337">&#9670;&nbsp;</a></span>delayed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::InsertAlloc::delayed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad253b0c172208271886e9acb43a51f19" name="ad253b0c172208271886e9acb43a51f19"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad253b0c172208271886e9acb43a51f19">&#9670;&nbsp;</a></span>visit() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::InsertAlloc::visit </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1Mutator.html#ac655f03447663c24de534a22e1185897">freetensor::Mutator</a>.</p>
+
+</div>
+</div>
+<a id="a5612dc592ae409dbce0fa35b235734da" name="a5612dc592ae409dbce0fa35b235734da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5612dc592ae409dbce0fa35b235734da">&#9670;&nbsp;</a></span>visit() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::InsertAlloc::visit </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a4cc9fa73027c8534e97d51f54349f0b1">If</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1Mutator.html#a162236314b48fc257c02dcfda28f30cd">freetensor::Mutator</a>.</p>
+
+</div>
+</div>
 <a id="ab311e6db76533a51306c598421616388" name="ab311e6db76533a51306c598421616388"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab311e6db76533a51306c598421616388">&#9670;&nbsp;</a></span>visit()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab311e6db76533a51306c598421616388">&#9670;&nbsp;</a></span>visit() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">

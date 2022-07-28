@@ -10810,7 +10810,10 @@ template&lt;class T &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p >For any variable with memory type of cpu/heap or gpu/global/heap, we allocate memory for it as late as possible, and deallocate memory as early as possible. Similar operations will not be performed on scalars cause of few memory they used. </p>
+<p >Insert Alloc and Free node for heap-allocated varialbes, and turn stack-allocated variables to heap-allocated is beneficial</p>
+<p >Varaibles with <code><a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a7245cc5f5bb9ad69fd022fb9bfb75436">MemType::CPUHeap</a></code> or <code><a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a1c4a6df9ec736690a81dd559de98ffc5">MemType::GPUGlobalHeap</a></code> are allocated on the heap by some allocators. Other variables are allocated in a stack manner, not allocated by an allocator, but they may also be on the heap physically</p>
+<p >If we can delay a variable's allocation or free them earlier, we allocate them on the heap. The delation or making early will not cross any control flow</p>
+<p >This transformation is not applied to scalars </p>
 
 </div>
 </div>
