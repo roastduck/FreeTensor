@@ -122,6 +122,9 @@ void Driver::buildAndLoad() {
     switch (dev_->type()) {
     case TargetType::CPU:
         executable = Config::backendCompilerCXX().c_str();
+        // For path arguments, we do not quote it again since the arguments are passed
+        // directly to the compiler (with execv) without going through the shell. Spaces
+        // are preserved and the argument will not be split into multiple arguments.
         addArgs("-I" FT_RUNTIME_DIR, "-std=c++20", "-shared", "-O3", "-fPIC",
                 "-Wall", "-fopenmp", "-ffast-math");
         addArgs("-o", so, cpp);

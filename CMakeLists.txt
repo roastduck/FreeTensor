@@ -143,6 +143,9 @@ if(FT_WITH_PYTORCH)
 endif()
 
 # THIS PROJECT
+# All paths passed to pre-defined macros should be quoted here. CMake add_definitions
+# kindly preserves the quotes through escaping. Once expanded by C preprocessor, they
+# become string literals in C/C++ code and we are safe to use them.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 if(FT_WITH_MKL)
     add_definitions(-DFT_WITH_MKL="${FT_WITH_MKL}")
