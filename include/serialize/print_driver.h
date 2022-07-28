@@ -21,9 +21,8 @@ inline std::string dumpTarget(const Ref<Target> &target_) {
 
     switch (target->type()) {
     case TargetType::GPU: {
-        Ref<GPU> _target = target.as<GPU>();
-        Opt<std::pair<int, int>> _computeCapability =
-            _target->computeCapability();
+        auto _target = target.as<GPU>();
+        auto _computeCapability = _target->computeCapability();
         if (_computeCapability.isValid()) {
             ret += " : " + std::to_string(_computeCapability->first) + " " +
                    std::to_string(_computeCapability->second);
