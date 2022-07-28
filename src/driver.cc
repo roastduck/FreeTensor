@@ -6,6 +6,7 @@
 #include <dlfcn.h> // dlopen
 #include <fstream>
 #include <sys/stat.h> // mkdir
+#include <sys/wait.h> // waitpid
 #include <unistd.h>   // rmdir
 
 #include <itertools.hpp>
@@ -18,9 +19,6 @@
 #ifdef FT_WITH_CUDA
 #include <driver/gpu.h>
 #endif
-
-#define NAME_(macro) #macro
-#define NAME(macro) NAME_(macro)
 
 namespace freetensor {
 
@@ -114,72 +112,105 @@ void Driver::buildAndLoad() {
         std::ofstream f(cpp);
         f << src_;
     }
-    std::string cmd;
+    const char *executable;
+    std::vector<std::string> args;
+    auto addArgs = [&](auto... s) {
+        args.insert(args.end(), {std::string(s)...});
+    };
     // We enable fast-math because our own transformations do not preserve
     // strict floating point rounding order either
     switch (dev_->type()) {
     case TargetType::CPU:
-        cmd = Config::backendCompilerCXX();
-        cmd += " -I" NAME(FT_RUNTIME_DIR) " -std=c++20 -shared -O3 -fPIC "
-                                          "-Wall -fopenmp -ffast-math";
-        cmd += " -o " + so + " " + cpp;
+        executable = Config::backendCompilerCXX().c_str();
+        addArgs("-I" FT_RUNTIME_DIR, "-std=c++20", "-shared", "-O3", "-fPIC",
+                "-Wall", "-fopenmp", "-ffast-math");
+        addArgs("-o", so, cpp);
 #ifdef FT_WITH_MKL
-        cmd += " -I\"" NAME(FT_WITH_MKL) "/include\"";
-        cmd += " -Wl,--start-group";
-        cmd += " \"" NAME(FT_WITH_MKL) "/lib/intel64/libmkl_intel_lp64.a\"";
-        cmd += " \"" NAME(FT_WITH_MKL) "/lib/intel64/libmkl_gnu_thread.a\"";
-        cmd += " \"" NAME(FT_WITH_MKL) "/lib/intel64/libmkl_core.a\"";
-        cmd += " -Wl,--end-group";
-        cmd += " -DFT_WITH_MKL=\"" NAME(FT_WITH_MKL) "\"";
+        addArgs("-I" FT_WITH_MKL "/include", "-Wl,--start-group",
+                FT_WITH_MKL "/lib/intel64/libmkl_intel_lp64.a",
+                FT_WITH_MKL "/lib/intel64/libmkl_gnu_thread.a",
+                FT_WITH_MKL "/lib/intel64/libmkl_core.a", "-Wl,--end-group",
+                "-DFT_WITH_MKL=" FT_WITH_MKL);
         // Link statically, or there will be dlopen issues
         // Generated with MKL Link Line Advisor
 #endif // FT_WITH_MKL
         if (dev_->target()->useNativeArch()) {
-            cmd += " -march=native";
+            addArgs("-march=native");
         }
         if (Config::debugBinary()) {
-            cmd += " -g";
+            addArgs("-g");
         }
         break;
 #ifdef FT_WITH_CUDA
     case TargetType::GPU:
-        cmd = Config::backendCompilerNVCC();
-        cmd += " -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -Xcompiler "
-                                          "-fPIC,-Wall,-O3 --use_fast_math";
-        cmd += " -o " + so + " " + cpp;
-        cmd += " -lcublas";
+        executable = Config::backendCompilerNVCC().c_str();
+        addArgs("-I" FT_RUNTIME_DIR, "-std=c++17", "-shared", "-Xcompiler",
+                "-fPIC,-Wall,-O3", "--use_fast_math");
+        addArgs("-o", so, cpp);
+        addArgs("-lcublas");
         if (auto arch = dev_->target().as<GPU>()->computeCapability();
             arch.isValid()) {
-            cmd += " -arch sm_" + std::to_string(arch->first) +
-                   std::to_string(arch->second);
+            addArgs("-arch", "sm_" + std::to_string(arch->first) +
+                                 std::to_string(arch->second));
         } else if (dev_->target()->useNativeArch()) {
             int major, minor;
             checkCudaError(cudaDeviceGetAttribute(
                 &major, cudaDevAttrComputeCapabilityMajor, dev_->num()));
             checkCudaError(cudaDeviceGetAttribute(
                 &minor, cudaDevAttrComputeCapabilityMinor, dev_->num()));
-            cmd += " -arch sm_" + std::to_string(major) + std::to_string(minor);
+            addArgs("-arch",
+                    "sm_" + std::to_string(major) + std::to_string(minor));
         } else {
             WARNING("GPU arch not specified, which may result in suboptimal "
                     "performance ");
         }
         if (Config::debugBinary()) {
-            cmd += " -g";
+            addArgs("-g");
         }
         break;
 #endif // FT_WITH_CUDA
     default:
         ASSERT(false);
     }
-    if (Config::debugBinary()) {
-        WARNING("debug-binary mode on. Compiling with " + cmd);
+
+    if (Config::debugBinary() || verbose_) {
+        std::stringstream cmdStream;
+        cmdStream << "\"" << executable << "\" ";
+        for (auto &s : args) {
+            cmdStream << "\"" << s << "\" ";
+        }
+        auto cmd = cmdStream.str();
+
+        if (Config::debugBinary()) {
+            WARNING("debug-binary mode on. Compiling with " + cmd);
+        }
+        if (verbose_) {
+            logger() << "Running " << cmd << std::endl;
+        }
     }
-    if (verbose_) {
-        logger() << "Running " << cmd << std::endl;
-    }
-    auto compilerErr = system(cmd.c_str());
-    if (compilerErr != 0) {
-        throw DriverError("Backend compiler reports error");
+
+    // fork + execv to execute the compiler
+    {
+        // construct the argv array
+        std::vector<const char *> argv;
+        argv.push_back(executable);
+        for (auto &s : args) {
+            argv.push_back(s.c_str());
+        }
+        argv.push_back(nullptr);
+
+        int pid = fork();
+        if (pid == 0) {
+            execv(executable, const_cast<char *const *>(argv.data()));
+            std::cerr << "Failed to execute " << executable << ": "
+                      << strerror(errno);
+            exit(-1);
+        } else {
+            int status;
+            waitpid(pid, &status, 0);
+            if (status != 0)
+                throw DriverError("Backend compiler reports error");
+        }
     }
 
     dlHandle_ = dlopen(so.c_str(), RTLD_NOW);
