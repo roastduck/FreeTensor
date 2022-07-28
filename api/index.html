@@ -6956,9 +6956,19 @@ Can be overridden by subclasses.</p>
         <span class="n">first_pred</span><span class="o">.</span><span class="n">while_stmt</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">first_pred</span><span class="p">:</span>
-            <span class="n">body</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">body</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">BreakException</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="k">except</span> <span class="n">ContinueException</span><span class="p">:</span>
+                <span class="k">pass</span>
         <span class="k">while</span> <span class="n">fpred</span><span class="p">():</span>
-            <span class="n">body</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">body</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">BreakException</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="n">ContinueException</span><span class="p">:</span>
+                <span class="k">continue</span>
 </code></pre></div>
         </details>
     </div>
@@ -13678,9 +13688,19 @@ StagingOverload        </code>
             <span class="n">first_pred</span><span class="o">.</span><span class="n">while_stmt</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">first_pred</span><span class="p">:</span>
-                <span class="n">body</span><span class="p">()</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">body</span><span class="p">()</span>
+                <span class="k">except</span> <span class="n">BreakException</span><span class="p">:</span>
+                    <span class="k">return</span>
+                <span class="k">except</span> <span class="n">ContinueException</span><span class="p">:</span>
+                    <span class="k">pass</span>
             <span class="k">while</span> <span class="n">fpred</span><span class="p">():</span>
-                <span class="n">body</span><span class="p">()</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">body</span><span class="p">()</span>
+                <span class="k">except</span> <span class="n">BreakException</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">except</span> <span class="n">ContinueException</span><span class="p">:</span>
+                    <span class="k">continue</span>
 
     <span class="k">def</span> <span class="nf">assert_stmt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Assert staging tool.&#39;&#39;&#39;</span>
@@ -14623,9 +14643,19 @@ Can be overridden by subclasses.</p>
         <span class="n">first_pred</span><span class="o">.</span><span class="n">while_stmt</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">first_pred</span><span class="p">:</span>
-            <span class="n">body</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">body</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">BreakException</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="k">except</span> <span class="n">ContinueException</span><span class="p">:</span>
+                <span class="k">pass</span>
         <span class="k">while</span> <span class="n">fpred</span><span class="p">():</span>
-            <span class="n">body</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">body</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">BreakException</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="n">ContinueException</span><span class="p">:</span>
+                <span class="k">continue</span>
 </code></pre></div>
         </details>
     </div>
