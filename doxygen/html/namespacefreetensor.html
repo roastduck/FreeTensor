@@ -1785,6 +1785,10 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:ad49048b0f5a7d44b5e690b466f6bb4b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adcc467c052c7fa09bef7460cec42bed7"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adcc467c052c7fa09bef7460cec42bed7">dumpAST</a> (const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op, bool dtypeInLoad=false)</td></tr>
 <tr class="separator:adcc467c052c7fa09bef7460cec42bed7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3255ceeeaf76169fda243d90eac0ed57"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3255ceeeaf76169fda243d90eac0ed57">dumpTarget</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target_)</td></tr>
+<tr class="separator:a3255ceeeaf76169fda243d90eac0ed57"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2369fc9bcb41dfa8cf208cb62567c3d0"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2369fc9bcb41dfa8cf208cb62567c3d0">dumpDevice</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;device_)</td></tr>
+<tr class="separator:a2369fc9bcb41dfa8cf208cb62567c3d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2c490189ddd347553322eb51f8e945dc"><td class="memTemplParams" colspan="2">template&lt;class T &gt; <br />
 requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; requires !std::convertible_to&lt;T, <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt;<a class="el" href="classfreetensor_1_1ASTNode.html">ASTNode</a>&gt;&gt;; }</td></tr>
 <tr class="memitem:a2c490189ddd347553322eb51f8e945dc"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2c490189ddd347553322eb51f8e945dc">toString</a> (const T &amp;obj)</td></tr>
@@ -8052,6 +8056,58 @@ template&lt;class FromMap , class ToMap &gt; </div>
 </table>
 </div><div class="memdoc">
 <p >Serialize function for storing an AST and loading it back </p>
+
+</div>
+</div>
+<a id="a2369fc9bcb41dfa8cf208cb62567c3d0" name="a2369fc9bcb41dfa8cf208cb62567c3d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2369fc9bcb41dfa8cf208cb62567c3d0">&#9670;&nbsp;</a></span>dumpDevice()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string freetensor::dumpDevice </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>device_</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3255ceeeaf76169fda243d90eac0ed57" name="a3255ceeeaf76169fda243d90eac0ed57"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3255ceeeaf76169fda243d90eac0ed57">&#9670;&nbsp;</a></span>dumpTarget()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string freetensor::dumpTarget </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>target_</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
