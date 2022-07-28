@@ -767,7 +767,7 @@ def test_one_loop_depends_on_multiple_statements_no_remove():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'make_heap_alloc'
                    ])
 
     with ft.VarDef("u", (64,), "float64", "input", "cpu") as u:

@@ -4,20 +4,23 @@
 namespace freetensor {
 
 Stmt InsertAlloc::visit(const StmtSeq &_op) {
-    bool tmp_insert = is_insert;
-    is_insert = false;
+    bool isOuterMostOld = isOuterMost_;
+    isOuterMost_ = false;
 
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
     auto op = __op.as<StmtSeqNode>();
 
-    if (!tmp_insert)
+    isOuterMost_ = isOuterMostOld;
+    if (!isOuterMost_) {
         return op;
-    is_insert = true;
+    }
 
     int i = 0;
-    while (allUses(op->stmts_[i]).count(var_) == 0)
+    while (allUses(op->stmts_[i]).count(var_) == 0) {
+        delayed_ = true;
         ++i;
+    }
 
     ASSERT(i < (int)op->stmts_.size());
 
@@ -36,20 +39,23 @@ Stmt InsertAlloc::visit(const StmtSeq &_op) {
 }
 
 Stmt InsertFree::visit(const StmtSeq &_op) {
-    bool tmp_insert = is_insert;
-    is_insert = false;
+    bool isOuterMostOld = isOuterMost_;
+    isOuterMost_ = false;
 
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
     auto op = __op.as<StmtSeqNode>();
 
-    if (!tmp_insert)
+    isOuterMost_ = isOuterMostOld;
+    if (!isOuterMost_) {
         return op;
-    is_insert = true;
+    }
 
     int i = op->stmts_.size() - 1;
-    while (allUses(op->stmts_[i]).count(var_) == 0)
+    while (allUses(op->stmts_[i]).count(var_) == 0) {
         --i;
+        madeEarly_ = true;
+    }
 
     ASSERT(i >= 0);
 
@@ -67,23 +73,63 @@ Stmt InsertFree::visit(const StmtSeq &_op) {
     return op;
 }
 
-bool MakeHeapAlloc::inKernel() const { return for_depth != 0 || inCublas_; }
+bool MakeHeapAlloc::inKernel() const { return forDepth_ != 0 || inCublas_; }
 
 Stmt MakeHeapAlloc::visit(const VarDef &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
-    if (op->buffer_->mtype() == MemType::GPUGlobalHeap) {
-        ASSERT(!inKernel());
+    if (op->buffer_->atype() != AccessType::Cache ||
+        op->buffer_->tensor()->shape().size() == 0) {
+        return op;
     }
 
-    if (op->buffer_->mtype() == MemType::CPUHeap ||
-        op->buffer_->mtype() == MemType::GPUGlobalHeap) {
-        if (op->buffer_->tensor()->shape().size() != 0) {
-            op->body_ = InsertAlloc(op->name_)(op->body_);
-            op->body_ = InsertFree(op->name_)(op->body_);
+    switch (op->buffer_->mtype()) {
+    case MemType::CPU:
+    case MemType::GPUGlobal: {
+        // If we can benefit from inserting Alloc and Free, turn them to
+        // heap-allocated
+
+        if (op->buffer_->mtype() == MemType::GPUGlobal && inKernel()) {
+            return op;
         }
+
+        InsertAlloc insertAlloc(op->name_);
+        InsertFree insertFree(op->name_);
+        auto newBody = insertAlloc(insertFree(op->body_));
+        if (insertAlloc.delayed() || insertFree.madeEarly()) {
+            switch (op->buffer_->mtype()) {
+            case MemType::CPU:
+                op->buffer_->setMtype(MemType::CPUHeap);
+                break;
+            case MemType::GPUGlobal:
+                op->buffer_->setMtype(MemType::GPUGlobalHeap);
+                break;
+            default:
+                ASSERT(false);
+            }
+            op->body_ = newBody;
+            return op;
+        }
+        break;
+    }
+
+    case MemType::CPUHeap:
+    case MemType::GPUGlobalHeap: {
+        // Insert Alloc and Free nodes for already heap-allocated variables
+
+        if (op->buffer_->mtype() == MemType::GPUGlobalHeap && inKernel()) {
+            throw InvalidProgram("Unable to allocate a dynamic-sized "
+                                 "gpu global memory inside a kernel");
+        }
+
+        op->body_ = InsertAlloc(op->name_)(op->body_);
+        op->body_ = InsertFree(op->name_)(op->body_);
+        break;
+    }
+
+    default:;
     }
 
     return op;
@@ -94,10 +140,10 @@ Stmt MakeHeapAlloc::visit(const For &_op) {
         ((_op->property_->parallel_ != serialScope) &&
          std::holds_alternative<CUDAScope>(_op->property_->parallel_));
     if (delta_depth)
-        ++for_depth;
+        ++forDepth_;
     auto __op = Mutator::visit(_op);
     if (delta_depth)
-        --for_depth;
+        --forDepth_;
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     return op;
@@ -112,11 +158,6 @@ Stmt MakeHeapAlloc::visit(const MatMul &_op) {
     return op;
 }
 
-Stmt makeHeapAlloc(const Stmt &_op) {
-    auto op = _op;
-    MakeHeapAlloc mutator;
-    op = mutator(op);
-    return op;
-}
+Stmt makeHeapAlloc(const Stmt &op) { return MakeHeapAlloc()(op); }
 
 } // namespace freetensor

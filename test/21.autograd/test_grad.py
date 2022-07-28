@@ -596,7 +596,7 @@ def test_tape_5():
     print("Backward:")
     print(backward)
     forward = ft.lower(forward)
-    backward = ft.lower(backward)
+    backward = ft.lower(backward, skip_passes=['make_heap_alloc'])
     print("Forward:")
     print(forward)
     print("Backward:")
