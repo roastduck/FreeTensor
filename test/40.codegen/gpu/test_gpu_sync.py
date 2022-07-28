@@ -485,7 +485,7 @@ def test_syncthreads_split_branch_and_vardef():
                                "gpu/shared") as t:
                     ft.Any()
                     with ft.VarDef("u", (1,), "int32", "cache",
-                                   "gpu/shared") as u:
+                                   "gpu/local") as u:
                         with ft.If(j == 0):
                             ft.Any()  # u[0]
                         ft.Eval(
@@ -547,7 +547,7 @@ def test_syncthreads_split_branch_and_vardef_with_else():
                     with ft.If(i < 2):
                         ft.Any()
                     with ft.VarDef("u1", (1,), "int32", "cache",
-                                   "gpu/shared") as u:
+                                   "gpu/local") as u:
                         with ft.If(i < 2):
                             with ft.If(j == 0):
                                 ft.Any()  # u[0]
@@ -565,7 +565,7 @@ def test_syncthreads_split_branch_and_vardef_with_else():
                     with ft.If(i >= 2):
                         ft.Any()
                     with ft.VarDef("u2", (1,), "int32", "cache",
-                                   "gpu/shared") as u:
+                                   "gpu/local") as u:
                         with ft.If(i >= 2):
                             with ft.If(j == 0):
                                 ft.Any()  # u[0]

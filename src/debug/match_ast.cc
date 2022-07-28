@@ -62,6 +62,7 @@ void MatchVisitor::visit(const VarDef &op) {
     auto instance = instance_.as<VarDefNode>();
     CHECK(matchName(op->name_, instance->name_));
     CHECK(op->buffer_->atype() == instance->buffer_->atype());
+    CHECK(op->buffer_->mtype() == instance->buffer_->mtype());
     CHECK(op->buffer_->tensor()->dtype() ==
           instance->buffer_->tensor()->dtype());
     auto &&lshape = op->buffer_->tensor()->shape();
