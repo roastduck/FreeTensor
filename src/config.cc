@@ -8,9 +8,6 @@
 #include <except.h>
 #include <opt.h>
 
-#define NAME_(macro) #macro
-#define NAME(macro) NAME_(macro)
-
 namespace freetensor {
 
 static Opt<std::string> getStrEnv(const char *name) {
@@ -53,10 +50,10 @@ Ref<Device> Config::defaultDevice_;
 void Config::init() {
     Config::setPrettyPrint(isatty(fileno(stdout)));
 #ifdef FT_BACKEND_COMPILER_CXX
-    Config::setBackendCompilerCXX(NAME(FT_BACKEND_COMPILER_CXX));
+    Config::setBackendCompilerCXX(FT_BACKEND_COMPILER_CXX);
 #endif
 #ifdef FT_BACKEND_COMPILER_NVCC
-    Config::setBackendCompilerNVCC(NAME(FT_BACKEND_COMPILER_NVCC));
+    Config::setBackendCompilerNVCC(FT_BACKEND_COMPILER_NVCC);
 #endif
 
     if (auto flag = getBoolEnv("FT_PRETTY_PRINT"); flag.isValid()) {
@@ -83,7 +80,7 @@ void Config::init() {
 
 std::string Config::withMKL() {
 #ifdef FT_WITH_MKL
-    return NAME(FT_WITH_MKL);
+    return FT_WITH_MKL;
 #else
     return "";
 #endif

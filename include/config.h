@@ -49,6 +49,11 @@ class Config {
     static void setDebugBinary(bool flag = true) { debugBinary_ = flag; }
     static bool debugBinary() { return debugBinary_; }
 
+    /**
+     * @brief Set the C++ compiler for CPU backend.
+     * 
+     * @param path Path to C++ compiler. Should be raw path (unescaped).
+     */
     static void setBackendCompilerCXX(const std::string &path) {
         backendCompilerCXX_ = path;
     }
@@ -56,6 +61,11 @@ class Config {
         return backendCompilerCXX_;
     }
 
+    /**
+     * @brief Set the NVCC compiler for GPU backend.
+     * 
+     * @param path Path to NVCC compiler. Should be raw path (unescaped).
+     */
     static void setBackendCompilerNVCC(const std::string &path) {
         backendCompilerNVCC_ = path;
     }
