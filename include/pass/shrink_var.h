@@ -34,15 +34,24 @@ class ShrinkVar : public Mutator {
     template <class T> Stmt addCheck(const T &oldOp, const T &op) {
         // We add check w.r.t oldOp because it is simplier, which brings less
         // redundancy to pass/simplify
-        Stmt ret = op;
+        Expr guard;
         if (upper_.count(op->var_)) {
             auto &&upper = upper_.at(op->var_);
             ASSERT(upper.size() == op->indices_.size());
             for (auto &&[idx, u] : iter::zip(oldOp->indices_, upper)) {
-                ret = makeIf("", makeLE(idx, u), ret);
+                guard = guard.isValid() ? makeLAnd(guard, makeLE(idx, u))
+                                        : makeLE(idx, u);
             }
         }
-        return ret;
+        if (lower_.count(op->var_)) {
+            auto &&lower = lower_.at(op->var_);
+            ASSERT(lower.size() == op->indices_.size());
+            for (auto &&[idx, l] : iter::zip(oldOp->indices_, lower)) {
+                guard = guard.isValid() ? makeLAnd(guard, makeGE(idx, l))
+                                        : makeGE(idx, l);
+            }
+        }
+        return guard.isValid() ? makeIf("", std::move(guard), op) : op;
     }
 
   protected:
