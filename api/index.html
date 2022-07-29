@@ -13827,10 +13827,13 @@ StagingOverload        </code>
 
     <span class="k">def</span> <span class="nf">into_staging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                      <span class="n">func</span><span class="p">,</span>
-                     <span class="n">extra_locals</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+                     <span class="n">extra_locals</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                      <span class="n">src</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                      <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">assert</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">extra_locals</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">extra_locals</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="k">if</span> <span class="n">src</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">lines</span><span class="p">,</span> <span class="n">lineno</span> <span class="o">=</span> <span class="n">ins</span><span class="o">.</span><span class="n">getsourcelines</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
