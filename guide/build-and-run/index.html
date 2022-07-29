@@ -154,13 +154,17 @@ make -j  # Or use Ninja
 <p>There are some options to <code>cmake</code>:</p>
 <ul>
 <li><code>-DFT_WITH_CUDA=ON/OFF</code>: build with/without CUDA (defaults to <code>ON</code>).</li>
-<li><code>-DFT_WITH_MKL=&lt;path/to/mkl/root&gt;</code>: build with MKL (path to MKL is required, defaults to building without it).</li>
+<li>
+<p><code>-DFT_WITH_MKL=&lt;path/to/mkl/root&gt;</code>: build with MKL (path to MKL is required, defaults to building without it).</p>
+<p>The path accepts by CMake should be a raw unescaped path; i.e. <code>-DFT_WITH_MKL="/some path"</code> is good since the quotes are resolved by the shell but <code>-DFT_WITH_MKL=\"/some\ path\"</code> is not.</p>
+</li>
+<li>
+<p><code>-DFT_WITH_PYTORCH=ON/OFF</code>: build with/without copy-free interface from/to PyTorch, requring PyTorch installed on the system (defaults to <code>OFF</code>).</p>
+</li>
+<li><code>-DFT_DEBUG_LOG_NODE=ON</code> (for developers): enables tracing to tell by which pass a specific AST node is modified.</li>
+<li><code>-DFT_DEBUG_PROFILE=ON</code> (for developers): profiles some heavy functions in the compiler.</li>
+<li><code>-DFT_DEBUG_SANITIZE=sanitizer_name</code> (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).</li>
 </ul>
-<p>The path accepts by CMake should be a raw unescaped path; i.e. <code>-DFT_WITH_MKL="/some path"</code> is good since the quotes are resolved by the shell but <code>-DFT_WITH_MKL=\"/some\ path\"</code> is not.
-- <code>-DFT_WITH_PYTORCH=ON/OFF</code>: build with/without copy-free interface from/to PyTorch, requring PyTorch installed on the system (defaults to <code>OFF</code>).
-- <code>-DFT_DEBUG_LOG_NODE=ON</code> (for developers): enables tracing to tell by which pass a specific AST node is modified.
-- <code>-DFT_DEBUG_PROFILE=ON</code> (for developers): profiles some heavy functions in the compiler.
-- <code>-DFT_DEBUG_SANITIZE=sanitizer_name</code> (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).</p>
 <p>It will build a shared library with a name like <code>freetensor_ffi.cpython-37m-x86_64-linux-gnu.so</code>, which can be used in Python via <code>import freetensor</code>.</p>
 <h2 id="run-a-program-with-freetensor">Run a Program with FreeTensor<a class="headerlink" href="#run-a-program-with-freetensor" title="Permanent link">&para;</a></h2>
 <p>To run any program with FreeTensor, one should add the <code>python/</code> and <code>build/</code> directory to <code>PYTHONPATH</code> first.</p>
