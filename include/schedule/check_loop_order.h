@@ -20,7 +20,15 @@ class CheckLoopOrder : public Visitor {
   public:
     CheckLoopOrder(const std::vector<ID> &dstOrder) : dstOrder_(dstOrder) {}
 
+    /**
+     * All required loops, sorted from outer to inner
+     */
     const std::vector<For> &order() const;
+
+    /**
+     * All StmtSeq nodes nested inside the outer-most required loop, and nesting
+     * the inner-most required loop, sorted from outer to inner
+     */
     const std::vector<StmtSeq> &stmtSeqInBetween() const {
         return stmtSeqInBetween_;
     }
