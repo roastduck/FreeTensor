@@ -34,7 +34,6 @@ class ShrinkVar : public Mutator {
     template <class T> Stmt addCheck(const T &oldOp, const T &op) {
         // We add check w.r.t oldOp because it is simplier, which brings less
         // redundancy to pass/simplify
-        Stmt ret = op;
         Expr guard;
         if (upper_.count(op->var_)) {
             auto &&upper = upper_.at(op->var_);
@@ -52,10 +51,7 @@ class ShrinkVar : public Mutator {
                                         : makeGE(idx, l);
             }
         }
-        if (guard.isValid()) {
-            ret = makeIf("", std::move(guard), std::move(ret));
-        }
-        return ret;
+        return guard.isValid() ? makeIf("", std::move(guard), op) : op;
     }
 
   protected:

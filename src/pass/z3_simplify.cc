@@ -160,12 +160,19 @@ Expr Z3Simplify::visit(const Min &_op) {
     }
 
     std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
-        [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
+        [this, &recur](const Expr &expr, std::unordered_set<Expr> &list) {
             if (expr->nodeType() == ASTNodeType::Min) {
                 recur(expr.as<MinNode>()->lhs_, list);
                 recur(expr.as<MinNode>()->rhs_, list);
             } else {
-                list.insert(expr);
+                // We will make a shorter Min while the original Min still
+                // alive, which will trigger a copy by SubTree and z3Expr will
+                // be lost, so deepCopy here
+                auto newExpr = deepCopy(expr);
+                if (exists(expr)) {
+                    put(newExpr, get(expr));
+                }
+                list.insert(std::move(newExpr));
             }
         };
     std::unordered_set<Expr> lhs, rhs, all;
@@ -209,12 +216,19 @@ Expr Z3Simplify::visit(const Max &_op) {
     }
 
     std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
-        [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
+        [this, &recur](const Expr &expr, std::unordered_set<Expr> &list) {
             if (expr->nodeType() == ASTNodeType::Max) {
                 recur(expr.as<MaxNode>()->lhs_, list);
                 recur(expr.as<MaxNode>()->rhs_, list);
             } else {
-                list.insert(expr);
+                // We will make a shorter Min while the original Min still
+                // alive, which will trigger a copy by SubTree and z3Expr will
+                // be lost, so deepCopy here
+                auto newExpr = deepCopy(expr);
+                if (exists(expr)) {
+                    put(newExpr, get(expr));
+                }
+                list.insert(std::move(newExpr));
             }
         };
     std::unordered_set<Expr> lhs, rhs, all;
@@ -312,15 +326,14 @@ Expr Z3Simplify::visit(const LAnd &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LAnd);
     auto op = __op.as<LAndNode>();
+    if (prove(op->lhs_)) {
+        return op->rhs_;
+    }
+    if (prove(op->rhs_)) {
+        return op->lhs_;
+    }
+    // If one of the operands is always false, visit(If) will deal with it
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        if (prove(op->lhs_)) {
-            return op->rhs_;
-        }
-        if (prove(op->rhs_)) {
-            return op->lhs_;
-        }
-        // If one of the operands is always false, visit(If) will deal with
-        // it
         put(op, get(op->lhs_) && get(op->rhs_));
     }
     return op;
@@ -330,15 +343,14 @@ Expr Z3Simplify::visit(const LOr &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LOr);
     auto op = __op.as<LOrNode>();
+    if (prove((*this)(makeLNot(op->lhs_)))) {
+        return op->rhs_;
+    }
+    if (prove((*this)(makeLNot(op->rhs_)))) {
+        return op->lhs_;
+    }
+    // If one of the operands is always true, visit(If) will deal with it
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        if (prove((*this)(makeLNot(op->lhs_)))) {
-            return op->rhs_;
-        }
-        if (prove((*this)(makeLNot(op->rhs_)))) {
-            return op->lhs_;
-        }
-        // If one of the operands is always true, visit(If) will deal with
-        // it
         put(op, get(op->lhs_) || get(op->rhs_));
     }
     return op;

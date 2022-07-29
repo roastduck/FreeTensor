@@ -2,6 +2,7 @@
 #include <pass/remove_dead_var.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
+#include <pass/z3_simplify.h>
 
 namespace freetensor {
 
@@ -72,7 +73,7 @@ Stmt shrinkVar(const Stmt &_op) {
     op = ShrinkVar(bounds)(op);
 
     // (3)
-    return simplify(op);
+    return simplify(z3Simplify(op));
 }
 
 Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
@@ -86,7 +87,7 @@ Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
     op = ShrinkVar(bounds)(op);
 
     // (3)
-    return simplify(op);
+    return simplify(z3Simplify(op));
 }
 
 } // namespace freetensor

@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_BOUNDS_H
 #define FREE_TENSOR_BOUNDS_H
 
+#include <iostream>
 #include <unordered_set>
 
 #include <math/linear.h>
@@ -27,6 +28,10 @@ class UpperBound {
     const Expr &expr();
     const std::unordered_set<std::string> &allNames();
     const LinearExpr<Rational<int64_t>> &lin() const { return lin_; }
+
+    friend std::ostream &operator<<(std::ostream &os, const UpperBound &b) {
+        return os << b.lin();
+    }
 };
 
 class LowerBound {
@@ -42,6 +47,10 @@ class LowerBound {
     const Expr &expr();
     const std::unordered_set<std::string> &allNames();
     const LinearExpr<Rational<int64_t>> &lin() const { return lin_; }
+
+    friend std::ostream &operator<<(std::ostream &os, const LowerBound &u) {
+        return os << u.lin();
+    }
 };
 
 UpperBound add(const UpperBound &b1, const UpperBound &b2);
