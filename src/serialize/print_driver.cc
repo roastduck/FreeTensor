@@ -71,9 +71,9 @@ std::string dumpArray(const Ref<Array> &array_) {
         ret += std::to_string(siz) + " ";
     }
 
-    ret += std::to_string(array_->ptrs().size()) + " ";
-    // `array_` is correct
-    for (auto &&[device, p, _] : array_->ptrs()) {
+    ret += std::to_string(array->ptrs().size()) + " ";
+
+    for (auto &&[device, p, _] : array->ptrs()) {
         ret += dumpDevice(device) + "# ";
     }
 

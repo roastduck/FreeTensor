@@ -44,38 +44,6 @@ def array(data):
     raise ffi.DriverError(f"Unsupported data type {type(data)} for Array")
 
 
-'''
-these functions have C++ version
-
-def load_target(target_str):
-    data = target_str.split()
-    if data[0] == 'GPU':
-        ret = GPU(bool(int(data[1])))
-        if data[2] == ':':
-            ret.set_compute_capability(int(data[3]), int(data[4]))
-    elif data[0] == 'CPU':
-        ret = CPU(bool(int(data[1])))
-    elif data[0] == 'DEV':
-        raise ffi.DriverError(
-            "load_target: You may want to load a device, try load_device")
-    else:
-        raise ffi.DriverError(
-            "load_target: Unknown target {}".format(target_str))
-    return ret
-
-
-def load_device(device_str):
-    data = device_str.split(' ', 2)
-    if data[0] == 'DEV':
-        ret = Device(load_target(str(data[2])), int(data[1]))
-    else:
-        raise ffi.DriverError(
-            "load_device: Unknown device {}".format(device_str))
-    return ret
-
-'''
-
-
 class Target(ffi.Target):
     '''
     A target architecture

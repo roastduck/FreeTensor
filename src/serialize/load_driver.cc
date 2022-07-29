@@ -123,9 +123,10 @@ Ref<Array> loadArray(const std::string &txt) {
         // `<ptrs_.size>`: the number of devices sharing the Array
         ASSERT(iss >> len);
 
+        ASSERT(len > 0);
+
+        // Arraydata may have the pattern "DEV"
         size_t st = txt.find("DEV"), ed = st;
-        // A CPU device at least
-        ASSERT(st != std::string::npos);
 
         for (size_t i = 0; i < len; i++) {
             st = txt.find("DEV", ed);
@@ -134,7 +135,7 @@ Ref<Array> loadArray(const std::string &txt) {
             devs.emplace_back(dev);
         }
 
-        // Arraydata (byte_hex, strlen = size * 2)
+        // Arraydata (uint8_t, strlen = size)
         iss.seekg(ed + 1);
         ASSERT(iss >> data);
 

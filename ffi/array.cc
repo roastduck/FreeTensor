@@ -117,8 +117,8 @@ void init_ffi_array(py::module_ &m) {
             /**
              * The feature is for testing serialization
              *
-             * Note: lhs->ptrs_ / rhs->ptrs_ may be emplace_back(ed) by a copy
-             * on CPU device
+             * Note: lhs->ptrs_ / rhs->ptrs_ may be emplace_back(ed) by a
+             * Arraycopy on CPU device
              */
             if (lhs->size() != rhs->size() || lhs->nElem() != rhs->nElem() ||
                 lhs->dtype() != rhs->dtype() || lhs->shape() != rhs->shape())
