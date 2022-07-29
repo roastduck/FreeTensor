@@ -112,7 +112,49 @@ void init_ffi_array(py::module_ &m) {
                 "Unsupported data type or strides from a NumPy Array. Please "
                 "use freetensor.array factory function, instead of "
                 "freetensor.Array, for strided arrays");
-        }));
+        }))
+        .def("__eq__", [](const Ref<Array> &lhs, const Ref<Array> &rhs) {
+            /**
+             * The feature is for testing serialization
+             *
+             * Note: lhs->ptrs_ / rhs->ptrs_ may be emplace_back(ed) by a copy
+             * on CPU device
+             */
+            if (lhs->size() != rhs->size() || lhs->nElem() != rhs->nElem() ||
+                lhs->dtype() != rhs->dtype() || lhs->shape() != rhs->shape())
+                return false;
+
+            uint8_t *lptr =
+                (uint8_t *)lhs->rawSharedTo(Config::defaultDevice());
+            uint8_t *rptr =
+                (uint8_t *)rhs->rawSharedTo(Config::defaultDevice());
+
+            for (size_t i = 0; i < lhs->size(); i++) {
+                if (lptr[i] != rptr[i])
+                    return false;
+            }
+
+            auto isDevIn = [&](const std::vector<ArrayCopy> &src,
+                               const std::vector<ArrayCopy> &dst) {
+                for (auto &&[ldev, lp, lb] : src) {
+                    bool flg = 0;
+                    for (auto &&[rdev, rp, rb] : dst) {
+                        if (*ldev == *rdev) {
+                            flg = 1;
+                            break;
+                        }
+                    }
+                    if (!flg)
+                        return false;
+                }
+                return true;
+            };
+            if (!isDevIn(lhs->ptrs(), rhs->ptrs()) ||
+                !isDevIn(rhs->ptrs(), lhs->ptrs()))
+                return false;
+
+            return true;
+        });
 #ifdef FT_WITH_PYTORCH
     pyArray.def(
         py::init([](const torch::Tensor &tensor) {

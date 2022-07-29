@@ -1,4 +1,6 @@
 import freetensor as ft
+import freetensor_ffi as ffi
+from freetensor import CPU, GPU, Device
 import pytest
 from random import randint
 
@@ -61,3 +63,35 @@ def test_device_gpu_with_compute_capability():
     print(txt)
     device2 = ft.load_device(txt)
     assert device == device2
+
+
+def test_array_no_cpu_sizeof4():
+    data = '#$^!@*ABCDEF114514ghijkl'
+    assert len(data) == 24
+
+    target = GPU(1)
+    target.set_compute_capability(7, 0)
+    devs = [Device(GPU(1), 1), Device(GPU(0), 2), Device(target, 3)]
+
+    arr = ffi.new_test_array([1, 2, 3], "float32", devs, data)
+    txt = ft.dump_array(arr)
+    print(txt)
+    arr2 = ft.load_array(txt)
+
+    assert arr == arr2
+
+
+def test_array_with_cpu_sizeof8():
+    data = '#$^!@*ABCDEF114514ghijkl(&%,.?MNOPQR236789stuvwx'
+    assert len(data) == 48
+
+    target = GPU(0)
+    target.set_compute_capability(4, 3)
+    devs = [Device(CPU(1), 1), Device(CPU(0), 2), Device(target, 3)]
+
+    arr = ffi.new_test_array([2, 1, 3], "int64", devs, data)
+    txt = ft.dump_array(arr)
+    print(txt)
+    arr2 = ft.load_array(txt)
+
+    assert arr == arr2

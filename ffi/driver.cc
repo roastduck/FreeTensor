@@ -4,6 +4,8 @@
 #include <driver.h>
 #include <except.h>
 #include <ffi.h>
+#include <serialize/load_driver.h>
+#include <serialize/print_driver.h>
 
 namespace freetensor {
 
@@ -36,6 +38,17 @@ void init_ffi_driver(py::module_ &m) {
         .def("sync", &Driver::sync)
         .def("collect_returns", &Driver::collectReturns)
         .def("time", &Driver::time, "rounds"_a = 10, "warmpups"_a = 3);
+
+    // Serialization
+    m.def("load_target", &loadTarget);
+    m.def("load_device", &loadDevice);
+    m.def("load_array", &loadArray);
+    m.def("dump_target", &dumpTarget, "target"_a);
+    m.def("dump_device", &dumpDevice, "device"_a);
+    m.def("dump_array", &dumpArray, "array"_a);
+    m.def("new_test_array", &newArray, "shape"_a, "dtype"_a, "devices"_a, "data"_a);
+
+
 }
 
 } // namespace freetensor

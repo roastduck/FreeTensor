@@ -83,6 +83,7 @@ class Array {
     size_t size() const { return size_; }
     size_t nElem() const { return nElem_; }
     const std::vector<size_t> &shape() const { return shape_; }
+    const std::vector<ArrayCopy> &ptrs() const { return ptrs_; }
     DataType dtype() const { return dtype_; }
 
     void *rawSharedTo(const Ref<Device> &device);

@@ -44,6 +44,9 @@ def array(data):
     raise ffi.DriverError(f"Unsupported data type {type(data)} for Array")
 
 
+'''
+these functions have C++ version
+
 def load_target(target_str):
     data = target_str.split()
     if data[0] == 'GPU':
@@ -69,6 +72,8 @@ def load_device(device_str):
         raise ffi.DriverError(
             "load_device: Unknown device {}".format(device_str))
     return ret
+
+'''
 
 
 class Target(ffi.Target):
