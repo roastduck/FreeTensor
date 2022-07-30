@@ -127,8 +127,8 @@ Stmt tensorPropConst(const Stmt &_op) {
                     }
                     for (auto &&[oldIter, value] :
                          iter::zip(repInfo.earlierIters_, values)) {
-                        if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
-                            oldIterToNewIter[oldIter.iter_.as<VarNode>()
+                        if (oldIter.realIter_->nodeType() == ASTNodeType::Var) {
+                            oldIterToNewIter[oldIter.realIter_.as<VarNode>()
                                                  ->name_] =
                                 oldIter.realIter_ == oldIter.iter_
                                     ? ReplaceIter(islVarToNewIter)(value)
