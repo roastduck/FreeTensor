@@ -65,6 +65,7 @@ def test_device_gpu_with_compute_capability():
     assert device == device2
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_array_no_cpu_sizeof4():
     data = '#$^!@*ABCDEF114514ghijkl'
     assert len(data) == 24
@@ -74,13 +75,16 @@ def test_array_no_cpu_sizeof4():
     devs = [Device(GPU(1), 1), Device(GPU(0), 2), Device(target, 3)]
 
     arr = ffi.new_test_array([1, 2, 3], "float32", devs, data)
-    txt = ft.dump_array(arr)
-    print(txt)
-    arr2 = ft.load_array(txt)
+    head, data2 = ft.dump_array(arr)
+    print(head)
+    print(data2)
+    print(type(data2))
+    arr2 = ft.load_array(head, data2)
 
     assert arr == arr2
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_array_with_cpu_sizeof8():
     data = '#$^!@*ABCDEF114514ghijkl(&%,.?MNOPQR236789stuvwx'
     assert len(data) == 48
@@ -90,8 +94,10 @@ def test_array_with_cpu_sizeof8():
     devs = [Device(CPU(1), 1), Device(CPU(0), 2), Device(target, 3)]
 
     arr = ffi.new_test_array([2, 1, 3], "int64", devs, data)
-    txt = ft.dump_array(arr)
-    print(txt)
-    arr2 = ft.load_array(txt)
+    head, data2 = ft.dump_array(arr)
+    print(head)
+    print(data2)
+    print(type(data2))
+    arr2 = ft.load_array(head, data2)
 
     assert arr == arr2

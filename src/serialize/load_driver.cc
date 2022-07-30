@@ -97,13 +97,13 @@ Ref<Array> newArray(const std::vector<size_t> &shape_,
 
     return ret;
 }
-Ref<Array> loadArray(const std::string &txt) {
+Ref<Array> loadArray(const std::string &txt, const std::string &data) {
 
     std::istringstream iss(txt);
 
     Ref<Array> ret;
 
-    std::string type, data;
+    std::string type;
     size_t dtype, len;
     std::vector<size_t> shape;
     std::vector<Ref<Device>> devs;
@@ -123,21 +123,17 @@ Ref<Array> loadArray(const std::string &txt) {
         // `<ptrs_.size>`: the number of devices sharing the Array
         ASSERT(iss >> len);
 
-        ASSERT(len > 0);
-
-        // Arraydata may have the pattern "DEV"
         size_t st = txt.find("DEV"), ed = st;
 
         for (size_t i = 0; i < len; i++) {
             st = txt.find("DEV", ed);
             ed = txt.find('#', st);
+
+            ASSERT(ed != std::string::npos);
+
             auto dev = loadDevice(txt.substr(st, ed - st));
             devs.emplace_back(dev);
         }
-
-        // Arraydata (uint8_t, strlen = size)
-        iss.seekg(ed + 1);
-        ASSERT(iss >> data);
 
         ret = newArray(shape, dataTypeNames[dtype], devs, data);
 

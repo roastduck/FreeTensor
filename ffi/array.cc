@@ -129,28 +129,7 @@ void init_ffi_array(py::module_ &m) {
             uint8_t *rptr =
                 (uint8_t *)rhs->rawSharedTo(Config::defaultDevice());
 
-            for (size_t i = 0; i < lhs->size(); i++) {
-                if (lptr[i] != rptr[i])
-                    return false;
-            }
-
-            auto isDevIn = [&](const std::vector<ArrayCopy> &src,
-                               const std::vector<ArrayCopy> &dst) {
-                for (auto &&[ldev, lp, lb] : src) {
-                    bool flg = 0;
-                    for (auto &&[rdev, rp, rb] : dst) {
-                        if (*ldev == *rdev) {
-                            flg = 1;
-                            break;
-                        }
-                    }
-                    if (!flg)
-                        return false;
-                }
-                return true;
-            };
-            if (!isDevIn(lhs->ptrs(), rhs->ptrs()) ||
-                !isDevIn(rhs->ptrs(), lhs->ptrs()))
+            if (memcmp(lptr, rptr, lhs->size()))
                 return false;
 
             return true;

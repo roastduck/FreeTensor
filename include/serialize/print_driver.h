@@ -14,7 +14,7 @@ namespace freetensor {
 
 std::string dumpTarget(const Ref<Target> &target_);
 std::string dumpDevice(const Ref<Device> &device_);
-std::string dumpArray(const Ref<Array> &array_);
+std::pair<std::string, std::string> dumpArray(const Ref<Array> &array_);
 
 } // namespace freetensor
 

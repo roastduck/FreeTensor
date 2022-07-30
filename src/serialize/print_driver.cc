@@ -42,7 +42,7 @@ std::string dumpDevice(const Ref<Device> &device_) {
     return ret;
 }
 
-std::string dumpArray(const Ref<Array> &array_) {
+std::pair<std::string, std::string> dumpArray(const Ref<Array> &array_) {
 
     /**
      * The string is constructed as follow (Separated by space):
@@ -51,37 +51,35 @@ std::string dumpArray(const Ref<Array> &array_) {
      * {dtype} +
      * {shape.size} + {shape[0]} + ... + {shape[shape.size - 1]} +
      * {ptrs.size} + {ptrs[0].dev_"#"} + ... + {ptrs[ptrs.size - 1].dev_"#"} +
-     * {Arraydata (uint8_t, strlen = array_->size(), e.g.!@#$%^&*1)}
+     * {Arraydata (string -> pybind11::bytes later, e.g. b'\x01\x23\xab\xcd')
      *
-     * Note: Arraydata may have invisible characters
+     *
      */
     ASSERT(array_.isValid());
 
     auto array = array_;
 
-    // it will modify array_
+    // array_ may be modified
     uint8_t *addr = (uint8_t *)array->rawSharedTo(Config::defaultDevice());
 
     ASSERT(addr);
 
-    std::string ret = "ARR " + std::to_string((size_t)array->dtype()) + " " +
-                      std::to_string(array->shape().size()) + " ";
+    std::string ret_meta = "ARR " + std::to_string((size_t)array->dtype()) +
+                           " " + std::to_string(array->shape().size()) + " ";
 
     for (const size_t &siz : array->shape()) {
-        ret += std::to_string(siz) + " ";
+        ret_meta += std::to_string(siz) + " ";
     }
 
-    ret += std::to_string(array->ptrs().size()) + " ";
+    ret_meta += std::to_string(array->ptrs().size()) + " ";
 
     for (auto &&[device, p, _] : array->ptrs()) {
-        ret += dumpDevice(device) + "# ";
+        ret_meta += dumpDevice(device) + "# ";
     }
 
-    for (size_t i = 0; i < array->size(); i++) {
-        ret += addr[i];
-    }
+    std::string ret_data((char *)addr, array->size());
 
-    return ret;
+    return std::make_pair(ret_meta, ret_data);
 }
 
 } // namespace freetensor

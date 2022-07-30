@@ -45,10 +45,15 @@ void init_ffi_driver(py::module_ &m) {
     m.def("load_array", &loadArray);
     m.def("dump_target", &dumpTarget, "target"_a);
     m.def("dump_device", &dumpDevice, "device"_a);
-    m.def("dump_array", &dumpArray, "array"_a);
-    m.def("new_test_array", &newArray, "shape"_a, "dtype"_a, "devices"_a, "data"_a);
-
-
+    m.def(
+        "dump_array",
+        [](const Ref<Array> &array_) {
+            auto &&[ret_meta, ret_data] = dumpArray(array_);
+            return std::make_pair(ret_meta, py::bytes(ret_data));
+        },
+        "array"_a);
+    m.def("new_test_array", &newArray, "shape"_a, "dtype"_a, "devices"_a,
+          "data"_a);
 }
 
 } // namespace freetensor
