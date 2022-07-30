@@ -146,6 +146,7 @@ void FindAccessPoint::visit(const For &op) {
     }
     cur_.pop_back();
     conds_.resize(oldCondsSize);
+    replaceIter_.erase(op->iter_);
 }
 
 void FindAccessPoint::visit(const If &op) {
