@@ -399,14 +399,21 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                         oldIterToNewIter;
                     for (auto &&[newIter, arg] :
                          iter::zip(repInfo.laterIters_, args)) {
-                        islVarToNewIter[arg] = newIter.iter_;
+                        islVarToNewIter[arg] =
+                            newIter.realIter_ == newIter.iter_
+                                ? newIter.iter_
+                                : makeMul(makeIntConst(-1), newIter.realIter_);
                     }
                     for (auto &&[oldIter, value] :
                          iter::zip(repInfo.earlierIters_, values)) {
                         if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
                             oldIterToNewIter[oldIter.iter_.as<VarNode>()
                                                  ->name_] =
-                                ReplaceIter(islVarToNewIter)(value);
+                                oldIter.realIter_ == oldIter.iter_
+                                    ? ReplaceIter(islVarToNewIter)(value)
+                                    : makeMul(
+                                          makeIntConst(-1),
+                                          ReplaceIter(islVarToNewIter)(value));
                         }
                     }
                     auto newExpr = ReplaceIter(oldIterToNewIter)(expr);

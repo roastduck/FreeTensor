@@ -170,6 +170,7 @@ class ConstFold : public Mutator {
  * pass/scalar_prop_const and pass/tensor_prop_const
  */
 inline Stmt constFold(const Stmt &op) { return ConstFold()(op); }
+inline Expr constFold(const Expr &op) { return ConstFold()(op); }
 
 DEFINE_PASS_FOR_FUNC(constFold)
 
