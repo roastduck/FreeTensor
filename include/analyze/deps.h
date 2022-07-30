@@ -24,9 +24,13 @@ namespace freetensor {
 struct IterAxis {
     Expr iter_;
     ParallelScope parallel_;
+    Expr realIter_; // The original iterating Var, no matter step is positive or
+                    // negative
 
+    IterAxis(Expr iter, const ParallelScope &parallel, Expr realIter)
+        : iter_(iter), parallel_(parallel), realIter_(realIter) {}
     IterAxis(Expr iter, const ParallelScope &parallel = serialScope)
-        : iter_(iter), parallel_(parallel) {}
+        : IterAxis(iter, parallel, iter) {}
 };
 
 struct AccessPoint {
@@ -107,6 +111,9 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     // Var name -> axis: Which axis is a local var defined
     std::unordered_map<std::string, int> defAxis_;
 
+    // For negative steps, replace iter with -neg_iter
+    std::unordered_map<std::string, Expr> replaceIter_;
+
   public:
     FindAccessPoint(const Stmt &root, const FindDepsAccFilter &accFilter);
 
@@ -123,6 +130,9 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     }
 
   private:
+    Expr normalizeExpr(const Expr &expr) const;
+    std::vector<Expr> normalizeExprs(const std::vector<Expr> &expr) const;
+
     template <class T> void visitStoreLike(const T &op) {
         BaseClass::visit(op);
 
@@ -141,8 +151,8 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                buffer(op->var_),
                defAxis_.at(op->var_),
                cur_,
-               std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
-               conds_};
+               normalizeExprs(op->indices_),
+               normalizeExprs(conds_)};
         if (accFilter_ == nullptr || accFilter_(*ap)) {
             writes_[def(op->var_)->id()].emplace_back(ap);
         }

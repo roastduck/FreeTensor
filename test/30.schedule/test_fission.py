@@ -564,3 +564,85 @@ def test_correct_dependency_overwritten_store():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_scan_without_dep():
+    with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
+                    ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
+        with ft.For("i", 1, 10, nid='L1') as i:
+            ft.MarkNid("S0")
+            a[i] += a[i - 1]
+            b[i] += a[i - 1]
+
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.fission("L1", ft.FissionSide.After, "S0")
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
+                    ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
+        with ft.For("i", 1, 10) as i:
+            a[i] += a[i - 1]
+        with ft.For("i", 1, 10) as i:
+            b[i] += a[i - 1]
+    std = ft.make_reduction(ft.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_scan_with_dep():
+    with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
+                    ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
+        with ft.For("i", 0, 9, nid='L1') as i:
+            ft.MarkNid("S0")
+            a[i] += a[i + 1]
+            b[i] += a[i + 1]
+
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    with pytest.raises(ft.InvalidSchedule):
+        s.fission("L1", ft.FissionSide.After, "S0")
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ast)
+
+
+def test_reversed_scan_without_dep():
+    with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
+                    ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
+        with ft.For("i", 8, -1, -1, nid='L1') as i:
+            ft.MarkNid("S0")
+            a[i] += a[i + 1]
+            b[i] += a[i + 1]
+
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.fission("L1", ft.FissionSide.After, "S0")
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
+                    ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
+        with ft.For("i", 8, -1, -1) as i:
+            a[i] += a[i + 1]
+        with ft.For("i", 8, -1, -1) as i:
+            b[i] += a[i + 1]
+    std = ft.make_reduction(ft.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_reversed_scan_with_dep():
+    with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
+                    ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
+        with ft.For("i", 9, 0, -1, nid='L1') as i:
+            ft.MarkNid("S0")
+            a[i] += a[i - 1]
+            b[i] += a[i - 1]
+
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    with pytest.raises(ft.InvalidSchedule):
+        s.fission("L1", ft.FissionSide.After, "S0")
