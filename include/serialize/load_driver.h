@@ -17,9 +17,7 @@ Ref<Array> loadArray(const std::string &txt, const std::string &data);
  * See include/driver/array.h for more info
  */
 Ref<Array> newArray(const std::vector<size_t> &shape_,
-                    const std::string &dtype_,
-                    const std::vector<Ref<Device>> &devs_,
-                    const std::string &data_);
+                    const std::string &dtype_, const std::string &data_);
 
 } // namespace freetensor
 

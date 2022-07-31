@@ -52,8 +52,6 @@ void init_ffi_driver(py::module_ &m) {
             return std::make_pair(ret_meta, py::bytes(ret_data));
         },
         "array"_a);
-    m.def("new_test_array", &newArray, "shape"_a, "dtype"_a, "devices"_a,
-          "data"_a);
 }
 
 } // namespace freetensor

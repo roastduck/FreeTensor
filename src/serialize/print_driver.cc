@@ -47,10 +47,12 @@ std::pair<std::string, std::string> dumpArray(const Ref<Array> &array_) {
     /**
      * The string is constructed as follow (Separated by space):
      *
+     * MetaData:
      * {"ARR"} +
      * {dtype} +
-     * {shape.size} + {shape[0]} + ... + {shape[shape.size - 1]} +
-     * {ptrs.size} + {ptrs[0].dev_"#"} + ... + {ptrs[ptrs.size - 1].dev_"#"} +
+     * {shape.size} + {shape[0]} + ... + {shape[shape.size - 1]}
+     *
+     * Data:
      * {Arraydata (string -> pybind11::bytes later, e.g. b'\x01\x23\xab\xcd')
      *
      *
@@ -69,12 +71,6 @@ std::pair<std::string, std::string> dumpArray(const Ref<Array> &array_) {
 
     for (const size_t &siz : array->shape()) {
         ret_meta += std::to_string(siz) + " ";
-    }
-
-    ret_meta += std::to_string(array->ptrs().size()) + " ";
-
-    for (auto &&[device, p, _] : array->ptrs()) {
-        ret_meta += dumpDevice(device) + "# ";
     }
 
     std::string ret_data((char *)addr, array->size());

@@ -71,9 +71,7 @@ Ref<Device> loadDevice(const std::string &txt) {
 }
 
 Ref<Array> newArray(const std::vector<size_t> &shape_,
-                    const std::string &dtypestr_,
-                    const std::vector<Ref<Device>> &devs_,
-                    const std::string &data_) {
+                    const std::string &dtypestr_, const std::string &data_) {
 
     DataType dtype = parseDType(dtypestr_);
     size_t siz = sizeOf(dtype);
@@ -91,10 +89,6 @@ Ref<Array> newArray(const std::vector<size_t> &shape_,
     auto ret = Ref<Array>::make(
         Array::moveFromRaw(addr, shape_, dtype, Config::defaultDevice()));
 
-    for (auto &dev : devs_) {
-        ret->rawSharedTo(dev);
-    }
-
     return ret;
 }
 Ref<Array> loadArray(const std::string &txt, const std::string &data) {
@@ -106,7 +100,6 @@ Ref<Array> loadArray(const std::string &txt, const std::string &data) {
     std::string type;
     size_t dtype, len;
     std::vector<size_t> shape;
-    std::vector<Ref<Device>> devs;
 
     // `ARR <dtype> <shape.size>`
     ASSERT(iss >> type >> dtype >> len);
@@ -120,22 +113,7 @@ Ref<Array> loadArray(const std::string &txt, const std::string &data) {
             ASSERT(iss >> shape[i]);
         }
 
-        // `<ptrs_.size>`: the number of devices sharing the Array
-        ASSERT(iss >> len);
-
-        size_t st = txt.find("DEV"), ed = st;
-
-        for (size_t i = 0; i < len; i++) {
-            st = txt.find("DEV", ed);
-            ed = txt.find('#', st);
-
-            ASSERT(ed != std::string::npos);
-
-            auto dev = loadDevice(txt.substr(st, ed - st));
-            devs.emplace_back(dev);
-        }
-
-        ret = newArray(shape, dataTypeNames[dtype], devs, data);
+        ret = newArray(shape, dataTypeNames[dtype], data);
 
         break;
     }

@@ -1,5 +1,6 @@
 import freetensor as ft
 import freetensor_ffi as ffi
+import numpy as np
 from freetensor import CPU, GPU, Device
 import pytest
 from random import randint
@@ -65,39 +66,27 @@ def test_device_gpu_with_compute_capability():
     assert device == device2
 
 
-@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_array_no_cpu_sizeof4():
-    data = '#$^!@*ABCDEF114514ghijkl'
-    assert len(data) == 24
 
-    target = GPU(1)
-    target.set_compute_capability(7, 0)
-    devs = [Device(GPU(1), 1), Device(GPU(0), 2), Device(target, 3)]
+    arr_np = np.array([[[1.7, 2.8, 3.9], [4.23, 5.5, 6.0]]], dtype="float32")
+    arr = ft.Array(arr_np)
 
-    arr = ffi.new_test_array([1, 2, 3], "float32", devs, data)
     head, data2 = ft.dump_array(arr)
     print(head)
     print(data2)
-    print(type(data2))
     arr2 = ft.load_array(head, data2)
 
     assert arr == arr2
 
 
-@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_array_with_cpu_sizeof8():
-    data = '#$^!@*ABCDEF114514ghijkl(&%,.?MNOPQR236789stuvwx'
-    assert len(data) == 48
 
-    target = GPU(0)
-    target.set_compute_capability(4, 3)
-    devs = [Device(CPU(1), 1), Device(CPU(0), 2), Device(target, 3)]
+    arr_np = np.array([[[17, 28, 7**20]], [[40, 5**24, 67]]], dtype="int64")
+    arr = ft.Array(arr_np)
 
-    arr = ffi.new_test_array([2, 1, 3], "int64", devs, data)
     head, data2 = ft.dump_array(arr)
     print(head)
     print(data2)
-    print(type(data2))
     arr2 = ft.load_array(head, data2)
 
     assert arr == arr2
