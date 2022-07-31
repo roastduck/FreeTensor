@@ -1,6 +1,5 @@
 #include <vector>
 
-#include <serialize/print_driver.h>
 #include <driver/device.h>
 #include <ffi.h>
 
@@ -52,14 +51,9 @@ void init_ffi_device(py::module_ &m) {
         .def("target", &Device::target)
         .def("main_mem_type", &Device::mainMemType)
         .def("sync", &Device::sync)
-        .def(
-            "__eq__",
-            [](const Ref<Device> &lhs, const Ref<Device> &rhs) {
-                return *lhs == *rhs;
-            });
-    // serialize target for multi-machine-parallel
-    m.def("dump_target", &dumpTarget, "target"_a);
-    m.def("dump_device", &dumpDevice, "device"_a);
+        .def("__eq__", [](const Ref<Device> &lhs, const Ref<Device> &rhs) {
+            return *lhs == *rhs;
+        });
 }
 
 } // namespace freetensor

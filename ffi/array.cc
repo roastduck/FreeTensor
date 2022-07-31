@@ -112,7 +112,28 @@ void init_ffi_array(py::module_ &m) {
                 "Unsupported data type or strides from a NumPy Array. Please "
                 "use freetensor.array factory function, instead of "
                 "freetensor.Array, for strided arrays");
-        }));
+        }))
+        .def("__eq__", [](const Ref<Array> &lhs, const Ref<Array> &rhs) {
+            /**
+             * The feature is for testing serialization
+             *
+             * Note: lhs->ptrs_ / rhs->ptrs_ may be emplace_back(ed) by a
+             * Arraycopy on CPU device
+             */
+            if (lhs->size() != rhs->size() || lhs->nElem() != rhs->nElem() ||
+                lhs->dtype() != rhs->dtype() || lhs->shape() != rhs->shape())
+                return false;
+
+            uint8_t *lptr =
+                (uint8_t *)lhs->rawSharedTo(Config::defaultDevice());
+            uint8_t *rptr =
+                (uint8_t *)rhs->rawSharedTo(Config::defaultDevice());
+
+            if (memcmp(lptr, rptr, lhs->size()))
+                return false;
+
+            return true;
+        });
 #ifdef FT_WITH_PYTORCH
     pyArray.def(
         py::init([](const torch::Tensor &tensor) {
