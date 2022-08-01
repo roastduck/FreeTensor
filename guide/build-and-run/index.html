@@ -179,6 +179,7 @@ make -j  # Or use Ninja
 <li><code>FT_WERROR=ON/OFF</code>. Treat warnings as errors (or not).</li>
 <li><code>FT_BACKEND_COMPILER_CXX=path_to_compiler</code>. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself.</li>
 <li><code>FT_BACKEND_COMPILER_NVCC=path_to_compiler</code>. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself.</li>
+<li><code>FT_DEBUG_BINARY=ON</code> (for developers). Compile with <code>-g</code> at backend. Do not delete the binary file after loaded.</li>
 </ul>
 <p>This configurations can also set at runtime in <a href="../../api/#freetensor.core.config"><code>ft.config</code></a>.</p>
 <h2 id="run-the-tests">Run the Tests<a class="headerlink" href="#run-the-tests" title="Permanent link">&para;</a></h2>

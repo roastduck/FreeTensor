@@ -120,6 +120,11 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:a20fc0f2b86e6fad76ca1dce017079f20"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe33f793c598e811c6412be047678de8"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Config.html#afe33f793c598e811c6412be047678de8">defaultDevice</a> ()</td></tr>
 <tr class="separator:afe33f793c598e811c6412be047678de8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a072b52d752334d325df505986470279f"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a072b52d752334d325df505986470279f"><td class="memTemplItemLeft" align="right" valign="top">static void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Config.html#a072b52d752334d325df505986470279f">setRuntimeDir</a> (T &amp;&amp;paths)</td></tr>
+<tr class="separator:a072b52d752334d325df505986470279f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad770da43f504510f4344dc8e7467296b"><td class="memItemLeft" align="right" valign="top">static const std::vector&lt; std::string &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Config.html#ad770da43f504510f4344dc8e7467296b">runtimeDir</a> ()</td></tr>
+<tr class="separator:ad770da43f504510f4344dc8e7467296b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Global configurations</p>
@@ -272,7 +277,7 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p >Used to create <a class="el" href="classfreetensor_1_1Driver.html">Driver</a> when device is omitted. Initialized to a <a class="el" href="classfreetensor_1_1CPU.html">CPU</a> <a class="el" href="classfreetensor_1_1Device.html">Device</a> </p>
+<p >Where to find the <code>runtime</code> directory. Macro FT_RUNTIME_DIR </p>
 
 </div>
 </div>
@@ -312,6 +317,31 @@ Static Public Member Functions</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">static bool freetensor::Config::printAllId </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad770da43f504510f4344dc8e7467296b" name="ad770da43f504510f4344dc8e7467296b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad770da43f504510f4344dc8e7467296b">&#9670;&nbsp;</a></span>runtimeDir()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static const std::vector&lt; std::string &gt; &amp; freetensor::Config::runtimeDir </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -512,6 +542,34 @@ Static Public Member Functions</h2></td></tr>
           <td>(</td>
           <td class="paramtype">bool&#160;</td>
           <td class="paramname"><em>flag</em> = <code>true</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a072b52d752334d325df505986470279f" name="a072b52d752334d325df505986470279f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a072b52d752334d325df505986470279f">&#9670;&nbsp;</a></span>setRuntimeDir()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void freetensor::Config::setRuntimeDir </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>paths</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
