@@ -108,6 +108,7 @@ void Config::init() {
     Config::setBackendCompilerCXX(
         fileInDirs("g++", makePaths(getStrEnvRequired("PATH"))));
 #endif
+#ifdef FT_WITH_CUDA
 #ifdef FT_BACKEND_COMPILER_NVCC
     Config::setBackendCompilerNVCC(
         cat(makePaths(FT_BACKEND_COMPILER_NVCC),
@@ -115,7 +116,8 @@ void Config::init() {
 #else
     Config::setBackendCompilerNVCC(
         fileInDirs("nvcc", makePaths(getStrEnvRequired("PATH"))));
-#endif
+#endif // FT_BACKEND_COMPILER_NVCC
+#endif // FT_WITH_CUDA
 
     if (auto flag = getBoolEnv("FT_PRETTY_PRINT"); flag.isValid()) {
         Config::setPrettyPrint(*flag);
@@ -132,9 +134,11 @@ void Config::init() {
     if (auto path = getStrEnv("FT_BACKEND_COMPILER_CXX"); path.isValid()) {
         Config::setBackendCompilerCXX(makePaths(*path));
     }
+#ifdef FT_WITH_CUDA
     if (auto path = getStrEnv("FT_BACKEND_COMPILER_NVCC"); path.isValid()) {
         Config::setBackendCompilerNVCC(makePaths(*path));
     }
+#endif // FT_WITH_CUDA
     Config::setDefaultTarget(Ref<CPU>::make());
     Config::setDefaultDevice(Ref<Device>::make(Ref<CPU>::make()));
 
