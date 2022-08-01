@@ -1,4 +1,5 @@
 /build
+/install
 /site
 /docs/doxygen
 __pycache__

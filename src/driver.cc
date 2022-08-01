@@ -122,11 +122,15 @@ void Driver::buildAndLoad() {
     switch (dev_->type()) {
     case TargetType::CPU:
         executable = Config::backendCompilerCXX().c_str();
-        // For path arguments, we do not quote it again since the arguments are passed
-        // directly to the compiler (with execv) without going through the shell. Spaces
-        // are preserved and the argument will not be split into multiple arguments.
-        addArgs("-I" FT_RUNTIME_DIR, "-std=c++20", "-shared", "-O3", "-fPIC",
-                "-Wall", "-fopenmp", "-ffast-math");
+        for (auto &&path : Config::runtimeDir()) {
+            // For path arguments, we do not quote it again since the arguments
+            // are passed directly to the compiler (with execv) without going
+            // through the shell. Spaces are preserved and the argument will not
+            // be split into multiple arguments.
+            addArgs("-I" + path);
+        }
+        addArgs("-std=c++20", "-shared", "-O3", "-fPIC", "-Wall", "-fopenmp",
+                "-ffast-math");
         addArgs("-o", so, cpp);
 #ifdef FT_WITH_MKL
         addArgs("-I" FT_WITH_MKL "/include", "-Wl,--start-group",
@@ -147,8 +151,11 @@ void Driver::buildAndLoad() {
 #ifdef FT_WITH_CUDA
     case TargetType::GPU:
         executable = Config::backendCompilerNVCC().c_str();
-        addArgs("-I" FT_RUNTIME_DIR, "-std=c++17", "-shared", "-Xcompiler",
-                "-fPIC,-Wall,-O3", "--use_fast_math");
+        for (auto &&path : Config::runtimeDir()) {
+            addArgs("-I" + path);
+        }
+        addArgs("-std=c++17", "-shared", "-Xcompiler", "-fPIC,-Wall,-O3",
+                "--use_fast_math");
         addArgs("-o", so, cpp);
         addArgs("-lcublas");
         if (auto arch = dev_->target().as<GPU>()->computeCapability();

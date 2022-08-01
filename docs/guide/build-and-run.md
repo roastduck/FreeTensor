@@ -73,6 +73,7 @@ There are serveral global configurations can be set via environment variables:
 - `FT_WERROR=ON/OFF`. Treat warnings as errors (or not).
 - `FT_BACKEND_COMPILER_CXX=path_to_compiler`. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself.
 - `FT_BACKEND_COMPILER_NVCC=path_to_compiler`. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself.
+- `FT_DEBUG_BINARY=ON` (for developers). Compile with `-g` at backend. Do not delete the binary file after loaded.
 
 This configurations can also set at runtime in [`ft.config`](../../api/#freetensor.core.config).
 
