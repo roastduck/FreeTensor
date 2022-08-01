@@ -143,7 +143,7 @@ of <em>the same version</em>. PyTorch can be installed in any way you like, see 
 </div>
 <h2 id="build">Build<a class="headerlink" href="#build" title="Permanent link">&para;</a></h2>
 <p>First, clone this repo. Don't forget there are some submodules.</p>
-<pre><code class="language-sh">git clone --recursive &lt;path-to-this-repo&gt;
+<pre><code class="language-sh">git clone --recursive &lt;path/to/this/repo&gt;
 </code></pre>
 <p>Then, build.</p>
 <pre><code class="language-sh">mkdir build
@@ -163,7 +163,7 @@ make -j  # Or use Ninja
 </li>
 <li><code>-DFT_DEBUG_LOG_NODE=ON</code> (for developers): enables tracing to tell by which pass a specific AST node is modified.</li>
 <li><code>-DFT_DEBUG_PROFILE=ON</code> (for developers): profiles some heavy functions in the compiler.</li>
-<li><code>-DFT_DEBUG_SANITIZE=sanitizer_name</code> (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).</li>
+<li><code>-DFT_DEBUG_SANITIZE=&lt;sanitizer_name&gt;</code> (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).</li>
 </ul>
 <p>It will build a shared library with a name like <code>freetensor_ffi.cpython-37m-x86_64-linux-gnu.so</code>, which can be used in Python via <code>import freetensor</code>.</p>
 <h2 id="run-a-program-with-freetensor">Run a Program with FreeTensor<a class="headerlink" href="#run-a-program-with-freetensor" title="Permanent link">&para;</a></h2>
@@ -177,9 +177,13 @@ make -j  # Or use Ninja
 <li><code>FT_PRETTY_PRINT=ON/OFF</code>. Enable/disable colored printing.</li>
 <li><code>FT_PRINT_ALL_ID=ON/OFF</code>. Print (or not) IDs of all statements in an AST.</li>
 <li><code>FT_WERROR=ON/OFF</code>. Treat warnings as errors (or not).</li>
-<li><code>FT_BACKEND_COMPILER_CXX=path_to_compiler</code>. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself.</li>
-<li><code>FT_BACKEND_COMPILER_NVCC=path_to_compiler</code>. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself.</li>
-<li><code>FT_DEBUG_BINARY=ON</code> (for developers). Compile with <code>-g</code> at backend. Do not delete the binary file after loaded.</li>
+<li><code>FT_BACKEND_COMPILER_CXX=&lt;path/to/compiler&gt;</code>. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself, and compilers found in the <code>PATH</code> enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.</li>
+<li>
+<p><code>FT_BACKEND_COMPILER_NVCC=&lt;path/to/compiler&gt;</code>. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself, and compilers found in the <code>PATH</code> enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.</p>
+</li>
+<li>
+<p><code>FT_DEBUG_BINARY=ON</code> (for developers). Compile with <code>-g</code> at backend. Do not delete the binary file after loaded.</p>
+</li>
 </ul>
 <p>This configurations can also set at runtime in <a href="../../api/#freetensor.core.config"><code>ft.config</code></a>.</p>
 <h2 id="run-the-tests">Run the Tests<a class="headerlink" href="#run-the-tests" title="Permanent link">&para;</a></h2>
