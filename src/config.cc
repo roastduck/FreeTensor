@@ -10,6 +10,21 @@
 
 namespace freetensor {
 
+/**
+ * Make paths from a colon-separated string
+ */
+static std::vector<std::string> makePaths(const std::string &str) {
+    std::vector<std::string> ret(1, "");
+    for (char c : str) {
+        if (c == ':') {
+            ret.emplace_back();
+        } else {
+            ret.back().push_back(c);
+        }
+    }
+    return ret;
+}
+
 static Opt<std::string> getStrEnv(const char *name) {
     static std::mutex lock;
     std::lock_guard<std::mutex> guard(lock); // getenv is not thread safe
@@ -46,6 +61,7 @@ std::string Config::backendCompilerCXX_;
 std::string Config::backendCompilerNVCC_;
 Ref<Target> Config::defaultTarget_;
 Ref<Device> Config::defaultDevice_;
+std::vector<std::string> Config::runtimeDir_;
 
 void Config::init() {
     Config::setPrettyPrint(isatty(fileno(stdout)));
@@ -76,6 +92,12 @@ void Config::init() {
     }
     Config::setDefaultTarget(Ref<CPU>::make());
     Config::setDefaultDevice(Ref<Device>::make(Ref<CPU>::make()));
+
+#ifdef FT_RUNTIME_DIR
+    Config::setRuntimeDir(makePaths(FT_RUNTIME_DIR));
+#else
+#error "FT_RUNTIME_DIR has to be defined"
+#endif
 }
 
 std::string Config::withMKL() {
