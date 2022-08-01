@@ -245,6 +245,12 @@ class PBSpace {
     isl_space *copy() const { return COPY_ISL_PTR(space_, space); }
     isl_space *move() { return MOVE_ISL_PTR(space_); }
 
+    bool operator==(const PBSpace &other) const {
+        if (space_ == nullptr || other.space_ == nullptr)
+            return space_ == other.space_;
+        return isl_space_is_equal(get(), other.get());
+    }
+
     friend std::ostream &operator<<(std::ostream &os, const PBSpace &space) {
         return os << isl_space_to_str(space.space_);
     }
@@ -525,6 +531,24 @@ inline PBMap lexGT(PBSpace &&space) {
 inline PBMap lexGT(const PBSpace &space) {
     DEBUG_PROFILE("lexGT");
     return isl_map_lex_gt(space.copy());
+}
+
+inline PBMap lexLE(PBSpace &&space) {
+    DEBUG_PROFILE("lexLE");
+    return isl_map_lex_le(space.move());
+}
+inline PBMap lexLE(const PBSpace &space) {
+    DEBUG_PROFILE("lexLE");
+    return isl_map_lex_le(space.copy());
+}
+
+inline PBMap lexLT(PBSpace &&space) {
+    DEBUG_PROFILE("lexLT");
+    return isl_map_lex_lt(space.move());
+}
+inline PBMap lexLT(const PBSpace &space) {
+    DEBUG_PROFILE("lexLT");
+    return isl_map_lex_lt(space.copy());
 }
 
 inline PBSpace spaceAlloc(const PBCtx &ctx, unsigned nparam, unsigned nIn,
