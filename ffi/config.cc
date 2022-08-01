@@ -35,14 +35,24 @@ void init_ffi_config(py::module_ &m) {
           "Set backend compiler used to compile generated C++ code, unescaped "
           "raw path expected",
           "path"_a);
-    m.def("backend_compiler_cxx", Config::backendCompilerCXX,
-          "Backend compiler used to compile generated C++ code");
+    m.def(
+        "backend_compiler_cxx",
+        []() {
+            auto &&paths = Config::backendCompilerCXX();
+            return std::vector<std::string>(paths.begin(), paths.end());
+        },
+        "Backend compiler used to compile generated C++ code");
     m.def("set_backend_compiler_nvcc", Config::setBackendCompilerNVCC,
           "Set backend compiler used to compile generated CUDA code, unescaped "
           "raw path expected",
           "path"_a);
-    m.def("backend_compiler_nvcc", Config::backendCompilerNVCC,
-          "Backend compiler used to compile generated CUDA code");
+    m.def(
+        "backend_compiler_nvcc",
+        []() {
+            auto &&paths = Config::backendCompilerNVCC();
+            return std::vector<std::string>(paths.begin(), paths.end());
+        },
+        "Backend compiler used to compile generated CUDA code");
     m.def("set_default_target", Config::setDefaultTarget,
           "Set default target (internal implementation of `with Target`)",
           "target"_a);

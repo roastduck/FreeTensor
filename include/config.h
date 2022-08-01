@@ -1,7 +1,7 @@
 #ifndef FREE_TENSOR_CONFIG_H
 #define FREE_TENSOR_CONFIG_H
 
-#include <string>
+#include <filesystem>
 #include <vector>
 
 #include <ref.h>
@@ -23,18 +23,31 @@ class Config {
     static bool
         debugBinary_; /// Compile with `-g` at backend. Do not delete the binary
                       /// file after loaded. Env FT_DEBUG_BINARY
-    static std::string
-        backendCompilerCXX_; /// Env and macro FT_BACKEND_COMPILER_CXX
-    static std::string
-        backendCompilerNVCC_; /// Env and macro FT_BACKEND_COMPILER_NVCC
+    static std::vector<std::filesystem::path>
+        backendCompilerCXX_; /// Env and macro FT_BACKEND_COMPILER_CXX.
+                             /// Colon-separated paths, searched from left to
+                             /// right
+    static std::vector<std::filesystem::path>
+        backendCompilerNVCC_; /// Env and macro FT_BACKEND_COMPILER_NVCC.
+                              /// Colon-separated paths, searched from left to
+                              /// right
 
     static Ref<Target> defaultTarget_; /// Used for lower and codegen when
                                        /// target is omitted. Initialized to CPU
     static Ref<Device> defaultDevice_; /// Used to create Driver when device is
                                        /// omitted. Initialized to a CPU Device
-    static std::vector<std::string>
+    static std::vector<std::filesystem::path>
         runtimeDir_; /// Where to find the `runtime` directory. Macro
-                     /// FT_RUNTIME_DIR
+                     /// FT_RUNTIME_DIR. Colon-separated paths, searched from
+                     /// left to right
+
+  private:
+    /**
+     * Filter existing paths
+     */
+    static std::vector<std::filesystem::path>
+    checkValidPaths(const std::vector<std::filesystem::path> &paths,
+                    bool required = true);
 
   public:
     static void init(); /// Called in src/ffi/config.cc
@@ -58,24 +71,26 @@ class Config {
     /**
      * @brief Set the C++ compiler for CPU backend.
      *
-     * @param path Path to C++ compiler. Should be raw path (unescaped).
+     * @param paths : Paths to C++ compiler. Should be raw paths (unescaped).
      */
-    static void setBackendCompilerCXX(const std::string &path) {
-        backendCompilerCXX_ = path;
+    static void
+    setBackendCompilerCXX(const std::vector<std::filesystem::path> &paths) {
+        backendCompilerCXX_ = checkValidPaths(paths);
     }
-    static const std::string &backendCompilerCXX() {
+    static const std::vector<std::filesystem::path> &backendCompilerCXX() {
         return backendCompilerCXX_;
     }
 
     /**
      * @brief Set the NVCC compiler for GPU backend.
      *
-     * @param path Path to NVCC compiler. Should be raw path (unescaped).
+     * @param paths : Paths to NVCC compiler. Should be raw paths (unescaped).
      */
-    static void setBackendCompilerNVCC(const std::string &path) {
-        backendCompilerNVCC_ = path;
+    static void
+    setBackendCompilerNVCC(const std::vector<std::filesystem::path> &paths) {
+        backendCompilerNVCC_ = checkValidPaths(paths);
     }
-    static const std::string &backendCompilerNVCC() {
+    static const std::vector<std::filesystem::path> &backendCompilerNVCC() {
         return backendCompilerNVCC_;
     }
 
@@ -89,10 +104,12 @@ class Config {
     }
     static Ref<Device> defaultDevice() { return defaultDevice_; }
 
-    template <class T> static void setRuntimeDir(T &&paths) {
-        runtimeDir_ = std::forward<T>(paths);
+    static void setRuntimeDir(const std::vector<std::filesystem::path> &paths) {
+        runtimeDir_ = checkValidPaths(paths);
     }
-    static const std::vector<std::string> &runtimeDir() { return runtimeDir_; }
+    static const std::vector<std::filesystem::path> &runtimeDir() {
+        return runtimeDir_;
+    }
 };
 
 } // namespace freetensor

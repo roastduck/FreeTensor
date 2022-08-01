@@ -4,16 +4,20 @@
 #include <unistd.h>
 
 #include <config.h>
+#include <container_utils.h>
 #include <driver/device.h>
 #include <except.h>
 #include <opt.h>
+#include <serialize/to_string.h>
 
 namespace freetensor {
+
+namespace fs = std::filesystem;
 
 /**
  * Make paths from a colon-separated string
  */
-static std::vector<std::string> makePaths(const std::string &str) {
+static std::vector<fs::path> makePaths(const std::string &str) {
     std::vector<std::string> ret(1, "");
     for (char c : str) {
         if (c == ':') {
@@ -21,6 +25,19 @@ static std::vector<std::string> makePaths(const std::string &str) {
         } else {
             ret.back().push_back(c);
         }
+    }
+    return std::vector<fs::path>(ret.begin(), ret.end());
+}
+
+/**
+ * Return paths of a filename in some directories
+ */
+static std::vector<fs::path> fileInDirs(const std::string &filename,
+                                        const std::vector<fs::path> &dirs) {
+    std::vector<fs::path> ret;
+    ret.reserve(dirs.size());
+    for (auto &&dir : dirs) {
+        ret.emplace_back(dir / filename);
     }
     return ret;
 }
@@ -33,6 +50,14 @@ static Opt<std::string> getStrEnv(const char *name) {
         return nullptr;
     } else {
         return Opt<std::string>::make(env);
+    }
+}
+
+static std::string getStrEnvRequired(const char *name) {
+    if (auto &&ret = getStrEnv(name); ret.isValid()) {
+        return *ret;
+    } else {
+        ERROR((std::string) "Environment varialbe " + name + " not found");
     }
 }
 
@@ -57,20 +82,42 @@ bool Config::prettyPrint_ = false;
 bool Config::printAllId_ = false;
 bool Config::werror_ = false;
 bool Config::debugBinary_ = false;
-std::string Config::backendCompilerCXX_;
-std::string Config::backendCompilerNVCC_;
+std::vector<fs::path> Config::backendCompilerCXX_;
+std::vector<fs::path> Config::backendCompilerNVCC_;
 Ref<Target> Config::defaultTarget_;
 Ref<Device> Config::defaultDevice_;
-std::vector<std::string> Config::runtimeDir_;
+std::vector<fs::path> Config::runtimeDir_;
+
+std::vector<fs::path>
+Config::checkValidPaths(const std::vector<fs::path> &paths, bool required) {
+    auto ret =
+        filter(paths, static_cast<bool (*)(const fs::path &)>(fs::exists));
+    if (required && ret.empty()) {
+        ERROR(toString(paths) + " are not valid paths");
+    }
+    return ret;
+}
 
 void Config::init() {
     Config::setPrettyPrint(isatty(fileno(stdout)));
 #ifdef FT_BACKEND_COMPILER_CXX
-    Config::setBackendCompilerCXX(FT_BACKEND_COMPILER_CXX);
+    Config::setBackendCompilerCXX(
+        cat(makePaths(FT_BACKEND_COMPILER_CXX),
+            fileInDirs("g++", makePaths(getStrEnvRequired("PATH")))));
+#else
+    Config::setBackendCompilerCXX(
+        fileInDirs("g++", makePaths(getStrEnvRequired("PATH"))));
 #endif
+#ifdef FT_WITH_CUDA
 #ifdef FT_BACKEND_COMPILER_NVCC
-    Config::setBackendCompilerNVCC(FT_BACKEND_COMPILER_NVCC);
-#endif
+    Config::setBackendCompilerNVCC(
+        cat(makePaths(FT_BACKEND_COMPILER_NVCC),
+            fileInDirs("nvcc", makePaths(getStrEnvRequired("PATH")))));
+#else
+    Config::setBackendCompilerNVCC(
+        fileInDirs("nvcc", makePaths(getStrEnvRequired("PATH"))));
+#endif // FT_BACKEND_COMPILER_NVCC
+#endif // FT_WITH_CUDA
 
     if (auto flag = getBoolEnv("FT_PRETTY_PRINT"); flag.isValid()) {
         Config::setPrettyPrint(*flag);
@@ -85,11 +132,13 @@ void Config::init() {
         Config::setDebugBinary(*flag);
     }
     if (auto path = getStrEnv("FT_BACKEND_COMPILER_CXX"); path.isValid()) {
-        Config::setBackendCompilerCXX(*path);
+        Config::setBackendCompilerCXX(makePaths(*path));
     }
+#ifdef FT_WITH_CUDA
     if (auto path = getStrEnv("FT_BACKEND_COMPILER_NVCC"); path.isValid()) {
-        Config::setBackendCompilerNVCC(*path);
+        Config::setBackendCompilerNVCC(makePaths(*path));
     }
+#endif // FT_WITH_CUDA
     Config::setDefaultTarget(Ref<CPU>::make());
     Config::setDefaultDevice(Ref<Device>::make(Ref<CPU>::make()));
 
