@@ -226,6 +226,7 @@ if (PYBIND11_STUBGEN AND NOT FT_DEBUG_SANITIZE)
 endif()
 
 # Install
+set_target_properties(freetensor_ffi PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE) # Required for PyTorch
 install(TARGETS freetensor LIBRARY DESTINATION lib)
 install(TARGETS freetensor_ffi LIBRARY DESTINATION lib)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include/freetensor) # Trailing slash after the source path is needed
