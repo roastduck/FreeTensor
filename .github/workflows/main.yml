@@ -30,8 +30,7 @@ jobs:
           source /home/rd/venv-freetensor/bin/activate
           mkdir build
           cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=ON -DFT_WITH_MKL=/home/spack/spack/opt/spack/linux-debian11-zen2/gcc-10.2.1/intel-mkl-2020.4.304-py6elz2mzhdgres34nr5e2ta5isfja7k/mkl -DFT_WITH_PYTORCH=ON -DCMAKE_INSTALL_PREFIX=./install
-          ninja
-          ninja install
+          cd build && ninja && ninja install
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh
@@ -56,7 +55,7 @@ jobs:
           source /home/rd/venv-freetensor/bin/activate
           mkdir build
           cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF
-          ninja
+          cd build && ninja
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh
