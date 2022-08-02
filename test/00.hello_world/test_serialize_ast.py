@@ -336,11 +336,14 @@ def test_assoc_priority_3():
 
 
 def test_io_tensor():
-    with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
-        x[2, 3] = 2.0
-        x[1, 0] = 3.0
-    ast = ft.pop_ast()
-    ast = ft.make_1d_var(ast)
+    ft.MarkNid("Dy")
+    with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 8) as i:
+            y[i] = i
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.var_split("Dy", 0, ft.VarSplitMode.FixedSize, 4)
+    ast = s.ast()
     txt = ft.dump_ast(ast)
     print(txt)
     assert '@!io_tensor' in txt

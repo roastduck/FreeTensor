@@ -13,7 +13,6 @@
 #include <pass/gpu/multiplex_buffers.h>
 #include <pass/gpu/normalize_threads.h>
 #include <pass/gpu/simplex_buffers.h>
-#include <pass/make_1d_var.h>
 #include <pass/make_const_shape.h>
 #include <pass/make_heap_alloc.h>
 #include <pass/make_parallel_reduction.h>
@@ -109,8 +108,7 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
                     ast); // After gpu_multiplex_buffers
         ast = APPLY("gpu_make_sync", gpu::makeSync,
                     ast); // After gpu_normalize_threads
-        ast = APPLY("gpu_lower_vector", gpu::lowerVector,
-                    ast); // After make_1d_var
+        ast = APPLY("gpu_lower_vector", gpu::lowerVector, ast);
         ast = APPLY("use_builtin_div", useBuiltinDiv, ast);
         break;
 
