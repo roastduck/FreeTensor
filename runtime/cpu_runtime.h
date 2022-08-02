@@ -15,19 +15,23 @@
 #endif
 
 #include "cpu_context.h"
+#include "mdspan.h"
 
 #define restrict __restrict__
 #define __ByValArray std::array
 
-template <class T> requires std::integral<T> T floorDiv(T a, T b) {
+template <class T>
+requires std::integral<T> T floorDiv(T a, T b) {
     T res = a / b, rem = a % b;
     return res - (rem != 0 && ((rem < 0) != (b < 0)));
 }
-template <class T> requires std::integral<T> T ceilDiv(T a, T b) {
+template <class T>
+requires std::integral<T> T ceilDiv(T a, T b) {
     T res = a / b, rem = a % b;
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
-template <class T> requires std::integral<T> T runtime_mod(T a, T b) {
+template <class T>
+requires std::integral<T> T runtime_mod(T a, T b) {
     T m = a % b;
     if (m < 0) {
         // m += (b < 0) ? -b : b; // avoid this form: it is UB when b == INT_MIN
