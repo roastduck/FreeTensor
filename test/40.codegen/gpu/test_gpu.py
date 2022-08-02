@@ -260,7 +260,7 @@ def test_global_mem():
         s.parallelize("L2", "threadIdx.x")
         func = ft.lower(s.func(), skip_passes=['prop_one_time_use'], verbose=1)
         code = ft.codegen(func, verbose=True)
-        assert "cudaNew" in str(code) # cudaNew is our wrapper over cudaMalloc
+        assert "cudaNew" in str(code)  # cudaNew is our wrapper over cudaMalloc
         assert "cudaFree" in str(code)
         x_np = np.array([1, 2, 3, 4], dtype="int32")
         y_np = np.zeros((4,), dtype="int32")
@@ -663,7 +663,8 @@ def test_simplex_local_1():
                    ]) as (x, y, z):
         with ft.For(".blockIdx", 0, 10) as b:
             with ft.For(".threadIdx.x", 0, 10) as i:
-                with ft.VarDef("t", (1, 10), "int32", "cache", "gpu/local") as t:
+                with ft.VarDef("t", (1, 10), "int32", "cache",
+                               "gpu/local") as t:
                     with ft.For("j", 0, 10) as j:
                         t[0, j] = x[b, i, j] * 2
                     with ft.For("j$1", 0, 10) as j:
@@ -722,7 +723,8 @@ def test_simplex_local_2():
     ]) as (x, y):
         with ft.For(".blockIdx", 0, 10) as b:
             with ft.For(".threadIdx.x", 0, 10) as i:
-                with ft.VarDef("t", (1, 10), "int32", "cache", "gpu/local") as t:
+                with ft.VarDef("t", (1, 10), "int32", "cache",
+                               "gpu/local") as t:
                     with ft.For("j", 0, 10) as j:
                         t[0, j] = x[b, i, j] * 2
                     with ft.For("j$1", 0, 10) as j:

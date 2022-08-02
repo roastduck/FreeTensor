@@ -366,7 +366,7 @@ def test_syncthreads_split_branch_out_of_const_loop():
 
     with ft.VarDef([("x", (10, 10, 32), "int32", "input", "gpu/global"),
                     ("y", (10, 10), "int32", "output", "gpu/global")]) as (x,
-                                                                             y):
+                                                                           y):
         with ft.For(".blockIdx.x", 0, 3) as i:
             with ft.For(".threadIdx.y", 0, 4) as j:
                 with ft.For(".threadIdx.x", 0, 32) as p:
