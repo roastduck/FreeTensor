@@ -59,7 +59,7 @@ def test_syncthreads():
                     ft.Eval(
                         ft.intrinsic("__syncthreads()", has_side_effect=True))
                     ft.Any()
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
     x_np = np.array([range(256)] * 4, dtype="int32")
@@ -115,7 +115,7 @@ def test_syncthreads_in_loop():
                         ft.Any()
                     ft.Eval(
                         ft.intrinsic("__syncthreads()", has_side_effect=True))
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
 
 def test_syncthreads_at_outer_loop():
@@ -158,7 +158,7 @@ def test_syncthreads_at_outer_loop():
                                      has_side_effect=True))  # Here outside p
                     with ft.For("p", 0, 5) as p:
                         ft.Any()
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
 
 def test_syncthreads_not_at_outer_loop():
@@ -216,7 +216,7 @@ def test_syncthreads_not_at_outer_loop():
                         ft.Eval(
                             ft.intrinsic("__syncthreads()",
                                          has_side_effect=True))
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
 
 def test_syncthreads_at_outer_branch():
@@ -252,7 +252,7 @@ def test_syncthreads_at_outer_branch():
                                      has_side_effect=True))  # Here outside If
                     with ft.If(j == 0):
                         ft.Any()
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
 
 def test_syncthreads_at_outer_loop_and_outer_branch():
@@ -295,7 +295,7 @@ def test_syncthreads_at_outer_loop_and_outer_branch():
                     with ft.If(j == 0):
                         with ft.For("p", 0, 5) as p:
                             ft.Any()
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
 
 def test_syncthreads_split_branch():
@@ -336,7 +336,7 @@ def test_syncthreads_split_branch():
                                      has_side_effect=True))  # Here outside If
                     with ft.If(j == 0):
                         ft.Any()  # y[i]
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
 
 def test_syncthreads_split_branch_out_of_const_loop():
@@ -364,14 +364,14 @@ def test_syncthreads_split_branch_out_of_const_loop():
     s.parallelize("L3", "threadIdx.x")
     func = ft.lower(s.func(), target, verbose=1)
 
-    with ft.VarDef([("x", (10 * 10 * 32,), "int32", "input", "gpu/global"),
-                    ("y", (10 * 10,), "int32", "output", "gpu/global")]) as (x,
+    with ft.VarDef([("x", (10, 10, 32), "int32", "input", "gpu/global"),
+                    ("y", (10, 10), "int32", "output", "gpu/global")]) as (x,
                                                                              y):
         with ft.For(".blockIdx.x", 0, 3) as i:
             with ft.For(".threadIdx.y", 0, 4) as j:
                 with ft.For(".threadIdx.x", 0, 32) as p:
                     with ft.For("k", 0, 10) as k:
-                        with ft.VarDef("t", (4 * 2,), "int32", "cache",
+                        with ft.VarDef("t", (4, 2), "int32", "cache",
                                        "gpu/shared") as t:
                             with ft.If(ft.any()):
                                 ft.Any()  # t
@@ -445,7 +445,7 @@ def test_syncthreads_split_branch_with_else():
                     with ft.If(i >= 2):
                         with ft.If(j == 0):
                             ft.Any()  # y[i]
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
 
 def test_syncthreads_split_branch_and_vardef():
@@ -496,7 +496,7 @@ def test_syncthreads_split_branch_and_vardef():
                             ft.Any()  # y[i]
                             ft.Any()  # z1[i]
                             ft.Any()  # z2[i]
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
 
 def test_syncthreads_split_branch_and_vardef_with_else():
@@ -578,7 +578,7 @@ def test_syncthreads_split_branch_and_vardef_with_else():
                                 ft.Any()  # y[i]
                                 ft.Any()  # z1[i]
                                 ft.Any()  # z2[i]
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
 
 def test_syncwarp():
@@ -628,7 +628,7 @@ def test_syncwarp():
                     ft.Any()
                     ft.Eval(ft.intrinsic("__syncwarp()", has_side_effect=True))
                     ft.Any()
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
     x_np = np.array([[0, 1, 2, 3]] * 4, dtype="int32")
@@ -691,4 +691,4 @@ def test_use_syncthreads_for_non_aligned_warps():
                                              has_side_effect=True))
 
                             e[i, j, k, i1] = t[k, i1]
-    assert ft.make_1d_var(ft.pop_ast()).match(ast)
+    assert ft.pop_ast().match(ast)

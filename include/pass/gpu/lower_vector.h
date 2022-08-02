@@ -25,8 +25,9 @@ class LowerVector : public Z3SimplifyWithSymbolTable {
 
   private:
     std::string vecType(DataType dtype) const;
-    bool hasVectorIndex(const Expr &index);
-    Expr getIndex(const Expr &index);
+    bool hasVectorIndices(const std::vector<Expr> &indices,
+                          const std::vector<Expr> &shape);
+    std::vector<Expr> getIndices(const std::vector<Expr> &indices);
 
   protected:
     using BaseClass::visit;

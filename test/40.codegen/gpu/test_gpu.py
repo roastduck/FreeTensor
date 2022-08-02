@@ -178,7 +178,7 @@ def test_not_remove_necessary_range_guard():
     s = ft.Schedule(test)
     s.parallelize('L1', "threadIdx.y")
     s.parallelize('L2', "threadIdx.x")
-    func = ft.lower(s.func(), target, verbose=2, skip_passes=['make_1d_var'])
+    func = ft.lower(s.func(), target, verbose=2)
 
     with ft.VarDef([
         ("x", (5, 32), "int32", "input", "gpu/global"),
@@ -572,7 +572,7 @@ def test_multiplex_shared_1():
                                "gpu/shared") as t:
                     t[i, j] = x[i, j] * 2
                     y[i, j] = t[i, j] + 1
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
     x_np = np.array([range(256)] * 4, dtype="int32")
@@ -622,7 +622,7 @@ def test_multiplex_shared_2():
                                "gpu/shared") as t:
                     t[j + i * 64] = x[i, j + i * 64] * 2
                     y[i, j + i * 64] = t[j + i * 64] + 1
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
 
 def test_simplex_local_1():
@@ -663,14 +663,14 @@ def test_simplex_local_1():
                    ]) as (x, y, z):
         with ft.For(".blockIdx", 0, 10) as b:
             with ft.For(".threadIdx.x", 0, 10) as i:
-                with ft.VarDef("t", (10,), "int32", "cache", "gpu/local") as t:
+                with ft.VarDef("t", (1, 10), "int32", "cache", "gpu/local") as t:
                     with ft.For("j", 0, 10) as j:
-                        t[j] = x[b, i, j] * 2
+                        t[0, j] = x[b, i, j] * 2
                     with ft.For("j$1", 0, 10) as j:
-                        y[b, i, j] = t[j] + 1
+                        y[b, i, j] = t[0, j] + 1
                     with ft.For("j$2", 0, 10) as j:
-                        z[b, i, j] = t[j] + 2
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+                        z[b, i, j] = t[0, j] + 2
+    assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
     x_np = np.random.randint(0, 100, (10, 10, 10)).astype("int32")
@@ -722,14 +722,14 @@ def test_simplex_local_2():
     ]) as (x, y):
         with ft.For(".blockIdx", 0, 10) as b:
             with ft.For(".threadIdx.x", 0, 10) as i:
-                with ft.VarDef("t", (10,), "int32", "cache", "gpu/local") as t:
+                with ft.VarDef("t", (1, 10), "int32", "cache", "gpu/local") as t:
                     with ft.For("j", 0, 10) as j:
-                        t[j] = x[b, i, j] * 2
+                        t[0, j] = x[b, i, j] * 2
                     with ft.For("j$1", 0, 10) as j:
-                        t[j] += t[i]
+                        t[0, j] += t[0, i]
                     with ft.For("j$2", 0, 10) as j:
-                        y[b, i, j] = t[j] + 1
-    assert ft.make_1d_var(ft.make_reduction(ft.pop_ast())).match(func.body)
+                        y[b, i, j] = t[0, j] + 1
+    assert ft.make_reduction(ft.pop_ast()).match(func.body)
 
 
 def test_relax_shared_shape_to_constants():
@@ -768,7 +768,7 @@ def test_relax_shared_shape_to_constants():
                             y[i, j] = t[i, j] + 1
                     with ft.For("j", n, 256) as j:
                         y[i, j] = 0
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
     n_np = np.array(200, dtype="int32")
@@ -839,7 +839,7 @@ def test_parallel_different_length():
                     ft.Eval(ft.intrinsic("__syncwarp()", has_side_effect=True))
                     with ft.For("j", 0, 4) as j:
                         ft.Any()
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
     a_np = np.random.randint(0, 100, (4, 4)).astype("int32")
@@ -880,7 +880,7 @@ def test_bounded_length():
             with ft.For(".threadIdx.x", 0, 99) as thx:  # i = thx + 1
                 with ft.If(thx >= thy):
                     b[thx + 1, thy] = a[thx + 1, thy] + 1
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
 
 def test_parallel_broadcast():
@@ -930,7 +930,7 @@ def test_parallel_broadcast():
                         t[0] = a[blk, 0]
                     ft.Eval(ft.intrinsic("__syncwarp()", has_side_effect=True))
                     ft.Any()
-    assert ft.make_1d_var(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
     a_np = np.random.randint(0, 100, (4, 1)).astype("int32")
