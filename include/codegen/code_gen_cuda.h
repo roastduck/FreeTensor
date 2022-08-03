@@ -29,6 +29,8 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
                 const std::vector<FuncRet> &returns)
         : CodeGenC(params, returns) {}
 
+    using CodeGenC<CodeGenCUDAStream>::genMdPtrType;
+
   private:
     bool inKernel() const;
 
@@ -41,7 +43,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
                   const std::string &dimPtr) override;
 
     using CodeGenC::genScalar;
-    void genScalar(const std::string &var,
+    void genScalar(const VarDef &def,
                    const std::vector<Expr> &indices) override;
 
     using CodeGenC<CodeGenCUDAStream>::visit;

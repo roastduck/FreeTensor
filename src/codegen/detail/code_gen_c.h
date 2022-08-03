@@ -14,13 +14,84 @@
 namespace freetensor {
 
 template <class Stream>
-void CodeGenC<Stream>::genScalar(const std::string &var,
+void CodeGenC<Stream>::genMdPtrType(std::ostream &os, const Ref<Buffer> &buf,
+                                    bool isConst) {
+    if (buf->tensor()->shape().empty()) {
+        // Use reference for scalars
+        if (isConst) {
+            os << "const ";
+        }
+        os << gen(buf->tensor()->dtype()) << " &";
+        return;
+    }
+
+    os << "mdspan_r<";
+    if (isConst) {
+        os << "const ";
+    }
+    os << gen(buf->tensor()->dtype()) << ", extents<";
+    for (auto &&[i, dim] : iter::enumerate(buf->tensor()->shape())) {
+        os << (i > 0 ? ", " : "");
+        if (dim->nodeType() == ASTNodeType::IntConst) {
+            os << dim.template as<IntConstNode>()->val_;
+        } else {
+            os << "dynamic_extent";
+        }
+    }
+    os << ">>";
+}
+
+template <class Stream>
+void CodeGenC<Stream>::genMdPtrDef(const Ref<Buffer> &buf,
+                                   const std::function<void()> &genRawPtr,
+                                   bool isConst) {
+    if (buf->tensor()->shape().empty()) {
+        // Use reference for scalars
+        genMdPtrType(buf, isConst);
+        this->os() << " = *";
+        genRawPtr();
+        return;
+    }
+
+    genMdPtrType(buf, isConst);
+    this->os() << "((";
+    if (isConst) {
+        this->os() << "const ";
+    }
+    this->os() << gen(buf->tensor()->dtype()) << "*)(";
+    genRawPtr();
+    this->os() << ")";
+    for (auto &&dim : buf->tensor()->shape()) {
+        if (dim->nodeType() != ASTNodeType::IntConst) {
+            this->os() << ", ";
+            (*this)(dim);
+        }
+    }
+    this->os() << ")";
+}
+
+template <class Stream>
+void CodeGenC<Stream>::genScalar(const VarDef &def,
                                  const std::vector<Expr> &indices) {
-    this->os() << mangle(var);
-    for (auto &&index : indices) {
-        this->os() << "[";
-        (*this)(index);
-        this->os() << "]";
+    if (def->buffer_->mtype() == MemType::ByValue) {
+        // __ByValArray
+        this->os() << mangle(def->name_);
+        for (auto &&index : indices) {
+            this->os() << "[";
+            (*this)(index);
+            this->os() << "]";
+        }
+    } else {
+        this->os() << mangle(def->name_);
+        if (!def->buffer_->tensor()->shape().empty()) {
+            // TODO: Switch bracket after C++23
+            this->os() << "(";
+            for (auto &&[i, index] : iter::enumerate(indices)) {
+                this->os() << (i > 0 ? ", " : "");
+                (*this)(index);
+            }
+            this->os() << ")";
+        }
     }
 }
 
@@ -38,43 +109,29 @@ template <class Stream> void CodeGenC<Stream>::visit(const StmtSeq &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
-    this->markDefBuffer(op);
-
     this->makeIndent();
     auto &&tensor = op->buffer_->tensor();
     auto &&shape = tensor->shape();
     auto name = mangle(op->name_);
 
     if (op->buffer_->atype() == AccessType::Cache) {
-        if (op->buffer_->mtype() == MemType::CPUHeap && shape.size() != 0) {
-            // e.g. float (*x)[5][5] = nullptr;
-            this->os() << gen(tensor->dtype()) << " (*" << name << ")";
-            for (auto i = 1lu; i < shape.size(); ++i) {
-                this->os() << "[";
-                (*this)(shape[i]);
-                this->os() << "]";
-            }
-            this->os() << " = nullptr";
-        } else {
-            // e.g. float x[5][5][5];
+        if (shape.empty()) {
+            // e.g. float x;
             this->os() << gen(tensor->dtype()) << " " << name;
-            if (op->buffer_->mtype() == MemType::GPUWarp) {
-                if ((int)shape.size() && shape[0]->isConst() &&
-                    shape[0].as<IntConstNode>()->val_ == 32) {
-                    for (int i = 1; i < (int)shape.size(); i++) {
-                        this->os() << "[";
-                        (*this)(shape[i]);
-                        this->os() << "]";
-                    }
-                } else {
-                    ERROR("GPUWarp type must have a 32-size dimension");
-                }
-            } else {
-                for (auto &&dim : shape) {
-                    this->os() << "[";
-                    (*this)(dim);
-                    this->os() << "]";
-                }
+        } else if (op->buffer_->mtype() == MemType::CPUHeap) {
+            // e.g. mdspan_r<float, std::extents<5, 5>> x;
+            genMdPtrType(op->buffer_);
+            this->os() << " " << name;
+        } else {
+            // FIXME: Do not directly allocate on the stack
+            // e.g.
+            // float _x[5][5][5];
+            // auto x = mdspan_r<float, std::extents<5, 5, 5>>(_x);
+            this->os() << gen(tensor->dtype()) << " _" << name;
+            for (auto &&dim : shape) {
+                this->os() << "[";
+                (*this)(dim);
+                this->os() << "]";
             }
             if (op->buffer_->mtype() == MemType::CPU) {
                 // Alignment (TODO: Move to CodeGenCPU)
@@ -91,6 +148,10 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
                     this->os() << " __attribute__((aligned(64)))";
                 }
             }
+            this->os() << ";" << std::endl;
+            this->makeIndent();
+            this->os() << "auto " << name << " = ";
+            this->genMdPtrDef(op->buffer_, "_" + name);
         }
         this->os() << ";" << std::endl;
     } else {
@@ -202,32 +263,17 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
                            << ");" << std::endl;
             } else {
                 // e.g.
-                // const float (*restrict x)[5][5] = (float(*)[5][5])_params[0];
-                if (op->buffer_->atype() == AccessType::Input) {
-                    this->os() << "const ";
-                }
-                this->os() << gen(tensor->dtype()) << " (*restrict ";
-                this->os() << name << ")";
-                for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                     i++) { // No shape[0]
-                    this->os() << "[";
-                    (*this)(shape[i]);
-                    this->os() << "]";
-                }
-                this->os() << " = (" << gen(tensor->dtype()) << "(*)";
-                for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                     i++) { // No shape[0]
-                    this->os() << "[";
-                    (*this)(shape[i]);
-                    this->os() << "]";
-                }
-                this->os() << ")" << rawPtr << ";" << std::endl;
+                // auto x = mdspan_r<const float, extents<5, 5>>(_params[0]);
+                this->os() << "auto " << name << " = ";
+                genMdPtrDef(op->buffer_, rawPtr,
+                            op->buffer_->atype() == AccessType::Input);
+                this->os() << ";" << std::endl;
             }
         }
     }
 
+    this->markDefBuffer(op);
     (*this)(op->body_);
-
     this->markUndefBuffer(op);
 }
 
@@ -251,37 +297,34 @@ template <class Stream> void CodeGenC<Stream>::visit(const Alloc &op) {
     this->markUseBuffer(op->var_);
     this->makeIndent();
 
-    // e.g.
-    // int (*x)[m][l];
-    // x = reinterpret_cast<int(*)[m][l]>(new int[n*m*l]);
-    auto &&tensor = BaseClass::buffer(op->var_)->tensor();
+    auto &&buf = BaseClass::buffer(op->var_);
+    auto &&tensor = buf->tensor();
     auto &&shape = tensor->shape();
     auto &&dtype = tensor->dtype();
 
-    this->os() << mangle(op->var_);
-
-    this->os() << " = reinterpret_cast<" << gen(dtype) << "(*)";
-    for (auto i = 1lu; i < shape.size(); ++i) {
-        this->os() << "[";
-        (*this)(shape[i]);
-        this->os() << "]";
-    }
-    this->os() << ">(new " << gen(dtype) << "[";
-    for (auto i = 0lu; i < shape.size(); ++i) {
-        if (i != 0lu)
-            this->os() << "*";
-        this->os() << "(";
-        (*this)(shape[i]);
-        this->os() << ")";
-    }
-    this->os() << "]);" << std::endl;
+    // e.g.
+    // x = mdspan_r<int, extents<5, 5>>(new int[n*m*l]);
+    this->os() << mangle(op->var_) << " = ";
+    genMdPtrDef(buf, [&]() {
+        this->os() << "new " << gen(dtype) << "[";
+        for (auto i = 0lu; i < shape.size(); ++i) {
+            if (i != 0lu)
+                this->os() << "*";
+            this->os() << "(";
+            (*this)(shape[i]);
+            this->os() << ")";
+        }
+        this->os() << "]" << std::endl;
+    });
+    this->os() << ";" << std::endl;
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Free &op) {
     this->makeIndent();
 
-    // e.g. delete[] x;
-    this->os() << "delete[] " << mangle(op->var_) << ";" << std::endl;
+    // e.g. delete[] x.data_handle();
+    this->os() << "delete[] " << mangle(op->var_) << ".data_handle();"
+               << std::endl;
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {
@@ -584,7 +627,6 @@ template <class Stream> void CodeGenC<Stream>::visit(const Cast &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const For &op) {
-    this->markDefIter(op);
     if (op->step_->nodeType() == ASTNodeType::IntConst &&
         op->step_.as<IntConstNode>()->val_ == 1) {
         this->makeIndent();
@@ -594,7 +636,9 @@ template <class Stream> void CodeGenC<Stream>::visit(const For &op) {
         (*this)(op->end_);
         this->os() << "; " << mangle(op->iter_) << "++) ";
         this->beginBlock();
+        this->markDefIter(op);
         (*this)(op->body_);
+        this->markUndefIter(op);
         this->endBlock();
     } else {
         auto iterCnt = mangle(op->iter_ + ".cnt");
@@ -609,10 +653,11 @@ template <class Stream> void CodeGenC<Stream>::visit(const For &op) {
         this->os() << " + " << iterCnt << " * ";
         (*this)(op->step_);
         this->os() << ";" << std::endl;
+        this->markDefIter(op);
         (*this)(op->body_);
+        this->markUndefIter(op);
         this->endBlock();
     }
-    this->markUndefIter(op);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const If &op) {

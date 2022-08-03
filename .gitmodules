@@ -17,3 +17,6 @@
 [submodule "3rd-party/antlr/antlr4"]
 	path = 3rd-party/antlr/antlr4
 	url = git@github.com:antlr/antlr4.git
+[submodule "3rd-party/mdspan"]
+	path = 3rd-party/mdspan
+	url = git@github.com:kokkos/mdspan.git

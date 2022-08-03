@@ -10,7 +10,6 @@
 #include <pass/gpu/normalize_threads.h>
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/hoist_var_over_stmt_seq.h>
-#include <pass/make_1d_var.h>
 #include <pass/make_const_shape.h>
 #include <pass/make_heap_alloc.h>
 #include <pass/make_parallel_reduction.h>
@@ -115,7 +114,7 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Func (*)(const Func &)>(&removeDeadVar), "func"_a);
     m.def("remove_dead_var",
           static_cast<Stmt (*)(const Stmt &)>(&removeDeadVar), "stmt"_a);
-      
+
     m.def("make_heap_alloc",
           static_cast<Func (*)(const Func &)>(&makeHeapAlloc), "func"_a);
     m.def("make_heap_alloc",
@@ -129,11 +128,6 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Stmt (*)(const Stmt &, const std::vector<MemType> &)>(
               &makeConstShape),
           "stmt"_a, "mtypes"_a);
-
-    m.def("make_1d_var", static_cast<Func (*)(const Func &)>(&make1dVar),
-          "func"_a);
-    m.def("make_1d_var", static_cast<Stmt (*)(const Stmt &)>(&make1dVar),
-          "stmt"_a);
 
     m.def("use_builtin_div",
           static_cast<Func (*)(const Func &)>(&useBuiltinDiv), "func"_a);

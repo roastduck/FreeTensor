@@ -41,8 +41,9 @@ void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
     os() << "sizeof(" << gen(tensor->dtype()) << ")));" << std::endl;
 }
 
-void CodeGenCUDA::genScalar(const std::string &var,
+void CodeGenCUDA::genScalar(const VarDef &def,
                             const std::vector<Expr> &indices) {
+    auto &&var = def->name_;
     auto mtype = buffer(var)->mtype();
     if (indices.empty() &&
         (mtype == MemType::GPUGlobal || mtype == MemType::GPUShared)) {
@@ -55,15 +56,24 @@ void CodeGenCUDA::genScalar(const std::string &var,
                 "You are accessing gpu/global memory from outside of a kernel. "
                 "This is only for debugging, and it has a low performance");
             os() << "gpuScalar(";
-            CodeGenC::genScalar(var, indices);
+            CodeGenC::genScalar(def, indices);
             os() << ")";
         } else {
             throw InvalidProgram("Unable to access " +
                                  ::freetensor::toString(mtype) +
                                  " from outside of a kernel");
         }
+    } else if (def->buffer_->mtype() == MemType::GPULocal ||
+               def->buffer_->mtype() == MemType::GPUWarp) {
+        // Likely registers, no wrapping inside a mdspan
+        os() << mangle(def->name_);
+        for (auto &&index : indices) {
+            os() << "[";
+            (*this)(index);
+            os() << "]";
+        }
     } else {
-        CodeGenC::genScalar(var, indices);
+        CodeGenC::genScalar(def, indices);
     }
 }
 
@@ -237,32 +247,35 @@ void CodeGenCUDA::visit(const Load &op) {
 }
 
 void CodeGenCUDA::visit(const Alloc &op) {
-    ASSERT(buffer(op->var_)->mtype() == MemType::GPUGlobalHeap);
+    auto &&buf = buffer(op->var_);
+    auto &&tensor = buf->tensor();
+    auto &&shape = tensor->shape();
+    auto &&dtype = tensor->dtype();
+    ASSERT(buf->mtype() == MemType::GPUGlobalHeap);
 
     // e.g.
-    // Alloc:   cudaMalloc((void**)&x, n*m*sizeof(float));
-
-    auto id = mangle(op->var_);
-    auto &&tensor = buffer(op->var_)->tensor();
-    auto &&shape = tensor->shape();
-    makeIndent();
-    os() << "checkCudaError(cudaMalloc((void**)&" << id << ", ";
-    for (auto &&dim : shape) {
-        (*this)(dim);
-        os() << " * ";
-    }
-    os() << "sizeof(" << gen(tensor->dtype()) << ")));" << std::endl;
+    // x = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 * sizeof(int)));
+    os() << mangle(op->var_) << " = ";
+    genMdPtrDef(buf, [&]() {
+        os() << "cudaNew(";
+        for (auto &&dim : shape) {
+            (*this)(dim);
+            os() << " * ";
+        }
+        os() << "sizeof(" << gen(dtype) << "))";
+    });
+    os() << ";" << std::endl;
 }
 
 void CodeGenCUDA::visit(const Free &op) {
     ASSERT(buffer(op->var_)->mtype() == MemType::GPUGlobalHeap);
 
     // e.g.
-    // Free:    cudaFree(x);
+    // cudaFree(x.data_handle());
 
     auto id = mangle(op->var_);
     makeIndent();
-    os() << "cudaFree(" << id << ");" << std::endl;
+    os() << "cudaFree(" << id << ".data_handle());" << std::endl;
 }
 
 void CodeGenCUDA::visit(const ReduceTo &op) {
@@ -448,31 +461,16 @@ void CodeGenCUDA::visit(const VarDef &op) {
     } else {
         switch (op->buffer_->mtype()) {
         case MemType::GPUGlobal: {
-            markDefBuffer(op);
 
             if (inKernel()) {
-                // e.g. float (*restirct x)[5][5] = (float(*)[5][5])(__glmem +
-                // 0);
+                // e.g. auto x = mdspan_r<float, extents<5, 5>>(__glmem + 0);
                 auto &&tensor = op->buffer_->tensor();
                 auto &&shape = tensor->shape();
                 makeIndent();
-                os() << gen(tensor->dtype()) << " (*restrict ";
-                os() << mangle(op->name_) << ")";
-                for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                     i++) { // No shape[0]
-                    os() << "[";
-                    (*this)(shape[i]);
-                    os() << "]";
-                }
-                os() << " = (" << gen(tensor->dtype()) << "(*)";
-                for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                     i++) { // No shape[0]
-                    os() << "[";
-                    (*this)(shape[i]);
-                    os() << "]";
-                }
-                os() << ")(__glmem + " + std::to_string(globalStackTop_) << ");"
-                     << std::endl;
+                os() << "auto " << mangle(op->name_) << " = ";
+                genMdPtrDef(op->buffer_,
+                            "__glmem + " + std::to_string(globalStackTop_));
+                os() << ";" << std::endl;
 
                 int64_t size = sizeOf(tensor->dtype());
                 for (auto &&dim : shape) {
@@ -490,74 +488,56 @@ void CodeGenCUDA::visit(const VarDef &op) {
                     streamStack_.back().globalSize_, globalStackTop_ + size);
 
                 globalStackTop_ += size;
+                markDefBuffer(op);
                 (*this)(op->body_);
                 // globalStackTop_ -= size;
                 // FIXME: We have to add some sync before reusing global buffers
+                markUndefBuffer(op);
             } else {
                 // e.g.
-                // float (*x)[5][5];  // CUDA does not allow "restrict" here
-                // cudaMalloc(&x, 5 * 5 * 5 * sizeof(float)); ...; cudaFree(x);
+                // auto x = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 *
+                // sizeof(int)));
+                // ...;
+                // cudaFree(x.data_handle());
                 auto &&tensor = op->buffer_->tensor();
                 auto &&shape = tensor->shape();
                 makeIndent();
-                os() << gen(tensor->dtype()) << " (*";
-                os() << mangle(op->name_) << ")";
-                for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                     i++) { // No shape[0]
-                    os() << "[";
-                    (*this)(shape[i]);
-                    os() << "]";
-                }
+                os() << "auto " << mangle(op->name_) << " = ";
+                genMdPtrDef(op->buffer_, [&]() {
+                    os() << "cudaNew(";
+                    for (auto &&dim : shape) {
+                        (*this)(dim);
+                        os() << " * ";
+                    }
+                    os() << "sizeof(" << gen(tensor->dtype()) << "))";
+                });
                 os() << ";" << std::endl;
-                makeIndent();
-                os() << "checkCudaError(cudaMalloc(&" << mangle(op->name_)
-                     << ", ";
-                for (auto &&dim : shape) {
-                    (*this)(dim);
-                    os() << " * ";
-                }
-                os() << "sizeof(" << gen(tensor->dtype()) << ")));"
-                     << std::endl;
 
+                markDefBuffer(op);
                 (*this)(op->body_);
+                markUndefBuffer(op);
 
                 makeIndent();
-                os() << "cudaFree(" << mangle(op->name_) << ");" << std::endl;
+                os() << "cudaFree(" << mangle(op->name_) << ".data_handle());"
+                     << std::endl;
             }
-
-            markUndefBuffer(op);
             break;
         }
 
         case MemType::GPUGlobalHeap: {
-            markDefBuffer(op);
-
             if (inKernel()) {
                 ASSERT(false);
             } else {
                 // e.g.
-                // VarDef:  float (*x)[m];  (same as cpu)
-                auto &&tensor = op->buffer_->tensor();
-                auto &&shape = tensor->shape();
+                // mdspan_r<float, extents<5, 5>> x;
                 makeIndent();
-                auto shape_size = shape.size();
-                if (shape_size == 0) { // scalar
-                    os() << gen(tensor->dtype()) << " " << mangle(op->name_);
-                } else {
-                    os() << gen(tensor->dtype()) << " (*";
-                    os() << mangle(op->name_) << ")";
-                    for (size_t i = 1; i < shape_size; i++) { // No shape[0]
-                        os() << "[";
-                        (*this)(shape[i]);
-                        os() << "]";
-                    }
-                }
-                os() << ";" << std::endl;
+                genMdPtrType(op->buffer_);
+                os() << " " << mangle(op->name_) << ";";
 
+                markDefBuffer(op);
                 (*this)(op->body_);
+                markUndefBuffer(op);
             }
-
-            markUndefBuffer(op);
             break;
         }
 
@@ -567,31 +547,16 @@ void CodeGenCUDA::visit(const VarDef &op) {
                                      "kernel is not allowed");
             }
 
-            markDefBuffer(op);
-
             // A static shared memory array cannot be larger than 48KB (maybe a
             // bug of NVCC), so we allocate shared memory dynamically
-            // e.g. float (*x)[5][5] = (float(*)[5][5])(__shmem + 0);
+            // auto x = mdspan<float, extents<5, 5>>(__shmem + 0);
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor->shape();
             makeIndent();
-            os() << gen(tensor->dtype()) << " (*";
-            os() << mangle(op->name_) << ")";
-            for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                 i++) { // No shape[0]
-                os() << "[";
-                (*this)(shape[i]);
-                os() << "]";
-            }
-            os() << " = (" << gen(tensor->dtype()) << "(*)";
-            for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                 i++) { // No shape[0]
-                os() << "[";
-                (*this)(shape[i]);
-                os() << "]";
-            }
-            os() << ")(__shmem + " + std::to_string(sharedStackTop_) << ");"
-                 << std::endl;
+            os() << "auto " << mangle(op->name_) << " = ";
+            genMdPtrDef(op->buffer_,
+                        "__shmem + " + std::to_string(sharedStackTop_));
+            os() << ";" << std::endl;
 
             int64_t size = sizeOf(tensor->dtype());
             for (auto &&dim : shape) {
@@ -606,34 +571,57 @@ void CodeGenCUDA::visit(const VarDef &op) {
             streamStack_.back().sharedSize_ = std::max(
                 streamStack_.back().sharedSize_, sharedStackTop_ + size);
 
+            markDefBuffer(op);
             sharedStackTop_ += size;
             (*this)(op->body_);
             // sharedStackTop_ -= size;
             // FIXME: We have to add some sync before reusing shared buffers
-
             markUndefBuffer(op);
             break;
         }
 
         case MemType::GPULocal:
-            if (!inKernel()) {
-                throw InvalidProgram("Allocating a local buffer outside a "
-                                     "kernel is not allowed");
-            }
-            CodeGenC::visit(op);
-            break;
         case MemType::GPUWarp: {
             if (!inKernel()) {
-                throw InvalidProgram("Allocating a warp buffer outside a "
-                                     "kernel is not allowed");
+                throw InvalidProgram(
+                    "Allocating a " +
+                    ::freetensor::toString(op->buffer_->mtype()) +
+                    " buffer outside a "
+                    "kernel is not allowed");
             }
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor->shape();
-            ASSERT((int)shape.size() > 0 && shape[0]->isConst() &&
-                   shape[0].as<IntConstNode>()->val_ <= 32);
-            CodeGenC::visit(op);
+            // e.g. float x[5][5][5];
+            makeIndent();
+            os() << gen(tensor->dtype()) << " " << mangle(op->name_);
+            if (op->buffer_->mtype() == MemType::GPUWarp) {
+                ASSERT((int)shape.size() > 0 && shape[0]->isConst() &&
+                       shape[0].as<IntConstNode>()->val_ <= 32);
+                if (!shape.empty() && shape[0]->isConst() &&
+                    shape[0].as<IntConstNode>()->val_ == 32) {
+                    for (size_t i = 1; i < shape.size(); i++) {
+                        this->os() << "[";
+                        (*this)(shape[i]);
+                        this->os() << "]";
+                    }
+                } else {
+                    ERROR("GPUWarp type must have a 32-size dimension");
+                }
+            } else {
+                for (auto &&dim : shape) {
+                    this->os() << "[";
+                    (*this)(dim);
+                    this->os() << "]";
+                }
+            }
+            os() << ";" << std::endl;
+
+            markDefBuffer(op);
+            (*this)(op->body_);
+            markUndefBuffer(op);
             break;
         }
+
         default:
             CodeGenC::visit(op);
             break;
@@ -798,17 +786,10 @@ extern "C" {
                     break;
 
                 default:
-                    // e.g. const float (*restrict x)[5][5]
-                    if (buffer->atype() == AccessType::Input) {
-                        os << "const ";
-                    }
-                    os << CodeGenCUDA::gen(tensor->dtype()) << " (*restrict ";
-                    os << mangle(name) << ")";
-                    for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                         i++) { // No shape[0]
-                        ASSERT(shape[i]->nodeType() == ASTNodeType::IntConst);
-                        os << "[" << shape[i].as<IntConstNode>()->val_ << "]";
-                    }
+                    // e.g. mdspan<float, extents<5, 5>> x
+                    visitor.genMdPtrType(os, buffer,
+                                         buffer->atype() == AccessType::Input);
+                    os << " " << mangle(name);
                 }
                 first = false;
             }

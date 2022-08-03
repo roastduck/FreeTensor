@@ -40,6 +40,20 @@ void CodeGenCPU::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
     os() << "sizeof(" << gen(tensor->dtype()) << "));" << std::endl;
 }
 
+void CodeGenCPU::genScalar(const VarDef &def,
+                           const std::vector<Expr> &indices) {
+    if (usedAsReduction_.count(def)) {
+        this->os() << mangle(def->name_) + "_ptr";
+        for (auto &&index : indices) {
+            this->os() << "[";
+            (*this)(index);
+            this->os() << "]";
+        }
+    } else {
+        CodeGenC<CodeGenStream>::genScalar(def, indices);
+    }
+}
+
 void CodeGenCPU::visit(const VarDef &op) {
     if (op->buffer_->atype() == AccessType::Cache) {
         auto &&tensor = op->buffer_->tensor();
@@ -94,6 +108,15 @@ void CodeGenCPU::visit(const For &op) {
             collapsed_.insert(inner.as<ForNode>());
         }
 
+        for (auto &&r : op->property_->reductions_) {
+            if (!buffer(r->var_)->tensor()->shape().empty()) {
+                usedAsReduction_.insert(def(r->var_));
+                auto var = mangle(r->var_);
+                makeIndent();
+                os() << "auto " << var << "_ptr = toArrPtr(" << var << ");"
+                     << std::endl;
+            }
+        }
         os() << "#pragma omp parallel for";
         if (collapse > 1) {
             os() << " collapse(" << collapse << ")";
@@ -137,15 +160,20 @@ void CodeGenCPU::visit(const For &op) {
                     os() << ", ";
                 }
                 first = false;
-                os() << mangle(r->var_);
-                for (auto &&[b, e] : iter::zip(r->begins_, r->ends_)) {
-                    os() << "[";
-                    (*this)(b);
-                    os() << ":";
-                    // Note that OpenMP accepts `[begin : length]` rather than
-                    // `[begin : end]`
-                    (*this)(makeSub(e, b));
-                    os() << "]";
+                if (!buffer(r->var_)->tensor()->shape().empty()) {
+                    os() << mangle(r->var_) << "_ptr";
+                    for (auto &&[b, e] : iter::zip(r->begins_, r->ends_)) {
+                        os() << "[";
+                        (*this)(b);
+                        os() << ":";
+                        // Note that OpenMP accepts `[begin : length]` rather
+                        // than
+                        // `[begin : end]`
+                        (*this)(makeSub(e, b));
+                        os() << "]";
+                    }
+                } else {
+                    os() << mangle(r->var_);
                 }
             }
             os() << ")";
@@ -155,6 +183,11 @@ void CodeGenCPU::visit(const For &op) {
         inParallel_ = true;
         CodeGenC::visit(op);
         inParallel_ = oldInParallel;
+        for (auto &&r : op->property_->reductions_) {
+            if (!buffer(r->var_)->tensor()->shape().empty()) {
+                usedAsReduction_.erase(def(r->var_));
+            }
+        }
         return;
     } else if (op->property_->vectorize_) {
         os() << "#pragma omp simd" << std::endl;

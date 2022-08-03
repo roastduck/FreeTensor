@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_CODE_GEN_C_H
 #define FREE_TENSOR_CODE_GEN_C_H
 
+#include <functional>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -27,11 +28,25 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
                           const std::string &shapePtr,
                           const std::string &dimPtr) = 0;
 
+    // Generate a pointer to an multi-dimensional array
+    virtual void genMdPtrType(std::ostream &os, const Ref<Buffer> &buf,
+                              bool isConst = false);
+    virtual void genMdPtrType(const Ref<Buffer> &buf, bool isConst = false) {
+        genMdPtrType(this->os(), buf, isConst);
+    }
+    virtual void genMdPtrDef(const Ref<Buffer> &buf,
+                             const std::function<void()> &genRawPtr,
+                             bool isConst = false);
+    void genMdPtrDef(const Ref<Buffer> &buf, const std::string &rawPtr,
+                     bool isConst = false) {
+        this->genMdPtrDef(
+            buf, [&]() { this->os() << rawPtr; }, isConst);
+    }
+
     // Generate the access to a scalar or an element of an array
-    virtual void genScalar(const std::string &var,
-                           const std::vector<Expr> &indices);
+    virtual void genScalar(const VarDef &def, const std::vector<Expr> &indices);
     template <class T> void genScalar(const T &op) {
-        genScalar(op->var_, op->indices_);
+        genScalar(this->def(op->var_), op->indices_);
     }
 
     virtual void visit(const StmtSeq &op) override;
