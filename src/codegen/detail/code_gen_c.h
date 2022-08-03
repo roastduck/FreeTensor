@@ -115,43 +115,13 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
     auto name = mangle(op->name_);
 
     if (op->buffer_->atype() == AccessType::Cache) {
-        if (shape.empty()) {
-            // e.g. float x;
-            this->os() << gen(tensor->dtype()) << " " << name;
-        } else if (op->buffer_->mtype() == MemType::CPUHeap) {
-            // e.g. mdspan_r<float, std::extents<5, 5>> x;
-            genMdPtrType(op->buffer_);
-            this->os() << " " << name;
-        } else {
-            // FIXME: Do not directly allocate on the stack
-            // e.g.
-            // float _x[5][5][5];
-            // auto x = mdspan_r<float, std::extents<5, 5, 5>>(_x);
-            this->os() << gen(tensor->dtype()) << " _" << name;
-            for (auto &&dim : shape) {
-                this->os() << "[";
-                (*this)(dim);
-                this->os() << "]";
-            }
-            if (op->buffer_->mtype() == MemType::CPU) {
-                // Alignment (TODO: Move to CodeGenCPU)
-                bool isSingle = true;
-                for (auto &&dim : shape) {
-                    if (dim->nodeType() != ASTNodeType::IntConst ||
-                        dim.as<IntConstNode>()->val_ != 1) {
-                        isSingle = false;
-                        break;
-                    }
-                }
-                if (!isSingle) {
-                    // TODO adjust the value according to the cache line size
-                    this->os() << " __attribute__((aligned(64)))";
-                }
-            }
-            this->os() << ";" << std::endl;
-            this->makeIndent();
-            this->os() << "auto " << name << " = ";
-            this->genMdPtrDef(op->buffer_, "_" + name);
+        // e.g. 1. float x;
+        //      2. float x[5][5][5];
+        this->os() << gen(tensor->dtype()) << " " << name;
+        for (auto &&dim : shape) {
+            this->os() << "[";
+            (*this)(dim);
+            this->os() << "]";
         }
         this->os() << ";" << std::endl;
     } else {
@@ -314,7 +284,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Alloc &op) {
             (*this)(shape[i]);
             this->os() << ")";
         }
-        this->os() << "]" << std::endl;
+        this->os() << "]";
     });
     this->os() << ";" << std::endl;
 }
