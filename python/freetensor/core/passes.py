@@ -18,7 +18,6 @@ from freetensor_ffi import remove_writes
 from freetensor_ffi import remove_dead_var
 from freetensor_ffi import make_heap_alloc
 from freetensor_ffi import make_const_shape
-from freetensor_ffi import make_1d_var
 from freetensor_ffi import use_builtin_div
 from freetensor_ffi import hoist_var_over_stmt_seq
 from freetensor_ffi import cpu_lower_parallel_reduction

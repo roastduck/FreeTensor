@@ -13,6 +13,7 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
     int64_t sharedStackTop_ = 8192 * 1024, sharedStackSize_ = 0;
     int64_t threadStackTop_ = 0, threadStackSize_ = 0;
     std::unordered_set<For> collapsed_;
+    std::unordered_set<VarDef> usedAsReduction_;
 
   public:
     CodeGenCPU(const std::vector<FuncParam> &params,
@@ -26,6 +27,9 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
     void genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
                   const std::string &shapePtr,
                   const std::string &dimPtr) override;
+
+    void genScalar(const VarDef &def,
+                   const std::vector<Expr> &indices) override;
 
     using CodeGenC<CodeGenStream>::visit;
     void visit(const VarDef &op) override;

@@ -383,10 +383,13 @@ class StagingOverload:
 
     def into_staging(self,
                      func,
-                     extra_locals: Dict[str, Any] = {},
+                     extra_locals: Dict[str, Any] = None,
                      src: str = None,
                      verbose=False):
         assert inspect.isfunction(func)
+
+        if extra_locals is None:
+            extra_locals = {}
 
         if src is None:
             lines, lineno = ins.getsourcelines(func)

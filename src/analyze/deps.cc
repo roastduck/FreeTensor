@@ -9,7 +9,8 @@
 #include <except.h>
 #include <mutator.h>
 #include <omp_utils.h>
-#include <pass/simplify.h>
+#include <pass/const_fold.h>
+#include <pass/replace_iter.h>
 #include <serialize/mangle.h>
 
 namespace freetensor {
@@ -57,6 +58,20 @@ FindAccessPoint::FindAccessPoint(const Stmt &root,
     }
 }
 
+Expr FindAccessPoint::normalizeExpr(const Expr &expr) const {
+    return ReplaceIter(replaceIter_)(expr);
+}
+
+std::vector<Expr>
+FindAccessPoint::normalizeExprs(const std::vector<Expr> &indices) const {
+    std::vector<Expr> ret;
+    ret.reserve(indices.size());
+    for (auto &&expr : indices) {
+        ret.emplace_back(normalizeExpr(expr));
+    }
+    return ret;
+}
+
 void FindAccessPoint::visit(const VarDef &op) {
     allDefs_.emplace_back(op);
     defAxis_[op->name_] =
@@ -90,20 +105,33 @@ void FindAccessPoint::visit(const For &op) {
 
     auto iter = makeVar(op->iter_);
     auto oldCondsSize = conds_.size();
-    // We use IfExpr instead of determine the sign of op->step_ here, because
-    // GenPBExpr can fold the constants
-    auto posiCond = makeLAnd(
-        makeLAnd(makeGE(iter, op->begin_), makeLT(iter, op->end_)),
-        makeEQ(makeMod(makeSub(iter, op->begin_), op->step_), makeIntConst(0)));
-    auto negCond = makeLAnd(
-        makeLAnd(makeLE(iter, op->begin_), makeGT(iter, op->end_)),
-        makeEQ(makeMod(makeSub(iter, op->begin_), op->step_), makeIntConst(0)));
-    auto zeroCond = makeEQ(iter, op->begin_);
-    conds_.emplace_back(
-        makeIfExpr(makeGT(op->step_, makeIntConst(0)), std::move(posiCond),
-                   makeIfExpr(makeLT(op->step_, makeIntConst(0)),
-                              std::move(negCond), zeroCond)));
-    cur_.emplace_back(iter, op->property_->parallel_);
+    if (auto &&step = constFold(op->step_);
+        step->nodeType() == ASTNodeType::IntConst) {
+        auto stepVal = step.as<IntConstNode>()->val_;
+        if (stepVal > 0) {
+            conds_.emplace_back(makeLAnd(
+                makeLAnd(makeGE(iter, op->begin_), makeLT(iter, op->end_)),
+                makeEQ(makeMod(makeSub(iter, op->begin_), op->step_),
+                       makeIntConst(0))));
+            cur_.emplace_back(iter, op->property_->parallel_);
+        } else if (stepVal == 0) {
+            conds_.emplace_back(makeEQ(iter, op->begin_));
+            cur_.emplace_back(iter, op->property_->parallel_);
+        } else {
+            auto negIter = makeVar(op->iter_ + ".neg");
+            auto newIter = makeMul(makeIntConst(-1), negIter);
+            conds_.emplace_back(makeLAnd(
+                makeLAnd(makeLE(newIter, op->begin_),
+                         makeGT(newIter, op->end_)),
+                makeEQ(makeMod(makeSub(newIter, op->begin_), op->step_),
+                       makeIntConst(0))));
+            cur_.emplace_back(negIter, op->property_->parallel_, iter);
+            replaceIter_[op->iter_] = newIter;
+        }
+    } else {
+        ERROR("Currently loops with an unknown sign of step is not supported "
+              "in analyze/deps");
+    }
     scope2coord_[op->id()] = cur_;
     if (int width = countBandNodeWidth(op->body_); width > 1) {
         cur_.emplace_back(makeIntConst(-1));
@@ -118,6 +146,7 @@ void FindAccessPoint::visit(const For &op) {
     }
     cur_.pop_back();
     conds_.resize(oldCondsSize);
+    replaceIter_.erase(op->iter_);
 }
 
 void FindAccessPoint::visit(const If &op) {
@@ -156,8 +185,8 @@ void FindAccessPoint::visit(const Load &op) {
            buffer(op->var_),
            defAxis_.at(op->var_),
            cur_,
-           std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
-           conds_};
+           normalizeExprs(op->indices_),
+           normalizeExprs(conds_)};
     if (accFilter_ == nullptr || accFilter_(*ap)) {
         reads_[def(op->var_)->id()].emplace_back(ap);
     }

@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test-cuda-mkl-pytorch:
+  build-and-test-cuda-mkl-pytorch-install:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
     steps:
@@ -29,15 +29,15 @@ jobs:
           spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.5.0 cudnn@8.3.3.40-11.5 intel-mkl@2020.4.304 java@11
           source /home/rd/venv-freetensor/bin/activate
           mkdir build
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=ON -DFT_WITH_MKL=/home/spack/spack/opt/spack/linux-debian11-zen2/gcc-10.2.1/intel-mkl-2020.4.304-py6elz2mzhdgres34nr5e2ta5isfja7k/mkl -DFT_WITH_PYTORCH=ON
-          cmake --build build -j
+          cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=ON -DFT_WITH_MKL=/home/spack/spack/opt/spack/linux-debian11-zen2/gcc-10.2.1/intel-mkl-2020.4.304-py6elz2mzhdgres34nr5e2ta5isfja7k/mkl -DFT_WITH_PYTORCH=ON -DCMAKE_INSTALL_PREFIX=./install
+          cd build && ninja && ninja install
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.5.0 cudnn@8.3.3.40-11.5 intel-mkl@2020.4.304 java@11
           source /home/rd/venv-freetensor/bin/activate
-          PYTHONPATH=build:python:$PYTHONPATH srun -N 1 -p gpu pytest test
-  build-and-test-minimal:
+          LD_LIBRARY_PATH=./install/lib:$LD_LIBRARY_PATH PYTHONPATH=install/lib:python:$PYTHONPATH srun -N 1 -p gpu pytest test
+  build-and-test-minimal-run_in_tree:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
     steps:
@@ -54,8 +54,8 @@ jobs:
           spack load python~debug@3.9.2%gcc@10.2.1 java@11
           source /home/rd/venv-freetensor/bin/activate
           mkdir build
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF
-          cmake --build build -j
+          cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF
+          cd build && ninja
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh

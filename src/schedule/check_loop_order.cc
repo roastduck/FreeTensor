@@ -32,9 +32,13 @@ void CheckLoopOrder::visit(const For &op) {
 }
 
 void CheckLoopOrder::visit(const StmtSeq &op) {
-    stmtSeqStack_.emplace_back(op);
-    Visitor::visit(op);
-    stmtSeqStack_.pop_back();
+    if (curOrder_.empty()) {
+        Visitor::visit(op);
+    } else {
+        stmtSeqStack_.emplace_back(op);
+        Visitor::visit(op);
+        stmtSeqStack_.pop_back();
+    }
 }
 
 const std::vector<For> &CheckLoopOrder::order() const {
