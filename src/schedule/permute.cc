@@ -122,10 +122,9 @@ Stmt permute(
         return oss.str();
     };
     // check if the map is bijective
+    PBCtx pbCtx;
+    PBMap permuteMap(pbCtx, getPermuteMap(0, 0));
     {
-        PBCtx pbCtx;
-        PBMap permuteMap(pbCtx, getPermuteMap(0, 0));
-        std::cout << "Permute map: " << permuteMap << std::endl;
         //! FIXME: if step != 1 or -1, this check will be more strict than
         //! actually needed; need to add range restrictions to input dimensions
         if (!permuteMap.isBijective())
@@ -148,16 +147,13 @@ Stmt permute(
 
     FindDeps()
         .direction({dir.begin(), dir.end()})
-        // .filterAccess([&](const AccessPoint &ap) {
-        //     return !ap.def_->ancestorById(loopsId.back()).isValid();
-        // })
+        .filterAccess([&](const AccessPoint &ap) {
+            return ap.def_->isAncestorOf(loops.front());
+        })
         .noProjectOutProvateAxis(true)
         .filterSubAST(loops.front()->id())(ast, [&](const Dependency &d) {
-            std::cout << "Found dependency: " << d.later() << " over "
-                      << d.earlier() << std::endl;
             auto numBackDims = getNumBackDims(d.earlier_);
             ASSERT(numBackDims == getNumBackDims(d.later_));
-            std::cout << "later2earlier: " << d.later2EarlierIter_ << std::endl;
             auto permuteMapLater = PBMap(
                 d.presburger_,
                 getPermuteMap(numBackDims, d.later_.iter_.size() - numBackDims -
@@ -169,16 +165,12 @@ Stmt permute(
             auto permutedLater2Earlier =
                 applyRange(applyDomain(d.later2EarlierIter_, permuteMapLater),
                            permuteMapEarlier);
-            std::cout << "Permuted later2earlier: " << permutedLater2Earlier
-                      << std::endl;
             PBSpace space(range(permutedLater2Earlier));
             ASSERT(space == PBSpace(domain(permutedLater2Earlier)));
             auto violated = intersect(permutedLater2Earlier, lexLE(space));
-            if (!violated.empty()) {
-                std::cout << "Violated map: " << violated << std::endl;
+            if (!violated.empty())
                 throw InvalidSchedule(
                     "Provided transformation violates dependency");
-            }
             //! TODO: more diagnostics
         });
 
