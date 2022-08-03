@@ -141,7 +141,7 @@ class TaskResult(object):
         return cls.get_base(task, TaskResult())
 
     @classmethod
-    def get_base(cls, task: Task, tmp_taskresult :TaskResult) -> TaskResult:
+    def get_base(cls, task: Task, tmp_taskresult: TaskResult) -> TaskResult:
         tmp_taskresult.src_server_uid = task.src_server_uid
         tmp_taskresult.target_server_uid = task.target_server_uid
         tmp_taskresult.task_uid = task.task_uid
@@ -627,8 +627,7 @@ class RemoteTaskScheduler(object):
             elif task["trans_c"] == 2:
                 self.update_inavailability(src_host_uid, task["time_stamp"])
             elif task["trans_c"] == 3:
-                threading.Thread(target=self.task_submit,
-                                 args=(src_host_uid,))
+                threading.Thread(target=self.task_submit, args=(src_host_uid,))
         else:
             if task["task_type"] == 1:
                 pass
