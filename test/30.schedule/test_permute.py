@@ -43,6 +43,7 @@ def test_9_point_seidel_failed():
         s.permute(['L1', 'L2'], lambda i, j: (i + j, j))
 
     with pytest.raises(ft.InvalidSchedule):
+
         @ft.schedule(callback=schd)
         @ft.transform
         def test(x: ft.Var[(8, 8), 'float32', 'inout']):
