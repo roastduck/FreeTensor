@@ -154,8 +154,6 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.ReturnValuesPack">ReturnValuesPack</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.Target">Target</a>
-    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.array">array()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.build_binary">build_binary()</a>
@@ -2259,15 +2257,16 @@ will use it by default. In this style, it also sets the default Target. E.g:</p>
         <span class="nb">super</span><span class="p">(</span><span class="n">Device</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">old_target</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_target</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">old_device</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_device</span><span class="p">()</span>
+        <span class="n">_old_target_device_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">default_target</span><span class="p">(),</span> <span class="n">config</span><span class="o">.</span><span class="n">default_device</span><span class="p">()))</span>
         <span class="n">config</span><span class="o">.</span><span class="n">set_default_target</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">())</span>
         <span class="n">config</span><span class="o">.</span><span class="n">set_default_device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
-        <span class="n">config</span><span class="o">.</span><span class="n">set_default_target</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">old_target</span><span class="p">)</span>
-        <span class="n">config</span><span class="o">.</span><span class="n">set_default_device</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">old_device</span><span class="p">)</span>
+        <span class="n">old_target</span><span class="p">,</span> <span class="n">old_device</span> <span class="o">=</span> <span class="n">_old_target_device_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">set_default_target</span><span class="p">(</span><span class="n">old_target</span><span class="p">)</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">set_default_device</span><span class="p">(</span><span class="n">old_device</span><span class="p">)</span>
 </code></pre></div>
         </details>
 
@@ -2770,89 +2769,6 @@ OrderedDict unpacks to keys rather than values</p>
     </div>
 
   </div>
-
-
-
-
-
-  </div>
-
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-class">
-
-
-
-<h4 id="freetensor.core.driver.Target" class="doc doc-heading">
-        <code>
-Target            (<span title="freetensor_ffi.Target">Target</span>)
-        </code>
-
-
-
-<a href="#freetensor.core.driver.Target" class="headerlink" title="Permanent link">&para;</a></h4>
-
-    <div class="doc doc-contents ">
-
-      <p>A target architecture</p>
-<p>A Target can be used as a "with" scope, then all the <code>lower</code>s and <code>codegen</code>s
-will use it by default. In this style, it also sets the default Device as the
-0-th device of the given Target. E.g:</p>
-<pre><code>with Target(...):
-    ast = lower(ast)  # Use the Target above by default
-    a = Array(...)  # Use the 0-th device of the Target above by default
-</code></pre>
-
-        <details class="quote">
-          <summary>Source code in <code>freetensor/core/driver.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Target</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">Target</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    A target architecture</span>
-
-<span class="sd">    A Target can be used as a &quot;with&quot; scope, then all the `lower`s and `codegen`s</span>
-<span class="sd">    will use it by default. In this style, it also sets the default Device as the</span>
-<span class="sd">    0-th device of the given Target. E.g:</span>
-
-<span class="sd">    ```</span>
-<span class="sd">    with Target(...):</span>
-<span class="sd">        ast = lower(ast)  # Use the Target above by default</span>
-<span class="sd">        a = Array(...)  # Use the 0-th device of the Target above by default</span>
-<span class="sd">    ```</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_native_arch</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Target</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">use_native_arch</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">old_target</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_target</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">old_device</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_device</span><span class="p">()</span>
-        <span class="n">config</span><span class="o">.</span><span class="n">set_default_target</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">config</span><span class="o">.</span><span class="n">set_default_device</span><span class="p">(</span><span class="n">Device</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
-        <span class="n">config</span><span class="o">.</span><span class="n">set_default_target</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">old_target</span><span class="p">)</span>
-        <span class="n">config</span><span class="o">.</span><span class="n">set_default_device</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">old_device</span><span class="p">)</span>
-</code></pre></div>
-        </details>
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -8810,7 +8726,7 @@ def f(...):
             <li><p><strong>func</strong> (<code>Python function or AST</code>) – The user function to optimize. If not specified, a partial function will
 be returend, which can be used as a decorator</p></li>
             <li><p><strong>schedule_callback</strong> (<code>Optional[Callable[[freetensor.core.schedule.Schedule], NoneType]]</code>) – Schedule(s) to apply</p></li>
-            <li><p><strong>target</strong> (<code>Optional[freetensor.core.driver.Target]</code>) – The target architecture. You don't have to set target if you set device</p></li>
+            <li><p><strong>target</strong> (<code>Optional[freetensor_ffi.Target]</code>) – The target architecture. You don't have to set target if you set device</p></li>
             <li><p><strong>device</strong> (<code>Optional[freetensor.core.driver.Device]</code>) – Where to run the program</p></li>
             <li><p><strong>default_dynamic_range</strong> (<code>bool</code>) – If True, the built-in range is replaced with freetensor.dynamic_range.
 Defaults to True</p></li>
