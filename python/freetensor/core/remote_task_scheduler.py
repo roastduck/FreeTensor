@@ -1,12 +1,10 @@
 from __future__ import annotations
-from operator import truediv
 import queue
 import threading
 import time
 import copy
 from typing import Any, List
 from typing import Dict
-from xmlrpc.client import boolean
 
 '''
 task_type is specified
@@ -20,9 +18,7 @@ then check param
     0. logger
     1. broadcast availability
     2. return inavailability
-    3. new_task_request
-
-    
+    3. new_task_request    
 minus means receive
 '''
 
@@ -288,7 +284,7 @@ class RemoteTaskScheduler(object):
     measure_server_num: int = 0
     server_list_lock = threading.Lock()
     #
-    is_ready: boolean = False
+    is_ready: bool = False
     self_server_uid: str
     #
     def __init__(self) -> None:
@@ -382,7 +378,7 @@ class RemoteTaskScheduler(object):
         return
 
     def task_submit(self, _server_uid: str):
-        task_availability: boolean = False
+        task_availability: bool = False
         tmp_submit_uid: int
         tmp_task_type: int
         if self.server_list[_server_uid][0] == 1:
