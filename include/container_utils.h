@@ -14,7 +14,6 @@
 #include <itertools.hpp>
 
 #include <except.h>
-#include <serialize/to_string.h>
 
 namespace freetensor {
 

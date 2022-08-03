@@ -1,6 +1,7 @@
 #include <itertools.hpp>
 
 #include <codegen/code_gen_cpu.h>
+#include <math/utils.h>
 #include <pass/simplify.h>
 #include <serialize/mangle.h>
 
@@ -40,36 +41,96 @@ void CodeGenCPU::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
     os() << "sizeof(" << gen(tensor->dtype()) << "));" << std::endl;
 }
 
-void CodeGenCPU::visit(const VarDef &op) {
-    if (op->buffer_->atype() == AccessType::Cache) {
-        auto &&tensor = op->buffer_->tensor();
-        auto &&shape = tensor->shape();
-        int64_t size = sizeOf(tensor->dtype());
-        for (auto &&dim : shape) {
-            if (dim->nodeType() == ASTNodeType::IntConst) {
-                size *= dim.as<IntConstNode>()->val_;
-            } else {
-                WARNING(
-                    "Cannot calculate size for a dynamic-sized local "
-                    "(MemType::Cache) array in order to set a stack limit. If "
-                    "this array is large, it may result in a stack overflow");
-            }
-        }
-        if (inParallel_) {
-            threadStackSize_ =
-                std::max(threadStackSize_, threadStackTop_ + size);
-            threadStackTop_ += size;
-            CodeGenC::visit(op);
-            threadStackTop_ -= size;
-        } else {
-            sharedStackSize_ =
-                std::max(sharedStackSize_, sharedStackTop_ + size);
-            sharedStackTop_ += size;
-            CodeGenC::visit(op);
-            sharedStackTop_ -= size;
+void CodeGenCPU::genScalar(const VarDef &def,
+                           const std::vector<Expr> &indices) {
+    if (usedAsReduction_.count(def)) {
+        this->os() << mangle(def->name_) + "_ptr";
+        for (auto &&index : indices) {
+            this->os() << "[";
+            (*this)(index);
+            this->os() << "]";
         }
     } else {
+        CodeGenC<CodeGenStream>::genScalar(def, indices);
+    }
+}
+
+void CodeGenCPU::visit(const VarDef &op) {
+    auto &&tensor = op->buffer_->tensor();
+    auto &&shape = tensor->shape();
+
+    if (op->buffer_->atype() != AccessType::Cache || shape.empty()) {
         CodeGenC::visit(op);
+
+    } else {
+        auto name = mangle(op->name_);
+
+        switch (op->buffer_->mtype()) {
+        case MemType::CPUHeap:
+            // e.g. mdspan_r<float, std::extents<5, 5>> x;
+            this->makeIndent();
+            genMdPtrType(op->buffer_);
+            this->os() << " " << name << ";" << std::endl;
+            this->markDefBuffer(op);
+            (*this)(op->body_);
+            this->markUndefBuffer(op);
+            break;
+
+        case MemType::CPU: {
+            // e.g.
+            // auto x = mdspan_r<float, std::extents<5, 5, 5>>(&__stack[200 +
+            // omp_get_thread_num() * _threadStackTop + 100]);
+            this->makeIndent();
+            this->os() << "auto " << name << " = ";
+            std::string rawPtr;
+            if (inParallel_) {
+                rawPtr = "&__stack[" + std::to_string(sharedStackTop_) +
+                         " + omp_get_thread_num() * _threadStackSize + " +
+                         std::to_string(threadStackTop_) + "]";
+            } else {
+                rawPtr = "&__stack[" + std::to_string(sharedStackTop_) + "]";
+            }
+            this->genMdPtrDef(op->buffer_, rawPtr);
+            this->os() << ";" << std::endl;
+
+            int64_t size = sizeOf(tensor->dtype());
+            for (auto &&dim : shape) {
+                if (dim->nodeType() == ASTNodeType::IntConst) {
+                    size *= dim.as<IntConstNode>()->val_;
+                } else {
+                    ERROR("BUG: Dyanmic sized variables cannot be allocated on "
+                          "stack. Should be transformed to heap-allocated in "
+                          "pass/make_heap_alloc")
+                }
+            }
+
+            // Align to 64 bytes (TODO: look up cache line size from Target)
+            size = ceilDiv<int64_t>(size, 64) * 64;
+
+            if (inParallel_) {
+                threadStackSize_ =
+                    std::max(threadStackSize_, threadStackTop_ + size);
+                threadStackTop_ += size;
+                this->markDefBuffer(op);
+                (*this)(op->body_);
+                this->markUndefBuffer(op);
+                threadStackTop_ -= size;
+            } else {
+                sharedStackSize_ =
+                    std::max(sharedStackSize_, sharedStackTop_ + size);
+                sharedStackTop_ += size;
+                this->markDefBuffer(op);
+                (*this)(op->body_);
+                this->markUndefBuffer(op);
+                sharedStackTop_ -= size;
+            }
+            break;
+        }
+
+        default:
+            CodeGenC::visit(op);
+            break;
+        }
     }
 }
 
@@ -94,6 +155,15 @@ void CodeGenCPU::visit(const For &op) {
             collapsed_.insert(inner.as<ForNode>());
         }
 
+        for (auto &&r : op->property_->reductions_) {
+            if (!buffer(r->var_)->tensor()->shape().empty()) {
+                usedAsReduction_.insert(def(r->var_));
+                auto var = mangle(r->var_);
+                makeIndent();
+                os() << "auto " << var << "_ptr = toArrPtr(" << var << ");"
+                     << std::endl;
+            }
+        }
         os() << "#pragma omp parallel for";
         if (collapse > 1) {
             os() << " collapse(" << collapse << ")";
@@ -137,15 +207,20 @@ void CodeGenCPU::visit(const For &op) {
                     os() << ", ";
                 }
                 first = false;
-                os() << mangle(r->var_);
-                for (auto &&[b, e] : iter::zip(r->begins_, r->ends_)) {
-                    os() << "[";
-                    (*this)(b);
-                    os() << ":";
-                    // Note that OpenMP accepts `[begin : length]` rather than
-                    // `[begin : end]`
-                    (*this)(makeSub(e, b));
-                    os() << "]";
+                if (!buffer(r->var_)->tensor()->shape().empty()) {
+                    os() << mangle(r->var_) << "_ptr";
+                    for (auto &&[b, e] : iter::zip(r->begins_, r->ends_)) {
+                        os() << "[";
+                        (*this)(b);
+                        os() << ":";
+                        // Note that OpenMP accepts `[begin : length]` rather
+                        // than
+                        // `[begin : end]`
+                        (*this)(makeSub(e, b));
+                        os() << "]";
+                    }
+                } else {
+                    os() << mangle(r->var_);
                 }
             }
             os() << ")";
@@ -155,6 +230,11 @@ void CodeGenCPU::visit(const For &op) {
         inParallel_ = true;
         CodeGenC::visit(op);
         inParallel_ = oldInParallel;
+        for (auto &&r : op->property_->reductions_) {
+            if (!buffer(r->var_)->tensor()->shape().empty()) {
+                usedAsReduction_.erase(def(r->var_));
+            }
+        }
         return;
     } else if (op->property_->vectorize_) {
         os() << "#pragma omp simd" << std::endl;
@@ -242,7 +322,6 @@ std::string codeGenCPU(const Func &func) {
     visitor(op);
     visitor.endBlock();
 
-    // TODO: Pure C?
     const char *header = R"~~~(
 #include <cpu_runtime.h>
 
@@ -254,17 +333,16 @@ extern "C" {
 
     auto body = visitor.toString([&](const CodeGenStream &stream) {
         std::string s =
-            "void __attribute__ ((noinline)) _run(void **_params, "
-            "void **_returns, size_t **_retShapes, size_t *_retDims) " +
-            stream.os_.str();
-        s += "\n";
-        s += "void run(void **_params, void **_returns, size_t **_retShapes, "
-             "size_t *_retDims, CPUContext_t _ctx) {\n";
-        s += "  _ctx->setStackLim(" +
-             std::to_string(visitor.sharedStackSize()) +
-             " + omp_get_num_threads() * " +
-             std::to_string(visitor.threadStackSize()) + ");\n";
-        s += "  _run(_params, _returns, _retShapes, _retDims);\n";
+            "void run(void **_params, void **_returns, size_t **_retShapes, "
+            "size_t *_retDims, CPUContext_t _ctx) {\n";
+        s += "  size_t _sharedStackSize = " +
+             std::to_string(visitor.sharedStackSize()) + ";\n";
+        s += "  size_t _threadStackSize = " +
+             std::to_string(visitor.threadStackSize()) + ";\n";
+        s += "  auto __stack = new uint8_t[_sharedStackSize + "
+             "omp_get_max_threads() * _threadStackSize];\n";
+        s += stream.os_.str();
+        s += "  delete[] __stack;\n";
         s += "}";
         return s;
     });

@@ -29,6 +29,9 @@ def max_value(dtype):
 def same_mtype(lhs, rhs):
     lhs = MemType(lhs)
     rhs = MemType(rhs)
-    assert lhs == rhs or lhs == MemType("byvalue") or rhs == MemType(
-        "byvalue"), "Variables must be on the same memory"
+    if lhs == MemType("byvalue"):
+        return rhs
+    if rhs == MemType("byvalue"):
+        return lhs
+    assert lhs == rhs, "Variables must be on the same memory"
     return lhs

@@ -231,3 +231,4 @@ install(TARGETS freetensor LIBRARY DESTINATION lib)
 install(TARGETS freetensor_ffi LIBRARY DESTINATION lib)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include/freetensor) # Trailing slash after the source path is needed
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ DESTINATION share/runtime_include)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/mdspan/ DESTINATION share/3rd-party/mdspan)

@@ -40,7 +40,16 @@ std::string LowerVector::vecType(DataType dtype) const {
     return ret + std::to_string(vecLen_);
 }
 
-bool LowerVector::hasVectorIndex(const Expr &index) {
+bool LowerVector::hasVectorIndices(const std::vector<Expr> &indices,
+                                   const std::vector<Expr> &shape) {
+    Expr index;
+    for (auto &&[idx, dim] : iter::zip(indices, shape)) {
+        index = index.isValid() ? makeAdd(makeMul(index, dim), idx) : idx;
+    }
+    if (!index.isValid()) {
+        return false;
+    }
+
     // Any expression is analyzed as a linear expression
     analyzeLinear_(index);
     auto &&lin = analyzeLinear_.result().at(index);
@@ -73,11 +82,14 @@ bool LowerVector::hasVectorIndex(const Expr &index) {
     }
 }
 
-Expr LowerVector::getIndex(const Expr &index) {
-    Expr ret;
+std::vector<Expr> LowerVector::getIndices(const std::vector<Expr> &indices) {
+    std::vector<Expr> ret;
+    ret.reserve(indices.size());
     isIndex_++;
     try {
-        ret = (*this)(index);
+        for (auto &&idx : indices) {
+            ret.emplace_back((*this)(idx));
+        }
     } catch (const InvalidGPUVector &e) {
         isIndex_--;
         throw;
@@ -156,13 +168,13 @@ Expr LowerVector::visit(const Var &op) {
 
 Expr LowerVector::visit(const Load &op) {
     if (!simplifyOnly_ && var_.isValid() && !op->indices_.empty()) {
-        ASSERT(op->indices_.size() == 1); // Please do make_1d_var first
-        if (hasVectorIndex(op->indices_[0])) {
-            Expr index = getIndex(op->indices_[0]);
+        if (hasVectorIndices(op->indices_,
+                             buffer(op->var_)->tensor()->shape())) {
+            auto &&indices = getIndices(op->indices_);
             auto dtype = buffer(op->var_)->tensor()->dtype();
             auto vtype = vecType(dtype);
             return makeIntrinsic("*((" + vtype + "*)&(%))",
-                                 {makeLoad(op->var_, {index}, dtype)},
+                                 {makeLoad(op->var_, indices, dtype)},
                                  DataType::Custom, false);
         }
     }
@@ -171,16 +183,16 @@ Expr LowerVector::visit(const Load &op) {
 
 Stmt LowerVector::visit(const Store &op) {
     if (var_.isValid() && !op->indices_.empty()) {
-        ASSERT(op->indices_.size() == 1); // Please do make_1d_var first
-        if (hasVectorIndex(op->indices_[0])) {
-            Expr index = getIndex(op->indices_[0]);
+        if (hasVectorIndices(op->indices_,
+                             buffer(op->var_)->tensor()->shape())) {
+            auto &&indices = getIndices(op->indices_);
             auto dtype = buffer(op->var_)->tensor()->dtype();
             auto vtype = vecType(dtype);
             return makeEval(
                 "",
                 makeIntrinsic(
                     "*((" + vtype + "*)&(%)) = make_" + vtype + "(%)",
-                    {makeLoad(op->var_, {index}, dtype), (*this)(op->expr_)},
+                    {makeLoad(op->var_, indices, dtype), (*this)(op->expr_)},
                     DataType::Void, false));
         }
     }
@@ -189,12 +201,12 @@ Stmt LowerVector::visit(const Store &op) {
 
 Stmt LowerVector::visit(const ReduceTo &op) {
     if (var_.isValid() && !op->indices_.empty()) {
-        ASSERT(op->indices_.size() == 1); // Please do make_1d_var first
-        if (hasVectorIndex(op->indices_[0])) {
-            Expr index = getIndex(op->indices_[0]);
+        if (hasVectorIndices(op->indices_,
+                             buffer(op->var_)->tensor()->shape())) {
+            auto &&indices = getIndices(op->indices_);
             auto dtype = buffer(op->var_)->tensor()->dtype();
             auto vtype = vecType(dtype);
-            auto newLoad = makeLoad(op->var_, {index}, dtype);
+            auto newLoad = makeLoad(op->var_, indices, dtype);
             switch (op->op_) {
             case ReduceOp::Add:
                 return makeEval("", makeIntrinsic("*((" + vtype +

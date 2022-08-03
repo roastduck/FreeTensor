@@ -37,6 +37,8 @@ template <class T> class Opt {
         return &*opt_;
     }
 
+    operator std::optional<T>() { return opt_; }
+
     static Opt make() { return Opt(T()); }
     static Opt make(T &&x) { return Opt(std::move(x)); }
     static Opt make(const T &x) { return Opt(x); }

@@ -10,6 +10,8 @@
 
 #include "gpu_context.h"
 
+#include "mdspan.h"
+
 #include "../3rd-party/cuda-samples/Common/helper_math.h"
 
 #define restrict __restrict__
@@ -23,6 +25,14 @@
             throw std::runtime_error("cuda error");                            \
         }                                                                      \
     }
+
+inline void *cudaNew(size_t size) {
+    void *ptr = nullptr;
+    if (size > 0) {
+        checkCudaError(cudaMalloc(&ptr, size));
+    }
+    return ptr;
+}
 
 template <class T, size_t n> struct __ByValArray {
     T data[n];
