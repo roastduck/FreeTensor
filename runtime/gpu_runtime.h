@@ -27,8 +27,10 @@
     }
 
 inline void *cudaNew(size_t size) {
-    void *ptr;
-    checkCudaError(cudaMalloc(&ptr, size));
+    void *ptr = nullptr;
+    if (size > 0) {
+        checkCudaError(cudaMalloc(&ptr, size));
+    }
     return ptr;
 }
 
