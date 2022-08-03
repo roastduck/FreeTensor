@@ -55,7 +55,8 @@ void CodeGenCPU::genScalar(const VarDef &def,
 }
 
 void CodeGenCPU::visit(const VarDef &op) {
-    if (op->buffer_->atype() == AccessType::Cache) {
+    if (op->buffer_->atype() == AccessType::Cache &&
+        op->buffer_->mtype() == MemType::CPU) {
         auto &&tensor = op->buffer_->tensor();
         auto &&shape = tensor->shape();
         int64_t size = sizeOf(tensor->dtype());
@@ -63,10 +64,9 @@ void CodeGenCPU::visit(const VarDef &op) {
             if (dim->nodeType() == ASTNodeType::IntConst) {
                 size *= dim.as<IntConstNode>()->val_;
             } else {
-                WARNING(
-                    "Cannot calculate size for a dynamic-sized local "
-                    "(MemType::Cache) array in order to set a stack limit. If "
-                    "this array is large, it may result in a stack overflow");
+                ERROR("BUG: Dyanmic sized variables cannot be allocated on "
+                      "stack. Should be transformed to heap-allocated in "
+                      "pass/make_heap_alloc")
             }
         }
         if (inParallel_) {

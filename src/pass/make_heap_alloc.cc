@@ -75,8 +75,17 @@ Stmt InsertFree::visit(const StmtSeq &_op) {
 
 bool MakeHeapAlloc::inKernel() const { return forDepth_ != 0 || inCublas_; }
 
+bool MakeHeapAlloc::isDynamicSized(const VarDef &op) const {
+    for (auto &&dim : op->buffer_->tensor()->shape()) {
+        if (!dim->isConst()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 Stmt MakeHeapAlloc::visit(const VarDef &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
@@ -98,7 +107,8 @@ Stmt MakeHeapAlloc::visit(const VarDef &_op) {
         InsertAlloc insertAlloc(op->name_);
         InsertFree insertFree(op->name_);
         auto newBody = insertAlloc(insertFree(op->body_));
-        if (insertAlloc.delayed() || insertFree.madeEarly()) {
+        if (insertAlloc.delayed() || insertFree.madeEarly() ||
+            isDynamicSized(op)) {
             switch (op->buffer_->mtype()) {
             case MemType::CPU:
                 op->buffer_->setMtype(MemType::CPUHeap);
@@ -141,21 +151,17 @@ Stmt MakeHeapAlloc::visit(const For &_op) {
          std::holds_alternative<CUDAScope>(_op->property_->parallel_));
     if (delta_depth)
         ++forDepth_;
-    auto __op = Mutator::visit(_op);
+    auto ret = BaseClass::visit(_op);
     if (delta_depth)
         --forDepth_;
-    ASSERT(__op->nodeType() == ASTNodeType::For);
-    auto op = __op.as<ForNode>();
-    return op;
+    return ret;
 }
 
 Stmt MakeHeapAlloc::visit(const MatMul &_op) {
     inCublas_ = true;
-    auto __op = Mutator::visit(_op);
+    auto ret = BaseClass::visit(_op);
     inCublas_ = false;
-    ASSERT(__op->nodeType() == ASTNodeType::MatMul);
-    auto op = __op.as<MatMulNode>();
-    return op;
+    return ret;
 }
 
 Stmt makeHeapAlloc(const Stmt &op) { return MakeHeapAlloc()(op); }

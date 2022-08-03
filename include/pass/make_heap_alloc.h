@@ -3,9 +3,9 @@
 
 #include <unordered_set>
 
-#include <driver/target.h>
 #include <func.h>
 #include <mutator.h>
+#include <pass/const_fold.h>
 
 namespace freetensor {
 
@@ -39,13 +39,19 @@ class InsertFree : public Mutator {
     Stmt visit(const If &op) override { return op; }
 };
 
-class MakeHeapAlloc : public Mutator {
-  private:
+class MakeHeapAlloc : public ConstFold {
+    // Inherit ConstFold for determine dynamic sizes
+    typedef ConstFold BaseClass;
+
     bool inCublas_ = false;
     int forDepth_ = 0;
+
+  private:
     bool inKernel() const;
+    bool isDynamicSized(const VarDef &op) const;
 
   protected:
+    using BaseClass::visit;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const MatMul &op) override;
@@ -60,9 +66,12 @@ class MakeHeapAlloc : public Mutator {
  * manner, not allocated by an allocator, but they may also be on the heap
  * physically
  *
- * If we can delay a variable's allocation or free them earlier, we allocate
- * them on the heap. The delation or making early will not cross any control
- * flow
+ * Dynamic-sized variables cannot be allocated on the stack, so turn them to be
+ * allocated on the heap
+ *
+ * For other variables, if we can delay its allocation or free them earlier, we
+ * allocate them on the heap. The delation or making early will not cross any
+ * control flow
  *
  * This transformation is not applied to scalars
  */
