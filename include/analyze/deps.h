@@ -579,7 +579,7 @@ class FindDeps {
             ret.filter_ == nullptr
                 ? f
                 : [f0 = ret.filter_, f1 = f](const AccessPoint &later,
-                                              const AccessPoint &earlier) {
+                                             const AccessPoint &earlier) {
                       return f0(later, earlier) && f1(later, earlier);
                   };
         return ret;
