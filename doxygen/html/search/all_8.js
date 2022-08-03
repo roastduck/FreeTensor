@@ -46,7 +46,7 @@ var searchData=
   ['gettag_43',['getTag',['../classfreetensor_1_1AutoSchedule.html#a321e19a95eaac7ccb52244d978280503',1,'freetensor::AutoSchedule']]],
   ['getupper_44',['getUpper',['../classfreetensor_1_1CompUniqueBounds.html#a2fafcb1d095ef9f3fa7c96c388eaa878',1,'freetensor::CompUniqueBounds']]],
   ['getvarid_45',['getVarId',['../classfreetensor_1_1Z3Simplify.html#aee88484abb8e1ced538b07e43f31af13',1,'freetensor::Z3Simplify']]],
-  ['globalsize_5f_46',['globalSize_',['../structfreetensor_1_1CodeGenCUDAStream.html#ab0293e8885ca8205722843416185c3c0',1,'freetensor::CodeGenCUDAStream']]],
+  ['globalsize_46',['globalSize',['../classfreetensor_1_1CodeGenCUDA.html#af2d86c53d587dfc009022f60b5762692',1,'freetensor::CodeGenCUDA']]],
   ['gpu_47',['GPU',['../classfreetensor_1_1GPU.html',1,'freetensor::GPU'],['../classfreetensor_1_1GPU.html#ad9ba5fb0500a1402deb257147b858726',1,'freetensor::GPU::GPU()'],['../namespacefreetensor.html#a000c2c313211c04f40116e7f8117d66ba52f9ec21735243ad9917cda3ca077d32',1,'freetensor::GPU()']]],
   ['gpu_2eh_48',['gpu.h',['../gpu_8h.html',1,'']]],
   ['gpuglobal_49',['GPUGlobal',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a039a6b51382edf8b7702c0d077e9e9a4',1,'freetensor']]],
