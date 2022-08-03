@@ -110,6 +110,10 @@ class TaskRunner(threading.Thread):
         self.scheduler.result_submit(self.task.src_server_uid, return_val)
         if is_new_task_required:
             self.scheduler.request_for_new_task_all()
+        self.scheduler.server_list_lock.acquire()
+        if len(self.scheduler.available_server_list) < 3:
+            self.scheduler.request_for_new_task_all()
+        self.scheduler.server_list_lock.release()
 
 class TaskResult(object):
     src_server_uid : str
@@ -524,7 +528,7 @@ class RemoteTaskScheduler(object):
 
     def request_for_new_task_all(self):
         for server_uid in self.available_server_list:
-            self.request_for_new_task(server_uid)
+            threading.Thread(target=self.request_for_new_task, args=(server_uid,))
 
     def send_tasks(self,_task: Dict , server_uid : str) -> int:
         pass
@@ -575,6 +579,8 @@ class RemoteTaskScheduler(object):
             self.server_list[server_uid] = (self.server_list[server_uid][1], time_stamp)
             self.available_server_list.discard(server_uid)
         self.server_list_lock.release()
+        if self.execution_queue_cnt < 5:
+            threading.Thread(target = self.task_submit(), args=(server_uid,))
 
     def update_inavailability(self, server_uid: str, time_stamp: float):
         self.server_list_lock.acquire()
