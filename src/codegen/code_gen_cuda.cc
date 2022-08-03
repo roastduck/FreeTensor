@@ -382,11 +382,14 @@ void CodeGenCUDA::visit(const For &op) {
             std::string kernel = "kernel" + std::to_string(nKernel_++);
             pushStream(kernel);
             sharedStackTop_ = 0;
-            globalStackTop_ = 0;
+            auto oldGlobalStackTop = globalStackTop_;
             beginBlock();
             (*this)(op->body_);
             streamStack_.back().threadDim_[op->property_->parallel_] = op->len_;
             endBlock();
+            globalStackTop_ =
+                oldGlobalStackTop; // Because we are not reducing
+                                   // globalStackTop_ inside a kernel
             popStream();
             Stream &stream = poppedStream_.back();
             const auto &dim = stream.threadDim_;
@@ -394,19 +397,7 @@ void CodeGenCUDA::visit(const For &op) {
             if (sharedSize > 96 * 1024) {
                 throw InvalidProgram("Shared memory too large");
             }
-            auto globalSize = stream.globalSize_;
 
-            makeIndent();
-            beginBlock();
-            makeIndent();
-            os() << "uint8_t *__glmem = NULL;" << std::endl;
-            if (globalSize > 0) {
-                makeIndent();
-                // TODO: Use cudaMallocAsync, but it requires CUDA 11.3 and
-                // device support
-                os() << "checkCudaError(cudaMalloc(&__glmem, " << globalSize
-                     << "));" << std::endl;
-            }
             makeIndent();
             os() << "checkCudaError(cudaFuncSetAttribute(" << kernel
                  << ", cudaFuncAttributeMaxDynamicSharedMemorySize, "
@@ -435,11 +426,6 @@ void CodeGenCUDA::visit(const For &op) {
                 first = false;
             }
             os() << ", _params, __glmem);" << std::endl;
-            if (globalSize > 0) {
-                makeIndent();
-                os() << "cudaFree(__glmem);" << std::endl;
-            }
-            endBlock();
         } else {
             (*this)(op->body_);
             streamStack_.back().threadDim_[op->property_->parallel_] = op->len_;
@@ -462,71 +448,46 @@ void CodeGenCUDA::visit(const VarDef &op) {
         switch (op->buffer_->mtype()) {
         case MemType::GPUGlobal: {
 
-            if (inKernel()) {
-                // e.g. auto x = mdspan_r<float, extents<5, 5>>(__glmem + 0);
-                auto &&tensor = op->buffer_->tensor();
-                auto &&shape = tensor->shape();
-                makeIndent();
-                os() << "auto " << mangle(op->name_) << " = ";
-                genMdPtrDef(op->buffer_,
-                            "__glmem + " + std::to_string(globalStackTop_));
-                os() << ";" << std::endl;
+            // e.g. auto x = mdspan_r<float, extents<5, 5>>(__glmem + 0);
+            auto &&tensor = op->buffer_->tensor();
+            auto &&shape = tensor->shape();
+            makeIndent();
+            os() << "auto " << mangle(op->name_) << " = ";
+            genMdPtrDef(op->buffer_,
+                        "__glmem + " + std::to_string(globalStackTop_));
+            os() << ";" << std::endl;
 
-                int64_t size = sizeOf(tensor->dtype());
-                for (auto &&dim : shape) {
-                    if (dim->nodeType() == ASTNodeType::IntConst) {
-                        size *= dim.as<IntConstNode>()->val_;
-                    } else {
-                        throw InvalidProgram(
-                            "Currently dynamic sized gpu/global "
-                            "memory allocated from inside a kernel is not "
-                            "supported");
-                    }
+            int64_t size = sizeOf(tensor->dtype());
+            for (auto &&dim : shape) {
+                if (dim->nodeType() == ASTNodeType::IntConst) {
+                    size *= dim.as<IntConstNode>()->val_;
+                } else {
+                    throw InvalidProgram(
+                        "Currently dynamic sized gpu/global "
+                        "memory allocated from inside a kernel is not "
+                        "supported");
                 }
+            }
 
-                streamStack_.back().globalSize_ = std::max(
-                    streamStack_.back().globalSize_, globalStackTop_ + size);
+            globalSize_ = std::max(globalSize_, globalStackTop_ + size);
 
-                globalStackTop_ += size;
-                markDefBuffer(op);
-                (*this)(op->body_);
+            globalStackTop_ += size;
+            markDefBuffer(op);
+            (*this)(op->body_);
+            if (inKernel()) {
                 // globalStackTop_ -= size;
                 // FIXME: We have to add some sync before reusing global buffers
-                markUndefBuffer(op);
             } else {
-                // e.g.
-                // auto x = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 *
-                // sizeof(int)));
-                // ...;
-                // cudaFree(x.data_handle());
-                auto &&tensor = op->buffer_->tensor();
-                auto &&shape = tensor->shape();
-                makeIndent();
-                os() << "auto " << mangle(op->name_) << " = ";
-                genMdPtrDef(op->buffer_, [&]() {
-                    os() << "cudaNew(";
-                    for (auto &&dim : shape) {
-                        (*this)(dim);
-                        os() << " * ";
-                    }
-                    os() << "sizeof(" << gen(tensor->dtype()) << "))";
-                });
-                os() << ";" << std::endl;
-
-                markDefBuffer(op);
-                (*this)(op->body_);
-                markUndefBuffer(op);
-
-                makeIndent();
-                os() << "cudaFree(" << mangle(op->name_) << ".data_handle());"
-                     << std::endl;
+                globalStackTop_ -= size;
             }
+            markUndefBuffer(op);
             break;
         }
 
         case MemType::GPUGlobalHeap: {
             if (inKernel()) {
-                ASSERT(false);
+                throw InvalidProgram("gpu/global/heap memory allocated from "
+                                     "inside a kernel is not supported");
             } else {
                 // e.g.
                 // mdspan_r<float, extents<5, 5>> x;
@@ -736,8 +697,17 @@ extern "C" {
             s += "cudaStream_t __stream = 0;\n";
             s += "\n";
 
+            // Allocate stack for gpu/global
+            s += "uint8_t *__glmem = (uint8_t*)cudaNew(" +
+                 std::to_string(visitor.globalSize()) + ");\n";
+            s += "\n";
+
             s += stream.os_.str();
             s += "\n";
+
+            // Free stack for gpu/global
+            s += "cudaFree(__glmem);\n";
+
             s += "}\n";
             return s;
         } else {

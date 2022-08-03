@@ -47,7 +47,8 @@ void FindParallelLoops::visit(const VarDef &op) {
 }
 
 Stmt MultiplexMutator::visit(const For &op) {
-    if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
+    if (std::holds_alternative<CUDAScope>(op->property_->parallel_) ||
+        std::holds_alternative<CUDAStreamScope>(op->property_->parallel_)) {
         stack_.emplace_back(op);
         auto ret = BaseClass::visit(op);
         stack_.pop_back();

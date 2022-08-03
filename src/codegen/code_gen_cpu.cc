@@ -78,17 +78,17 @@ void CodeGenCPU::visit(const VarDef &op) {
 
         case MemType::CPU: {
             // e.g.
-            // auto x = mdspan_r<float, std::extents<5, 5, 5>>(_stack[200 +
+            // auto x = mdspan_r<float, std::extents<5, 5, 5>>(&__stack[200 +
             // omp_get_thread_num() * _threadStackTop + 100]);
             this->makeIndent();
             this->os() << "auto " << name << " = ";
             std::string rawPtr;
             if (inParallel_) {
-                rawPtr = "&_stack[" + std::to_string(sharedStackTop_) +
+                rawPtr = "&__stack[" + std::to_string(sharedStackTop_) +
                          " + omp_get_thread_num() * _threadStackSize + " +
                          std::to_string(threadStackTop_) + "]";
             } else {
-                rawPtr = "&_stack[" + std::to_string(sharedStackTop_) + "]";
+                rawPtr = "&__stack[" + std::to_string(sharedStackTop_) + "]";
             }
             this->genMdPtrDef(op->buffer_, rawPtr);
             this->os() << ";" << std::endl;
@@ -339,10 +339,10 @@ extern "C" {
              std::to_string(visitor.sharedStackSize()) + ";\n";
         s += "  size_t _threadStackSize = " +
              std::to_string(visitor.threadStackSize()) + ";\n";
-        s += "  auto _stack = new uint8_t[_sharedStackSize + "
+        s += "  auto __stack = new uint8_t[_sharedStackSize + "
              "omp_get_max_threads() * _threadStackSize];\n";
         s += stream.os_.str();
-        s += "  delete[] _stack;\n";
+        s += "  delete[] __stack;\n";
         s += "}";
         return s;
     });
