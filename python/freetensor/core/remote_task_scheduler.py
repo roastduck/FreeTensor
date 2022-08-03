@@ -182,21 +182,23 @@ class TaskResult(object):
 class MeasureTask(Task):
     task_type: int = 2
     warmup_rounds: int
+    attatched_params: tuple
 
-    def __init__(self, _task_uid: int, run_times: int, _warmup_rounds: int, _params: List):
+    def __init__(self, _task_uid: int, run_times: int, _warmup_rounds: int, _attatched_params: tuple, _params: List):
         self.task_uid = _task_uid
         self.single_task_block_size = run_times
         self.warmup_rounds=_warmup_rounds
         self.params = _params
         self.block_start = 0
         self.block_end = run_times * len(_params)
+        self.attatched_params=_attatched_params
 
     def split(self, _block_start: int, _block_end: int) -> Task:
         tempparams=[]
         for i in range(_block_start//self.single_task_block_size, (_block_end
             +self.single_task_block_size-1)//self.single_task_block_size):
             tempparams.append(self.params[i])
-        subtask = MeasureTask(self.task_uid, self.single_task_block_size, self.warmup_rounds, tempparams)
+        subtask = MeasureTask(self.task_uid, self.single_task_block_size, self.warmup_rounds, self.attatched_params, tempparams)
         subtask.block_start=_block_start
         subtask.block_end=_block_end
         return subtask
@@ -204,6 +206,7 @@ class MeasureTask(Task):
     def measure(self,
                 rounds : int,
                 warmups : int, 
+                attached_params : tuple,
                 sketches : List
                 ) -> tuple[List[float],List[float]]:
         pass
@@ -217,34 +220,39 @@ class MeasureTask(Task):
         #first check if the first block is complete
         fbe: int = (start + self.single_task_block_size - 1)//self.single_task_block_size
         if (fbe * self.single_task_block_size) > end:
-            tmpresult = self.measure(end-start, self.warmup_rounds, self.params)
+            tmpresult = self.measure(end-start, self.warmup_rounds, self.attached_params, self.params)
             tmptaskresult.put_result(tmpresult)
             return tmptaskresult
         blnow: int = 0
         if (fbe * self.single_task_block_size) > start:
-            tmpresult = self.measure(fbe * self.single_task_block_size - start, self.warmup_rounds, self.params[0:1])
+            tmpresult = self.measure(fbe * self.single_task_block_size - start, 
+                            self.warmup_rounds, self.attatched_params, self.params[0:1])
             blnow = 1
             start = fbe * self.single_task_block_size
         #for mid part
         blend = blnow + (end-start) // self.single_task_block_size
         if blend > blnow:
-            tmpresult = tmpresult + self.measure(self.single_task_block_size, self.warmup_rounds, self.params[blnow, blend])
+            tmpresult = tmpresult + self.measure(self.single_task_block_size,
+            self.attatched_params, self.warmup_rounds, self.params[blnow, blend])
         start = (end // self.single_task_block_size) * self.single_task_block_size
         #deal with the unfinished part    
         if (start<end):
-            tmpresult = tmpresult + self.measure(end-start, self.warmup_rounds, self.params[blend, blend+1])
+            tmpresult = tmpresult + self.measure(end-start, self.warmup_rounds,
+            self.attached_params, self.params[blend, blend+1])
         tmptaskresult.put_result(tmpresult)
         return tmptaskresult
 
     def convert2dict(self) -> Dict:
         tmpdict=super().convert2dict()
         tmpdict["warmup_rounds"] = self.warmup_rounds
+        tmpdict["attatched_params"] = self.attatched_params
         return tmpdict
 
     @classmethod
     def dict2self(cls, inputdict: Dict) -> Task:
-        tmpdict = super().dict2self_base(MeasureTask(0, 0, inputdict["warmup_rounds"], []), inputdict)
-        return tmpdict
+        tmptask = super().dict2self_base(MeasureTask(0, 0, inputdict["warmup_rounds"],
+                         inputdict["attatched_params"], []), inputdict)
+        return tmptask
 
 class MeasureResult(TaskResult):
     task_type: int = -2
@@ -540,10 +548,11 @@ class RemoteTaskScheduler(object):
 
     def remote_measure_submit(self, rounds : int,
                              warmups :int,
+                             attatched_params: int,
                              Sketches : List[str]
                             ) -> tuple[List[float],List[float]]:
         tmpuid=self.task_uid_assign()
-        tmptask = MeasureTask(tmpuid, rounds, warmups, Sketches)
+        tmptask = MeasureTask(tmpuid, rounds, warmups, attatched_params, Sketches)
         tmplock = threading.Lock()
         self.task_register(tmptask, tmplock)
         tmplock.acquire()
