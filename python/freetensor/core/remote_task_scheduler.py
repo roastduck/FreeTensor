@@ -484,10 +484,12 @@ class RemoteTaskScheduler(object):
 
     def send_tasks(self,_task: Dict , server_uid : str) -> int:
         pass
+        #this part will use the method in RPCTools
 
     def send_results(self, _taskresult: Dict, server_uid: str) -> None:
         pass
-
+        #this part will use the method in RPCTools
+        
     def remote_measure_submit(self, rounds : int,
                              warmups :int,
                              Sketches : List[str]
