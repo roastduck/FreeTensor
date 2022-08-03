@@ -31,10 +31,17 @@ void init_ffi_config(py::module_ &m) {
           "flag"_a = true);
     m.def("debug_binary", Config::debugBinary,
           "Check if compiling binary in debug mode");
-    m.def("set_backend_compiler_cxx", Config::setBackendCompilerCXX,
-          "Set backend compiler used to compile generated C++ code, unescaped "
-          "raw path expected",
-          "path"_a);
+    m.def(
+        "set_backend_compiler_cxx",
+        [](const std::vector<std::string> &paths) {
+            auto pathsFs = paths | iter::imap([](const std::string &path) {
+                               return std::filesystem::path(path);
+                           });
+            Config::setBackendCompilerCXX({pathsFs.begin(), pathsFs.end()});
+        },
+        "Set backend compiler used to compile generated C++ code, unescaped "
+        "raw path expected",
+        "path"_a);
     m.def(
         "backend_compiler_cxx",
         []() {
@@ -42,10 +49,17 @@ void init_ffi_config(py::module_ &m) {
             return std::vector<std::string>(paths.begin(), paths.end());
         },
         "Backend compiler used to compile generated C++ code");
-    m.def("set_backend_compiler_nvcc", Config::setBackendCompilerNVCC,
-          "Set backend compiler used to compile generated CUDA code, unescaped "
-          "raw path expected",
-          "path"_a);
+    m.def(
+        "set_backend_compiler_nvcc",
+        [](const std::vector<std::string> &paths) {
+            auto pathsFs = paths | iter::imap([](const std::string &path) {
+                               return std::filesystem::path(path);
+                           });
+            Config::setBackendCompilerNVCC({pathsFs.begin(), pathsFs.end()});
+        },
+        "Set backend compiler used to compile generated CUDA code, unescaped "
+        "raw path expected",
+        "path"_a);
     m.def(
         "backend_compiler_nvcc",
         []() {
