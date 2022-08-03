@@ -2,6 +2,7 @@
 
 #include <codegen/code_gen_cuda.h>
 #include <except.h>
+#include <math/utils.h>
 #include <pass/simplify.h>
 #include <serialize/mangle.h>
 
@@ -468,6 +469,9 @@ void CodeGenCUDA::visit(const VarDef &op) {
                         "supported");
                 }
             }
+
+            // Align to 128 bytes (TODO: look up cache line size from Target)
+            size = ceilDiv<int64_t>(size, 128) * 128;
 
             globalSize_ = std::max(globalSize_, globalStackTop_ + size);
 

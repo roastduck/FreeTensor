@@ -104,7 +104,7 @@ void CodeGenCPU::visit(const VarDef &op) {
                 }
             }
 
-            // Align to 64 bytes
+            // Align to 64 bytes (TODO: look up cache line size from Target)
             size = ceilDiv<int64_t>(size, 64) * 64;
 
             if (inParallel_) {
