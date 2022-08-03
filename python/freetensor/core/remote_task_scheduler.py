@@ -136,15 +136,21 @@ class TaskResult(object):
     results: Any
 
     #
-    def __init__(self, task: Task) -> None:
-        self.src_server_uid = task.src_server_uid
-        self.target_server_uid = task.target_server_uid
-        self.task_uid = task.task_uid
-        self.submit_uid = task.submit_uid
-        self.task_type = task.task_type
-        self.block_start = task.block_start
-        self.block_end = task.block_end
-        self.single_task_block_size = task.single_task_block_size
+    @classmethod
+    def get(cls, task: Task) -> TaskResult:
+        return cls.get_base(task, TaskResult())
+
+    @classmethod
+    def get_base(cls, task: Task, tmp_taskresult :TaskResult) -> TaskResult:
+        tmp_taskresult.src_server_uid = task.src_server_uid
+        tmp_taskresult.target_server_uid = task.target_server_uid
+        tmp_taskresult.task_uid = task.task_uid
+        tmp_taskresult.submit_uid = task.submit_uid
+        tmp_taskresult.task_type = task.task_type
+        tmp_taskresult.block_start = task.block_start
+        tmp_taskresult.block_end = task.block_end
+        tmp_taskresult.single_task_block_size = task.single_task_block_size
+        return tmp_taskresult
 
     def put_result(self, _results: Any):
         self.results = _results
@@ -221,7 +227,7 @@ class MeasureTask(Task):
         pass
 
     def run(self) -> TaskResult:
-        tmptaskresult = MeasureResult(self)
+        tmptaskresult = MeasureResult.get(self)
         start = self.block_start
         end = self.block_end
         if (start >= end):
@@ -276,6 +282,10 @@ class MeasureResult(TaskResult):
     results: tuple[List[float], List[float]] = ([], [])
 
     #first element is avr, the second is stddev
+
+    @classmethod
+    def get(cls, task: Task) -> MeasureResult:
+        return cls.get_base(task, MeasureResult())
 
     def merge(self, _measure_result: MeasureResult):
         start = _measure_result.block_start
@@ -617,7 +627,7 @@ class RemoteTaskScheduler(object):
             elif task["trans_c"] == 2:
                 self.update_inavailability(src_host_uid, task["time_stamp"])
             elif task["trans_c"] == 3:
-                threading.Thread(target=self.task_submit(),
+                threading.Thread(target=self.task_submit,
                                  args=(src_host_uid,))
         else:
             if task["task_type"] == 1:
@@ -635,7 +645,7 @@ class RemoteTaskScheduler(object):
             self.available_server_list.discard(server_uid)
         self.server_list_lock.release()
         if self.execution_queue_cnt < 5:
-            threading.Thread(target=self.task_submit(), args=(server_uid,))
+            threading.Thread(target=self.task_submit, args=(server_uid,))
 
     def update_inavailability(self, server_uid: str, time_stamp: float):
         self.server_list_lock.acquire()
