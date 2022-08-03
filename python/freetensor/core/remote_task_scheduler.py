@@ -127,6 +127,18 @@ class TaskResult(object):
     #
     results : Any
     #
+    def __init__(self, task: Task) -> None:
+        self.src_server_uid = task.src_server_uid
+        self.target_server_uid = task.target_server_uid
+        self.task_uid = task.task_uid
+        self.submit_uid = task.submit_uid
+        self.task_type = task.task_type
+        self.block_start = task.block_start
+        self.block_end = task.block_end
+        self.single_task_block_size = task.single_task_block_size
+
+    def put_result(self, _results: Any):
+        self.results = _results
 
     def merge(self, _task_result : TaskResult):
         pass
@@ -185,8 +197,40 @@ class MeasureTask(Task):
         subtask.block_end=_block_end
         return subtask
 
-    def run(self) -> None:
+    def measure(self,
+                rounds : int,
+                warmups : int, 
+                sketches : List
+                ) -> tuple[List[float],List[float]]:
         pass
+
+    def run(self) -> TaskResult:
+        tmptaskresult = MeasureResult(self)
+        start = self.block_start
+        end = self.block_end
+        if (start >= end):
+            return
+        #first check if the first block is complete
+        fbe: int = (start + self.single_task_block_size - 1)//self.single_task_block_size
+        if (fbe * self.single_task_block_size) > end:
+            tmpresult = self.measure(end-start, self.warmup_rounds, self.params)
+            tmptaskresult.put_result(tmpresult)
+            return tmptaskresult
+        blnow: int = 0
+        if (fbe * self.single_task_block_size) > start:
+            tmpresult = self.measure(fbe * self.single_task_block_size - start, self.warmup_rounds, self.params[0:1])
+            blnow = 1
+            start = fbe * self.single_task_block_size
+        #for mid part
+        blend = blnow + (end-start) // self.single_task_block_size
+        if blend > blnow:
+            tmpresult = tmpresult + self.measure(self.single_task_block_size, self.warmup_rounds, self.params[blnow, blend])
+        start = (end // self.single_task_block_size) * self.single_task_block_size
+        #deal with the unfinished part    
+        if (start<end):
+            tmpresult = tmpresult + self.measure(end-start, self.warmup_rounds, self.params[blend, blend+1])
+        tmptaskresult.put_result(tmpresult)
+        return tmptaskresult
 
     def convert2dict(self) -> Dict:
         tmpdict=super().convert2dict()
@@ -489,7 +533,7 @@ class RemoteTaskScheduler(object):
     def send_results(self, _taskresult: Dict, server_uid: str) -> None:
         pass
         #this part will use the method in RPCTools
-        
+
     def remote_measure_submit(self, rounds : int,
                              warmups :int,
                              Sketches : List[str]
@@ -546,8 +590,6 @@ class RemoteTaskScheduler(object):
         self.execution_queue_cnt_lock.release()
         tmprunner.start()
 
-
-
     def remote_result_receive(self, remote_host_uid : str,
                             task_result : TaskResult):
         if task_result["task_type"] == 1:
@@ -556,7 +598,7 @@ class RemoteTaskScheduler(object):
             tmptask_result = MeasureResult.dict2self(task_result)
         self.task_merge(tmptask_result)
 
-    def remote_logger(log: str):
+    def remote_logger(self, log: str):
         pass
 
     def remote_logger_execution(self, dict):
