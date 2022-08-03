@@ -606,7 +606,7 @@ class RemoteTaskScheduler(object):
 
 #the followings are functional tests
 
-
+'''
 def remote_task_submit(remote_host_uid : int, task : Task) -> int:
     print(task.submit_uid)
     return 0
@@ -617,3 +617,4 @@ for i in range(300):
 task1 = MeasureTask(1,100,10,tmp)
 task2 = task1.split(150,1000)
 print(task2.params)
+'''
