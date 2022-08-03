@@ -37,14 +37,16 @@ void init_ffi_device(py::module_ &m) {
                  return Ref<GPU>::make(useNativeArch);
              }),
              "use_native_arch"_a = true)
+        .def("compute_capability",
+             [](const Ref<GPU> &target) -> std::optional<std::pair<int, int>> {
+                 return target->computeCapability();
+             })
         .def(
             "set_compute_capability",
             [](const Ref<GPU> &target, int major, int minor) {
                 target->setComputeCapability(major, minor);
             },
             "major"_a, "minor"_a);
-    // We can't export .compute_capability() to Python due to an issue in
-    // PyBind11
 
     py::class_<Device, Ref<Device>>(m, "Device")
         .def(py::init<const Ref<Target> &, size_t>(), "target"_a, "num"_a = 0)
