@@ -27,9 +27,9 @@ minus means receive
 '''
 
 class Task(object):
-    src_server_uid: int
+    src_server_uid: str
     #
-    target_server_uid: int
+    target_server_uid: str
     #
     task_uid: int 
     submit_uid: int
@@ -116,9 +116,9 @@ class TaskRunner(threading.Thread):
             self.scheduler.request_for_new_task_all()
 
 class TaskResult(object):
-    src_server_uid : int
+    src_server_uid : str
     #
-    target_server_uid : int
+    target_server_uid : str
     #
     task_uid : int 
     submit_uid : int
@@ -281,7 +281,7 @@ class RemoteTaskScheduler(object):
     #
     execution_lock = threading.Lock()
     #
-    server_list: Dict[int: tuple[int, float]] = {} 
+    server_list: Dict[str: tuple[int, float]] = {} 
     available_server_list= set()
     #server_uid: tuple[server_status, last_connection_time]
     search_server_num: int = 0
@@ -289,7 +289,7 @@ class RemoteTaskScheduler(object):
     server_list_lock = threading.Lock()
     #
     is_ready: boolean = False
-    self_server_uid: int
+    self_server_uid: str
     #
     def __init__(self) -> None:
         self.submit_queue_lock.acquire()
@@ -381,7 +381,7 @@ class RemoteTaskScheduler(object):
             self.submit_lock_container.pop(_task_result.task_uid).release()
         return
 
-    def task_submit(self, _server_uid: int):
+    def task_submit(self, _server_uid: str):
         task_availability: boolean = False
         tmp_submit_uid: int
         tmp_task_type: int
@@ -438,9 +438,9 @@ class RemoteTaskScheduler(object):
             self.report_inavailability(_server_uid)      
 
     def result_submit(self, _server_uid: int, _task_result: TaskResult):
-        self.send_results(TaskResult.convert2dict(), _server_uid)
+        self.send_results(_task_result.convert2dict(), _server_uid)
 
-    def task_trans_submit2waiting(self, submit_uid):
+    def task_trans_submit2waiting(self, submit_uid: int):
         self.submitted_task_container_lock.acquire()
         tmptask = self.submitted_task_container.pop(submit_uid)
         self.submitted_task_container_lock.release()
@@ -452,7 +452,7 @@ class RemoteTaskScheduler(object):
         if tmptask.task_type == 1:
             self.search_queue.put(submit_uid)
         
-    def report_inavailability(self, _server_uid: int):
+    def report_inavailability(self, _server_uid: str):
         tmpdict: Dict = {"task_type": 0,
                         "trans_c": 2,
                         "time_stamp": time.time()}
@@ -476,7 +476,7 @@ class RemoteTaskScheduler(object):
                 t.start()
         self.server_list_lock.release()
     
-    def request_for_new_task(self, _server_uid: int):
+    def request_for_new_task(self, _server_uid: str):
         tmpdict: Dict = {"task_type": 0,
                         "trans_c": 3,
                         "time_stamp": time.time()}
@@ -486,10 +486,10 @@ class RemoteTaskScheduler(object):
         for server_uid in self.available_server_list:
             self.request_for_new_task(server_uid)
 
-    def send_tasks(self,_task: Dict , server_uid : int) -> int:
+    def send_tasks(self,_task: Dict , server_uid : str) -> int:
         pass
 
-    def send_results(self, _taskresult: Dict, server_uid: int) -> None:
+    def send_results(self, _taskresult: Dict, server_uid: str) -> None:
         pass
 
     def remote_measure_submit(self, rounds : int,
@@ -507,7 +507,7 @@ class RemoteTaskScheduler(object):
         self.task_result_container_lock.release()
         return tmpresult
         
-    def remote_task_receive(self, src_host_uid : int,
+    def remote_task_receive(self, src_host_uid : str,
                                 task : Dict
                                 ) -> int:
         if task["task_type"] == 0:
@@ -525,15 +525,16 @@ class RemoteTaskScheduler(object):
             elif task["task_type"] == 2:
                 tmptask = MeasureTask.dict2self(task)
             self.task_execution(tmptask)
+        return 0
 
-    def update_availability(self, server_uid: int, time_stamp: float):
+    def update_availability(self, server_uid: str, time_stamp: float):
         self.server_list_lock.acquire()
         if self.server_list[server_uid][1] < time_stamp:
             self.server_list[server_uid] = (self.server_list[server_uid][1], time_stamp)
             self.available_server_list.discard(server_uid)
         self.server_list_lock.release()
 
-    def update_inavailability(self, server_uid: int, time_stamp: float):
+    def update_inavailability(self, server_uid: str, time_stamp: float):
         self.server_list_lock.acquire()
         if self.server_list[server_uid][1] < time_stamp:
             self.server_list[server_uid] = (self.server_list[server_uid][1], time_stamp)
@@ -549,7 +550,7 @@ class RemoteTaskScheduler(object):
 
 
 
-    def remote_result_receive(self, remote_host_uid : int,
+    def remote_result_receive(self, remote_host_uid : str,
                             task_result : TaskResult):
         if task_result["task_type"] == 1:
             pass
@@ -568,7 +569,7 @@ class RemoteTaskScheduler(object):
                 "1": self.search_queue.qsize(),
                 "2": self.measure_queue.qsize()}
 
-    def add_host(self, _server_uid: int, sev_status: int) -> None:
+    def add_host(self, _server_uid: str, sev_status: int) -> None:
         self.server_list_lock.acquire()
         self.server_list[_server_uid] = (sev_status, time.time())
         if sev_status == 1:
@@ -582,7 +583,7 @@ class RemoteTaskScheduler(object):
             self.report_new_task()
         self.server_list_lock.release()
 
-    def remove_host(self, server_uid: int) -> None:
+    def remove_host(self, server_uid: str) -> None:
         self.server_list_lock.acquire()
         sev_status = self.server_list.pop(server_uid)[0]
         if sev_status == 1:
@@ -599,7 +600,7 @@ class RemoteTaskScheduler(object):
                 self.task_trans_submit2waiting(key)
         self.submitted_task_container_lock.release()
 
-    def get_self_uid(self, server_uid: int) -> None:
+    def get_self_uid(self, server_uid: str) -> None:
         self.self_server_uid = server_uid
         if self.is_ready == False:
             self.submit_queue_lock.release()
