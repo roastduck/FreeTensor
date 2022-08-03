@@ -105,7 +105,7 @@ class TaskRunner(threading.Thread):
         self.scheduler.execution_lock.release()
         self.scheduler.execution_queue_cnt_lock.acquire()
         self.scheduler.execution_queue_cnt -= 1
-        is_new_task_required =  (self.scheduler.execution_queue_cnt < 5)
+        is_new_task_required =  bool(self.scheduler.execution_queue_cnt < 5)
         self.scheduler.execution_queue_cnt_lock.release()
         self.scheduler.result_submit(self.task.src_server_uid, return_val)
         if is_new_task_required:
