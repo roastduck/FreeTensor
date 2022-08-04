@@ -5,9 +5,10 @@
 #include <cstring> // memset
 #include <dlfcn.h> // dlopen
 #include <fstream>
-#include <sys/stat.h> // mkdir
-#include <sys/wait.h> // waitpid
-#include <unistd.h>   // rmdir
+#include <sys/stat.h>    // mkdir
+#include <sys/syscall.h> // SYS_CLONE
+#include <sys/wait.h>    // waitpid
+#include <unistd.h>      // rmdir
 
 #include <itertools.hpp>
 
@@ -212,7 +213,8 @@ void Driver::buildAndLoad() {
         }
         argv.push_back(nullptr);
 
-        int pid = fork();
+        int pid = 0;
+        syscall(SYS_clone, CLONE_CHILD_SETTID, 0, 0, 0, &pid);
         if (pid == 0) {
             execv(executable, const_cast<char *const *>(argv.data()));
             std::cerr << "Failed to execute " << executable << ": "
