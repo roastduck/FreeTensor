@@ -444,14 +444,12 @@ std::pair<double, double> Driver::time(int rounds, int warmups) {
 
 void Driver::unload() {
     func_ = nullptr;
-    // FIXME: How to safely close it? OpenMP won't kill its worker threads
-    // before it ends
-    /*if (dlHandle_) {
+    if (dlHandle_) {
         auto err = dlclose(dlHandle_);
         if (err) {
             WARNING("Unable to unload target code");
         }
-    }*/
+    }
 }
 
 } // namespace freetensor

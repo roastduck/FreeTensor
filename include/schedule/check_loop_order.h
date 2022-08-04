@@ -13,7 +13,7 @@ namespace freetensor {
  */
 class CheckLoopOrder : public Visitor {
     std::vector<ID> dstOrder_;
-    std::vector<For> curOrder_;
+    std::vector<For> curOrder_, outerLoops_, outerLoopStack_;
     std::vector<StmtSeq> stmtSeqStack_, stmtSeqInBetween_;
     bool done_ = false;
 
@@ -33,7 +33,13 @@ class CheckLoopOrder : public Visitor {
         return stmtSeqInBetween_;
     }
 
+    /**
+     * Loops surrounding all loops in `dstOrder`
+     */
+    const std::vector<For> &outerLoops() const { return outerLoops_; }
+
   protected:
+    void visitStmt(const Stmt &stmt) override;
     void visit(const For &op) override;
     void visit(const StmtSeq &op) override;
 };

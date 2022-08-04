@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <regex>
 #include <sstream>
 
 #include <itertools.hpp>
@@ -1052,7 +1051,9 @@ std::ostream &operator<<(std::ostream &_os, const Dependency &dep) {
             os << scope.parallel_;
         }
     }
-    return _os << std::regex_replace(os.str(), std::regex("\n"), "");
+    std::string str = os.str();
+    std::erase(str, '\n');
+    return _os << str;
 }
 
 } // namespace freetensor

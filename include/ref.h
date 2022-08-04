@@ -31,11 +31,25 @@ template <class T> class Ref {
   private:
     Ref(std::shared_ptr<T> &&ptr) : ptr_(std::move(ptr)) { updateSelf(); }
 
+    /**
+     * Update the self pointer in EnableSelf
+     */
     void updateSelf() {
         if constexpr (std::is_base_of_v<EnableSelfBase, T>) {
             if (ptr_ != nullptr) {
-                std::static_pointer_cast<EnableSelf<typename T::Self>>(ptr_)
-                    ->self_ = *this;
+                auto &self =
+                    std::static_pointer_cast<EnableSelf<typename T::Self>>(ptr_)
+                        ->self_;
+                // We only need to set `self` when we point a `Ref` to it for
+                // the first time. Later when we retrieve `Ref` from
+                // `Weak::lock`, we are still entering this `updateSelf`, but we
+                // need to set nothing (it is already set). Otherwise, there may
+                // be some false alarm from some data rase detectors, when we
+                // retrieve from `Weak::lock` simultenously from multiple
+                // threads
+                if (!self.isValid()) {
+                    self = *this;
+                }
             }
         }
     }

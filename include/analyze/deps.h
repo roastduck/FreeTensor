@@ -522,7 +522,7 @@ class FindDeps {
         ret.accFilter_ =
             ret.accFilter_ == nullptr
                 ? f
-                : [f0 = ret.accFilter_, &f1 = f](const AccessPoint &acc) {
+                : [f0 = ret.accFilter_, f1 = f](const AccessPoint &acc) {
                       return f0(acc) && f1(acc);
                   };
         return ret;
@@ -541,7 +541,7 @@ class FindDeps {
         ret.earlierFilter_ =
             ret.earlierFilter_ == nullptr
                 ? f
-                : [f0 = ret.earlierFilter_, &f1 = f](const AccessPoint &acc) {
+                : [f0 = ret.earlierFilter_, f1 = f](const AccessPoint &acc) {
                       return f0(acc) && f1(acc);
                   };
         return ret;
@@ -560,7 +560,7 @@ class FindDeps {
         ret.laterFilter_ =
             ret.laterFilter_ == nullptr
                 ? f
-                : [f0 = ret.laterFilter_, &f1 = f](const AccessPoint &acc) {
+                : [f0 = ret.laterFilter_, f1 = f](const AccessPoint &acc) {
                       return f0(acc) && f1(acc);
                   };
         return ret;
@@ -580,8 +580,8 @@ class FindDeps {
         ret.filter_ =
             ret.filter_ == nullptr
                 ? f
-                : [f0 = ret.filter_, &f1 = f](const AccessPoint &later,
-                                              const AccessPoint &earlier) {
+                : [f0 = ret.filter_, f1 = f](const AccessPoint &later,
+                                             const AccessPoint &earlier) {
                       return f0(later, earlier) && f1(later, earlier);
                   };
         return ret;
