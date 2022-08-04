@@ -7,12 +7,17 @@
 
 namespace freetensor {
 
-std::vector<FindDepsDir> notLexLessAfterPermu(const std::vector<ID> &permu) {
-    // Not lexicographically less <==> there is no such dependence that the
-    // out-most non-'=' carrying loop is not a '>'
+std::vector<FindDepsDir> notLexLessAfterPermu(const std::vector<For> &outers,
+                                              const std::vector<ID> &permu) {
+    // Not lexicographically less <==> when all outer loops are the same, there
+    // is no such dependence that the out-most non-'=' carrying loop is not a
+    // '>'
     std::vector<FindDepsDir> direction;
     for (size_t i = 0, n = permu.size(); i < n; i++) {
         FindDepsDir dir;
+        for (auto &&loop : outers) {
+            dir.emplace_back(loop->id(), DepDirection::Same);
+        }
         for (size_t j = 0; j < i; j++) {
             dir.emplace_back(permu[j], DepDirection::Same);
         }
@@ -143,9 +148,10 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
             dstOrder.begin());
     }
 
-    // A reorder is leagal if and only if, after transformation, for each
-    // dependence pair, `earlier` is still earlier (lexicographically less) than
-    // `later`.
+    // A reorder is leagal if and only if:
+    // 1. when all the outer loops are in the same iteration,
+    // 2. after transformation, for each dependence pair, `earlier` is still
+    // earlier (lexicographically less) than `later`.
     std::vector<ID> dstLoopAndStmtSeqOrder;
     for (auto &&seq : checker.stmtSeqInBetween()) {
         dstLoopAndStmtSeqOrder.emplace_back(seq->id());
@@ -153,7 +159,8 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
     dstLoopAndStmtSeqOrder.insert(dstLoopAndStmtSeqOrder.end(),
                                   dstOrder.begin(), dstOrder.end());
     FindDeps()
-        .direction(notLexLessAfterPermu(dstLoopAndStmtSeqOrder))
+        .direction(
+            notLexLessAfterPermu(checker.outerLoops(), dstLoopAndStmtSeqOrder))
         .filterSubAST(curOrder.front()->id())(ast, [&](const Dependency &d) {
             throw InvalidSchedule("Loops are not permutable: " + toString(d) +
                                   " cannot be resolved");

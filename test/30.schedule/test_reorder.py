@@ -110,7 +110,45 @@ def test_loop_in_between():
     assert std.match(ast)
 
 
-def test_dependency():
+def test_leagal_dependence():
+    with ft.VarDef("y", (8,), "int32", "inout", "cpu") as y:
+        with ft.For("i", 0, 4, nid="L1") as i:
+            with ft.For("j", 0, 8, nid="L2") as j:
+                y[j] = (y[j] + 1) * j
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef("y", (8,), "int32", "inout", "cpu") as y:
+        with ft.For("j", 0, 8) as j:
+            with ft.For("i", 0, 4) as i:
+                y[j] = (y[j] + 1) * j
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_leagal_dependence_only_inner_loops():
+    with ft.VarDef("y", (16,), "int32", "inout", "cpu") as y:
+        with ft.For("i", 0, 4, nid="L1") as i:
+            with ft.For("j", 0, 8, nid="L2") as j:
+                with ft.For("k", 0, 16, nid="L3") as k:
+                    y[k] = (y[k] + 1) * j * k
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L3", "L2"]), verbose=1)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef("y", (16,), "int32", "inout", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            with ft.For("k", 0, 16) as k:
+                with ft.For("j", 0, 8) as j:
+                    y[k] = (y[k] + 1) * j * k
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_illegal_dependence():
     with ft.VarDef("y", (1,), "int32", "output", "cpu") as y:
         y[0] = 0
         with ft.For("i", 0, 4, nid="L1") as i:
@@ -124,7 +162,7 @@ def test_dependency():
     assert ast_.match(ast)
 
 
-def test_dependency_of_stmt_in_between():
+def test_illegal_dependence_of_stmt_in_between():
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (), "int32", "cache", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, nid="L1") as i:
