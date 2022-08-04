@@ -197,7 +197,7 @@ class MeasureTask(Task):
     task_type: int
     warmup_rounds: int
     attached_params: tuple
-    
+
     normal_bundle_size: int = 4  # the number of tasks in a bundle
     min_bundle_size: int = 26  #the minimum size of a bundle(in blocks)
     single_task_block_size: int = 100  # the size of single task(in blocks)
@@ -235,7 +235,7 @@ class MeasureTask(Task):
         time.sleep(0.0001)
         for k in sketches:
             tmplist.append(0)
-        return (tmplist,copy.copy(tmplist))   
+        return (tmplist, copy.copy(tmplist))
         pass  #this part will use the measure method of cpp-python-bridge in remote machine
 
     def run(self) -> TaskResult:
@@ -254,7 +254,7 @@ class MeasureTask(Task):
             tmptaskresult.put_result(tmpresult)
             return tmptaskresult
         blnow: int = 0
-        tmpresult = ([],[])
+        tmpresult = ([], [])
         if (fbe * self.single_task_block_size) > start:
             tmpresult = self.measure(fbe * self.single_task_block_size - start,
                                      self.warmup_rounds, self.attached_params,
@@ -264,9 +264,9 @@ class MeasureTask(Task):
         #for mid part
         blend = blnow + (end - start) // self.single_task_block_size
         if blend > blnow:
-            tmpresult1 = self.measure(
-                self.single_task_block_size, self.attached_params,
-                self.warmup_rounds, self.params[blnow:blend])
+            tmpresult1 = self.measure(self.single_task_block_size,
+                                      self.attached_params, self.warmup_rounds,
+                                      self.params[blnow:blend])
             tmplist0 = tmpresult[0] + tmpresult1[0]
             tmplist1 = tmpresult[1] + tmpresult1[1]
             tmpresult = (tmplist0, tmplist1)
@@ -274,12 +274,12 @@ class MeasureTask(Task):
                  self.single_task_block_size) * self.single_task_block_size
         #deal with the unfinished part
         if (start < end):
-            tmpresult1 = self.measure(
-                end - start, self.warmup_rounds, self.attached_params,
-                self.params[blend: blend + 1])
+            tmpresult1 = self.measure(end - start, self.warmup_rounds,
+                                      self.attached_params,
+                                      self.params[blend:blend + 1])
             tmplist0 = tmpresult[0] + tmpresult1[0]
             tmplist1 = tmpresult[1] + tmpresult1[1]
-            tmpresult = (tmplist0, tmplist1)              
+            tmpresult = (tmplist0, tmplist1)
         tmptaskresult.put_result(tmpresult)
         return tmptaskresult
 
@@ -541,7 +541,7 @@ class RemoteTaskScheduler(object):
 
     def task_submit(self, _server_uid: str):
         #automatically submit a task and balance the queue
-        print("submitting tasks to server: "+ _server_uid)
+        print("submitting tasks to server: " + _server_uid)
         task_availability: bool = False
         tmp_submit_uid: int
         if self.server_list[_server_uid][0] == 1:
@@ -585,8 +585,8 @@ class RemoteTaskScheduler(object):
             self.submitted_task_container_lock.release()
             self.tasks_waiting_to_submit_lock.release()
             if self.send_tasks(
-                    self.submitted_task_container[tmp_submit_uid].convert2dict(),
-                    _server_uid) == 0:
+                    self.submitted_task_container[tmp_submit_uid].convert2dict(
+                    ), _server_uid) == 0:
                 tmptask.target_server_uid = _server_uid
                 #if task is successfully sent, modify the target_server_uid
             else:
@@ -635,7 +635,7 @@ class RemoteTaskScheduler(object):
             task_type_list.append(3)
         if self.measure_queue.qsize() > 0:
             task_type_list.append(2)
-            if not(3 in task_type_list):
+            if not (3 in task_type_list):
                 task_type_list.append(3)
         #self.server_list_lock.acquire()
         for uidkey in self.server_list.keys():
@@ -657,11 +657,11 @@ class RemoteTaskScheduler(object):
     def request_for_new_task_all(self):
         for server_uid in self.available_server_list:
             t = threading.Thread(target=self.request_for_new_task,
-                             args=(server_uid,))
+                                 args=(server_uid,))
             t.start()
 
     def send_tasks(self, _task: Dict, server_uid: str) -> int:
-        self.remote_task_receive(server_uid,_task)
+        self.remote_task_receive(server_uid, _task)
         return 0
         pass
         #this part will use the method in RPCTools
@@ -697,7 +697,8 @@ class RemoteTaskScheduler(object):
             elif task["trans_c"] == 2:
                 self.update_inavailability(src_host_uid, task["time_stamp"])
             elif task["trans_c"] == 3:
-                t = threading.Thread(target=self.task_submit, args=(src_host_uid,))
+                t = threading.Thread(target=self.task_submit,
+                                     args=(src_host_uid,))
                 t.start()
         else:
             print("receiving")
@@ -718,7 +719,7 @@ class RemoteTaskScheduler(object):
         self.server_list_lock.release()
         if self.execution_queue_cnt < 5:
             t = threading.Thread(target=self.request_for_new_task,
-                             args=(server_uid,))
+                                 args=(server_uid,))
             t.start()
 
     def update_inavailability(self, server_uid: str, time_stamp: float):
@@ -809,6 +810,7 @@ class RemoteTaskScheduler(object):
         if self.is_ready == False:
             self.submit_queue_lock.release()
             self.is_ready = True
+
 
 ##################################################
 # the following are test code(can be used instantly)
