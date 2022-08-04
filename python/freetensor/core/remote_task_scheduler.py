@@ -126,12 +126,14 @@ class TaskRunner(threading.Thread):
         is_new_task_required = bool(self.scheduler.execution_queue_cnt < 5)
         self.scheduler.execution_queue_cnt_lock.release()
         self.scheduler.result_submit(self.task.src_server_uid, return_val)
+        print(self.scheduler.get_queue_len())
         if is_new_task_required:
             self.scheduler.request_for_new_task_all()
-        self.scheduler.server_list_lock.acquire()
-        if len(self.scheduler.available_server_list) < 3:
-            self.scheduler.request_for_new_task_all()
-        self.scheduler.server_list_lock.release()
+            self.scheduler.server_list_lock.acquire()
+            tempbool = bool(len(self.scheduler.available_server_list) < 3)
+            self.scheduler.server_list_lock.release()
+            if tempbool:
+                self.scheduler.request_for_new_task_all()
         # fetch tasks if there are too few tasks to execute
 
 
@@ -232,7 +234,7 @@ class MeasureTask(Task):
     def measure(self, rounds: int, warmups: int, attached_params: tuple,
                 sketches: List) -> tuple[List[float], List[float]]:
         tmplist = []
-        time.sleep(0.0001)
+        time.sleep(1)
         for k in sketches:
             tmplist.append(0)
         return (tmplist, copy.copy(tmplist))
@@ -515,7 +517,8 @@ class RemoteTaskScheduler(object):
         self.submitted_task_container_lock.release()
         #acquire the merge_lock
         self.merge_lock_container_lock.acquire()
-        self.merge_lock_container[_task_result.task_uid].acquire()
+        tmplock = self.merge_lock_container[_task_result.task_uid]
+        tmplock.acquire()
         self.merge_lock_container_lock.release()
         #update the counter
         self.task_block_counter_lock.acquire()
@@ -529,9 +532,7 @@ class RemoteTaskScheduler(object):
         self.task_result_container[_task_result.task_uid].merge(_task_result)
         self.task_result_container_lock.release()
         #release the merge_lock
-        self.merge_lock_container_lock.acquire()
-        self.merge_lock_container[_task_result.task_uid].release()
-        self.merge_lock_container_lock.release()
+        tmplock.release()
         #if all subtasks are done, remove the merge_lock, submit lock and free the memory
         if self.task_block_counter[_task_result.task_uid] <= 0:
             self.merge_lock_container.pop(_task_result.task_uid)
@@ -655,12 +656,16 @@ class RemoteTaskScheduler(object):
         self.send_tasks(tmpdict, _server_uid)
 
     def request_for_new_task_all(self):
+        print("requesting_tasks")
+        self.server_list_lock.acquire()
         for server_uid in self.available_server_list:
             t = threading.Thread(target=self.request_for_new_task,
                                  args=(server_uid,))
             t.start()
+        self.server_list_lock.release()
 
     def send_tasks(self, _task: Dict, server_uid: str) -> int:
+        #time.sleep(0.001)
         self.remote_task_receive(server_uid, _task)
         return 0
         pass
@@ -745,7 +750,9 @@ class RemoteTaskScheduler(object):
             pass
         elif task_result["task_type"] == 2:
             tmptask_result = MeasureResult.dict2self(task_result)
-            self.task_merge(tmptask_result)
+            #self.task_merge(tmptask_result)
+            t = threading.Thread(target=self.task_merge, args=(tmptask_result,))
+            t.start()
 
     def remote_logger(self, log: str):
         pass
@@ -819,28 +826,26 @@ class RemoteTaskScheduler(object):
 rts = RemoteTaskScheduler()
 rts.get_self_uid("hello_test")
 
+
 def test_submit():
     time.sleep(2)
-    rts.task_submit("hello_test") 
+    rts.task_submit("hello_test")
     time.sleep(5)
-    print(rts.get_queue_len()) 
-      
+    print(rts.get_queue_len())
+
 
 tmplist = []
-rts.add_host("hello_test",3)
+rts.add_host("hello_test", 3)
 for i in range(64):
     tmplist.append(0)
 
-
 for i in range(1):
-    thread_test = threading.Thread(target= test_submit)
+    thread_test = threading.Thread(target=test_submit)
     thread_test.start()
 #rts.task_submit("hello_test")
 
-rts.remote_measure_submit(100,10,0,tmplist)
+rts.remote_measure_submit(100, 10, 0, tmplist)
 
 #K = MeasureTask(0,100,10,0,tmplist)
 #print(K.convert2dict())
-
-
 '''
