@@ -72,7 +72,7 @@ void init_ffi_schedule(py::module_ &m) {
                             pyArgs[i] = e;
                         return transformFunc(*pyArgs).cast<std::vector<Expr>>();
                     };
-                s.permute(loopsId, wrappedTransformFunc);
+                return s.permute(loopsId, wrappedTransformFunc);
             },
             "loops_id"_a, "transform_func"_a)
         .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,

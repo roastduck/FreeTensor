@@ -174,9 +174,10 @@ class Schedule {
      */
     ID merge(const ID &loop1, const ID &loop2);
 
-    void permute(const std::vector<ID> &loopsId,
-                 const std::function<std::vector<Expr>(std::vector<Expr>)>
-                     &transformFunc);
+    std::vector<ID>
+    permute(const std::vector<ID> &loopsId,
+            const std::function<std::vector<Expr>(std::vector<Expr>)>
+                &transformFunc);
 
     typedef std::unordered_map<ID, ID> IDMap;
     /**

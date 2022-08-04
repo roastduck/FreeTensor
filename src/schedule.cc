@@ -155,10 +155,13 @@ ID Schedule::merge(const ID &loop1, const ID &loop2) {
     }
 }
 
-void Schedule::permute(
+std::vector<ID> Schedule::permute(
     const std::vector<ID> &loopsId,
     const std::function<std::vector<Expr>(std::vector<Expr>)> &transformFunc) {
-    freetensor::permute(ast_, loopsId, transformFunc);
+    //! FIXME: put this into schedule logs
+    auto &&[ast, ids] = freetensor::permute(ast_, loopsId, transformFunc);
+    ast_ = ast;
+    return ids;
 }
 
 std::pair<Schedule::IDMap, Schedule::IDMap>

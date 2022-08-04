@@ -5,7 +5,8 @@ import freetensor as ft
 def test_5_point_seidel():
 
     def schd(s: ft.Schedule):
-        s.permute(['L1', 'L2'], lambda i, j: (i + j, j))
+        outer, _ = s.permute(['L1', 'L2'], lambda i, j: (i + j, i))
+        s.parallelize(outer, 'openmp')
 
     @ft.schedule(callback=schd)
     @ft.transform
@@ -20,7 +21,8 @@ def test_5_point_seidel():
 def test_9_point_seidel():
 
     def schd(s: ft.Schedule):
-        s.permute(['L1', 'L2'], lambda i, j: (2 * i + j, j))
+        outer, _ = s.permute(['L1', 'L2'], lambda i, j: (2 * i + j, i))
+        s.parallelize(outer, 'openmp')
 
     @ft.schedule(callback=schd)
     @ft.transform
@@ -40,7 +42,8 @@ def test_9_point_seidel():
 def test_9_point_seidel_failed():
 
     def schd(s: ft.Schedule):
-        s.permute(['L1', 'L2'], lambda i, j: (i + j, j))
+        outer, _ = s.permute(['L1', 'L2'], lambda i, j: (i + j, i))
+        s.parallelize(outer, 'openmp')
 
     with pytest.raises(ft.InvalidSchedule):
 

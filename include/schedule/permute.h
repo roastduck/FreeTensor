@@ -8,7 +8,7 @@
 
 namespace freetensor {
 
-Stmt permute(
+std::pair<Stmt, std::vector<ID>> permute(
     const Stmt &ast, const std::vector<ID> &loopsId,
     const std::function<std::vector<Expr>(std::vector<Expr>)> &transformFunc);
 
