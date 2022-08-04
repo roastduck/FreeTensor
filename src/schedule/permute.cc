@@ -177,16 +177,16 @@ std::pair<Stmt, std::vector<ID>> permute(
                 PBMap real2iter(pbCtx, "{[" + ossRaw.str() + "] -> [" +
                                            ossIter.str() + "]}");
                 iter2permuted =
-                    toString(applyDomain(reverse(real2iter), permuteMap));
+                    toString(applyRange(reverse(real2iter), permuteMap));
             })
         .filterSubAST(loops.front()->id())(ast, [&](const Dependency &d) {
             auto iter2permutedMap = PBMap(d.presburger_, iter2permuted);
-            auto &&permuteMapLater = applyDomain(
+            auto &&permuteMapLater = applyRange(
                 PBMap(d.presburger_,
                       getExtractDimMap(numBackDims, numBackDims + loops.size(),
                                        d.later_.iter_.size())),
                 iter2permutedMap);
-            auto &&permuteMapEarlier = applyDomain(
+            auto &&permuteMapEarlier = applyRange(
                 PBMap(d.presburger_,
                       getExtractDimMap(numBackDims, numBackDims + loops.size(),
                                        d.earlier_.iter_.size())),
