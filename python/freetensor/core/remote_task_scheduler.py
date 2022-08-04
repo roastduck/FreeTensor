@@ -688,7 +688,7 @@ class RemoteTaskScheduler(object):
             self.available_server_list.add(server_uid)
         self.server_list_lock.release()
         if self.execution_queue_cnt < 5:
-            threading.Thread(target=self.request_for_new_task(),
+            threading.Thread(target=self.request_for_new_task,
                              args=(server_uid,))
 
     def update_inavailability(self, server_uid: str, time_stamp: float):
