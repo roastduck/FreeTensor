@@ -21,7 +21,7 @@ var searchData=
   ['noprojectoutprovateaxis_18',['noProjectOutProvateAxis',['../classfreetensor_1_1FindDeps.html#ac60c7bb079a0aa635accc44c1acfff2e',1,'freetensor::FindDeps']]],
   ['normalizethreads_19',['NormalizeThreads',['../classfreetensor_1_1gpu_1_1NormalizeThreads.html#af8483decf7a9a27f23444ce478f6e9bc',1,'freetensor::gpu::NormalizeThreads']]],
   ['normalizethreads_20',['normalizeThreads',['../namespacefreetensor_1_1gpu.html#aa39f5c0b8c1a5c6ae03ec2d5a733d9e9',1,'freetensor::gpu']]],
-  ['notlexlessafterpermu_21',['notLexLessAfterPermu',['../namespacefreetensor.html#ad726f1132d7b442ddb91f2e28c53e440',1,'freetensor']]],
+  ['notlexlessafterpermu_21',['notLexLessAfterPermu',['../namespacefreetensor.html#affd9024564fe030fc074d18560f25e5b',1,'freetensor']]],
   ['nowsubnum_22',['nowSubNum',['../classfreetensor_1_1Sketch.html#adde45ed793cf85e181b62134645022be',1,'freetensor::Sketch']]],
   ['nowsubsketch_23',['nowSubSketch',['../classfreetensor_1_1Sketch.html#aa45221226e616bb1330d168cb2fecb75',1,'freetensor::Sketch::nowSubSketch()'],['../classfreetensor_1_1Sketch.html#a751b9aab36ae535323bec9db51224c17',1,'freetensor::Sketch::nowSubSketch() const']]],
   ['num_24',['num',['../classfreetensor_1_1Device.html#ad486f37f8f8d4ef1b8a1421f3ae83ddf',1,'freetensor::Device']]],
