@@ -52,16 +52,16 @@ How does this part work:
 
 
 class Task(object):  #the parent class of all tasks
-    src_server_uid: str
+    src_server_uid: str = ""
     #
-    target_server_uid: str
+    target_server_uid: str = ""
     #
-    task_uid: int
-    submit_uid: int
+    task_uid: int = 0
+    submit_uid: int = 0
     #
     params: Any  #the params of the task
     #
-    task_type: int  #refer to the beginning of the file to see its meaning
+    task_type: int = -1  #refer to the beginning of the file to see its meaning
     #
     block_start: int = 0
     block_end: int = 6400
@@ -88,7 +88,7 @@ class Task(object):  #the parent class of all tasks
         print(self.block_end)
 
     def convert2dict(self) -> Dict:
-        return self.__dict__()
+        return self.__dict__
 
     def get_blank_result(self) -> TaskResult:
         #this part gets a blank result
@@ -180,7 +180,7 @@ class TaskResult(object):
         return self.results
 
     def convert2dict(self) -> Dict:
-        return self.__dict__()
+        return self.__dict__
 
     @classmethod
     def dict2self_base(cls, tmptask_result: Any, inputdict: Dict) -> Any:
@@ -194,21 +194,27 @@ class TaskResult(object):
 
 
 class MeasureTask(Task):
-    task_type: int = 2
+    task_type: int
     warmup_rounds: int
-    attatched_params: tuple
+    attached_params: tuple
+    
+    normal_bundle_size: int = 4  # the number of tasks in a bundle
+    min_bundle_size: int = 26  #the minimum size of a bundle(in blocks)
+    single_task_block_size: int = 100  # the size of single task(in blocks)
+    max_block_to_split: int = 1600  #no larger than the number of blocks will be further splitted
 
     #a block means one round of timing rounds
 
     def __init__(self, _task_uid: int, run_times: int, _warmup_rounds: int,
-                 _attatched_params: tuple, _params: List):
+                 _attached_params: tuple, _params: List):
+        self.task_type = 2
         self.task_uid = _task_uid
         self.single_task_block_size = run_times
         self.warmup_rounds = _warmup_rounds
         self.params = _params
         self.block_start = 0
         self.block_end = run_times * len(_params)
-        self.attatched_params = _attatched_params
+        self.attached_params = _attached_params
 
     def split(self, _block_start: int, _block_end: int) -> Task:
         tempparams = []
@@ -217,7 +223,7 @@ class MeasureTask(Task):
                        self.single_task_block_size):
             tempparams.append(self.params[i])
         subtask = MeasureTask(self.task_uid, self.single_task_block_size,
-                              self.warmup_rounds, self.attatched_params,
+                              self.warmup_rounds, self.attached_params,
                               tempparams)
         subtask.block_start = _block_start
         subtask.block_end = _block_end
@@ -225,9 +231,15 @@ class MeasureTask(Task):
 
     def measure(self, rounds: int, warmups: int, attached_params: tuple,
                 sketches: List) -> tuple[List[float], List[float]]:
+        tmplist = []
+        time.sleep(0.0001)
+        for k in sketches:
+            tmplist.append(0)
+        return (tmplist,copy.copy(tmplist))   
         pass  #this part will use the measure method of cpp-python-bridge in remote machine
 
     def run(self) -> TaskResult:
+        print("running")
         tmptaskresult = MeasureResult.get(self)
         start = self.block_start
         end = self.block_end
@@ -242,30 +254,37 @@ class MeasureTask(Task):
             tmptaskresult.put_result(tmpresult)
             return tmptaskresult
         blnow: int = 0
+        tmpresult = ([],[])
         if (fbe * self.single_task_block_size) > start:
             tmpresult = self.measure(fbe * self.single_task_block_size - start,
-                                     self.warmup_rounds, self.attatched_params,
+                                     self.warmup_rounds, self.attached_params,
                                      self.params[0:1])
             blnow = 1
             start = fbe * self.single_task_block_size
         #for mid part
         blend = blnow + (end - start) // self.single_task_block_size
         if blend > blnow:
-            tmpresult = tmpresult + self.measure(
-                self.single_task_block_size, self.attatched_params,
-                self.warmup_rounds, self.params[blnow, blend])
+            tmpresult1 = self.measure(
+                self.single_task_block_size, self.attached_params,
+                self.warmup_rounds, self.params[blnow:blend])
+            tmplist0 = tmpresult[0] + tmpresult1[0]
+            tmplist1 = tmpresult[1] + tmpresult1[1]
+            tmpresult = (tmplist0, tmplist1)
         start = (end //
                  self.single_task_block_size) * self.single_task_block_size
         #deal with the unfinished part
         if (start < end):
-            tmpresult = tmpresult + self.measure(
+            tmpresult1 = self.measure(
                 end - start, self.warmup_rounds, self.attached_params,
-                self.params[blend, blend + 1])
+                self.params[blend: blend + 1])
+            tmplist0 = tmpresult[0] + tmpresult1[0]
+            tmplist1 = tmpresult[1] + tmpresult1[1]
+            tmpresult = (tmplist0, tmplist1)              
         tmptaskresult.put_result(tmpresult)
         return tmptaskresult
 
     def convert2dict(self) -> Dict:
-        return self.__dict__()
+        return self.__dict__
 
     def get_blank_result(self) -> MeasureResult:
         tmp_result = MeasureResult()
@@ -281,7 +300,7 @@ class MeasureTask(Task):
     def dict2self(cls, inputdict: Dict) -> Task:
         tmptask = super().dict2self_base(
             MeasureTask(0, 0, inputdict["warmup_rounds"],
-                        inputdict["attatched_params"], []), inputdict)
+                        inputdict["attached_params"], []), inputdict)
         return tmptask
 
 
@@ -442,6 +461,7 @@ class RemoteTaskScheduler(object):
 
     def task_register(self, _task: Task, _lock: threading.Lock) -> None:
         _lock.acquire()  #acquire the threadlock
+
         self.submit_lock_container_lock.acquire()
         self.submit_lock_container[_task.task_uid] = _lock
         self.submit_lock_container_lock.release()
@@ -472,18 +492,15 @@ class RemoteTaskScheduler(object):
         self.task_result_container[_task.task_uid] = _task.get_blank_result()
         self.task_result_container_lock.release()
         #construct a blank result
-
-        self.submit_queue_lock.acquire()
+        self.tasks_waiting_to_submit_lock.acquire()
         for subtask in temp:
             subtask.submit_uid = self.submit_uid_assign()
-            self.tasks_waiting_to_submit_lock.acquire()
             self.tasks_waiting_to_submit[subtask.submit_uid] = subtask
-            self.tasks_waiting_to_submit_lock.release()
             if subtask.task_type == 2:
                 self.measure_queue.put(subtask.submit_uid)
             if subtask.task_type == 1:
                 self.search_queue.put(subtask.submit_uid)
-        self.submit_queue_lock.release()
+        self.tasks_waiting_to_submit_lock.release()
         #put these subtasks in submit queues
 
         self.report_new_task()
@@ -491,10 +508,10 @@ class RemoteTaskScheduler(object):
     def task_merge(self, _task_result: TaskResult) -> None:
         #pop out the related submit_task
         self.submitted_task_container_lock.acquire()
-        if not (_task_result.task_uid in self.submitted_task_container):
+        if not (_task_result.submit_uid in self.submitted_task_container):
             self.submitted_task_container_lock.release()
             return
-        self.submitted_task_container.pop(_task_result.task_uid)
+        self.submitted_task_container.pop(_task_result.submit_uid)
         self.submitted_task_container_lock.release()
         #acquire the merge_lock
         self.merge_lock_container_lock.acquire()
@@ -505,6 +522,7 @@ class RemoteTaskScheduler(object):
         self.task_block_counter[
             _task_result.
             task_uid] -= _task_result.block_end - _task_result.block_start
+        print(self.task_block_counter[_task_result.task_uid])
         self.task_block_counter_lock.release()
         #merge_the_result
         self.task_result_container_lock.acquire()
@@ -523,6 +541,7 @@ class RemoteTaskScheduler(object):
 
     def task_submit(self, _server_uid: str):
         #automatically submit a task and balance the queue
+        print("submitting tasks to server: "+ _server_uid)
         task_availability: bool = False
         tmp_submit_uid: int
         if self.server_list[_server_uid][0] == 1:
@@ -566,7 +585,7 @@ class RemoteTaskScheduler(object):
             self.submitted_task_container_lock.release()
             self.tasks_waiting_to_submit_lock.release()
             if self.send_tasks(
-                    self.tasks_waiting_to_submit[tmp_submit_uid].convert2dict(),
+                    self.submitted_task_container[tmp_submit_uid].convert2dict(),
                     _server_uid) == 0:
                 tmptask.target_server_uid = _server_uid
                 #if task is successfully sent, modify the target_server_uid
@@ -594,6 +613,7 @@ class RemoteTaskScheduler(object):
             self.search_queue.put(submit_uid)
 
     def report_inavailability(self, _server_uid: str):
+        print("reporting inavailability")
         tmpdict: Dict = {
             "task_type": 0,
             "trans_c": 2,
@@ -603,6 +623,7 @@ class RemoteTaskScheduler(object):
 
     def report_new_task(self):
         #broadcast the information that new tasks are available to fetch
+        print("reporting availability")
         tmpdict: Dict = {
             "task_type": 0,
             "trans_c": 1,
@@ -611,17 +632,19 @@ class RemoteTaskScheduler(object):
         task_type_list: List = []
         if self.search_queue.qsize() > 0:
             task_type_list.append(1)
+            task_type_list.append(3)
         if self.measure_queue.qsize() > 0:
             task_type_list.append(2)
-            if 1 in task_type_list:
+            if not(3 in task_type_list):
                 task_type_list.append(3)
-        self.server_list_lock.acquire()
+        #self.server_list_lock.acquire()
         for uidkey in self.server_list.keys():
             if self.server_list[uidkey][0] in task_type_list:
                 t = threading.Thread(target=self.send_tasks,
                                      args=(tmpdict, uidkey))
                 t.start()
-        self.server_list_lock.release()
+        #self.server_list_lock.release()
+        print("availability reported")
 
     def request_for_new_task(self, _server_uid: str):
         tmpdict: Dict = {
@@ -633,23 +656,27 @@ class RemoteTaskScheduler(object):
 
     def request_for_new_task_all(self):
         for server_uid in self.available_server_list:
-            threading.Thread(target=self.request_for_new_task,
+            t = threading.Thread(target=self.request_for_new_task,
                              args=(server_uid,))
+            t.start()
 
     def send_tasks(self, _task: Dict, server_uid: str) -> int:
+        self.remote_task_receive(server_uid,_task)
+        return 0
         pass
         #this part will use the method in RPCTools
 
     def send_results(self, _taskresult: Dict, server_uid: str) -> None:
+        self.remote_result_receive(server_uid, _taskresult)
         pass
         #this part will use the method in RPCTools
 
     def remote_measure_submit(
-            self, rounds: int, warmups: int, attatched_params: int,
+            self, rounds: int, warmups: int, attached_params: int,
             Sketches: List[str]) -> tuple[List[float], List[float]]:
         #the method used to submit measure task by cpp-python-bridge
         tmpuid = self.task_uid_assign()
-        tmptask = MeasureTask(tmpuid, rounds, warmups, attatched_params,
+        tmptask = MeasureTask(tmpuid, rounds, warmups, attached_params,
                               Sketches)
         tmplock = threading.Lock()
         self.task_register(tmptask, tmplock)
@@ -670,8 +697,10 @@ class RemoteTaskScheduler(object):
             elif task["trans_c"] == 2:
                 self.update_inavailability(src_host_uid, task["time_stamp"])
             elif task["trans_c"] == 3:
-                threading.Thread(target=self.task_submit, args=(src_host_uid,))
+                t = threading.Thread(target=self.task_submit, args=(src_host_uid,))
+                t.start()
         else:
+            print("receiving")
             if task["task_type"] == 1:
                 pass
             elif task["task_type"] == 2:
@@ -688,8 +717,9 @@ class RemoteTaskScheduler(object):
             self.available_server_list.add(server_uid)
         self.server_list_lock.release()
         if self.execution_queue_cnt < 5:
-            threading.Thread(target=self.request_for_new_task,
+            t = threading.Thread(target=self.request_for_new_task,
                              args=(server_uid,))
+            t.start()
 
     def update_inavailability(self, server_uid: str, time_stamp: float):
         #remove the server from the available server list
@@ -714,7 +744,7 @@ class RemoteTaskScheduler(object):
             pass
         elif task_result["task_type"] == 2:
             tmptask_result = MeasureResult.dict2self(task_result)
-        self.task_merge(tmptask_result)
+            self.task_merge(tmptask_result)
 
     def remote_logger(self, log: str):
         pass
@@ -749,7 +779,8 @@ class RemoteTaskScheduler(object):
             "trans_c": 2,
             "time_stamp": time.time()
         }
-        threading.Thread(target=self.send_tasks(tmpdict, _server_uid))
+        t = threading.Thread(target=self.send_tasks(tmpdict, _server_uid))
+        t.start()
         #inform availability to the server
 
     def remove_host(self, server_uid: str) -> None:
@@ -777,3 +808,37 @@ class RemoteTaskScheduler(object):
         self.self_server_uid = server_uid
         if self.is_ready == False:
             self.submit_queue_lock.release()
+            self.is_ready = True
+
+##################################################
+# the following are test code(can be used instantly)
+#Some functions are Some functions are populated to make testing possible
+'''
+rts = RemoteTaskScheduler()
+rts.get_self_uid("hello_test")
+
+def test_submit():
+    time.sleep(2)
+    rts.task_submit("hello_test") 
+    time.sleep(5)
+    print(rts.get_queue_len()) 
+      
+
+tmplist = []
+rts.add_host("hello_test",3)
+for i in range(64):
+    tmplist.append(0)
+
+
+for i in range(1):
+    thread_test = threading.Thread(target= test_submit)
+    thread_test.start()
+#rts.task_submit("hello_test")
+
+rts.remote_measure_submit(100,10,0,tmplist)
+
+#K = MeasureTask(0,100,10,0,tmplist)
+#print(K.convert2dict())
+
+
+'''
