@@ -201,7 +201,7 @@ class MeasureTask(Task):
     attached_params: tuple
 
     normal_bundle_size: int = 4  # the number of tasks in a bundle
-    min_bundle_size: int = 26  #the minimum size of a bundle(in blocks)
+    min_bundle_size: int = 100  #the minimum size of a bundle(in blocks)
     single_task_block_size: int = 100  # the size of single task(in blocks)
     max_block_to_split: int = 1600  #no larger than the number of blocks will be further splitted
 
@@ -787,7 +787,8 @@ class RemoteTaskScheduler(object):
             "trans_c": 2,
             "time_stamp": time.time()
         }
-        t = threading.Thread(target=self.send_tasks(tmpdict, _server_uid))
+        t = threading.Thread(target=self.send_tasks,
+                             args=(tmpdict, _server_uid))
         t.start()
         #inform availability to the server
 
