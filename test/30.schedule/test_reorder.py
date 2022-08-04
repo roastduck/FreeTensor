@@ -110,7 +110,7 @@ def test_loop_in_between():
     assert std.match(ast)
 
 
-def test_leagal_dependence():
+def test_legal_dependence():
     with ft.VarDef("y", (8,), "int32", "inout", "cpu") as y:
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
@@ -128,7 +128,7 @@ def test_leagal_dependence():
     assert std.match(ast)
 
 
-def test_leagal_dependence_only_inner_loops():
+def test_legal_dependence_only_inner_loops():
     with ft.VarDef("y", (16,), "int32", "inout", "cpu") as y:
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
