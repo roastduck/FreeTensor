@@ -69,6 +69,7 @@ $(function() {
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
+<a href="#concepts">Concepts</a> &#124;
 <a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">presburger.h File Reference</div></div>
@@ -179,6 +180,19 @@ Namespaces</h2></td></tr>
 <tr class="memitem:namespacefreetensor"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html">freetensor</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="concepts" name="concepts"></a>
+Concepts</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptfreetensor_1_1PBMapRef.html">freetensor::PBMapRef</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptfreetensor_1_1PBValRef.html">freetensor::PBValRef</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptfreetensor_1_1PBSetRef.html">freetensor::PBSetRef</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptfreetensor_1_1PBSpaceRef.html">freetensor::PBSpaceRef</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptfreetensor_1_1PBFuncRef.html">freetensor::PBFuncRef</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
 <tr class="memitem:acc866af82975dd6bb9c05cae60b064a7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="presburger_8h.html#acc866af82975dd6bb9c05cae60b064a7">COPY_ISL_PTR</a>(ptr,  type)&#160;&#160;&#160;_COPY_ISL_PTR(ptr, isl_##type##_copy)</td></tr>
@@ -195,150 +209,103 @@ Functions</h2></td></tr>
 <tr class="memitem:a6575fe82dd92b5df3de63922d8c78d44"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a6575fe82dd92b5df3de63922d8c78d44"><td class="memTemplItemLeft" align="right" valign="top">T *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6575fe82dd92b5df3de63922d8c78d44">freetensor::MOVE_ISL_PTR</a> (T *&amp;ptr)</td></tr>
 <tr class="separator:a6575fe82dd92b5df3de63922d8c78d44"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a77589d1186e9d95abab4f8f9ee5c7bd8"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a77589d1186e9d95abab4f8f9ee5c7bd8">freetensor::complement</a> (PBSet &amp;&amp;set)</td></tr>
-<tr class="separator:a77589d1186e9d95abab4f8f9ee5c7bd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a61fc90ee1f3fa4d5e0f8e374fc472aa1"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a61fc90ee1f3fa4d5e0f8e374fc472aa1">freetensor::complement</a> (const PBSet &amp;set)</td></tr>
-<tr class="separator:a61fc90ee1f3fa4d5e0f8e374fc472aa1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af9c4b5aa0c71871f93a6f3fc0b5758ba"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af9c4b5aa0c71871f93a6f3fc0b5758ba">freetensor::complement</a> (PBMap &amp;&amp;map)</td></tr>
-<tr class="separator:af9c4b5aa0c71871f93a6f3fc0b5758ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9573d4df48336bb41091b57fc16b0594"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9573d4df48336bb41091b57fc16b0594">freetensor::complement</a> (const PBMap &amp;map)</td></tr>
-<tr class="separator:a9573d4df48336bb41091b57fc16b0594"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0b6d6da0d46e8753aec9bf3cc2aa57e7"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0b6d6da0d46e8753aec9bf3cc2aa57e7">freetensor::reverse</a> (PBMap &amp;&amp;map)</td></tr>
-<tr class="separator:a0b6d6da0d46e8753aec9bf3cc2aa57e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a009aa9df502a3bbf2be780eda1c6ea23"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a009aa9df502a3bbf2be780eda1c6ea23">freetensor::reverse</a> (const PBMap &amp;map)</td></tr>
-<tr class="separator:a009aa9df502a3bbf2be780eda1c6ea23"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3e07a4690ab24fe367225e4fb2ace241"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3e07a4690ab24fe367225e4fb2ace241">freetensor::subtract</a> (PBMap &amp;&amp;lhs, PBMap &amp;&amp;rhs)</td></tr>
-<tr class="separator:a3e07a4690ab24fe367225e4fb2ace241"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af5093d18ffb580d3ac283bb031b09000"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af5093d18ffb580d3ac283bb031b09000">freetensor::subtract</a> (const PBMap &amp;lhs, PBMap &amp;&amp;rhs)</td></tr>
-<tr class="separator:af5093d18ffb580d3ac283bb031b09000"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0724eef336e5c7b901714b09ca668d55"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0724eef336e5c7b901714b09ca668d55">freetensor::subtract</a> (PBMap &amp;&amp;lhs, const PBMap &amp;rhs)</td></tr>
-<tr class="separator:a0724eef336e5c7b901714b09ca668d55"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aedbc52ad2b773a623cf0a128ffeaba3e"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aedbc52ad2b773a623cf0a128ffeaba3e">freetensor::subtract</a> (const PBMap &amp;lhs, const PBMap &amp;rhs)</td></tr>
-<tr class="separator:aedbc52ad2b773a623cf0a128ffeaba3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94408f57559d61f27feca2ed5a13c177"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a94408f57559d61f27feca2ed5a13c177">freetensor::subtract</a> (PBSet &amp;&amp;lhs, PBSet &amp;&amp;rhs)</td></tr>
-<tr class="separator:a94408f57559d61f27feca2ed5a13c177"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad20af4559298c56087f3a0eb0bef2793"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad20af4559298c56087f3a0eb0bef2793">freetensor::subtract</a> (const PBSet &amp;lhs, PBSet &amp;&amp;rhs)</td></tr>
-<tr class="separator:ad20af4559298c56087f3a0eb0bef2793"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adc7a33b4e9aa74f062c44bb090fda888"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adc7a33b4e9aa74f062c44bb090fda888">freetensor::subtract</a> (PBSet &amp;&amp;lhs, const PBSet &amp;rhs)</td></tr>
-<tr class="separator:adc7a33b4e9aa74f062c44bb090fda888"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aee776a74994afee1e35aa848f2381b2e"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aee776a74994afee1e35aa848f2381b2e">freetensor::subtract</a> (const PBSet &amp;lhs, const PBSet &amp;rhs)</td></tr>
-<tr class="separator:aee776a74994afee1e35aa848f2381b2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3d85d17c3b7ce8fe5ab688190abede7e"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3d85d17c3b7ce8fe5ab688190abede7e">freetensor::intersect</a> (PBSet &amp;&amp;lhs, PBSet &amp;&amp;rhs)</td></tr>
-<tr class="separator:a3d85d17c3b7ce8fe5ab688190abede7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80c610756ac651975a2ddfb775660a2a"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a80c610756ac651975a2ddfb775660a2a">freetensor::intersect</a> (const PBSet &amp;lhs, PBSet &amp;&amp;rhs)</td></tr>
-<tr class="separator:a80c610756ac651975a2ddfb775660a2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30c198fba8983c451e800df173651631"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a30c198fba8983c451e800df173651631">freetensor::intersect</a> (PBSet &amp;&amp;lhs, const PBSet &amp;rhs)</td></tr>
-<tr class="separator:a30c198fba8983c451e800df173651631"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3f67bf3058a51fbd7e2917366cbb4685"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3f67bf3058a51fbd7e2917366cbb4685">freetensor::intersect</a> (const PBSet &amp;lhs, const PBSet &amp;rhs)</td></tr>
-<tr class="separator:a3f67bf3058a51fbd7e2917366cbb4685"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8da09cdac2eac54d339982c94ba00a4b"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8da09cdac2eac54d339982c94ba00a4b">freetensor::intersect</a> (PBMap &amp;&amp;lhs, PBMap &amp;&amp;rhs)</td></tr>
-<tr class="separator:a8da09cdac2eac54d339982c94ba00a4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a085b902bf7c8ebb98b023781d3d84a18"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a085b902bf7c8ebb98b023781d3d84a18">freetensor::intersect</a> (const PBMap &amp;lhs, PBMap &amp;&amp;rhs)</td></tr>
-<tr class="separator:a085b902bf7c8ebb98b023781d3d84a18"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1bac4c19321b7b246de9c42068333ded"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1bac4c19321b7b246de9c42068333ded">freetensor::intersect</a> (PBMap &amp;&amp;lhs, const PBMap &amp;rhs)</td></tr>
-<tr class="separator:a1bac4c19321b7b246de9c42068333ded"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af779046b7f8650dc9bbbf4e9ef91a1ab"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af779046b7f8650dc9bbbf4e9ef91a1ab">freetensor::intersect</a> (const PBMap &amp;lhs, const PBMap &amp;rhs)</td></tr>
-<tr class="separator:af779046b7f8650dc9bbbf4e9ef91a1ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9ab240490b7e06b8408ba5373dbc2335"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9ab240490b7e06b8408ba5373dbc2335">freetensor::uni</a> (PBMap &amp;&amp;lhs, PBMap &amp;&amp;rhs)</td></tr>
-<tr class="separator:a9ab240490b7e06b8408ba5373dbc2335"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a399459b4ccae56530465c950a9ffdf96"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a399459b4ccae56530465c950a9ffdf96">freetensor::uni</a> (const PBMap &amp;lhs, PBMap &amp;&amp;rhs)</td></tr>
-<tr class="separator:a399459b4ccae56530465c950a9ffdf96"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a87423db1607f44957e6978787572ff23"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a87423db1607f44957e6978787572ff23">freetensor::uni</a> (PBMap &amp;&amp;lhs, const PBMap &amp;rhs)</td></tr>
-<tr class="separator:a87423db1607f44957e6978787572ff23"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab7a511d5fed5fcfa90b219240d84a654"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab7a511d5fed5fcfa90b219240d84a654">freetensor::uni</a> (const PBMap &amp;lhs, const PBMap &amp;rhs)</td></tr>
-<tr class="separator:ab7a511d5fed5fcfa90b219240d84a654"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7176ff0cceb2b03fe51b05a780cc479e"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7176ff0cceb2b03fe51b05a780cc479e">freetensor::apply</a> (PBSet &amp;&amp;lhs, PBMap &amp;&amp;rhs)</td></tr>
-<tr class="separator:a7176ff0cceb2b03fe51b05a780cc479e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2c2a55e16def4fe133937272e494f970"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2c2a55e16def4fe133937272e494f970">freetensor::apply</a> (const PBSet &amp;lhs, PBMap &amp;&amp;rhs)</td></tr>
-<tr class="separator:a2c2a55e16def4fe133937272e494f970"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa2b750814af26fbaadbfe1a8e7369cbf"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa2b750814af26fbaadbfe1a8e7369cbf">freetensor::apply</a> (PBSet &amp;&amp;lhs, const PBMap &amp;rhs)</td></tr>
-<tr class="separator:aa2b750814af26fbaadbfe1a8e7369cbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf6eaead2ad99ce65aaed1dbb9ba882a"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adf6eaead2ad99ce65aaed1dbb9ba882a">freetensor::apply</a> (const PBSet &amp;lhs, const PBMap &amp;rhs)</td></tr>
-<tr class="separator:adf6eaead2ad99ce65aaed1dbb9ba882a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad3463ce5392bd5712a34f6b5a637771d"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad3463ce5392bd5712a34f6b5a637771d">freetensor::applyDomain</a> (PBMap &amp;&amp;lhs, PBMap &amp;&amp;rhs)</td></tr>
-<tr class="separator:ad3463ce5392bd5712a34f6b5a637771d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd96b1ac57471cfa9ab61008bf7e9895"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#acd96b1ac57471cfa9ab61008bf7e9895">freetensor::applyDomain</a> (const PBMap &amp;lhs, PBMap &amp;&amp;rhs)</td></tr>
-<tr class="separator:acd96b1ac57471cfa9ab61008bf7e9895"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a23cbad0e93db77546c0a2a3b72d9ae20"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a23cbad0e93db77546c0a2a3b72d9ae20">freetensor::applyDomain</a> (PBMap &amp;&amp;lhs, const PBMap &amp;rhs)</td></tr>
-<tr class="separator:a23cbad0e93db77546c0a2a3b72d9ae20"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae6559e31701f4e8df9cbf5041adce148"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae6559e31701f4e8df9cbf5041adce148">freetensor::applyDomain</a> (const PBMap &amp;lhs, const PBMap &amp;rhs)</td></tr>
-<tr class="separator:ae6559e31701f4e8df9cbf5041adce148"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afb4e23c8c1de61f485f68df815a19bd5"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afb4e23c8c1de61f485f68df815a19bd5">freetensor::applyRange</a> (PBMap &amp;&amp;lhs, PBMap &amp;&amp;rhs)</td></tr>
-<tr class="separator:afb4e23c8c1de61f485f68df815a19bd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a03fb6c266257a6441b9273188c01ab39"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a03fb6c266257a6441b9273188c01ab39">freetensor::applyRange</a> (const PBMap &amp;lhs, PBMap &amp;&amp;rhs)</td></tr>
-<tr class="separator:a03fb6c266257a6441b9273188c01ab39"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a26fc29ec43dba9316a6d1947a6cc5369"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a26fc29ec43dba9316a6d1947a6cc5369">freetensor::applyRange</a> (PBMap &amp;&amp;lhs, const PBMap &amp;rhs)</td></tr>
-<tr class="separator:a26fc29ec43dba9316a6d1947a6cc5369"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a05c53768906c2336a02d85014270bcd9"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a05c53768906c2336a02d85014270bcd9">freetensor::applyRange</a> (const PBMap &amp;lhs, const PBMap &amp;rhs)</td></tr>
-<tr class="separator:a05c53768906c2336a02d85014270bcd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7786896e2f620c6401e98e350e5f865e"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7786896e2f620c6401e98e350e5f865e">freetensor::lexmax</a> (PBMap &amp;&amp;map)</td></tr>
-<tr class="separator:a7786896e2f620c6401e98e350e5f865e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a09e5180626a20710639655a451a72f85"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a09e5180626a20710639655a451a72f85">freetensor::lexmax</a> (const PBMap &amp;map)</td></tr>
-<tr class="separator:a09e5180626a20710639655a451a72f85"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeff1bc1e2a156cb945c5c9b7bd01b008"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aeff1bc1e2a156cb945c5c9b7bd01b008">freetensor::lexmin</a> (PBMap &amp;&amp;map)</td></tr>
-<tr class="separator:aeff1bc1e2a156cb945c5c9b7bd01b008"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaf02a8a8b982577e51087a290b123112"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aaf02a8a8b982577e51087a290b123112">freetensor::lexmin</a> (const PBMap &amp;map)</td></tr>
-<tr class="separator:aaf02a8a8b982577e51087a290b123112"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a88a247c808bff362260d2d38818ff184"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a88a247c808bff362260d2d38818ff184">freetensor::identity</a> (PBSpace &amp;&amp;space)</td></tr>
-<tr class="separator:a88a247c808bff362260d2d38818ff184"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a11482ff5df783ba4c0d3b4fa90bbb2d0"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a11482ff5df783ba4c0d3b4fa90bbb2d0">freetensor::identity</a> (const PBSpace &amp;space)</td></tr>
-<tr class="separator:a11482ff5df783ba4c0d3b4fa90bbb2d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a15ce2727f3f794e1b5b8e4068f03932b"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a15ce2727f3f794e1b5b8e4068f03932b">freetensor::lexGE</a> (PBSpace &amp;&amp;space)</td></tr>
-<tr class="separator:a15ce2727f3f794e1b5b8e4068f03932b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a73f9b51ace7a2dee57217155a5b05672"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a73f9b51ace7a2dee57217155a5b05672">freetensor::lexGE</a> (const PBSpace &amp;space)</td></tr>
-<tr class="separator:a73f9b51ace7a2dee57217155a5b05672"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeec80842905abab79002273eef29e4de"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aeec80842905abab79002273eef29e4de">freetensor::lexGT</a> (PBSpace &amp;&amp;space)</td></tr>
-<tr class="separator:aeec80842905abab79002273eef29e4de"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3da88dfd20fdc5746eb20cb18ddaeba3"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3da88dfd20fdc5746eb20cb18ddaeba3">freetensor::lexGT</a> (const PBSpace &amp;space)</td></tr>
-<tr class="separator:a3da88dfd20fdc5746eb20cb18ddaeba3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11a1e5f63cec62dec254f06ac36765ea"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a11a1e5f63cec62dec254f06ac36765ea"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a11a1e5f63cec62dec254f06ac36765ea">freetensor::PBRefTake</a> (std::remove_reference_t&lt; T &gt; &amp;t)</td></tr>
+<tr class="separator:a11a1e5f63cec62dec254f06ac36765ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b34ae9ba8409e38bc3385a9047daf55"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a2b34ae9ba8409e38bc3385a9047daf55"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2b34ae9ba8409e38bc3385a9047daf55">freetensor::PBRefTake</a> (std::remove_reference_t&lt; T &gt; &amp;&amp;t)</td></tr>
+<tr class="separator:a2b34ae9ba8409e38bc3385a9047daf55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8625ab55342e821c0620e7621eb824e4"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:a8625ab55342e821c0620e7621eb824e4"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8625ab55342e821c0620e7621eb824e4">freetensor::complement</a> (T &amp;&amp;set)</td></tr>
+<tr class="separator:a8625ab55342e821c0620e7621eb824e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22d6ef21b292d683e3c05c6d875829f4"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a22d6ef21b292d683e3c05c6d875829f4"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a22d6ef21b292d683e3c05c6d875829f4">freetensor::complement</a> (T &amp;&amp;map)</td></tr>
+<tr class="separator:a22d6ef21b292d683e3c05c6d875829f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac51052feb41e27f118e813650296a260"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:ac51052feb41e27f118e813650296a260"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac51052feb41e27f118e813650296a260">freetensor::reverse</a> (T &amp;&amp;map)</td></tr>
+<tr class="separator:ac51052feb41e27f118e813650296a260"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaacae409bc0c53140bd949d272b15c4b"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T, PBMapRef U&gt; </td></tr>
+<tr class="memitem:aaacae409bc0c53140bd949d272b15c4b"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aaacae409bc0c53140bd949d272b15c4b">freetensor::subtract</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:aaacae409bc0c53140bd949d272b15c4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a408529dd5db4e3d5496f7bf922bd6f5a"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T, PBSetRef U&gt; </td></tr>
+<tr class="memitem:a408529dd5db4e3d5496f7bf922bd6f5a"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a408529dd5db4e3d5496f7bf922bd6f5a">freetensor::subtract</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:a408529dd5db4e3d5496f7bf922bd6f5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79b5a80b17ff64e004d9d9b367f11818"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T, PBMapRef U&gt; </td></tr>
+<tr class="memitem:a79b5a80b17ff64e004d9d9b367f11818"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a79b5a80b17ff64e004d9d9b367f11818">freetensor::intersect</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:a79b5a80b17ff64e004d9d9b367f11818"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34b6f757845e272d7d0c9ef61044064c"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T, PBSetRef U&gt; </td></tr>
+<tr class="memitem:a34b6f757845e272d7d0c9ef61044064c"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a34b6f757845e272d7d0c9ef61044064c">freetensor::intersect</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:a34b6f757845e272d7d0c9ef61044064c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa1a8f39c90fd721add82a2d0e3228432"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T, PBMapRef U&gt; </td></tr>
+<tr class="memitem:aa1a8f39c90fd721add82a2d0e3228432"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa1a8f39c90fd721add82a2d0e3228432">freetensor::uni</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:aa1a8f39c90fd721add82a2d0e3228432"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a72ad71770fd2211715907e3189e380d5"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T, PBMapRef U&gt; </td></tr>
+<tr class="memitem:a72ad71770fd2211715907e3189e380d5"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a72ad71770fd2211715907e3189e380d5">freetensor::apply</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:a72ad71770fd2211715907e3189e380d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a83f81cc7c8fa31b5a277c655482f515c"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T, PBMapRef U&gt; </td></tr>
+<tr class="memitem:a83f81cc7c8fa31b5a277c655482f515c"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a83f81cc7c8fa31b5a277c655482f515c">freetensor::applyDomain</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:a83f81cc7c8fa31b5a277c655482f515c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30f47d28e631e07b3df5991bed3f0baa"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T, PBMapRef U&gt; </td></tr>
+<tr class="memitem:a30f47d28e631e07b3df5991bed3f0baa"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a30f47d28e631e07b3df5991bed3f0baa">freetensor::applyRange</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:a30f47d28e631e07b3df5991bed3f0baa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d5c219de5dd8f06c21fbb3a8202c46b"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a9d5c219de5dd8f06c21fbb3a8202c46b"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9d5c219de5dd8f06c21fbb3a8202c46b">freetensor::lexmax</a> (T &amp;&amp;map)</td></tr>
+<tr class="separator:a9d5c219de5dd8f06c21fbb3a8202c46b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac18a36e225785f1e9750e7b2429a7dc1"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:ac18a36e225785f1e9750e7b2429a7dc1"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac18a36e225785f1e9750e7b2429a7dc1">freetensor::lexmin</a> (T &amp;&amp;map)</td></tr>
+<tr class="separator:ac18a36e225785f1e9750e7b2429a7dc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5714e61b29754a1a972d4fe6b32192a4"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
+<tr class="memitem:a5714e61b29754a1a972d4fe6b32192a4"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5714e61b29754a1a972d4fe6b32192a4">freetensor::identity</a> (T &amp;&amp;space)</td></tr>
+<tr class="separator:a5714e61b29754a1a972d4fe6b32192a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3946bd30d11fa49c3545f286d4245c7"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
+<tr class="memitem:ab3946bd30d11fa49c3545f286d4245c7"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab3946bd30d11fa49c3545f286d4245c7">freetensor::lexGE</a> (T &amp;&amp;space)</td></tr>
+<tr class="separator:ab3946bd30d11fa49c3545f286d4245c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a85005d102f7dd3de3f4161e590eb4e"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
+<tr class="memitem:a6a85005d102f7dd3de3f4161e590eb4e"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6a85005d102f7dd3de3f4161e590eb4e">freetensor::lexGT</a> (T &amp;&amp;space)</td></tr>
+<tr class="separator:a6a85005d102f7dd3de3f4161e590eb4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e7fa03d81a3dcdf18a7b4b9deeda08a"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
+<tr class="memitem:a6e7fa03d81a3dcdf18a7b4b9deeda08a"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6e7fa03d81a3dcdf18a7b4b9deeda08a">freetensor::lexLE</a> (T &amp;&amp;space)</td></tr>
+<tr class="separator:a6e7fa03d81a3dcdf18a7b4b9deeda08a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3840e240c886e699b1f3553f9aecb7b"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
+<tr class="memitem:ad3840e240c886e699b1f3553f9aecb7b"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad3840e240c886e699b1f3553f9aecb7b">freetensor::lexLT</a> (T &amp;&amp;space)</td></tr>
+<tr class="separator:ad3840e240c886e699b1f3553f9aecb7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1d2d4709487cad8349cec0eb39136d9a"><td class="memItemLeft" align="right" valign="top">PBSpace&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1d2d4709487cad8349cec0eb39136d9a">freetensor::spaceAlloc</a> (const PBCtx &amp;ctx, unsigned nparam, unsigned nIn, unsigned nOut)</td></tr>
 <tr class="separator:a1d2d4709487cad8349cec0eb39136d9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abb7be589a6efba17f869fc91ad22edbf"><td class="memItemLeft" align="right" valign="top">PBSpace&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#abb7be589a6efba17f869fc91ad22edbf">freetensor::spaceSetAlloc</a> (const PBCtx &amp;ctx, unsigned nparam, unsigned dim)</td></tr>
 <tr class="separator:abb7be589a6efba17f869fc91ad22edbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a110847918f4a78e2e22c34edd5984662"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a110847918f4a78e2e22c34edd5984662">freetensor::emptySet</a> (PBSpace &amp;&amp;space)</td></tr>
-<tr class="separator:a110847918f4a78e2e22c34edd5984662"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaaeafe2cb2b6cbd3712d15e713ce22e3"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aaaeafe2cb2b6cbd3712d15e713ce22e3">freetensor::emptySet</a> (const PBSpace &amp;space)</td></tr>
-<tr class="separator:aaaeafe2cb2b6cbd3712d15e713ce22e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a587daf798e648330283bf1d66f8e4c23"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a587daf798e648330283bf1d66f8e4c23">freetensor::emptyMap</a> (PBSpace &amp;&amp;space)</td></tr>
-<tr class="separator:a587daf798e648330283bf1d66f8e4c23"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae0f83eef3d2eb3cb00d2441f1bab8d0"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aae0f83eef3d2eb3cb00d2441f1bab8d0">freetensor::emptyMap</a> (const PBSpace &amp;space)</td></tr>
-<tr class="separator:aae0f83eef3d2eb3cb00d2441f1bab8d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94e14a06914df77499e436a97fdd7559"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a94e14a06914df77499e436a97fdd7559">freetensor::universeSet</a> (PBSpace &amp;&amp;space)</td></tr>
-<tr class="separator:a94e14a06914df77499e436a97fdd7559"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab790ad31cf17e56a7bc45d29744d0c2a"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab790ad31cf17e56a7bc45d29744d0c2a">freetensor::universeSet</a> (const PBSpace &amp;space)</td></tr>
-<tr class="separator:ab790ad31cf17e56a7bc45d29744d0c2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aafa700d6fe5731f69a8f05bd5c8c1974"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aafa700d6fe5731f69a8f05bd5c8c1974">freetensor::universeMap</a> (PBSpace &amp;&amp;space)</td></tr>
-<tr class="separator:aafa700d6fe5731f69a8f05bd5c8c1974"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a36ba67c8f32187834c97bfca1a9006ac"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a36ba67c8f32187834c97bfca1a9006ac">freetensor::universeMap</a> (const PBSpace &amp;space)</td></tr>
-<tr class="separator:a36ba67c8f32187834c97bfca1a9006ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0aff119f601d1bccee65e8a59566ee1f"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0aff119f601d1bccee65e8a59566ee1f">freetensor::domain</a> (PBMap &amp;&amp;map)</td></tr>
-<tr class="separator:a0aff119f601d1bccee65e8a59566ee1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a352dafef1607a64f0ca1c4966da66e5b"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a352dafef1607a64f0ca1c4966da66e5b">freetensor::domain</a> (const PBMap &amp;map)</td></tr>
-<tr class="separator:a352dafef1607a64f0ca1c4966da66e5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a103b43010631b355bba28157225335a1"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a103b43010631b355bba28157225335a1">freetensor::range</a> (PBMap &amp;&amp;map)</td></tr>
-<tr class="separator:a103b43010631b355bba28157225335a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a111425c4bbc5c0a17379a3559724a77a"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a111425c4bbc5c0a17379a3559724a77a">freetensor::range</a> (const PBMap &amp;map)</td></tr>
-<tr class="separator:a111425c4bbc5c0a17379a3559724a77a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa8adabde5ad99d2339697140c66e7444"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa8adabde5ad99d2339697140c66e7444">freetensor::coalesce</a> (PBSet &amp;&amp;set)</td></tr>
-<tr class="separator:aa8adabde5ad99d2339697140c66e7444"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ada2063ca10789209e783d174d5e9b894"><td class="memItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ada2063ca10789209e783d174d5e9b894">freetensor::coalesce</a> (const PBSet &amp;set)</td></tr>
-<tr class="separator:ada2063ca10789209e783d174d5e9b894"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7b7776db9d23dbc526da7aef1ab65b52"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7b7776db9d23dbc526da7aef1ab65b52">freetensor::coalesce</a> (PBMap &amp;&amp;map)</td></tr>
-<tr class="separator:a7b7776db9d23dbc526da7aef1ab65b52"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af383a28346c0d75f99f1508c487fa068"><td class="memItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af383a28346c0d75f99f1508c487fa068">freetensor::coalesce</a> (const PBMap &amp;map)</td></tr>
-<tr class="separator:af383a28346c0d75f99f1508c487fa068"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4a5a6672dd1321b5db09c4611670f2ec"><td class="memItemLeft" align="right" valign="top">PBVal&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4a5a6672dd1321b5db09c4611670f2ec">freetensor::dimMaxVal</a> (PBSet &amp;&amp;set, int pos)</td></tr>
-<tr class="separator:a4a5a6672dd1321b5db09c4611670f2ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abfb4f8e3d65fa08dfc0cd3fb43c67eb6"><td class="memItemLeft" align="right" valign="top">PBVal&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#abfb4f8e3d65fa08dfc0cd3fb43c67eb6">freetensor::dimMaxVal</a> (const PBSet &amp;set, int pos)</td></tr>
-<tr class="separator:abfb4f8e3d65fa08dfc0cd3fb43c67eb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a31cf0534eeb7460b852818a34a2dcc66"><td class="memItemLeft" align="right" valign="top">PBVal&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a31cf0534eeb7460b852818a34a2dcc66">freetensor::dimMinVal</a> (PBSet &amp;&amp;set, int pos)</td></tr>
-<tr class="separator:a31cf0534eeb7460b852818a34a2dcc66"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a384c513ac9f45ee409e0f7173f1b4136"><td class="memItemLeft" align="right" valign="top">PBVal&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a384c513ac9f45ee409e0f7173f1b4136">freetensor::dimMinVal</a> (const PBSet &amp;set, int pos)</td></tr>
-<tr class="separator:a384c513ac9f45ee409e0f7173f1b4136"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac686f9f3a08a7f68e278ddca8ffe49fc"><td class="memItemLeft" align="right" valign="top">PBSpace&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac686f9f3a08a7f68e278ddca8ffe49fc">freetensor::spaceMapFromSet</a> (PBSpace &amp;&amp;space)</td></tr>
-<tr class="separator:ac686f9f3a08a7f68e278ddca8ffe49fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17ffdd91e44001cd73c26f348b26bcf9"><td class="memItemLeft" align="right" valign="top">PBSpace&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a17ffdd91e44001cd73c26f348b26bcf9">freetensor::spaceMapFromSet</a> (const PBSpace &amp;space)</td></tr>
-<tr class="separator:a17ffdd91e44001cd73c26f348b26bcf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad016d7383650d0e09ffd6f8d75868caf"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
+<tr class="memitem:ad016d7383650d0e09ffd6f8d75868caf"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad016d7383650d0e09ffd6f8d75868caf">freetensor::emptySet</a> (T &amp;&amp;space)</td></tr>
+<tr class="separator:ad016d7383650d0e09ffd6f8d75868caf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bc922ecfac8f602bc8d04a30a1defe1"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
+<tr class="memitem:a8bc922ecfac8f602bc8d04a30a1defe1"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8bc922ecfac8f602bc8d04a30a1defe1">freetensor::emptyMap</a> (T &amp;&amp;space)</td></tr>
+<tr class="separator:a8bc922ecfac8f602bc8d04a30a1defe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa394ecdffe03ce0ce15292b868c291b8"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
+<tr class="memitem:aa394ecdffe03ce0ce15292b868c291b8"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa394ecdffe03ce0ce15292b868c291b8">freetensor::universeSet</a> (T &amp;&amp;space)</td></tr>
+<tr class="separator:aa394ecdffe03ce0ce15292b868c291b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5af415d2a157c0c5e24eab1690a64c3"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
+<tr class="memitem:ac5af415d2a157c0c5e24eab1690a64c3"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac5af415d2a157c0c5e24eab1690a64c3">freetensor::universeMap</a> (T &amp;&amp;space)</td></tr>
+<tr class="separator:ac5af415d2a157c0c5e24eab1690a64c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5fcddedc8eb400c5a71c0dbcfdb122c0"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a5fcddedc8eb400c5a71c0dbcfdb122c0"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5fcddedc8eb400c5a71c0dbcfdb122c0">freetensor::domain</a> (T &amp;&amp;map)</td></tr>
+<tr class="separator:a5fcddedc8eb400c5a71c0dbcfdb122c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acfaf93568b1c66993de575777d454184"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:acfaf93568b1c66993de575777d454184"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#acfaf93568b1c66993de575777d454184">freetensor::range</a> (T &amp;&amp;map)</td></tr>
+<tr class="separator:acfaf93568b1c66993de575777d454184"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae80b15ea357253d337ea9c84d92fdbb4"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:ae80b15ea357253d337ea9c84d92fdbb4"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae80b15ea357253d337ea9c84d92fdbb4">freetensor::coalesce</a> (T &amp;&amp;set)</td></tr>
+<tr class="separator:ae80b15ea357253d337ea9c84d92fdbb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea448474ad1a9a2ae34fe1cf6c0a8c20"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:aea448474ad1a9a2ae34fe1cf6c0a8c20"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aea448474ad1a9a2ae34fe1cf6c0a8c20">freetensor::coalesce</a> (T &amp;&amp;map)</td></tr>
+<tr class="separator:aea448474ad1a9a2ae34fe1cf6c0a8c20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7a9f850c3af8a172c0ada2cfe597aec"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:ad7a9f850c3af8a172c0ada2cfe597aec"><td class="memTemplItemLeft" align="right" valign="top">PBVal&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad7a9f850c3af8a172c0ada2cfe597aec">freetensor::dimMaxVal</a> (T &amp;&amp;set, int pos)</td></tr>
+<tr class="separator:ad7a9f850c3af8a172c0ada2cfe597aec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78e962c3fc44efd68c8271e9f0614dbf"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:a78e962c3fc44efd68c8271e9f0614dbf"><td class="memTemplItemLeft" align="right" valign="top">PBVal&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a78e962c3fc44efd68c8271e9f0614dbf">freetensor::dimMinVal</a> (T &amp;&amp;set, int pos)</td></tr>
+<tr class="separator:a78e962c3fc44efd68c8271e9f0614dbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c66105c843469e658a3948466a71094"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
+<tr class="memitem:a7c66105c843469e658a3948466a71094"><td class="memTemplItemLeft" align="right" valign="top">PBSpace&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7c66105c843469e658a3948466a71094">freetensor::spaceMapFromSet</a> (T &amp;&amp;space)</td></tr>
+<tr class="separator:a7c66105c843469e658a3948466a71094"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb7116b28332c5e953fc318f2e77e48c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afb7116b28332c5e953fc318f2e77e48c">freetensor::operator==</a> (const PBSet &amp;lhs, const PBSet &amp;rhs)</td></tr>
 <tr class="separator:afb7116b28332c5e953fc318f2e77e48c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29a0ea44021bb36284780e36a5e4951a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a29a0ea44021bb36284780e36a5e4951a">freetensor::operator==</a> (const PBMap &amp;lhs, const PBMap &amp;rhs)</td></tr>
