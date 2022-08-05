@@ -4,6 +4,7 @@ import queue
 import threading
 import time
 import copy
+import freetensor_ffi as ffi
 from typing import Any, List
 from typing import Dict
 '''
@@ -18,7 +19,8 @@ then check param
     0. logger
     1. broadcast availability
     2. return inavailability
-    3. new_task_request    
+    3. new_task_request  
+    4. check whether a task is in the execution queue 
 '''
 '''
 How does this part work:
@@ -119,6 +121,8 @@ class TaskRunner(threading.Thread):
         super().__init__()
 
     def run(self):
+        self.scheduler.append_to_execution_queue(self.task.src_server_uid,
+                                                 self.task.submit_uid)
         self.scheduler.execution_lock.acquire()
         return_val = self.task.run()
         self.scheduler.execution_lock.release()
@@ -136,6 +140,9 @@ class TaskRunner(threading.Thread):
             self.scheduler.server_list_lock.release()
             if tempbool:
                 self.scheduler.request_for_new_task_all()
+        time.sleep(10)
+        self.scheduler.remove_from_execution_queue(self.task.src_server_uid,
+                                                   self.task.submit_uid)
         # fetch tasks if there are too few tasks to execute
 
 
@@ -221,6 +228,22 @@ class MeasureTask(Task):
         self.block_end = run_times * len(_params)
         self.attached_params = _attached_params
 
+    @classmethod
+    def args_deserialization(attached_params: tuple, params: List) -> tuple:
+        target, device, args, kws = attached_params
+        return ((ffi.load_target(target), ffi.load_device(device),
+                 [ffi.load_array(array) for array in args
+                 ], {key: ffi.load_array(array) for key, array in kws.items()}),
+                [ffi.load_ast(func) for func in params])
+
+    @classmethod
+    def args_serialization(attached_params: tuple, params: List) -> tuple:
+        target, device, args, kws = attached_params
+        return ((ffi.dump_target(target), ffi.dump_device(device),
+                 [ffi.dump_array(array) for array in args
+                 ], {key: ffi.dump_array(array) for key, array in kws.items()}),
+                [ffi.dump_ast(func) for func in params])
+
     def split(self, _block_start: int, _block_end: int) -> Task:
         tempparams = []
         for i in range(_block_start // self.single_task_block_size,
@@ -247,7 +270,10 @@ class MeasureTask(Task):
             t = (tmplist1, tmplist2)
             return t
         else:
-            pass  #this part will use the measure method of cpp-python-bridge in remote machine
+            return ffi.rpc_measure(
+                rounds, warmups,
+                *(MeasureTask.args_deserialization(attached_params, sketches)))
+            #pass  #this part will use the measure method of cpp-python-bridge in remote machine
 
     def run(self) -> TaskResult:
         print("running")
@@ -417,15 +443,15 @@ class RemoteTaskScheduler(object):
     #server_uid: tuple[server_status, last_connection_time]
     available_server_list = set()
     #(available_server_uid)
-
     search_server_num: int = 0
     measure_server_num: int = 0
     server_list_lock = threading.Lock()
     #initialize from remote
     is_ready: bool = False
     self_server_uid: str
-    #the following are global command for tests:
-    REMOTE_TASK_SCHEDULER_GLOBAL_TEST: bool = False
+    #
+    execution_tasks: Dict[str:set] = {}
+    execution_tasks_check_lock = threading.Lock()
 
     #
 
@@ -586,6 +612,9 @@ class RemoteTaskScheduler(object):
                     self.submitted_task_container[tmp_submit_uid].convert2dict(
                     ), _server_uid) == 0:
                 tmptask.target_server_uid = _server_uid
+                self.remote_check_in_execution_queue(tmptask.src_server_uid,
+                                                     _server_uid,
+                                                     tmptask.submit_uid)
                 #if task is successfully sent, modify the target_server_uid
             else:
                 self.task_trans_submit2waiting(tmp_submit_uid)
@@ -595,13 +624,39 @@ class RemoteTaskScheduler(object):
             self.report_inavailability(_server_uid)
             #if no tasks are available, report inavailability
 
+    def remote_check_in_execution_queue(self, src_server_uid: str,
+                                        target_server_uid: str,
+                                        submit_uid: int) -> None:
+        pass
+        tmpdict: Dict = {
+            "task_type": 0,
+            "trans_c": 4,
+            "src_server_uid": src_server_uid,
+            "submit_uid": submit_uid
+        }
+        while True:
+            time.sleep(1)
+            if not (submit_uid in self.submitted_task_container):
+                return
+            else:
+                if self.send_tasks(tmpdict, target_server_uid) == 0:
+                    pass
+                else:
+                    self.task_trans_submit2waiting(submit_uid)
+                    return
+
     def result_submit(self, _server_uid: int, _task_result: TaskResult):
         self.send_results(_task_result.convert2dict(), _server_uid)
 
     def task_trans_submit2waiting(self, submit_uid: int):
         self.submitted_task_container_lock.acquire()
+        if not (submit_uid in self.submitted_task_container):
+            self.submitted_task_container_lock.release()
+            return
         tmptask = self.submitted_task_container.pop(submit_uid)
         self.submitted_task_container_lock.release()
+        submit_uid = self.submit_uid_assign()
+        tmptask.submit_uid = submit_uid
         self.tasks_waiting_to_submit_lock.acquire()
         self.tasks_waiting_to_submit[submit_uid] = tmptask
         self.tasks_waiting_to_submit_lock.release()
@@ -661,6 +716,35 @@ class RemoteTaskScheduler(object):
             t.start()
         self.server_list_lock.release()
 
+    def is_in_execution_queue(self, src_server_uid: str,
+                              submit_uid: int) -> int:
+        self.execution_tasks_check_lock.acquire()
+        retval = -1
+        if not (src_server_uid in self.execution_tasks):
+            self.execution_tasks_check_lock.release()
+            return -1
+        else:
+            tmpset = self.execution_tasks[src_server_uid]
+            if submit_uid in tmpset:
+                retval = 0
+        self.execution_tasks_check_lock.release()
+        return retval
+
+    def append_to_execution_queue(self, src_server_uid: str,
+                                  submit_uid: int) -> None:
+        self.execution_tasks_check_lock.acquire()
+        self.execution_tasks.setdefault(src_server_uid, set())
+        self.execution_tasks[src_server_uid].add(submit_uid)
+        self.execution_tasks_check_lock.release()
+
+    def remove_from_execution_queue(self, src_server_uid: str,
+                                    submit_uid: int) -> None:
+        self.execution_tasks_check_lock.acquire()
+        self.execution_tasks[src_server_uid].discard(submit_uid)
+        if len(self.execution_tasks[src_server_uid]) == 0:
+            self.execution_tasks.pop(src_server_uid)
+        self.execution_tasks_check_lock.release()
+
     def send_tasks(self, _task: Dict, server_uid: str) -> int:
         #time.sleep(0.001)
         if server_uid == "localhost":
@@ -684,8 +768,13 @@ class RemoteTaskScheduler(object):
             Sketches: List[str]) -> tuple[List[float], List[float]]:
         #the method used to submit measure task by cpp-python-bridge
         tmpuid = self.task_uid_assign()
-        tmptask = MeasureTask(tmpuid, rounds, warmups, attached_params,
-                              Sketches)
+        if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
+            tmptask = MeasureTask(tmpuid, rounds, warmups, attached_params,
+                                  Sketches)
+        else:
+            tmptask = MeasureTask(
+                tmpuid, rounds, warmups,
+                *(MeasureTask.args_serialization(attached_params, Sketches)))
         tmplock = threading.Event()
         self.task_register(tmptask, tmplock)
         tmplock.wait()
@@ -707,6 +796,9 @@ class RemoteTaskScheduler(object):
                 t = threading.Thread(target=self.task_submit,
                                      args=(src_host_uid,))
                 t.start()
+            elif task["trans_c"] == 4:
+                return self.is_in_execution_queue(task["src_server_uid"],
+                                                  task["submit_uid"])
         else:
             print("receiving")
             if task["task_type"] == 1:
