@@ -9,6 +9,9 @@ List = {}
 if os.path.exists('./machine_list'):
     os.remove('./machine_list')
 
+def check_connection():
+    return True
+
 def register_machine(remoteInfo):
     """机器注册函数，从每个机器拉取网络地址和端口并且分配uuid，同时更新每个机器的本地列表"""
     global List
@@ -76,6 +79,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
 
 server = SimpleXMLRPCServer(SocketName, allow_none=True)
 print("Receiving Message on %s:%d..." % (SocketName[0], SocketName[1]))
+server.register_function(check_connection)
 server.register_function(register_machine)
 server.register_function(task_submit)
 try:

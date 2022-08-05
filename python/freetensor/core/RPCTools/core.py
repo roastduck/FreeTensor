@@ -5,8 +5,9 @@ import socket, sys, time
 
 
 class RPCTool:
-    def __init__(self, addr, port = 8047): #参数是初始化时主服务器的地址
+    def __init__(self, addr = "127.0.0.1", port = 8047): #参数是初始化时主服务器的地址
         """初始化获取主机地址和端口以便分配UUID"""
+        self.UID = 'localhost' #当无中心服务器分配UID时默认本地运行，分配特殊UID:'localhost
         self.serverAddr = self.get_address()
         self.server = SimpleXMLRPCServer(self.serverAddr, allow_none = True)
         self.server.register_introspection_functions()
@@ -33,11 +34,16 @@ class RPCTool:
         for cnt in range(5):
             try:
                 server = client.ServerProxy(str(addr[0]) + ':' + str(addr[1]))
+                server.check_connection()
             except:
-                time.sleep(0.5)
+                time.sleep(0.1)
+                server = None
                 continue
             break
-        return server
+        if server:
+            return server
+        else:
+            raise Exception("Error failed to connect")
 
     def get_address(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -55,9 +61,8 @@ class RPCTool:
             self.UID = self.center_server.register_machine(self.serverAddr)
             print("Registered")
         except Exception as Er:
-            print("Register Failed")
             print(Er)
-            sys.exit(1)
+            print("Remote registering failed, running locally")
 
     def change_status(self, remote_host_uid, status, new_tag = False):
         print("Status Changed:" + remote_host_uid + " " + str(status))
@@ -67,12 +72,20 @@ class RPCTool:
             add_host(remote_host_uid, status)
 
     def remote_task_submit(self, remote_host_uid, task):
+        if remote_host_uid == "localhost":
+            return task_submit(remote_host_uid, self.UID, task)
         return self.center_server.task_submit(remote_host_uid, self.UID, task)
 
     def remote_result_submit(self, remote_host_uid, task_result):
+        if remote_host_uid == "localhost":
+            return result_submit(remote_host_uid, self.UID, task_result)
         return self.center_server.result_submit(remote_host_uid, self.UID, task_result)
 
 # def remove_host(uid):
 #     print("Host %s removed" % uid)
 # def add_host(uid, status):
 #     print("Added a host %s with status %s" % (uid, str(status)))
+# def task_submit(r_uid, l_uid, task):
+#     print("Submit a task from %s to %s" % (r_uid, l_uid))
+# def result_submit(r_uid, l_uid, result):
+#     print("Submit result from %s to %s" % (r_uid, l_uid))
