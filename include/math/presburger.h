@@ -299,238 +299,117 @@ class PBFunc {
     }
 };
 
-inline PBSet complement(PBSet &&set) {
-    DEBUG_PROFILE("complement");
-    return isl_set_complement(set.move());
+template <typename T>
+concept PBMapRef = std::same_as<PBMap, std::decay_t<T>>;
+template <typename T>
+concept PBValRef = std::same_as<PBVal, std::decay_t<T>>;
+template <typename T>
+concept PBSetRef = std::same_as<PBSet, std::decay_t<T>>;
+template <typename T>
+concept PBSpaceRef = std::same_as<PBSpace, std::decay_t<T>>;
+template <typename T>
+concept PBFuncRef = std::same_as<PBFunc, std::decay_t<T>>;
+
+template <typename T> auto PBRefTake(std::remove_reference_t<T> &t) {
+    return t.copy();
 }
-inline PBSet complement(const PBSet &set) {
-    DEBUG_PROFILE("complement");
-    return isl_set_complement(set.copy());
-}
-inline PBMap complement(PBMap &&map) {
-    DEBUG_PROFILE("complement");
-    return isl_map_complement(map.move());
-}
-inline PBMap complement(const PBMap &map) {
-    DEBUG_PROFILE("complement");
-    return isl_map_complement(map.copy());
+template <typename T> auto PBRefTake(std::remove_reference_t<T> &&t) {
+    static_assert(!std::is_lvalue_reference_v<T>); // similar to std::forward
+    return t.move();
 }
 
-inline PBMap reverse(PBMap &&map) {
+template <PBSetRef T> PBSet complement(T &&set) {
+    DEBUG_PROFILE("complement");
+    return isl_set_complement(PBRefTake<T>(set));
+}
+template <PBMapRef T> PBMap complement(T &&map) {
+    DEBUG_PROFILE("complement");
+    return isl_map_complement(PBRefTake<T>(map));
+}
+
+template <PBMapRef T> PBMap reverse(T &&map) {
     DEBUG_PROFILE("reverse");
-    return isl_map_reverse(map.move());
-}
-inline PBMap reverse(const PBMap &map) {
-    DEBUG_PROFILE("reverse");
-    return isl_map_reverse(map.copy());
+    return isl_map_reverse(PBRefTake<T>(map));
 }
 
-inline PBMap subtract(PBMap &&lhs, PBMap &&rhs) {
+template <PBMapRef T, PBMapRef U> PBMap subtract(T &&lhs, U &&rhs) {
     DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
                                           "," + std::to_string(rhs.nBasic()));
-    return isl_map_subtract(lhs.move(), rhs.move());
+    return isl_map_subtract(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
-inline PBMap subtract(const PBMap &lhs, PBMap &&rhs) {
+template <PBSetRef T, PBSetRef U> PBSet subtract(T &&lhs, U &&rhs) {
     DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
                                           "," + std::to_string(rhs.nBasic()));
-    return isl_map_subtract(lhs.copy(), rhs.move());
-}
-inline PBMap subtract(PBMap &&lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                          "," + std::to_string(rhs.nBasic()));
-    return isl_map_subtract(lhs.move(), rhs.copy());
-}
-inline PBMap subtract(const PBMap &lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                          "," + std::to_string(rhs.nBasic()));
-    return isl_map_subtract(lhs.copy(), rhs.copy());
-}
-inline PBSet subtract(PBSet &&lhs, PBSet &&rhs) {
-    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                          "," + std::to_string(rhs.nBasic()));
-    return isl_set_subtract(lhs.move(), rhs.move());
-}
-inline PBSet subtract(const PBSet &lhs, PBSet &&rhs) {
-    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                          "," + std::to_string(rhs.nBasic()));
-    return isl_set_subtract(lhs.copy(), rhs.move());
-}
-inline PBSet subtract(PBSet &&lhs, const PBSet &rhs) {
-    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                          "," + std::to_string(rhs.nBasic()));
-    return isl_set_subtract(lhs.move(), rhs.copy());
-}
-inline PBSet subtract(const PBSet &lhs, const PBSet &rhs) {
-    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                          "," + std::to_string(rhs.nBasic()));
-    return isl_set_subtract(lhs.copy(), rhs.copy());
+    return isl_set_subtract(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
-inline PBSet intersect(PBSet &&lhs, PBSet &&rhs) {
+template <PBMapRef T, PBMapRef U> PBMap intersect(T &&lhs, U &&rhs) {
     DEBUG_PROFILE_VERBOSE("intersect",
                           "nBasic=" + std::to_string(lhs.nBasic()) + "," +
                               std::to_string(rhs.nBasic()));
-    return isl_set_intersect(lhs.move(), rhs.move());
+    return isl_map_intersect(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
-inline PBSet intersect(const PBSet &lhs, PBSet &&rhs) {
+template <PBSetRef T, PBSetRef U> PBSet intersect(T &&lhs, U &&rhs) {
     DEBUG_PROFILE_VERBOSE("intersect",
                           "nBasic=" + std::to_string(lhs.nBasic()) + "," +
                               std::to_string(rhs.nBasic()));
-    return isl_set_intersect(lhs.copy(), rhs.move());
-}
-inline PBSet intersect(PBSet &&lhs, const PBSet &rhs) {
-    DEBUG_PROFILE_VERBOSE("intersect",
-                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
-                              std::to_string(rhs.nBasic()));
-    return isl_set_intersect(lhs.move(), rhs.copy());
-}
-inline PBSet intersect(const PBSet &lhs, const PBSet &rhs) {
-    DEBUG_PROFILE_VERBOSE("intersect",
-                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
-                              std::to_string(rhs.nBasic()));
-    return isl_set_intersect(lhs.copy(), rhs.copy());
+    return isl_set_intersect(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
-inline PBMap intersect(PBMap &&lhs, PBMap &&rhs) {
-    DEBUG_PROFILE_VERBOSE("intersect",
-                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
-                              std::to_string(rhs.nBasic()));
-    return isl_map_intersect(lhs.move(), rhs.move());
-}
-inline PBMap intersect(const PBMap &lhs, PBMap &&rhs) {
-    DEBUG_PROFILE_VERBOSE("intersect",
-                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
-                              std::to_string(rhs.nBasic()));
-    return isl_map_intersect(lhs.copy(), rhs.move());
-}
-inline PBMap intersect(PBMap &&lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("intersect",
-                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
-                              std::to_string(rhs.nBasic()));
-    return isl_map_intersect(lhs.move(), rhs.copy());
-}
-inline PBMap intersect(const PBMap &lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("intersect",
-                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
-                              std::to_string(rhs.nBasic()));
-    return isl_map_intersect(lhs.copy(), rhs.copy());
-}
-
-inline PBMap uni(PBMap &&lhs, PBMap &&rhs) {
+template <PBMapRef T, PBMapRef U> PBMap uni(T &&lhs, U &&rhs) {
     DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
                                      "," + std::to_string(rhs.nBasic()));
-    return isl_map_union(lhs.move(), rhs.move());
-}
-inline PBMap uni(const PBMap &lhs, PBMap &&rhs) {
-    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                     "," + std::to_string(rhs.nBasic()));
-    return isl_map_union(lhs.copy(), rhs.move());
-}
-inline PBMap uni(PBMap &&lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                     "," + std::to_string(rhs.nBasic()));
-    return isl_map_union(lhs.move(), rhs.copy());
-}
-inline PBMap uni(const PBMap &lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                     "," + std::to_string(rhs.nBasic()));
-    return isl_map_union(lhs.copy(), rhs.copy());
+    return isl_map_union(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
-inline PBSet apply(PBSet &&lhs, PBMap &&rhs) {
+template <PBSetRef T, PBMapRef U> PBSet apply(T &&lhs, U &&rhs) {
     DEBUG_PROFILE("apply");
-    return isl_set_apply(lhs.move(), rhs.move());
-}
-inline PBSet apply(const PBSet &lhs, PBMap &&rhs) {
-    DEBUG_PROFILE("apply");
-    return isl_set_apply(lhs.copy(), rhs.move());
-}
-inline PBSet apply(PBSet &&lhs, const PBMap &rhs) {
-    DEBUG_PROFILE("apply");
-    return isl_set_apply(lhs.move(), rhs.copy());
-}
-inline PBSet apply(const PBSet &lhs, const PBMap &rhs) {
-    DEBUG_PROFILE("apply");
-    return isl_set_apply(lhs.copy(), rhs.copy());
+    return isl_set_apply(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
-inline PBMap applyDomain(PBMap &&lhs, PBMap &&rhs) {
+template <PBMapRef T, PBMapRef U> PBMap applyDomain(T &&lhs, U &&rhs) {
     DEBUG_PROFILE("applyDomain");
-    return isl_map_apply_domain(lhs.move(), rhs.move());
-}
-inline PBMap applyDomain(const PBMap &lhs, PBMap &&rhs) {
-    DEBUG_PROFILE("applyDomain");
-    return isl_map_apply_domain(lhs.copy(), rhs.move());
-}
-inline PBMap applyDomain(PBMap &&lhs, const PBMap &rhs) {
-    DEBUG_PROFILE("applyDomain");
-    return isl_map_apply_domain(lhs.move(), rhs.copy());
-}
-inline PBMap applyDomain(const PBMap &lhs, const PBMap &rhs) {
-    DEBUG_PROFILE("applyDomain");
-    return isl_map_apply_domain(lhs.copy(), rhs.copy());
+    return isl_map_apply_domain(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
-inline PBMap applyRange(PBMap &&lhs, PBMap &&rhs) {
+template <PBMapRef T, PBMapRef U> PBMap applyRange(T &&lhs, U &&rhs) {
     DEBUG_PROFILE("applyRange");
-    return isl_map_apply_range(lhs.move(), rhs.move());
-}
-inline PBMap applyRange(const PBMap &lhs, PBMap &&rhs) {
-    DEBUG_PROFILE("applyRange");
-    return isl_map_apply_range(lhs.copy(), rhs.move());
-}
-inline PBMap applyRange(PBMap &&lhs, const PBMap &rhs) {
-    DEBUG_PROFILE("applyRange");
-    return isl_map_apply_range(lhs.move(), rhs.copy());
-}
-inline PBMap applyRange(const PBMap &lhs, const PBMap &rhs) {
-    DEBUG_PROFILE("applyRange");
-    return isl_map_apply_range(lhs.copy(), rhs.copy());
+    return isl_map_apply_range(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
-inline PBMap lexmax(PBMap &&map) {
+template <PBMapRef T> PBMap lexmax(T &&map) {
     DEBUG_PROFILE_VERBOSE("lexmax", "nBasic=" + std::to_string(map.nBasic()));
-    return isl_map_lexmax(map.move());
-}
-inline PBMap lexmax(const PBMap &map) {
-    DEBUG_PROFILE_VERBOSE("lexmax", "nBasic=" + std::to_string(map.nBasic()));
-    return isl_map_lexmax(map.copy());
+    return isl_map_lexmax(PBRefTake<T>(map));
 }
 
-inline PBMap lexmin(PBMap &&map) {
+template <PBMapRef T> PBMap lexmin(T &&map) {
     DEBUG_PROFILE_VERBOSE("lexmin", "nBasic=" + std::to_string(map.nBasic()));
-    return isl_map_lexmin(map.move());
-}
-inline PBMap lexmin(const PBMap &map) {
-    DEBUG_PROFILE_VERBOSE("lexmin", "nBasic=" + std::to_string(map.nBasic()));
-    return isl_map_lexmin(map.copy());
+    return isl_map_lexmin(PBRefTake<T>(map));
 }
 
-inline PBMap identity(PBSpace &&space) {
+template <PBSpaceRef T> PBMap identity(T &&space) {
     DEBUG_PROFILE("identity");
-    return isl_map_identity(space.move());
-}
-inline PBMap identity(const PBSpace &space) {
-    DEBUG_PROFILE("identity");
-    return isl_map_identity(space.copy());
+    return isl_map_identity(PBRefTake<T>(space));
 }
 
-inline PBMap lexGE(PBSpace &&space) {
+template <PBSpaceRef T> PBMap lexGE(T &&space) {
     DEBUG_PROFILE("lexGE");
-    return isl_map_lex_ge(space.move());
-}
-inline PBMap lexGE(const PBSpace &space) {
-    DEBUG_PROFILE("lexGE");
-    return isl_map_lex_ge(space.copy());
+    return isl_map_lex_ge(PBRefTake<T>(space));
 }
 
-inline PBMap lexGT(PBSpace &&space) {
+template <PBSpaceRef T> PBMap lexGT(T &&space) {
     DEBUG_PROFILE("lexGT");
-    return isl_map_lex_gt(space.move());
+    return isl_map_lex_gt(PBRefTake<T>(space));
 }
-inline PBMap lexGT(const PBSpace &space) {
-    DEBUG_PROFILE("lexGT");
-    return isl_map_lex_gt(space.copy());
+
+template <PBSpaceRef T> PBMap lexLE(T &&space) {
+    DEBUG_PROFILE("lexLE");
+    return isl_map_lex_le(PBRefTake<T>(space));
+}
+
+template <PBSpaceRef T> PBMap lexLT(T &&space) {
+    DEBUG_PROFILE("lexLT");
+    return isl_map_lex_lt(PBRefTake<T>(space));
 }
 
 inline PBMap lexLE(PBSpace &&space) {
@@ -560,73 +439,50 @@ inline PBSpace spaceSetAlloc(const PBCtx &ctx, unsigned nparam, unsigned dim) {
     return isl_space_set_alloc(ctx.get(), nparam, dim);
 }
 
-inline PBSet emptySet(PBSpace &&space) { return isl_set_empty(space.move()); }
-inline PBSet emptySet(const PBSpace &space) {
-    return isl_set_empty(space.copy());
+template <PBSpaceRef T> PBSet emptySet(T &&space) {
+    return isl_set_empty(PBRefTake<T>(space));
 }
 
-inline PBMap emptyMap(PBSpace &&space) { return isl_map_empty(space.move()); }
-inline PBMap emptyMap(const PBSpace &space) {
-    return isl_map_empty(space.copy());
+template <PBSpaceRef T> PBMap emptyMap(T &&space) {
+    return isl_map_empty(PBRefTake<T>(space));
 }
 
-inline PBSet universeSet(PBSpace &&space) {
-    return isl_set_universe(space.move());
-}
-inline PBSet universeSet(const PBSpace &space) {
-    return isl_set_universe(space.copy());
+template <PBSpaceRef T> PBSet universeSet(T &&space) {
+    return isl_set_universe(PBRefTake<T>(space));
 }
 
-inline PBMap universeMap(PBSpace &&space) {
-    return isl_map_universe(space.move());
-}
-inline PBMap universeMap(const PBSpace &space) {
-    return isl_map_universe(space.copy());
+template <PBSpaceRef T> PBMap universeMap(T &&space) {
+    return isl_map_universe(PBRefTake<T>(space));
 }
 
-inline PBSet domain(PBMap &&map) { return isl_map_domain(map.move()); }
-inline PBSet domain(const PBMap &map) { return isl_map_domain(map.copy()); }
+template <PBMapRef T> PBSet domain(T &&map) {
+    return isl_map_domain(PBRefTake<T>(map));
+}
 
-inline PBSet range(PBMap &&map) { return isl_map_range(map.move()); }
-inline PBSet range(const PBMap &map) { return isl_map_range(map.copy()); }
+template <PBMapRef T> PBSet range(T &&map) {
+    return isl_map_range(PBRefTake<T>(map));
+}
 
-inline PBSet coalesce(PBSet &&set) {
+template <PBSetRef T> PBSet coalesce(T &&set) {
     DEBUG_PROFILE("coalesce");
-    return isl_set_coalesce(set.move());
+    return isl_set_coalesce(PBRefTake<T>(set));
 }
-inline PBSet coalesce(const PBSet &set) {
+
+template <PBMapRef T> PBMap coalesce(T &&map) {
     DEBUG_PROFILE("coalesce");
-    return isl_set_coalesce(set.copy());
+    return isl_map_coalesce(PBRefTake<T>(map));
 }
 
-inline PBMap coalesce(PBMap &&map) {
-    DEBUG_PROFILE("coalesce");
-    return isl_map_coalesce(map.move());
-}
-inline PBMap coalesce(const PBMap &map) {
-    DEBUG_PROFILE("coalesce");
-    return isl_map_coalesce(map.copy());
+template <PBSetRef T> PBVal dimMaxVal(T &&set, int pos) {
+    return isl_set_dim_max_val(PBRefTake<T>(set), pos);
 }
 
-inline PBVal dimMaxVal(PBSet &&set, int pos) {
-    return isl_set_dim_max_val(set.move(), pos);
-}
-inline PBVal dimMaxVal(const PBSet &set, int pos) {
-    return isl_set_dim_max_val(set.copy(), pos);
+template <PBSetRef T> PBVal dimMinVal(T &&set, int pos) {
+    return isl_set_dim_min_val(PBRefTake<T>(set), pos);
 }
 
-inline PBVal dimMinVal(PBSet &&set, int pos) {
-    return isl_set_dim_min_val(set.move(), pos);
-}
-inline PBVal dimMinVal(const PBSet &set, int pos) {
-    return isl_set_dim_min_val(set.copy(), pos);
-}
-
-inline PBSpace spaceMapFromSet(PBSpace &&space) {
-    return isl_space_map_from_set(space.move());
-}
-inline PBSpace spaceMapFromSet(const PBSpace &space) {
-    return isl_space_map_from_set(space.copy());
+template <PBSpaceRef T> PBSpace spaceMapFromSet(T &&space) {
+    return isl_space_map_from_set(PBRefTake<T>(space));
 }
 
 inline bool operator==(const PBSet &lhs, const PBSet &rhs) {
