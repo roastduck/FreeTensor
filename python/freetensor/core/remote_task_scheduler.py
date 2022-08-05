@@ -132,7 +132,7 @@ class TaskRunner(threading.Thread):
         self.scheduler.execution_queue_cnt_lock.acquire()
         self.scheduler.execution_queue_cnt -= 1
         # run the task with the maintenance the execution_queue
-        is_new_task_required = bool(self.scheduler.execution_queue_cnt < 15)
+        is_new_task_required = bool(self.scheduler.execution_queue_cnt < 10)
         self.scheduler.execution_queue_cnt_lock.release()
         self.scheduler.result_submit(self.task.src_server_uid, return_val)
         print(self.scheduler.get_queue_len())
@@ -619,9 +619,11 @@ class RemoteTaskScheduler(object):
                     self.submitted_task_container[tmp_submit_uid].convert2dict(
                     ), _server_uid) == 0:
                 tmptask.target_server_uid = _server_uid
-                self.remote_check_in_execution_queue(tmptask.src_server_uid,
-                                                     _server_uid,
-                                                     tmptask.submit_uid)
+                tmpthread = threading.Thread(
+                    target=self.remote_check_in_execution_queue,
+                    args=(tmptask.src_server_uid, _server_uid,
+                          tmptask.submit_uid))
+                tmpthread.start()
                 #if task is successfully sent, modify the target_server_uid
             else:
                 self.task_trans_submit2waiting(tmp_submit_uid)
@@ -634,7 +636,6 @@ class RemoteTaskScheduler(object):
     def remote_check_in_execution_queue(self, src_server_uid: str,
                                         target_server_uid: str,
                                         submit_uid: int) -> None:
-        pass
         tmpdict: Dict = {
             "task_type": 0,
             "trans_c": 4,
@@ -642,7 +643,7 @@ class RemoteTaskScheduler(object):
             "submit_uid": submit_uid
         }
         while True:
-            time.sleep(1)
+            time.sleep(0.1)
             if not (submit_uid in self.submitted_task_container):
                 return
             else:
@@ -650,6 +651,7 @@ class RemoteTaskScheduler(object):
                     pass
                 else:
                     self.task_trans_submit2waiting(submit_uid)
+                    self.report_new_task()
                     return
 
     def result_submit(self, _server_uid: int, _task_result: TaskResult):
