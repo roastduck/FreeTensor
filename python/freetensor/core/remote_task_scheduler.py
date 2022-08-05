@@ -49,6 +49,7 @@ How does this part work:
 5. then the method in 1 returns the return value 
 
 '''
+REMOTE_TASK_SCHEDULER_GLOBAL_TEST: bool = False  #True means test mode
 
 
 class Task(object):  #the parent class of all tasks
@@ -212,6 +213,7 @@ class MeasureTask(Task):
         self.task_type = 2
         self.task_uid = _task_uid
         self.single_task_block_size = run_times
+        self.min_bundle_size = run_times
         self.warmup_rounds = _warmup_rounds
         self.params = _params
         self.block_start = 0
@@ -229,16 +231,20 @@ class MeasureTask(Task):
                               tempparams)
         subtask.block_start = _block_start
         subtask.block_end = _block_end
+        subtask.src_server_uid = self.src_server_uid
         return subtask
 
     def measure(self, rounds: int, warmups: int, attached_params: tuple,
                 sketches: List) -> tuple[List[float], List[float]]:
-        tmplist = []
-        time.sleep(1)
-        for k in sketches:
-            tmplist.append(0)
-        return (tmplist, copy.copy(tmplist))
-        pass  #this part will use the measure method of cpp-python-bridge in remote machine
+        if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
+            tmplist1 = []
+            tmplist2 = []
+            #time.sleep(0.1)
+            for k in sketches:
+                tmplist1.append(1)
+                tmplist2.append(0.1)
+            return (tmplist1, tmplist2)
+            pass  #this part will use the measure method of cpp-python-bridge in remote machine
 
     def run(self) -> TaskResult:
         print("running")
@@ -382,7 +388,7 @@ class RemoteTaskScheduler(object):
 
     tasks_waiting_to_submit: Dict[int, Task] = {}
     #
-    submit_lock_container: Dict[int, threading.Lock] = {
+    submit_lock_container: Dict[int, threading.Event] = {
     }  #stores the general lock of a task(in case it won't return an incomplete value)
     merge_lock_container: Dict[int, threading.Lock] = {}  #stores merge_lock
     task_block_counter: Dict[int,
@@ -415,10 +421,14 @@ class RemoteTaskScheduler(object):
     #initialize from remote
     is_ready: bool = False
     self_server_uid: str
+    #the following are global command for tests:
+    REMOTE_TASK_SCHEDULER_GLOBAL_TEST: bool = False
 
     #
+
     def __init__(self) -> None:
-        self.submit_queue_lock.acquire()
+        self.self_server_uid = "localhost"
+        self.add_host("localhost", 3)
         return
 
     def task_uid_assign(self) -> int:
@@ -461,40 +471,26 @@ class RemoteTaskScheduler(object):
         #small blocks in the end
         return splitted_tasks
 
-    def task_register(self, _task: Task, _lock: threading.Lock) -> None:
-        _lock.acquire()  #acquire the threadlock
+    def task_register(self, _task: Task, _lock: threading.Event) -> None:
+        _lock.clear()  #acquire the threadlock
 
-        self.submit_lock_container_lock.acquire()
         self.submit_lock_container[_task.task_uid] = _lock
-        self.submit_lock_container_lock.release()
         #put threadlock in submit_lock_container
-        if self.is_ready:
-            _task.src_server_uid = self.self_server_uid
-        else:
-            self.submit_queue_lock.acquire()
-            _task.src_server_uid = self.self_server_uid
-            self.submit_queue_lock.release()
+        _task.src_server_uid = self.self_server_uid
         #write src_server_uid to the task (if not initialized online and get self_server_uid, the process will be suspended)
 
-        self.merge_lock_container_lock.acquire()
         self.merge_lock_container[_task.task_uid] = threading.Lock()
-        self.merge_lock_container_lock.release()
         #construct a merge_lock
 
-        self.task_block_counter_lock.acquire()
         self.task_block_counter[
             _task.task_uid] = _task.block_end - _task.block_start
-        self.task_block_counter_lock.release()
         #construct task_block_counter
 
         temp = self.task_auto_split(_task)
         #split the task
 
-        self.task_result_container_lock.acquire()
         self.task_result_container[_task.task_uid] = _task.get_blank_result()
-        self.task_result_container_lock.release()
         #construct a blank result
-        self.tasks_waiting_to_submit_lock.acquire()
         for subtask in temp:
             subtask.submit_uid = self.submit_uid_assign()
             self.tasks_waiting_to_submit[subtask.submit_uid] = subtask
@@ -502,9 +498,7 @@ class RemoteTaskScheduler(object):
                 self.measure_queue.put(subtask.submit_uid)
             if subtask.task_type == 1:
                 self.search_queue.put(subtask.submit_uid)
-        self.tasks_waiting_to_submit_lock.release()
         #put these subtasks in submit queues
-
         self.report_new_task()
 
     def task_merge(self, _task_result: TaskResult) -> None:
@@ -537,7 +531,7 @@ class RemoteTaskScheduler(object):
         if self.task_block_counter[_task_result.task_uid] <= 0:
             self.merge_lock_container.pop(_task_result.task_uid)
             self.task_block_counter.pop(_task_result.task_uid)
-            self.submit_lock_container.pop(_task_result.task_uid).release()
+            self.submit_lock_container.pop(_task_result.task_uid).set()
         return
 
     def task_submit(self, _server_uid: str):
@@ -638,13 +632,13 @@ class RemoteTaskScheduler(object):
             task_type_list.append(2)
             if not (3 in task_type_list):
                 task_type_list.append(3)
-        #self.server_list_lock.acquire()
+        self.server_list_lock.acquire()
         for uidkey in self.server_list.keys():
             if self.server_list[uidkey][0] in task_type_list:
                 t = threading.Thread(target=self.send_tasks,
                                      args=(tmpdict, uidkey))
                 t.start()
-        #self.server_list_lock.release()
+        self.server_list_lock.release()
         print("availability reported")
 
     def request_for_new_task(self, _server_uid: str):
@@ -666,14 +660,20 @@ class RemoteTaskScheduler(object):
 
     def send_tasks(self, _task: Dict, server_uid: str) -> int:
         #time.sleep(0.001)
-        self.remote_task_receive(server_uid, _task)
-        return 0
-        pass
+        if server_uid == "localhost":
+            self.remote_task_receive(self.self_server_uid, _task)
+            return 0
+        else:
+            pass
         #this part will use the method in RPCTools
 
     def send_results(self, _taskresult: Dict, server_uid: str) -> None:
-        self.remote_result_receive(server_uid, _taskresult)
-        pass
+        if server_uid == "localhost":
+            self.remote_result_receive(self.self_server_uid, _taskresult)
+            return 0
+        else:
+            print("not available")
+            pass
         #this part will use the method in RPCTools
 
     def remote_measure_submit(
@@ -683,10 +683,9 @@ class RemoteTaskScheduler(object):
         tmpuid = self.task_uid_assign()
         tmptask = MeasureTask(tmpuid, rounds, warmups, attached_params,
                               Sketches)
-        tmplock = threading.Lock()
+        tmplock = threading.Event()
         self.task_register(tmptask, tmplock)
-        tmplock.acquire()
-        tmplock.release()
+        tmplock.wait()
         self.task_result_container_lock.acquire()
         tmpresult = self.task_result_container.pop(tmpuid).fetch()
         self.task_result_container_lock.release()
@@ -778,13 +777,11 @@ class RemoteTaskScheduler(object):
         if sev_status == 3:
             self.measure_server_num += 1
             self.search_server_num += 1
-        if (self.measure_server_num + self.search_server_num) < 3:
-            self.report_new_task()
         self.server_list_lock.release()
         #update the known server list
         tmpdict: Dict = {
             "task_type": 0,
-            "trans_c": 2,
+            "trans_c": 1,
             "time_stamp": time.time()
         }
         t = threading.Thread(target=self.send_tasks,
@@ -815,38 +812,3 @@ class RemoteTaskScheduler(object):
     def get_self_uid(self, server_uid: str) -> None:
         #online initialization
         self.self_server_uid = server_uid
-        if self.is_ready == False:
-            self.submit_queue_lock.release()
-            self.is_ready = True
-
-
-##################################################
-# the following are test code(can be used instantly)
-#Some functions are Some functions are populated to make testing possible
-'''
-rts = RemoteTaskScheduler()
-rts.get_self_uid("hello_test")
-
-
-def test_submit():
-    time.sleep(2)
-    rts.task_submit("hello_test")
-    time.sleep(5)
-    print(rts.get_queue_len())
-
-
-tmplist = []
-rts.add_host("hello_test", 3)
-for i in range(64):
-    tmplist.append(0)
-
-for i in range(1):
-    thread_test = threading.Thread(target=test_submit)
-    thread_test.start()
-#rts.task_submit("hello_test")
-
-rts.remote_measure_submit(100, 10, 0, tmplist)
-
-#K = MeasureTask(0,100,10,0,tmplist)
-#print(K.convert2dict())
-'''
