@@ -29,9 +29,11 @@ class Permute : public Mutator {
     Stmt visit(const For &op) override {
         if (op->id() == loopsId_.front()) {
             Stmt inner = op;
+            // the condition from PBFunc; if nothing, use true
             Expr condition = reversePermute_.cond_;
             if (!condition.isValid())
                 condition = makeBoolConst(true);
+            // iterate over the loops
             for (auto &&[i, l] : iter::enumerate(loopsId_)) {
                 // sanity check
                 ASSERT(inner->id() == l &&
@@ -53,8 +55,11 @@ class Permute : public Mutator {
                 iterReplacer_[innerFor->iter_] = reversePermute_.values_[i];
                 inner = innerFor->body_;
             }
+            // inner is now innermost->body_; transform `Var's in it
             inner = (*this)(inner);
+            // wrap with the conditions
             inner = makeIf(ID{}, condition, inner);
+            // wrap with the new loops
             for (auto &&newIter : iter::reversed(reversePermute_.args_)) {
                 inner = makeFor(ID{}, newIter, makeIntConst(INT32_MIN),
                                 makeIntConst(INT32_MAX), makeIntConst(1),
@@ -62,6 +67,7 @@ class Permute : public Mutator {
                                 Ref<ForProperty>::make(), inner);
                 permutedLoopsId_.push_front(inner->id());
             }
+            // clear replacing map, later `Var's won't be transformed
             iterReplacer_.clear();
             return inner;
         } else {
@@ -70,6 +76,7 @@ class Permute : public Mutator {
     }
 
     Expr visit(const Var &op) override {
+        // lookup the map; if exists, replace iter with provided expression
         if (iterReplacer_.find(op->name_) != iterReplacer_.end())
             return iterReplacer_[op->name_];
         return op;
@@ -225,10 +232,15 @@ std::pair<Stmt, std::vector<ID>> permute(
         .scope2CoordCallback(
             [&](const std::unordered_map<ID, std::vector<IterAxis>>
                     &scope2coord) {
+                // compute number of backing dimensions, outer than our
+                // outermost loop
                 numBackDims = scope2coord.at(loopsId[0]).size() - 1;
+                // sanity check: innermost should have exactly num. loops more
+                // axes
                 auto innerMostAxes = scope2coord.at(loopsId.back());
                 ASSERT(numBackDims + loops.size() == innerMostAxes.size());
 
+                // generate PB expr for realIter -> iter transformation
                 GenPBExpr genPBExpr;
                 std::ostringstream ossRaw, ossIter;
                 for (size_t i = numBackDims; i < innerMostAxes.size(); i++) {
@@ -239,28 +251,36 @@ std::pair<Stmt, std::vector<ID>> permute(
                     ossRaw << *genPBExpr.gen(innerMostAxes[i].realIter_);
                     ossIter << *genPBExpr.gen(innerMostAxes[i].iter_);
                 }
+                // use anonymous output variables in ISL
                 PBMap real2iter(pbCtx, "{[" + ossRaw.str() + "] -> [" +
                                            ossIter.str() + "]}");
+                // prepare iter -> permuted map string, for later use in `found'
                 iter2permuted =
                     toString(applyRange(reverse(real2iter), permuteMap));
             })
         .filterSubAST(loops.front()->id())(ast, [&](const Dependency &d) {
+            // Construct map for iter -> permuted
             auto iter2permutedMap = PBMap(d.presburger_, iter2permuted);
+            // laterIter -> permuted
             auto &&permuteMapLater = applyRange(
                 PBMap(d.presburger_,
                       getExtractDimMap(numBackDims, numBackDims + loops.size(),
                                        d.later_.iter_.size())),
                 iter2permutedMap);
+            // earlierIter -> permuted
             auto &&permuteMapEarlier = applyRange(
                 PBMap(d.presburger_,
                       getExtractDimMap(numBackDims, numBackDims + loops.size(),
                                        d.earlier_.iter_.size())),
                 iter2permutedMap);
+            // permuted(later) -> permuted(earlier)
             auto permutedLater2Earlier =
                 applyRange(applyDomain(d.later2EarlierIter_, permuteMapLater),
                            permuteMapEarlier);
+            // sanity check: two permuted should be in same space
             PBSpace space(range(permutedLater2Earlier));
             ASSERT(space == PBSpace(domain(permutedLater2Earlier)));
+            // should never have permuted(later) <= permuted(earlier)
             auto violated = intersect(permutedLater2Earlier, lexLE(space));
             if (!violated.empty())
                 throw InvalidSchedule(
@@ -268,11 +288,15 @@ std::pair<Stmt, std::vector<ID>> permute(
             //! TODO: more diagnostics
         });
 
+    // compute the function for reverse permute; we iterate against permuted
+    // space, thus we need to compute the original iterators from the new ones
     auto reversePermute =
         parseSimplePBFunc(toString(PBFunc(reverse(permuteMap))));
 
+    // perform transformation
     Permute permuter(loopsId, reversePermute);
     ast = permuter(ast);
+    // shrinkFor since we use INT_MIN:INT_MAX range in Permute
     ast = shrinkFor(ast);
 
     return {
