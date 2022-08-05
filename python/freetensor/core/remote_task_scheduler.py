@@ -134,7 +134,8 @@ class TaskRunner(threading.Thread):
         is_new_task_required = bool(self.scheduler.execution_queue_cnt < 10)
         self.scheduler.execution_queue_cnt_lock.release()
         self.scheduler.result_submit(self.task.src_server_uid, return_val)
-        print(self.scheduler.get_queue_len())
+        if self.scheduler.verbose > 0:
+            print(self.scheduler.get_queue_len())
         if is_new_task_required:
             self.scheduler.request_for_new_task_all()
             self.scheduler.server_list_lock.acquire()
@@ -280,7 +281,7 @@ class MeasureTask(Task):
             #pass  #this part will use the measure method of cpp-python-bridge in remote machine
 
     def run(self) -> TaskResult:
-        print("running")
+        #print("running")
         tmptaskresult = MeasureResult.get(self)
         start = self.block_start
         end = self.block_end
@@ -458,12 +459,15 @@ class RemoteTaskScheduler(object):
     execution_tasks_check_lock = threading.Lock()
     #the following are for diagnose use
     recalls: int = 0
+    #
+    verbose: int = 1
 
     #
 
     def __init__(self) -> None:
         self.self_server_uid = "localhost"
         self.add_host("localhost", 3)
+        self.verbose = 0
         return
 
     def task_uid_assign(self) -> int:
@@ -554,7 +558,8 @@ class RemoteTaskScheduler(object):
         self.task_block_counter[
             _task_result.
             task_uid] -= _task_result.block_end - _task_result.block_start
-        print(self.task_block_counter[_task_result.task_uid])
+        if self.verbose > 0:
+            print(self.task_block_counter[_task_result.task_uid])
         self.task_block_counter_lock.release()
         #merge_the_result
         self.task_result_container_lock.acquire()
@@ -571,7 +576,8 @@ class RemoteTaskScheduler(object):
 
     def task_submit(self, _server_uid: str):
         #automatically submit a task and balance the queue
-        print("submitting tasks to server: " + _server_uid)
+        if self.verbose > 0:
+            print("submitting tasks to server: " + _server_uid)
         task_availability: bool = False
         tmp_submit_uid: int
         if self.server_list[_server_uid][0] == 1:
@@ -675,7 +681,8 @@ class RemoteTaskScheduler(object):
             self.search_queue.put(submit_uid)
 
     def report_inavailability(self, _server_uid: str):
-        print("reporting inavailability")
+        if self.verbose > 0:
+            print("reporting inavailability")
         tmpdict: Dict = {
             "task_type": 0,
             "trans_c": 2,
@@ -685,7 +692,8 @@ class RemoteTaskScheduler(object):
 
     def report_new_task(self):
         #broadcast the information that new tasks are available to fetch
-        print("reporting availability")
+        if self.verbose > 0:
+            print("reporting availability")
         tmpdict: Dict = {
             "task_type": 0,
             "trans_c": 1,
@@ -706,7 +714,8 @@ class RemoteTaskScheduler(object):
                                      args=(tmpdict, uidkey))
                 t.start()
         self.server_list_lock.release()
-        print("availability reported")
+        if self.verbose > 0:
+            print("availability reported")
 
     def request_for_new_task(self, _server_uid: str):
         tmpdict: Dict = {
@@ -717,7 +726,8 @@ class RemoteTaskScheduler(object):
         self.send_tasks(tmpdict, _server_uid)
 
     def request_for_new_task_all(self):
-        print("requesting_tasks")
+        if self.verbose > 0:
+            print("requesting_tasks")
         self.server_list_lock.acquire()
         for server_uid in self.available_server_list:
             t = threading.Thread(target=self.request_for_new_task,
@@ -819,7 +829,8 @@ class RemoteTaskScheduler(object):
                 return self.is_in_execution_queue(task["src_server_uid"],
                                                   task["submit_uid"])
         else:
-            print("receiving")
+            if self.verbose > 0:
+                print("receiving")
             if task["task_type"] == 1:
                 pass
             elif task["task_type"] == 2:

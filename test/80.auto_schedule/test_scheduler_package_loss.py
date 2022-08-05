@@ -14,14 +14,14 @@ def measure_submit(rts: ft.RemoteTaskScheduler, tmplist):
 def test_full_function_with_package_loss():
     rts = ft.RemoteTaskScheduler()
     rts.change_into_test_mode()
-    rts.config_package_loss_rate(0.03)
-
+    rts.config_package_loss_rate(0.05)
+    rts.verbose = 0
     tmplist = []
 
     for i in range(64):
         tmplist.append(0)
 
-    for i in range(1000):
+    for i in range(100):
         thread_test = threading.Thread(target=measure_submit,
                                        args=(rts, tmplist))
         thread_test.start()
