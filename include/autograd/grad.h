@@ -12,7 +12,11 @@
 
 namespace freetensor {
 
-class PropagateRequire : public SymbolTable<Visitor> {
+/**
+ * Determine what variables we need to compute gradient for (propagete from
+ * inputs to outputs)
+ */
+class PropagateRequires : public SymbolTable<Visitor> {
     typedef SymbolTable<Visitor> BaseClass;
 
     const std::unordered_set<std::string> &requires_; // input var names
@@ -23,11 +27,50 @@ class PropagateRequire : public SymbolTable<Visitor> {
     ID curTarget_; // VarDef ID of current var being written to
 
   public:
-    PropagateRequire(const std::unordered_set<std::string> &_requires,
-                     const std::unordered_set<std::string> &provides)
+    PropagateRequires(const std::unordered_set<std::string> &_requires,
+                      const std::unordered_set<std::string> &provides)
         : requires_(_requires), provides_(provides) {}
 
     const std::unordered_set<ID> &affectedDefs() const { return affectedDefs_; }
+
+    static std::unordered_set<ID>
+    propagateUntilConverge(const Stmt &op,
+                           const std::unordered_set<std::string> &_requires,
+                           const std::unordered_set<std::string> &provides);
+
+  protected:
+    using BaseClass::visit;
+    void visit(const Load &op) override;
+    void visit(const Store &op) override;
+    void visit(const ReduceTo &op) override;
+    void visit(const VarDef &op) override;
+};
+
+/**
+ * Determine what variables we need to compute gradient for (propagete from
+ * outputs to inputs)
+ */
+class PropagateProvides : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
+
+    const std::unordered_set<std::string> &requires_; // input var names
+    const std::unordered_set<std::string> &provides_; // output var names
+
+    std::unordered_set<ID> affectedDefs_; // all VarDef IDs
+
+    ID curTarget_; // VarDef ID of current var being written to
+
+  public:
+    PropagateProvides(const std::unordered_set<std::string> &_requires,
+                      const std::unordered_set<std::string> &provides)
+        : requires_(_requires), provides_(provides) {}
+
+    const std::unordered_set<ID> &affectedDefs() const { return affectedDefs_; }
+
+    static std::unordered_set<ID>
+    propagateUntilConverge(const Stmt &op,
+                           const std::unordered_set<std::string> &_requires,
+                           const std::unordered_set<std::string> &provides);
 
   protected:
     using BaseClass::visit;
