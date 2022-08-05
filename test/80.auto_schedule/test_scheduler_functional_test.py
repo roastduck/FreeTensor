@@ -1,4 +1,3 @@
-from __future__ import annotations
 import freetensor as ft
 import threading
 import copy
@@ -8,8 +7,8 @@ def measure_submit(rts: ft.RemoteTaskScheduler, tmplist):
     tmptuple = rts.remote_measure_submit(100, 10, 0, copy.copy(tmplist))
     trange = len(tmptuple[0])
     for t in range(trange):
-        #assert tmptuple[0][t] == 1
-        #assert tmptuple[1][t] == 0.1
+        assert tmptuple[0][t] == 1
+        assert tmptuple[1][t] == 0.1
         t += 1
 
 
