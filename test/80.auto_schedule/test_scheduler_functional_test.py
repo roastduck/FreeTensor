@@ -9,7 +9,6 @@ def measure_submit(rts: ft.RemoteTaskScheduler, tmplist):
     for t in range(trange):
         assert tmptuple[0][t] == 1
         assert tmptuple[1][t] == 0.1
-        t += 1
 
 
 def test_full_function():
