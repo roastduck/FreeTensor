@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pickle import TRUE
 import queue
 import threading
 import time
@@ -240,7 +241,7 @@ class MeasureTask(Task):
             tmplist1 = []
             tmplist2 = []
             #time.sleep(0.1)
-            for k in sketches:
+            for k in range(len(sketches)):
                 tmplist1.append(1.0)
                 tmplist2.append(0.1)
             t = (tmplist1, tmplist2)
@@ -814,3 +815,7 @@ class RemoteTaskScheduler(object):
     def get_self_uid(self, server_uid: str) -> None:
         #online initialization
         self.self_server_uid = server_uid
+
+    def change_into_test_mode(self) -> None:
+        global REMOTE_TASK_SCHEDULER_GLOBAL_TEST
+        REMOTE_TASK_SCHEDULER_GLOBAL_TEST = True

@@ -12,8 +12,8 @@ def measure_submit(rts: ft.RemoteTaskScheduler, tmplist):
 
 
 def test_full_function():
-    ft.REMOTE_TASK_SCHEDULER_GLOBAL_TEST = True
     rts = ft.RemoteTaskScheduler()
+    rts.change_into_test_mode()
 
     tmplist = []
     #rts.add_host("hello_test1", 3)
@@ -25,6 +25,3 @@ def test_full_function():
         thread_test = threading.Thread(target=measure_submit,
                                        args=(rts, tmplist))
         thread_test.start()
-
-
-#test_full_function()
