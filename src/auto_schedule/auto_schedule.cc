@@ -41,11 +41,19 @@ AutoSchedule::AutoSchedule(
     const std::function<Predicts(const Features &)> &predictFunc,
     const std::function<void(const Features &, const Predicts &)> &updateFunc,
     std::string tag, int minBlockSize, std::optional<size_t> randomSeed,
-    const std::optional<std::unordered_set<std::string>> &ruleSet, int verbose)
+    const std::optional<std::unordered_set<std::string>> &ruleSet, int verbose,
+    const std::function<std::pair<std::vector<double>, std::vector<double>>(
+        int rounds, int warmups,
+        const std::tuple<const Ref<Target> &, const Ref<Device> &,
+                         const std::vector<Ref<Array>> &,
+                         const std::unordered_map<std::string, Ref<Array>> &>
+            &att,
+        const std::vector<Func> &funcs)> &remoteMeasureSubmit)
     : original_(schedule.fork()), target_(target), device_(device),
       paramsSet_(false), rng_(decideSeed(randomSeed, verbose)),
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)),
-      tag_(std::move(tag)), minBlockSize_(minBlockSize), verbose_(verbose) {
+      tag_(std::move(tag)), minBlockSize_(minBlockSize), verbose_(verbose),
+      remoteMeasureSubmit_(remoteMeasureSubmit) {
     flop_ = 0;
     auto opCnt =
         structuralFeature(original_.ast())[original_.ast()->id()].opCnt_;
@@ -87,14 +95,72 @@ void AutoSchedule::setParams(
 }
 
 std::pair<std::vector<double>, std::vector<double>>
+rpcMeasure(int rounds, int warmups, const Ref<Target> &target,
+           const Ref<Device> &device, const std::vector<Ref<Array>> &args,
+           const std::unordered_map<std::string, Ref<Array>> &kws,
+           const std::vector<Func> &funcs) {
+    size_t n = funcs.size();
+    std::vector<Ref<Driver>> drivers(n);
+#pragma omp parallel for schedule(dynamic)
+    for (size_t i = 0; i < n; i++) {
+        try {
+            auto lowered = funcs[i];
+            auto code = codeGen(lowered, target);
+            drivers[i] = Ref<Driver>::make(lowered, code, device);
+        } catch (const std::exception &e) {
+            // OpenMP threads won't report an exception message
+            std::cerr << "ERROR measure: " << e.what() << std::endl;
+            drivers[i] = nullptr;
+        }
+    }
+    std::vector<double> times, stddevs;
+    times.reserve(n);
+    stddevs.reserve(n);
+    for (size_t i = 0; i < n; i++) {
+        try {
+            if (!drivers[i].isValid()) {
+                times.emplace_back(INFINITY);
+                stddevs.emplace_back(0);
+                continue;
+            }
+            drivers[i]->setArgs(args, kws);
+            auto [avg, stddev] = drivers[i]->time(rounds, warmups);
+            times.emplace_back(avg);
+            stddevs.emplace_back(stddev);
+        } catch (const std::exception &e) {
+            // OpenMP threads won't report an exception message
+            std::cerr << "ERROR measure: " << e.what() << std::endl;
+            times.emplace_back(INFINITY);
+            stddevs.emplace_back(0);
+        }
+    }
+    return std::make_pair(times, stddevs);
+}
+
+std::pair<std::vector<double>, std::vector<double>>
 AutoSchedule::measure(const std::vector<Ref<Sketch>> &sketches) {
     // Compile in parallel, and measure sequentially
     // TODO: Parallel among computing nodes
 
+    size_t n = sketches.size();
+    if (remoteMeasureSubmit_) {
+        std::vector<Func> funcs(n);
+#pragma omp parallel for schedule(dynamic)
+        for (size_t i = 0; i < n; i++) {
+            try {
+                funcs[i] = sketches[i]->lowered();
+            } catch (const std::exception &e) {
+                // OpenMP threads won't report an exception message
+                std::cerr << "ERROR measure: " << e.what() << std::endl;
+            }
+        }
+        return remoteMeasureSubmit_(
+            100, 10, std::make_tuple(target_, device_, args_, kws_), funcs);
+    }
+
     if (verbose_ >= 1) {
         logger() << "Compiling code" << std::endl;
     }
-    size_t n = sketches.size();
     std::vector<Ref<Driver>> drivers(n);
 #pragma omp parallel for schedule(dynamic)
     for (size_t i = 0; i < n; i++) {
@@ -112,6 +178,7 @@ AutoSchedule::measure(const std::vector<Ref<Sketch>> &sketches) {
     if (verbose_ >= 1) {
         logger() << "Measuring time" << std::endl;
     }
+
     std::vector<double> times, stddevs;
     times.reserve(n);
     stddevs.reserve(n);
