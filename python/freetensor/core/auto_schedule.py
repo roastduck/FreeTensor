@@ -18,7 +18,8 @@ class AutoSchedule(ffi.AutoSchedule):
                  continue_training=False,
                  random_seed=None,
                  rule_set=None,
-                 verbose=0):
+                 verbose=0,
+                 remote_measure_submit=None):
         '''
         Automatic scheduler
 
@@ -58,6 +59,7 @@ class AutoSchedule(ffi.AutoSchedule):
             self.model = xgb.Booster()
             self.model.load_model(self.save_file_name)
         self.verbose = verbose
+        self.remote_measure_submit = remote_measure_submit
 
         def predict_func(features):
             return self.predict(features)
@@ -68,7 +70,7 @@ class AutoSchedule(ffi.AutoSchedule):
         super(AutoSchedule,
               self).__init__(schedule, target, device, predict_func,
                              update_func, tag, min_block_size, random_seed,
-                             rule_set, verbose)
+                             rule_set, verbose, remote_measure_submit)
 
     def set_params(self, *args, **kws):
         super(AutoSchedule, self).set_params(args, kws)
