@@ -65,7 +65,7 @@ def test_multiple_bounds():
                         y1[i, j] += b[j]
                         y2[i, j] += b[j]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['make_heap_alloc'])
 
     with ft.VarDef([("x", (10, 5), "int32", "input", "cpu"),
                     ("y1", (10, 5), "int32", "output", "cpu"),

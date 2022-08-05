@@ -5,9 +5,10 @@
 #include <cstring> // memset
 #include <dlfcn.h> // dlopen
 #include <fstream>
-#include <sys/stat.h> // mkdir
-#include <sys/wait.h> // waitpid
-#include <unistd.h>   // rmdir
+#include <sys/stat.h>    // mkdir
+#include <sys/syscall.h> // SYS_fork
+#include <sys/wait.h>    // waitpid
+#include <unistd.h>      // rmdir
 
 #include <itertools.hpp>
 
@@ -212,7 +213,12 @@ void Driver::buildAndLoad() {
         }
         argv.push_back(nullptr);
 
-        int pid = fork();
+        // We use the raw syscall instead of libc fork() here.
+        // This is because libc fork() processes the pthread_atfork() handlers,
+        // in which handlers from like OpenMP implementations will do something against
+        // potential broken states (e.g. mutexes) due to the fork().
+        // With raw syscall, we can avoid this.
+        int pid = syscall(SYS_fork);
         if (pid == 0) {
             execv(executable, const_cast<char *const *>(argv.data()));
             std::cerr << "Failed to execute " << executable << ": "
@@ -444,14 +450,12 @@ std::pair<double, double> Driver::time(int rounds, int warmups) {
 
 void Driver::unload() {
     func_ = nullptr;
-    // FIXME: How to safely close it? OpenMP won't kill its worker threads
-    // before it ends
-    /*if (dlHandle_) {
+    if (dlHandle_) {
         auto err = dlclose(dlHandle_);
         if (err) {
             WARNING("Unable to unload target code");
         }
-    }*/
+    }
 }
 
 } // namespace freetensor

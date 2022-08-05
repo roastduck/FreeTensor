@@ -6,10 +6,14 @@
 
 namespace freetensor {
 
-void CheckLoopOrder::visit(const For &op) {
+void CheckLoopOrder::visitStmt(const Stmt &stmt) {
     if (done_) {
         return;
     }
+    Visitor::visitStmt(stmt);
+}
+
+void CheckLoopOrder::visit(const For &op) {
     if (std::find(dstOrder_.begin(), dstOrder_.end(), op->id()) !=
         dstOrder_.end()) {
         curOrder_.emplace_back(op);
@@ -18,6 +22,7 @@ void CheckLoopOrder::visit(const For &op) {
         }
         if (!done_) {
             done_ = true;
+            outerLoops_ = outerLoopStack_;
             stmtSeqInBetween_ = stmtSeqStack_;
         }
         // done_ is to avoid such a program:
@@ -27,7 +32,9 @@ void CheckLoopOrder::visit(const For &op) {
         // }
     } else if (curOrder_.empty()) {
         // not yet started
+        outerLoopStack_.emplace_back(op);
         Visitor::visit(op);
+        outerLoopStack_.pop_back();
     }
 }
 

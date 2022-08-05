@@ -11,9 +11,11 @@ int ASTPart::depth() const {
 }
 
 size_t ASTPart::hash() {
+    lock();
     if (hash_ == ~0ull) {
         compHash();
     }
+    unlock();
     return hash_;
 }
 
