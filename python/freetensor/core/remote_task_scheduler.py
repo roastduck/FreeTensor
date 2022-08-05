@@ -7,6 +7,7 @@ import copy
 import freetensor_ffi as ffi
 from typing import Any, List
 from typing import Dict
+import random
 '''
 task_type is specified
 1.search_task
@@ -33,7 +34,7 @@ How does this part work:
 2. a worker receive the broadcast in 1.3, and update the server's availability
     if needed, the worker will send requests to all 
     available servers for new tasks (currently, it 
-    means the number tasks in execution queue < 5)
+    means the number tasks in execution queue < 10)
 
 3. the client receive the request in 2, and send tasks to the worker(one for a time),
     if no tasks are available, it will send
@@ -53,6 +54,8 @@ How does this part work:
 
 '''
 REMOTE_TASK_SCHEDULER_GLOBAL_TEST: bool = False  #True means test mode
+
+REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE = 0.0  #package loss rate(the possibility of losing a package)
 
 
 class Task(object):  #the parent class of all tasks
@@ -129,7 +132,7 @@ class TaskRunner(threading.Thread):
         self.scheduler.execution_queue_cnt_lock.acquire()
         self.scheduler.execution_queue_cnt -= 1
         # run the task with the maintenance the execution_queue
-        is_new_task_required = bool(self.scheduler.execution_queue_cnt < 5)
+        is_new_task_required = bool(self.scheduler.execution_queue_cnt < 15)
         self.scheduler.execution_queue_cnt_lock.release()
         self.scheduler.result_submit(self.task.src_server_uid, return_val)
         print(self.scheduler.get_queue_len())
@@ -139,6 +142,7 @@ class TaskRunner(threading.Thread):
             tempbool = bool(len(self.scheduler.available_server_list) < 3)
             self.scheduler.server_list_lock.release()
             if tempbool:
+                self.scheduler.request_for_new_task_all()
                 self.scheduler.request_for_new_task_all()
         time.sleep(10)
         self.scheduler.remove_from_execution_queue(self.task.src_server_uid,
@@ -229,7 +233,8 @@ class MeasureTask(Task):
         self.attached_params = _attached_params
 
     @classmethod
-    def args_deserialization(attached_params: tuple, params: List) -> tuple:
+    def args_deserialization(cls, attached_params: tuple,
+                             params: List) -> tuple:
         target, device, args, kws = attached_params
         return ((ffi.load_target(target), ffi.load_device(device),
                  [ffi.load_array(array) for array in args
@@ -237,7 +242,7 @@ class MeasureTask(Task):
                 [ffi.load_ast(func) for func in params])
 
     @classmethod
-    def args_serialization(attached_params: tuple, params: List) -> tuple:
+    def args_serialization(cls, attached_params: tuple, params: List) -> tuple:
         target, device, args, kws = attached_params
         return ((ffi.dump_target(target), ffi.dump_device(device),
                  [ffi.dump_array(array) for array in args
@@ -263,7 +268,7 @@ class MeasureTask(Task):
         if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
             tmplist1 = []
             tmplist2 = []
-            #time.sleep(0.1)
+            time.sleep(0.001)
             for k in range(len(sketches)):
                 tmplist1.append(1.0)
                 tmplist2.append(0.1)
@@ -302,7 +307,7 @@ class MeasureTask(Task):
         blend = blnow + (end - start) // self.single_task_block_size
         if blend > blnow:
             tmpresult1 = self.measure(self.single_task_block_size,
-                                      self.attached_params, self.warmup_rounds,
+                                      self.warmup_rounds, self.attached_params,
                                       self.params[blnow:blend])
             tmplist0 = tmpresult[0] + tmpresult1[0]
             tmplist1 = tmpresult[1] + tmpresult1[1]
@@ -452,6 +457,8 @@ class RemoteTaskScheduler(object):
     #
     execution_tasks: Dict[str:set] = {}
     execution_tasks_check_lock = threading.Lock()
+    #the following are for diagnose use
+    recalls: int = 0
 
     #
 
@@ -649,6 +656,7 @@ class RemoteTaskScheduler(object):
         self.send_results(_task_result.convert2dict(), _server_uid)
 
     def task_trans_submit2waiting(self, submit_uid: int):
+        self.recalls += 1
         self.submitted_task_container_lock.acquire()
         if not (submit_uid in self.submitted_task_container):
             self.submitted_task_container_lock.release()
@@ -747,6 +755,10 @@ class RemoteTaskScheduler(object):
 
     def send_tasks(self, _task: Dict, server_uid: str) -> int:
         #time.sleep(0.001)
+        if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
+            t = random.random()
+            if t < REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE:
+                return -1
         if server_uid == "localhost":
             self.remote_task_receive(self.self_server_uid, _task)
             return 0
@@ -755,6 +767,10 @@ class RemoteTaskScheduler(object):
         #this part will use the method in RPCTools
 
     def send_results(self, _taskresult: Dict, server_uid: str) -> None:
+        if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
+            t = random.random()
+            if t < REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE:
+                return
         if server_uid == "localhost":
             self.remote_result_receive(self.self_server_uid, _taskresult)
             return 0
@@ -816,7 +832,7 @@ class RemoteTaskScheduler(object):
                                             time_stamp)
             self.available_server_list.add(server_uid)
         self.server_list_lock.release()
-        if self.execution_queue_cnt < 5:
+        if self.execution_queue_cnt < 10:
             t = threading.Thread(target=self.request_for_new_task,
                                  args=(server_uid,))
             t.start()
@@ -911,3 +927,7 @@ class RemoteTaskScheduler(object):
     def change_into_test_mode(self) -> None:
         global REMOTE_TASK_SCHEDULER_GLOBAL_TEST
         REMOTE_TASK_SCHEDULER_GLOBAL_TEST = True
+
+    def config_package_loss_rate(self, rate: float) -> None:
+        global REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE
+        REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE = rate
