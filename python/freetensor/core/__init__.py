@@ -38,3 +38,4 @@ from .auto_schedule import *
 from .optimize import optimize
 
 from .task_scheduler import TaskScheduler
+from .remote_task_scheduler import *

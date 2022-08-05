@@ -244,6 +244,7 @@ class MeasureTask(Task):
                 tmplist1.append(1)
                 tmplist2.append(0.1)
             return (tmplist1, tmplist2)
+        else:
             pass  #this part will use the measure method of cpp-python-bridge in remote machine
 
     def run(self) -> TaskResult:
@@ -672,7 +673,7 @@ class RemoteTaskScheduler(object):
             self.remote_result_receive(self.self_server_uid, _taskresult)
             return 0
         else:
-            print("not available")
+            #print("not available")
             pass
         #this part will use the method in RPCTools
 
