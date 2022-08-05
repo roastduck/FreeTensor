@@ -94,11 +94,13 @@ void AutoSchedule::setParams(
     paramsSet_ = true;
 }
 
-std::pair<std::vector<double>, std::vector<double>>
-rpcMeasure(int rounds, int warmups, const Ref<Target> &target,
-           const Ref<Device> &device, const std::vector<Ref<Array>> &args,
-           const std::unordered_map<std::string, Ref<Array>> &kws,
-           const std::vector<Func> &funcs) {
+std::pair<std::vector<double>, std::vector<double>> rpcMeasure(
+    int rounds, int warmups,
+    const std::tuple<const Ref<Target> &, const Ref<Device> &,
+                     const std::vector<Ref<Array>> &,
+                     const std::unordered_map<std::string, Ref<Array>> &> &att,
+    const std::vector<Func> &funcs) {
+    auto &&[target, device, args, kws] = att;
     size_t n = funcs.size();
     std::vector<Ref<Driver>> drivers(n);
 #pragma omp parallel for schedule(dynamic)

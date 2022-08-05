@@ -51,8 +51,8 @@ void init_ffi_auto_schedule(py::module_ &m) {
         .def("get_flop", &AutoSchedule::getFlop)
         .def("get_tag", &AutoSchedule::getTag)
         .def("get_best_time", &AutoSchedule::getBestTime);
-    m.def("rpc_measure", &rpcMeasure, "rounds"_a, "warmups"_a, "target"_a,
-          "device"_a, "args"_a, "kws"_a, "funcs"_a);
+    m.def("rpc_measure", &rpcMeasure, "rounds"_a, "warmups"_a, "att"_a,
+          "funcs"_a);
 }
 
 } // namespace freetensor
