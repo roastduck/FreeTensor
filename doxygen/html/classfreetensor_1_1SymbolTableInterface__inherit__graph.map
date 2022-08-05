@@ -1,12 +1,12 @@
 <map id="freetensor::SymbolTableInterface" name="freetensor::SymbolTableInterface">
-<area shape="rect" id="node1" title=" " alt="" coords="5,1552,244,1579"/>
+<area shape="rect" id="node1" title=" " alt="" coords="5,1603,244,1629"/>
 <area shape="rect" id="node2" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="307,427,487,469"/>
-<area shape="rect" id="node20" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="307,1158,487,1199"/>
-<area shape="rect" id="node38" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="303,1479,492,1521"/>
-<area shape="rect" id="node40" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="307,1545,487,1586"/>
-<area shape="rect" id="node45" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="307,1610,487,1651"/>
-<area shape="rect" id="node46" href="$classfreetensor_1_1SymbolTableData.html" title=" " alt="" coords="292,1676,503,1703"/>
-<area shape="rect" id="node47" href="$classfreetensor_1_1Z3SimplifyWithSymbolTable.html" title=" " alt="" coords="299,1727,496,1769"/>
+<area shape="rect" id="node20" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="307,1190,487,1231"/>
+<area shape="rect" id="node39" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="303,1530,492,1571"/>
+<area shape="rect" id="node41" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="307,1595,487,1637"/>
+<area shape="rect" id="node45" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="307,1661,487,1702"/>
+<area shape="rect" id="node46" href="$classfreetensor_1_1SymbolTableData.html" title=" " alt="" coords="292,1727,503,1753"/>
+<area shape="rect" id="node47" href="$classfreetensor_1_1Z3SimplifyWithSymbolTable.html" title=" " alt="" coords="299,1778,496,1819"/>
 <area shape="rect" id="node3" href="$classfreetensor_1_1CompTransientBounds.html" title=" " alt="" coords="557,115,821,157"/>
 <area shape="rect" id="node9" href="$classfreetensor_1_1AddDimToVar.html" title=" " alt="" coords="597,181,781,208"/>
 <area shape="rect" id="node10" href="$classfreetensor_1_1AsMatMul.html" title=" " alt="" coords="608,232,771,259"/>
@@ -33,19 +33,19 @@
 <area shape="rect" id="node33" href="$classfreetensor_1_1FindIndexingLoops.html" title=" " alt="" coords="599,1190,779,1231"/>
 <area shape="rect" id="node34" href="$classfreetensor_1_1FindLoopInvariantWrites.html" title=" " alt="" coords="583,1255,796,1297"/>
 <area shape="rect" id="node35" href="$classfreetensor_1_1FindSingleElementWise.html" title=" " alt="" coords="564,1321,815,1348"/>
-<area shape="rect" id="node36" href="$classfreetensor_1_1PropagateRequire.html" title=" " alt="" coords="583,1372,796,1399"/>
-<area shape="rect" id="node37" href="$classfreetensor_1_1gpu_1_1FindSimplexOffset.html" title=" " alt="" coords="585,1423,794,1465"/>
+<area shape="rect" id="node36" href="$classfreetensor_1_1PropagateProvides.html" title=" " alt="" coords="580,1372,799,1399"/>
+<area shape="rect" id="node37" href="$classfreetensor_1_1PropagateRequires.html" title=" " alt="" coords="579,1423,799,1449"/>
+<area shape="rect" id="node38" href="$classfreetensor_1_1gpu_1_1FindSimplexOffset.html" title=" " alt="" coords="585,1474,794,1515"/>
 <area shape="rect" id="node22" href="$classfreetensor_1_1CodeGenC.html" title=" " alt="" coords="916,742,1081,783"/>
 <area shape="rect" id="node23" href="$classfreetensor_1_1PrintVisitor.html" title=" " alt="" coords="914,808,1083,835"/>
 <area shape="rect" id="node25" href="$classfreetensor_1_1CodeGenC.html" title=" " alt="" coords="901,863,1097,905"/>
 <area shape="rect" id="node27" href="$classfreetensor_1_1CompAccessBound.html" title=" " alt="" coords="888,933,1109,960"/>
 <area shape="rect" id="node28" href="$classfreetensor_1_1StructuralFeature.html" title=" " alt="" coords="894,984,1103,1011"/>
 <area shape="rect" id="node31" href="$classfreetensor_1_1CodeGenC.html" title=" " alt="" coords="916,1059,1081,1101"/>
-<area shape="rect" id="node39" href="$classfreetensor_1_1FindAccessPoint.html" title=" " alt="" coords="588,1489,791,1516"/>
-<area shape="rect" id="node41" href="$classfreetensor_1_1CompTransientBounds.html" title=" " alt="" coords="551,1541,828,1582"/>
-<area shape="rect" id="node43" href="$classfreetensor_1_1FloatSimplify.html" title=" " alt="" coords="598,1607,781,1633"/>
-<area shape="rect" id="node44" href="$classfreetensor_1_1ScalarPropConst.html" title=" " alt="" coords="588,1657,791,1684"/>
-<area shape="rect" id="node42" href="$classfreetensor_1_1SimplifyPass.html" title=" " alt="" coords="909,1548,1088,1575"/>
-<area shape="rect" id="node48" href="$classfreetensor_1_1MoveOutFirstOrLastIter.html" title=" " alt="" coords="597,1719,781,1761"/>
-<area shape="rect" id="node49" href="$classfreetensor_1_1gpu_1_1LowerVector.html" title=" " alt="" coords="585,1785,794,1812"/>
+<area shape="rect" id="node40" href="$classfreetensor_1_1FindAccessPoint.html" title=" " alt="" coords="588,1540,791,1567"/>
+<area shape="rect" id="node42" href="$classfreetensor_1_1CompTransientBounds.html" title=" " alt="" coords="551,1591,828,1633"/>
+<area shape="rect" id="node43" href="$classfreetensor_1_1FloatSimplify.html" title=" " alt="" coords="598,1657,781,1684"/>
+<area shape="rect" id="node44" href="$classfreetensor_1_1ScalarPropConst.html" title=" " alt="" coords="588,1708,791,1735"/>
+<area shape="rect" id="node48" href="$classfreetensor_1_1MoveOutFirstOrLastIter.html" title=" " alt="" coords="597,1770,781,1811"/>
+<area shape="rect" id="node49" href="$classfreetensor_1_1gpu_1_1LowerVector.html" title=" " alt="" coords="585,1836,794,1863"/>
 </map>

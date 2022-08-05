@@ -15,6 +15,7 @@ var searchData=
   ['pbval_12',['PBVal',['../classfreetensor_1_1PBVal.html',1,'freetensor']]],
   ['printvisitor_13',['PrintVisitor',['../classfreetensor_1_1PrintVisitor.html',1,'freetensor']]],
   ['programpositionhelper_14',['ProgramPositionHelper',['../structfreetensor_1_1ProgramPositionHelper.html',1,'freetensor']]],
-  ['propagaterequire_15',['PropagateRequire',['../classfreetensor_1_1PropagateRequire.html',1,'freetensor']]],
-  ['ptrinvocable_16',['PtrInvocable',['../classfreetensor_1_1PtrInvocable.html',1,'freetensor']]]
+  ['propagateprovides_15',['PropagateProvides',['../classfreetensor_1_1PropagateProvides.html',1,'freetensor']]],
+  ['propagaterequires_16',['PropagateRequires',['../classfreetensor_1_1PropagateRequires.html',1,'freetensor']]],
+  ['ptrinvocable_17',['PtrInvocable',['../classfreetensor_1_1PtrInvocable.html',1,'freetensor']]]
 ];
