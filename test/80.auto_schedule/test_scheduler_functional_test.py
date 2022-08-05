@@ -16,8 +16,8 @@ def test_full_function():
     rts = ft.RemoteTaskScheduler()
 
     tmplist = []
-    rts.add_host("hello_test1", 3)
-    rts.add_host("hello_test2", 3)
+    #rts.add_host("hello_test1", 3)
+    #rts.add_host("hello_test2", 3)
     for i in range(64):
         tmplist.append(0)
 
@@ -25,3 +25,6 @@ def test_full_function():
         thread_test = threading.Thread(target=measure_submit,
                                        args=(rts, tmplist))
         thread_test.start()
+
+
+#test_full_function()

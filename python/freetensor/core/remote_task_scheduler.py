@@ -241,9 +241,10 @@ class MeasureTask(Task):
             tmplist2 = []
             #time.sleep(0.1)
             for k in sketches:
-                tmplist1.append(1)
+                tmplist1.append(1.0)
                 tmplist2.append(0.1)
-            return (tmplist1, tmplist2)
+            t = (tmplist1, tmplist2)
+            return t
         else:
             pass  #this part will use the measure method of cpp-python-bridge in remote machine
 
