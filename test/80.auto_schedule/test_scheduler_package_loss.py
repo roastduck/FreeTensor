@@ -1,8 +1,6 @@
-import time
 import freetensor as ft
 import threading
 import copy
-import pytest
 
 
 def measure_submit(rts: ft.RemoteTaskScheduler, tmplist):
@@ -13,7 +11,6 @@ def measure_submit(rts: ft.RemoteTaskScheduler, tmplist):
         assert tmptuple[1][t] == 0.1
 
 
-@pytest.mark.timeout(60)
 def test_full_function_with_package_loss():
     rts = ft.RemoteTaskScheduler()
     rts.change_into_test_mode()
