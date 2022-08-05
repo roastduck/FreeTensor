@@ -748,6 +748,8 @@ class RemoteTaskScheduler(object):
     def remove_from_execution_queue(self, src_server_uid: str,
                                     submit_uid: int) -> None:
         self.execution_tasks_check_lock.acquire()
+        if not (src_server_uid in self.execution_tasks):
+            return
         self.execution_tasks[src_server_uid].discard(submit_uid)
         if len(self.execution_tasks[src_server_uid]) == 0:
             self.execution_tasks.pop(src_server_uid)
