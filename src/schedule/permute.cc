@@ -5,11 +5,76 @@
 #include <math/parse_pb_expr.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
+#include <pass/shrink_for.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/permute.h>
 #include <serialize/mangle.h>
 
 namespace freetensor {
+
+class Permute : public Mutator {
+    const std::vector<ID> &loopsId_;
+    const SimplePBFuncAST &reversePermute_;
+    std::unordered_map<std::string, Expr> iterReplacer_;
+    std::deque<ID> permutedLoopsId_;
+
+  public:
+    Permute(const std::vector<ID> &loopsId,
+            const SimplePBFuncAST &reversePermute)
+        : loopsId_(loopsId), reversePermute_(reversePermute), iterReplacer_() {}
+
+    const std::deque<ID> &permutedLoopsId() const { return permutedLoopsId_; }
+
+  protected:
+    Stmt visit(const For &op) override {
+        if (op->id() == loopsId_.front()) {
+            Stmt inner = op;
+            Expr condition = reversePermute_.cond_;
+            if (!condition.isValid())
+                condition = makeBoolConst(true);
+            for (auto &&[i, l] : iter::enumerate(loopsId_)) {
+                // sanity check
+                ASSERT(inner->id() == l &&
+                       inner->nodeType() == ASTNodeType::For);
+                auto innerFor = inner.as<ForNode>();
+                // construct condition
+                condition = makeLAnd(
+                    condition,
+                    makeIfExpr(makeGT(innerFor->step_, makeIntConst(0)),
+                               makeLAnd(makeLE(innerFor->begin_,
+                                               reversePermute_.values_[i]),
+                                        makeLT(reversePermute_.values_[i],
+                                               innerFor->end_)),
+                               makeLAnd(makeGE(innerFor->begin_,
+                                               reversePermute_.values_[i]),
+                                        makeGT(reversePermute_.values_[i],
+                                               innerFor->end_))));
+                // record expression to replace the iter Var
+                iterReplacer_[innerFor->iter_] = reversePermute_.values_[i];
+                inner = innerFor->body_;
+            }
+            inner = (*this)(inner);
+            inner = makeIf(ID{}, condition, inner);
+            for (auto &&newIter : iter::reversed(reversePermute_.args_)) {
+                inner = makeFor(ID{}, newIter, makeIntConst(INT32_MIN),
+                                makeIntConst(INT32_MAX), makeIntConst(1),
+                                makeIntConst(int64_t(INT32_MAX) - INT32_MIN),
+                                Ref<ForProperty>::make(), inner);
+                permutedLoopsId_.push_front(inner->id());
+            }
+            iterReplacer_.clear();
+            return inner;
+        } else {
+            return Mutator::visit(op);
+        }
+    }
+
+    Expr visit(const Var &op) override {
+        if (iterReplacer_.find(op->name_) != iterReplacer_.end())
+            return iterReplacer_[op->name_];
+        return op;
+    }
+};
 
 std::pair<Stmt, std::vector<ID>> permute(
     const Stmt &_ast, const std::vector<ID> &loopsId,
@@ -205,13 +270,14 @@ std::pair<Stmt, std::vector<ID>> permute(
 
     auto reversePermute =
         parseSimplePBFunc(toString(PBFunc(reverse(permuteMap))));
-    if (reversePermute.cond_.isValid())
-        throw InvalidSchedule(
-            "Reversed permutation with condition is not supported");
 
-    //! TODO: perform code transformation
+    Permute permuter(loopsId, reversePermute);
+    ast = permuter(ast);
+    ast = shrinkFor(ast);
 
-    return {ast, {}};
+    return {
+        ast,
+        {permuter.permutedLoopsId().begin(), permuter.permutedLoopsId().end()}};
 }
 
 } // namespace freetensor

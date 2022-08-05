@@ -999,7 +999,8 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
 
     FindAccessPoint accFinder(op, accFilter_);
     accFinder(op);
-    scope2CoordCallback_(accFinder.scope2coord());
+    if (scope2CoordCallback_)
+        scope2CoordCallback_(accFinder.scope2coord());
 
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
