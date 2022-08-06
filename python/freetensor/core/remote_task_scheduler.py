@@ -739,7 +739,12 @@ class RemoteTaskScheduler(object):
             "trans_c": 3,
             "time_stamp": time.time()
         }
-        self.send_tasks(tmpdict, _server_uid)
+        tries = 10
+        while tries > 0:
+            tries -= 1
+            if self.send_tasks(tmpdict, _server_uid) == 0:
+                return
+            time.sleep(0.1)
 
     def request_for_new_task_all(self):
         if self.verbose > 0:
