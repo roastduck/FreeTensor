@@ -461,6 +461,9 @@ class RemoteTaskScheduler(object):
     recalls: int = 0
     #
     verbose: int = 1
+    inavailability_counter_lock = threading.Lock()
+    inavailability_counter: int = 0
+    tmp_inavailability_counter: int = 0
 
     #
 
@@ -683,6 +686,14 @@ class RemoteTaskScheduler(object):
     def report_inavailability(self, _server_uid: str):
         if self.verbose > 0:
             print("reporting inavailability")
+        self.inavailability_counter_lock.acquire()
+        self.inavailability_counter += 1
+        self.tmp_inavailability_counter += 1
+        if (self.tmp_inavailability_counter < 10):
+            return
+        else:
+            self.tmp_inavailability_counter = 0
+        self.inavailability_counter_lock.release()
         tmpdict: Dict = {
             "task_type": 0,
             "trans_c": 2,

@@ -11,17 +11,22 @@ def measure_submit(rts: ft.RemoteTaskScheduler, tmplist):
         assert tmptuple[1][t] == 0.1
 
 
-def test_full_function():
+def test_full_function_with_package_loss():
     rts = ft.RemoteTaskScheduler()
     rts.change_into_test_mode()
-
+    rts.config_package_loss_rate(0.0)
+    rts.verbose = 0
     tmplist = []
-    #rts.add_host("hello_test1", 3)
-    #rts.add_host("hello_test2", 3)
+    tmpthreadlist = []
     for i in range(64):
         tmplist.append(0)
 
-    for i in range(10):
+    for i in range(100):
         thread_test = threading.Thread(target=measure_submit,
                                        args=(rts, tmplist))
         thread_test.start()
+        tmpthreadlist.append(thread_test)
+
+    for t in tmpthreadlist:
+        t.join()
+    print(rts.recalls)
