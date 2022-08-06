@@ -44,7 +44,7 @@ def test_full_function_with_delay():
     for i in range(64):
         tmplist.append(0)
 
-    for i in range(10):
+    for i in range(5):
         thread_test = threading.Thread(target=measure_submit,
                                        args=(rts, tmplist))
         thread_test.start()

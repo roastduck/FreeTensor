@@ -2,6 +2,7 @@ import freetensor as ft
 import threading
 import copy
 import time
+import pytest
 
 
 def measure_submit(rts: ft.RemoteTaskScheduler, tmplist):
@@ -14,7 +15,7 @@ def measure_submit(rts: ft.RemoteTaskScheduler, tmplist):
 
 def test_full_function_with_package_loss():
     ft.RemoteTaskScheduler.change_into_test_mode()
-    ft.RemoteTaskScheduler.config_package_loss_rate(0.01)
+    ft.RemoteTaskScheduler.config_package_loss_rate(0.001)
     ft.RemoteTaskScheduler.config_transmittion_delay(0.0)
     rts = ft.RemoteTaskScheduler()
     rts.verbose = 0
@@ -23,7 +24,7 @@ def test_full_function_with_package_loss():
     for i in range(640):
         tmplist.append(0)
 
-    for i in range(10):
+    for i in range(2):
         for j in range(1):
             thread_test = threading.Thread(target=measure_submit,
                                            args=(rts, tmplist))
@@ -38,9 +39,10 @@ def test_full_function_with_package_loss():
         time.sleep(0.1)
 
 
+#@pytest.mark.skip()
 def test_full_function_with_delay_and_package_loss():
     ft.RemoteTaskScheduler.change_into_test_mode()
-    ft.RemoteTaskScheduler.config_package_loss_rate(0.01)
+    ft.RemoteTaskScheduler.config_package_loss_rate(0.001)
     ft.RemoteTaskScheduler.config_transmittion_delay(0.04)
     rts = ft.RemoteTaskScheduler()
     rts.verbose = 0
@@ -48,13 +50,14 @@ def test_full_function_with_delay_and_package_loss():
     tmpthreadlist = []
     for i in range(64):
         tmplist.append(0)
+    for j in range(10):
+        for i in range(1):
+            thread_test = threading.Thread(target=measure_submit,
+                                           args=(rts, tmplist))
+            thread_test.start()
+            tmpthreadlist.append(thread_test)
 
-    for i in range(10):
-        thread_test = threading.Thread(target=measure_submit,
-                                       args=(rts, tmplist))
-        thread_test.start()
-        tmpthreadlist.append(thread_test)
+        for t in tmpthreadlist:
+            t.join()
 
-    for t in tmpthreadlist:
-        t.join()
-    print(rts.recalls)
+        print((rts.recalls, rts.inavailability_counter))

@@ -33,7 +33,7 @@ How does this part work:
 2. a worker receive the broadcast in 1.3, and update the server's availability
     if needed, the worker will send requests to all 
     available servers for new tasks (currently, it 
-    means the number tasks in execution queue < 10)
+    means the number tasks in execution queue < 5)
 
 3. the client receive the request in 2, and send tasks to the worker(one for a time),
     if no tasks are available, it will send
@@ -134,20 +134,15 @@ class TaskRunner(threading.Thread):
         self.scheduler.execution_queue_cnt_lock.acquire()
         self.scheduler.execution_queue_cnt -= 1
         # run the task with the maintenance the execution_queue
-        is_new_task_required = bool(self.scheduler.execution_queue_cnt < 10)
+        is_new_task_required = bool(self.scheduler.execution_queue_cnt < 5)
         self.scheduler.execution_queue_cnt_lock.release()
         self.scheduler.result_submit(self.task.src_server_uid, return_val)
         if self.scheduler.verbose > 0:
             print(self.scheduler.get_queue_len())
         if is_new_task_required:
-            self.scheduler.request_for_new_task(self.task.src_server_uid)
+            for i in range(2):
+                self.scheduler.request_for_new_task(self.task.src_server_uid)
             self.scheduler.request_for_new_task_all()
-            self.scheduler.server_list_lock.acquire()
-            tempbool = bool(len(self.scheduler.available_server_list) < 3)
-            self.scheduler.server_list_lock.release()
-            if tempbool:
-                self.scheduler.request_for_new_task_all()
-                self.scheduler.request_for_new_task_all()
         time.sleep(3)
         self.scheduler.remove_from_execution_queue(self.task.src_server_uid,
                                                    self.task.submit_uid)
@@ -272,7 +267,8 @@ class MeasureTask(Task):
         if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
             tmplist1 = []
             tmplist2 = []
-            #time.sleep(0.0001 * (rounds + warmups) * len(sketches))   //reserved for realistic tests
+            time.sleep(0.0002 * (rounds + warmups) *
+                       len(sketches))  #reserved for realistic tests
             for k in range(len(sketches)):
                 tmplist1.append(1.0)
                 tmplist2.append(0.1)
@@ -557,8 +553,8 @@ class RemoteTaskScheduler(object):
         #acquire the merge_lock
         self.merge_lock_container_lock.acquire()
         tmplock = self.merge_lock_container[_task_result.task_uid]
-        tmplock.acquire()
         self.merge_lock_container_lock.release()
+        tmplock.acquire()
         #update the counter
         self.task_block_counter_lock.acquire()
         self.task_block_counter[
@@ -627,9 +623,7 @@ class RemoteTaskScheduler(object):
             self.submitted_task_container[tmp_submit_uid] = tmptask
             self.submitted_task_container_lock.release()
 
-            if self.send_tasks(
-                    self.submitted_task_container[tmp_submit_uid].convert2dict(
-                    ), _server_uid) == 0:
+            if self.send_tasks(tmptask.convert2dict(), _server_uid) == 0:
                 tmptask.target_server_uid = _server_uid
                 tmpthread = threading.Thread(
                     target=self.remote_check_in_execution_queue,
@@ -656,13 +650,13 @@ class RemoteTaskScheduler(object):
         }
         time.sleep(3)
         while (submit_uid in self.submitted_task_container):
-            time.sleep(1)
             if self.send_tasks(tmpdict, target_server_uid) == 0:
                 pass
             else:
                 self.task_trans_submit2waiting(submit_uid)
                 self.report_new_task()
                 return
+            time.sleep(0.5)
 
     def result_submit(self, _server_uid: int, _task_result: TaskResult):
         self.send_results(_task_result.convert2dict(), _server_uid)
@@ -739,7 +733,7 @@ class RemoteTaskScheduler(object):
             "trans_c": 3,
             "time_stamp": time.time()
         }
-        tries = 10
+        tries = 15
         while tries > 0:
             tries -= 1
             if self.send_tasks(tmpdict, _server_uid) == 0:
@@ -874,18 +868,8 @@ class RemoteTaskScheduler(object):
             self.available_server_list[server_uid] = 40
         self.server_list_lock.release()
         tmp = self.execution_queue_cnt
-        if tmp < 5:
-            for i in range(2):
-                t = threading.Thread(target=self.request_for_new_task,
-                                     args=(server_uid,))
-                t.start()
-            if tmp == 0:
-                for i in range(3):
-                    t = threading.Thread(target=self.request_for_new_task,
-                                         args=(server_uid,))
-                    t.start()
-        else:
-            for i in range(1):
+        if tmp == 0:
+            for i in range(3):
                 t = threading.Thread(target=self.request_for_new_task,
                                      args=(server_uid,))
                 t.start()
@@ -900,7 +884,20 @@ class RemoteTaskScheduler(object):
                 self.available_server_list[server_uid] -= 1
                 if self.available_server_list[server_uid] < 0:
                     self.available_server_list.pop(server_uid)
+                    t = threading.Thread(target=self.rebuild_task_connection,
+                                         args=(server_uid,))
+                    t.start()
         self.server_list_lock.release()
+
+    def rebuild_task_connection(self, server_uid: str):
+        time.sleep(2)
+        tries = 15
+        while tries > 0:
+            tries -= 1
+            if server_uid in self.available_server_list:
+                return
+            self.request_for_new_task(server_uid)
+            time.sleep(0.1)
 
     def task_execution(self, task: Task):  #execute the task(from remote_server)
         tmprunner = TaskRunner(task, self)
