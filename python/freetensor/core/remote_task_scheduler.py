@@ -268,7 +268,7 @@ class MeasureTask(Task):
         if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
             tmplist1 = []
             tmplist2 = []
-            time.sleep(0.00001 * (rounds + warmups) * len(sketches))
+            #time.sleep(0.0001 * (rounds + warmups) * len(sketches))
             for k in range(len(sketches)):
                 tmplist1.append(1.0)
                 tmplist2.append(0.1)

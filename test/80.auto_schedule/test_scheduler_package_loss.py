@@ -14,7 +14,7 @@ def measure_submit(rts: ft.RemoteTaskScheduler, tmplist):
 def test_full_function_with_package_loss():
     rts = ft.RemoteTaskScheduler()
     rts.change_into_test_mode()
-    rts.config_package_loss_rate(0.03)
+    rts.config_package_loss_rate(0.1)
     rts.verbose = 0
     tmplist = []
     tmpthreadlist = []
