@@ -12,6 +12,7 @@ def measure_submit(rts: ft.RemoteTaskScheduler, tmplist):
         assert tmptuple[0][t] == 1
         assert tmptuple[1][t] == 0.1
 
+
 @pytest.mark.skip()
 def test_full_function_with_package_loss():
     ft.RemoteTaskScheduler.change_into_test_mode()
