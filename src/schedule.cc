@@ -29,6 +29,7 @@
 #include <schedule/merge.h>
 #include <schedule/multi_level_tiling.h>
 #include <schedule/parallelize.h>
+#include <schedule/permute.h>
 #include <schedule/reorder.h>
 #include <schedule/separate_tail.h>
 #include <schedule/set_mem_type.h>
@@ -152,6 +153,15 @@ ID Schedule::merge(const ID &loop1, const ID &loop2) {
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule(log, ast_, e.what());
     }
+}
+
+std::vector<ID> Schedule::permute(
+    const std::vector<ID> &loopsId,
+    const std::function<std::vector<Expr>(std::vector<Expr>)> &transformFunc) {
+    //! FIXME: put this into schedule logs
+    auto &&[ast, ids] = freetensor::permute(ast_, loopsId, transformFunc);
+    ast_ = ast;
+    return ids;
 }
 
 std::pair<Schedule::IDMap, Schedule::IDMap>

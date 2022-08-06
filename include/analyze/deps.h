@@ -450,6 +450,8 @@ class FindDeps {
     FindDepsAccFilter earlierFilter_ = nullptr;
     FindDepsAccFilter laterFilter_ = nullptr;
     FindDepsFilter filter_ = nullptr;
+    std::function<void(const std::unordered_map<ID, std::vector<IterAxis>> &)>
+        scope2CoordCallback_ = nullptr;
     bool ignoreReductionWAW_ = true;
     bool eraseOutsideVarDef_ = true;
     bool noProjectOutProvateAxis_ = false;
@@ -627,6 +629,15 @@ class FindDeps {
     FindDeps noProjectOutProvateAxis(bool flag) {
         FindDeps ret = *this;
         ret.noProjectOutProvateAxis_ = flag;
+        return ret;
+    }
+
+    FindDeps scope2CoordCallback(
+        std::function<
+            void(const std::unordered_map<ID, std::vector<IterAxis>> &)>
+            callback) {
+        FindDeps ret = *this;
+        ret.scope2CoordCallback_ = callback;
         return ret;
     }
 

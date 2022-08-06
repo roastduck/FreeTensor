@@ -999,9 +999,14 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
 
     FindAccessPoint accFinder(op, accFilter_);
     accFinder(op);
+    if (scope2CoordCallback_)
+        scope2CoordCallback_(accFinder.scope2coord());
+
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
+
     auto variantExpr = LAZY(findLoopVariance(op).first);
+
     AnalyzeDeps analyzer(
         accFinder.reads(), accFinder.writes(), accFinder.allDefs(),
         accFinder.scope2coord(), noDepsFinder.results(), variantExpr,

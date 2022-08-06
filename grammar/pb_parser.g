@@ -87,6 +87,10 @@ expr returns [Expr node]
       {
         $node = makeCeilDiv($expr0.node, $expr1.node);
       }
+    | intConst expr
+      {
+        $node = makeMul($intConst.node, $expr.node);
+      }
     | expr0=expr
       {int ty;} (
         '*' {ty = 1;}
