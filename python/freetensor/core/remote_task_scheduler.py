@@ -56,6 +56,8 @@ REMOTE_TASK_SCHEDULER_GLOBAL_TEST: bool = False  #True means test mode
 
 REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE = 0.0  #package loss rate(the possibility of losing a package)
 
+REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY = 0.000  #global delay(internet transmittion, in seconds)
+
 
 class Task(object):  #the parent class of all tasks
     src_server_uid: str = ""
@@ -126,6 +128,7 @@ class TaskRunner(threading.Thread):
         self.scheduler.append_to_execution_queue(self.task.src_server_uid,
                                                  self.task.submit_uid)
         self.scheduler.execution_lock.acquire()
+        #time.sleep(0.001)
         return_val = self.task.run()
         self.scheduler.execution_lock.release()
         self.scheduler.execution_queue_cnt_lock.acquire()
@@ -137,6 +140,7 @@ class TaskRunner(threading.Thread):
         if self.scheduler.verbose > 0:
             print(self.scheduler.get_queue_len())
         if is_new_task_required:
+            self.scheduler.request_for_new_task(self.task.src_server_uid)
             self.scheduler.request_for_new_task_all()
             self.scheduler.server_list_lock.acquire()
             tempbool = bool(len(self.scheduler.available_server_list) < 3)
@@ -144,7 +148,7 @@ class TaskRunner(threading.Thread):
             if tempbool:
                 self.scheduler.request_for_new_task_all()
                 self.scheduler.request_for_new_task_all()
-        time.sleep(10)
+        time.sleep(3)
         self.scheduler.remove_from_execution_queue(self.task.src_server_uid,
                                                    self.task.submit_uid)
         # fetch tasks if there are too few tasks to execute
@@ -268,7 +272,7 @@ class MeasureTask(Task):
         if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
             tmplist1 = []
             tmplist2 = []
-            #time.sleep(0.0001 * (rounds + warmups) * len(sketches))
+            #time.sleep(0.0001 * (rounds + warmups) * len(sketches))   //reserved for realistic tests
             for k in range(len(sketches)):
                 tmplist1.append(1.0)
                 tmplist2.append(0.1)
@@ -446,7 +450,7 @@ class RemoteTaskScheduler(object):
     #
     server_list: Dict[str:tuple[int, float]] = {}
     #server_uid: tuple[server_status, last_connection_time]
-    available_server_list = set()
+    available_server_list: Dict[str:int] = {}
     #(available_server_uid)
     search_server_num: int = 0
     measure_server_num: int = 0
@@ -463,7 +467,6 @@ class RemoteTaskScheduler(object):
     verbose: int = 1
     inavailability_counter_lock = threading.Lock()
     inavailability_counter: int = 0
-    tmp_inavailability_counter: int = 0
 
     #
 
@@ -618,11 +621,12 @@ class RemoteTaskScheduler(object):
         #for mixed worker
         if task_availability:
             self.tasks_waiting_to_submit_lock.acquire()
-            self.submitted_task_container_lock.acquire()
             tmptask = self.tasks_waiting_to_submit.pop(tmp_submit_uid)
+            self.tasks_waiting_to_submit_lock.release()
+            self.submitted_task_container_lock.acquire()
             self.submitted_task_container[tmp_submit_uid] = tmptask
             self.submitted_task_container_lock.release()
-            self.tasks_waiting_to_submit_lock.release()
+
             if self.send_tasks(
                     self.submitted_task_container[tmp_submit_uid].convert2dict(
                     ), _server_uid) == 0:
@@ -650,17 +654,15 @@ class RemoteTaskScheduler(object):
             "src_server_uid": src_server_uid,
             "submit_uid": submit_uid
         }
-        while True:
-            time.sleep(0.1)
-            if not (submit_uid in self.submitted_task_container):
-                return
+        time.sleep(3)
+        while (submit_uid in self.submitted_task_container):
+            time.sleep(1)
+            if self.send_tasks(tmpdict, target_server_uid) == 0:
+                pass
             else:
-                if self.send_tasks(tmpdict, target_server_uid) == 0:
-                    pass
-                else:
-                    self.task_trans_submit2waiting(submit_uid)
-                    self.report_new_task()
-                    return
+                self.task_trans_submit2waiting(submit_uid)
+                self.report_new_task()
+                return
 
     def result_submit(self, _server_uid: int, _task_result: TaskResult):
         self.send_results(_task_result.convert2dict(), _server_uid)
@@ -675,32 +677,34 @@ class RemoteTaskScheduler(object):
         self.submitted_task_container_lock.release()
         submit_uid = self.submit_uid_assign()
         tmptask.submit_uid = submit_uid
-        self.tasks_waiting_to_submit_lock.acquire()
+        #self.tasks_waiting_to_submit_lock.acquire()
         self.tasks_waiting_to_submit[submit_uid] = tmptask
-        self.tasks_waiting_to_submit_lock.release()
+        #self.tasks_waiting_to_submit_lock.release()
         if tmptask.task_type == 2:
             self.measure_queue.put(submit_uid)
         if tmptask.task_type == 1:
             self.search_queue.put(submit_uid)
 
     def report_inavailability(self, _server_uid: str):
-        self.inavailability_counter_lock.acquire()
-        self.inavailability_counter += 1
-        self.tmp_inavailability_counter += 1
-        if (self.tmp_inavailability_counter < 10):
-            self.inavailability_counter_lock.release()
-            return
-        else:
-            self.tmp_inavailability_counter = 0
-        self.inavailability_counter_lock.release()
-        if self.verbose > 0:
-            print("reporting inavailability")
         tmpdict: Dict = {
             "task_type": 0,
             "trans_c": 2,
             "time_stamp": time.time()
         }
+        self.inavailability_counter_lock.acquire()
+        self.inavailability_counter += 1
+        self.inavailability_counter_lock.release()
+        if self.verbose > 0:
+            print("reporting inavailability")
         self.send_tasks(tmpdict, _server_uid)
+
+    def report_availability(self, _server_uid: str, tmpdict: Dict):
+        tries = 10
+        while (tries > 0):
+            tries -= 1
+            if self.send_tasks(tmpdict, _server_uid) == 0:
+                return
+            time.sleep(0.001)
 
     def report_new_task(self):
         #broadcast the information that new tasks are available to fetch
@@ -722,8 +726,8 @@ class RemoteTaskScheduler(object):
         self.server_list_lock.acquire()
         for uidkey in self.server_list.keys():
             if self.server_list[uidkey][0] in task_type_list:
-                t = threading.Thread(target=self.send_tasks,
-                                     args=(tmpdict, uidkey))
+                t = threading.Thread(target=self.report_availability,
+                                     args=(uidkey, tmpdict))
                 t.start()
         self.server_list_lock.release()
         if self.verbose > 0:
@@ -741,7 +745,7 @@ class RemoteTaskScheduler(object):
         if self.verbose > 0:
             print("requesting_tasks")
         self.server_list_lock.acquire()
-        for server_uid in self.available_server_list:
+        for server_uid in self.available_server_list.keys():
             t = threading.Thread(target=self.request_for_new_task,
                                  args=(server_uid,))
             t.start()
@@ -779,19 +783,22 @@ class RemoteTaskScheduler(object):
         self.execution_tasks_check_lock.release()
 
     def send_tasks(self, _task: Dict, server_uid: str) -> int:
-        #time.sleep(0.001)
+        global REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY
+        time.sleep(REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY)
+        _task.setdefault("time_stamp", time.time())
         if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
             t = random.random()
             if t < REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE:
                 return -1
         if server_uid == "localhost":
-            self.remote_task_receive(self.self_server_uid, _task)
-            return 0
+            return self.remote_task_receive(self.self_server_uid, _task)
         else:
             pass
         #this part will use the method in RPCTools
 
     def send_results(self, _taskresult: Dict, server_uid: str) -> None:
+        global REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY
+        time.sleep(REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY)
         if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
             t = random.random()
             if t < REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE:
@@ -843,10 +850,12 @@ class RemoteTaskScheduler(object):
         else:
             if self.verbose > 0:
                 print("receiving")
+            self.update_availability(src_host_uid, task["time_stamp"])
             if task["task_type"] == 1:
                 pass
             elif task["task_type"] == 2:
                 tmptask = MeasureTask.dict2self(task)
+
             self.task_execution(tmptask)
         return 0
 
@@ -856,20 +865,36 @@ class RemoteTaskScheduler(object):
         if self.server_list[server_uid][1] < time_stamp:
             self.server_list[server_uid] = (self.server_list[server_uid][0],
                                             time_stamp)
-            self.available_server_list.add(server_uid)
+            #self.available_server_list.setdefault(server_uid, 20)
+            self.available_server_list[server_uid] = 40
         self.server_list_lock.release()
-        if self.execution_queue_cnt < 10:
-            t = threading.Thread(target=self.request_for_new_task,
-                                 args=(server_uid,))
-            t.start()
+        tmp = self.execution_queue_cnt
+        if tmp < 5:
+            for i in range(2):
+                t = threading.Thread(target=self.request_for_new_task,
+                                     args=(server_uid,))
+                t.start()
+            if tmp == 0:
+                for i in range(3):
+                    t = threading.Thread(target=self.request_for_new_task,
+                                         args=(server_uid,))
+                    t.start()
+        else:
+            for i in range(1):
+                t = threading.Thread(target=self.request_for_new_task,
+                                     args=(server_uid,))
+                t.start()
 
     def update_inavailability(self, server_uid: str, time_stamp: float):
         #remove the server from the available server list
         self.server_list_lock.acquire()
-        if self.server_list[server_uid][1] < time_stamp:
+        if self.server_list[server_uid][1] < (time_stamp - 1):
             self.server_list[server_uid] = (self.server_list[server_uid][0],
                                             time_stamp)
-            self.available_server_list.discard(server_uid)
+            if server_uid in self.available_server_list:
+                self.available_server_list[server_uid] -= 1
+                if self.available_server_list[server_uid] < 0:
+                    self.available_server_list.pop(server_uid)
         self.server_list_lock.release()
 
     def task_execution(self, task: Task):  #execute the task(from remote_server)
@@ -937,23 +962,34 @@ class RemoteTaskScheduler(object):
         if sev_status == 3:
             self.measure_server_num -= 1
             self.search_server_num -= 1
+        if server_uid in self.available_server_list:
+            self.available_server_list.pop(server_uid)
         self.server_list_lock.release()
+        '''
         self.submitted_task_container_lock.acquire()
         for key in self.submitted_task_container.keys():
             if self.submitted_task_container[
                     key].target_server_uid == server_uid:
                 self.task_trans_submit2waiting(key)
         self.submitted_task_container_lock.release()
-        #put the tasks submitted to the server back to the queue
+        '''
+        #put the tasks submitted to the server back to the queue(legacy, not sure whether removal should be done)
 
     def get_self_uid(self, server_uid: str) -> None:
         #online initialization
         self.self_server_uid = server_uid
 
-    def change_into_test_mode(self) -> None:
+    @classmethod
+    def change_into_test_mode(cls) -> None:
         global REMOTE_TASK_SCHEDULER_GLOBAL_TEST
         REMOTE_TASK_SCHEDULER_GLOBAL_TEST = True
 
-    def config_package_loss_rate(self, rate: float) -> None:
+    @classmethod
+    def config_package_loss_rate(cls, rate: float) -> None:
         global REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE
         REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE = rate
+
+    @classmethod
+    def config_transmittion_delay(cls, delay: float) -> None:
+        global REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY
+        REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY = delay
