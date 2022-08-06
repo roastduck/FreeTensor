@@ -77,8 +77,8 @@ class Permute : public Mutator {
 
     Expr visit(const Var &op) override {
         // lookup the map; if exists, replace iter with provided expression
-        if (iterReplacer_.find(op->name_) != iterReplacer_.end())
-            return iterReplacer_[op->name_];
+        if (auto it = iterReplacer_.find(op->name_); it != iterReplacer_.end())
+            return it->second;
         return op;
     }
 };

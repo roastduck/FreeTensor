@@ -1,5 +1,5 @@
-#ifndef FREE_TENSOR_LINEAR_REORDER_H
-#define FREE_TENSOR_LINEAR_REORDER_H
+#ifndef FREE_TENSOR_PERMUTE_H
+#define FREE_TENSOR_PERMUTE_H
 
 #include <string>
 #include <vector>
@@ -14,4 +14,4 @@ std::pair<Stmt, std::vector<ID>> permute(
 
 } // namespace freetensor
 
-#endif // FREE_TENSOR_LINEAR_REORDER_H
+#endif // FREE_TENSOR_PERMUTE_H
