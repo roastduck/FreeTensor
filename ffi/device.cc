@@ -1,6 +1,7 @@
 #include <vector>
 
 #include <driver/device.h>
+#include <driver/device_t.h>
 #include <ffi.h>
 
 namespace freetensor {
@@ -56,6 +57,44 @@ void init_ffi_device(py::module_ &m) {
         .def("__eq__", [](const Ref<Device> &lhs, const Ref<Device> &rhs) {
             return *lhs == *rhs;
         });
+
+    py::class_<Target_t, Ref<Target_t>> pyTarget_t(m, "Target_t");
+    pyTarget_t
+        .def("type", [](const Ref<Target_t> &target) { return target->type(); })
+        .def(
+            "set_use_native_arch",
+            [](const Ref<Target_t> &target, bool useNativeArch) {
+                target->setUseNativeArch(useNativeArch);
+            },
+            "useNativeArch"_a = true)
+        .def("use_native_arch", &Target_t::useNativeArch)
+        .def("__str__", &Target_t::toString)
+        .def("main_mem_type", &Target_t::mainMemType);
+
+#ifdef FT_WITH_CUDA
+    pyTarget_t.def("set_info_arch", &Target_t::setInfoArch)
+        .def("info_arch", &Target_t::infoArch);
+#endif // FT_WITH_CUDA
+
+    py::class_<CPU_t, Ref<CPU_t>>(m, "CPU_t", pyTarget_t)
+        .def(py::init([](bool useNativeArch) {
+                 return Ref<CPU_t>::make(useNativeArch);
+             }),
+             "use_native_arch"_a = true);
+    py::class_<GPU_t, Ref<GPU_t>>(m, "GPU_t", pyTarget_t)
+        .def(py::init([](bool useNativeArch) {
+                 return Ref<GPU_t>::make(useNativeArch);
+             }),
+             "use_native_arch"_a = true);
+
+    py::class_<Device_t, Ref<Device_t>>(m, "Device_t")
+        .def(py::init<const TargetType &, size_t>(), "targetType"_a,
+             "num"_a = 0)
+        .def(py::init<const TargetType &, const std::string &>(),
+             "targetType"_a, "getDeviceByName"_a)
+        .def("type", &Device_t::type)
+        .def("num", &Device_t::num)
+        .def("target", &Device_t::target);
 }
 
 } // namespace freetensor

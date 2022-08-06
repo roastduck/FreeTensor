@@ -1,65 +1,73 @@
-#ifndef FREE_TENSOR_TARGET_H
-#define FREE_TENSOR_TARGET_H
+#ifndef FREE_TENSOR_TARGET_T_H
+#define FREE_TENSOR_TARGET_T_H
 
 #include <string>
+
+#ifdef FT_WITH_CUDA
+#include <cuda_runtime.h>
+#endif
 
 #include <buffer.h>
 #include <driver/target_type.h>
 #include <opt.h>
+#include <ref.h>
 
 namespace freetensor {
 
 /**
  * Target architecture
  */
-class Target {
+class Target_t {
     bool useNativeArch_;
+#ifdef FT_WITH_CUDA
+    Ref<cudaDeviceProp> infoArch_;
+#endif // FT_WITH_CUDA
 
   public:
-    Target(bool useNativeArch = true) : useNativeArch_(useNativeArch) {}
+    Target_t(bool useNativeArch = true) : useNativeArch_(useNativeArch) {}
 
     void setUseNativeArch(bool useNativeArch = true) {
         useNativeArch_ = useNativeArch;
     }
     bool useNativeArch() const { return useNativeArch_; }
-
-    virtual ~Target() = default;
+    virtual ~Target_t() = default;
     virtual TargetType type() const = 0;
     virtual std::string toString() const = 0;
     virtual MemType mainMemType() const = 0;
+
+#ifdef FT_WITH_CUDA
+    void setInfoArch(const Ref<cudaDeviceProp> &infoArch = nullptr) {
+        infoArch_ = infoArch;
+    }
+    const Ref<cudaDeviceProp> &infoArch() {
+        if (!infoArch_.isValid()) {
+            infoArch_ = Ref<cudaDeviceProp>::make();
+        }
+        return infoArch_;
+    }
+
+#endif // FT_WITH_CUDA
 };
 
-class CPU : public Target {
+class CPU_t : public Target_t {
   public:
-    CPU(bool useNativeArch = true) : Target(useNativeArch) {}
+    CPU_t(bool useNativeArch = true) : Target_t(useNativeArch) {}
 
     TargetType type() const override { return TargetType::CPU; }
     std::string toString() const override { return "CPU"; }
     MemType mainMemType() const override { return MemType::CPU; }
 };
 
-class GPU : public Target {
-    Opt<std::pair<int, int>> computeCapability_;
+class GPU_t : public Target_t {
 
   public:
-    GPU(bool useNativeArch = true) : Target(useNativeArch) {}
+    GPU_t(bool useNativeArch = true) : Target_t(useNativeArch) {}
 
     TargetType type() const override { return TargetType::GPU; }
     std::string toString() const override { return "GPU"; }
     MemType mainMemType() const override { return MemType::GPUGlobal; }
-
-    /// E.g. (7, 0) for compute capability 7.0 (sm_70)
-    void setComputeCapability(int major, int minor) {
-        computeCapability_ =
-            Opt<std::pair<int, int>>::make(std::make_pair(major, minor));
-    }
-    Opt<std::pair<int, int>> computeCapability() const {
-        return computeCapability_;
-    }
 };
-
-bool isSame(const Ref<Target> &lhs, const Ref<Target> &rhs);
 
 } // namespace freetensor
 
-#endif // FREE_TENSOR_TARGET_H
+#endif // FREE_TENSOR_TARGET_T_H
