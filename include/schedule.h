@@ -174,6 +174,22 @@ class Schedule {
      */
     ID merge(const ID &loop1, const ID &loop2);
 
+    /**
+     * Permute perfectly nested loops (directly nested loops without statements
+     * in between) with the given loop space transformation function
+     *
+     * The transformed loops follow ascending lexical order of the transformed
+     * terms returned by `transformFunc` when called with original iteration
+     * variables
+     *
+     * @param loopsId : the list of IDs of perfectly nested loops to be permuted
+     * @param transformFunc : the loop space transformation function, should be
+     * bijective
+     * @throw InvalidSchedule if the loops are not perfectly nested, or the
+     * permutation is not bijective, or the permutation breaks certain
+     * dependency
+     * @return : the list of IDs of permuted loops
+     */
     std::vector<ID>
     permute(const std::vector<ID> &loopsId,
             const std::function<std::vector<Expr>(std::vector<Expr>)>
