@@ -13,9 +13,10 @@ var searchData=
   ['pbsimplify_10',['PBSimplify',['../classfreetensor_1_1PBSimplify.html',1,'freetensor']]],
   ['pbspace_11',['PBSpace',['../classfreetensor_1_1PBSpace.html',1,'freetensor']]],
   ['pbval_12',['PBVal',['../classfreetensor_1_1PBVal.html',1,'freetensor']]],
-  ['printvisitor_13',['PrintVisitor',['../classfreetensor_1_1PrintVisitor.html',1,'freetensor']]],
-  ['programpositionhelper_14',['ProgramPositionHelper',['../structfreetensor_1_1ProgramPositionHelper.html',1,'freetensor']]],
-  ['propagateprovides_15',['PropagateProvides',['../classfreetensor_1_1PropagateProvides.html',1,'freetensor']]],
-  ['propagaterequires_16',['PropagateRequires',['../classfreetensor_1_1PropagateRequires.html',1,'freetensor']]],
-  ['ptrinvocable_17',['PtrInvocable',['../classfreetensor_1_1PtrInvocable.html',1,'freetensor']]]
+  ['permute_13',['Permute',['../classfreetensor_1_1Permute.html',1,'freetensor']]],
+  ['printvisitor_14',['PrintVisitor',['../classfreetensor_1_1PrintVisitor.html',1,'freetensor']]],
+  ['programpositionhelper_15',['ProgramPositionHelper',['../structfreetensor_1_1ProgramPositionHelper.html',1,'freetensor']]],
+  ['propagateprovides_16',['PropagateProvides',['../classfreetensor_1_1PropagateProvides.html',1,'freetensor']]],
+  ['propagaterequires_17',['PropagateRequires',['../classfreetensor_1_1PropagateRequires.html',1,'freetensor']]],
+  ['ptrinvocable_18',['PtrInvocable',['../classfreetensor_1_1PtrInvocable.html',1,'freetensor']]]
 ];

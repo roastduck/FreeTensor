@@ -111,6 +111,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a7152785074bdd363a5eb0091819b9152"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa1a2b69d757e3277d357d76fc06c5c82"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1ID.html">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#aa1a2b69d757e3277d357d76fc06c5c82">merge</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop2)</td></tr>
 <tr class="separator:aa1a2b69d757e3277d357d76fc06c5c82"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a575b7a57ec6518dc5c6cd53bc8d2b8cc"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a575b7a57ec6518dc5c6cd53bc8d2b8cc">permute</a> (const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;loopsId, const std::function&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;(std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;)&gt; &amp;transformFunc)</td></tr>
+<tr class="separator:a575b7a57ec6518dc5c6cd53bc8d2b8cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54719c22533351b6b3ec37c73fb13652"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1Schedule.html#acf8585443368254e352dbe9e6408978a">IDMap</a>, <a class="el" href="classfreetensor_1_1Schedule.html#acf8585443368254e352dbe9e6408978a">IDMap</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a54719c22533351b6b3ec37c73fb13652">fission</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, <a class="el" href="namespacefreetensor.html#a2b0728b023b746c7fb73d4f24a6bb15e">FissionSide</a> side, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;splitter, const std::string &amp;suffix0=&quot;.a&quot;, const std::string &amp;suffix1=&quot;.b&quot;)</td></tr>
 <tr class="separator:a54719c22533351b6b3ec37c73fb13652"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade01fd2d0d808e2e6f76ee11af33c33d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#ade01fd2d0d808e2e6f76ee11af33c33d">swap</a> (const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;order)</td></tr>
@@ -1245,6 +1247,51 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a575b7a57ec6518dc5c6cd53bc8d2b8cc" name="a575b7a57ec6518dc5c6cd53bc8d2b8cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a575b7a57ec6518dc5c6cd53bc8d2b8cc">&#9670;&nbsp;</a></span>permute()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; freetensor::Schedule::permute </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>loopsId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;(std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>transformFunc</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p ><a class="el" href="classfreetensor_1_1Permute.html">Permute</a> perfectly nested loops (directly nested loops without statements in between) with the given loop space transformation function</p>
+<p >The transformed loops follow ascending lexical order of the transformed terms returned by <code>transformFunc</code> when called with original iteration variables</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">loopsId</td><td>: the list of IDs of perfectly nested loops to be permuted </td></tr>
+    <tr><td class="paramname">transformFunc</td><td>: the loop space transformation function, should be bijective </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classfreetensor_1_1InvalidSchedule.html">InvalidSchedule</a></td><td>if the loops are not perfectly nested, or the permutation is not bijective, or the permutation breaks certain dependency </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>: the list of IDs of permuted loops </dd></dl>
+<p >FIXME: put this into schedule logs</p>
 
 </div>
 </div>

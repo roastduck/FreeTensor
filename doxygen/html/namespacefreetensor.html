@@ -493,6 +493,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBVal.html">PBVal</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Permute.html">Permute</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PrintVisitor.html">PrintVisitor</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1ProgramPositionHelper.html">ProgramPositionHelper</a></td></tr>
@@ -1056,7 +1058,9 @@ Enumerations</h2></td></tr>
 &#160;&#160;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8ab8c3ff4276089f60a1f1820acc67bf60">Vectorize</a>
 , <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8abd41b498d5a21166c2626a519b452141">SeparateTail</a>
 , <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a3a9092b0d0f68da544f01b7535e742da">AsMatMul</a>
-, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a86e30d8e0831512671e7ed103ad7c457">NumTypes</a>
+, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8afa662c6eb71caef475b2b981ce8eccd7">Permute</a>
+, <br />
+&#160;&#160;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a86e30d8e0831512671e7ed103ad7c457">NumTypes</a>
 <br />
  }</td></tr>
 <tr class="separator:ac28eb3e0e6e276ccd7ffbe307afdaae8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1534,6 +1538,14 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:ad3840e240c886e699b1f3553f9aecb7b"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
 <tr class="memitem:ad3840e240c886e699b1f3553f9aecb7b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad3840e240c886e699b1f3553f9aecb7b">lexLT</a> (T &amp;&amp;space)</td></tr>
 <tr class="separator:ad3840e240c886e699b1f3553f9aecb7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afdd780be875758d92fee34b769876457"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afdd780be875758d92fee34b769876457">lexLE</a> (<a class="el" href="classfreetensor_1_1PBSpace.html">PBSpace</a> &amp;&amp;space)</td></tr>
+<tr class="separator:afdd780be875758d92fee34b769876457"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aadd9ce116131f933ff1cf26307402707"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aadd9ce116131f933ff1cf26307402707">lexLE</a> (const <a class="el" href="classfreetensor_1_1PBSpace.html">PBSpace</a> &amp;space)</td></tr>
+<tr class="separator:aadd9ce116131f933ff1cf26307402707"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a386c89cf6e8e95719e0ec665f2987e00"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a386c89cf6e8e95719e0ec665f2987e00">lexLT</a> (<a class="el" href="classfreetensor_1_1PBSpace.html">PBSpace</a> &amp;&amp;space)</td></tr>
+<tr class="separator:a386c89cf6e8e95719e0ec665f2987e00"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a8240a4840fa8e208d620c60e3552c2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1a8240a4840fa8e208d620c60e3552c2">lexLT</a> (const <a class="el" href="classfreetensor_1_1PBSpace.html">PBSpace</a> &amp;space)</td></tr>
+<tr class="separator:a1a8240a4840fa8e208d620c60e3552c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1d2d4709487cad8349cec0eb39136d9a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSpace.html">PBSpace</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1d2d4709487cad8349cec0eb39136d9a">spaceAlloc</a> (const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;ctx, unsigned nparam, unsigned nIn, unsigned nOut)</td></tr>
 <tr class="separator:a1d2d4709487cad8349cec0eb39136d9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abb7be589a6efba17f869fc91ad22edbf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSpace.html">PBSpace</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#abb7be589a6efba17f869fc91ad22edbf">spaceSetAlloc</a> (const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;ctx, unsigned nparam, unsigned dim)</td></tr>
@@ -1716,6 +1728,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:a197e08c5babe7e35b0b488e71eb272d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3f82a2ccf2f6b44322fb09ae50bf88d5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3f82a2ccf2f6b44322fb09ae50bf88d5">parallelize</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, const <a class="el" href="namespacefreetensor.html#a6d19bf2262d0cd0af3903283c9722088">ParallelScope</a> &amp;parallel)</td></tr>
 <tr class="separator:a3f82a2ccf2f6b44322fb09ae50bf88d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b570067aa5abf04a28cd49e59b1079a"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9b570067aa5abf04a28cd49e59b1079a">permute</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;loopsId, const std::function&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;(std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;)&gt; &amp;transformFunc)</td></tr>
+<tr class="separator:a9b570067aa5abf04a28cd49e59b1079a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac95a1c68f35ad6583776c9c563c227d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac95a1c68f35ad6583776c9c563c227d0">reorder</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;order)</td></tr>
 <tr class="separator:ac95a1c68f35ad6583776c9c563c227d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1bea8d6925cf272fb06ae26fbb25da60"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1bea8d6925cf272fb06ae26fbb25da60">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8">ScheduleType</a> type)</td></tr>
@@ -3634,6 +3648,7 @@ template&lt;class K &gt; </div>
 <tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8ab8c3ff4276089f60a1f1820acc67bf60" name="ac28eb3e0e6e276ccd7ffbe307afdaae8ab8c3ff4276089f60a1f1820acc67bf60"></a>Vectorize&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8abd41b498d5a21166c2626a519b452141" name="ac28eb3e0e6e276ccd7ffbe307afdaae8abd41b498d5a21166c2626a519b452141"></a>SeparateTail&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8a3a9092b0d0f68da544f01b7535e742da" name="ac28eb3e0e6e276ccd7ffbe307afdaae8a3a9092b0d0f68da544f01b7535e742da"></a>AsMatMul&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8afa662c6eb71caef475b2b981ce8eccd7" name="ac28eb3e0e6e276ccd7ffbe307afdaae8afa662c6eb71caef475b2b981ce8eccd7"></a>Permute&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8a86e30d8e0831512671e7ed103ad7c457" name="ac28eb3e0e6e276ccd7ffbe307afdaae8a86e30d8e0831512671e7ed103ad7c457"></a>NumTypes&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
@@ -9412,8 +9427,60 @@ template&lt;PBSpaceRef T&gt; </div>
 
 </div>
 </div>
+<a id="aadd9ce116131f933ff1cf26307402707" name="aadd9ce116131f933ff1cf26307402707"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aadd9ce116131f933ff1cf26307402707">&#9670;&nbsp;</a></span>lexLE() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::lexLE </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1PBSpace.html">PBSpace</a> &amp;&#160;</td>
+          <td class="paramname"><em>space</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="afdd780be875758d92fee34b769876457" name="afdd780be875758d92fee34b769876457"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afdd780be875758d92fee34b769876457">&#9670;&nbsp;</a></span>lexLE() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::lexLE </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1PBSpace.html">PBSpace</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>space</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a6e7fa03d81a3dcdf18a7b4b9deeda08a" name="a6e7fa03d81a3dcdf18a7b4b9deeda08a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6e7fa03d81a3dcdf18a7b4b9deeda08a">&#9670;&nbsp;</a></span>lexLE()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e7fa03d81a3dcdf18a7b4b9deeda08a">&#9670;&nbsp;</a></span>lexLE() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -9432,8 +9499,60 @@ template&lt;PBSpaceRef T&gt; </div>
 
 </div>
 </div>
+<a id="a1a8240a4840fa8e208d620c60e3552c2" name="a1a8240a4840fa8e208d620c60e3552c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a8240a4840fa8e208d620c60e3552c2">&#9670;&nbsp;</a></span>lexLT() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::lexLT </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1PBSpace.html">PBSpace</a> &amp;&#160;</td>
+          <td class="paramname"><em>space</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a386c89cf6e8e95719e0ec665f2987e00" name="a386c89cf6e8e95719e0ec665f2987e00"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a386c89cf6e8e95719e0ec665f2987e00">&#9670;&nbsp;</a></span>lexLT() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::lexLT </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1PBSpace.html">PBSpace</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>space</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ad3840e240c886e699b1f3553f9aecb7b" name="ad3840e240c886e699b1f3553f9aecb7b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad3840e240c886e699b1f3553f9aecb7b">&#9670;&nbsp;</a></span>lexLT()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ad3840e240c886e699b1f3553f9aecb7b">&#9670;&nbsp;</a></span>lexLT() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12117,6 +12236,44 @@ template&lt;typename T &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a9b570067aa5abf04a28cd49e59b1079a" name="a9b570067aa5abf04a28cd49e59b1079a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b570067aa5abf04a28cd49e59b1079a">&#9670;&nbsp;</a></span>permute()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; freetensor::permute </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>ast</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>loopsId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;(std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>transformFunc</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >FIXME: if step != 1 or -1, this check will be more strict than actually needed; need to add range restrictions to input dimensions</p>
+<p >TODO: more diagnostics</p>
+<p >FIXME: if step != 1 or -1, this check will be more strict than actually needed; need to add range restrictions to input dimensions</p>
+<p >TODO: more diagnostics</p>
 
 </div>
 </div>
@@ -14846,7 +15003,7 @@ template&lt;PBSpaceRef T&gt; </div>
 <div class="line">    <span class="stringliteral">&quot;set_mem_type&quot;</span>, <span class="stringliteral">&quot;var_split&quot;</span>, <span class="stringliteral">&quot;var_merge&quot;</span>,</div>
 <div class="line">    <span class="stringliteral">&quot;var_reorder&quot;</span>,  <span class="stringliteral">&quot;inline&quot;</span>,    <span class="stringliteral">&quot;parallelize&quot;</span>,</div>
 <div class="line">    <span class="stringliteral">&quot;unroll&quot;</span>,       <span class="stringliteral">&quot;vectorize&quot;</span>, <span class="stringliteral">&quot;separate_tail&quot;</span>,</div>
-<div class="line">    <span class="stringliteral">&quot;as_matmul&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;as_matmul&quot;</span>,    <span class="stringliteral">&quot;permute&quot;</span>,</div>
 <div class="line">}</div>
 </div><!-- fragment -->
 </div>
