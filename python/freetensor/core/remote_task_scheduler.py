@@ -704,7 +704,7 @@ class RemoteTaskScheduler(object):
             tries -= 1
             if self.send_tasks(tmpdict, _server_uid) == 0:
                 return
-            time.sleep(0.001)
+            time.sleep(0.1)
 
     def report_new_task(self):
         #broadcast the information that new tasks are available to fetch
