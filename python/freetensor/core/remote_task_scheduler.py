@@ -268,7 +268,7 @@ class MeasureTask(Task):
         if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
             tmplist1 = []
             tmplist2 = []
-            time.sleep(0.001)
+            time.sleep(0.00001 * (rounds + warmups) * len(sketches))
             for k in range(len(sketches)):
                 tmplist1.append(1.0)
                 tmplist2.append(0.1)
@@ -684,16 +684,17 @@ class RemoteTaskScheduler(object):
             self.search_queue.put(submit_uid)
 
     def report_inavailability(self, _server_uid: str):
-        if self.verbose > 0:
-            print("reporting inavailability")
         self.inavailability_counter_lock.acquire()
         self.inavailability_counter += 1
         self.tmp_inavailability_counter += 1
         if (self.tmp_inavailability_counter < 10):
+            self.inavailability_counter_lock.release()
             return
         else:
             self.tmp_inavailability_counter = 0
         self.inavailability_counter_lock.release()
+        if self.verbose > 0:
+            print("reporting inavailability")
         tmpdict: Dict = {
             "task_type": 0,
             "trans_c": 2,
