@@ -28,6 +28,7 @@ class Device {
            size_t nth);
 
     TargetType type() const { return target_->type(); }
+    MemType mainMemType() const { return target_->mainMemType(); }
     int num() const { return num_; }
     const Ref<Target> &target() const { return target_; }
 

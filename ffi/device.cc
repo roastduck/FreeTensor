@@ -53,6 +53,7 @@ void init_ffi_device(py::module_ &m) {
         .def("type", &Device::type)
         .def("num", &Device::num)
         .def("target", &Device::target)
+        .def("main_mem_type", &Device::mainMemType)
         .def("sync", &Device::sync)
         .def("__eq__", [](const Ref<Device> &lhs, const Ref<Device> &rhs) {
             return *lhs == *rhs;

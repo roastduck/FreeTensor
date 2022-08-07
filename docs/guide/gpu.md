@@ -9,7 +9,7 @@ import freetensor as ft
 import numpy as np
 
 # Using the 0-th GPU device
-with ft.Device(ft.GPU(), 0):
+with ft.Device(ft.TargetType.GPU, 0):
 
     n = 4
 
@@ -32,11 +32,11 @@ with ft.Device(ft.GPU(), 0):
 Similar to [parallelizing to OpenMP threads](../schedules/#example-parallel-vector-addition), in this example, we parallelize Loop `Li` to the `threadIdx.x` dimension of CUDA. There are two major differences:
 
 1. You are now calling `parallelize` schedule with a `threadIdx.x` parameter, instead of `openmp`.
-2. All the code are enclosed by a `with ft.Device(ft.GPU(), 0)` scope.
+2. All the code are enclosed by a `with ft.Device(ft.TargetType.GPU, 0)` scope.
 
 Usually, you not only parallelize your loops to `threadIdx.x`, but also other CUDA dimensions like `blockIdx.x`. To achieve this, you either parallelize different loops in a loop nests to different CUDA dimensions, or [`split`](../../api/#freetensor.core.schedule.Schedule.split) your loops before parallelizing them.
 
-As for the `with ft.Device(ft.GPU(), 0)` scope, `ft.GPU()` specifies a [`Target`](../../api/#freetensor.core.driver.Target) (a GPU architecture), and `ft.Device(ft.GPU(), 0)` specifies a [`Device`](../../api/#freetensor.core.driver.Device) of that target (a specific hardware device of GPU). By calling `with` on a device, default values of several classes and functions are set, but currently you only need to be aware of two things:
+As for the `with ft.Device(ft.TargetType, 0)` scope, `ft.TargetType` specifies a [`Target`](../../api/#freetensor.core.driver.Target) (a GPU architecture), and `ft.Device(ft.GPU(), 0)` specifies a [`Device`](../../api/#freetensor.core.driver.Device) of that target (a specific hardware device of GPU). By calling `with` on a device, default values of several classes and functions are set, but currently you only need to be aware of two things:
 
 1. It sets the targeting `Target` and `Device` of `optimize`.
 2. It sets the default `mtype` of all tensors in the program, which is an optional parameter of `ft.Var`, `ft.empty`, etc.
@@ -56,7 +56,7 @@ import freetensor as ft
 import numpy as np
 
 # Using the 0-th GPU device
-with ft.Device(ft.GPU(), 0):
+with ft.Device(ft.TargetType.GPU, 0):
 
     @ft.optimize(
         # Parallel Loop Li as GPU threads
