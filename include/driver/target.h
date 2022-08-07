@@ -3,9 +3,14 @@
 
 #include <string>
 
+#ifdef FT_WITH_CUDA
+#include <cuda_runtime.h>
+#endif
+
 #include <buffer.h>
 #include <driver/target_type.h>
 #include <opt.h>
+#include <ref.h>
 
 namespace freetensor {
 
@@ -22,7 +27,6 @@ class Target {
         useNativeArch_ = useNativeArch;
     }
     bool useNativeArch() const { return useNativeArch_; }
-
     virtual ~Target() = default;
     virtual TargetType type() const = 0;
     virtual std::string toString() const = 0;
@@ -30,6 +34,8 @@ class Target {
 };
 
 class CPU : public Target {
+    // TODO: infoArch
+
   public:
     CPU(bool useNativeArch = true) : Target(useNativeArch) {}
 
@@ -38,27 +44,34 @@ class CPU : public Target {
     MemType mainMemType() const override { return MemType::CPU; }
 };
 
+#ifdef FT_WITH_CUDA
 class GPU : public Target {
-    Opt<std::pair<int, int>> computeCapability_;
+    Ref<cudaDeviceProp> infoArch_;
 
   public:
-    GPU(bool useNativeArch = true) : Target(useNativeArch) {}
+    GPU(const Ref<cudaDeviceProp> &infoArch = nullptr,
+        bool useNativeArch = true)
+        : Target(useNativeArch), infoArch_(infoArch) {}
 
     TargetType type() const override { return TargetType::GPU; }
     std::string toString() const override { return "GPU"; }
     MemType mainMemType() const override { return MemType::GPUGlobal; }
 
-    /// E.g. (7, 0) for compute capability 7.0 (sm_70)
-    void setComputeCapability(int major, int minor) {
-        computeCapability_ =
-            Opt<std::pair<int, int>>::make(std::make_pair(major, minor));
+    void setInfoArch(const Ref<cudaDeviceProp> &infoArch = nullptr) {
+        infoArch_ = infoArch;
     }
-    Opt<std::pair<int, int>> computeCapability() const {
-        return computeCapability_;
+    const Ref<cudaDeviceProp> &infoArch() const { return infoArch_; }
+
+    Ref<std::pair<int, int>> computeCapability() const {
+        if (!infoArch_.isValid())
+            return nullptr;
+        return Ref<std::pair<int, int>>::make(
+            std::make_pair(infoArch_->major, infoArch_->minor));
     }
 };
+#endif // FT_WITH_CUDA
 
-bool isSame(const Ref<Target> &lhs, const Ref<Target> &rhs);
+bool isSameTarget(const Ref<Target> &lhs, const Ref<Target> &rhs);
 
 } // namespace freetensor
 

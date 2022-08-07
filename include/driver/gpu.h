@@ -3,6 +3,7 @@
 
 #include <sstream>
 
+#ifdef FT_WITH_CUDA
 #include <cuda_runtime.h>
 
 #include <except.h>
@@ -14,5 +15,7 @@
             throw DriverError(cudaGetErrorString(err));                        \
         }                                                                      \
     }
+
+#endif // FT_WITH_CUDA
 
 #endif // FREE_TENSOR_GPU_H

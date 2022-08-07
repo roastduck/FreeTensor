@@ -1,7 +1,6 @@
 #include <vector>
 
 #include <driver/device.h>
-#include <driver/device_t.h>
 #include <ffi.h>
 
 namespace freetensor {
@@ -21,80 +20,37 @@ void init_ffi_device(py::module_ &m) {
             [](const Ref<Target> &target, bool useNativeArch) {
                 target->setUseNativeArch(useNativeArch);
             },
-            "useNativeArch"_a = true)
+            "use_native_arch"_a = true)
         .def("use_native_arch", &Target::useNativeArch)
         .def("__str__", &Target::toString)
-        .def("main_mem_type", &Target::mainMemType)
-        .def("__eq__",
-             static_cast<bool (*)(const Ref<Target> &, const Ref<Target> &)>(
-                 &isSame));
+        .def("main_mem_type", &Target::mainMemType);
+
     py::class_<CPU, Ref<CPU>>(m, "CPU", pyTarget)
         .def(py::init([](bool useNativeArch) {
                  return Ref<CPU>::make(useNativeArch);
              }),
              "use_native_arch"_a = true);
-    py::class_<GPU, Ref<GPU>>(m, "GPU", pyTarget)
-        .def(py::init([](bool useNativeArch) {
-                 return Ref<GPU>::make(useNativeArch);
-             }),
-             "use_native_arch"_a = true)
-        .def("compute_capability",
-             [](const Ref<GPU> &target) -> std::optional<std::pair<int, int>> {
-                 return target->computeCapability();
-             })
-        .def(
-            "set_compute_capability",
-            [](const Ref<GPU> &target, int major, int minor) {
-                target->setComputeCapability(major, minor);
-            },
-            "major"_a, "minor"_a);
-
-    py::class_<Device, Ref<Device>>(m, "Device")
-        .def(py::init<const Ref<Target> &, size_t>(), "target"_a, "num"_a = 0)
-        .def("target", &Device::target)
-        .def("main_mem_type", &Device::mainMemType)
-        .def("sync", &Device::sync)
-        .def("__eq__", [](const Ref<Device> &lhs, const Ref<Device> &rhs) {
-            return *lhs == *rhs;
-        });
-
-    py::class_<Target_t, Ref<Target_t>> pyTarget_t(m, "Target_t");
-    pyTarget_t
-        .def("type", [](const Ref<Target_t> &target) { return target->type(); })
-        .def(
-            "set_use_native_arch",
-            [](const Ref<Target_t> &target, bool useNativeArch) {
-                target->setUseNativeArch(useNativeArch);
-            },
-            "useNativeArch"_a = true)
-        .def("use_native_arch", &Target_t::useNativeArch)
-        .def("__str__", &Target_t::toString)
-        .def("main_mem_type", &Target_t::mainMemType);
 
 #ifdef FT_WITH_CUDA
-    pyTarget_t.def("set_info_arch", &Target_t::setInfoArch)
-        .def("info_arch", &Target_t::infoArch);
+    py::class_<GPU, Ref<GPU>>(m, "GPU", pyTarget)
+        .def(py::init(
+                 [](const Ref<cudaDeviceProp> &infoArch, bool useNativeArch) {
+                     return Ref<GPU>::make(infoArch, useNativeArch);
+                 }),
+             "info_arch"_a = nullptr, "use_native_arch"_a = true)
+        .def("info_arch", &GPU::infoArch);
 #endif // FT_WITH_CUDA
 
-    py::class_<CPU_t, Ref<CPU_t>>(m, "CPU_t", pyTarget_t)
-        .def(py::init([](bool useNativeArch) {
-                 return Ref<CPU_t>::make(useNativeArch);
-             }),
-             "use_native_arch"_a = true);
-    py::class_<GPU_t, Ref<GPU_t>>(m, "GPU_t", pyTarget_t)
-        .def(py::init([](bool useNativeArch) {
-                 return Ref<GPU_t>::make(useNativeArch);
-             }),
-             "use_native_arch"_a = true);
-
-    py::class_<Device_t, Ref<Device_t>>(m, "Device_t")
-        .def(py::init<const TargetType &, size_t>(), "targetType"_a,
+    py::class_<Device, Ref<Device>>(m, "Device")
+        .def(py::init<const TargetType &, size_t>(), "target_type"_a,
              "num"_a = 0)
         .def(py::init<const TargetType &, const std::string &>(),
-             "targetType"_a, "getDeviceByName"_a)
-        .def("type", &Device_t::type)
-        .def("num", &Device_t::num)
-        .def("target", &Device_t::target);
+             "target_type"_a, "get_device_by_name"_a)
+        .def(py::init<const TargetType &, const std::string &, int>(),
+             "target_type"_a, "get_device_by_full_name"_a, "nth"_a)
+        .def("type", &Device::type)
+        .def("num", &Device::num)
+        .def("target", &Device::target);
 }
 
 } // namespace freetensor

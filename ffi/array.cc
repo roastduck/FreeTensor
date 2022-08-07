@@ -26,9 +26,9 @@ static Ref<Device> deviceFromPyTorch(const torch::Device &d) {
         throw DriverError("Unsupported PyTorch device");
     }
     if (d.has_index()) {
-        return Ref<Device>::make(target, d.index());
+        return Ref<Device>::make(target->type(), d.index());
     } else {
-        return Ref<Device>::make(target);
+        return Ref<Device>::make(target->type());
     }
 }
 
@@ -85,14 +85,14 @@ void init_ffi_array(py::module_ &m) {
         std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());         \
         return Array::borrowFromRaw((void *)np.unchecked().data(), shape,      \
                                     dtype,                                     \
-                                    Ref<Device>::make(Ref<CPU>::make()));      \
+                                    Ref<Device>::make(TargetType::CPU));       \
     }),                                                                        \
         "data"_a.noconvert(), py::keep_alive<1, 2>()
 
 #define SHARE_TO_NUMPY(nativeType, dtype)                                      \
     case dtype: {                                                              \
         auto ptr = (const nativeType *)arr.rawSharedTo(                        \
-            Ref<Device>::make(Ref<CPU>::make()));                              \
+            Ref<Device>::make(TargetType::CPU));                               \
         return py::array_t<nativeType>(arr.shape(), ptr,                       \
                                        py::capsule(ptr, [](void *) {}));       \
     }

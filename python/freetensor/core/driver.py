@@ -65,7 +65,7 @@ def _register_target(cls):
         _old_target_device_stack.append(
             (config.default_target(), config.default_device()))
         config.set_default_target(self)
-        config.set_default_device(Device(self, 0))
+        config.set_default_device(Device(self.type(), 0))
         return self
 
     def __exit__(self: cls, exc_type, exc_value, traceback):
@@ -83,10 +83,15 @@ _register_target(GPU)
 
 class Device(ffi.Device):
     '''
-    A computing device of a Target
 
-    E.g. suppose GPU() is a Target (architecture), then Device(GPU(), 0) means
-    the 0-th GPU (device)
+    A computing device can be constructed from
+         1. (TargetType, DeviceNumber)
+         2. (TargetType, getDeviceByName): cuda uses best matches criteria.
+         3. (TargetType, FullName, nth): get nth(from 0) device named `Fullname`.
+
+    E.g. Device(TargetType::GPU, 0) means the 0-th GPU (device)
+         Device(TargetType::GPU, "V100") means a GPU which best matches "V100"
+         Device(TargetType::GPU, "NVIDIA GeForce RTX 3060 Laptop GPU", 0)
 
     A Device can be used as a "with" scope, then all the `Array`s and `Driver`s
     will use it by default. In this style, it also sets the default Target. E.g:
@@ -97,9 +102,6 @@ class Device(ffi.Device):
         a = Array(...)  # Use the Device above by default
     ```
     '''
-
-    def __init__(self, target: Target, num: int = 0):
-        super(Device, self).__init__(target, num)
 
     def __enter__(self):
         _old_target_device_stack.append(

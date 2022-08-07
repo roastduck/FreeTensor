@@ -140,7 +140,7 @@ void Config::init() {
     }
 #endif // FT_WITH_CUDA
     Config::setDefaultTarget(Ref<CPU>::make());
-    Config::setDefaultDevice(Ref<Device>::make(Ref<CPU>::make()));
+    Config::setDefaultDevice(Ref<Device>::make(TargetType::CPU));
 
 #ifdef FT_RUNTIME_DIR
     Config::setRuntimeDir(makePaths(FT_RUNTIME_DIR));
