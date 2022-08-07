@@ -34,6 +34,14 @@ void init_ffi_device(py::module_ &m) {
              }),
              "use_native_arch"_a = true);
 
+#ifndef FT_WITH_CUDA
+    py::class_<GPU, Ref<GPU>>(m, "GPU", pyTarget)
+        .def(py::init([](bool useNativeArch) {
+                 return Ref<GPU>::make(useNativeArch);
+             }),
+             "use_native_arch"_a = true);
+#endif // NOT FT_WITH_CUDA
+
 #ifdef FT_WITH_CUDA
     py::class_<GPU, Ref<GPU>>(m, "GPU", pyTarget)
         .def(py::init([](bool useNativeArch) {

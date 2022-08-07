@@ -9,7 +9,8 @@ namespace freetensor {
 
 Ref<Target> loadTarget(const std::string &txt);
 Ref<Device> loadDevice(const std::string &txt);
-Ref<Array> loadArray(const std::pair<const std::string &, const std::string &>);
+Ref<Array>
+loadArray(const std::pair<const std::string &, const std::string &> &);
 
 /**
  * The function is only for serialization

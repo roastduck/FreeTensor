@@ -13,6 +13,11 @@ bool isSameTarget(const Ref<Target> &lhs, const Ref<Target> &rhs) {
     case TargetType::CPU:
 
         return true;
+#ifndef FT_WITH_CUDA
+    case TargetType::GPU: {
+        return true;
+    }
+#endif // NOT FT_WITH_CUDA
 #ifdef FT_WITH_CUDA
     case TargetType::GPU: {
         auto &&l = lhs.as<GPU>(), &&r = rhs.as<GPU>();

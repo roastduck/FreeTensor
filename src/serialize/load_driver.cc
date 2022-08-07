@@ -21,6 +21,15 @@ Ref<Target> loadTarget(const std::string &txt) {
     ASSERT(type.length() > 0);
 
     switch (type[0]) {
+#ifndef FT_WITH_CUDA
+    case 'G': {
+
+        auto ret_ = Ref<GPU>::make(useNativeArch);
+        ret = ret_.as<Target>();
+        break;
+    }
+
+#endif // NOT FT_WITH_CUDA
 #ifdef FT_WITH_CUDA
     case 'G': {
         auto ret_ = Ref<GPU>::make(nullptr, useNativeArch);
@@ -90,7 +99,7 @@ Ref<Array> newArray(const std::vector<size_t> &shape_,
 Ref<Array>
 loadArray(const std::pair<const std::string &, const std::string &> &txt_data) {
 
-    auto &[txt, data] = txt_data;
+    auto &&[txt, data] = txt_data;
     std::istringstream iss(txt);
 
     Ref<Array> ret;

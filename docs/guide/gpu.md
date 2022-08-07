@@ -36,7 +36,7 @@ Similar to [parallelizing to OpenMP threads](../schedules/#example-parallel-vect
 
 Usually, you not only parallelize your loops to `threadIdx.x`, but also other CUDA dimensions like `blockIdx.x`. To achieve this, you either parallelize different loops in a loop nests to different CUDA dimensions, or [`split`](../../api/#freetensor.core.schedule.Schedule.split) your loops before parallelizing them.
 
-As for the `with ft.Device(ft.TargetType, 0)` scope, `ft.TargetType` specifies a [`Target`](../../api/#freetensor.core.driver.Target) (a GPU architecture), and `ft.Device(ft.GPU(), 0)` specifies a [`Device`](../../api/#freetensor.core.driver.Device) of that target (a specific hardware device of GPU). By calling `with` on a device, default values of several classes and functions are set, but currently you only need to be aware of two things:
+As for the `with ft.Device(ft.TargetType.GPU, 0)` scope, `ft.TargetType.GPU` specifies a [`Target`](../../api/#freetensor.core.driver.Target) (a GPU architecture), and `ft.Device(ft.GPU(), 0)` specifies a [`Device`](../../api/#freetensor.core.driver.Device) of that target (a specific hardware device of GPU). By calling `with` on a device, default values of several classes and functions are set, but currently you only need to be aware of two things:
 
 1. It sets the targeting `Target` and `Device` of `optimize`.
 2. It sets the default `mtype` of all tensors in the program, which is an optional parameter of `ft.Var`, `ft.empty`, etc.

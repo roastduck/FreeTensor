@@ -44,19 +44,27 @@ class CPU : public Target {
     MemType mainMemType() const override { return MemType::CPU; }
 };
 
-#ifdef FT_WITH_CUDA
 class GPU : public Target {
+#ifdef FT_WITH_CUDA
     Ref<cudaDeviceProp> infoArch_;
+#endif // FT_WITH_CUDA
 
   public:
+#ifndef FT_WITH_CUDA
+    GPU(bool useNativeArch = true) : Target(useNativeArch) {}
+#endif // NOT FT_WITH_CUDA
+
+#ifdef FT_WITH_CUDA
     GPU(const Ref<cudaDeviceProp> &infoArch = nullptr,
         bool useNativeArch = true)
         : Target(useNativeArch), infoArch_(infoArch) {}
+#endif // FT_WITH_CUDA
 
     TargetType type() const override { return TargetType::GPU; }
     std::string toString() const override { return "GPU"; }
     MemType mainMemType() const override { return MemType::GPUGlobal; }
 
+#ifdef FT_WITH_CUDA
     void setInfoArch(const Ref<cudaDeviceProp> &infoArch = nullptr) {
         infoArch_ = infoArch;
     }
@@ -68,8 +76,8 @@ class GPU : public Target {
         return Ref<std::pair<int, int>>::make(
             std::make_pair(infoArch_->major, infoArch_->minor));
     }
-};
 #endif // FT_WITH_CUDA
+};
 
 bool isSameTarget(const Ref<Target> &lhs, const Ref<Target> &rhs);
 
