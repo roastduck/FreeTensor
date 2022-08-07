@@ -23,7 +23,10 @@ void init_ffi_device(py::module_ &m) {
             "use_native_arch"_a = true)
         .def("use_native_arch", &Target::useNativeArch)
         .def("__str__", &Target::toString)
-        .def("main_mem_type", &Target::mainMemType);
+        .def("main_mem_type", &Target::mainMemType)
+        .def("__eq__",
+             static_cast<bool (*)(const Ref<Target> &, const Ref<Target> &)>(
+                 &isSameTarget));
 
     py::class_<CPU, Ref<CPU>>(m, "CPU", pyTarget)
         .def(py::init([](bool useNativeArch) {
@@ -33,11 +36,10 @@ void init_ffi_device(py::module_ &m) {
 
 #ifdef FT_WITH_CUDA
     py::class_<GPU, Ref<GPU>>(m, "GPU", pyTarget)
-        .def(py::init(
-                 [](const Ref<cudaDeviceProp> &infoArch, bool useNativeArch) {
-                     return Ref<GPU>::make(infoArch, useNativeArch);
-                 }),
-             "info_arch"_a = nullptr, "use_native_arch"_a = true)
+        .def(py::init([](bool useNativeArch) {
+                 return Ref<GPU>::make(nullptr, useNativeArch);
+             }),
+             "use_native_arch"_a = true)
         .def("info_arch", &GPU::infoArch);
 #endif // FT_WITH_CUDA
 
@@ -50,7 +52,11 @@ void init_ffi_device(py::module_ &m) {
              "target_type"_a, "get_device_by_full_name"_a, "nth"_a)
         .def("type", &Device::type)
         .def("num", &Device::num)
-        .def("target", &Device::target);
+        .def("target", &Device::target)
+        .def("sync", &Device::sync)
+        .def("__eq__", [](const Ref<Device> &lhs, const Ref<Device> &rhs) {
+            return *lhs == *rhs;
+        });
 }
 
 } // namespace freetensor

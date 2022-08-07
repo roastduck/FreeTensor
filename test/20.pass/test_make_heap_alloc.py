@@ -35,7 +35,7 @@ def test_cpu_heap():
 
 
 def test_gpu_global_heap():
-    with ft.Device(ft.GPU(), 0):
+    with ft.Device(ft.TargetType.GPU, 0):
         with ft.VarDef([("x", (), "int32", "cache", "gpu/global"),
                         ("y", (2,), "int32", "cache", "gpu/global/heap"),
                         ("t", (), "int32", "cache", "gpu/global/heap"),
@@ -104,7 +104,7 @@ def test_transform_to_cpu_heap():
 
 
 def test_transform_to_gpu_global_heap():
-    with ft.Device(ft.GPU(), 0):
+    with ft.Device(ft.TargetType.GPU, 0):
         with ft.VarDef([("x", (), "int32", "cache", "gpu/global"),
                         ("y", (2,), "int32", "cache", "gpu/global"),
                         ("t", (), "int32", "cache", "gpu/global"),

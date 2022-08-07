@@ -6,7 +6,7 @@ from freetensor import libop
 
 
 def test_static():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -26,7 +26,7 @@ def test_static():
 
 
 def test_out_of_place():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x):

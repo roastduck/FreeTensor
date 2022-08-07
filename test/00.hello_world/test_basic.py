@@ -386,13 +386,14 @@ def test_target_language_keyword_as_name():
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_default_target():
-    with ft.GPU() as target:
+    device = ft.Device(ft.TargetType.GPU)
+    with device.target() as target:
         assert ft.config.default_target() == target
-        assert ft.config.default_device() == ft.Device(target, 0)
+        assert ft.config.default_device() == device
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_default_device():
-    with ft.Device(ft.GPU(), 2) as dev:
+    with ft.Device(ft.TargetType.GPU) as dev:
         assert ft.config.default_device() == dev
         assert ft.config.default_target() == dev.target()

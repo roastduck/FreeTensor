@@ -1,5 +1,5 @@
-#include <driver/target.h>
 #include <cstring>
+#include <driver/target.h>
 
 namespace freetensor {
 bool isSameTarget(const Ref<Target> &lhs, const Ref<Target> &rhs) {
@@ -16,6 +16,10 @@ bool isSameTarget(const Ref<Target> &lhs, const Ref<Target> &rhs) {
 #ifdef FT_WITH_CUDA
     case TargetType::GPU: {
         auto &&l = lhs.as<GPU>(), &&r = rhs.as<GPU>();
+        if (l->infoArch().isValid() ^ r->infoArch().isValid())
+            return false;
+        if (!l->infoArch().isValid() && !r->infoArch().isValid())
+            return true;
         uint8_t *lptr = (uint8_t *)&(*(l->infoArch()));
         uint8_t *rptr = (uint8_t *)&(*(r->infoArch()));
         if (memcmp(lptr, rptr, sizeof(cudaDeviceProp)) == 0)

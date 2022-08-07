@@ -6,7 +6,7 @@ from freetensor import libop
 
 
 def test_basic():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -30,7 +30,7 @@ def test_basic():
 
 
 def test_broadcast():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -54,7 +54,7 @@ def test_broadcast():
 
 
 def test_out_of_place():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b):

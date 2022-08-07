@@ -6,7 +6,7 @@ if not ft.with_mkl():
     pytest.skip("requires MKL", allow_module_level=True)
 
 target = ft.CPU()
-device = ft.Device(target)
+device = ft.Device(ft.TargetType.CPU)
 
 
 def test_mkl_basic():

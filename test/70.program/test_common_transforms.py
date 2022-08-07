@@ -5,8 +5,8 @@ import pytest
 
 
 def test_tiling():
-    target = ft.CPU()
-    device = ft.Device(target)
+    device = ft.Device(ft.TargetType.CPU)
+    target = device.target()
 
     with ft.VarDef([
         ("a", (256, 256), "float32", "input", "cpu"),
@@ -79,8 +79,8 @@ def test_tiling():
 
 
 def test_tiled_reduction():
-    target = ft.CPU()
-    device = ft.Device(target)
+    device = ft.Device(ft.TargetType.CPU)
+    target = device.target()
 
     with ft.VarDef([
         ("x", (256,), "float32", "input", "cpu"),
@@ -126,8 +126,8 @@ def test_tiled_reduction():
 
 
 def test_parallel_reduction():
-    target = ft.CPU()
-    device = ft.Device(target)
+    device = ft.Device(ft.TargetType.CPU)
+    target = device.target()
 
     with ft.VarDef([
         ("x", (256,), "float32", "input", "cpu"),
@@ -179,8 +179,8 @@ def test_parallel_reduction():
 
 
 def test_dynamic_tiling():
-    target = ft.CPU()
-    device = ft.Device(target)
+    device = ft.Device(ft.TargetType.CPU)
+    target = device.target()
 
     with ft.VarDef([
         ("n", (), "int32", "input", "byvalue"),
@@ -242,8 +242,8 @@ def test_dynamic_tiling():
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_collaborative_fetch():
-    target = ft.GPU()
-    device = ft.Device(target)
+    device = ft.Device(ft.TargetType.GPU)
+    target = device.target()
 
     with ft.VarDef([
         ("a", (32, 256), "float32", "input", "gpu/global"),

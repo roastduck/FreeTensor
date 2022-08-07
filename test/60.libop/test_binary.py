@@ -59,7 +59,7 @@ def same(lhs, rhs, dtype):
     (ft.ne_, operator.ne, "int32", "bool"),
 ])
 def test_same_static_shape(libop_func, torch_func, dtype, ret_dtype):
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y, out):
@@ -101,7 +101,7 @@ def test_same_static_shape(libop_func, torch_func, dtype, ret_dtype):
     (ft.ne_, operator.ne, "int32", "bool"),
 ])
 def test_static_broadcast_shorter(libop_func, torch_func, dtype, ret_dtype):
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y, out):
@@ -143,7 +143,7 @@ def test_static_broadcast_shorter(libop_func, torch_func, dtype, ret_dtype):
     (ft.ne_, operator.ne, "int32", "bool"),
 ])
 def test_static_broadcast_1_at_front(libop_func, torch_func, dtype, ret_dtype):
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y, out):
@@ -185,7 +185,7 @@ def test_static_broadcast_1_at_front(libop_func, torch_func, dtype, ret_dtype):
     (ft.ne_, operator.ne, "int32", "bool"),
 ])
 def test_static_broadcast_1_at_back(libop_func, torch_func, dtype, ret_dtype):
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y, out):
@@ -222,7 +222,7 @@ def test_static_broadcast_1_at_back(libop_func, torch_func, dtype, ret_dtype):
     (ft.ne_, operator.ne, "float32", "int32", "bool"),
 ])
 def test_different_dtype(libop_func, torch_func, dtype1, dtype2, ret_dtype):
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y, out):
@@ -264,7 +264,7 @@ def test_different_dtype(libop_func, torch_func, dtype1, dtype2, ret_dtype):
     (ft.ne, operator.ne, "int32", "bool"),
 ])
 def test_out_of_place(libop_func, torch_func, dtype, ret_dtype):
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -300,7 +300,7 @@ def test_out_of_place(libop_func, torch_func, dtype, ret_dtype):
     (operator.ne, operator.ne, "int32", "bool"),
 ])
 def test_operator_overload(libop_func, torch_func, dtype, ret_dtype):
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):

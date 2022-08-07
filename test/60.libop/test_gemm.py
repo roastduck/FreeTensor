@@ -6,7 +6,7 @@ from freetensor import libop
 
 
 def test_basic():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -30,7 +30,7 @@ def test_basic():
 
 
 def test_trans_A():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -54,7 +54,7 @@ def test_trans_A():
 
 
 def test_trans_B():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -78,7 +78,7 @@ def test_trans_B():
 
 
 def test_trans_AB():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -102,7 +102,7 @@ def test_trans_AB():
 
 
 def test_bias():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, c, y):
@@ -129,7 +129,7 @@ def test_bias():
 
 
 def test_bias_broadcast_1():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, c, y):
@@ -156,7 +156,7 @@ def test_bias_broadcast_1():
 
 
 def test_bias_broadcast_2():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, c, y):
@@ -183,7 +183,7 @@ def test_bias_broadcast_2():
 
 
 def test_bias_with_coeff():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, c, y):
@@ -210,7 +210,7 @@ def test_bias_with_coeff():
 
 
 def test_out_of_place():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b):

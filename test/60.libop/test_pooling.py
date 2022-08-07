@@ -6,7 +6,7 @@ from freetensor import libop
 
 
 def test_max_pooling_basic():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -29,7 +29,7 @@ def test_max_pooling_basic():
 
 
 def test_max_pooling_same_padding():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -55,7 +55,7 @@ def test_max_pooling_same_padding():
 
 
 def test_max_pooling_stride():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -82,7 +82,7 @@ def test_max_pooling_stride():
 
 
 def test_max_pooling_dilation():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -110,7 +110,7 @@ def test_max_pooling_dilation():
 
 
 def test_max_pooling_out_of_place():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x):
@@ -131,7 +131,7 @@ def test_max_pooling_out_of_place():
 
 
 def test_global_avg_pool():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -153,7 +153,7 @@ def test_global_avg_pool():
 
 
 def test_global_avg_pool_out_of_place():
-    device = ft.Device(ft.CPU())
+    device = ft.Device(ft.TargetType.CPU)
 
     @ft.optimize(device=device, verbose=1)
     def f(x):

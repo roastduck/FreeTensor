@@ -2,8 +2,8 @@ import freetensor as ft
 import numpy as np
 import pytest
 
-target = ft.GPU()
-device = ft.Device(target)
+device = ft.Device(ft.TargetType.GPU)
+target = device.target()
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")

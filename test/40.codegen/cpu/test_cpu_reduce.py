@@ -4,8 +4,8 @@ import freetensor as ft
 import pytest
 import numpy as np
 
-target = ft.CPU()
-device = ft.Device(target)
+device = ft.Device(ft.TargetType.CPU)
+target = device.target()
 
 
 def test_parallel_reduction():
