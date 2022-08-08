@@ -13,6 +13,8 @@ void init_ffi_device(py::module_ &m) {
         .value("GPU", TargetType::GPU);
 
     py::class_<Target, Ref<Target>> pyTarget(m, "Target");
+    py::class_<Device, Ref<Device>> pyDevice(m, "Device");
+
     pyTarget
         .def(py::init(
             [](const Ref<Device> &device) { return device->target(); }))
@@ -24,7 +26,7 @@ void init_ffi_device(py::module_ &m) {
              static_cast<bool (*)(const Ref<Target> &, const Ref<Target> &)>(
                  &isSameTarget));
 
-    py::class_<CPU, Ref<CPU>>(m, "CPU", pyTarget)
+    py::class_<CPU, Ref<CPU>>(m, "CPUTarget", pyTarget)
         .def(
             "set_use_native_arch",
             [](const Ref<CPU> &cpu, bool useNativeArch) {
@@ -33,11 +35,11 @@ void init_ffi_device(py::module_ &m) {
             "use_native_arch"_a = true);
 
 #ifdef FT_WITH_CUDA
-    py::class_<GPU, Ref<GPU>>(m, "GPU", pyTarget)
+    py::class_<GPU, Ref<GPU>>(m, "GPUTarget", pyTarget)
         .def("info_arch", &GPU::infoArch);
 #endif // FT_WITH_CUDA
 
-    py::class_<Device, Ref<Device>>(m, "Device")
+    pyDevice
         .def(py::init<const TargetType &, int>(), "target_type"_a, "num"_a = 0)
         .def(py::init<const TargetType &, const std::string &>(),
              "target_type"_a, "get_device_by_name"_a)

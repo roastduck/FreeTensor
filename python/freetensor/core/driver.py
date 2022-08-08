@@ -77,9 +77,9 @@ def _register_target(cls):
     cls.__exit__ = __exit__
 
 
-_register_target(ffi.CPU)
+_register_target(ffi.CPUTarget)
 if config.with_cuda():
-    _register_target(ffi.GPU)
+    _register_target(ffi.GPUTarget)
 
 
 class Device(ffi.Device):

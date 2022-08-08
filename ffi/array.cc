@@ -21,7 +21,9 @@ static Ref<Device> deviceFromPyTorch(const torch::Device &d) {
     if (d.is_cpu()) {
         target = Ref<CPU>::make();
     } else if (d.is_cuda()) {
-        target = Ref<GPU>::make();
+#ifdef FT_WITH_CUDA
+        target = Ref<GPU>::make(nullptr);
+#endif // FT_WITH_CUDA
     } else {
         throw DriverError("Unsupported PyTorch device");
     }
