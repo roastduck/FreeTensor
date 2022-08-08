@@ -14,6 +14,7 @@ def test_target_cpu():
     assert target == target2
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_target_gpu():
     target = ft.GPU().target()
     txt = ft.dump_target(target)
@@ -30,6 +31,7 @@ def test_device_cpu():
     assert device == device2
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_device_gpu():
     device = ft.GPU()
     txt = ft.dump_device(device)

@@ -78,7 +78,8 @@ def _register_target(cls):
 
 
 _register_target(ffi.CPU)
-_register_target(ffi.GPU)
+if config.with_cuda():
+    _register_target(ffi.GPU)
 
 
 class Device(ffi.Device):

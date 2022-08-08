@@ -16,6 +16,7 @@ def test_cpu_basic():
     assert s.logs() == ["merge(Li, Lj)", "parallelize(merged.Li.Lj, openmp)"]
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_basic_static_small():
     with ft.VarDef([("x", (10, 10, 2), "int32", "input", "cpu"),
                     ("y", (10, 10, 2), "int32", "output", "cpu")]) as (x, y):
@@ -35,6 +36,7 @@ def test_gpu_basic_static_small():
     ]
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_basic_static_large():
     with ft.VarDef([("x", (1000, 1000, 2), "int32", "input", "cpu"),
                     ("y", (1000, 1000, 2), "int32", "output", "cpu")]) as (x,
@@ -55,6 +57,7 @@ def test_gpu_basic_static_large():
     ]
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_basic_dynamic():
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ft.VarDef([("x", (n[()], 1000, 2), "int32", "input", "cpu"),
@@ -110,6 +113,7 @@ def test_reduction_better_not_parallelized():
     assert s.logs() == ["parallelize(Li, openmp)"]
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_warp_static():
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
                     ("y", (1000, 2), "int32", "output", "gpu/global")]) as (x,
@@ -131,6 +135,7 @@ def test_gpu_warp_static():
     ]
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_warp_dynamic():
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ft.VarDef([("x", (n[()], n[()]), "int32", "input", "gpu/global"),

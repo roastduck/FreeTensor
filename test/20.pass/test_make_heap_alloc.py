@@ -1,4 +1,5 @@
 import freetensor as ft
+import pytest
 
 
 def test_cpu_heap():
@@ -34,6 +35,7 @@ def test_cpu_heap():
     assert std.match(ast)
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_global_heap():
     with ft.GPU():
         with ft.VarDef([("x", (), "int32", "cache", "gpu/global"),
@@ -103,6 +105,7 @@ def test_transform_to_cpu_heap():
     assert std.match(ast)
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_transform_to_gpu_global_heap():
     with ft.GPU():
         with ft.VarDef([("x", (), "int32", "cache", "gpu/global"),

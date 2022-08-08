@@ -6,6 +6,9 @@ import freetensor as ft
 from freetensor import debug
 from freetensor import libop
 
+if not ft.with_cuda():
+    pytest.skip("requires CUDA", allow_module_level=True)
+
 device = ft.GPU()
 target = device.target()
 
