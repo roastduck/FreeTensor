@@ -4,17 +4,25 @@
 
 namespace freetensor {
 
-std::string dumpTarget(const Ref<Target> &target_) {
+std::pair<std::string, std::string> dumpTarget(const Ref<Target> &target_) {
 
     auto target = target_.isValid() ? target_ : Config::defaultTarget();
 
-    std::string ret = target->toString();
+    std::string ret_meta =
+        target->toString() + " " + std::to_string(target->useNativeArch());
+    std::string ret_data;
 
     // TODO
     switch (target->type()) {
+#ifdef FT_WITH_CUDA
     case TargetType::GPU: {
+        auto &&tmp = target.as<GPU>();
+        auto deviceProp = tmp->infoArch();
+        ret_data = std::string((char *)&(*deviceProp), sizeof(cudaDeviceProp));
+
         break;
     }
+#endif // FT_WITH_CUDA
     case TargetType::CPU:
         break;
 
@@ -22,16 +30,18 @@ std::string dumpTarget(const Ref<Target> &target_) {
         ASSERT(false);
     }
 
-    return ret;
+    return std::make_pair(ret_meta, ret_data);
 }
 
-std::string dumpDevice(const Ref<Device> &device_) {
+std::pair<std::string, std::string> dumpDevice(const Ref<Device> &device_) {
 
     auto device = device_.isValid() ? device_ : Config::defaultDevice();
 
-    std::string ret = "DEV " + std::to_string(device->num()) + " " +
-                      dumpTarget(device->target());
-    return ret;
+    std::string ret_meta = "DEV " + std::to_string(device->num()) + " ";
+    auto &&[target_meta, ret_data] = dumpTarget(device->target());
+    ret_meta += target_meta;
+
+    return std::make_pair(ret_meta, ret_data);
 }
 
 std::pair<std::string, std::string> dumpArray(const Ref<Array> &array_) {

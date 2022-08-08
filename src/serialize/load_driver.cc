@@ -6,30 +6,29 @@
 #include <sstream>
 
 namespace freetensor {
-Ref<Target> loadTarget(const std::string &txt) {
+Ref<Target> loadTarget(const std::string &txt, const std::string &data) {
 
-    /**
-     * TODO
-     */
     std::istringstream iss(txt);
 
     Ref<Target> ret;
     std::string type;
+    bool useNativeArch;
 
-    ASSERT(iss >> type);
+    ASSERT(iss >> type >> useNativeArch);
     ASSERT(type.length() > 0);
 
     switch (type[0]) {
 #ifdef FT_WITH_CUDA
     case 'G': {
-        auto ret_ = Ref<GPU>::make(nullptr);
-        // TODO
+        auto deviceProp = Ref<cudaDeviceProp>::make();
+        memcpy(&(*deviceProp), data.c_str(), sizeof(cudaDeviceProp));
+        auto ret_ = Ref<GPU>::make(deviceProp);
         ret = ret_.as<Target>();
         break;
     }
 #endif // FT_WITH_CUDA
     case 'C': {
-        auto ret_ = Ref<CPU>::make();
+        auto ret_ = Ref<CPU>::make(useNativeArch);
         ret = ret_.as<Target>();
         break;
     }
@@ -38,11 +37,11 @@ Ref<Target> loadTarget(const std::string &txt) {
     }
     return ret;
 }
-Ref<Device> loadDevice(const std::string &txt) {
+Ref<Device> loadDevice(const std::string &txt, const std::string &data) {
 
     /**
      * `DEV <Num> <Target>`
-     * e.g. `DEV 3 GPU`
+     * e.g. `DEV 3 GPU 1`
      */
     std::istringstream iss(txt);
 
@@ -57,7 +56,7 @@ Ref<Device> loadDevice(const std::string &txt) {
     case 'D':
         // `DEV <Num> <Target>` : find a space after `<Num>`
         ret = Ref<Device>::make(
-            loadTarget(txt.substr(txt.find(' ', 4)))->type(), num);
+            loadTarget(txt.substr(txt.find(' ', 4)), data)->type(), num);
         break;
     default:
         ASSERT(false);

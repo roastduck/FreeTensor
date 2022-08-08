@@ -38,27 +38,25 @@ def test_device_gpu():
     assert device == device2
 
 
-def test_array_no_cpu_sizeof4():
+def test_array_sizeof4():
 
     arr_np = np.array([[[1.7, 2.8, 3.9], [4.23, 5.5, 6.0]]], dtype="float32")
     arr = ft.Array(arr_np)
 
-    head, data2 = ft.dump_array(arr)
-    print(head)
-    print(data2)
-    arr2 = ft.load_array((head, data2))
+    txt = ft.dump_array(arr)
+    print(txt)
+    arr2 = ft.load_array(txt)
 
     assert arr == arr2
 
 
-def test_array_with_cpu_sizeof8():
+def test_array_sizeof8():
 
     arr_np = np.array([[[17, 28, 7**20]], [[40, 5**24, 67]]], dtype="int64")
     arr = ft.Array(arr_np)
 
-    head, data2 = ft.dump_array(arr)
-    print(head)
-    print(data2)
-    arr2 = ft.load_array((head, data2))
+    txt = ft.dump_array(arr)
+    print(txt)
+    arr2 = ft.load_array(txt)
 
     assert arr == arr2
