@@ -3,7 +3,8 @@
 #include <driver/gpu.h>
 namespace freetensor {
 
-const size_t deviceNameMaxLength = 255; // not 256, for '\0' terminated string
+static const size_t deviceNameMaxLength =
+    255; // not 256, for '\0' terminated string
 
 Device::Device(const TargetType &targetType, int num) : num_(num) {
     switch (targetType) {

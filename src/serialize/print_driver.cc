@@ -8,8 +8,7 @@ std::string dumpTarget(const Ref<Target> &target_) {
 
     auto target = target_.isValid() ? target_ : Config::defaultTarget();
 
-    std::string ret =
-        target->toString() + " " + std::to_string(target->useNativeArch());
+    std::string ret = target->toString();
 
     // TODO
     switch (target->type()) {

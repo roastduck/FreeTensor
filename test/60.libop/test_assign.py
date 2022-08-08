@@ -6,7 +6,7 @@ from freetensor import libop
 
 
 def test_same_static_shape():
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -26,7 +26,7 @@ def test_same_static_shape():
 
 
 def test_static_broadcast_shorter():
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -46,7 +46,7 @@ def test_static_broadcast_shorter():
 
 
 def test_static_broadcast_1_at_front():
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -66,7 +66,7 @@ def test_static_broadcast_1_at_front():
 
 
 def test_static_broadcast_1_at_back():
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -86,7 +86,7 @@ def test_static_broadcast_1_at_back():
 
 
 def test_different_dtype():
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -106,7 +106,7 @@ def test_different_dtype():
 
 
 def test_operator_overload():
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):

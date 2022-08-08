@@ -110,10 +110,7 @@ def test_tune():
     a = ft.Array(np.random.randint(0, 100, (100, 100, 100)).astype("int32"))
     b = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
     c = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
-    trials = s.tune_auto_schedule(10,
-                                  1,
-                                  ft.Device(ft.TargetType.CPU), (a, b, c),
-                                  to_learn="fuse")
+    trials = s.tune_auto_schedule(10, 1, ft.CPU(), (a, b, c), to_learn="fuse")
     traces = [
         "{}:\n t={}, stddev={}".format(
             "\n".join([str(obs)
@@ -169,7 +166,7 @@ def test_tune_with_cond():
     y = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
     trials = s.tune_auto_schedule(10,
                                   1,
-                                  ft.Device(ft.TargetType.GPU), (a, b, c, y),
+                                  ft.GPU(), (a, b, c, y),
                                   to_learn="fuse")
     traces = [
         "{}:\n t={}, stddev={}".format(

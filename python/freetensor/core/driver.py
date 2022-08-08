@@ -3,7 +3,7 @@ import functools
 import numpy as np
 
 from typing import Optional, Sequence
-from freetensor_ffi import Target, CPU, GPU, Device, Array
+from freetensor_ffi import Target, Array
 
 from . import config
 from .codegen import NativeCode
@@ -77,8 +77,8 @@ def _register_target(cls):
     cls.__exit__ = __exit__
 
 
-_register_target(CPU)
-_register_target(GPU)
+_register_target(ffi.CPU)
+_register_target(ffi.GPU)
 
 
 class Device(ffi.Device):
@@ -114,6 +114,18 @@ class Device(ffi.Device):
         old_target, old_device = _old_target_device_stack.pop()
         config.set_default_target(old_target)
         config.set_default_device(old_device)
+
+
+class CPU(Device):
+
+    def __init__(self, *args):
+        super().__init__(ffi.TargetType.CPU, *args)
+
+
+class GPU(Device):
+
+    def __init__(self, *args):
+        super().__init__(ffi.TargetType.GPU, *args)
 
 
 class ReturnValuesPack:

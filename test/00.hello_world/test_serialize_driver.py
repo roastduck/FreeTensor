@@ -7,7 +7,7 @@ from random import randint
 
 
 def test_target_cpu():
-    target = ft.CPU(0)
+    target = ft.CPU().target()
     txt = ft.dump_target(target)
     print(txt)
     target2 = ft.load_target(txt)
@@ -15,7 +15,7 @@ def test_target_cpu():
 
 
 def test_target_gpu():
-    target = ft.GPU(0)
+    target = ft.GPU().target()
     txt = ft.dump_target(target)
     print(txt)
     target2 = ft.load_target(txt)
@@ -23,8 +23,7 @@ def test_target_gpu():
 
 
 def test_device_cpu():
-    device = ft.Device(ft.TargetType.CPU, 0)
-    target = device.target()
+    device = ft.CPU()
     txt = ft.dump_device(device)
     print(txt)
     device2 = ft.load_device(txt)
@@ -32,8 +31,7 @@ def test_device_cpu():
 
 
 def test_device_gpu():
-    device = ft.Device(ft.TargetType.GPU, 0)
-    target = device.target()
+    device = ft.GPU()
     txt = ft.dump_device(device)
     print(txt)
     device2 = ft.load_device(txt)

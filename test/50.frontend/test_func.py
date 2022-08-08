@@ -115,14 +115,14 @@ def test_call_with_external_data():
 
     y_np = np.zeros((2, 2), dtype="int32")
     y_arr = ft.Array(y_np)
-    ft.Driver(f, code, ft.Device(ft.TargetType.CPU))(y=y_arr)
+    ft.Driver(f, code, ft.CPU())(y=y_arr)
     y_np = y_arr.numpy()
 
     assert np.array_equal(y_np, data.numpy() * 2)
 
 
 def test_call_with_literal_data():
-    dev = ft.Device(ft.TargetType.CPU)
+    dev = ft.CPU()
 
     @ft.inline
     def g(x, y):
@@ -332,7 +332,7 @@ def test_error_missing_parameters():
 
 
 def test_return():
-    dev = ft.Device(ft.TargetType.CPU)
+    dev = ft.CPU()
 
     @ft.inline
     def test_i(a, b):
@@ -431,7 +431,7 @@ def test_func_in_args():
             y[i] = x[i] + 1
         return y
 
-    @ft.build_binary(device=ft.Device(ft.TargetType.CPU))
+    @ft.build_binary(device=ft.CPU())
     @ft.codegen(target=ft.CPU(), verbose=True)
     @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
@@ -480,7 +480,7 @@ def test_variadic():
 
 
 def test_no_deps_on_returned_tensor():
-    dev = ft.Device(ft.TargetType.CPU)
+    dev = ft.CPU()
 
     @ft.inline
     def test_i(a, b):

@@ -5,10 +5,10 @@ from freetensor import debug
 import pytest
 import numpy as np
 
-device = ft.Device(ft.TargetType.GPU)
+device = ft.GPU()
 target = device.target()
 
-host = ft.Device(ft.TargetType.CPU)
+host = ft.CPU()
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")

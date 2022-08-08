@@ -27,7 +27,7 @@ def rand(*shape, **kvs):
     (libop.mod_to, operator.mod, "int32"),
 ])
 def test_same_static_shape(libop_func, torch_func, dtype):
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -56,7 +56,7 @@ def test_same_static_shape(libop_func, torch_func, dtype):
     (libop.mod_to, operator.mod, "int32"),
 ])
 def test_static_broadcast_shorter(libop_func, torch_func, dtype):
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -85,7 +85,7 @@ def test_static_broadcast_shorter(libop_func, torch_func, dtype):
     (libop.mod_to, operator.mod, "int32"),
 ])
 def test_static_broadcast_1_at_front(libop_func, torch_func, dtype):
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -114,7 +114,7 @@ def test_static_broadcast_1_at_front(libop_func, torch_func, dtype):
     (libop.mod_to, operator.mod, "int32"),
 ])
 def test_static_broadcast_1_at_back(libop_func, torch_func, dtype):
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -140,7 +140,7 @@ def test_static_broadcast_1_at_back(libop_func, torch_func, dtype):
     (libop.truediv_to, operator.truediv),
 ])
 def test_different_dtype(libop_func, torch_func):
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -169,7 +169,7 @@ def test_different_dtype(libop_func, torch_func):
     (operator.imod, operator.mod, "int32"),
 ])
 def test_operator_overload(libop_func, torch_func, dtype):
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):

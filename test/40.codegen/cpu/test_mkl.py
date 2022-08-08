@@ -6,7 +6,7 @@ if not ft.with_mkl():
     pytest.skip("requires MKL", allow_module_level=True)
 
 target = ft.CPU()
-device = ft.Device(ft.TargetType.CPU)
+device = ft.CPU()
 
 
 def test_mkl_basic():
@@ -34,9 +34,7 @@ def test_mkl_basic():
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.Device(ft.TargetType.CPU))(a=a_arr,
-                                                        b=b_arr,
-                                                        c=c_arr)
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -67,9 +65,7 @@ def test_mkl_reverse_idx():
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.Device(ft.TargetType.CPU))(a=a_arr,
-                                                        b=b_arr,
-                                                        c=c_arr)
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -99,9 +95,7 @@ def test_mkl_trans_a():
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.Device(ft.TargetType.CPU))(a=a_arr,
-                                                        b=b_arr,
-                                                        c=c_arr)
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np.transpose() @ b_np))
@@ -131,9 +125,7 @@ def test_mkl_trans_b():
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.Device(ft.TargetType.CPU))(a=a_arr,
-                                                        b=b_arr,
-                                                        c=c_arr)
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np.transpose()))
@@ -163,9 +155,7 @@ def test_mkl_trans_c():
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.Device(ft.TargetType.CPU))(a=a_arr,
-                                                        b=b_arr,
-                                                        c=c_arr)
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + (a_np @ b_np).transpose()))
@@ -196,9 +186,7 @@ def test_mkl_batch():
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.Device(ft.TargetType.CPU))(a=a_arr,
-                                                        b=b_arr,
-                                                        c=c_arr)
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -229,9 +217,7 @@ def test_mkl_splitted_dim():
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.Device(ft.TargetType.CPU))(a=a_arr,
-                                                        b=b_arr,
-                                                        c=c_arr)
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(
@@ -264,9 +250,7 @@ def test_mkl_with_init():
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.Device(ft.TargetType.CPU))(a=a_arr,
-                                                        b=b_arr,
-                                                        c=c_arr)
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, a_np @ b_np))
@@ -300,9 +284,7 @@ def test_mkl_in_parallel():
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.Device(ft.TargetType.CPU))(a=a_arr,
-                                                        b=b_arr,
-                                                        c=c_arr)
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -332,9 +314,7 @@ def test_mkl_matrix_vector():
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.Device(ft.TargetType.CPU))(a=a_arr,
-                                                        b=b_arr,
-                                                        c=c_arr)
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -364,9 +344,7 @@ def test_mkl_vector_matrix():
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.Device(ft.TargetType.CPU))(a=a_arr,
-                                                        b=b_arr,
-                                                        c=c_arr)
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -398,9 +376,7 @@ def test_mkl_vardef_in_loop():
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.Device(ft.TargetType.CPU))(a=a_arr,
-                                                        b=b_arr,
-                                                        c=c_arr)
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))

@@ -49,7 +49,7 @@ def same(lhs, rhs, dtype):
     (libop.any_, torch.any, "bool"),
 ])
 def test_static(libop_func, torch_func, dtype):
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -79,7 +79,7 @@ def test_static(libop_func, torch_func, dtype):
     (libop.any_, torch.any, "bool"),
 ])
 def test_keepdims(libop_func, torch_func, dtype):
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -109,7 +109,7 @@ def test_keepdims(libop_func, torch_func, dtype):
     (libop.any, torch.any, "bool"),
 ])
 def test_out_of_place(libop_func, torch_func, dtype):
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x):
@@ -137,7 +137,7 @@ def test_out_of_place(libop_func, torch_func, dtype):
     (libop.any, torch.any, "bool"),
 ])
 def test_out_of_place_keepdims(libop_func, torch_func, dtype):
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x):

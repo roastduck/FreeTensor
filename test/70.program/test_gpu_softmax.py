@@ -6,7 +6,7 @@ import freetensor as ft
 from freetensor import debug
 from freetensor import libop
 
-device = ft.Device(ft.TargetType.GPU)
+device = ft.GPU()
 target = device.target()
 
 

@@ -4,7 +4,7 @@ import freetensor as ft
 import pytest
 import numpy as np
 
-device = ft.Device(ft.TargetType.CPU)
+device = ft.CPU()
 target = device.target()
 
 

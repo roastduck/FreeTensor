@@ -18,66 +18,59 @@ namespace freetensor {
  * Target architecture
  */
 class Target {
-    bool useNativeArch_;
 
   public:
-    Target(bool useNativeArch = true) : useNativeArch_(useNativeArch) {}
+    Target() {}
 
-    void setUseNativeArch(bool useNativeArch = true) {
-        useNativeArch_ = useNativeArch;
-    }
-    bool useNativeArch() const { return useNativeArch_; }
     virtual ~Target() = default;
+    virtual bool useNativeArch() const = 0;
     virtual TargetType type() const = 0;
     virtual std::string toString() const = 0;
     virtual MemType mainMemType() const = 0;
 };
 
 class CPU : public Target {
+    bool useNativeArch_;
     // TODO: infoArch
 
   public:
-    CPU(bool useNativeArch = true) : Target(useNativeArch) {}
+    CPU(bool useNativeArch = true) : useNativeArch_(useNativeArch) {}
 
+    void setUseNativeArch(bool useNativeArch = true) {
+        useNativeArch_ = useNativeArch;
+    }
+    bool useNativeArch() const { return useNativeArch_; }
     TargetType type() const override { return TargetType::CPU; }
     std::string toString() const override { return "CPU"; }
     MemType mainMemType() const override { return MemType::CPU; }
 };
 
-class GPU : public Target {
 #ifdef FT_WITH_CUDA
+class GPU : public Target {
     Ref<cudaDeviceProp> infoArch_;
-#endif // FT_WITH_CUDA
 
   public:
-#ifndef FT_WITH_CUDA
-    GPU(bool useNativeArch = true) : Target(useNativeArch) {}
-#endif // NOT FT_WITH_CUDA
+    // GPU is constructed from real local Deivce
+    // `infoArch` has no default value
+    // `useNativeArch` is always true
+    GPU(const Ref<cudaDeviceProp> &infoArch) : infoArch_(infoArch) {}
 
-#ifdef FT_WITH_CUDA
-    GPU(const Ref<cudaDeviceProp> &infoArch = nullptr,
-        bool useNativeArch = true)
-        : Target(useNativeArch), infoArch_(infoArch) {}
-#endif // FT_WITH_CUDA
-
+    bool useNativeArch() const override { return true; }
     TargetType type() const override { return TargetType::GPU; }
     std::string toString() const override { return "GPU"; }
     MemType mainMemType() const override { return MemType::GPUGlobal; }
 
-#ifdef FT_WITH_CUDA
-    void setInfoArch(const Ref<cudaDeviceProp> &infoArch = nullptr) {
+    void setInfoArch(const Ref<cudaDeviceProp> &infoArch) {
         infoArch_ = infoArch;
     }
     const Ref<cudaDeviceProp> &infoArch() const { return infoArch_; }
 
     Ref<std::pair<int, int>> computeCapability() const {
-        if (!infoArch_.isValid())
-            return nullptr;
         return Ref<std::pair<int, int>>::make(
             std::make_pair(infoArch_->major, infoArch_->minor));
     }
-#endif // FT_WITH_CUDA
 };
+#endif // FT_WITH_CUDA
 
 bool isSameTarget(const Ref<Target> &lhs, const Ref<Target> &rhs);
 

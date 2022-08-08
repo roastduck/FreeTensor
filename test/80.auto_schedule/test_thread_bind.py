@@ -2,7 +2,7 @@ import freetensor as ft
 import numpy as np
 import pytest
 
-device = ft.Device(ft.TargetType.GPU)
+device = ft.GPU()
 target = device.target()
 
 

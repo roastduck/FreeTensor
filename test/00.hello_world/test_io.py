@@ -57,7 +57,7 @@ def test_torch_strided():
                     reason="requires PyTorch and CUDA")
 def test_torch_cuda():
 
-    with ft.Device(ft.TargetType.GPU, 0):
+    with ft.GPU():
 
         def sch(s):
             s.parallelize("Li", "blockIdx.x")

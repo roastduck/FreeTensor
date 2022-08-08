@@ -55,7 +55,7 @@ def test_vector_add_gpu():
     import numpy as np
 
     # Using the 0-th GPU device
-    with ft.Device(ft.TargetType.GPU, 0):
+    with ft.GPU():
 
         n = 4
 
@@ -85,7 +85,7 @@ def test_vector_add_dynamic_gpu():
     import numpy as np
 
     # Using the 0-th GPU device
-    with ft.Device(ft.TargetType.GPU, 0):
+    with ft.GPU():
 
         @ft.optimize(
             # Parallel Loop Li as GPU threads

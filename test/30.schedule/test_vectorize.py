@@ -1,7 +1,7 @@
 import freetensor as ft
 import pytest
 
-device = ft.Device(ft.TargetType.CPU)
+device = ft.CPU()
 target = device.target()
 
 # For normal test cases, please refer to test/codegen

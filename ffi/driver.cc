@@ -42,7 +42,9 @@ void init_ffi_driver(py::module_ &m) {
     // Serialization
     m.def("load_target", &loadTarget);
     m.def("load_device", &loadDevice);
-    m.def("load_array", &loadArray);
+    m.def("load_array",
+          [](const std::pair<const std::string &, const std::string &>
+                 &txt_data) { return std::apply(loadArray, txt_data); });
     m.def("dump_target", &dumpTarget, "target"_a);
     m.def("dump_device", &dumpDevice, "device"_a);
     m.def(

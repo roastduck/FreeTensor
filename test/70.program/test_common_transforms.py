@@ -5,7 +5,7 @@ import pytest
 
 
 def test_tiling():
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
     target = device.target()
 
     with ft.VarDef([
@@ -79,7 +79,7 @@ def test_tiling():
 
 
 def test_tiled_reduction():
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
     target = device.target()
 
     with ft.VarDef([
@@ -126,7 +126,7 @@ def test_tiled_reduction():
 
 
 def test_parallel_reduction():
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
     target = device.target()
 
     with ft.VarDef([
@@ -179,7 +179,7 @@ def test_parallel_reduction():
 
 
 def test_dynamic_tiling():
-    device = ft.Device(ft.TargetType.CPU)
+    device = ft.CPU()
     target = device.target()
 
     with ft.VarDef([
@@ -242,7 +242,7 @@ def test_dynamic_tiling():
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_collaborative_fetch():
-    device = ft.Device(ft.TargetType.GPU)
+    device = ft.GPU()
     target = device.target()
 
     with ft.VarDef([

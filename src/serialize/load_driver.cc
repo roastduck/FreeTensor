@@ -9,37 +9,27 @@ namespace freetensor {
 Ref<Target> loadTarget(const std::string &txt) {
 
     /**
-     * `[CPU|GPU] <useNativeArch>`
+     * TODO
      */
     std::istringstream iss(txt);
 
     Ref<Target> ret;
     std::string type;
-    bool useNativeArch;
 
-    ASSERT(iss >> type >> useNativeArch);
+    ASSERT(iss >> type);
     ASSERT(type.length() > 0);
 
     switch (type[0]) {
-#ifndef FT_WITH_CUDA
-    case 'G': {
-
-        auto ret_ = Ref<GPU>::make(useNativeArch);
-        ret = ret_.as<Target>();
-        break;
-    }
-
-#endif // NOT FT_WITH_CUDA
 #ifdef FT_WITH_CUDA
     case 'G': {
-        auto ret_ = Ref<GPU>::make(nullptr, useNativeArch);
+        auto ret_ = Ref<GPU>::make(nullptr);
         // TODO
         ret = ret_.as<Target>();
         break;
     }
 #endif // FT_WITH_CUDA
     case 'C': {
-        auto ret_ = Ref<CPU>::make(useNativeArch);
+        auto ret_ = Ref<CPU>::make();
         ret = ret_.as<Target>();
         break;
     }
@@ -52,7 +42,7 @@ Ref<Device> loadDevice(const std::string &txt) {
 
     /**
      * `DEV <Num> <Target>`
-     * e.g. `DEV 3 GPU 1`
+     * e.g. `DEV 3 GPU`
      */
     std::istringstream iss(txt);
 
@@ -96,10 +86,8 @@ Ref<Array> newArray(const std::vector<size_t> &shape_,
 
     return ret;
 }
-Ref<Array>
-loadArray(const std::pair<const std::string &, const std::string &> &txt_data) {
+Ref<Array> loadArray(const std::string &txt, const std::string &data) {
 
-    auto &&[txt, data] = txt_data;
     std::istringstream iss(txt);
 
     Ref<Array> ret;
