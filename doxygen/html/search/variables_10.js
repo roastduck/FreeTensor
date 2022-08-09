@@ -24,6 +24,5 @@ var searchData=
   ['stridea_5f_21',['stridea_',['../classfreetensor_1_1MatMulNode.html#afb5ee412e447e27f97606ada6124e60e',1,'freetensor::MatMulNode']]],
   ['strideb_5f_22',['strideb_',['../classfreetensor_1_1MatMulNode.html#afb12f7051dad0223f6e5fe0a380f6a08',1,'freetensor::MatMulNode']]],
   ['stridec_5f_23',['stridec_',['../classfreetensor_1_1MatMulNode.html#a82efe76eb75e567c400820c805589ba0',1,'freetensor::MatMulNode']]],
-  ['subloops_5f_24',['subLoops_',['../structfreetensor_1_1LoopNest.html#a58e1c780410b7688c711be24c75fcbff',1,'freetensor::LoopNest']]],
-  ['synced_5f_25',['synced_',['../structfreetensor_1_1gpu_1_1CrossThreadDep.html#a229a7df675502488f64b5e0b99e454b7',1,'freetensor::gpu::CrossThreadDep']]]
+  ['subloops_5f_24',['subLoops_',['../structfreetensor_1_1LoopNest.html#a58e1c780410b7688c711be24c75fcbff',1,'freetensor::LoopNest']]]
 ];

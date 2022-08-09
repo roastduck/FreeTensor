@@ -1,7 +1,6 @@
 <map id="include/analyze/merge_no_deps_hint.h" name="include/analyze/merge_no_deps_hint.h">
-<area shape="rect" id="node1" title=" " alt="" coords="289,5,460,47"/>
+<area shape="rect" id="node1" title=" " alt="" coords="187,5,357,47"/>
 <area shape="rect" id="node2" href="$merge__no__deps__hint_8cc.html" title=" " alt="" coords="5,95,171,136"/>
-<area shape="rect" id="node3" href="$normalize__threads_8cc.html" title=" " alt="" coords="195,95,367,136"/>
-<area shape="rect" id="node4" href="$fuse_8cc.html" title=" " alt="" coords="391,102,545,129"/>
-<area shape="rect" id="node5" href="$merge_8cc.html" title=" " alt="" coords="569,102,735,129"/>
+<area shape="rect" id="node3" href="$fuse_8cc.html" title=" " alt="" coords="195,102,349,129"/>
+<area shape="rect" id="node4" href="$merge_8cc.html" title=" " alt="" coords="373,102,539,129"/>
 </map>

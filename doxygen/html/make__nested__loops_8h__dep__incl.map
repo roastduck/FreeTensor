@@ -1,7 +1,6 @@
 <map id="include/pass/make_nested_loops.h" name="include/pass/make_nested_loops.h">
-<area shape="rect" id="node1" title=" " alt="" coords="274,5,469,47"/>
+<area shape="rect" id="node1" title=" " alt="" coords="182,5,377,47"/>
 <area shape="rect" id="node2" href="$cpu_2lower__parallel__reduction_8cc.html" title=" " alt="" coords="5,95,169,136"/>
-<area shape="rect" id="node3" href="$gpu_2lower__parallel__reduction_8cc.html" title=" " alt="" coords="193,95,357,136"/>
-<area shape="rect" id="node4" href="$make__parallel__reduction_8cc.html" title=" " alt="" coords="382,95,553,136"/>
-<area shape="rect" id="node5" href="$cache_8cc.html" title=" " alt="" coords="577,102,739,129"/>
+<area shape="rect" id="node3" href="$make__parallel__reduction_8cc.html" title=" " alt="" coords="194,95,365,136"/>
+<area shape="rect" id="node4" href="$cache_8cc.html" title=" " alt="" coords="389,102,551,129"/>
 </map>

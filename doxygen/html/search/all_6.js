@@ -1,9 +1,9 @@
 var searchData=
 [
   ['earlier_0',['earlier',['../structfreetensor_1_1Dependency.html#a459fda2043c4ae8be50ced287670304a',1,'freetensor::Dependency']]],
-  ['earlier_5f_1',['earlier_',['../structfreetensor_1_1gpu_1_1CrossThreadDep.html#a85c036b82d7ff6be44f300b692de6d96',1,'freetensor::gpu::CrossThreadDep::earlier_()'],['../structfreetensor_1_1Dependency.html#ab954f0fbab88aa63d2140373ef660c5d',1,'freetensor::Dependency::earlier_()']]],
+  ['earlier_5f_1',['earlier_',['../structfreetensor_1_1Dependency.html#ab954f0fbab88aa63d2140373ef660c5d',1,'freetensor::Dependency']]],
   ['earlieriter2idx_5f_2',['earlierIter2Idx_',['../structfreetensor_1_1Dependency.html#ac72d395cbed3ded3e6efba649d8438bd',1,'freetensor::Dependency']]],
-  ['earlieriters_5f_3',['earlierIters_',['../tensor__prop__const_8cc.html#a111a609b3a7df04c81ccf0bd9535fb11',1,'earlierIters_():&#160;tensor_prop_const.cc'],['../remove__writes_8cc.html#a111a609b3a7df04c81ccf0bd9535fb11',1,'earlierIters_():&#160;remove_writes.cc'],['../prop__one__time__use_8cc.html#a111a609b3a7df04c81ccf0bd9535fb11',1,'earlierIters_():&#160;prop_one_time_use.cc']]],
+  ['earlieriters_5f_3',['earlierIters_',['../prop__one__time__use_8cc.html#a111a609b3a7df04c81ccf0bd9535fb11',1,'earlierIters_():&#160;prop_one_time_use.cc'],['../tensor__prop__const_8cc.html#a111a609b3a7df04c81ccf0bd9535fb11',1,'earlierIters_():&#160;tensor_prop_const.cc'],['../remove__writes_8cc.html#a111a609b3a7df04c81ccf0bd9535fb11',1,'earlierIters_():&#160;remove_writes.cc']]],
   ['elementwiseinfo_4',['ElementWiseInfo',['../structfreetensor_1_1ElementWiseInfo.html',1,'freetensor']]],
   ['elsecase_5f_5',['elseCase_',['../classfreetensor_1_1IfNode.html#afde6ae8767bbdfaac317d4d7f2d5533f',1,'freetensor::IfNode::elseCase_()'],['../classfreetensor_1_1IfExprNode.html#aa710d9825771180de5e121463737ac6b',1,'freetensor::IfExprNode::elseCase_()']]],
   ['emplace_5fback_6',['emplace_back',['../classfreetensor_1_1SubTreeList.html#ae63312b5d3da80cef86acbce6e11a415',1,'freetensor::SubTreeList']]],
@@ -20,7 +20,7 @@ var searchData=
   ['ends_5f_17',['ends_',['../structfreetensor_1_1ReductionItem.html#a8391624beb371162bcf3d921001114a9',1,'freetensor::ReductionItem']]],
   ['eq_18',['EQ',['../namespacefreetensor.html#aa8ba9802f89eed150bede47cf5afef88',1,'freetensor::EQ()'],['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa2dcbad7477fd40561e8b8198f173bd47',1,'freetensor::EQ()']]],
   ['eqnode_19',['EQNode',['../classfreetensor_1_1EQNode.html',1,'freetensor']]],
-  ['equals_20',['equals',['../classfreetensor_1_1ScheduleLogItemImpl.html#a14cdf61a3d062d3fe86148880bef62ca',1,'freetensor::ScheduleLogItemImpl::equals()'],['../classfreetensor_1_1ScheduleLogItem.html#a9ca417bfc1f8b7bd3d4a2a12c70b6d06',1,'freetensor::ScheduleLogItem::equals()']]],
+  ['equals_20',['equals',['../classfreetensor_1_1ScheduleLogItem.html#a9ca417bfc1f8b7bd3d4a2a12c70b6d06',1,'freetensor::ScheduleLogItem::equals()'],['../classfreetensor_1_1ScheduleLogItemImpl.html#a14cdf61a3d062d3fe86148880bef62ca',1,'freetensor::ScheduleLogItemImpl::equals()']]],
   ['equivalent_5f_21',['equivalent_',['../classfreetensor_1_1MatMulNode.html#aaf0ff3000bd3ee0ff70d97c0ea552d2b',1,'freetensor::MatMulNode']]],
   ['erase_22',['erase',['../classfreetensor_1_1SubTreeList.html#a10cf02a8af566f458ebab8ef7ae36772',1,'freetensor::SubTreeList']]],
   ['eraseoutsidevardef_23',['eraseOutsideVarDef',['../classfreetensor_1_1FindDeps.html#a158e4be89f87ada0a7d30c8987a7dc6f',1,'freetensor::FindDeps']]],

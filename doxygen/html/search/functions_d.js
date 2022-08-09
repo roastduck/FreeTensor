@@ -19,11 +19,9 @@ var searchData=
   ['nodeidorparallelscope_16',['NodeIDOrParallelScope',['../structfreetensor_1_1NodeIDOrParallelScope.html#a96327a433b31d54be404b692e9d60eef',1,'freetensor::NodeIDOrParallelScope::NodeIDOrParallelScope(const ID &amp;id)'],['../structfreetensor_1_1NodeIDOrParallelScope.html#a750ffa79e66a4f6c82fa507e7e9957e0',1,'freetensor::NodeIDOrParallelScope::NodeIDOrParallelScope(const ParallelScope &amp;parallel)']]],
   ['nodetype_17',['nodeType',['../classfreetensor_1_1ASTNode.html#a9231cccded096dfb8a9b7070a4f39baf',1,'freetensor::ASTNode']]],
   ['noprojectoutprovateaxis_18',['noProjectOutProvateAxis',['../classfreetensor_1_1FindDeps.html#ac60c7bb079a0aa635accc44c1acfff2e',1,'freetensor::FindDeps']]],
-  ['normalizethreads_19',['NormalizeThreads',['../classfreetensor_1_1gpu_1_1NormalizeThreads.html#af8483decf7a9a27f23444ce478f6e9bc',1,'freetensor::gpu::NormalizeThreads']]],
-  ['normalizethreads_20',['normalizeThreads',['../namespacefreetensor_1_1gpu.html#aa39f5c0b8c1a5c6ae03ec2d5a733d9e9',1,'freetensor::gpu']]],
-  ['notlexlessafterpermu_21',['notLexLessAfterPermu',['../namespacefreetensor.html#affd9024564fe030fc074d18560f25e5b',1,'freetensor']]],
-  ['nowsubnum_22',['nowSubNum',['../classfreetensor_1_1Sketch.html#adde45ed793cf85e181b62134645022be',1,'freetensor::Sketch']]],
-  ['nowsubsketch_23',['nowSubSketch',['../classfreetensor_1_1Sketch.html#aa45221226e616bb1330d168cb2fecb75',1,'freetensor::Sketch::nowSubSketch()'],['../classfreetensor_1_1Sketch.html#a751b9aab36ae535323bec9db51224c17',1,'freetensor::Sketch::nowSubSketch() const']]],
-  ['num_24',['num',['../classfreetensor_1_1Device.html#a21e8a9ed5f036f7aff100c0b170a713c',1,'freetensor::Device']]],
-  ['numsi_25',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]]
+  ['notlexlessafterpermu_19',['notLexLessAfterPermu',['../namespacefreetensor.html#affd9024564fe030fc074d18560f25e5b',1,'freetensor']]],
+  ['nowsubnum_20',['nowSubNum',['../classfreetensor_1_1Sketch.html#adde45ed793cf85e181b62134645022be',1,'freetensor::Sketch']]],
+  ['nowsubsketch_21',['nowSubSketch',['../classfreetensor_1_1Sketch.html#aa45221226e616bb1330d168cb2fecb75',1,'freetensor::Sketch::nowSubSketch()'],['../classfreetensor_1_1Sketch.html#a751b9aab36ae535323bec9db51224c17',1,'freetensor::Sketch::nowSubSketch() const']]],
+  ['num_22',['num',['../classfreetensor_1_1Device.html#a21e8a9ed5f036f7aff100c0b170a713c',1,'freetensor::Device']]],
+  ['numsi_23',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]]
 ];

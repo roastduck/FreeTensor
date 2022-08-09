@@ -101,7 +101,7 @@ $(function() {
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="expr_8h.html#a8791cc9ae81f9849cd9e7c2715965f30">   35</a></span><span class="preprocessor">#define makeVar(...) makeNode(Var, __VA_ARGS__)</span></div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno"><a class="line" href="namespacefreetensor.html#a97aa155dcc7c5e89d937d23c6e74691a">   36</a></span><span class="keyword">inline</span> <a class="code hl_class" href="classfreetensor_1_1Ref.html">Expr</a> <a class="code hl_function" href="namespacefreetensor.html#a97aa155dcc7c5e89d937d23c6e74691a">_makeVar</a>(<span class="keyword">const</span> std::string &amp;name) {</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    <a class="code hl_class" href="classfreetensor_1_1Ref.html">Var</a> v = <a class="code hl_function" href="classfreetensor_1_1Ref.html#a07be840737c8cf0a9c0860ea6f4e30ea">Var::make</a>();</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    v-&gt;<a class="code hl_variable" href="classfreetensor_1_1VarNode.html#a3c478a115dcd164d9e1dbb588886aef0">name_</a> = name;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    v-&gt;name_ = name;</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keywordflow">return</span> v;</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>}</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>

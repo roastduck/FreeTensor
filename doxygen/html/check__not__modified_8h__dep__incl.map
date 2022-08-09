@@ -1,10 +1,9 @@
 <map id="include/analyze/check_not_modified.h" name="include/analyze/check_not_modified.h">
-<area shape="rect" id="node1" title=" " alt="" coords="605,5,772,47"/>
+<area shape="rect" id="node1" title=" " alt="" coords="487,5,653,47"/>
 <area shape="rect" id="node2" href="$check__not__modified_8cc.html" title=" " alt="" coords="5,95,172,136"/>
-<area shape="rect" id="node3" href="$make__sync_8cc.html" title=" " alt="" coords="196,102,395,129"/>
-<area shape="rect" id="node4" href="$hoist__return__vars_8cc.html" title=" " alt="" coords="419,95,577,136"/>
-<area shape="rect" id="node5" href="$prop__one__time__use_8cc.html" title=" " alt="" coords="601,95,777,136"/>
-<area shape="rect" id="node6" href="$remove__writes_8cc.html" title=" " alt="" coords="801,102,995,129"/>
-<area shape="rect" id="node7" href="$fuse_8cc.html" title=" " alt="" coords="1020,102,1173,129"/>
-<area shape="rect" id="node8" href="$inlining_8cc.html" title=" " alt="" coords="1198,102,1371,129"/>
+<area shape="rect" id="node3" href="$hoist__return__vars_8cc.html" title=" " alt="" coords="197,95,354,136"/>
+<area shape="rect" id="node4" href="$prop__one__time__use_8cc.html" title=" " alt="" coords="378,95,554,136"/>
+<area shape="rect" id="node5" href="$remove__writes_8cc.html" title=" " alt="" coords="578,102,773,129"/>
+<area shape="rect" id="node6" href="$fuse_8cc.html" title=" " alt="" coords="797,102,951,129"/>
+<area shape="rect" id="node7" href="$inlining_8cc.html" title=" " alt="" coords="975,102,1149,129"/>
 </map>

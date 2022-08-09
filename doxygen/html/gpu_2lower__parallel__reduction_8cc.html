@@ -66,88 +66,9 @@ $(function() {
 </div>
 </div><!-- top -->
 <div class="header">
-  <div class="summary">
-<a href="#namespaces">Namespaces</a> &#124;
-<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">lower_parallel_reduction.cc File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;itertools.hpp&gt;</code><br />
-<code>#include &lt;<a class="el" href="container__utils_8h_source.html">container_utils.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="hash_8h_source.html">hash.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="gpu_2lower__parallel__reduction_8h_source.html">pass/gpu/lower_parallel_reduction.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="make__nested__loops_8h_source.html">pass/make_nested_loops.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="simplify_8h_source.html">pass/simplify.h</a>&gt;</code><br />
-</div><div class="textblock"><div class="dynheader">
-Include dependency graph for lower_parallel_reduction.cc:</div>
-<div class="dyncontent">
-<div class="center"><img src="gpu_2lower__parallel__reduction_8cc__incl.png" border="0" usemap="#asrc_2pass_2gpu_2lower__parallel__reduction_8cc" alt=""/></div>
-<map name="asrc_2pass_2gpu_2lower__parallel__reduction_8cc" id="asrc_2pass_2gpu_2lower__parallel__reduction_8cc">
-<area shape="rect" title=" " alt="" coords="1618,5,1782,47"/>
-<area shape="rect" title=" " alt="" coords="2616,1109,2720,1136"/>
-<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="1499,1035,1629,1061"/>
-<area shape="rect" href="hash_8h.html" title=" " alt="" coords="1011,512,1077,539"/>
-<area shape="rect" href="gpu_2lower__parallel__reduction_8h.html" title=" " alt="" coords="1461,423,1637,464"/>
-<area shape="rect" href="make__nested__loops_8h.html" title=" " alt="" coords="2307,512,2504,539"/>
-<area shape="rect" href="simplify_8h.html" title=" " alt="" coords="1333,95,1451,121"/>
-<area shape="rect" title=" " alt="" coords="893,1109,979,1136"/>
-<area shape="rect" title=" " alt="" coords="1441,1109,1506,1136"/>
-<area shape="rect" title=" " alt="" coords="1312,1184,1392,1211"/>
-<area shape="rect" title=" " alt="" coords="1531,1109,1597,1136"/>
-<area shape="rect" title=" " alt="" coords="1992,1184,2051,1211"/>
-<area shape="rect" title=" " alt="" coords="1622,1109,1677,1136"/>
-<area shape="rect" title=" " alt="" coords="1103,1109,1227,1136"/>
-<area shape="rect" title=" " alt="" coords="412,1109,527,1136"/>
-<area shape="rect" title=" " alt="" coords="2294,1109,2357,1136"/>
-<area shape="rect" href="except_8h.html" title=" " alt="" coords="1753,1109,1831,1136"/>
-<area shape="rect" title=" " alt="" coords="1749,1184,1835,1211"/>
-<area shape="rect" href="expr_8h.html" title=" " alt="" coords="1938,811,2001,837"/>
-<area shape="rect" href="hash__combine_8h.html" title=" " alt="" coords="1051,587,1179,613"/>
-<area shape="rect" href="stmt_8h.html" title=" " alt="" coords="1773,587,1837,613"/>
-<area shape="rect" href="ast_8h.html" title=" " alt="" coords="1603,885,1658,912"/>
-<area shape="rect" href="data__type_8h.html" title=" " alt="" coords="1835,960,1933,987"/>
-<area shape="rect" title=" " alt="" coords="1305,960,1391,987"/>
-<area shape="rect" title=" " alt="" coords="1082,661,1147,688"/>
-<area shape="rect" href="buffer_8h.html" title=" " alt="" coords="2217,661,2287,688"/>
-<area shape="rect" href="for__property_8h.html" title=" " alt="" coords="1912,661,2024,688"/>
-<area shape="rect" href="reduce__op_8h.html" title=" " alt="" coords="1859,736,1960,763"/>
-<area shape="rect" href="tensor_8h.html" title=" " alt="" coords="2288,736,2363,763"/>
-<area shape="rect" href="symbol__table_8h.html" title=" " alt="" coords="609,512,786,539"/>
-<area shape="rect" href="func_8h.html" title=" " alt="" coords="2034,512,2097,539"/>
-<area shape="rect" href="mutator_8h.html" title=" " alt="" coords="1683,512,1768,539"/>
-<area shape="rect" title=" " alt="" coords="681,661,773,688"/>
-<area shape="rect" href="maybe__void_8h.html" title=" " alt="" coords="557,587,672,613"/>
-<area shape="rect" title=" " alt="" coords="2165,587,2225,613"/>
-<area shape="rect" href="array_8h.html" title=" " alt="" coords="2363,661,2471,688"/>
-<area shape="rect" href="debug_8h.html" title=" " alt="" coords="1456,736,1531,763"/>
-<area shape="rect" href="comp__transient__bounds_8h.html" title=" " alt="" coords="836,259,1015,300"/>
-<area shape="rect" href="visitor_8h.html" title=" " alt="" coords="1363,430,1437,457"/>
-<area shape="rect" href="opt_8h.html" title=" " alt="" coords="690,430,745,457"/>
-<area shape="rect" href="bounds_8h.html" title=" " alt="" coords="161,348,279,375"/>
-<area shape="rect" href="comp__unique__bounds_8h.html" title=" " alt="" coords="963,169,1127,211"/>
-<area shape="rect" href="annotate__conds_8h.html" title=" " alt="" coords="1763,177,1933,203"/>
-<area shape="rect" href="const__fold_8h.html" title=" " alt="" coords="1893,430,2027,457"/>
-<area shape="rect" href="all__uses_8h.html" title=" " alt="" coords="985,348,1127,375"/>
-<area shape="rect" href="analyze__linear_8h.html" title=" " alt="" coords="675,348,858,375"/>
-<area shape="rect" href="as__dnf_8h.html" title=" " alt="" coords="1253,348,1384,375"/>
-<area shape="rect" href="linear_8h.html" title=" " alt="" coords="558,430,666,457"/>
-<area shape="rect" title=" " alt="" coords="861,512,936,539"/>
-<area shape="rect" href="rational_8h.html" title=" " alt="" coords="5,811,128,837"/>
-</map>
-</div>
-</div><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
-Namespaces</h2></td></tr>
-<tr class="memitem:namespacefreetensor"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html">freetensor</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:namespacefreetensor_1_1gpu"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor_1_1gpu.html">freetensor::gpu</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:a24d238d276af2db1acdc594f2411ab46"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor_1_1gpu.html#a24d238d276af2db1acdc594f2411ab46">freetensor::gpu::lowerParallelReduction</a> (const Stmt &amp;op)</td></tr>
-<tr class="separator:a24d238d276af2db1acdc594f2411ab46"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
