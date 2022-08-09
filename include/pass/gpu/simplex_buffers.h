@@ -1,6 +1,8 @@
 #ifndef FREE_TENSOR_GPU_SIMPLEX_BUFFERS_H
 #define FREE_TENSOR_GPU_SIMPLEX_BUFFERS_H
 
+#ifdef FT_WITH_CUDA
+
 #include <unordered_set>
 
 #include <itertools.hpp>
@@ -155,5 +157,7 @@ DEFINE_PASS_FOR_FUNC(simplexBuffers)
 } // namespace gpu
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA
 
 #endif // FREE_TENSOR_GPU_SIMPLEX_BUFFERS_H

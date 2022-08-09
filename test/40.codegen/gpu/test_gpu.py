@@ -8,8 +8,8 @@ import numpy as np
 if not ft.with_cuda():
     pytest.skip("requires CUDA", allow_module_level=True)
 
-target = ft.GPU()
-device = ft.Device(target)
+device = ft.GPU()
+target = device.target()
 
 
 def test_basic():

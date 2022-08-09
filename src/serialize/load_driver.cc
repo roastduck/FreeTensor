@@ -6,16 +6,10 @@
 #include <sstream>
 
 namespace freetensor {
-Ref<Target> loadTarget(const std::string &txt) {
+Ref<Target> loadTarget(const std::string &txt, const std::string &data) {
 
-    /**
-     * `CPU <useNativeArch>`
-     * `GPU <useNativeArch> [: <major> <minor> | ;]`
-     * e.g. `GPU 1 : 7 0`, `GPU 0 ;`, `CPU 1`
-     */
     std::istringstream iss(txt);
 
-    Ref<Target> ret;
     std::string type;
     bool useNativeArch;
 
@@ -23,32 +17,26 @@ Ref<Target> loadTarget(const std::string &txt) {
     ASSERT(type.length() > 0);
 
     switch (type[0]) {
+#ifdef FT_WITH_CUDA
     case 'G': {
-        auto ret_ = Ref<GPU>::make(useNativeArch);
-        ASSERT(iss >> type);
-        if (type == ":") {
-            int major, minor;
-            ASSERT(iss >> major >> minor);
-            ret_->setComputeCapability(major, minor);
-        }
-        ret = ret_.as<Target>();
-        break;
+        auto deviceProp = Ref<cudaDeviceProp>::make();
+        memcpy(&(*deviceProp), data.c_str(), sizeof(cudaDeviceProp));
+        return Ref<GPUTarget>::make(deviceProp);
     }
+#endif // FT_WITH_CUDA
     case 'C': {
-        auto ret_ = Ref<CPU>::make(useNativeArch);
-        ret = ret_.as<Target>();
-        break;
+        return Ref<CPUTarget>::make(useNativeArch);
     }
     default:
         ASSERT(false);
     }
-    return ret;
 }
-Ref<Device> loadDevice(const std::string &txt) {
+
+Ref<Device> loadDevice(const std::string &txt, const std::string &data) {
 
     /**
      * `DEV <Num> <Target>`
-     * e.g. `DEV 3 GPU 1 : 7 0`
+     * e.g. `DEV 3 GPU 1`
      */
     std::istringstream iss(txt);
 
@@ -62,7 +50,8 @@ Ref<Device> loadDevice(const std::string &txt) {
     switch (type[0]) {
     case 'D':
         // `DEV <Num> <Target>` : find a space after `<Num>`
-        ret = Ref<Device>::make(loadTarget(txt.substr(txt.find(' ', 4))), num);
+        ret = Ref<Device>::make(
+            loadTarget(txt.substr(txt.find(' ', 4)), data)->type(), num);
         break;
     default:
         ASSERT(false);
@@ -91,6 +80,7 @@ Ref<Array> newArray(const std::vector<size_t> &shape_,
 
     return ret;
 }
+
 Ref<Array> loadArray(const std::string &txt, const std::string &data) {
 
     std::istringstream iss(txt);

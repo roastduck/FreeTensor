@@ -412,6 +412,24 @@ template <PBSpaceRef T> PBMap lexLT(T &&space) {
     return isl_map_lex_lt(PBRefTake<T>(space));
 }
 
+inline PBMap lexLE(PBSpace &&space) {
+    DEBUG_PROFILE("lexLE");
+    return isl_map_lex_le(space.move());
+}
+inline PBMap lexLE(const PBSpace &space) {
+    DEBUG_PROFILE("lexLE");
+    return isl_map_lex_le(space.copy());
+}
+
+inline PBMap lexLT(PBSpace &&space) {
+    DEBUG_PROFILE("lexLT");
+    return isl_map_lex_lt(space.move());
+}
+inline PBMap lexLT(const PBSpace &space) {
+    DEBUG_PROFILE("lexLT");
+    return isl_map_lex_lt(space.copy());
+}
+
 inline PBSpace spaceAlloc(const PBCtx &ctx, unsigned nparam, unsigned nIn,
                           unsigned nOut) {
     return isl_space_alloc(ctx.get(), nparam, nIn, nOut);

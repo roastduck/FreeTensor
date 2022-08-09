@@ -139,8 +139,9 @@ void Config::init() {
         Config::setBackendCompilerNVCC(makePaths(*path));
     }
 #endif // FT_WITH_CUDA
-    Config::setDefaultTarget(Ref<CPU>::make());
-    Config::setDefaultDevice(Ref<Device>::make(Ref<CPU>::make()));
+    auto device = Ref<Device>::make(TargetType::CPU);
+    Config::setDefaultDevice(device);
+    Config::setDefaultTarget(device->target());
 
 #ifdef FT_RUNTIME_DIR
     Config::setRuntimeDir(makePaths(FT_RUNTIME_DIR));

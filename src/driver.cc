@@ -151,7 +151,7 @@ void Driver::buildAndLoad() {
         }
         break;
 #ifdef FT_WITH_CUDA
-    case TargetType::GPU:
+    case TargetType::GPU: {
         ASSERT(!Config::backendCompilerNVCC().empty());
         executable = Config::backendCompilerNVCC().front().c_str();
         for (auto &&path : Config::runtimeDir()) {
@@ -162,26 +162,14 @@ void Driver::buildAndLoad() {
                 "--expt-relaxed-constexpr" /* required by mdspan */);
         addArgs("-o", so, cpp);
         addArgs("-lcublas");
-        if (auto arch = dev_->target().as<GPU>()->computeCapability();
-            arch.isValid()) {
-            addArgs("-arch", "sm_" + std::to_string(arch->first) +
-                                 std::to_string(arch->second));
-        } else if (dev_->target()->useNativeArch()) {
-            int major, minor;
-            checkCudaError(cudaDeviceGetAttribute(
-                &major, cudaDevAttrComputeCapabilityMajor, dev_->num()));
-            checkCudaError(cudaDeviceGetAttribute(
-                &minor, cudaDevAttrComputeCapabilityMinor, dev_->num()));
-            addArgs("-arch",
-                    "sm_" + std::to_string(major) + std::to_string(minor));
-        } else {
-            WARNING("GPU arch not specified, which may result in suboptimal "
-                    "performance ");
-        }
+        auto cc = dev_->target().as<GPUTarget>()->computeCapability();
+        addArgs("-arch",
+                "sm_" + std::to_string(cc.first) + std::to_string(cc.second));
         if (Config::debugBinary()) {
             addArgs("-g");
         }
         break;
+    }
 #endif // FT_WITH_CUDA
     default:
         ASSERT(false);
@@ -215,8 +203,8 @@ void Driver::buildAndLoad() {
 
         // We use the raw syscall instead of libc fork() here.
         // This is because libc fork() processes the pthread_atfork() handlers,
-        // in which handlers from like OpenMP implementations will do something against
-        // potential broken states (e.g. mutexes) due to the fork().
+        // in which handlers from like OpenMP implementations will do something
+        // against potential broken states (e.g. mutexes) due to the fork().
         // With raw syscall, we can avoid this.
         int pid = syscall(SYS_fork);
         if (pid == 0) {

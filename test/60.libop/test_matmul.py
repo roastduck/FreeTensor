@@ -6,7 +6,7 @@ from freetensor import libop
 
 
 def test_mm():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -30,7 +30,7 @@ def test_mm():
 
 
 def test_bmm_1():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -54,7 +54,7 @@ def test_bmm_1():
 
 
 def test_bmm_2():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -78,7 +78,7 @@ def test_bmm_2():
 
 
 def test_mv():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -102,7 +102,7 @@ def test_mv():
 
 
 def test_vm():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -126,7 +126,7 @@ def test_vm():
 
 
 def test_scalar_multiply_scalar():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -145,7 +145,7 @@ def test_scalar_multiply_scalar():
 
 
 def test_scalar_multiply_matrix():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b, y):
@@ -168,7 +168,7 @@ def test_scalar_multiply_matrix():
 
 
 def test_out_of_place():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b):
@@ -190,7 +190,7 @@ def test_out_of_place():
 
 
 def test_operator_overload():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b):
@@ -212,7 +212,7 @@ def test_operator_overload():
 
 
 def test_subtensor():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(a, b):

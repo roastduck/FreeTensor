@@ -7,8 +7,8 @@
 #include <ref.h>
 namespace freetensor {
 
-Ref<Target> loadTarget(const std::string &txt);
-Ref<Device> loadDevice(const std::string &txt);
+Ref<Target> loadTarget(const std::string &txt, const std::string &data);
+Ref<Device> loadDevice(const std::string &txt, const std::string &data);
 Ref<Array> loadArray(const std::string &txt, const std::string &data);
 
 /**

@@ -58,7 +58,7 @@ class Driver {
         : Driver(func, src, device,
                  device->type() == TargetType::CPU
                      ? device
-                     : Ref<Device>::make(Ref<CPU>::make()),
+                     : Ref<Device>::make(TargetType::CPU),
                  verbose) {}
     /** @} */
 

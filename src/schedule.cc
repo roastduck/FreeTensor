@@ -29,6 +29,7 @@
 #include <schedule/merge.h>
 #include <schedule/multi_level_tiling.h>
 #include <schedule/parallelize.h>
+#include <schedule/permute.h>
 #include <schedule/reorder.h>
 #include <schedule/separate_tail.h>
 #include <schedule/set_mem_type.h>
@@ -152,6 +153,15 @@ ID Schedule::merge(const ID &loop1, const ID &loop2) {
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule(log, ast_, e.what());
     }
+}
+
+std::vector<ID> Schedule::permute(
+    const std::vector<ID> &loopsId,
+    const std::function<std::vector<Expr>(std::vector<Expr>)> &transformFunc) {
+    //! FIXME: put this into schedule logs
+    auto &&[ast, ids] = freetensor::permute(ast_, loopsId, transformFunc);
+    ast_ = ast;
+    return ids;
 }
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
@@ -675,6 +685,7 @@ void Schedule::autoFuse(const Target &target, const Ref<RandTrace> &trace) {
 }
 
 void Schedule::autoParallelize(const Target &target) {
+#ifdef FT_WITH_CUDA
     // [GPU only] Try to parallelize loops accessing contiguous items as warps
     if (target.type() == TargetType::GPU) {
         // We try to parallelize the loop with most contiguous access count
@@ -702,8 +713,8 @@ void Schedule::autoParallelize(const Target &target) {
             auto bak = ast_;
             auto logBak = logs_;
             try {
-                // FIXME: Do not hard-code 32
-                auto [l0, l1] = split(loop->id(), 32);
+                auto [l0, l1] =
+                    split(loop->id(), ((GPUTarget &)target).warpSize());
                 parallelize(l1, threadIdxX);
 
                 try {
@@ -730,6 +741,7 @@ void Schedule::autoParallelize(const Target &target) {
             }
         }
     }
+#endif // FT_WITH_CUDA
 
     // Try to merge and parallelize as many outer loops as possible
     std::function<void(const Ref<LoopNest> &)> autoParallelizeOuter =
@@ -741,12 +753,14 @@ void Schedule::autoParallelize(const Target &target) {
             try {
                 Ref<LoopNest> loop = root;
 
+#ifdef FT_WITH_CUDA
                 bool parentIsWarp = false;
                 while (loop->loop_->property_->parallel_ != serialScope &&
                        loop->subLoops_.size() == 1) {
                     loop = loop->subLoops_.front();
                     parentIsWarp = true;
                 }
+#endif // FT_WITH_CUDA
 
                 ID loopId, outerId;
                 while (true) {
@@ -767,6 +781,7 @@ void Schedule::autoParallelize(const Target &target) {
                         atLeastOne = true;
                         break;
 
+#ifdef FT_WITH_CUDA
                     case TargetType::GPU: {
                         auto loop = find(loopId);
                         auto isParallelLoop = [](const Stmt &s) {
@@ -783,10 +798,15 @@ void Schedule::autoParallelize(const Target &target) {
                         // split it only once, to reduce redundant guards, and
                         // save time for dependency analysis. If not, we split
                         // it twice, and merge once
-                        int numSM = 80;
+                        int numSM = ((GPUTarget &)target).multiProcessorCount();
                         int maxThreads =
-                            (!parentIsWarp && !childIsWarp) ? 256 : 8;
-                        // TODO: do not hard-code these numbers
+                            256; // Can be max thread per block (1024), but our
+                                 // generated kernels are huge, so set it lower
+                                 // to reserve for more registers. TODO: no
+                                 // magic number
+                        if (parentIsWarp || childIsWarp) {
+                            maxThreads /= ((GPUTarget &)target).warpSize();
+                        }
                         ID l1, l1b, l2;
                         if (auto loopNode = loop.as<ForNode>();
                             loopNode->len_->nodeType() ==
@@ -832,6 +852,8 @@ void Schedule::autoParallelize(const Target &target) {
                         }
                         break;
                     }
+
+#endif // FT_WITH_CUDA
                     default:
                         ASSERT(false);
                     }

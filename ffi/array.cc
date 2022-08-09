@@ -17,18 +17,20 @@ using namespace pybind11::literals;
 
 #ifdef FT_WITH_PYTORCH
 static Ref<Device> deviceFromPyTorch(const torch::Device &d) {
-    Ref<Target> target;
+    TargetType targetType;
     if (d.is_cpu()) {
-        target = Ref<CPU>::make();
+        targetType = TargetType::CPU;
     } else if (d.is_cuda()) {
-        target = Ref<GPU>::make();
+#ifdef FT_WITH_CUDA
+        targetType = TargetType::GPU;
+#endif // FT_WITH_CUDA
     } else {
         throw DriverError("Unsupported PyTorch device");
     }
     if (d.has_index()) {
-        return Ref<Device>::make(target, d.index());
+        return Ref<Device>::make(targetType, d.index());
     } else {
-        return Ref<Device>::make(target);
+        return Ref<Device>::make(targetType);
     }
 }
 
@@ -85,14 +87,14 @@ void init_ffi_array(py::module_ &m) {
         std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());         \
         return Array::borrowFromRaw((void *)np.unchecked().data(), shape,      \
                                     dtype,                                     \
-                                    Ref<Device>::make(Ref<CPU>::make()));      \
+                                    Ref<Device>::make(TargetType::CPU));       \
     }),                                                                        \
         "data"_a.noconvert(), py::keep_alive<1, 2>()
 
 #define SHARE_TO_NUMPY(nativeType, dtype)                                      \
     case dtype: {                                                              \
         auto ptr = (const nativeType *)arr.rawSharedTo(                        \
-            Ref<Device>::make(Ref<CPU>::make()));                              \
+            Ref<Device>::make(TargetType::CPU));                               \
         return py::array_t<nativeType>(arr.shape(), ptr,                       \
                                        py::capsule(ptr, [](void *) {}));       \
     }

@@ -6,7 +6,7 @@ from freetensor import libop
 
 
 def test_static_shape():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -26,7 +26,7 @@ def test_static_shape():
 
 
 def test_out_of_place():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x):
@@ -44,7 +44,7 @@ def test_out_of_place():
 
 
 def test_grad():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.transform
     def f(x, y):

@@ -6,7 +6,7 @@ from freetensor import libop
 
 
 def test_basic():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, w, y):
@@ -30,7 +30,7 @@ def test_basic():
 
 
 def test_bias():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, w, b, y):
@@ -57,7 +57,7 @@ def test_bias():
 
 
 def test_same_pad():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, w, y):
@@ -81,7 +81,7 @@ def test_same_pad():
 
 
 def test_stride():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, w, y):
@@ -105,7 +105,7 @@ def test_stride():
 
 
 def test_group():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, w, y):
@@ -129,7 +129,7 @@ def test_group():
 
 
 def test_dilation():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, w, y):
@@ -153,7 +153,7 @@ def test_dilation():
 
 
 def test_out_of_place():
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, w):

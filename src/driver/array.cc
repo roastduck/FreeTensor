@@ -150,8 +150,8 @@ void *Array::rawSharedTo(const Ref<Device> &device) {
                 goto done;
             }
         }
-        copyFromCPU(ptr, rawSharedTo(Ref<Device>::make(Ref<CPU>::make())),
-                    size_, device);
+        copyFromCPU(ptr, rawSharedTo(Ref<Device>::make(TargetType::CPU)), size_,
+                    device);
     }
 done:
     ptrs_.emplace_back(device, ptr, false);
@@ -183,8 +183,8 @@ void *Array::rawMovedTo(const Ref<Device> &device) {
                 goto done;
             }
         }
-        copyFromCPU(ptr, rawSharedTo(Ref<Device>::make(Ref<CPU>::make())),
-                    size_, device);
+        copyFromCPU(ptr, rawSharedTo(Ref<Device>::make(TargetType::CPU)), size_,
+                    device);
     }
 done:
     for (auto &&[d, p, borrowed] : ptrs_) {
@@ -232,7 +232,7 @@ void Array::makePrivateCopy() {
     }
 
     for (auto &&[d, p, _] : ptrs_) {
-        auto dev = Ref<Device>::make(Ref<CPU>::make());
+        auto dev = Ref<Device>::make(TargetType::CPU);
         auto ptr = allocOn(size_, dev);
         copyToCPU(ptr, p, size_, d);
         ptrs_ = {{dev, ptr, false}};

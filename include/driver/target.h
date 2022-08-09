@@ -3,63 +3,79 @@
 
 #include <string>
 
+#ifdef FT_WITH_CUDA
+#include <cuda_runtime.h>
+#endif
+
 #include <buffer.h>
+#include <driver/target_type.h>
 #include <opt.h>
+#include <ref.h>
 
 namespace freetensor {
-
-enum class TargetType : int { CPU, GPU };
 
 /**
  * Target architecture
  */
 class Target {
-    bool useNativeArch_;
 
   public:
-    Target(bool useNativeArch = true) : useNativeArch_(useNativeArch) {}
-
-    void setUseNativeArch(bool useNativeArch = true) {
-        useNativeArch_ = useNativeArch;
-    }
-    bool useNativeArch() const { return useNativeArch_; }
+    Target() {}
 
     virtual ~Target() = default;
+    virtual bool useNativeArch() const = 0;
     virtual TargetType type() const = 0;
     virtual std::string toString() const = 0;
     virtual MemType mainMemType() const = 0;
 };
 
-class CPU : public Target {
-  public:
-    CPU(bool useNativeArch = true) : Target(useNativeArch) {}
+class CPUTarget : public Target {
+    bool useNativeArch_;
+    // TODO: infoArch
 
+  public:
+    CPUTarget(bool useNativeArch = true) : useNativeArch_(useNativeArch) {}
+
+    void setUseNativeArch(bool useNativeArch = true) {
+        useNativeArch_ = useNativeArch;
+    }
+    bool useNativeArch() const override { return useNativeArch_; }
     TargetType type() const override { return TargetType::CPU; }
     std::string toString() const override { return "CPU"; }
     MemType mainMemType() const override { return MemType::CPU; }
 };
 
-class GPU : public Target {
-    Opt<std::pair<int, int>> computeCapability_;
+#ifdef FT_WITH_CUDA
+class GPUTarget : public Target {
+    Ref<cudaDeviceProp> infoArch_;
 
   public:
-    GPU(bool useNativeArch = true) : Target(useNativeArch) {}
+    // GPU is constructed from real local Deivce
+    // `infoArch` has no default value
+    // `useNativeArch` is always true
+    GPUTarget(const Ref<cudaDeviceProp> &infoArch) : infoArch_(infoArch) {}
 
+    bool useNativeArch() const override { return true; }
     TargetType type() const override { return TargetType::GPU; }
     std::string toString() const override { return "GPU"; }
     MemType mainMemType() const override { return MemType::GPUGlobal; }
 
-    /// E.g. (7, 0) for compute capability 7.0 (sm_70)
-    void setComputeCapability(int major, int minor) {
-        computeCapability_ =
-            Opt<std::pair<int, int>>::make(std::make_pair(major, minor));
+    void setInfoArch(const Ref<cudaDeviceProp> &infoArch) {
+        infoArch_ = infoArch;
     }
-    Opt<std::pair<int, int>> computeCapability() const {
-        return computeCapability_;
-    }
-};
+    const Ref<cudaDeviceProp> &infoArch() const { return infoArch_; }
 
-bool isSame(const Ref<Target> &lhs, const Ref<Target> &rhs);
+    std::pair<int, int> computeCapability() const {
+        return std::make_pair(infoArch_->major, infoArch_->minor);
+    }
+
+    int warpSize() const { return infoArch_->warpSize; }
+
+    int multiProcessorCount() const { return infoArch_->multiProcessorCount; }
+};
+#endif // FT_WITH_CUDA
+
+bool isSameTarget(const Ref<Target> &lhs, const Ref<Target> &rhs);
 
 } // namespace freetensor
 

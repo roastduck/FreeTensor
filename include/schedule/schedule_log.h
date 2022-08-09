@@ -32,6 +32,7 @@ enum class ScheduleType : int {
     Vectorize,
     SeparateTail,
     AsMatMul,
+    Permute,
     // ------
     NumTypes,
 };
@@ -43,7 +44,7 @@ constexpr std::array scheduleTypeNames = {
     "set_mem_type", "var_split", "var_merge",
     "var_reorder",  "inline",    "parallelize",
     "unroll",       "vectorize", "separate_tail",
-    "as_matmul",
+    "as_matmul",    "permute",
 };
 static_assert(scheduleTypeNames.size() == (size_t)ScheduleType::NumTypes);
 
