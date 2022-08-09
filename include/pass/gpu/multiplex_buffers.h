@@ -1,11 +1,14 @@
 #ifndef FREE_TENSOR_GPU_MULTIPLEX_BUFFERS_H
 #define FREE_TENSOR_GPU_MULTIPLEX_BUFFERS_H
 
+#ifdef FT_WITH_CUDA
+
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 #include <analyze/symbol_table.h>
+#include <driver/target.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -15,10 +18,13 @@ namespace freetensor {
 namespace gpu {
 
 class FindParallelLoops : public Visitor {
+    Ref<GPUTarget> target_;
     std::vector<For> loops_, stack_;
     std::unordered_map<ID, std::unordered_set<ID>> affecting_;
 
   public:
+    FindParallelLoops(const Ref<GPUTarget> &target) : target_(target) {}
+
     const std::vector<For> &loops() const { return loops_; }
     const std::unordered_map<ID, std::unordered_set<ID>> &affecting() const {
         return affecting_;
@@ -74,12 +80,14 @@ class MultiplexMutator : public SymbolTable<Mutator> {
  *
  * E.g. Alter from `shmem[i]` to `shmem[threadIdx.x, i]`
  */
-Stmt multiplexBuffers(const Stmt &op);
+Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target);
 
 DEFINE_PASS_FOR_FUNC(multiplexBuffers)
 
 } // namespace gpu
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA
 
 #endif // FREE_TENSOR_GPU_MULTIPLEX_BUFFERS_H

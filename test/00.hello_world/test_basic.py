@@ -382,3 +382,18 @@ def test_target_language_keyword_as_name():
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")
     assert np.array_equal(y_np, y_std)
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_default_target():
+    device = ft.GPU()
+    with device.target() as target:
+        assert ft.config.default_target() == target
+        assert ft.config.default_device() == device
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_default_device():
+    with ft.GPU() as dev:
+        assert ft.config.default_device() == dev
+        assert ft.config.default_target() == dev.target()

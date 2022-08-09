@@ -19,7 +19,52 @@
 
 namespace freetensor {
 
-void PropagateRequire::visit(const Load &op) {
+void PropagateRequires::visit(const Load &op) {
+    if (isFloat(op->dtype()) && curTarget_.isValid() &&
+        affectedDefs_.count(def(op->var_)->id())) {
+        affectedDefs_.insert(curTarget_);
+        // No need to recurse deeper
+    }
+}
+
+void PropagateRequires::visit(const Store &op) {
+    if (buffer(op->var_)->atype() == AccessType::Cache) {
+        curTarget_ = def(op->var_)->id();
+        (*this)(op->expr_);
+        // No need to recurse into indices
+        curTarget_ = "";
+    }
+}
+
+void PropagateRequires::visit(const ReduceTo &op) {
+    if (buffer(op->var_)->atype() == AccessType::Cache) {
+        curTarget_ = def(op->var_)->id();
+        (*this)(op->expr_);
+        // No need to recurse into indices
+        curTarget_ = "";
+    }
+}
+
+void PropagateRequires::visit(const VarDef &op) {
+    if (requires_.count(op->name_) || provides_.count(op->name_)) {
+        affectedDefs_.insert(op->id());
+    }
+    BaseClass::visit(op);
+}
+
+std::unordered_set<ID> PropagateRequires::propagateUntilConverge(
+    const Stmt &op, const std::unordered_set<std::string> &_requires,
+    const std::unordered_set<std::string> &provides) {
+    PropagateRequires propagator(_requires, provides);
+    size_t affectCnt;
+    do {
+        affectCnt = propagator.affectedDefs().size();
+        propagator(op);
+    } while (propagator.affectedDefs().size() > affectCnt);
+    return propagator.affectedDefs();
+}
+
+void PropagateProvides::visit(const Load &op) {
     if (isFloat(op->dtype()) && curTarget_.isValid() &&
         buffer(op->var_)->atype() == AccessType::Cache) {
         affectedDefs_.insert(def(op->var_)->id());
@@ -27,7 +72,7 @@ void PropagateRequire::visit(const Load &op) {
     }
 }
 
-void PropagateRequire::visit(const Store &op) {
+void PropagateProvides::visit(const Store &op) {
     if (affectedDefs_.count(def(op->var_)->id())) {
         curTarget_ = def(op->var_)->id();
         (*this)(op->expr_);
@@ -36,7 +81,7 @@ void PropagateRequire::visit(const Store &op) {
     }
 }
 
-void PropagateRequire::visit(const ReduceTo &op) {
+void PropagateProvides::visit(const ReduceTo &op) {
     if (affectedDefs_.count(def(op->var_)->id())) {
         curTarget_ = def(op->var_)->id();
         (*this)(op->expr_);
@@ -45,11 +90,23 @@ void PropagateRequire::visit(const ReduceTo &op) {
     }
 }
 
-void PropagateRequire::visit(const VarDef &op) {
+void PropagateProvides::visit(const VarDef &op) {
     if (requires_.count(op->name_) || provides_.count(op->name_)) {
         affectedDefs_.insert(op->id());
     }
     BaseClass::visit(op);
+}
+
+std::unordered_set<ID> PropagateProvides::propagateUntilConverge(
+    const Stmt &op, const std::unordered_set<std::string> &_requires,
+    const std::unordered_set<std::string> &provides) {
+    PropagateProvides propagator(_requires, provides);
+    size_t affectCnt;
+    do {
+        affectCnt = propagator.affectedDefs().size();
+        propagator(op);
+    } while (propagator.affectedDefs().size() > affectCnt);
+    return propagator.affectedDefs();
 }
 
 Expr ReplaceByTape::replaceForwardValue(const Expr &_equLoad) {
@@ -530,12 +587,9 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
 
     auto [forward, tapeMap, versions, totLens] = outputIntermediates(op, tapes);
 
-    PropagateRequire propagator(_requires, provides);
-    size_t affectCnt;
-    do {
-        affectCnt = propagator.affectedDefs().size();
-        propagator(op);
-    } while (propagator.affectedDefs().size() > affectCnt);
+    auto affectedDefs = intersect(
+        PropagateProvides::propagateUntilConverge(op, _requires, provides),
+        PropagateRequires::propagateUntilConverge(op, _requires, provides));
 
     std::unordered_set<Stmt> notSingleWrite;
     auto foundWAW = [&](const Dependency &d) {
@@ -543,8 +597,8 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     };
     FindDeps().type(DEP_WAW).ignoreReductionWAW(false)(op, foundWAW);
 
-    Grad mutator(_requires, provides, tapes, propagator.affectedDefs(), tapeMap,
-                 versions, totLens, notSingleWrite);
+    Grad mutator(_requires, provides, tapes, affectedDefs, tapeMap, versions,
+                 totLens, notSingleWrite);
     auto backward = mutator(op);
 
     // We do some basic simplifications here, to reduce burden on auto-schedule

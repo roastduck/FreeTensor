@@ -2,6 +2,7 @@ import freetensor as ft
 import pytest
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_basic():
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
                     ("y", (1000, 1000), "int32", "output", "gpu/global")
@@ -25,6 +26,7 @@ def test_gpu_basic():
     assert s.logs()[2:] == ["set_mem_type(V_t, gpu/shared)"]
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_local_across_loops():
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
                     ("y", (1000, 1000), "int32", "output", "gpu/global")

@@ -61,6 +61,20 @@ void init_ffi_schedule(py::module_ &m) {
              "nparts"_a = -1, "shift"_a = 0)
         .def("reorder", &Schedule::reorder, "order"_a)
         .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a)
+        .def(
+            "permute",
+            [](Schedule &s, const std::vector<ID> &loopsId,
+               py::function transformFunc) {
+                auto wrappedTransformFunc =
+                    [transformFunc](const std::vector<Expr> &args) {
+                        py::list pyArgs((ssize_t)args.size());
+                        for (auto &&[i, e]: iter::enumerate(args))
+                            pyArgs[i] = e;
+                        return transformFunc(*pyArgs).cast<std::vector<Expr>>();
+                    };
+                return s.permute(loopsId, wrappedTransformFunc);
+            },
+            "loops_id"_a, "transform_func"_a)
         .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,
              "suffix0"_a = ".a", "suffix1"_a = ".b")
         .def("fuse",

@@ -60,7 +60,7 @@ import freetensor as ft
 import numpy as np
 
 # Using the 0-th GPU device
-with ft.Device(ft.GPU(), 0):
+with ft.GPU(0):
 
     @ft.optimize(
         # Parallel Loop Li as GPU threads

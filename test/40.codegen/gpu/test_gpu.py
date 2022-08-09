@@ -8,8 +8,8 @@ import numpy as np
 if not ft.with_cuda():
     pytest.skip("requires CUDA", allow_module_level=True)
 
-target = ft.GPU()
-device = ft.Device(target)
+device = ft.GPU()
+target = device.target()
 
 
 def test_basic():
@@ -301,9 +301,6 @@ def test_global_mem_in_kernel():
         s.parallelize("L2", "threadIdx.x")
         func = ft.lower(s.func(), verbose=1)
         code = ft.codegen(func, verbose=True)
-        assert re.search(r"cudaMalloc(.*, 32)", str(code))
-        assert re.search(r"cudaMalloc(.*, 16)", str(code))
-        assert "cudaFree" in str(code)
         x_np = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype="int32")
         y1_np = np.zeros((8,), dtype="int32")
         y2_np = np.zeros((8,), dtype="int32")

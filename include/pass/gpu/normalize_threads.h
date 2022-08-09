@@ -1,6 +1,8 @@
 #ifndef FREE_TENSOR_GPU_NORMALIZE_THREADS_H
 #define FREE_TENSOR_GPU_NORMALIZE_THREADS_H
 
+#ifdef FT_WITH_CUDA
+
 #include <unordered_map>
 #include <unordered_set>
 
@@ -70,5 +72,7 @@ DEFINE_PASS_FOR_FUNC(normalizeThreads)
 } // namespace gpu
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA
 
 #endif // FREE_TENSOR_GPU_NORMALIZE_THREADS_H

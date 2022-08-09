@@ -1,4 +1,5 @@
 import freetensor as ft
+import pytest
 
 
 def test_cpu_heap():
@@ -23,19 +24,20 @@ def test_cpu_heap():
         with ft.VarDef("y", (2, 2), "int32", "cache", "cpu/heap") as y:
             with ft.VarDef("t", (), "int32", "cache", "cpu/heap") as t:
                 t[()] = x[()] + 1
-                ft.Alloc(y.name)
+                ft.Alloc(y)
                 y[0, 1] = t[()] + 1
                 y[1, 0] = t[()] + 1
             x[()] = y[0, 1] + y[1, 0] + 1
-            ft.Free(y.name)
+            ft.Free(y)
         o[()] = x[()] + 1
     std = ft.pop_ast()
 
     assert std.match(ast)
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_global_heap():
-    with ft.Device(ft.GPU(), 0):
+    with ft.GPU():
         with ft.VarDef([("x", (), "int32", "cache", "gpu/global"),
                         ("y", (2,), "int32", "cache", "gpu/global/heap"),
                         ("t", (), "int32", "cache", "gpu/global/heap"),
@@ -60,11 +62,11 @@ def test_gpu_global_heap():
                 with ft.VarDef("t", (), "int32", "cache",
                                "gpu/global/heap") as t:
                     t[()] = x[()] + 1
-                    ft.Alloc(y.name)
+                    ft.Alloc(y)
                     y[0] = t[()] + 1
                     y[1] = t[()] + 1
                 x[()] = y[0] + y[1] + 1
-                ft.Free(y.name)
+                ft.Free(y)
             o[()] = x[()] + 1
         std = ft.pop_ast()
         assert std.match(ast)
@@ -92,19 +94,20 @@ def test_transform_to_cpu_heap():
         with ft.VarDef("y", (2, 2), "int32", "cache", "cpu/heap") as y:
             with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
                 t[()] = x[()] + 1
-                ft.Alloc(y.name)
+                ft.Alloc(y)
                 y[0, 1] = t[()] + 1
                 y[1, 0] = t[()] + 1
             x[()] = y[0, 1] + y[1, 0] + 1
-            ft.Free(y.name)
+            ft.Free(y)
         o[()] = x[()] + 1
     std = ft.pop_ast()
 
     assert std.match(ast)
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_transform_to_gpu_global_heap():
-    with ft.Device(ft.GPU(), 0):
+    with ft.GPU():
         with ft.VarDef([("x", (), "int32", "cache", "gpu/global"),
                         ("y", (2,), "int32", "cache", "gpu/global"),
                         ("t", (), "int32", "cache", "gpu/global"),
@@ -128,11 +131,45 @@ def test_transform_to_gpu_global_heap():
             with ft.VarDef("y", (2,), "int32", "cache", "gpu/global/heap") as y:
                 with ft.VarDef("t", (), "int32", "cache", "gpu/global") as t:
                     t[()] = x[()] + 1
-                    ft.Alloc(y.name)
+                    ft.Alloc(y)
                     y[0] = t[()] + 1
                     y[1] = t[()] + 1
                 x[()] = y[0] + y[1] + 1
-                ft.Free(y.name)
+                ft.Free(y)
             o[()] = x[()] + 1
         std = ft.pop_ast()
         assert std.match(ast)
+
+
+def test_transform_dynamic_size():
+    with ft.VarDef("n", (), "int32", "input", "cpu") as n:
+        with ft.VarDef([("x", (n[...],), "int32", "input", "cpu"),
+                        ("y", (n[...],), "int32", "cache", "cpu"),
+                        ("s", (), "int32", "output", "cpu"),
+                        ("m", (), "int32", "output", "cpu")]) as (x, y, s, m):
+            s[...] = 0
+            m[...] = 1
+            with ft.For("i", 0, n[...]) as i:
+                y[i] = x[i] * 2
+            with ft.For("i", 0, n[...]) as i:
+                s[...] += y[i]
+                m[...] *= y[i]
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef("n", (), "int32", "input", "cpu") as n:
+        with ft.VarDef([("x", (n[...],), "int32", "input", "cpu"),
+                        ("s", (), "int32", "output", "cpu"),
+                        ("m", (), "int32", "output", "cpu")]) as (x, s, m):
+            s[...] = 0
+            m[...] = 1
+            with ft.VarDef("y", (n[...],), "int32", "cache", "cpu/heap") as y:
+                ft.Alloc(y)
+                with ft.For("i", 0, n[...]) as i:
+                    y[i] = x[i] * 2
+                with ft.For("i", 0, n[...]) as i:
+                    s[...] += y[i]
+                    m[...] *= y[i]
+                ft.Free(y)
+    std = ft.make_reduction(ft.pop_ast())
+    assert std.match(ast)

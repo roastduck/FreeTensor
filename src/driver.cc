@@ -5,9 +5,10 @@
 #include <cstring> // memset
 #include <dlfcn.h> // dlopen
 #include <fstream>
-#include <sys/stat.h> // mkdir
-#include <sys/wait.h> // waitpid
-#include <unistd.h>   // rmdir
+#include <sys/stat.h>    // mkdir
+#include <sys/syscall.h> // SYS_fork
+#include <sys/wait.h>    // waitpid
+#include <unistd.h>      // rmdir
 
 #include <itertools.hpp>
 
@@ -150,7 +151,7 @@ void Driver::buildAndLoad() {
         }
         break;
 #ifdef FT_WITH_CUDA
-    case TargetType::GPU:
+    case TargetType::GPU: {
         ASSERT(!Config::backendCompilerNVCC().empty());
         executable = Config::backendCompilerNVCC().front().c_str();
         for (auto &&path : Config::runtimeDir()) {
@@ -161,26 +162,14 @@ void Driver::buildAndLoad() {
                 "--expt-relaxed-constexpr" /* required by mdspan */);
         addArgs("-o", so, cpp);
         addArgs("-lcublas");
-        if (auto arch = dev_->target().as<GPU>()->computeCapability();
-            arch.isValid()) {
-            addArgs("-arch", "sm_" + std::to_string(arch->first) +
-                                 std::to_string(arch->second));
-        } else if (dev_->target()->useNativeArch()) {
-            int major, minor;
-            checkCudaError(cudaDeviceGetAttribute(
-                &major, cudaDevAttrComputeCapabilityMajor, dev_->num()));
-            checkCudaError(cudaDeviceGetAttribute(
-                &minor, cudaDevAttrComputeCapabilityMinor, dev_->num()));
-            addArgs("-arch",
-                    "sm_" + std::to_string(major) + std::to_string(minor));
-        } else {
-            WARNING("GPU arch not specified, which may result in suboptimal "
-                    "performance ");
-        }
+        auto cc = dev_->target().as<GPUTarget>()->computeCapability();
+        addArgs("-arch",
+                "sm_" + std::to_string(cc.first) + std::to_string(cc.second));
         if (Config::debugBinary()) {
             addArgs("-g");
         }
         break;
+    }
 #endif // FT_WITH_CUDA
     default:
         ASSERT(false);
@@ -212,7 +201,12 @@ void Driver::buildAndLoad() {
         }
         argv.push_back(nullptr);
 
-        int pid = fork();
+        // We use the raw syscall instead of libc fork() here.
+        // This is because libc fork() processes the pthread_atfork() handlers,
+        // in which handlers from like OpenMP implementations will do something
+        // against potential broken states (e.g. mutexes) due to the fork().
+        // With raw syscall, we can avoid this.
+        int pid = syscall(SYS_fork);
         if (pid == 0) {
             execv(executable, const_cast<char *const *>(argv.data()));
             std::cerr << "Failed to execute " << executable << ": "
@@ -444,14 +438,12 @@ std::pair<double, double> Driver::time(int rounds, int warmups) {
 
 void Driver::unload() {
     func_ = nullptr;
-    // FIXME: How to safely close it? OpenMP won't kill its worker threads
-    // before it ends
-    /*if (dlHandle_) {
+    if (dlHandle_) {
         auto err = dlclose(dlHandle_);
         if (err) {
             WARNING("Unable to unload target code");
         }
-    }*/
+    }
 }
 
 } // namespace freetensor

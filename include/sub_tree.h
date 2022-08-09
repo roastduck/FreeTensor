@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_SUB_TREE_H
 #define FREE_TENSOR_SUB_TREE_H
 
+#include <atomic>
 #include <vector>
 
 #include <ref.h>
@@ -42,6 +43,9 @@ struct ChildOf {
  * instead of a custom constructor. This is because the `self()` will be used to
  * initialize is children, but `self()` is only available when a `Ref` of the
  * `ASTPart` is present, after the `ASTPart` is constructed.
+ *
+ * Read members from an `ASTPart` is thread-safe (even it computes hash). Write
+ * to members of an `ASTPart` is NOT thread-safe
  */
 class ASTPart : public EnableSelf<ASTPart> {
     DEFINE_AST_PART_ACCESS(ASTPart)
@@ -50,6 +54,18 @@ class ASTPart : public EnableSelf<ASTPart> {
 
   protected:
     size_t hash_ = ~0ull;
+    std::atomic_flag lock_ = ATOMIC_FLAG_INIT;
+
+    void lock() {
+        while (lock_.test_and_set(std::memory_order_acquire)) {
+            // spin
+        }
+    }
+
+    void unlock() { lock_.clear(std::memory_order_release); }
+
+    virtual void compHash() = 0;
+    void resetHash();
 
   public:
     virtual ~ASTPart() {}
@@ -81,12 +97,12 @@ class ASTPart : public EnableSelf<ASTPart> {
      *
      * You can override this hook to clear some internal states of an ASTPart.
      * Remember to call the base class' hook
+     *
+     * This hook is NOT thread-safe
      */
     virtual void modifiedHook() { resetHash(); }
 
     size_t hash();
-    void resetHash();
-    virtual void compHash() = 0;
 
     virtual bool isAST() const { return false; };
 };
@@ -234,9 +250,8 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
     }
 
     template <class U>
-    requires std::derived_from<T, U> operator Ref<U>() const {
-        return obj_;
-    }
+    requires std::derived_from<T, U>
+    operator Ref<U>() const { return obj_; }
 
     T &operator*() const { return *obj_; }
     T *operator->() const { return obj_.get(); }
@@ -390,7 +405,8 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
     }
 
     template <class U>
-    requires std::derived_from<T, U> operator std::vector<Ref<U>>() const {
+    requires std::derived_from<T, U>
+    operator std::vector<Ref<U>>() const {
         return std::vector<Ref<U>>(objs_.begin(), objs_.end());
     }
 

@@ -32,8 +32,9 @@ class Config {
                               /// Colon-separated paths, searched from left to
                               /// right
 
-    static Ref<Target> defaultTarget_; /// Used for lower and codegen when
-                                       /// target is omitted. Initialized to CPU
+    static Ref<Target>
+        defaultTarget_; /// Used for lower and codegen when
+                        /// target is omitted. Initialized to CPUTarget
     static Ref<Device> defaultDevice_; /// Used to create Driver when device is
                                        /// omitted. Initialized to a CPU Device
     static std::vector<std::filesystem::path>

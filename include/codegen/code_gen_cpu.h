@@ -10,7 +10,7 @@ namespace freetensor {
 
 class CodeGenCPU : public CodeGenC<CodeGenStream> {
     bool inParallel_ = false;
-    int64_t sharedStackTop_ = 8192 * 1024, sharedStackSize_ = 0;
+    int64_t sharedStackTop_ = 0, sharedStackSize_ = 0;
     int64_t threadStackTop_ = 0, threadStackSize_ = 0;
     std::unordered_set<For> collapsed_;
     std::unordered_set<VarDef> usedAsReduction_;
@@ -20,6 +20,7 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
                const std::vector<FuncRet> &returns)
         : CodeGenC(params, returns) {}
 
+    // Stack sizes in bytes
     int64_t sharedStackSize() const { return sharedStackSize_; }
     int64_t threadStackSize() const { return threadStackSize_; }
 

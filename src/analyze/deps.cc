@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <regex>
 #include <sstream>
 
 #include <itertools.hpp>
@@ -1000,9 +999,14 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
 
     FindAccessPoint accFinder(op, accFilter_);
     accFinder(op);
+    if (scope2CoordCallback_)
+        scope2CoordCallback_(accFinder.scope2coord());
+
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
+
     auto variantExpr = LAZY(findLoopVariance(op).first);
+
     AnalyzeDeps analyzer(
         accFinder.reads(), accFinder.writes(), accFinder.allDefs(),
         accFinder.scope2coord(), noDepsFinder.results(), variantExpr,
@@ -1048,7 +1052,9 @@ std::ostream &operator<<(std::ostream &_os, const Dependency &dep) {
             os << scope.parallel_;
         }
     }
-    return _os << std::regex_replace(os.str(), std::regex("\n"), "");
+    std::string str = os.str();
+    std::erase(str, '\n');
+    return _os << str;
 }
 
 } // namespace freetensor

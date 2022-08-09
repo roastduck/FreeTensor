@@ -1,3 +1,5 @@
+#ifdef FT_WITH_CUDA
+
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
 #include <pass/gpu/multiplex_buffers.h>
@@ -35,11 +37,12 @@ void FindParallelLoops::visit(const VarDef &op) {
     } else if (op->buffer_->mtype() == MemType::GPUWarp) {
         for (auto &&outer : stack_) {
             if (outer->property_->parallel_ == threadIdxX) {
-                // Only support conditions that threadIdx.x <= 32
-                makeAssert(StmtNode::newId(),
-                           makeLE(outer->len_, makeIntConst(32)),
-                           makeStmtSeq(StmtNode::newId(),
-                                       std::initializer_list<Stmt>()));
+                // Only support conditions that threadIdx.x <= warpSize
+                makeAssert(
+                    StmtNode::newId(),
+                    makeLE(outer->len_, makeIntConst(target_->warpSize())),
+                    makeStmtSeq(StmtNode::newId(),
+                                std::initializer_list<Stmt>()));
                 affecting_[op->id()].insert(outer->id());
             }
         }
@@ -47,7 +50,8 @@ void FindParallelLoops::visit(const VarDef &op) {
 }
 
 Stmt MultiplexMutator::visit(const For &op) {
-    if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
+    if (std::holds_alternative<CUDAScope>(op->property_->parallel_) ||
+        std::holds_alternative<CUDAStreamScope>(op->property_->parallel_)) {
         stack_.emplace_back(op);
         auto ret = BaseClass::visit(op);
         stack_.pop_back();
@@ -97,8 +101,8 @@ Stmt MultiplexMutator::visit(const ReduceTo &_op) {
     return alterAccess(op);
 }
 
-Stmt multiplexBuffers(const Stmt &op) {
-    FindParallelLoops finder;
+Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target) {
+    FindParallelLoops finder(target);
     finder(op);
 
     // Criteria:
@@ -140,3 +144,5 @@ Stmt multiplexBuffers(const Stmt &op) {
 } // namespace gpu
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA

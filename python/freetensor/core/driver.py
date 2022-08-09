@@ -3,7 +3,7 @@ import functools
 import numpy as np
 
 from typing import Optional, Sequence
-from freetensor_ffi import CPU, GPU, Device, Array
+from freetensor_ffi import Target, Array
 
 from . import config
 from .codegen import NativeCode
@@ -44,42 +44,55 @@ def array(data):
     raise ffi.DriverError(f"Unsupported data type {type(data)} for Array")
 
 
-class Target(ffi.Target):
-    '''
-    A target architecture
+_old_target_device_stack = []
 
-    A Target can be used as a "with" scope, then all the `lower`s and `codegen`s
-    will use it by default. In this style, it also sets the default Device as the
-    0-th device of the given Target. E.g:
 
-    ```
-    with Target(...):
-        ast = lower(ast)  # Use the Target above by default
-        a = Array(...)  # Use the 0-th device of the Target above by default
-    ```
-    '''
+def _register_target(cls):
 
-    def __init__(self, use_native_arch: bool = True):
-        super(Target, self).__init__(use_native_arch)
+    def __enter__(self: cls):
+        '''
+        A Target can be used as a "with" scope, then all the `lower`s and `codegen`s
+        will use it by default. In this style, it also sets the default Device as the
+        0-th device of the given Target. E.g:
 
-    def __enter__(self):
-        self.old_target = config.default_target()
-        self.old_device = config.default_device()
+        ```
+        with Target(...):
+            ast = lower(ast)  # Use the Target above by default
+            a = Array(...)  # Use the 0-th device of the Target above by default
+        ```
+        '''
+
+        _old_target_device_stack.append(
+            (config.default_target(), config.default_device()))
         config.set_default_target(self)
-        config.set_default_device(Device(self, 0))
+        config.set_default_device(Device(self.type(), 0))
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        config.set_default_target(self.old_target)
-        config.set_default_device(self.old_device)
+    def __exit__(self: cls, exc_type, exc_value, traceback):
+        old_target, old_device = _old_target_device_stack.pop()
+        config.set_default_target(old_target)
+        config.set_default_device(old_device)
+
+    cls.__enter__ = __enter__
+    cls.__exit__ = __exit__
+
+
+_register_target(ffi.CPUTarget)
+if config.with_cuda():
+    _register_target(ffi.GPUTarget)
 
 
 class Device(ffi.Device):
     '''
-    A computing device of a Target
 
-    E.g. suppose GPU() is a Target (architecture), then Device(GPU(), 0) means
-    the 0-th GPU (device)
+    A computing device can be constructed from
+         1. (TargetType, DeviceNumber)
+         2. (TargetType, getDeviceByName): cuda uses best matches criteria.
+         3. (TargetType, FullName, nth): get nth(from 0) device named `Fullname`.
+
+    E.g. Device(TargetType::GPU, 0) means the 0-th GPU (device)
+         Device(TargetType::GPU, "V100") means a GPU which best matches "V100"
+         Device(TargetType::GPU, "NVIDIA GeForce RTX 3060 Laptop GPU", 0)
 
     A Device can be used as a "with" scope, then all the `Array`s and `Driver`s
     will use it by default. In this style, it also sets the default Target. E.g:
@@ -91,19 +104,29 @@ class Device(ffi.Device):
     ```
     '''
 
-    def __init__(self, target: Target, num: int = 0):
-        super(Device, self).__init__(target, num)
-
     def __enter__(self):
-        self.old_target = config.default_target()
-        self.old_device = config.default_device()
+        _old_target_device_stack.append(
+            (config.default_target(), config.default_device()))
         config.set_default_target(self.target())
         config.set_default_device(self)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        config.set_default_target(self.old_target)
-        config.set_default_device(self.old_device)
+        old_target, old_device = _old_target_device_stack.pop()
+        config.set_default_target(old_target)
+        config.set_default_device(old_device)
+
+
+class CPU(Device):
+
+    def __init__(self, *args):
+        super().__init__(ffi.TargetType.CPU, *args)
+
+
+class GPU(Device):
+
+    def __init__(self, *args):
+        super().__init__(ffi.TargetType.GPU, *args)
 
 
 class ReturnValuesPack:

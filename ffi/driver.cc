@@ -40,18 +40,27 @@ void init_ffi_driver(py::module_ &m) {
         .def("time", &Driver::time, "rounds"_a = 10, "warmpups"_a = 3);
 
     // Serialization
-    m.def("load_target", &loadTarget);
-    m.def("load_device", &loadDevice);
-    m.def("load_array", &loadArray);
-    m.def("dump_target", &dumpTarget, "target"_a);
-    m.def("dump_device", &dumpDevice, "device"_a);
-    m.def(
-        "dump_array",
-        [](const Ref<Array> &array_) {
-            auto &&[ret_meta, ret_data] = dumpArray(array_);
-            return std::make_pair(ret_meta, py::bytes(ret_data));
-        },
-        "array"_a);
+    m.def("load_target",
+          [](const std::pair<const std::string &, const std::string &>
+                 &txt_data) { return std::apply(loadTarget, txt_data); });
+    m.def("load_device",
+          [](const std::pair<const std::string &, const std::string &>
+                 &txt_data) { return std::apply(loadDevice, txt_data); });
+    m.def("load_array",
+          [](const std::pair<const std::string &, const std::string &>
+                 &txt_data) { return std::apply(loadArray, txt_data); });
+    m.def("dump_target", [](const Ref<Target> &target_) {
+        auto &&[ret_meta, ret_data] = dumpTarget(target_);
+        return std::make_pair(ret_meta, py::bytes(ret_data));
+    });
+    m.def("dump_device", [](const Ref<Device> &device_) {
+        auto &&[ret_meta, ret_data] = dumpDevice(device_);
+        return std::make_pair(ret_meta, py::bytes(ret_data));
+    });
+    m.def("dump_array", [](const Ref<Array> &array_) {
+        auto &&[ret_meta, ret_data] = dumpArray(array_);
+        return std::make_pair(ret_meta, py::bytes(ret_data));
+    });
 }
 
 } // namespace freetensor

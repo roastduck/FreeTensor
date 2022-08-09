@@ -16,6 +16,7 @@ def test_cpu_basic():
     assert s.logs() == ["merge(Li, Lj)", "parallelize(merged.Li.Lj, openmp)"]
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_basic_static_small():
     with ft.VarDef([("x", (10, 10, 2), "int32", "input", "cpu"),
                     ("y", (10, 10, 2), "int32", "output", "cpu")]) as (x, y):
@@ -23,18 +24,23 @@ def test_gpu_basic_static_small():
             with ft.For("j", 0, 10, nid="Lj") as j:
                 y[i, j, 0] = x[i, j, 0] + 1
 
+    device = ft.GPU()
+    target = device.target()
+    num_sm = target.multi_processor_count()
+
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.auto_parallelize(ft.GPU())
+    s.auto_parallelize(device)
     print(s.ast())
     print(s.logs())
     assert s.logs() == [
-        "merge(Li, Lj)", "split(merged.Li.Lj, -1, 80, 0)",
+        "merge(Li, Lj)", f"split(merged.Li.Lj, -1, {num_sm}, 0)",
         "parallelize(merged.Li.Lj.0, blockIdx.x)",
         "parallelize(merged.Li.Lj.1, threadIdx.x)"
     ]
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_basic_static_large():
     with ft.VarDef([("x", (1000, 1000, 2), "int32", "input", "cpu"),
                     ("y", (1000, 1000, 2), "int32", "output", "cpu")]) as (x,
@@ -55,6 +61,7 @@ def test_gpu_basic_static_large():
     ]
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_basic_dynamic():
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ft.VarDef([("x", (n[()], 1000, 2), "int32", "input", "cpu"),
@@ -64,13 +71,17 @@ def test_gpu_basic_dynamic():
                 with ft.For("j", 0, 1000, nid="Lj") as j:
                     y[i, j, 0] = x[i, j, 0] + 1
 
+    device = ft.GPU()
+    target = device.target()
+    num_sm = target.multi_processor_count()
+
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.GPU())
     print(s.ast())
     print(s.logs())
     assert s.logs() == [
-        "merge(Li, Lj)", "split(merged.Li.Lj, 80, -1, 0)",
+        "merge(Li, Lj)", f"split(merged.Li.Lj, {num_sm}, -1, 0)",
         "reorder(merged.Li.Lj.1, merged.Li.Lj.0)",
         "split(merged.Li.Lj.0, 256, -1, 0)",
         "parallelize(merged.Li.Lj.1, blockIdx.y)",
@@ -110,6 +121,7 @@ def test_reduction_better_not_parallelized():
     assert s.logs() == ["parallelize(Li, openmp)"]
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_warp_static():
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
                     ("y", (1000, 2), "int32", "output", "gpu/global")]) as (x,
@@ -131,6 +143,7 @@ def test_gpu_warp_static():
     ]
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_warp_dynamic():
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ft.VarDef([("x", (n[()], n[()]), "int32", "input", "gpu/global"),
@@ -141,6 +154,10 @@ def test_gpu_warp_dynamic():
                 with ft.For("k", 0, n[()], nid="Lk") as k:
                     y[i, 0] += x[i, k]
 
+    device = ft.GPU()
+    target = device.target()
+    num_sm = target.multi_processor_count()
+
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.GPU())
@@ -148,9 +165,10 @@ def test_gpu_warp_dynamic():
     print(s.logs())
     assert s.logs() == [
         "split(Lk, 32, -1, 0)", "parallelize(Lk.1, threadIdx.x)",
-        "reorder(Lk.1, Lk.0)", "split(Li, 80, -1, 0)", "reorder(Li.1, Li.0)",
-        "split(Li.0, 8, -1, 0)", "parallelize(Li.1, blockIdx.y)",
-        "parallelize(Li.0.0, blockIdx.x)", "parallelize(Li.0.1, threadIdx.y)"
+        "reorder(Lk.1, Lk.0)", f"split(Li, {num_sm}, -1, 0)",
+        "reorder(Li.1, Li.0)", "split(Li.0, 8, -1, 0)",
+        "parallelize(Li.1, blockIdx.y)", "parallelize(Li.0.0, blockIdx.x)",
+        "parallelize(Li.0.1, threadIdx.y)"
     ]
 
 
