@@ -174,30 +174,21 @@ class StmtNode;
 typedef Ref<StmtNode> Stmt;
 
 /**
- * Identify an Stmt or Expr acrossing passes, so we do not need to pass pointers
+ * Identify an Stmt acrossing passes, so we do not need to pass pointers
  *
  * An Stmt is identified by a string-typed id_ property, which is unique to each
  * Stmt node
- *
- * An Expr is identified by the hash of itself, combined with the string-typed
- * ID of the Stmt its in, so that any identical Expr in the same Stmt is treated
- * as the same node
  */
 class ID {
     friend StmtNode;
 
     std::string stmtId_;
-    Expr expr_; /// null for Stmt
 
   public:
     ID() {}
     ID(const char *stmtId) : stmtId_(stmtId) {}
     ID(const std::string &stmtId) : stmtId_(stmtId) {}
     explicit ID(const Stmt &stmt);
-
-    template <class T> ID(const Expr &expr, T &&parent) : ID(parent) {
-        expr_ = expr;
-    }
 
     bool isValid() const { return !stmtId_.empty(); }
 
@@ -209,6 +200,29 @@ class ID {
 };
 
 std::ostream &operator<<(std::ostream &os, const ID &id);
+
+/**
+ * Identify an Stmt or Expr acrossing passes, so we do not need to pass pointers
+ *
+ * An Expr is identified by the hash of itself, combined with the string-typed
+ * ID of the Stmt its in, so that any identical Expr in the same Stmt is treated
+ * as the same node
+ */
+class StmtOrExprID {
+    ID stmtId_;
+    Expr expr_;
+
+  public:
+    StmtOrExprID(const ID &stmtId) : stmtId_(stmtId) {}
+
+    template <class T> StmtOrExprID(const Expr &expr, T &&parent) : stmtId_(parent) {
+        expr_ = expr;
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const StmtOrExprID &id);
+    friend bool operator==(const StmtOrExprID &lhs, const StmtOrExprID &rhs);
+    friend struct ::std::hash<StmtOrExprID>;
+};
 
 /**
  * Base class of all statement nodes in an AST
@@ -259,6 +273,10 @@ namespace std {
 
 template <> struct hash<freetensor::ID> {
     size_t operator()(const freetensor::ID &id) const;
+};
+
+template <> struct hash<freetensor::StmtOrExprID> {
+    size_t operator()(const freetensor::StmtOrExprID &id) const;
 };
 
 } // namespace std

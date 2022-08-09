@@ -133,7 +133,7 @@ Expr ReplaceByTape::visit(const Load &_op) {
         if (tapeVar != op->var_) {
             op->var_ = tapeVar;
             op->indices_.insert(op->indices_.begin(),
-                                versions_.at(ID(_op, parent_)));
+                                versions_.at(StmtOrExprID(_op, parent_)));
         }
     }
     return op;

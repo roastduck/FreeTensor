@@ -34,7 +34,7 @@ Stmt OutputIntermediates::visitStmt(const Stmt &stmt) {
 
 Expr OutputIntermediates::visit(const Load &op) {
     auto ret = BaseClass::visit(op);
-    auto id = ID(op, curStmt_);
+    auto id = StmtOrExprID(op, curStmt_);
     if (versions_.count(id) && !isSingleVersion(def(op->var_)->id())) {
         std::vector<Expr> newIndices(1, versions_.at(id));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
@@ -117,13 +117,13 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
 }
 
 std::tuple<Stmt, std::unordered_map<ID, std::string>,
-           std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
+           std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>>
 outputIntermediates(const Stmt &op,
                     const std::unordered_set<ID> &intermediates) {
     auto [versions, totLens] = analyzeVersion(op, intermediates);
     OutputIntermediates mutator(versions, totLens);
     auto ret = mutator(op);
-    return std::make_tuple(ret, mutator.tapeNames(), versions, totLens);
+    return {ret, mutator.tapeNames(), versions, totLens};
 }
 
 } // namespace freetensor
