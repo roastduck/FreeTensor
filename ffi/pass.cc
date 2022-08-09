@@ -176,7 +176,6 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &)>(
               &gpu::multiplexBuffers),
           "stmt"_a, "target"_a);
-#endif // FT_WITH_CUDA
 
     m.def("gpu_simplex_buffers",
           static_cast<Func (*)(const Func &)>(&gpu::simplexBuffers), "func"_a);
@@ -187,6 +186,7 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Func (*)(const Func &)>(&gpu::lowerVector), "func"_a);
     m.def("gpu_lower_vector",
           static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerVector), "stmt"_a);
+#endif // FT_WITH_CUDA
 
     m.def("lower",
           static_cast<Func (*)(const Func &, const Ref<Target> &,
