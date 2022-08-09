@@ -36,7 +36,7 @@ var searchData=
   ['countcontigaccessloops_33',['CountContigAccessLoops',['../classfreetensor_1_1CountContigAccessLoops.html',1,'freetensor']]],
   ['countheavyops_34',['CountHeavyOps',['../classfreetensor_1_1CountHeavyOps.html',1,'freetensor']]],
   ['countscopelen_35',['CountScopeLen',['../classfreetensor_1_1CountScopeLen.html',1,'freetensor']]],
-  ['cpu_36',['CPU',['../classfreetensor_1_1CPU.html',1,'freetensor']]],
+  ['cputarget_36',['CPUTarget',['../classfreetensor_1_1CPUTarget.html',1,'freetensor']]],
   ['crossthreaddep_37',['CrossThreadDep',['../structfreetensor_1_1gpu_1_1CrossThreadDep.html',1,'freetensor::gpu']]],
   ['cudascope_38',['CUDAScope',['../structfreetensor_1_1CUDAScope.html',1,'freetensor']]],
   ['cudastreamscope_39',['CUDAStreamScope',['../structfreetensor_1_1CUDAStreamScope.html',1,'freetensor']]]

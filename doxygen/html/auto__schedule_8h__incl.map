@@ -1,52 +1,52 @@
 <map id="include/auto_schedule/auto_schedule.h" name="include/auto_schedule/auto_schedule.h">
-<area shape="rect" id="node1" title=" " alt="" coords="1417,5,1583,47"/>
-<area shape="rect" id="node2" title=" " alt="" coords="809,781,895,808"/>
-<area shape="rect" id="node3" title=" " alt="" coords="987,557,1059,584"/>
-<area shape="rect" id="node4" href="$schedule_8h.html" title=" " alt="" coords="1621,244,1713,271"/>
-<area shape="rect" id="node5" title=" " alt="" coords="2558,557,2682,584"/>
-<area shape="rect" id="node21" href="$target_8h.html" title=" " alt="" coords="493,557,608,584"/>
-<area shape="rect" id="node25" href="$array_8h.html" title=" " alt="" coords="313,408,421,435"/>
-<area shape="rect" id="node27" href="$device_8h.html" title=" " alt="" coords="94,483,213,509"/>
-<area shape="rect" id="node36" href="$random_8h.html" title=" " alt="" coords="1475,326,1559,353"/>
-<area shape="rect" id="node45" title=" " alt="" coords="1769,95,1812,121"/>
-<area shape="rect" id="node46" href="$rule_8h.html" title=" " alt="" coords="1588,95,1745,121"/>
-<area shape="rect" id="node47" href="$sketch_8h.html" title=" " alt="" coords="1838,169,2013,196"/>
-<area shape="rect" id="node6" href="$structs_8h.html" title=" " alt="" coords="2731,408,2907,435"/>
-<area shape="rect" id="node15" href="$stmt_8h.html" title=" " alt="" coords="1817,557,1881,584"/>
-<area shape="rect" id="node23" href="$func_8h.html" title=" " alt="" coords="886,326,949,353"/>
-<area shape="rect" id="node28" href="$rand__ctx_8h.html" title=" " alt="" coords="1243,408,1407,435"/>
-<area shape="rect" id="node37" href="$fission_8h.html" title=" " alt="" coords="1808,408,1947,435"/>
-<area shape="rect" id="node40" href="$memoized__schedules_8h.html" title=" " alt="" coords="2021,483,2259,509"/>
-<area shape="rect" id="node41" href="$schedule__log_8h.html" title=" " alt="" coords="1932,557,2113,584"/>
-<area shape="rect" id="node44" href="$var__split_8h.html" title=" " alt="" coords="1685,326,1837,353"/>
-<area shape="rect" id="node7" title=" " alt="" coords="2116,707,2172,733"/>
-<area shape="rect" id="node8" href="$ast_8h.html" title=" " alt="" coords="1930,632,1985,659"/>
-<area shape="rect" id="node13" href="$hash_8h.html" title=" " alt="" coords="2587,483,2653,509"/>
-<area shape="rect" id="node16" title=" " alt="" coords="1821,781,1883,808"/>
-<area shape="rect" id="node9" title=" " alt="" coords="1344,707,1424,733"/>
-<area shape="rect" id="node10" title=" " alt="" coords="920,781,979,808"/>
-<area shape="rect" id="node11" href="$ref_8h.html" title=" " alt="" coords="987,707,1037,733"/>
-<area shape="rect" id="node12" href="$to__string_8h.html" title=" " alt="" coords="1789,707,1939,733"/>
-<area shape="rect" id="node14" title=" " alt="" coords="2301,557,2416,584"/>
-<area shape="rect" id="node17" href="$buffer_8h.html" title=" " alt="" coords="1213,632,1283,659"/>
-<area shape="rect" id="node19" href="$for__property_8h.html" title=" " alt="" coords="1793,632,1905,659"/>
-<area shape="rect" id="node20" href="$reduce__op_8h.html" title=" " alt="" coords="1663,707,1764,733"/>
-<area shape="rect" id="node18" href="$tensor_8h.html" title=" " alt="" coords="684,707,759,733"/>
-<area shape="rect" id="node22" href="$opt_8h.html" title=" " alt="" coords="1663,632,1718,659"/>
-<area shape="rect" id="node24" title=" " alt="" coords="1483,408,1543,435"/>
-<area shape="rect" id="node26" title=" " alt="" coords="288,483,355,509"/>
-<area shape="rect" id="node29" title=" " alt="" coords="1736,483,1787,509"/>
-<area shape="rect" id="node30" title=" " alt="" coords="1717,557,1781,584"/>
-<area shape="rect" id="node31" title=" " alt="" coords="1227,483,1285,509"/>
-<area shape="rect" id="node32" href="$func__utils_8h.html" title=" " alt="" coords="1310,483,1407,509"/>
-<area shape="rect" id="node33" href="$rand__cond_8h.html" title=" " alt="" coords="1083,557,1258,584"/>
-<area shape="rect" id="node35" href="$rand__var_8h.html" title=" " alt="" coords="835,483,999,509"/>
-<area shape="rect" id="node34" href="$shared__linked__list_8h.html" title=" " alt="" coords="1038,632,1189,659"/>
-<area shape="rect" id="node38" href="$symbol__table_8h.html" title=" " alt="" coords="2334,483,2511,509"/>
-<area shape="rect" id="node39" href="$mutator_8h.html" title=" " alt="" coords="1861,483,1947,509"/>
-<area shape="rect" id="node42" title=" " alt="" coords="2167,632,2254,659"/>
-<area shape="rect" id="node43" title=" " alt="" coords="2278,632,2346,659"/>
-<area shape="rect" id="node48" href="$find__multi__level__tiling_8h.html" title=" " alt="" coords="2685,319,2827,360"/>
-<area shape="rect" id="node49" href="$find__loop__variance_8h.html" title=" " alt="" coords="3032,483,3243,509"/>
-<area shape="rect" id="node50" href="$undo__make__reduction_8h.html" title=" " alt="" coords="2317,408,2528,435"/>
+<area shape="rect" id="node1" title=" " alt="" coords="2254,5,2421,47"/>
+<area shape="rect" id="node2" title=" " alt="" coords="1171,781,1258,808"/>
+<area shape="rect" id="node3" title=" " alt="" coords="3265,557,3337,584"/>
+<area shape="rect" id="node4" href="$schedule_8h.html" title=" " alt="" coords="1851,244,1943,271"/>
+<area shape="rect" id="node5" title=" " alt="" coords="947,557,1071,584"/>
+<area shape="rect" id="node21" href="$target_8h.html" title=" " alt="" coords="2653,557,2768,584"/>
+<area shape="rect" id="node26" href="$array_8h.html" title=" " alt="" coords="2826,408,2934,435"/>
+<area shape="rect" id="node28" href="$device_8h.html" title=" " alt="" coords="2525,483,2643,509"/>
+<area shape="rect" id="node37" href="$random_8h.html" title=" " alt="" coords="3247,326,3331,353"/>
+<area shape="rect" id="node46" title=" " alt="" coords="3417,95,3460,121"/>
+<area shape="rect" id="node47" href="$rule_8h.html" title=" " alt="" coords="2004,95,2161,121"/>
+<area shape="rect" id="node48" href="$sketch_8h.html" title=" " alt="" coords="2250,169,2425,196"/>
+<area shape="rect" id="node6" href="$structs_8h.html" title=" " alt="" coords="1985,408,2161,435"/>
+<area shape="rect" id="node15" href="$stmt_8h.html" title=" " alt="" coords="2183,557,2247,584"/>
+<area shape="rect" id="node24" href="$func_8h.html" title=" " alt="" coords="2397,326,2459,353"/>
+<area shape="rect" id="node29" href="$rand__ctx_8h.html" title=" " alt="" coords="1251,408,1415,435"/>
+<area shape="rect" id="node38" href="$fission_8h.html" title=" " alt="" coords="659,408,797,435"/>
+<area shape="rect" id="node41" href="$memoized__schedules_8h.html" title=" " alt="" coords="195,483,432,509"/>
+<area shape="rect" id="node42" href="$schedule__log_8h.html" title=" " alt="" coords="552,557,733,584"/>
+<area shape="rect" id="node45" href="$var__split_8h.html" title=" " alt="" coords="1708,326,1860,353"/>
+<area shape="rect" id="node7" title=" " alt="" coords="2229,707,2285,733"/>
+<area shape="rect" id="node8" href="$ast_8h.html" title=" " alt="" coords="1775,632,1830,659"/>
+<area shape="rect" id="node13" href="$hash_8h.html" title=" " alt="" coords="1497,483,1562,509"/>
+<area shape="rect" id="node16" title=" " alt="" coords="2923,781,2986,808"/>
+<area shape="rect" id="node9" title=" " alt="" coords="1449,707,1529,733"/>
+<area shape="rect" id="node10" title=" " alt="" coords="1988,781,2047,808"/>
+<area shape="rect" id="node11" href="$ref_8h.html" title=" " alt="" coords="1615,707,1665,733"/>
+<area shape="rect" id="node12" href="$to__string_8h.html" title=" " alt="" coords="1741,707,1891,733"/>
+<area shape="rect" id="node14" title=" " alt="" coords="808,557,923,584"/>
+<area shape="rect" id="node17" href="$buffer_8h.html" title=" " alt="" coords="2295,632,2366,659"/>
+<area shape="rect" id="node19" href="$for__property_8h.html" title=" " alt="" coords="1956,632,2068,659"/>
+<area shape="rect" id="node20" href="$reduce__op_8h.html" title=" " alt="" coords="1967,707,2068,733"/>
+<area shape="rect" id="node18" href="$tensor_8h.html" title=" " alt="" coords="2772,707,2847,733"/>
+<area shape="rect" id="node22" href="$target__type_8h.html" title=" " alt="" coords="2645,632,2795,659"/>
+<area shape="rect" id="node23" href="$opt_8h.html" title=" " alt="" coords="3165,632,3219,659"/>
+<area shape="rect" id="node25" title=" " alt="" coords="2237,408,2297,435"/>
+<area shape="rect" id="node27" title=" " alt="" coords="2921,483,2988,509"/>
+<area shape="rect" id="node30" title=" " alt="" coords="1421,483,1472,509"/>
+<area shape="rect" id="node31" title=" " alt="" coords="213,557,277,584"/>
+<area shape="rect" id="node32" title=" " alt="" coords="1115,483,1173,509"/>
+<area shape="rect" id="node33" href="$func__utils_8h.html" title=" " alt="" coords="1198,483,1295,509"/>
+<area shape="rect" id="node34" href="$rand__cond_8h.html" title=" " alt="" coords="1171,557,1346,584"/>
+<area shape="rect" id="node36" href="$rand__var_8h.html" title=" " alt="" coords="1586,483,1750,509"/>
+<area shape="rect" id="node35" href="$shared__linked__list_8h.html" title=" " alt="" coords="1139,632,1290,659"/>
+<area shape="rect" id="node39" href="$symbol__table_8h.html" title=" " alt="" coords="761,483,938,509"/>
+<area shape="rect" id="node40" href="$mutator_8h.html" title=" " alt="" coords="1775,483,1860,509"/>
+<area shape="rect" id="node43" title=" " alt="" coords="650,632,737,659"/>
+<area shape="rect" id="node44" title=" " alt="" coords="558,632,626,659"/>
+<area shape="rect" id="node49" href="$find__multi__level__tiling_8h.html" title=" " alt="" coords="1935,319,2078,360"/>
+<area shape="rect" id="node50" href="$find__loop__variance_8h.html" title=" " alt="" coords="1985,483,2196,509"/>
 </map>

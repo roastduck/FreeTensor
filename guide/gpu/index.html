@@ -117,7 +117,7 @@
 import numpy as np
 
 # Using the 0-th GPU device
-with ft.Device(ft.GPU(), 0):
+with ft.GPU(0):
 
     n = 4
 
@@ -139,12 +139,12 @@ with ft.Device(ft.GPU(), 0):
 <p>Similar to <a href="../schedules/#example-parallel-vector-addition">parallelizing to OpenMP threads</a>, in this example, we parallelize Loop <code>Li</code> to the <code>threadIdx.x</code> dimension of CUDA. There are two major differences:</p>
 <ol>
 <li>You are now calling <code>parallelize</code> schedule with a <code>threadIdx.x</code> parameter, instead of <code>openmp</code>.</li>
-<li>All the code are enclosed by a <code>with ft.Device(ft.GPU(), 0)</code> scope.</li>
+<li>All the code are enclosed by a <code>with ft.GPU(0)</code> scope.</li>
 </ol>
 <p>Usually, you not only parallelize your loops to <code>threadIdx.x</code>, but also other CUDA dimensions like <code>blockIdx.x</code>. To achieve this, you either parallelize different loops in a loop nests to different CUDA dimensions, or <a href="../../api/#freetensor.core.schedule.Schedule.split"><code>split</code></a> your loops before parallelizing them.</p>
-<p>As for the <code>with ft.Device(ft.GPU(), 0)</code> scope, <code>ft.GPU()</code> specifies a <a href="../../api/#freetensor.core.driver.Target"><code>Target</code></a> (a GPU architecture), and <code>ft.Device(ft.GPU(), 0)</code> specifies a <a href="../../api/#freetensor.core.driver.Device"><code>Device</code></a> of that target (a specific hardware device of GPU). By calling <code>with</code> on a device, default values of several classes and functions are set, but currently you only need to be aware of two things:</p>
+<p>As for the <code>with ft.GPU(0)</code> scope, <code>ft.GPU(0)</code> specifies a <a href="../../api/#freetensor.core.driver.Device"><code>Device</code></a> (a specific hardware device of GPU). By calling <code>with</code> on a device, default values of several classes and functions are set, but currently you only need to be aware of two things:</p>
 <ol>
-<li>It sets the targeting <code>Target</code> and <code>Device</code> of <code>optimize</code>.</li>
+<li>It sets the <code>Device</code> of <code>optimize</code>.</li>
 <li>It sets the default <code>mtype</code> of all tensors in the program, which is an optional parameter of <code>ft.Var</code>, <code>ft.empty</code>, etc.</li>
 </ol>
 <p><code>mtype</code> refers to memory type. It controls where a tensor is stored. It defaults to <code>"cpu"</code> for a CPU program, and <code>"gpu/global"</code> for a GPU program. You probably GPU requires putting each variable to a right place (global memory, shared memory, registers, etc.), and this can be done by setting <code>mtype</code>s of each tensor. There are several ways to set <code>mtype</code>s:</p>
@@ -159,7 +159,7 @@ with ft.Device(ft.GPU(), 0):
 import numpy as np
 
 # Using the 0-th GPU device
-with ft.Device(ft.GPU(), 0):
+with ft.GPU(0):
 
     @ft.optimize(
         # Parallel Loop Li as GPU threads

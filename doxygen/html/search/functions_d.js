@@ -24,6 +24,6 @@ var searchData=
   ['notlexlessafterpermu_21',['notLexLessAfterPermu',['../namespacefreetensor.html#affd9024564fe030fc074d18560f25e5b',1,'freetensor']]],
   ['nowsubnum_22',['nowSubNum',['../classfreetensor_1_1Sketch.html#adde45ed793cf85e181b62134645022be',1,'freetensor::Sketch']]],
   ['nowsubsketch_23',['nowSubSketch',['../classfreetensor_1_1Sketch.html#aa45221226e616bb1330d168cb2fecb75',1,'freetensor::Sketch::nowSubSketch()'],['../classfreetensor_1_1Sketch.html#a751b9aab36ae535323bec9db51224c17',1,'freetensor::Sketch::nowSubSketch() const']]],
-  ['num_24',['num',['../classfreetensor_1_1Device.html#ad486f37f8f8d4ef1b8a1421f3ae83ddf',1,'freetensor::Device']]],
+  ['num_24',['num',['../classfreetensor_1_1Device.html#a21e8a9ed5f036f7aff100c0b170a713c',1,'freetensor::Device']]],
   ['numsi_25',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]]
 ];

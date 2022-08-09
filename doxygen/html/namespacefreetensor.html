@@ -209,7 +209,7 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CountScopeLen.html">CountScopeLen</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CPU.html">CPU</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CPUTarget.html">CPUTarget</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1CUDAScope.html">CUDAScope</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -328,8 +328,6 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1GenPBExpr.html">GenPBExpr</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1GetLoopNestTree.html">GetLoopNestTree</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1GPU.html">GPU</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Grad.html">Grad</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1261,8 +1259,8 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 <tr class="separator:a69b12235146ab210071e589e98530649"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ba7246af1695e374f117991cdcbd660"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Logger.html">Logger</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5ba7246af1695e374f117991cdcbd660">logger</a> ()</td></tr>
 <tr class="separator:a5ba7246af1695e374f117991cdcbd660"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a15f99564a55157eb9d3f3841bfdf915a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a15f99564a55157eb9d3f3841bfdf915a">isSame</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;lhs, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;rhs)</td></tr>
-<tr class="separator:a15f99564a55157eb9d3f3841bfdf915a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8536201d32cf173c3ba1e8a8abcede52"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8536201d32cf173c3ba1e8a8abcede52">isSameTarget</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;lhs, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;rhs)</td></tr>
+<tr class="separator:a8536201d32cf173c3ba1e8a8abcede52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75f5f9279dfa1046350703df7855e98c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a75f5f9279dfa1046350703df7855e98c">reportWarning</a> (const std::string &amp;msg)</td></tr>
 <tr class="separator:a75f5f9279dfa1046350703df7855e98c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a14ebefc89b03c4abfe8914970ce51535"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a14ebefc89b03c4abfe8914970ce51535">_makeAnyExpr</a> ()</td></tr>
@@ -1756,10 +1754,10 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:aea5111a7980fc169f59a834ed9fdb814"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a38d4647ec95f1346cbb7bf6c3d19382c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a38d4647ec95f1346cbb7bf6c3d19382c">loadAST</a> (const std::string &amp;txt)</td></tr>
 <tr class="separator:a38d4647ec95f1346cbb7bf6c3d19382c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a139a890d89738c9f5c37ec5a47082521"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a139a890d89738c9f5c37ec5a47082521">loadTarget</a> (const std::string &amp;txt)</td></tr>
-<tr class="separator:a139a890d89738c9f5c37ec5a47082521"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aab61605d34ed7e52888dd2bfb436cfa3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aab61605d34ed7e52888dd2bfb436cfa3">loadDevice</a> (const std::string &amp;txt)</td></tr>
-<tr class="separator:aab61605d34ed7e52888dd2bfb436cfa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3356f8329eb68122c0b9a233bd888e0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab3356f8329eb68122c0b9a233bd888e0">loadTarget</a> (const std::string &amp;txt, const std::string &amp;data)</td></tr>
+<tr class="separator:ab3356f8329eb68122c0b9a233bd888e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4651489c42d002df2a41d7bbd120f919"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4651489c42d002df2a41d7bbd120f919">loadDevice</a> (const std::string &amp;txt, const std::string &amp;data)</td></tr>
+<tr class="separator:a4651489c42d002df2a41d7bbd120f919"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a62d910d81c097bd722568c69540a2484"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Array.html">Array</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a62d910d81c097bd722568c69540a2484">loadArray</a> (const std::string &amp;txt, const std::string &amp;data)</td></tr>
 <tr class="separator:a62d910d81c097bd722568c69540a2484"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a149d0a492488f5045de5620b04a2f866"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Array.html">Array</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a149d0a492488f5045de5620b04a2f866">newArray</a> (const std::vector&lt; size_t &gt; &amp;shape_, const std::string &amp;dtype_, const std::string &amp;data_)</td></tr>
@@ -1770,10 +1768,10 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:ad49048b0f5a7d44b5e690b466f6bb4b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adcc467c052c7fa09bef7460cec42bed7"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adcc467c052c7fa09bef7460cec42bed7">dumpAST</a> (const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op, bool dtypeInLoad=false)</td></tr>
 <tr class="separator:adcc467c052c7fa09bef7460cec42bed7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3255ceeeaf76169fda243d90eac0ed57"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3255ceeeaf76169fda243d90eac0ed57">dumpTarget</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target_)</td></tr>
-<tr class="separator:a3255ceeeaf76169fda243d90eac0ed57"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2369fc9bcb41dfa8cf208cb62567c3d0"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2369fc9bcb41dfa8cf208cb62567c3d0">dumpDevice</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;device_)</td></tr>
-<tr class="separator:a2369fc9bcb41dfa8cf208cb62567c3d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69b928436d788b4eeaf2fe1dcfb09685"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a69b928436d788b4eeaf2fe1dcfb09685">dumpTarget</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target_)</td></tr>
+<tr class="separator:a69b928436d788b4eeaf2fe1dcfb09685"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a410b08e3991efea437bea8a5301ed9ee"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a410b08e3991efea437bea8a5301ed9ee">dumpDevice</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;device_)</td></tr>
+<tr class="separator:a410b08e3991efea437bea8a5301ed9ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4cd5587319c50918b9d491f661cee351"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4cd5587319c50918b9d491f661cee351">dumpArray</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Array.html">Array</a> &gt; &amp;array_)</td></tr>
 <tr class="separator:a4cd5587319c50918b9d491f661cee351"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2c490189ddd347553322eb51f8e945dc"><td class="memTemplParams" colspan="2">template&lt;class T &gt; <br />
@@ -7511,14 +7509,14 @@ template&lt;PBMapRef T&gt; </div>
 
 </div>
 </div>
-<a id="a2369fc9bcb41dfa8cf208cb62567c3d0" name="a2369fc9bcb41dfa8cf208cb62567c3d0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2369fc9bcb41dfa8cf208cb62567c3d0">&#9670;&nbsp;</a></span>dumpDevice()</h2>
+<a id="a410b08e3991efea437bea8a5301ed9ee" name="a410b08e3991efea437bea8a5301ed9ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a410b08e3991efea437bea8a5301ed9ee">&#9670;&nbsp;</a></span>dumpDevice()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::string freetensor::dumpDevice </td>
+          <td class="memname">std::pair&lt; std::string, std::string &gt; freetensor::dumpDevice </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;&#160;</td>
           <td class="paramname"><em>device_</em></td><td>)</td>
@@ -7529,14 +7527,14 @@ template&lt;PBMapRef T&gt; </div>
 
 </div>
 </div>
-<a id="a3255ceeeaf76169fda243d90eac0ed57" name="a3255ceeeaf76169fda243d90eac0ed57"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3255ceeeaf76169fda243d90eac0ed57">&#9670;&nbsp;</a></span>dumpTarget()</h2>
+<a id="a69b928436d788b4eeaf2fe1dcfb09685" name="a69b928436d788b4eeaf2fe1dcfb09685"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a69b928436d788b4eeaf2fe1dcfb09685">&#9670;&nbsp;</a></span>dumpTarget()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::string freetensor::dumpTarget </td>
+          <td class="memname">std::pair&lt; std::string, std::string &gt; freetensor::dumpTarget </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;&#160;</td>
           <td class="paramname"><em>target_</em></td><td>)</td>
@@ -9098,14 +9096,14 @@ template&lt;PBSetRef T, PBSetRef U&gt; </div>
 
 </div>
 </div>
-<a id="a15f99564a55157eb9d3f3841bfdf915a" name="a15f99564a55157eb9d3f3841bfdf915a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a15f99564a55157eb9d3f3841bfdf915a">&#9670;&nbsp;</a></span>isSame()</h2>
+<a id="a8536201d32cf173c3ba1e8a8abcede52" name="a8536201d32cf173c3ba1e8a8abcede52"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8536201d32cf173c3ba1e8a8abcede52">&#9670;&nbsp;</a></span>isSameTarget()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool freetensor::isSame </td>
+          <td class="memname">bool freetensor::isSameTarget </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;&#160;</td>
           <td class="paramname"><em>lhs</em>, </td>
@@ -9756,8 +9754,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</div>
 
 </div>
 </div>
-<a id="aab61605d34ed7e52888dd2bfb436cfa3" name="aab61605d34ed7e52888dd2bfb436cfa3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aab61605d34ed7e52888dd2bfb436cfa3">&#9670;&nbsp;</a></span>loadDevice()</h2>
+<a id="a4651489c42d002df2a41d7bbd120f919" name="a4651489c42d002df2a41d7bbd120f919"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4651489c42d002df2a41d7bbd120f919">&#9670;&nbsp;</a></span>loadDevice()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -9766,18 +9764,28 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</div>
           <td class="memname"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; freetensor::loadDevice </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>txt</em></td><td>)</td>
+          <td class="paramname"><em>txt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p ><code>DEV &lt;Num&gt; &lt;<a class="el" href="classfreetensor_1_1Target.html">Target</a>&gt;</code> e.g. <code>DEV 3 <a class="el" href="classfreetensor_1_1GPU.html">GPU</a> 1 : 7 0</code></p>
-<p ><code>DEV &lt;Num&gt; &lt;<a class="el" href="classfreetensor_1_1Target.html">Target</a>&gt;</code> e.g. <code>DEV 3 <a class="el" href="classfreetensor_1_1GPU.html">GPU</a> 1 : 7 0</code></p>
+<p ><code>DEV &lt;Num&gt; &lt;<a class="el" href="classfreetensor_1_1Target.html">Target</a>&gt;</code> e.g. <code>DEV 3 GPU 1</code></p>
+<p ><code>DEV &lt;Num&gt; &lt;<a class="el" href="classfreetensor_1_1Target.html">Target</a>&gt;</code> e.g. <code>DEV 3 GPU 1</code></p>
 
 </div>
 </div>
-<a id="a139a890d89738c9f5c37ec5a47082521" name="a139a890d89738c9f5c37ec5a47082521"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a139a890d89738c9f5c37ec5a47082521">&#9670;&nbsp;</a></span>loadTarget()</h2>
+<a id="ab3356f8329eb68122c0b9a233bd888e0" name="ab3356f8329eb68122c0b9a233bd888e0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab3356f8329eb68122c0b9a233bd888e0">&#9670;&nbsp;</a></span>loadTarget()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -9786,13 +9794,21 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</div>
           <td class="memname"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; freetensor::loadTarget </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>txt</em></td><td>)</td>
+          <td class="paramname"><em>txt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p ><code><a class="el" href="classfreetensor_1_1CPU.html">CPU</a> &lt;useNativeArch&gt;</code> <code><a class="el" href="classfreetensor_1_1GPU.html">GPU</a> &lt;useNativeArch&gt; [: &lt;major&gt; &lt;minor&gt; | ;]</code> e.g. <code><a class="el" href="classfreetensor_1_1GPU.html">GPU</a> 1 : 7 0</code>, <code><a class="el" href="classfreetensor_1_1GPU.html">GPU</a> 0 ;</code>, <code><a class="el" href="classfreetensor_1_1CPU.html">CPU</a> 1</code></p>
-<p ><code><a class="el" href="classfreetensor_1_1CPU.html">CPU</a> &lt;useNativeArch&gt;</code> <code><a class="el" href="classfreetensor_1_1GPU.html">GPU</a> &lt;useNativeArch&gt; [: &lt;major&gt; &lt;minor&gt; | ;]</code> e.g. <code><a class="el" href="classfreetensor_1_1GPU.html">GPU</a> 1 : 7 0</code>, <code><a class="el" href="classfreetensor_1_1GPU.html">GPU</a> 0 ;</code>, <code><a class="el" href="classfreetensor_1_1CPU.html">CPU</a> 1</code></p>
 
 </div>
 </div>

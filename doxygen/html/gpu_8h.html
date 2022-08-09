@@ -66,61 +66,30 @@ $(function() {
 </div>
 </div><!-- top -->
 <div class="header">
-  <div class="summary">
-<a href="#define-members">Macros</a>  </div>
   <div class="headertitle"><div class="title">gpu.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;sstream&gt;</code><br />
-<code>#include &lt;cuda_runtime.h&gt;</code><br />
-<code>#include &lt;<a class="el" href="except_8h_source.html">except.h</a>&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for gpu.h:</div>
 <div class="dyncontent">
 <div class="center"><img src="gpu_8h__incl.png" border="0" usemap="#ainclude_2driver_2gpu_8h" alt=""/></div>
 <map name="ainclude_2driver_2gpu_8h" id="ainclude_2driver_2gpu_8h">
-<area shape="rect" title=" " alt="" coords="90,5,241,32"/>
-<area shape="rect" title=" " alt="" coords="5,80,80,107"/>
-<area shape="rect" title=" " alt="" coords="104,80,227,107"/>
-<area shape="rect" href="except_8h.html" title=" " alt="" coords="251,80,330,107"/>
-<area shape="rect" title=" " alt="" coords="143,155,223,181"/>
-<area shape="rect" title=" " alt="" coords="247,155,334,181"/>
-<area shape="rect" title=" " alt="" coords="359,155,417,181"/>
+<area shape="rect" title=" " alt="" coords="5,5,156,32"/>
+<area shape="rect" title=" " alt="" coords="43,80,118,107"/>
+</map>
+</div>
+</div><div class="textblock"><div class="dynheader">
+This graph shows which files directly or indirectly include this file:</div>
+<div class="dyncontent">
+<div class="center"><img src="gpu_8h__dep__incl.png" border="0" usemap="#ainclude_2driver_2gpu_8hdep" alt=""/></div>
+<map name="ainclude_2driver_2gpu_8hdep" id="ainclude_2driver_2gpu_8hdep">
+<area shape="rect" title=" " alt="" coords="5,5,156,32"/>
+<area shape="rect" href="device_8cc.html" title=" " alt="" coords="7,80,155,107"/>
 </map>
 </div>
 </div>
 <p><a href="gpu_8h_source.html">Go to the source code of this file.</a></p>
-<table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
-Macros</h2></td></tr>
-<tr class="memitem:a68037a15cabbfe7fe52ff204ee0d4783"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="gpu_8h.html#a68037a15cabbfe7fe52ff204ee0d4783">checkCudaError</a>(call)</td></tr>
-<tr class="separator:a68037a15cabbfe7fe52ff204ee0d4783"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table>
-<h2 class="groupheader">Macro Definition Documentation</h2>
-<a id="a68037a15cabbfe7fe52ff204ee0d4783" name="a68037a15cabbfe7fe52ff204ee0d4783"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a68037a15cabbfe7fe52ff204ee0d4783">&#9670;&nbsp;</a></span>checkCudaError</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define checkCudaError</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">call</td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">    {                                                                          \</div>
-<div class="line">        auto err = (call);                                                     \</div>
-<div class="line">        if (cudaSuccess != err) {                                              \</div>
-<div class="line">            throw DriverError(cudaGetErrorString(err));                        \</div>
-<div class="line">        }                                                                      \</div>
-<div class="line">    }</div>
-</div><!-- fragment -->
-</div>
-</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

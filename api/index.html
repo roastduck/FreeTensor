@@ -2209,6 +2209,7 @@ End users are encouraged to use <code>transformer</code>, instead of this module
 
 
 
+
   <div class="doc doc-object doc-class">
 
 
@@ -2224,9 +2225,17 @@ Device            (<span title="freetensor_ffi.Device">Device</span>)
 
     <div class="doc doc-contents ">
 
-      <p>A computing device of a Target</p>
-<p>E.g. suppose GPU() is a Target (architecture), then Device(GPU(), 0) means
-the 0-th GPU (device)</p>
+      <p>A computing device can be constructed from</p>
+<ol>
+<li>(TargetType, DeviceNumber)<ol>
+<li>(TargetType, getDeviceByName): cuda uses best matches criteria.</li>
+<li>(TargetType, FullName, nth): get nth(from 0) device named <code>Fullname</code>.</li>
+</ol>
+</li>
+</ol>
+<p>E.g. Device(TargetType::GPU, 0) means the 0-th GPU (device)
+     Device(TargetType::GPU, "V100") means a GPU which best matches "V100"
+     Device(TargetType::GPU, "NVIDIA GeForce RTX 3060 Laptop GPU", 0)</p>
 <p>A Device can be used as a "with" scope, then all the <code>Array</code>s and <code>Driver</code>s
 will use it by default. In this style, it also sets the default Target. E.g:</p>
 <pre><code>with Device(...):
@@ -2238,10 +2247,15 @@ will use it by default. In this style, it also sets the default Target. E.g:</p>
           <summary>Source code in <code>freetensor/core/driver.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Device</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">Device</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    A computing device of a Target</span>
 
-<span class="sd">    E.g. suppose GPU() is a Target (architecture), then Device(GPU(), 0) means</span>
-<span class="sd">    the 0-th GPU (device)</span>
+<span class="sd">    A computing device can be constructed from</span>
+<span class="sd">         1. (TargetType, DeviceNumber)</span>
+<span class="sd">         2. (TargetType, getDeviceByName): cuda uses best matches criteria.</span>
+<span class="sd">         3. (TargetType, FullName, nth): get nth(from 0) device named `Fullname`.</span>
+
+<span class="sd">    E.g. Device(TargetType::GPU, 0) means the 0-th GPU (device)</span>
+<span class="sd">         Device(TargetType::GPU, &quot;V100&quot;) means a GPU which best matches &quot;V100&quot;</span>
+<span class="sd">         Device(TargetType::GPU, &quot;NVIDIA GeForce RTX 3060 Laptop GPU&quot;, 0)</span>
 
 <span class="sd">    A Device can be used as a &quot;with&quot; scope, then all the `Array`s and `Driver`s</span>
 <span class="sd">    will use it by default. In this style, it also sets the default Target. E.g:</span>
@@ -2252,9 +2266,6 @@ will use it by default. In this style, it also sets the default Target. E.g:</p>
 <span class="sd">        a = Array(...)  # Use the Device above by default</span>
 <span class="sd">    ```</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Target</span><span class="p">,</span> <span class="n">num</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Device</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">_old_target_device_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -2273,7 +2284,6 @@ will use it by default. In this style, it also sets the default Target. E.g:</p>
 
 
   <div class="doc doc-children">
-
 
 
 
@@ -2630,6 +2640,7 @@ the return values are packed in a ReturnValuesPack</p>
     </div>
 
   </div>
+
 
 
 

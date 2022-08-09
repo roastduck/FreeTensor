@@ -38,7 +38,7 @@ var searchData=
   ['usebuiltindiv_35',['useBuiltinDiv',['../namespacefreetensor.html#a1d7e8385e1c871b2c861b2f70a041196',1,'freetensor']]],
   ['usebuiltindiv_36',['UseBuiltinDiv',['../classfreetensor_1_1UseBuiltinDiv.html#a74633855d3143a469c5618cb12ebfd85',1,'freetensor::UseBuiltinDiv']]],
   ['useiters_5f_37',['useIters_',['../structfreetensor_1_1CodeGenStream.html#a3503fcfd50902e05dc58dd3dc65c0e27',1,'freetensor::CodeGenStream']]],
-  ['usenativearch_38',['useNativeArch',['../classfreetensor_1_1Target.html#ac1227e86c4b46e740777a53189847804',1,'freetensor::Target']]],
+  ['usenativearch_38',['useNativeArch',['../classfreetensor_1_1CPUTarget.html#ac52a20371e64021a721432db24228aa6',1,'freetensor::CPUTarget::useNativeArch()'],['../classfreetensor_1_1Target.html#a94430881a13dba49deed1f5a8d9f677e',1,'freetensor::Target::useNativeArch()']]],
   ['uses_39',['uses',['../classfreetensor_1_1AllUses.html#a6f2622151ea97b652b0c579e728e67e9',1,'freetensor::AllUses']]],
   ['utils_2eh_40',['utils.h',['../math_2utils_8h.html',1,'(Global Namespace)'],['../auto__schedule_2utils_8h.html',1,'(Global Namespace)']]]
 ];
