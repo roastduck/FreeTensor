@@ -1,8 +1,11 @@
 from typing import Optional, Sequence
 import functools
 
+from . import config
+
 import freetensor_ffi as ffi
 
+from freetensor_ffi import lower
 from freetensor_ffi import scalar_prop_const
 from freetensor_ffi import tensor_prop_const
 from freetensor_ffi import prop_one_time_use
@@ -21,13 +24,14 @@ from freetensor_ffi import make_const_shape
 from freetensor_ffi import use_builtin_div
 from freetensor_ffi import hoist_var_over_stmt_seq
 from freetensor_ffi import cpu_lower_parallel_reduction
-from freetensor_ffi import gpu_lower_parallel_reduction
-from freetensor_ffi import gpu_make_sync
-from freetensor_ffi import gpu_multiplex_buffers
-from freetensor_ffi import gpu_simplex_buffers
-from freetensor_ffi import gpu_normalize_threads
-from freetensor_ffi import gpu_lower_vector
-from freetensor_ffi import lower
+
+if config.with_cuda():
+    from freetensor_ffi import gpu_lower_parallel_reduction
+    from freetensor_ffi import gpu_make_sync
+    from freetensor_ffi import gpu_multiplex_buffers
+    from freetensor_ffi import gpu_simplex_buffers
+    from freetensor_ffi import gpu_normalize_threads
+    from freetensor_ffi import gpu_lower_vector
 
 
 def lower(ast=None,

@@ -90,14 +90,16 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
     ast = APPLY("make_heap_alloc", makeHeapAlloc, ast);
 
     switch (target->type()) {
-    case TargetType::GPU:
+#ifdef FT_WITH_CUDA
+    case TargetType::GPU: {
+        auto t = target.as<GPUTarget>();
         // Before gpu_nromalize_threads
         ast = APPLY("gpu_lower_parallel_reduction", gpu::lowerParallelReduction,
                     ast);
 
         // TODO: Support dynamic shared memory size, but the size should be
         // determined outside of kernels
-        ast = APPLY("gpu_multiplex_buffers", gpu::multiplexBuffers, ast);
+        ast = APPLY("gpu_multiplex_buffers", gpu::multiplexBuffers, ast, t);
         ast = APPLY("gpu_simplex_buffers", gpu::simplexBuffers, ast);
         // FIXME: MemType::GPUGlobal should also be make const, but only
         // inside a kernel
@@ -106,11 +108,13 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
                   std::vector<MemType>{MemType::GPUShared, MemType::GPULocal});
         ast = APPLY("gpu_normalize_threads", gpu::normalizeThreads,
                     ast); // After gpu_multiplex_buffers
-        ast = APPLY("gpu_make_sync", gpu::makeSync,
-                    ast); // After gpu_normalize_threads
+        ast = APPLY("gpu_make_sync", gpu::makeSync, ast,
+                    t); // After gpu_normalize_threads
         ast = APPLY("gpu_lower_vector", gpu::lowerVector, ast);
         ast = APPLY("use_builtin_div", useBuiltinDiv, ast);
         break;
+    }
+#endif // FT_WITH_CUDA
 
     case TargetType::CPU:
         ast = APPLY("cpu_lower_parallel_reduction", cpu::lowerParallelReduction,

@@ -68,6 +68,10 @@ class GPUTarget : public Target {
     std::pair<int, int> computeCapability() const {
         return std::make_pair(infoArch_->major, infoArch_->minor);
     }
+
+    int warpSize() const { return infoArch_->warpSize; }
+
+    int multiProcessorCount() const { return infoArch_->multiProcessorCount; }
 };
 #endif // FT_WITH_CUDA
 
