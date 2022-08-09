@@ -13,49 +13,43 @@ void init_ffi_device(py::module_ &m) {
         .value("GPU", TargetType::GPU);
 
     py::class_<Target, Ref<Target>> pyTarget(m, "Target");
+    py::class_<Device, Ref<Device>> pyDevice(m, "Device");
+
     pyTarget
+        .def(py::init(
+            [](const Ref<Device> &device) { return device->target(); }))
         .def("type", [](const Ref<Target> &target) { return target->type(); })
-        .def(
-            "set_use_native_arch",
-            [](const Ref<Target> &target, bool useNativeArch) {
-                target->setUseNativeArch(useNativeArch);
-            },
-            "useNativeArch"_a = true)
-        .def("use_native_arch", &Target::useNativeArch)
         .def("__str__", &Target::toString)
         .def("main_mem_type", &Target::mainMemType)
+        .def("use_native_arch", &Target::useNativeArch)
         .def("__eq__",
              static_cast<bool (*)(const Ref<Target> &, const Ref<Target> &)>(
-                 &isSame));
-    py::class_<CPU, Ref<CPU>>(m, "CPU", pyTarget)
-        .def(py::init([](bool useNativeArch) {
-                 return Ref<CPU>::make(useNativeArch);
-             }),
-             "use_native_arch"_a = true);
-    py::class_<GPU, Ref<GPU>>(m, "GPU", pyTarget)
-        .def(py::init([](bool useNativeArch) {
-                 return Ref<GPU>::make(useNativeArch);
-             }),
-             "use_native_arch"_a = true)
-        .def("compute_capability",
-             [](const Ref<GPU> &target) -> std::optional<std::pair<int, int>> {
-                 return target->computeCapability();
-             })
-        .def(
-            "set_compute_capability",
-            [](const Ref<GPU> &target, int major, int minor) {
-                target->setComputeCapability(major, minor);
-            },
-            "major"_a, "minor"_a);
+                 &isSameTarget));
 
-    py::class_<Device, Ref<Device>>(m, "Device")
-        .def(py::init<const Ref<Target> &, size_t>(), "target"_a, "num"_a = 0)
+    py::class_<CPUTarget, Ref<CPUTarget>>(m, "CPUTarget", pyTarget)
+        .def("set_use_native_arch", &CPUTarget::setUseNativeArch,
+             "use_native_arch"_a = true);
+
+#ifdef FT_WITH_CUDA
+    py::class_<GPUTarget, Ref<GPUTarget>>(m, "GPUTarget", pyTarget)
+        .def("compute_capability", &GPUTarget::computeCapability);
+#endif // FT_WITH_CUDA
+
+    pyDevice
+        .def(py::init<const TargetType &, int>(), "target_type"_a, "num"_a = 0)
+        .def(py::init<const TargetType &, const std::string &>(),
+             "target_type"_a, "get_device_by_name"_a)
+        .def(py::init<const TargetType &, const std::string &, size_t>(),
+             "target_type"_a, "get_device_by_full_name"_a, "nth"_a)
+        .def("type", &Device::type)
+        .def("num", &Device::num)
         .def("target", &Device::target)
         .def("main_mem_type", &Device::mainMemType)
         .def("sync", &Device::sync)
         .def("__eq__", [](const Ref<Device> &lhs, const Ref<Device> &rhs) {
             return *lhs == *rhs;
         });
+    py::implicitly_convertible<Device, Target>();
 }
 
 } // namespace freetensor
@@ -70,11 +64,13 @@ template <> struct polymorphic_type_hook<freetensor::Target> {
         }
         switch (src->type()) {
         case freetensor::TargetType::CPU:
-            type = &typeid(freetensor::CPU);
-            return static_cast<const freetensor::CPU *>(src);
+            type = &typeid(freetensor::CPUTarget);
+            return static_cast<const freetensor::CPUTarget *>(src);
+#ifdef FT_WITH_CUDA
         case freetensor::TargetType::GPU:
-            type = &typeid(freetensor::GPU);
-            return static_cast<const freetensor::GPU *>(src);
+            type = &typeid(freetensor::GPUTarget);
+            return static_cast<const freetensor::GPUTarget *>(src);
+#endif // FT_WITH_CUDA
         default:
             ERROR("Unexpected target type");
         }

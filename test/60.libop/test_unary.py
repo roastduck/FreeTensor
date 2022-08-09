@@ -18,7 +18,7 @@ import freetensor as ft
     (ft.ceil_, torch.ceil, False),
 ])
 def test_static_shape(libop_func, torch_func, require_positive):
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
@@ -54,7 +54,7 @@ def test_static_shape(libop_func, torch_func, require_positive):
     (operator.neg, operator.neg, False),
 ])
 def test_out_of_place(libop_func, torch_func, require_positive):
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.optimize(device=device, verbose=1)
     def f(x):
@@ -86,7 +86,7 @@ def test_out_of_place(libop_func, torch_func, require_positive):
     (ft.ceil_, torch.ceil, False),
 ])
 def test_inplace_grad_of_inplace_func(libop_func, torch_func, require_positive):
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.transform
     def f(x, y):
@@ -138,7 +138,7 @@ def test_inplace_grad_of_inplace_func(libop_func, torch_func, require_positive):
 ])
 def test_inplace_grad_of_out_of_place_func(libop_func, torch_func,
                                            require_positive):
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.transform
     def f(x):
@@ -187,7 +187,7 @@ def test_inplace_grad_of_out_of_place_func(libop_func, torch_func,
 ])
 def test_out_of_place_grad_of_out_of_place_func(libop_func, torch_func,
                                                 require_positive):
-    device = ft.Device(ft.CPU())
+    device = ft.CPU()
 
     @ft.transform
     def f(x):

@@ -2,8 +2,8 @@ import freetensor as ft
 import pytest
 import numpy as np
 
-target = ft.CPU()
-device = ft.Device(target)
+device = ft.CPU()
+target = device.target()
 
 
 def test_omp_for():
@@ -164,7 +164,7 @@ def test_unroll_for():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr, y=y_arr)
+    ft.Driver(func, code, ft.CPU())(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")
@@ -196,7 +196,7 @@ def test_vectorize_for():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr, y=y_arr)
+    ft.Driver(func, code, ft.CPU())(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")

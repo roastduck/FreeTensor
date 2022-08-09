@@ -2,7 +2,7 @@ import freetensor as ft
 import numpy as np
 
 target = ft.CPU()
-device = ft.Device(target)
+device = ft.Device(target.type())
 
 
 def test_fusion():
