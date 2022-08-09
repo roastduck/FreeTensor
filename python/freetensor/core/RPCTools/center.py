@@ -13,6 +13,7 @@ if os.path.exists('./machine_list'):
 def check_connection():
     return True
 
+
 def register_machine(remoteInfo, sev_status):
     """机器注册函数，从每个机器拉取网络地址和端口并且分配uuid，同时更新每个机器的本地列表"""
     global List
@@ -29,7 +30,7 @@ def register_machine(remoteInfo, sev_status):
         )
 
     List[UID] = [remoteInfo[0], remoteInfo[1], sev_status]
-    broadcast(UID, sev_status, new_tag = True)
+    broadcast(UID, sev_status, new_tag=True)
     remote_server = connect(remoteInfo)
     for uid, info in List.items():
         if uid != UID:

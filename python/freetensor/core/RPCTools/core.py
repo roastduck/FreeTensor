@@ -2,27 +2,34 @@ import xmlrpc.client as client
 from multiprocessing import Process, Pool
 from xmlrpc.server import SimpleXMLRPCServer
 import socket, sys, time
+from ..remote_task_scheduler import RemoteTaskScheduler
 
 
 class RPCTool:
-    def __init__(self, remoteTaskSchedule, addr = "127.0.0.1", port = 8047, sev_status = 3): #参数是初始化时主服务器的地址
+
+    def __init__(self,
+                 remoteTaskScheduler: RemoteTaskScheduler,
+                 addr="127.0.0.1",
+                 port=8047,
+                 sev_status=3):  #参数是初始化时主服务器的地址
         """初始化获取主机地址和端口以便分配UUID"""
         self.UID = 'localhost'  #当无中心服务器分配UID时默认本地运行，分配特殊UID:'localhost
-        self.taskSchedule = remoteTaskSchedule
+        self.taskScheduler = remoteTaskScheduler
         self.serverAddr = self.get_address()
         self.server = SimpleXMLRPCServer(self.serverAddr, allow_none=True)
         self.server.register_introspection_functions()
         self.server.register_multicall_functions()
-        self.server.register_function(self.taskSchedule.remote_task_receive)
-        self.server.register_function(self.taskSchedule.remote_result_receive)
+        self.server.register_function(self.taskScheduler.remote_task_receive)
+        self.server.register_function(self.taskScheduler.remote_result_receive)
         self.server.register_function(self.change_status)
         try:
             self.serverProcess = Process(target=self.server.serve_forever)
             self.serverProcess.start()
-            print("RPC Server Started on %s:%d..." % (self.serverAddr[0], self.serverAddr[1]))
+            print("RPC Server Started on %s:%d..." %
+                  (self.serverAddr[0], self.serverAddr[1]))
             self.centerAddr = (addr, port)
             self.upload(self.centerAddr, sev_status)
-            self.taskSchedule.get_self_uid(self.UID)
+            self.taskScheduler.get_self_uid(self.UID)
             print("Machine UID:" + self.UID)
         except KeyboardInterrupt:
             print("\nKeyboard interrupt received, exiting.")
@@ -58,7 +65,8 @@ class RPCTool:
         try:
             center_server = self.connect(addr)
             print("Server Connected\nRegistering machine...")
-            self.UID = center_server.register_machine(self.serverAddr, sev_status)
+            self.UID = center_server.register_machine(self.serverAddr,
+                                                      sev_status)
             print("Registered")
         except Exception as Er:
             print(Er)
@@ -67,20 +75,24 @@ class RPCTool:
     def change_status(self, remote_host_uid, status, new_tag=False):
         print("Status Changed:" + remote_host_uid + " " + str(status))
         if new_tag == False:
-            self.taskSchedule.remove_host(remote_host_uid)
-        self.taskSchedule.add_host(remote_host_uid, status)
+            self.taskScheduler.remove_host(remote_host_uid)
+        self.taskScheduler.add_host(remote_host_uid, status)
 
     def remote_task_submit(self, remote_host_uid, task):
         if remote_host_uid == "localhost":
-            return self.taskSchedule.task_submit(remote_host_uid, self.UID, task)
+            return self.taskScheduler.task_submit(remote_host_uid, self.UID,
+                                                  task)
         center_server = self.connect(self.centerAddr)
         return center_server.task_submit(remote_host_uid, self.UID, task)
 
     def remote_result_submit(self, remote_host_uid, task_result):
         if remote_host_uid == "localhost":
-            return self.taskSchedule.result_submit(remote_host_uid, self.UID, task_result)
+            return self.taskScheduler.result_submit(remote_host_uid, self.UID,
+                                                    task_result)
         center_server = self.connect(self.centerAddr)
-        return center_server.result_submit(remote_host_uid, self.UID, task_result)
+        return center_server.result_submit(remote_host_uid, self.UID,
+                                           task_result)
+
 
 # def remove_host(uid):
 #     print("Host %s removed" % uid)
