@@ -7,6 +7,7 @@ import freetensor_ffi as ffi
 from typing import Any, List
 from typing import Dict
 import random
+from .import RPCTools
 
 
 '''
@@ -414,6 +415,8 @@ class MeasureResult(TaskResult):
 
 
 class RemoteTaskScheduler(object):
+    rpctool: RPCTools.RPCTool
+
     search_queue = queue.Queue()
     measure_queue = queue.Queue()
     execution_queue_cnt: int = 0
@@ -473,6 +476,9 @@ class RemoteTaskScheduler(object):
         self.add_host("localhost", 3)
         self.verbose = 0
         return
+
+    def bind_rpctool(self, _rpctool: RPCTools.RPCTool) -> None:
+        self.rpctool = _rpctool
 
     def task_uid_assign(self) -> int:
         #assign a task_uid
@@ -794,7 +800,7 @@ class RemoteTaskScheduler(object):
         if server_uid == "localhost":
             return self.remote_task_receive(self.self_server_uid, _task)
         else:
-            pass
+            return self.rpctool.remote_task_submit(server_uid, _task)
         #this part will use the method in RPCTools
 
     def send_results(self, _taskresult: Dict, server_uid: str) -> None:
@@ -806,10 +812,10 @@ class RemoteTaskScheduler(object):
                 return
         if server_uid == "localhost":
             self.remote_result_receive(self.self_server_uid, _taskresult)
-            return 0
+            return
         else:
-            #print("not available")
-            pass
+            self.rpctool.remote_result_submit(server_uid, _taskresult)
+
         #this part will use the method in RPCTools
 
     def remote_measure_submit(
