@@ -7,9 +7,7 @@ import freetensor_ffi as ffi
 from typing import Any, List
 from typing import Dict
 import random
-from .import RPCTools
-
-
+from . import RPCTools
 '''
 task_type is specified
 1.search_task
