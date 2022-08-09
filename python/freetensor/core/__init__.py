@@ -39,3 +39,5 @@ from .optimize import optimize
 
 from .task_scheduler import TaskScheduler
 from .remote_task_scheduler import RemoteTaskScheduler
+
+from . import RPCTools
