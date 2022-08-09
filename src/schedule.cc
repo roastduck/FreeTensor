@@ -753,12 +753,14 @@ void Schedule::autoParallelize(const Target &target) {
             try {
                 Ref<LoopNest> loop = root;
 
+#ifdef FT_WITH_CUDA
                 bool parentIsWarp = false;
                 while (loop->loop_->property_->parallel_ != serialScope &&
                        loop->subLoops_.size() == 1) {
                     loop = loop->subLoops_.front();
                     parentIsWarp = true;
                 }
+#endif // FT_WITH_CUDA
 
                 ID loopId, outerId;
                 while (true) {
