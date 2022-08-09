@@ -60,6 +60,7 @@ REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE = 0.0  #package loss rate(th
 REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY = 0.000  #global delay(internet transmittion, in seconds)
 
 
+
 class Task(object):  #the parent class of all tasks
     src_server_uid: str = ""
     #
@@ -1001,3 +1002,13 @@ class RemoteTaskScheduler(object):
     def config_transmittion_delay(cls, delay: float) -> None:
         global REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY
         REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY = delay
+
+class MultiMachineScheduler(RemoteTaskScheduler):
+    rpctool: RPCTools.RPCTool
+
+    def __init__(self, addr: str = "127.0.0.1", port: int = 8047, sev_status: int = 3) -> None:
+        super().__init__()
+        self.rpctool = RPCTools.RPCTool(addr, port, sev_status)
+        self.bind_rpctool(self.rpctool)
+        pass
+
