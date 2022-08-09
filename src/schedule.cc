@@ -18,6 +18,7 @@
 #include <omp_utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/make_reduction.h>
 #include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/as_matmul.h>
@@ -614,17 +615,30 @@ void Schedule::autoUseLib(const Target &target) {
 }
 
 void Schedule::autoReorder(const Target &target) {
+    ast_ = makeReduction(ast_);
+
     auto allLoops = findAllLoops(ast_);
     std::vector<FindDepsDir> direction;
     direction.reserve(allLoops.size());
     for (auto &&loop : allLoops) {
         direction.push_back({{loop, DepDirection::Normal}});
     }
-    std::unordered_set<ID> hasDep;
-    FindDeps().direction(direction)(ast_, [&](const Dependency &d) {
-        ASSERT(d.dir_.size() == 1);
-        hasDep.insert(d.dir_[0].first.id_);
-    });
+
+    // 0 = No dep
+    // 1 = Reduction
+    // 2 = Others
+    std::unordered_map<ID, int> depLevel;
+    FindDeps().direction(direction).ignoreReductionWAW(false)(
+        ast_, [&](const Dependency &d) {
+            ASSERT(d.dir_.size() == 1);
+            auto &level = depLevel[d.dir_[0].first.id_];
+            if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
+                d.later()->nodeType() == ASTNodeType::ReduceTo) {
+                level = std::max(level, 1);
+            } else {
+                level = std::max(level, 2);
+            }
+        });
 
     std::function<void(const Ref<LoopNest> &nest)> visitNest =
         [&, this](const Ref<LoopNest> &_nest) {
@@ -640,7 +654,7 @@ void Schedule::autoReorder(const Target &target) {
             auto sorted = perfectNest;
             std::stable_sort(sorted.begin(), sorted.end(),
                              [&](const ID &lhs, const ID &rhs) {
-                                 return hasDep.count(lhs) < hasDep.count(rhs);
+                                 return depLevel[lhs] < depLevel[rhs];
                              });
             if (sorted != perfectNest) {
                 reorder(sorted);
