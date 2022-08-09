@@ -68,7 +68,7 @@ void init_ffi_schedule(py::module_ &m) {
                 auto wrappedTransformFunc =
                     [transformFunc](const std::vector<Expr> &args) {
                         py::list pyArgs((ssize_t)args.size());
-                        for (auto &&[i, e]: iter::enumerate(args))
+                        for (auto &&[i, e] : iter::enumerate(args))
                             pyArgs[i] = e;
                         return transformFunc(*pyArgs).cast<std::vector<Expr>>();
                     };
@@ -108,6 +108,7 @@ void init_ffi_schedule(py::module_ &m) {
                  return s.autoSchedule(target);
              })
         .def("auto_use_lib", &Schedule::autoUseLib)
+        .def("auto_reorder", &Schedule::autoReorder)
         .def("auto_fuse",
              [](Schedule &s, const Target &target) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda
