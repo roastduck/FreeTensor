@@ -16,7 +16,7 @@ std::pair<std::string, std::string> dumpTarget(const Ref<Target> &target_) {
     switch (target->type()) {
 #ifdef FT_WITH_CUDA
     case TargetType::GPU: {
-        auto &&tmp = target.as<GPU>();
+        auto &&tmp = target.as<GPUTarget>();
         auto deviceProp = tmp->infoArch();
         ret_data = std::string((char *)&(*deviceProp), sizeof(cudaDeviceProp));
 

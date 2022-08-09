@@ -29,31 +29,31 @@ class Target {
     virtual MemType mainMemType() const = 0;
 };
 
-class CPU : public Target {
+class CPUTarget : public Target {
     bool useNativeArch_;
     // TODO: infoArch
 
   public:
-    CPU(bool useNativeArch = true) : useNativeArch_(useNativeArch) {}
+    CPUTarget(bool useNativeArch = true) : useNativeArch_(useNativeArch) {}
 
     void setUseNativeArch(bool useNativeArch = true) {
         useNativeArch_ = useNativeArch;
     }
-    bool useNativeArch() const { return useNativeArch_; }
+    bool useNativeArch() const override { return useNativeArch_; }
     TargetType type() const override { return TargetType::CPU; }
     std::string toString() const override { return "CPU"; }
     MemType mainMemType() const override { return MemType::CPU; }
 };
 
 #ifdef FT_WITH_CUDA
-class GPU : public Target {
+class GPUTarget : public Target {
     Ref<cudaDeviceProp> infoArch_;
 
   public:
     // GPU is constructed from real local Deivce
     // `infoArch` has no default value
     // `useNativeArch` is always true
-    GPU(const Ref<cudaDeviceProp> &infoArch) : infoArch_(infoArch) {}
+    GPUTarget(const Ref<cudaDeviceProp> &infoArch) : infoArch_(infoArch) {}
 
     bool useNativeArch() const override { return true; }
     TargetType type() const override { return TargetType::GPU; }
@@ -65,9 +65,8 @@ class GPU : public Target {
     }
     const Ref<cudaDeviceProp> &infoArch() const { return infoArch_; }
 
-    Ref<std::pair<int, int>> computeCapability() const {
-        return Ref<std::pair<int, int>>::make(
-            std::make_pair(infoArch_->major, infoArch_->minor));
+    std::pair<int, int> computeCapability() const {
+        return std::make_pair(infoArch_->major, infoArch_->minor);
     }
 };
 #endif // FT_WITH_CUDA

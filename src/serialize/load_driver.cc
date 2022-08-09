@@ -10,7 +10,6 @@ Ref<Target> loadTarget(const std::string &txt, const std::string &data) {
 
     std::istringstream iss(txt);
 
-    Ref<Target> ret;
     std::string type;
     bool useNativeArch;
 
@@ -22,21 +21,17 @@ Ref<Target> loadTarget(const std::string &txt, const std::string &data) {
     case 'G': {
         auto deviceProp = Ref<cudaDeviceProp>::make();
         memcpy(&(*deviceProp), data.c_str(), sizeof(cudaDeviceProp));
-        auto ret_ = Ref<GPU>::make(deviceProp);
-        ret = ret_.as<Target>();
-        break;
+        return Ref<GPUTarget>::make(deviceProp);
     }
 #endif // FT_WITH_CUDA
     case 'C': {
-        auto ret_ = Ref<CPU>::make(useNativeArch);
-        ret = ret_.as<Target>();
-        break;
+        return Ref<CPUTarget>::make(useNativeArch);
     }
     default:
         ASSERT(false);
     }
-    return ret;
 }
+
 Ref<Device> loadDevice(const std::string &txt, const std::string &data) {
 
     /**
@@ -85,6 +80,7 @@ Ref<Array> newArray(const std::vector<size_t> &shape_,
 
     return ret;
 }
+
 Ref<Array> loadArray(const std::string &txt, const std::string &data) {
 
     std::istringstream iss(txt);

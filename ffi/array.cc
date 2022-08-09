@@ -17,20 +17,20 @@ using namespace pybind11::literals;
 
 #ifdef FT_WITH_PYTORCH
 static Ref<Device> deviceFromPyTorch(const torch::Device &d) {
-    Ref<Target> target;
+    TargetType targetType;
     if (d.is_cpu()) {
-        target = Ref<CPU>::make();
+        targetType = TargetType::CPU;
     } else if (d.is_cuda()) {
 #ifdef FT_WITH_CUDA
-        target = Ref<GPU>::make(nullptr);
+        targetType = TargetType::GPU;
 #endif // FT_WITH_CUDA
     } else {
         throw DriverError("Unsupported PyTorch device");
     }
     if (d.has_index()) {
-        return Ref<Device>::make(target->type(), d.index());
+        return Ref<Device>::make(targetType, d.index());
     } else {
-        return Ref<Device>::make(target->type());
+        return Ref<Device>::make(targetType);
     }
 }
 

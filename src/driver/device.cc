@@ -10,14 +10,14 @@ Device::Device(const TargetType &targetType, int num) : num_(num) {
     switch (targetType) {
     case TargetType::CPU: {
         // TODO: infoArch
-        target_ = Ref<CPU>::make();
+        target_ = Ref<CPUTarget>::make();
         break;
     }
 #ifdef FT_WITH_CUDA
     case TargetType::GPU: {
         auto deviceModel = Ref<cudaDeviceProp>::make();
         checkCudaError(cudaGetDeviceProperties(&(*deviceModel), num_));
-        target_ = Ref<GPU>::make(deviceModel);
+        target_ = Ref<GPUTarget>::make(deviceModel);
         break;
     }
 #endif // FT_WITH_CUDA
@@ -46,7 +46,7 @@ Device::Device(const TargetType &targetType,
 
         /* get the device architecture info */
         checkCudaError(cudaGetDeviceProperties(&(*deviceModel), num_));
-        target_ = Ref<GPU>::make(deviceModel);
+        target_ = Ref<GPUTarget>::make(deviceModel);
         break;
     }
 #endif // FT_WITH_CUDA
@@ -83,7 +83,7 @@ Device::Device(const TargetType &targetType,
         }
         ASSERT(num_ != -1);
         checkCudaError(cudaGetDeviceProperties(&(*deviceModel), num_));
-        target_ = Ref<GPU>::make(deviceModel);
+        target_ = Ref<GPUTarget>::make(deviceModel);
         break;
     }
 #endif // FT_WITH_CUDA

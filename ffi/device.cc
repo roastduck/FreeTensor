@@ -26,17 +26,13 @@ void init_ffi_device(py::module_ &m) {
              static_cast<bool (*)(const Ref<Target> &, const Ref<Target> &)>(
                  &isSameTarget));
 
-    py::class_<CPU, Ref<CPU>>(m, "CPUTarget", pyTarget)
-        .def(
-            "set_use_native_arch",
-            [](const Ref<CPU> &cpu, bool useNativeArch) {
-                cpu->setUseNativeArch(useNativeArch);
-            },
-            "use_native_arch"_a = true);
+    py::class_<CPUTarget, Ref<CPUTarget>>(m, "CPUTarget", pyTarget)
+        .def("set_use_native_arch", &CPUTarget::setUseNativeArch,
+             "use_native_arch"_a = true);
 
 #ifdef FT_WITH_CUDA
-    py::class_<GPU, Ref<GPU>>(m, "GPUTarget", pyTarget)
-        .def("info_arch", &GPU::infoArch);
+    py::class_<GPUTarget, Ref<GPUTarget>>(m, "GPUTarget", pyTarget)
+        .def("compute_capability", &GPUTarget::computeCapability);
 #endif // FT_WITH_CUDA
 
     pyDevice
@@ -68,12 +64,12 @@ template <> struct polymorphic_type_hook<freetensor::Target> {
         }
         switch (src->type()) {
         case freetensor::TargetType::CPU:
-            type = &typeid(freetensor::CPU);
-            return static_cast<const freetensor::CPU *>(src);
+            type = &typeid(freetensor::CPUTarget);
+            return static_cast<const freetensor::CPUTarget *>(src);
 #ifdef FT_WITH_CUDA
         case freetensor::TargetType::GPU:
-            type = &typeid(freetensor::GPU);
-            return static_cast<const freetensor::GPU *>(src);
+            type = &typeid(freetensor::GPUTarget);
+            return static_cast<const freetensor::GPUTarget *>(src);
 #endif // FT_WITH_CUDA
         default:
             ERROR("Unexpected target type");
