@@ -5,17 +5,16 @@ import socket, sys, time
 
 
 class RPCTool:
-    def __init__(self, addr = "127.0.0.1", port = 8047, sev_status = 3): #参数是初始化时主服务器的地址
+    def __init__(self, remoteTaskSchedule, addr = "127.0.0.1", port = 8047, sev_status = 3): #参数是初始化时主服务器的地址
         """初始化获取主机地址和端口以便分配UUID"""
         self.UID = 'localhost'  #当无中心服务器分配UID时默认本地运行，分配特殊UID:'localhost
+        self.taskSchedule = remoteTaskSchedule
         self.serverAddr = self.get_address()
         self.server = SimpleXMLRPCServer(self.serverAddr, allow_none=True)
         self.server.register_introspection_functions()
         self.server.register_multicall_functions()
-        self.server.register_function(remote_task_receive)
-        self.server.register_function(remote_result_receive)
-        self.server.register_function(add_host)
-        self.server.register_function(remove_host)
+        self.server.register_function(self.taskSchedule.remote_task_receive)
+        self.server.register_function(self.taskSchedule.remote_result_receive)
         self.server.register_function(self.change_status)
         try:
             self.serverProcess = Process(target=self.server.serve_forever)
@@ -23,7 +22,7 @@ class RPCTool:
             print("RPC Server Started on %s:%d..." % (self.serverAddr[0], self.serverAddr[1]))
             self.centerAddr = (addr, port)
             self.upload(self.centerAddr, sev_status)
-            get_self_uid(self.UID)
+            self.taskSchedule.get_self_uid(self.UID)
             print("Machine UID:" + self.UID)
         except KeyboardInterrupt:
             print("\nKeyboard interrupt received, exiting.")
@@ -68,18 +67,18 @@ class RPCTool:
     def change_status(self, remote_host_uid, status, new_tag=False):
         print("Status Changed:" + remote_host_uid + " " + str(status))
         if new_tag == False:
-            remove_host(remote_host_uid)
-        add_host(remote_host_uid, status)
+            self.taskSchedule.remove_host(remote_host_uid)
+        self.taskSchedule.add_host(remote_host_uid, status)
 
     def remote_task_submit(self, remote_host_uid, task):
         if remote_host_uid == "localhost":
-            return task_submit(remote_host_uid, self.UID, task)
+            return self.taskSchedule.task_submit(remote_host_uid, self.UID, task)
         center_server = self.connect(self.centerAddr)
         return center_server.task_submit(remote_host_uid, self.UID, task)
 
     def remote_result_submit(self, remote_host_uid, task_result):
         if remote_host_uid == "localhost":
-            return result_submit(remote_host_uid, self.UID, task_result)
+            return self.taskSchedule.result_submit(remote_host_uid, self.UID, task_result)
         center_server = self.connect(self.centerAddr)
         return center_server.result_submit(remote_host_uid, self.UID, task_result)
 
