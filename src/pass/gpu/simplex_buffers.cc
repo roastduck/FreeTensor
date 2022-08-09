@@ -1,3 +1,5 @@
+#ifdef FT_WITH_CUDA
+
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/shrink_var.h>
 
@@ -44,3 +46,5 @@ Stmt simplexBuffers(const Stmt &_op) {
 } // namespace gpu
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA

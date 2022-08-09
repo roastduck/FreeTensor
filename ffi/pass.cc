@@ -146,6 +146,7 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Stmt (*)(const Stmt &)>(&cpu::lowerParallelReduction));
 
     // GPU
+#ifdef FT_WITH_CUDA
     m.def("gpu_lower_parallel_reduction",
           static_cast<Func (*)(const Func &)>(&gpu::lowerParallelReduction));
     m.def("gpu_lower_parallel_reduction",
@@ -158,17 +159,24 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeThreads),
           "stmt"_a);
 
-    m.def("gpu_make_sync", static_cast<Func (*)(const Func &)>(&gpu::makeSync),
-          "func"_a);
-    m.def("gpu_make_sync", static_cast<Stmt (*)(const Stmt &)>(&gpu::makeSync),
-          "stmt"_a);
+    m.def("gpu_make_sync",
+          static_cast<Func (*)(const Func &, const Ref<GPUTarget> &)>(
+              &gpu::makeSync),
+          "func"_a, "target"_a);
+    m.def("gpu_make_sync",
+          static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &)>(
+              &gpu::makeSync),
+          "stmt"_a, "target"_a);
 
     m.def("gpu_multiplex_buffers",
-          static_cast<Func (*)(const Func &)>(&gpu::multiplexBuffers),
-          "func"_a);
+          static_cast<Func (*)(const Func &, const Ref<GPUTarget> &)>(
+              &gpu::multiplexBuffers),
+          "func"_a, "target"_a);
     m.def("gpu_multiplex_buffers",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::multiplexBuffers),
-          "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &)>(
+              &gpu::multiplexBuffers),
+          "stmt"_a, "target"_a);
+#endif // FT_WITH_CUDA
 
     m.def("gpu_simplex_buffers",
           static_cast<Func (*)(const Func &)>(&gpu::simplexBuffers), "func"_a);

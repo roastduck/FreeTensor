@@ -1,3 +1,5 @@
+#ifdef FT_WITH_CUDA
+
 #include <climits>
 
 #include <analyze/all_uses.h>
@@ -201,3 +203,5 @@ Stmt normalizeThreads(const Stmt &_op) {
 } // namespace gpu
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA

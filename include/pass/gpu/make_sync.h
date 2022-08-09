@@ -1,9 +1,12 @@
 #ifndef FREE_TENSOR_GPU_MAKE_SYNC_H
 #define FREE_TENSOR_GPU_MAKE_SYNC_H
 
+#ifdef FT_WITH_CUDA
+
 #include <unordered_map>
 #include <unordered_set>
 
+#include <driver/target.h>
 #include <func.h>
 #include <math/bounds.h>
 #include <mutator.h>
@@ -20,13 +23,16 @@ struct ThreadInfo {
 };
 
 class FindAllThreads : public Visitor {
-    int warpSize_ = 32; // TODO: Adjust to different arch
+    int warpSize_;
     Opt<int> thx_ = Opt<int>::make(1);
     Opt<int> thy_ = Opt<int>::make(1);
     Opt<int> thz_ = Opt<int>::make(1);
     std::unordered_map<ID, ThreadInfo> results_;
 
   public:
+    FindAllThreads(const Ref<GPUTarget> &target)
+        : warpSize_(target->warpSize()) {}
+
     const std::unordered_map<ID, ThreadInfo> &results() const {
         return results_;
     }
@@ -81,12 +87,14 @@ class MakeSync : public Mutator {
     Stmt visit(const If &op) override;
 };
 
-Stmt makeSync(const Stmt &op);
+Stmt makeSync(const Stmt &op, const Ref<GPUTarget> &target);
 
 DEFINE_PASS_FOR_FUNC(makeSync)
 
 } // namespace gpu
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA
 
 #endif // FREE_TENSOR_GPU_MAKE_SYNC_H

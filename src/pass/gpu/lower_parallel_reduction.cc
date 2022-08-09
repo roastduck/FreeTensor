@@ -1,3 +1,5 @@
+#ifdef FT_WITH_CUDA
+
 #include <itertools.hpp>
 
 #include <container_utils.h>
@@ -183,3 +185,5 @@ Stmt lowerParallelReduction(const Stmt &_op) {
 } // namespace gpu
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA

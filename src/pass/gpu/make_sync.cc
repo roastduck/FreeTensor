@@ -1,3 +1,5 @@
+#ifdef FT_WITH_CUDA
+
 #include <algorithm>
 #include <climits>
 #include <sstream>
@@ -281,9 +283,9 @@ Stmt MakeSync::visit(const If &_op) {
     return op;
 }
 
-Stmt makeSync(const Stmt &_op) {
+Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
     auto op = constFold(_op);
-    FindAllThreads finder;
+    FindAllThreads finder(target);
     finder(op);
     auto &&loop2thread = finder.results();
 
@@ -327,3 +329,5 @@ Stmt makeSync(const Stmt &_op) {
 } // namespace gpu
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA

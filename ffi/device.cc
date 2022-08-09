@@ -32,7 +32,9 @@ void init_ffi_device(py::module_ &m) {
 
 #ifdef FT_WITH_CUDA
     py::class_<GPUTarget, Ref<GPUTarget>>(m, "GPUTarget", pyTarget)
-        .def("compute_capability", &GPUTarget::computeCapability);
+        .def("compute_capability", &GPUTarget::computeCapability)
+        .def("warp_size", &GPUTarget::warpSize)
+        .def("multi_processor_count", &GPUTarget::multiProcessorCount);
 #endif // FT_WITH_CUDA
 
     pyDevice
