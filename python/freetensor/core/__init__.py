@@ -38,6 +38,6 @@ from .auto_schedule import *
 from .optimize import optimize
 
 from .task_scheduler import TaskScheduler
-from .remote_task_scheduler import RemoteTaskScheduler
+from .remote_task_scheduler import RemoteTaskScheduler,MultiMachineScheduler
 
 from . import RPCTools
