@@ -23,7 +23,7 @@ Stmt MakeCacheVar::visitStmt(const Stmt &op) {
         inStmt_ = false;
         Ref<Buffer> newBuffer =
             makeBuffer(def_->buffer_->tensor(), AccessType::Cache, mtype_);
-        ret = makeVarDef("", newVar_, std::move(newBuffer), nullptr,
+        ret = makeVarDef(newVar_, std::move(newBuffer), nullptr,
                          std::move(ret), false);
         oldDef_ = def_->id();
         newDef_ = ret->id();
@@ -104,35 +104,35 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
 
         Stmt fill;
         fill = makeStore(
-            "", newVar_, indices,
+            newVar_, indices,
             makeLoad(oldVar_, indices, def_->buffer_->tensor()->dtype()));
         fillStmt_ = fill->id();
         if (idx1d.isValid()) {
-            fill = makeIf("", makeLT(idx1d, sizeLim), fill);
+            fill = makeIf(makeLT(idx1d, sizeLim), fill);
         }
         fill = makeNestedLoops(indices, rwRange_.lower_, iter::repeat(nullptr),
                                iter::repeat(makeIntConst(1)), rwRange_.len_,
                                iter::repeat(Ref<ForProperty>::make()), fill);
         if (rwRange_.cond_.isValid()) {
-            fill = makeIf("", rwRange_.cond_, fill);
+            fill = makeIf(rwRange_.cond_, fill);
         }
 
         Stmt flush;
         flush = makeStore(
-            "", oldVar_, indices,
+            oldVar_, indices,
             makeLoad(newVar_, indices, def_->buffer_->tensor()->dtype()));
         flushStmt_ = flush->id();
         if (idx1d.isValid()) {
-            flush = makeIf("", makeLT(idx1d, sizeLim), flush);
+            flush = makeIf(makeLT(idx1d, sizeLim), flush);
         }
         flush = makeNestedLoops(indices, wRange_.lower_, iter::repeat(nullptr),
                                 iter::repeat(makeIntConst(1)), wRange_.len_,
                                 iter::repeat(Ref<ForProperty>::make()), flush);
         if (wRange_.cond_.isValid()) {
-            flush = makeIf("", wRange_.cond_, flush);
+            flush = makeIf(wRange_.cond_, flush);
         }
 
-        op = makeStmtSeq("", {fill, op, flush});
+        op = makeStmtSeq({fill, op, flush});
     }
     return op;
 }
@@ -173,30 +173,30 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
         }
 
         Stmt init = makeStore(
-            "", newVar_, indices,
+            newVar_, indices,
             neutralVal(def_->buffer_->tensor()->dtype(), reduce_->op_));
         initStmt_ = init->id();
         if (idx1d.isValid()) {
-            init = makeIf("", makeLT(idx1d, sizeLim), init);
+            init = makeIf(makeLT(idx1d, sizeLim), init);
         }
         init = makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
                                iter::repeat(makeIntConst(1)), range_.len_,
                                iter::repeat(Ref<ForProperty>::make()), init);
 
         Stmt reduce = makeReduceTo(
-            "", oldVar_, indices, reduce_->op_,
+            oldVar_, indices, reduce_->op_,
             makeLoad(newVar_, indices, def_->buffer_->tensor()->dtype()),
             false);
         reduceStmt_ = reduce->id();
         if (idx1d.isValid()) {
-            reduce = makeIf("", makeLT(idx1d, sizeLim), reduce);
+            reduce = makeIf(makeLT(idx1d, sizeLim), reduce);
         }
         reduce =
             makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
                             iter::repeat(makeIntConst(1)), range_.len_,
                             iter::repeat(Ref<ForProperty>::make()), reduce);
 
-        op = makeStmtSeq("", {init, op, reduce});
+        op = makeStmtSeq({init, op, reduce});
     }
     return op;
 }

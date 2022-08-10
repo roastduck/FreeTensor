@@ -110,43 +110,46 @@ void init_ffi_ast_stmt(py::module_ &m) {
     // makers
     m.def("makeAny", &_makeAny);
     m.def("makeStmtSeq",
-          static_cast<Stmt (*)(const ID &, const std::vector<Stmt> &)>(
-              &_makeStmtSeq),
+          static_cast<Stmt (*)(const std::vector<Stmt> &, const Metadata &,
+                               const ID &)>(&_makeStmtSeq),
           "id"_a, "stmts"_a);
     m.def("makeVarDef",
-          static_cast<Stmt (*)(const ID &, const std::string &,
-                               const Ref<Buffer> &, const Ref<Tensor> &,
-                               const Stmt &, bool)>(&_makeVarDef),
+          static_cast<Stmt (*)(const std::string &, const Ref<Buffer> &,
+                               const Ref<Tensor> &, const Stmt &, bool,
+                               const Metadata &, const ID &)>(&_makeVarDef),
           "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a);
     m.def("makeStore",
-          static_cast<Stmt (*)(const ID &, const std::string &,
-                               const std::vector<Expr> &, const Expr &)>(
+          static_cast<Stmt (*)(const std::string &, const std::vector<Expr> &,
+                               const Expr &, const Metadata &, const ID &)>(
               &_makeStore<const Expr &>),
           "nid"_a, "var"_a, "indices"_a, "expr"_a);
     m.def("makeAlloc",
-          static_cast<Stmt (*)(const ID &, const std::string &)>(&_makeAlloc),
+          static_cast<Stmt (*)(const std::string &, const Metadata &,
+                               const ID &)>(&_makeAlloc),
           "nid"_a, "var"_a);
     m.def("makeFree",
-          static_cast<Stmt (*)(const ID &, const std::string &)>(&_makeFree),
+          static_cast<Stmt (*)(const std::string &, const Metadata &,
+                               const ID &)>(&_makeFree),
           "nid"_a, "var"_a);
     m.def("makeFor",
-          static_cast<Stmt (*)(const ID &, const std::string &, const Expr &,
-                               const Expr &, const Expr &, const Expr &,
-                               const Ref<ForProperty> &, const Stmt &)>(
-              &_makeFor),
+          static_cast<Stmt (*)(const std::string &, const Expr &, const Expr &,
+                               const Expr &, const Expr &,
+                               const Ref<ForProperty> &, const Stmt &,
+                               const Metadata &, const ID &)>(&_makeFor),
           "nid"_a, "iter"_a, "begin"_a, "end"_a, "step"_a, "len"_a,
           "property"_a, "body"_a);
     m.def("makeIf",
-          static_cast<Stmt (*)(const ID &, const Expr &, const Stmt &,
-                               const Stmt &)>(&_makeIf),
+          static_cast<Stmt (*)(const Expr &, const Stmt &, const Stmt &,
+                               const Metadata &, const ID &)>(&_makeIf),
           "nid"_a, "cond"_a, "thenCase"_a, "elseCase"_a = nullptr);
     m.def("makeAssert",
-          static_cast<Stmt (*)(const ID &, const Expr &, const Stmt &)>(
-              &_makeAssert),
+          static_cast<Stmt (*)(const Expr &, const Stmt &, const Metadata &,
+                               const ID &)>(&_makeAssert),
           "nid"_a, "cond"_a, "body"_a);
     m.def("makeEval",
-          static_cast<Stmt (*)(const ID &, const Expr &)>(&_makeEval), "nid"_a,
-          "expr"_a);
+          static_cast<Stmt (*)(const Expr &, const Metadata &, const ID &)>(
+              &_makeEval),
+          "nid"_a, "expr"_a);
 }
 
 } // namespace freetensor

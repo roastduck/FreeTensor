@@ -235,10 +235,10 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                 }
                 targetIndices[j] = cacheIndices.back();
             }
-            Stmt init = makeStore("", cacheName, cacheIndices,
+            Stmt init = makeStore(cacheName, cacheIndices,
                                   neutralVal(dtype, reduce->op_));
             Stmt flush =
-                makeReduceTo("", reduce->var_, targetIndices, reduce->op_,
+                makeReduceTo(reduce->var_, targetIndices, reduce->op_,
                              makeLoad(cacheName, cacheIndices, dtype), true);
             init = makeNestedLoops(
                 cacheIndices, iter::repeat(makeIntConst(0)), newShape,
@@ -249,10 +249,10 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                 iter::repeat(makeIntConst(1)), newShape,
                 iter::repeat(Ref<ForProperty>::make()), flush);
             ret =
-                makeVarDef("", cacheName,
+                makeVarDef(cacheName,
                            makeBuffer(makeTensor(newShape, dtype),
                                       AccessType::Cache, mtype),
-                           nullptr, makeStmtSeq("", {init, ret, flush}), false);
+                           nullptr, makeStmtSeq({init, ret, flush}), false);
         }
         return ret;
     } else {

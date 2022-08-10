@@ -40,7 +40,7 @@ Stmt InlinedInvoke::visit(const Store &_op) {
         auto &&fv = *kvs_.at(op->var_);
         return FrontendVar(fv.name(), fv.fullShape(), fv.dtype(), fv.mtype(),
                            fv.chainIndices(indices))
-            .asStore(op->id(), op->expr_);
+            .asStore(op->metadata(), op->expr_);
     }
     return op;
 }

@@ -62,9 +62,9 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             indices.emplace_back(makeVar(workspace + "." + std::to_string(j)));
         }
         auto initStmt =
-            makeStore("", workspace, indices, neutralVal(dtype, r->op_));
+            makeStore(workspace, indices, neutralVal(dtype, r->op_));
         auto flushStmt =
-            makeReduceTo("", r->var_,
+            makeReduceTo(r->var_,
                          asVec<Expr>(iter::imap(
                              [](auto &&x, auto &&y) { return makeAdd(x, y); },
                              r->begins_, indices)),
@@ -96,10 +96,10 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     stmts.insert(stmts.end(), initStmts.begin(), initStmts.end());
     stmts.emplace_back(op);
     stmts.insert(stmts.end(), flushStmts.begin(), flushStmts.end());
-    Stmt ret = makeStmtSeq("", std::move(stmts));
+    Stmt ret = makeStmtSeq(std::move(stmts));
     for (auto &&[workspace, wsShape, dtype] :
          iter::zip(workspaces, workspaceShapes, dtypes)) {
-        ret = makeVarDef("", workspace,
+        ret = makeVarDef(workspace,
                          makeBuffer(makeTensor(wsShape, dtype),
                                     AccessType::Cache, MemType::CPU),
                          nullptr, ret, false);
@@ -130,11 +130,11 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
             redLoop.first->property_->reductions_[redLoop.second]->begins_;
         ASSERT(op->indices_.size() == begins.size());
         return makeReduceTo(
-            op->id(), workspace,
+            workspace,
             asVec<Expr>(
                 iter::imap([](auto &&x, auto &&y) { return makeSub(x, y); },
                            op->indices_, begins)),
-            op->op_, op->expr_, false);
+            op->op_, op->expr_, false, op->metadata(), op->id());
     }
 
     return op;

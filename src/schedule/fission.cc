@@ -37,9 +37,9 @@ Stmt HoistVar::visit(const For &op) {
         }
         innerLoops_.emplace_back(op->id());
         for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
-            ret = makeVarDef((*i)->id(), std::move((*i)->name_),
-                             std::move(((*i)->buffer_)),
-                             std::move((*i)->ioTensor_), ret, (*i)->pinned_);
+            ret = makeVarDef(std::move((*i)->name_), std::move(((*i)->buffer_)),
+                             std::move((*i)->ioTensor_), ret, (*i)->pinned_,
+                             (*i)->metadata(), (*i)->id());
         }
         return ret;
     }
@@ -64,17 +64,16 @@ Stmt HoistVar::visit(const StmtSeq &op) {
         }
         Stmt ret;
         if (after.empty()) {
-            ret = makeStmtSeq(op->id(), std::move(before));
+            ret = makeStmtSeq(std::move(before), op->metadata(), op->id());
         } else if (before.empty()) {
-            ret = makeStmtSeq(op->id(), std::move(after));
+            ret = makeStmtSeq(std::move(after), op->metadata(), op->id());
         } else {
-            auto beforeNode = before.size() > 1
-                                  ? makeStmtSeq("", std::move(before))
-                                  : before[0];
+            auto beforeNode =
+                before.size() > 1 ? makeStmtSeq(std::move(before)) : before[0];
             auto afterNode =
-                after.size() > 1 ? makeStmtSeq("", std::move(after)) : after[0];
+                after.size() > 1 ? makeStmtSeq(std::move(after)) : after[0];
             scopePairs_.emplace_back(beforeNode->id(), afterNode->id());
-            ret = makeStmtSeq(op->id(), {beforeNode, afterNode});
+            ret = makeStmtSeq({beforeNode, afterNode}, op->metadata(), op->id());
         }
         return ret;
     }
@@ -166,7 +165,7 @@ Stmt FissionFor::visitStmt(const Stmt &op) {
             isAfter_ |= op->id() == after_;
         }
         if (!anyInside_) {
-            ret = makeStmtSeq("", {});
+            ret = makeStmtSeq({});
         }
         anyInside_ |= oldAnyInside;
         return ret;
@@ -202,13 +201,13 @@ Stmt FissionFor::visit(const For &op) {
         isPart0_ = false, isAfter_ = false, anyInside_ = false;
         auto part1 = (*this)(op->body_);
         inside_ = false;
-        auto for0 = makeFor(op->id(), op->iter_, begin, end, step, len,
-                            op->property_, part0);
-        auto for1 = makeFor(op->id(), op->iter_, begin, end, step, len,
-                            op->property_, part1);
+        auto for0 = makeFor(op->iter_, begin, end, step, len,
+                            op->property_, part0, op->metadata(), op->id());
+        auto for1 = makeFor(op->iter_, begin, end, step, len,
+                            op->property_, part1, op->metadata(), op->id());
         markNewId(for0, true);
         markNewId(for1, false);
-        return makeStmtSeq("", {for0, for1});
+        return makeStmtSeq({for0, for1});
     }
 }
 
@@ -292,7 +291,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     HoistVar hoist(loop, side == FissionSide::Before ? splitter : "",
                    side == FissionSide::After ? splitter : "");
     FissionFor mutator(loop, side == FissionSide::Before ? splitter : "",
-                       side == FissionSide::After ? splitter : "", suffix0,
+                       side == FissionSide::After ? splitter : suffix0,
                        suffix1);
 
     auto ast = hoist(_ast);

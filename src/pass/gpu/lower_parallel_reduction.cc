@@ -76,16 +76,16 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             auto iter = makeVar(workspace + "." + std::to_string(j));
             indices.emplace_back(iter);
         }
-        auto initStmt = makeStore("", workspace, cat({nth}, indices),
+        auto initStmt = makeStore(workspace, cat({nth}, indices),
                                   neutralVal(dtype, r->op_));
         auto flushStmt = makeReduceTo(
-            "", r->var_,
+            r->var_,
             asVec<Expr>(
                 iter::imap([](auto &&x, auto &&y) { return makeAdd(x, y); },
                            r->begins_, indices)),
             r->op_, makeLoad(workspace, cat({makeIntConst(0)}, indices), dtype),
             false);
-        flushStmt = makeIf("", makeEQ(nth, makeIntConst(0)), flushStmt);
+        flushStmt = makeIf(makeEQ(nth, makeIntConst(0)), flushStmt);
 
         // for (int k = 1; k < len; k <<= 1)
         //   if (nth % k == 0 && nth + k < len)
@@ -98,19 +98,18 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         auto k = makeIntrinsic("1 << (%)", {makeVar("__reduce_p")},
                                DataType::Int32, false);
         auto reduceStmt = makeIf(
-            "",
             makeLAnd(makeEQ(makeMod(nth, makeMul(k, makeIntConst(2))),
                             makeIntConst(0)),
                      makeLT(makeAdd(nth, k), op->len_)),
             makeReduceTo(
-                "", workspace, cat({nth}, indices), r->op_,
+                workspace, cat({nth}, indices), r->op_,
                 makeLoad(workspace, cat({makeAdd(nth, k)}, indices), dtype),
                 false));
-        reduceStmt = makeFor(
-            "", "__reduce_p", makeIntConst(0), makeIntConst(count),
-            makeIntConst(1), makeIntConst(count),
-            Ref<ForProperty>::make()->withUnroll(), std::move(reduceStmt));
-        flushStmt = makeStmtSeq("", {reduceStmt, flushStmt});
+        reduceStmt = makeFor("__reduce_p", makeIntConst(0), makeIntConst(count),
+                             makeIntConst(1), makeIntConst(count),
+                             Ref<ForProperty>::make()->withUnroll(),
+                             std::move(reduceStmt));
+        flushStmt = makeStmtSeq({reduceStmt, flushStmt});
 
         initStmt =
             makeNestedLoops(indices, iter::repeat(makeIntConst(0)), shape,
@@ -121,7 +120,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
                             iter::repeat(makeIntConst(1)), shape,
                             iter::repeat(Ref<ForProperty>::make()), flushStmt);
 
-        op->body_ = makeStmtSeq("", {initStmt, op->body_, flushStmt});
+        op->body_ = makeStmtSeq({initStmt, op->body_, flushStmt});
 
         workspaces.emplace_back(std::move(workspace));
         workspaceShapes.emplace_back(cat({op->len_}, shape));
@@ -132,7 +131,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     Stmt ret = op;
     for (auto &&[workspace, wsShape, dtype] :
          iter::zip(workspaces, workspaceShapes, dtypes)) {
-        ret = makeVarDef("", workspace,
+        ret = makeVarDef(workspace,
                          makeBuffer(makeTensor(wsShape, dtype),
                                     AccessType::Cache, MemType::GPUShared),
                          nullptr, ret, false);
@@ -169,8 +168,8 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
         for (auto &&[begin, idx] : iter::zip(begins, op->indices_)) {
             indices.emplace_back(makeSub(idx, begin));
         }
-        return makeReduceTo(op->id(), workspace, std::move(indices), op->op_,
-                            op->expr_, false);
+        return makeReduceTo(workspace, std::move(indices), op->op_, op->expr_,
+                            false, op->metadata(), op->id());
     }
 
     return op;

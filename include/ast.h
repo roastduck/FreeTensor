@@ -7,6 +7,7 @@
 #include <string>
 
 #include <data_type.h>
+#include <metadata.h>
 #include <ref.h>
 #include <serialize/to_string.h>
 #include <sub_tree.h>
@@ -122,6 +123,20 @@ class ASTNode : public ASTPart {
 };
 typedef Ref<ASTNode> AST;
 
+/**
+ * Construct TransformedMetadata with specified operation and source ASTs.
+ *
+ * The children Metadatas are retrieved from the provided ASTs.
+ *
+ * @param op operation of the TransformedMetadata
+ * @param sourceASTs variadic parameters that accept the source ASTs.
+ */
+template <typename... Srcs>
+requires(std::convertible_to<Srcs, AST> &&...) Metadata
+    makeMetadata(const std::string &op, Srcs &&...sourceASTs) {
+    return makeMetadata(op, std::vector<Metadata>{sourceASTs->metadata()...});
+}
+
 #ifdef FT_DEBUG_LOG_NODE
 #define makeNode(type, ...)                                                    \
     ({                                                                         \
@@ -215,7 +230,8 @@ class StmtOrExprID {
   public:
     StmtOrExprID(const ID &stmtId) : stmtId_(stmtId) {}
 
-    template <class T> StmtOrExprID(const Expr &expr, T &&parent) : stmtId_(parent) {
+    template <class T>
+    StmtOrExprID(const Expr &expr, T &&parent) : stmtId_(parent) {
         expr_ = expr;
     }
 
@@ -233,12 +249,17 @@ class StmtNode : public ASTNode {
     std::string id_;
     static std::atomic<uint64_t> idCnt_;
 
+    Metadata metadata_;
+
   public:
     static std::string newId();
 
     void setId(const ID &id);
     ID id() const;
     bool hasNamedId() const;
+
+    const Metadata &metadata() const { return metadata_; }
+    Metadata &metadata() { return metadata_; }
 
     bool isStmt() const override { return true; }
 

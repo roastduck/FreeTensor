@@ -52,9 +52,10 @@ class RemoveWrites : public Mutator {
 
     template <class T> Stmt doVisit(const T &op) {
         if (redundant_.count(op)) {
-            return makeStmtSeq(op->id(), {});
+            return makeStmtSeq({}, op->metadata(), op->id());
         } else if (replacement_.count(op)) {
             auto ret = replacement_.at(op);
+            ret->metadata() = op->metadata();
             ret->setId(op->id());
             return ret;
         } else {

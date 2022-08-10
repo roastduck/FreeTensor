@@ -18,7 +18,7 @@ class Splitter : public Mutator {
 
   public:
     Splitter(const ID &id, int factor = -1, int nparts = -1, int shift = 0)
-        : src_(id), dst0_(id.strId() + ".0"), dst1_(id.strId() + ".1"),
+        : src_(id),
           factor_(factor), nparts_(nparts), shift_(shift) {}
 
     const ID &outerId() const { return dst0_; }

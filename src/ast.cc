@@ -267,8 +267,8 @@ size_t hash<freetensor::ID>::operator()(const freetensor::ID &id) const {
     return std::hash<std::string>()(id.stmtId_);
 }
 
-size_t
-hash<freetensor::StmtOrExprID>::operator()(const freetensor::StmtOrExprID &id) const {
+size_t hash<freetensor::StmtOrExprID>::operator()(
+    const freetensor::StmtOrExprID &id) const {
     return freetensor::hashCombine(freetensor::Hasher()(id.expr_),
                                    std::hash<freetensor::ID>()(id.stmtId_));
 }

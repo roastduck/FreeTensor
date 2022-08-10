@@ -48,7 +48,7 @@ Stmt ImmediateUnroll::visit(const For &op) {
             begin_ = step_ = nullptr;
             iter_.clear();
             done_ = true;
-            return makeStmtSeq("", std::move(stmts));
+            return makeStmtSeq(std::move(stmts));
         } else {
             throw InvalidSchedule("Length of the loop should be constant.");
         }

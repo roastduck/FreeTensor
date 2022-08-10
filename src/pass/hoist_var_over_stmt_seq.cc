@@ -82,11 +82,12 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
             stmts.emplace_back((*this)(stmt));
         }
     }
-    auto ret = makeStmtSeq("", std::move(stmts));
+    auto ret = makeStmtSeq(std::move(stmts));
     for (auto i = defs.rbegin(); i != defs.rend(); i++) {
         auto &&def = *i;
-        ret = makeVarDef(def->id(), def->name_, def->buffer_, def->ioTensor_,
-                         std::move(ret), def->pinned_);
+        ret =
+            makeVarDef(def->name_, def->buffer_, def->ioTensor_, std::move(ret),
+                       def->pinned_, def->metadata(), def->id());
     }
     return ret;
 }

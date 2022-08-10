@@ -48,8 +48,8 @@ Stmt MakeReduction::doMake(Store op, ReduceOp reduceOp) {
                                                   : other;
                     }
                 }
-                return makeReduceTo(op->id(), op->var_, op->indices_, reduceOp,
-                                    others, false);
+                return makeReduceTo(op->var_, op->indices_, reduceOp, others,
+                                    false, op->metadata(), op->id());
             fail:;
             }
         }

@@ -100,7 +100,7 @@ class FrontendVar {
     /** @} */
 
     Expr asLoad() const;
-    Stmt asStore(const ID &id, const Expr &value) const;
+    Stmt asStore(const Metadata &metadata, const Expr &value) const;
 
     std::vector<FrontendVarIdx>
     chainIndices(const std::vector<FrontendVarIdx> &next) const;

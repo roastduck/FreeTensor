@@ -39,8 +39,9 @@ Stmt HoistReturnVars::visit(const For &op) {
         outMostLoop_ = ID();
 
         for (auto def : toHoist_) {
-            ret = makeVarDef(def->id(), def->name_, def->buffer_,
-                             def->ioTensor_, std::move(ret), def->pinned_);
+            ret = makeVarDef(def->name_, def->buffer_,
+                             def->ioTensor_, std::move(ret), def->pinned_,
+                             def->metadata(), def->id());
         }
         return ret;
     } else {

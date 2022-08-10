@@ -80,7 +80,7 @@ Stmt ShrinkFor::visit(const For &_op) {
     iterStack_.pop_back();
 
     if (!newRange_.count(var)) {
-        return makeStmtSeq("", {});
+        return makeStmtSeq({});
     }
     auto lower = makeMinMax(newRange_.at(var).first);
     auto upper = makeMaxMin(newRange_.at(var).second);

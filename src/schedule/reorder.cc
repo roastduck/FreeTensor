@@ -55,9 +55,9 @@ Stmt Reorder::visit(const For &_op) {
         insideOuter_ = true;
         auto body = Mutator::visit(_op);
         insideOuter_ = false;
-        return makeFor(oldInner_->id(), oldInner_->iter_, oldInner_->begin_,
-                       oldInner_->end_, oldInner_->step_, oldInner_->len_,
-                       oldInner_->property_, body);
+        return makeFor(oldInner_->iter_, oldInner_->begin_, oldInner_->end_,
+                       oldInner_->step_, oldInner_->len_, oldInner_->property_,
+                       body, oldInner_->metadata(), oldInner_->id());
     } else if (_op->id() == oldInner_->id()) {
         insideInner_ = true;
         auto __op = Mutator::visit(_op);
@@ -99,22 +99,22 @@ Stmt Reorder::visit(const StmtSeq &_op) {
                 throw InvalidSchedule("Imperfect nesting is not allowed when "
                                       "the inner loop is parallelized");
             }
-            before = makeIf(
-                "", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                RenameIter{oldInner_->iter_}(
-                    beforeStmts.size() == 1 ? beforeStmts[0]
-                                            : makeStmtSeq("", beforeStmts)));
+            before =
+                makeIf(makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
+                       RenameIter{oldInner_->iter_}(
+                           beforeStmts.size() == 1 ? beforeStmts[0]
+                                                   : makeStmtSeq(beforeStmts)));
         }
         if (!afterStmts.empty()) {
             if (oldInner_->property_->parallel_ != serialScope) {
                 throw InvalidSchedule("Imperfect nesting is not allowed when "
                                       "the inner loop is parallelized");
             }
-            after = makeIf(
-                "", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                RenameIter{oldInner_->iter_}(
-                    afterStmts.size() == 1 ? afterStmts[0]
-                                           : makeStmtSeq("", afterStmts)));
+            after =
+                makeIf(makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
+                       RenameIter{oldInner_->iter_}(
+                           afterStmts.size() == 1 ? afterStmts[0]
+                                                  : makeStmtSeq(afterStmts)));
         }
 
         std::vector<Stmt> stmts;
@@ -127,7 +127,9 @@ Stmt Reorder::visit(const StmtSeq &_op) {
         if (after.isValid()) {
             stmts.emplace_back(after);
         }
-        return stmts.size() == 1 ? stmts[0] : makeStmtSeq(_op->id(), stmts);
+        return stmts.size() == 1
+                   ? stmts[0]
+                   : makeStmtSeq(stmts, _op->metadata(), _op->id());
     } else {
         return Mutator::visit(_op);
     }

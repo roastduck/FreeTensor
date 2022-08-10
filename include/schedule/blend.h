@@ -55,15 +55,15 @@ class BlendPass : public Mutator {
                 } else if (stmt->nodeType() == ASTNodeType::ReduceTo) {
                     stmt = visitMemAccess(stmt.template as<ReduceToNode>());
                 }
-                stmt->setId(stmt->id().strId() + "." +
-                            std::to_string(curIter_));
+                stmt->metadata() = makeMetadata(
+                    "blend." + std::to_string(curIter_), stmt);
 
                 for (auto it = envStack_.rbegin(); it != envStack_.rend();
                      it++) {
                     switch ((*it)->nodeType()) {
                     case ASTNodeType::For: {
                         auto env = it->as<ForNode>();
-                        stmt = makeFor("", env->iter_, (*this)(env->begin_),
+                        stmt = makeFor(env->iter_, (*this)(env->begin_),
                                        (*this)(env->end_), (*this)(env->step_),
                                        (*this)(env->len_), env->property_,
                                        std::move(stmt));
@@ -71,13 +71,12 @@ class BlendPass : public Mutator {
                     }
                     case ASTNodeType::If: {
                         auto env = it->as<IfNode>();
-                        stmt = makeIf("", (*this)(env->cond_), std::move(stmt));
+                        stmt = makeIf((*this)(env->cond_), std::move(stmt));
                         break;
                     }
                     case ASTNodeType::Assert: {
                         auto env = it->as<AssertNode>();
-                        stmt = makeAssert("", (*this)(env->cond_),
-                                          std::move(stmt));
+                        stmt = makeAssert((*this)(env->cond_), std::move(stmt));
                         break;
                     }
                     default:
@@ -86,7 +85,7 @@ class BlendPass : public Mutator {
                 }
                 stmts.emplace_back(std::move(stmt));
             }
-            return makeStmtSeq("", std::move(stmts));
+            return makeStmtSeq(std::move(stmts));
         } else {
             return Mutator::visit(op);
         }

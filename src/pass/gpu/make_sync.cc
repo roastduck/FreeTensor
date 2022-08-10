@@ -131,7 +131,7 @@ Stmt CopyParts::visit(const StmtSeq &_op) {
 split_this_level:
     for (auto &stmt : op->stmts_) {
         if (fullParts_.count(stmt)) {
-            stmt = makeIf("", cond_, stmt);
+            stmt = makeIf(cond_, stmt);
         }
     }
     return op;
@@ -169,10 +169,10 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
         Stmt sync;
         if (needSyncThreads) {
             sync = makeEval(
-                "", makeIntrinsic("__syncthreads()", {}, DataType::Void, true));
+                makeIntrinsic("__syncthreads()", {}, DataType::Void, true));
         } else {
             sync = makeEval(
-                "", makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
+                makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
         }
 
         Stmt whereToInsert;
@@ -183,7 +183,7 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
             }
         }
         if (!whereToInsert.isValid()) {
-            ret = makeStmtSeq("", {sync, ret});
+            ret = makeStmtSeq({sync, ret});
             markSyncForSplitting(op->parentStmt(), sync);
         } else {
             syncBeforeFor_[whereToInsert->id()] = sync;
@@ -222,12 +222,12 @@ Stmt MakeSync::visit(const For &_op) {
         Stmt sync;
         if (needSyncThreads) {
             sync = makeEval(
-                "", makeIntrinsic("__syncthreads()", {}, DataType::Void, true));
+                makeIntrinsic("__syncthreads()", {}, DataType::Void, true));
         } else if (needSyncWarp) {
             sync = makeEval(
-                "", makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
+                makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
         }
-        op->body_ = makeStmtSeq("", {op->body_, sync});
+        op->body_ = makeStmtSeq({op->body_, sync});
         markSyncForSplitting(_op, sync);
         for (CrossThreadDep &dep : deps_) {
             if (dep.visiting_) {
@@ -243,7 +243,7 @@ Stmt MakeSync::visit(const For &_op) {
     if (syncBeforeFor_.count(op->id())) {
         auto &&sync = syncBeforeFor_.at(op->id());
         markSyncForSplitting(_op, sync);
-        return makeStmtSeq("", {sync, op});
+        return makeStmtSeq({sync, op});
     }
     return op;
 }
@@ -275,7 +275,7 @@ Stmt MakeSync::visit(const If &_op) {
                                      branchSplittersElse_.at(op->id()));
                 elseBody = elseCopier(elseBody);
             }
-            return makeStmtSeq("", {thenBody, elseBody});
+            return makeStmtSeq({thenBody, elseBody});
         } else {
             return thenBody;
         }

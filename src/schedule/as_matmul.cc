@@ -78,12 +78,12 @@ Stmt AsMatMul::visit(const For &op) {
         } else {
             beta = makeIntConst(1);
         }
-        ret = makeMatMul("", a_, b_, c_, alpha, beta, m_, k_, n_, lda_, ldb_,
-                         ldc_, stridea_, strideb_, stridec_, batchSize_,
-                         aIsRowMajor_, bIsRowMajor_, cIsRowMajor_, ret);
+        ret = makeMatMul(a_, b_, c_, alpha, beta, m_, k_, n_, lda_, ldb_, ldc_,
+                         stridea_, strideb_, stridec_, batchSize_, aIsRowMajor_,
+                         bIsRowMajor_, cIsRowMajor_, ret);
         for (auto &&def : innerDefs_) {
-            ret = makeVarDef(def->id(), def->name_, def->buffer_,
-                             def->ioTensor_, ret, def->pinned_);
+            ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_, ret,
+                             def->pinned_, def->metadata(), def->id());
         }
         return ret;
     } else {

@@ -6,28 +6,34 @@ Stmt undoMakeReduction(const ReduceTo &op, DataType dtype) {
     switch (op->op_) {
     case ReduceOp::Add:
         return makeStore(
-            op->id(), op->var_, op->indices_,
-            makeAdd(makeLoad(op->var_, op->indices_, dtype), op->expr_));
+            op->var_, op->indices_,
+            makeAdd(makeLoad(op->var_, op->indices_, dtype), op->expr_),
+            op->metadata(), op->id());
     case ReduceOp::Mul:
         return makeStore(
-            op->id(), op->var_, op->indices_,
-            makeMul(makeLoad(op->var_, op->indices_, dtype), op->expr_));
+            op->var_, op->indices_,
+            makeMul(makeLoad(op->var_, op->indices_, dtype), op->expr_),
+            op->metadata(), op->id());
     case ReduceOp::Min:
         return makeStore(
-            op->id(), op->var_, op->indices_,
-            makeMin(makeLoad(op->var_, op->indices_, dtype), op->expr_));
+            op->var_, op->indices_,
+            makeMin(makeLoad(op->var_, op->indices_, dtype), op->expr_),
+            op->metadata(), op->id());
     case ReduceOp::Max:
         return makeStore(
-            op->id(), op->var_, op->indices_,
-            makeMax(makeLoad(op->var_, op->indices_, dtype), op->expr_));
+            op->var_, op->indices_,
+            makeMax(makeLoad(op->var_, op->indices_, dtype), op->expr_),
+            op->metadata(), op->id());
     case ReduceOp::LAnd:
         return makeStore(
-            op->id(), op->var_, op->indices_,
-            makeLAnd(makeLoad(op->var_, op->indices_, dtype), op->expr_));
+            op->var_, op->indices_,
+            makeLAnd(makeLoad(op->var_, op->indices_, dtype), op->expr_),
+            op->metadata(), op->id());
     case ReduceOp::LOr:
         return makeStore(
-            op->id(), op->var_, op->indices_,
-            makeLOr(makeLoad(op->var_, op->indices_, dtype), op->expr_));
+            op->var_, op->indices_,
+            makeLOr(makeLoad(op->var_, op->indices_, dtype), op->expr_),
+            op->metadata(), op->id());
     default:
         ASSERT(false);
     }
