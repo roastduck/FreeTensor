@@ -2,20 +2,21 @@ import freetensor as ft
 import numpy as np
 import threading
 import time
-
-device = ft.GPU()
-target = device.target()
-t = threading.Thread(target=ft.run_center)
-t.start()
-time.sleep(3)
-client = ft.MultiMachineScheduler()
+import pytest
 
 
+@pytest.mark.skip()
 def test_matmul():
     a = 256
     b = 256
     m = 4
     # c = 64
+    device = ft.GPU()
+    target = device.target()
+    t = threading.Thread(target=ft.run_center)
+    t.start()
+    time.sleep(3)
+    client = ft.MultiMachineScheduler()
 
     @ft.transform
     # def test(w, x, y):
@@ -90,7 +91,3 @@ def test_matmul():
     print(code)
     t = threading.Thread(target=ft.shutdown_center)
     t.start()
-
-
-if __name__ == '__main__':
-    test_matmul()

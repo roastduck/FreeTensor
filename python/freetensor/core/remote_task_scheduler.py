@@ -2,11 +2,9 @@ from __future__ import annotations
 import queue
 import threading
 import time
-import copy
 import freetensor_ffi as ffi
 from typing import Any, List
 from typing import Dict
-import random
 from .. import core
 '''
 task_type is specified
@@ -53,11 +51,6 @@ How does this part work:
 5. then the method in 1 returns the return value 
 
 '''
-REMOTE_TASK_SCHEDULER_GLOBAL_TEST: bool = False  #True means test mode
-
-REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE = 0.0  #package loss rate(the possibility of losing a package)
-
-REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY = 0.000  #global delay(internet transmittion, in seconds)
 
 
 class Task(object):  #the parent class of all tasks
@@ -213,20 +206,10 @@ class MeasureTask(Task):
 
     def measure(self, rounds: int, warmups: int, attached_params: tuple,
                 sketches: List) -> tuple[List[float], List[float]]:
-        if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
-            tmplist1 = []
-            tmplist2 = []
-            #time.sleep(1)  #reserved for realistic tests
-            for k in range(len(sketches)):
-                tmplist1.append(1.0)
-                tmplist2.append(0.1)
-            t = (tmplist1, tmplist2)
-            return t
-        else:
-            return ffi.rpc_measure(
-                rounds, warmups,
-                *(MeasureTask.args_deserialization(attached_params, sketches)))
-            #pass  #this part will use the measure method of cpp-python-bridge in remote machine
+        return ffi.rpc_measure(
+            rounds, warmups,
+            *(MeasureTask.args_deserialization(attached_params, sketches)))
+        #pass  #this part will use the measure method of cpp-python-bridge in remote machine
 
     def run(self) -> TaskResult:
         tmpresult = MeasureResult.get(self)
@@ -260,7 +243,7 @@ class MeasureResult(TaskResult):
         return self.results
 
     @classmethod
-    def dict2self(cls, inputdict: Dict) -> Task:
+    def dict2self(cls, inputdict: Dict) -> TaskResult:
         return super().dict2self_base(MeasureResult(), inputdict)
 
 
@@ -569,13 +552,7 @@ class RemoteTaskScheduler(object):
         self.execution_tasks_check_lock.release()
 
     def send_tasks(self, _task: Dict, server_uid: str) -> int:
-        global REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY
-        time.sleep(REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY)
         _task.setdefault("time_stamp", time.time())
-        if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
-            t = random.random()
-            if t < REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE:
-                return -1
         if server_uid == "localhost":
             return self.remote_task_receive(self.self_server_uid, _task)
         else:
@@ -583,12 +560,6 @@ class RemoteTaskScheduler(object):
         #this part will use the method in RPCTools
 
     def send_results(self, _taskresult: Dict, server_uid: str) -> None:
-        global REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY
-        time.sleep(REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY)
-        if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
-            t = random.random()
-            if t < REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE:
-                return
         if self.verbose > 0:
             print("sending results to" + server_uid)
         if server_uid == "localhost":
@@ -604,13 +575,9 @@ class RemoteTaskScheduler(object):
             Sketches: List[str]) -> tuple[List[float], List[float]]:
         #the method used to submit measure task by cpp-python-bridge
         tmpuid = self.task_uid_assign()
-        if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
-            tmptask = MeasureTask(tmpuid, rounds, warmups, attached_params,
-                                  Sketches)
-        else:
-            tmptask = MeasureTask(
-                tmpuid, rounds, warmups,
-                *(MeasureTask.args_serialization(attached_params, Sketches)))
+        tmptask = MeasureTask(
+            tmpuid, rounds, warmups,
+            *(MeasureTask.args_serialization(attached_params, Sketches)))
         tmplock = threading.Event()
         self.task_register(tmptask, tmplock)
         tmplock.wait()
@@ -757,34 +724,12 @@ class RemoteTaskScheduler(object):
         if server_uid in self.available_server_list:
             self.available_server_list.pop(server_uid)
         self.server_list_lock.release()
-        '''
-        self.submitted_task_container_lock.acquire()
-        for key in self.submitted_task_container.keys():
-            if self.submitted_task_container[
-                    key].target_server_uid == server_uid:
-                self.task_trans_submit2waiting(key)
-        self.submitted_task_container_lock.release()
-        '''
+
         #put the tasks submitted to the server back to the queue(legacy, not sure whether removal should be done)
 
     def get_self_uid(self, server_uid: str) -> None:
         #online initialization
         self.self_server_uid = server_uid
-
-    @classmethod
-    def change_into_test_mode(cls) -> None:
-        global REMOTE_TASK_SCHEDULER_GLOBAL_TEST
-        REMOTE_TASK_SCHEDULER_GLOBAL_TEST = True
-
-    @classmethod
-    def config_package_loss_rate(cls, rate: float) -> None:
-        global REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE
-        REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE = rate
-
-    @classmethod
-    def config_transmittion_delay(cls, delay: float) -> None:
-        global REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY
-        REMOTE_TASK_SCHEDULER_GLOBAL_TEST_TRANSMITTION_DELAY = delay
 
 
 class MultiMachineScheduler(RemoteTaskScheduler):
