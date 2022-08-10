@@ -523,6 +523,13 @@ class Schedule {
     void autoUseLib(const Target &target);
 
     /**
+     * (Experimental) Automaticaly reorder loops in a loop nest
+     *
+     * @param target : Target architecture
+     */
+    void autoReorder(const Target &target);
+
+    /**
      * (Experimental) Automatically fuse consecutive loops using some heuristics
      *
      * @param target : Target architecture
