@@ -80,8 +80,9 @@ def result_submit(remote_host_uid, src_host_uid, task_result):
     remote_server = connect(List[remote_host_uid])
     return remote_server.remote_result_receive(src_host_uid, task_result)
 
+
 def run_center():
-# 获取内网IP和可用端口
+    # 获取内网IP和可用端口
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.connect(("8.8.8.8", 80))
         SocketName = (s.getsockname()[0], 8047)  #初始化端口为8047，需要手动用ufw开防火墙端口

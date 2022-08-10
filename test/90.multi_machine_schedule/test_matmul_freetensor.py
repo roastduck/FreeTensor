@@ -1,14 +1,19 @@
 import freetensor as ft
 import numpy as np
+import threading
+import time
 
-target = ft.GPU()
-device = ft.Device(target)
-
+device = ft.GPU()
+target = device.target()
+t = threading.Thread(target=ft.run_center)
+t.start()
+time.sleep(3)
 client = ft.MultiMachineScheduler()
 
+
 def test_matmul():
-    a = 512
-    b = 512
+    a = 256
+    b = 256
     m = 4
     # c = 64
 
@@ -73,7 +78,7 @@ def test_matmul():
                         tag="matmul",
                         min_block_size=256,
                         verbose=2,
-                        remote_task_submit= client.remote_task_submit)
+                        remote_measure_submit=client.remote_measure_submit)
     s.set_params(w=w_arr, x=x_arr, c=c_arr, z=z_arr)
     # s.set_params(w=w_arr, x=x_arr, y=y_arr)
     print("Start running...")
