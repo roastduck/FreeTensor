@@ -1,11 +1,11 @@
-from email.header import make_header
 from sre_constants import SUCCESS
 from xmlrpc.server import SimpleXMLRPCServer
 import xmlrpc.client as client
 import sys, socket, uuid, os, time
-import threading
+import _thread
 
 List = {}
+quit_server = False
 
 if os.path.exists('./machine_list'):
     os.remove('./machine_list')
@@ -40,16 +40,22 @@ def register_machine(remoteInfo, sev_status):
 
 
 def connect(addr):
+    """允许失败五次的连接，每次连接之间间隔0.1s"""
     if "http" not in addr[0]:
         addr[0] = "http://" + addr[0]
     for cnt in range(5):
         try:
             server = client.ServerProxy(str(addr[0]) + ':' + str(addr[1]))
+            server.check_connection()
         except:
             time.sleep(0.1)
+            server = None
             continue
         break
-    return server
+    if server:
+        return server
+    else:
+        raise Exception("Error failed to connect")
 
 
 def broadcast(host_uid, status, new_tag=False):
@@ -88,11 +94,13 @@ def run_center():
         SocketName = (s.getsockname()[0], 8047)  #初始化端口为8047，需要手动用ufw开防火墙端口
         s.close()
 
+    global server
     server = SimpleXMLRPCServer(SocketName, allow_none=True)
     print("Receiving Message on %s:%d..." % (SocketName[0], SocketName[1]))
     server.register_function(check_connection)
     server.register_function(register_machine)
     server.register_function(task_submit)
+    server.register_function(shutdown_center)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -100,3 +108,14 @@ def run_center():
             os.remove('./machine_list')
         print("\nKeyboard interrupt received, exiting.")
         sys.exit(0)
+
+def server_shutdown():
+    if os.path.exists('./machine_list'):
+        os.remove('./machine_list')
+    for uid, addr in List.items():
+        remote_server = connect(addr)
+        remote_server.quit()
+    server.shutdown()
+
+def shutdown_center():
+    _thread.start_new_thread(server_shutdown, ())

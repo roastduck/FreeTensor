@@ -22,6 +22,8 @@ class RPCTool:
         self.server.register_function(self.taskScheduler.remote_task_receive)
         self.server.register_function(self.taskScheduler.remote_result_receive)
         self.server.register_function(self.change_status)
+        self.server.register_function(self.check_connection)
+        self.server.register_function(self.quit)
         try:
             self.serverProcess = Process(target=self.server.serve_forever)
             self.serverProcess.start()
@@ -33,9 +35,13 @@ class RPCTool:
             print("Machine UID:" + self.UID)
         except KeyboardInterrupt:
             print("\nKeyboard interrupt received, exiting.")
+        
+    def quit(self):
+        self.serverProcess.kill()
+        print(str(self.UID) + " quited.")
 
     def connect(self, addr):
-        """允许失败五次的连接，每次连接之间间隔0.5s"""
+        """允许失败五次的连接，每次连接之间间隔0.1s"""
         if "http" not in addr[0]:
             addr[0] = "http://" + addr[0]
         for cnt in range(5):
@@ -72,11 +78,18 @@ class RPCTool:
             print(Er)
             print("Remote registering failed, running locally")
 
+    def check_connection(self):
+        return True
+
     def change_status(self, remote_host_uid, status, new_tag=False):
         print("Status Changed:" + remote_host_uid + " " + str(status))
         if new_tag == False:
             self.taskScheduler.remove_host(remote_host_uid)
         self.taskScheduler.add_host(remote_host_uid, status)
+    
+    def quitcenter(self):
+        center_server = self.connect(self.centerAddr)
+        center_server.shutdown_center()
 
     def remote_task_submit(self, remote_host_uid, task):
         if remote_host_uid == "localhost":

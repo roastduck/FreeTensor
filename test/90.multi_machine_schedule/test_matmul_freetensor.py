@@ -88,6 +88,8 @@ def test_matmul():
     print(func)
     code = ft.codegen(func, target)
     print(code)
+    t = threading.Thread(target=ft.shutdown_center)
+    t.start()
 
 
 if __name__ == '__main__':
