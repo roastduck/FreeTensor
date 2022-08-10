@@ -35,7 +35,7 @@ class RPCTool:
             print("Machine UID:" + self.UID)
         except KeyboardInterrupt:
             print("\nKeyboard interrupt received, exiting.")
-        
+
     def quit(self):
         self.serverProcess.kill()
         print(str(self.UID) + " quited.")
@@ -86,7 +86,7 @@ class RPCTool:
         if new_tag == False:
             self.taskScheduler.remove_host(remote_host_uid)
         self.taskScheduler.add_host(remote_host_uid, status)
-    
+
     def quitcenter(self):
         center_server = self.connect(self.centerAddr)
         center_server.shutdown_center()

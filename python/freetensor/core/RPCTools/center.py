@@ -109,6 +109,7 @@ def run_center():
         print("\nKeyboard interrupt received, exiting.")
         sys.exit(0)
 
+
 def server_shutdown():
     if os.path.exists('./machine_list'):
         os.remove('./machine_list')
@@ -116,6 +117,7 @@ def server_shutdown():
         remote_server = connect(addr)
         remote_server.quit()
     server.shutdown()
+
 
 def shutdown_center():
     _thread.start_new_thread(server_shutdown, ())
