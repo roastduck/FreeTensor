@@ -72,7 +72,8 @@ def test_matmul():
                         device,
                         tag="matmul",
                         min_block_size=256,
-                        verbose=2)
+                        verbose=2,
+                        remote_task_submit= client.remote_task_submit)
     s.set_params(w=w_arr, x=x_arr, c=c_arr, z=z_arr)
     # s.set_params(w=w_arr, x=x_arr, y=y_arr)
     print("Start running...")

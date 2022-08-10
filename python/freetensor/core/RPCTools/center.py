@@ -3,6 +3,7 @@ from sre_constants import SUCCESS
 from xmlrpc.server import SimpleXMLRPCServer
 import xmlrpc.client as client
 import sys, socket, uuid, os, time
+import threading
 
 List = {}
 
@@ -91,10 +92,14 @@ print("Receiving Message on %s:%d..." % (SocketName[0], SocketName[1]))
 server.register_function(check_connection)
 server.register_function(register_machine)
 server.register_function(task_submit)
-try:
-    server.serve_forever()
-except KeyboardInterrupt:
-    if os.path.exists('./machine_list'):
-        os.remove('./machine_list')
-    print("\nKeyboard interrupt received, exiting.")
-    sys.exit(0)
+def keep_alive():
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        if os.path.exists('./machine_list'):
+            os.remove('./machine_list')
+        print("\nKeyboard interrupt received, exiting.")
+        sys.exit(0)
+
+tmp = threading.Thread(target=keep_alive)
+tmp.start()
