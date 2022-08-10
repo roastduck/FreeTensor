@@ -2,13 +2,13 @@ import xmlrpc.client as client
 from multiprocessing import Process, Pool
 from xmlrpc.server import SimpleXMLRPCServer
 import socket, sys, time
-from ..remote_task_scheduler import RemoteTaskScheduler
+from .. import remote_task_scheduler
 
 
 class RPCTool:
 
     def __init__(self,
-                 remoteTaskScheduler: RemoteTaskScheduler,
+                 remoteTaskScheduler: remote_task_scheduler.RemoteTaskScheduler,
                  addr="127.0.0.1",
                  port=8047,
                  sev_status=3):  #参数是初始化时主服务器的地址

@@ -7,7 +7,7 @@ import freetensor_ffi as ffi
 from typing import Any, List
 from typing import Dict
 import random
-from . import RPCTools
+from .. import core
 '''
 task_type is specified
 1.search_task
@@ -1004,12 +1004,12 @@ class RemoteTaskScheduler(object):
 
 
 class MultiMachineScheduler(RemoteTaskScheduler):
-    rpctool: RPCTools.RPCTool
+    rpctool: core.RPCTools.RPCTool
 
     def __init__(self,
                  addr: str = "127.0.0.1",
                  port: int = 8047,
                  sev_status: int = 3) -> None:
         super().__init__()
-        rpctool = RPCTools.RPCTool(self, addr, port, sev_status)
+        rpctool = core.RPCTools.RPCTool(self, addr, port, sev_status)
         self.bind_rpctool(rpctool)
