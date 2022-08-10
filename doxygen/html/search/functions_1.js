@@ -51,9 +51,10 @@ var searchData=
   ['atype_48',['atype',['../classfreetensor_1_1Buffer.html#a9e0702bde51c66d8df667d18b122aa84',1,'freetensor::Buffer']]],
   ['autofuse_49',['autoFuse',['../classfreetensor_1_1Schedule.html#ac78ab0a3587fc753a96468c6ad85186f',1,'freetensor::Schedule']]],
   ['autoparallelize_50',['autoParallelize',['../classfreetensor_1_1Schedule.html#aab49e422d97c96d24081406de659e121',1,'freetensor::Schedule']]],
-  ['autoschedule_51',['AutoSchedule',['../classfreetensor_1_1AutoSchedule.html#af63772d26bdd3e696d0e158843a8ec7c',1,'freetensor::AutoSchedule']]],
+  ['autoreorder_51',['autoReorder',['../classfreetensor_1_1Schedule.html#ae867511016657dd663ed4cc8c91e03ed',1,'freetensor::Schedule']]],
   ['autoschedule_52',['autoSchedule',['../classfreetensor_1_1Schedule.html#ab07b305c56ef33cab76de9e874c295c3',1,'freetensor::Schedule']]],
-  ['autosetmemtype_53',['autoSetMemType',['../classfreetensor_1_1Schedule.html#aeb4eeb733444a7566604e4f19f657b07',1,'freetensor::Schedule']]],
-  ['autounroll_54',['autoUnroll',['../classfreetensor_1_1Schedule.html#a7f5c6509535b6636e718d7e3fdbc267f',1,'freetensor::Schedule']]],
-  ['autouselib_55',['autoUseLib',['../classfreetensor_1_1Schedule.html#a7f6e8a418824aeaf48e5966d9046e8b4',1,'freetensor::Schedule']]]
+  ['autoschedule_53',['AutoSchedule',['../classfreetensor_1_1AutoSchedule.html#af63772d26bdd3e696d0e158843a8ec7c',1,'freetensor::AutoSchedule']]],
+  ['autosetmemtype_54',['autoSetMemType',['../classfreetensor_1_1Schedule.html#aeb4eeb733444a7566604e4f19f657b07',1,'freetensor::Schedule']]],
+  ['autounroll_55',['autoUnroll',['../classfreetensor_1_1Schedule.html#a7f5c6509535b6636e718d7e3fdbc267f',1,'freetensor::Schedule']]],
+  ['autouselib_56',['autoUseLib',['../classfreetensor_1_1Schedule.html#a7f6e8a418824aeaf48e5966d9046e8b4',1,'freetensor::Schedule']]]
 ];
