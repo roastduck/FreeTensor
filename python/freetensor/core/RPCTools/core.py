@@ -27,7 +27,7 @@ class RPCTool:
             self.serverProcess.start()
             print("RPC Server Started on %s:%d..." %
                   (self.serverAddr[0], self.serverAddr[1]))
-            self.centerAddr = (addr, port)
+            self.centerAddr = [addr, port]
             self.upload(self.centerAddr, sev_status)
             self.taskScheduler.get_self_uid(self.UID)
             print("Machine UID:" + self.UID)
