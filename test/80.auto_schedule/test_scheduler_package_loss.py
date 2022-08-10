@@ -4,6 +4,7 @@ import copy
 from typing import List, Dict, Any
 import time
 import random
+import pytest
 
 
 class MeasureTaskTest(ft.MeasureTask):
@@ -113,7 +114,7 @@ def measure_submit(rts: ft.RemoteTaskScheduler, tmplist):
         assert tmptuple[1][t] == 0.1
 
 
-#@pytest.mark.skip()
+@pytest.mark.skip()
 def test_full_function_with_package_loss():
     rts = RemoteTaskSchedulerTest(0, 0, 0.01)
     rts.verbose = 0
@@ -133,7 +134,7 @@ def test_full_function_with_package_loss():
     print(rts.recalls)
 
 
-#@pytest.mark.skip()
+@pytest.mark.skip()
 def test_full_function_with_delay_and_package_loss():
     rts = RemoteTaskSchedulerTest(0.04, 0.04, 0.01)
     rts.verbose = 0
