@@ -42,3 +42,4 @@ from .remote_task_scheduler import RemoteTaskScheduler, MultiMachineScheduler
 
 from . import RPCTools
 from .RPCTools import run_center
+from .RPCTools import shutdown_center

@@ -17,12 +17,13 @@ def test_full_function():
     ft.RemoteTaskScheduler.config_package_loss_rate(0.00)
     ft.RemoteTaskScheduler.config_transmittion_delay(0.00)
     rts = ft.RemoteTaskScheduler()
+    rts.verbose = 0
     tmplist = []
     tmpthreadlist = []
     for i in range(64):
         tmplist.append(0)
 
-    for i in range(10):
+    for i in range(1000):
         thread_test = threading.Thread(target=measure_submit,
                                        args=(rts, tmplist))
         thread_test.start()
@@ -44,7 +45,7 @@ def test_full_function_with_delay():
     for i in range(64):
         tmplist.append(0)
 
-    for i in range(5):
+    for i in range(400):
         thread_test = threading.Thread(target=measure_submit,
                                        args=(rts, tmplist))
         thread_test.start()

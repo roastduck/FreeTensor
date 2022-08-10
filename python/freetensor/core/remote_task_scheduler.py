@@ -71,6 +71,7 @@ class Task(object):  #the parent class of all tasks
     params: Any  #the params of the task
     #
     task_type: int = -1  #refer to the beginning of the file to see its meaning
+
     #
 
     def run(self) -> None:
@@ -80,7 +81,6 @@ class Task(object):  #the parent class of all tasks
 
     def convert2dict(self) -> Dict:
         return self.__dict__
-
 
     @classmethod
     def dict2self_base(cls, tmptask: Task, inputdict: Dict) -> Task:
@@ -182,6 +182,7 @@ class MeasureTask(Task):
     warmup_rounds: int
     run_times: int
     attached_params: tuple
+
     #a block means one round of timing rounds
 
     def __init__(self, _task_uid: int, _run_times: int, _warmup_rounds: int,
@@ -210,14 +211,12 @@ class MeasureTask(Task):
                  ], {key: ffi.dump_array(array) for key, array in kws.items()}),
                 [ffi.dump_ast(func) for func in params])
 
-
     def measure(self, rounds: int, warmups: int, attached_params: tuple,
                 sketches: List) -> tuple[List[float], List[float]]:
         if REMOTE_TASK_SCHEDULER_GLOBAL_TEST:
             tmplist1 = []
             tmplist2 = []
-            time.sleep(0.0002 * (rounds + warmups) *
-                       len(sketches))  #reserved for realistic tests
+            #time.sleep(1)  #reserved for realistic tests
             for k in range(len(sketches)):
                 tmplist1.append(1.0)
                 tmplist2.append(0.1)
@@ -230,8 +229,11 @@ class MeasureTask(Task):
             #pass  #this part will use the measure method of cpp-python-bridge in remote machine
 
     def run(self) -> TaskResult:
-        #print("running")
-        return self.measure(self.single_task_block_size,self.warmup_rounds,self.attached_params,self.params)
+        tmpresult = MeasureResult.get(self)
+        tmp = self.measure(self.run_times, self.warmup_rounds,
+                           self.attached_params, self.params)
+        tmpresult.put_result(tmp)
+        return tmpresult
 
     def convert2dict(self) -> Dict:
         return self.__dict__
@@ -353,7 +355,7 @@ class RemoteTaskScheduler(object):
         self.report_new_task()
 
     def result_process(self, _task_result: TaskResult) -> None:
-        #pop out the related submit_task and prevent double 
+        #pop out the related submit_task and prevent double receive
         self.submitted_task_container_lock.acquire()
         if not (_task_result.submit_uid in self.submitted_task_container):
             self.submitted_task_container_lock.release()
@@ -362,7 +364,7 @@ class RemoteTaskScheduler(object):
         self.submitted_task_container_lock.release()
 
         #put the result to container
-        self.task_result_container[_task_result.task_uid]=_task_result
+        self.task_result_container[_task_result.task_uid] = _task_result
 
         #unblock the task and free the memory
         self.submit_lock_container.pop(_task_result.task_uid).set()
@@ -587,6 +589,8 @@ class RemoteTaskScheduler(object):
             t = random.random()
             if t < REMOTE_TASK_SCHEDULER_GLOBAL_TEST_PACKAGE_LOSS_RATE:
                 return
+        if self.verbose > 0:
+            print("sending results to" + server_uid)
         if server_uid == "localhost":
             self.remote_result_receive(self.self_server_uid, _taskresult)
             return
@@ -684,6 +688,8 @@ class RemoteTaskScheduler(object):
 
     def task_execution(self, task: Task):  #execute the task(from remote_server)
         tmprunner = TaskRunner(task, self)
+        if self.verbose > 0:
+            print(self.get_queue_len())
         self.execution_queue_cnt_lock.acquire()
         self.execution_queue_cnt += 1
         self.execution_queue_cnt_lock.release()
@@ -697,7 +703,8 @@ class RemoteTaskScheduler(object):
         elif task_result["task_type"] == 2:
             tmptask_result = MeasureResult.dict2self(task_result)
             #self.task_merge(tmptask_result)
-            t = threading.Thread(target=self.result_process, args=(tmptask_result,))
+            t = threading.Thread(target=self.result_process,
+                                 args=(tmptask_result,))
             t.start()
 
     def remote_logger(self, log: str):
