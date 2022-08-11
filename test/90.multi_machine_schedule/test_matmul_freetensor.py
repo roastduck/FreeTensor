@@ -3,9 +3,9 @@ import numpy as np
 import threading
 import time
 import pytest
+import xmlrpc.client
 
 
-@pytest.mark.skip()
 def test_matmul():
     a = 256
     b = 256
@@ -13,7 +13,7 @@ def test_matmul():
     # c = 64
     device = ft.GPU()
     target = device.target()
-    t = threading.Thread(target=ft.run_center)
+    t = threading.Thread(target=ft.run_center, args=(True,))
     t.start()
     time.sleep(3)
     client = ft.MultiMachineScheduler()
@@ -89,5 +89,6 @@ def test_matmul():
     print(func)
     code = ft.codegen(func, target)
     print(code)
-    t = threading.Thread(target=ft.shutdown_center)
-    t.start()
+    tmpserver = xmlrpc.client.ServerProxy('http://127.0.0.1:8047')
+    tmpserver.shutdown_center()
+

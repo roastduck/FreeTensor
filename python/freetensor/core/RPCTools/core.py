@@ -1,7 +1,7 @@
 import xmlrpc.client as client
 from multiprocessing import Process, Pool
 from xmlrpc.server import SimpleXMLRPCServer
-import socket, sys, time
+import socket, time
 from .. import remote_task_scheduler
 
 
@@ -25,7 +25,7 @@ class RPCTool:
         self.server.register_function(self.check_connection)
         self.server.register_function(self.quit)
         try:
-            self.serverProcess = Process(target=self.server.serve_forever)
+            self.serverProcess = Process(target=self.serve_till_quit)
             self.serverProcess.start()
             print("RPC Server Started on %s:%d..." %
                   (self.serverAddr[0], self.serverAddr[1]))
@@ -36,9 +36,14 @@ class RPCTool:
         except KeyboardInterrupt:
             print("\nKeyboard interrupt received, exiting.")
 
+    def serve_till_quit(self):
+        self.quit_tag = False
+        while not self.quit_tag:
+            self.server.handle_request()
+
     def quit(self):
-        self.serverProcess.kill()
-        print(str(self.UID) + " quited.")
+        self.quit_tag = True
+        server = client.ServerProxy('http://' + self.serverAddr[0] + ':' + str(self.serverAddr[1]))
 
     def connect(self, addr):
         """允许失败五次的连接，每次连接之间间隔0.1s"""
@@ -48,10 +53,12 @@ class RPCTool:
             try:
                 server = client.ServerProxy(str(addr[0]) + ':' + str(addr[1]))
                 server.check_connection()
-            except:
+            except Exception as Ex:
                 time.sleep(0.1)
                 server = None
                 continue
+            except SystemExit:
+                pass
             break
         if server:
             return server

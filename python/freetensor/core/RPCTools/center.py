@@ -30,8 +30,8 @@ def register_machine(remoteInfo, sev_status):
             "Error occured when creating or writing into the FILE of MACHINE LIST"
         )
 
-    broadcast(UID, sev_status, new_tag=True)
     List[UID] = [remoteInfo[0], remoteInfo[1], sev_status]
+    broadcast(UID, sev_status, new_tag=True)
     remote_server = connect(remoteInfo)
     for uid, info in List.items():
         if uid != UID:
@@ -47,10 +47,12 @@ def connect(addr):
         try:
             server = client.ServerProxy(str(addr[0]) + ':' + str(addr[1]))
             server.check_connection()
-        except:
+        except Exception as Ex:
             time.sleep(0.1)
             server = None
             continue
+        except SystemExit:
+            pass
         break
     if server:
         return server
@@ -60,13 +62,11 @@ def connect(addr):
 
 def broadcast(host_uid, status, new_tag=False):
     """向所有机器广播host_uid的状态变更"""
-    if status == 0:
-        del List[host_uid]
-    else:
-        List[host_uid][2] = status
+    List[host_uid][2] = status
     for uid, addr in List.items():
-        remote_server = connect(addr)
-        remote_server.change_status(host_uid, status, new_tag)
+        if uid != host_uid:
+            remote_server = connect(addr)
+            remote_server.change_status(host_uid, status, new_tag)
 
 
 def task_submit(remote_host_uid, src_host_uid, task):
@@ -74,9 +74,7 @@ def task_submit(remote_host_uid, src_host_uid, task):
     if remote_host_uid not in List:
         return -1
     remote_server = connect(List[remote_host_uid])
-    status = remote_server.remote_task_receive(src_host_uid, task)
-    broadcast(remote_host_uid, status)
-    return status
+    return remote_server.remote_task_receive(src_host_uid, task)
 
 
 def result_submit(remote_host_uid, src_host_uid, task_result):
@@ -87,11 +85,14 @@ def result_submit(remote_host_uid, src_host_uid, task_result):
     return remote_server.remote_result_receive(src_host_uid, task_result)
 
 
-def run_center():
+def run_center(test = False):
     # 获取内网IP和可用端口
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.connect(("8.8.8.8", 80))
-        SocketName = (s.getsockname()[0], 8047)  #初始化端口为8047，需要手动用ufw开防火墙端口
+        if not test:
+            SocketName = (s.getsockname()[0], 8047)  #初始化端口为8047，需要手动用ufw开防火墙端口
+        else:
+            SocketName = ('127.0.0.1', 8047)  #初始化端口为8047，需要手动用ufw开防火墙端口
         s.close()
 
     global server
@@ -116,6 +117,8 @@ def server_shutdown():
     for uid, addr in List.items():
         remote_server = connect(addr)
         remote_server.quit()
+        print(uid + ' quitted.')
+    print("All clients closed.")
     server.shutdown()
 
 
