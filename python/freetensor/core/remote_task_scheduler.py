@@ -293,12 +293,12 @@ class RemoteTaskScheduler(object):
     verbose: int = 1
     inavailability_counter_lock = threading.Lock()
     inavailability_counter: int = 0
-    init_lock: threading.Event
+    init_lock: bool
 
     #
 
     def __init__(self) -> None:
-        self.init_lock = threading.Event()
+        self.init_lock = False
         self.self_server_uid = "localhost"
         self.add_host("localhost", 3)
         self.verbose = 0
@@ -554,23 +554,25 @@ class RemoteTaskScheduler(object):
         self.execution_tasks_check_lock.release()
 
     def send_tasks(self, _task: Dict, server_uid: str) -> int:
-        self.init_lock.wait()
         _task.setdefault("time_stamp", time.time())
         if server_uid == "localhost":
             return self.remote_task_receive(self.self_server_uid, _task)
         else:
-            return self.rpctool.remote_task_submit(server_uid, _task)
+            if self.init_lock:
+                return self.rpctool.remote_task_submit(server_uid, _task)
+            else:
+                return -1
         #this part will use the method in RPCTools
 
     def send_results(self, _taskresult: Dict, server_uid: str) -> None:
-        self.init_lock.wait()
         if self.verbose > 0:
             print("sending results to" + server_uid)
         if server_uid == "localhost":
             self.remote_result_receive(self.self_server_uid, _taskresult)
             return
         else:
-            self.rpctool.remote_result_submit(server_uid, _taskresult)
+            if self.init_lock:
+                self.rpctool.remote_result_submit(server_uid, _taskresult)
 
         #this part will use the method in RPCTools
 
@@ -746,7 +748,6 @@ class MultiMachineScheduler(RemoteTaskScheduler):
                  port: int = 8047,
                  sev_status: int = 3) -> None:
         super().__init__()
-        self.init_lock.clear()
         rpctool = core.RPCTool(self, addr, port, sev_status)
         self.bind_rpctool(rpctool)
-        self.init_lock.set()
+        self.init_lock = True
