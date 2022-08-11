@@ -19,13 +19,15 @@ class MetadataContent {
     }
 
   public:
-    virtual ~MetadataContent() = 0;
+    virtual ~MetadataContent() {}
 
-    virtual void print(std::ostream &os, int nIndent = 0) const = 0;
+    virtual void print(std::ostream &os, bool skipLocation,
+                       int nIndent) const = 0;
 };
-std::ostream &operator<<(std::ostream &os, const Ref<MetadataContent> &mdc);
-
 using Metadata = Ref<MetadataContent>;
+
+std::function<std::ostream &(std::ostream &)> skipLocation(bool skip);
+std::ostream &operator<<(std::ostream &os, const Ref<MetadataContent> &mdc);
 
 class TransformedMetadataContent : public MetadataContent {
     std::string op_;
@@ -33,35 +35,38 @@ class TransformedMetadataContent : public MetadataContent {
 
   public:
     TransformedMetadataContent(const std::string &op,
-                               const std::vector<Metadata> sources)
-        : op_(op), sources_(sources) {}
+                               const std::vector<Metadata> sources);
 
-    void print(std::ostream &os, int nIndent) const override;
+    ~TransformedMetadataContent() override = default;
+
+    void print(std::ostream &os, bool skipLocation, int nIndent) const override;
 };
+using TransformedMetadata = Ref<TransformedMetadataContent>;
 
-Metadata makeMetadata(const std::string &op,
-                      const std::vector<Metadata> &sources) {
-    return Ref<TransformedMetadataContent>::make(op, sources);
-}
+TransformedMetadata makeMetadata(const std::string &op,
+                                 const std::vector<Metadata> &sources);
 
 class SourceMetadataContent : public MetadataContent {
     std::vector<std::string> labels_;
-    std::vector<std::pair<std::string, int>> locationStack_;
+    std::optional<std::pair<std::string, int>> location_;
+    Metadata callerMetadata_;
 
   public:
     SourceMetadataContent(
         const std::vector<std::string> &labels,
-        const std::vector<std::pair<std::string, int>> &locationStack)
-        : labels_(labels), locationStack_(locationStack) {}
+        const std::optional<std::pair<std::string, int>> &location,
+        const Metadata &callerMetadata);
 
-    void print(std::ostream &os, int nIndent) const override;
+    ~SourceMetadataContent() override = default;
+
+    void print(std::ostream &os, bool skipLocation, int nIndent) const override;
 };
+using SourceMetadata = Ref<SourceMetadataContent>;
 
-inline Metadata
+SourceMetadata
 makeMetadata(const std::vector<std::string> &labels,
-             const std::vector<std::pair<std::string, int>> &locationStack) {
-    return Ref<SourceMetadataContent>::make(labels, locationStack);
-}
+             const std::optional<std::pair<std::string, int>> &location,
+             const Metadata &callerMetadata);
 
 } // namespace freetensor
 

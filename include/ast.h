@@ -132,8 +132,8 @@ typedef Ref<ASTNode> AST;
  * @param sourceASTs variadic parameters that accept the source ASTs.
  */
 template <typename... Srcs>
-requires(std::convertible_to<Srcs, AST> &&...) Metadata
-    makeMetadata(const std::string &op, Srcs &&...sourceASTs) {
+requires(std::convertible_to<Srcs, AST> &&...) auto makeMetadata(
+    const std::string &op, Srcs &&...sourceASTs) {
     return makeMetadata(op, std::vector<Metadata>{sourceASTs->metadata()...});
 }
 
