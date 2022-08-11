@@ -432,37 +432,36 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
         _overload.__init__()
         # Create a new scope for the function
         with LifetimeScope():
-            with NamingScope(None):
-                # Run staging function with the tensor program arguments' names as parameters
-                returns = staging_func(*params)
-                # Check returned vardefs (if any)
-                if isinstance(returns, VarRef):
-                    returns = [returns]
-                elif isinstance(returns, tuple):
-                    for ret in returns:
-                        if not isinstance(ret, VarRef):
-                            raise _overload.error(
-                                'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
-                            )
-                    returns = list(returns)
-                elif returns is None:
-                    returns = []
-                else:
-                    raise _overload.error(
-                        'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
-                    )
-                # Set returned vardefs' access type to inout/output according to whether it was an input
+            # Run staging function with the tensor program arguments' names as parameters
+            returns = staging_func(*params)
+            # Check returned vardefs (if any)
+            if isinstance(returns, VarRef):
+                returns = [returns]
+            elif isinstance(returns, tuple):
                 for ret in returns:
-                    if ret.vardef.atype == 'input' or ret.vardef.atype == 'inout':
-                        ret.vardef.set_atype('inout')
-                    else:
-                        ret.vardef.set_atype('output')
-                returns = [
-                    (ret.vardef.name, ret.vardef.dtype) for ret in returns
-                ]
+                    if not isinstance(ret, VarRef):
+                        raise _overload.error(
+                            'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
+                        )
+                returns = list(returns)
+            elif returns is None:
+                returns = []
+            else:
+                raise _overload.error(
+                    'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
+                )
+            # Set returned vardefs' access type to inout/output according to whether it was an input
+            for ret in returns:
+                if ret.vardef.atype == 'input' or ret.vardef.atype == 'inout':
+                    ret.vardef.set_atype('inout')
+                else:
+                    ret.vardef.set_atype('output')
+            returns = [
+                (ret.vardef.name, ret.vardef.dtype) for ret in returns
+            ]
 
-                # Set closure; they are from captured Arrays.
-                closure = _overload.closure
+            # Set closure; they are from captured Arrays.
+            closure = _overload.closure
     except StagingError:
         raise
     except TransformError:
