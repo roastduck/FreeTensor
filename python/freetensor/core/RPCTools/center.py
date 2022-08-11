@@ -30,8 +30,8 @@ def register_machine(remoteInfo, sev_status):
             "Error occured when creating or writing into the FILE of MACHINE LIST"
         )
 
-    List[UID] = [remoteInfo[0], remoteInfo[1], sev_status]
     broadcast(UID, sev_status, new_tag=True)
+    List[UID] = [remoteInfo[0], remoteInfo[1], sev_status]
     remote_server = connect(remoteInfo)
     for uid, info in List.items():
         if uid != UID:
