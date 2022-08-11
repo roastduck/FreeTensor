@@ -297,7 +297,7 @@ class RemoteTaskScheduler(object):
 
     #
 
-    def __init__(self, sev_status) -> None:
+    def __init__(self, sev_status = 3) -> None:
         self.init_lock = False
         self.self_server_uid = "localhost"
         self.add_host("localhost", sev_status)
