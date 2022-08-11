@@ -297,10 +297,10 @@ class RemoteTaskScheduler(object):
 
     #
 
-    def __init__(self) -> None:
+    def __init__(self, sev_status) -> None:
         self.init_lock = False
         self.self_server_uid = "localhost"
-        self.add_host("localhost", 3)
+        self.add_host("localhost", sev_status)
         self.verbose = 0
         return
 
@@ -747,7 +747,7 @@ class MultiMachineScheduler(RemoteTaskScheduler):
                  addr: str = "127.0.0.1",
                  port: int = 8047,
                  sev_status: int = 3) -> None:
-        super().__init__()
+        super().__init__(sev_status)
         rpctool = core.RPCTool(self, addr, port, sev_status)
         self.bind_rpctool(rpctool)
         self.init_lock = True
