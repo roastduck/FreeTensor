@@ -294,6 +294,7 @@ class RemoteTaskScheduler(object):
     inavailability_counter_lock = threading.Lock()
     inavailability_counter: int = 0
     init_lock: bool
+    self_sev_status: int
 
     #
 
@@ -301,6 +302,7 @@ class RemoteTaskScheduler(object):
         self.init_lock = False
         self.self_server_uid = "localhost"
         self.add_host("localhost", sev_status)
+        self.self_sev_status = sev_status
         self.verbose = 0
         return
 
@@ -397,7 +399,6 @@ class RemoteTaskScheduler(object):
         if task_availability:
             tmptask = self.tasks_waiting_to_submit.pop(tmp_submit_uid)
             self.submitted_task_container[tmp_submit_uid] = tmptask
-
             if self.send_tasks(tmptask.convert2dict(), _server_uid) == 0:
                 tmptask.target_server_uid = _server_uid
                 tmpthread = threading.Thread(
@@ -555,7 +556,9 @@ class RemoteTaskScheduler(object):
 
     def send_tasks(self, _task: Dict, server_uid: str) -> int:
         _task.setdefault("time_stamp", time.time())
-        if server_uid == "localhost":
+        if self.verbose > 0:
+            print("sending tasks to " + server_uid)
+        if (server_uid == "localhost") or (server_uid == self.self_server_uid):
             return self.remote_task_receive(self.self_server_uid, _task)
         else:
             if self.init_lock:
@@ -567,7 +570,7 @@ class RemoteTaskScheduler(object):
     def send_results(self, _taskresult: Dict, server_uid: str) -> None:
         if self.verbose > 0:
             print("sending results to" + server_uid)
-        if server_uid == "localhost":
+        if (server_uid == "localhost") or (server_uid == self.self_server_uid):
             self.remote_result_receive(self.self_server_uid, _taskresult)
             return
         else:
@@ -722,23 +725,26 @@ class RemoteTaskScheduler(object):
     def remove_host(self, server_uid: str) -> None:
         #remove the server from known server list
         self.server_list_lock.acquire()
-        sev_status = self.server_list.pop(server_uid)[0]
-        if sev_status == 1:
-            self.search_server_num -= 1
-        if sev_status == 2:
-            self.measure_server_num -= 1
-        if sev_status == 3:
-            self.measure_server_num -= 1
-            self.search_server_num -= 1
-        if server_uid in self.available_server_list:
-            self.available_server_list.pop(server_uid)
+        if server_uid in self.server_list:
+            sev_status = self.server_list.pop(server_uid)[0]
+            if sev_status == 1:
+                self.search_server_num -= 1
+            if sev_status == 2:
+                self.measure_server_num -= 1
+            if sev_status == 3:
+                self.measure_server_num -= 1
+                self.search_server_num -= 1
+            if server_uid in self.available_server_list:
+                self.available_server_list.pop(server_uid)
         self.server_list_lock.release()
 
         #put the tasks submitted to the server back to the queue(legacy, not sure whether removal should be done)
 
     def get_self_uid(self, server_uid: str) -> None:
         #online initialization
+        self.remove_host(server_uid)
         self.self_server_uid = server_uid
+        self.add_host(server_uid, self.self_sev_status)
 
 
 class MultiMachineScheduler(RemoteTaskScheduler):
