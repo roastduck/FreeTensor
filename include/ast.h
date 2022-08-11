@@ -256,7 +256,6 @@ class StmtNode : public ASTNode {
 
     void setId(const ID &id);
     ID id() const;
-    bool hasNamedId() const;
 
     const Metadata &metadata() const { return metadata_; }
     Metadata &metadata() { return metadata_; }

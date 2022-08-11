@@ -108,11 +108,12 @@ stmt returns [Stmt node]
       {
         $node = $stmtWithoutID.node;
       }
-    | var ':' stmtWithoutID
-      {
-        $node = $stmtWithoutID.node;
-        $node->setId($var.name);
-      }
+    //!TODO: parse metadata
+    // | var ':' stmtWithoutID
+    //   {
+    //     $node = $stmtWithoutID.node;
+    //     $node->setId($var.name);
+    //   }
     ;
 
 stmtWithoutID returns [Stmt node]

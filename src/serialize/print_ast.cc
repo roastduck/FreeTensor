@@ -80,12 +80,13 @@ void PrintVisitor::recur(const Stmt &op) {
     }
 }
 
-void PrintVisitor::printId(const Stmt &op) {
+void PrintVisitor::printMetadataAndId(const Stmt &op) {
 #ifdef FT_DEBUG_LOG_NODE
     makeIndent();
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
-    if (printAllId_ || op->hasNamedId()) {
+    //! TODO: print metadata
+    if (printAllId_) {
         makeIndent();
         os() << prettyId(::freetensor::toString(op->id())) << ":" << std::endl;
     }
@@ -114,7 +115,7 @@ std::string PrintVisitor::escape(const std::string &name) {
 
 void PrintVisitor::visitStmt(const Stmt &op) {
     if (op->nodeType() != ASTNodeType::Any) {
-        printId(op);
+        printMetadataAndId(op);
     }
     Visitor::visitStmt(op);
 }
@@ -147,7 +148,7 @@ void PrintVisitor::visit(const Func &op) {
 }
 
 void PrintVisitor::visit(const StmtSeq &op) {
-    if (printAllId_ || op->hasNamedId()) {
+    if (printAllId_ || op->metadata().isValid()) {
         makeIndent();
         beginBlock();
     }
@@ -157,7 +158,7 @@ void PrintVisitor::visit(const StmtSeq &op) {
     } else {
         Visitor::visit(op);
     }
-    if (printAllId_ || op->hasNamedId()) {
+    if (printAllId_ || op->metadata().isValid()) {
         endBlock();
     }
 }

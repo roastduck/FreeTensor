@@ -230,8 +230,6 @@ void StmtNode::setId(const ID &id) {
 
 ID StmtNode::id() const { return ID(id_); }
 
-bool StmtNode::hasNamedId() const { return id_.empty() || id_[0] != '#'; }
-
 Expr deepCopy(const Expr &op) { return Mutator()(op); }
 Stmt deepCopy(const Stmt &op) { return Mutator()(op); }
 

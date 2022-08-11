@@ -82,7 +82,7 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
   private:
     void recur(const Expr &op);
     void recur(const Stmt &op);
-    void printId(const Stmt &op);
+    void printMetadataAndId(const Stmt &op);
 
     std::string escape(const std::string &name);
     std::string prettyIterName(const std::string &name);
