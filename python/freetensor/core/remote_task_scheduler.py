@@ -619,6 +619,9 @@ class RemoteTaskScheduler(object):
     def update_availability(self, server_uid: str, time_stamp: float):
         #update the availability of a specified server
         self.server_list_lock.acquire()
+        if not server_uid in self.server_list:
+            self.server_list_lock.release()
+            return
         if self.server_list[server_uid][1] < time_stamp:
             self.server_list[server_uid] = (self.server_list[server_uid][0],
                                             time_stamp)
@@ -744,6 +747,6 @@ class MultiMachineScheduler(RemoteTaskScheduler):
                  sev_status: int = 3) -> None:
         super().__init__()
         self.init_lock.clear()
-        rpctool = core.RPCTools.RPCTool(self, addr, port, sev_status)
+        rpctool = core.RPCTool(self, addr, port, sev_status)
         self.bind_rpctool(rpctool)
         self.init_lock.set()
