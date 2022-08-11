@@ -24,7 +24,7 @@ def test_static_shape(libop_func, torch_func, require_positive):
     def f(x, y):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        #! nid: to_test
+        #! label: to_test
         libop_func(x, y)
 
     if require_positive:
@@ -59,7 +59,7 @@ def test_out_of_place(libop_func, torch_func, require_positive):
     @ft.optimize(device=device, verbose=1)
     def f(x):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
-        #! nid: to_test
+        #! label: to_test
         return libop_func(x)
 
     if require_positive:
@@ -92,7 +92,7 @@ def test_inplace_grad_of_inplace_func(libop_func, torch_func, require_positive):
     def f(x, y):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        #! nid: to_test
+        #! label: to_test
         libop_func(x, y)
 
     f, g, requires, provides = ft.grad_(f, ["x"], ["y"],
@@ -143,7 +143,7 @@ def test_inplace_grad_of_out_of_place_func(libop_func, torch_func,
     @ft.transform
     def f(x):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
-        #! nid: to_test
+        #! label: to_test
         return libop_func(x)
 
     f, g, requires, provides = ft.grad_(f, ["x"], [ft.Return()],
@@ -192,7 +192,7 @@ def test_out_of_place_grad_of_out_of_place_func(libop_func, torch_func,
     @ft.transform
     def f(x):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
-        #! nid: to_test
+        #! label: to_test
         return libop_func(x)
 
     f, g, requires, provides = ft.grad(f, ["x"], [ft.Return()],

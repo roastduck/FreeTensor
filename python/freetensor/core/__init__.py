@@ -12,7 +12,7 @@ from .stmt import (
     Alloc,
     Free,
     Assert,
-    MarkNid,
+    MarkLabel,
     NamedScope,
     Invoke,
     Eval,

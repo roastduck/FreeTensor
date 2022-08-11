@@ -25,13 +25,13 @@ def test_manual_static():
 
     @ft.transform
     def f(x, y):
-        #! nid: V_x
+        #! label: V_x
         x: ft.Var[(batch_size, n_heads, seq_len, seq_len), "float32", "input",
                   "gpu/global"]
-        #! nid: V_y
+        #! label: V_y
         y: ft.Var[(batch_size, n_heads, seq_len, seq_len), "float32", "output",
                   "gpu/global"]
-        #! nid: softmax
+        #! label: softmax
         libop.softmax_(x, y)
 
     print(f)
@@ -68,14 +68,14 @@ def test_manual_static():
     thr_y_dim = 32
 
     # Optimize reductions
-    def opt_red(def_nid, init_nid, loop_nid):
-        node = s.find(def_nid)
+    def opt_red(def_label, init_label, loop_label):
+        node = s.find(def_label)
 
         # Hold result in shared memory
         _, _, V_sum_shmem, _ = s.cache(node.body, node.name, "gpu/shared")
 
         # Parallel reduction
-        serial, thr_x = s.split(loop_nid, thr_x_dim)
+        serial, thr_x = s.split(loop_label, thr_x_dim)
         s.reorder([thr_x, serial])
         s.parallelize(thr_x, "threadIdx.x")
 
@@ -94,8 +94,8 @@ def test_manual_static():
         "softmax->max->impl->recur->reduce->recur->recur->recur->L")
 
     # Parallelize data-parall loops
-    def opt_elemwise(loop_nid):
-        serial, thr_x = s.split(loop_nid, thr_x_dim)
+    def opt_elemwise(loop_label):
+        serial, thr_x = s.split(loop_label, thr_x_dim)
         s.reorder([thr_x, serial])
         s.parallelize(thr_x, "threadIdx.x")
         return thr_x, serial

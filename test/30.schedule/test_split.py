@@ -4,7 +4,7 @@ import pytest
 
 def test_factor():
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
-        with ft.For("i", 0, 8, nid="L1") as i:
+        with ft.For("i", 0, 8, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -24,7 +24,7 @@ def test_factor():
 
 def test_factor_with_step():
     with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
-        with ft.For("i", 14, -2, -2, nid="L1") as i:
+        with ft.For("i", 14, -2, -2, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -44,7 +44,7 @@ def test_factor_with_step():
 
 def test_nparts():
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
-        with ft.For("i", 0, 8, nid="L1") as i:
+        with ft.For("i", 0, 8, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -64,7 +64,7 @@ def test_nparts():
 
 def test_nparts_with_step():
     with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
-        with ft.For("i", 14, -2, -2, nid="L1") as i:
+        with ft.For("i", 14, -2, -2, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -84,7 +84,7 @@ def test_nparts_with_step():
 
 def test_guard():
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
-        with ft.For("i", 0, 10, nid="L1") as i:
+        with ft.For("i", 0, 10, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -105,7 +105,7 @@ def test_guard():
 
 def test_guard_with_step():
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
-        with ft.For("i", 0, 10, 2, nid="L1") as i:
+        with ft.For("i", 0, 10, 2, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -126,7 +126,7 @@ def test_guard_with_step():
 
 def test_shift():
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
-        with ft.For("i", 0, 10, nid="L1") as i:
+        with ft.For("i", 0, 10, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -159,7 +159,7 @@ def test_not_found():
 
 def test_simplify_split_then_merge():
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
-        with ft.For("i", 0, 10, nid="L") as i:
+        with ft.For("i", 0, 10, label="L") as i:
             y[i] = i
 
     ast = ft.pop_ast()

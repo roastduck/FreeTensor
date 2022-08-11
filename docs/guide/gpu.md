@@ -19,7 +19,7 @@ with ft.GPU(0):
         schedule_callback=lambda s: s.parallelize('Li', 'threadIdx.x'))
     def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
         y = ft.empty((n,), "int32")
-        #! nid: Li # Name the loop below as "Li"
+        #! label: Li # Name the loop below as "Li"
         for i in range(n):
             y[i] = a[i] + b[i]
         return y
@@ -67,7 +67,7 @@ with ft.GPU(0):
         a: ft.Var[(n,), "int32"]
         b: ft.Var[(n,), "int32"]
         y = ft.empty((n,), "int32")
-        #! nid: Li # Name the loop below as "Li"
+        #! label: Li # Name the loop below as "Li"
         for i in range(n):
             y[i] = a[i] + b[i]
         return y

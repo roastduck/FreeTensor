@@ -707,11 +707,11 @@ def test_circular_dependency_in_parallel():
         with ft.For("i", 0, 256) as i:
             b[i] = a[i]
         with ft.For("k", 0, 100) as k:
-            ft.MarkNid("L1")
+            ft.MarkLabel("L1")
             with ft.For("l", 0, 256) as l:
                 c[l] += b[l]
                 b[l] = 0
-            ft.MarkNid("L")
+            ft.MarkLabel("L")
             with ft.For("i", 0, 256) as i:
                 with ft.For("j", 0, 256) as j:
                     b[j] += c[i]

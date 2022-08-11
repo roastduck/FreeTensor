@@ -8,9 +8,9 @@ import numpy as np
 
 @ft.inline
 def g_global(y):
-    #! nid: S0
+    #! label: S0
     y[0] = 2.0
-    #! nid: S1
+    #! label: S1
     y[1] = 3.0
 
 
@@ -24,9 +24,9 @@ def test_basic_call():
 
     @ft.inline
     def g(y):
-        #! nid: S0
+        #! label: S0
         y[0] = 2.0
-        #! nid: S1
+        #! label: S1
         y[1] = 3.0
 
     @ft.lower(target=ft.CPU(), verbose=1)
@@ -57,9 +57,9 @@ def test_called_multiple_times():
 
     @ft.inline
     def g(y):
-        #! nid: S0
+        #! label: S0
         y[0] = 2.0
-        #! nid: S1
+        #! label: S1
         y[1] = 3.0
 
     @ft.lower(target=ft.CPU(), verbose=1)
@@ -67,9 +67,9 @@ def test_called_multiple_times():
     def f(y1, y2):
         y1: ft.Var[(2,), "float32", "output", "cpu"]
         y2: ft.Var[(2,), "float32", "output", "cpu"]
-        #! nid: C1
+        #! label: C1
         g(y1)
-        #! nid: C2
+        #! label: C2
         g(y2)
 
     with ft.VarDef([("y1", (2,), "float32", "output", "cpu"),
@@ -318,9 +318,9 @@ def test_error_missing_parameters():
 
     @ft.inline
     def g(y):
-        #! nid: S0
+        #! label: S0
         y[0] = 2.0
-        #! nid: S1
+        #! label: S1
         y[1] = 3.0
 
     def f(y):
@@ -484,7 +484,7 @@ def test_no_deps_on_returned_tensor():
 
     @ft.inline
     def test_i(a, b):
-        #! nid: Vc
+        #! label: Vc
         c = ft.empty((2, 2), "int32", "cpu")
         d = ft.empty((2, 2), "int32", "cpu")
         for i in range(2):
@@ -504,7 +504,7 @@ def test_no_deps_on_returned_tensor():
             ft.capture_var(ft.Array(np.array([[1, 2], [3, 4]],
                                              dtype=np.int32))), y)
         for i in range(2):
-            #! nid: Lj
+            #! label: Lj
             #! no_deps: cc
             for j in range(2):
                 c[i, j] = cc[i, j]

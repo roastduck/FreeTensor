@@ -3,7 +3,7 @@ import pytest
 
 
 def test_factor():
-    ft.MarkNid("Dy")
+    ft.MarkLabel("Dy")
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
             y[i] = i
@@ -23,7 +23,7 @@ def test_factor():
 
 
 def test_nparts():
-    ft.MarkNid("Dy")
+    ft.MarkLabel("Dy")
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
             y[i] = i
@@ -43,7 +43,7 @@ def test_nparts():
 
 
 def test_non_divisible():
-    ft.MarkNid("Dy")
+    ft.MarkLabel("Dy")
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10) as i:
             y[i] = i
@@ -63,11 +63,11 @@ def test_non_divisible():
 
 
 def test_non_divisible_when_caching():
-    ft.MarkNid("Dx")
+    ft.MarkLabel("Dx")
     with ft.VarDef("x", (10,), "int32", "input", "cpu") as x:
         with ft.VarDef([("y", (10,), "int32", "output", "cpu"),
                         ("z", (10,), "int32", "output", "cpu")]) as (y, z):
-            with ft.For("i", 0, 10, nid="Li") as i:
+            with ft.For("i", 0, 10, label="Li") as i:
                 y[i] = x[i] + 1
                 z[i] = x[i] + 2
     ast = ft.pop_ast(verbose=True)
@@ -85,7 +85,7 @@ def test_non_divisible_when_caching():
                 with ft.For("j", 0, 4) as j:
                     with ft.If(i * 4 + j < 10):
                         t[i, j] = x[i, j]
-            with ft.For("k", 0, 10, nid="Li") as k:
+            with ft.For("k", 0, 10, label="Li") as k:
                 y[k] = t[k // 4, k % 4] + 1
                 z[k] = t[k // 4, k % 4] + 2
     std = ft.pop_ast()
@@ -94,7 +94,7 @@ def test_non_divisible_when_caching():
 
 
 def test_not_found():
-    ft.MarkNid("Dy")
+    ft.MarkLabel("Dy")
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
             y[i] = i
@@ -107,7 +107,7 @@ def test_not_found():
 
 
 def test_out_of_range():
-    ft.MarkNid("Dy")
+    ft.MarkLabel("Dy")
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
             y[i] = i

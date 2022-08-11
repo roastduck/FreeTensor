@@ -119,7 +119,7 @@ def test_reversed_for():
 def test_for_with_multiple_properties():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="foo", no_deps=['x'], prefer_libs=True) as i:
+        with ft.For("i", 0, 4, label="foo", no_deps=['x'], prefer_libs=True) as i:
             y[i] = x[i] + 1
     ast = ft.pop_ast()
     txt = ft.dump_ast(ast)
@@ -135,7 +135,7 @@ def test_for_with_multiple_properties():
 def test_for_with_parallel():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="foo") as i:
+        with ft.For("i", 0, 4, label="foo") as i:
             y[i] = x[i] + 1
     s = ft.Schedule(ft.pop_ast())
     s.parallelize("foo", "openmp")
@@ -152,8 +152,8 @@ def test_for_with_parallel():
 def test_for_with_parallel_reduction():
     with ft.VarDef([("x", (4, 64), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "inout", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 64, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 64, label="L2") as j:
                 y[i] = y[i] + x[i, j]
     s = ft.Schedule(ft.pop_ast())
     s.parallelize("L2", "openmp")
@@ -199,7 +199,7 @@ def test_assert():
 
 def test_id():
     with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
-        ft.MarkNid("foo")
+        ft.MarkLabel("foo")
         x[2, 3] = 2.0
         x[1, 0] = 3.0
     ast = ft.pop_ast()
@@ -255,7 +255,7 @@ def test_complex_name():
 
 def test_complex_id():
     with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
-        ft.MarkNid("id!@#$%^&*")
+        ft.MarkLabel("id!@#$%^&*")
         x[2, 3] = 2.0
         x[1, 0] = 3.0
     ast = ft.pop_ast()
@@ -336,7 +336,7 @@ def test_assoc_priority_3():
 
 
 def test_io_tensor():
-    ft.MarkNid("Dy")
+    ft.MarkLabel("Dy")
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
             y[i] = i

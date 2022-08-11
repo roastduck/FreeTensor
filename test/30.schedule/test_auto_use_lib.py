@@ -9,7 +9,7 @@ def test_basic():
         a: ft.Var[(1000, 1000), "float32", "input", "cpu"]
         b: ft.Var[(1000, 1000), "float32", "input", "cpu"]
         c: ft.Var[(1000, 1000), "float32", "output", "cpu"]
-        #! nid: Li
+        #! label: Li
         for i in range(1000):
             for j in range(1000):
                 c[i, j] = 0
@@ -33,7 +33,7 @@ def test_fission_when_prefer_libs():
         b2: ft.Var[(1000, 1000), "float32", "input", "cpu"]
         c1: ft.Var[(1000, 1000), "float32", "inout", "cpu"]
         c2: ft.Var[(1000, 1000), "float32", "inout", "cpu"]
-        #! nid: Li
+        #! label: Li
         #! prefer_libs
         for i in range(1000):
             for j in range(1000):

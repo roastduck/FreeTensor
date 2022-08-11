@@ -17,23 +17,23 @@ def test_cache_write():
         x: ft.Var[(m, m, b, a), "int32", "input", "cpu"]
         y: ft.Var[(1, 1, a, a), "int32", "inout", "cpu"]
         z: ft.Var[(m, m, a, a), "int32", "output", "cpu"]
-        #! nid: L1
+        #! label: L1
         for i in range(m):
-            #! nid: L2
+            #! label: L2
             for j in range(m):
-                #! nid: L4
+                #! label: L4
                 for p in range(a):
-                    #! nid: L5
+                    #! label: L5
                     for q in range(a):
-                        #! nid: Init
+                        #! label: Init
                         y[0, 0, p, q] = 0
-                        #! nid: L3
+                        #! label: L3
                         for k in range(b):
                             y[0, 0, p,
                               q] = y[0, 0, p, q] + w[i, j, p, k] * x[i, j, k, q]
-                #! nid: L6
+                #! label: L6
                 for p in range(a):
-                    #! nid: L7
+                    #! label: L7
                     for q in range(a):
                         z[i, j, p, q] = y[0, 0, p, q]
 

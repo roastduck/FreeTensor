@@ -5,8 +5,8 @@ import pytest
 def test_cpu_basic():
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "cpu"),
                     ("y", (1000, 1000), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 1000, nid="Li") as i:
-            with ft.For("j", 0, 1000, nid="Lj") as j:
+        with ft.For("i", 0, 1000, label="Li") as i:
+            with ft.For("j", 0, 1000, label="Lj") as j:
                 y[i, j] = x[i, j] + 1
 
     ast = ft.pop_ast(verbose=True)
@@ -20,8 +20,8 @@ def test_cpu_basic():
 def test_gpu_basic_static_small():
     with ft.VarDef([("x", (10, 10, 2), "int32", "input", "cpu"),
                     ("y", (10, 10, 2), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 10, nid="Li") as i:
-            with ft.For("j", 0, 10, nid="Lj") as j:
+        with ft.For("i", 0, 10, label="Li") as i:
+            with ft.For("j", 0, 10, label="Lj") as j:
                 y[i, j, 0] = x[i, j, 0] + 1
 
     device = ft.GPU()
@@ -45,8 +45,8 @@ def test_gpu_basic_static_large():
     with ft.VarDef([("x", (1000, 1000, 2), "int32", "input", "cpu"),
                     ("y", (1000, 1000, 2), "int32", "output", "cpu")]) as (x,
                                                                            y):
-        with ft.For("i", 0, 1000, nid="Li") as i:
-            with ft.For("j", 0, 1000, nid="Lj") as j:
+        with ft.For("i", 0, 1000, label="Li") as i:
+            with ft.For("j", 0, 1000, label="Lj") as j:
                 y[i, j, 0] = x[i, j, 0] + 1
 
     ast = ft.pop_ast(verbose=True)
@@ -67,8 +67,8 @@ def test_gpu_basic_dynamic():
         with ft.VarDef([("x", (n[()], 1000, 2), "int32", "input", "cpu"),
                         ("y", (n[()], 1000, 2), "int32", "output", "cpu")
                        ]) as (x, y):
-            with ft.For("i", 0, n[()], nid="Li") as i:
-                with ft.For("j", 0, 1000, nid="Lj") as j:
+            with ft.For("i", 0, n[()], label="Li") as i:
+                with ft.For("j", 0, 1000, label="Lj") as j:
                     y[i, j, 0] = x[i, j, 0] + 1
 
     device = ft.GPU()
@@ -93,9 +93,9 @@ def test_gpu_basic_dynamic():
 def test_non_parallelizable():
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "cpu"),
                     ("y", (1000,), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 1000, nid="Li") as i:
+        with ft.For("i", 0, 1000, label="Li") as i:
             y[i] = 0
-            with ft.For("j", 0, 1000, nid="Lj") as j:
+            with ft.For("j", 0, 1000, label="Lj") as j:
                 y[i] = y[i] * 2 + x[i, j]
 
     ast = ft.pop_ast(verbose=True)
@@ -108,9 +108,9 @@ def test_non_parallelizable():
 def test_reduction_better_not_parallelized():
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "cpu"),
                     ("y", (1000,), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 1000, nid="Li") as i:
+        with ft.For("i", 0, 1000, label="Li") as i:
             y[i] = 0
-            with ft.For("j", 0, 1000, nid="Lj") as j:
+            with ft.For("j", 0, 1000, label="Lj") as j:
                 y[i] += x[i, j]
 
     ast = ft.make_reduction(ft.pop_ast())
@@ -126,9 +126,9 @@ def test_gpu_warp_static():
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
                     ("y", (1000, 2), "int32", "output", "gpu/global")]) as (x,
                                                                             y):
-        with ft.For("i", 0, 1000, nid="Li") as i:
+        with ft.For("i", 0, 1000, label="Li") as i:
             y[i, 0] = 0
-            with ft.For("k", 0, 1000, nid="Lk") as k:
+            with ft.For("k", 0, 1000, label="Lk") as k:
                 y[i, 0] += x[i, k]
 
     ast = ft.pop_ast(verbose=True)
@@ -149,9 +149,9 @@ def test_gpu_warp_dynamic():
         with ft.VarDef([("x", (n[()], n[()]), "int32", "input", "gpu/global"),
                         ("y", (n[()], 2), "int32", "output", "gpu/global")
                        ]) as (x, y):
-            with ft.For("i", 0, n[()], nid="Li") as i:
+            with ft.For("i", 0, n[()], label="Li") as i:
                 y[i, 0] = 0
-                with ft.For("k", 0, n[()], nid="Lk") as k:
+                with ft.For("k", 0, n[()], label="Lk") as k:
                     y[i, 0] += x[i, k]
 
     device = ft.GPU()
@@ -176,10 +176,10 @@ def test_outer_loop_too_short():
     with ft.VarDef([("x", (8, 1000), "int32", "input", "cpu"),
                     ("y", (8, 1000), "int32", "output", "cpu"),
                     ("z", (8, 1000), "int32", "output", "cpu")]) as (x, y, z):
-        with ft.For("i", 0, 8, nid="Li") as i:
-            with ft.For("j", 0, 1000, nid="Lj1") as j:
+        with ft.For("i", 0, 8, label="Li") as i:
+            with ft.For("j", 0, 1000, label="Lj1") as j:
                 y[i, j] = x[i, j] + x[i, (j + 1) % 1000]
-            with ft.For("j", 0, 1000, nid="Lj2") as j:
+            with ft.For("j", 0, 1000, label="Lj2") as j:
                 z[i, j] = y[i, j] + y[i, (j + 1) % 1000]
 
     ast = ft.pop_ast(verbose=True)
@@ -193,13 +193,13 @@ def test_outer_loop_too_short():
 def test_outer_loop_not_parallelizable():
     with ft.VarDef([("x", (100,), "float32", "inout", "cpu"),
                     ("w", (100, 100), "float32", "input", "cpu")]) as (x, w):
-        with ft.For("p", 0, 1000, nid="Lp") as p:
+        with ft.For("p", 0, 1000, label="Lp") as p:
             with ft.VarDef("y", (100,), "float32", "cache", "cpu") as y:
-                with ft.For("i", 0, 100, nid="Li0") as i:
+                with ft.For("i", 0, 100, label="Li0") as i:
                     y[i] = 0
-                    with ft.For("j", 0, 100, nid="Lj") as j:
+                    with ft.For("j", 0, 100, label="Lj") as j:
                         y[i] += x[j] * w[i, j]
-                with ft.For("i", 0, 100, nid="Li1") as i:
+                with ft.For("i", 0, 100, label="Li1") as i:
                     x[i] = y[i]
 
     ast = ft.pop_ast(verbose=True)

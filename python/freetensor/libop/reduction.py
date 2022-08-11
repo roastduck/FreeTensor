@@ -32,34 +32,34 @@ def _circular_axes(axes, x_ndim, keepdims):
 @core.inline
 def _init(neutral_val, y):
     if y.ndim == 0:
-        #! nid: exec
+        #! label: exec
         y[()] = neutral_val
     else:
-        #! nid: L
+        #! label: L
         for i in range(y.shape(0)):
-            #! nid: recur
+            #! label: recur
             _init(neutral_val, y[i])
 
 
 @core.inline
 def _reduce(op, axes, keepdims, x, y):
     if core.ndim(x) == 0:
-        #! nid: exec
+        #! label: exec
         y[()] = op(y, x)
     else:
-        #! nid: L
+        #! label: L
         for i in range(x.shape(0)):
             if begin_with_0(axes):
                 if keepdims:
                     assert y.shape(0) == 1
-                    #! nid: recur
+                    #! label: recur
                     _reduce(op, all_minus_one(axes[1:]), keepdims, x[i], y[0])
                 else:
-                    #! nid: recur
+                    #! label: recur
                     _reduce(op, all_minus_one(axes[1:]), keepdims, x[i], y)
             else:
                 assert y.shape(0) == x.shape(0)
-                #! nid: recur
+                #! label: recur
                 _reduce(op, all_minus_one(axes), keepdims, x[i], y[i])
 
 
@@ -70,9 +70,9 @@ def _general_reduce_(op,
                      y,
                      axes: Optional[Sequence[int]] = None,
                      keepdims: bool = True):
-    #! nid: init
+    #! label: init
     _init(neutral_val, y)
-    #! nid: reduce
+    #! label: reduce
     _reduce(op, _circular_axes(axes, core.ndim(x), keepdims), keepdims, x, y)
 
 
@@ -94,11 +94,11 @@ def _general_reduce(op,
                     x,
                     axes: Optional[Sequence[int]] = None,
                     keepdims: bool = True):
-    #! nid: y
+    #! label: y
     y = core.empty(
         _comp_shape(_circular_axes(axes, core.ndim(x), keepdims), keepdims, x),
         core.dtype(x), core.mtype(x))
-    #! nid: recur
+    #! label: recur
     _general_reduce_(op, neutral_val, x, y,
                      _circular_axes(axes, core.ndim(x), keepdims), keepdims)
     return y
@@ -185,7 +185,7 @@ def reduce_max_(x, y, axes: Sequence[int], keepdims: bool = True):
     keepdims : bool (Optional)
         Keep the reduced dimensions as singleton dimensions. Defaults to True
     '''
-    #! nid: impl
+    #! label: impl
     _general_reduce_(core.max, core.min_value(core.dtype(x)), x, y, axes,
                      keepdims)
 
@@ -210,7 +210,7 @@ def reduce_max(x, axes: Sequence[int], keepdims: bool = True):
     VarRef
         The result tensor
     '''
-    #! nid: impl
+    #! label: impl
     y = _general_reduce(core.max, core.min_value(core.dtype(x)), x, axes,
                         keepdims)
     return y
@@ -233,7 +233,7 @@ def reduce_min_(x, y, axes: Sequence[int], keepdims: bool = True):
     keepdims : bool (Optional)
         Keep the reduced dimensions as singleton dimensions. Defaults to True
     '''
-    #! nid: impl
+    #! label: impl
     _general_reduce_(core.min, core.max_value(core.dtype(x)), x, y, axes,
                      keepdims)
 
@@ -258,7 +258,7 @@ def reduce_min(x, axes: Sequence[int], keepdims: bool = True):
     VarRef
         The result tensor
     '''
-    #! nid: impl
+    #! label: impl
     y = _general_reduce(core.min, core.max_value(core.dtype(x)), x, axes,
                         keepdims)
     return y

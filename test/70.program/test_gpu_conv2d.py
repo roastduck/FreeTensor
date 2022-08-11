@@ -62,21 +62,21 @@ def test_manual_static():
                   "gpu/global"]
         B: ft.Var[(out_size, out_size, out_channel, batch), "float32", "output",
                   "gpu/global"]
-        #! nid: Ly
+        #! label: Ly
         for yy in range(out_size):
-            #! nid: Lx
+            #! label: Lx
             for xx in range(out_size):
-                #! nid: Lf
+                #! label: Lf
                 for ff in range(out_channel):
-                    #! nid: Ln
+                    #! label: Ln
                     for nn in range(batch):
-                        #! nid: init
+                        #! label: init
                         B[yy, xx, ff, nn] = 0.
-                        #! nid: Lry
+                        #! label: Lry
                         for ry in range(kernel):
-                            #! nid: Lrx
+                            #! label: Lrx
                             for rx in range(0, kernel):
-                                #! nid: Lrc
+                                #! label: Lrc
                                 for rc in range(0, in_channel):
                                     # TODO: Let y = yy * stride + ry - pad
                                     # TODO：Let x = xx * stride + rx - pad

@@ -3,7 +3,7 @@ import pytest
 
 
 def test_basic():
-    ft.MarkNid("Dy")
+    ft.MarkLabel("Dy")
     with ft.VarDef("y", (7, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 7) as i:
             with ft.For("j", 0, 8) as j:
@@ -25,7 +25,7 @@ def test_basic():
 
 
 def test_not_found():
-    ft.MarkNid("Dy")
+    ft.MarkLabel("Dy")
     with ft.VarDef("y", (7, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 7) as i:
             with ft.For("j", 0, 8) as j:
@@ -39,7 +39,7 @@ def test_not_found():
 
 
 def test_out_of_range():
-    ft.MarkNid("Dy")
+    ft.MarkLabel("Dy")
     with ft.VarDef("y", (7, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 7) as i:
             with ft.For("j", 0, 8) as j:

@@ -7,13 +7,13 @@ def test_gpu_basic():
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
                     ("y", (1000, 1000), "int32", "output", "gpu/global")
                    ]) as (x, y):
-        with ft.For("i", 0, 1000, nid="Li") as i:
-            ft.MarkNid("V_t")
+        with ft.For("i", 0, 1000, label="Li") as i:
+            ft.MarkLabel("V_t")
             with ft.VarDef("t", (), "int32", "cache", "gpu/global") as t:
                 t[()] = 0
-                with ft.For("j", 0, 1000, nid="Lj1") as j:
+                with ft.For("j", 0, 1000, label="Lj1") as j:
                     t[()] += x[i, j]
-                with ft.For("j", 0, 1000, nid="Lj2") as j:
+                with ft.For("j", 0, 1000, label="Lj2") as j:
                     y[i, j] = x[i, j] - t[()]
 
     ast = ft.pop_ast(verbose=True)
@@ -31,12 +31,12 @@ def test_gpu_local_across_loops():
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
                     ("y", (1000, 1000), "int32", "output", "gpu/global")
                    ]) as (x, y):
-        with ft.For("i", 0, 1000, nid="Li") as i:
-            ft.MarkNid("V_t")
+        with ft.For("i", 0, 1000, label="Li") as i:
+            ft.MarkLabel("V_t")
             with ft.VarDef("t", (1000,), "int32", "cache", "gpu/global") as t:
-                with ft.For("j", 0, 1000, nid="Lj1") as j:
+                with ft.For("j", 0, 1000, label="Lj1") as j:
                     t[j] = x[i, j] + 1
-                with ft.For("j", 0, 1000, nid="Lj2") as j:
+                with ft.For("j", 0, 1000, label="Lj2") as j:
                     y[i, j] = t[j] * 2
 
     ast = ft.pop_ast(verbose=True)

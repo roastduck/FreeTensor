@@ -69,7 +69,7 @@ class VarRef(ffi.FrontendVar):
                 "` becuase it has been borrowed in another tensor's shape, "
                 "a tensor slice, or a range of a loop")
         top = ctx_stack.top()
-        top.append_stmt(var.as_store(top.get_next_nid(), value))
+        top.append_stmt(var.as_store(top.get_metadata(), value))
 
     def select(self, idx, dim):
         assert isinstance(dim, int)

@@ -9,12 +9,12 @@ def test_pure_swap_forward():
         ("y3", (4,), "int32", "output", "cpu"),
         ("y4", (4,), "int32", "output", "cpu"),
     ]) as (y1, y2, y3, y4):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            ft.MarkNid("S1")
+        with ft.For("i", 0, 4, label="L1") as i:
+            ft.MarkLabel("S1")
             y1[i] = i + 1
             y2[i] = i + 2
             y3[i] = i + 3
-            ft.MarkNid("S2")
+            ft.MarkLabel("S2")
             y4[i] = i + 4
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -46,12 +46,12 @@ def test_pure_swap_backward():
         ("y3", (4,), "int32", "output", "cpu"),
         ("y4", (4,), "int32", "output", "cpu"),
     ]) as (y1, y2, y3, y4):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            ft.MarkNid("S1")
+        with ft.For("i", 0, 4, label="L1") as i:
+            ft.MarkLabel("S1")
             y1[i] = i + 1
             y2[i] = i + 2
             y3[i] = i + 3
-            ft.MarkNid("S2")
+            ft.MarkLabel("S2")
             y4[i] = i + 4
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -83,11 +83,11 @@ def test_swap_to_begin():
         ("y3", (4,), "int32", "output", "cpu"),
         ("y4", (4,), "int32", "output", "cpu"),
     ]) as (y1, y2, y3, y4):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             y1[i] = i + 1
             y2[i] = i + 2
             y3[i] = i + 3
-            ft.MarkNid("S1")
+            ft.MarkLabel("S1")
             y4[i] = i + 4
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -120,8 +120,8 @@ def test_swap_to_end():
         ("y3", (4,), "int32", "output", "cpu"),
         ("y4", (4,), "int32", "output", "cpu"),
     ]) as (y1, y2, y3, y4):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            ft.MarkNid("S1")
+        with ft.For("i", 0, 4, label="L1") as i:
+            ft.MarkLabel("S1")
             y1[i] = i + 1
             y2[i] = i + 2
             y3[i] = i + 3
@@ -155,9 +155,9 @@ def test_pure_fission_forward():
         ("y1", (4, 4), "int32", "output", "cpu"),
         ("y2", (4, 4), "int32", "output", "cpu"),
     ]) as (y1, y2):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 4, nid="L2") as j:
-                ft.MarkNid("S1")
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 4, label="L2") as j:
+                ft.MarkLabel("S1")
                 y1[i, j] = i * j + 1
                 y2[i, j] = i * j + 2
     ast = ft.pop_ast(verbose=True)
@@ -186,10 +186,10 @@ def test_pure_fission_backward():
         ("y1", (4, 4), "int32", "output", "cpu"),
         ("y2", (4, 4), "int32", "output", "cpu"),
     ]) as (y1, y2):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 4, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 4, label="L2") as j:
                 y1[i, j] = i * j + 1
-                ft.MarkNid("S1")
+                ft.MarkLabel("S1")
                 y2[i, j] = i * j + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -218,13 +218,13 @@ def test_swap_and_fission_forward():
         ("y2", (4, 4), "int32", "output", "cpu"),
         ("y3", (4, 4), "int32", "output", "cpu"),
     ]) as (y1, y2, y3):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            ft.MarkNid("S1")
+        with ft.For("i", 0, 4, label="L1") as i:
+            ft.MarkLabel("S1")
             y1[i] = i
-            with ft.For("j", 0, 4, nid="L2") as j:
-                ft.MarkNid("S2")
+            with ft.For("j", 0, 4, label="L2") as j:
+                ft.MarkLabel("S2")
                 y2[i, j] = i * j + 1
-                ft.MarkNid("S3")
+                ft.MarkLabel("S3")
                 y3[i, j] = i * j + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -255,13 +255,13 @@ def test_swap_and_fission_backward():
         ("y2", (4, 4), "int32", "output", "cpu"),
         ("y3", (4,), "int32", "output", "cpu"),
     ]) as (y1, y2, y3):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 4, nid="L2") as j:
-                ft.MarkNid("S2")
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 4, label="L2") as j:
+                ft.MarkLabel("S2")
                 y1[i, j] = i * j + 1
-                ft.MarkNid("S3")
+                ft.MarkLabel("S3")
                 y2[i, j] = i * j + 2
-            ft.MarkNid("S1")
+            ft.MarkLabel("S1")
             y3[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -292,11 +292,11 @@ def test_crossing_var_def():
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4, 4), "int32", "output", "cpu"),
     ]) as (x, y1, y2):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             y1[i] = i
-            with ft.For("j", 0, 4, nid="L2") as j:
+            with ft.For("j", 0, 4, label="L2") as j:
                 with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
-                    ft.MarkNid("S1")
+                    ft.MarkLabel("S1")
                     t[()] = x[i] * x[j]
                     y2[i, j] = t[()]
     ast = ft.pop_ast(verbose=True)

@@ -7,7 +7,7 @@ End users are encouraged to use `transformer`, instead of this module.
 '''
 
 import sys
-from typing import Sequence, Optional
+from typing import List, Sequence, Optional
 
 import freetensor_ffi as ffi
 
@@ -16,27 +16,43 @@ class Context:
 
     def __init__(self):
         self.stmt_seq = []
+
+        self.next_labels = []
+        self.next_location = None
+        self.caller_metadata: Optional[ffi.Metadata] = None
+        if len(ctx_stack.get_stack()) > 0:
+            self.caller_metadata = ctx_stack.top().caller_metadata
+
         self.last_if = None  # To handle else case
-        self.next_nid = ""
         self.next_no_deps = []
         self.next_prefer_libs = False
 
+    def get_metadata(self):
+        return ffi.SourceMetadata(self.next_labels, self.next_location,
+                                  self.caller_metadata)
+
+    def clear_metadata(self):
+        self.next_labels = []
+        self.next_location = None
+
     def append_stmt(self, stmt: ffi.Stmt):
         self.stmt_seq.append(stmt)
+
+        self.clear_metadata()
+
         self.last_if = None
-        self.next_nid = ""
         self.next_no_deps = []
         self.next_prefer_libs = False
 
     def append_if_then_stmt(self, cond, body: ffi.Stmt):
-        next_nid = self.next_nid
-        self.append_stmt(ffi.makeIf(next_nid, cond, body))
-        self.last_if = (next_nid, cond, body)
+        next_metadata = self.get_metadata()
+        self.append_stmt(ffi.makeIf(cond, body, next_metadata))
+        self.last_if = (next_metadata, cond, body)
 
     def append_if_else_stmt(self, elseCase: ffi.Stmt):
-        nid, cond, thenCase = self.last_if
+        metadata, cond, thenCase = self.last_if
         self.stmt_seq.pop()
-        self.append_stmt(ffi.makeIf(nid, cond, thenCase, elseCase))
+        self.append_stmt(ffi.makeIf(cond, thenCase, elseCase, metadata))
 
     def append_for_stmt(self,
                         iter_var,
@@ -44,34 +60,31 @@ class Context:
                         end,
                         step,
                         body,
-                        nid: str = "",
+                        metadata: ffi.Metadata = None,
                         no_deps: Optional[Sequence[str]] = None,
                         prefer_libs: Optional[bool] = None):
-        if nid == "":
-            nid = self.next_nid
+        if metadata == None:
+            metadata = self.get_metadata()
         if no_deps is None:
             no_deps = self.next_no_deps
         if prefer_libs is None:
             prefer_libs = self.next_prefer_libs
+        for_property = ffi.ForProperty(). \
+            with_no_deps(no_deps).with_prefer_libs(prefer_libs)
+
         from .expr import ceildiv
         self.append_stmt(
-            ffi.makeFor(
-                nid,
-                iter_var,
-                begin,
-                end,
-                step,
-                ceildiv(end - begin, step),
-                ffi.ForProperty().with_no_deps(no_deps).with_prefer_libs(
-                    prefer_libs),
-                body,
-            ))
+            ffi.makeFor(iter_var, begin, end, step, ceildiv(end - begin, step),
+                        for_property, body, metadata))
 
-    def set_next_nid(self, nid: str):
-        self.next_nid = nid
+    def add_label(self, label):
+        self.next_labels.append(label)
 
-    def get_next_nid(self):
-        return self.next_nid
+    def set_next_location(self, file, line):
+        self.next_location = (file, line)
+
+    def set_caller_metadata(self, metadata):
+        self.caller_metadata = metadata
 
     def add_next_no_deps(self, var):
         self.next_no_deps.append(var)
@@ -88,11 +101,12 @@ class Context:
     def get_next_prefer_libs(self):
         return self.next_prefer_libs
 
-    def make_stmt(self, nid: str = ""):
-        if len(self.stmt_seq) == 1 and nid == "":
+    def make_stmt(self, metadata: ffi.Metadata = None):
+        if len(self.stmt_seq) == 1 and metadata == None:
             return self.stmt_seq[0]
         else:
-            return ffi.makeStmtSeq(nid, self.stmt_seq)
+            return ffi.makeStmtSeq(self.stmt_seq, metadata or
+                                   ffi.SourceMetadata([]))
 
 
 class ContextStack:
@@ -103,7 +117,7 @@ class ContextStack:
     def reset(self):
         self.stack = [Context()]
 
-    def top(self):
+    def top(self) -> Context:
         return self.stack[-1]
 
     def push(self):
@@ -112,10 +126,10 @@ class ContextStack:
     def pop(self):
         return self.stack.pop()
 
-    def get_stack(self):
+    def get_stack(self) -> List[Context]:
         return self.stack
 
-    def set_stack(self, stack):
+    def set_stack(self, stack: List[Context]):
         self.stack = stack
 
 

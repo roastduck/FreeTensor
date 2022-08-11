@@ -15,7 +15,7 @@ n = 4
             )  # <-- 2. Apply the schedule
 def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
     y = ft.empty((n,), "int32")
-    #! nid: Li  # <-- 1. Name the loop as Li
+    #! label: Li  # <-- 1. Name the loop as Li
     for i in range(n):
         y[i] = a[i] + b[i]
     return y
@@ -27,8 +27,8 @@ print(y)
 
 Here is an example of a parallel vector addition executed with OpenMP multithreading. Each element is computed by one thread. To achieve this, there are two steps:
 
-1. Name the loop to be parallelized with a `#! nid:` comment. Here `nid` refers to node ID (of an AST node).
-2. Apply a `parallelize` schedule to `Li` in the `schedule_callback` argument to `optimize`.
+1. Name the loop to be parallelized with a `#! label:` comment. Here `label` refers to label of an AST node, which is not required to be unique.
+2. Apply a `parallelize` schedule to `Li` in the `schedule_callback` argument to `optimize`; since the `Li` label is unambiguous here, the only `Li` loop is selectd and parallelized.
 
 And you are done. You can have a look at the generated OpenMP multithreaded code by setting `verbose=1`.
 
@@ -55,7 +55,7 @@ def sch(s):
 @ft.optimize(schedule_callback=sch)
 def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
     y = ft.empty((n,), "int32")
-    #! nid: Li
+    #! label: Li
     for i in range(n):
         y[i] = a[i] + b[i]
     return y

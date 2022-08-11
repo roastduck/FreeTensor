@@ -4,8 +4,8 @@ import pytest
 
 def test_basic():
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
     ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
@@ -22,9 +22,9 @@ def test_basic():
 
 def test_multiple_loops():
     with ft.VarDef("y", (4, 8, 16), "int32", "output", "cpu") as y:
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
-                with ft.For("k", 0, 16, nid="L3") as k:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                with ft.For("k", 0, 16, label="L3") as k:
                     y[i, j, k] = (i + j) * k
     ast = ft.pop_ast(verbose=True)
     ast = ft.schedule(ast, lambda s: s.reorder(["L3", "L2", "L1"]), verbose=1)
@@ -43,9 +43,9 @@ def test_multiple_loops():
 def test_if_in_between():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             with ft.If(x[i] > 0):
-                with ft.For("j", 0, 8, nid="L2") as j:
+                with ft.For("j", 0, 8, label="L2") as j:
                     y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
     ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
@@ -65,9 +65,9 @@ def test_if_in_between():
 def test_stmt_in_between():
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu")]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             z[i] = i
-            with ft.For("j", 0, 8, nid="L2") as j:
+            with ft.For("j", 0, 8, label="L2") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
     ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
@@ -88,10 +88,10 @@ def test_stmt_in_between():
 def test_loop_in_between():
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4, 8), "int32", "output", "cpu")]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 z[i, j] = i * j
-            with ft.For("j", 0, 8, nid="L3") as j:
+            with ft.For("j", 0, 8, label="L3") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
     ast = ft.schedule(ast, lambda s: s.reorder(["L3", "L1"]), verbose=1)
@@ -112,8 +112,8 @@ def test_loop_in_between():
 
 def test_legal_dependence():
     with ft.VarDef("y", (8,), "int32", "inout", "cpu") as y:
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 y[j] = (y[j] + 1) * j
     ast = ft.pop_ast(verbose=True)
     ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
@@ -130,9 +130,9 @@ def test_legal_dependence():
 
 def test_legal_dependence_only_inner_loops():
     with ft.VarDef("y", (16,), "int32", "inout", "cpu") as y:
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
-                with ft.For("k", 0, 16, nid="L3") as k:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                with ft.For("k", 0, 16, label="L3") as k:
                     y[k] = (y[k] + 1) * j * k
     ast = ft.pop_ast(verbose=True)
     ast = ft.schedule(ast, lambda s: s.reorder(["L3", "L2"]), verbose=1)
@@ -151,8 +151,8 @@ def test_legal_dependence_only_inner_loops():
 def test_illegal_dependence():
     with ft.VarDef("y", (1,), "int32", "output", "cpu") as y:
         y[0] = 0
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 y[0] = y[0] * i + j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -165,9 +165,9 @@ def test_illegal_dependence():
 def test_illegal_dependence_of_stmt_in_between():
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (), "int32", "cache", "cpu")]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             z[()] = i * i
-            with ft.For("j", 0, 8, nid="L2") as j:
+            with ft.For("j", 0, 8, label="L2") as j:
                 y[i, j] = z[()] + j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -181,8 +181,8 @@ def test_reduction():
     with ft.VarDef([("x", (4, 8), "int32", "output", "cpu"),
                     ("y", (1,), "int32", "output", "cpu")]) as (x, y):
         y[0] = 0
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 y[0] = y[0] + x[i, j]
     ast = ft.pop_ast(verbose=True)
     ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
@@ -206,8 +206,8 @@ def test_local_var():
         ("y1", (4, 8), "int32", "output", "cpu"),
         ("y2", (4, 8), "int32", "output", "cpu"),
     ]) as (x0, x1, y1, y2):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 with ft.VarDef("buf", (1,), "int32", "cache", "cpu") as buf:
                     buf[0] = x0[i, j] + x1[i, j]
                     y1[i, j] = buf[0] * 2

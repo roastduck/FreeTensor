@@ -5,7 +5,7 @@ import pytest
 def test_basic():
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("Dc")
+        ft.MarkLabel("Dc")
         with ft.VarDef("c", (4, 8), "int32", "cache", "cpu") as c:
             with ft.For("i", 0, 4) as i:
                 with ft.For("j", 0, 8) as j:
@@ -22,7 +22,7 @@ def test_basic():
 
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("Dc")
+        ft.MarkLabel("Dc")
         with ft.VarDef("c", (8, 4), "int32", "cache", "cpu") as c:
             with ft.For("i", 0, 4) as i:
                 with ft.For("j", 0, 8) as j:
@@ -38,7 +38,7 @@ def test_basic():
 def test_not_found():
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("Dc")
+        ft.MarkLabel("Dc")
         with ft.VarDef("c", (4, 8), "int32", "cache", "cpu") as c:
             with ft.For("i", 0, 4) as i:
                 with ft.For("j", 0, 8) as j:
@@ -57,7 +57,7 @@ def test_not_found():
 def test_not_a_permutation():
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("Dc")
+        ft.MarkLabel("Dc")
         with ft.VarDef("c", (4, 8), "int32", "cache", "cpu") as c:
             with ft.For("i", 0, 4) as i:
                 with ft.For("j", 0, 8) as j:
