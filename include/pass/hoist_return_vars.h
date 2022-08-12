@@ -20,7 +20,7 @@ namespace freetensor {
  */
 class HoistReturnVars : public Mutator {
     Func func_;
-    ID outMostLoop_;
+    std::optional<ID> outMostLoop_;
     std::vector<VarDef> toHoist_; // inner to outer
 
   public:

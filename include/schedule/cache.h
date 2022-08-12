@@ -9,7 +9,7 @@ namespace freetensor {
 class MakeCacheVar : public Mutator {
     ID stmt_;
     std::string oldVar_, newVar_;
-    ID oldDef_, newDef_;
+    std::optional<ID> oldDef_, newDef_;
     MemType mtype_;
     VarDef def_;
     bool inStmt_ = false;
@@ -36,8 +36,8 @@ class MakeCacheVar : public Mutator {
     }
 
     const std::string &newVar() const { return newVar_; }
-    const ID &oldDef() const { return oldDef_; }
-    const ID &newDef() const { return newDef_; }
+    const std::optional<ID> &oldDef() const { return oldDef_; }
+    const std::optional<ID> &newDef() const { return newDef_; }
 
   protected:
     Stmt visitStmt(const Stmt &op) override;

@@ -71,20 +71,20 @@ inline ID mergeLoops(Schedule &schedule, std::vector<ID> loops) {
     return outermost;
 }
 
-inline std::vector<std::pair<ID, int>> splitLoop(Schedule &schedule, ID loop,
-                                                 std::vector<int> tiling) {
+inline std::vector<std::pair<std::optional<ID>, int>>
+splitLoop(Schedule &schedule, ID loop, std::vector<int> tiling) {
     int n = tiling.size();
-    std::vector<std::pair<ID, int>> result(n);
+    std::vector<std::pair<std::optional<ID>, int>> result(n);
     for (int i = 0; i < n - 1; i++) {
         if (tiling[i] != 1) {
             auto t = schedule.split(loop, tiling[i]);
             loop = t.first;
-            result[n - i - 1] = std::make_pair(t.second, tiling[i]);
+            result[n - i - 1] = {t.second, tiling[i]};
         } else {
-            result[n - i - 1] = std::make_pair("", 1);
+            result[n - i - 1] = {std::nullopt, 1};
         }
     }
-    result[0] = std::make_pair(loop, tiling[n - 1]);
+    result[0] = {loop, tiling[n - 1]};
     return result;
 }
 

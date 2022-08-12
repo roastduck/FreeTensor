@@ -14,7 +14,8 @@ void FindMultiLevelTiling::visit(const For &op) {
     if (!downward && !stackMarkBranch_.empty()) {
         stackMarkBranch_.back() = true;
     }
-    stack_.push_back({op->id(), -1, op->len_.as<IntConstNode>()->val_});
+    stack_.push_back(
+        {op->id(), op->metadata(), -1, op->len_.as<IntConstNode>()->val_});
     stackMarkBranch_.push_back(false);
     downward = true;
     if (op->body_->nodeType() == ASTNodeType::StmtSeq) {

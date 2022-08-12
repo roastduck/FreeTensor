@@ -444,8 +444,7 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                     }
                     // Leave IDs of the other statements unchanged
                     auto idMap =
-                        fission(s->id(), FissionSide::Before, stmt, "", ".b")
-                            .second;
+                        fission(s->id(), FissionSide::Before, stmt).second;
                     stmt = idMap.at(s->id());
                 }
                 // TODO: Fuse if d is inner of s
@@ -757,15 +756,15 @@ void Schedule::autoParallelize(const Target &target) {
                 }
 #endif // FT_WITH_CUDA
 
-                ID loopId, outerId;
+                std::optional<ID> outerId;
                 while (true) {
-                    loopId = loop->loop_->id();
+                    ID loopId = loop->loop_->id();
                     if (find(loopId).as<ForNode>()->property_->parallel_ !=
                         serialScope) {
                         break;
                     }
-                    if (outerId.isValid()) {
-                        loopId = merge(outerId, loopId);
+                    if (outerId) {
+                        loopId = merge(*outerId, loopId);
                     }
 
                     auto bak = ast_;

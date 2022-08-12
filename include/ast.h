@@ -225,6 +225,9 @@ class StmtOrExprID {
   public:
     StmtOrExprID(const ID &stmtId) : stmtId_(stmtId) {}
 
+    StmtOrExprID(const Expr &expr, const ID &stmtId)
+        : stmtId_(stmtId), expr_(expr) {}
+
     template <std::convertible_to<Stmt> T>
     StmtOrExprID(const Expr &expr, T &&parent) : stmtId_(parent->id()) {
         expr_ = expr;

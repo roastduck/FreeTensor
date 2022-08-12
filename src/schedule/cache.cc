@@ -23,8 +23,8 @@ Stmt MakeCacheVar::visitStmt(const Stmt &op) {
         inStmt_ = false;
         Ref<Buffer> newBuffer =
             makeBuffer(def_->buffer_->tensor(), AccessType::Cache, mtype_);
-        ret = makeVarDef(newVar_, std::move(newBuffer), nullptr,
-                         std::move(ret), false);
+        ret = makeVarDef(newVar_, std::move(newBuffer), nullptr, std::move(ret),
+                         false);
         oldDef_ = def_->id();
         newDef_ = ret->id();
         return ret;
@@ -250,66 +250,62 @@ Expr MakeInitAndReduce::visit(const Load &op) {
 
 std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
 cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
-    ID fillStmt, flushStmt, oldDef, newDef;
-    std::string newVar;
     MakeCacheVar makeCacheVar(stmt, var, mtype, false);
     auto ast = makeCacheVar(_ast);
-    newVar = makeCacheVar.newVar();
-    oldDef = makeCacheVar.oldDef();
-    newDef = makeCacheVar.newDef();
-    if (!newDef.isValid()) {
+    auto newVar = makeCacheVar.newVar();
+    auto oldDef = *makeCacheVar.oldDef();
+    auto newDef = makeCacheVar.newDef();
+    if (!newDef) {
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
     ast = simplify(ast);
-    auto rwBound = compAccessBound(ast, newDef);
-    auto wBound = compAccessBound(ast, newDef, COMP_ACCESS_BOUND_WRITE);
+    auto rwBound = compAccessBound(ast, *newDef);
+    auto wBound = compAccessBound(ast, *newDef, COMP_ACCESS_BOUND_WRITE);
     MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, rwBound,
                                       wBound);
     ast = makeFillAndFlush(ast);
-    fillStmt = makeFillAndFlush.fillStmt();
-    flushStmt = makeFillAndFlush.flushStmt();
+    auto fillStmt = makeFillAndFlush.fillStmt();
+    auto flushStmt = makeFillAndFlush.flushStmt();
 
     ast = simplify(ast);
-    ast = shrinkSingleVar(ast, newDef);
-    ast = removeWrites(ast, newDef);
-    checkVarCrossParallel(ast, newDef, mtype);
-    return std::make_pair(
-        ast, std::make_tuple(std::move(fillStmt), std::move(flushStmt),
-                             std::move(newVar), std::move(newDef)));
+    ast = shrinkSingleVar(ast, *newDef);
+    ast = removeWrites(ast, *newDef);
+    checkVarCrossParallel(ast, *newDef, mtype);
+    return {ast,
+            {std::move(fillStmt), std::move(flushStmt), std::move(newVar),
+             std::move(*newDef)}};
 }
 
 std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
 cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
                MemType mtype) {
-    ID initStmt, reduceStmt, oldDef, newDef;
-    std::string newVar;
     auto ast = makeReduction(_ast);
 
     MakeCacheVar makeCacheVar(stmt, var, mtype, true);
     ast = makeCacheVar(ast);
-    newVar = makeCacheVar.newVar();
-    oldDef = makeCacheVar.oldDef();
-    newDef = makeCacheVar.newDef();
-    if (!newDef.isValid()) {
+    auto newVar = makeCacheVar.newVar();
+    auto oldDef = *makeCacheVar.oldDef();
+    auto newDef = makeCacheVar.newDef();
+    if (!newDef) {
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
     ast = simplify(ast);
-    auto bound = compAccessBound(ast, newDef);
-    MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,
+    auto bound = compAccessBound(ast, *newDef);
+    MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, *newDef,
                                         bound);
     ast = makeInitAndReduce(ast);
-    initStmt = makeInitAndReduce.initStmt();
-    reduceStmt = makeInitAndReduce.reduceStmt();
+    auto initStmt = makeInitAndReduce.initStmt();
+    auto reduceStmt = makeInitAndReduce.reduceStmt();
 
     ast = simplify(ast);
-    ast = shrinkSingleVar(ast, newDef);
-    ast = removeWrites(ast, newDef);
-    checkVarCrossParallel(ast, newDef, mtype);
-    return std::make_pair(
-        ast, std::make_tuple(std::move(initStmt), std::move(reduceStmt),
-                             std::move(newVar), std::move(newDef)));
+    ast = shrinkSingleVar(ast, *newDef);
+    ast = removeWrites(ast, *newDef);
+    checkVarCrossParallel(ast, *newDef, mtype);
+    return {ast,
+            {std::move(initStmt), std::move(reduceStmt), std::move(newVar),
+             std::move(*newDef)}};
 }
 
 } // namespace freetensor

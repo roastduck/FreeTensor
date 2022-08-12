@@ -20,9 +20,9 @@
 namespace freetensor {
 
 void PropagateRequires::visit(const Load &op) {
-    if (isFloat(op->dtype()) && curTarget_.isValid() &&
+    if (isFloat(op->dtype()) && curTarget_ &&
         affectedDefs_.count(def(op->var_)->id())) {
-        affectedDefs_.insert(curTarget_);
+        affectedDefs_.insert(*curTarget_);
         // No need to recurse deeper
     }
 }
@@ -32,7 +32,7 @@ void PropagateRequires::visit(const Store &op) {
         curTarget_ = def(op->var_)->id();
         (*this)(op->expr_);
         // No need to recurse into indices
-        curTarget_ = "";
+        curTarget_ = std::nullopt;
     }
 }
 
@@ -41,7 +41,7 @@ void PropagateRequires::visit(const ReduceTo &op) {
         curTarget_ = def(op->var_)->id();
         (*this)(op->expr_);
         // No need to recurse into indices
-        curTarget_ = "";
+        curTarget_ = std::nullopt;
     }
 }
 
@@ -65,7 +65,7 @@ std::unordered_set<ID> PropagateRequires::propagateUntilConverge(
 }
 
 void PropagateProvides::visit(const Load &op) {
-    if (isFloat(op->dtype()) && curTarget_.isValid() &&
+    if (isFloat(op->dtype()) && curTarget_ &&
         buffer(op->var_)->atype() == AccessType::Cache) {
         affectedDefs_.insert(def(op->var_)->id());
         // No need to recurse deeper
@@ -77,7 +77,7 @@ void PropagateProvides::visit(const Store &op) {
         curTarget_ = def(op->var_)->id();
         (*this)(op->expr_);
         // No need to recurse into indices
-        curTarget_ = "";
+        curTarget_ = std::nullopt;
     }
 }
 
@@ -86,7 +86,7 @@ void PropagateProvides::visit(const ReduceTo &op) {
         curTarget_ = def(op->var_)->id();
         (*this)(op->expr_);
         // No need to recurse into indices
-        curTarget_ = "";
+        curTarget_ = std::nullopt;
     }
 }
 
