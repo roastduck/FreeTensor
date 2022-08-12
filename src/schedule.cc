@@ -165,10 +165,9 @@ std::vector<ID> Schedule::permute(
 }
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
-Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
-                  const std::string &suffix0, const std::string &suffix1) {
+Schedule::fission(const ID &loop, FissionSide side, const ID &splitter) {
     auto log = MAKE_LOG(Fission, std::bind_front(freetensor::fission, ast_),
-                        loop, side, splitter, suffix0, suffix1);
+                        loop, side, splitter);
     ScheduleLog logs = logs_.push(log);
     RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
@@ -417,10 +416,8 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                             "supported in moveTo");
                         // TODO: Fission IfNode
                     }
-                    // Leave IDs of the other statements unchanged
                     auto idMap =
-                        fission(s->id(), FissionSide::After, stmt, ".a", "")
-                            .first;
+                        fission(s->id(), FissionSide::After, stmt).first;
                     stmt = idMap.at(s->id());
                 }
                 // TODO: Fuse if d is inner of s
@@ -595,12 +592,10 @@ void Schedule::autoUseLib(const Target &target) {
                     auto logBak = logs_;
                     try {
                         fission(loop->loop_->id(), FissionSide::Before,
-                                stmt->id(), "." + std::to_string(i), "");
-                        auto libStmtId =
-                            fission(loop->loop_->id(), FissionSide::After,
-                                    stmt->id(),
-                                    "." + std::to_string(i) + ".lib", "")
-                                .first.at(loop->loop_->id());
+                                stmt->id());
+                        auto libStmtId = fission(loop->loop_->id(),
+                                                 FissionSide::After, stmt->id())
+                                             .first.at(loop->loop_->id());
                         asMatMul(libStmtId);
                     } catch (const InvalidSchedule &e) {
                         ast_ = std::move(bak), logs_ = std::move(logBak);

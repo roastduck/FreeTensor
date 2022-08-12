@@ -197,17 +197,12 @@ typedef Ref<StmtNode> Stmt;
 class ID {
     friend StmtNode;
 
-    std::string stmtId_;
+    int64_t id_;
+
+    static std::atomic_int64_t globalIdCnt_;
 
   public:
-    ID() {}
-    ID(const char *stmtId) : stmtId_(stmtId) {}
-    ID(const std::string &stmtId) : stmtId_(stmtId) {}
-    explicit ID(const Stmt &stmt);
-
-    bool isValid() const { return !stmtId_.empty(); }
-
-    const std::string &strId() const;
+    ID() : id_(globalIdCnt_++) {}
 
     friend std::ostream &operator<<(std::ostream &os, const ID &id);
     friend bool operator==(const ID &lhs, const ID &rhs);
@@ -230,8 +225,8 @@ class StmtOrExprID {
   public:
     StmtOrExprID(const ID &stmtId) : stmtId_(stmtId) {}
 
-    template <class T>
-    StmtOrExprID(const Expr &expr, T &&parent) : stmtId_(parent) {
+    template <std::convertible_to<Stmt> T>
+    StmtOrExprID(const Expr &expr, T &&parent) : stmtId_(parent->id()) {
         expr_ = expr;
     }
 
@@ -246,15 +241,11 @@ class StmtOrExprID {
 class StmtNode : public ASTNode {
     friend ID;
 
-    std::string id_;
-    static std::atomic<uint64_t> idCnt_;
-
+    ID id_;
     Metadata metadata_;
 
   public:
-    static std::string newId();
-
-    void setId(const ID &id);
+    void setId(const ID &id = {});
     ID id() const;
 
     const Metadata &metadata() const { return metadata_; }

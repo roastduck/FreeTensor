@@ -169,7 +169,7 @@ Stmt Grad::visit(const For &_op) {
         op->end_ = replaceByTape(op->end_);
         op->step_ = replaceByTape(op->step_);
         op->len_ = replaceByTape(op->len_);
-        op->setId("");
+        op->setId();
         op->metadata() = nullptr;
     } else {
         auto noDeps = op->property_->noDeps_;
@@ -201,7 +201,7 @@ Stmt Grad::visit(const If &_op) {
     ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
     op->cond_ = replaceByTape(op->cond_);
     if (isRecompute_) {
-        op->setId("");
+        op->setId();
         op->metadata() = nullptr;
     }
     return op;
@@ -214,7 +214,7 @@ Stmt Grad::visit(const Assert &_op) {
     ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
     op->cond_ = replaceByTape(op->cond_);
     if (isRecompute_) {
-        op->setId("");
+        op->setId();
         op->metadata() = nullptr;
     }
     return op;
@@ -238,7 +238,7 @@ Stmt Grad::visit(const VarDef &_op) {
     recomputed_.erase(op->name_);
 
     if (isRecompute_) {
-        op->setId("");
+        op->setId();
         op->metadata() = nullptr;
         return op;
     } else {
@@ -332,7 +332,7 @@ Stmt Grad::visit(const Store &op) {
         if (!recomputed && !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
             auto ret = ReplaceByTape(*this, tapeMap_, versions_, op)(op);
-            ret->setId("");
+            ret->setId();
             ret->metadata() = nullptr;
             return ret;
         } else {
@@ -405,7 +405,7 @@ Stmt Grad::visit(const ReduceTo &op) {
             !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
             auto ret = ReplaceByTape(*this, tapeMap_, versions_, op)(op);
-            ret->setId("");
+            ret->setId();
             ret->metadata() = nullptr;
             return ret;
         } else {

@@ -51,7 +51,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         auto &&r = op->property_->reductions_[i];
         auto dtype = buffer(r->var_)->tensor()->dtype();
         auto workspace =
-            "__reduce_" + op->id().strId() + "_" + std::to_string(i);
+            "__reduce_" + toString(op->id()) + "_" + std::to_string(i);
         std::vector<Expr> workspaceShape;
         for (auto &&[begin, end] : iter::zip(r->begins_, r->ends_)) {
             workspaceShape.emplace_back(makeSub(end, begin));
@@ -124,7 +124,7 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
                 "Parallel reduction over multiple scopes is not supported yet");
         }
         auto &&redLoop = redLoops.front();
-        auto workspace = "__reduce_" + redLoop.first->id().strId() + "_" +
+        auto workspace = "__reduce_" + toString(redLoop.first->id()) + "_" +
                          std::to_string(redLoop.second);
         auto &&begins =
             redLoop.first->property_->reductions_[redLoop.second]->begins_;

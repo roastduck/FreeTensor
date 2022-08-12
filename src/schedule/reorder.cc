@@ -39,7 +39,7 @@ Expr RenameIter::visit(const Var &_op) {
 
 Stmt RenameIter::visit(const For &_op) {
     if (_op->iter_ == oldName_) {
-        newName_ = oldName_ + "." + _op->id().strId();
+        newName_ = oldName_ + "." + toString(_op->id());
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();

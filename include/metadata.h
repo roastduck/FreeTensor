@@ -26,8 +26,10 @@ class MetadataContent {
 };
 using Metadata = Ref<MetadataContent>;
 
-std::function<std::ostream &(std::ostream &)> skipLocation(bool skip);
-std::ostream &operator<<(std::ostream &os, const Ref<MetadataContent> &mdc);
+std::ostream &manipMetadataSkipLocation(std::ostream &);
+std::ostream &manipMetadataWithLocation(std::ostream &);
+
+std::ostream &operator<<(std::ostream &os, const Metadata &md);
 
 class TransformedMetadataContent : public MetadataContent {
     std::string op_;
@@ -67,6 +69,8 @@ SourceMetadata
 makeMetadata(const std::vector<std::string> &labels,
              const std::optional<std::pair<std::string, int>> &location,
              const Metadata &callerMetadata);
+
+std::string toString(const Metadata &md, bool shouldSkipLocation = false);
 
 } // namespace freetensor
 

@@ -22,7 +22,8 @@ Stmt BackUnroll::visit(const For &_op) {
 Stmt ImmediateUnroll::visitStmt(const Stmt &op) {
     auto ret = Mutator::visitStmt(op);
     if (!iter_.empty()) {
-        ret->setId(ret->id().strId() + "." + std::to_string(curIter_));
+        ret->setId();
+        ret->metadata() = makeMetadata("unroll." + std::to_string(curIter_), ret);
     }
     return ret;
 }

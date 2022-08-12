@@ -6,13 +6,9 @@
 namespace freetensor {
 
 Stmt HoistVar::visitStmt(const Stmt &op) {
-    if (before_.isValid()) {
-        isAfter_ |= op->id() == before_;
-    }
+    isAfter_ |= op->id() == before_;
     auto ret = Mutator::visitStmt(op);
-    if (after_.isValid()) {
-        isAfter_ |= op->id() == after_;
-    }
+    isAfter_ |= op->id() == after_;
     return ret;
 }
 
@@ -73,7 +69,8 @@ Stmt HoistVar::visit(const StmtSeq &op) {
             auto afterNode =
                 after.size() > 1 ? makeStmtSeq(std::move(after)) : after[0];
             scopePairs_.emplace_back(beforeNode->id(), afterNode->id());
-            ret = makeStmtSeq({beforeNode, afterNode}, op->metadata(), op->id());
+            ret =
+                makeStmtSeq({beforeNode, afterNode}, op->metadata(), op->id());
         }
         return ret;
     }
@@ -156,14 +153,10 @@ Stmt FissionFor::visitStmt(const Stmt &op) {
     } else {
         auto oldAnyInside = anyInside_;
         anyInside_ = false;
-        if (before_.isValid()) {
-            isAfter_ |= op->id() == before_;
-        }
+        isAfter_ |= op->id() == before_;
         anyInside_ |= (isPart0_ && !isAfter_) || (!isPart0_ && isAfter_);
         auto ret = Mutator::visitStmt(op);
-        if (after_.isValid()) {
-            isAfter_ |= op->id() == after_;
-        }
+        isAfter_ |= op->id() == after_;
         if (!anyInside_) {
             ret = makeStmtSeq({});
         }
@@ -173,12 +166,14 @@ Stmt FissionFor::visitStmt(const Stmt &op) {
 }
 
 void FissionFor::markNewId(const Stmt &op, bool isPart0) {
-    ID oldId = op->id(), newId;
+    ID oldId = op->id();
+    op->setId();
+    ID newId = op->id();
     if (isPart0) {
-        op->setId(newId = oldId.strId() + suffix0_);
+        op->metadata() = makeMetadata("fission.0", op);
         ids0_.emplace(oldId, newId);
     } else {
-        op->setId(newId = oldId.strId() + suffix1_);
+        op->metadata() = makeMetadata("fission.1", op);
         ids1_.emplace(oldId, newId);
     }
 }
@@ -201,10 +196,10 @@ Stmt FissionFor::visit(const For &op) {
         isPart0_ = false, isAfter_ = false, anyInside_ = false;
         auto part1 = (*this)(op->body_);
         inside_ = false;
-        auto for0 = makeFor(op->iter_, begin, end, step, len,
-                            op->property_, part0, op->metadata(), op->id());
-        auto for1 = makeFor(op->iter_, begin, end, step, len,
-                            op->property_, part1, op->metadata(), op->id());
+        auto for0 = makeFor(op->iter_, begin, end, step, len, op->property_,
+                            part0, op->metadata(), op->id());
+        auto for1 = makeFor(op->iter_, begin, end, step, len, op->property_,
+                            part1, op->metadata(), op->id());
         markNewId(for0, true);
         markNewId(for1, false);
         return makeStmtSeq({for0, for1});
@@ -280,19 +275,18 @@ Stmt FissionFor::visit(const Assert &op) {
 
 std::pair<Stmt,
           std::pair<std::unordered_map<ID, ID>, std::unordered_map<ID, ID>>>
-fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
-        const std::string &suffix0, const std::string &suffix1) {
+fission(const Stmt &_ast, const ID &loop, FissionSide side,
+        const ID &splitter) {
     // FIXME: Check the condition is not variant when splitting an If
 
-    if (suffix0 == suffix1) {
-        throw InvalidSchedule("suffix0 cannot be the same with suffix1");
-    }
-
-    HoistVar hoist(loop, side == FissionSide::Before ? splitter : "",
-                   side == FissionSide::After ? splitter : "");
-    FissionFor mutator(loop, side == FissionSide::Before ? splitter : "",
-                       side == FissionSide::After ? splitter : suffix0,
-                       suffix1);
+    HoistVar hoist(
+        loop,
+        side == FissionSide::Before ? std::optional(splitter) : std::nullopt,
+        side == FissionSide::After ? std::optional(splitter) : std::nullopt);
+    FissionFor mutator(
+        loop,
+        side == FissionSide::Before ? std::optional(splitter) : std::nullopt,
+        side == FissionSide::After ? std::optional(splitter) : std::nullopt);
 
     auto ast = hoist(_ast);
     if (!hoist.found()) {

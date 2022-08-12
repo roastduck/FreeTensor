@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include <itertools.hpp>
 
 #include <metadata.h>
@@ -8,11 +10,13 @@ namespace {
 const int metadataSkipLocation = std::ios_base::xalloc();
 } // namespace
 
-std::function<std::ostream &(std::ostream &)> skipLocation(bool skip) {
-    return [skip](std::ostream &os) -> std::ostream & {
-        os.iword(metadataSkipLocation) = skip;
-        return os;
-    };
+std::ostream &manipMetadataSkipLocation(std::ostream &os) {
+    os.iword(metadataSkipLocation) = true;
+    return os;
+}
+std::ostream &manipMetadataWithLocation(std::ostream &os) {
+    os.iword(metadataSkipLocation) = false;
+    return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const Ref<MetadataContent> &mdc) {
@@ -68,6 +72,14 @@ makeMetadata(const std::vector<std::string> &labels,
              const std::optional<std::pair<std::string, int>> &location,
              const Metadata &callerMetadata) {
     return Ref<SourceMetadataContent>::make(labels, location, callerMetadata);
+}
+
+std::string toString(const Metadata &md, bool shouldSkipLocation) {
+    std::ostringstream oss;
+    if (shouldSkipLocation)
+        oss << manipMetadataSkipLocation;
+    oss << md;
+    return oss.str();
 }
 
 } // namespace freetensor

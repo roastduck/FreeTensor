@@ -144,7 +144,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
         // atomic operation. We will cache over some serial inner loops, if
         // reduction is invariant to this loop, or if the loop densly iterates
         // over the reduction
-        ID loopToCache;
+        std::optional<ID> loopToCache;
         std::vector<bool> preserveDim(op->indices_.size(), false);
         if (serialOverRed_.count(op->id())) {
             for (auto &&loop : serialOverRed_.at(op->id())) {
@@ -167,9 +167,9 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             }
         }
     found_loop_to_cache:
-        if (loopToCache.isValid()) {
+        if (loopToCache) {
             std::vector<Expr> newShape, newTargetIndices;
-            op->var_ += ".atomic_cache." + op->id().strId();
+            op->var_ += ".atomic_cache." + toString(op->id());
             op->indices_ = {};
             for (auto &&[preserve, idx, dim] :
                  iter::zip(preserveDim, _op->indices_,
@@ -182,8 +182,8 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                     newTargetIndices.emplace_back(idx);
                 }
             }
-            cacheAtomic_[loopToCache].emplace_back(_op, newShape,
-                                                   newTargetIndices);
+            cacheAtomic_[*loopToCache].emplace_back(_op, newShape,
+                                                    newTargetIndices);
         } else {
             op->atomic_ = true;
         }
@@ -222,7 +222,7 @@ Stmt MakeParallelReduction::visit(const For &_op) {
         for (auto &&[reduce, newShape, targetIndices] :
              cacheAtomic_.at(op->id())) {
             auto cacheName =
-                reduce->var_ + ".atomic_cache." + reduce->id().strId();
+                reduce->var_ + ".atomic_cache." + toString(reduce->id());
             auto dtype = buffer(reduce->var_)->tensor()->dtype();
             auto mtype = localMType(buffer(reduce->var_)->mtype());
             std::vector<Expr> cacheIndices;
@@ -248,11 +248,10 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                 cacheIndices, iter::repeat(makeIntConst(0)), newShape,
                 iter::repeat(makeIntConst(1)), newShape,
                 iter::repeat(Ref<ForProperty>::make()), flush);
-            ret =
-                makeVarDef(cacheName,
-                           makeBuffer(makeTensor(newShape, dtype),
-                                      AccessType::Cache, mtype),
-                           nullptr, makeStmtSeq({init, ret, flush}), false);
+            ret = makeVarDef(cacheName,
+                             makeBuffer(makeTensor(newShape, dtype),
+                                        AccessType::Cache, mtype),
+                             nullptr, makeStmtSeq({init, ret, flush}), false);
         }
         return ret;
     } else {

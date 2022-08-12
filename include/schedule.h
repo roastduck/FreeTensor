@@ -206,18 +206,12 @@ class Schedule {
      * @param side : If `After`, `splitter` is the last statement of the first
      * loop. If `Before`, `splitter` is the first statement of the second loop
      * @param splitter : Where to fission the loop
-     * @param suffix0 : ID suffix of the statements in the first loop, default
-     * to ".a", can be "" for convenience, but cannot be the same with suffix1
-     * @param suffix1 : ID suffix of the statements in the second loop, default
-     * to ".b", can be "" for convenience, but cannot be the same with suffix0
      * @throw InvalidSchedule if any dependency cannot be resolved
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
      * loop})
      */
     std::pair<IDMap, IDMap> fission(const ID &loop, FissionSide side,
-                                    const ID &splitter,
-                                    const std::string &suffix0 = ".a",
-                                    const std::string &suffix1 = ".b");
+                                    const ID &splitter);
 
     /**
      * Fuse two directly following loops with the same length into one

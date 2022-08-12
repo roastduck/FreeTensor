@@ -194,17 +194,13 @@ void ExprNode::resetDType() {
     }
 }
 
-ID::ID(const Stmt &stmt) : ID(stmt->id_) {}
-
-const std::string &ID::strId() const { return stmtId_; }
+std::atomic_int64_t ID::globalIdCnt_ = 0;
 
 std::ostream &operator<<(std::ostream &os, const ID &id) {
-    return os << id.stmtId_;
+    return os << id.id_;
 }
 
-bool operator==(const ID &lhs, const ID &rhs) {
-    return lhs.stmtId_ == rhs.stmtId_;
-}
+bool operator==(const ID &lhs, const ID &rhs) { return lhs.id_ == rhs.id_; }
 
 std::ostream &operator<<(std::ostream &os, const StmtOrExprID &id) {
     if (id.expr_.isValid())
@@ -217,18 +213,8 @@ bool operator==(const StmtOrExprID &lhs, const StmtOrExprID &rhs) {
     return lhs.stmtId_ == rhs.stmtId_ && HashComparator()(lhs.expr_, rhs.expr_);
 }
 
-std::atomic<uint64_t> StmtNode::idCnt_ = 0;
-
-std::string StmtNode::newId() { return "#" + std::to_string(idCnt_++); }
-
-void StmtNode::setId(const ID &id) {
-    if (!id.isValid())
-        id_ = newId();
-    else
-        id_ = id.stmtId_;
-}
-
-ID StmtNode::id() const { return ID(id_); }
+void StmtNode::setId(const ID &id) { id_ = id; }
+ID StmtNode::id() const { return id_; }
 
 Expr deepCopy(const Expr &op) { return Mutator()(op); }
 Stmt deepCopy(const Stmt &op) { return Mutator()(op); }
@@ -262,7 +248,7 @@ Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs) {
 namespace std {
 
 size_t hash<freetensor::ID>::operator()(const freetensor::ID &id) const {
-    return std::hash<std::string>()(id.stmtId_);
+    return std::hash<int64_t>()(id.id_);
 }
 
 size_t hash<freetensor::StmtOrExprID>::operator()(
