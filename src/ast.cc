@@ -214,8 +214,10 @@ bool operator==(const StmtOrExprID &lhs, const StmtOrExprID &rhs) {
 }
 
 void StmtNode::setId(const ID &id) {
-    ASSERT(id.isValid());
-    id_ = id;
+    if (!id.isValid())
+        id_ = ID::make();
+    else
+        id_ = id;
 }
 ID StmtNode::id() const { return id_; }
 

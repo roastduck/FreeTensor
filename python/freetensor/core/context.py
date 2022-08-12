@@ -14,14 +14,12 @@ import freetensor_ffi as ffi
 
 class Context:
 
-    def __init__(self):
+    def __init__(self, caller_metadata: Optional[ffi.Metadata] = None):
         self.stmt_seq = []
 
         self.next_labels = []
         self.next_location = None
-        self.caller_metadata: Optional[ffi.Metadata] = None
-        if len(ctx_stack.get_stack()) > 0:
-            self.caller_metadata = ctx_stack.top().caller_metadata
+        self.caller_metadata = caller_metadata
 
         self.last_if = None  # To handle else case
         self.next_no_deps = []
@@ -121,7 +119,7 @@ class ContextStack:
         return self.stack[-1]
 
     def push(self):
-        self.stack.append(Context())
+        self.stack.append(Context(self.top().caller_metadata))
 
     def pop(self):
         return self.stack.pop()

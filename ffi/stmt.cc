@@ -112,49 +112,51 @@ void init_ffi_ast_stmt(py::module_ &m) {
     m.def("makeStmtSeq",
           static_cast<Stmt (*)(const std::vector<Stmt> &, const Metadata &,
                                const ID &)>(&_makeStmtSeq),
-          "stmts"_a, "metadata"_a, "id"_a = nullptr);
+          "stmts"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeVarDef",
           static_cast<Stmt (*)(const std::string &, const Ref<Buffer> &,
                                const Ref<Tensor> &, const Stmt &, bool,
                                const Metadata &, const ID &)>(&_makeVarDef),
           "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a,
-          "metadata"_a, "id"_a = nullptr);
+          "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeStore",
           static_cast<Stmt (*)(const std::string &, const std::vector<Expr> &,
                                const Expr &, const Metadata &, const ID &)>(
               &_makeStore<const Expr &>),
-          "var"_a, "indices"_a, "expr"_a, "metadata"_a, "id"_a = nullptr);
+          "var"_a, "indices"_a, "expr"_a, "metadata"_a,
+          py::arg_v("id", ID(), "ID()"));
     m.def("makeAlloc",
           static_cast<Stmt (*)(const std::string &, const Metadata &,
                                const ID &)>(&_makeAlloc),
-          "var"_a, "metadata"_a, "id"_a = nullptr);
+          "var"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeFree",
           static_cast<Stmt (*)(const std::string &, const Metadata &,
                                const ID &)>(&_makeFree),
-          "var"_a, "metadata"_a, "id"_a = nullptr);
+          "var"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeFor",
           static_cast<Stmt (*)(const std::string &, const Expr &, const Expr &,
                                const Expr &, const Expr &,
                                const Ref<ForProperty> &, const Stmt &,
                                const Metadata &, const ID &)>(&_makeFor),
           "iter"_a, "begin"_a, "end"_a, "step"_a, "len"_a, "property"_a,
-          "body"_a, "metadata"_a, "id"_a = nullptr);
+          "body"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeIf",
           static_cast<Stmt (*)(const Expr &, const Stmt &, const Stmt &,
                                const Metadata &, const ID &)>(&_makeIf),
-          "cond"_a, "thenCase"_a, "elseCase"_a, "metadata"_a, "id"_a = nullptr);
+          "cond"_a, "thenCase"_a, "elseCase"_a, "metadata"_a,
+          py::arg_v("id", ID(), "ID()"));
     m.def("makeIf",
           static_cast<Stmt (*)(const Expr &, const Stmt &, const Metadata &,
                                const ID &)>(&_makeIf),
-          "cond"_a, "thenCase"_a, "metadata"_a, "id"_a = nullptr);
+          "cond"_a, "thenCase"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeAssert",
           static_cast<Stmt (*)(const Expr &, const Stmt &, const Metadata &,
                                const ID &)>(&_makeAssert),
-          "cond"_a, "body"_a, "metadata"_a, "id"_a = nullptr);
+          "cond"_a, "body"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeEval",
           static_cast<Stmt (*)(const Expr &, const Metadata &, const ID &)>(
               &_makeEval),
-          "expr"_a, "metadata"_a, "id"_a = nullptr);
+          "expr"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
 }
 
 } // namespace freetensor
