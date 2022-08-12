@@ -756,15 +756,15 @@ void Schedule::autoParallelize(const Target &target) {
                 }
 #endif // FT_WITH_CUDA
 
-                std::optional<ID> outerId;
+                ID outerId;
                 while (true) {
                     ID loopId = loop->loop_->id();
                     if (find(loopId).as<ForNode>()->property_->parallel_ !=
                         serialScope) {
                         break;
                     }
-                    if (outerId) {
-                        loopId = merge(*outerId, loopId);
+                    if (outerId.isValid()) {
+                        loopId = merge(outerId, loopId);
                     }
 
                     auto bak = ast_;
@@ -1002,7 +1002,8 @@ Schedule::multiLevelTiling(const ForsWithDataReuse &target,
                            const std::string &pat, int level) {
     return freetensor::multiLevelTiling(*this, target, annotation, pat, level);
 }
-std::vector<std::pair<ID, int>> Schedule::multiLevelTilingWithFusion(
+std::vector<std::pair<ID, int>>
+Schedule::multiLevelTilingWithFusion(
     const ForsWithDataReuse &target,
     const MultiLevelTilingAnnotation &annotation, const std::string &pat,
     const ElementWiseInfo &toFuse, int level, TargetType targetType,

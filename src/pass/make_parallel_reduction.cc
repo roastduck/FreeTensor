@@ -144,7 +144,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
         // atomic operation. We will cache over some serial inner loops, if
         // reduction is invariant to this loop, or if the loop densly iterates
         // over the reduction
-        std::optional<ID> loopToCache;
+        ID loopToCache;
         std::vector<bool> preserveDim(op->indices_.size(), false);
         if (serialOverRed_.count(op->id())) {
             for (auto &&loop : serialOverRed_.at(op->id())) {
@@ -167,7 +167,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             }
         }
     found_loop_to_cache:
-        if (loopToCache) {
+        if (loopToCache.isValid()) {
             std::vector<Expr> newShape, newTargetIndices;
             op->var_ += ".atomic_cache." + toString(op->id());
             op->indices_ = {};
@@ -182,7 +182,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                     newTargetIndices.emplace_back(idx);
                 }
             }
-            cacheAtomic_[*loopToCache].emplace_back(_op, newShape,
+            cacheAtomic_[loopToCache].emplace_back(_op, newShape,
                                                     newTargetIndices);
         } else {
             op->atomic_ = true;

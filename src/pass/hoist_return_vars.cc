@@ -7,21 +7,21 @@ Stmt HoistReturnVars::visit(const VarDef &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
-    if (outMostLoop_ &&
+    if (outMostLoop_.isValid() &&
         std::find_if(func_->returns_.begin(), func_->returns_.end(),
                      [&](const FuncRet &ret) {
                          return ret.name_ == op->name_;
                      }) != func_->returns_.end()) {
         for (auto &&dim : op->buffer_->tensor()->shape()) {
-            if (!checkNotModified(
-                    func_->body_, dim, CheckNotModifiedSide::Before, op->id(),
-                    CheckNotModifiedSide::Before, *outMostLoop_)) {
+            if (!checkNotModified(func_->body_, dim,
+                                  CheckNotModifiedSide::Before, op->id(),
+                                  CheckNotModifiedSide::Before, outMostLoop_)) {
                 throw InvalidProgram(
                     "A `Func`'s returning values are allocated during run "
                     "time, and the allocation cannot be parallelized. "
                     "Furthermore, "
                     "it is unable to hoist " +
-                    op->name_ + " out of " + toString(*outMostLoop_) +
+                    op->name_ + " out of " + toString(outMostLoop_) +
                     " or the dimension size " + toString(dim) +
                     " will be modified");
             }
@@ -33,10 +33,10 @@ Stmt HoistReturnVars::visit(const VarDef &_op) {
 }
 
 Stmt HoistReturnVars::visit(const For &op) {
-    if (!outMostLoop_) {
+    if (!outMostLoop_.isValid()) {
         outMostLoop_ = op->id();
         auto ret = Mutator::visit(op);
-        outMostLoop_ = std::nullopt;
+        outMostLoop_ = {};
 
         for (auto def : toHoist_) {
             ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,

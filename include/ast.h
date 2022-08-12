@@ -200,9 +200,13 @@ class ID {
     int64_t id_;
 
     static std::atomic_int64_t globalIdCnt_;
+    explicit ID(int64_t id) : id_(id) {}
 
   public:
-    ID() : id_(globalIdCnt_++) {}
+    ID() : id_(-1) {}
+
+    static ID make() { return ID(globalIdCnt_++); }
+    bool isValid() const { return id_ != -1; }
 
     friend std::ostream &operator<<(std::ostream &os, const ID &id);
     friend bool operator==(const ID &lhs, const ID &rhs);
@@ -248,7 +252,7 @@ class StmtNode : public ASTNode {
     Metadata metadata_;
 
   public:
-    void setId(const ID &id = {});
+    void setId(const ID &id = ID::make());
     ID id() const;
 
     const Metadata &metadata() const { return metadata_; }

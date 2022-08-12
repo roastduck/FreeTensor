@@ -253,15 +253,15 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
     MakeCacheVar makeCacheVar(stmt, var, mtype, false);
     auto ast = makeCacheVar(_ast);
     auto newVar = makeCacheVar.newVar();
-    auto oldDef = *makeCacheVar.oldDef();
+    auto oldDef = makeCacheVar.oldDef();
     auto newDef = makeCacheVar.newDef();
-    if (!newDef) {
+    if (newDef.isValid()) {
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
     ast = simplify(ast);
-    auto rwBound = compAccessBound(ast, *newDef);
-    auto wBound = compAccessBound(ast, *newDef, COMP_ACCESS_BOUND_WRITE);
+    auto rwBound = compAccessBound(ast, newDef);
+    auto wBound = compAccessBound(ast, newDef, COMP_ACCESS_BOUND_WRITE);
     MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, rwBound,
                                       wBound);
     ast = makeFillAndFlush(ast);
@@ -269,12 +269,12 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
     auto flushStmt = makeFillAndFlush.flushStmt();
 
     ast = simplify(ast);
-    ast = shrinkSingleVar(ast, *newDef);
-    ast = removeWrites(ast, *newDef);
-    checkVarCrossParallel(ast, *newDef, mtype);
+    ast = shrinkSingleVar(ast, newDef);
+    ast = removeWrites(ast, newDef);
+    checkVarCrossParallel(ast, newDef, mtype);
     return {ast,
             {std::move(fillStmt), std::move(flushStmt), std::move(newVar),
-             std::move(*newDef)}};
+             std::move(newDef)}};
 }
 
 std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
@@ -285,27 +285,27 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
     MakeCacheVar makeCacheVar(stmt, var, mtype, true);
     ast = makeCacheVar(ast);
     auto newVar = makeCacheVar.newVar();
-    auto oldDef = *makeCacheVar.oldDef();
+    auto oldDef = makeCacheVar.oldDef();
     auto newDef = makeCacheVar.newDef();
-    if (!newDef) {
+    if (!newDef.isValid()) {
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
     ast = simplify(ast);
-    auto bound = compAccessBound(ast, *newDef);
-    MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, *newDef,
+    auto bound = compAccessBound(ast, newDef);
+    MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,
                                         bound);
     ast = makeInitAndReduce(ast);
     auto initStmt = makeInitAndReduce.initStmt();
     auto reduceStmt = makeInitAndReduce.reduceStmt();
 
     ast = simplify(ast);
-    ast = shrinkSingleVar(ast, *newDef);
-    ast = removeWrites(ast, *newDef);
-    checkVarCrossParallel(ast, *newDef, mtype);
+    ast = shrinkSingleVar(ast, newDef);
+    ast = removeWrites(ast, newDef);
+    checkVarCrossParallel(ast, newDef, mtype);
     return {ast,
             {std::move(initStmt), std::move(reduceStmt), std::move(newVar),
-             std::move(*newDef)}};
+             std::move(newDef)}};
 }
 
 } // namespace freetensor

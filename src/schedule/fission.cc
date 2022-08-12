@@ -279,14 +279,10 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side,
         const ID &splitter) {
     // FIXME: Check the condition is not variant when splitting an If
 
-    HoistVar hoist(
-        loop,
-        side == FissionSide::Before ? std::optional(splitter) : std::nullopt,
-        side == FissionSide::After ? std::optional(splitter) : std::nullopt);
-    FissionFor mutator(
-        loop,
-        side == FissionSide::Before ? std::optional(splitter) : std::nullopt,
-        side == FissionSide::After ? std::optional(splitter) : std::nullopt);
+    HoistVar hoist(loop, side == FissionSide::Before ? splitter : ID{},
+                   side == FissionSide::After ? splitter : ID{});
+    FissionFor mutator(loop, side == FissionSide::Before ? splitter : ID{},
+                       side == FissionSide::After ? splitter : ID{});
 
     auto ast = hoist(_ast);
     if (!hoist.found()) {
@@ -351,7 +347,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side,
 
     ast = mutator(ast);
     ast = mergeAndHoistIf(ast);
-    return std::make_pair(ast, std::make_pair(mutator.ids0(), mutator.ids1()));
+    return {ast, {mutator.ids0(), mutator.ids1()}};
 }
 
 } // namespace freetensor

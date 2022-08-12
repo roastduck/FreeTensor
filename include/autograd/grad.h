@@ -24,7 +24,7 @@ class PropagateRequires : public SymbolTable<Visitor> {
 
     std::unordered_set<ID> affectedDefs_; // all VarDef IDs
 
-    std::optional<ID> curTarget_; // VarDef ID of current var being written to
+    ID curTarget_; // VarDef ID of current var being written to
 
   public:
     PropagateRequires(const std::unordered_set<std::string> &_requires,
@@ -58,7 +58,7 @@ class PropagateProvides : public SymbolTable<Visitor> {
 
     std::unordered_set<ID> affectedDefs_; // all VarDef IDs
 
-    std::optional<ID> curTarget_; // VarDef ID of current var being written to
+    ID curTarget_; // VarDef ID of current var being written to
 
   public:
     PropagateProvides(const std::unordered_set<std::string> &_requires,

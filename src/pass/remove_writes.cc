@@ -179,7 +179,7 @@ Stmt RemoveWrites::visit(const If &_op) {
     return op;
 }
 
-Stmt removeWrites(const Stmt &_op, std::optional<ID> singleDefId) {
+Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     auto op = makeReduction(_op);
 
     // A new Store/ReduceTo node may contain Load nodes out of their VarDef

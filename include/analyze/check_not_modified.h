@@ -34,9 +34,7 @@ class CheckNameToDefMapping : public SymbolTable<Visitor> {
 
 class InsertTmpEval : public Mutator {
     Expr s0Expr_, s1Expr_;
-    ID s0_, s1_;
-    // optional for outputs
-    std::optional<ID> s0Eval_, s1Eval_;
+    ID s0_, s1_, s0Eval_, s1Eval_;
     CheckNotModifiedSide s0Side_, s1Side_;
 
   public:
@@ -46,8 +44,8 @@ class InsertTmpEval : public Mutator {
         : s0Expr_(s0Expr), s1Expr_(s1Expr), s0_(s0), s1_(s1), s0Side_(s0Side),
           s1Side_(s1Side) {}
 
-    const std::optional<ID> &s0Eval() const { return s0Eval_; }
-    const std::optional<ID> &s1Eval() const { return s1Eval_; }
+    const ID &s0Eval() const { return s0Eval_; }
+    const ID &s1Eval() const { return s1Eval_; }
 
   protected:
     Stmt visitStmt(const Stmt &op) override;

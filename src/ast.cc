@@ -213,7 +213,10 @@ bool operator==(const StmtOrExprID &lhs, const StmtOrExprID &rhs) {
     return lhs.stmtId_ == rhs.stmtId_ && HashComparator()(lhs.expr_, rhs.expr_);
 }
 
-void StmtNode::setId(const ID &id) { id_ = id; }
+void StmtNode::setId(const ID &id) {
+    ASSERT(id.isValid());
+    id_ = id;
+}
 ID StmtNode::id() const { return id_; }
 
 Expr deepCopy(const Expr &op) { return Mutator()(op); }

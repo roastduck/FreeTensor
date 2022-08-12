@@ -132,7 +132,8 @@ std::string FindMultiLevelTiling::hasStore(const For &op) {
 }
 
 void FindHasStore::visit(const For &op) {
-    stack_.push_back({op->id(), -1, op->len_.as<IntConstNode>()->val_});
+    stack_.push_back(
+        {op->id(), op->metadata(), -1, op->len_.as<IntConstNode>()->val_});
     Visitor::visit(op);
     stack_.pop_back();
 }

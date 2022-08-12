@@ -6,7 +6,7 @@
 
 namespace freetensor {
 
-std::vector<std::pair<std::optional<ID>, int>>
+std::vector<std::pair<ID, int>>
 _multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
                   const MultiLevelTilingAnnotation &annotation,
                   const std::string &pat) {
@@ -17,9 +17,8 @@ _multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
                                  ? 0
                                  : annotation.reductionLoopTiling[0].size();
 
-    std::vector<std::vector<std::pair<std::optional<ID>, int>>> spaceSplit(
-        spaceLoopLength);
-    std::vector<std::vector<std::pair<std::optional<ID>, int>>> reductionSplit(
+    std::vector<std::vector<std::pair<ID, int>>> spaceSplit(spaceLoopLength);
+    std::vector<std::vector<std::pair<ID, int>>> reductionSplit(
         reductionLoopLength);
 
     for (int i = 0; i < spaceLoopLength; i++) {
@@ -31,7 +30,7 @@ _multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
                                       annotation.reductionLoopTiling[i]);
     }
 
-    std::vector<std::pair<std::optional<ID>, int>> tiles;
+    std::vector<std::pair<ID, int>> tiles;
     tiles.reserve(spaceLoopTimes * spaceLoopLength +
                   reductionLoopTimes * reductionLoopLength);
     int nowSpace = 0;
@@ -52,7 +51,7 @@ _multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
     std::vector<ID> labels;
     for (const auto &tile : tiles) {
         if (tile.second > 1) {
-            labels.push_back(*tile.first);
+            labels.push_back(tile.first);
         }
     }
     if (!labels.empty()) {
@@ -98,7 +97,7 @@ multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
             if (firstTiles[i].second > 1) {
                 fissionIDs.push_back(firstTiles[i].first);
                 secondTarget.spaceLoops[i - lastTileStart].id =
-                    firstTiles[i].first.strId();
+                    firstTiles[i].first;
                 secondTarget.spaceLoops[i - lastTileStart].length =
                     firstTiles[i].second;
             }
@@ -159,7 +158,7 @@ multiLevelTilingWithFusion(Schedule &schedule, const ForsWithDataReuse &target,
     ID lastFuse;
     for (size_t i = 0; i < fuseTileSize; i++) {
         if (fuseTiles[i].second > 1) {
-            lastFuse = tiles[i].first =
+            tiles[i].first = lastFuse =
                 schedule.fuse(tiles[i].first, fuseTiles[i].first);
         }
     }

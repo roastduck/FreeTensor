@@ -71,11 +71,11 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
     InsertTmpEval inserter(s0Expr, s1Expr, s0Side, s0, s1Side, s1);
     auto tmpOp = inserter(op);
     tmpOp = flattenStmtSeq(tmpOp);
-    ASSERT(inserter.s0Eval());
-    ASSERT(inserter.s1Eval());
+    ASSERT(inserter.s0Eval().isValid());
+    ASSERT(inserter.s1Eval().isValid());
 
-    auto s0Eval = findStmt(tmpOp, *inserter.s0Eval());
-    auto s1Eval = findStmt(tmpOp, *inserter.s1Eval());
+    auto s0Eval = findStmt(tmpOp, inserter.s0Eval());
+    auto s1Eval = findStmt(tmpOp, inserter.s1Eval());
     if (s0Eval->nextStmt() == s1Eval) {
         return true; // early exit: the period to check is empty
     }

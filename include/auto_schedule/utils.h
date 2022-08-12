@@ -71,17 +71,17 @@ inline ID mergeLoops(Schedule &schedule, std::vector<ID> loops) {
     return outermost;
 }
 
-inline std::vector<std::pair<std::optional<ID>, int>>
-splitLoop(Schedule &schedule, ID loop, std::vector<int> tiling) {
+inline std::vector<std::pair<ID, int>> splitLoop(Schedule &schedule, ID loop,
+                                                 std::vector<int> tiling) {
     int n = tiling.size();
-    std::vector<std::pair<std::optional<ID>, int>> result(n);
+    std::vector<std::pair<ID, int>> result(n);
     for (int i = 0; i < n - 1; i++) {
         if (tiling[i] != 1) {
             auto t = schedule.split(loop, tiling[i]);
             loop = t.first;
             result[n - i - 1] = {t.second, tiling[i]};
         } else {
-            result[n - i - 1] = {std::nullopt, 1};
+            result[n - i - 1] = {{}, 1};
         }
     }
     result[0] = {loop, tiling[n - 1]};
@@ -93,17 +93,19 @@ inline Schedule::IDMap fissionLoops(Schedule &schedule,
     int n = loops.size();
     Schedule::IDMap ret;
     for (int i = n - 1; i >= 0; i--) {
-        auto now =
-            schedule.fission(loops[i], FissionSide::After, splitter).second;
+        auto [before, after] =
+            schedule.fission(loops[i], FissionSide::After, splitter);
         if (ret.empty()) {
-            ret = now;
+            ret = after;
         } else {
             for (auto &&[key, value] : ret) {
-                ret[key] = now[value];
+                ret[key] = after[value];
             }
-            ret[loops[i]] = loops[i].strId() + ".b";
+            // after should contain loops[i] already
+            ASSERT(ret.count(loops[i]) == 1);
         }
-        splitter = loops[i].strId() + ".a";
+        ASSERT(before.count(loops[i]) == 1);
+        splitter = before[loops[i]];
     }
     return ret;
 }
