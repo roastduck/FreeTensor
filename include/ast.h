@@ -206,6 +206,8 @@ class ID {
     ID() : id_(-1) {}
 
     static ID make() { return ID(globalIdCnt_++); }
+    static ID make(int64_t id) { return ID(id); }
+
     bool isValid() const { return id_ != -1; }
 
     friend std::ostream &operator<<(std::ostream &os, const ID &id);

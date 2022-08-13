@@ -13,6 +13,7 @@
 #include <schedule/memoized_schedules.h>
 #include <schedule/schedule_log.h>
 #include <schedule/var_split.h>
+#include <selector.h>
 #include <stmt.h>
 
 namespace freetensor {
@@ -111,6 +112,25 @@ class Schedule {
      */
     Stmt find(const ID &id) const {
         return find([&id](const Stmt &c) { return c->id() == id; });
+    }
+
+    /**
+     * Find all node(s) in the current AST with a given selector
+     * 
+     * @param selector: selector used to match a sub-tree
+     */
+    std::vector<Stmt> findAll(const Ref<Selector> &selector) const {
+        return findAll(
+            [&selector](const Stmt &c) { return selector->match(c); });
+    }
+
+    /**
+     * Find a node in the current AST with a given selector
+     * 
+     * @param selector: selector used to match a sub-tree
+     */
+    Stmt find(const Ref<Selector> &selector) const {
+        return find([&selector](const Stmt &c) { return selector->match(c); });
     }
 
     /**

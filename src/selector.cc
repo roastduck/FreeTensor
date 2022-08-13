@@ -1,5 +1,8 @@
 #include <selector.h>
 
+#include <selector_lexer.h>
+#include <selector_parser.h>
+
 namespace freetensor {
 
 bool BothSelector::match(const Stmt &stmt) const {
@@ -16,6 +19,8 @@ bool LabelSelector::match(const Stmt &stmt) const {
     const auto &labels = stmt->metadata().as<SourceMetadataContent>()->labels();
     return std::find(labels.begin(), labels.end(), label_) != labels.end();
 }
+
+bool IDSelector::match(const Stmt &stmt) const { return stmt->id() == id_; }
 
 bool NodeTypeSelector::match(const Stmt &stmt) const {
     return stmt->nodeType() == nodeType_;
@@ -37,6 +42,19 @@ bool DescendantSelector::match(const Stmt &_stmt) const {
             return true;
     }
     return false;
+}
+
+Ref<Selector> parseSelector(const std::string &str) {
+    try {
+        antlr4::ANTLRInputStream charStream(str);
+        selector_lexer lexer(&charStream);
+        antlr4::CommonTokenStream tokens(&lexer);
+        selector_parser parser(&tokens);
+        parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
+        return parser.selector()->s;
+    } catch (const antlr4::ParseCancellationException &e) {
+        throw ParserError((std::string) "Parser error: " + e.what());
+    }
 }
 
 } // namespace freetensor

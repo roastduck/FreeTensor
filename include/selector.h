@@ -40,6 +40,14 @@ class LabelSelector : public Selector {
     bool match(const Stmt &stmt) const override;
 };
 
+class IDSelector : public Selector {
+    ID id_;
+
+  public:
+    IDSelector(const ID &id) : id_(id) {}
+    bool match(const Stmt &stmt) const override;
+};
+
 class NodeTypeSelector : public Selector {
     ASTNodeType nodeType_;
 
@@ -67,9 +75,7 @@ class DescendantSelector : public Selector {
     bool match(const Stmt &stmt) const override;
 };
 
-template <std::derived_from<Selector> T> Ref<T> makeSelector(auto &&args...) {
-    return Ref<T>::make(std::forward(args)...);
-}
+Ref<Selector> parseSelector(std::string str);
 
 } // namespace freetensor
 
