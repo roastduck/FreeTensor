@@ -85,11 +85,12 @@ void PrintVisitor::printMetadataAndId(const Stmt &op) {
     makeIndent();
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
-    //! TODO: print metadata
     if (printAllId_) {
         makeIndent();
-        os() << prettyId(::freetensor::toString(op->id())) << ":" << std::endl;
+        os() << "#" << prettyId(::freetensor::toString(op->id()));
     }
+    os() << manipMetadataSkipLocation << manipMetadataOneLine << op->metadata()
+         << ":" << std::endl;
 }
 
 std::string PrintVisitor::escape(const std::string &name) {

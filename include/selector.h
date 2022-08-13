@@ -75,7 +75,7 @@ class DescendantSelector : public Selector {
     bool match(const Stmt &stmt) const override;
 };
 
-Ref<Selector> parseSelector(std::string str);
+Ref<Selector> parseSelector(const std::string &str);
 
 } // namespace freetensor
 

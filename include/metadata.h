@@ -17,12 +17,6 @@ enum class MetadataType {
 };
 
 class MetadataContent {
-  protected:
-    static void indent(std::ostream &os, int n) {
-        for (int i = 0; i < n; ++i)
-            os << "  ";
-    }
-
   public:
     virtual ~MetadataContent() {}
 
@@ -34,6 +28,9 @@ using Metadata = Ref<MetadataContent>;
 
 std::ostream &manipMetadataSkipLocation(std::ostream &);
 std::ostream &manipMetadataWithLocation(std::ostream &);
+
+std::ostream &manipMetadataOneLine(std::ostream &);
+std::ostream &manipMetadataMultiLine(std::ostream &);
 
 std::ostream &operator<<(std::ostream &os, const Metadata &md);
 

@@ -1,11 +1,19 @@
 import functools
-from typing import Optional, Callable
+from typing import Optional, Callable, Union
 
 import freetensor_ffi as ffi
-from freetensor_ffi import FissionSide, MoveToSide, VarSplitMode, MemType, ParallelScope, ID
+from freetensor_ffi import MemType, ParallelScope, ID, Selector
 
 
 class Schedule(ffi.Schedule):
+
+    def _lookup(self, pattern: Union[ID, Selector, str]):
+        if isinstance(pattern, ID):
+            return ffi.ID(pattern)
+        elif isinstance(pattern, Selector):
+            return self.find(pattern).id
+        else:
+            return self.find(Selector(pattern)).id
 
     def __init__(self, ast, verbose: int = 0):
         super(Schedule, self).__init__(ast, verbose)
@@ -56,7 +64,8 @@ class Schedule(ffi.Schedule):
         (str, str)
             (outer loop ID, inner loop ID)
         """
-        return super(Schedule, self).split(ID(node), factor, nparts, shift)
+        return super(Schedule, self).split(self._lookup(node), factor, nparts,
+                                           shift)
 
     def reorder(self, order):
         """
@@ -74,7 +83,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the input is invalid or there are breaking dependencies
         """
-        super(Schedule, self).reorder(list(map(ID, order)))
+        super(Schedule, self).reorder(list(map(self._lookup, order)))
 
     def merge(self, loop1, loop2):
         """
@@ -100,7 +109,8 @@ class Schedule(ffi.Schedule):
         str
             ID of the merged loop
         """
-        return super(Schedule, self).merge(ID(loop1), ID(loop2))
+        return super(Schedule, self).merge(self._lookup(loop1),
+                                           self._lookup(loop2))
 
     def fission(self, loop, side, splitter, suffix0=".a", suffix1=".b"):
         """
@@ -135,8 +145,9 @@ class Schedule(ffi.Schedule):
         (map, map)
             ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd loop})
         """
-        return super(Schedule, self).fission(ID(loop), side, ID(splitter),
-                                             suffix0, suffix1)
+        return super(Schedule, self).fission(self._lookup(loop), side,
+                                             self._lookup(splitter), suffix0,
+                                             suffix1)
 
     def fuse(self, loop0, loop1=None, strict=False):
         """
@@ -170,9 +181,10 @@ class Schedule(ffi.Schedule):
             ID of the result loop
         """
         if loop1 is None:
-            return super(Schedule, self).fuse(ID(loop0), strict)
+            return super(Schedule, self).fuse(self._lookup(loop0), strict)
         else:
-            return super(Schedule, self).fuse(ID(loop0), ID(loop1), strict)
+            return super(Schedule, self).fuse(self._lookup(loop0),
+                                              self._lookup(loop1), strict)
 
     def swap(self, order):
         """
@@ -227,7 +239,7 @@ class Schedule(ffi.Schedule):
             if the loop is not found, the loop length is not a constant, or
             the dependencies cannot be solved
         """
-        super(Schedule, self).blend(ID(loop))
+        super(Schedule, self).blend(self._lookup(loop))
 
     def cache(self, stmt, var, mtype):
         """
@@ -276,7 +288,8 @@ class Schedule(ffi.Schedule):
             flushes from the cache, name of the cache variable, ID of the VarDef
             node of the cache variable)
         """
-        return super(Schedule, self).cache(ID(stmt), var, MemType(mtype))
+        return super(Schedule, self).cache(self._lookup(stmt), var,
+                                           MemType(mtype))
 
     def cache_reduction(self, stmt, var, mtype):
         """
@@ -320,7 +333,7 @@ class Schedule(ffi.Schedule):
             that reduces the local result to the global result, name of the
             cache variable, ID of the VarDef node of the cache variable)
         """
-        return super(Schedule, self).cache_reduction(ID(stmt), var,
+        return super(Schedule, self).cache_reduction(self._lookup(stmt), var,
                                                      MemType(mtype))
 
     def set_mem_type(self, vardef, mtype):
@@ -339,7 +352,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable is not found
         """
-        super(Schedule, self).set_mem_type(ID(vardef), MemType(mtype))
+        super(Schedule, self).set_mem_type(self._lookup(vardef), MemType(mtype))
 
     def var_split(self, vardef, dim, mode, factor=-1, nparts=-1):
         """
@@ -367,8 +380,8 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable or the dimension is not found
         """
-        return super(Schedule, self).var_split(ID(vardef), dim, mode, factor,
-                                               nparts)
+        return super(Schedule, self).var_split(self._lookup(vardef), dim, mode,
+                                               factor, nparts)
 
     def var_merge(self, vardef, dim):
         """
@@ -380,7 +393,7 @@ class Schedule(ffi.Schedule):
         dim : int
             Merge the `dim`-th and the `(dim + 1)`-th dimension
         """
-        return super(Schedule, self).var_merge(ID(vardef), dim)
+        return super(Schedule, self).var_merge(self._lookup(vardef), dim)
 
     def var_reorder(self, vardef, order):
         """
@@ -398,7 +411,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable or the order is illegal
         """
-        return super(Schedule, self).var_reorder(ID(vardef), order)
+        return super(Schedule, self).var_reorder(self._lookup(vardef), order)
 
     def move_to(self, stmt, side, dst):
         """
@@ -426,7 +439,8 @@ class Schedule(ffi.Schedule):
         str
             The new ID of stmt
         """
-        return super(Schedule, self).move_to(ID(stmt), side, ID(dst))
+        return super(Schedule, self).move_to(self._lookup(stmt), side,
+                                             self._lookup(dst))
 
     def inline(self, vardef):
         """
@@ -443,7 +457,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable cannot be completely removed
         """
-        return super(Schedule, self).inline(ID(vardef))
+        return super(Schedule, self).inline(self._lookup(vardef))
 
     def parallelize(self, loop, parallel):
         """
@@ -456,7 +470,8 @@ class Schedule(ffi.Schedule):
         parallel : ParallelScope
             Parallel scope
         """
-        super(Schedule, self).parallelize(ID(loop), ParallelScope(parallel))
+        super(Schedule, self).parallelize(self._lookup(loop),
+                                          ParallelScope(parallel))
 
     def unroll(self, loop, immediate=False):
         """
@@ -479,7 +494,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the loop is not found or length of the loop is not a constant
         """
-        super(Schedule, self).unroll(ID(loop), immediate)
+        super(Schedule, self).unroll(self._lookup(loop), immediate)
 
     def vectorize(self, loop):
         """
@@ -500,7 +515,7 @@ class Schedule(ffi.Schedule):
             if the ID or name is not found, or the dependency requirement is
             not met
         """
-        super(Schedule, self).vectorize(ID(loop))
+        super(Schedule, self).vectorize(self._lookup(loop))
 
     def separate_tail(self, noDuplicateVarDefs=False):
         """
@@ -561,7 +576,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the loop cannot be transformed to be a matrix multiplication
         """
-        super(Schedule, self).as_matmul(ID(loop))
+        super(Schedule, self).as_matmul(self._lookup(loop))
 
     def auto_schedule(self, target):
         """

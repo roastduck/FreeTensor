@@ -30,6 +30,11 @@ void init_ffi_schedule(py::module_ &m) {
         .def_readonly("time", &AutoScheduleTuneTrial::time_)
         .def_readonly("stddev", &AutoScheduleTuneTrial::stddev_);
 
+    py::class_<Selector, Ref<Selector>>(m, "Selector")
+        .def(
+            py::init([](const std::string &str) { return parseSelector(str); }))
+        .def("match", &Selector::match);
+
     py::class_<Schedule>(m, "Schedule")
         .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
         .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
@@ -51,12 +56,17 @@ void init_ffi_schedule(py::module_ &m) {
                          &Schedule::find))
         .def("find",
              static_cast<Stmt (Schedule::*)(const ID &) const>(&Schedule::find))
+        .def("find",
+             static_cast<Stmt (Schedule::*)(const Ref<Selector> &) const>(
+                 &Schedule::find))
         .def("find_all", static_cast<std::vector<Stmt> (Schedule::*)(
                              const std::function<bool(const Stmt &)> &) const>(
                              &Schedule::findAll))
         .def("find_all",
              static_cast<std::vector<Stmt> (Schedule::*)(const ID &) const>(
                  &Schedule::findAll))
+        .def("find_all", static_cast<std::vector<Stmt> (Schedule::*)(
+                             const Ref<Selector> &) const>(&Schedule::findAll))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1, "shift"_a = 0)
         .def("reorder", &Schedule::reorder, "order"_a)
@@ -68,7 +78,7 @@ void init_ffi_schedule(py::module_ &m) {
                 auto wrappedTransformFunc =
                     [transformFunc](const std::vector<Expr> &args) {
                         py::list pyArgs((ssize_t)args.size());
-                        for (auto &&[i, e]: iter::enumerate(args))
+                        for (auto &&[i, e] : iter::enumerate(args))
                             pyArgs[i] = e;
                         return transformFunc(*pyArgs).cast<std::vector<Expr>>();
                     };

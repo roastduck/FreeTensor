@@ -7,20 +7,48 @@
 namespace freetensor {
 
 namespace {
-const int metadataSkipLocation = std::ios_base::xalloc();
+const int metadataLocation = std::ios_base::xalloc();
+const int metadataNewLine = std::ios_base::xalloc();
+
+struct Indent {
+    int n;
+};
+
+std::ostream &operator<<(std::ostream &os, Indent indent) {
+    if (os.iword(metadataNewLine))
+        for (int i = 0; i < indent.n; ++i)
+            os << "  ";
+    return os;
+}
+
+std::ostream &nl(std::ostream &os) {
+    if (os.iword(metadataNewLine))
+        os.put('\n');
+    return os;
+}
+
 } // namespace
 
 std::ostream &manipMetadataSkipLocation(std::ostream &os) {
-    os.iword(metadataSkipLocation) = true;
+    os.iword(metadataLocation) = false;
     return os;
 }
 std::ostream &manipMetadataWithLocation(std::ostream &os) {
-    os.iword(metadataSkipLocation) = false;
+    os.iword(metadataLocation) = true;
+    return os;
+}
+
+std::ostream &manipMetadataOneLine(std::ostream &os) {
+    os.iword(metadataNewLine) = false;
+    return os;
+}
+std::ostream &manipMetadataMultiLine(std::ostream &os) {
+    os.iword(metadataNewLine) = true;
     return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const Ref<MetadataContent> &mdc) {
-    mdc->print(os, os.iword(metadataSkipLocation), 0);
+    mdc->print(os, os.iword(metadataLocation), 0);
     return os;
 }
 
@@ -28,16 +56,14 @@ TransformedMetadataContent::TransformedMetadataContent(
     const std::string &op, const std::vector<Metadata> sources)
     : op_(op), sources_(sources) {}
 
-void TransformedMetadataContent::print(std::ostream &os, bool skipLocation,
+void TransformedMetadataContent::print(std::ostream &os, bool printLocation,
                                        int nIndent) const {
-    indent(os, nIndent);
-    os << op_ << " {\n";
+    os << Indent(nIndent) << op_ << " {" << nl;
     for (auto &&[i, src] : iter::enumerate(sources_)) {
-        src->print(os, skipLocation, nIndent + 1);
-        os << ",\n";
+        src->print(os, printLocation, nIndent + 1);
+        os << "," << nl;
     }
-    indent(os, nIndent);
-    os << "}";
+    os << Indent(nIndent) << "}";
 }
 
 TransformedMetadata makeMetadata(const std::string &op,
@@ -51,19 +77,19 @@ SourceMetadataContent::SourceMetadataContent(
     const Metadata &callerMetadata)
     : labels_(labels), location_(location), callerMetadata_(callerMetadata) {}
 
-void SourceMetadataContent::print(std::ostream &os, bool skipLocation,
+void SourceMetadataContent::print(std::ostream &os, bool printLocation,
                                   int nIndent) const {
-    indent(os, nIndent);
+    os << Indent(nIndent);
     for (auto &&[i, l] : iter::enumerate(labels_)) {
         if (i != 0)
             os << " ";
         os << l;
     }
-    if (!skipLocation && location_)
+    if (printLocation && location_)
         os << " @ " << location_->first << ":" << location_->second;
     if (callerMetadata_.isValid()) {
-        os << " <-\n";
-        callerMetadata_->print(os, skipLocation, nIndent);
+        os << " <-" << nl;
+        callerMetadata_->print(os, printLocation, nIndent);
     }
 }
 
