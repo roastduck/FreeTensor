@@ -25,9 +25,14 @@ class Context:
         self.next_no_deps = []
         self.next_prefer_libs = False
 
-    def get_metadata(self):
-        return ffi.SourceMetadata(self.next_labels, self.next_location,
-                                  self.caller_metadata)
+    def get_metadata(self, labels=None):
+        if labels is None:
+            labels = self.next_labels
+        if len(labels) > 0:
+            return ffi.SourceMetadata(list(labels), self.next_location,
+                                      self.caller_metadata)
+        else:
+            return None
 
     def clear_metadata(self):
         self.next_labels = []
@@ -103,8 +108,7 @@ class Context:
         if len(self.stmt_seq) == 1 and metadata == None:
             return self.stmt_seq[0]
         else:
-            return ffi.makeStmtSeq(self.stmt_seq, metadata or
-                                   ffi.SourceMetadata([]))
+            return ffi.makeStmtSeq(self.stmt_seq, metadata or None)
 
 
 class ContextStack:

@@ -201,8 +201,8 @@ class For:
                             self.end,
                             self.step,
                             body,
-                            metadata=ffi.SourceMetadata(
-                                [self.label] if self.label is not None else []),
+                            metadata=ffi.SourceMetadata([self.label])
+                            if self.label is not None else None,
                             no_deps=self.no_deps,
                             prefer_libs=self.prefer_libs)
 
@@ -328,10 +328,8 @@ class NamedScope:
             # Do not generate an AST node
             return False  # Do not suppress the exception
         finished_scope = ctx_stack.pop()
-        body = finished_scope.make_stmt(
-            ffi.SourceMetadata(list(self.labels),
-                               ctx_stack.top().next_location,
-                               ctx_stack.top().caller_metadata))
+        metadata = ctx_stack.top().get_metadata(self.labels)
+        body = finished_scope.make_stmt(metadata)
         ctx_stack.top().append_stmt(body)
 
 

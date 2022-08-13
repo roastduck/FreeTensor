@@ -14,7 +14,8 @@ bool EitherSelector::match(const Stmt &stmt) const {
 }
 
 bool LabelSelector::match(const Stmt &stmt) const {
-    if (stmt->metadata()->getType() != MetadataType::Source)
+    if (!stmt->metadata().isValid() ||
+        stmt->metadata()->getType() != MetadataType::Source)
         return false;
     const auto &labels = stmt->metadata().as<SourceMetadataContent>()->labels();
     return std::find(labels.begin(), labels.end(), label_) != labels.end();

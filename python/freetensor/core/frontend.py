@@ -120,8 +120,11 @@ class FreeTensorOverload(StagingOverload):
     def functiondef_wrapper(self, filename: str, func):
         basic_wrapped = super().functiondef_wrapper(filename, func)
 
-        def wrapped(*args, **kwargs):
-            call_metadata = ctx_stack.top().get_metadata()
+        def wrapped(*args, __freetensor_transform_outermost__=False, **kwargs):
+            if __freetensor_transform_outermost__:
+                call_metadata = None
+            else:
+                call_metadata = ctx_stack.top().get_metadata()
             ctx_stack.top().clear_metadata()
             with NamedScope():
                 ctx_stack.top().set_caller_metadata(call_metadata)
@@ -433,7 +436,8 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
         # Create a new scope for the function
         with LifetimeScope():
             # Run staging function with the tensor program arguments' names as parameters
-            returns = staging_func(*params)
+            returns = staging_func(*params,
+                                   __freetensor_transform_outermost__=True)
             # Check returned vardefs (if any)
             if isinstance(returns, VarRef):
                 returns = [returns]
@@ -456,9 +460,7 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
                     ret.vardef.set_atype('inout')
                 else:
                     ret.vardef.set_atype('output')
-            returns = [
-                (ret.vardef.name, ret.vardef.dtype) for ret in returns
-            ]
+            returns = [(ret.vardef.name, ret.vardef.dtype) for ret in returns]
 
             # Set closure; they are from captured Arrays.
             closure = _overload.closure
