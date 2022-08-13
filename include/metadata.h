@@ -11,6 +11,11 @@
 
 namespace freetensor {
 
+enum class MetadataType {
+    Transformed,
+    Source,
+};
+
 class MetadataContent {
   protected:
     static void indent(std::ostream &os, int n) {
@@ -21,6 +26,7 @@ class MetadataContent {
   public:
     virtual ~MetadataContent() {}
 
+    virtual MetadataType getType() const = 0;
     virtual void print(std::ostream &os, bool skipLocation,
                        int nIndent) const = 0;
 };
@@ -41,6 +47,7 @@ class TransformedMetadataContent : public MetadataContent {
 
     ~TransformedMetadataContent() override = default;
 
+    MetadataType getType() const override { return MetadataType::Transformed; }
     void print(std::ostream &os, bool skipLocation, int nIndent) const override;
 };
 using TransformedMetadata = Ref<TransformedMetadataContent>;
@@ -61,6 +68,9 @@ class SourceMetadataContent : public MetadataContent {
 
     ~SourceMetadataContent() override = default;
 
+    const std::vector<std::string> &labels() const { return labels_; }
+
+    MetadataType getType() const override { return MetadataType::Source; }
     void print(std::ostream &os, bool skipLocation, int nIndent) const override;
 };
 using SourceMetadata = Ref<SourceMetadataContent>;
