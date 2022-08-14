@@ -6,6 +6,7 @@ import freetensor_ffi as ffi
 from freetensor_ffi import GradTapeMode
 from freetensor_ffi import output_intermediates
 
+from .stmt import lookup_id
 from .frontend import transform
 
 
@@ -54,7 +55,7 @@ def grad_body(stmt: ffi.Stmt,
     req = set(requires)
     prov = set(provides)
     if type(tapes) is not GradTapeMode:
-        tapes = set(tapes)
+        tapes = {lookup_id(stmt, t) for t in tapes}
     return ffi.grad_body(stmt, req, prov, tapes)
 
 
@@ -75,7 +76,7 @@ def _grad_func(impl,
         else:
             prov.add(p)
     if type(tapes) is not GradTapeMode:
-        tapes = set(tapes)
+        tapes = {lookup_id(func, t) for t in tapes}
     fwd, bwd, req_map, prov_map = impl(func, req, prov, tapes)
     if verbose is not None and verbose >= 1:
         print("Forward pass from AD:", file=sys.stderr)

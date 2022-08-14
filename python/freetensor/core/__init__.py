@@ -20,6 +20,7 @@ from .stmt import (
     Eval,
     Any,
     Func,
+    lookup_id
 )
 from .analyze import *
 from .autograd import *

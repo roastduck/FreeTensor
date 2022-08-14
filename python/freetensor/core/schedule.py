@@ -7,13 +7,8 @@ from freetensor_ffi import MemType, ParallelScope, ID, Selector
 
 class Schedule(ffi.Schedule):
 
-    def _lookup(self, pattern: Union[ID, Selector, str]):
-        if isinstance(pattern, ID):
-            return ffi.ID(pattern)
-        elif isinstance(pattern, Selector):
-            return self.find(pattern).id
-        else:
-            return self.find(Selector(pattern)).id
+    def _lookup(self, pattern: Union[ID, Selector, str]) -> ID:
+        return self.find(pattern).id
 
     def __init__(self, ast, verbose: int = 0):
         super(Schedule, self).__init__(ast, verbose)

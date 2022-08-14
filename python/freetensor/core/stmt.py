@@ -379,3 +379,8 @@ def Any():
 
 def Func(name, params, returns, body, closure={}):
     return ffi.makeFunc(name, params, returns, body, closure)
+
+
+def lookup_id(ast, pattern):
+    from .schedule import Schedule
+    return Schedule(ast).find(pattern).id

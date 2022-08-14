@@ -89,7 +89,7 @@ void FindLoopInvariantWrites::visit(const VarDef &op) {
 
 void FindLoopInvariantWrites::visit(const Store &op) {
     BaseClass::visit(op);
-    if (def(op->var_)->id() != singleDefId_) {
+    if (singleDefId_.isValid() && def(op->var_)->id() != singleDefId_) {
         return;
     }
     Expr cond;
@@ -283,7 +283,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     FindDeps()
         .type(DEP_WAW)
         .filterAccess([&](const AccessPoint &acc) {
-            return acc.def_->id() == singleDefId;
+            return !singleDefId.isValid() || acc.def_->id() == singleDefId;
         })
         .filterLater([&](const AccessPoint &later) {
             return later.op_->nodeType() == ASTNodeType::Store;
@@ -294,7 +294,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         .mode(FindDepsMode::KillLater)
         .type(DEP_WAW)
         .filterAccess([&](const AccessPoint &acc) {
-            return acc.def_->id() == singleDefId;
+            return !singleDefId.isValid() || acc.def_->id() == singleDefId;
         })
         .filterLater([&](const AccessPoint &later) {
             return later.op_->nodeType() == ASTNodeType::ReduceTo;

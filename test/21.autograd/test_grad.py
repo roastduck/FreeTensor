@@ -572,9 +572,9 @@ def test_tape_5():
     with ft.VarDef([("x", (100, 4), "float32", "input", "cpu"),
                     ("y", (256,), "float32", "output", "cpu"),
                     ("u", (256, 256), "float32", "input", "cpu")]) as (x, y, u):
-        ft.MarkLabel(":h")
+        ft.MarkLabel("h")
         with ft.VarDef("h", (256,), "float32", "cache", "cpu") as h:
-            ft.MarkLabel(":f")
+            ft.MarkLabel("f")
             with ft.VarDef("f", (256,), "float32", "cache", "cpu") as f:
                 with ft.For("l", 0, 256, label="Ll0") as l:
                     h[l] = 0
@@ -590,7 +590,7 @@ def test_tape_5():
 
     ast = ft.pop_ast(verbose=True)
     forward, backward, _, _, _ = ft.grad_body(ast, ["x", "u"], ["y"],
-                                              [":h", ":f"])
+                                              ["h", "f"])
     print("Forward:")
     print(forward)
     print("Backward:")
