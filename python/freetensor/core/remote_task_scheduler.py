@@ -18,8 +18,8 @@ then check param
     0. logger
     1. broadcast availability
     2. return inavailability
-    3. new_task_request  
-    4. check whether a task is in the execution queue 
+    3. new_task_request
+    4. check whether a task is in the execution queue
 '''
 '''
 How does this part work:
@@ -30,16 +30,16 @@ How does this part work:
         1.3 a message is broadcasted to all workers, telling them that new tasks are available to fetch
 
 2. a worker receive the broadcast in 1.3, and update the server's availability
-    if needed, the worker will send requests to all 
-    available servers for new tasks (currently, it 
+    if needed, the worker will send requests to all
+    available servers for new tasks (currently, it
     means the number tasks in execution queue < 5)
 
 3. the client receive the request in 2, and send tasks to the worker(one for a time),
     if no tasks are available, it will send
-    another message, telling that the server's 
+    another message, telling that the server's
     submit queues are not available
 
-3. when a worker receives a task, it will check whether it is a task or a control message 
+3. when a worker receives a task, it will check whether it is a task or a control message
     if it is a task, the task will be used to construct a TaskRunner object to run separately.
     threadlock is also acquired to make sure that only one task is running at a time
     The return value is a TaskResult object.the object is then transformed into a dict and sent back to the source
@@ -48,7 +48,7 @@ How does this part work:
     If is, the result will be stored.
     The lock in 1.1 will be released.
 
-5. then the method in 1 returns the return value 
+5. then the method in 1 returns the return value
 
 '''
 
@@ -191,10 +191,13 @@ class MeasureTask(Task):
     def args_deserialization(cls, attached_params: tuple,
                              params: List) -> tuple:
         target, device, args, kws = attached_params
-        return ((ffi.load_target(target), ffi.load_device(device),
-                 [ffi.load_array(array) for array in args
-                 ], {key: ffi.load_array(array) for key, array in kws.items()}),
-                [ffi.load_ast(func) for func in params])
+        return ((ffi.load_target((target[0], target[1].data)),
+                 ffi.load_device((device[0], device[1].data)),
+                 [ffi.load_array((array[0], array[1].data)) for array in args
+                 ], {
+                     key: ffi.load_array((array[0], array[1].data))
+                     for key, array in kws.items()
+                 }), [ffi.load_ast(func) for func in params])
 
     @classmethod
     def args_serialization(cls, attached_params: tuple, params: List) -> tuple:
