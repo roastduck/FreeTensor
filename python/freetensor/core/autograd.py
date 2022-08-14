@@ -1,4 +1,4 @@
-from typing import Optional, Union, Sequence
+from typing import Optional, Set, Union, Sequence
 import sys
 
 import freetensor_ffi as ffi
@@ -190,3 +190,9 @@ def grad(func: ffi.Func,
                       provides,
                       tapes,
                       verbose=verbose)
+
+
+def output_intermediates(stmt: ffi.Stmt, intermediates: Set[Union[str,
+                                                                  ffi.ID]]):
+    return ffi.output_intermediates(stmt,
+                                    {lookup_id(stmt, i) for i in intermediates})
