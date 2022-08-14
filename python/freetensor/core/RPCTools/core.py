@@ -3,6 +3,7 @@ from multiprocessing import Process, Pool
 from xmlrpc.server import SimpleXMLRPCServer
 import socket, time
 from .. import remote_task_scheduler
+import threading
 
 
 class RPCTool:
@@ -25,7 +26,7 @@ class RPCTool:
         self.server.register_function(self.check_connection)
         self.server.register_function(self.quit)
         try:
-            self.serverProcess = Process(target=self.serve_till_quit)
+            self.serverProcess = threading.Thread(target=self.serve_till_quit)
             self.serverProcess.start()
             print("RPC Server Started on %s:%d..." %
                   (self.serverAddr[0], self.serverAddr[1]))

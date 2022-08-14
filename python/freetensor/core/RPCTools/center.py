@@ -101,6 +101,7 @@ def run_center(test = False):
     server.register_function(check_connection)
     server.register_function(register_machine)
     server.register_function(task_submit)
+    server.register_function(result_submit)
     server.register_function(shutdown_center)
     try:
         server.serve_forever()
