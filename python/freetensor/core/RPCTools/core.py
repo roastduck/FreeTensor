@@ -8,13 +8,14 @@ import threading
 
 class RPCTool:
 
-    def __init__(self,
-                 remoteTaskScheduler: remote_task_scheduler.RemoteTaskScheduler,
-                 addr="127.0.0.1",
-                 port=8047,
-                 sev_status=3):  #参数是初始化时主服务器的地址
-        """初始化获取主机地址和端口以便分配UUID"""
-        self.UID = 'localhost'  #当无中心服务器分配UID时默认本地运行，分配特殊UID:'localhost
+    def __init__(
+            self,
+            remoteTaskScheduler: remote_task_scheduler.RemoteTaskScheduler,
+            addr="127.0.0.1",
+            port=8047,
+            sev_status=3):  #fill the address and port with your center server's
+        """Initially get the address,port and uid of this node"""
+        self.UID = 'localhost'  #the node will run locally with a special uid 'localhost' when there's no center server
         self.taskScheduler = remoteTaskScheduler
         self.serverAddr = self.get_address()
         self.server = SimpleXMLRPCServer(self.serverAddr, allow_none=True)
@@ -44,10 +45,11 @@ class RPCTool:
 
     def quit(self):
         self.quit_tag = True
-        server = client.ServerProxy('http://' + self.serverAddr[0] + ':' + str(self.serverAddr[1]))
+        client.ServerProxy('http://' + self.serverAddr[0] + ':' +
+                           str(self.serverAddr[1]))
 
     def connect(self, addr):
-        """允许失败五次的连接，每次连接之间间隔0.1s"""
+        """The number of failed connections can be allowed to be 5 at most."""
         if "http" not in addr[0]:
             addr[0] = "http://" + addr[0]
         for cnt in range(5):
@@ -67,6 +69,7 @@ class RPCTool:
             raise Exception("Error failed to connect")
 
     def get_address(self):
+        """This function is used to get this node's IP address and an available port"""
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.bind(('', 0))
         s.connect(('8.8.8.8', 80))
@@ -75,7 +78,7 @@ class RPCTool:
         return Addr[0], Addr[1]
 
     def upload(self, addr, sev_status):
-        """上传当前服务器信息给中心服务器"""
+        """Upload the server's address to the center server and get an uid from it."""
         try:
             center_server = self.connect(addr)
             print("Server Connected\nRegistering machine...")
@@ -101,25 +104,14 @@ class RPCTool:
 
     def remote_task_submit(self, remote_host_uid, task):
         if remote_host_uid == "localhost":
-            return self.taskScheduler.task_submit(remote_host_uid, self.UID,
-                                                  task)
+            return self.taskScheduler.remote_task_receive(self.UID, task)
         center_server = self.connect(self.centerAddr)
         return center_server.task_submit(remote_host_uid, self.UID, task)
 
     def remote_result_submit(self, remote_host_uid, task_result):
         if remote_host_uid == "localhost":
-            return self.taskScheduler.result_submit(remote_host_uid, self.UID,
-                                                    task_result)
+            return self.taskScheduler.remote_result_receive(
+                self.UID, task_result)
         center_server = self.connect(self.centerAddr)
         return center_server.result_submit(remote_host_uid, self.UID,
                                            task_result)
-
-
-# def remove_host(uid):
-#     print("Host %s removed" % uid)
-# def add_host(uid, status):
-#     print("Added a host %s with status %s" % (uid, str(status)))
-# def task_submit(r_uid, l_uid, task):
-#     print("Submit a task from %s to %s" % (r_uid, l_uid))
-# def result_submit(r_uid, l_uid, result):
-#     print("Submit result from %s to %s" % (r_uid, l_uid))

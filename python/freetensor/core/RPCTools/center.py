@@ -16,7 +16,7 @@ def check_connection():
 
 
 def register_machine(remoteInfo, sev_status):
-    """机器注册函数，从每个机器拉取网络地址和端口并且分配uuid，同时更新每个机器的本地列表"""
+    """The machine registering function that pulls address and ports from available machines and generates an uid for them"""
     global List
     print("Registering %s:%d" % (remoteInfo[0], remoteInfo[1]))
     UID = str(uuid.uuid4())
@@ -40,7 +40,7 @@ def register_machine(remoteInfo, sev_status):
 
 
 def connect(addr):
-    """允许失败五次的连接，每次连接之间间隔0.1s"""
+    """The number of failed connections can be allowed to be 5 at most."""
     if "http" not in addr[0]:
         addr[0] = "http://" + addr[0]
     for cnt in range(5):
@@ -61,7 +61,7 @@ def connect(addr):
 
 
 def broadcast(host_uid, status, new_tag=False):
-    """向所有机器广播host_uid的状态变更"""
+    """Broadcast the status change of the machine host_uid to other machines"""
     List[host_uid][2] = status
     for uid, addr in List.items():
         if uid != host_uid:
@@ -85,14 +85,14 @@ def result_submit(remote_host_uid, src_host_uid, task_result):
     return remote_server.remote_result_receive(src_host_uid, task_result)
 
 
-def run_center(test = False):
-    # 获取内网IP和可用端口
+def run_center(test=False):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.connect(("8.8.8.8", 80))
+        # the initial port is 8047 and you may have to open it through the firewall
         if not test:
-            SocketName = (s.getsockname()[0], 8047)  #初始化端口为8047，需要手动用ufw开防火墙端口
+            SocketName = (s.getsockname()[0], 8047)
         else:
-            SocketName = ('127.0.0.1', 8047)  #初始化端口为8047，需要手动用ufw开防火墙端口
+            SocketName = ('127.0.0.1', 8047)
         s.close()
 
     global server
