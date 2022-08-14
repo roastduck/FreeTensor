@@ -34,6 +34,9 @@ std::ostream &manipMetadataWithLocation(std::ostream &);
 std::ostream &manipMetadataOneLine(std::ostream &);
 std::ostream &manipMetadataMultiLine(std::ostream &);
 
+std::ostream &manipMetadataNoId(std::ostream &os);
+std::ostream &manipMetadataPrintId(std::ostream &os);
+
 std::ostream &operator<<(std::ostream &os, const Metadata &md);
 
 class TransformedMetadataContent : public MetadataContent {

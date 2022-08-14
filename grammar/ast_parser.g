@@ -88,6 +88,42 @@ func returns [Func node]
       }
     ;
 
+metadata returns [Metadata md]
+    : LABEL_META '{' metadata { std::vector<Metadata> sources{$metadata.md}; }
+      (',' newMd=metadata { sources.push_back($newMd.md); })+ '}'
+      {
+        $md = makeMetadata($LABEL_META.text, std::move(sources));
+      }
+    | LABEL_META { std::vector<std::string> labels{$LABEL_META.text}; }
+      (newLabel=LABEL_META { labels.push_back($newLabel.text); })*
+      { Metadata callerMeta; }
+      (LARROW_META caller=metadata { callerMeta = $caller.md; })?
+      {
+        $md = makeMetadata(std::move(labels), std::nullopt, callerMeta);
+      }
+    | ANON_META
+      {
+        $md = makeMetadata();
+      }
+    | ID_META
+      {
+        $md = makeMetadata(ID::make(std::stoi(std::string($ID_META.text).substr(1))));
+      }
+    ;
+
+metadataLine returns [std::pair<Metadata, ID> md_id]
+    : BEGIN_META metadata END_META
+      {
+        $md_id.first = $metadata.md;
+        $md_id.second = ID::make();
+      }
+    | BEGIN_META INTEGER_META metadata END_META
+      {
+        $md_id.first = $metadata.md;
+        $md_id.second = ID::make(std::stoi(std::string($INTEGER_META.text)));
+      }
+    ;
+
 // -------------------- STMT --------------------
 // All statements default to without ID, and stmt will handle the ID
 stmts returns [Stmt node]
@@ -108,12 +144,12 @@ stmt returns [Stmt node]
       {
         $node = $stmtWithoutID.node;
       }
-    //!TODO: parse metadata
-    // | var ':' stmtWithoutID
-    //   {
-    //     $node = $stmtWithoutID.node;
-    //     $node->setId($var.name);
-    //   }
+    | metadataLine stmtWithoutID
+      {
+        $node = $stmtWithoutID.node;
+        $node->metadata() = $metadataLine.md_id.first;
+        $node->setId($metadataLine.md_id.second);
+      }
     ;
 
 stmtWithoutID returns [Stmt node]

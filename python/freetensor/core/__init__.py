@@ -1,6 +1,8 @@
 import os
-from freetensor_ffi import AccessType, MemType, DataType, ASTNodeType, TargetType
-from freetensor_ffi import InvalidSchedule, InvalidProgram, DriverError, AssertAlwaysFalse
+from freetensor_ffi import (AccessType, MemType, DataType, ASTNodeType,
+                            TargetType, InvalidSchedule, InvalidProgram,
+                            DriverError, AssertAlwaysFalse, FissionSide,
+                            VarSplitMode)
 
 from .context import pop_ast
 from .expr import *

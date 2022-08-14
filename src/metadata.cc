@@ -9,6 +9,7 @@ namespace freetensor {
 namespace {
 const int metadataLocation = std::ios_base::xalloc();
 const int metadataNewLine = std::ios_base::xalloc();
+const int metadataPrintId = std::ios_base::xalloc();
 
 struct Indent {
     int n;
@@ -44,6 +45,15 @@ std::ostream &manipMetadataOneLine(std::ostream &os) {
 }
 std::ostream &manipMetadataMultiLine(std::ostream &os) {
     os.iword(metadataNewLine) = true;
+    return os;
+}
+
+std::ostream &manipMetadataNoId(std::ostream &os) {
+    os.iword(metadataPrintId) = false;
+    return os;
+}
+std::ostream &manipMetadataPrintId(std::ostream &os) {
+    os.iword(metadataPrintId) = true;
     return os;
 }
 
@@ -91,7 +101,7 @@ void SourceMetadataContent::print(std::ostream &os, bool printLocation,
     if (printLocation && location_)
         os << " @ " << location_->first << ":" << location_->second;
     if (callerMetadata_.isValid()) {
-        os << " <-" << nl;
+        os << " <- " << nl;
         callerMetadata_->print(os, printLocation, nIndent);
     }
 }
@@ -107,7 +117,7 @@ AnonymousMetadataContent::AnonymousMetadataContent(const ID &id) : id_(id) {}
 
 void AnonymousMetadataContent::print(std::ostream &os, bool skipLocation,
                                      int nIndent) const {
-    if (id_.isValid())
+    if (os.iword(metadataPrintId) && id_.isValid())
         os << Indent(nIndent) << "#" << id_;
     else
         os << Indent(nIndent) << "#<anon>";
