@@ -80,7 +80,9 @@ Stmt inlinedInvoke(
     for (size_t i = 0, n = args.size(); i < n; i++) {
         kvs[func->params_[i].name_] = args[i];
     }
-    ast = InlinedInvoke(callSiteMetadata, kvs)(ast);
+    ast = InlinedInvoke(callSiteMetadata.isValid() ? callSiteMetadata
+                                                   : makeMetadata(),
+                        kvs)(ast);
 
     return ast;
 }

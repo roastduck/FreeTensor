@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include <id.h>
 #include <ref.h>
 
 namespace freetensor {
@@ -14,6 +15,7 @@ namespace freetensor {
 enum class MetadataType {
     Transformed,
     Source,
+    Anonymous,
 };
 
 class MetadataContent {
@@ -76,6 +78,19 @@ SourceMetadata
 makeMetadata(const std::vector<std::string> &labels,
              const std::optional<std::pair<std::string, int>> &location,
              const Metadata &callerMetadata);
+
+class AnonymousMetadataContent : public MetadataContent {
+    ID id_;
+
+  public:
+    AnonymousMetadataContent(const ID &id);
+    ~AnonymousMetadataContent() override = default;
+    MetadataType getType() const override { return MetadataType::Anonymous; }
+    void print(std::ostream &os, bool skipLocation, int nIndent) const override;
+};
+using AnonymousMetadata = Ref<AnonymousMetadataContent>;
+
+AnonymousMetadata makeMetadata(const ID &id = {});
 
 std::string toString(const Metadata &md, bool shouldSkipLocation = false);
 

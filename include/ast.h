@@ -7,6 +7,7 @@
 #include <string>
 
 #include <data_type.h>
+#include <id.h>
 #include <metadata.h>
 #include <ref.h>
 #include <serialize/to_string.h>
@@ -123,20 +124,6 @@ class ASTNode : public ASTPart {
 };
 typedef Ref<ASTNode> AST;
 
-/**
- * Construct TransformedMetadata with specified operation and source ASTs.
- *
- * The children Metadatas are retrieved from the provided ASTs.
- *
- * @param op operation of the TransformedMetadata
- * @param sourceASTs variadic parameters that accept the source ASTs.
- */
-template <typename... Srcs>
-requires(std::convertible_to<Srcs, AST> &&...) auto makeMetadata(
-    const std::string &op, Srcs &&...sourceASTs) {
-    return makeMetadata(op, std::vector<Metadata>{sourceASTs->metadata()...});
-}
-
 #ifdef FT_DEBUG_LOG_NODE
 #define makeNode(type, ...)                                                    \
     ({                                                                         \
@@ -187,35 +174,6 @@ typedef Ref<ExprNode> Expr;
 
 class StmtNode;
 typedef Ref<StmtNode> Stmt;
-
-/**
- * Identify an Stmt acrossing passes, so we do not need to pass pointers
- *
- * An Stmt is identified by a string-typed id_ property, which is unique to each
- * Stmt node
- */
-class ID {
-    friend StmtNode;
-
-    int64_t id_;
-
-    static std::atomic_int64_t globalIdCnt_;
-    explicit ID(int64_t id) : id_(id) {}
-
-  public:
-    ID() : id_(-1) {}
-
-    static ID make() { return ID(globalIdCnt_++); }
-    static ID make(int64_t id) { return ID(id); }
-
-    bool isValid() const { return id_ != -1; }
-
-    friend std::ostream &operator<<(std::ostream &os, const ID &id);
-    friend bool operator==(const ID &lhs, const ID &rhs);
-    friend struct ::std::hash<ID>;
-};
-
-std::ostream &operator<<(std::ostream &os, const ID &id);
 
 /**
  * Identify an Stmt or Expr acrossing passes, so we do not need to pass pointers
@@ -287,13 +245,30 @@ AST lcaAST(const AST &lhs, const AST &rhs);
 Expr lcaExpr(const Expr &lhs, const Expr &rhs);
 Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs);
 
+/**
+ * Construct TransformedMetadata with specified operation and source Stmts.
+ *
+ * The children Metadatas are retrieved from the provided Stmts.
+ *
+ * @param op operation of the TransformedMetadata
+ * @param sourceStmts variadic parameters that accept the source Stmts.
+ */
+template <typename... Srcs>
+requires(std::convertible_to<Srcs, Stmt> &&...) auto makeMetadata(
+    const std::string &op, Srcs &&...sourceStmts) {
+    auto metadataFrom = [](const Stmt &s) -> Metadata {
+        if (s->metadata().isValid())
+            return s->metadata();
+        else
+            return makeMetadata(s->id());
+    };
+    return makeMetadata(op,
+                        std::vector<Metadata>{metadataFrom(sourceStmts)...});
+}
+
 } // namespace freetensor
 
 namespace std {
-
-template <> struct hash<freetensor::ID> {
-    size_t operator()(const freetensor::ID &id) const;
-};
 
 template <> struct hash<freetensor::StmtOrExprID> {
     size_t operator()(const freetensor::StmtOrExprID &id) const;

@@ -291,7 +291,7 @@ class Assert:
             return False  # Do not suppress the exception
         body = ctx_stack.pop().make_stmt()
         top = ctx_stack.top()
-        top.append_stmt(ffi.makeAssert(top.get_metadata(), self.cond, body))
+        top.append_stmt(ffi.makeAssert(self.cond, body, top.get_metadata()))
 
 
 def MarkLabel(label: str):

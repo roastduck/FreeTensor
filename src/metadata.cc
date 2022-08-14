@@ -54,7 +54,10 @@ std::ostream &operator<<(std::ostream &os, const Ref<MetadataContent> &mdc) {
 
 TransformedMetadataContent::TransformedMetadataContent(
     const std::string &op, const std::vector<Metadata> sources)
-    : op_(op), sources_(sources) {}
+    : op_(op), sources_(sources) {
+    for (const auto &source : sources_)
+        ASSERT(source.isValid());
+}
 
 void TransformedMetadataContent::print(std::ostream &os, bool printLocation,
                                        int nIndent) const {
@@ -98,6 +101,20 @@ makeMetadata(const std::vector<std::string> &labels,
              const std::optional<std::pair<std::string, int>> &location,
              const Metadata &callerMetadata) {
     return Ref<SourceMetadataContent>::make(labels, location, callerMetadata);
+}
+
+AnonymousMetadataContent::AnonymousMetadataContent(const ID &id) : id_(id) {}
+
+void AnonymousMetadataContent::print(std::ostream &os, bool skipLocation,
+                                     int nIndent) const {
+    if (id_.isValid())
+        os << Indent(nIndent) << "#" << id_;
+    else
+        os << Indent(nIndent) << "#<anon>";
+}
+
+AnonymousMetadata makeMetadata(const ID &id) {
+    return Ref<AnonymousMetadataContent>::make(id);
 }
 
 std::string toString(const Metadata &md, bool shouldSkipLocation) {

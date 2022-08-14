@@ -16,7 +16,9 @@ class InlinedInvoke : public Mutator {
   public:
     InlinedInvoke(const Metadata &callSiteMetadata,
                   const std::unordered_map<std::string, Ref<FrontendVar>> &kvs)
-        : callSiteMetadata_(callSiteMetadata), kvs_(kvs) {}
+        : callSiteMetadata_(callSiteMetadata), kvs_(kvs) {
+        ASSERT(callSiteMetadata_.isValid());
+    }
 
   protected:
     Stmt visitStmt(const Stmt &op) override;
