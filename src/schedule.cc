@@ -85,12 +85,13 @@ Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
 
 // Make a log item with specifc parameter and result types
 #define MAKE_LOG(TYPE, FUNC, ...)                                              \
-    ([&](const auto &func, const auto &params) {                               \
+    ([this](const auto &func, const auto &_params) {                           \
+        auto params = getPackFromID(this, _params);                            \
         /* decay is required: we must not store an reference */                \
         typedef ScheduleLogItemImpl<                                           \
             ScheduleType::TYPE, std::decay_t<decltype(func)>,                  \
             std::decay_t<decltype(params)>,                                    \
-            std::decay_t<decltype(std::apply(func, params))>>                  \
+            std::decay_t<decltype(std::apply(func, _params))>>                 \
             BaseClass;                                                         \
         class ScheduleLogItem##TYPE : public BaseClass {                       \
           public:                                                              \
@@ -1002,8 +1003,7 @@ Schedule::multiLevelTiling(const ForsWithDataReuse &target,
                            const std::string &pat, int level) {
     return freetensor::multiLevelTiling(*this, target, annotation, pat, level);
 }
-std::vector<std::pair<ID, int>>
-Schedule::multiLevelTilingWithFusion(
+std::vector<std::pair<ID, int>> Schedule::multiLevelTilingWithFusion(
     const ForsWithDataReuse &target,
     const MultiLevelTilingAnnotation &annotation, const std::string &pat,
     const ElementWiseInfo &toFuse, int level, TargetType targetType,

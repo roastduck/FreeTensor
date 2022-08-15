@@ -52,6 +52,16 @@ void init_ffi_schedule(py::module_ &m) {
                  }
                  return ret;
              })
+        .def("pretty_logs",
+             [](const Schedule &s) {
+                 auto &&log = s.logs();
+                 std::vector<std::string> ret;
+                 ret.reserve(log.size());
+                 for (auto &&item : log) {
+                     ret.emplace_back(item->toPrettyString());
+                 }
+                 return ret;
+             })
         .def("find", static_cast<Stmt (Schedule::*)(
                          const std::function<bool(const Stmt &)> &) const>(
                          &Schedule::find))

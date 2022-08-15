@@ -114,7 +114,7 @@ def grad_(func: ffi.Func,
     tapes : Union[Sequence, GradTapeMode]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
-        VarDef IDs of them. It can also be a `GradTapeMode`, then it will determine
+        VarDef selectors of them. It can also be a `GradTapeMode`, then it will determine
         which intermediate variables to be stored by heuristics. Avail `GradTapeMode`s
         are: All: store all variables including local scalars; None: store nothing;
         NoReuseOnly: store variables that only hold one version of data, which means
@@ -167,7 +167,7 @@ def grad(func: ffi.Func,
     tapes : Union[Sequence, GradTapeMode]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
-        VarDef IDs of them. It can also be a `GradTapeMode`, then it will determine
+        VarDef selectors of them. It can also be a `GradTapeMode`, then it will determine
         which intermediate variables to be stored by heuristics. Avail `GradTapeMode`s
         are: All: store all variables including local scalars; None: store nothing;
         NoReuseOnly: store variables that only hold one version of data, which means

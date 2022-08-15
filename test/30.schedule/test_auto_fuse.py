@@ -18,7 +18,7 @@ def test_basic():
     s.auto_fuse(ft.CPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs() == ["fuse(L1, L2, true)"]
+    assert s.pretty_logs() == ["fuse(L1, L2, true)"]
 
 
 def test_nested():
@@ -38,7 +38,7 @@ def test_nested():
     s.auto_fuse(ft.CPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs() == ["fuse(L1, L3, true)", "fuse(L2, L4, true)"]
+    assert s.pretty_logs() == ["fuse(L1, L3, true)", "fuse(L2, L4, true)"]
 
 
 def test_stmt_in_between_1():
@@ -60,7 +60,7 @@ def test_stmt_in_between_1():
     s.auto_fuse(ft.CPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs() == ["swap(S2, L1)", "fuse(L1, L2, true)"]
+    assert s.pretty_logs() == ["swap(S2, L1)", "fuse(L1, L2, true)"]
 
 
 def test_stmt_in_between_2():
@@ -83,7 +83,7 @@ def test_stmt_in_between_2():
     s.auto_fuse(ft.CPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs() == ["swap(L2, S1)", "fuse(L1, L2, true)"]
+    assert s.pretty_logs() == ["swap(L2, S1)", "fuse(L1, L2, true)"]
 
 
 def test_tune():
@@ -180,5 +180,5 @@ def test_tune_with_cond():
     print(s.func())
     print(s.logs())
 
-    assert "fuse(Li1, Li2, true)" not in s.logs()
-    assert "fuse(Li3, Li4, true)" in s.logs()
+    assert "fuse(Li1, Li2, true)" not in s.pretty_logs()
+    assert "fuse(Li3, Li4, true)" in s.pretty_logs()
