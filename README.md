@@ -1,6 +1,4 @@
-![Logo](docs/resource/logo-light.png)
-
-# FreeTensor
+<img src="docs/resource/logo-light.png" alt="logo" width="40%"/>
 
 [Get Started](https://roastduck.github.io/FreeTensor/guide/) | [Contributing](https://roastduck.github.io/FreeTensor/about/contrib/) | [Publication](https://roastduck.github.io/FreeTensor/about/pub/) | [License](https://github.com/roastduck/FreeTensor/blob/master/LICENSE)
 
