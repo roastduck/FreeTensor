@@ -255,7 +255,7 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
     auto newVar = makeCacheVar.newVar();
     auto oldDef = makeCacheVar.oldDef();
     auto newDef = makeCacheVar.newDef();
-    if (newDef.isValid()) {
+    if (!newDef.isValid()) {
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
