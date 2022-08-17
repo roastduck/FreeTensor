@@ -39,6 +39,7 @@ void init_ffi_schedule(py::module_ &m) {
     py::class_<Schedule>(m, "Schedule")
         .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
         .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
+        .def(py::init<const Schedule &>(), "schedule"_a)
         .def("fork", &Schedule::fork)
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)

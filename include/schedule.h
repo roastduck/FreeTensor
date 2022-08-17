@@ -49,6 +49,7 @@ class Schedule {
         : Schedule(func->body_, verbose) {
         func_ = func;
     }
+    Schedule(const Schedule &) = default;
 
     /**
      * Copy the `Schedule` object for trying different scheduling decisions in
@@ -116,7 +117,7 @@ class Schedule {
 
     /**
      * Find all node(s) in the current AST with a given selector
-     * 
+     *
      * @param selector: selector used to match a sub-tree
      */
     std::vector<Stmt> findAll(const Ref<Selector> &selector) const {
@@ -126,7 +127,7 @@ class Schedule {
 
     /**
      * Find a node in the current AST with a given selector
-     * 
+     *
      * @param selector: selector used to match a sub-tree
      */
     Stmt find(const Ref<Selector> &selector) const {
