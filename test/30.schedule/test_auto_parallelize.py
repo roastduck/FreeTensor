@@ -14,7 +14,7 @@ def test_cpu_basic():
     s.auto_parallelize(ft.CPU())
     print(s.logs())
     assert s.pretty_logs() == [
-        "merge(Li, Lj)", "parallelize(merged.Li.Lj, openmp)"
+        "merge(Li, Lj)", "parallelize(merge {Li, Lj}, openmp)"
     ]
 
 
@@ -36,9 +36,9 @@ def test_gpu_basic_static_small():
     print(s.ast())
     print(s.logs())
     assert s.pretty_logs() == [
-        "merge(Li, Lj)", f"split(merged.Li.Lj, -1, {num_sm}, 0)",
-        "parallelize(merged.Li.Lj.0, blockIdx.x)",
-        "parallelize(merged.Li.Lj.1, threadIdx.x)"
+        "merge(Li, Lj)", f"split(merge {{Li, Lj}}, -1, {num_sm}, 0)",
+        "parallelize(split.outer {merge {Li, Lj}}, blockIdx.x)",
+        "parallelize(split.inner {merge {Li, Lj}}, threadIdx.x)"
     ]
 
 
@@ -57,9 +57,9 @@ def test_gpu_basic_static_large():
     print(s.ast())
     print(s.logs())
     assert s.pretty_logs() == [
-        "merge(Li, Lj)", "split(merged.Li.Lj, 256, -1, 0)",
-        "parallelize(merged.Li.Lj.0, blockIdx.x)",
-        "parallelize(merged.Li.Lj.1, threadIdx.x)"
+        "merge(Li, Lj)", "split(merge {Li, Lj}, 256, -1, 0)",
+        "parallelize(split.outer {merge {Li, Lj}}, blockIdx.x)",
+        "parallelize(split.inner {merge {Li, Lj}}, threadIdx.x)"
     ]
 
 
@@ -83,12 +83,12 @@ def test_gpu_basic_dynamic():
     print(s.ast())
     print(s.logs())
     assert s.pretty_logs() == [
-        "merge(Li, Lj)", f"split(merged.Li.Lj, {num_sm}, -1, 0)",
-        "reorder(merged.Li.Lj.1, merged.Li.Lj.0)",
-        "split(merged.Li.Lj.0, 256, -1, 0)",
-        "parallelize(merged.Li.Lj.1, blockIdx.y)",
-        "parallelize(merged.Li.Lj.0.0, blockIdx.x)",
-        "parallelize(merged.Li.Lj.0.1, threadIdx.x)"
+        "merge(Li, Lj)", f"split(merge {{Li, Lj}}, {num_sm}, -1, 0)",
+        "reorder(split.inner {merge {Li, Lj}}, split.outer {merge {Li, Lj}})",
+        "split(split.outer {merge {Li, Lj}}, 256, -1, 0)",
+        "parallelize(split.inner {merge {Li, Lj}}, blockIdx.y)",
+        "parallelize(split.outer {split.outer {merge {Li, Lj}}}, blockIdx.x)",
+        "parallelize(split.inner {split.outer {merge {Li, Lj}}}, threadIdx.x)"
     ]
 
 
@@ -139,9 +139,10 @@ def test_gpu_warp_static():
     print(s.ast())
     print(s.logs())
     assert s.pretty_logs() == [
-        "split(Lk, 32, -1, 0)", "parallelize(Lk.1, threadIdx.x)",
-        "reorder(Lk.1, Lk.0)", "split(Li, 8, -1, 0)",
-        "parallelize(Li.0, blockIdx.x)", "parallelize(Li.1, threadIdx.y)"
+        "split(Lk, 32, -1, 0)", "parallelize(split.inner {Lk}, threadIdx.x)",
+        "reorder(split.inner {Lk}, split.outer {Lk})", "split(Li, 8, -1, 0)",
+        "parallelize(split.outer {Li}, blockIdx.x)",
+        "parallelize(split.inner {Li}, threadIdx.y)"
     ]
 
 
@@ -166,11 +167,14 @@ def test_gpu_warp_dynamic():
     print(s.ast())
     print(s.logs())
     assert s.pretty_logs() == [
-        "split(Lk, 32, -1, 0)", "parallelize(Lk.1, threadIdx.x)",
-        "reorder(Lk.1, Lk.0)", f"split(Li, {num_sm}, -1, 0)",
-        "reorder(Li.1, Li.0)", "split(Li.0, 8, -1, 0)",
-        "parallelize(Li.1, blockIdx.y)", "parallelize(Li.0.0, blockIdx.x)",
-        "parallelize(Li.0.1, threadIdx.y)"
+        "split(Lk, 32, -1, 0)", "parallelize(split.inner {Lk}, threadIdx.x)",
+        "reorder(split.inner {Lk}, split.outer {Lk})",
+        f"split(Li, {num_sm}, -1, 0)",
+        "reorder(split.inner {Li}, split.outer {Li})",
+        "split(split.outer {Li}, 8, -1, 0)",
+        "parallelize(split.inner {Li}, blockIdx.y)",
+        "parallelize(split.outer {split.outer {Li}}, blockIdx.x)",
+        "parallelize(split.inner {split.outer {Li}}, threadIdx.y)"
     ]
 
 

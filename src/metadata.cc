@@ -73,8 +73,9 @@ void TransformedMetadataContent::print(std::ostream &os, bool printLocation,
                                        int nIndent) const {
     os << Indent(nIndent) << op_ << " {" << nl;
     for (auto &&[i, src] : iter::enumerate(sources_)) {
+        if (i != 0)
+            os << ", " << nl;
         src->print(os, printLocation, nIndent + 1);
-        os << "," << nl;
     }
     os << Indent(nIndent) << "}";
 }
