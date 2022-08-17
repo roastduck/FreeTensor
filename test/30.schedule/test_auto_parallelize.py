@@ -13,7 +13,9 @@ def test_cpu_basic():
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
     print(s.logs())
-    assert s.logs() == ["merge(Li, Lj)", "parallelize(merged.Li.Lj, openmp)"]
+    assert s.pretty_logs() == [
+        "merge(Li, Lj)", "parallelize(merged.Li.Lj, openmp)"
+    ]
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
@@ -33,7 +35,7 @@ def test_gpu_basic_static_small():
     s.auto_parallelize(device)
     print(s.ast())
     print(s.logs())
-    assert s.logs() == [
+    assert s.pretty_logs() == [
         "merge(Li, Lj)", f"split(merged.Li.Lj, -1, {num_sm}, 0)",
         "parallelize(merged.Li.Lj.0, blockIdx.x)",
         "parallelize(merged.Li.Lj.1, threadIdx.x)"
@@ -54,7 +56,7 @@ def test_gpu_basic_static_large():
     s.auto_parallelize(ft.GPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs() == [
+    assert s.pretty_logs() == [
         "merge(Li, Lj)", "split(merged.Li.Lj, 256, -1, 0)",
         "parallelize(merged.Li.Lj.0, blockIdx.x)",
         "parallelize(merged.Li.Lj.1, threadIdx.x)"
@@ -80,7 +82,7 @@ def test_gpu_basic_dynamic():
     s.auto_parallelize(ft.GPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs() == [
+    assert s.pretty_logs() == [
         "merge(Li, Lj)", f"split(merged.Li.Lj, {num_sm}, -1, 0)",
         "reorder(merged.Li.Lj.1, merged.Li.Lj.0)",
         "split(merged.Li.Lj.0, 256, -1, 0)",
@@ -102,7 +104,7 @@ def test_non_parallelizable():
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
     print(s.logs())
-    assert s.logs() == ["parallelize(Li, openmp)"]
+    assert s.pretty_logs() == ["parallelize(Li, openmp)"]
 
 
 def test_reduction_better_not_parallelized():
@@ -118,7 +120,7 @@ def test_reduction_better_not_parallelized():
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
     print(s.logs())
-    assert s.logs() == ["parallelize(Li, openmp)"]
+    assert s.pretty_logs() == ["parallelize(Li, openmp)"]
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
@@ -136,7 +138,7 @@ def test_gpu_warp_static():
     s.auto_parallelize(ft.GPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs() == [
+    assert s.pretty_logs() == [
         "split(Lk, 32, -1, 0)", "parallelize(Lk.1, threadIdx.x)",
         "reorder(Lk.1, Lk.0)", "split(Li, 8, -1, 0)",
         "parallelize(Li.0, blockIdx.x)", "parallelize(Li.1, threadIdx.y)"
@@ -163,7 +165,7 @@ def test_gpu_warp_dynamic():
     s.auto_parallelize(ft.GPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs() == [
+    assert s.pretty_logs() == [
         "split(Lk, 32, -1, 0)", "parallelize(Lk.1, threadIdx.x)",
         "reorder(Lk.1, Lk.0)", f"split(Li, {num_sm}, -1, 0)",
         "reorder(Li.1, Li.0)", "split(Li.0, 8, -1, 0)",
@@ -187,7 +189,9 @@ def test_outer_loop_too_short():
     s.auto_parallelize(ft.CPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs() == ["parallelize(Lj1, openmp)", "parallelize(Lj2, openmp)"]
+    assert s.pretty_logs() == [
+        "parallelize(Lj1, openmp)", "parallelize(Lj2, openmp)"
+    ]
 
 
 def test_outer_loop_not_parallelizable():
@@ -207,4 +211,6 @@ def test_outer_loop_not_parallelizable():
     s.auto_parallelize(ft.CPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs() == ["parallelize(Li0, openmp)", "parallelize(Li1, openmp)"]
+    assert s.pretty_logs() == [
+        "parallelize(Li0, openmp)", "parallelize(Li1, openmp)"
+    ]

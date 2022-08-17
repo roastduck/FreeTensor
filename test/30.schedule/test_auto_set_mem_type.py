@@ -23,7 +23,7 @@ def test_gpu_basic():
     s.auto_set_mem_type(ft.GPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs()[2:] == ["set_mem_type(V_t, gpu/shared)"]
+    assert s.pretty_logs()[2:] == ["set_mem_type(V_t, gpu/shared)"]
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
@@ -47,4 +47,4 @@ def test_gpu_local_across_loops():
     s.auto_set_mem_type(ft.GPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs()[3:] == ["set_mem_type(V_t, gpu/local)"]
+    assert s.pretty_logs()[3:] == ["set_mem_type(V_t, gpu/local)"]

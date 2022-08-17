@@ -13,12 +13,13 @@ def test_flop():
             y[i] = x1[i] * x2[i] + x3[i]
     ast = ft.pop_ast(verbose=True)
 
-    features = dict(
-        map(lambda kv: (str(kv[0]), kv[1]),
-            ft.structural_feature(ast).items()))
+    features = ft.structural_feature(ast)
 
-    assert features[ft.lookup_id('S1', ast)].op_cnt[ft.DataType('float32')] == 2
-    assert features[ft.lookup_id('L1', ast)].op_cnt[ft.DataType('float32')] == 64
+    S1 = features[ft.lookup_id(ast, 'S1')]
+    L1 = features[ft.lookup_id(ast, 'L1')]
+
+    assert S1.op_cnt[ft.DataType('float32')] == 2
+    assert L1.op_cnt[ft.DataType('float32')] == 64
 
 
 def test_access_count():
@@ -31,16 +32,17 @@ def test_access_count():
             y[i] = x[i] + 1
     ast = ft.pop_ast(verbose=True)
 
-    features = dict(
-        map(lambda kv: (str(kv[0]), kv[1]),
-            ft.structural_feature(ast).items()))
+    features = ft.structural_feature(ast)
 
-    assert features[ft.lookup_id('S1', ast)].load_cnt[ft.MemType('cpu')] == 1
-    assert features[ft.lookup_id('S1', ast)].store_cnt[ft.MemType('cpu')] == 1
-    assert features[ft.lookup_id('S1', ast)].access_cnt[ft.MemType('cpu')] == 2
-    assert features[ft.lookup_id('L1', ast)].load_cnt[ft.MemType('cpu')] == 32
-    assert features[ft.lookup_id('L1', ast)].store_cnt[ft.MemType('cpu')] == 32
-    assert features[ft.lookup_id('L1', ast)].access_cnt[ft.MemType('cpu')] == 64
+    S1 = features[ft.lookup_id(ast, 'S1')]
+    L1 = features[ft.lookup_id(ast, 'L1')]
+
+    assert S1.load_cnt[ft.MemType('cpu')] == 1
+    assert S1.store_cnt[ft.MemType('cpu')] == 1
+    assert S1.access_cnt[ft.MemType('cpu')] == 2
+    assert L1.load_cnt[ft.MemType('cpu')] == 32
+    assert L1.store_cnt[ft.MemType('cpu')] == 32
+    assert L1.access_cnt[ft.MemType('cpu')] == 64
 
 
 def test_access_count_overlap():
@@ -56,19 +58,21 @@ def test_access_count_overlap():
                 y2[i] = x[i] + 1
     ast = ft.pop_ast(verbose=True)
 
-    features = dict(
-        map(lambda kv: (str(kv[0]), kv[1]),
-            ft.structural_feature(ast).items()))
+    features = ft.structural_feature(ast)
 
-    assert features[ft.lookup_id('L1', ast)].load_cnt[ft.MemType('cpu')] == 32
-    assert features[ft.lookup_id('L1', ast)].store_cnt[ft.MemType('cpu')] == 32
-    assert features[ft.lookup_id('L1', ast)].access_cnt[ft.MemType('cpu')] == 64
-    assert features[ft.lookup_id('L2', ast)].load_cnt[ft.MemType('cpu')] == 32
-    assert features[ft.lookup_id('L2', ast)].store_cnt[ft.MemType('cpu')] == 32
-    assert features[ft.lookup_id('L2', ast)].access_cnt[ft.MemType('cpu')] == 64
-    assert features[ft.lookup_id('S1', ast)].load_cnt[ft.MemType('cpu')] == 64
-    assert features[ft.lookup_id('S1', ast)].store_cnt[ft.MemType('cpu')] == 64
-    assert features[ft.lookup_id('S1', ast)].access_cnt[ft.MemType('cpu')] == 128
+    S1 = features[ft.lookup_id(ast, 'S1')]
+    L1 = features[ft.lookup_id(ast, 'L1')]
+    L2 = features[ft.lookup_id(ast, 'L2')]
+
+    assert L1.load_cnt[ft.MemType('cpu')] == 32
+    assert L1.store_cnt[ft.MemType('cpu')] == 32
+    assert L1.access_cnt[ft.MemType('cpu')] == 64
+    assert L2.load_cnt[ft.MemType('cpu')] == 32
+    assert L2.store_cnt[ft.MemType('cpu')] == 32
+    assert L2.access_cnt[ft.MemType('cpu')] == 64
+    assert S1.load_cnt[ft.MemType('cpu')] == 64
+    assert S1.store_cnt[ft.MemType('cpu')] == 64
+    assert S1.access_cnt[ft.MemType('cpu')] == 128
 
 
 def test_access_area():
@@ -81,16 +85,17 @@ def test_access_area():
             y[i] = x[i] + 1
     ast = ft.pop_ast(verbose=True)
 
-    features = dict(
-        map(lambda kv: (str(kv[0]), kv[1]),
-            ft.structural_feature(ast).items()))
+    features = ft.structural_feature(ast)
 
-    assert features[ft.lookup_id('S1', ast)].load_area[ft.MemType('cpu')] == 1
-    assert features[ft.lookup_id('S1', ast)].store_area[ft.MemType('cpu')] == 1
-    assert features[ft.lookup_id('S1', ast)].access_area[ft.MemType('cpu')] == 2
-    assert features[ft.lookup_id('L1', ast)].load_area[ft.MemType('cpu')] == 32
-    assert features[ft.lookup_id('L1', ast)].store_area[ft.MemType('cpu')] == 32
-    assert features[ft.lookup_id('L1', ast)].access_area[ft.MemType('cpu')] == 64
+    S1 = features[ft.lookup_id(ast, 'S1')]
+    L1 = features[ft.lookup_id(ast, 'L1')]
+
+    assert S1.load_area[ft.MemType('cpu')] == 1
+    assert S1.store_area[ft.MemType('cpu')] == 1
+    assert S1.access_area[ft.MemType('cpu')] == 2
+    assert L1.load_area[ft.MemType('cpu')] == 32
+    assert L1.store_area[ft.MemType('cpu')] == 32
+    assert L1.access_area[ft.MemType('cpu')] == 64
 
 
 def test_access_area_overlap():
@@ -106,17 +111,18 @@ def test_access_area_overlap():
                 y2[i] = x[i] + 1
     ast = ft.pop_ast(verbose=True)
 
-    features = dict(
-        map(lambda kv: (str(kv[0]), kv[1]),
-            ft.structural_feature(ast).items()))
+    features = ft.structural_feature(ast)
 
-    assert features[ft.lookup_id('L1', ast)].load_area[ft.MemType('cpu')] == 32
-    assert features[ft.lookup_id('L1', ast)].store_area[ft.MemType('cpu')] == 32
-    assert features[ft.lookup_id('L1', ast)].access_area[ft.MemType('cpu')] == 64
-    assert features[ft.lookup_id('L2', ast)].load_area[ft.MemType('cpu')] == 32
-    assert features[ft.lookup_id('L2', ast)].store_area[ft.MemType('cpu')] == 32
-    assert features[ft.lookup_id('L2', ast)].access_area[ft.MemType('cpu')] == 64
-    assert features[ft.lookup_id('S1', ast)].load_area[ft.MemType('cpu')] == 48
-    assert features[ft.lookup_id('S1', ast)].store_area[ft.MemType('cpu')] == 64
-    assert features[ft.lookup_id('S1',
-                                ast)].access_area[ft.MemType('cpu')] == 112
+    S1 = features[ft.lookup_id(ast, 'S1')]
+    L1 = features[ft.lookup_id(ast, 'L1')]
+    L2 = features[ft.lookup_id(ast, 'L2')]
+
+    assert L1.load_area[ft.MemType('cpu')] == 32
+    assert L1.store_area[ft.MemType('cpu')] == 32
+    assert L1.access_area[ft.MemType('cpu')] == 64
+    assert L2.load_area[ft.MemType('cpu')] == 32
+    assert L2.store_area[ft.MemType('cpu')] == 32
+    assert L2.access_area[ft.MemType('cpu')] == 64
+    assert S1.load_area[ft.MemType('cpu')] == 48
+    assert S1.store_area[ft.MemType('cpu')] == 64
+    assert S1.access_area[ft.MemType('cpu')] == 112

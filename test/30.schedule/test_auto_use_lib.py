@@ -21,7 +21,7 @@ def test_basic():
     s.auto_use_lib(ft.CPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs() == ["as_matmul(Li)"]
+    assert s.pretty_logs() == ["as_matmul(Li)"]
 
 
 def test_fission_when_prefer_libs():
@@ -46,5 +46,5 @@ def test_fission_when_prefer_libs():
     s.auto_use_lib(ft.CPU())
     print(s.ast())
     print(s.logs())
-    assert "as_matmul(Li.0.lib)" in s.logs()
-    assert "as_matmul(Li.1.lib)" in s.logs()
+    assert "as_matmul(Li.0.lib)" in s.pretty_logs()
+    assert "as_matmul(Li.1.lib)" in s.pretty_logs()
