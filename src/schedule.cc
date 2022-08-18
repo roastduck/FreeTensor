@@ -166,9 +166,10 @@ std::vector<ID> Schedule::permute(
 }
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
-Schedule::fission(const ID &loop, FissionSide side, const ID &splitter) {
+Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
+                  bool preserveFirst, bool preserveSecond) {
     auto log = MAKE_LOG(Fission, std::bind_front(freetensor::fission, ast_),
-                        loop, side, splitter);
+                        loop, side, splitter, preserveFirst, preserveSecond);
     ScheduleLog logs = logs_.push(log);
     RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
@@ -417,15 +418,10 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                             "supported in moveTo");
                         // TODO: Fission IfNode
                     }
-                    auto &&[idMapBefore, idMapAfter] =
-                        fission(s->id(), FissionSide::After, stmt);
+                    auto idMapBefore =
+                        fission(s->id(), FissionSide::After, stmt, false, true)
+                            .first;
                     stmt = idMapBefore.at(s->id());
-                    if (auto it = idMapAfter.find(dst);
-                        it != idMapAfter.end()) {
-                        // In case moving a statement from the body of `dst` to
-                        // before `dst`
-                        dst = it->second;
-                    }
                 }
                 // TODO: Fuse if d is inner of s
 
@@ -450,15 +446,10 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                         // TODO: Fission IfNode
                     }
                     // Leave IDs of the other statements unchanged
-                    auto &&[idMapBefore, idMapAfter] =
-                        fission(s->id(), FissionSide::Before, stmt);
+                    auto idMapAfter =
+                        fission(s->id(), FissionSide::Before, stmt, true, false)
+                            .second;
                     stmt = idMapAfter.at(s->id());
-                    if (auto it = idMapBefore.find(dst);
-                        it != idMapBefore.end()) {
-                        // In case moving a statement from the body of `dst` to
-                        // after `dst`
-                        dst = it->second;
-                    }
                 }
                 // TODO: Fuse if d is inner of s
 
@@ -604,10 +595,11 @@ void Schedule::autoUseLib(const Target &target) {
                     auto logBak = logs_;
                     try {
                         fission(loop->loop_->id(), FissionSide::Before,
-                                stmt->id());
-                        auto libStmtId = fission(loop->loop_->id(),
-                                                 FissionSide::After, stmt->id())
-                                             .first.at(loop->loop_->id());
+                                stmt->id(), false, true);
+                        auto libStmtId =
+                            fission(loop->loop_->id(), FissionSide::After,
+                                    stmt->id(), false, true)
+                                .first.at(loop->loop_->id());
                         asMatMul(libStmtId);
                     } catch (const InvalidSchedule &e) {
                         ast_ = std::move(bak), logs_ = std::move(logBak);

@@ -104,10 +104,13 @@ class FissionFor : public Mutator {
     std::unordered_map<ID, ID> ids0_, ids1_;
     std::unordered_set<std::string> varUses_;
     bool inside_ = false, isPart0_ = true, anyInside_ = false, isAfter_ = false;
+    bool preserveFirst_, preserveSecond_;
 
   public:
-    FissionFor(const ID &loop, const ID &before, const ID &after)
-        : loop_(loop), before_(before), after_(after) {}
+    FissionFor(const ID &loop, const ID &before, const ID &after,
+               bool preserveFirst, bool preserveSecond)
+        : loop_(loop), before_(before), after_(after),
+          preserveFirst_(preserveFirst), preserveSecond_(preserveSecond) {}
 
     const std::unordered_map<ID, ID> &ids0() const { return ids0_; }
     const std::unordered_map<ID, ID> &ids1() const { return ids1_; }
@@ -133,7 +136,8 @@ class FissionFor : public Mutator {
 
 std::pair<Stmt,
           std::pair<std::unordered_map<ID, ID>, std::unordered_map<ID, ID>>>
-fission(const Stmt &ast, const ID &loop, FissionSide side, const ID &splitter);
+fission(const Stmt &ast, const ID &loop, FissionSide side, const ID &splitter,
+        bool preserveFirstId, bool preserveSecondId);
 
 } // namespace freetensor
 

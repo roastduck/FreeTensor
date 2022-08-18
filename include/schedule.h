@@ -227,12 +227,20 @@ class Schedule {
      * @param side : If `After`, `splitter` is the last statement of the first
      * loop. If `Before`, `splitter` is the first statement of the second loop
      * @param splitter : Where to fission the loop
+     * @param preserveFirst : Whether to keep the ID and metadata of the first
+     * part after fission, defaults to false, cannot be true together with
+     * preserveSecond
+     * @param preserveSecond : Whether to keep the ID and metadata of the second
+     * part after fission, defaults to false, cannot be true together with
+     * preserveFirst
      * @throw InvalidSchedule if any dependency cannot be resolved
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
      * loop})
      */
     std::pair<IDMap, IDMap> fission(const ID &loop, FissionSide side,
-                                    const ID &splitter);
+                                    const ID &splitter,
+                                    bool preserveFirst = false,
+                                    bool preserveSecond = false);
 
     /**
      * Fuse two directly following loops with the same length into one
