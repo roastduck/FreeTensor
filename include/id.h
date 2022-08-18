@@ -9,8 +9,8 @@ namespace freetensor {
 /**
  * Identify an Stmt acrossing passes, so we do not need to pass pointers
  *
- * An Stmt is identified by a string-typed id_ property, which is unique to each
- * Stmt node
+ * An Stmt is identified by a integer id_ property, which is unique to each Stmt
+ * node
  */
 class ID {
     friend class StmtNode;
