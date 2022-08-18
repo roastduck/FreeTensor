@@ -139,7 +139,7 @@ class Schedule(ffi.Schedule):
         list of ID
             the list of IDs of permuted loops
         """
-        super().permute([self._lookup(l) for l in loops], transform_func)
+        return super().permute([self._lookup(l) for l in loops], transform_func)
 
     def fission(self, loop, side, splitter):
         """
