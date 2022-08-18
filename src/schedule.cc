@@ -417,9 +417,15 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                             "supported in moveTo");
                         // TODO: Fission IfNode
                     }
-                    auto idMap =
-                        fission(s->id(), FissionSide::After, stmt).first;
-                    stmt = idMap.at(s->id());
+                    auto &&[idMapBefore, idMapAfter] =
+                        fission(s->id(), FissionSide::After, stmt);
+                    stmt = idMapBefore.at(s->id());
+                    if (auto it = idMapAfter.find(dst);
+                        it != idMapAfter.end()) {
+                        // In case moving a statement from the body of `dst` to
+                        // before `dst`
+                        dst = it->second;
+                    }
                 }
                 // TODO: Fuse if d is inner of s
 
@@ -444,9 +450,15 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                         // TODO: Fission IfNode
                     }
                     // Leave IDs of the other statements unchanged
-                    auto idMap =
-                        fission(s->id(), FissionSide::Before, stmt).second;
-                    stmt = idMap.at(s->id());
+                    auto &&[idMapBefore, idMapAfter] =
+                        fission(s->id(), FissionSide::Before, stmt);
+                    stmt = idMapAfter.at(s->id());
+                    if (auto it = idMapBefore.find(dst);
+                        it != idMapBefore.end()) {
+                        // In case moving a statement from the body of `dst` to
+                        // after `dst`
+                        dst = it->second;
+                    }
                 }
                 // TODO: Fuse if d is inner of s
 
