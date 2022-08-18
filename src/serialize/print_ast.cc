@@ -41,12 +41,11 @@ std::string PrintVisitor::prettyFuncName(const std::string &name) {
         return escaped;
 }
 
-std::string PrintVisitor::prettyId(const std::string &id) {
-    auto escaped = escape(id);
+std::string PrintVisitor::prettyId(const ID &id) {
     if (pretty_)
-        return CYAN + escaped + RESET;
+        return CYAN + freetensor::toString(id) + RESET;
     else
-        return escaped;
+        return freetensor::toString(id);
 }
 
 std::string PrintVisitor::prettyLiteral(const std::string &lit) {
@@ -89,7 +88,7 @@ void PrintVisitor::printMetadataAndId(const Stmt &op) {
         makeIndent();
         os() << "#!";
         if (printAllId_)
-            os() << prettyId(::freetensor::toString(op->id()));
+            os() << prettyId(op->id());
         os() << " ";
         if (op->metadata().isValid())
             os() << op->metadata();
