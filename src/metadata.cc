@@ -58,7 +58,10 @@ std::ostream &manipMetadataPrintId(std::ostream &os) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Ref<MetadataContent> &mdc) {
-    mdc->print(os, os.iword(metadataLocation), 0);
+    if (mdc.isValid())
+        mdc->print(os, os.iword(metadataLocation), 0);
+    else
+        makeMetadata()->print(os, os.iword(metadataLocation), 0);
     return os;
 }
 
