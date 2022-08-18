@@ -101,8 +101,7 @@ inline Schedule::IDMap fissionLoops(Schedule &schedule,
             for (auto &&[key, value] : ret) {
                 ret[key] = after[value];
             }
-            // after should contain loops[i] already
-            ASSERT(ret.count(loops[i]) == 1);
+            ret[loops[i]] = after[loops[i]];
         }
         ASSERT(before.count(loops[i]) == 1);
         splitter = before[loops[i]];
