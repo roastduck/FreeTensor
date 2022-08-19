@@ -119,7 +119,8 @@ def test_reversed_for():
 def test_for_with_multiple_properties():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, label="foo", no_deps=['x'], prefer_libs=True) as i:
+        with ft.For("i", 0, 4, label="foo", no_deps=['x'],
+                    prefer_libs=True) as i:
             y[i] = x[i] + 1
     ast = ft.pop_ast()
     txt = ft.dump_ast(ast)

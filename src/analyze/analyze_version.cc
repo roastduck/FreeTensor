@@ -88,7 +88,8 @@ void CountScopeLen::visit(const Assert &op) {
 void AnalyzeVersion::visit(const Load &op) {
     BaseClass::visit(op);
     if (op->var_ == var_) {
-        versions_[StmtOrExprID(op, curStmt())] = makeSub(offset_, makeIntConst(1));
+        versions_[StmtOrExprID(op, curStmt())] =
+            makeSub(offset_, makeIntConst(1));
     }
 }
 

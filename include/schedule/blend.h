@@ -55,8 +55,8 @@ class BlendPass : public Mutator {
                 } else if (stmt->nodeType() == ASTNodeType::ReduceTo) {
                     stmt = visitMemAccess(stmt.template as<ReduceToNode>());
                 }
-                stmt->metadata() = makeMetadata(
-                    "blend." + std::to_string(curIter_), stmt);
+                stmt->metadata() =
+                    makeMetadata("blend." + std::to_string(curIter_), stmt);
 
                 for (auto it = envStack_.rbegin(); it != envStack_.rend();
                      it++) {

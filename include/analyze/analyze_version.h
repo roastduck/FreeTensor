@@ -50,7 +50,8 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
     AnalyzeVersion(const ID &def, const std::unordered_set<ID> &affectingScopes,
                    const std::unordered_set<ID> &needTapes,
                    const std::unordered_map<Stmt, Expr> &scopeLen,
-                   const Expr &totLen, std::unordered_map<StmtOrExprID, Expr> &versions)
+                   const Expr &totLen,
+                   std::unordered_map<StmtOrExprID, Expr> &versions)
         : def_(def), affectingScopes_(affectingScopes), needTapes_(needTapes),
           scopeLen_(scopeLen), totLen_(totLen), versions_(versions) {}
 

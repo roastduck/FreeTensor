@@ -171,9 +171,10 @@ class CompTransientBounds : public BaseClass,
                 property->reductions_.emplace_back(makeReductionItem(
                     r->op_, r->var_, std::move(begins), std::move(ends)));
             }
-            auto ret = makeFor(op->iter_, std::move(begin),
-                               std::move(end), std::move(step), std::move(len),
-                               std::move(property), std::move(body), op->metadata(), op->id());
+            auto ret =
+                makeFor(op->iter_, std::move(begin), std::move(end),
+                        std::move(step), std::move(len), std::move(property),
+                        std::move(body), op->metadata(), op->id());
             return COPY_DEBUG_INFO(ret, op);
         }
     }

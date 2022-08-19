@@ -183,7 +183,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                 }
             }
             cacheAtomic_[loopToCache].emplace_back(_op, newShape,
-                                                    newTargetIndices);
+                                                   newTargetIndices);
         } else {
             op->atomic_ = true;
         }
