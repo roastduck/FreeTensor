@@ -38,11 +38,11 @@ Stmt Splitter::visit(const For &_op) {
             op->body_);
         auto inner =
             makeFor(iter1, makeIntConst(0), factor, makeIntConst(1), factor,
-                    op->property_, body, makeMetadata("split.inner", op));
+                    op->property_, body, makeMetadata("split.1", op));
         dst1_ = inner->id();
         auto outer =
             makeFor(iter0, makeIntConst(0), nparts, makeIntConst(1), nparts,
-                    op->property_, inner, makeMetadata("split.outer", op));
+                    op->property_, inner, makeMetadata("split.0", op));
         dst0_ = outer->id();
         found_ = true;
         return outer;
