@@ -54,18 +54,18 @@ def test_fusion():
     z_arr = ft.Array(z_np)
     ft.build_binary(code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
-        'split(L4, 2, -1, 0)', 'split(split.0 {L4}, 2, -1, 0)',
-        'split(split.0 {split.0 {L4}}, 2, -1, 0)', 'split(L5, 2, -1, 0)',
-        'split(split.0 {L5}, 2, -1, 0)',
-        'split(split.0 {split.0 {L5}}, 2, -1, 0)', 'split(L3, 2, -1, 0)',
-        'reorder(split.0 {split.0 {split.0 {L4}}}, split.0 {split.0 {split.0 {L5}}}, split.1 {split.0 {split.0 {L4}}}, split.1 {split.0 {split.0 {L5}}}, split.0 {L3}, split.1 {split.0 {L4}}, split.1 {split.0 {L5}}, split.1 {L3}, split.1 {L4}, split.1 {L5})',
-        'split(L6, 4, -1, 0)', 'split(split.0 {L6}, 2, -1, 0)',
-        'split(L7, 4, -1, 0)', 'split(split.0 {L7}, 2, -1, 0)',
-        'reorder(split.0 {split.0 {L6}}, split.0 {split.0 {L7}}, split.1 {split.0 {L6}}, split.1 {split.0 {L7}}, split.1 {L6}, split.1 {L7})',
-        'fuse(split.0 {split.0 {split.0 {L4}}}, split.0 {split.0 {L6}}, false)',
-        'fuse(split.0 {split.0 {split.0 {L5}}}, split.0 {split.0 {L7}}, false)',
-        'fuse(split.1 {split.0 {split.0 {L4}}}, split.1 {split.0 {L6}}, false)',
-        'fuse(split.1 {split.0 {split.0 {L5}}}, split.1 {split.0 {L7}}, false)',
+        'split(L4, 2, -1, 0)', 'split($split.0{L4}, 2, -1, 0)',
+        'split($split.0{$split.0{L4}}, 2, -1, 0)', 'split(L5, 2, -1, 0)',
+        'split($split.0{L5}, 2, -1, 0)',
+        'split($split.0{$split.0{L5}}, 2, -1, 0)', 'split(L3, 2, -1, 0)',
+        'reorder($split.0{$split.0{$split.0{L4}}}, $split.0{$split.0{$split.0{L5}}}, $split.1{$split.0{$split.0{L4}}}, $split.1{$split.0{$split.0{L5}}}, $split.0{L3}, $split.1{$split.0{L4}}, $split.1{$split.0{L5}}, $split.1{L3}, $split.1{L4}, $split.1{L5})',
+        'split(L6, 4, -1, 0)', 'split($split.0{L6}, 2, -1, 0)',
+        'split(L7, 4, -1, 0)', 'split($split.0{L7}, 2, -1, 0)',
+        'reorder($split.0{$split.0{L6}}, $split.0{$split.0{L7}}, $split.1{$split.0{L6}}, $split.1{$split.0{L7}}, $split.1{L6}, $split.1{L7})',
+        'fuse($split.0{$split.0{$split.0{L4}}}, $split.0{$split.0{L6}}, false)',
+        'fuse($split.0{$split.0{$split.0{L5}}}, $split.0{$split.0{L7}}, false)',
+        'fuse($split.1{$split.0{$split.0{L4}}}, $split.1{$split.0{L6}}, false)',
+        'fuse($split.1{$split.0{$split.0{L5}}}, $split.1{$split.0{L7}}, false)',
         'cache(*, y, cpu)'
     ]
     sch_log = sch.pretty_logs()
