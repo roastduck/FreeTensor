@@ -66,7 +66,7 @@ class Context:
                         metadata: ffi.Metadata = None,
                         no_deps: Optional[Sequence[str]] = None,
                         prefer_libs: Optional[bool] = None):
-        if metadata == None:
+        if metadata is None:
             metadata = self.get_metadata()
         if no_deps is None:
             no_deps = self.next_no_deps
@@ -105,7 +105,7 @@ class Context:
         return self.next_prefer_libs
 
     def make_stmt(self, metadata: ffi.Metadata = None):
-        if len(self.stmt_seq) == 1 and metadata == None:
+        if len(self.stmt_seq) == 1 and metadata is None:
             return self.stmt_seq[0]
         else:
             return ffi.makeStmtSeq(self.stmt_seq, metadata or None)

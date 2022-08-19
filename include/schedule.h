@@ -49,7 +49,10 @@ class Schedule {
         : Schedule(func->body_, verbose) {
         func_ = func;
     }
+
+    // Copy by default, which means `Ref`s in a `Schedule` object is shared
     Schedule(const Schedule &) = default;
+    Schedule &operator=(const Schedule &) = default;
 
     /**
      * Copy the `Schedule` object for trying different scheduling decisions in
