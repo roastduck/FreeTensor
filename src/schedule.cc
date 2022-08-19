@@ -6,6 +6,7 @@
 #include <analyze/all_stmts.h>
 #include <analyze/count_contig_access_loops.h>
 #include <analyze/deps.h>
+#include <analyze/find_all_loops.h>
 #include <analyze/find_indexing_loops.h>
 #include <analyze/find_stmt.h>
 #include <analyze/get_loop_nest_tree.h>
@@ -17,6 +18,7 @@
 #include <omp_utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/make_reduction.h>
 #include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/as_matmul.h>
@@ -548,6 +550,7 @@ void Schedule::asMatMul(const ID &loop) {
 void Schedule::autoSchedule(const Target &target, const Ref<RandTrace> &trace) {
     autoUseLib(target);
     autoFuse(target, trace);
+    autoReorder(target);
     autoParallelize(target);
     autoSetMemType(target);
     autoUnroll(target);
@@ -607,6 +610,62 @@ void Schedule::autoUseLib(const Target &target) {
                 }
             }
         }
+    }
+}
+
+void Schedule::autoReorder(const Target &target) {
+    ast_ = makeReduction(ast_);
+
+    auto allLoops = findAllLoops(ast_);
+    std::vector<FindDepsDir> direction;
+    direction.reserve(allLoops.size());
+    for (auto &&loop : allLoops) {
+        direction.push_back({{loop, DepDirection::Normal}});
+    }
+
+    // 0 = No dep
+    // 1 = Reduction
+    // 2 = Others
+    std::unordered_map<ID, int> depLevel;
+    FindDeps().direction(direction).ignoreReductionWAW(false)(
+        ast_, [&](const Dependency &d) {
+            ASSERT(d.dir_.size() == 1);
+            auto &level = depLevel[d.dir_[0].first.id_];
+            if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
+                d.later()->nodeType() == ASTNodeType::ReduceTo) {
+                level = std::max(level, 1);
+            } else {
+                level = std::max(level, 2);
+            }
+        });
+
+    std::function<void(const Ref<LoopNest> &nest)> visitNest =
+        [&, this](const Ref<LoopNest> &_nest) {
+            Ref<LoopNest> nest = _nest;
+
+            // Currently we only reorder loops in a perfect loop nest
+            std::vector<ID> perfectNest = {nest->loop_->id()};
+            while (nest->subLoops_.size() == 1) {
+                nest = nest->subLoops_.front();
+                perfectNest.emplace_back(nest->loop_->id());
+            }
+
+            auto sorted = perfectNest;
+            std::stable_sort(sorted.begin(), sorted.end(),
+                             [&](const ID &lhs, const ID &rhs) {
+                                 return depLevel[lhs] < depLevel[rhs];
+                             });
+            if (sorted != perfectNest) {
+                reorder(sorted);
+            }
+
+            for (auto &&subNest : nest->subLoops_) {
+                visitNest(subNest);
+            }
+        };
+    auto nest = getLoopNestTree(ast_);
+    for (auto &&sub : nest->subLoops_) {
+        visitNest(sub);
     }
 }
 

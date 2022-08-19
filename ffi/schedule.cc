@@ -130,6 +130,7 @@ void init_ffi_schedule(py::module_ &m) {
                  return s.autoSchedule(target);
              })
         .def("auto_use_lib", &Schedule::autoUseLib)
+        .def("auto_reorder", &Schedule::autoReorder)
         .def("auto_fuse",
              [](Schedule &s, const Target &target) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda
