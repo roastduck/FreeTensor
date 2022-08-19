@@ -105,6 +105,7 @@ INTEGER_META:       [0-9]+;
 LABEL_META:         [a-zA-Z0-9_\-]+;
 ID_META:            '#' [0-9]+;
 ANON_META:          '#<anon>';
-LARROW_META:        '<-';
+LARROW_META:        '<~';
+TRANSFORM_OP:       '$';
 
 END_META:   '\n' -> popMode;

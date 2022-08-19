@@ -82,10 +82,10 @@ def test_called_multiple_times():
     assert std.match(f.body)
 
     s = ft.Schedule(f)
-    assert len(s.find_all("C1->S0")) == 1
-    assert len(s.find_all("C1->S1")) == 1
-    assert len(s.find_all("C2->S0")) == 1
-    assert len(s.find_all("C2->S1")) == 1
+    assert len(s.find_all("S0<~C1")) == 1
+    assert len(s.find_all("S1<~C1")) == 1
+    assert len(s.find_all("S0<~C2")) == 1
+    assert len(s.find_all("S1<~C2")) == 1
 
 
 def test_call_with_external_data():

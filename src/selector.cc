@@ -13,16 +13,6 @@ bool EitherSelector::match(const Stmt &stmt) const {
     return lhs_->match(stmt) || rhs_->match(stmt);
 }
 
-bool LabelSelector::match(const Stmt &stmt) const {
-    if (!stmt->metadata().isValid() ||
-        stmt->metadata()->getType() != MetadataType::Source)
-        return false;
-    const auto &labels = stmt->metadata().as<SourceMetadataContent>()->labels();
-    return std::find(labels.begin(), labels.end(), label_) != labels.end();
-}
-
-bool IDSelector::match(const Stmt &stmt) const { return stmt->id() == id_; }
-
 bool NodeTypeSelector::match(const Stmt &stmt) const {
     return stmt->nodeType() == nodeType_;
 }
@@ -43,6 +33,43 @@ bool DescendantSelector::match(const Stmt &_stmt) const {
             return true;
     }
     return false;
+}
+
+bool IDSelector::match(const Stmt &stmt) const { return stmt->id() == id_; }
+bool IDSelector::match(const Metadata &md) const {
+    return md->getType() == MetadataType::Anonymous &&
+           md.as<AnonymousMetadataContent>()->id() == id_;
+}
+
+bool LabelSelector::match(const Metadata &md) const {
+    if (!md.isValid() || md->getType() != MetadataType::Source)
+        return false;
+    const auto &labelsSet = md.as<SourceMetadataContent>()->labelsSet();
+    for (const auto &l : labels_)
+        if (labelsSet.count(l) == 0)
+            return false;
+    return true;
+}
+
+bool TransformedSelector::match(const Metadata &_md) const {
+    if (_md->getType() != MetadataType::Transformed)
+        return false;
+    auto md = _md.as<TransformedMetadataContent>();
+    if (md->op() != op_ || sources_.size() != md->sources().size())
+        return false;
+    for (auto &&[sel, md] : iter::zip(sources_, md->sources()))
+        if (!sel->match(md))
+            return false;
+    return true;
+}
+
+bool CallerSelector::match(const Metadata &_md) const {
+    if (_md->getType() != MetadataType::Source)
+        return false;
+    auto md = _md.as<SourceMetadataContent>();
+    if (!md->caller().isValid())
+        return false;
+    return self_->match(md) && caller_->match(md->caller());
 }
 
 Ref<Selector> parseSelector(const std::string &str) {

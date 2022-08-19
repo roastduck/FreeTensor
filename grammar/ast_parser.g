@@ -89,7 +89,7 @@ func returns [Func node]
     ;
 
 metadata returns [Metadata md]
-    : LABEL_META '{' metadata { std::vector<Metadata> sources{$metadata.md}; }
+    : TRANSFORM_OP LABEL_META '{' metadata { std::vector<Metadata> sources{$metadata.md}; }
       (',' newMd=metadata { sources.push_back($newMd.md); })+ '}'
       {
         $md = makeMetadata($LABEL_META.text, std::move(sources));

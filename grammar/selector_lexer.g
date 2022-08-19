@@ -5,6 +5,7 @@ WhiteSpaces: [ \t\n\r]+ -> skip;
 And: '&';
 Or: '|';
 Label: [a-zA-Z0-9_\-]+;
+TransformOp: '$' [a-zA-Z0-9_\-.]+;
 Id: '#' [0-9]*;
 
 NodeTypeStmtSeq: '<StmtSeq>';
@@ -14,8 +15,10 @@ NodeTypeIf: '<If>';
 NodeTypeAssert: '<Assert>';
 NodeTypeAssume: '<Assume>';
 
-ChildArrow: '->';
-DescendantArrow: '->>';
+ChildArrow: '<-';
+DescendantArrow: '<<-';
+CallerArrow: '<~';
 
 LeftBracket: '{';
 RightBracket: '}';
+Comma: ',';

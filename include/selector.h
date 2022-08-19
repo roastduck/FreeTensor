@@ -32,22 +32,6 @@ class EitherSelector : public Selector {
     bool match(const Stmt &stmt) const override;
 };
 
-class LabelSelector : public Selector {
-    std::string label_;
-
-  public:
-    LabelSelector(const std::string &label) : label_(label) {}
-    bool match(const Stmt &stmt) const override;
-};
-
-class IDSelector : public Selector {
-    ID id_;
-
-  public:
-    IDSelector(const ID &id) : id_(id) {}
-    bool match(const Stmt &stmt) const override;
-};
-
 class NodeTypeSelector : public Selector {
     ASTNodeType nodeType_;
 
@@ -73,6 +57,52 @@ class DescendantSelector : public Selector {
                        const Ref<Selector> &descendant)
         : ancestor_(ancestor), descendant_(descendant) {}
     bool match(const Stmt &stmt) const override;
+};
+
+class LeafSelector : public Selector {
+  public:
+    virtual bool match(const Metadata &md) const = 0;
+    virtual bool match(const Stmt &stmt) const override {
+        return stmt->metadata().isValid() && match(stmt->metadata());
+    }
+};
+
+class IDSelector : public LeafSelector {
+    ID id_;
+
+  public:
+    IDSelector(const ID &id) : id_(id) {}
+    bool match(const Metadata &md) const override;
+    bool match(const Stmt &stmt) const override;
+};
+
+class LabelSelector : public LeafSelector {
+    std::vector<std::string> labels_;
+
+  public:
+    LabelSelector(const std::vector<std::string> &label) : labels_(label) {}
+    bool match(const Metadata &md) const override;
+};
+
+class TransformedSelector : public LeafSelector {
+    std::string op_;
+    std::vector<Ref<LeafSelector>> sources_;
+
+  public:
+    TransformedSelector(const std::string &op,
+                        const std::vector<Ref<LeafSelector>> sources)
+        : op_(op), sources_(sources) {}
+    bool match(const Metadata &md) const override;
+};
+
+class CallerSelector : public LeafSelector {
+    Ref<LeafSelector> self_, caller_;
+
+  public:
+    CallerSelector(const Ref<LeafSelector> &self,
+                   const Ref<LeafSelector> &caller)
+        : self_(self), caller_(caller) {}
+    bool match(const Metadata &md) const override;
 };
 
 Ref<Selector> parseSelector(const std::string &str);

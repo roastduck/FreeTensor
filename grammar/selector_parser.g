@@ -8,16 +8,33 @@ options {
     #include <selector.h>
 }
 
+leafSelector
+	returns[Ref<LeafSelector> s]:
+	| Label { std::vector<std::string> labels{$Label.text}; } (
+		Label { labels.push_back($Label.text); }
+	)* {
+        $s = Ref<LabelSelector>::make(labels);
+    }
+	| Id {
+        $s = Ref<IDSelector>::make(ID::make(std::stoi($Id.text)));
+    }
+	| TransformOp LeftBracket leafSelector { std::vector<Ref<LeafSelector>> srcs{$leafSelector.s}; }
+		(
+		Comma leafSelector { srcs.push_back($leafSelector.s); }
+	)* RightBracket {
+        $s = Ref<TransformedSelector>::make($TransformOp.text.substr(1), srcs);
+    }
+	| l1 = leafSelector CallerArrow l2 = leafSelector {
+        $s = Ref<CallerSelector>::make($l1.s, $l2.s);
+    };
+
 selector
 	returns[Ref<Selector> s]:
 	LeftBracket selector RightBracket {
         $s = $selector.s;
     }
-	| Label {
-        $s = Ref<LabelSelector>::make($Label.text);
-    }
-	| Id {
-        $s = Ref<IDSelector>::make(ID::make(std::stoi($Id.text)));
+	| leafSelector {
+        $s = $leafSelector.s;
     }
 	| NodeTypeAssert {
         $s = Ref<NodeTypeSelector>::make(ASTNodeType::Assert);
@@ -43,9 +60,9 @@ selector
 	| s1 = selector Or s2 = selector {
         $s = Ref<EitherSelector>::make($s1.s, $s2.s);
     }
-	| s1 = selector ChildArrow s2 = selector {
-        $s = Ref<ChildSelector>::make($s1.s, $s2.s);
+	| child = selector ChildArrow parent = selector {
+        $s = Ref<ChildSelector>::make($parent.s, $child.s);
     }
-	| s1 = selector DescendantArrow s2 = selector {
-        $s = Ref<DescendantSelector>::make($s1.s, $s2.s);
+	| descendant = selector DescendantArrow ancestor = selector {
+        $s = Ref<DescendantSelector>::make($ancestor.s, $descendant.s);
     };

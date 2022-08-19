@@ -78,6 +78,7 @@ class _VarDef:
 
         self.borrower_cnt = 0
         self.borrowed_vardefs = find_borrowed_vardefs(self.shape)
+        self.metadata = ctx_stack.top().get_metadata()
 
     def set_atype(self, atype):
         self.atype = ffi.AccessType(atype)
@@ -112,8 +113,7 @@ class _VarDef:
         body = ctx_stack.pop().make_stmt()
         top = ctx_stack.top()
         top.append_stmt(
-            ffi.makeVarDef(self.name, buf, None, body, False,
-                           top.get_metadata()))
+            ffi.makeVarDef(self.name, buf, None, body, False, self.metadata))
 
 
 class _VarsDef:

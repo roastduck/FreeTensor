@@ -51,6 +51,9 @@ class TransformedMetadataContent : public MetadataContent {
 
     MetadataType getType() const override { return MetadataType::Transformed; }
     void print(std::ostream &os, bool skipLocation, int nIndent) const override;
+
+    const std::string &op() const { return op_; }
+    const std::vector<Metadata> &sources() const { return sources_; }
 };
 using TransformedMetadata = Ref<TransformedMetadataContent>;
 
@@ -59,6 +62,7 @@ TransformedMetadata makeMetadata(const std::string &op,
 
 class SourceMetadataContent : public MetadataContent {
     std::vector<std::string> labels_;
+    std::unordered_set<std::string> labelsSet_;
     std::optional<std::pair<std::string, int>> location_;
     Metadata callerMetadata_;
 
@@ -71,6 +75,10 @@ class SourceMetadataContent : public MetadataContent {
     ~SourceMetadataContent() override = default;
 
     const std::vector<std::string> &labels() const { return labels_; }
+    const std::unordered_set<std::string> &labelsSet() const {
+        return labelsSet_;
+    }
+    const Metadata &caller() const { return callerMetadata_; }
 
     MetadataType getType() const override { return MetadataType::Source; }
     void print(std::ostream &os, bool skipLocation, int nIndent) const override;
@@ -90,6 +98,8 @@ class AnonymousMetadataContent : public MetadataContent {
     ~AnonymousMetadataContent() override = default;
     MetadataType getType() const override { return MetadataType::Anonymous; }
     void print(std::ostream &os, bool skipLocation, int nIndent) const override;
+
+    ID id() const { return id_; }
 };
 using AnonymousMetadata = Ref<AnonymousMetadataContent>;
 

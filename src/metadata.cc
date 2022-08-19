@@ -74,7 +74,7 @@ TransformedMetadataContent::TransformedMetadataContent(
 
 void TransformedMetadataContent::print(std::ostream &os, bool printLocation,
                                        int nIndent) const {
-    os << Indent(nIndent) << op_ << " {" << nl;
+    os << Indent(nIndent) << "$" << op_ << " {" << nl;
     for (auto &&[i, src] : iter::enumerate(sources_)) {
         if (i != 0)
             os << ", " << nl;
@@ -92,7 +92,8 @@ SourceMetadataContent::SourceMetadataContent(
     const std::vector<std::string> &labels,
     const std::optional<std::pair<std::string, int>> &location,
     const Metadata &callerMetadata)
-    : labels_(labels), location_(location), callerMetadata_(callerMetadata) {}
+    : labels_(labels), labelsSet_(labels.begin(), labels.end()),
+      location_(location), callerMetadata_(callerMetadata) {}
 
 void SourceMetadataContent::print(std::ostream &os, bool printLocation,
                                   int nIndent) const {
@@ -105,7 +106,7 @@ void SourceMetadataContent::print(std::ostream &os, bool printLocation,
     if (printLocation && location_)
         os << " @ " << location_->first << ":" << location_->second;
     if (callerMetadata_.isValid()) {
-        os << " <- " << nl;
+        os << " <~ " << nl;
         callerMetadata_->print(os, printLocation, nIndent);
     }
 }
