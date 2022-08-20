@@ -169,9 +169,9 @@ std::vector<ID> Schedule::permute(
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
-                  bool preserveFirst, bool preserveSecond) {
+                  const std::string &suffix0, const std::string &suffix1) {
     auto log = MAKE_LOG(Fission, std::bind_front(freetensor::fission, ast_),
-                        loop, side, splitter, preserveFirst, preserveSecond);
+                        loop, side, splitter, suffix0, suffix1);
     ScheduleLog logs = logs_.push(log);
     RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
@@ -421,7 +421,7 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                         // TODO: Fission IfNode
                     }
                     auto idMapBefore =
-                        fission(s->id(), FissionSide::After, stmt, false, true)
+                        fission(s->id(), FissionSide::After, stmt, ".a", "")
                             .first;
                     stmt = idMapBefore.at(s->id());
                 }
@@ -449,7 +449,7 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                     }
                     // Leave IDs of the other statements unchanged
                     auto idMapAfter =
-                        fission(s->id(), FissionSide::Before, stmt, true, false)
+                        fission(s->id(), FissionSide::Before, stmt, "", ".b")
                             .second;
                     stmt = idMapAfter.at(s->id());
                 }
@@ -598,10 +598,10 @@ void Schedule::autoUseLib(const Target &target) {
                     auto logBak = logs_;
                     try {
                         fission(loop->loop_->id(), FissionSide::Before,
-                                stmt->id(), false, true);
+                                stmt->id(), "." + toString(i), "");
                         auto libStmtId =
                             fission(loop->loop_->id(), FissionSide::After,
-                                    stmt->id(), false, true)
+                                    stmt->id(), "." + toString(i) + ".lib", "")
                                 .first.at(loop->loop_->id());
                         asMatMul(libStmtId);
                     } catch (const InvalidSchedule &e) {

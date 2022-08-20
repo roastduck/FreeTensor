@@ -141,12 +141,7 @@ class Schedule(ffi.Schedule):
         """
         return super().permute([self._lookup(l) for l in loops], transform_func)
 
-    def fission(self,
-                loop,
-                side,
-                splitter,
-                preserve_first=False,
-                preserve_second=False):
+    def fission(self, loop, side, splitter):
         """
         Fission a loop into two loops each containing part of the statements, one
         followed by another
@@ -162,12 +157,6 @@ class Schedule(ffi.Schedule):
             `splitter` is the first statement of the second loop
         splitter : str, ID or Stmt
             Where to fission the loop
-        preserve_first : bool
-            Whether to keep the ID and metadata of the first part after fission,
-            defaults to `false`, cannot be true together with `preserve_second`
-        preserve_second : bool
-            Whether to keep the ID and metadata of the second part after fission,
-            defaults to `false`, cannot be true together with `preserve_first`
 
         Raises
         ------
@@ -179,8 +168,7 @@ class Schedule(ffi.Schedule):
         (map, map)
             ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd loop})
         """
-        return super().fission(self._lookup(loop), side, self._lookup(splitter),
-                               preserve_first, preserve_second)
+        return super().fission(self._lookup(loop), side, self._lookup(splitter))
 
     def fuse(self, loop0, loop1=None, strict=False):
         """

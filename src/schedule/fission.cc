@@ -167,14 +167,16 @@ Stmt FissionFor::visitStmt(const Stmt &op) {
 
 void FissionFor::markNewId(const Stmt &op, bool isPart0) {
     ID oldId = op->id();
-    if (!(isPart0 ? preserveFirst_ : preserveSecond_))
+    if (!(isPart0 ? op0_ : op1_))
         op->setId();
     ID newId = op->id();
     if (isPart0) {
-        op->metadata() = makeMetadata("fission.0", op);
+        if (op0_)
+            op->metadata() = makeMetadata(*op0_, op);
         ids0_.emplace(oldId, newId);
     } else {
-        op->metadata() = makeMetadata("fission.1", op);
+        if (op1_)
+            op->metadata() = makeMetadata(*op1_, op);
         ids1_.emplace(oldId, newId);
     }
 }
@@ -277,18 +279,18 @@ Stmt FissionFor::visit(const Assert &op) {
 std::pair<Stmt,
           std::pair<std::unordered_map<ID, ID>, std::unordered_map<ID, ID>>>
 fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
-        bool preserveFirst, bool preserveSecond) {
+        const std::string &suffix0, const std::string &suffix1) {
     // FIXME: Check the condition is not variant when splitting an If
 
-    if (preserveFirst && preserveSecond)
+    if (suffix0.empty() && suffix1.empty())
         throw InvalidSchedule(
             "Cannot preserve ID and Metadata for both first and second parts");
 
     HoistVar hoist(loop, side == FissionSide::Before ? splitter : ID{},
                    side == FissionSide::After ? splitter : ID{});
     FissionFor mutator(loop, side == FissionSide::Before ? splitter : ID{},
-                       side == FissionSide::After ? splitter : ID{},
-                       preserveFirst, preserveSecond);
+                       side == FissionSide::After ? splitter : ID{}, suffix0,
+                       suffix1);
 
     auto ast = hoist(_ast);
     if (!hoist.found()) {

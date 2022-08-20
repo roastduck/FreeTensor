@@ -104,6 +104,7 @@ def test_manual_static():
     s.reorder([bz, by, bx, ty, tx, tyz, txz, fi, ni])
 
     s.move_to("init", ft.MoveToSide.Before, fi)
+    print(s.ast())
     rco, rci = s.split(rci, factor=step)
     s.reorder([rco, ryi, rxi, rci, fi, ni])
 

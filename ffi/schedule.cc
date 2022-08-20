@@ -98,7 +98,7 @@ void init_ffi_schedule(py::module_ &m) {
             },
             "loops_id"_a, "transform_func"_a)
         .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,
-             "preserve_first"_a = false, "preserve_second"_a = false)
+             "suffix0"_a = ".0", "suffix1"_a = ".1")
         .def("fuse",
              static_cast<ID (Schedule::*)(const ID &, const ID &, bool)>(
                  &Schedule::fuse),
