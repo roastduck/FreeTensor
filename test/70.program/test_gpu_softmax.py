@@ -38,14 +38,14 @@ def test_manual_static():
     s = ft.Schedule(f)
 
     # L_head
-    L_head = s.fuse("softmax->max->impl->recur->init->recur->L")
+    L_head = s.fuse("L<~recur<~init<~recur<~impl<~max<~softmax")
     L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
 
     # L_seq_outer
-    L_seq_outer = s.fuse("softmax->max->impl->recur->init->recur->recur->L")
+    L_seq_outer = s.fuse("L<~recur<~recur<~init<~recur<~impl<~max<~softmax")
     L_seq_outer = s.fuse(L_seq_outer)
     L_seq_outer = s.fuse(L_seq_outer)
     L_seq_outer = s.fuse(L_seq_outer)
@@ -54,7 +54,7 @@ def test_manual_static():
     # ----------------
 
     # Don't store these intermediates
-    s.inline("softmax->sub->out")
+    s.inline("out<~sub<~softmax")
 
     # Store these intermedates to registers
     load_x, _, _, x_local_def = s.cache(
@@ -85,13 +85,13 @@ def test_manual_static():
         return V_sum_shmem
 
     V_sum_shmem = opt_red(
-        "softmax->sum->y",
-        "softmax->sum->recur->init->recur->recur->recur->recur->exec",
-        "softmax->sum->recur->reduce->recur->recur->recur->L")
+        "y<~sum<~softmax",
+        "exec<~recur<~recur<~recur<~recur<~init<~recur<~sum<~softmax",
+        "L<~recur<~recur<~recur<~reduce<~recur<~sum<~softmax")
     V_max_shmem = opt_red(
-        "softmax->max->impl->y",
-        "softmax->max->impl->recur->init->recur->recur->recur->recur->exec",
-        "softmax->max->impl->recur->reduce->recur->recur->recur->L")
+        "y<~impl<~max<~softmax",
+        "exec<~recur<~recur<~recur<~recur<~init<~recur<~impl<~max<~softmax",
+        "L<~recur<~recur<~recur<~reduce<~recur<~impl<~max<~softmax")
 
     # Parallelize data-parall loops
     def opt_elemwise(loop_label):
@@ -102,9 +102,9 @@ def test_manual_static():
 
     opt_elemwise(load_x_loop)
     exp_outer, exp_inner = opt_elemwise(
-        "softmax->exp->recur->recur->recur->recur->L_elem")
+        "L_elem<~recur<~recur<~recur<~recur<~exp<~softmax")
     div_outer, div_inner = opt_elemwise(
-        "softmax->div->recur->recur->recur->L_elem")
+        "L_elem<~recur<~recur<~recur<~div<~softmax")
     s.cache(exp_inner, V_max_shmem, "gpu/local")
     s.cache(div_inner, V_sum_shmem, "gpu/local")
 
@@ -117,7 +117,7 @@ def test_manual_static():
     # ----------------
 
     s.set_mem_type(x_local_def, "gpu/local")
-    s.set_mem_type(s.find("softmax->exp->y"), "gpu/local")
+    s.set_mem_type(s.find("y<~exp<~softmax"), "gpu/local")
 
     f = ft.lower(s.func(), target)
     print(f)

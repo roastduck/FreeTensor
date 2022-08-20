@@ -126,9 +126,13 @@ class FreeTensorOverload(StagingOverload):
             else:
                 call_metadata = ctx_stack.top().get_metadata()
             ctx_stack.top().clear_metadata()
-            with NamedScope():
-                ctx_stack.top().set_caller_metadata(call_metadata)
-                return basic_wrapped(*args, **kwargs)
+
+            prev = ctx_stack.top().caller_metadata
+            ctx_stack.top().set_caller_metadata(call_metadata)
+            result = basic_wrapped(*args, **kwargs)
+            ctx_stack.top().set_caller_metadata(prev)
+
+            return result
 
         return wrapped
 

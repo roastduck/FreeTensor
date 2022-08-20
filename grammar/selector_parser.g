@@ -24,7 +24,7 @@ leafSelector
 	)* RightBracket {
         $s = Ref<TransformedSelector>::make($TransformOp.text.substr(1), srcs);
     }
-	| l1 = leafSelector CallerArrow l2 = leafSelector {
+	| <assoc=right> l1 = leafSelector CallerArrow l2 = leafSelector {
         $s = Ref<CallerSelector>::make($l1.s, $l2.s);
     };
 
