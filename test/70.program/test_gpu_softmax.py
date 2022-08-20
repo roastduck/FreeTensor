@@ -53,8 +53,8 @@ def test_manual_static():
 
     # ----------------
 
-    # Don't store these intermediates
-    s.inline("out<~sub<~softmax")
+    # The intermediate should have been eliminated during fuse
+    assert len(s.find_all("out<~sub<~softmax")) == 0
 
     # Store these intermedates to registers
     load_x, _, _, x_local_def = s.cache(
