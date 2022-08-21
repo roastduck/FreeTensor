@@ -167,7 +167,7 @@ Stmt FissionFor::visitStmt(const Stmt &op) {
 
 void FissionFor::markNewId(const Stmt &op, bool isPart0) {
     ID oldId = op->id();
-    if (!(isPart0 ? op0_ : op1_))
+    if (isPart0 ? op0_ : op1_)
         op->setId();
     ID newId = op->id();
     if (isPart0) {
