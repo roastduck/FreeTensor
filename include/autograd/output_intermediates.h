@@ -12,14 +12,14 @@ namespace freetensor {
 class OutputIntermediates : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
-    const std::unordered_map<ID, Expr> &versions_;
+    const std::unordered_map<StmtOrExprID, Expr> &versions_;
     const std::unordered_map<ID, Expr> &totLens_;
     std::unordered_map<ID, std::string> tapeNames_;
     std::unordered_map<ID, std::vector<Stmt>> toTape_;
     ID curStmt_;
 
   public:
-    OutputIntermediates(const std::unordered_map<ID, Expr> &versions,
+    OutputIntermediates(const std::unordered_map<StmtOrExprID, Expr> &versions,
                         const std::unordered_map<ID, Expr> &totLens)
         : versions_(versions), totLens_(totLens) {}
 
@@ -90,7 +90,7 @@ class OutputIntermediates : public SymbolTable<Mutator> {
  * )
  */
 std::tuple<Stmt, std::unordered_map<ID, std::string>,
-           std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
+           std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>>
 outputIntermediates(const Stmt &op,
                     const std::unordered_set<ID> &intermediates);
 

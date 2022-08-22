@@ -25,27 +25,27 @@ def test_manual_static():
 
     @ft.transform
     def f(x, y):
-        #! nid: V_x
+        #! label: V_x
         x: ft.Var[(batch_size, n_heads, seq_len, seq_len), "float32", "input",
                   "gpu/global"]
-        #! nid: V_y
+        #! label: V_y
         y: ft.Var[(batch_size, n_heads, seq_len, seq_len), "float32", "output",
                   "gpu/global"]
-        #! nid: softmax
+        #! label: softmax
         libop.softmax_(x, y)
 
     print(f)
     s = ft.Schedule(f)
 
     # L_head
-    L_head = s.fuse("softmax->max->impl->recur->init->recur->L")
+    L_head = s.fuse("L<~recur<~init<~recur<~impl<~max<~softmax")
     L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
 
     # L_seq_outer
-    L_seq_outer = s.fuse("softmax->max->impl->recur->init->recur->recur->L")
+    L_seq_outer = s.fuse("L<~recur<~recur<~init<~recur<~impl<~max<~softmax")
     L_seq_outer = s.fuse(L_seq_outer)
     L_seq_outer = s.fuse(L_seq_outer)
     L_seq_outer = s.fuse(L_seq_outer)
@@ -53,8 +53,8 @@ def test_manual_static():
 
     # ----------------
 
-    # Don't store these intermediates
-    s.inline("softmax->sub->out")
+    # The intermediate should have been eliminated during fuse
+    assert len(s.find_all("out<~sub<~softmax")) == 0
 
     # Store these intermedates to registers
     load_x, _, _, x_local_def = s.cache(
@@ -68,14 +68,14 @@ def test_manual_static():
     thr_y_dim = 32
 
     # Optimize reductions
-    def opt_red(def_nid, init_nid, loop_nid):
-        node = s.find(def_nid)
+    def opt_red(def_label, init_label, loop_label):
+        node = s.find(def_label)
 
         # Hold result in shared memory
         _, _, V_sum_shmem, _ = s.cache(node.body, node.name, "gpu/shared")
 
         # Parallel reduction
-        serial, thr_x = s.split(loop_nid, thr_x_dim)
+        serial, thr_x = s.split(loop_label, thr_x_dim)
         s.reorder([thr_x, serial])
         s.parallelize(thr_x, "threadIdx.x")
 
@@ -85,26 +85,26 @@ def test_manual_static():
         return V_sum_shmem
 
     V_sum_shmem = opt_red(
-        "softmax->sum->y",
-        "softmax->sum->recur->init->recur->recur->recur->recur->exec",
-        "softmax->sum->recur->reduce->recur->recur->recur->L")
+        "y<~sum<~softmax",
+        "exec<~recur<~recur<~recur<~recur<~init<~recur<~sum<~softmax",
+        "L<~recur<~recur<~recur<~reduce<~recur<~sum<~softmax")
     V_max_shmem = opt_red(
-        "softmax->max->impl->y",
-        "softmax->max->impl->recur->init->recur->recur->recur->recur->exec",
-        "softmax->max->impl->recur->reduce->recur->recur->recur->L")
+        "y<~impl<~max<~softmax",
+        "exec<~recur<~recur<~recur<~recur<~init<~recur<~impl<~max<~softmax",
+        "L<~recur<~recur<~recur<~reduce<~recur<~impl<~max<~softmax")
 
     # Parallelize data-parall loops
-    def opt_elemwise(loop_nid):
-        serial, thr_x = s.split(loop_nid, thr_x_dim)
+    def opt_elemwise(loop_label):
+        serial, thr_x = s.split(loop_label, thr_x_dim)
         s.reorder([thr_x, serial])
         s.parallelize(thr_x, "threadIdx.x")
         return thr_x, serial
 
     opt_elemwise(load_x_loop)
     exp_outer, exp_inner = opt_elemwise(
-        "softmax->exp->recur->recur->recur->recur->L_elem")
+        "L_elem<~recur<~recur<~recur<~recur<~exp<~softmax")
     div_outer, div_inner = opt_elemwise(
-        "softmax->div->recur->recur->recur->L_elem")
+        "L_elem<~recur<~recur<~recur<~div<~softmax")
     s.cache(exp_inner, V_max_shmem, "gpu/local")
     s.cache(div_inner, V_sum_shmem, "gpu/local")
 
@@ -117,7 +117,7 @@ def test_manual_static():
     # ----------------
 
     s.set_mem_type(x_local_def, "gpu/local")
-    s.set_mem_type(s.find("softmax->exp->y"), "gpu/local")
+    s.set_mem_type(s.find("y<~exp<~softmax"), "gpu/local")
 
     f = ft.lower(s.func(), target)
     print(f)

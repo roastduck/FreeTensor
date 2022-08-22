@@ -10,7 +10,7 @@ target = device.target()
 def test_not_found():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             y[i] = x[i] + 1
     func = ft.Func("main", ["x", "y"], [], ft.pop_ast())
 
@@ -26,7 +26,7 @@ def test_not_found():
 def test_not_constant():
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
-        with ft.For("i", 0, n[()], nid="L1") as i:
+        with ft.For("i", 0, n[()], label="L1") as i:
             y[i] = i
 
     func = ft.Func("main", ["n", "y"], [], ft.pop_ast())
@@ -43,8 +43,8 @@ def test_not_constant():
 def test_unbounded_length():
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("x", (4, 4), "int32", "output", "cpu")]) as (n, x):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", i, 4, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", i, 4, label="L2") as j:
                 x[i, j] = 1
 
     func = ft.Func("main", ["n", "x"], [], ft.pop_ast())
@@ -61,7 +61,7 @@ def test_unbounded_length():
 def test_constant_length():
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("x", (8,), "int32", "output", "cpu")]) as (n, x):
-        with ft.For("i", n[()], n[()] + 4, nid="L1") as i:
+        with ft.For("i", n[()], n[()] + 4, label="L1") as i:
             x[i] = 1
 
     func = ft.Func("main", ["n", "x"], [], ft.pop_ast())
@@ -77,7 +77,7 @@ def test_constant_length():
 def test_immediate_basic():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             y[i] = x[i] + 1
 
     s = ft.Schedule(ft.pop_ast())
@@ -101,7 +101,7 @@ def test_immediate_with_offset():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         y[0] = 0
-        with ft.For("i", 1, 4, nid="L1") as i:
+        with ft.For("i", 1, 4, label="L1") as i:
             y[i] = x[i] + 1
 
     s = ft.Schedule(ft.pop_ast())
@@ -124,7 +124,7 @@ def test_immediate_with_offset():
 def test_immediate_with_step():
     with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
                     ("y", (8,), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 6, -2, -2, nid="L1") as i:
+        with ft.For("i", 6, -2, -2, label="L1") as i:
             y[i] = x[i] + 1
 
     s = ft.Schedule(ft.pop_ast())
@@ -148,7 +148,7 @@ def test_folding_sum():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 0
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             y[()] = y[()] + x[i]
 
     s = ft.Schedule(ft.pop_ast())

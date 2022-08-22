@@ -6,8 +6,8 @@ import pytest
 
 def test_unsolvable_dependency():
     with ft.VarDef("y", (5,), "int32", "output", "cpu") as y:
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", i, i + 2, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", i, i + 2, label="L2") as j:
                 y[j] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -22,9 +22,9 @@ def test_sharing_locals():
                     ("t", (100,), "int32", "cache", "gpu/local"),
                     ("y", (100,), "int32", "output", "gpu/global")]) as (x, t,
                                                                          y):
-        with ft.For("i", 0, 100, nid="L1") as i:
+        with ft.For("i", 0, 100, label="L1") as i:
             t[i] = x[i] * 2
-        with ft.For("i", 0, 100, nid="L2") as i:
+        with ft.For("i", 0, 100, label="L2") as i:
             y[i] = t[i] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -48,8 +48,8 @@ def test_not_found():
 
 def test_nested_thread_idx():
     with ft.VarDef("y", (4, 4), "int32", "output", "cpu") as y:
-        with ft.For("i", 0, 4, nid='L1') as i:
-            with ft.For("j", 0, 4, nid='L2') as j:
+        with ft.For("i", 0, 4, label='L1') as i:
+            with ft.For("j", 0, 4, label='L2') as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -68,7 +68,7 @@ def test_no_deps():
         ptr: ft.Var[(11,), "int32", "input", "cpu"]
         edge1: ft.Var[(50,), "int32", "input", "cpu"]
         edge2: ft.Var[(50,), "int32", "output", "cpu"]
-        #! nid: Li
+        #! label: Li
         #! no_deps: edge2
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1]):

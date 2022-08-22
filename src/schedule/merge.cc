@@ -17,14 +17,15 @@ Stmt MergeFor::visit(const For &_op) {
                        ? makeIntConst(innerLen_.as<IntConstNode>()->val_ *
                                       outerLen_.as<IntConstNode>()->val_)
                        : makeMul(innerLen_, outerLen_);
-        auto ret = makeFor(newId_, newIter_, makeIntConst(0), len,
-                           makeIntConst(1), len,
-                           Ref<ForProperty>::make()->withNoDeps(mergeNoDepsHint(
-                               root_, oldInner_->id(), oldOuter_->id())),
-                           op->body_);
+        auto ret =
+            makeFor(newIter_, makeIntConst(0), len, makeIntConst(1), len,
+                    Ref<ForProperty>::make()->withNoDeps(mergeNoDepsHint(
+                        root_, oldInner_->id(), oldOuter_->id())),
+                    op->body_, makeMetadata("merge", oldOuter_, oldInner_));
+        newId_ = ret->id();
         for (auto &&def : intermediateDefs_) {
-            ret = makeVarDef(def->id(), def->name_, def->buffer_,
-                             def->ioTensor_, ret, def->pinned_);
+            ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_, ret,
+                             def->pinned_, def->metadata(), def->id());
         }
         return ret;
     } else if (_op->id() == oldInner_->id()) {
@@ -65,17 +66,15 @@ Stmt MergeFor::visit(const StmtSeq &_op) {
 
         if (!beforeStmts.empty()) {
             before = makeIf(
-                "",
                 makeEQ(makeMod(makeVar(newIter_), innerLen_), makeIntConst(0)),
                 beforeStmts.size() == 1 ? beforeStmts[0]
-                                        : makeStmtSeq("", beforeStmts));
+                                        : makeStmtSeq(beforeStmts));
         }
         if (!afterStmts.empty()) {
             after = makeIf(
-                "",
                 makeEQ(makeMod(makeVar(newIter_), innerLen_), makeIntConst(0)),
                 afterStmts.size() == 1 ? afterStmts[0]
-                                       : makeStmtSeq("", afterStmts));
+                                       : makeStmtSeq(afterStmts));
         }
 
         std::vector<Stmt> stmts;
@@ -88,7 +87,9 @@ Stmt MergeFor::visit(const StmtSeq &_op) {
         if (after.isValid()) {
             stmts.emplace_back(after);
         }
-        return stmts.size() == 1 ? stmts[0] : makeStmtSeq(_op->id(), stmts);
+        return stmts.size() == 1
+                   ? stmts[0]
+                   : makeStmtSeq(stmts, _op->metadata(), _op->id());
     } else {
         return Mutator::visit(_op);
     }

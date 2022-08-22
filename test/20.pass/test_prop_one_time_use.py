@@ -192,7 +192,7 @@ def test_different_iter_non_linear():
     with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
                     ("x2", (4,), "int32", "input", "cpu"),
                     ("y", (16,), "int32", "output", "cpu")]) as (x1, x2, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (16,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 with ft.For("j", 0, 4) as j:

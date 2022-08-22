@@ -169,7 +169,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
     found_loop_to_cache:
         if (loopToCache.isValid()) {
             std::vector<Expr> newShape, newTargetIndices;
-            op->var_ += ".atomic_cache." + op->id().strId();
+            op->var_ += ".atomic_cache." + toString(op->id());
             op->indices_ = {};
             for (auto &&[preserve, idx, dim] :
                  iter::zip(preserveDim, _op->indices_,
@@ -222,7 +222,7 @@ Stmt MakeParallelReduction::visit(const For &_op) {
         for (auto &&[reduce, newShape, targetIndices] :
              cacheAtomic_.at(op->id())) {
             auto cacheName =
-                reduce->var_ + ".atomic_cache." + reduce->id().strId();
+                reduce->var_ + ".atomic_cache." + toString(reduce->id());
             auto dtype = buffer(reduce->var_)->tensor()->dtype();
             auto mtype = localMType(buffer(reduce->var_)->mtype());
             std::vector<Expr> cacheIndices;
@@ -235,10 +235,10 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                 }
                 targetIndices[j] = cacheIndices.back();
             }
-            Stmt init = makeStore("", cacheName, cacheIndices,
+            Stmt init = makeStore(cacheName, cacheIndices,
                                   neutralVal(dtype, reduce->op_));
             Stmt flush =
-                makeReduceTo("", reduce->var_, targetIndices, reduce->op_,
+                makeReduceTo(reduce->var_, targetIndices, reduce->op_,
                              makeLoad(cacheName, cacheIndices, dtype), true);
             init = makeNestedLoops(
                 cacheIndices, iter::repeat(makeIntConst(0)), newShape,
@@ -248,11 +248,10 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                 cacheIndices, iter::repeat(makeIntConst(0)), newShape,
                 iter::repeat(makeIntConst(1)), newShape,
                 iter::repeat(Ref<ForProperty>::make()), flush);
-            ret =
-                makeVarDef("", cacheName,
-                           makeBuffer(makeTensor(newShape, dtype),
-                                      AccessType::Cache, mtype),
-                           nullptr, makeStmtSeq("", {init, ret, flush}), false);
+            ret = makeVarDef(cacheName,
+                             makeBuffer(makeTensor(newShape, dtype),
+                                        AccessType::Cache, mtype),
+                             nullptr, makeStmtSeq({init, ret, flush}), false);
         }
         return ret;
     } else {

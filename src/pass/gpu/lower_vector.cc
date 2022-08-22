@@ -127,7 +127,8 @@ Stmt LowerVector::visit(const For &op) {
                 ret->end_ = makeAdd(ret->begin_, ret->len_);
                 ret->body_ = (*this)(ret->body_);
             } catch (const InvalidGPUVector &e) {
-                WARNING("Vectorizing loop " + op->id().strId() + " to length " +
+                WARNING("Vectorizing loop " + toString(op->id()) + "(" +
+                        toString(op->metadata()) + ") to length " +
                         std::to_string(vecLen) +
                         " failed because: " + e.what());
                 var_ = nullptr;
@@ -190,12 +191,10 @@ Stmt LowerVector::visit(const Store &op) {
             auto &&indices = getIndices(op->indices_);
             auto dtype = buffer(op->var_)->tensor()->dtype();
             auto vtype = vecType(dtype);
-            return makeEval(
-                "",
-                makeIntrinsic(
-                    "*((" + vtype + "*)&(%)) = make_" + vtype + "(%)",
-                    {makeLoad(op->var_, indices, dtype), (*this)(op->expr_)},
-                    DataType::Void, false));
+            return makeEval(makeIntrinsic(
+                "*((" + vtype + "*)&(%)) = make_" + vtype + "(%)",
+                {makeLoad(op->var_, indices, dtype), (*this)(op->expr_)},
+                DataType::Void, false));
         }
     }
     return BaseClass::visit(op);
@@ -211,21 +210,17 @@ Stmt LowerVector::visit(const ReduceTo &op) {
             auto newLoad = makeLoad(op->var_, indices, dtype);
             switch (op->op_) {
             case ReduceOp::Add:
-                return makeEval("", makeIntrinsic("*((" + vtype +
-                                                      "*)&(%)) += make_" +
-                                                      vtype + "(%)",
-                                                  {newLoad, (*this)(op->expr_)},
-                                                  DataType::Void, false));
+                return makeEval(makeIntrinsic(
+                    "*((" + vtype + "*)&(%)) += make_" + vtype + "(%)",
+                    {newLoad, (*this)(op->expr_)}, DataType::Void, false));
             case ReduceOp::Max:
                 return makeEval(
-                    "",
                     makeIntrinsic("*((" + vtype + "*)&(%)) = max(*((*" + vtype +
                                       ")&(%)), make_" + vtype + "(%))",
                                   {newLoad, newLoad, (*this)(op->expr_)},
                                   DataType::Void, false));
             case ReduceOp::Min:
                 return makeEval(
-                    "",
                     makeIntrinsic("*((" + vtype + "*)&(%)) = min(*((*" + vtype +
                                       ")&(%)), make_" + vtype + "(%))",
                                   {newLoad, newLoad, (*this)(op->expr_)},

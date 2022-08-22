@@ -12,7 +12,7 @@ def test_static_shape():
     def f(x, y):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        #! nid: softmax
+        #! label: softmax
         libop.softmax_(x, y)
 
     x_torch = torch.rand(4, 4, dtype=torch.float32)
@@ -31,7 +31,7 @@ def test_out_of_place():
     @ft.optimize(device=device, verbose=1)
     def f(x):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
-        #! nid: softmax
+        #! label: softmax
         return libop.softmax(x, axis=-1)
 
     x_torch = torch.rand(4, 4, dtype=torch.float32)
@@ -50,7 +50,7 @@ def test_grad():
     def f(x, y):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        #! nid: softmax
+        #! label: softmax
         libop.softmax_(x, y)
 
     print(f)

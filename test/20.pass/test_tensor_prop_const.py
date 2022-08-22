@@ -130,7 +130,7 @@ def test_prop_iter_different_scope():
 
 def test_prop_iter_different_iter():
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 t[i] = i * 2
@@ -149,7 +149,7 @@ def test_prop_iter_different_iter():
 
 def test_prop_iter_different_iter_non_linear():
     with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (16,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 with ft.For("j", 0, 4) as j:

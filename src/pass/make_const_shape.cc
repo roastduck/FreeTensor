@@ -33,7 +33,8 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
         if (result == std::numeric_limits<int64_t>::max()) {
             throw InvalidProgram("Unable to relax dimension " +
                                  std::to_string(i) + ": " + toString(dim) +
-                                 " of " + op->id().strId() + ": " + op->name_ +
+                                 " of " + toString(op->id()) + "(" +
+                                 toString(op->metadata()) + "): " + op->name_ +
                                  " to a constant");
         }
         dim = makeIntConst(result);

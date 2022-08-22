@@ -5,7 +5,7 @@ namespace freetensor {
 
 Stmt InlinedInvoke::visitStmt(const Stmt &op) {
     auto ret = Mutator::visitStmt(op);
-    ret->setId(callSiteId_.strId() + "/" + ret->id().strId());
+    ret->metadata() = makeMetadata("inlined_invoke", {callSiteMetadata_});
     return ret;
 }
 
@@ -40,7 +40,7 @@ Stmt InlinedInvoke::visit(const Store &_op) {
         auto &&fv = *kvs_.at(op->var_);
         return FrontendVar(fv.name(), fv.fullShape(), fv.dtype(), fv.mtype(),
                            fv.chainIndices(indices))
-            .asStore(op->id(), op->expr_);
+            .asStore(op->metadata(), op->expr_);
     }
     return op;
 }
@@ -64,7 +64,7 @@ Stmt InlinedInvoke::visit(const VarDef &op) {
 }
 
 Stmt inlinedInvoke(
-    const ID &callSiteId, const Func &func,
+    const Metadata &callSiteMetadata, const Func &func,
     const std::vector<Ref<FrontendVar>> &args,
     const std::unordered_map<std::string, Ref<FrontendVar>> &_kvs) {
     Stmt ast = func->body_;
@@ -80,7 +80,9 @@ Stmt inlinedInvoke(
     for (size_t i = 0, n = args.size(); i < n; i++) {
         kvs[func->params_[i].name_] = args[i];
     }
-    ast = InlinedInvoke(callSiteId, kvs)(ast);
+    ast = InlinedInvoke(callSiteMetadata.isValid() ? callSiteMetadata
+                                                   : makeMetadata(),
+                        kvs)(ast);
 
     return ast;
 }

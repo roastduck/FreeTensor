@@ -87,12 +87,13 @@ Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
 
 // Make a log item with specifc parameter and result types
 #define MAKE_LOG(TYPE, FUNC, ...)                                              \
-    ([&](const auto &func, const auto &params) {                               \
+    ([this](const auto &func, const auto &_params) {                           \
+        auto params = getPackFromID(this, _params);                            \
         /* decay is required: we must not store an reference */                \
         typedef ScheduleLogItemImpl<                                           \
             ScheduleType::TYPE, std::decay_t<decltype(func)>,                  \
             std::decay_t<decltype(params)>,                                    \
-            std::decay_t<decltype(std::apply(func, params))>>                  \
+            std::decay_t<decltype(std::apply(func, _params))>>                 \
             BaseClass;                                                         \
         class ScheduleLogItem##TYPE : public BaseClass {                       \
           public:                                                              \
@@ -419,11 +420,10 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                             "supported in moveTo");
                         // TODO: Fission IfNode
                     }
-                    // Leave IDs of the other statements unchanged
-                    auto idMap =
+                    auto idMapBefore =
                         fission(s->id(), FissionSide::After, stmt, ".a", "")
                             .first;
-                    stmt = idMap.at(s->id());
+                    stmt = idMapBefore.at(s->id());
                 }
                 // TODO: Fuse if d is inner of s
 
@@ -448,10 +448,10 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                         // TODO: Fission IfNode
                     }
                     // Leave IDs of the other statements unchanged
-                    auto idMap =
+                    auto idMapAfter =
                         fission(s->id(), FissionSide::Before, stmt, "", ".b")
                             .second;
-                    stmt = idMap.at(s->id());
+                    stmt = idMapAfter.at(s->id());
                 }
                 // TODO: Fuse if d is inner of s
 
@@ -598,11 +598,10 @@ void Schedule::autoUseLib(const Target &target) {
                     auto logBak = logs_;
                     try {
                         fission(loop->loop_->id(), FissionSide::Before,
-                                stmt->id(), "." + std::to_string(i), "");
+                                stmt->id(), "." + toString(i), "");
                         auto libStmtId =
                             fission(loop->loop_->id(), FissionSide::After,
-                                    stmt->id(),
-                                    "." + std::to_string(i) + ".lib", "")
+                                    stmt->id(), "." + toString(i) + ".lib", "")
                                 .first.at(loop->loop_->id());
                         asMatMul(libStmtId);
                     } catch (const InvalidSchedule &e) {
@@ -821,9 +820,9 @@ void Schedule::autoParallelize(const Target &target) {
                 }
 #endif // FT_WITH_CUDA
 
-                ID loopId, outerId;
+                ID outerId;
                 while (true) {
-                    loopId = loop->loop_->id();
+                    ID loopId = loop->loop_->id();
                     if (find(loopId).as<ForNode>()->property_->parallel_ !=
                         serialScope) {
                         break;

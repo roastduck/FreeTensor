@@ -4,15 +4,15 @@ import freetensor as ft
 def test_reuse_over_loop():
     with ft.VarDef([("x", (4, 5, 6), "float32", "input", "cpu"),
                     ("y", (4, 6), "float32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="Li") as i:
-            ft.MarkNid("V_t")
+        with ft.For("i", 0, 4, label="Li") as i:
+            ft.MarkLabel("V_t")
             with ft.VarDef("t", (6,), "float32", "cache", "cpu") as t:
-                with ft.For("k", 0, 6, nid="Lk0") as k:
+                with ft.For("k", 0, 6, label="Lk0") as k:
                     t[k] = 0
-                with ft.For("j", 0, 5, nid="Lj") as j:
-                    with ft.For("k", 0, 6, nid="Lk1") as k:
+                with ft.For("j", 0, 5, label="Lj") as j:
+                    with ft.For("k", 0, 6, label="Lk1") as k:
                         t[k] += x[i, j, k]
-                with ft.For("k", 0, 6, nid="Lk2"):
+                with ft.For("k", 0, 6, label="Lk2"):
                     y[i, k] = t[k] * 2
     ast = ft.make_reduction(ft.pop_ast())
     print(ast)
@@ -42,17 +42,17 @@ def test_reuse_over_loop():
 def test_multiple_assignments():
     with ft.VarDef([("x", (4, 5, 6), "float32", "input", "cpu"),
                     ("y", (4, 6, 2), "float32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="Li") as i:
-            ft.MarkNid("V_t")
+        with ft.For("i", 0, 4, label="Li") as i:
+            ft.MarkLabel("V_t")
             with ft.VarDef("t", (6, 2), "float32", "cache", "cpu") as t:
-                with ft.For("k", 0, 6, nid="Lk0") as k:
+                with ft.For("k", 0, 6, label="Lk0") as k:
                     t[k, 0] = 0
                     t[k, 1] = 0
-                with ft.For("j", 0, 5, nid="Lj") as j:
-                    with ft.For("k", 0, 6, nid="Lk1") as k:
+                with ft.For("j", 0, 5, label="Lj") as j:
+                    with ft.For("k", 0, 6, label="Lk1") as k:
                         t[k, 0] += x[i, j, k]
                         t[k, 1] += x[i, j, k] + 1
-                with ft.For("k", 0, 6, nid="Lk2"):
+                with ft.For("k", 0, 6, label="Lk2"):
                     y[i, k, 0] = t[k, 0] * 2
                     y[i, k, 1] = t[k, 1] * 2
     ast = ft.make_reduction(ft.pop_ast())
@@ -87,15 +87,15 @@ def test_multiple_assignments():
 def test_reuse_over_loop_with_offset():
     with ft.VarDef([("x", (4, 5, 6), "float32", "input", "cpu"),
                     ("y", (4, 6), "float32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 2, 6, nid="Li") as i:
-            ft.MarkNid("V_t")
+        with ft.For("i", 2, 6, label="Li") as i:
+            ft.MarkLabel("V_t")
             with ft.VarDef("t", (6,), "float32", "cache", "cpu") as t:
-                with ft.For("k", 0, 6, nid="Lk0") as k:
+                with ft.For("k", 0, 6, label="Lk0") as k:
                     t[k] = 0
-                with ft.For("j", 0, 5, nid="Lj") as j:
-                    with ft.For("k", 0, 6, nid="Lk1") as k:
+                with ft.For("j", 0, 5, label="Lj") as j:
+                    with ft.For("k", 0, 6, label="Lk1") as k:
                         t[k] += x[i - 2, j, k]
-                with ft.For("k", 0, 6, nid="Lk2"):
+                with ft.For("k", 0, 6, label="Lk2"):
                     y[i - 2, k] = t[k] * 2
     ast = ft.make_reduction(ft.pop_ast())
     print(ast)
@@ -125,15 +125,15 @@ def test_reuse_over_loop_with_offset():
 def test_reuse_over_stmt_seq():
     with ft.VarDef([("x", (6,), "float32", "input", "cpu"),
                     ("y", (6,), "float32", "inout", "cpu")]) as (x, y):
-        ft.MarkNid("V_t")
+        ft.MarkLabel("V_t")
         with ft.VarDef("t", (6,), "float32", "cache", "cpu") as t:
-            with ft.For("k", 0, 6, nid="Lk0") as k:
+            with ft.For("k", 0, 6, label="Lk0") as k:
                 t[k] = x[k] * k
-            with ft.For("k", 0, 6, nid="Lk2"):
+            with ft.For("k", 0, 6, label="Lk2"):
                 y[k] += t[k] * 2
-            with ft.For("k", 0, 6, nid="Lk0") as k:
+            with ft.For("k", 0, 6, label="Lk0") as k:
                 t[k] = x[5 - k] * k
-            with ft.For("k", 0, 6, nid="Lk2"):
+            with ft.For("k", 0, 6, label="Lk2"):
                 y[k] *= t[k]
     ast = ft.make_reduction(ft.pop_ast())
     print(ast)
@@ -166,7 +166,7 @@ def test_reuse_different_lengths():
                     ("y1", (4, 6), "float32", "output", "cpu"),
                     ("y2", (2, 6), "float32", "output", "cpu")]) as (x1, x2, y1,
                                                                      y2):
-        ft.MarkNid("V_t")
+        ft.MarkLabel("V_t")
         with ft.VarDef("t", (6,), "float32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 with ft.For("k", 0, 6) as k:
@@ -223,15 +223,15 @@ def test_reuse_different_lengths():
 def test_no_need_to_copy():
     with ft.VarDef([("x", (4, 5, 6), "float32", "input", "cpu"),
                     ("y", (4, 6), "float32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="Li") as i:
-            ft.MarkNid("V_t")
+        with ft.For("i", 0, 4, label="Li") as i:
+            ft.MarkLabel("V_t")
             with ft.VarDef("t", (4, 6), "float32", "cache", "cpu") as t:
-                with ft.For("k", 0, 6, nid="Lk0") as k:
+                with ft.For("k", 0, 6, label="Lk0") as k:
                     t[i, k] = 0
-                with ft.For("j", 0, 5, nid="Lj") as j:
-                    with ft.For("k", 0, 6, nid="Lk1") as k:
+                with ft.For("j", 0, 5, label="Lj") as j:
+                    with ft.For("k", 0, 6, label="Lk1") as k:
                         t[i, k] += x[i, j, k]
-                with ft.For("k", 0, 6, nid="Lk2"):
+                with ft.For("k", 0, 6, label="Lk2"):
                     y[i, k] = t[i, k] * 2
     ast = ft.make_reduction(ft.pop_ast())
     print(ast)
@@ -257,18 +257,18 @@ def test_no_need_to_copy():
 
 def test_circular_reuse():
     with ft.VarDef("y", (128,), "float32", "output", "cpu") as y:
-        ft.MarkNid("V_c")
+        ft.MarkLabel("V_c")
         with ft.VarDef("c", (128,), "float32", "cache", "cpu") as c:
-            ft.MarkNid("V_h")
+            ft.MarkLabel("V_h")
             with ft.VarDef("h", (128,), "float32", "cache", "cpu") as h:
-                with ft.For("i", 0, 128, nid='Li0') as i:
+                with ft.For("i", 0, 128, label='Li0') as i:
                     c[i] = 0
                     h[i] = 0
-                with ft.For("p", 0, 100, nid='Lp') as p:
-                    with ft.For("i", 0, 128, nid='Li1') as i:
+                with ft.For("p", 0, 100, label='Lp') as p:
+                    with ft.For("i", 0, 128, label='Li1') as i:
                         c[i] = h[i] / 2 - 1
                         h[i] = c[i] * 2 + 1
-                with ft.For("i", 0, 128, nid='Li2') as i:
+                with ft.For("i", 0, 128, label='Li2') as i:
                     y[i] = h[i]
     ast = ft.make_reduction(ft.pop_ast())
     print(ast)
@@ -281,19 +281,19 @@ def test_circular_reuse():
                        "cpu") as c_tape:
             with ft.VarDef("h.tape", (101, 128), "float32", "output",
                            "cpu") as h_tape:
-                ft.MarkNid("V_h")
+                ft.MarkLabel("V_h")
                 with ft.VarDef("h", (128,), "float32", "cache", "cpu") as h:
-                    with ft.For("i", 0, 128, nid='Li0') as i:
+                    with ft.For("i", 0, 128, label='Li0') as i:
                         h[i] = 0
-                    ft.MarkNid("V_c")
+                    ft.MarkLabel("V_c")
                     with ft.VarDef("c", (128,), "float32", "cache", "cpu") as c:
-                        with ft.For("p", 0, 100, nid='Lp') as p:
-                            with ft.For("i", 0, 128, nid='Li1') as i:
+                        with ft.For("p", 0, 100, label='Lp') as p:
+                            with ft.For("i", 0, 128, label='Li1') as i:
                                 h_tape[p, i] = h[i]
                                 c[i] = h[i] / 2 - 1
                                 c_tape[p, i] = c[i]
                                 h[i] = c[i] * 2 + 1
-                    with ft.For("i", 0, 128, nid='Li2') as i:
+                    with ft.For("i", 0, 128, label='Li2') as i:
                         h_tape[100, i] = h[i]
                         y[i] = h[i]
     std = ft.make_reduction(ft.pop_ast())

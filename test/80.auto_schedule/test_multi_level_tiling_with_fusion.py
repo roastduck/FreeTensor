@@ -16,21 +16,21 @@ def test_fusion():
         x: ft.Var[(m, m, b, a), "int32", "input", "cpu"]
         y: ft.Var[(1, 1, a, a), "int32", "inout", "cpu"]
         z: ft.Var[(m, m, a, a), "int32", "output", "cpu"]
-        #! nid: L1
+        #! label: L1
         for i in range(m):
-            #! nid: L2
+            #! label: L2
             for j in range(m):
-                #! nid: L3
+                #! label: L3
                 for k in range(b):
-                    #! nid: L4
+                    #! label: L4
                     for p in range(a):
-                        #! nid: L5
+                        #! label: L5
                         for q in range(a):
                             y[0, 0, p,
                               q] = y[0, 0, p, q] + w[i, j, p, k] * x[i, j, k, q]
-                #! nid: L6
+                #! label: L6
                 for p in range(a):
-                    #! nid: L7
+                    #! label: L7
                     for q in range(a):
                         z[i, j, p, q] = y[0, 0, p, q]
 
@@ -54,19 +54,21 @@ def test_fusion():
     z_arr = ft.Array(z_np)
     ft.build_binary(code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
-        'split(L4, 2, -1, 0)', 'split(L4.0, 2, -1, 0)',
-        'split(L4.0.0, 2, -1, 0)', 'split(L5, 2, -1, 0)',
-        'split(L5.0, 2, -1, 0)', 'split(L5.0.0, 2, -1, 0)',
-        'split(L3, 2, -1, 0)',
-        'reorder(L4.0.0.0, L5.0.0.0, L4.0.0.1, L5.0.0.1, L3.0, L4.0.1, L5.0.1, L3.1, L4.1, L5.1)',
-        'split(L6, 4, -1, 0)', 'split(L6.0, 2, -1, 0)', 'split(L7, 4, -1, 0)',
-        'split(L7.0, 2, -1, 0)',
-        'reorder(L6.0.0, L7.0.0, L6.0.1, L7.0.1, L6.1, L7.1)',
-        'fuse(L4.0.0.0, L6.0.0, false)', 'fuse(L5.0.0.0, L7.0.0, false)',
-        'fuse(L4.0.0.1, L6.0.1, false)', 'fuse(L5.0.0.1, L7.0.1, false)',
+        'split(L4, 2, -1, 0)', 'split($split.0{L4}, 2, -1, 0)',
+        'split($split.0{$split.0{L4}}, 2, -1, 0)', 'split(L5, 2, -1, 0)',
+        'split($split.0{L5}, 2, -1, 0)',
+        'split($split.0{$split.0{L5}}, 2, -1, 0)', 'split(L3, 2, -1, 0)',
+        'reorder($split.0{$split.0{$split.0{L4}}}, $split.0{$split.0{$split.0{L5}}}, $split.1{$split.0{$split.0{L4}}}, $split.1{$split.0{$split.0{L5}}}, $split.0{L3}, $split.1{$split.0{L4}}, $split.1{$split.0{L5}}, $split.1{L3}, $split.1{L4}, $split.1{L5})',
+        'split(L6, 4, -1, 0)', 'split($split.0{L6}, 2, -1, 0)',
+        'split(L7, 4, -1, 0)', 'split($split.0{L7}, 2, -1, 0)',
+        'reorder($split.0{$split.0{L6}}, $split.0{$split.0{L7}}, $split.1{$split.0{L6}}, $split.1{$split.0{L7}}, $split.1{L6}, $split.1{L7})',
+        'fuse($split.0{$split.0{$split.0{L4}}}, $split.0{$split.0{L6}}, false)',
+        'fuse($split.0{$split.0{$split.0{L5}}}, $split.0{$split.0{L7}}, false)',
+        'fuse($split.1{$split.0{$split.0{L4}}}, $split.1{$split.0{L6}}, false)',
+        'fuse($split.1{$split.0{$split.0{L5}}}, $split.1{$split.0{L7}}, false)',
         'cache(*, y, cpu)'
     ]
-    sch_log = sch.logs()
+    sch_log = sch.pretty_logs()
     print(sch_log)
     assert std_log[:-1] == sch_log[:-1]
     assert sch_log[-1].startswith('cache(') and sch_log[-1].endswith(

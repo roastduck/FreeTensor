@@ -27,20 +27,20 @@ Stmt OutputIntermediates::visitStmt(const Stmt &stmt) {
     if (toTape_.count(stmt->id())) {
         auto &toTape = toTape_.at(stmt->id());
         toTape.emplace_back(ret);
-        return makeStmtSeq("", std::move(toTape));
+        return makeStmtSeq(std::move(toTape));
     }
     return ret;
 }
 
 Expr OutputIntermediates::visit(const Load &op) {
     auto ret = BaseClass::visit(op);
-    auto id = ID(op, curStmt_);
+    auto id = StmtOrExprID(op, curStmt_);
     if (versions_.count(id) && !isSingleVersion(def(op->var_)->id())) {
         std::vector<Expr> newIndices(1, versions_.at(id));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         toTape_[curStmt_].emplace_back(
-            makeStore("", op->var_ + ".tape", std::move(newIndices),
+            makeStore(op->var_ + ".tape", std::move(newIndices),
                       makeLoad(op->var_, op->indices_, op->loadType_)));
     }
     return ret;
@@ -53,10 +53,10 @@ Stmt OutputIntermediates::visit(const Store &op) {
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         auto newStore =
-            makeStore("", op->var_ + ".tape", std::move(newIndices),
+            makeStore(op->var_ + ".tape", std::move(newIndices),
                       makeLoad(op->var_, op->indices_,
                                buffer(op->var_)->tensor()->dtype()));
-        return makeStmtSeq("", {oldStore, newStore});
+        return makeStmtSeq({oldStore, newStore});
     } else {
         return oldStore;
     }
@@ -69,10 +69,10 @@ Stmt OutputIntermediates::visit(const ReduceTo &op) {
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         auto newStore =
-            makeStore("", op->var_ + ".tape", std::move(newIndices),
+            makeStore(op->var_ + ".tape", std::move(newIndices),
                       makeLoad(op->var_, op->indices_,
                                buffer(op->var_)->tensor()->dtype()));
-        return makeStmtSeq("", {oldReduce, newStore});
+        return makeStmtSeq({oldReduce, newStore});
     } else {
         return oldReduce;
     }
@@ -106,7 +106,7 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
             Ref<Tensor> tensor = deepCopy(op->buffer_->tensor());
             tensor->shape().insert(tensor->shape().begin(),
                                    totLens_.at(op->id()));
-            return makeVarDef("", tapeName,
+            return makeVarDef(tapeName,
                               makeBuffer(std::move(tensor), AccessType::Output,
                                          toGlobalMemType(op->buffer_->mtype())),
                               nullptr, op, false);
@@ -117,13 +117,13 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
 }
 
 std::tuple<Stmt, std::unordered_map<ID, std::string>,
-           std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
+           std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>>
 outputIntermediates(const Stmt &op,
                     const std::unordered_set<ID> &intermediates) {
     auto [versions, totLens] = analyzeVersion(op, intermediates);
     OutputIntermediates mutator(versions, totLens);
     auto ret = mutator(op);
-    return std::make_tuple(ret, mutator.tapeNames(), versions, totLens);
+    return {ret, mutator.tapeNames(), versions, totLens};
 }
 
 } // namespace freetensor

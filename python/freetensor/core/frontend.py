@@ -14,8 +14,8 @@ import freetensor_ffi as ffi
 from .context import pop_ast
 from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
                    if_then_else, shape)
-from .stmt import (_VarDef, VarRef, For, If, Else, MarkNid, ctx_stack, Func,
-                   Assert)
+from .stmt import (_VarDef, NamedScope, VarRef, For, If, Else, MarkLabel,
+                   ctx_stack, Func, Assert)
 
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
                       StagedIterable, StagingError, StagingOverload,
@@ -40,40 +40,6 @@ def staged_callable(staging, original, doc: Optional[str] = None):
         impl.__doc__ = doc
 
     return impl
-
-
-class NamingScope:
-
-    def __init__(self, namespace: Optional[str]) -> None:
-        if len(_overload.id_stack) > 0 and namespace is None:
-            raise _overload.error(
-                'Namespace must not be None for inner levels.')
-        self.namespace = namespace
-        self.ids = {}
-
-    def __enter__(self):
-        _overload.id_stack.append(self)
-
-    def __exit__(self, _1, _2, _3):
-        popped = _overload.id_stack.pop()
-        if popped != self:
-            raise _overload.error(
-                'NamingScope enter/exit not match, must be FILO')
-
-    def fullid(self, nid: str):
-        if self.namespace is not None:
-            prefix = self.namespace + '->'
-        else:
-            prefix = ''
-
-        if nid in self.ids:
-            suffix = '$' + str(self.ids[nid])
-            self.ids[nid] += 1
-        else:
-            suffix = ''
-            self.ids[nid] = 1
-
-        return prefix + nid + suffix
 
 
 class LifetimeScope:
@@ -106,7 +72,6 @@ class FreeTensorOverload(StagingOverload):
 
     def __init__(self):
         super().__init__()
-        self.id_stack: List[NamingScope] = []
         self.lifetime_stack: List[LifetimeScope] = []
         self.closure: Dict[str, Any] = {}
         self.name_dict: Dict[str, int] = {}
@@ -128,10 +93,6 @@ class FreeTensorOverload(StagingOverload):
 
     def register_assert(self, pred):
         self.lifetime_stack[-1].register_inner_scope(Assert(pred))
-
-    def fullid(self, nid: str) -> str:
-        '''Get namespace-prepended full nid of given short nid.'''
-        return self.id_stack[-1].fullid(nid)
 
     def fullname(self, name: str) -> str:
         '''Get distinct name.'''
@@ -159,14 +120,19 @@ class FreeTensorOverload(StagingOverload):
     def functiondef_wrapper(self, filename: str, func):
         basic_wrapped = super().functiondef_wrapper(filename, func)
 
-        def wrapped(*args, **kwargs):
-            namespace = ctx_stack.top().get_next_nid()
-            ctx_stack.top().set_next_nid('')
-            if namespace == '':
-                return basic_wrapped(*args, **kwargs)
+        def wrapped(*args, __freetensor_transform_outermost__=False, **kwargs):
+            if __freetensor_transform_outermost__:
+                call_metadata = None
             else:
-                with NamingScope(namespace):
-                    return basic_wrapped(*args, **kwargs)
+                call_metadata = ctx_stack.top().get_metadata()
+            ctx_stack.top().clear_metadata()
+
+            prev = ctx_stack.top().caller_metadata
+            ctx_stack.top().set_caller_metadata(call_metadata)
+            result = basic_wrapped(*args, **kwargs)
+            ctx_stack.top().set_caller_metadata(prev)
+
+            return result
 
         return wrapped
 
@@ -180,8 +146,8 @@ class FreeTensorOverload(StagingOverload):
             key = key[:-1]
             val = parts[1]
 
-        if key == 'nid':
-            ctx_stack.top().set_next_nid(self.fullid(val))
+        if key == 'label':
+            ctx_stack.top().add_label(val)
         elif key == 'no_deps':
             back = inspect.currentframe().f_back
 
@@ -203,8 +169,7 @@ class FreeTensorOverload(StagingOverload):
             ctx_stack.top().set_next_prefer_libs()
 
     def at_position(self, filename: str, lineno: int) -> None:
-        if ctx_stack.top().get_next_nid() == "":
-            ctx_stack.top().set_next_nid(self.fullid(f'{filename}:{lineno}'))
+        ctx_stack.top().set_next_location(filename, lineno)
 
 
 _overload: FreeTensorOverload = FreeTensorOverload()
@@ -474,37 +439,35 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
         _overload.__init__()
         # Create a new scope for the function
         with LifetimeScope():
-            with NamingScope(None):
-                # Run staging function with the tensor program arguments' names as parameters
-                returns = staging_func(*params)
-                # Check returned vardefs (if any)
-                if isinstance(returns, VarRef):
-                    returns = [returns]
-                elif isinstance(returns, tuple):
-                    for ret in returns:
-                        if not isinstance(ret, VarRef):
-                            raise _overload.error(
-                                'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
-                            )
-                    returns = list(returns)
-                elif returns is None:
-                    returns = []
-                else:
-                    raise _overload.error(
-                        'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
-                    )
-                # Set returned vardefs' access type to inout/output according to whether it was an input
+            # Run staging function with the tensor program arguments' names as parameters
+            returns = staging_func(*params,
+                                   __freetensor_transform_outermost__=True)
+            # Check returned vardefs (if any)
+            if isinstance(returns, VarRef):
+                returns = [returns]
+            elif isinstance(returns, tuple):
                 for ret in returns:
-                    if ret.vardef.atype == 'input' or ret.vardef.atype == 'inout':
-                        ret.vardef.set_atype('inout')
-                    else:
-                        ret.vardef.set_atype('output')
-                returns = [
-                    (ret.vardef.name, ret.vardef.dtype) for ret in returns
-                ]
+                    if not isinstance(ret, VarRef):
+                        raise _overload.error(
+                            'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
+                        )
+                returns = list(returns)
+            elif returns is None:
+                returns = []
+            else:
+                raise _overload.error(
+                    'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
+                )
+            # Set returned vardefs' access type to inout/output according to whether it was an input
+            for ret in returns:
+                if ret.vardef.atype == 'input' or ret.vardef.atype == 'inout':
+                    ret.vardef.set_atype('inout')
+                else:
+                    ret.vardef.set_atype('output')
+            returns = [(ret.vardef.name, ret.vardef.dtype) for ret in returns]
 
-                # Set closure; they are from captured Arrays.
-                closure = _overload.closure
+            # Set closure; they are from captured Arrays.
+            closure = _overload.closure
     except StagingError:
         raise
     except TransformError:

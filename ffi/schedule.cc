@@ -30,9 +30,16 @@ void init_ffi_schedule(py::module_ &m) {
         .def_readonly("time", &AutoScheduleTuneTrial::time_)
         .def_readonly("stddev", &AutoScheduleTuneTrial::stddev_);
 
+    py::class_<Selector, Ref<Selector>>(m, "Selector")
+        .def(
+            py::init([](const std::string &str) { return parseSelector(str); }))
+        .def("match", &Selector::match);
+    py::implicitly_convertible<std::string, Selector>();
+
     py::class_<Schedule>(m, "Schedule")
         .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
         .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
+        .def(py::init<const Schedule &>(), "schedule"_a)
         .def("fork", &Schedule::fork)
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)
@@ -46,17 +53,32 @@ void init_ffi_schedule(py::module_ &m) {
                  }
                  return ret;
              })
+        .def("pretty_logs",
+             [](const Schedule &s) {
+                 auto &&log = s.logs();
+                 std::vector<std::string> ret;
+                 ret.reserve(log.size());
+                 for (auto &&item : log) {
+                     ret.emplace_back(item->toPrettyString());
+                 }
+                 return ret;
+             })
         .def("find", static_cast<Stmt (Schedule::*)(
                          const std::function<bool(const Stmt &)> &) const>(
                          &Schedule::find))
         .def("find",
              static_cast<Stmt (Schedule::*)(const ID &) const>(&Schedule::find))
+        .def("find",
+             static_cast<Stmt (Schedule::*)(const Ref<Selector> &) const>(
+                 &Schedule::find))
         .def("find_all", static_cast<std::vector<Stmt> (Schedule::*)(
                              const std::function<bool(const Stmt &)> &) const>(
                              &Schedule::findAll))
         .def("find_all",
              static_cast<std::vector<Stmt> (Schedule::*)(const ID &) const>(
                  &Schedule::findAll))
+        .def("find_all", static_cast<std::vector<Stmt> (Schedule::*)(
+                             const Ref<Selector> &) const>(&Schedule::findAll))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1, "shift"_a = 0)
         .def("reorder", &Schedule::reorder, "order"_a)
@@ -76,7 +98,7 @@ void init_ffi_schedule(py::module_ &m) {
             },
             "loops_id"_a, "transform_func"_a)
         .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,
-             "suffix0"_a = ".a", "suffix1"_a = ".b")
+             "suffix0"_a = ".0", "suffix1"_a = ".1")
         .def("fuse",
              static_cast<ID (Schedule::*)(const ID &, const ID &, bool)>(
                  &Schedule::fuse),

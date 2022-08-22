@@ -16,6 +16,7 @@ struct MultiLevelTilingAnnotation {
 
 struct ForInfo {
     ID id;
+    Metadata metadata;
     int index{-1};
     int64_t length{};
     bool operator<(const ForInfo &f) const { return index < f.index; }

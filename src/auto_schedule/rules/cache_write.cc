@@ -17,7 +17,7 @@ std::vector<Ref<Sketch>> CacheWriteRule::genPart(const Sketch &sketch) {
     auto newSketch = sketch.clone();
     auto &target = newSketch->nowSubSketch().target;
     if (verbose_ >= 2) {
-        logger() << "cache: " << target.outermost.strId() << " " << target.dest
+        logger() << "cache: " << target.outermost << " " << target.dest
                  << std::endl;
     }
     std::string name = std::get<2>(

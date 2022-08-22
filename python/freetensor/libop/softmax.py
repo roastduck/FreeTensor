@@ -18,15 +18,15 @@ def softmax_(x, y, axis: int = -1):
         Axis that the softmax is performed along. Negative axis means
         count from the last dimension
     '''
-    #! nid: max
+    #! label: max
     maxval = reduce_max(x, axes=[axis], keepdims=True)
-    #! nid: sub
+    #! label: sub
     corrected = sub(x, maxval)
-    #! nid: exp
+    #! label: exp
     exponent = exp(corrected)
-    #! nid: sum
+    #! label: sum
     summation = reduce_sum(exponent, axes=[axis], keepdims=True)
-    #! nid: div
+    #! label: div
     truediv_(exponent, summation, y)
 
 
@@ -48,14 +48,14 @@ def softmax(x, axis=-1):
     VarRef :
         The result tensor
     '''
-    #! nid: max
+    #! label: max
     maxval = reduce_max(x, axes=[axis], keepdims=True)
-    #! nid: sub
+    #! label: sub
     corrected = sub(x, maxval)
-    #! nid: exp
+    #! label: exp
     exponent = exp(corrected)
-    #! nid: sum
+    #! label: sum
     summation = reduce_sum(exponent, axes=[axis], keepdims=True)
-    #! nid: div
+    #! label: div
     out = truediv(exponent, summation)
     return out

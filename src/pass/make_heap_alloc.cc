@@ -30,7 +30,7 @@ Stmt InsertAlloc::visit(const StmtSeq &_op) {
         op->stmts_[i]->nodeType() == ASTNodeType::Load ||
         op->stmts_[i]->nodeType() == ASTNodeType::ReduceTo ||
         op->stmts_[i]->isExpr()) {
-        op->stmts_.insert(op->stmts_.begin() + i, makeAlloc(op->id(), var_));
+        op->stmts_.insert(op->stmts_.begin() + i, makeAlloc(var_));
     } else {
         op->stmts_[i] = (*this)(op->stmts_[i]);
     }
@@ -65,7 +65,7 @@ Stmt InsertFree::visit(const StmtSeq &_op) {
         op->stmts_[i]->nodeType() == ASTNodeType::Load ||
         op->stmts_[i]->nodeType() == ASTNodeType::ReduceTo ||
         op->stmts_[i]->isExpr()) {
-        op->stmts_.insert(op->stmts_.begin() + i + 1, makeFree(op->id(), var_));
+        op->stmts_.insert(op->stmts_.begin() + i + 1, makeFree(var_));
     } else {
         op->stmts_[i] = (*this)(op->stmts_[i]);
     }

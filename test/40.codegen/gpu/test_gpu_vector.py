@@ -15,8 +15,8 @@ def test_vectorize():
         ("x", (4, 64), "int32", "input", "gpu/global"),
         ("y", (4, 64), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 64, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 64, label="L2") as j:
                 y[i, j] = x[i, j] * 2
     func = ft.Func("main", ["x", "y"], [], ft.pop_ast())
 
@@ -44,8 +44,8 @@ def test_vectorize_with_non_vector_access():
         ("x", (4,), "int32", "input", "gpu/global"),
         ("y", (4, 64), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 64, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 64, label="L2") as j:
                 y[i, j] = x[i] * 2
     func = ft.Func("main", ["x", "y"], [], ft.pop_ast())
 
@@ -70,8 +70,8 @@ def test_vectorize_with_non_vector_access():
 
 def test_vectorize_use_iter():
     with ft.VarDef("y", (4, 64), "int32", "output", "gpu/global") as y:
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 64, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 64, label="L2") as j:
                 y[i, j] = i + j
     func = ft.Func("main", ["y"], [], ft.pop_ast())
 
@@ -97,8 +97,8 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
         ("x", (4, 62), "int32", "input", "gpu/global"),
         ("y", (4, 62), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 62, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 62, label="L2") as j:
                 y[i, j] = x[i, j] * 2
     func = ft.Func("main", ["x", "y"], [], ft.pop_ast())
 
@@ -126,8 +126,8 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
         ("x", (4, 66), "int32", "input", "gpu/global"),
         ("y", (4, 64), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 64, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 64, label="L2") as j:
                 y[i, j] = x[i, j + 2] * 2
     func = ft.Func("main", ["x", "y"], [], ft.pop_ast())
 

@@ -499,33 +499,33 @@ Stmt SimplifyPass::visit(const ReduceTo &_op) {
     case ReduceOp::Add:
         if (op->expr_->nodeType() == ASTNodeType::IntConst &&
             op->expr_.as<IntConstNode>()->val_ == 0) {
-            return makeStmtSeq("", {});
+            return makeStmtSeq({});
         }
         if (op->expr_->nodeType() == ASTNodeType::FloatConst &&
             op->expr_.as<FloatConstNode>()->val_ == 0) {
-            return makeStmtSeq("", {});
+            return makeStmtSeq({});
         }
         break;
     case ReduceOp::Mul:
         if (op->expr_->nodeType() == ASTNodeType::IntConst &&
             op->expr_.as<IntConstNode>()->val_ == 1) {
-            return makeStmtSeq("", {});
+            return makeStmtSeq({});
         }
         if (op->expr_->nodeType() == ASTNodeType::FloatConst &&
             op->expr_.as<FloatConstNode>()->val_ == 1) {
-            return makeStmtSeq("", {});
+            return makeStmtSeq({});
         }
         break;
     case ReduceOp::LAnd:
         if (op->expr_->nodeType() == ASTNodeType::BoolConst &&
             op->expr_.as<BoolConstNode>()->val_ == true) {
-            return makeStmtSeq("", {});
+            return makeStmtSeq({});
         }
         break;
     case ReduceOp::LOr:
         if (op->expr_->nodeType() == ASTNodeType::BoolConst &&
             op->expr_.as<BoolConstNode>()->val_ == false) {
-            return makeStmtSeq("", {});
+            return makeStmtSeq({});
         }
         break;
     default:; // do nothing
@@ -546,7 +546,7 @@ Stmt SimplifyPass::visit(const VarDef &_op) {
     varScope_.erase(_op->name_), curScope_--;
 
     if (isEmptyStmt(op->body_) && op->buffer_->atype() == AccessType::Cache) {
-        return makeStmtSeq("", {});
+        return makeStmtSeq({});
     }
     return op;
 }
@@ -570,17 +570,17 @@ Stmt SimplifyPass::visit(const For &_op) {
             return (*this)(body);
         }
         if (intLen <= 0) {
-            return makeStmtSeq("", {});
+            return makeStmtSeq({});
         }
     }
     if (unique_.getIntUpper(op->len_) == 1) {
         auto body = ReplaceIter(_op->iter_, op->begin_)(_op->body_);
         body = (*this)(body);
-        return makeIf("", makeEQ(op->len_, makeIntConst(1)), body);
+        return makeIf(makeEQ(op->len_, makeIntConst(1)), body);
     }
 
     if (isEmptyStmt(op->body_)) {
-        return makeStmtSeq("", {});
+        return makeStmtSeq({});
     }
     return op;
 }
@@ -597,24 +597,26 @@ Stmt SimplifyPass::visit(const If &_op) {
             if (_op->elseCase_.isValid()) {
                 return (*this)(_op->elseCase_);
             } else {
-                return makeStmtSeq("", {});
+                return makeStmtSeq({});
             }
         }
     }
 
-    auto __op = BaseClass::visit(
-        makeIf(_op->id(), std::move(cond), _op->thenCase_, _op->elseCase_)
-            .as<IfNode>());
+    auto __op =
+        BaseClass::visit(makeIf(std::move(cond), _op->thenCase_, _op->elseCase_,
+                                _op->metadata(), _op->id())
+                             .as<IfNode>());
     ASSERT(__op->nodeType() == ASTNodeType::If);
     auto op = __op.as<IfNode>();
     bool emptyThen = isEmptyStmt(op->thenCase_);
     bool emptyElse = isEmptyStmt(op->elseCase_);
     if (emptyThen && emptyElse) {
-        return makeStmtSeq("", {});
+        return makeStmtSeq({});
     }
     if (op->elseCase_.isValid()) {
         if (emptyThen) {
-            return makeIf(op->id(), makeLNot(op->cond_), op->elseCase_);
+            return makeIf(makeLNot(op->cond_), op->elseCase_, op->metadata(),
+                          op->id());
         }
         if (emptyElse) {
             op->elseCase_ = nullptr;

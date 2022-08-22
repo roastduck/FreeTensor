@@ -53,23 +53,25 @@ Stmt SinkVar::visit(const VarDef &_op) {
                 segment = seq->stmts_[firstUse];
             } else {
                 segment = makeStmtSeq(
-                    "", std::vector<Stmt>(seq->stmts_.begin() + firstUse,
-                                          seq->stmts_.begin() + lastUse + 1));
+                    std::vector<Stmt>(seq->stmts_.begin() + firstUse,
+                                      seq->stmts_.begin() + lastUse + 1));
             }
             std::vector<Stmt> stmts;
             stmts.reserve(seq->stmts_.size() - (lastUse - firstUse));
             stmts.insert(stmts.end(), seq->stmts_.begin(),
                          seq->stmts_.begin() + firstUse);
             stmts.insert(stmts.end(),
-                         makeVarDef(_op->id(), _op->name_, _op->buffer_,
-                                    _op->ioTensor_, std::move(segment), false));
+                         makeVarDef(_op->name_, _op->buffer_, _op->ioTensor_,
+                                    std::move(segment), false, _op->metadata(),
+                                    _op->id()));
             stmts.insert(stmts.end(), seq->stmts_.begin() + lastUse + 1,
                          seq->stmts_.end());
             isFixPoint_ = false;
-            ret = makeStmtSeq(seq->id(), std::move(stmts));
+            ret = makeStmtSeq(std::move(stmts), seq->metadata(), seq->id());
             for (auto &&def : iter::reversed(inners)) {
-                ret = makeVarDef(def->id(), def->name_, def->buffer_,
-                                 def->ioTensor_, std::move(ret), def->pinned_);
+                ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
+                                 std::move(ret), def->pinned_, def->metadata(),
+                                 def->id());
             }
         }
         break;
@@ -83,15 +85,17 @@ Stmt SinkVar::visit(const VarDef &_op) {
         // 2. All writes to this variable write the same value
         if (!deps_.count(std::make_pair(_op->name_, loop->id())) ||
             !isVariant(variantMap_, _op, loop->id())) {
-            auto loopBody = makeVarDef(_op->id(), _op->name_, _op->buffer_,
-                                       _op->ioTensor_, loop->body_, false);
+            auto loopBody =
+                makeVarDef(_op->name_, _op->buffer_, _op->ioTensor_,
+                           loop->body_, false, _op->metadata(), _op->id());
             isFixPoint_ = false;
-            ret = makeFor(loop->id(), loop->iter_, loop->begin_, loop->end_,
-                          loop->step_, loop->len_, loop->property_,
-                          std::move(loopBody));
+            ret = makeFor(loop->iter_, loop->begin_, loop->end_, loop->step_,
+                          loop->len_, loop->property_, std::move(loopBody),
+                          loop->metadata(), loop->id());
             for (auto &&def : iter::reversed(inners)) {
-                ret = makeVarDef(def->id(), def->name_, def->buffer_,
-                                 def->ioTensor_, std::move(ret), def->pinned_);
+                ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
+                                 std::move(ret), def->pinned_, def->metadata(),
+                                 def->id());
             }
         }
         break;
@@ -101,30 +105,33 @@ Stmt SinkVar::visit(const VarDef &_op) {
         auto branch = op->body_.as<IfNode>();
         Stmt thenCase, elseCase;
         thenCase =
-            makeVarDef(_op->id().strId() + ".0", _op->name_, _op->buffer_,
-                       _op->ioTensor_, branch->thenCase_, false);
+            makeVarDef(_op->name_, _op->buffer_, _op->ioTensor_,
+                       branch->thenCase_, false, makeMetadata("sink.1", _op));
         if (branch->elseCase_.isValid()) {
-            elseCase =
-                makeVarDef(_op->id().strId() + ".1", _op->name_, _op->buffer_,
-                           _op->ioTensor_, branch->elseCase_, false);
+            elseCase = makeVarDef(_op->name_, _op->buffer_, _op->ioTensor_,
+                                  branch->elseCase_, false,
+                                  makeMetadata("sink.0", _op));
         }
-        ret = makeIf(branch->id(), branch->cond_, std::move(thenCase),
-                     std::move(elseCase));
+        ret = makeIf(branch->cond_, std::move(thenCase), std::move(elseCase),
+                     branch->metadata(), branch->id());
         for (auto &&def : iter::reversed(inners)) {
-            ret = makeVarDef(def->id(), def->name_, def->buffer_,
-                             def->ioTensor_, std::move(ret), def->pinned_);
+            ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
+                             std::move(ret), def->pinned_, def->metadata(),
+                             def->id());
         }
         break;
     }
 
     case ASTNodeType::Assert: {
         auto ass = op->body_.as<AssertNode>();
-        auto body = makeVarDef(_op->id(), _op->name_, _op->buffer_,
-                               _op->ioTensor_, ass->body_, false);
-        ret = makeAssert(ass->id(), ass->cond_, std::move(body));
+        auto body = makeVarDef(_op->name_, _op->buffer_, _op->ioTensor_,
+                               ass->body_, false, _op->metadata(), _op->id());
+        ret =
+            makeAssert(ass->cond_, std::move(body), ass->metadata(), ass->id());
         for (auto &&def : iter::reversed(inners)) {
-            ret = makeVarDef(def->id(), def->name_, def->buffer_,
-                             def->ioTensor_, std::move(ret), def->pinned_);
+            ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
+                             std::move(ret), def->pinned_, def->metadata(),
+                             def->id());
         }
         break;
     }

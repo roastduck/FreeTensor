@@ -390,7 +390,7 @@ Stmt Z3Simplify::visit(const If &op) {
     }
     if (prove(notCond)) {
         return op->elseCase_.isValid() ? (*this)(op->elseCase_)
-                                       : makeStmtSeq("", {});
+                                       : makeStmtSeq({});
     }
 
     Stmt thenCase;
@@ -413,8 +413,8 @@ Stmt Z3Simplify::visit(const If &op) {
         }
     }
 
-    auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
-                      std::move(elseCase));
+    auto ret = makeIf(std::move(cond), std::move(thenCase), std::move(elseCase),
+                      op->metadata(), op->id());
     return COPY_DEBUG_INFO(ret, op);
 }
 
@@ -437,7 +437,8 @@ Stmt Z3Simplify::visit(const Assert &op) {
         body = (*this)(op->body_);
     }
 
-    return makeAssert(op->id(), std::move(cond), std::move(body));
+    return makeAssert(std::move(cond), std::move(body), op->metadata(),
+                      op->id());
 }
 
 Stmt Z3Simplify::visit(const Assume &op) {
@@ -452,7 +453,8 @@ Stmt Z3Simplify::visit(const Assume &op) {
         body = (*this)(op->body_);
     }
 
-    return makeAssume(op->id(), std::move(cond), std::move(body));
+    return makeAssume(std::move(cond), std::move(body), op->metadata(),
+                      op->id());
 }
 
 Stmt Z3Simplify::visit(const For &op) {
@@ -463,7 +465,7 @@ Stmt Z3Simplify::visit(const For &op) {
     auto len = (*this)(op->len_);
 
     if (prove((*this)(makeEQ(len, makeIntConst(0))))) {
-        return makeStmtSeq("", {});
+        return makeStmtSeq({});
     }
     if (prove((*this)(makeEQ(len, makeIntConst(1))))) {
         auto body = ReplaceIter(op->iter_, begin)(op->body_);
@@ -497,9 +499,9 @@ Stmt Z3Simplify::visit(const For &op) {
         body = (*this)(op->body_);
     }
 
-    auto ret = makeFor(op->id(), op->iter_, std::move(begin), std::move(end),
+    auto ret = makeFor(op->iter_, std::move(begin), std::move(end),
                        std::move(step), std::move(len), op->property_,
-                       std::move(body));
+                       std::move(body), op->metadata(), op->id());
     return COPY_DEBUG_INFO(ret, op);
 }
 

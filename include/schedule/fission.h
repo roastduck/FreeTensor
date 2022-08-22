@@ -17,7 +17,8 @@ inline std::ostream &operator<<(std::ostream &os, FissionSide side) {
 }
 
 class HoistVar : public Mutator {
-    ID loop_, before_, after_;
+    ID loop_;
+    ID before_, after_;
     std::vector<std::pair<ID, ID>> scopePairs_;
     std::unordered_set<std::string> part0Vars_, part1Vars_;
     std::vector<VarDef> defStack_;
@@ -97,18 +98,21 @@ class AddDimToVar : public SymbolTable<Mutator> {
 };
 
 class FissionFor : public Mutator {
-    ID loop_, before_, after_;
-    std::string suffix0_, suffix1_;
+    ID loop_;
+    ID before_, after_;
+    std::optional<std::string> op0_, op1_;
     std::unordered_map<ID, ID> ids0_, ids1_;
     std::unordered_set<std::string> varUses_;
     bool inside_ = false, isPart0_ = true, anyInside_ = false, isAfter_ = false;
 
   public:
     FissionFor(const ID &loop, const ID &before, const ID &after,
-               const std::string &suffix0 = ".a",
-               const std::string &suffix1 = ".b")
-        : loop_(loop), before_(before), after_(after), suffix0_(suffix0),
-          suffix1_(suffix1) {}
+               const std::string &suffix0, const std::string &suffix1)
+        : loop_(loop), before_(before), after_(after),
+          op0_(suffix0.empty() ? std::nullopt
+                               : std::optional{"fission" + suffix0}),
+          op1_(suffix1.empty() ? std::nullopt
+                               : std::optional{"fission" + suffix1}) {}
 
     const std::unordered_map<ID, ID> &ids0() const { return ids0_; }
     const std::unordered_map<ID, ID> &ids1() const { return ids1_; }

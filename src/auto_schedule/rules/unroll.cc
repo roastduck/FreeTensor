@@ -15,7 +15,8 @@ void UnrollPart::apply(Schedule &schedule, SubSketch &subSketch) {
     int vthreadSize = 1;
     if (targetType_ == TargetType::GPU) {
         SketchPart part = subSketch.getPart(SketchPartType::ThreadBind);
-        ID lastParallelizedID = part.as<ThreadBindPart>()->lastParallelizedID();
+        auto lastParallelizedID =
+            part.as<ThreadBindPart>()->lastParallelizedID();
         if (!lastParallelizedID.isValid()) {
             return;
         }
@@ -23,7 +24,7 @@ void UnrollPart::apply(Schedule &schedule, SubSketch &subSketch) {
         vthreadSize = part.as<ThreadBindPart>()->vthreadSize();
     } else {
         SketchPart part = subSketch.getPart(SketchPartType::Parallelize);
-        ID lastParallelizedID =
+        auto lastParallelizedID =
             part.as<ParallelizePart>()->lastParallelizedID();
         if (!lastParallelizedID.isValid()) {
             return;

@@ -17,23 +17,23 @@ def test_cache_write():
         x: ft.Var[(m, m, b, a), "int32", "input", "cpu"]
         y: ft.Var[(1, 1, a, a), "int32", "inout", "cpu"]
         z: ft.Var[(m, m, a, a), "int32", "output", "cpu"]
-        #! nid: L1
+        #! label: L1
         for i in range(m):
-            #! nid: L2
+            #! label: L2
             for j in range(m):
-                #! nid: L4
+                #! label: L4
                 for p in range(a):
-                    #! nid: L5
+                    #! label: L5
                     for q in range(a):
-                        #! nid: Init
+                        #! label: Init
                         y[0, 0, p, q] = 0
-                        #! nid: L3
+                        #! label: L3
                         for k in range(b):
                             y[0, 0, p,
                               q] = y[0, 0, p, q] + w[i, j, p, k] * x[i, j, k, q]
-                #! nid: L6
+                #! label: L6
                 for p in range(a):
-                    #! nid: L7
+                    #! label: L7
                     for q in range(a):
                         z[i, j, p, q] = y[0, 0, p, q]
 
@@ -56,20 +56,18 @@ def test_cache_write():
     z_arr = ft.Array(z_np)
     ft.build_binary(code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
-        'split(L4, 4, -1, 0)', 'split(L4.0, 2, -1, 0)', 'split(L5, 4, -1, 0)',
-        'split(L5.0, 2, -1, 0)',
-        'reorder(L4.0.0, L5.0.0, L4.0.1, L5.0.1, L4.1, L5.1)',
-        'fission(L5.1, after, Init, .a, .b)',
-        'fission(L4.1, after, L5.1.a, .a, .b)', 'split(L4.1.b, 2, -1, 0)',
-        'split(L5.1.b.b, 2, -1, 0)', 'split(L3.b.b, 2, -1, 0)',
-        'reorder(L3.b.b.0, L4.1.b.0, L5.1.b.b.0, L3.b.b.1, L4.1.b.1, L5.1.b.b.1)',
-        'merge(L4.0.0, L5.0.0)', 'parallelize(merged.L4.0.0.L5.0.0, openmp)'
+        'split(L4, 4, -1, 0)', 'split($split.0{L4}, 2, -1, 0)',
+        'split(L5, 4, -1, 0)', 'split($split.0{L5}, 2, -1, 0)',
+        'reorder($split.0{$split.0{L4}}, $split.0{$split.0{L5}}, $split.1{$split.0{L4}}, $split.1{$split.0{L5}}, $split.1{L4}, $split.1{L5})',
+        'fission($split.1{L5}, after, Init, .0, .1)',
+        'fission($split.1{L4}, after, $fission.0{$split.1{L5}}, .0, .1)',
+        'split($fission.1{$split.1{L4}}, 2, -1, 0)',
+        'split($fission.1{$fission.1{$split.1{L5}}}, 2, -1, 0)',
+        'split($fission.1{$fission.1{L3}}, 2, -1, 0)',
+        'reorder($split.0{$fission.1{$fission.1{L3}}}, $split.0{$fission.1{$split.1{L4}}}, $split.0{$fission.1{$fission.1{$split.1{L5}}}}, $split.1{$fission.1{$fission.1{L3}}}, $split.1{$fission.1{$split.1{L4}}}, $split.1{$fission.1{$fission.1{$split.1{L5}}}})',
+        'merge($split.0{$split.0{L4}}, $split.0{$split.0{L5}})',
+        'parallelize($merge{$split.0{$split.0{L4}}, $split.0{$split.0{L5}}}, openmp)'
     ]
-    sch_log = sch.logs()
+    sch_log = sch.pretty_logs()
     print(sch_log)
-    assert len(sch_log) == len(std_log)
-    for l, r in zip(sch_log, std_log):
-        if l.startswith('cache'):
-            assert r.startswith('cache')
-        else:
-            assert l == r
+    assert sch_log == std_log

@@ -170,7 +170,7 @@ Stmt ScalarPropConst::visit(const If &op) {
             return visitStmt(op->thenCase_);
         else
             return op->elseCase_.isValid() ? visitStmt(op->elseCase_)
-                                           : makeStmtSeq("", {});
+                                           : makeStmtSeq({});
     } else {
         // keep both branches, propagate on each one
 
@@ -187,7 +187,7 @@ Stmt ScalarPropConst::visit(const If &op) {
         // intersect both branches
         intersect_constants_with(std::move(then_constants));
         // reconstruct If node
-        return makeIf(op->id(), cond, then_case, else_case);
+        return makeIf(cond, then_case, else_case, op->metadata(), op->id());
     }
 }
 

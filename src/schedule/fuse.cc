@@ -101,8 +101,9 @@ Stmt FuseFor::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     if (op->id() == id0_ || op->id() == id1_) {
         inLoop0_ = inLoop1_ = false;
-        return makeFor(op->id(), op->iter_, makeIntConst(0), op->len_,
-                       makeIntConst(1), op->len_, op->property_, op->body_);
+        return makeFor(op->iter_, makeIntConst(0), op->len_, makeIntConst(1),
+                       op->len_, op->property_, op->body_, op->metadata(),
+                       op->id());
     }
     return op;
 }
@@ -139,58 +140,64 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             for (auto &&stmt : loop0InScopes.scopes_) {
                 if (stmt->nodeType() == ASTNodeType::If) {
                     auto branch = stmt.as<IfNode>();
-                    body0 =
-                        makeIf(branch->id(), branch->cond_, std::move(body0));
+                    body0 = makeIf(branch->cond_, std::move(body0),
+                                   branch->metadata(), branch->id());
                 } else if (stmt->nodeType() == ASTNodeType::Assert) {
                     auto ass = stmt.as<AssertNode>();
-                    body0 = makeAssert(ass->id(), ass->cond_, std::move(body0));
+                    body0 = makeAssert(ass->cond_, std::move(body0),
+                                       ass->metadata(), ass->id());
                 }
             }
             for (auto &&stmt : loop1InScopes.scopes_) {
                 if (stmt->nodeType() == ASTNodeType::If) {
                     auto branch = stmt.as<IfNode>();
-                    body1 =
-                        makeIf(branch->id(), branch->cond_, std::move(body1));
+                    body1 = makeIf(branch->cond_, std::move(body1),
+                                   branch->metadata(), branch->id());
                 } else if (stmt->nodeType() == ASTNodeType::Assert) {
                     auto ass = stmt.as<AssertNode>();
-                    body1 = makeAssert(ass->id(), ass->cond_, std::move(body1));
+                    body1 = makeAssert(ass->cond_, std::move(body1),
+                                       ass->metadata(), ass->id());
                 }
             }
-            auto seq = makeStmtSeq("", {std::move(body0), std::move(body1)});
+            auto seq = makeStmtSeq({std::move(body0), std::move(body1)});
 
-            auto fused = makeFor(fused_, iter0_, makeIntConst(0), loop0->end_,
-                                 makeIntConst(1), loop0->end_,
-                                 ForProperty().withNoDeps(mergeNoDepsHint(
-                                     root_, loop0->id(), loop1->id())),
-                                 std::move(seq));
+            auto fused =
+                makeFor(iter0_, makeIntConst(0), loop0->end_, makeIntConst(1),
+                        loop0->end_,
+                        ForProperty().withNoDeps(
+                            mergeNoDepsHint(root_, loop0->id(), loop1->id())),
+                        std::move(seq), makeMetadata("fuse", loop0, loop1));
+            fused_ = fused->id();
 
             // From inner to outer
             for (auto &&stmt : loop1InScopes.scopes_) {
                 if (stmt->nodeType() == ASTNodeType::VarDef) {
                     auto def = stmt.as<VarDefNode>();
-                    fused = makeVarDef(def->id(), def->name_,
-                                       std::move(def->buffer_), def->ioTensor_,
-                                       fused, def->pinned_);
+                    fused = makeVarDef(def->name_, std::move(def->buffer_),
+                                       def->ioTensor_, fused, def->pinned_,
+                                       def->metadata(), def->id());
                 } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
                     auto seq = stmt.as<StmtSeqNode>();
                     std::vector<Stmt> stmts = {fused};
                     stmts.insert(stmts.end(), seq->stmts_.begin() + 1,
                                  seq->stmts_.end());
-                    fused = makeStmtSeq(seq->id(), std::move(stmts));
+                    fused = makeStmtSeq(std::move(stmts), seq->metadata(),
+                                        seq->id());
                 }
             }
             for (auto &&stmt : loop0InScopes.scopes_) {
                 if (stmt->nodeType() == ASTNodeType::VarDef) {
                     auto def = stmt.as<VarDefNode>();
-                    fused = makeVarDef(def->id(), def->name_,
-                                       std::move(def->buffer_), def->ioTensor_,
-                                       fused, def->pinned_);
+                    fused = makeVarDef(def->name_, std::move(def->buffer_),
+                                       def->ioTensor_, fused, def->pinned_,
+                                       def->metadata(), def->id());
                 } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
                     auto seq = stmt.as<StmtSeqNode>();
                     std::vector<Stmt> stmts(seq->stmts_.begin(),
                                             seq->stmts_.end() - 1);
                     stmts.emplace_back(fused);
-                    fused = makeStmtSeq(seq->id(), std::move(stmts));
+                    fused = makeStmtSeq(std::move(stmts), seq->metadata(),
+                                        seq->id());
                 }
             }
 
@@ -204,7 +211,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                 op->stmts_[i] = fused;
             } else {
                 op->stmts_[i] =
-                    makeAssert("", makeEQ(loop0->end_, loop1->end_), fused);
+                    makeAssert(makeEQ(loop0->end_, loop1->end_), fused);
             }
             op->stmts_.erase(op->stmts_.begin() + i + 1);
             break;

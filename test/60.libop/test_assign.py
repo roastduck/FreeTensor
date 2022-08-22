@@ -12,7 +12,7 @@ def test_same_static_shape():
     def f(x, y):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        #! nid: assign
+        #! label: assign
         libop.assign(y, x)
 
     x_torch = torch.rand(4, 4, dtype=torch.float32)
@@ -32,7 +32,7 @@ def test_static_broadcast_shorter():
     def f(x, y):
         x: ft.Var[(4,), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        #! nid: assign
+        #! label: assign
         libop.assign(y, x)
 
     x_torch = torch.rand(4, dtype=torch.float32)
@@ -52,7 +52,7 @@ def test_static_broadcast_1_at_front():
     def f(x, y):
         x: ft.Var[(1, 4), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        #! nid: assign
+        #! label: assign
         libop.assign(y, x)
 
     x_torch = torch.rand(1, 4, dtype=torch.float32)
@@ -72,7 +72,7 @@ def test_static_broadcast_1_at_back():
     def f(x, y):
         x: ft.Var[(4, 1), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        #! nid: assign
+        #! label: assign
         libop.assign(y, x)
 
     x_torch = torch.rand(4, 1, dtype=torch.float32)
@@ -92,7 +92,7 @@ def test_different_dtype():
     def f(x, y):
         x: ft.Var[(4, 4), "int32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        #! nid: assign
+        #! label: assign
         libop.assign(y, x)
 
     x_torch = torch.randint(0, 100, (4, 4), dtype=torch.int32)
@@ -112,7 +112,7 @@ def test_operator_overload():
     def f(x, y):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        #! nid: assign
+        #! label: assign
         y[:] = x
 
     x_torch = torch.rand(4, 4, dtype=torch.float32)
