@@ -61,4 +61,4 @@ jobs:
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.9.2%gcc@10.2.1 java@11
           source /home/rd/venv-freetensor/bin/activate
-          PYTHONPATH=build:python:$PYTHONPATH srun -N 1 -p cpu pytest test
+          PYTHONPATH=build:python:$PYTHONPATH srun -N 1 -p cpu pytest --color=yes test
