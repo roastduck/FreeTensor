@@ -46,6 +46,5 @@ def test_fission_when_prefer_libs():
     s.auto_use_lib(ft.CPU())
     print(s.ast())
     print(s.logs())
-    assert ("as_matmul($fission.0{$fission.1{Li}})" in s.pretty_logs())
-    assert ("as_matmul($fission.0{$fission.1{$fission.1{$fission.1{Li}}}})"
-            in s.pretty_logs())
+    assert "as_matmul($fission.0.lib{Li})" in s.pretty_logs()
+    assert "as_matmul($fission.1.lib{Li})" in s.pretty_logs()

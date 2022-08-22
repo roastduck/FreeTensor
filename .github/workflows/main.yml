@@ -36,7 +36,7 @@ jobs:
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.5.0 cudnn@8.3.3.40-11.5 intel-mkl@2020.4.304 java@11
           source /home/rd/venv-freetensor/bin/activate
-          LD_LIBRARY_PATH=./install/lib:$LD_LIBRARY_PATH PYTHONPATH=install/lib:python:$PYTHONPATH srun -N 1 -p gpu pytest test
+          LD_LIBRARY_PATH=./install/lib:$LD_LIBRARY_PATH PYTHONPATH=install/lib:python:$PYTHONPATH srun -N 1 -p gpu pytest --color=yes test
   build-and-test-minimal-run_in_tree:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
