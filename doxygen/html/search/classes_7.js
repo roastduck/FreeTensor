@@ -12,12 +12,13 @@ var searchData=
   ['hash_3c_20freetensor_3a_3aref_3c_20t_20_3e_20_3e_9',['hash&lt; freetensor::Ref&lt; T &gt; &gt;',['../structstd_1_1hash_3_01freetensor_1_1Ref_3_01T_01_4_01_4.html',1,'std']]],
   ['hash_3c_20freetensor_3a_3aserialscope_20_3e_10',['hash&lt; freetensor::SerialScope &gt;',['../structstd_1_1hash_3_01freetensor_1_1SerialScope_01_4.html',1,'std']]],
   ['hash_3c_20freetensor_3a_3asharedlinkedlist_3c_20t_2c_20hash_2c_20equal_20_3e_20_3e_11',['hash&lt; freetensor::SharedLinkedList&lt; T, Hash, Equal &gt; &gt;',['../classstd_1_1hash_3_01freetensor_1_1SharedLinkedList_3_01T_00_01Hash_00_01Equal_01_4_01_4.html',1,'std']]],
-  ['hash_3c_20std_3a_3apair_3c_20t_2c_20u_20_3e_20_3e_12',['hash&lt; std::pair&lt; T, U &gt; &gt;',['../classstd_1_1hash_3_01std_1_1pair_3_01T_00_01U_01_4_01_4.html',1,'std']]],
-  ['hash_3c_20std_3a_3atuple_3c_20ts_2e_2e_2e_20_3e_20_3e_13',['hash&lt; std::tuple&lt; Ts... &gt; &gt;',['../classstd_1_1hash_3_01std_1_1tuple_3_01Ts_8_8_8_01_4_01_4.html',1,'std']]],
-  ['hash_3c_20std_3a_3avector_3c_20t_20_3e_20_3e_14',['hash&lt; std::vector&lt; T &gt; &gt;',['../classstd_1_1hash_3_01std_1_1vector_3_01T_01_4_01_4.html',1,'std']]],
-  ['hashcomparator_15',['HashComparator',['../classfreetensor_1_1HashComparator.html',1,'freetensor']]],
-  ['hasher_16',['Hasher',['../classfreetensor_1_1Hasher.html',1,'freetensor']]],
-  ['hoistreturnvars_17',['HoistReturnVars',['../classfreetensor_1_1HoistReturnVars.html',1,'freetensor']]],
-  ['hoistvar_18',['HoistVar',['../classfreetensor_1_1HoistVar.html',1,'freetensor']]],
-  ['hoistvaroverstmtseq_19',['HoistVarOverStmtSeq',['../classfreetensor_1_1HoistVarOverStmtSeq.html',1,'freetensor']]]
+  ['hash_3c_20freetensor_3a_3astmtorexprid_20_3e_12',['hash&lt; freetensor::StmtOrExprID &gt;',['../structstd_1_1hash_3_01freetensor_1_1StmtOrExprID_01_4.html',1,'std']]],
+  ['hash_3c_20std_3a_3apair_3c_20t_2c_20u_20_3e_20_3e_13',['hash&lt; std::pair&lt; T, U &gt; &gt;',['../classstd_1_1hash_3_01std_1_1pair_3_01T_00_01U_01_4_01_4.html',1,'std']]],
+  ['hash_3c_20std_3a_3atuple_3c_20ts_2e_2e_2e_20_3e_20_3e_14',['hash&lt; std::tuple&lt; Ts... &gt; &gt;',['../classstd_1_1hash_3_01std_1_1tuple_3_01Ts_8_8_8_01_4_01_4.html',1,'std']]],
+  ['hash_3c_20std_3a_3avector_3c_20t_20_3e_20_3e_15',['hash&lt; std::vector&lt; T &gt; &gt;',['../classstd_1_1hash_3_01std_1_1vector_3_01T_01_4_01_4.html',1,'std']]],
+  ['hashcomparator_16',['HashComparator',['../classfreetensor_1_1HashComparator.html',1,'freetensor']]],
+  ['hasher_17',['Hasher',['../classfreetensor_1_1Hasher.html',1,'freetensor']]],
+  ['hoistreturnvars_18',['HoistReturnVars',['../classfreetensor_1_1HoistReturnVars.html',1,'freetensor']]],
+  ['hoistvar_19',['HoistVar',['../classfreetensor_1_1HoistVar.html',1,'freetensor']]],
+  ['hoistvaroverstmtseq_20',['HoistVarOverStmtSeq',['../classfreetensor_1_1HoistVarOverStmtSeq.html',1,'freetensor']]]
 ];

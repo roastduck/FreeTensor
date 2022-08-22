@@ -81,6 +81,8 @@ $(function() {
 <code>#include &lt;iostream&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;<a class="el" href="data__type_8h_source.html">data_type.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="id_8h_source.html">id.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="metadata_8h_source.html">metadata.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="ref_8h_source.html">ref.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="to__string_8h_source.html">serialize/to_string.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="sub__tree_8h_source.html">sub_tree.h</a>&gt;</code><br />
@@ -89,33 +91,35 @@ Include dependency graph for ast.h:</div>
 <div class="dyncontent">
 <div class="center"><img src="ast_8h__incl.png" border="0" usemap="#ainclude_2ast_8h" alt=""/></div>
 <map name="ainclude_2ast_8h" id="ainclude_2ast_8h">
-<area shape="rect" title=" " alt="" coords="1097,5,1202,32"/>
-<area shape="rect" title=" " alt="" coords="1602,304,1668,331"/>
-<area shape="rect" title=" " alt="" coords="1614,229,1701,256"/>
-<area shape="rect" title=" " alt="" coords="139,304,219,331"/>
-<area shape="rect" title=" " alt="" coords="571,304,630,331"/>
-<area shape="rect" href="data__type_8h.html" title=" " alt="" coords="883,80,982,107"/>
-<area shape="rect" href="to__string_8h.html" title=" " alt="" coords="1004,155,1154,181"/>
-<area shape="rect" href="ref_8h.html" title=" " alt="" coords="1294,155,1344,181"/>
-<area shape="rect" href="sub__tree_8h.html" title=" " alt="" coords="1158,80,1248,107"/>
-<area shape="rect" title=" " alt="" coords="872,155,928,181"/>
-<area shape="rect" title=" " alt="" coords="38,229,142,256"/>
-<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="502,155,632,181"/>
-<area shape="rect" href="except_8h.html" title=" " alt="" coords="926,229,1005,256"/>
-<area shape="rect" title=" " alt="" coords="216,229,302,256"/>
-<area shape="rect" title=" " alt="" coords="326,229,392,256"/>
-<area shape="rect" title=" " alt="" coords="416,229,483,256"/>
-<area shape="rect" title=" " alt="" coords="508,229,562,256"/>
-<area shape="rect" title=" " alt="" coords="638,229,762,256"/>
-<area shape="rect" title=" " alt="" coords="787,229,902,256"/>
-<area shape="rect" title=" " alt="" coords="1161,304,1224,331"/>
-<area shape="rect" title=" " alt="" coords="922,304,1009,331"/>
-<area shape="rect" title=" " alt="" coords="1080,229,1155,256"/>
-<area shape="rect" title=" " alt="" coords="1280,229,1358,256"/>
-<area shape="rect" title=" " alt="" coords="1382,229,1474,256"/>
-<area shape="rect" href="allocator_8h.html" title=" " alt="" coords="1499,229,1590,256"/>
-<area shape="rect" title=" " alt="" coords="1420,304,1487,331"/>
-<area shape="rect" title=" " alt="" coords="1512,304,1577,331"/>
+<area shape="rect" title=" " alt="" coords="610,5,715,32"/>
+<area shape="rect" title=" " alt="" coords="25,304,92,331"/>
+<area shape="rect" title=" " alt="" coords="633,229,719,256"/>
+<area shape="rect" title=" " alt="" coords="768,304,848,331"/>
+<area shape="rect" title=" " alt="" coords="895,304,953,331"/>
+<area shape="rect" href="data__type_8h.html" title=" " alt="" coords="1148,80,1247,107"/>
+<area shape="rect" href="to__string_8h.html" title=" " alt="" coords="1423,155,1574,181"/>
+<area shape="rect" href="id_8h.html" title=" " alt="" coords="514,155,561,181"/>
+<area shape="rect" href="metadata_8h.html" title=" " alt="" coords="571,80,669,107"/>
+<area shape="rect" href="ref_8h.html" title=" " alt="" coords="439,155,489,181"/>
+<area shape="rect" href="sub__tree_8h.html" title=" " alt="" coords="355,80,445,107"/>
+<area shape="rect" title=" " alt="" coords="1137,155,1193,181"/>
+<area shape="rect" title=" " alt="" coords="1101,229,1205,256"/>
+<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="1268,155,1399,181"/>
+<area shape="rect" href="except_8h.html" title=" " alt="" coords="998,229,1077,256"/>
+<area shape="rect" title=" " alt="" coords="1331,229,1416,256"/>
+<area shape="rect" title=" " alt="" coords="1441,229,1506,256"/>
+<area shape="rect" title=" " alt="" coords="1531,229,1597,256"/>
+<area shape="rect" title=" " alt="" coords="1622,229,1677,256"/>
+<area shape="rect" title=" " alt="" coords="1701,229,1825,256"/>
+<area shape="rect" title=" " alt="" coords="1849,229,1964,256"/>
+<area shape="rect" title=" " alt="" coords="490,304,553,331"/>
+<area shape="rect" title=" " alt="" coords="994,304,1081,331"/>
+<area shape="rect" title=" " alt="" coords="1988,229,2063,256"/>
+<area shape="rect" title=" " alt="" coords="213,229,291,256"/>
+<area shape="rect" title=" " alt="" coords="97,229,189,256"/>
+<area shape="rect" href="allocator_8h.html" title=" " alt="" coords="365,229,456,256"/>
+<area shape="rect" title=" " alt="" coords="297,304,364,331"/>
+<area shape="rect" title=" " alt="" coords="389,304,454,331"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -123,56 +127,56 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="ast_8h__dep__incl.png" border="0" usemap="#ainclude_2ast_8hdep" alt=""/></div>
 <map name="ainclude_2ast_8hdep" id="ainclude_2ast_8hdep">
-<area shape="rect" title=" " alt="" coords="2592,5,2698,32"/>
-<area shape="rect" href="check__all__defined_8h.html" title=" " alt="" coords="860,423,1027,464"/>
-<area shape="rect" href="find__multi__level__tiling_8h.html" title=" " alt="" coords="2657,601,2812,643"/>
-<area shape="rect" href="find__multi__level__tiling_8cc.html" title=" " alt="" coords="3110,691,3276,732"/>
-<area shape="rect" href="structs_8h.html" title=" " alt="" coords="2988,512,3155,553"/>
-<area shape="rect" href="debug_8h.html" title=" " alt="" coords="676,348,801,375"/>
-<area shape="rect" href="ast_8cc.html" title=" " alt="" coords="2564,519,2646,546"/>
-<area shape="rect" href="expr_8h.html" title=" " alt="" coords="2119,87,2232,114"/>
-<area shape="rect" href="stmt_8h.html" title=" " alt="" coords="1921,348,2036,375"/>
-<area shape="rect" href="func_8h.html" title=" " alt="" coords="1815,430,1928,457"/>
-<area shape="rect" href="schedule__log_8h.html" title=" " alt="" coords="2743,259,2936,300"/>
-<area shape="rect" href="load__ast_8h.html" title=" " alt="" coords="3281,80,3441,121"/>
-<area shape="rect" href="shrink__for_8h.html" title=" " alt="" coords="2116,512,2262,553"/>
-<area shape="rect" href="as__matmul_8h.html" title=" " alt="" coords="2338,512,2488,553"/>
-<area shape="rect" href="comp__access__bound_8cc.html" title=" " alt="" coords="262,512,449,553"/>
-<area shape="rect" href="comp__unique__bounds_8cc.html" title=" " alt="" coords="473,512,660,553"/>
-<area shape="rect" href="structural__feature_8cc.html" title=" " alt="" coords="76,512,238,553"/>
-<area shape="rect" href="make__parallel__reduction_8cc.html" title=" " alt="" coords="684,512,854,553"/>
-<area shape="rect" href="merge__and__hoist__if_8cc.html" title=" " alt="" coords="1502,512,1654,553"/>
-<area shape="rect" href="separate__tail_8cc.html" title=" " alt="" coords="879,512,1043,553"/>
-<area shape="rect" href="find__elementwise_8h.html" title=" " alt="" coords="2117,691,2269,732"/>
-<area shape="rect" href="cache__write_8cc.html" title=" " alt="" coords="2231,877,2406,918"/>
-<area shape="rect" href="multi__level__tiling__with__fusion_8cc.html" title=" " alt="" coords="2528,973,2703,1029"/>
-<area shape="rect" href="cache__write_8h.html" title=" " alt="" coords="2351,780,2518,821"/>
-<area shape="rect" href="auto__schedule_2rules_2multi__level__tiling_8h.html" title=" " alt="" coords="2644,780,2830,821"/>
-<area shape="rect" href="multi__level__tiling__with__fusion_8h.html" title=" " alt="" coords="2528,869,2703,925"/>
-<area shape="rect" href="auto__schedule_2rules_2multi__level__tiling_8cc.html" title=" " alt="" coords="2738,877,2912,918"/>
-<area shape="rect" href="sketch_8h.html" title=" " alt="" coords="2472,691,2639,732"/>
-<area shape="rect" href="schedule_8h.html" title=" " alt="" coords="2486,609,2628,635"/>
-<area shape="rect" href="schedule_2multi__level__tiling_8h.html" title=" " alt="" coords="2986,601,3155,643"/>
-<area shape="rect" href="except_8cc.html" title=" " alt="" coords="1174,698,1281,725"/>
-<area shape="rect" href="frontend__var_8h.html" title=" " alt="" coords="1102,423,1289,464"/>
-<area shape="rect" href="mutator_8h.html" title=" " alt="" coords="2233,430,2369,457"/>
-<area shape="rect" href="visitor_8h.html" title=" " alt="" coords="1916,519,2041,546"/>
-<area shape="rect" href="driver_8cc.html" title=" " alt="" coords="552,609,652,635"/>
-<area shape="rect" href="array_8cc.html" title=" " alt="" coords="76,430,214,457"/>
-<area shape="rect" href="parse__pb__expr_8cc.html" title=" " alt="" coords="641,430,836,457"/>
-<area shape="rect" href="mangle_8cc.html" title=" " alt="" coords="238,430,409,457"/>
-<area shape="rect" href="grad_8h.html" title=" " alt="" coords="2162,609,2338,635"/>
-<area shape="rect" href="data__type__infer_8h.html" title=" " alt="" coords="2421,177,2608,203"/>
-<area shape="rect" href="expr_8cc.html" title=" " alt="" coords="2772,519,2862,546"/>
-<area shape="rect" href="for__property_8h.html" title=" " alt="" coords="1981,266,2144,293"/>
-<area shape="rect" href="hash_8h.html" title=" " alt="" coords="2398,430,2514,457"/>
-<area shape="rect" href="min__max_8h.html" title=" " alt="" coords="433,430,617,457"/>
-<area shape="rect" href="parse__pb__expr_8h.html" title=" " alt="" coords="1397,169,1544,211"/>
-<area shape="rect" href="reduce__op_8h.html" title=" " alt="" coords="2042,177,2194,203"/>
-<area shape="rect" href="tensor_8h.html" title=" " alt="" coords="1781,266,1906,293"/>
-<area shape="rect" href="code__gen__cpu_8h.html" title=" " alt="" coords="1316,512,1478,553"/>
-<area shape="rect" href="code__gen__cuda_8h.html" title=" " alt="" coords="1678,512,1841,553"/>
-<area shape="rect" href="driver_8h.html" title=" " alt="" coords="1068,519,1190,546"/>
+<area shape="rect" title=" " alt="" coords="1730,5,1836,32"/>
+<area shape="rect" href="check__all__defined_8h.html" title=" " alt="" coords="628,423,794,464"/>
+<area shape="rect" href="find__multi__level__tiling_8h.html" title=" " alt="" coords="1879,601,2034,643"/>
+<area shape="rect" href="find__multi__level__tiling_8cc.html" title=" " alt="" coords="1410,691,1575,732"/>
+<area shape="rect" href="structs_8h.html" title=" " alt="" coords="88,512,254,553"/>
+<area shape="rect" href="debug_8h.html" title=" " alt="" coords="1354,348,1479,375"/>
+<area shape="rect" href="ast_8cc.html" title=" " alt="" coords="1775,519,1858,546"/>
+<area shape="rect" href="expr_8h.html" title=" " alt="" coords="1996,87,2109,114"/>
+<area shape="rect" href="stmt_8h.html" title=" " alt="" coords="2476,348,2591,375"/>
+<area shape="rect" href="func_8h.html" title=" " alt="" coords="2832,430,2945,457"/>
+<area shape="rect" href="selector_8h.html" title=" " alt="" coords="2671,430,2807,457"/>
+<area shape="rect" href="schedule__log_8h.html" title=" " alt="" coords="2996,259,3189,300"/>
+<area shape="rect" href="load__ast_8h.html" title=" " alt="" coords="2976,80,3136,121"/>
+<area shape="rect" href="shrink__for_8h.html" title=" " alt="" coords="1882,512,2028,553"/>
+<area shape="rect" href="as__matmul_8h.html" title=" " alt="" coords="1373,512,1524,553"/>
+<area shape="rect" href="comp__access__bound_8cc.html" title=" " alt="" coords="516,512,703,553"/>
+<area shape="rect" href="comp__unique__bounds_8cc.html" title=" " alt="" coords="727,512,914,553"/>
+<area shape="rect" href="structural__feature_8cc.html" title=" " alt="" coords="330,512,492,553"/>
+<area shape="rect" href="make__parallel__reduction_8cc.html" title=" " alt="" coords="1127,512,1298,553"/>
+<area shape="rect" href="merge__and__hoist__if_8cc.html" title=" " alt="" coords="1599,512,1751,553"/>
+<area shape="rect" href="separate__tail_8cc.html" title=" " alt="" coords="938,512,1102,553"/>
+<area shape="rect" href="find__elementwise_8h.html" title=" " alt="" coords="2306,691,2458,732"/>
+<area shape="rect" href="cache__write_8cc.html" title=" " alt="" coords="2169,877,2344,918"/>
+<area shape="rect" href="multi__level__tiling__with__fusion_8cc.html" title=" " alt="" coords="1938,973,2113,1029"/>
+<area shape="rect" href="cache__write_8h.html" title=" " alt="" coords="2064,780,2230,821"/>
+<area shape="rect" href="auto__schedule_2rules_2multi__level__tiling_8h.html" title=" " alt="" coords="1650,780,1836,821"/>
+<area shape="rect" href="multi__level__tiling__with__fusion_8h.html" title=" " alt="" coords="1786,869,1961,925"/>
+<area shape="rect" href="auto__schedule_2rules_2multi__level__tiling_8cc.html" title=" " alt="" coords="1557,877,1732,918"/>
+<area shape="rect" href="sketch_8h.html" title=" " alt="" coords="1873,691,2040,732"/>
+<area shape="rect" href="schedule_8h.html" title=" " alt="" coords="2621,609,2764,635"/>
+<area shape="rect" href="schedule_2multi__level__tiling_8h.html" title=" " alt="" coords="260,601,429,643"/>
+<area shape="rect" href="except_8cc.html" title=" " alt="" coords="2530,698,2636,725"/>
+<area shape="rect" href="frontend__var_8h.html" title=" " alt="" coords="1672,423,1859,464"/>
+<area shape="rect" href="mutator_8h.html" title=" " alt="" coords="1883,430,2019,457"/>
+<area shape="rect" href="visitor_8h.html" title=" " alt="" coords="2319,519,2444,546"/>
+<area shape="rect" href="driver_8cc.html" title=" " alt="" coords="1228,430,1328,457"/>
+<area shape="rect" href="array_8cc.html" title=" " alt="" coords="870,430,1008,457"/>
+<area shape="rect" href="parse__pb__expr_8cc.html" title=" " alt="" coords="1454,430,1648,457"/>
+<area shape="rect" href="mangle_8cc.html" title=" " alt="" coords="1032,430,1203,457"/>
+<area shape="rect" href="grad_8h.html" title=" " alt="" coords="2148,609,2324,635"/>
+<area shape="rect" href="data__type__infer_8h.html" title=" " alt="" coords="2024,177,2211,203"/>
+<area shape="rect" href="expr_8cc.html" title=" " alt="" coords="2204,519,2295,546"/>
+<area shape="rect" href="for__property_8h.html" title=" " alt="" coords="2336,266,2499,293"/>
+<area shape="rect" href="hash_8h.html" title=" " alt="" coords="2044,430,2160,457"/>
+<area shape="rect" href="min__max_8h.html" title=" " alt="" coords="419,430,603,457"/>
+<area shape="rect" href="parse__pb__expr_8h.html" title=" " alt="" coords="1616,169,1763,211"/>
+<area shape="rect" href="reduce__op_8h.html" title=" " alt="" coords="2387,177,2539,203"/>
+<area shape="rect" href="tensor_8h.html" title=" " alt="" coords="2624,266,2750,293"/>
+<area shape="rect" href="code__gen__cpu_8h.html" title=" " alt="" coords="2776,512,2939,553"/>
+<area shape="rect" href="code__gen__cuda_8h.html" title=" " alt="" coords="2963,512,3126,553"/>
 </map>
 </div>
 </div>
@@ -184,11 +188,11 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ExprNode.html">freetensor::ExprNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ID.html">freetensor::ID</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1StmtOrExprID.html">freetensor::StmtOrExprID</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1StmtNode.html">freetensor::StmtNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structstd_1_1hash_3_01freetensor_1_1ID_01_4.html">std::hash&lt; freetensor::ID &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structstd_1_1hash_3_01freetensor_1_1StmtOrExprID_01_4.html">std::hash&lt; freetensor::StmtOrExprID &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
@@ -293,8 +297,6 @@ Enumerations</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:ae091398240e204f37128828d143d8678"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae091398240e204f37128828d143d8678">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, ASTNodeType type)</td></tr>
 <tr class="separator:ae091398240e204f37128828d143d8678"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a74c9bede2fbfda49f084b7b9178bc970"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a74c9bede2fbfda49f084b7b9178bc970">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, const ID &amp;id)</td></tr>
-<tr class="separator:a74c9bede2fbfda49f084b7b9178bc970"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a83655335f80dfe407b6c7e05c025a43b"><td class="memItemLeft" align="right" valign="top">Expr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a83655335f80dfe407b6c7e05c025a43b">freetensor::deepCopy</a> (const Expr &amp;op)</td></tr>
 <tr class="separator:a83655335f80dfe407b6c7e05c025a43b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8f78d485b03e8a545ddc67fcd90d4b6"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af8f78d485b03e8a545ddc67fcd90d4b6">freetensor::deepCopy</a> (const Stmt &amp;op)</td></tr>
@@ -305,6 +307,10 @@ Functions</h2></td></tr>
 <tr class="separator:a7122c05d95e3819de959c839f4178342"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7af0844b2754bd8f87415c6e47bfc5e7"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7af0844b2754bd8f87415c6e47bfc5e7">freetensor::lcaStmt</a> (const Stmt &amp;lhs, const Stmt &amp;rhs)</td></tr>
 <tr class="separator:a7af0844b2754bd8f87415c6e47bfc5e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a300ea57c4a10eb7eb1b40d7caa552754"><td class="memTemplParams" colspan="2">template&lt;typename... Srcs&gt; <br />
+requires (std::convertible_to&lt;Srcs, Stmt&gt; &amp;&amp;...)</td></tr>
+<tr class="memitem:a300ea57c4a10eb7eb1b40d7caa552754"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a300ea57c4a10eb7eb1b40d7caa552754">freetensor::makeMetadata</a> (const std::string &amp;op, Srcs &amp;&amp;...sourceStmts)</td></tr>
+<tr class="separator:a300ea57c4a10eb7eb1b40d7caa552754"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="a0d2859b1c6da4d7d6fbeb33b3901fda1" name="a0d2859b1c6da4d7d6fbeb33b3901fda1"></a>
@@ -371,8 +377,8 @@ Functions</h2></td></tr>
 <b>Value:</b><div class="fragment"><div class="line">    <a class="code hl_define" href="ast_8h.html#aa2403af1a97efd46112478db9e5aff51">DEFINE_NODE_ACCESS</a>(name)                                                   \</div>
 <div class="line">  public:                                                                      \</div>
 <div class="line">    virtual <a class="code hl_enumeration" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> nodeType()<span class="keyword"> const override </span>{ <span class="keywordflow">return</span> ASTNodeType::name; }</div>
-<div class="ttc" id="aast_8h_html_aa2403af1a97efd46112478db9e5aff51"><div class="ttname"><a href="ast_8h.html#aa2403af1a97efd46112478db9e5aff51">DEFINE_NODE_ACCESS</a></div><div class="ttdeci">#define DEFINE_NODE_ACCESS(name)</div><div class="ttdef"><b>Definition:</b> ast.h:91</div></div>
-<div class="ttc" id="anamespacefreetensor_html_afc87eee71f05eb84c5799d7f3492915f"><div class="ttname"><a href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">freetensor::ASTNodeType</a></div><div class="ttdeci">ASTNodeType</div><div class="ttdef"><b>Definition:</b> ast.h:16</div></div>
+<div class="ttc" id="aast_8h_html_aa2403af1a97efd46112478db9e5aff51"><div class="ttname"><a href="ast_8h.html#aa2403af1a97efd46112478db9e5aff51">DEFINE_NODE_ACCESS</a></div><div class="ttdeci">#define DEFINE_NODE_ACCESS(name)</div><div class="ttdef"><b>Definition:</b> ast.h:93</div></div>
+<div class="ttc" id="anamespacefreetensor_html_afc87eee71f05eb84c5799d7f3492915f"><div class="ttname"><a href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">freetensor::ASTNodeType</a></div><div class="ttdeci">ASTNodeType</div><div class="ttdef"><b>Definition:</b> ast.h:18</div></div>
 </div><!-- fragment -->
 </div>
 </div>

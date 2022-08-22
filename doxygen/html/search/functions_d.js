@@ -10,7 +10,7 @@ var searchData=
   ['newarray_7',['newArray',['../namespacefreetensor.html#a149d0a492488f5045de5620b04a2f866',1,'freetensor']]],
   ['newblk_8',['newBlk',['../classfreetensor_1_1SmallItemBlock.html#a181934c4caaab4db4da210be3991b371',1,'freetensor::SmallItemBlock']]],
   ['newdef_9',['newDef',['../classfreetensor_1_1MakeCacheVar.html#aa09215ff227037f63fc0b408b9030bb5',1,'freetensor::MakeCacheVar']]],
-  ['newid_10',['newId',['../classfreetensor_1_1StmtNode.html#a520d647046b6582d7c141f54494e6220',1,'freetensor::StmtNode::newId()'],['../classfreetensor_1_1MergeFor.html#a12f0bf8e4e0ac8af9afbd547d430c2dd',1,'freetensor::MergeFor::newId() const']]],
+  ['newid_10',['newId',['../classfreetensor_1_1MergeFor.html#a12f0bf8e4e0ac8af9afbd547d430c2dd',1,'freetensor::MergeFor']]],
   ['newiter_11',['newIter',['../classfreetensor_1_1MergeFor.html#a3412ed37d3bc7034e7c8aeb6b7c90c7d',1,'freetensor::MergeFor']]],
   ['newvar_12',['newVar',['../classfreetensor_1_1MakeCacheVar.html#a2dfcecc64de75e6109ad5b881d6975fa',1,'freetensor::MakeCacheVar']]],
   ['nextcandidates_13',['nextCandidates',['../classfreetensor_1_1SeparateTail.html#a96e73814c5aa40037d6ef416b8c2ab71',1,'freetensor::SeparateTail']]],
@@ -18,10 +18,11 @@ var searchData=
   ['nindent_15',['nIndent',['../classfreetensor_1_1CodeGen.html#a69f061844ea6d812f8b653efcdd2a24e',1,'freetensor::CodeGen']]],
   ['nodeidorparallelscope_16',['NodeIDOrParallelScope',['../structfreetensor_1_1NodeIDOrParallelScope.html#a96327a433b31d54be404b692e9d60eef',1,'freetensor::NodeIDOrParallelScope::NodeIDOrParallelScope(const ID &amp;id)'],['../structfreetensor_1_1NodeIDOrParallelScope.html#a750ffa79e66a4f6c82fa507e7e9957e0',1,'freetensor::NodeIDOrParallelScope::NodeIDOrParallelScope(const ParallelScope &amp;parallel)']]],
   ['nodetype_17',['nodeType',['../classfreetensor_1_1ASTNode.html#a9231cccded096dfb8a9b7070a4f39baf',1,'freetensor::ASTNode']]],
-  ['noprojectoutprovateaxis_18',['noProjectOutProvateAxis',['../classfreetensor_1_1FindDeps.html#ac60c7bb079a0aa635accc44c1acfff2e',1,'freetensor::FindDeps']]],
-  ['notlexlessafterpermu_19',['notLexLessAfterPermu',['../namespacefreetensor.html#affd9024564fe030fc074d18560f25e5b',1,'freetensor']]],
-  ['nowsubnum_20',['nowSubNum',['../classfreetensor_1_1Sketch.html#adde45ed793cf85e181b62134645022be',1,'freetensor::Sketch']]],
-  ['nowsubsketch_21',['nowSubSketch',['../classfreetensor_1_1Sketch.html#aa45221226e616bb1330d168cb2fecb75',1,'freetensor::Sketch::nowSubSketch()'],['../classfreetensor_1_1Sketch.html#a751b9aab36ae535323bec9db51224c17',1,'freetensor::Sketch::nowSubSketch() const']]],
-  ['num_22',['num',['../classfreetensor_1_1Device.html#a21e8a9ed5f036f7aff100c0b170a713c',1,'freetensor::Device']]],
-  ['numsi_23',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]]
+  ['nodetypeselector_18',['NodeTypeSelector',['../classfreetensor_1_1NodeTypeSelector.html#a419b3a7a2e0db07b68dd975862797f7f',1,'freetensor::NodeTypeSelector']]],
+  ['noprojectoutprovateaxis_19',['noProjectOutProvateAxis',['../classfreetensor_1_1FindDeps.html#ac60c7bb079a0aa635accc44c1acfff2e',1,'freetensor::FindDeps']]],
+  ['notlexlessafterpermu_20',['notLexLessAfterPermu',['../namespacefreetensor.html#affd9024564fe030fc074d18560f25e5b',1,'freetensor']]],
+  ['nowsubnum_21',['nowSubNum',['../classfreetensor_1_1Sketch.html#adde45ed793cf85e181b62134645022be',1,'freetensor::Sketch']]],
+  ['nowsubsketch_22',['nowSubSketch',['../classfreetensor_1_1Sketch.html#aa45221226e616bb1330d168cb2fecb75',1,'freetensor::Sketch::nowSubSketch()'],['../classfreetensor_1_1Sketch.html#a751b9aab36ae535323bec9db51224c17',1,'freetensor::Sketch::nowSubSketch() const']]],
+  ['num_23',['num',['../classfreetensor_1_1Device.html#a21e8a9ed5f036f7aff100c0b170a713c',1,'freetensor::Device']]],
+  ['numsi_24',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]]
 ];

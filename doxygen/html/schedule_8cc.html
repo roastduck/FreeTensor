@@ -215,12 +215,13 @@ Macros</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">    ([&amp;](<span class="keyword">const</span> <span class="keyword">auto</span> &amp;func, <span class="keyword">const</span> <span class="keyword">auto</span> &amp;params) {                               \</div>
+<b>Value:</b><div class="fragment"><div class="line">    ([<span class="keyword">this</span>](<span class="keyword">const</span> <span class="keyword">auto</span> &amp;func, <span class="keyword">const</span> <span class="keyword">auto</span> &amp;_params) {                           \</div>
+<div class="line">        auto params = <a class="code hl_function" href="namespacefreetensor.html#aa2167252e741aa103c5129991760f9eb">getPackFromID</a>(<span class="keyword">this</span>, _params);                            \</div>
 <div class="line">        <span class="comment">/* decay is required: we must not store an reference */</span>                \</div>
 <div class="line">        typedef ScheduleLogItemImpl&lt;                                           \</div>
 <div class="line">            ScheduleType::TYPE, std::decay_t&lt;<span class="keyword">decltype</span>(func)&gt;,                  \</div>
 <div class="line">            std::decay_t&lt;<span class="keyword">decltype</span>(params)&gt;,                                    \</div>
-<div class="line">            std::decay_t&lt;<span class="keyword">decltype</span>(<a class="code hl_function" href="namespacefreetensor.html#a72ad71770fd2211715907e3189e380d5">std::apply</a>(func, params))&gt;&gt;                  \</div>
+<div class="line">            std::decay_t&lt;<span class="keyword">decltype</span>(<a class="code hl_function" href="namespacefreetensor.html#a72ad71770fd2211715907e3189e380d5">std::apply</a>(func, _params))&gt;&gt;                 \</div>
 <div class="line">            BaseClass;                                                         \</div>
 <div class="line">        class ScheduleLogItem##TYPE : <span class="keyword">public</span> BaseClass {                       \</div>
 <div class="line">          public:                                                              \</div>
@@ -231,6 +232,7 @@ Macros</h2></td></tr>
 <div class="line">        return Ref&lt;ScheduleLogItem##TYPE&gt;::make(func, params);                 \</div>
 <div class="line">    })(FUNC, std::make_tuple(__VA_ARGS__))</div>
 <div class="ttc" id="anamespacefreetensor_html_a72ad71770fd2211715907e3189e380d5"><div class="ttname"><a href="namespacefreetensor.html#a72ad71770fd2211715907e3189e380d5">freetensor::apply</a></div><div class="ttdeci">PBSet apply(T &amp;&amp;lhs, U &amp;&amp;rhs)</div><div class="ttdef"><b>Definition:</b> presburger.h:365</div></div>
+<div class="ttc" id="anamespacefreetensor_html_aa2167252e741aa103c5129991760f9eb"><div class="ttname"><a href="namespacefreetensor.html#aa2167252e741aa103c5129991760f9eb">freetensor::getPackFromID</a></div><div class="ttdeci">auto getPackFromID(auto schedule, const std::tuple&lt; Args... &gt; &amp;args)</div><div class="ttdef"><b>Definition:</b> schedule_log.h:118</div></div>
 </div><!-- fragment -->
 </div>
 </div>

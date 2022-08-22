@@ -103,6 +103,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a6a81a4f2a12a34657f31a4c8fa2c7b69"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6683c17ed6c1db0b0ed65320739a180"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html#ad6683c17ed6c1db0b0ed65320739a180">toString</a> () const override</td></tr>
 <tr class="separator:ad6683c17ed6c1db0b0ed65320739a180"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a526ddda878592a8d66d07d0e44c047f4"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html#a526ddda878592a8d66d07d0e44c047f4">toPrettyString</a> () const override</td></tr>
+<tr class="separator:a526ddda878592a8d66d07d0e44c047f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10f3dfe171770e7b072d81b40cff481c"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html#a10f3dfe171770e7b072d81b40cff481c">hash</a> () const override</td></tr>
 <tr class="separator:a10f3dfe171770e7b072d81b40cff481c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a14cdf61a3d062d3fe86148880bef62ca"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html#a14cdf61a3d062d3fe86148880bef62ca">equals</a> (const <a class="el" href="classfreetensor_1_1ScheduleLogItem.html">ScheduleLogItem</a> &amp;other) const override</td></tr>
@@ -118,6 +120,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ae61a39593b6d78b6bcb90301192cb22f inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5eea86aedb991a66c870c917a963e3e5 inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItem.html#a5eea86aedb991a66c870c917a963e3e5">toString</a> () const =0</td></tr>
 <tr class="separator:a5eea86aedb991a66c870c917a963e3e5 inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49b531c2f25cd401a60c02c4369d582a inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItem.html#a49b531c2f25cd401a60c02c4369d582a">toPrettyString</a> () const =0</td></tr>
+<tr class="separator:a49b531c2f25cd401a60c02c4369d582a inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a87d36d865f10eafd12dc7550ad82e7f2 inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItem.html#a87d36d865f10eafd12dc7550ad82e7f2">hash</a> () const =0</td></tr>
 <tr class="separator:a87d36d865f10eafd12dc7550ad82e7f2 inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ca417bfc1f8b7bd3d4a2a12c70b6d06 inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItem.html#a9ca417bfc1f8b7bd3d4a2a12c70b6d06">equals</a> (const <a class="el" href="classfreetensor_1_1ScheduleLogItem.html">ScheduleLogItem</a> &amp;other) const =0</td></tr>
@@ -373,6 +377,35 @@ template&lt;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe
 <p >Run a schedule and save its result or its exception </p>
 
 <p>Implements <a class="el" href="classfreetensor_1_1ScheduleLogItem.html#ad736faa94f6f331d71b670f5997820c7">freetensor::ScheduleLogItem</a>.</p>
+
+</div>
+</div>
+<a id="a526ddda878592a8d66d07d0e44c047f4" name="a526ddda878592a8d66d07d0e44c047f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a526ddda878592a8d66d07d0e44c047f4">&#9670;&nbsp;</a></span>toPrettyString()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8">ScheduleType</a> TYPE, class _Invocable , class _Params , class _Result &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string <a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html">freetensor::ScheduleLogItemImpl</a>&lt; TYPE, _Invocable, _Params, _Result &gt;::toPrettyString </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="classfreetensor_1_1ScheduleLogItem.html#a49b531c2f25cd401a60c02c4369d582a">freetensor::ScheduleLogItem</a>.</p>
 
 </div>
 </div>

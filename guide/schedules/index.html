@@ -64,6 +64,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#combining-multiple-schdules">Combining Multiple Schdules</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#specify-what-to-schedule-by-selectors">Specify What to Schedule by Selectors</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#auto-scheduling-experimental">Auto Scheduling (Experimental)</a>
     </li>
     </ul>
@@ -126,7 +128,7 @@ n = 4
             )  # &lt;-- 2. Apply the schedule
 def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(n,), &quot;int32&quot;]):
     y = ft.empty((n,), &quot;int32&quot;)
-    #! nid: Li  # &lt;-- 1. Name the loop as Li
+    #! label: Li  # &lt;-- 1. Label the loop as Li
     for i in range(n):
         y[i] = a[i] + b[i]
     return y
@@ -137,8 +139,8 @@ print(y)
 </code></pre>
 <p>Here is an example of a parallel vector addition executed with OpenMP multithreading. Each element is computed by one thread. To achieve this, there are two steps:</p>
 <ol>
-<li>Name the loop to be parallelized with a <code>#! nid:</code> comment. Here <code>nid</code> refers to node ID (of an AST node).</li>
-<li>Apply a <code>parallelize</code> schedule to <code>Li</code> in the <code>schedule_callback</code> argument to <code>optimize</code>.</li>
+<li>Label the loop to be parallelized with a <code>#! label:</code> comment. Here <code>label</code> refers to label of an AST node, which is not required to be unique.</li>
+<li>Apply a <code>parallelize</code> schedule to <code>Li</code> in the <code>schedule_callback</code> argument to <code>optimize</code>; since the <code>Li</code> label is unambiguous here, the only <code>Li</code> loop is selectd and parallelized.</li>
 </ol>
 <p>And you are done. You can have a look at the generated OpenMP multithreaded code by setting <code>verbose=1</code>.</p>
 <p>Parameter <code>s</code> in <code>schedule_callback</code> is a <a href="../../api/#freetensor.core.schedule.Schedule"><code>Schedule</code></a> object. Besides <code>parallelize</code>, there are more supported scheduling primitives.</p>
@@ -159,7 +161,7 @@ def sch(s):
 @ft.optimize(schedule_callback=sch)
 def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(n,), &quot;int32&quot;]):
     y = ft.empty((n,), &quot;int32&quot;)
-    #! nid: Li
+    #! label: Li
     for i in range(n):
         y[i] = a[i] + b[i]
     return y
@@ -168,7 +170,16 @@ y = test(np.array(np.arange(1024), dtype=&quot;int32&quot;),
          np.array(np.arange(1024), dtype=&quot;int32&quot;)).numpy()
 print(y)
 </code></pre>
-<p>One important thing is to track names of the loops, because the names will change after schedules. You get names of new loops generated from one schedule from its return values (<code>outer</code> and <code>inner</code> in this case), and pass them to a next schedule.</p>
+<p>One important thing is to track labels of the loops, because the labels will change after schedules. You get labels (to be precise, IDs, which is can be looked-up by labels) of new loops generated from one schedule from its return values (<code>outer</code> and <code>inner</code> in this case), and pass them to a next schedule.</p>
+<h2 id="specify-what-to-schedule-by-selectors">Specify What to Schedule by Selectors<a class="headerlink" href="#specify-what-to-schedule-by-selectors" title="Permanent link">&para;</a></h2>
+<p>In the example above, we label a loop <code>Li</code> and apply schedules on it. It is straight-forward in a tiny example, but as programs grow, it often gets hard to track each statement by a unique label, especially there are inlined function calls. To make things easy, FreeTensor supports specifying a statment by a selector, written in the following rules:</p>
+<ol>
+<li>A label is a selector. E.g., <code>Li</code> matches a statement with a label <code>Li</code>.</li>
+<li>(For debugging only) A numerical ID is also a selector. E.g., <code>#31</code>.</li>
+<li>A selector can be extended to match a new statement produced by a previous schedule. E.g., <code>$split.0{Li}</code> matches the outer loop split from the loop <code>Li</code>. This is useful when return values from schedules are hard to track.</li>
+<li>Selectors can be combined to match a statement in a function call. E.g., <code>Li&lt;~C1</code> matches a statment labeled <code>Li</code> called by a call site <code>C1</code>.</li>
+</ol>
+<p>All schedules support passing selectors.</p>
 <h2 id="auto-scheduling-experimental">Auto Scheduling (Experimental)<a class="headerlink" href="#auto-scheduling-experimental" title="Permanent link">&para;</a></h2>
 <p>Manually scheduling a program requires a lot of efforts. We provide an experimental automatic scheduling functions in <a href="../../api/#freetensor.core.schedule.Schedule"><code>Schedule</code></a>. You can call <code>s.auto_schedule</code> to pick schedules fully automatically. <code>s.auto_schedule</code> calls other <code>s.auto_xxxxxx</code> functions internally, you can also call one or some of them instead. Please note that these auto-scheduling functions are experimental, and their API is subject to changes.</p>
               

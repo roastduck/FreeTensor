@@ -7,7 +7,9 @@ var searchData=
   ['threadbindrule_4',['ThreadBindRule',['../classfreetensor_1_1ThreadBindRule.html',1,'freetensor']]],
   ['trackstmt_5',['TrackStmt',['../classfreetensor_1_1TrackStmt.html',1,'freetensor']]],
   ['trackstmt_3c_20visitor_20_3e_6',['TrackStmt&lt; Visitor &gt;',['../classfreetensor_1_1TrackStmt.html',1,'freetensor']]],
-  ['transientbound_7',['TransientBound',['../structfreetensor_1_1TransientBound.html',1,'freetensor']]],
-  ['typeormonostate_8',['TypeOrMonostate',['../structfreetensor_1_1TypeOrMonostate.html',1,'freetensor']]],
-  ['typeormonostate_3c_20void_20_3e_9',['TypeOrMonostate&lt; void &gt;',['../structfreetensor_1_1TypeOrMonostate_3_01void_01_4.html',1,'freetensor']]]
+  ['transformedmetadatacontent_7',['TransformedMetadataContent',['../classfreetensor_1_1TransformedMetadataContent.html',1,'freetensor']]],
+  ['transformedselector_8',['TransformedSelector',['../classfreetensor_1_1TransformedSelector.html',1,'freetensor']]],
+  ['transientbound_9',['TransientBound',['../structfreetensor_1_1TransientBound.html',1,'freetensor']]],
+  ['typeormonostate_10',['TypeOrMonostate',['../structfreetensor_1_1TypeOrMonostate.html',1,'freetensor']]],
+  ['typeormonostate_3c_20void_20_3e_11',['TypeOrMonostate&lt; void &gt;',['../structfreetensor_1_1TypeOrMonostate_3_01void_01_4.html',1,'freetensor']]]
 ];

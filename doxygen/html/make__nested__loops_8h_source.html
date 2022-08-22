@@ -106,7 +106,7 @@ $(function() {
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <span class="keyword">auto</span> &amp;&amp;len = ((<a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>)_len).isValid()</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>                         ? _len</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>                         : <a class="code hl_define" href="expr_8h.html#aad916faf0c66e49ccc390c4e4169d690">makeCeilDiv</a>(<a class="code hl_define" href="expr_8h.html#aa83f97be3459d415c2c22fe9a358f3b8">makeSub</a>(_end, begin), step);</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        ret = <a class="code hl_define" href="stmt_8h.html#a550ac86872ea86034ca669e775df9696">makeFor</a>(<span class="stringliteral">&quot;&quot;</span>, *iter, begin, end, step, len, property, ret);</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        ret = <a class="code hl_define" href="stmt_8h.html#a550ac86872ea86034ca669e775df9696">makeFor</a>(*iter, begin, end, step, len, property, ret);</div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    }</div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordflow">return</span> ret;</div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>}</div>
@@ -122,10 +122,10 @@ $(function() {
 <div class="ttc" id="aexpr_8h_html_ab4dbe0c9fb2d17158eb0eaa315895078"><div class="ttname"><a href="expr_8h.html#ab4dbe0c9fb2d17158eb0eaa315895078">makeAdd</a></div><div class="ttdeci">#define makeAdd(...)</div><div class="ttdef"><b>Definition:</b> expr.h:149</div></div>
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a577b96f4267f9cde2337206783dd9596"><div class="ttname"><a href="namespacefreetensor.html#a577b96f4267f9cde2337206783dd9596">freetensor::makeNestedLoops</a></div><div class="ttdeci">Stmt makeNestedLoops(Titers &amp;&amp;iters, Tbegins &amp;&amp;begins, Tends &amp;&amp;ends, Tsteps &amp;&amp;steps, Tlens &amp;&amp;lens, Tproperties &amp;&amp;properties, Tbody &amp;&amp;body)</div><div class="ttdef"><b>Definition:</b> make_nested_loops.h:22</div></div>
-<div class="ttc" id="anamespacefreetensor_html_acfa6f07a5497b3d187fe112708aa335b"><div class="ttname"><a href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">freetensor::Expr</a></div><div class="ttdeci">Ref&lt; ExprNode &gt; Expr</div><div class="ttdef"><b>Definition:</b> ast.h:171</div></div>
+<div class="ttc" id="anamespacefreetensor_html_acfa6f07a5497b3d187fe112708aa335b"><div class="ttname"><a href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">freetensor::Expr</a></div><div class="ttdeci">Ref&lt; ExprNode &gt; Expr</div><div class="ttdef"><b>Definition:</b> ast.h:173</div></div>
 <div class="ttc" id="anamespacefreetensor_html_afc87eee71f05eb84c5799d7f3492915fa5a92344ee95acf10c31901b36418be77"><div class="ttname"><a href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa5a92344ee95acf10c31901b36418be77">freetensor::ASTNodeType::Var</a></div><div class="ttdeci">@ Var</div></div>
 <div class="ttc" id="astmt_8h_html"><div class="ttname"><a href="stmt_8h.html">stmt.h</a></div></div>
-<div class="ttc" id="astmt_8h_html_a550ac86872ea86034ca669e775df9696"><div class="ttname"><a href="stmt_8h.html#a550ac86872ea86034ca669e775df9696">makeFor</a></div><div class="ttdeci">#define makeFor(...)</div><div class="ttdef"><b>Definition:</b> stmt.h:197</div></div>
+<div class="ttc" id="astmt_8h_html_a550ac86872ea86034ca669e775df9696"><div class="ttname"><a href="stmt_8h.html#a550ac86872ea86034ca669e775df9696">makeFor</a></div><div class="ttdeci">#define makeFor(...)</div><div class="ttdef"><b>Definition:</b> stmt.h:215</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

@@ -172,7 +172,7 @@ with ft.GPU(0):
         a: ft.Var[(n,), &quot;int32&quot;]
         b: ft.Var[(n,), &quot;int32&quot;]
         y = ft.empty((n,), &quot;int32&quot;)
-        #! nid: Li # Name the loop below as &quot;Li&quot;
+        #! label: Li # Name the loop below as &quot;Li&quot;
         for i in range(n):
             y[i] = a[i] + b[i]
         return y
