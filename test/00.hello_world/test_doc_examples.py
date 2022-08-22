@@ -65,7 +65,7 @@ def test_vector_add_gpu():
             schedule_callback=lambda s: s.parallelize('Li', 'threadIdx.x'))
         def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
             y = ft.empty((n,), "int32")
-            #! label: Li # Name the loop below as "Li"
+            #! label: Li # Label the loop below as "Li"
             for i in range(n):
                 y[i] = a[i] + b[i]
             return y
@@ -96,7 +96,7 @@ def test_vector_add_dynamic_gpu():
             a: ft.Var[(n,), "int32"]
             b: ft.Var[(n,), "int32"]
             y = ft.empty((n,), "int32")
-            #! label: Li # Name the loop below as "Li"
+            #! label: Li # Label the loop below as "Li"
             for i in range(n):
                 y[i] = a[i] + b[i]
             return y
@@ -169,7 +169,7 @@ def test_parallel_vector_add():
                 )  # <-- 2. Apply the schedule
     def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
         y = ft.empty((n,), "int32")
-        #! label: Li  # <-- 1. Name the loop as Li
+        #! label: Li  # <-- 1. Label the loop as Li
         for i in range(n):
             y[i] = a[i] + b[i]
         return y
