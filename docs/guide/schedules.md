@@ -15,7 +15,7 @@ n = 4
             )  # <-- 2. Apply the schedule
 def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
     y = ft.empty((n,), "int32")
-    #! label: Li  # <-- 1. Name the loop as Li
+    #! label: Li  # <-- 1. Label the loop as Li
     for i in range(n):
         y[i] = a[i] + b[i]
     return y
@@ -27,7 +27,7 @@ print(y)
 
 Here is an example of a parallel vector addition executed with OpenMP multithreading. Each element is computed by one thread. To achieve this, there are two steps:
 
-1. Name the loop to be parallelized with a `#! label:` comment. Here `label` refers to label of an AST node, which is not required to be unique.
+1. Label the loop to be parallelized with a `#! label:` comment. Here `label` refers to label of an AST node, which is not required to be unique.
 2. Apply a `parallelize` schedule to `Li` in the `schedule_callback` argument to `optimize`; since the `Li` label is unambiguous here, the only `Li` loop is selectd and parallelized.
 
 And you are done. You can have a look at the generated OpenMP multithreaded code by setting `verbose=1`.
@@ -65,7 +65,18 @@ y = test(np.array(np.arange(1024), dtype="int32"),
 print(y)
 ```
 
-One important thing is to track names of the loops, because the names will change after schedules. You get names of new loops generated from one schedule from its return values (`outer` and `inner` in this case), and pass them to a next schedule.
+One important thing is to track labels of the loops, because the labels will change after schedules. You get labels (to be precise, IDs, which is can be looked-up by labels) of new loops generated from one schedule from its return values (`outer` and `inner` in this case), and pass them to a next schedule.
+
+## Specify What to Schedule by Selectors
+
+In the example above, we label a loop `Li` and apply schedules on it. It is straight-forward in a tiny example, but as programs grow, it often gets hard to track each statement by a unique label, especially there are inlined function calls. To make things easy, FreeTensor supports specifying a statment by a selector, written in the following rules:
+
+1. A label is a selector. E.g., `Li` matches a statement with a label `Li`.
+2. (For debugging only) A numerical ID is also a selector. E.g., `#31`.
+3. A selector can be extended to match a new statement produced by a previous schedule. E.g., `$split.0{Li}` matches the outer loop split from the loop `Li`. This is useful when return values from schedules are hard to track.
+4. Selectors can be combined to match a statement in a function call. E.g., `Li<~C1` matches a statment labeled `Li` called by a call site `C1`.
+
+All schedules support passing selectors.
 
 ## Auto Scheduling (Experimental)
 
