@@ -369,10 +369,12 @@ void Schedule::varReorder(const ID &def, const std::vector<int> &order) {
     }
 }
 
-ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
+std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
+                                   const ID &_dst) {
     auto bak = ast_;
     try {
         auto stmt = _stmt, dst = _dst;
+        auto stmtBody = stmt;
         while (true) {
             ast_ = hoistVarOverStmtSeq(ast_);
             Stmt s = findStmt(ast_, stmt);
@@ -423,6 +425,7 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                     auto idMapBefore =
                         fission(s->id(), FissionSide::After, stmt, ".a", "")
                             .first;
+                    stmtBody = idMapBefore.at(stmt);
                     stmt = idMapBefore.at(s->id());
                 }
                 // TODO: Fuse if d is inner of s
@@ -451,12 +454,13 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                     auto idMapAfter =
                         fission(s->id(), FissionSide::Before, stmt, "", ".b")
                             .second;
+                    stmtBody = idMapAfter.at(stmt);
                     stmt = idMapAfter.at(s->id());
                 }
                 // TODO: Fuse if d is inner of s
 
             } else {
-                return s->id();
+                return {stmtBody, stmt};
             }
         }
     } catch (const InvalidSchedule &e) {
@@ -714,10 +718,12 @@ void Schedule::autoFuse(const Target &target, const Ref<RandTrace> &trace) {
                             try {
                                 try {
                                     lastId = moveTo(lastId, MoveToSide::Before,
-                                                    thisId);
+                                                    thisId)
+                                                 .first;
                                 } catch (const InvalidSchedule &e) {
                                     thisId = moveTo(thisId, MoveToSide::After,
-                                                    lastId);
+                                                    lastId)
+                                                 .first;
                                 }
                                 thisId = fuse(lastId, thisId, true);
                                 subNest->subLoops_.insert(

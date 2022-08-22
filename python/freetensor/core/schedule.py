@@ -70,7 +70,7 @@ class Schedule(ffi.Schedule):
 
         Returns
         -------
-        (str, str)
+        (ID, ID)
             (outer loop ID, inner loop ID)
         """
         return super().split(self._lookup(node), factor, nparts, shift)
@@ -114,7 +114,7 @@ class Schedule(ffi.Schedule):
 
         Returns
         -------
-        str
+        ID
             ID of the merged loop
         """
         return super().merge(self._lookup(loop1), self._lookup(loop2))
@@ -133,7 +133,7 @@ class Schedule(ffi.Schedule):
             the list of perfectly nested loops to be permuted
         transform_func : Callable[[Expr], Expr]
             the loop space transformation function, should be bijective
-        
+
         Returns
         -------
         list of ID
@@ -198,7 +198,7 @@ class Schedule(ffi.Schedule):
 
         Returns
         -------
-        str
+        ID
             ID of the result loop
         """
         if loop1 is None:
@@ -304,7 +304,7 @@ class Schedule(ffi.Schedule):
 
         Returns
         -------
-        (str, str, str, str)
+        (ID, ID, ID, ID)
             (ID of the statement that fills the cache, ID of the statement that
             flushes from the cache, name of the cache variable, ID of the VarDef
             node of the cache variable)
@@ -348,7 +348,7 @@ class Schedule(ffi.Schedule):
 
         Returns
         -------
-        (str, str, str, str)
+        (ID, ID, ID, ID)
             (ID of the statement that initialize the cache, ID of the statement
             that reduces the local result to the global result, name of the
             cache variable, ID of the VarDef node of the cache variable)
@@ -439,6 +439,9 @@ class Schedule(ffi.Schedule):
         This is a composite schedule command, which is implemented with other
         commands
 
+        If moving a statement out of some loops, identical loops will be added
+        around the moved statement, which is equivalent to fission these loops
+
         Parameters
         ----------
         stmt : str, ID or Stmt
@@ -455,8 +458,9 @@ class Schedule(ffi.Schedule):
 
         Returns
         -------
-        str
-            The new ID of stmt
+        (ID, ID)
+            (The new ID of the moved statement, The out-most newly introduced
+            statments including the added loops)
         """
         return super().move_to(self._lookup(stmt), side, self._lookup(dst))
 

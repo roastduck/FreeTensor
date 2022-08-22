@@ -144,8 +144,8 @@ def test_parallel_reduction():
     s = ft.Schedule(func)
     i0, i1 = s.split(i, 64)
     init, final, _, _ = s.cache_reduction(i1, "y", "cpu")
-    final = s.move_to(final, ft.MoveToSide.After, i0)
-    S0 = s.move_to(S0, ft.MoveToSide.Before, final)
+    _, final = s.move_to(final, ft.MoveToSide.After, i0)
+    _, S0 = s.move_to(S0, ft.MoveToSide.Before, final)
 
     s.parallelize(i0, "openmp")
 
@@ -304,10 +304,9 @@ def test_vectorize_spmv():
     s = ft.Schedule(ast)
     i0, i1 = s.split("Li", 4)
     s.reorder([i0, "Lj", i1])
-    s.move_to("S0", ft.MoveToSide.Before, "Lj")
+    S0, _ = s.move_to("S0", ft.MoveToSide.Before, "Lj")
     s.vectorize(i1)
-    s.vectorize(s.find("$fission.a{S0}").parent_stmt()
-               )  # FIXME: do not hard-code $fission.a{S0}
+    s.vectorize(s.find(S0).parent_stmt())
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
