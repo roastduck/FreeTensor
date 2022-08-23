@@ -1,5 +1,6 @@
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
+#include <analyze/find_stmt.h>
 #include <pass/merge_and_hoist_if.h>
 #include <schedule/fission.h>
 
@@ -20,8 +21,6 @@ Stmt HoistVar::visit(const For &op) {
                 xLoops_[def->name_].emplace_back(op->id());
             }
             innerLoops_.emplace_back(op->id());
-        } else {
-            outerScopes_.emplace_back(op->id());
         }
         return ret;
     } else {
@@ -36,41 +35,6 @@ Stmt HoistVar::visit(const For &op) {
             ret = makeVarDef(std::move((*i)->name_), std::move(((*i)->buffer_)),
                              std::move((*i)->ioTensor_), ret, (*i)->pinned_,
                              (*i)->metadata(), (*i)->id());
-        }
-        return ret;
-    }
-}
-
-Stmt HoistVar::visit(const StmtSeq &op) {
-    if (!inside_) {
-        outerScopes_.emplace_back(op->id());
-        return Mutator::visit(op);
-    } else {
-        std::vector<Stmt> before, after;
-        for (auto &&_stmt : op->stmts_) {
-            bool thisIsAfter = false;
-            if (!after.empty()) {
-                thisIsAfter = isAfter_;
-            }
-            auto stmt = (*this)(_stmt);
-            if (!before.empty()) {
-                thisIsAfter = isAfter_;
-            }
-            (thisIsAfter ? after : before).emplace_back(stmt);
-        }
-        Stmt ret;
-        if (after.empty()) {
-            ret = makeStmtSeq(std::move(before), op->metadata(), op->id());
-        } else if (before.empty()) {
-            ret = makeStmtSeq(std::move(after), op->metadata(), op->id());
-        } else {
-            auto beforeNode =
-                before.size() > 1 ? makeStmtSeq(std::move(before)) : before[0];
-            auto afterNode =
-                after.size() > 1 ? makeStmtSeq(std::move(after)) : after[0];
-            scopePairs_.emplace_back(beforeNode->id(), afterNode->id());
-            ret =
-                makeStmtSeq({beforeNode, afterNode}, op->metadata(), op->id());
         }
         return ret;
     }
@@ -286,11 +250,10 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
         throw InvalidSchedule(
             "Cannot preserve ID and Metadata for both first and second parts");
 
-    HoistVar hoist(loop, side == FissionSide::Before ? splitter : ID{},
-                   side == FissionSide::After ? splitter : ID{});
-    FissionFor mutator(loop, side == FissionSide::Before ? splitter : ID{},
-                       side == FissionSide::After ? splitter : ID{}, suffix0,
-                       suffix1);
+    auto before = side == FissionSide::Before ? splitter : ID{};
+    auto after = side == FissionSide::After ? splitter : ID{};
+    HoistVar hoist(loop, before, after);
+    FissionFor mutator(loop, before, after, suffix0, suffix1);
 
     auto ast = hoist(_ast);
     if (!hoist.found()) {
@@ -331,23 +294,28 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
             toAdd[d.defId()].emplace_back(id);
         }
     };
+    auto beforeStmt = before.isValid() ? findStmt(ast, before) : nullptr;
+    auto afterStmt = after.isValid() ? findStmt(ast, after) : nullptr;
     FindDeps()
         .direction(disjunct)
+        .filterSubAST(loop)
         .filterEarlier([&](const AccessPoint &earlier) {
-            for (auto &&[beforeId, afterId] : hoist.scopePairs()) {
-                if (earlier.stmt_->ancestorById(afterId).isValid()) {
-                    return true;
-                }
+            // Reverse dependence: earlier at the second fissioned part
+            if (beforeStmt.isValid()) {
+                return !earlier.stmt_->isBefore(beforeStmt);
+            } else {
+                ASSERT(afterStmt.isValid());
+                return afterStmt->isBefore(earlier.stmt_);
             }
-            return false;
         })
         .filterLater([&](const AccessPoint &later) {
-            for (auto &&[beforeId, afterId] : hoist.scopePairs()) {
-                if (later.stmt_->ancestorById(beforeId).isValid()) {
-                    return true;
-                }
+            // Reverse dependence: later at the first fissioned part
+            if (beforeStmt.isValid()) {
+                return later.stmt_->isBefore(beforeStmt);
+            } else {
+                ASSERT(afterStmt.isValid());
+                return !afterStmt->isBefore(later.stmt_);
             }
-            return false;
         })(ast, found);
 
     AddDimToVar adder(toAdd);
