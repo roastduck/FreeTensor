@@ -139,8 +139,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a4afd2c54b5c306cea3ef02276278a638"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0527473deeef7e00524a5aa1887c974b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a0527473deeef7e00524a5aa1887c974b">varReorder</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def, const std::vector&lt; int &gt; &amp;order)</td></tr>
 <tr class="separator:a0527473deeef7e00524a5aa1887c974b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28085136b3ac2b360e10aa30b51a9fdb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1ID.html">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a28085136b3ac2b360e10aa30b51a9fdb">moveTo</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;stmt, <a class="el" href="namespacefreetensor.html#ac490983b87e6acdba7919a1cf57245c3">MoveToSide</a> side, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;dst)</td></tr>
-<tr class="separator:a28085136b3ac2b360e10aa30b51a9fdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e8f42786f010644795cac660b690b61"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a6e8f42786f010644795cac660b690b61">moveTo</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;stmt, <a class="el" href="namespacefreetensor.html#ac490983b87e6acdba7919a1cf57245c3">MoveToSide</a> side, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;dst)</td></tr>
+<tr class="separator:a6e8f42786f010644795cac660b690b61"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9bfc2f98d42e75a3838eaa0166b802e2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a9bfc2f98d42e75a3838eaa0166b802e2">inlining</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def)</td></tr>
 <tr class="separator:a9bfc2f98d42e75a3838eaa0166b802e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9dd6430725b39cc15a3aa5cad99fa2b1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a9dd6430725b39cc15a3aa5cad99fa2b1">parallelize</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, const <a class="el" href="namespacefreetensor.html#a6d19bf2262d0cd0af3903283c9722088">ParallelScope</a> &amp;parallel)</td></tr>
@@ -1193,14 +1193,14 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a28085136b3ac2b360e10aa30b51a9fdb" name="a28085136b3ac2b360e10aa30b51a9fdb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a28085136b3ac2b360e10aa30b51a9fdb">&#9670;&nbsp;</a></span>moveTo()</h2>
+<a id="a6e8f42786f010644795cac660b690b61" name="a6e8f42786f010644795cac660b690b61"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e8f42786f010644795cac660b690b61">&#9670;&nbsp;</a></span>moveTo()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classfreetensor_1_1ID.html">ID</a> freetensor::Schedule::moveTo </td>
+          <td class="memname">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; freetensor::Schedule::moveTo </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
           <td class="paramname"><em>stmt</em>, </td>
@@ -1226,6 +1226,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 <p >Move a statement to a new position</p>
 <p >This is a composite schedule command, which is implemented with other commands</p>
+<p >If moving a statement out of some loops, identical loops will be added around the moved statement, which is equivalent to fission these loops</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">stmt</td><td>: <a class="el" href="classfreetensor_1_1ID.html">ID</a> of the statement to be moved </td></tr>
@@ -1239,7 +1240,7 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>: The new <a class="el" href="classfreetensor_1_1ID.html">ID</a> of stmt </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>: (The new <a class="el" href="classfreetensor_1_1ID.html">ID</a> of the moved statement, The out-most newly introduced statments including the added loops) </dd></dl>
 
 </div>
 </div>

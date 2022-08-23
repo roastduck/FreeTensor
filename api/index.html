@@ -9046,7 +9046,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        (str, str)</span>
+<span class="sd">        (ID, ID)</span>
 <span class="sd">            (outer loop ID, inner loop ID)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">node</span><span class="p">),</span> <span class="n">factor</span><span class="p">,</span> <span class="n">nparts</span><span class="p">,</span> <span class="n">shift</span><span class="p">)</span>
@@ -9090,7 +9090,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        str</span>
+<span class="sd">        ID</span>
 <span class="sd">            ID of the merged loop</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop2</span><span class="p">))</span>
@@ -9174,7 +9174,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        str</span>
+<span class="sd">        ID</span>
 <span class="sd">            ID of the result loop</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">loop1</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -9280,7 +9280,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        (str, str, str, str)</span>
+<span class="sd">        (ID, ID, ID, ID)</span>
 <span class="sd">            (ID of the statement that fills the cache, ID of the statement that</span>
 <span class="sd">            flushes from the cache, name of the cache variable, ID of the VarDef</span>
 <span class="sd">            node of the cache variable)</span>
@@ -9324,7 +9324,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        (str, str, str, str)</span>
+<span class="sd">        (ID, ID, ID, ID)</span>
 <span class="sd">            (ID of the statement that initialize the cache, ID of the statement</span>
 <span class="sd">            that reduces the local result to the global result, name of the</span>
 <span class="sd">            cache variable, ID of the VarDef node of the cache variable)</span>
@@ -9415,6 +9415,9 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        This is a composite schedule command, which is implemented with other</span>
 <span class="sd">        commands</span>
 
+<span class="sd">        If moving a statement out of some loops, identical loops will be added</span>
+<span class="sd">        around the moved statement, which is equivalent to fission these loops</span>
+
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        stmt : str, ID or Stmt</span>
@@ -9431,8 +9434,9 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        str</span>
-<span class="sd">            The new ID of stmt</span>
+<span class="sd">        (ID, ID)</span>
+<span class="sd">            (The new ID of the moved statement, The out-most newly introduced</span>
+<span class="sd">            statments including the added loops)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">move_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">stmt</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">dst</span><span class="p">))</span>
 
@@ -10202,7 +10206,7 @@ use <code>cache_reduction</code> instead</p>
     <th class="field-name">Returns:</th>
     <td class="field-body">
         <ul class="first simple">
-          <li><p><code>(str, str, str, str)</code> – (ID of the statement that fills the cache, ID of the statement that
+          <li><p><code>(ID, ID, ID, ID)</code> – (ID of the statement that fills the cache, ID of the statement that
 flushes from the cache, name of the cache variable, ID of the VarDef
 node of the cache variable)</p></li>
         </ul>
@@ -10254,7 +10258,7 @@ node of the cache variable)</p></li>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    (str, str, str, str)</span>
+<span class="sd">    (ID, ID, ID, ID)</span>
 <span class="sd">        (ID of the statement that fills the cache, ID of the statement that</span>
 <span class="sd">        flushes from the cache, name of the cache variable, ID of the VarDef</span>
 <span class="sd">        node of the cache variable)</span>
@@ -10337,7 +10341,7 @@ writes</p></li>
     <th class="field-name">Returns:</th>
     <td class="field-body">
         <ul class="first simple">
-          <li><p><code>(str, str, str, str)</code> – (ID of the statement that initialize the cache, ID of the statement
+          <li><p><code>(ID, ID, ID, ID)</code> – (ID of the statement that initialize the cache, ID of the statement
 that reduces the local result to the global result, name of the
 cache variable, ID of the VarDef node of the cache variable)</p></li>
         </ul>
@@ -10384,7 +10388,7 @@ cache variable, ID of the VarDef node of the cache variable)</p></li>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    (str, str, str, str)</span>
+<span class="sd">    (ID, ID, ID, ID)</span>
 <span class="sd">        (ID of the statement that initialize the cache, ID of the statement</span>
 <span class="sd">        that reduces the local result to the global result, name of the</span>
 <span class="sd">        cache variable, ID of the VarDef node of the cache variable)</span>
@@ -10593,7 +10597,7 @@ the same length, or there is any dependency cannot be resolved</p></li>
     <th class="field-name">Returns:</th>
     <td class="field-body">
         <ul class="first simple">
-          <li><p><code>str</code> – ID of the result loop</p></li>
+          <li><p><code>ID</code> – ID of the result loop</p></li>
         </ul>
     </td>
     </tr>
@@ -10629,7 +10633,7 @@ the same length, or there is any dependency cannot be resolved</p></li>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    str</span>
+<span class="sd">    ID</span>
 <span class="sd">        ID of the result loop</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">loop1</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -10777,7 +10781,7 @@ merged loop</p>
     <th class="field-name">Returns:</th>
     <td class="field-body">
         <ul class="first simple">
-          <li><p><code>str</code> – ID of the merged loop</p></li>
+          <li><p><code>ID</code> – ID of the merged loop</p></li>
         </ul>
     </td>
     </tr>
@@ -10806,7 +10810,7 @@ merged loop</p>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    str</span>
+<span class="sd">    ID</span>
 <span class="sd">        ID of the merged loop</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop2</span><span class="p">))</span>
@@ -10833,6 +10837,8 @@ merged loop</p>
       <p>Move a statement to a new position</p>
 <p>This is a composite schedule command, which is implemented with other
 commands</p>
+<p>If moving a statement out of some loops, identical loops will be added
+around the moved statement, which is equivalent to fission these loops</p>
 
 <table class="field-list">
   <colgroup>
@@ -10878,7 +10884,8 @@ commands</p>
     <th class="field-name">Returns:</th>
     <td class="field-body">
         <ul class="first simple">
-          <li><p><code>str</code> – The new ID of stmt</p></li>
+          <li><p><code>(ID, ID)</code> – (The new ID of the moved statement, The out-most newly introduced
+statments including the added loops)</p></li>
         </ul>
     </td>
     </tr>
@@ -10892,6 +10899,9 @@ commands</p>
 
 <span class="sd">    This is a composite schedule command, which is implemented with other</span>
 <span class="sd">    commands</span>
+
+<span class="sd">    If moving a statement out of some loops, identical loops will be added</span>
+<span class="sd">    around the moved statement, which is equivalent to fission these loops</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -10909,8 +10919,9 @@ commands</p>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    str</span>
-<span class="sd">        The new ID of stmt</span>
+<span class="sd">    (ID, ID)</span>
+<span class="sd">        (The new ID of the moved statement, The out-most newly introduced</span>
+<span class="sd">        statments including the added loops)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">move_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">stmt</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">dst</span><span class="p">))</span>
 </code></pre></div>
@@ -11393,7 +11404,7 @@ loops</p>
     <th class="field-name">Returns:</th>
     <td class="field-body">
         <ul class="first simple">
-          <li><p><code>(str, str)</code> – (outer loop ID, inner loop ID)</p></li>
+          <li><p><code>(ID, ID)</code> – (outer loop ID, inner loop ID)</p></li>
         </ul>
     </td>
     </tr>
@@ -11444,7 +11455,7 @@ loops</p>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    (str, str)</span>
+<span class="sd">    (ID, ID)</span>
 <span class="sd">        (outer loop ID, inner loop ID)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">node</span><span class="p">),</span> <span class="n">factor</span><span class="p">,</span> <span class="n">nparts</span><span class="p">,</span> <span class="n">shift</span><span class="p">)</span>
