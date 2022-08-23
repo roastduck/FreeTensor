@@ -553,7 +553,7 @@ void Schedule::asMatMul(const ID &loop) {
 
 void Schedule::autoSchedule(const Target &target, const Ref<RandTrace> &trace) {
     autoUseLib(target);
-    autoFuse(target, trace);
+    autoFissionFuse(target, trace);
     autoReorder(target);
     autoParallelize(target);
     autoSetMemType(target);
@@ -673,16 +673,131 @@ void Schedule::autoReorder(const Target &target) {
     }
 }
 
-void Schedule::autoFuse(const Target &target, const Ref<RandTrace> &trace) {
+void Schedule::autoFissionFuse(const Target &target,
+                               const Ref<RandTrace> &trace) {
     RandCondStack conds;
-    // Try to fuse each pair of consecutive loops
-    std::function<void(const Ref<LoopNest> &nest)> visitNest =
+
+    // Random decision on whether to fission or fuse:
+    //
+    // - Decision = 0: not to fuse, to fission
+    // - Decision = 1: to fuse, not to fission
+    //
+    // Fusing (or not fissioning) may reduce parallelizing opportunities, which
+    // is related to dependences on the two loops being fused (or the two
+    // fissioned loops):
+    //
+    // - If neither loop has dependence: It doesn't matter
+    // - If both loops have dependence: It doesn't matter, too
+    // - If exactly one of the loop: It may have negative influence on
+    // parallelizing
+    //
+    // Therefore, we add "the two loops having different
+    // dependences" as a condition of our decision
+    auto decisionId = PROGRAM_POSITION;
+    auto decisionName = "fuse";
+    auto depDiffCondName = "defDiff";
+
+    // Record which loop is fission from which loop, so we don't fuse them back
+    // to one
+    //
+    // We only care about the last fission. E.g., if we fission `L1 L2` to `L1
+    // {L3 L4}` and then to `L1 {{L5 L6}, L4}`, we won't fuse L5 and L6 back,
+    // but we can fuse L6 and L4
+    std::unordered_map<ID, ID> fissionFrom;
+
+    // Try to fission a loop into consecutive loops. Only fission at
+    // beginnings of each sub-loops, and at each leaf nodes (Store, ReduceTo,
+    // Eval)
+    std::function<std::vector<ID>(const Ref<LoopNest> &nest)> tryFission =
+        [&, this](const Ref<LoopNest> &nest) -> std::vector<ID> {
+        std::vector<ID> newOuters, newInners;
+
+        // Recurse first
+        for (auto &&subNest : nest->subLoops_) {
+            auto fissioned = tryFission(subNest);
+            for (auto &&item : fissioned) {
+                newInners.emplace_back(item);
+            }
+        }
+
+        // Try fission
+        std::vector<ID> splitters = newInners;
+        for (auto &&stmt : nest->leafStmts_) {
+            splitters.emplace_back(stmt->id());
+        }
+        auto thisId = nest->loop_->id();
+        int partCnt = 0;
+        for (auto &&[i, item] : iter::enumerate(splitters)) {
+            if (i == 0) {
+                continue;
+            }
+            auto &&splitter = find(item);
+            bool frontHasDep =
+                FindDeps()
+                    .direction({{{thisId, DepDirection::Different}}})
+                    .filterSubAST(thisId)
+                    .filterAccess([&](const AccessPoint &ap) {
+                        return ap.stmt_->isBefore(splitter);
+                    })
+                    .exists(ast_);
+            bool backHasDep =
+                FindDeps()
+                    .direction({{{thisId, DepDirection::Different}}})
+                    .filterSubAST(thisId)
+                    .filterAccess([&](const AccessPoint &ap) {
+                        return !ap.stmt_->isBefore(splitter);
+                    })
+                    .exists(ast_);
+            bool depDiff = frontHasDep != backHasDep;
+            {
+                RandCondGuard _(conds, depDiffCondName, depDiff);
+                if (!randCtx_->decide(decisionId, decisionName, conds,
+                                      {depDiff ? 1 : 0, depDiff ? 0 : 1}, trace,
+                                      "not fission " + toString(thisId) +
+                                          " before " +
+                                          toString(splitter->id()) + "?")) {
+                    auto bak = ast_;
+                    auto logBak = logs_;
+                    try {
+                        auto newId =
+                            fission(thisId, FissionSide::Before, splitter->id(),
+                                    "." + toString(partCnt), "")
+                                .first.at(thisId);
+                        newOuters.emplace_back(newId);
+                        fissionFrom[newId] = thisId;
+                        partCnt++;
+                    } catch (const InvalidSchedule &e) {
+                        ast_ = std::move(bak);
+                        logs_ = std::move(logBak);
+                    }
+                }
+            }
+        }
+        newOuters.emplace_back(thisId);
+        fissionFrom[thisId] = thisId;
+        return newOuters;
+    };
+    auto nest = getLoopNestTree(ast_);
+    for (auto &&sub : nest->subLoops_) {
+        tryFission(sub);
+    }
+
+    // Try to fuse each pair of consecutive loops, unless they are just
+    // fissioned from the same loop
+    std::function<void(const Ref<LoopNest> &nest)> tryFuse =
         [&, this](const Ref<LoopNest> &nest) {
             Ref<LoopNest> last;
             ID lastId;
             for (auto &&subNest : nest->subLoops_) {
                 auto thisId = subNest->loop_->id();
-                if (last.isValid()) {
+                if (!last.isValid()) {
+                    goto skip;
+                }
+                if (fissionFrom.count(thisId) && fissionFrom.count(lastId) &&
+                    fissionFrom.at(thisId) == fissionFrom.at(lastId)) {
+                    goto skip;
+                }
+                {
                     bool thisHasDep =
                         FindDeps()
                             .direction({{{thisId, DepDirection::Different}}})
@@ -693,23 +808,11 @@ void Schedule::autoFuse(const Target &target, const Ref<RandTrace> &trace) {
                             .direction({{{lastId, DepDirection::Different}}})
                             .filterSubAST(lastId)
                             .exists(ast_);
+                    bool depDiff = thisHasDep != lastHasDep;
                     {
-                        // Fusing two may reduce parallelizing opportunities,
-                        // which is related to dependences on the two loops
-                        // being fused:
-                        //
-                        // - If neither loop has dependence: It doesn't matter
-                        // - If both loops have dependence: It doesn't matter,
-                        // too
-                        // - If exactly one of the loop: It may have bad
-                        // influence on parallelizing
-                        //
-                        // Therefore, we add "the two loops having different
-                        // dependences" as a condition of our decision
-                        bool depDiff = thisHasDep != lastHasDep;
-                        RandCondGuard _(conds, "depDiff", depDiff);
+                        RandCondGuard _(conds, depDiffCondName, depDiff);
                         if (randCtx_->decide(
-                                PROGRAM_POSITION, "fuse", conds,
+                                decisionId, decisionName, conds,
                                 {depDiff ? 1 : 0, depDiff ? 0 : 1}, trace,
                                 "fuse " + toString(lastId) + " and " +
                                     toString(thisId) + "?")) {
@@ -732,20 +835,21 @@ void Schedule::autoFuse(const Target &target, const Ref<RandTrace> &trace) {
                                     last->subLoops_.end());
                                 last->subLoops_.clear();
                             } catch (const InvalidSchedule &e) {
-                                ast_ = std::move(bak),
+                                ast_ = std::move(bak);
                                 logs_ = std::move(logBak);
-                                visitNest(last);
+                                tryFuse(last);
                             }
                         }
                     }
                 }
+            skip:
                 lastId = thisId, last = subNest;
             }
             if (last.isValid()) {
-                visitNest(last);
+                tryFuse(last);
             }
         };
-    visitNest(getLoopNestTree(ast_));
+    tryFuse(getLoopNestTree(ast_));
 }
 
 void Schedule::autoParallelize(const Target &target) {

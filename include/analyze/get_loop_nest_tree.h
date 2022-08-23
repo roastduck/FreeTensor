@@ -8,6 +8,8 @@ namespace freetensor {
 struct LoopNest {
     For loop_;
     std::vector<Ref<LoopNest>> subLoops_;
+    std::vector<Stmt> leafStmts_; // Store, ReduceTo and Eval nodes nested in
+                                  // this loop but not in its children loops
 };
 
 class GetLoopNestTree : public Visitor {
@@ -20,6 +22,9 @@ class GetLoopNestTree : public Visitor {
 
   protected:
     void visit(const For &op) override;
+    void visit(const Store &op) override;
+    void visit(const ReduceTo &op) override;
+    void visit(const Eval &op) override;
     void visit(const MatMul &op) override {} // do nothing
 };
 

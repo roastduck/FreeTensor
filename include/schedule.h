@@ -560,12 +560,14 @@ class Schedule {
     void autoReorder(const Target &target);
 
     /**
-     * (Experimental) Automatically fuse consecutive loops using some heuristics
+     * (Experimental) Automatically fuse consecutive loops or vice versa using
+     * some heuristics
      *
      * @param target : Target architecture
      * @param trace : Random decision tarce
      */
-    void autoFuse(const Target &target, const Ref<RandTrace> &trace = nullptr);
+    void autoFissionFuse(const Target &target,
+                         const Ref<RandTrace> &trace = nullptr);
 
     /**
      * (Experimental) Automatically parallelize some loops using some heuristics
