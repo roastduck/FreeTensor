@@ -159,8 +159,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a7f6e8a418824aeaf48e5966d9046e8b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae867511016657dd663ed4cc8c91e03ed"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#ae867511016657dd663ed4cc8c91e03ed">autoReorder</a> (const <a class="el" href="classfreetensor_1_1Target.html">Target</a> &amp;target)</td></tr>
 <tr class="separator:ae867511016657dd663ed4cc8c91e03ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac78ab0a3587fc753a96468c6ad85186f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#ac78ab0a3587fc753a96468c6ad85186f">autoFuse</a> (const <a class="el" href="classfreetensor_1_1Target.html">Target</a> &amp;target, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a> &gt; &amp;trace=nullptr)</td></tr>
-<tr class="separator:ac78ab0a3587fc753a96468c6ad85186f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a73cd5f1b56e41e37405ddaa5c955bdb8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a73cd5f1b56e41e37405ddaa5c955bdb8">autoFissionFuse</a> (const <a class="el" href="classfreetensor_1_1Target.html">Target</a> &amp;target, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a> &gt; &amp;trace=nullptr)</td></tr>
+<tr class="separator:a73cd5f1b56e41e37405ddaa5c955bdb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab49e422d97c96d24081406de659e121"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#aab49e422d97c96d24081406de659e121">autoParallelize</a> (const <a class="el" href="classfreetensor_1_1Target.html">Target</a> &amp;target)</td></tr>
 <tr class="separator:aab49e422d97c96d24081406de659e121"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb4eeb733444a7566604e4f19f657b07"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#aeb4eeb733444a7566604e4f19f657b07">autoSetMemType</a> (const <a class="el" href="classfreetensor_1_1Target.html">Target</a> &amp;target)</td></tr>
@@ -360,14 +360,14 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ac78ab0a3587fc753a96468c6ad85186f" name="ac78ab0a3587fc753a96468c6ad85186f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac78ab0a3587fc753a96468c6ad85186f">&#9670;&nbsp;</a></span>autoFuse()</h2>
+<a id="a73cd5f1b56e41e37405ddaa5c955bdb8" name="a73cd5f1b56e41e37405ddaa5c955bdb8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a73cd5f1b56e41e37405ddaa5c955bdb8">&#9670;&nbsp;</a></span>autoFissionFuse()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void freetensor::Schedule::autoFuse </td>
+          <td class="memname">void freetensor::Schedule::autoFissionFuse </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="classfreetensor_1_1Target.html">Target</a> &amp;&#160;</td>
           <td class="paramname"><em>target</em>, </td>
@@ -385,7 +385,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p >(Experimental) Automatically fuse consecutive loops using some heuristics</p>
+<p >(Experimental) Automatically fuse consecutive loops or vice versa using some heuristics</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">target</td><td>: <a class="el" href="classfreetensor_1_1Target.html">Target</a> architecture </td></tr>
