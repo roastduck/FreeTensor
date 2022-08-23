@@ -19,10 +19,9 @@ inline std::ostream &operator<<(std::ostream &os, FissionSide side) {
 class HoistVar : public Mutator {
     ID loop_;
     ID before_, after_;
-    std::vector<std::pair<ID, ID>> scopePairs_;
     std::unordered_set<std::string> part0Vars_, part1Vars_;
     std::vector<VarDef> defStack_;
-    std::vector<ID> outerScopes_, innerLoops_;
+    std::vector<ID> innerLoops_;
 
     // var name -> loop id: which loops will a var cross during hoisting?
     std::unordered_map<std::string, std::vector<ID>> xLoops_;
@@ -33,13 +32,8 @@ class HoistVar : public Mutator {
     HoistVar(const ID &loop, const ID &before, const ID &after)
         : loop_(loop), before_(before), after_(after) {}
 
-    const std::vector<std::pair<ID, ID>> &scopePairs() const {
-        return scopePairs_;
-    }
-
     bool found() const { return isAfter_; }
 
-    const std::vector<ID> &outerScopes() const { return outerScopes_; }
     const std::vector<ID> &innerLoops() const { return innerLoops_; }
 
     const std::unordered_map<std::string, std::vector<ID>> &xLoops() const {
@@ -56,7 +50,6 @@ class HoistVar : public Mutator {
   protected:
     Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const For &op) override;
-    Stmt visit(const StmtSeq &op) override;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const Store &op) override;
     Expr visit(const Load &op) override;

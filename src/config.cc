@@ -63,15 +63,16 @@ static std::string getStrEnvRequired(const char *name) {
 
 static Opt<bool> getBoolEnv(const char *name) {
     if (auto _env = getStrEnv(name); _env.isValid()) {
-        auto &&env = *_env;
+        auto &&env = tolower(*_env);
         if (env == "true" || env == "yes" || env == "on" || env == "1") {
             return Opt<bool>::make(true);
         } else if (env == "false" || env == "no" || env == "off" ||
                    env == "0") {
             return Opt<bool>::make(false);
         } else {
-            ERROR((std::string) "Value of " + name +
-                  " must be true/yes/on/1 or false/no/off/0");
+            ERROR(
+                (std::string) "Value of " + name +
+                " must be true/yes/on/1 or false/no/off/0 (case insensitive)");
         }
     } else {
         return nullptr;
