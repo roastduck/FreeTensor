@@ -13,4 +13,19 @@ void GetLoopNestTree::visit(const For &op) {
     parent_ = parent;
 }
 
+void GetLoopNestTree::visit(const Store &op) {
+    Visitor::visit(op);
+    parent_->leafStmts_.emplace_back(op);
+}
+
+void GetLoopNestTree::visit(const ReduceTo &op) {
+    Visitor::visit(op);
+    parent_->leafStmts_.emplace_back(op);
+}
+
+void GetLoopNestTree::visit(const Eval &op) {
+    Visitor::visit(op);
+    parent_->leafStmts_.emplace_back(op);
+}
+
 } // namespace freetensor
