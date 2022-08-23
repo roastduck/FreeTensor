@@ -428,13 +428,17 @@ class Schedule {
      * This is a composite schedule command, which is implemented with other
      * commands
      *
+     * If moving a statement out of some loops, identical loops will be added
+     * around the moved statement, which is equivalent to fission these loops
+     *
      * @param stmt : ID of the statement to be moved
      * @param side : Whether `stmt` will be BEFORE or AFTER `dst
      * @param dst : Insert `stmt` to be directly after this statement
      * @throw InvalidSchedule if there is no feasible path to move
-     * @return : The new ID of stmt
+     * @return : (The new ID of the moved statement, The out-most newly
+     * introduced statments including the added loops)
      */
-    ID moveTo(const ID &stmt, MoveToSide side, const ID &dst);
+    std::pair<ID, ID> moveTo(const ID &stmt, MoveToSide side, const ID &dst);
 
     /**
      * Remove a variable. When the variable is used, recompute its value
