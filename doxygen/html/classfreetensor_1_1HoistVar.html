@@ -98,12 +98,8 @@ Collaboration diagram for freetensor::HoistVar:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a0575330471930ac6ba8d60006bbc8a7f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVar.html#a0575330471930ac6ba8d60006bbc8a7f">HoistVar</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;before, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;after)</td></tr>
 <tr class="separator:a0575330471930ac6ba8d60006bbc8a7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac3960bf571060cc6e8c746f71997d73b"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVar.html#ac3960bf571060cc6e8c746f71997d73b">scopePairs</a> () const</td></tr>
-<tr class="separator:ac3960bf571060cc6e8c746f71997d73b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b0cf600befa4432a1843e86b0e2bcfc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVar.html#a0b0cf600befa4432a1843e86b0e2bcfc">found</a> () const</td></tr>
 <tr class="separator:a0b0cf600befa4432a1843e86b0e2bcfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a40a49087a07e91940db601dcbaa0345e"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVar.html#a40a49087a07e91940db601dcbaa0345e">outerScopes</a> () const</td></tr>
-<tr class="separator:a40a49087a07e91940db601dcbaa0345e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a62ce5e6685cc442afb738d6c3f896305"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVar.html#a62ce5e6685cc442afb738d6c3f896305">innerLoops</a> () const</td></tr>
 <tr class="separator:a62ce5e6685cc442afb738d6c3f896305"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acb11d2183ca29c91f929bd88ad7b4a34"><td class="memItemLeft" align="right" valign="top">const std::unordered_map&lt; std::string, std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVar.html#acb11d2183ca29c91f929bd88ad7b4a34">xLoops</a> () const</td></tr>
@@ -122,8 +118,6 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:ac32c2950fef27683dfbea7cc41bc5dbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b52c13ea4aeac5f61c2d26c4c81714e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVar.html#a1b52c13ea4aeac5f61c2d26c4c81714e">visit</a> (const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) override</td></tr>
 <tr class="separator:a1b52c13ea4aeac5f61c2d26c4c81714e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaadb64133c8754fd8675f09ba1ab9d87"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVar.html#aaadb64133c8754fd8675f09ba1ab9d87">visit</a> (const <a class="el" href="namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96">StmtSeq</a> &amp;op) override</td></tr>
-<tr class="separator:aaadb64133c8754fd8675f09ba1ab9d87"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abe3ead181cb6aec1c6f454eeb327f542"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVar.html#abe3ead181cb6aec1c6f454eeb327f542">visit</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op) override</td></tr>
 <tr class="separator:abe3ead181cb6aec1c6f454eeb327f542"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac39de3838e2e408735088f3894069cfd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVar.html#ac39de3838e2e408735088f3894069cfd">visit</a> (const <a class="el" href="namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7">Store</a> &amp;op) override</td></tr>
@@ -340,58 +334,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a40a49087a07e91940db601dcbaa0345e" name="a40a49087a07e91940db601dcbaa0345e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a40a49087a07e91940db601dcbaa0345e">&#9670;&nbsp;</a></span>outerScopes()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp; freetensor::HoistVar::outerScopes </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="ac3960bf571060cc6e8c746f71997d73b" name="ac3960bf571060cc6e8c746f71997d73b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac3960bf571060cc6e8c746f71997d73b">&#9670;&nbsp;</a></span>scopePairs()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const std::vector&lt; std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp; freetensor::HoistVar::scopePairs </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a1b52c13ea4aeac5f61c2d26c4c81714e" name="a1b52c13ea4aeac5f61c2d26c4c81714e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1b52c13ea4aeac5f61c2d26c4c81714e">&#9670;&nbsp;</a></span>visit() <span class="overload">[1/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b52c13ea4aeac5f61c2d26c4c81714e">&#9670;&nbsp;</a></span>visit() <span class="overload">[1/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -419,7 +363,7 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <a id="aca0d5fd6fb1dbb97cb89febf5bd405f3" name="aca0d5fd6fb1dbb97cb89febf5bd405f3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aca0d5fd6fb1dbb97cb89febf5bd405f3">&#9670;&nbsp;</a></span>visit() <span class="overload">[2/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aca0d5fd6fb1dbb97cb89febf5bd405f3">&#9670;&nbsp;</a></span>visit() <span class="overload">[2/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -447,7 +391,7 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <a id="aeaf35620d36ab7accdb812c2799e618e" name="aeaf35620d36ab7accdb812c2799e618e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeaf35620d36ab7accdb812c2799e618e">&#9670;&nbsp;</a></span>visit() <span class="overload">[3/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aeaf35620d36ab7accdb812c2799e618e">&#9670;&nbsp;</a></span>visit() <span class="overload">[3/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -474,36 +418,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="aaadb64133c8754fd8675f09ba1ab9d87" name="aaadb64133c8754fd8675f09ba1ab9d87"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaadb64133c8754fd8675f09ba1ab9d87">&#9670;&nbsp;</a></span>visit() <span class="overload">[4/6]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::HoistVar::visit </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96">StmtSeq</a> &amp;&#160;</td>
-          <td class="paramname"><em>op</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Reimplemented from <a class="el" href="classfreetensor_1_1Mutator.html#ae38eae5fa69aae5d6d56d1863af41394">freetensor::Mutator</a>.</p>
-
-</div>
-</div>
 <a id="ac39de3838e2e408735088f3894069cfd" name="ac39de3838e2e408735088f3894069cfd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac39de3838e2e408735088f3894069cfd">&#9670;&nbsp;</a></span>visit() <span class="overload">[5/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ac39de3838e2e408735088f3894069cfd">&#9670;&nbsp;</a></span>visit() <span class="overload">[4/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -531,7 +447,7 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <a id="abe3ead181cb6aec1c6f454eeb327f542" name="abe3ead181cb6aec1c6f454eeb327f542"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abe3ead181cb6aec1c6f454eeb327f542">&#9670;&nbsp;</a></span>visit() <span class="overload">[6/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#abe3ead181cb6aec1c6f454eeb327f542">&#9670;&nbsp;</a></span>visit() <span class="overload">[5/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
