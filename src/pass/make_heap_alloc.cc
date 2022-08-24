@@ -73,8 +73,6 @@ Stmt InsertFree::visit(const StmtSeq &_op) {
     return op;
 }
 
-bool MakeHeapAlloc::inKernel() const { return forDepth_ != 0 || inCublas_; }
-
 bool MakeHeapAlloc::isDynamicSized(const VarDef &op) const {
     for (auto &&dim : op->buffer_->tensor()->shape()) {
         if (!dim->isConst()) {
@@ -100,7 +98,7 @@ Stmt MakeHeapAlloc::visit(const VarDef &_op) {
         // If we can benefit from inserting Alloc and Free, turn them to
         // heap-allocated
 
-        if (op->buffer_->mtype() == MemType::GPUGlobal && inKernel()) {
+        if (op->buffer_->mtype() == MemType::GPUGlobal && inKernel_) {
             return op;
         }
 
@@ -129,7 +127,7 @@ Stmt MakeHeapAlloc::visit(const VarDef &_op) {
     case MemType::GPUGlobalHeap: {
         // Insert Alloc and Free nodes for already heap-allocated variables
 
-        if (op->buffer_->mtype() == MemType::GPUGlobalHeap && inKernel()) {
+        if (op->buffer_->mtype() == MemType::GPUGlobalHeap && inKernel_) {
             throw InvalidProgram("Unable to allocate a dynamic-sized "
                                  "gpu global memory inside a kernel");
         }
@@ -145,22 +143,11 @@ Stmt MakeHeapAlloc::visit(const VarDef &_op) {
     return op;
 }
 
-Stmt MakeHeapAlloc::visit(const For &_op) {
-    bool delta_depth =
-        ((_op->property_->parallel_ != serialScope) &&
-         std::holds_alternative<CUDAScope>(_op->property_->parallel_));
-    if (delta_depth)
-        ++forDepth_;
-    auto ret = BaseClass::visit(_op);
-    if (delta_depth)
-        --forDepth_;
-    return ret;
-}
-
-Stmt MakeHeapAlloc::visit(const MatMul &_op) {
-    inCublas_ = true;
-    auto ret = BaseClass::visit(_op);
-    inCublas_ = false;
+Stmt MakeHeapAlloc::visit(const BSPScope &op) {
+    ASSERT(!inKernel_);
+    inKernel_ = true;
+    auto ret = BaseClass::visit(op);
+    inKernel_ = false;
     return ret;
 }
 

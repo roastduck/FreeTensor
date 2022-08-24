@@ -9,6 +9,7 @@ FOR:        'for';
 IN:         'in';
 ASSERT_TOKEN:     'assert';
 ASSUME:     'assume';
+BSP:        'bsp';
 FUNC:       'func';
 
 // empty

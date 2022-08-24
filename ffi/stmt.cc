@@ -102,6 +102,9 @@ void init_ffi_ast_stmt(py::module_ &m) {
             "cond", [](const Assume &op) -> Expr { return op->cond_; })
         .def_property_readonly(
             "body", [](const Assume &op) -> Stmt { return op->body_; });
+    py::class_<BSPScopeNode, BSPScope>(m, "BSPScope", pyStmt)
+        .def_property_readonly(
+            "body", [](const BSPScope &op) -> Stmt { return op->body_; });
     py::class_<EvalNode, Eval>(m, "Eval", pyStmt)
         .def_property_readonly(
             "expr", [](const Eval &op) -> Expr { return op->expr_; });
@@ -153,6 +156,10 @@ void init_ffi_ast_stmt(py::module_ &m) {
           static_cast<Stmt (*)(const Expr &, const Stmt &, const Metadata &,
                                const ID &)>(&_makeAssert),
           "cond"_a, "body"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
+    m.def("makeBSPScope",
+          static_cast<Stmt (*)(const Stmt &, const Metadata &, const ID &)>(
+              &_makeBSPScope),
+          "body"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeEval",
           static_cast<Stmt (*)(const Expr &, const Metadata &, const ID &)>(
               &_makeEval),

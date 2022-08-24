@@ -234,6 +234,8 @@ class Visitor {
         (*this)(op->body_);
     }
 
+    virtual void visit(const BSPScope &op) { (*this)(op->body_); }
+
     virtual void visit(const IfExpr &op) {
         (*this)(op->cond_);
         (*this)(op->thenCase_);

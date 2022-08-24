@@ -23,6 +23,7 @@ std::ostream &operator<<(std::ostream &os, ASTNodeType type) {
         DISPATCH(If);
         DISPATCH(Assert);
         DISPATCH(Assume);
+        DISPATCH(BSPScope);
         DISPATCH(Eval);
         DISPATCH(Any);
         DISPATCH(Var);

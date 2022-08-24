@@ -322,6 +322,32 @@ Stmt _makeAssume(Tcond &&cond, Tbody &&body, const Metadata &metadata = nullptr,
 }
 
 /**
+ * Bulk-synchronous parallel scope
+ *
+ * Parallel `For`s inside a `BSPScope` will be normalized. They start when the
+ * `BSPScope` starts, wait for their jobs, and end when the `BSPScope` ends. A
+ * GPU kernel is a typical `BSPScope`
+ *
+ * A `BSPScope` will be inserted in the lowering passes for specific backends.
+ * It can also be explicited inserted
+ */
+class BSPScopeNode : public StmtNode {
+  public:
+    SubTree<StmtNode> body_ = ChildOf{this};
+    void compHash() override;
+    DEFINE_NODE_TRAIT(BSPScope);
+};
+typedef Ref<BSPScopeNode> BSPScope;
+#define makeBSPScope(...) makeNode(BSPScope, __VA_ARGS__)
+template <class Tbody>
+Stmt _makeBSPScope(Tbody &&body, const Metadata &metadata = nullptr,
+                   const ID &id = {}) {
+    BSPScope b = BSPScope::make();
+    b->body_ = std::forward<Tbody>(body);
+    return b;
+}
+
+/**
  * Evaluate an expression and do nothing else
  *
  * Can be used to call an intrinsic

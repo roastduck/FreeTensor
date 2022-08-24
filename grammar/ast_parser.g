@@ -189,6 +189,10 @@ stmtWithoutID returns [Stmt node]
       {
         $node = $assume.node;
       }
+    | bsp
+      {
+        $node = $bsp.node;
+      }
     | EVAL '(' expr ')'
       {
         $node = makeEval($expr.node);
@@ -358,6 +362,13 @@ assume returns [Stmt node]
     : ASSUME '(' cond=expr ')' '{' stmts '}'
       {
         $node = makeAssume($cond.node, $stmts.node);
+      }
+    ;
+
+bsp returns [Stmt node]
+    : BSP '{' stmts '}'
+      {
+        $node = makeBSPScope($stmts.node);
       }
     ;
 

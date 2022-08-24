@@ -57,7 +57,7 @@ void CodeGenCUDA::genScalar(const VarDef &def,
                 "You are accessing gpu/global memory from outside of a kernel. "
                 "This is only for debugging, and it has a low performance");
             os() << "gpuScalar(";
-            CodeGenC::genScalar(def, indices);
+            BaseClass::genScalar(def, indices);
             os() << ")";
         } else {
             throw InvalidProgram("Unable to access " +
@@ -74,7 +74,7 @@ void CodeGenCUDA::genScalar(const VarDef &def,
             os() << "]";
         }
     } else {
-        CodeGenC::genScalar(def, indices);
+        BaseClass::genScalar(def, indices);
     }
 }
 
@@ -118,7 +118,7 @@ void CodeGenCUDA::visitStmt(const Stmt &stmt) {
         os() << "cudaStream_t __oldStream = __stream;" << std::endl;
         makeIndent();
         os() << "__stream = __newStream;" << std::endl;
-        CodeGenC::visitStmt(stmt);
+        BaseClass::visitStmt(stmt);
         makeIndent();
         os() << "__stream = __oldStream;" << std::endl;
 
@@ -142,7 +142,7 @@ void CodeGenCUDA::visitStmt(const Stmt &stmt) {
         makeIndent();
         os() << "cudaStreamDestroy(__newStream);" << std::endl;
     } else {
-        CodeGenC::visitStmt(stmt);
+        BaseClass::visitStmt(stmt);
     }
 }
 
@@ -154,7 +154,7 @@ void CodeGenCUDA::visit(const Min &op) {
         (*this)(op->rhs_);
         os() << ")";
     } else {
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
     }
 }
 
@@ -166,7 +166,7 @@ void CodeGenCUDA::visit(const Max &op) {
         (*this)(op->rhs_);
         os() << ")";
     } else {
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
     }
 }
 
@@ -221,7 +221,7 @@ void CodeGenCUDA::visit(const Store &op) {
         (*this)(op->expr_);
         os() << ";" << std::endl;
     } else {
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
     }
 }
 
@@ -243,7 +243,7 @@ void CodeGenCUDA::visit(const Load &op) {
         (*this)(op->indices_[0]);
         os() << ");" << std::endl;
     } else {
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
     }
 }
 
@@ -368,8 +368,57 @@ void CodeGenCUDA::visit(const Var &op) {
     } else if (op->name_ == ".blockIdx.z") {
         os() << "(int)blockIdx.z";
     } else {
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
     }
+}
+
+void CodeGenCUDA::visit(const BSPScope &op) {
+    ASSERT(!inKernel());
+    std::string kernel = "kernel" + std::to_string(nKernel_++);
+    pushStream(kernel);
+    sharedStackTop_ = 0;
+    auto oldGlobalStackTop = globalStackTop_;
+    beginBlock();
+    BaseClass::visit(op);
+    endBlock();
+    globalStackTop_ = oldGlobalStackTop; // Because we are not reducing
+                                         // globalStackTop_ inside a kernel
+    popStream();
+    Stream &stream = poppedStream_.back();
+    const auto &dim = stream.threadDim_;
+    auto sharedSize = stream.sharedSize_;
+    if (sharedSize > 96 * 1024) {
+        throw InvalidProgram("Shared memory too large");
+    }
+
+    makeIndent();
+    os() << "checkCudaError(cudaFuncSetAttribute(" << kernel
+         << ", cudaFuncAttributeMaxDynamicSharedMemorySize, "
+         << std::to_string(sharedSize) << "));" << std::endl;
+    makeIndent();
+    os() << kernel << "<<<dim3(";
+    exprOr1(dim, blockIdxX);
+    os() << ", ";
+    exprOr1(dim, blockIdxY);
+    os() << ", ";
+    exprOr1(dim, blockIdxZ);
+    os() << "), dim3(";
+    exprOr1(dim, threadIdxX);
+    os() << ", ";
+    exprOr1(dim, threadIdxY);
+    os() << ", ";
+    exprOr1(dim, threadIdxZ);
+    os() << "), " << std::to_string(sharedSize) << ", __stream>>>(";
+    bool first = true;
+    for (auto &&[name, buffer] : stream.useBuffers_) {
+        os() << (first ? "" : ", ") << mangle(name);
+        first = false;
+    }
+    for (auto &&name : stream.useIters_) {
+        os() << (first ? "" : ", ") << mangle(name);
+        first = false;
+    }
+    os() << ", _params, __glmem);" << std::endl;
 }
 
 void CodeGenCUDA::visit(const For &op) {
@@ -377,64 +426,15 @@ void CodeGenCUDA::visit(const For &op) {
         if (op->property_->unroll_) {
             os() << "#pragma unroll " << op->len_ << std::endl;
         }
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
     } else if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
-        if (!inKernel()) {
-            std::string kernel = "kernel" + std::to_string(nKernel_++);
-            pushStream(kernel);
-            sharedStackTop_ = 0;
-            auto oldGlobalStackTop = globalStackTop_;
-            beginBlock();
-            (*this)(op->body_);
-            streamStack_.back().threadDim_[op->property_->parallel_] = op->len_;
-            endBlock();
-            globalStackTop_ =
-                oldGlobalStackTop; // Because we are not reducing
-                                   // globalStackTop_ inside a kernel
-            popStream();
-            Stream &stream = poppedStream_.back();
-            const auto &dim = stream.threadDim_;
-            auto sharedSize = stream.sharedSize_;
-            if (sharedSize > 96 * 1024) {
-                throw InvalidProgram("Shared memory too large");
-            }
-
-            makeIndent();
-            os() << "checkCudaError(cudaFuncSetAttribute(" << kernel
-                 << ", cudaFuncAttributeMaxDynamicSharedMemorySize, "
-                 << std::to_string(sharedSize) << "));" << std::endl;
-            makeIndent();
-            os() << kernel << "<<<dim3(";
-            exprOr1(dim, blockIdxX);
-            os() << ", ";
-            exprOr1(dim, blockIdxY);
-            os() << ", ";
-            exprOr1(dim, blockIdxZ);
-            os() << "), dim3(";
-            exprOr1(dim, threadIdxX);
-            os() << ", ";
-            exprOr1(dim, threadIdxY);
-            os() << ", ";
-            exprOr1(dim, threadIdxZ);
-            os() << "), " << std::to_string(sharedSize) << ", __stream>>>(";
-            bool first = true;
-            for (auto &&[name, buffer] : stream.useBuffers_) {
-                os() << (first ? "" : ", ") << mangle(name);
-                first = false;
-            }
-            for (auto &&name : stream.useIters_) {
-                os() << (first ? "" : ", ") << mangle(name);
-                first = false;
-            }
-            os() << ", _params, __glmem);" << std::endl;
-        } else {
-            (*this)(op->body_);
-            streamStack_.back().threadDim_[op->property_->parallel_] = op->len_;
-        }
+        ASSERT(inKernel());
+        (*this)(op->body_);
+        streamStack_.back().threadDim_[op->property_->parallel_] = op->len_;
     } else if (std::holds_alternative<CUDAStreamScope>(
                    op->property_->parallel_)) {
         streamScopes_.insert(op->body_);
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
     } else {
         throw Error("Unsupported parallel method " +
                     ::freetensor::toString(op->property_->parallel_));
@@ -443,7 +443,7 @@ void CodeGenCUDA::visit(const For &op) {
 
 void CodeGenCUDA::visit(const VarDef &op) {
     if (op->buffer_->atype() != AccessType::Cache) {
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
 
     } else {
         switch (op->buffer_->mtype()) {
@@ -588,7 +588,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
         }
 
         default:
-            CodeGenC::visit(op);
+            BaseClass::visit(op);
             break;
         }
     }

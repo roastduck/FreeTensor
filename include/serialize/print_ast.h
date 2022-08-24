@@ -11,7 +11,8 @@ namespace freetensor {
 class PrintVisitor : public CodeGen<CodeGenStream> {
     bool printAllId_ = false, pretty_ = false, dtypeInLoad_ = false;
     const std::unordered_set<std::string> keywords = {
-        "if", "else", "for", "in", "assert", "assume", "func", "true", "false",
+        "if",     "else", "for",  "in",   "assert",
+        "assume", "bsp",  "func", "true", "false",
     };
 
     /**
@@ -143,6 +144,7 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void visit(const If &op) override;
     void visit(const Assert &op) override;
     void visit(const Assume &op) override;
+    void visit(const BSPScope &op) override;
     void visit(const Intrinsic &op) override;
     void visit(const Eval &op) override;
     void visit(const MatMul &op) override;

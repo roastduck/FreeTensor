@@ -15,6 +15,8 @@ struct CodeGenCUDAStream : public CodeGenStream {
 };
 
 class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
+    typedef CodeGenC<CodeGenCUDAStream> BaseClass;
+
   public:
     typedef CodeGenCUDAStream Stream;
 
@@ -49,7 +51,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     void genScalar(const VarDef &def,
                    const std::vector<Expr> &indices) override;
 
-    using CodeGenC<CodeGenCUDAStream>::visit;
+    using BaseClass::visit;
     void visitStmt(const Stmt &stmt) override;
     void visit(const Min &op) override;
     void visit(const Max &op) override;
@@ -61,6 +63,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     void visit(const Ceil &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const Var &op) override;
+    void visit(const BSPScope &op) override;
     void visit(const For &op) override;
     void visit(const VarDef &op) override;
     void visit(const MatMul &op) override;

@@ -8,6 +8,7 @@
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/multiplex_buffers.h>
 #include <pass/gpu/normalize_threads.h>
+#include <pass/gpu/set_bsp_scope.h>
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_const_shape.h>
@@ -147,6 +148,11 @@ void init_ffi_pass(py::module_ &m) {
 
     // GPU
 #ifdef FT_WITH_CUDA
+    m.def("gpu_set_bsp_scope",
+          static_cast<Func (*)(const Func &)>(&gpu::setBSPScope));
+    m.def("gpu_set_bsp_scope",
+          static_cast<Stmt (*)(const Stmt &)>(&gpu::setBSPScope));
+
     m.def("gpu_lower_parallel_reduction",
           static_cast<Func (*)(const Func &)>(&gpu::lowerParallelReduction));
     m.def("gpu_lower_parallel_reduction",

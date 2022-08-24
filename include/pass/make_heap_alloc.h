@@ -43,8 +43,7 @@ class MakeHeapAlloc : public ConstFold {
     // Inherit ConstFold for determine dynamic sizes
     typedef ConstFold BaseClass;
 
-    bool inCublas_ = false;
-    int forDepth_ = 0;
+    bool inKernel_ = false;
 
   private:
     bool inKernel() const;
@@ -53,8 +52,8 @@ class MakeHeapAlloc : public ConstFold {
   protected:
     using BaseClass::visit;
     Stmt visit(const VarDef &op) override;
-    Stmt visit(const For &op) override;
-    Stmt visit(const MatMul &op) override;
+    Stmt visit(const BSPScope &op) override;
+    Stmt visit(const MatMul &op) override { return op; }
 };
 
 /**

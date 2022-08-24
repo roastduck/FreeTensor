@@ -63,6 +63,7 @@ void init_ffi_ast(py::module_ &m) {
         .value("If", ASTNodeType::If)
         .value("Assert", ASTNodeType::Assert)
         .value("Assume", ASTNodeType::Assume)
+        .value("BSPScope", ASTNodeType::BSPScope)
         .value("Intrinsic", ASTNodeType::Intrinsic)
         .value("Eval", ASTNodeType::Eval);
 
@@ -132,6 +133,7 @@ template <> struct polymorphic_type_hook<freetensor::ASTNode> {
             DISPATCH(If);
             DISPATCH(Assert);
             DISPATCH(Assume);
+            DISPATCH(BSPScope);
             DISPATCH(Eval);
             DISPATCH(Any);
             DISPATCH(AnyExpr);
@@ -199,6 +201,7 @@ template <> struct polymorphic_type_hook<freetensor::StmtNode> {
             DISPATCH(If);
             DISPATCH(Assert);
             DISPATCH(Assume);
+            DISPATCH(BSPScope);
             DISPATCH(Eval);
             DISPATCH(Any);
         default:

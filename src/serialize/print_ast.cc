@@ -632,7 +632,7 @@ void PrintVisitor::visit(const If &op) {
 
 void PrintVisitor::visit(const Assert &op) {
     makeIndent();
-    os() << "assert ";
+    os() << prettyKeyword("assert ");
     recur(op->cond_);
     os() << " ";
     beginBlock();
@@ -642,9 +642,17 @@ void PrintVisitor::visit(const Assert &op) {
 
 void PrintVisitor::visit(const Assume &op) {
     makeIndent();
-    os() << "assume ";
+    os() << prettyKeyword("assume ");
     recur(op->cond_);
     os() << " ";
+    beginBlock();
+    recur(op->body_);
+    endBlock();
+}
+
+void PrintVisitor::visit(const BSPScope &op) {
+    makeIndent();
+    os() << prettyKeyword("bsp ");
     beginBlock();
     recur(op->body_);
     endBlock();

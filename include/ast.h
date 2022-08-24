@@ -37,6 +37,7 @@ enum class ASTNodeType : int {
     If,
     Assert,
     Assume,
+    BSPScope,
 
     // Calls to external libs
     MatMul,

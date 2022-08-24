@@ -34,12 +34,12 @@ class NormalizeThreads : public Mutator {
     NormalizeThreads(const Stmt &root) : root_(root) {}
 
   private:
-    Stmt doVisitFor(const For &op);
     Stmt doVisitStmt(const Stmt &op);
 
   protected:
     Expr visit(const Var &op) override;
     Stmt visit(const For &op) override;
+    Stmt visit(const BSPScope &op) override;
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const Eval &op) override;

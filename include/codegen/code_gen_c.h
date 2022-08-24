@@ -49,6 +49,7 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
         genScalar(this->def(op->var_), op->indices_);
     }
 
+    using BaseClass::visit;
     virtual void visit(const StmtSeq &op) override;
     virtual void visit(const VarDef &op) override;
     virtual void visit(const Var &op) override;

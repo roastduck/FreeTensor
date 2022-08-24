@@ -12,6 +12,7 @@
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/multiplex_buffers.h>
 #include <pass/gpu/normalize_threads.h>
+#include <pass/gpu/set_bsp_scope.h>
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/make_const_shape.h>
 #include <pass/make_heap_alloc.h>
@@ -87,12 +88,15 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
     ast = APPLY("make_parallel_reduction", makeParallelReduction, ast);
     ast = APPLY("shrink_for", shrinkFor,
                 ast); // After remove_writes and make_parallel_reduction
-    ast = APPLY("make_heap_alloc", makeHeapAlloc, ast);
 
     switch (target->type()) {
 #ifdef FT_WITH_CUDA
     case TargetType::GPU: {
         auto t = target.as<GPUTarget>();
+
+        ast = APPLY("gpu_set_bsp_scope", gpu::setBSPScope, ast);
+        ast = APPLY("make_heap_alloc", makeHeapAlloc, ast);
+
         // Before gpu_nromalize_threads
         ast = APPLY("gpu_lower_parallel_reduction", gpu::lowerParallelReduction,
                     ast);
@@ -117,6 +121,7 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
 #endif // FT_WITH_CUDA
 
     case TargetType::CPU:
+        ast = APPLY("make_heap_alloc", makeHeapAlloc, ast);
         ast = APPLY("cpu_lower_parallel_reduction", cpu::lowerParallelReduction,
                     ast);
         ast = APPLY("use_builtin_div", useBuiltinDiv, ast);

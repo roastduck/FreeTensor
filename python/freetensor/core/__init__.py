@@ -5,8 +5,8 @@ from freetensor_ffi import (AccessType, MemType, DataType, ASTNodeType,
 
 from .context import pop_ast
 from .expr import *
-from .stmt import (VarDef, For, If, Else, Alloc, Free, Assert, MarkLabel,
-                   NamedScope, Invoke, Eval, Any, Func, lookup_id)
+from .stmt import (VarDef, For, If, Else, Alloc, Free, Assert, BSPScope,
+                   MarkLabel, NamedScope, Invoke, Eval, Any, Func, lookup_id)
 from .analyze import *
 from .autograd import *
 from .passes import *

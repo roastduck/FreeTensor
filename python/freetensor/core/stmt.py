@@ -294,6 +294,23 @@ class Assert:
         top.append_stmt(ffi.makeAssert(self.cond, body, top.get_metadata()))
 
 
+class BSPScope:
+    '''
+    (Internal use only) Bulk-synchronous parallel scope
+    '''
+
+    def __enter__(self):
+        ctx_stack.push()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_value is not None:
+            # Do not generate an AST node
+            return False  # Do not suppress the exception
+        body = ctx_stack.pop().make_stmt()
+        top = ctx_stack.top()
+        top.append_stmt(ffi.makeBSPScope(body, top.get_metadata()))
+
+
 def MarkLabel(label: str):
     """
     Mark the ID of the following statement

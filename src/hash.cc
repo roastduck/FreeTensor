@@ -144,6 +144,12 @@ size_t Hasher::compHash(const AssumeNode &op) {
     return (h * K3 + B3) % P;
 }
 
+size_t Hasher::compHash(const BSPScopeNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + op.body_->hash()) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
 size_t Hasher::compHash(const EvalNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     h = ((h + op.expr_->hash()) * K2 + B2) % P;
@@ -394,6 +400,10 @@ bool HashComparator::compare(const Assume &lhs, const Assume &rhs) const {
     return true;
 }
 
+bool HashComparator::compare(const BSPScope &lhs, const BSPScope &rhs) const {
+    return (*this)(lhs->body_, rhs->body_);
+}
+
 bool HashComparator::compare(const Eval &lhs, const Eval &rhs) const {
     return (*this)(lhs->expr_, rhs->expr_);
 }
@@ -622,6 +632,7 @@ bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
         DISPATCH(If);
         DISPATCH(Assert);
         DISPATCH(Assume);
+        DISPATCH(BSPScope);
         DISPATCH(Eval);
         DISPATCH(MatMul);
         DISPATCH(Var);

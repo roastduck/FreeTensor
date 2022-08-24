@@ -327,6 +327,11 @@ class Mutator {
                                op);
     }
 
+    virtual Stmt visit(const BSPScope &op) {
+        return COPY_DEBUG_INFO(
+            makeBSPScope((*this)(op->body_), op->metadata(), op->id()), op);
+    }
+
     virtual Expr visit(const IfExpr &op) {
         return COPY_DEBUG_INFO(makeIfExpr((*this)(op->cond_),
                                           (*this)(op->thenCase_),

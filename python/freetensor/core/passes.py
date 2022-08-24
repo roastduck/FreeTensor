@@ -26,6 +26,7 @@ from freetensor_ffi import hoist_var_over_stmt_seq
 from freetensor_ffi import cpu_lower_parallel_reduction
 
 if config.with_cuda():
+    from freetensor_ffi import gpu_set_bsp_scope
     from freetensor_ffi import gpu_lower_parallel_reduction
     from freetensor_ffi import gpu_make_sync
     from freetensor_ffi import gpu_multiplex_buffers

@@ -51,14 +51,16 @@ def test_syncthreads():
         ("x", (4, 256), "int32", "input", "gpu/global"),
         ("y", (4, 256), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For(".blockIdx.x", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.VarDef("t", (256,), "int32", "cache",
-                               "gpu/shared") as t:
-                    ft.Any()
-                    ft.Eval(
-                        ft.intrinsic("__syncthreads()", has_side_effect=True))
-                    ft.Any()
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 256) as j:
+                    with ft.VarDef("t", (256,), "int32", "cache",
+                                   "gpu/shared") as t:
+                        ft.Any()
+                        ft.Eval(
+                            ft.intrinsic("__syncthreads()",
+                                         has_side_effect=True))
+                        ft.Any()
     assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -103,18 +105,20 @@ def test_syncthreads_in_loop():
         ("x", (4, 256), "int32", "input", "gpu/global"),
         ("y", (4, 5, 256), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For(".blockIdx.x", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.For("p", 0, 5) as p:
-                    with ft.VarDef("t", (256,), "int32", "cache",
-                                   "gpu/shared") as t:
-                        ft.Any()
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 256) as j:
+                    with ft.For("p", 0, 5) as p:
+                        with ft.VarDef("t", (256,), "int32", "cache",
+                                       "gpu/shared") as t:
+                            ft.Any()
+                            ft.Eval(
+                                ft.intrinsic("__syncthreads()",
+                                             has_side_effect=True))
+                            ft.Any()
                         ft.Eval(
                             ft.intrinsic("__syncthreads()",
                                          has_side_effect=True))
-                        ft.Any()
-                    ft.Eval(
-                        ft.intrinsic("__syncthreads()", has_side_effect=True))
     assert ft.pop_ast().match(func.body)
 
 
@@ -148,16 +152,18 @@ def test_syncthreads_at_outer_loop():
         ("x", (4, 256), "int32", "input", "gpu/global"),
         ("y", (4, 5, 256), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For(".blockIdx.x", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.VarDef("t", (256,), "int32", "cache",
-                               "gpu/shared") as t:
-                    ft.Any()
-                    ft.Eval(
-                        ft.intrinsic("__syncthreads()",
-                                     has_side_effect=True))  # Here outside p
-                    with ft.For("p", 0, 5) as p:
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 256) as j:
+                    with ft.VarDef("t", (256,), "int32", "cache",
+                                   "gpu/shared") as t:
                         ft.Any()
+                        ft.Eval(
+                            ft.intrinsic(
+                                "__syncthreads()",
+                                has_side_effect=True))  # Here outside p
+                        with ft.For("p", 0, 5) as p:
+                            ft.Any()
     assert ft.pop_ast().match(func.body)
 
 
@@ -198,24 +204,25 @@ def test_syncthreads_not_at_outer_loop():
         ("x1", (4, 5, 256), "int32", "input", "gpu/global"),
         ("y", (4, 5, 256), "int32", "output", "gpu/global"),
     ]) as (x0, x1, y):
-        with ft.For(".blockIdx.x", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.VarDef("t0", (256,), "int32", "cache",
-                               "gpu/shared") as t0:
-                    ft.Any()  # t0
-                    # Not here
-                    with ft.For("p", 0, 5) as p:
-                        with ft.VarDef("t1", (256,), "int32", "cache",
-                                       "gpu/shared") as t1:
-                            ft.Any()  # t1
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 256) as j:
+                    with ft.VarDef("t0", (256,), "int32", "cache",
+                                   "gpu/shared") as t0:
+                        ft.Any()  # t0
+                        # Not here
+                        with ft.For("p", 0, 5) as p:
+                            with ft.VarDef("t1", (256,), "int32", "cache",
+                                           "gpu/shared") as t1:
+                                ft.Any()  # t1
+                                ft.Eval(
+                                    ft.intrinsic(
+                                        "__syncthreads()",
+                                        has_side_effect=True))  # Here inside p
+                                ft.Any()  # L3
                             ft.Eval(
-                                ft.intrinsic(
-                                    "__syncthreads()",
-                                    has_side_effect=True))  # Here inside p
-                            ft.Any()  # L3
-                        ft.Eval(
-                            ft.intrinsic("__syncthreads()",
-                                         has_side_effect=True))
+                                ft.intrinsic("__syncthreads()",
+                                             has_side_effect=True))
     assert ft.pop_ast().match(func.body)
 
 
@@ -242,16 +249,18 @@ def test_syncthreads_at_outer_branch():
         ("x", (4, 256), "int32", "input", "gpu/global"),
         ("y", (4,), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For(".blockIdx.x", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.VarDef("t", (256,), "int32", "cache",
-                               "gpu/shared") as t:
-                    ft.Any()
-                    ft.Eval(
-                        ft.intrinsic("__syncthreads()",
-                                     has_side_effect=True))  # Here outside If
-                    with ft.If(j == 0):
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 256) as j:
+                    with ft.VarDef("t", (256,), "int32", "cache",
+                                   "gpu/shared") as t:
                         ft.Any()
+                        ft.Eval(
+                            ft.intrinsic(
+                                "__syncthreads()",
+                                has_side_effect=True))  # Here outside If
+                        with ft.If(j == 0):
+                            ft.Any()
     assert ft.pop_ast().match(func.body)
 
 
@@ -284,17 +293,19 @@ def test_syncthreads_at_outer_loop_and_outer_branch():
         ("x", (4, 256), "int32", "input", "gpu/global"),
         ("y", (4, 5, 256), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For(".blockIdx.x", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.VarDef("t", (256,), "int32", "cache",
-                               "gpu/shared") as t:
-                    ft.Any()
-                    ft.Eval(
-                        ft.intrinsic("__syncthreads()", has_side_effect=True)
-                    )  # Here outside p and ouside If
-                    with ft.If(j == 0):
-                        with ft.For("p", 0, 5) as p:
-                            ft.Any()
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 256) as j:
+                    with ft.VarDef("t", (256,), "int32", "cache",
+                                   "gpu/shared") as t:
+                        ft.Any()
+                        ft.Eval(
+                            ft.intrinsic("__syncthreads()",
+                                         has_side_effect=True)
+                        )  # Here outside p and ouside If
+                        with ft.If(j == 0):
+                            with ft.For("p", 0, 5) as p:
+                                ft.Any()
     assert ft.pop_ast().match(func.body)
 
 
@@ -324,18 +335,20 @@ def test_syncthreads_split_branch():
         ("y", (4,), "int32", "output", "gpu/global"),
         ("z", (4,), "int32", "inout", "gpu/global"),
     ]) as (x, y, z):
-        with ft.For(".blockIdx.x", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.VarDef("t", (256,), "int32", "cache",
-                               "gpu/shared") as t:
-                    ft.Any()
-                    with ft.If(j == 0):
-                        ft.Any()  # z[i]
-                    ft.Eval(
-                        ft.intrinsic("__syncthreads()",
-                                     has_side_effect=True))  # Here outside If
-                    with ft.If(j == 0):
-                        ft.Any()  # y[i]
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 256) as j:
+                    with ft.VarDef("t", (256,), "int32", "cache",
+                                   "gpu/shared") as t:
+                        ft.Any()
+                        with ft.If(j == 0):
+                            ft.Any()  # z[i]
+                        ft.Eval(
+                            ft.intrinsic(
+                                "__syncthreads()",
+                                has_side_effect=True))  # Here outside If
+                        with ft.If(j == 0):
+                            ft.Any()  # y[i]
     assert ft.pop_ast().match(func.body)
 
 
@@ -367,22 +380,24 @@ def test_syncthreads_split_branch_out_of_const_loop():
     with ft.VarDef([("x", (10, 10, 32), "int32", "input", "gpu/global"),
                     ("y", (10, 10), "int32", "output", "gpu/global")]) as (x,
                                                                            y):
-        with ft.For(".blockIdx.x", 0, 3) as i:
-            with ft.For(".threadIdx.y", 0, 4) as j:
-                with ft.For(".threadIdx.x", 0, 32) as p:
-                    with ft.For("k", 0, 10) as k:
-                        with ft.VarDef("t", (4, 2), "int32", "cache",
-                                       "gpu/shared") as t:
-                            with ft.If(ft.any()):
-                                ft.Any()  # t
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 3) as i:
+                with ft.For(".threadIdx.y", 0, 4) as j:
+                    with ft.For(".threadIdx.x", 0, 32) as p:
+                        with ft.For("k", 0, 10) as k:
+                            with ft.VarDef("t", (4, 2), "int32", "cache",
+                                           "gpu/shared") as t:
+                                with ft.If(ft.any()):
+                                    ft.Any()  # t
+                                ft.Eval(
+                                    ft.intrinsic("__syncwarp()",
+                                                 has_side_effect=True))
+                                with ft.If(ft.any()):
+                                    with ft.If(p == 0):
+                                        ft.Any()  # y
                             ft.Eval(
                                 ft.intrinsic("__syncwarp()",
                                              has_side_effect=True))
-                            with ft.If(ft.any()):
-                                with ft.If(p == 0):
-                                    ft.Any()  # y
-                        ft.Eval(
-                            ft.intrinsic("__syncwarp()", has_side_effect=True))
     assert ft.pop_ast().match(func.body)
 
 
@@ -420,31 +435,36 @@ def test_syncthreads_split_branch_with_else():
         ("y", (4,), "int32", "output", "gpu/global"),
         ("z", (4,), "int32", "inout", "gpu/global"),
     ]) as (x, y, z):
-        with ft.For(".blockIdx.x", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.VarDef("t", (2,), "int32", "cache", "gpu/shared") as t:
-                    with ft.If(i < 2):
-                        ft.Any()
-                        with ft.If(j == 0):
-                            ft.Any()  # z[i]
-                    ft.Eval(
-                        ft.intrinsic("__syncthreads()",
-                                     has_side_effect=True))  # Here outside If
-                    with ft.If(i < 2):
-                        with ft.If(j == 0):
-                            ft.Any()  # y[i]
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 256) as j:
+                    with ft.VarDef("t", (2,), "int32", "cache",
+                                   "gpu/shared") as t:
+                        with ft.If(i < 2):
+                            ft.Any()
+                            with ft.If(j == 0):
+                                ft.Any()  # z[i]
+                        ft.Eval(
+                            ft.intrinsic(
+                                "__syncthreads()",
+                                has_side_effect=True))  # Here outside If
+                        with ft.If(i < 2):
+                            with ft.If(j == 0):
+                                ft.Any()  # y[i]
 
-                with ft.VarDef("t", (2,), "int32", "cache", "gpu/shared") as t:
-                    with ft.If(i >= 2):
-                        ft.Any()
-                        with ft.If(j == 0):
-                            ft.Any()  # z[i]
-                    ft.Eval(
-                        ft.intrinsic("__syncthreads()",
-                                     has_side_effect=True))  # Here outside If
-                    with ft.If(i >= 2):
-                        with ft.If(j == 0):
-                            ft.Any()  # y[i]
+                    with ft.VarDef("t", (2,), "int32", "cache",
+                                   "gpu/shared") as t:
+                        with ft.If(i >= 2):
+                            ft.Any()
+                            with ft.If(j == 0):
+                                ft.Any()  # z[i]
+                        ft.Eval(
+                            ft.intrinsic(
+                                "__syncthreads()",
+                                has_side_effect=True))  # Here outside If
+                        with ft.If(i >= 2):
+                            with ft.If(j == 0):
+                                ft.Any()  # y[i]
     assert ft.pop_ast().match(func.body)
 
 
@@ -479,23 +499,24 @@ def test_syncthreads_split_branch_and_vardef():
         ("z1", (4,), "int32", "inout", "gpu/global"),
         ("z2", (4,), "int32", "inout", "gpu/global"),
     ]) as (x, y, z1, z2):
-        with ft.For(".blockIdx.x", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.VarDef("t", (256,), "int32", "cache",
-                               "gpu/shared") as t:
-                    ft.Any()
-                    with ft.VarDef("u", (1,), "int32", "cache",
-                                   "gpu/local") as u:
-                        with ft.If(j == 0):
-                            ft.Any()  # u[0]
-                        ft.Eval(
-                            ft.intrinsic(
-                                "__syncthreads()",
-                                has_side_effect=True))  # Here outside If
-                        with ft.If(j == 0):
-                            ft.Any()  # y[i]
-                            ft.Any()  # z1[i]
-                            ft.Any()  # z2[i]
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 256) as j:
+                    with ft.VarDef("t", (256,), "int32", "cache",
+                                   "gpu/shared") as t:
+                        ft.Any()
+                        with ft.VarDef("u", (1,), "int32", "cache",
+                                       "gpu/local") as u:
+                            with ft.If(j == 0):
+                                ft.Any()  # u[0]
+                            ft.Eval(
+                                ft.intrinsic(
+                                    "__syncthreads()",
+                                    has_side_effect=True))  # Here outside If
+                            with ft.If(j == 0):
+                                ft.Any()  # y[i]
+                                ft.Any()  # z1[i]
+                                ft.Any()  # z2[i]
     assert ft.pop_ast().match(func.body)
 
 
@@ -541,43 +562,46 @@ def test_syncthreads_split_branch_and_vardef_with_else():
         ("z1", (4,), "int32", "inout", "gpu/global"),
         ("z2", (4,), "int32", "inout", "gpu/global"),
     ]) as (x, y, z1, z2):
-        with ft.For(".blockIdx.x", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.VarDef("t", (2,), "int32", "cache", "gpu/shared") as t:
-                    with ft.If(i < 2):
-                        ft.Any()
-                    with ft.VarDef("u1", (1,), "int32", "cache",
-                                   "gpu/local") as u:
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 256) as j:
+                    with ft.VarDef("t", (2,), "int32", "cache",
+                                   "gpu/shared") as t:
                         with ft.If(i < 2):
-                            with ft.If(j == 0):
-                                ft.Any()  # u[0]
-                        ft.Eval(
-                            ft.intrinsic(
-                                "__syncthreads()",
-                                has_side_effect=True))  # Here outside If
-                        with ft.If(i < 2):
-                            with ft.If(j == 0):
-                                ft.Any()  # y[i]
-                                ft.Any()  # z1[i]
-                                ft.Any()  # z2[i]
+                            ft.Any()
+                        with ft.VarDef("u1", (1,), "int32", "cache",
+                                       "gpu/local") as u:
+                            with ft.If(i < 2):
+                                with ft.If(j == 0):
+                                    ft.Any()  # u[0]
+                            ft.Eval(
+                                ft.intrinsic(
+                                    "__syncthreads()",
+                                    has_side_effect=True))  # Here outside If
+                            with ft.If(i < 2):
+                                with ft.If(j == 0):
+                                    ft.Any()  # y[i]
+                                    ft.Any()  # z1[i]
+                                    ft.Any()  # z2[i]
 
-                with ft.VarDef("t", (2,), "int32", "cache", "gpu/shared") as t:
-                    with ft.If(i >= 2):
-                        ft.Any()
-                    with ft.VarDef("u2", (1,), "int32", "cache",
-                                   "gpu/local") as u:
+                    with ft.VarDef("t", (2,), "int32", "cache",
+                                   "gpu/shared") as t:
                         with ft.If(i >= 2):
-                            with ft.If(j == 0):
-                                ft.Any()  # u[0]
-                        ft.Eval(
-                            ft.intrinsic(
-                                "__syncthreads()",
-                                has_side_effect=True))  # Here outside If
-                        with ft.If(i >= 2):
-                            with ft.If(j == 0):
-                                ft.Any()  # y[i]
-                                ft.Any()  # z1[i]
-                                ft.Any()  # z2[i]
+                            ft.Any()
+                        with ft.VarDef("u2", (1,), "int32", "cache",
+                                       "gpu/local") as u:
+                            with ft.If(i >= 2):
+                                with ft.If(j == 0):
+                                    ft.Any()  # u[0]
+                            ft.Eval(
+                                ft.intrinsic(
+                                    "__syncthreads()",
+                                    has_side_effect=True))  # Here outside If
+                            with ft.If(i >= 2):
+                                with ft.If(j == 0):
+                                    ft.Any()  # y[i]
+                                    ft.Any()  # z1[i]
+                                    ft.Any()  # z2[i]
     assert ft.pop_ast().match(func.body)
 
 
@@ -622,12 +646,15 @@ def test_syncwarp():
         ("x", (4, 4), "int32", "input", "gpu/global"),
         ("y", (4, 4), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For(".blockIdx.x", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 4) as j:
-                with ft.VarDef("t", (4,), "int32", "cache", "gpu/shared") as t:
-                    ft.Any()
-                    ft.Eval(ft.intrinsic("__syncwarp()", has_side_effect=True))
-                    ft.Any()
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 4) as j:
+                    with ft.VarDef("t", (4,), "int32", "cache",
+                                   "gpu/shared") as t:
+                        ft.Any()
+                        ft.Eval(
+                            ft.intrinsic("__syncwarp()", has_side_effect=True))
+                        ft.Any()
     assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -672,23 +699,24 @@ def test_use_syncthreads_for_non_aligned_warps():
     with ft.VarDef([("u", (64, 64, 64, 5), "float64", "input", "gpu/global"),
                     ("e", (64, 64, 64, 5), "float64", "output", "gpu/global")
                    ]) as (u, e):
-        with ft.For("i", 0, 64) as i:
-            with ft.For("j", 0, 64) as j:
-                with ft.For("k", 0, 64) as k:
-                    with ft.For("i1", 0, 5) as i1:
-                        with ft.VarDef("t", (64, 5), "float64", "cache",
-                                       "gpu/shared") as t:
-                            with ft.If(i1 == 0):
-                                t[k, 0] = u[i, j, k, 0]
-                                t[k, 1] = u[i, j, k, 1]
-                                t[k, 2] = u[i, j, k, 2]
-                                t[k, 3] = u[i, j, k, 3]
-                                t[k, 4] = u[i, j, k, 4]
+        with ft.BSPScope():
+            with ft.For("i", 0, 64) as i:
+                with ft.For("j", 0, 64) as j:
+                    with ft.For("k", 0, 64) as k:
+                        with ft.For("i1", 0, 5) as i1:
+                            with ft.VarDef("t", (64, 5), "float64", "cache",
+                                           "gpu/shared") as t:
+                                with ft.If(i1 == 0):
+                                    t[k, 0] = u[i, j, k, 0]
+                                    t[k, 1] = u[i, j, k, 1]
+                                    t[k, 2] = u[i, j, k, 2]
+                                    t[k, 3] = u[i, j, k, 3]
+                                    t[k, 4] = u[i, j, k, 4]
 
-                            # Use syncthreads here
-                            ft.Eval(
-                                ft.intrinsic("__syncthreads()",
-                                             has_side_effect=True))
+                                # Use syncthreads here
+                                ft.Eval(
+                                    ft.intrinsic("__syncthreads()",
+                                                 has_side_effect=True))
 
-                            e[i, j, k, i1] = t[k, i1]
+                                e[i, j, k, i1] = t[k, i1]
     assert ft.pop_ast().match(ast)

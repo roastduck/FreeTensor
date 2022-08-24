@@ -473,6 +473,12 @@ void MatchVisitor::visit(const Assert &op) {
     RECURSE(op->body_, instance->body_);
 }
 
+void MatchVisitor::visit(const BSPScope &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::BSPScope);
+    auto instance = instance_.as<BSPScopeNode>();
+    RECURSE(op->body_, instance->body_);
+}
+
 void MatchVisitor::visit(const Intrinsic &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Intrinsic);
     auto instance = instance_.as<IntrinsicNode>();

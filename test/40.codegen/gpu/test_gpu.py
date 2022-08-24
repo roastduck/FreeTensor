@@ -144,10 +144,11 @@ def test_split_by_block_and_bind():
         ("x", (100,), "int32", "input", "gpu/global"),
         ("y", (100,), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For(".blockIdx.x", 0, 3) as i:
-            with ft.For(".threadIdx.x", 0, 34) as j:
-                with ft.If(ft.any()):
-                    ft.Any()
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 3) as i:
+                with ft.For(".threadIdx.x", 0, 34) as j:
+                    with ft.If(ft.any()):
+                        ft.Any()
     assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -184,10 +185,11 @@ def test_not_remove_necessary_range_guard():
         ("x", (5, 32), "int32", "input", "gpu/global"),
         ("y", (5, 32), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For(".blockIdx.x", 0, 5) as i:
-            with ft.For(".threadIdx.x", 0, 32) as j:
-                with ft.If(ft.any()):
-                    ft.Any()
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 5) as i:
+                with ft.For(".threadIdx.x", 0, 32) as j:
+                    with ft.If(ft.any()):
+                        ft.Any()
     assert ft.pop_ast().match(func.body)
 
 
@@ -563,12 +565,13 @@ def test_multiplex_shared_1():
         ("x", (4, 256), "int32", "input", "gpu/global"),
         ("y", (4, 256), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For(".threadIdx.y", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.VarDef("t", (4, 256), "int32", "cache",
-                               "gpu/shared") as t:
-                    t[i, j] = x[i, j] * 2
-                    y[i, j] = t[i, j] + 1
+        with ft.BSPScope():
+            with ft.For(".threadIdx.y", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 256) as j:
+                    with ft.VarDef("t", (4, 256), "int32", "cache",
+                                   "gpu/shared") as t:
+                        t[i, j] = x[i, j] * 2
+                        y[i, j] = t[i, j] + 1
     assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -613,12 +616,13 @@ def test_multiplex_shared_2():
         ("x", (4, 256), "int32", "input", "gpu/global"),
         ("y", (4, 256), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For(".threadIdx.y", 0, 4) as i:
-            with ft.For(".threadIdx.x", 0, 64) as j:
-                with ft.VarDef("t", (256,), "int32", "cache",
-                               "gpu/shared") as t:
-                    t[j + i * 64] = x[i, j + i * 64] * 2
-                    y[i, j + i * 64] = t[j + i * 64] + 1
+        with ft.BSPScope():
+            with ft.For(".threadIdx.y", 0, 4) as i:
+                with ft.For(".threadIdx.x", 0, 64) as j:
+                    with ft.VarDef("t", (256,), "int32", "cache",
+                                   "gpu/shared") as t:
+                        t[j + i * 64] = x[i, j + i * 64] * 2
+                        y[i, j + i * 64] = t[j + i * 64] + 1
     assert ft.pop_ast().match(func.body)
 
 
@@ -658,16 +662,17 @@ def test_simplex_local_1():
                     ("y", (10, 10, 10), "int32", "output", "gpu/global"),
                     ("z", (10, 10, 10), "int32", "output", "gpu/global")
                    ]) as (x, y, z):
-        with ft.For(".blockIdx", 0, 10) as b:
-            with ft.For(".threadIdx.x", 0, 10) as i:
-                with ft.VarDef("t", (1, 10), "int32", "cache",
-                               "gpu/local") as t:
-                    with ft.For("j", 0, 10) as j:
-                        t[0, j] = x[b, i, j] * 2
-                    with ft.For("j$1", 0, 10) as j:
-                        y[b, i, j] = t[0, j] + 1
-                    with ft.For("j$2", 0, 10) as j:
-                        z[b, i, j] = t[0, j] + 2
+        with ft.BSPScope():
+            with ft.For(".blockIdx", 0, 10) as b:
+                with ft.For(".threadIdx.x", 0, 10) as i:
+                    with ft.VarDef("t", (1, 10), "int32", "cache",
+                                   "gpu/local") as t:
+                        with ft.For("j", 0, 10) as j:
+                            t[0, j] = x[b, i, j] * 2
+                        with ft.For("j$1", 0, 10) as j:
+                            y[b, i, j] = t[0, j] + 1
+                        with ft.For("j$2", 0, 10) as j:
+                            z[b, i, j] = t[0, j] + 2
     assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -718,16 +723,17 @@ def test_simplex_local_2():
         ("x", (10, 10, 10), "int32", "input", "gpu/global"),
         ("y", (10, 10, 10), "int32", "output", "gpu/global"),
     ]) as (x, y):
-        with ft.For(".blockIdx", 0, 10) as b:
-            with ft.For(".threadIdx.x", 0, 10) as i:
-                with ft.VarDef("t", (1, 10), "int32", "cache",
-                               "gpu/local") as t:
-                    with ft.For("j", 0, 10) as j:
-                        t[0, j] = x[b, i, j] * 2
-                    with ft.For("j$1", 0, 10) as j:
-                        t[0, j] += t[0, i]
-                    with ft.For("j$2", 0, 10) as j:
-                        y[b, i, j] = t[0, j] + 1
+        with ft.BSPScope():
+            with ft.For(".blockIdx", 0, 10) as b:
+                with ft.For(".threadIdx.x", 0, 10) as i:
+                    with ft.VarDef("t", (1, 10), "int32", "cache",
+                                   "gpu/local") as t:
+                        with ft.For("j", 0, 10) as j:
+                            t[0, j] = x[b, i, j] * 2
+                        with ft.For("j$1", 0, 10) as j:
+                            t[0, j] += t[0, i]
+                        with ft.For("j$2", 0, 10) as j:
+                            y[b, i, j] = t[0, j] + 1
     assert ft.make_reduction(ft.pop_ast()).match(func.body)
 
 
@@ -758,15 +764,16 @@ def test_relax_shared_shape_to_constants():
             ("y", (4, 256), "int32", "output", "gpu/global"),
         ]) as (x, y):
             with ft.Assert(n <= 256):
-                with ft.For(".threadIdx.y", 0, 4) as i:
-                    with ft.VarDef("t", (4, 256), "int32", "cache",
-                                   "gpu/shared") as t:
-                        with ft.For("j", 0, n) as j:
-                            t[i, j] = x[i, j] * 2
-                        with ft.For("j", 0, n) as j:
-                            y[i, j] = t[i, j] + 1
-                    with ft.For("j", n, 256) as j:
-                        y[i, j] = 0
+                with ft.BSPScope():
+                    with ft.For(".threadIdx.y", 0, 4) as i:
+                        with ft.VarDef("t", (4, 256), "int32", "cache",
+                                       "gpu/shared") as t:
+                            with ft.For("j", 0, n) as j:
+                                t[i, j] = x[i, j] * 2
+                            with ft.For("j", 0, n) as j:
+                                y[i, j] = t[i, j] + 1
+                        with ft.For("j", n, 256) as j:
+                            y[i, j] = 0
     assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -830,14 +837,17 @@ def test_parallel_different_length():
         ("b", (4, 8), "int32", "input", "gpu/global"),
         ("c", (4, 8), "int32", "output", "gpu/global"),
     ]) as (a, b, c):
-        with ft.For(".blockIdx.x", 0, 4) as blk:
-            with ft.For(".threadIdx.x", 0, 8) as th:
-                with ft.VarDef("t", (4,), "int32", "cache", "gpu/shared") as t:
-                    with ft.If(th < 4):
-                        t[th] = a[blk, th]
-                    ft.Eval(ft.intrinsic("__syncwarp()", has_side_effect=True))
-                    with ft.For("j", 0, 4) as j:
-                        ft.Any()
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as blk:
+                with ft.For(".threadIdx.x", 0, 8) as th:
+                    with ft.VarDef("t", (4,), "int32", "cache",
+                                   "gpu/shared") as t:
+                        with ft.If(th < 4):
+                            t[th] = a[blk, th]
+                        ft.Eval(
+                            ft.intrinsic("__syncwarp()", has_side_effect=True))
+                        with ft.For("j", 0, 4) as j:
+                            ft.Any()
     assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -875,10 +885,11 @@ def test_bounded_length():
         ("a", (100, 100), "int32", "input", "gpu/global"),
         ("b", (100, 100), "int32", "output", "gpu/global"),
     ]) as (a, b):
-        with ft.For(".threadIdx.y", 0, 99) as thy:
-            with ft.For(".threadIdx.x", 0, 99) as thx:  # i = thx + 1
-                with ft.If(thx >= thy):
-                    b[thx + 1, thy] = a[thx + 1, thy] + 1
+        with ft.BSPScope():
+            with ft.For(".threadIdx.y", 0, 99) as thy:
+                with ft.For(".threadIdx.x", 0, 99) as thx:  # i = thx + 1
+                    with ft.If(thx >= thy):
+                        b[thx + 1, thy] = a[thx + 1, thy] + 1
     assert ft.pop_ast().match(func.body)
 
 
@@ -922,13 +933,16 @@ def test_parallel_broadcast():
         ("b", (1, 8), "int32", "input", "gpu/global"),
         ("c", (4, 8), "int32", "output", "gpu/global"),
     ]) as (a, b, c):
-        with ft.For(".blockIdx.x", 0, 4) as blk:
-            with ft.For(".threadIdx.x", 0, 8) as th:
-                with ft.VarDef("t", (1,), "int32", "cache", "gpu/shared") as t:
-                    with ft.If(th == 0):
-                        t[0] = a[blk, 0]
-                    ft.Eval(ft.intrinsic("__syncwarp()", has_side_effect=True))
-                    ft.Any()
+        with ft.BSPScope():
+            with ft.For(".blockIdx.x", 0, 4) as blk:
+                with ft.For(".threadIdx.x", 0, 8) as th:
+                    with ft.VarDef("t", (1,), "int32", "cache",
+                                   "gpu/shared") as t:
+                        with ft.If(th == 0):
+                            t[0] = a[blk, 0]
+                        ft.Eval(
+                            ft.intrinsic("__syncwarp()", has_side_effect=True))
+                        ft.Any()
     assert ft.pop_ast().match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
