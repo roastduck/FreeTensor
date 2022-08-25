@@ -2,8 +2,8 @@
 #include <unordered_map>
 
 #include <signal.h>
-
-#include <Python.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <config.h>
 #include <debug.h>
@@ -26,12 +26,9 @@ InvalidSchedule::InvalidSchedule(const Ref<ScheduleLogItem> &log,
                       "\nThe reason is: " + msg) {}
 
 InterruptExcept::InterruptExcept() : Error("Interrupted (Ctrl+C)") {
-    // 1. If not called from Python, raise SIGINT as normal
+    // Raise SIGINT as normal. But if called from Python, nothing will happen,
+    // because Python sets to ignore SIGINT
     kill(getpid(), SIGINT);
-
-    // 2. If called from Python, report it to Python
-    PyErr_SetInterrupt();
-    PyErr_CheckSignals();
 }
 
 void reportWarning(const std::string &msg) {

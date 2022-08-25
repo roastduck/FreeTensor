@@ -13,25 +13,10 @@ using namespace pybind11::literals;
 
 void init_ffi_driver(py::module_ &m) {
     py::class_<Driver, Ref<Driver>>(m, "Driver")
-        .def(py::init([](const Func &func, const std::string &code,
-                         const Ref<Device> &device, bool verbose) {
-            try {
-                return Ref<Driver>::make(func, code, device, verbose);
-            } catch (const InterruptExcept &e) {
-                // Handle Ctrl+C. See the doc of InterruptExcept
-                throw py::error_already_set();
-            }
-        }))
-        .def(py::init([](const Func &func, const std::string &code,
-                         const Ref<Device> &device,
-                         const Ref<Device> &hostDevice, bool verbose) {
-            try {
-                return Ref<Driver>::make(func, code, device, verbose);
-            } catch (const InterruptExcept &e) {
-                // Handle Ctrl+C. See the doc of InterruptExcept
-                throw py::error_already_set();
-            }
-        }))
+        .def(py::init<const Func &, const std::string &, const Ref<Device> &,
+                      bool>())
+        .def(py::init<const Func &, const std::string &, const Ref<Device> &,
+                      const Ref<Device> &, bool>())
         .def("set_args",
              static_cast<void (Driver::*)(
                  const std::vector<Ref<Array>> &,

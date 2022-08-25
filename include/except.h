@@ -51,9 +51,13 @@ class ParserError : public Error {
  * This is required because Python has its own signal handler. See
  * https://docs.python.org/3/c-api/exceptions.html#signal-handling
  *
- * If some function may throw InterruptExcept, it should be catched in `ffi` and
- * throw `py::error_already_set()` to Python side. See
+ * If not invoking from Python, throwing this exception is equivalent to raise
+ * SIGINT
+ *
+ * A special adaptor in `ffi/except.cc` is implemented for this exception.
+ * See
  * https://pybind11.readthedocs.io/en/stable/faq.html#how-can-i-properly-handle-ctrl-c-in-long-running-functions
+ * for details
  */
 class InterruptExcept : public Error {
   public:
