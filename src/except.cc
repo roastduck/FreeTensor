@@ -1,6 +1,10 @@
 #include <mutex>
 #include <unordered_map>
 
+#include <signal.h>
+
+#include <Python.h>
+
 #include <config.h>
 #include <debug.h>
 #include <except.h>
@@ -20,6 +24,15 @@ InvalidSchedule::InvalidSchedule(const Ref<ScheduleLogItem> &log,
                       " on this AST is invalid: \n\n" +
                       toString(ast, Config::prettyPrint(), true) +
                       "\nThe reason is: " + msg) {}
+
+InterruptExcept::InterruptExcept() : Error("Interrupted (Ctrl+C)") {
+    // 1. If not called from Python, raise SIGINT as normal
+    kill(getpid(), SIGINT);
+
+    // 2. If called from Python, report it to Python
+    PyErr_SetInterrupt();
+    PyErr_CheckSignals();
+}
 
 void reportWarning(const std::string &msg) {
     static std::unordered_map<std::string, int> reportCnt;
