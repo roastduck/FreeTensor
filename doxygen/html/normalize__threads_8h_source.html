@@ -96,8 +96,8 @@ $(function() {
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> root_;</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    std::unordered_map&lt;std::string, IterInfo&gt; varMap_;</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    std::unordered_map&lt;ParallelScope, int&gt;</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>        inside_; <span class="comment">// Multiple nested `threadIdx.x`s are possible. See</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>                 <span class="comment">// test/program/common_transforms::test_collaborative_fetch</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>        inside_; <span class="comment">// Multiple nested `threadIdx.x`s are possible. See the</span></div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>                 <span class="comment">// doc-string of schedule/parallelize</span></div>
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    std::unordered_map&lt;ParallelScope, std::vector&lt;ID&gt;&gt; loops_;</div>
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <span class="keywordtype">bool</span> inKernel_ = <span class="keyword">false</span>;</div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
