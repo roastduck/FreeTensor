@@ -80,7 +80,7 @@ void init_ffi_schedule(py::module_ &m) {
         .def("find_all", static_cast<std::vector<Stmt> (Schedule::*)(
                              const Ref<Selector> &) const>(&Schedule::findAll))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
-             "nparts"_a = -1, "shift"_a = 0)
+             "nparts"_a = -1, "shift"_a = 0, "keep_singleton"_a = false)
         .def("reorder", &Schedule::reorder, "order"_a)
         .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a)
         .def(

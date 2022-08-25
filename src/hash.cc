@@ -46,6 +46,7 @@ size_t Hasher::compHash(const ForProperty &p) {
         h = ((h + std::hash<std::string>()(item)) * K2 + B2) % P;
     }
     h = ((h + std::hash<bool>()(p.preferLibs_)) * K2 + B2) % P;
+    h = ((h + std::hash<bool>()(p.keepSingleton_)) * K2 + B2) % P;
     return (h * K3 + B3) % P;
 }
 
@@ -569,6 +570,9 @@ bool HashComparator::operator()(const Ref<ForProperty> &lhs,
         }
     }
     if (lhs->preferLibs_ != rhs->preferLibs_) {
+        return false;
+    }
+    if (lhs->keepSingleton_ != rhs->keepSingleton_) {
         return false;
     }
     return true;

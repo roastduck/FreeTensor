@@ -27,7 +27,7 @@ class Schedule(ffi.Schedule):
     def fork(self):
         return Schedule(super().fork())
 
-    def split(self, node, factor=-1, nparts=-1, shift=0):
+    def split(self, node, factor=-1, nparts=-1, shift=0, keep_singleton=False):
         """
         Split a loop into two nested loops
 
@@ -62,6 +62,11 @@ class Schedule(ffi.Schedule):
             Length of the inner loop. Set to -1 if using `nparts`
         nparts : int
             Length of the outer loop. Set to -1 if using `factor`
+        shift : int
+            Shift of iteration base. Defaults to zero
+        keep_singleton : bool
+            Keep both resulting loops even if the length of one or both of them
+            is one
 
         Raises
         ------
@@ -73,7 +78,8 @@ class Schedule(ffi.Schedule):
         (ID, ID)
             (outer loop ID, inner loop ID)
         """
-        return super().split(self._lookup(node), factor, nparts, shift)
+        return super().split(self._lookup(node), factor, nparts, shift,
+                             keep_singleton)
 
     def reorder(self, order):
         """

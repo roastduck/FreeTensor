@@ -306,6 +306,10 @@ forProperty returns [Ref<ForProperty> property]
       {
         $property = $prev.property->withPreferLibs();
       }
+    | prev=forProperty KEEP_SINGLETON
+      {
+        $property = $prev.property->withKeepSingleton();
+      }
     | prev=forProperty UNROLL
       {
         $property = $prev.property->withUnroll();

@@ -565,7 +565,7 @@ Stmt SimplifyPass::visit(const For &_op) {
 
     if (auto _intLen = unique_.getInt(op->len_); _intLen.isValid()) {
         auto intLen = *_intLen;
-        if (intLen == 1) {
+        if (!op->property_->keepSingleton_ && intLen == 1) {
             auto body = ReplaceIter(_op->iter_, op->begin_)(_op->body_);
             return (*this)(body);
         }
@@ -573,7 +573,7 @@ Stmt SimplifyPass::visit(const For &_op) {
             return makeStmtSeq({});
         }
     }
-    if (unique_.getIntUpper(op->len_) == 1) {
+    if (!op->property_->keepSingleton_ && unique_.getIntUpper(op->len_) == 1) {
         auto body = ReplaceIter(_op->iter_, op->begin_)(_op->body_);
         body = (*this)(body);
         return makeIf(makeEQ(op->len_, makeIntConst(1)), body);

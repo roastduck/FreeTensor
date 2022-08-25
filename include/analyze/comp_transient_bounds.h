@@ -151,12 +151,14 @@ class CompTransientBounds : public BaseClass,
         transients_.erase(var);
 
         if constexpr (!std::is_same_v<typename BaseClass::StmtRetType, void>) {
-            auto property = Ref<ForProperty>::make()
-                                ->withParallel(op->property_->parallel_)
-                                ->withUnroll(op->property_->unroll_)
-                                ->withVectorize(op->property_->vectorize_)
-                                ->withNoDeps(op->property_->noDeps_)
-                                ->withPreferLibs(op->property_->preferLibs_);
+            auto property =
+                Ref<ForProperty>::make()
+                    ->withParallel(op->property_->parallel_)
+                    ->withUnroll(op->property_->unroll_)
+                    ->withVectorize(op->property_->vectorize_)
+                    ->withNoDeps(op->property_->noDeps_)
+                    ->withPreferLibs(op->property_->preferLibs_)
+                    ->withKeepSingleton(op->property_->keepSingleton_);
             property->reductions_.reserve(op->property_->reductions_.size());
             for (auto &&r : op->property_->reductions_) {
                 std::vector<Expr> begins, ends;

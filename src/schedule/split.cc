@@ -38,11 +38,13 @@ Stmt Splitter::visit(const For &_op) {
             op->body_);
         auto inner =
             makeFor(iter1, makeIntConst(0), factor, makeIntConst(1), factor,
-                    op->property_, body, makeMetadata("split.1", op));
+                    op->property_->withKeepSingleton(keepSingleton_), body,
+                    makeMetadata("split.1", op));
         dst1_ = inner->id();
         auto outer =
             makeFor(iter0, makeIntConst(0), nparts, makeIntConst(1), nparts,
-                    op->property_, inner, makeMetadata("split.0", op));
+                    op->property_->withKeepSingleton(keepSingleton_), inner,
+                    makeMetadata("split.0", op));
         dst0_ = outer->id();
         found_ = true;
         return outer;
@@ -60,8 +62,9 @@ Expr Splitter::visit(const Var &op) {
 }
 
 std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &_ast, const ID &id,
-                                         int factor, int nparts, int shift) {
-    Splitter mutator(id, factor, nparts, shift);
+                                         int factor, int nparts, int shift,
+                                         bool keepSingleton) {
+    Splitter mutator(id, factor, nparts, shift, keepSingleton);
     auto ast = mutator(_ast);
     if (!mutator.found()) {
         throw InvalidSchedule("Loop not found");

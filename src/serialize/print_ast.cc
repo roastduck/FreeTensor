@@ -597,6 +597,10 @@ void PrintVisitor::visit(const For &op) {
         makeIndent();
         os() << "@!prefer_libs" << std::endl;
     }
+    if (op->property_->keepSingleton_) {
+        makeIndent();
+        os() << "@!keep_singleton" << std::endl;
+    }
     makeIndent();
     os() << prettyKeyword("for ") << prettyIterName(op->iter_)
          << prettyKeyword(" in ");
@@ -632,7 +636,7 @@ void PrintVisitor::visit(const If &op) {
 
 void PrintVisitor::visit(const Assert &op) {
     makeIndent();
-    os() << "assert ";
+    os() << prettyKeyword("assert ");
     recur(op->cond_);
     os() << " ";
     beginBlock();
@@ -642,7 +646,7 @@ void PrintVisitor::visit(const Assert &op) {
 
 void PrintVisitor::visit(const Assume &op) {
     makeIndent();
-    os() << "assume ";
+    os() << prettyKeyword("assume ");
     recur(op->cond_);
     os() << " ";
     beginBlock();

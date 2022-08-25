@@ -36,6 +36,7 @@ REDUCTION:  '@!reduction';
 UNROLL:     '@!unroll';
 VECTORIZE:  '@!vectorize';
 PREFERLIBS: '@!prefer_libs';
+KEEP_SINGLETON: '@!keep_singleton';
 
 TRUE:       'true';
 FALSE:      'false';

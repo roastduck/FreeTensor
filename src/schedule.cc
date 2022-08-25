@@ -115,9 +115,9 @@ Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
     memoized_->save(logs);
 
 std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts,
-                                  int shift) {
+                                  int shift, bool keepSingleton) {
     auto log = MAKE_LOG(Split, std::bind_front(freetensor::split, ast_), id,
-                        factor, nparts, shift);
+                        factor, nparts, shift, keepSingleton);
     ScheduleLog logs = logs_.push(log);
     RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {

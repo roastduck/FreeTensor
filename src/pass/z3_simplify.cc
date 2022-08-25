@@ -467,7 +467,8 @@ Stmt Z3Simplify::visit(const For &op) {
     if (prove((*this)(makeEQ(len, makeIntConst(0))))) {
         return makeStmtSeq({});
     }
-    if (prove((*this)(makeEQ(len, makeIntConst(1))))) {
+    if (!op->property_->keepSingleton_ &&
+        prove((*this)(makeEQ(len, makeIntConst(1))))) {
         auto body = ReplaceIter(op->iter_, begin)(op->body_);
         return (*this)(body);
     }

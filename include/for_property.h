@@ -33,11 +33,13 @@ struct ForProperty : public ASTPart {
     SubTreeList<ReductionItem> reductions_ = ChildOf{this};
     std::vector<std::string> noDeps_; // vars that are explicitly marked to have
                                       // no dependencies over this loop
-    bool preferLibs_; // Aggresively transform to external library calls in
-                      // auto-schedule
+    bool preferLibs_;    // Aggresively transform to external library calls in
+                         // auto-schedule
+    bool keepSingleton_; // Don't remove this loop even if the length is one
 
     ForProperty()
-        : parallel_(), unroll_(false), vectorize_(false), preferLibs_(false) {}
+        : parallel_(), unroll_(false), vectorize_(false), preferLibs_(false),
+          keepSingleton_(false) {}
 
     Ref<ForProperty> withParallel(const ParallelScope &parallel) {
         auto ret = Ref<ForProperty>::make(*this);
@@ -64,6 +66,11 @@ struct ForProperty : public ASTPart {
         ret->preferLibs_ = preferLibs;
         return ret;
     }
+    Ref<ForProperty> withKeepSingleton(bool keepSingleton = true) {
+        auto ret = Ref<ForProperty>::make(*this);
+        ret->keepSingleton_ = keepSingleton;
+        return ret;
+    }
 
     void compHash() override;
 };
@@ -80,6 +87,7 @@ inline Ref<ForProperty> deepCopy(const Ref<ForProperty> &_p) {
     p->reductions_ = _p->reductions_;
     p->noDeps_ = _p->noDeps_;
     p->preferLibs_ = _p->preferLibs_;
+    p->keepSingleton_ = _p->keepSingleton_;
     return p;
 }
 

@@ -167,11 +167,13 @@ class Schedule {
      * @param factor : Length of the inner loop. Set to -1 if using `nparts`
      * @param nparts : Length of the outer loop. Set to -1 if using `factor`
      * @param shift : Shift of iteration base. Defaults to zero
+     * @param keepSingleton : Keep both resulting loops even if the length of
+     * one or both of them is one
      * @throw InvalidSchedule if the loop is not found
      * @return : (outer loop ID, inner loop ID)
      */
     std::pair<ID, ID> split(const ID &id, int factor = -1, int nparts = -1,
-                            int shift = 0);
+                            int shift = 0, bool keepSingleton = false);
 
     /**
      * Reorder directly nested loops
