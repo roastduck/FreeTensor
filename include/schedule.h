@@ -452,6 +452,57 @@ class Schedule {
     /**
      * Mark a loop with a parallel implementation
      *
+     * This schedule follows a fork-join model: multiple workers (abstract
+     * threads) are created (but physically the threads may be cached in a
+     * thread pool) when the loop begins, do their jobs in parallel, and join
+     * when the loop ends
+     *
+     * OpenMP threads follow a typical fork-join model. CUDA threads run in a
+     * bulk-synchronous parallel (BSP) model, which can also be mimiked by the
+     * fork-join model: All threads start when the kernel get launched, but they
+     * only begin to do their jobs when the parallel loop begins. Nevertheless,
+     * the fork-join model needs the following extension to fully mimic a BSP
+     * model:
+     *
+     * Taking CUDA as an example, we allow binding a loop to `threadIdx.x`
+     * inside another loop bound to `threadIdx.x`, which is illegal in a classic
+     * fork-join model. For example, we may implement a matmul with
+     * collaborative fetch as below:
+     *
+     * ```
+     * for i : threadIdx.x  # Li
+     *   for j : threadIdx.y  # Lj
+     *     local_sum = 0  # In gpu/local memory, unique to (i, j)
+     *     for k0  # Lk0
+     *       for k : threadIdx.y  # Lk1_a
+     *         A_cache[k] = A[i, k]  # In gpu/shared, shared by different j
+     *       for k : threadIdx.x  # Lk1_b
+     *         B_cache[k] = B[k, j]  # In gpu/shared, shared by different i
+     *       for k  # Lk1_c
+     *         sum += A_cache[k] * B_cache[k]
+     *     C[i, j] = local_sum
+     * ```
+     *
+     * A seemingly plausible solution to avoid this extension is to reorder
+     * `Lk0` to outer-most, and then move `Lk1_a` and `Lk1_b` out of `Li` or
+     * `Lj`. This resolves the nested `threadIdx.x` and `threadIdx.y` binding
+     * problem by running `Li+Lk1_a`, `Lj+Lk1_b` and `Li+Lj` interleavingly,
+     * instead of running `Lk1_a` and `Lk1_b` inside `Li+Lj`. However, this
+     * approach is illegal, because the local variable `local_sum` can no longer
+     * be kept inside the body of `Li` and `Lj`: It has to be reused across
+     * multiple runs of `Li` and `Lj`
+     *
+     * Please also note that we can bind one `threadIdx.x` to two loops only
+     * when the body statement is loop-invariant to one of them. For example,
+     * the following binding is still illegal, even in our extended fork-join
+     * model, because it violates its serial semantics:
+     *
+     * ```
+     * for i : threadIdx.x
+     *   for j : threadIdx.x
+     *     A[i, j] ++
+     * ```
+     *
      * @param loop : ID of the loop
      * @param parallel : Parallel scope
      */

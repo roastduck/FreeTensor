@@ -14,28 +14,8 @@ class Parallelize : public Mutator {
     std::vector<ID> outerLoops_, loopStack_;
     bool done_ = false;
 
-    // For GPU threads, we may want to bind a loop to threadIdx.x inside another
-    // loop bound to threadIdx.x. For example, we may implement a matmul with
-    // collaborative fetch as below:
-    //
-    // for i : threadIdx.x
-    //   for j : threadIdx.y
-    //     for k : threadIdx.y
-    //       load block A[i, k]
-    //     for k : thradIdx.x
-    //       load block B[k, j]
-    //     for k
-    //       compute block C[i, j] = A[i, k] * B[k, j]
-    //
-    // We have no way to separate these nested loops. However, some nesting is
-    // illegal. For example:
-    //
-    // for i : threadIdx.x
-    //   for j : threadIdx.x
-    //     A[i, j] ++
-    //
-    // This is illegal because it violates its serial semantics. The following
-    // variables are used to check this behaviour
+    // Check illegal cases even in our extended fork-join model. See the
+    // doc-string of schedule/parallelize
     std::unordered_map<ParallelScope, std::string> para2var_;
     std::unordered_set<std::string> hiddenVars_;
 
