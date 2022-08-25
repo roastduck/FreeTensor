@@ -11,8 +11,9 @@ var searchData=
   ['insertfree_8',['InsertFree',['../classfreetensor_1_1InsertFree.html',1,'freetensor']]],
   ['inserttmpeval_9',['InsertTmpEval',['../classfreetensor_1_1InsertTmpEval.html',1,'freetensor']]],
   ['intconstnode_10',['IntConstNode',['../classfreetensor_1_1IntConstNode.html',1,'freetensor']]],
-  ['intrinsicnode_11',['IntrinsicNode',['../classfreetensor_1_1IntrinsicNode.html',1,'freetensor']]],
-  ['invalidprogram_12',['InvalidProgram',['../classfreetensor_1_1InvalidProgram.html',1,'freetensor']]],
-  ['invalidschedule_13',['InvalidSchedule',['../classfreetensor_1_1InvalidSchedule.html',1,'freetensor']]],
-  ['iteraxis_14',['IterAxis',['../structfreetensor_1_1IterAxis.html',1,'freetensor']]]
+  ['interruptexcept_11',['InterruptExcept',['../classfreetensor_1_1InterruptExcept.html',1,'freetensor']]],
+  ['intrinsicnode_12',['IntrinsicNode',['../classfreetensor_1_1IntrinsicNode.html',1,'freetensor']]],
+  ['invalidprogram_13',['InvalidProgram',['../classfreetensor_1_1InvalidProgram.html',1,'freetensor']]],
+  ['invalidschedule_14',['InvalidSchedule',['../classfreetensor_1_1InvalidSchedule.html',1,'freetensor']]],
+  ['iteraxis_15',['IterAxis',['../structfreetensor_1_1IterAxis.html',1,'freetensor']]]
 ];
