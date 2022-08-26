@@ -17,7 +17,6 @@
 #include <lower.h>
 #include <omp_utils.h>
 #include <pass/flatten_stmt_seq.h>
-#include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/simplify.h>
 #include <schedule.h>
@@ -369,105 +368,25 @@ void Schedule::varReorder(const ID &def, const std::vector<int> &order) {
     }
 }
 
-std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
-                                   const ID &_dst) {
-    auto bak = ast_;
+std::pair<ID, ID> Schedule::moveTo(const ID &stmt, MoveToSide side,
+                                   const ID &dst) {
+    auto log = MAKE_LOG(MoveTo, std::bind_front(freetensor::moveTo, ast_), stmt,
+                        side, dst);
+    ScheduleLog logs = logs_.push(log);
+    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
     try {
-        auto stmt = _stmt, dst = _dst;
-        auto stmtBody = stmt;
-        while (true) {
-            ast_ = hoistVarOverStmtSeq(ast_);
-            Stmt s = findStmt(ast_, stmt);
-            Stmt d = findStmt(ast_, dst);
+        auto ret = log->getResult();
 
-            auto movingUp = [&]() {
-                if (d->isAncestorOf(s)) {
-                    return side == MoveToSide::Before;
-                }
-                if (auto prev = s->prevStmt(); prev.isValid()) {
-                    return d->isBefore(side == MoveToSide::After ? prev : s);
-                } else {
-                    return d->isBefore(s);
-                }
-            };
-            auto movingDown = [&]() {
-                if (d->isAncestorOf(s)) {
-                    return side == MoveToSide::After;
-                }
-                if (auto next = s->nextStmt(); next.isValid()) {
-                    return (side == MoveToSide::Before ? next : s)->isBefore(d);
-                } else {
-                    return s->isBefore(d);
-                }
-            };
-
-            if (movingUp()) {
-                if (s->prevStmt().isValid()) {
-                    std::vector<ID> orderRev;
-                    while (s->prevStmt().isValid() && movingUp()) {
-                        s = s->prevStmt();
-                        orderRev.emplace_back(s->id());
-                    }
-                    orderRev.emplace_back(stmt);
-                    std::vector<ID> order(orderRev.rbegin(), orderRev.rend());
-                    swap(order);
-                } else {
-                    while (!s->prevStmt().isValid() && movingUp()) {
-                        s = s->parentCtrlFlow();
-                    }
-                    if (s->nodeType() != ASTNodeType::For) {
-                        throw InvalidSchedule(
-                            ast_,
-                            "Fission a If node in a StmtSeq is not currently "
-                            "supported in moveTo");
-                        // TODO: Fission IfNode
-                    }
-                    auto idMapBefore =
-                        fission(s->id(), FissionSide::After, stmt, ".a", "")
-                            .first;
-                    stmtBody = idMapBefore.at(stmt);
-                    stmt = idMapBefore.at(s->id());
-                }
-                // TODO: Fuse if d is inner of s
-
-            } else if (movingDown()) {
-                if (s->nextStmt().isValid()) {
-                    std::vector<ID> order;
-                    while (s->nextStmt().isValid() && movingDown()) {
-                        s = s->nextStmt();
-                        order.emplace_back(s->id());
-                    }
-                    order.emplace_back(stmt);
-                    swap(order);
-                } else {
-                    while (!s->nextStmt().isValid() && movingDown()) {
-                        s = s->parentCtrlFlow();
-                    }
-                    if (s->nodeType() != ASTNodeType::For) {
-                        throw InvalidSchedule(
-                            ast_,
-                            "Fission a If node in a StmtSeq is not currently "
-                            "supported in moveTo");
-                        // TODO: Fission IfNode
-                    }
-                    // Leave IDs of the other statements unchanged
-                    auto idMapAfter =
-                        fission(s->id(), FissionSide::Before, stmt, "", ".b")
-                            .second;
-                    stmtBody = idMapAfter.at(stmt);
-                    stmt = idMapAfter.at(s->id());
-                }
-                // TODO: Fuse if d is inner of s
-
-            } else {
-                return {stmtBody, stmt};
-            }
+        // If nothing is moved, don't record a log
+        if (HashComparator{}(ast_, ret.first)) {
+            return {stmt, stmt};
         }
+
+        ast_ = ret.first;
+        saveSuccessLog(logs);
+        return ret.second;
     } catch (const InvalidSchedule &e) {
-        ast_ = bak;
-        throw InvalidSchedule(ast_, "Invalid move_to(" + toString(_stmt) +
-                                        ", " + toString(_dst) +
-                                        "): " + e.what());
+        throw InvalidSchedule(log, ast_, e.what());
     }
 }
 

@@ -60,7 +60,7 @@ def test_stmt_in_between_1():
     s.auto_fission_fuse(ft.CPU())
     print(s.ast())
     print(s.pretty_logs())
-    assert s.pretty_logs() == ["swap(S2, L1)", "fuse(L1, L2, true)"]
+    assert s.pretty_logs() == ["move_to(L1, before, L2)", "fuse(L1, L2, true)"]
 
 
 def test_stmt_in_between_2():
@@ -83,7 +83,7 @@ def test_stmt_in_between_2():
     s.auto_fission_fuse(ft.CPU())
     print(s.ast())
     print(s.pretty_logs())
-    assert s.pretty_logs() == ["swap(L2, S1)", "fuse(L1, L2, true)"]
+    assert s.pretty_logs() == ["move_to(L2, after, L1)", "fuse(L1, L2, true)"]
 
 
 def test_tune_fuse():

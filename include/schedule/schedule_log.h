@@ -26,6 +26,7 @@ enum class ScheduleType : int {
     VarSplit,
     VarMerge,
     VarReorder,
+    MoveTo,
     Inline,
     Parallelize,
     Unroll,
@@ -38,13 +39,13 @@ enum class ScheduleType : int {
 };
 
 constexpr std::array scheduleTypeNames = {
-    "split",        "reorder",   "merge",
-    "fission",      "fuse",      "swap",
-    "blend",        "cache",     "cache_reduction",
-    "set_mem_type", "var_split", "var_merge",
-    "var_reorder",  "inline",    "parallelize",
-    "unroll",       "vectorize", "separate_tail",
-    "as_matmul",    "permute",
+    "split",         "reorder",   "merge",
+    "fission",       "fuse",      "swap",
+    "blend",         "cache",     "cache_reduction",
+    "set_mem_type",  "var_split", "var_merge",
+    "var_reorder",   "move_to",   "inline",
+    "parallelize",   "unroll",    "vectorize",
+    "separate_tail", "as_matmul", "permute",
 };
 static_assert(scheduleTypeNames.size() == (size_t)ScheduleType::NumTypes);
 

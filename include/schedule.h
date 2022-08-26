@@ -11,14 +11,13 @@
 #include <random.h>
 #include <schedule/fission.h>
 #include <schedule/memoized_schedules.h>
+#include <schedule/move_to.h>
 #include <schedule/schedule_log.h>
 #include <schedule/var_split.h>
 #include <selector.h>
 #include <stmt.h>
 
 namespace freetensor {
-
-enum class MoveToSide : int { Before, After };
 
 struct AutoScheduleTuneTrial {
     Ref<RandTrace> trace_;
@@ -426,7 +425,10 @@ class Schedule {
      * Move a statement to a new position
      *
      * This is a composite schedule command, which is implemented with other
-     * commands
+     * commands, but it is recorded as a monolithic schedule in the schedule log
+     *
+     * Although invoking fission internally, `ID` and `Metadata` of the
+     * statements other than the being moved `stmt` will be kept untouched
      *
      * If moving a statement out of some loops, identical loops will be added
      * around the moved statement, which is equivalent to fission these loops
