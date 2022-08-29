@@ -936,52 +936,78 @@ void Schedule::autoParallelize(const Target &target) {
 
     // Try to merge and parallelize as many outer loops as possible
     std::function<void(const Ref<LoopNest> &)> autoParallelizeOuter =
-        [&](const Ref<LoopNest> &root) {
-            auto latestSuccess = ast();
-            auto successLogs = logs();
-
-            bool atLeastOne = false; // if at least one loop is parallelized
-            try {
-                Ref<LoopNest> loop = root;
-
+        [&](const Ref<LoopNest> &_root) {
+            auto root = _root;
 #ifdef FT_WITH_CUDA
-                bool parentIsWarp = false;
-                while (loop->loop_->property_->parallel_ != serialScope &&
-                       loop->subLoops_.size() == 1) {
-                    loop = loop->subLoops_.front();
-                    parentIsWarp = true;
-                }
+            bool parentIsWarp = false;
+            while (root->loop_->property_->parallel_ != serialScope &&
+                   root->subLoops_.size() == 1) {
+                root = root->subLoops_.front();
+                parentIsWarp = true;
+            }
 #endif // FT_WITH_CUDA
 
-                ID outerId;
+            // Count how many loops we can merge and drop the result. Don't
+            // worry about repeatly doing the same merging, because we have
+            // memoized schedules
+            int maxMergeLevel = 0;
+            beginTransaction();
+            try {
+                ID mergedId;
+                Ref<LoopNest> loop = root;
                 while (true) {
                     ID loopId = loop->loop_->id();
                     if (find(loopId).as<ForNode>()->property_->parallel_ !=
                         serialScope) {
                         break;
                     }
-                    if (outerId.isValid()) {
-                        loopId = merge(outerId, loopId);
+                    mergedId =
+                        mergedId.isValid() ? merge(mergedId, loopId) : loopId;
+                    maxMergeLevel++;
+                    if (loop->subLoops_.size() == 1) {
+                        loop = loop->subLoops_.front();
+                    } else {
+                        break;
+                    }
+                }
+            } catch (const InvalidSchedule &e) {
+                // do nothing
+            }
+            abortTransaction();
+
+            // Suppose we can merge n loops at maximum, we try merging and
+            // parallelizing n loops first, then try n - 1, n - 2, and so on.
+            bool done = false;
+            for (int mergeLevel = maxMergeLevel; mergeLevel > 0; mergeLevel--) {
+                beginTransaction();
+                try {
+                    ID mergedId;
+                    Ref<LoopNest> loop = root;
+                    for (int i = 0; i < mergeLevel; i++) {
+                        ID loopId = loop->loop_->id();
+                        mergedId = mergedId.isValid() ? merge(mergedId, loopId)
+                                                      : loopId;
+                        if (i + 1 < mergeLevel) {
+                            ASSERT(loop->subLoops_.size() == 1);
+                            loop = loop->subLoops_.front();
+                        }
                     }
 
-                    auto bak = ast();
-                    auto logBak = logs();
                     switch (target.type()) {
                     case TargetType::CPU:
-                        parallelize(loopId, OpenMPScope{});
-                        atLeastOne = true;
+                        parallelize(mergedId, OpenMPScope{});
                         break;
 
 #ifdef FT_WITH_CUDA
                     case TargetType::GPU: {
-                        auto loop = find(loopId);
+                        auto merged = find(mergedId);
                         auto isParallelLoop = [](const Stmt &s) {
                             return s->nodeType() == ASTNodeType::For &&
                                    s.as<ForNode>()->property_->parallel_ !=
                                        serialScope;
                         };
                         bool childIsWarp =
-                            !findStmt(loop, isParallelLoop).empty();
+                            !findStmt(merged, isParallelLoop).empty();
                         // We guarantee the following requirements in order:
                         // 1. make sure all SMs are used
                         // 2. if there are enough threads, make sure blockDim is
@@ -999,14 +1025,14 @@ void Schedule::autoParallelize(const Target &target) {
                             maxThreads /= ((GPUTarget &)target).warpSize();
                         }
                         ID l1, l1b, l2;
-                        if (auto loopNode = loop.as<ForNode>();
+                        if (auto loopNode = merged.as<ForNode>();
                             loopNode->len_->nodeType() ==
                             ASTNodeType::IntConst) {
                             auto len = loopNode->len_.as<IntConstNode>()->val_;
                             if (len < numSM * maxThreads) {
-                                std::tie(l1, l2) = split(loopId, -1, numSM);
+                                std::tie(l1, l2) = split(mergedId, -1, numSM);
                             } else {
-                                std::tie(l1, l2) = split(loopId, maxThreads);
+                                std::tie(l1, l2) = split(mergedId, maxThreads);
                             }
                         } else {
                             // We don't use the `nparts` mode of `split`,
@@ -1014,7 +1040,7 @@ void Schedule::autoParallelize(const Target &target) {
                             // Instead, we use the `factor` mode and then
                             // reorder. See the doc string of `split` for
                             // details
-                            std::tie(l2, l1) = split(loopId, numSM);
+                            std::tie(l2, l1) = split(mergedId, numSM);
                             reorder({l1, l2});
                             if (!findAll(l2).empty()) {
                                 std::tie(l1b, l2) = split(l2, maxThreads);
@@ -1028,18 +1054,15 @@ void Schedule::autoParallelize(const Target &target) {
                                 // introduced, which is not supported by ISL and
                                 // may probably lead to false dependencies
                                 parallelize(l1, blockIdxY);
-                                atLeastOne = true;
                                 parallelize(l1b, blockIdxX);
                             } else {
                                 parallelize(l1, blockIdxX);
-                                atLeastOne = true;
                             }
                         }
                         if (!findAll(l2).empty()) {
                             parallelize(l2, (!parentIsWarp && !childIsWarp)
                                                 ? threadIdxX
                                                 : threadIdxY);
-                            atLeastOne = true;
                         }
                         break;
                     }
@@ -1048,23 +1071,16 @@ void Schedule::autoParallelize(const Target &target) {
                     default:
                         ASSERT(false);
                     }
-                    latestSuccess = ast(), successLogs = logs();
-                    ast() = std::move(bak), logs() = std::move(logBak);
 
-                    if (loop->subLoops_.size() == 1) {
-                        outerId = loopId;
-                        loop = loop->subLoops_.front();
-                    } else {
-                        break;
-                    }
+                    done = true;
+                    commitTransaction();
+                    break;
+                } catch (const InvalidSchedule &e) {
+                    abortTransaction();
                 }
-            } catch (InvalidSchedule &e) {
-                // do nothing
             }
 
-            ast() = latestSuccess, logs() = successLogs;
-
-            if (!atLeastOne) {
+            if (!done) {
                 for (auto &&subLoop : root->subLoops_) {
                     autoParallelizeOuter(subLoop);
                 }
