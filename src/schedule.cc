@@ -45,38 +45,53 @@
 namespace freetensor {
 
 Schedule::Schedule(const Stmt &ast, int verbose)
-    : ast_(ast), verbose_(verbose), memoized_(Ref<MemoizedSchedules>::make()),
+    : verbose_(verbose), memoized_(Ref<MemoizedSchedules>::make()),
       rng_(Ref<OpenMPRandomEngine>::make(0)) /* TODO: set seed */,
       randCtx_(Ref<RandCtx<OpenMPRandomEngine>>::make(*rng_)) {
-    ast_ = simplify(ast_);
+    openTrans_.emplace_back(simplify(ast), ScheduleLog());
 }
 
-void Schedule::saveSuccessLog(const ScheduleLog &logs) {
-    logs_ = logs;
+void Schedule::beginTransaction() { openTrans_.emplace_back(ast(), logs()); }
+
+void Schedule::commitTransaction() {
+    if (openTrans_.size() == 1) {
+        ERROR(
+            "The outer-most default transaction does not need to be committed");
+    }
+    auto trans = std::move(openTrans_.back());
+    openTrans_.pop_back();
     if (verbose_ >= 2) {
-        logger() << "AST after " << *logs.top() << " is:" << std::endl
-                 << ast_ << std::endl;
+        auto &&os = logger();
+        os << "Committing schedule(s): ";
+        for (auto &&[i, item] :
+             iter::enumerate(asVector(openTrans_.back().logs_, trans.logs_))) {
+            os << (i > 0 ? ", " : "") << *item;
+        }
+        os << ", resulting in:" << std::endl << ast() << std::endl;
     }
+    openTrans_.back() = std::move(trans);
 }
 
-Stmt Schedule::ast() const {
-    if (verbose_ >= 1) {
-        logger() << "The scheduled AST is:" << std::endl << ast_ << std::endl;
+void Schedule::abortTransaction() {
+    if (openTrans_.size() == 1) {
+        ERROR("The outer-most default transaction cannot be aborted");
     }
-    return ast_;
+    openTrans_.pop_back();
 }
 
-std::vector<Ref<ScheduleLogItem>> Schedule::logs() const {
-    return logs_.asVector();
-}
+const Stmt &Schedule::ast() const { return openTrans_.back().ast_; }
+Stmt &Schedule::ast() { return openTrans_.back().ast_; }
+
+const ScheduleLog &Schedule::logs() const { return openTrans_.back().logs_; }
+ScheduleLog &Schedule::logs() { return openTrans_.back().logs_; }
 
 std::vector<Stmt>
 Schedule::findAll(const std::function<bool(const Stmt &)> &filter) const {
-    return findStmt(ast_, filter);
+    return findStmt(ast(), filter);
 }
 
 Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
-    auto ret = findStmt(ast_, filter);
+    auto ret = findStmt(ast(), filter);
     if (ret.size() != 1) {
         throw InvalidSchedule("find: There is " + std::to_string(ret.size()) +
                               " nodes matching the given condition. "
@@ -104,103 +119,103 @@ Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
         return Ref<ScheduleLogItem##TYPE>::make(func, params);                 \
     })(FUNC, std::make_tuple(__VA_ARGS__))
 
-// - Try looking up an identical schedule from `MemoizedSchedules`
-// - If not found, do the schedule (if found, `run` directly returns)
-// - Save the result (including exceptions, if any) back to `MemoziedSchedules`
-#define RUN_SCHEDULE_MEMORIZEDLY(logs, log)                                    \
-    logs = memoized_->lookup(logs);                                            \
-    ASSERT(logs.top()->type() == log->type());                                 \
-    log = logs.top().as<decltype(log)::Object>();                              \
-    log->run();                                                                \
-    memoized_->save(logs);
-
 std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts,
                                   int shift) {
-    auto log = MAKE_LOG(Split, std::bind_front(freetensor::split, ast_), id,
-                        factor, nparts, shift);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log =
+        appendLog(MAKE_LOG(Split, std::bind_front(freetensor::split, ast()), id,
+                           factor, nparts, shift));
     try {
         auto ret = log->getResult();
-        ast_ = ret.first;
-        saveSuccessLog(logs);
+        ast() = ret.first;
+        commitTransaction();
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 void Schedule::reorder(const std::vector<ID> &order) {
-    auto log =
-        MAKE_LOG(Reorder, std::bind_front(freetensor::reorder, ast_), order);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_LOG(Reorder, std::bind_front(freetensor::reorder, ast()), order));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 ID Schedule::merge(const ID &loop1, const ID &loop2) {
-    auto log =
-        MAKE_LOG(Merge, std::bind_front(freetensor::merge, ast_), loop1, loop2);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(MAKE_LOG(
+        Merge, std::bind_front(freetensor::merge, ast()), loop1, loop2));
     try {
         auto ret = log->getResult();
-        ast_ = ret.first;
-        saveSuccessLog(logs);
+        ast() = ret.first;
+        commitTransaction();
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 std::vector<ID> Schedule::permute(
     const std::vector<ID> &loopsId,
     const std::function<std::vector<Expr>(std::vector<Expr>)> &transformFunc) {
+    beginTransaction();
     //! FIXME: put this into schedule logs
-    auto &&[ast, ids] = freetensor::permute(ast_, loopsId, transformFunc);
-    ast_ = ast;
-    return ids;
+    try {
+        auto ret = freetensor::permute(ast(), loopsId, transformFunc);
+        ast() = ret.first;
+        commitTransaction();
+        return ret.second;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw;
+    }
 }
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
                   const std::string &suffix0, const std::string &suffix1) {
-    auto log = MAKE_LOG(Fission, std::bind_front(freetensor::fission, ast_),
-                        loop, side, splitter, suffix0, suffix1);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log =
+        appendLog(MAKE_LOG(Fission, std::bind_front(freetensor::fission, ast()),
+                           loop, side, splitter, suffix0, suffix1));
     try {
         auto ret = log->getResult();
-        ast_ = ret.first;
-        saveSuccessLog(logs);
+        ast() = ret.first;
+        commitTransaction();
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict) {
-    auto log = MAKE_LOG(Fuse, std::bind_front(freetensor::fuse, ast_), loop0,
-                        loop1, strict);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(MAKE_LOG(
+        Fuse, std::bind_front(freetensor::fuse, ast()), loop0, loop1, strict));
     try {
         auto ret = log->getResult();
-        ast_ = ret.first;
-        saveSuccessLog(logs);
+        ast() = ret.first;
+        commitTransaction();
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 ID Schedule::fuse(const ID &loop0, bool strict) {
-    ast_ = flattenStmtSeq(ast_);
+    beginTransaction();
+    ast() = flattenStmtSeq(ast());
     auto l0 = find(loop0);
 
     auto isTrivialScope = [](const Stmt &s) {
@@ -249,136 +264,145 @@ ID Schedule::fuse(const ID &loop0, bool strict) {
                 s = firstStmtInTrivalScope(s);
             }
             if (s.isValid() && s->nodeType() == ASTNodeType::For) {
-                return fuse(loop0, s->id(), strict);
+                auto ret = fuse(loop0, s->id(), strict);
+                commitTransaction();
+                return ret;
             }
         }
     }
+
+    abortTransaction();
     throw InvalidSchedule("Invalid fuse(" + toString(loop0) +
                           "): Unable to find a following loop of " +
                           toString(loop0));
 }
 
 void Schedule::swap(const std::vector<ID> &order) {
-    auto log = MAKE_LOG(Swap, std::bind_front(freetensor::swap, ast_), order);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_LOG(Swap, std::bind_front(freetensor::swap, ast()), order));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 void Schedule::blend(const ID &loop) {
-    auto log = MAKE_LOG(Blend, std::bind_front(freetensor::blend, ast_), loop);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_LOG(Blend, std::bind_front(freetensor::blend, ast()), loop));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 std::tuple<ID, ID, std::string, ID>
 Schedule::cache(const ID &stmt, const std::string &var, MemType mtype) {
-    auto log = MAKE_LOG(Cache, std::bind_front(freetensor::cache, ast_), stmt,
-                        var, mtype);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(MAKE_LOG(
+        Cache, std::bind_front(freetensor::cache, ast()), stmt, var, mtype));
     try {
         auto ret = log->getResult();
-        ast_ = ret.first;
-        saveSuccessLog(logs);
+        ast() = ret.first;
+        commitTransaction();
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 std::tuple<ID, ID, std::string, ID>
 Schedule::cacheReduction(const ID &stmt, const std::string &var,
                          MemType mtype) {
-    auto log = MAKE_LOG(CacheReduction,
-                        std::bind_front(freetensor::cacheReduction, ast_), stmt,
-                        var, mtype);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(MAKE_LOG(
+        CacheReduction, std::bind_front(freetensor::cacheReduction, ast()),
+        stmt, var, mtype));
     try {
         auto ret = log->getResult();
-        ast_ = ret.first;
-        saveSuccessLog(logs);
+        ast() = ret.first;
+        commitTransaction();
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 void Schedule::setMemType(const ID &def, MemType mtype) {
-    auto log = MAKE_LOG(
-        SetMemType, std::bind_front(freetensor::setMemType, ast_), def, mtype);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_LOG(SetMemType, std::bind_front(freetensor::setMemType, ast()),
+                 def, mtype));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 void Schedule::varSplit(const ID &def, int dim, VarSplitMode mode, int factor,
                         int nparts) {
-    auto log = MAKE_LOG(VarSplit, std::bind_front(freetensor::varSplit, ast_),
-                        def, dim, mode, factor, nparts);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(MAKE_LOG(VarSplit,
+                                  std::bind_front(freetensor::varSplit, ast()),
+                                  def, dim, mode, factor, nparts));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 void Schedule::varMerge(const ID &def, int dim) {
-    auto log = MAKE_LOG(VarMerge, std::bind_front(freetensor::varMerge, ast_),
-                        def, dim);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(MAKE_LOG(
+        VarMerge, std::bind_front(freetensor::varMerge, ast()), def, dim));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 void Schedule::varReorder(const ID &def, const std::vector<int> &order) {
-    auto log = MAKE_LOG(
-        VarReorder, std::bind_front(freetensor::varReorder, ast_), def, order);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_LOG(VarReorder, std::bind_front(freetensor::varReorder, ast()),
+                 def, order));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
                                    const ID &_dst) {
-    auto bak = ast_;
+    beginTransaction();
     try {
         auto stmt = _stmt, dst = _dst;
         auto stmtBody = stmt;
         while (true) {
-            ast_ = hoistVarOverStmtSeq(ast_);
-            Stmt s = findStmt(ast_, stmt);
-            Stmt d = findStmt(ast_, dst);
+            ast() = hoistVarOverStmtSeq(ast());
+            Stmt s = findStmt(ast(), stmt);
+            Stmt d = findStmt(ast(), dst);
 
             auto movingUp = [&]() {
                 if (d->isAncestorOf(s)) {
@@ -417,7 +441,7 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
                     }
                     if (s->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
-                            ast_,
+                            ast(),
                             "Fission a If node in a StmtSeq is not currently "
                             "supported in moveTo");
                         // TODO: Fission IfNode
@@ -445,7 +469,7 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
                     }
                     if (s->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
-                            ast_,
+                            ast(),
                             "Fission a If node in a StmtSeq is not currently "
                             "supported in moveTo");
                         // TODO: Fission IfNode
@@ -460,94 +484,95 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
                 // TODO: Fuse if d is inner of s
 
             } else {
+                commitTransaction();
                 return {stmtBody, stmt};
             }
         }
     } catch (const InvalidSchedule &e) {
-        ast_ = bak;
-        throw InvalidSchedule(ast_, "Invalid move_to(" + toString(_stmt) +
-                                        ", " + toString(_dst) +
-                                        "): " + e.what());
+        abortTransaction();
+        throw InvalidSchedule(ast(), "Invalid move_to(" + toString(_stmt) +
+                                         ", " + toString(_dst) +
+                                         "): " + e.what());
     }
 }
 
 void Schedule::inlining(const ID &def) {
-    auto log =
-        MAKE_LOG(Inline, std::bind_front(freetensor::inlining, ast_), def);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_LOG(Inline, std::bind_front(freetensor::inlining, ast()), def));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 void Schedule::parallelize(const ID &loop, const ParallelScope &parallel) {
-    auto log =
-        MAKE_LOG(Parallelize, std::bind_front(freetensor::parallelize, ast_),
-                 loop, parallel);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_LOG(Parallelize, std::bind_front(freetensor::parallelize, ast()),
+                 loop, parallel));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 void Schedule::unroll(const ID &loop, bool immediate) {
-    auto log = MAKE_LOG(Unroll, std::bind_front(freetensor::unroll, ast_), loop,
-                        immediate);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(MAKE_LOG(
+        Unroll, std::bind_front(freetensor::unroll, ast()), loop, immediate));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 void Schedule::vectorize(const ID &loop) {
-    auto log =
-        MAKE_LOG(Vectorize, std::bind_front(freetensor::vectorize, ast_), loop);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(MAKE_LOG(
+        Vectorize, std::bind_front(freetensor::vectorize, ast()), loop));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 void Schedule::separateTail(bool noDuplicateVarDefs) {
-    auto log =
-        MAKE_LOG(SeparateTail, std::bind_front(freetensor::separateTail, ast_),
-                 noDuplicateVarDefs);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_LOG(SeparateTail, std::bind_front(freetensor::separateTail, ast()),
+                 noDuplicateVarDefs));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
 void Schedule::asMatMul(const ID &loop) {
-    auto log =
-        MAKE_LOG(AsMatMul, std::bind_front(freetensor::asMatMul, ast_), loop);
-    ScheduleLog logs = logs_.push(log);
-    RUN_SCHEDULE_MEMORIZEDLY(logs, log);
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_LOG(AsMatMul, std::bind_front(freetensor::asMatMul, ast()), loop));
     try {
-        ast_ = log->getResult();
-        saveSuccessLog(logs);
+        ast() = log->getResult();
+        commitTransaction();
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log, ast_, e.what());
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
     }
 }
 
@@ -562,7 +587,7 @@ void Schedule::autoSchedule(const Target &target, const Ref<RandTrace> &trace) {
 
 void Schedule::autoUseLib(const Target &target) {
     // Try to implement each top-level loops with lib calls
-    auto loopNestTree = getLoopNestTree(ast_);
+    auto loopNestTree = getLoopNestTree(ast());
     for (auto &&loop : loopNestTree->subLoops_) {
         try {
             asMatMul(loop->loop_->id());
@@ -598,8 +623,7 @@ void Schedule::autoUseLib(const Target &target) {
                 auto stmts = allStmts(
                     loop->loop_, {ASTNodeType::Store, ASTNodeType::ReduceTo});
                 for (auto &&[i, stmt] : iter::enumerate(stmts)) {
-                    auto bak = ast_;
-                    auto logBak = logs_;
+                    beginTransaction();
                     try {
                         fission(loop->loop_->id(), FissionSide::Before,
                                 stmt->id(), "." + toString(i), "");
@@ -608,8 +632,9 @@ void Schedule::autoUseLib(const Target &target) {
                                     stmt->id(), "." + toString(i) + ".lib", "")
                                 .first.at(loop->loop_->id());
                         asMatMul(libStmtId);
+                        commitTransaction();
                     } catch (const InvalidSchedule &e) {
-                        ast_ = std::move(bak), logs_ = std::move(logBak);
+                        abortTransaction();
                     }
                 }
             }
@@ -618,9 +643,9 @@ void Schedule::autoUseLib(const Target &target) {
 }
 
 void Schedule::autoReorder(const Target &target) {
-    ast_ = makeReduction(ast_);
+    ast() = makeReduction(ast());
 
-    auto allLoops = findAllLoops(ast_);
+    auto allLoops = findAllLoops(ast());
     std::vector<FindDepsDir> direction;
     direction.reserve(allLoops.size());
     for (auto &&loop : allLoops) {
@@ -632,7 +657,7 @@ void Schedule::autoReorder(const Target &target) {
     // 2 = Others
     std::unordered_map<ID, int> depLevel;
     FindDeps().direction(direction).ignoreReductionWAW(false)(
-        ast_, [&](const Dependency &d) {
+        ast(), [&](const Dependency &d) {
             ASSERT(d.dir_.size() == 1);
             auto &level = depLevel[d.dir_[0].first.id_];
             if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
@@ -667,7 +692,7 @@ void Schedule::autoReorder(const Target &target) {
                 visitNest(subNest);
             }
         };
-    auto nest = getLoopNestTree(ast_);
+    auto nest = getLoopNestTree(ast());
     for (auto &&sub : nest->subLoops_) {
         visitNest(sub);
     }
@@ -739,7 +764,7 @@ void Schedule::autoFissionFuse(const Target &target,
                     .filterAccess([&](const AccessPoint &ap) {
                         return ap.stmt_->isBefore(splitter);
                     })
-                    .exists(ast_);
+                    .exists(ast());
             bool backHasDep =
                 FindDeps()
                     .direction({{{thisId, DepDirection::Different}}})
@@ -747,7 +772,7 @@ void Schedule::autoFissionFuse(const Target &target,
                     .filterAccess([&](const AccessPoint &ap) {
                         return !ap.stmt_->isBefore(splitter);
                     })
-                    .exists(ast_);
+                    .exists(ast());
             bool depDiff = frontHasDep != backHasDep;
             {
                 RandCondGuard _(conds, depDiffCondName, depDiff);
@@ -756,8 +781,7 @@ void Schedule::autoFissionFuse(const Target &target,
                                       "not fission " + toString(thisId) +
                                           " before " +
                                           toString(splitter->id()) + "?")) {
-                    auto bak = ast_;
-                    auto logBak = logs_;
+                    beginTransaction();
                     try {
                         auto newId =
                             fission(thisId, FissionSide::Before, splitter->id(),
@@ -766,9 +790,9 @@ void Schedule::autoFissionFuse(const Target &target,
                         newOuters.emplace_back(newId);
                         fissionFrom[newId] = thisId;
                         partCnt++;
+                        commitTransaction();
                     } catch (const InvalidSchedule &e) {
-                        ast_ = std::move(bak);
-                        logs_ = std::move(logBak);
+                        abortTransaction();
                     }
                 }
             }
@@ -777,7 +801,7 @@ void Schedule::autoFissionFuse(const Target &target,
         fissionFrom[thisId] = thisId;
         return newOuters;
     };
-    auto nest = getLoopNestTree(ast_);
+    auto nest = getLoopNestTree(ast());
     for (auto &&sub : nest->subLoops_) {
         tryFission(sub);
     }
@@ -802,12 +826,12 @@ void Schedule::autoFissionFuse(const Target &target,
                         FindDeps()
                             .direction({{{thisId, DepDirection::Different}}})
                             .filterSubAST(thisId)
-                            .exists(ast_);
+                            .exists(ast());
                     bool lastHasDep =
                         FindDeps()
                             .direction({{{lastId, DepDirection::Different}}})
                             .filterSubAST(lastId)
-                            .exists(ast_);
+                            .exists(ast());
                     bool depDiff = thisHasDep != lastHasDep;
                     {
                         RandCondGuard _(conds, depDiffCondName, depDiff);
@@ -816,8 +840,7 @@ void Schedule::autoFissionFuse(const Target &target,
                                 {depDiff ? 1 : 0, depDiff ? 0 : 1}, trace,
                                 "fuse " + toString(lastId) + " and " +
                                     toString(thisId) + "?")) {
-                            auto bak = ast_;
-                            auto logBak = logs_;
+                            beginTransaction();
                             try {
                                 try {
                                     lastId = moveTo(lastId, MoveToSide::Before,
@@ -834,9 +857,9 @@ void Schedule::autoFissionFuse(const Target &target,
                                     last->subLoops_.begin(),
                                     last->subLoops_.end());
                                 last->subLoops_.clear();
+                                commitTransaction();
                             } catch (const InvalidSchedule &e) {
-                                ast_ = std::move(bak);
-                                logs_ = std::move(logBak);
+                                abortTransaction();
                                 tryFuse(last);
                             }
                         }
@@ -849,7 +872,7 @@ void Schedule::autoFissionFuse(const Target &target,
                 tryFuse(last);
             }
         };
-    tryFuse(getLoopNestTree(ast_));
+    tryFuse(getLoopNestTree(ast()));
 }
 
 void Schedule::autoParallelize(const Target &target) {
@@ -860,7 +883,7 @@ void Schedule::autoParallelize(const Target &target) {
         // first. If the counts are equal, we try to parallel the out-most loop
         // with the same count first
         CountContigAccessLoops contigFinder;
-        contigFinder(ast_);
+        contigFinder(ast());
         std::vector<std::pair<ID, std::pair<int64_t, int>>> contigLoops(
             contigFinder.counts().begin(), contigFinder.counts().end());
         std::sort(contigLoops.begin(), contigLoops.end(),
@@ -878,8 +901,7 @@ void Schedule::autoParallelize(const Target &target) {
                 continue;
             }
 
-            auto bak = ast_;
-            auto logBak = logs_;
+            beginTransaction();
             try {
                 auto [l0, l1] =
                     split(loop->id(), ((GPUTarget &)target).warpSize());
@@ -887,7 +909,7 @@ void Schedule::autoParallelize(const Target &target) {
 
                 try {
                     // Reorder this scope to as outer as possible
-                    auto refCntHolder = ast_;
+                    auto refCntHolder = ast();
                     auto c = find(l1);
                     if (c->parentStmt().isValid()) {
                         for (c = c->parentStmt(); c->parentStmt().isValid();
@@ -904,8 +926,9 @@ void Schedule::autoParallelize(const Target &target) {
                 } catch (const InvalidSchedule &e) {
                     // do nothing
                 }
+                commitTransaction();
             } catch (const InvalidSchedule &e) {
-                ast_ = std::move(bak), logs_ = std::move(logBak);
+                abortTransaction();
             }
         }
     }
@@ -913,52 +936,78 @@ void Schedule::autoParallelize(const Target &target) {
 
     // Try to merge and parallelize as many outer loops as possible
     std::function<void(const Ref<LoopNest> &)> autoParallelizeOuter =
-        [&](const Ref<LoopNest> &root) {
-            auto latestSuccess = ast_;
-            auto successLogs = logs_;
-
-            bool atLeastOne = false; // if at least one loop is parallelized
-            try {
-                Ref<LoopNest> loop = root;
-
+        [&](const Ref<LoopNest> &_root) {
+            auto root = _root;
 #ifdef FT_WITH_CUDA
-                bool parentIsWarp = false;
-                while (loop->loop_->property_->parallel_ != serialScope &&
-                       loop->subLoops_.size() == 1) {
-                    loop = loop->subLoops_.front();
-                    parentIsWarp = true;
-                }
+            bool parentIsWarp = false;
+            while (root->loop_->property_->parallel_ != serialScope &&
+                   root->subLoops_.size() == 1) {
+                root = root->subLoops_.front();
+                parentIsWarp = true;
+            }
 #endif // FT_WITH_CUDA
 
-                ID outerId;
+            // Count how many loops we can merge and drop the result. Don't
+            // worry about repeatly doing the same merging, because we have
+            // memoized schedules
+            int maxMergeLevel = 0;
+            beginTransaction();
+            try {
+                ID mergedId;
+                Ref<LoopNest> loop = root;
                 while (true) {
                     ID loopId = loop->loop_->id();
                     if (find(loopId).as<ForNode>()->property_->parallel_ !=
                         serialScope) {
                         break;
                     }
-                    if (outerId.isValid()) {
-                        loopId = merge(outerId, loopId);
+                    mergedId =
+                        mergedId.isValid() ? merge(mergedId, loopId) : loopId;
+                    maxMergeLevel++;
+                    if (loop->subLoops_.size() == 1) {
+                        loop = loop->subLoops_.front();
+                    } else {
+                        break;
+                    }
+                }
+            } catch (const InvalidSchedule &e) {
+                // do nothing
+            }
+            abortTransaction();
+
+            // Suppose we can merge n loops at maximum, we try merging and
+            // parallelizing n loops first, then try n - 1, n - 2, and so on.
+            bool done = false;
+            for (int mergeLevel = maxMergeLevel; mergeLevel > 0; mergeLevel--) {
+                beginTransaction();
+                try {
+                    ID mergedId;
+                    Ref<LoopNest> loop = root;
+                    for (int i = 0; i < mergeLevel; i++) {
+                        ID loopId = loop->loop_->id();
+                        mergedId = mergedId.isValid() ? merge(mergedId, loopId)
+                                                      : loopId;
+                        if (i + 1 < mergeLevel) {
+                            ASSERT(loop->subLoops_.size() == 1);
+                            loop = loop->subLoops_.front();
+                        }
                     }
 
-                    auto bak = ast_;
-                    auto logBak = logs_;
                     switch (target.type()) {
                     case TargetType::CPU:
-                        parallelize(loopId, OpenMPScope{});
-                        atLeastOne = true;
+                        parallelize(mergedId, OpenMPScope{});
                         break;
 
 #ifdef FT_WITH_CUDA
                     case TargetType::GPU: {
-                        auto loop = find(loopId);
+                        auto merged = find(mergedId);
                         auto isParallelLoop = [](const Stmt &s) {
                             return s->nodeType() == ASTNodeType::For &&
                                    s.as<ForNode>()->property_->parallel_ !=
                                        serialScope;
                         };
                         bool childIsWarp =
-                            !findStmt(loop, isParallelLoop).empty();
+                            !findStmt(merged, isParallelLoop).empty();
                         // We guarantee the following requirements in order:
                         // 1. make sure all SMs are used
                         // 2. if there are enough threads, make sure blockDim is
@@ -976,14 +1025,14 @@ void Schedule::autoParallelize(const Target &target) {
                             maxThreads /= ((GPUTarget &)target).warpSize();
                         }
                         ID l1, l1b, l2;
-                        if (auto loopNode = loop.as<ForNode>();
+                        if (auto loopNode = merged.as<ForNode>();
                             loopNode->len_->nodeType() ==
                             ASTNodeType::IntConst) {
                             auto len = loopNode->len_.as<IntConstNode>()->val_;
                             if (len < numSM * maxThreads) {
-                                std::tie(l1, l2) = split(loopId, -1, numSM);
+                                std::tie(l1, l2) = split(mergedId, -1, numSM);
                             } else {
-                                std::tie(l1, l2) = split(loopId, maxThreads);
+                                std::tie(l1, l2) = split(mergedId, maxThreads);
                             }
                         } else {
                             // We don't use the `nparts` mode of `split`,
@@ -991,7 +1040,7 @@ void Schedule::autoParallelize(const Target &target) {
                             // Instead, we use the `factor` mode and then
                             // reorder. See the doc string of `split` for
                             // details
-                            std::tie(l2, l1) = split(loopId, numSM);
+                            std::tie(l2, l1) = split(mergedId, numSM);
                             reorder({l1, l2});
                             if (!findAll(l2).empty()) {
                                 std::tie(l1b, l2) = split(l2, maxThreads);
@@ -1005,18 +1054,15 @@ void Schedule::autoParallelize(const Target &target) {
                                 // introduced, which is not supported by ISL and
                                 // may probably lead to false dependencies
                                 parallelize(l1, blockIdxY);
-                                atLeastOne = true;
                                 parallelize(l1b, blockIdxX);
                             } else {
                                 parallelize(l1, blockIdxX);
-                                atLeastOne = true;
                             }
                         }
                         if (!findAll(l2).empty()) {
                             parallelize(l2, (!parentIsWarp && !childIsWarp)
                                                 ? threadIdxX
                                                 : threadIdxY);
-                            atLeastOne = true;
                         }
                         break;
                     }
@@ -1025,29 +1071,22 @@ void Schedule::autoParallelize(const Target &target) {
                     default:
                         ASSERT(false);
                     }
-                    latestSuccess = ast_, successLogs = logs_;
-                    ast_ = std::move(bak), logs_ = std::move(logBak);
 
-                    if (loop->subLoops_.size() == 1) {
-                        outerId = loopId;
-                        loop = loop->subLoops_.front();
-                    } else {
-                        break;
-                    }
+                    done = true;
+                    commitTransaction();
+                    break;
+                } catch (const InvalidSchedule &e) {
+                    abortTransaction();
                 }
-            } catch (InvalidSchedule &e) {
-                // do nothing
             }
 
-            ast_ = latestSuccess, logs_ = successLogs;
-
-            if (!atLeastOne) {
+            if (!done) {
                 for (auto &&subLoop : root->subLoops_) {
                     autoParallelizeOuter(subLoop);
                 }
             }
         };
-    auto loopNestTree = getLoopNestTree(ast_);
+    auto loopNestTree = getLoopNestTree(ast());
     for (const Ref<LoopNest> &root : loopNestTree->subLoops_) {
         // If the outer most loop is too short, we try the second outer loops
         // instead
@@ -1066,7 +1105,7 @@ void Schedule::autoParallelize(const Target &target) {
 void Schedule::autoSetMemType(const Target &target) {
     // Try to put each VarDef as near to processor as possible
     if (target.type() == TargetType::GPU) {
-        for (auto &&[defId, name] : allDefs(ast_, {AccessType::Cache})) {
+        for (auto &&[defId, name] : allDefs(ast(), {AccessType::Cache})) {
             try {
                 setMemType(defId, MemType::GPULocal);
             } catch (const InvalidSchedule &e) {
@@ -1084,7 +1123,7 @@ void Schedule::autoUnroll(const Target &target) {
     if (target.type() == TargetType::GPU) {
         // Try to unroll loops that accessing local arrays, to help nvcc put
         // these arrays to registers
-        for (auto &&[loop, defs] : findIndexingLoops(ast_)) {
+        for (auto &&[loop, defs] : findIndexingLoops(ast())) {
             if (loop->property_->parallel_ != serialScope ||
                 loop->property_->vectorize_) {
                 continue;
@@ -1121,7 +1160,7 @@ void Schedule::autoUnroll(const Target &target) {
                 visitNest(subNest);
             }
         };
-    visitNest(getLoopNestTree(ast_));
+    visitNest(getLoopNestTree(ast()));
 }
 
 std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
