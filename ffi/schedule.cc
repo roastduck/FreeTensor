@@ -44,7 +44,7 @@ void init_ffi_schedule(py::module_ &m) {
         .def("fork", &Schedule::fork)
         .def("begin_transaction", &Schedule::beginTransaction)
         .def("commit_transaction", &Schedule::commitTransaction)
-        .def("abort_transactino", &Schedule::abortTransaction)
+        .def("abort_transaction", &Schedule::abortTransaction)
         .def("ast",
              static_cast<const Stmt &(Schedule::*)() const>(&Schedule::ast))
         .def("func", &Schedule::func)
