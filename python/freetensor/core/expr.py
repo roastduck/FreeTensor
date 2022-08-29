@@ -8,6 +8,7 @@ and also exposed to users via multi-stage programming
 import collections
 import builtins
 import math
+from numbers import Number
 from typing import Sequence
 
 import freetensor_ffi as ffi
@@ -78,6 +79,24 @@ class VarRef(ffi.FrontendVar):
             slice(None, None) if d != dim else idx for d in range(self.ndim)
         ]
         return self[indices]
+
+    def shape(self, dim=None):
+        '''
+        Return lengths of all dimensions or the length of one dimension
+
+        `.shape()` -> list of lengths of all dimensions
+
+        `.shape(dim)` -> length of dimension `dim`, where `dim` can be `int`
+        or `Expr`
+
+        All lengths can be `Expr` (if the length is dynamically decided) or
+        `int` (if statically decided)
+        '''
+        intOrExpr = lambda x: x.val if isinstance(x, ffi.IntConst) else x
+        if dim is None:
+            return [intOrExpr(d) for d in super(VarRef, self).shape()]
+        else:
+            return intOrExpr(super(VarRef, self).shape(dim))
 
     def _parse_key(self, key):
         if key is None or key is ...:
@@ -530,7 +549,7 @@ def min(lhs, rhs):
     if _istensor(lhs) or _istensor(rhs):
         from .. import libop
         return libop.min(lhs, rhs)
-    if type(lhs) in (int, float) and type(rhs) in (int, float):
+    if isinstance(lhs, Number) and isinstance(rhs, Number):
         return builtins.min(lhs, rhs)
     return ffi.makeMin(lhs, rhs)
 
@@ -557,7 +576,7 @@ def max(lhs, rhs):
     if _istensor(lhs) or _istensor(rhs):
         from .. import libop
         return libop.max(lhs, rhs)
-    if type(lhs) in (int, float) and type(rhs) in (int, float):
+    if isinstance(lhs, Number) and isinstance(rhs, Number):
         return builtins.max(lhs, rhs)
     return ffi.makeMax(lhs, rhs)
 
@@ -804,7 +823,7 @@ def abs(expr):
     if _istensor(expr):
         from .. import libop
         return libop.abs(expr)
-    if type(expr) in (int, float):
+    if isinstance(expr, Number):
         return builtins.abs(expr)
     return ffi.makeAbs(expr)
 
@@ -829,7 +848,7 @@ def sqrt(expr):
     if _istensor(expr):
         from .. import libop
         return libop.sqrt(expr)
-    if type(expr) in (int, float):
+    if isinstance(expr, Number):
         return math.sqrt(expr)
     return ffi.makeSqrt(expr)
 
@@ -854,7 +873,7 @@ def exp(expr):
     if _istensor(expr):
         from .. import libop
         return libop.exp(expr)
-    if type(expr) in (int, float):
+    if isinstance(expr, Number):
         return math.exp(expr)
     return ffi.makeExp(expr)
 
@@ -879,7 +898,7 @@ def square(expr):
     if _istensor(expr):
         from .. import libop
         return libop.square(expr)
-    if type(expr) in (int, float):
+    if isinstance(expr, Number):
         return expr * expr
     return ffi.makeSquare(expr)
 
@@ -927,7 +946,7 @@ def tanh(expr):
     if _istensor(expr):
         from .. import libop
         return libop.tanh(expr)
-    if type(expr) in (int, float):
+    if isinstance(expr, Number):
         return math.tanh(expr)
     return ffi.makeTanh(expr)
 
