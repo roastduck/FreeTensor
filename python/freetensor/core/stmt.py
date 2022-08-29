@@ -62,10 +62,9 @@ class _VarDef:
             self.shape = shape
         elif isinstance(shape, VarRef):
             assert shape.ndim == 1, "Shape of a shape should be 1-D"
-            assert type(
-                shape.shape(0)
-            ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
-            ndim = shape.shape(0).val
+            assert type(shape.shape(
+                0)) is int, "Dynamic number of dimensions is not supported"
+            ndim = shape.shape(0)
             self.shape = [shape[i] for i in range(ndim)]
         else:
             assert False, "shape cannot be of type %s" % type(shape)
