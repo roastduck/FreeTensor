@@ -24,6 +24,28 @@ class Schedule(ffi.Schedule):
             # create a new schedule from a program
             super().__init__(arg, verbose)
 
+    def ast(self):
+        """
+        Get the scheduled AST without function signature
+
+        This is mainly for debugging and testting purpose
+        """
+
+        ret = super().ast()
+        if self.verbose >= 1:
+            print(f"The scheduled AST is :\n{ret}")
+        return ret
+
+    def func(self):
+        """
+        Get the scheduled function
+        """
+
+        ret = super().func()
+        if self.verbose >= 1:
+            print(f"The scheduled Func is :\n{ret}")
+        return ret
+
     def fork(self):
         return Schedule(super().fork())
 

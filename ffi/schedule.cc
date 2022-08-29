@@ -40,12 +40,17 @@ void init_ffi_schedule(py::module_ &m) {
         .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
         .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
         .def(py::init<const Schedule &>(), "schedule"_a)
+        .def_property_readonly("verbose", &Schedule::verbose)
         .def("fork", &Schedule::fork)
-        .def("ast", &Schedule::ast)
+        .def("begin_transaction", &Schedule::beginTransaction)
+        .def("commit_transaction", &Schedule::commitTransaction)
+        .def("abort_transactino", &Schedule::abortTransaction)
+        .def("ast",
+             static_cast<const Stmt &(Schedule::*)() const>(&Schedule::ast))
         .def("func", &Schedule::func)
         .def("logs",
              [](const Schedule &s) {
-                 auto &&log = s.logs();
+                 auto &&log = s.logs().asVector();
                  std::vector<std::string> ret;
                  ret.reserve(log.size());
                  for (auto &&item : log) {
@@ -55,7 +60,7 @@ void init_ffi_schedule(py::module_ &m) {
              })
         .def("pretty_logs",
              [](const Schedule &s) {
-                 auto &&log = s.logs();
+                 auto &&log = s.logs().asVector();
                  std::vector<std::string> ret;
                  ret.reserve(log.size());
                  for (auto &&item : log) {

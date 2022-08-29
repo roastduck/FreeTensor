@@ -28,19 +28,45 @@ struct AutoScheduleTuneTrial {
 };
 
 class Schedule {
-    Func func_;
-    Stmt ast_;
+    struct Transaction {
+        Stmt ast_;
+        ScheduleLog logs_;
+
+        Transaction(const Stmt &ast, const ScheduleLog &logs)
+            : ast_(ast), logs_(logs) {}
+    };
+
+    Func func_; /// Used for `func()`. Only header of `func_` is used, while its
+                /// body is `ast_` in `openTrans_`
+
+    std::vector<Transaction> openTrans_; /// Open transactions
 
     int verbose_ = 0;
 
-    ScheduleLog logs_;
     Ref<MemoizedSchedules> memoized_;
 
     Ref<OpenMPRandomEngine> rng_;
     Ref<RandCtx<OpenMPRandomEngine>> randCtx_;
 
   private:
-    void saveSuccessLog(const ScheduleLog &logs);
+    /**
+     * Append a new schedule log to logs, and try looking up an identical
+     * schedule from `MemoizedSchedules`
+     *
+     * If a memoized log is found, the memoized schedule result (including
+     * exceptions, if any) can be reused. If not found, save the new log to
+     * `MemoziedSchedules`
+     */
+    template <class T> T appendLog(const T &_log) {
+        auto log = _log;
+        logs() = logs().push(log);
+        logs() = memoized_->lookup(logs());
+        ASSERT(logs().top()->type() == log->type());
+        log = logs().top().as<typename decltype(log)::Object>();
+        log->run();
+        memoized_->save(logs());
+        return log;
+    }
 
   public:
     Schedule() = default;
@@ -67,22 +93,48 @@ class Schedule {
     Schedule fork() const { return *this; }
 
     /**
+     * Transaction of schedules
+     *
+     * Schedules are applied in transactions. A transaction is created with
+     * `beginTransaction()`, applied as a whole with `commitTransaction()`, and
+     * can be aborted with `abortTransaction()`
+     *
+     * Transactions can be nested. Technically, each schedule is by itself a
+     * inner-most transaction, while a `Schedule` object defines the outer-most
+     * transaction, but these inner-most and outer-most transcations are
+     * invisible to users
+     *
+     * @{
+     */
+    void beginTransaction();
+    void commitTransaction();
+    void abortTransaction();
+    /** @} */
+
+    /**
      * @return : The function being transformed
      */
     Func func() const {
         ASSERT(func_.isValid());
-        return makeFunc(func_->name_, func_->params_, func_->returns_, ast_);
+        return makeFunc(func_->name_, func_->params_, func_->returns_, ast());
     }
 
     /**
      * @return : The statements being transformed, without a function signature
      */
-    Stmt ast() const;
+    Stmt &ast();
+    const Stmt &ast() const;
 
     /**
      * @return : Logs of all schedules applied
      */
-    std::vector<Ref<ScheduleLogItem>> logs() const;
+    ScheduleLog &logs();
+    const ScheduleLog &logs() const;
+
+    /**
+     * Verbose level
+     */
+    int verbose() const { return verbose_; }
 
     /**
      * Find all nodes in the current AST satisfying a given condition
