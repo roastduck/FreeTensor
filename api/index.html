@@ -3055,6 +3055,24 @@ on <code>VarRef</code> objects generates AST nodes</p>
         <span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
 
+    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return lengths of all dimensions or the length of one dimension</span>
+
+<span class="sd">        `.shape()` -&gt; list of lengths of all dimensions</span>
+
+<span class="sd">        `.shape(dim)` -&gt; length of dimension `dim`, where `dim` can be `int`</span>
+<span class="sd">        or `Expr`</span>
+
+<span class="sd">        All lengths can be `Expr` (if the length is dynamically decided) or</span>
+<span class="sd">        `int` (if statically decided)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">intOrExpr</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">val</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">IntConst</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">intOrExpr</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">()]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">intOrExpr</span><span class="p">(</span><span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span>
+
     <span class="k">def</span> <span class="nf">_parse_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">key</span> <span class="ow">is</span> <span class="o">...</span><span class="p">:</span>
             <span class="n">key</span> <span class="o">=</span> <span class="p">()</span>
@@ -3309,6 +3327,52 @@ on <code>VarRef</code> objects generates AST nodes</p>
 
 
 
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.expr.VarRef.shape" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.expr.VarRef.shape" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Return lengths of all dimensions or the length of one dimension</p>
+<p><code>.shape()</code> -&gt; list of lengths of all dimensions</p>
+<p><code>.shape(dim)</code> -&gt; length of dimension <code>dim</code>, where <code>dim</code> can be <code>int</code>
+or <code>Expr</code></p>
+<p>All lengths can be <code>Expr</code> (if the length is dynamically decided) or
+<code>int</code> (if statically decided)</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return lengths of all dimensions or the length of one dimension</span>
+
+<span class="sd">    `.shape()` -&gt; list of lengths of all dimensions</span>
+
+<span class="sd">    `.shape(dim)` -&gt; length of dimension `dim`, where `dim` can be `int`</span>
+<span class="sd">    or `Expr`</span>
+
+<span class="sd">    All lengths can be `Expr` (if the length is dynamically decided) or</span>
+<span class="sd">    `int` (if statically decided)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">intOrExpr</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">val</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">IntConst</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span>
+    <span class="k">if</span> <span class="n">dim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">intOrExpr</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">()]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">intOrExpr</span><span class="p">(</span><span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
 
 
 
@@ -3391,7 +3455,7 @@ it calls libop.abs</p>
     <span class="k">if</span> <span class="n">_istensor</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
         <span class="k">return</span> <span class="n">libop</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">builtins</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">makeAbs</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
 </code></pre></div>
@@ -3940,7 +4004,7 @@ it calls libop.exp</p>
     <span class="k">if</span> <span class="n">_istensor</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
         <span class="k">return</span> <span class="n">libop</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">makeExp</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
 </code></pre></div>
@@ -4915,7 +4979,7 @@ it calls libop.max</p>
     <span class="k">if</span> <span class="n">_istensor</span><span class="p">(</span><span class="n">lhs</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_istensor</span><span class="p">(</span><span class="n">rhs</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
         <span class="k">return</span> <span class="n">libop</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">lhs</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">builtins</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">makeMax</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
 </code></pre></div>
@@ -4999,7 +5063,7 @@ it calls libop.min</p>
     <span class="k">if</span> <span class="n">_istensor</span><span class="p">(</span><span class="n">lhs</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_istensor</span><span class="p">(</span><span class="n">rhs</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
         <span class="k">return</span> <span class="n">libop</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">lhs</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">builtins</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">makeMin</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
 </code></pre></div>
@@ -5674,7 +5738,7 @@ it calls libop.sqrt</p>
     <span class="k">if</span> <span class="n">_istensor</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
         <span class="k">return</span> <span class="n">libop</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">makeSqrt</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
 </code></pre></div>
@@ -5755,7 +5819,7 @@ it calls libop.square</p>
     <span class="k">if</span> <span class="n">_istensor</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
         <span class="k">return</span> <span class="n">libop</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">expr</span> <span class="o">*</span> <span class="n">expr</span>
     <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">makeSquare</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
 </code></pre></div>
@@ -5915,7 +5979,7 @@ it calls libop.tanh</p>
     <span class="k">if</span> <span class="n">_istensor</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
         <span class="k">return</span> <span class="n">libop</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">makeTanh</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
 </code></pre></div>
