@@ -180,8 +180,6 @@ Namespaces</h2></td></tr>
 Macros</h2></td></tr>
 <tr class="memitem:ad474ec41602566489ec2184b3310df29"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="schedule_8cc.html#ad474ec41602566489ec2184b3310df29">MAKE_LOG</a>(TYPE,  FUNC, ...)</td></tr>
 <tr class="separator:ad474ec41602566489ec2184b3310df29"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a758dc377b4e84fe092ac108bb5ef73a1"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="schedule_8cc.html#a758dc377b4e84fe092ac108bb5ef73a1">RUN_SCHEDULE_MEMORIZEDLY</a>(logs,  log)</td></tr>
-<tr class="separator:a758dc377b4e84fe092ac108bb5ef73a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="ad474ec41602566489ec2184b3310df29" name="ad474ec41602566489ec2184b3310df29"></a>
@@ -233,39 +231,6 @@ Macros</h2></td></tr>
 <div class="line">    })(FUNC, std::make_tuple(__VA_ARGS__))</div>
 <div class="ttc" id="anamespacefreetensor_html_a72ad71770fd2211715907e3189e380d5"><div class="ttname"><a href="namespacefreetensor.html#a72ad71770fd2211715907e3189e380d5">freetensor::apply</a></div><div class="ttdeci">PBSet apply(T &amp;&amp;lhs, U &amp;&amp;rhs)</div><div class="ttdef"><b>Definition:</b> presburger.h:365</div></div>
 <div class="ttc" id="anamespacefreetensor_html_aa2167252e741aa103c5129991760f9eb"><div class="ttname"><a href="namespacefreetensor.html#aa2167252e741aa103c5129991760f9eb">freetensor::getPackFromID</a></div><div class="ttdeci">auto getPackFromID(auto schedule, const std::tuple&lt; Args... &gt; &amp;args)</div><div class="ttdef"><b>Definition:</b> schedule_log.h:118</div></div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="a758dc377b4e84fe092ac108bb5ef73a1" name="a758dc377b4e84fe092ac108bb5ef73a1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a758dc377b4e84fe092ac108bb5ef73a1">&#9670;&nbsp;</a></span>RUN_SCHEDULE_MEMORIZEDLY</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define RUN_SCHEDULE_MEMORIZEDLY</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">logs, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">log&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">    logs = memoized_-&gt;lookup(logs);                                            \</div>
-<div class="line">    ASSERT(logs.top()-&gt;type() == log-&gt;type());                                 \</div>
-<div class="line">    log = logs.top().as&lt;<span class="keyword">decltype</span>(log)::Object&gt;();                              \</div>
-<div class="line">    log-&gt;run();                                                                \</div>
-<div class="line">    memoized_-&gt;save(logs);</div>
 </div><!-- fragment -->
 </div>
 </div>

@@ -9000,6 +9000,28 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
             <span class="c1"># create a new schedule from a program</span>
             <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">ast</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the scheduled AST without function signature</span>
+
+<span class="sd">        This is mainly for debugging and testting purpose</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">ret</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">ast</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The scheduled AST is :</span><span class="se">\n</span><span class="si">{</span><span class="n">ret</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span>
+
+    <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the scheduled function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">ret</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">func</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The scheduled Func is :</span><span class="se">\n</span><span class="si">{</span><span class="n">ret</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span>
+
     <span class="k">def</span> <span class="nf">fork</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">Schedule</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fork</span><span class="p">())</span>
 
@@ -9708,6 +9730,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 
 
+
   <div class="doc doc-object doc-method">
 
 
@@ -9771,6 +9794,42 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        if the loop cannot be transformed to be a matrix multiplication</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">))</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.schedule.Schedule.ast" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">ast</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.schedule.Schedule.ast" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Get the scheduled AST without function signature</p>
+<p>This is mainly for debugging and testting purpose</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">ast</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the scheduled AST without function signature</span>
+
+<span class="sd">    This is mainly for debugging and testting purpose</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ret</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">ast</span><span class="p">()</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The scheduled AST is :</span><span class="se">\n</span><span class="si">{</span><span class="n">ret</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ret</span>
 </code></pre></div>
         </details>
     </div>
@@ -10576,6 +10635,39 @@ cache variable, ID of the VarDef node of the cache variable)</p></li>
           <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">fork</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">Schedule</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fork</span><span class="p">())</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.schedule.Schedule.func" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.schedule.Schedule.func" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Get the scheduled function</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the scheduled function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ret</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">func</span><span class="p">()</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The scheduled Func is :</span><span class="se">\n</span><span class="si">{</span><span class="n">ret</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ret</span>
 </code></pre></div>
         </details>
     </div>

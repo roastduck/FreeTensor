@@ -186,6 +186,7 @@ var menudata={children:[
 {text:"Enumerator",url:"functions_eval.html"},
 {text:"Related Functions",url:"functions_rela.html",children:[
 {text:":",url:"functions_rela.html#index_:"},
+{text:"a",url:"functions_rela.html#index_a"},
 {text:"e",url:"functions_rela.html#index_e"},
 {text:"m",url:"functions_rela.html#index_m"},
 {text:"o",url:"functions_rela.html#index_o"},
