@@ -9148,6 +9148,8 @@ template&lt;class T , class Hash , class KeyEqual &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+<p >Transform things like <code>VarDef { stmt0 VarDef { stmt1 }}</code> into <code>VarDef { VarDef { stmt0 stmt1 }}</code></p>
+<p >This is not a optimization pass. It is intended to used inside other passes and make them simpler. It is suggest to run <code>sinkVar</code> after these passes to revert the effect of <code>hoistVarOverStmtSeq</code> </p>
 
 </div>
 </div>
