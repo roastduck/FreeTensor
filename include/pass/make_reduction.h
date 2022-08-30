@@ -40,8 +40,9 @@ inline Stmt makeReduction(const Stmt &op,
 }
 
 inline Stmt makeReduction(const Stmt &op) {
-    return makeReduction(op, {ReduceOp::Add, ReduceOp::Mul, ReduceOp::Min,
-                              ReduceOp::Max, ReduceOp::LAnd, ReduceOp::LOr});
+    return makeReduction(op, {ReduceOp::Add, ReduceOp::Sub, ReduceOp::Mul,
+                              ReduceOp::Min, ReduceOp::Max, ReduceOp::LAnd,
+                              ReduceOp::LOr});
 }
 
 DEFINE_PASS_FOR_FUNC(makeReduction)

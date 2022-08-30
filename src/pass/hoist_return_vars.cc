@@ -36,11 +36,12 @@ Stmt HoistReturnVars::visit(const For &op) {
     if (!outMostLoop_.isValid()) {
         outMostLoop_ = op->id();
         auto ret = Mutator::visit(op);
-        outMostLoop_ = ID();
+        outMostLoop_ = {};
 
         for (auto def : toHoist_) {
-            ret = makeVarDef(def->id(), def->name_, def->buffer_,
-                             def->ioTensor_, std::move(ret), def->pinned_);
+            ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
+                             std::move(ret), def->pinned_, def->metadata(),
+                             def->id());
         }
         return ret;
     } else {

@@ -88,6 +88,42 @@ func returns [Func node]
       }
     ;
 
+metadata returns [Metadata md]
+    : TRANSFORM_OP LABEL_META '{' metadata { std::vector<Metadata> sources{$metadata.md}; }
+      (',' newMd=metadata { sources.push_back($newMd.md); })+ '}'
+      {
+        $md = makeMetadata($LABEL_META.text, std::move(sources));
+      }
+    | LABEL_META { std::vector<std::string> labels{$LABEL_META.text}; }
+      (newLabel=LABEL_META { labels.push_back($newLabel.text); })*
+      { Metadata callerMeta; }
+      (LARROW_META caller=metadata { callerMeta = $caller.md; })?
+      {
+        $md = makeMetadata(std::move(labels), std::nullopt, callerMeta);
+      }
+    | ANON_META
+      {
+        $md = makeMetadata();
+      }
+    | ID_META
+      {
+        $md = makeMetadata(ID::make(std::stoi(std::string($ID_META.text).substr(1))));
+      }
+    ;
+
+metadataLine returns [std::pair<Metadata, ID> md_id]
+    : BEGIN_META metadata END_META
+      {
+        $md_id.first = $metadata.md;
+        $md_id.second = ID::make();
+      }
+    | BEGIN_META INTEGER_META metadata END_META
+      {
+        $md_id.first = $metadata.md;
+        $md_id.second = ID::make(std::stoi(std::string($INTEGER_META.text)));
+      }
+    ;
+
 // -------------------- STMT --------------------
 // All statements default to without ID, and stmt will handle the ID
 stmts returns [Stmt node]
@@ -97,7 +133,7 @@ stmts returns [Stmt node]
     } (newStmt=stmt {
         stmts.emplace_back($newStmt.node);
     })+ {
-        $node = makeStmtSeq(ID(), std::move(stmts));
+        $node = makeStmtSeq(std::move(stmts));
     }
     | stmt {
         $node = $stmt.node;
@@ -108,10 +144,11 @@ stmt returns [Stmt node]
       {
         $node = $stmtWithoutID.node;
       }
-    | var ':' stmtWithoutID
+    | metadataLine stmtWithoutID
       {
         $node = $stmtWithoutID.node;
-        $node->setId($var.name);
+        $node->metadata() = $metadataLine.md_id.first;
+        $node->setId($metadataLine.md_id.second);
       }
     ;
 
@@ -154,11 +191,11 @@ stmtWithoutID returns [Stmt node]
       }
     | EVAL '(' expr ')'
       {
-        $node = makeEval(ID(), $expr.node);
+        $node = makeEval($expr.node);
       }
     | '{' '}'
       {
-        $node = makeStmtSeq(ID(), {});
+        $node = makeStmtSeq({});
       }
     | '{' stmts '}'
       {
@@ -168,13 +205,17 @@ stmtWithoutID returns [Stmt node]
 
 store returns [Stmt node]
     : var indices '=' expr {
-        $node = makeStore(ID(), $var.name, $indices.exprs, $expr.node);
+        $node = makeStore($var.name, $indices.exprs, $expr.node);
     };
 
 reduceOp returns [ReduceOp op]
     : PLUSEQ
       {
         $op = ReduceOp::Add;
+      }
+    | SUBEQ
+      {
+        $op = ReduceOp::Sub;
       }
     | STAREQ
       {
@@ -205,7 +246,7 @@ reduceTo returns [Stmt node]
     : (ATOMIC { atomic = true; })?
         var indices reduceOp expr
       {
-        $node = makeReduceTo(ID(), $var.name, $indices.exprs, $reduceOp.op, $expr.node, atomic);
+        $node = makeReduceTo($var.name, $indices.exprs, $reduceOp.op, $expr.node, atomic);
       }
     ;
 
@@ -237,21 +278,21 @@ varDef returns [Stmt node]
         Ref<Tensor> t = makeTensor($actual_shape.vec, $dtype.type);
         Ref<Buffer> b = makeBuffer(std::move(t), $atype.type, $mtype.type);
         Expr sizeLim = nullptr;
-        $node = makeVarDef(ID(), $var.name, std::move(b), std::move(ioTensor), $stmts.node, pinned);
+        $node = makeVarDef($var.name, std::move(b), std::move(ioTensor), $stmts.node, pinned);
       }
     ;
 
 alloc returns [Stmt node]
     : ALLOC LPAREN var RPAREN
       {
-        $node = makeAlloc(ID(), $var.name);
+        $node = makeAlloc($var.name);
       }
     ;
 
 free returns [Stmt node]
     : FREE LPAREN var RPAREN
       {
-        $node = makeFree(ID(), $var.name);
+        $node = makeFree($var.name);
       }
     ;
 
@@ -294,7 +335,7 @@ for returns [Stmt node]
         FOR var IN begin=expr ':' end=expr ':' step=expr ':' len=expr
         '{' stmts '}'
       {
-          $node = makeFor(ID(), $var.name, $begin.node, $end.node, $step.node, $len.node,
+          $node = makeFor($var.name, $begin.node, $end.node, $step.node, $len.node,
                           $forProperty.property, $stmts.node);
       }
     ;
@@ -302,25 +343,25 @@ for returns [Stmt node]
 if returns [Stmt node]
     : IF cond=expr '{' thenCase=stmts '}'
       {
-        $node = makeIf(ID(), $cond.node, $thenCase.node);
+        $node = makeIf($cond.node, $thenCase.node);
       }
     | IF cond=expr '{' thenCase=stmts '}' ELSE '{' elseCase=stmts '}'
       {
-        $node = makeIf(ID(), $cond.node, $thenCase.node, $elseCase.node);
+        $node = makeIf($cond.node, $thenCase.node, $elseCase.node);
       }
     ;
 
 assertNode returns [Stmt node]
     : ASSERT_TOKEN cond=expr '{' stmts '}'
       {
-        $node = makeAssert(ID(), $cond.node, $stmts.node);
+        $node = makeAssert($cond.node, $stmts.node);
       }
     ;
 
 assume returns [Stmt node]
     : ASSUME '(' cond=expr ')' '{' stmts '}'
       {
-        $node = makeAssume(ID(), $cond.node, $stmts.node);
+        $node = makeAssume($cond.node, $stmts.node);
       }
     ;
 

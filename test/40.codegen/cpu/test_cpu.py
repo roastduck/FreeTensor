@@ -12,13 +12,13 @@ def test_omp_for():
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "cpu"]
         y: ft.Var[(4,), "int32", "output", "cpu"]
-        #! nid: L1
+        #! label: L1
         for i in range(0, 4):
             y[i] = x[i] + 1
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             y[i] = x[i] + 1
     assert ft.pop_ast().match(test.body)
 
@@ -43,9 +43,9 @@ def test_omp_for_2():
     def test(x, y):
         x: ft.Var[(4, 4), "int32", "input", "cpu"]
         y: ft.Var[(4, 4), "int32", "output", "cpu"]
-        #! nid: L1
+        #! label: L1
         for i in range(4):
-            #! nid: L2
+            #! label: L2
             for j in range(4):
                 y[i, j] = x[i, j] + 1
 
@@ -73,9 +73,9 @@ def test_omp_for_collapse_nested():
     def test(x, y):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        #! nid: L1
+        #! label: L1
         for i in range(0, 4):
-            #! nid: L2
+            #! label: L2
             for j in range(0, 4):
                 y[i, j] = x[i, j] + 1
 
@@ -101,9 +101,9 @@ def test_parallelize_parametric_access_1():
     def test(idx, y):
         idx: ft.Var[(10,), "int32", "input", "cpu"]
         y: ft.Var[(100,), "int32", "inout", "cpu"]
-        #! nid: L1
+        #! label: L1
         for i in range(10):
-            #! nid: L2
+            #! label: L2
             for j in range(10):
                 y[idx[i] + j] += j
 
@@ -123,9 +123,9 @@ def test_parallelize_parametric_access_2():
     def test(idx, y):
         idx: ft.Var[(10,), "int32", "input", "cpu"]
         y: ft.Var[(100,), "int32", "inout", "cpu"]
-        #! nid: L1
+        #! label: L1
         for i in range(10):
-            #! nid: L2
+            #! label: L2
             for j in range(10):
                 y[idx[i] + j] += j
 
@@ -145,13 +145,13 @@ def test_unroll_for():
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "cpu"]
         y: ft.Var[(4,), "int32", "output", "cpu"]
-        #! nid: L1
+        #! label: L1
         for i in range(0, 4):
             y[i] = x[i] + 1
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             y[i] = x[i] + 1
     assert ft.pop_ast().match(test.body)
 
@@ -177,13 +177,13 @@ def test_vectorize_for():
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "cpu"]
         y: ft.Var[(4,), "int32", "output", "cpu"]
-        #! nid: L1
+        #! label: L1
         for i in range(0, 4):
             y[i] = x[i] + 1
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             y[i] = x[i] + 1
     assert ft.pop_ast().match(test.body)
 

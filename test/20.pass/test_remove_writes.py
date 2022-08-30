@@ -109,7 +109,7 @@ def test_type1_one_then_many_reduce_no_remove():
         y[0] = 1
         with ft.For("i", 0, 4) as i:
             y[i] += i
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -275,8 +275,8 @@ def test_type1_write_then_reduce_expr_modified_no_remove():
     with ft.VarDef([("y", (), "int32", "output", "cpu"),
                     ("z", (), "int32", "inout", "cpu")]) as (y, z):
         y[()] = z[()]
-        z[()] = z[()] + 1
-        y[()] = y[()] + 2
+        z[()] += 1
+        y[()] += 2
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
@@ -288,17 +288,17 @@ def test_type1_write_then_reduce_expr_modified_no_remove():
     with ft.VarDef([("y", (), "int32", "output", "cpu"),
                     ("z", (), "int32", "inout", "cpu")]) as (y, z):
         y[()] = z[()]
-        z[()] = z[()] + 1
-        y[()] = y[()] + 2
-    std = ft.make_reduction(ft.pop_ast())
+        z[()] += 1
+        y[()] += 2
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
 
 def test_type1_reduce_then_reduce():
     with ft.VarDef("y", (), "int32", "inout", "cpu") as y:
-        y[()] = y[()] + 1
-        y[()] = y[()] + 2
+        y[()] += 1
+        y[()] += 2
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
@@ -308,8 +308,8 @@ def test_type1_reduce_then_reduce():
                    ])
 
     with ft.VarDef("y", (), "int32", "inout", "cpu") as y:
-        y[()] = y[()] + 3
-    std = ft.make_reduction(ft.pop_ast())
+        y[()] += 3
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -331,7 +331,7 @@ def test_type1_reduce_then_reduce_across_loops():
     with ft.VarDef("y", (4,), "int32", "inout", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] += 3
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -353,7 +353,7 @@ def test_type1_reduce_then_reduce_across_loops_differnet_indices():
     with ft.VarDef("y", (4,), "int32", "inout", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] += i + 4
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -383,8 +383,8 @@ def test_type1_write_then_loop_then_reduce_no_remove():
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 0
         with ft.For("i", 0, 5) as i:
-            y[()] = y[()] + i
-        y[()] = y[()] + x[()]
+            y[()] += i
+        y[()] += x[()]
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
@@ -397,9 +397,9 @@ def test_type1_write_then_loop_then_reduce_no_remove():
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 0
         with ft.For("i", 0, 5) as i:
-            y[()] = y[()] + i
-        y[()] = y[()] + x[()]
-    std = ft.make_reduction(ft.pop_ast())
+            y[()] += i
+        y[()] += x[()]
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -408,8 +408,8 @@ def test_type1_read_by_following_write_no_remove():
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()]
-        y[()] = y[()] * y[()]
-        y[()] = y[()] * y[()]
+        y[()] *= y[()]
+        y[()] *= y[()]
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
@@ -421,9 +421,9 @@ def test_type1_read_by_following_write_no_remove():
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()]
-        y[()] = y[()] * y[()]
-        y[()] = y[()] * y[()]
-    std = ft.make_reduction(ft.pop_ast())
+        y[()] *= y[()]
+        y[()] *= y[()]
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -445,7 +445,7 @@ def test_type1_not_kill_later_store():
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 1
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -469,7 +469,7 @@ def test_type1_not_kill_later_reduce_no_remove():
         with ft.If(x[()] > 0):
             y[()] = x[()]
         y[()] += 1
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -493,7 +493,7 @@ def test_type1_not_kill_earlier_store_no_remove():
         y[()] = 1
         with ft.If(x[()] > 0):
             y[()] = x[()]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -517,7 +517,7 @@ def test_type1_not_kill_earlier_reduce_no_remove():
         y[()] = x[()] + 1
         with ft.If(x[()] > 0):
             y[()] += x[()]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -693,7 +693,7 @@ def test_same_parent_but_dep_and_circular_dependency_on_init():
                 with ft.For("k", 0, 10) as k:
                     f[j] += u[j] + 1
                 u[j] = f[j]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -707,11 +707,11 @@ def test_circular_dependency_in_parallel():
         with ft.For("i", 0, 256) as i:
             b[i] = a[i]
         with ft.For("k", 0, 100) as k:
-            ft.MarkNid("L1")
+            ft.MarkLabel("L1")
             with ft.For("l", 0, 256) as l:
                 c[l] += b[l]
                 b[l] = 0
-            ft.MarkNid("L")
+            ft.MarkLabel("L")
             with ft.For("i", 0, 256) as i:
                 with ft.For("j", 0, 256) as j:
                     b[j] += c[i]
@@ -735,12 +735,12 @@ def test_circular_dependency_in_parallel():
                 b[i] = a[i]
             with ft.For("k", 0, 100) as k:
                 with ft.For("l", 0, 256) as l:
-                    c[l] = (c[l] + b[l])
+                    c[l] += b[l]
                     b[l] = 0
                 with ft.For("i", 0, 256) as i:
                     with ft.For("j", 0, 256) as j:
-                        b[j] = (b[j] + c[i])
-    std = ft.make_reduction(ft.pop_ast())
+                        b[j] += c[i]
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -784,6 +784,6 @@ def test_one_loop_depends_on_multiple_statements_no_remove():
                         tmp[i] += A[i] * u[1, 0] + A[i] * u[1, 1]
                 with ft.For("i", 0, 2) as i:
                     y[i] = tmp[i]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)

@@ -43,7 +43,7 @@ Stmt makeNestedLoops(Titers &&iters, Tbegins &&begins, Tends &&ends,
         auto &&len = ((Expr)_len).isValid()
                          ? _len
                          : makeCeilDiv(makeSub(_end, begin), step);
-        ret = makeFor("", *iter, begin, end, step, len, property, ret);
+        ret = makeFor(*iter, begin, end, step, len, property, ret);
     }
     return ret;
 }

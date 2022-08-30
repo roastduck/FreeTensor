@@ -138,7 +138,7 @@ def test_modify_self_no_prop():
                 t[i] = x[i]
                 x[i] = 0
             with ft.For("i", 0, 5) as i:
-                t[i] = t[i] - 1
+                t[i] = t[i] * 2 + 1
                 y[i] = t[i]
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
@@ -150,7 +150,7 @@ def test_modify_self_no_prop():
                 t[i] = x[i]
                 x[i] = 0
             with ft.For("i", 0, 5) as i:
-                t[i] = t[i] - 1
+                t[i] = t[i] * 2 + 1
                 y[i] = t[i]
     std = ft.pop_ast()
 
@@ -183,7 +183,7 @@ def test_using_local_var_no_prop():
                     t[i] = s[()] * 2  # No prop t
             with ft.For("i", 0, 5) as i:
                 y[i] = t[i]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -192,7 +192,7 @@ def test_different_iter_non_linear():
     with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
                     ("x2", (4,), "int32", "input", "cpu"),
                     ("y", (16,), "int32", "output", "cpu")]) as (x1, x2, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (16,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 with ft.For("j", 0, 4) as j:

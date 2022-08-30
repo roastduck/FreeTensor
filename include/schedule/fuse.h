@@ -23,8 +23,7 @@ class FuseFor : public Mutator {
 
   public:
     FuseFor(const Stmt &root, const ID &id0, const ID &id1, bool strict)
-        : root_(root), id0_(id0), id1_(id1),
-          fused_("fused." + id0.strId() + "." + id1.strId()), strict_(strict) {}
+        : root_(root), id0_(id0), id1_(id1), strict_(strict) {}
 
     const ID &fused() const { return fused_; }
     const ID &beforeId() const { return beforeId_; }

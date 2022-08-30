@@ -194,45 +194,24 @@ void ExprNode::resetDType() {
     }
 }
 
-ID::ID(const Stmt &stmt) : ID(stmt->id_) {}
-
-const std::string &ID::strId() const {
-    if (expr_.isValid()) {
-        ERROR("Only Stmt has strId");
-    }
-    return stmtId_;
-}
-
-std::ostream &operator<<(std::ostream &os, const ID &id) {
-    if (id.expr_.isValid()) {
+std::ostream &operator<<(std::ostream &os, const StmtOrExprID &id) {
+    if (id.expr_.isValid())
         return os << id.expr_ << " in " << id.stmtId_;
-    } else {
+    else
         return os << id.stmtId_;
-    }
 }
 
-bool operator==(const ID &lhs, const ID &rhs) {
+bool operator==(const StmtOrExprID &lhs, const StmtOrExprID &rhs) {
     return lhs.stmtId_ == rhs.stmtId_ && HashComparator()(lhs.expr_, rhs.expr_);
 }
 
-std::atomic<uint64_t> StmtNode::idCnt_ = 0;
-
-std::string StmtNode::newId() { return "#" + std::to_string(idCnt_++); }
-
 void StmtNode::setId(const ID &id) {
-    if (!id.isValid()) {
-        id_ = newId();
-    } else {
-        if (id.expr_.isValid()) {
-            ERROR("Cannot assign an Expr ID to an Stmt");
-        }
-        id_ = id.stmtId_;
-    }
+    if (!id.isValid())
+        id_ = ID::make();
+    else
+        id_ = id;
 }
-
-ID StmtNode::id() const { return ID(id_); }
-
-bool StmtNode::hasNamedId() const { return id_.empty() || id_[0] != '#'; }
+ID StmtNode::id() const { return id_; }
 
 Expr deepCopy(const Expr &op) { return Mutator()(op); }
 Stmt deepCopy(const Stmt &op) { return Mutator()(op); }
@@ -265,9 +244,10 @@ Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs) {
 
 namespace std {
 
-size_t hash<freetensor::ID>::operator()(const freetensor::ID &id) const {
+size_t hash<freetensor::StmtOrExprID>::operator()(
+    const freetensor::StmtOrExprID &id) const {
     return freetensor::hashCombine(freetensor::Hasher()(id.expr_),
-                                   std::hash<std::string>()(id.stmtId_));
+                                   std::hash<freetensor::ID>()(id.stmtId_));
 }
 
 } // namespace std

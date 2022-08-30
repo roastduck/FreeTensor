@@ -34,12 +34,16 @@ Stmt Splitter::visit(const For &_op) {
         auto &&op = __op.as<ForNode>();
 
         auto body = makeIf(
-            "", makeLAnd(makeGE(nthIter, shift), makeLT(nthIter, shifted_len)),
+            makeLAnd(makeGE(nthIter, shift), makeLT(nthIter, shifted_len)),
             op->body_);
-        auto inner = makeFor(dst1_, iter1, makeIntConst(0), factor,
-                             makeIntConst(1), factor, op->property_, body);
-        auto outer = makeFor(dst0_, iter0, makeIntConst(0), nparts,
-                             makeIntConst(1), nparts, op->property_, inner);
+        auto inner =
+            makeFor(iter1, makeIntConst(0), factor, makeIntConst(1), factor,
+                    op->property_, body, makeMetadata("split.1", op));
+        dst1_ = inner->id();
+        auto outer =
+            makeFor(iter0, makeIntConst(0), nparts, makeIntConst(1), nparts,
+                    op->property_, inner, makeMetadata("split.0", op));
+        dst0_ = outer->id();
         found_ = true;
         return outer;
     } else {

@@ -8,11 +8,24 @@ and also exposed to users via multi-stage programming
 import collections
 import builtins
 import math
+from numbers import Number
 from typing import Sequence
 
 import freetensor_ffi as ffi
 
 from .context import ctx_stack
+
+
+class AlreadyMadeReduceTo:
+    """
+    A single-value type that marks a ReduceTo node is already made, and there is no need to
+    make another Store node
+
+    In standard Python data model, functions like __iadd__ returns the modified self, and
+    __setitem__ does a self-assignment. We do the augmenting assignment directly in __iadd__
+    and return AlreadyMadeReduceTo, so we do not have to Store it again
+    """
+    pass
 
 
 class VarRef(ffi.FrontendVar):
@@ -50,15 +63,11 @@ class VarRef(ffi.FrontendVar):
     def __setitem__(self, key, value):
         var = VarRef(self.name, self.vardef, self.full_shape, self.dtype,
                      self.mtype, self.chain_indices(self._parse_key(key)))
+        if value is AlreadyMadeReduceTo:
+            return
         if var.ndim > 0:
-            if value is not None:
-                # In standard Python data model, functions like __iadd__
-                # returns the modified self, and __setitem__ does a self-
-                # assignment. We do the augmenting assignment directly
-                # in __iadd__ and return None, so we do not have to do
-                # it again here
-                from .. import libop
-                libop.assign(var, value)
+            from .. import libop
+            libop.assign(var, value)
             return
         if var.vardef.atype == ffi.AccessType("input"):
             raise ffi.InvalidProgram("Cannot modify an \"input\" tensor `" +
@@ -69,7 +78,7 @@ class VarRef(ffi.FrontendVar):
                 "` becuase it has been borrowed in another tensor's shape, "
                 "a tensor slice, or a range of a loop")
         top = ctx_stack.top()
-        top.append_stmt(var.as_store(top.get_next_nid(), value))
+        top.append_stmt(var.as_store(top.get_metadata(), value))
 
     def select(self, idx, dim):
         assert isinstance(dim, int)
@@ -78,6 +87,24 @@ class VarRef(ffi.FrontendVar):
             slice(None, None) if d != dim else idx for d in range(self.ndim)
         ]
         return self[indices]
+
+    def shape(self, dim=None):
+        '''
+        Return lengths of all dimensions or the length of one dimension
+
+        `.shape()` -> list of lengths of all dimensions
+
+        `.shape(dim)` -> length of dimension `dim`, where `dim` can be `int`
+        or `Expr`
+
+        All lengths can be `Expr` (if the length is dynamically decided) or
+        `int` (if statically decided)
+        '''
+        intOrExpr = lambda x: x.val if isinstance(x, ffi.IntConst) else x
+        if dim is None:
+            return [intOrExpr(d) for d in super(VarRef, self).shape()]
+        else:
+            return intOrExpr(super(VarRef, self).shape(dim))
 
     def _parse_key(self, key):
         if key is None or key is ...:
@@ -126,8 +153,11 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.add_to(self, other)
-            return  # Don't return self. See __setitem__
-        return NotImplemented
+            return AlreadyMadeReduceTo
+        top = ctx_stack.top()
+        top.append_stmt(
+            self.as_reduce_to(ffi.ReduceOp.Add, top.get_metadata(), other))
+        return AlreadyMadeReduceTo
 
     def __sub__(self, other):
         if self.ndim > 0:
@@ -145,8 +175,11 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.sub_to(self, other)
-            return  # Don't return self. See __setitem__
-        return NotImplemented
+            return AlreadyMadeReduceTo
+        top = ctx_stack.top()
+        top.append_stmt(
+            self.as_reduce_to(ffi.ReduceOp.Sub, top.get_metadata(), other))
+        return AlreadyMadeReduceTo
 
     def __mul__(self, other):
         if self.ndim > 0:
@@ -164,8 +197,11 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.mul_to(self, other)
-            return  # Don't return self. See __setitem__
-        return NotImplemented
+            return AlreadyMadeReduceTo
+        top = ctx_stack.top()
+        top.append_stmt(
+            self.as_reduce_to(ffi.ReduceOp.Mul, top.get_metadata(), other))
+        return AlreadyMadeReduceTo
 
     def __truediv__(self, other):
         if self.ndim > 0:
@@ -183,8 +219,8 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.truediv_to(self, other)
-            return  # Don't return self. See __setitem__
-        return NotImplemented
+            return AlreadyMadeReduceTo
+        return NotImplemented  # Fallback to x = x / y
 
     def __floordiv__(self, other):
         if self.ndim > 0:
@@ -202,8 +238,8 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.floordiv_to(self, other)
-            return  # Don't return self. See __setitem__
-        return NotImplemented
+            return AlreadyMadeReduceTo
+        return NotImplemented  # Fallback to x = x // y
 
     def __mod__(self, other):
         if self.ndim > 0:
@@ -221,8 +257,8 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.mod_to(self, other)
-            return  # Don't return self. See __setitem__
-        return NotImplemented
+            return AlreadyMadeReduceTo
+        return NotImplemented  # Fallback to x = x % y
 
     def __lt__(self, other):
         if self.ndim > 0:
@@ -530,7 +566,7 @@ def min(lhs, rhs):
     if _istensor(lhs) or _istensor(rhs):
         from .. import libop
         return libop.min(lhs, rhs)
-    if type(lhs) in (int, float) and type(rhs) in (int, float):
+    if isinstance(lhs, Number) and isinstance(rhs, Number):
         return builtins.min(lhs, rhs)
     return ffi.makeMin(lhs, rhs)
 
@@ -557,7 +593,7 @@ def max(lhs, rhs):
     if _istensor(lhs) or _istensor(rhs):
         from .. import libop
         return libop.max(lhs, rhs)
-    if type(lhs) in (int, float) and type(rhs) in (int, float):
+    if isinstance(lhs, Number) and isinstance(rhs, Number):
         return builtins.max(lhs, rhs)
     return ffi.makeMax(lhs, rhs)
 
@@ -804,7 +840,7 @@ def abs(expr):
     if _istensor(expr):
         from .. import libop
         return libop.abs(expr)
-    if type(expr) in (int, float):
+    if isinstance(expr, Number):
         return builtins.abs(expr)
     return ffi.makeAbs(expr)
 
@@ -829,7 +865,7 @@ def sqrt(expr):
     if _istensor(expr):
         from .. import libop
         return libop.sqrt(expr)
-    if type(expr) in (int, float):
+    if isinstance(expr, Number):
         return math.sqrt(expr)
     return ffi.makeSqrt(expr)
 
@@ -854,7 +890,7 @@ def exp(expr):
     if _istensor(expr):
         from .. import libop
         return libop.exp(expr)
-    if type(expr) in (int, float):
+    if isinstance(expr, Number):
         return math.exp(expr)
     return ffi.makeExp(expr)
 
@@ -879,7 +915,7 @@ def square(expr):
     if _istensor(expr):
         from .. import libop
         return libop.square(expr)
-    if type(expr) in (int, float):
+    if isinstance(expr, Number):
         return expr * expr
     return ffi.makeSquare(expr)
 
@@ -927,7 +963,7 @@ def tanh(expr):
     if _istensor(expr):
         from .. import libop
         return libop.tanh(expr)
-    if type(expr) in (int, float):
+    if isinstance(expr, Number):
         return math.tanh(expr)
     return ffi.makeTanh(expr)
 

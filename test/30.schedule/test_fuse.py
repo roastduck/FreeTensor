@@ -7,10 +7,10 @@ def test_basic():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j1", 0, 8, nid="L2a") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j1", 0, 8, label="L2a") as j:
                 y[i, j] = i + j
-            with ft.For("j2", 0, 8, nid="L2b") as j:
+            with ft.For("j2", 0, 8, label="L2b") as j:
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -37,10 +37,10 @@ def test_find_following_loop():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j1", 0, 8, nid="L2a") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j1", 0, 8, label="L2a") as j:
                 y[i, j] = i + j
-            with ft.For("j2", 0, 8, nid="L2b") as j:
+            with ft.For("j2", 0, 8, label="L2b") as j:
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -67,10 +67,10 @@ def test_not_aligned_1():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j1", 0, 8, nid="L2a") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j1", 0, 8, label="L2a") as j:
                 y[i, j] = i + j
-            with ft.For("j2", 2, 10, nid="L2b") as j:
+            with ft.For("j2", 2, 10, label="L2b") as j:
                 z[i, j - 2] = i * (j - 2)
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -97,10 +97,10 @@ def test_not_aligned_2():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2a") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2a") as j:
                 y[i, j] = i + j
-            with ft.For("j", 2, 10, nid="L2b") as j:
+            with ft.For("j", 2, 10, label="L2b") as j:
                 z[i, j - 2] = i * (j - 2)
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -127,10 +127,10 @@ def test_step():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j1", 0, 8, 2, nid="L2a") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j1", 0, 8, 2, label="L2a") as j:
                 y[i, j] = i + j
-            with ft.For("j2", 1, 9, 2, nid="L2b") as j:
+            with ft.For("j2", 1, 9, 2, label="L2b") as j:
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -158,12 +158,12 @@ def test_not_following_1():
         ("z", (4, 8), "int32", "output", "cpu"),
         ("w", (4, 8), "int32", "output", "cpu"),
     ]) as (y, z, w):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2a") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2a") as j:
                 y[i, j] = i + j
-            with ft.For("j", 0, 8, nid="L2b") as j:
+            with ft.For("j", 0, 8, label="L2b") as j:
                 z[i, j] = i * j
-            with ft.For("j", 0, 8, nid="L2c") as j:
+            with ft.For("j", 0, 8, label="L2c") as j:
                 w[i, j] = i - j
     ast = ft.simplify(ft.pop_ast())
     print(ast)
@@ -179,11 +179,11 @@ def test_not_following_2():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1a") as i:
-            with ft.For("j", 0, 8, nid="L2a") as j:
+        with ft.For("i", 0, 4, label="L1a") as i:
+            with ft.For("j", 0, 8, label="L2a") as j:
                 y[i, j] = i + j
-        with ft.For("i", 0, 4, nid="L1b") as i:
-            with ft.For("j", 0, 8, nid="L2b") as j:
+        with ft.For("i", 0, 4, label="L1b") as i:
+            with ft.For("j", 0, 8, label="L2b") as j:
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -198,10 +198,10 @@ def test_different_length():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2a") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2a") as j:
                 y[i, j] = i + j
-            with ft.For("j", 0, 10, nid="L2b") as j:
+            with ft.For("j", 0, 10, label="L2b") as j:
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -216,11 +216,11 @@ def test_dependency_unable_resolve():
         ("x", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
     ]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             with ft.VarDef("b", (4, 8), "int32", "cache", "cpu") as b:
-                with ft.For("j", 0, 8, nid="L2a") as j:
+                with ft.For("j", 0, 8, label="L2a") as j:
                     b[i, j] = x[i, j] * 2
-                with ft.For("j", 0, 8, nid="L2b") as j:
+                with ft.For("j", 0, 8, label="L2b") as j:
                     y[i, j] = b[i, 8 - j]
     ast = ft.simplify(ft.pop_ast())
     print(ast)
@@ -237,11 +237,11 @@ def test_buffer_fuse():
         ("y1", (4, 8), "int32", "output", "cpu"),
         ("y2", (4, 8), "int32", "output", "cpu"),
     ]) as (x, y1, y2):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             with ft.VarDef("b", (4, 8), "int32", "cache", "cpu") as b:
-                with ft.For("j", 0, 8, nid="L2a") as j:
+                with ft.For("j", 0, 8, label="L2a") as j:
                     b[i, j] = x[i, j] * 2
-                with ft.For("j", 0, 8, nid="L2b") as j:
+                with ft.For("j", 0, 8, label="L2b") as j:
                     y1[i, j] = b[i, j] + 1
                     y2[i, j] = b[i, j] + 2
     ast = ft.pop_ast(verbose=True)
@@ -268,12 +268,12 @@ def test_buffer_fuse():
 
 
 def test_hoist_var():
-    with ft.For("i", 0, 4, nid="L1") as i:
+    with ft.For("i", 0, 4, label="L1") as i:
         with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
-            with ft.For("j1", 0, 8, nid="L2a") as j:
+            with ft.For("j1", 0, 8, label="L2a") as j:
                 y[i, j] = i + j
         with ft.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
-            with ft.For("j2", 0, 8, nid="L2b") as j:
+            with ft.For("j2", 0, 8, label="L2b") as j:
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -296,12 +296,12 @@ def test_hoist_var():
 
 
 def test_hoist_var_find_following_loop():
-    with ft.For("i", 0, 4, nid="L1") as i:
+    with ft.For("i", 0, 4, label="L1") as i:
         with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
-            with ft.For("j1", 0, 8, nid="L2a") as j:
+            with ft.For("j1", 0, 8, label="L2a") as j:
                 y[i, j] = i + j
         with ft.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
-            with ft.For("j2", 0, 8, nid="L2b") as j:
+            with ft.For("j2", 0, 8, label="L2b") as j:
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -324,12 +324,12 @@ def test_hoist_var_find_following_loop():
 
 
 def test_hoist_var_in_stmt_seq():
-    with ft.For("i", 0, 4, nid="L1") as i:
+    with ft.For("i", 0, 4, label="L1") as i:
         with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
-            with ft.For("j1", 0, 8, nid="L2a") as j:
+            with ft.For("j1", 0, 8, label="L2a") as j:
                 y[i, j] = i + j
         with ft.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
-            with ft.For("j2", 0, 8, nid="L2b") as j:
+            with ft.For("j2", 0, 8, label="L2b") as j:
                 z[i, j] = i * j
             z[0, 0] = -1
     ast = ft.pop_ast(verbose=True)
@@ -354,12 +354,12 @@ def test_hoist_var_in_stmt_seq():
 
 
 def test_hoist_var_in_stmt_seq_find_following_loop():
-    with ft.For("i", 0, 4, nid="L1") as i:
+    with ft.For("i", 0, 4, label="L1") as i:
         with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
-            with ft.For("j1", 0, 8, nid="L2a") as j:
+            with ft.For("j1", 0, 8, label="L2a") as j:
                 y[i, j] = i + j
         with ft.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
-            with ft.For("j2", 0, 8, nid="L2b") as j:
+            with ft.For("j2", 0, 8, label="L2b") as j:
                 z[i, j] = i * j
             z[0, 0] = -1
     ast = ft.pop_ast(verbose=True)
@@ -385,10 +385,10 @@ def test_hoist_var_in_stmt_seq_find_following_loop():
 
 def test_hoist_var_with_modified_shape():
     with ft.VarDef("n", (), "int32", "output", "cpu") as n:
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             n[()] = i
         with ft.VarDef("x", (n,), "int32", "output", "cpu") as x:
-            with ft.For("i", 0, 4, nid="L2") as i:
+            with ft.For("i", 0, 4, label="L2") as i:
                 x[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -405,12 +405,12 @@ def test_fuse_no_deps_1():
         ptr: ft.Var[(11,), "int32", "input", "cpu"]
         edge1: ft.Var[(50,), "int32", "input", "cpu"]
         edge2: ft.Var[(50,), "int32", "output", "cpu"]
-        #! nid: Li1
+        #! label: Li1
         #! no_deps: edge2
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1]):
                 edge2[j] = edge1[j] + i
-        #! nid: Li2
+        #! label: Li2
         #! no_deps: edge2
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1]):
@@ -431,12 +431,12 @@ def test_fuse_no_deps_2():
         edge1: ft.Var[(50,), "int32", "input", "cpu"]
         edge2: ft.Var[(50,), "int32", "output", "cpu"]
         foobar: ft.Var[(10,), "int32", "output", "cpu"]
-        #! nid: Li1
+        #! label: Li1
         #! no_deps: edge2
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1]):
                 edge2[j] = edge1[j] + i
-        #! nid: Li2
+        #! label: Li2
         for i in range(10):
             # Nothing to do with edge2 here
             foobar[i] = i
@@ -455,12 +455,12 @@ def test_fuse_no_deps_3():
         ptr: ft.Var[(11,), "int32", "input", "cpu"]
         edge1: ft.Var[(50,), "int32", "input", "cpu"]
         edge2: ft.Var[(50,), "int32", "output", "cpu"]
-        #! nid: Li1
+        #! label: Li1
         #! no_deps: edge2
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1]):
                 edge2[j] = edge1[j] + i
-        #! nid: Li2  # If we don't mark edge2 here
+        #! label: Li2  # If we don't mark edge2 here
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1] + 1):
                 edge2[j] += j
@@ -479,11 +479,11 @@ def test_fuse_with_if():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (c, y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             with ft.If(c[()] > 0):
-                with ft.For("j1", 0, 8, nid="L2a") as j:
+                with ft.For("j1", 0, 8, label="L2a") as j:
                     y[i, j] = i + j
-            with ft.For("j2", 0, 8, nid="L2b") as j:
+            with ft.For("j2", 0, 8, label="L2b") as j:
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -513,11 +513,11 @@ def test_fuse_with_if_find_following_loop():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (c, y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             with ft.If(c[()] > 0):
-                with ft.For("j1", 0, 8, nid="L2a") as j:
+                with ft.For("j1", 0, 8, label="L2a") as j:
                     y[i, j] = i + j
-            with ft.For("j2", 0, 8, nid="L2b") as j:
+            with ft.For("j2", 0, 8, label="L2b") as j:
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)

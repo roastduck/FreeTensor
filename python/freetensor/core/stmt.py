@@ -62,10 +62,9 @@ class _VarDef:
             self.shape = shape
         elif isinstance(shape, VarRef):
             assert shape.ndim == 1, "Shape of a shape should be 1-D"
-            assert type(
-                shape.shape(0)
-            ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
-            ndim = shape.shape(0).val
+            assert type(shape.shape(
+                0)) is int, "Dynamic number of dimensions is not supported"
+            ndim = shape.shape(0)
             self.shape = [shape[i] for i in range(ndim)]
         else:
             assert False, "shape cannot be of type %s" % type(shape)
@@ -78,6 +77,7 @@ class _VarDef:
 
         self.borrower_cnt = 0
         self.borrowed_vardefs = find_borrowed_vardefs(self.shape)
+        self.metadata = ctx_stack.top().get_metadata()
 
     def set_atype(self, atype):
         self.atype = ffi.AccessType(atype)
@@ -112,8 +112,7 @@ class _VarDef:
         body = ctx_stack.pop().make_stmt()
         top = ctx_stack.top()
         top.append_stmt(
-            ffi.makeVarDef(top.get_next_nid(), self.name, buf, None, body,
-                           False))
+            ffi.makeVarDef(self.name, buf, None, body, False, self.metadata))
 
 
 class _VarsDef:
@@ -166,14 +165,14 @@ class For:
                  begin,
                  end,
                  step=1,
-                 nid: str = "",
+                 label: Optional[str] = None,
                  no_deps: Optional[Sequence[str]] = None,
                  prefer_libs: Optional[bool] = None):
         self.iter_var = iter_var
         self.begin = begin
         self.end = end
         self.step = step
-        self.nid = nid
+        self.label = label
         self.no_deps = no_deps
         self.prefer_libs = prefer_libs
 
@@ -201,7 +200,8 @@ class For:
                             self.end,
                             self.step,
                             body,
-                            nid=self.nid,
+                            metadata=ffi.SourceMetadata([self.label])
+                            if self.label is not None else None,
                             no_deps=self.no_deps,
                             prefer_libs=self.prefer_libs)
 
@@ -290,17 +290,16 @@ class Assert:
             return False  # Do not suppress the exception
         body = ctx_stack.pop().make_stmt()
         top = ctx_stack.top()
-        nid = top.get_next_nid()
-        top.append_stmt(ffi.makeAssert(nid, self.cond, body))
+        top.append_stmt(ffi.makeAssert(self.cond, body, top.get_metadata()))
 
 
-def MarkNid(nid: str):
+def MarkLabel(label: str):
     """
     Mark the ID of the following statement
 
     This scope is internally used by `transformer` and tests
     """
-    ctx_stack.top().set_next_nid(nid)
+    ctx_stack.top().add_label(label)
 
 
 class NamedScope:
@@ -317,8 +316,8 @@ class NamedScope:
     This scope is used for testing only. StmtSeq nodes can be deleted in many lowering passes
     '''
 
-    def __init__(self, nid: str):
-        self.nid = nid
+    def __init__(self, *labels: str):
+        self.labels = labels
 
     def __enter__(self):
         ctx_stack.push()
@@ -327,7 +326,9 @@ class NamedScope:
         if exc_value is not None:
             # Do not generate an AST node
             return False  # Do not suppress the exception
-        body = ctx_stack.pop().make_stmt(self.nid)
+        finished_scope = ctx_stack.pop()
+        metadata = ctx_stack.top().get_metadata(self.labels)
+        body = finished_scope.make_stmt(metadata)
         ctx_stack.top().append_stmt(body)
 
 
@@ -343,17 +344,17 @@ def Invoke(func, *args, **kvs):
     instead, which supports generic types
     '''
     top = ctx_stack.top()
-    top.append_stmt(ffi.inlined_invoke(top.get_next_nid(), func, args, kvs))
+    top.append_stmt(ffi.inlined_invoke(top.get_metadata(), func, args, kvs))
 
 
 def Alloc(var: VarRef):
     top = ctx_stack.top()
-    top.append_stmt(ffi.makeAlloc(top.get_next_nid(), var.name))
+    top.append_stmt(ffi.makeAlloc(var.name, top.get_metadata()))
 
 
 def Free(var: VarRef):
     top = ctx_stack.top()
-    top.append_stmt(ffi.makeFree(top.get_next_nid(), var.name))
+    top.append_stmt(ffi.makeFree(var.name, top.get_metadata()))
 
 
 def Eval(expr):
@@ -363,7 +364,7 @@ def Eval(expr):
     This scope is internally used by `transformer` and tests
     '''
     top = ctx_stack.top()
-    top.append_stmt(ffi.makeEval(top.get_next_nid(), expr))
+    top.append_stmt(ffi.makeEval(expr, top.get_metadata()))
 
 
 def Any():
@@ -377,3 +378,8 @@ def Any():
 
 def Func(name, params, returns, body, closure={}):
     return ffi.makeFunc(name, params, returns, body, closure)
+
+
+def lookup_id(ast, pattern):
+    from .schedule import Schedule
+    return Schedule(ast).find(pattern).id

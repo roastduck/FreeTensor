@@ -5,7 +5,7 @@ import pytest
 def test_basic():
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             y1[i] = i + 1
             y2[i] = i + 2
     ast = ft.pop_ast(verbose=True)
@@ -33,7 +33,7 @@ def test_basic():
 def test_begin_and_step():
     with ft.VarDef([("y1", (8,), "int32", "output", "cpu"),
                     ("y2", (8,), "int32", "output", "cpu")]) as (y1, y2):
-        with ft.For("i", 6, -2, -2, nid="L1") as i:
+        with ft.For("i", 6, -2, -2, label="L1") as i:
             y1[i] = i + 1
             y2[i] = i + 2
     ast = ft.pop_ast(verbose=True)
@@ -64,7 +64,7 @@ def test_inner_if():
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4,), "int32", "output", "cpu"),
     ]) as (x, y1, y2):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             with ft.If(x[i] > 0):
                 y1[i] = i + 1
                 y2[i] = i + 2
@@ -107,7 +107,7 @@ def test_inner_if_fuse():
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4,), "int32", "output", "cpu"),
     ]) as (x, y1, y2):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             with ft.If(x[()] > 0):
                 y1[i] = i + 1
                 y2[i] = i + 2
@@ -143,7 +143,7 @@ def test_inner_if_else():
         ("y1", (2,), "int32", "output", "cpu"),
         ("y2", (2,), "int32", "output", "cpu"),
     ]) as (x, y1, y2):
-        with ft.For("i", 0, 2, nid="L1") as i:
+        with ft.For("i", 0, 2, label="L1") as i:
             with ft.If(x[i] > 0):
                 y1[i] = i + 1
                 y2[i] = i + 2
@@ -189,10 +189,10 @@ def test_inner_for():
         ("y1", (2,), "int32", "inout", "cpu"),
         ("y2", (2,), "int32", "inout", "cpu"),
     ]) as (x, y1, y2):
-        with ft.For("i", 0, 2, nid="L1") as i:
+        with ft.For("i", 0, 2, label="L1") as i:
             with ft.For("j", 0, x[i]):
-                y1[i] = y1[i] * 2
-                y2[i] = y2[i] * 3
+                y1[i] *= 2
+                y2[i] *= 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
@@ -206,14 +206,14 @@ def test_inner_for():
         ("y2", (2,), "int32", "inout", "cpu"),
     ]) as (x, y1, y2):
         with ft.For("j", 0, x[0]):
-            y1[0] = y1[0] * 2
+            y1[0] *= 2
         with ft.For("j", 0, x[1]):
-            y1[1] = y1[1] * 2
+            y1[1] *= 2
         with ft.For("j", 0, x[0]):
-            y2[0] = y2[0] * 3
+            y2[0] *= 3
         with ft.For("j", 0, x[1]):
-            y2[1] = y2[1] * 3
-    std = ft.make_reduction(ft.pop_ast())
+            y2[1] *= 3
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -224,10 +224,10 @@ def test_inner_for_fuse():
         ("y1", (2,), "int32", "inout", "cpu"),
         ("y2", (2,), "int32", "inout", "cpu"),
     ]) as (x, y1, y2):
-        with ft.For("i", 0, 2, nid="L1") as i:
+        with ft.For("i", 0, 2, label="L1") as i:
             with ft.For("j", 0, x[()]):
-                y1[i] = y1[i] * 2
-                y2[i] = y2[i] * 3
+                y1[i] *= 2
+                y2[i] *= 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
@@ -241,11 +241,11 @@ def test_inner_for_fuse():
         ("y2", (2,), "int32", "inout", "cpu"),
     ]) as (x, y1, y2):
         with ft.For("j", 0, x[()]):
-            y1[0] = y1[0] * 2
-            y1[1] = y1[1] * 2
-            y2[0] = y2[0] * 3
-            y2[1] = y2[1] * 3
-    std = ft.make_reduction(ft.pop_ast())
+            y1[0] *= 2
+            y1[1] *= 2
+            y2[0] *= 3
+            y2[1] *= 3
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -256,10 +256,10 @@ def test_inner_for_fuse_different_begin():
         ("y1", (2,), "int32", "inout", "cpu"),
         ("y2", (2,), "int32", "inout", "cpu"),
     ]) as (x, y1, y2):
-        with ft.For("i", 0, 2, nid="L1") as i:
+        with ft.For("i", 0, 2, label="L1") as i:
             with ft.For("j", i, x[()] + i):
-                y1[i] = y1[i] * 2
-                y2[i] = y2[i] * 3
+                y1[i] *= 2
+                y2[i] *= 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
@@ -273,11 +273,11 @@ def test_inner_for_fuse_different_begin():
         ("y2", (2,), "int32", "inout", "cpu"),
     ]) as (x, y1, y2):
         with ft.For("j", 0, x[()]):
-            y1[0] = y1[0] * 2
-            y1[1] = y1[1] * 2
-            y2[0] = y2[0] * 3
-            y2[1] = y2[1] * 3
-    std = ft.make_reduction(ft.pop_ast())
+            y1[0] *= 2
+            y1[1] *= 2
+            y2[0] *= 3
+            y2[1] *= 3
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -285,9 +285,9 @@ def test_inner_for_fuse_different_begin():
 def test_unsolvable_dependency():
     with ft.VarDef([("y1", (), "int32", "inout", "cpu"),
                     ("y2", (), "int32", "inout", "cpu")]) as (y1, y2):
-        with ft.For("i", 0, 2, nid="L1") as i:
-            y1[()] = y2[()] * i
-            y2[()] = y2[()] + i
+        with ft.For("i", 0, 2, label="L1") as i:
+            y1[()] = y2[()] * i + 1
+            y2[()] = y2[()] * i + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
@@ -299,7 +299,7 @@ def test_unsolvable_dependency():
 def test_loop_not_found():
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             y1[i] = i + 1
             y2[i] = i + 2
     ast = ft.pop_ast(verbose=True)
@@ -314,7 +314,7 @@ def test_var_def_inside():
     with ft.VarDef([("x", (2,), "int32", "input", "cpu"),
                     ("y1", (2,), "int32", "output", "cpu"),
                     ("y2", (2,), "int32", "output", "cpu")]) as (x, y1, y2):
-        with ft.For("i", 0, 2, nid="L1") as i:
+        with ft.For("i", 0, 2, label="L1") as i:
             with ft.VarDef("b", (), "int32", "cache", "cpu") as b:
                 b[()] = x[i] * 2
                 y1[i] = b[()] + 1
@@ -346,7 +346,7 @@ def test_var_def_inside_no_need_to_split():
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("x", (2,), "int32", "input", "cpu"),
                     ("y", (2,), "int32", "output", "cpu")]) as (n, x, y):
-        with ft.For("i", 0, 2, nid="L1") as i:
+        with ft.For("i", 0, 2, label="L1") as i:
             with ft.VarDef("b", (), "int32", "cache", "cpu") as b:
                 b[()] = n[()]
                 y[i] = b[()] * x[i]

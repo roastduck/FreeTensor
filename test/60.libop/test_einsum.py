@@ -13,7 +13,7 @@ def test_basic():
         a: ft.Var[(4, 5), "float32", "input", "cpu"]
         b: ft.Var[(5,), "float32", "input", "cpu"]
         y: ft.Var[(4,), "float32", "output", "cpu"]
-        #! nid: einsum
+        #! label: einsum
         libop.einsum_("ij,j->i", a, b, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
@@ -37,7 +37,7 @@ def test_broadcast():
         a: ft.Var[(4, 1), "float32", "input", "cpu"]
         b: ft.Var[(5,), "float32", "input", "cpu"]
         y: ft.Var[(4,), "float32", "output", "cpu"]
-        #! nid: einsum
+        #! label: einsum
         libop.einsum_("ij,j->i", a, b, y)
 
     a_torch = torch.rand(4, 1, dtype=torch.float32)
@@ -60,7 +60,7 @@ def test_out_of_place():
     def f(a, b):
         a: ft.Var[(4, 5), "float32", "input", "cpu"]
         b: ft.Var[(5,), "float32", "input", "cpu"]
-        #! nid: gemm
+        #! label: gemm
         return libop.einsum("ij,j->i", a, b)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)

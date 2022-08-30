@@ -15,9 +15,9 @@ def zeros_(y):
     if core.ndim(y) == 0:
         y[()] = 0
     else:
-        #! nid: L_elem
+        #! label: L_elem
         for i in range(core.shape(y, 0)):
-            #! nid: recur
+            #! label: recur
             zeros_(y[i])
 
 
@@ -43,6 +43,6 @@ def zeros(shape, dtype, mtype=None):
         The zero tensor
     '''
     y = core.empty(shape, dtype, mtype)
-    #! nid: recur
+    #! label: recur
     zeros_(y)
     return y

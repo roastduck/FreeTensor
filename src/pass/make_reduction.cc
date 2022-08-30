@@ -48,8 +48,8 @@ Stmt MakeReduction::doMake(Store op, ReduceOp reduceOp) {
                                                   : other;
                     }
                 }
-                return makeReduceTo(op->id(), op->var_, op->indices_, reduceOp,
-                                    others, false);
+                return makeReduceTo(op->var_, op->indices_, reduceOp, others,
+                                    false, op->metadata(), op->id());
             fail:;
             }
         }
@@ -64,6 +64,8 @@ Stmt MakeReduction::visit(const Store &_op) {
     switch (op->expr_->nodeType()) {
     case ASTNodeType::Add:
         return doMake(op, ReduceOp::Add);
+    case ASTNodeType::Sub:
+        return doMake(op, ReduceOp::Sub);
     case ASTNodeType::Mul:
         return doMake(op, ReduceOp::Mul);
     case ASTNodeType::Min:

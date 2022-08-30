@@ -73,14 +73,15 @@ void init_ffi_ast(py::module_ &m) {
 
     py::class_<ID>(m, "ID")
         .def(py::init<ID>())
-        .def(py::init<std::string>())
-        .def(py::init<Stmt>())
+        .def(py::init<>())
         .def("__str__", [](const ID &id) { return toString(id); })
         .def("__hash__", [](const ID &id) { return std::hash<ID>()(id); })
         .def(
             "__eq__", [](const ID &lhs, const ID &rhs) { return lhs == rhs; },
             py::is_operator());
-    py::implicitly_convertible<std::string, ID>();
+
+    m.def("make_id", static_cast<ID (*)()>(&ID::make));
+    m.def("make_id", static_cast<ID (*)(int64_t)>(&ID::make));
 
 #ifdef FT_DEBUG_LOG_NODE
     pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);

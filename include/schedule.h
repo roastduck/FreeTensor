@@ -13,6 +13,7 @@
 #include <schedule/memoized_schedules.h>
 #include <schedule/schedule_log.h>
 #include <schedule/var_split.h>
+#include <selector.h>
 #include <stmt.h>
 
 namespace freetensor {
@@ -27,19 +28,45 @@ struct AutoScheduleTuneTrial {
 };
 
 class Schedule {
-    Func func_;
-    Stmt ast_;
+    struct Transaction {
+        Stmt ast_;
+        ScheduleLog logs_;
+
+        Transaction(const Stmt &ast, const ScheduleLog &logs)
+            : ast_(ast), logs_(logs) {}
+    };
+
+    Func func_; /// Used for `func()`. Only header of `func_` is used, while its
+                /// body is `ast_` in `openTrans_`
+
+    std::vector<Transaction> openTrans_; /// Open transactions
 
     int verbose_ = 0;
 
-    ScheduleLog logs_;
     Ref<MemoizedSchedules> memoized_;
 
     Ref<OpenMPRandomEngine> rng_;
     Ref<RandCtx<OpenMPRandomEngine>> randCtx_;
 
   private:
-    void saveSuccessLog(const ScheduleLog &logs);
+    /**
+     * Append a new schedule log to logs, and try looking up an identical
+     * schedule from `MemoizedSchedules`
+     *
+     * If a memoized log is found, the memoized schedule result (including
+     * exceptions, if any) can be reused. If not found, save the new log to
+     * `MemoziedSchedules`
+     */
+    template <class T> T appendLog(const T &_log) {
+        auto log = _log;
+        logs() = logs().push(log);
+        logs() = memoized_->lookup(logs());
+        ASSERT(logs().top()->type() == log->type());
+        log = logs().top().as<typename decltype(log)::Object>();
+        log->run();
+        memoized_->save(logs());
+        return log;
+    }
 
   public:
     Schedule() = default;
@@ -48,6 +75,10 @@ class Schedule {
         : Schedule(func->body_, verbose) {
         func_ = func;
     }
+
+    // Copy by default, which means `Ref`s in a `Schedule` object is shared
+    Schedule(const Schedule &) = default;
+    Schedule &operator=(const Schedule &) = default;
 
     /**
      * Copy the `Schedule` object for trying different scheduling decisions in
@@ -62,22 +93,48 @@ class Schedule {
     Schedule fork() const { return *this; }
 
     /**
+     * Transaction of schedules
+     *
+     * Schedules are applied in transactions. A transaction is created with
+     * `beginTransaction()`, applied as a whole with `commitTransaction()`, and
+     * can be aborted with `abortTransaction()`
+     *
+     * Transactions can be nested. Technically, each schedule is by itself a
+     * inner-most transaction, while a `Schedule` object defines the outer-most
+     * transaction, but these inner-most and outer-most transcations are
+     * invisible to users
+     *
+     * @{
+     */
+    void beginTransaction();
+    void commitTransaction();
+    void abortTransaction();
+    /** @} */
+
+    /**
      * @return : The function being transformed
      */
     Func func() const {
         ASSERT(func_.isValid());
-        return makeFunc(func_->name_, func_->params_, func_->returns_, ast_);
+        return makeFunc(func_->name_, func_->params_, func_->returns_, ast());
     }
 
     /**
      * @return : The statements being transformed, without a function signature
      */
-    Stmt ast() const;
+    Stmt &ast();
+    const Stmt &ast() const;
 
     /**
      * @return : Logs of all schedules applied
      */
-    std::vector<Ref<ScheduleLogItem>> logs() const;
+    ScheduleLog &logs();
+    const ScheduleLog &logs() const;
+
+    /**
+     * Verbose level
+     */
+    int verbose() const { return verbose_; }
 
     /**
      * Find all nodes in the current AST satisfying a given condition
@@ -111,6 +168,25 @@ class Schedule {
      */
     Stmt find(const ID &id) const {
         return find([&id](const Stmt &c) { return c->id() == id; });
+    }
+
+    /**
+     * Find all node(s) in the current AST with a given selector
+     *
+     * @param selector: selector used to match a sub-tree
+     */
+    std::vector<Stmt> findAll(const Ref<Selector> &selector) const {
+        return findAll(
+            [&selector](const Stmt &c) { return selector->match(c); });
+    }
+
+    /**
+     * Find a node in the current AST with a given selector
+     *
+     * @param selector: selector used to match a sub-tree
+     */
+    Stmt find(const Ref<Selector> &selector) const {
+        return find([&selector](const Stmt &c) { return selector->match(c); });
     }
 
     /**
@@ -206,18 +282,20 @@ class Schedule {
      * @param side : If `After`, `splitter` is the last statement of the first
      * loop. If `Before`, `splitter` is the first statement of the second loop
      * @param splitter : Where to fission the loop
-     * @param suffix0 : ID suffix of the statements in the first loop, default
-     * to ".a", can be "" for convenience, but cannot be the same with suffix1
-     * @param suffix1 : ID suffix of the statements in the second loop, default
-     * to ".b", can be "" for convenience, but cannot be the same with suffix0
+     * @param suffix0 : The suffix in the `op` of metadata of result part 0. If
+     * empty, the fissioned part 0 preserves original ID and metadata. Cannot be
+     * empty together with `suffix1`.
+     * @param suffix1 : The suffix in the `op` of metadata of result part 1. If
+     * empty, the fissioned part 1 preserves original ID and metadata. Cannot be
+     * empty together with `suffix0`.
      * @throw InvalidSchedule if any dependency cannot be resolved
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
      * loop})
      */
     std::pair<IDMap, IDMap> fission(const ID &loop, FissionSide side,
                                     const ID &splitter,
-                                    const std::string &suffix0 = ".a",
-                                    const std::string &suffix1 = ".b");
+                                    const std::string &suffix0 = ".0",
+                                    const std::string &suffix1 = ".1");
 
     /**
      * Fuse two directly following loops with the same length into one
@@ -402,13 +480,17 @@ class Schedule {
      * This is a composite schedule command, which is implemented with other
      * commands
      *
+     * If moving a statement out of some loops, identical loops will be added
+     * around the moved statement, which is equivalent to fission these loops
+     *
      * @param stmt : ID of the statement to be moved
      * @param side : Whether `stmt` will be BEFORE or AFTER `dst
      * @param dst : Insert `stmt` to be directly after this statement
      * @throw InvalidSchedule if there is no feasible path to move
-     * @return : The new ID of stmt
+     * @return : (The new ID of the moved statement, The out-most newly
+     * introduced statments including the added loops)
      */
-    ID moveTo(const ID &stmt, MoveToSide side, const ID &dst);
+    std::pair<ID, ID> moveTo(const ID &stmt, MoveToSide side, const ID &dst);
 
     /**
      * Remove a variable. When the variable is used, recompute its value
@@ -421,6 +503,57 @@ class Schedule {
 
     /**
      * Mark a loop with a parallel implementation
+     *
+     * This schedule follows a fork-join model: multiple workers (abstract
+     * threads) are created (but physically the threads may be cached in a
+     * thread pool) when the loop begins, do their jobs in parallel, and join
+     * when the loop ends
+     *
+     * OpenMP threads follow a typical fork-join model. CUDA threads run in a
+     * bulk-synchronous parallel (BSP) model, which can also be mimiked by the
+     * fork-join model: All threads start when the kernel get launched, but they
+     * only begin to do their jobs when the parallel loop begins. Nevertheless,
+     * the fork-join model needs the following extension to fully mimic a BSP
+     * model:
+     *
+     * Taking CUDA as an example, we allow binding a loop to `threadIdx.x`
+     * inside another loop bound to `threadIdx.x`, which is illegal in a classic
+     * fork-join model. For example, we may implement a matmul with
+     * collaborative fetch as below:
+     *
+     * ```
+     * for i : threadIdx.x  # Li
+     *   for j : threadIdx.y  # Lj
+     *     local_sum = 0  # In gpu/local memory, unique to (i, j)
+     *     for k0  # Lk0
+     *       for k : threadIdx.y  # Lk1_a
+     *         A_cache[k] = A[i, k]  # In gpu/shared, shared by different j
+     *       for k : threadIdx.x  # Lk1_b
+     *         B_cache[k] = B[k, j]  # In gpu/shared, shared by different i
+     *       for k  # Lk1_c
+     *         sum += A_cache[k] * B_cache[k]
+     *     C[i, j] = local_sum
+     * ```
+     *
+     * A seemingly plausible solution to avoid this extension is to reorder
+     * `Lk0` to outer-most, and then move `Lk1_a` and `Lk1_b` out of `Li` or
+     * `Lj`. This resolves the nested `threadIdx.x` and `threadIdx.y` binding
+     * problem by running `Li+Lk1_a`, `Lj+Lk1_b` and `Li+Lj` interleavingly,
+     * instead of running `Lk1_a` and `Lk1_b` inside `Li+Lj`. However, this
+     * approach is illegal, because the local variable `local_sum` can no longer
+     * be kept inside the body of `Li` and `Lj`: It has to be reused across
+     * multiple runs of `Li` and `Lj`
+     *
+     * Please also note that we can bind one `threadIdx.x` to two loops only
+     * when the body statement is loop-invariant to one of them. For example,
+     * the following binding is still illegal, even in our extended fork-join
+     * model, because it violates its serial semantics:
+     *
+     * ```
+     * for i : threadIdx.x
+     *   for j : threadIdx.x
+     *     A[i, j] ++
+     * ```
      *
      * @param loop : ID of the loop
      * @param parallel : Parallel scope
@@ -523,12 +656,21 @@ class Schedule {
     void autoUseLib(const Target &target);
 
     /**
-     * (Experimental) Automatically fuse consecutive loops using some heuristics
+     * (Experimental) Automaticaly reorder loops in a loop nest
+     *
+     * @param target : Target architecture
+     */
+    void autoReorder(const Target &target);
+
+    /**
+     * (Experimental) Automatically fuse consecutive loops or vice versa using
+     * some heuristics
      *
      * @param target : Target architecture
      * @param trace : Random decision tarce
      */
-    void autoFuse(const Target &target, const Ref<RandTrace> &trace = nullptr);
+    void autoFissionFuse(const Target &target,
+                         const Ref<RandTrace> &trace = nullptr);
 
     /**
      * (Experimental) Automatically parallelize some loops using some heuristics

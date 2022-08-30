@@ -10,13 +10,15 @@
 namespace freetensor {
 
 class InlinedInvoke : public Mutator {
-    ID callSiteId_;
+    Metadata callSiteMetadata_;
     const std::unordered_map<std::string, Ref<FrontendVar>> &kvs_;
 
   public:
-    InlinedInvoke(const ID &callSiteId,
+    InlinedInvoke(const Metadata &callSiteMetadata,
                   const std::unordered_map<std::string, Ref<FrontendVar>> &kvs)
-        : callSiteId_(callSiteId), kvs_(kvs) {}
+        : callSiteMetadata_(callSiteMetadata), kvs_(kvs) {
+        ASSERT(callSiteMetadata_.isValid());
+    }
 
   protected:
     Stmt visitStmt(const Stmt &op) override;
@@ -34,7 +36,7 @@ class InlinedInvoke : public Mutator {
  * AST. Then, we can use `inlinedInvoke` to call it
  */
 Stmt inlinedInvoke(
-    const ID &callSiteId, const Func &func,
+    const Metadata &callSiteMetadata, const Func &func,
     const std::vector<Ref<FrontendVar>> &args,
     const std::unordered_map<std::string, Ref<FrontendVar>> &kvs);
 

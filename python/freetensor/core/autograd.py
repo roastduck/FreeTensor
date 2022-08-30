@@ -1,4 +1,4 @@
-from typing import Optional, Union, Sequence
+from typing import Optional, Set, Union, Sequence
 import sys
 
 import freetensor_ffi as ffi
@@ -6,6 +6,7 @@ import freetensor_ffi as ffi
 from freetensor_ffi import GradTapeMode
 from freetensor_ffi import output_intermediates
 
+from .stmt import lookup_id
 from .frontend import transform
 
 
@@ -54,7 +55,7 @@ def grad_body(stmt: ffi.Stmt,
     req = set(requires)
     prov = set(provides)
     if type(tapes) is not GradTapeMode:
-        tapes = set(tapes)
+        tapes = {lookup_id(stmt, t) for t in tapes}
     return ffi.grad_body(stmt, req, prov, tapes)
 
 
@@ -75,7 +76,7 @@ def _grad_func(impl,
         else:
             prov.add(p)
     if type(tapes) is not GradTapeMode:
-        tapes = set(tapes)
+        tapes = {lookup_id(func, t) for t in tapes}
     fwd, bwd, req_map, prov_map = impl(func, req, prov, tapes)
     if verbose is not None and verbose >= 1:
         print("Forward pass from AD:", file=sys.stderr)
@@ -113,7 +114,7 @@ def grad_(func: ffi.Func,
     tapes : Union[Sequence, GradTapeMode]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
-        VarDef IDs of them. It can also be a `GradTapeMode`, then it will determine
+        VarDef selectors of them. It can also be a `GradTapeMode`, then it will determine
         which intermediate variables to be stored by heuristics. Avail `GradTapeMode`s
         are: All: store all variables including local scalars; None: store nothing;
         NoReuseOnly: store variables that only hold one version of data, which means
@@ -166,7 +167,7 @@ def grad(func: ffi.Func,
     tapes : Union[Sequence, GradTapeMode]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
-        VarDef IDs of them. It can also be a `GradTapeMode`, then it will determine
+        VarDef selectors of them. It can also be a `GradTapeMode`, then it will determine
         which intermediate variables to be stored by heuristics. Avail `GradTapeMode`s
         are: All: store all variables including local scalars; None: store nothing;
         NoReuseOnly: store variables that only hold one version of data, which means
@@ -189,3 +190,9 @@ def grad(func: ffi.Func,
                       provides,
                       tapes,
                       verbose=verbose)
+
+
+def output_intermediates(stmt: ffi.Stmt, intermediates: Set[Union[str,
+                                                                  ffi.ID]]):
+    return ffi.output_intermediates(stmt,
+                                    {lookup_id(stmt, i) for i in intermediates})

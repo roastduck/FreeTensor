@@ -33,14 +33,20 @@ class StmtSeqNode : public StmtNode {
 };
 typedef Ref<StmtSeqNode> StmtSeq;
 #define makeStmtSeq(...) makeNode(StmtSeq, __VA_ARGS__)
-template <class Tstmts> Stmt _makeStmtSeq(const ID &id, Tstmts &&stmts) {
+template <class Tstmts>
+Stmt _makeStmtSeq(Tstmts &&stmts, const Metadata &metadata = nullptr,
+                  const ID &id = {}) {
     StmtSeq s = StmtSeq::make();
+    s->metadata() = metadata;
     s->setId(id);
     s->stmts_ = std::forward<Tstmts>(stmts);
     return s;
 }
-inline Stmt _makeStmtSeq(const ID &id, std::initializer_list<Stmt> stmts) {
+inline Stmt _makeStmtSeq(std::initializer_list<Stmt> stmts,
+                         const Metadata &metadata = nullptr,
+                         const ID &id = {}) {
     StmtSeq s = StmtSeq::make();
+    s->metadata() = metadata;
     s->setId(id);
     s->stmts_ = stmts;
     return s;
@@ -64,9 +70,11 @@ class VarDefNode : public StmtNode {
 typedef Ref<VarDefNode> VarDef;
 #define makeVarDef(...) makeNode(VarDef, __VA_ARGS__)
 template <class Tbuffer, class TioTensor, class Tbody>
-Stmt _makeVarDef(const ID &id, const std::string &name, Tbuffer &&buffer,
-                 TioTensor &&ioTensor, Tbody &&body, bool pinned) {
+Stmt _makeVarDef(const std::string &name, Tbuffer &&buffer,
+                 TioTensor &&ioTensor, Tbody &&body, bool pinned,
+                 const Metadata &metadata = nullptr, const ID &id = {}) {
     VarDef d = VarDef::make();
+    d->metadata() = metadata;
     d->setId(id);
     d->name_ = name;
     d->buffer_ = SubTree<Buffer>(buffer);
@@ -87,9 +95,10 @@ class StoreNode : public StmtNode {
 typedef Ref<StoreNode> Store;
 #define makeStore(...) makeNode(Store, __VA_ARGS__)
 template <class Tindices, class Texpr>
-Stmt _makeStore(const ID &id, const std::string &var, Tindices &&indices,
-                Texpr &&expr) {
+Stmt _makeStore(const std::string &var, Tindices &&indices, Texpr &&expr,
+                const Metadata &metadata = nullptr, const ID &id = {}) {
     Store s = Store::make();
+    s->metadata() = metadata;
     s->setId(id);
     s->var_ = var;
     s->indices_ = std::forward<Tindices>(indices);
@@ -97,9 +106,11 @@ Stmt _makeStore(const ID &id, const std::string &var, Tindices &&indices,
     return s;
 }
 template <class Texpr>
-Stmt _makeStore(const ID &id, const std::string &var,
-                const std::vector<Expr> &indices, Texpr &&expr) {
+Stmt _makeStore(const std::string &var, const std::vector<Expr> &indices,
+                Texpr &&expr, const Metadata &metadata = nullptr,
+                const ID &id = {}) {
     Store s = Store::make();
+    s->metadata() = metadata;
     s->setId(id);
     s->var_ = var;
     s->indices_ = indices;
@@ -115,8 +126,10 @@ class AllocNode : public StmtNode {
 };
 typedef Ref<AllocNode> Alloc;
 #define makeAlloc(...) makeNode(Alloc, __VA_ARGS__)
-inline Stmt _makeAlloc(const ID &id, const std::string &var) {
+inline Stmt _makeAlloc(const std::string &var,
+                       const Metadata &metadata = nullptr, const ID &id = {}) {
     Alloc a = Alloc::make();
+    a->metadata() = metadata;
     a->setId(id);
     a->var_ = var;
     return a;
@@ -130,8 +143,10 @@ class FreeNode : public StmtNode {
 };
 typedef Ref<FreeNode> Free;
 #define makeFree(...) makeNode(Free, __VA_ARGS__)
-inline Stmt _makeFree(const ID &id, const std::string &var) {
+inline Stmt _makeFree(const std::string &var,
+                      const Metadata &metadata = nullptr, const ID &id = {}) {
     Free f = Free::make();
+    f->metadata() = metadata;
     f->setId(id);
     f->var_ = var;
     return f;
@@ -150,9 +165,11 @@ class ReduceToNode : public StmtNode {
 typedef Ref<ReduceToNode> ReduceTo;
 #define makeReduceTo(...) makeNode(ReduceTo, __VA_ARGS__)
 template <class Tindices, class Texpr>
-Stmt _makeReduceTo(const ID &id, const std::string &var, Tindices &&indices,
-                   ReduceOp op, Texpr &&expr, bool atomic) {
+Stmt _makeReduceTo(const std::string &var, Tindices &&indices, ReduceOp op,
+                   Texpr &&expr, bool atomic,
+                   const Metadata &metadata = nullptr, const ID &id = {}) {
     ReduceTo a = ReduceTo::make();
+    a->metadata() = metadata;
     a->setId(id);
     a->var_ = var;
     a->indices_ = std::forward<Tindices>(indices);
@@ -162,10 +179,11 @@ Stmt _makeReduceTo(const ID &id, const std::string &var, Tindices &&indices,
     return a;
 }
 template <class Texpr>
-Stmt _makeReduceTo(const ID &id, const std::string &var,
-                   const std::vector<Expr> &indices, ReduceOp op, Texpr &&expr,
-                   bool atomic) {
+Stmt _makeReduceTo(const std::string &var, const std::vector<Expr> &indices,
+                   ReduceOp op, Texpr &&expr, bool atomic,
+                   const Metadata &metadata = nullptr, const ID &id = {}) {
     ReduceTo a = ReduceTo::make();
+    a->metadata() = metadata;
     a->setId(id);
     a->var_ = var;
     a->indices_ = indices;
@@ -197,9 +215,11 @@ typedef Ref<ForNode> For;
 #define makeFor(...) makeNode(For, __VA_ARGS__)
 template <class Tbegin, class Tend, class Tstep, class Tlen, class Tbody,
           class Tproperty>
-Stmt _makeFor(const ID &id, const std::string &iter, Tbegin &&begin, Tend &&end,
-              Tstep &&step, Tlen &&len, Tproperty &&property, Tbody &&body) {
+Stmt _makeFor(const std::string &iter, Tbegin &&begin, Tend &&end, Tstep &&step,
+              Tlen &&len, Tproperty &&property, Tbody &&body,
+              const Metadata &metadata = nullptr, const ID &id = {}) {
     For f = For::make();
+    f->metadata() = metadata;
     f->setId(id);
     f->iter_ = iter;
     f->begin_ = std::forward<Tbegin>(begin);
@@ -224,14 +244,20 @@ class IfNode : public StmtNode {
 typedef Ref<IfNode> If;
 #define makeIf(...) makeNode(If, __VA_ARGS__)
 template <class Tcond, class Tthen, class Telse = std::nullptr_t>
-Stmt _makeIf(const ID &id, Tcond &&cond, Tthen &&thenCase,
-             Telse &&elseCase = nullptr) {
+Stmt _makeIf(Tcond &&cond, Tthen &&thenCase, Telse &&elseCase,
+             const Metadata &metadata = nullptr, const ID &id = {}) {
     If i = If::make();
+    i->metadata() = metadata;
     i->setId(id);
     i->cond_ = std::forward<Tcond>(cond);
     i->thenCase_ = std::forward<Tthen>(thenCase);
     i->elseCase_ = std::forward<Telse>(elseCase);
     return i;
+}
+template <class Tcond, class Tthen, class Telse = std::nullptr_t>
+Stmt _makeIf(Tcond &&cond, Tthen &&thenCase, const Metadata &metadata = nullptr,
+             const ID &id = {}) {
+    return _makeIf(cond, thenCase, nullptr, metadata, id);
 }
 
 /**
@@ -254,8 +280,10 @@ class AssertNode : public StmtNode {
 typedef Ref<AssertNode> Assert;
 #define makeAssert(...) makeNode(Assert, __VA_ARGS__)
 template <class Tcond, class Tbody>
-Stmt _makeAssert(const ID &id, Tcond &&cond, Tbody &&body) {
+Stmt _makeAssert(Tcond &&cond, Tbody &&body, const Metadata &metadata = nullptr,
+                 const ID &id = {}) {
     Assert a = Assert::make();
+    a->metadata() = metadata;
     a->setId(id);
     a->cond_ = std::forward<Tcond>(cond);
     a->body_ = std::forward<Tbody>(body);
@@ -283,8 +311,10 @@ class AssumeNode : public StmtNode {
 typedef Ref<AssumeNode> Assume;
 #define makeAssume(...) makeNode(Assume, __VA_ARGS__)
 template <class Tcond, class Tbody>
-Stmt _makeAssume(const ID &id, Tcond &&cond, Tbody &&body) {
+Stmt _makeAssume(Tcond &&cond, Tbody &&body, const Metadata &metadata = nullptr,
+                 const ID &id = {}) {
     Assume a = Assume::make();
+    a->metadata() = metadata;
     a->setId(id);
     a->cond_ = std::forward<Tcond>(cond);
     a->body_ = std::forward<Tbody>(body);
@@ -304,8 +334,11 @@ class EvalNode : public StmtNode {
 };
 typedef Ref<EvalNode> Eval;
 #define makeEval(...) makeNode(Eval, __VA_ARGS__)
-template <class T> Stmt _makeEval(const ID &id, T &&expr) {
+template <class T>
+Stmt _makeEval(T &&expr, const Metadata &metadata = nullptr,
+               const ID &id = {}) {
     Eval e = Eval::make();
+    e->metadata() = metadata;
     e->setId(id);
     e->expr_ = std::forward<T>(expr);
     return e;
@@ -343,15 +376,17 @@ class MatMulNode : public StmtNode {
 };
 typedef Ref<MatMulNode> MatMul;
 #define makeMatMul(...) makeNode(MatMul, __VA_ARGS__)
-inline Stmt _makeMatMul(const ID &id, const Expr &a, const Expr &b,
-                        const Expr &c, const Expr &alpha, const Expr &beta,
-                        const Expr &m, const Expr &k, const Expr &n,
-                        const Expr &lda, const Expr &ldb, const Expr &ldc,
-                        const Expr &stridea, const Expr &strideb,
-                        const Expr &stridec, const Expr &batchSize,
-                        bool aIsRowMajor, bool bIsRowMajor, bool cIsRowMajor,
-                        const Stmt &equivalent) {
+inline Stmt _makeMatMul(const Expr &a, const Expr &b, const Expr &c,
+                        const Expr &alpha, const Expr &beta, const Expr &m,
+                        const Expr &k, const Expr &n, const Expr &lda,
+                        const Expr &ldb, const Expr &ldc, const Expr &stridea,
+                        const Expr &strideb, const Expr &stridec,
+                        const Expr &batchSize, bool aIsRowMajor,
+                        bool bIsRowMajor, bool cIsRowMajor,
+                        const Stmt &equivalent,
+                        const Metadata &metadata = nullptr, const ID &id = {}) {
     MatMul s = MatMul::make();
+    s->metadata() = metadata;
     s->setId(id);
     s->a_ = a;
     s->b_ = b;

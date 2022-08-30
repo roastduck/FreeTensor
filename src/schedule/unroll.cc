@@ -22,7 +22,9 @@ Stmt BackUnroll::visit(const For &_op) {
 Stmt ImmediateUnroll::visitStmt(const Stmt &op) {
     auto ret = Mutator::visitStmt(op);
     if (!iter_.empty()) {
-        ret->setId(ret->id().strId() + "." + std::to_string(curIter_));
+        ret->setId();
+        ret->metadata() =
+            makeMetadata("unroll." + std::to_string(curIter_), ret);
     }
     return ret;
 }
@@ -48,7 +50,7 @@ Stmt ImmediateUnroll::visit(const For &op) {
             begin_ = step_ = nullptr;
             iter_.clear();
             done_ = true;
-            return makeStmtSeq("", std::move(stmts));
+            return makeStmtSeq(std::move(stmts));
         } else {
             throw InvalidSchedule("Length of the loop should be constant.");
         }

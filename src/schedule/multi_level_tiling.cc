@@ -97,7 +97,7 @@ multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
             if (firstTiles[i].second > 1) {
                 fissionIDs.push_back(firstTiles[i].first);
                 secondTarget.spaceLoops[i - lastTileStart].id =
-                    firstTiles[i].first.strId();
+                    firstTiles[i].first;
                 secondTarget.spaceLoops[i - lastTileStart].length =
                     firstTiles[i].second;
             }
@@ -158,7 +158,7 @@ multiLevelTilingWithFusion(Schedule &schedule, const ForsWithDataReuse &target,
     ID lastFuse;
     for (size_t i = 0; i < fuseTileSize; i++) {
         if (fuseTiles[i].second > 1) {
-            lastFuse = tiles[i].first =
+            tiles[i].first = lastFuse =
                 schedule.fuse(tiles[i].first, fuseTiles[i].first);
         }
     }

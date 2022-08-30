@@ -44,7 +44,8 @@ class Mutator {
         for (auto &&stmt : op->stmts_) {
             stmts.emplace_back((*this)(stmt));
         }
-        return COPY_DEBUG_INFO(makeStmtSeq(op->id(), std::move(stmts)), op);
+        return COPY_DEBUG_INFO(
+            makeStmtSeq(std::move(stmts), op->metadata(), op->id()), op);
     }
 
     virtual Stmt visit(const VarDef &op) {
@@ -66,9 +67,10 @@ class Mutator {
             }
             ioTensor = makeTensor(std::move(shape), op->ioTensor_->dtype());
         }
-        return COPY_DEBUG_INFO(makeVarDef(op->id(), op->name_, std::move(b),
+        return COPY_DEBUG_INFO(makeVarDef(op->name_, std::move(b),
                                           std::move(ioTensor),
-                                          (*this)(op->body_), op->pinned_),
+                                          (*this)(op->body_), op->pinned_,
+                                          op->metadata(), op->id()),
                                op);
     }
 
@@ -83,21 +85,20 @@ class Mutator {
             indices.emplace_back((*this)(index));
         }
         auto &&expr = (*this)(op->expr_);
-        return COPY_DEBUG_INFO(
-            makeStore(op->id(), op->var_, std::move(indices), std::move(expr)),
-            op);
+        return COPY_DEBUG_INFO(makeStore(op->var_, std::move(indices),
+                                         std::move(expr), op->metadata(),
+                                         op->id()),
+                               op);
     }
 
     virtual Stmt visit(const Alloc &op) {
-        return COPY_DEBUG_INFO(
-            makeAlloc(op->id(), op->var_),
-            op);
+        return COPY_DEBUG_INFO(makeAlloc(op->var_, op->metadata(), op->id()),
+                               op);
     }
 
     virtual Stmt visit(const Free &op) {
-        return COPY_DEBUG_INFO(
-            makeFree(op->id(), op->var_),
-            op);
+        return COPY_DEBUG_INFO(makeFree(op->var_, op->metadata(), op->id()),
+                               op);
     }
 
     virtual Expr visit(const Load &op) {
@@ -117,10 +118,10 @@ class Mutator {
             indices.emplace_back((*this)(index));
         }
         auto &&expr = (*this)(op->expr_);
-        return COPY_DEBUG_INFO(makeReduceTo(op->id(), op->var_,
-                                            std::move(indices), op->op_,
-                                            std::move(expr), op->atomic_),
-                               op);
+        return COPY_DEBUG_INFO(
+            makeReduceTo(op->var_, std::move(indices), op->op_, std::move(expr),
+                         op->atomic_, op->metadata(), op->id()),
+            op);
     }
 
     virtual Expr visit(const AnyExpr &op) {
@@ -296,9 +297,9 @@ class Mutator {
                 r->op_, r->var_, std::move(begins), std::move(ends)));
         }
         auto body = (*this)(op->body_);
-        auto ret = makeFor(op->id(), op->iter_, std::move(begin),
-                           std::move(end), std::move(step), std::move(len),
-                           std::move(property), std::move(body));
+        auto ret = makeFor(op->iter_, std::move(begin), std::move(end),
+                           std::move(step), std::move(len), std::move(property),
+                           std::move(body), op->metadata(), op->id());
         return COPY_DEBUG_INFO(ret, op);
     }
 
@@ -307,19 +308,23 @@ class Mutator {
         auto thenCase = (*this)(op->thenCase_); // Visit then BEFORE else!
         auto elseCase =
             op->elseCase_.isValid() ? (*this)(op->elseCase_) : nullptr;
-        auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
-                          std::move(elseCase));
+        auto ret = makeIf(std::move(cond), std::move(thenCase),
+                          std::move(elseCase), op->metadata(), op->id());
         return COPY_DEBUG_INFO(ret, op);
     }
 
     virtual Stmt visit(const Assert &op) {
-        return COPY_DEBUG_INFO(
-            makeAssert(op->id(), (*this)(op->cond_), (*this)(op->body_)), op);
+        return COPY_DEBUG_INFO(makeAssert((*this)(op->cond_),
+                                          (*this)(op->body_), op->metadata(),
+                                          op->id()),
+                               op);
     }
 
     virtual Stmt visit(const Assume &op) {
-        return COPY_DEBUG_INFO(
-            makeAssume(op->id(), (*this)(op->cond_), (*this)(op->body_)), op);
+        return COPY_DEBUG_INFO(makeAssume((*this)(op->cond_),
+                                          (*this)(op->body_), op->metadata(),
+                                          op->id()),
+                               op);
     }
 
     virtual Expr visit(const IfExpr &op) {
@@ -345,19 +350,20 @@ class Mutator {
     }
 
     virtual Stmt visit(const Eval &op) {
-        return COPY_DEBUG_INFO(makeEval(op->id(), (*this)(op->expr_)), op);
+        return COPY_DEBUG_INFO(
+            makeEval((*this)(op->expr_), op->metadata(), op->id()), op);
     }
 
     virtual Stmt visit(const MatMul &op) {
         return COPY_DEBUG_INFO(
-            makeMatMul(op->id(), (*this)(op->a_), (*this)(op->b_),
-                       (*this)(op->c_), (*this)(op->alpha_), (*this)(op->beta_),
-                       (*this)(op->m_), (*this)(op->k_), (*this)(op->n_),
-                       (*this)(op->lda_), (*this)(op->ldb_), (*this)(op->ldc_),
+            makeMatMul((*this)(op->a_), (*this)(op->b_), (*this)(op->c_),
+                       (*this)(op->alpha_), (*this)(op->beta_), (*this)(op->m_),
+                       (*this)(op->k_), (*this)(op->n_), (*this)(op->lda_),
+                       (*this)(op->ldb_), (*this)(op->ldc_),
                        (*this)(op->stridea_), (*this)(op->strideb_),
                        (*this)(op->stridec_), (*this)(op->batchSize_),
                        op->aIsRowMajor_, op->bIsRowMajor_, op->cIsRowMajor_,
-                       (*this)(op->equivalent_)),
+                       (*this)(op->equivalent_), op->metadata(), op->id()),
             op);
     }
 };

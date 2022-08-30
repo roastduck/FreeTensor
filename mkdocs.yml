@@ -2,6 +2,7 @@ site_name: FreeTensor
 
 theme:
     name: "readthedocs"
+    logo: "resource/logo-light.png"
 
 plugins:
     - search

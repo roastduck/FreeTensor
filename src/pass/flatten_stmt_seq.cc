@@ -19,8 +19,9 @@ Stmt FlattenStmtSeq::visit(const StmtSeq &_op) {
         }
     }
 
-    return stmts.size() == 1 ? stmts[0]
-                             : makeStmtSeq(op->id(), std::move(stmts));
+    return stmts.size() == 1
+               ? stmts[0]
+               : makeStmtSeq(std::move(stmts), op->metadata(), op->id());
 }
 
 Stmt FlattenStmtSeq::visit(const Assume &op) { return (*this)(op->body_); }

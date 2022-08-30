@@ -41,12 +41,11 @@ std::string PrintVisitor::prettyFuncName(const std::string &name) {
         return escaped;
 }
 
-std::string PrintVisitor::prettyId(const std::string &id) {
-    auto escaped = escape(id);
+std::string PrintVisitor::prettyId(const ID &id) {
     if (pretty_)
-        return CYAN + escaped + RESET;
+        return CYAN + freetensor::toString(id) + RESET;
     else
-        return escaped;
+        return freetensor::toString(id);
 }
 
 std::string PrintVisitor::prettyLiteral(const std::string &lit) {
@@ -80,14 +79,20 @@ void PrintVisitor::recur(const Stmt &op) {
     }
 }
 
-void PrintVisitor::printId(const Stmt &op) {
+void PrintVisitor::printMetadataAndId(const Stmt &op) {
 #ifdef FT_DEBUG_LOG_NODE
     makeIndent();
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
-    if (printAllId_ || op->hasNamedId()) {
+    if (printAllId_ || op->metadata().isValid()) {
         makeIndent();
-        os() << prettyId(::freetensor::toString(op->id())) << ":" << std::endl;
+        os() << "#!";
+        if (printAllId_)
+            os() << prettyId(op->id());
+        os() << " ";
+        if (op->metadata().isValid())
+            os() << op->metadata();
+        os() << std::endl;
     }
 }
 
@@ -114,7 +119,7 @@ std::string PrintVisitor::escape(const std::string &name) {
 
 void PrintVisitor::visitStmt(const Stmt &op) {
     if (op->nodeType() != ASTNodeType::Any) {
-        printId(op);
+        printMetadataAndId(op);
     }
     Visitor::visitStmt(op);
 }
@@ -147,7 +152,7 @@ void PrintVisitor::visit(const Func &op) {
 }
 
 void PrintVisitor::visit(const StmtSeq &op) {
-    if (printAllId_ || op->hasNamedId()) {
+    if (printAllId_ || op->metadata().isValid()) {
         makeIndent();
         beginBlock();
     }
@@ -157,7 +162,7 @@ void PrintVisitor::visit(const StmtSeq &op) {
     } else {
         Visitor::visit(op);
     }
-    if (printAllId_ || op->hasNamedId()) {
+    if (printAllId_ || op->metadata().isValid()) {
         endBlock();
     }
 }
@@ -240,6 +245,9 @@ void PrintVisitor::visit(const ReduceTo &op) {
     switch (op->op_) {
     case ReduceOp::Add:
         os() << "+=";
+        break;
+    case ReduceOp::Sub:
+        os() << "-=";
         break;
     case ReduceOp::Mul:
         os() << "*=";
@@ -555,6 +563,9 @@ void PrintVisitor::visit(const For &op) {
         switch (reduction->op_) {
         case ReduceOp::Add:
             os() << "+= ";
+            break;
+        case ReduceOp::Sub:
+            os() << "-= ";
             break;
         case ReduceOp::Mul:
             os() << "*= ";

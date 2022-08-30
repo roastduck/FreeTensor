@@ -58,10 +58,10 @@ class Permute : public Mutator {
             // inner is now innermost->body_; transform `Var's in it
             inner = (*this)(inner);
             // wrap with the conditions
-            inner = makeIf(ID{}, condition, inner);
+            inner = makeIf(condition, inner);
             // wrap with the new loops
             for (auto &&newIter : iter::reversed(reversePermute_.args_)) {
-                inner = makeFor(ID{}, newIter, makeIntConst(INT32_MIN),
+                inner = makeFor(newIter, makeIntConst(INT32_MIN),
                                 makeIntConst(INT32_MAX), makeIntConst(1),
                                 makeIntConst(int64_t(INT32_MAX) - INT32_MIN),
                                 Ref<ForProperty>::make(), inner);

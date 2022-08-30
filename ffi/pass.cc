@@ -105,10 +105,10 @@ void init_ffi_pass(py::module_ &m) {
 
     m.def("remove_writes",
           static_cast<Func (*)(const Func &, const ID &)>(&removeWrites),
-          "func"_a, "single_def_id"_a = "");
+          "func"_a, py::arg_v("single_def_id", ID(), "ID()"));
     m.def("remove_writes",
           static_cast<Stmt (*)(const Stmt &, const ID &)>(&removeWrites),
-          "stmt"_a, "single_def_id"_a = "");
+          "stmt"_a, py::arg_v("single_def_id", ID(), "ID()"));
 
     m.def("remove_dead_var",
           static_cast<Func (*)(const Func &)>(&removeDeadVar), "func"_a);

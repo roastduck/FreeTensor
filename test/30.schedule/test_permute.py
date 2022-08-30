@@ -10,9 +10,9 @@ def test_5_point_seidel():
     @ft.schedule(callback=schd)
     @ft.transform
     def test(x: ft.Var[(8, 8), 'float32', 'inout']):
-        #! nid: L1
+        #! label: L1
         for i in range(1, 7):
-            #! nid: L2
+            #! label: L2
             for j in range(1, 7):
                 x[i, j] += x[i - 1, j] + x[i, j - 1] + x[i, j + 1] + x[i + 1, j]
 
@@ -37,9 +37,9 @@ def test_9_point_seidel():
     @ft.schedule(callback=schd)
     @ft.transform
     def test(x: ft.Var[(8, 8), 'float32', 'inout']):
-        #! nid: L1
+        #! label: L1
         for i in range(1, 7):
-            #! nid: L2
+            #! label: L2
             for j in range(1, 7):
                 delta = 0
                 for ii in [-1, 0, 1]:
@@ -60,9 +60,9 @@ def test_9_point_seidel_failed():
         @ft.schedule(callback=schd)
         @ft.transform
         def test(x: ft.Var[(8, 8), 'float32', 'inout']):
-            #! nid: L1
+            #! label: L1
             for i in range(1, 7):
-                #! nid: L2
+                #! label: L2
                 for j in range(1, 7):
                     delta = 0
                     for ii in [-1, 0, 1]:

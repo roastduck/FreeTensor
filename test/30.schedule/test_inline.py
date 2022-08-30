@@ -5,7 +5,7 @@ import pytest
 def test_basic():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 t[i] = x[i] * 2
@@ -30,7 +30,7 @@ def test_basic():
 def test_multiple_assignments():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 2) as i:
                 t[i] = x[i] * 2
@@ -61,7 +61,7 @@ def test_multiple_assignments():
 def test_modified_unrelated_item():
     with ft.VarDef([("x", (5,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 t[i] = x[i] * 2
@@ -88,7 +88,7 @@ def test_modified_unrelated_item():
 def test_loop_around():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 3), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("j", 0, 4) as j:
                 with ft.If(j > 0):
@@ -116,7 +116,7 @@ def test_loop_around():
 def test_loop_around_different_iter_no_prop():
     with ft.VarDef([("x", (4, 3), "int32", "input", "cpu"),
                     ("y", (4, 3), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("j", 0, 4) as j:
                 with ft.If(j > 0):
@@ -135,7 +135,7 @@ def test_loop_around_different_iter_no_prop():
 def test_no_inline_expr_is_changed_1():
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 t[i] = x[i] * 2
@@ -154,7 +154,7 @@ def test_no_inline_expr_is_changed_1():
 def test_no_inline_expr_is_changed_2():
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 t[i] = x[i] * 2
@@ -172,7 +172,7 @@ def test_no_inline_expr_is_changed_2():
 def test_no_inline_expr_is_changed_multiple_times():
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 t[i] = x[i] * 2
@@ -195,7 +195,7 @@ def test_no_inline_expr_is_changed_multiple_times():
 def test_no_inline_output_var():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "output", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 t[i] = x[i] * 2
@@ -212,7 +212,7 @@ def test_no_inline_output_var():
 def test_different_iter_with_the_same_name():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 t[i] = x[i] * 2
@@ -237,7 +237,7 @@ def test_different_iter_with_the_same_name():
 def test_different_iter_with_different_names():
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 t[i] = x[i] * 2
@@ -267,7 +267,7 @@ def test_different_iter_with_dynamic_offset():
     with ft.VarDef([("offset", (), "int32", "inout", "cpu"),
                     ("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (offset, x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", offset[()], offset[()] + 4) as i:
                 t[i + -1 * offset[()]] = x[i + -1 * offset[()]] * 2
@@ -294,7 +294,7 @@ def test_different_iter_with_uncertain_offset_no_inline():
     with ft.VarDef([("offset", (), "int32", "inout", "cpu"),
                     ("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (offset, x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", offset[()], offset[()] + 4) as i:
                 t[i + -1 * offset[()]] = x[i + -1 * offset[()]] * 2
@@ -307,14 +307,14 @@ def test_different_iter_with_uncertain_offset_no_inline():
         s.inline("T")
     ast_ = s.ast()  # Should not changed
     print(ast_)
-    assert ast_.match(ft.make_reduction(ast))
+    assert ast_.match(ast)
 
 
 def test_different_iter_non_linear():
     with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
                     ("x2", (4,), "int32", "input", "cpu"),
                     ("y", (16,), "int32", "output", "cpu")]) as (x1, x2, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (16,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 with ft.For("j", 0, 4) as j:
@@ -341,11 +341,11 @@ def test_different_iter_non_linear():
 def test_inline_serial_into_parallel():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 t[i] = x[i] * 2
-            with ft.For("i", 0, 4, nid="L") as i:
+            with ft.For("i", 0, 4, label="L") as i:
                 y[i] = t[i] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -367,9 +367,9 @@ def test_inline_serial_into_parallel():
 def test_correct_scope():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("U")
+        ft.MarkLabel("U")
         with ft.VarDef("u", (4,), "int32", "cache", "cpu") as u:
-            ft.MarkNid("T")
+            ft.MarkLabel("T")
             with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
                 with ft.For("i", 0, 4) as i:
                     t[i] = x[i] * 2
@@ -386,7 +386,7 @@ def test_correct_scope():
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("T")
+        ft.MarkLabel("T")
         with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
             with ft.For("i", 0, 4) as i:
                 t[i] = x[i] * 2
@@ -400,10 +400,10 @@ def test_correct_scope():
 def test_no_inline_defined_inside_a_loop():
     with ft.VarDef([("x", (4, 4), "int32", "input", "cpu"),
                     ("y", (4, 4), "int32", "output", "cpu")]) as (x, y):
-        ft.MarkNid("U")
+        ft.MarkLabel("U")
         with ft.VarDef("u", (4, 4), "int32", "cache", "cpu") as u:
             with ft.For("i", 0, 4) as i:
-                ft.MarkNid("T")
+                ft.MarkLabel("T")
                 with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
                     with ft.For("j", 0, 4) as j:
                         t[j] = x[i, j] * 2
@@ -417,7 +417,7 @@ def test_no_inline_defined_inside_a_loop():
     with pytest.raises(ft.InvalidSchedule):
         s.inline("U")
     ast_ = s.ast()  # Should not changed
-    assert ast_.match(ft.make_reduction(ast))
+    assert ast_.match(ast)
 
 
 def test_def_then_use_then_def_in_the_same_place():
@@ -426,7 +426,7 @@ def test_def_then_use_then_def_in_the_same_place():
             with ft.For("ix_2", 1, 127) as ix:
                 with ft.For("iy_2", 1, 127) as iy:
                     with ft.For("iz_2", 1, 127) as iz:
-                        ft.MarkNid('sx')
+                        ft.MarkLabel('sx')
                         with ft.VarDef("sx", (), "float64", "cache",
                                        "cpu") as sx:
                             sx[()] = x[ix + -1, iy + 1, iz + -1] + x[ix, iy + 1,

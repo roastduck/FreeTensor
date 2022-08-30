@@ -10,6 +10,7 @@ PYBIND11_MODULE(freetensor_ffi, m) {
     init_ffi_device(m);
     init_ffi_array(m);
     init_ffi_parallel_scope(m);
+    init_ffi_metadata(m);
 
     // Introduce the AST, Func, Expr, and Stmt declarations first
     init_ffi_ast(m);

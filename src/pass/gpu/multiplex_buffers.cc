@@ -39,10 +39,8 @@ void FindParallelLoops::visit(const VarDef &op) {
             if (outer->property_->parallel_ == threadIdxX) {
                 // Only support conditions that threadIdx.x <= warpSize
                 makeAssert(
-                    StmtNode::newId(),
                     makeLE(outer->len_, makeIntConst(target_->warpSize())),
-                    makeStmtSeq(StmtNode::newId(),
-                                std::initializer_list<Stmt>()));
+                    makeStmtSeq(std::initializer_list<Stmt>()));
                 affecting_[op->id()].insert(outer->id());
             }
         }

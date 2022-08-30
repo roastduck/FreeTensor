@@ -67,10 +67,71 @@ class ScheduleLogItem {
     virtual ~ScheduleLogItem() {}
     virtual ScheduleType type() const = 0;
     virtual std::string toString() const = 0;
+    virtual std::string toPrettyString() const = 0;
     virtual size_t hash() const = 0;
     virtual bool equals(const ScheduleLogItem &other) const = 0;
     virtual void run() = 0;
 };
+
+using IDMetadataPack = std::pair<ID, Metadata>;
+
+inline std::ostream &operator<<(std::ostream &os, const IDMetadataPack &pack) {
+    return os << pack.first << "(" << pack.second << ")";
+}
+
+template <typename... Args>
+auto getIDFromPack(const std::tuple<Args...> &args) {
+    auto f = [&](auto &&arg) {
+        if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
+                                     IDMetadataPack>)
+            return arg.first;
+        else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
+                                          std::vector<IDMetadataPack>>) {
+            auto ids = arg | iter::imap([&](auto pack) { return pack.first; });
+            return std::vector<ID>(ids.begin(), ids.end());
+        } else
+            return arg;
+    };
+    return std::apply(
+        [&](auto &&...args) { return std::make_tuple(f(args)...); }, args);
+}
+
+template <typename... Args>
+auto getMetadataFromPack(const std::tuple<Args...> &args) {
+    auto f = [&](auto &&arg) {
+        if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
+                                     IDMetadataPack>)
+            return arg.second;
+        else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
+                                          std::vector<IDMetadataPack>>) {
+            auto metas =
+                arg | iter::imap([&](auto pack) { return pack.second; });
+            return std::vector<Metadata>(metas.begin(), metas.end());
+        } else
+            return arg;
+    };
+    return std::apply(
+        [&](auto &&...args) { return std::make_tuple(f(args)...); }, args);
+}
+
+template <typename... Args>
+auto getPackFromID(auto schedule, const std::tuple<Args...> &args) {
+    auto f = [&](auto &&arg) {
+        if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, ID>)
+            return IDMetadataPack{arg, schedule->find(arg)->metadata()};
+        else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
+                                          std::vector<ID>>) {
+            auto packs =
+                arg | iter::imap([&](auto id) {
+                    return IDMetadataPack{id, schedule->find(id)->metadata()};
+                });
+            return std::vector<IDMetadataPack>(packs.begin(), packs.end());
+        } else
+            return arg;
+    };
+    return std::apply(
+        [&](auto &&...args) { return std::make_tuple(f(args)...); }, args);
+}
 
 /**
  * Template of a specialized `ScheduleLogItem` of a particular type of schedule
@@ -100,7 +161,17 @@ class ScheduleLogItemImpl : public ScheduleLogItem {
         return os.str();
     }
 
-    size_t hash() const override { return std::hash<Params>()(params_); }
+    std::string toPrettyString() const override {
+        std::ostringstream os;
+        os << std::boolalpha << type() << '(' << getMetadataFromPack(params_)
+           << ')';
+        return os.str();
+    }
+
+    size_t hash() const override {
+        auto idParams = getIDFromPack(params_);
+        return std::hash<decltype(idParams)>()(idParams);
+    }
 
     bool equals(const ScheduleLogItem &other) const override {
         if (other.type() != type()) {
@@ -115,7 +186,7 @@ class ScheduleLogItemImpl : public ScheduleLogItem {
     void run() override {
         if (std::holds_alternative<std::nullopt_t>(result_)) {
             try {
-                result_ = std::apply(doSchedule_, params_);
+                result_ = std::apply(doSchedule_, getIDFromPack(params_));
             } catch (...) {
                 result_ = std::current_exception();
             }

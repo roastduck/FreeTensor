@@ -26,7 +26,7 @@ Expr MakeInline::visit(const Load &op) {
 
 Stmt MakeInline::visit(const Store &op) {
     if (op->var_ == var_) {
-        return makeStmtSeq("", {});
+        return makeStmtSeq({});
     } else {
         return Mutator::visit(op);
     }
@@ -34,7 +34,7 @@ Stmt MakeInline::visit(const Store &op) {
 
 Stmt MakeInline::visit(const ReduceTo &op) {
     if (op->var_ == var_) {
-        return makeStmtSeq("", {});
+        return makeStmtSeq({});
     } else {
         return Mutator::visit(op);
     }

@@ -53,23 +53,23 @@ def conv_(X,
     if B is None:
 
         # yapf: disable
-        #! nid: L_n
+        #! label: L_n
         for n in range(X.shape(0)):
-            #! nid: L_g
+            #! label: L_g
             for g in range(group):
-                #! nid: L_c_out
+                #! label: L_c_out
                 for c_out in range(W.shape(0) // group):
-                    #! nid: L_h
+                    #! label: L_h
                     for h in range(Y.shape(2)):
-                        #! nid: L_w
+                        #! label: L_w
                         for w in range(Y.shape(3)):
-                            #! nid: init
+                            #! label: init
                             Y[n, g * (W.shape(0) // group) + c_out, h, w] = 0
-                            #! nid: L_c_in
+                            #! label: L_c_in
                             for c_in in range(W.shape(1)):
-                                #! nid: L_kh
+                                #! label: L_kh
                                 for kh in range(W.shape(2)):
-                                    #! nid: L_kw
+                                    #! label: L_kw
                                     for kw in range(W.shape(3)):
                                         # h_in = h * stride + kh * dilation - pad
                                         # w_in = w * stride + kw * dilation - pad
@@ -78,7 +78,7 @@ def conv_(X,
                                                 h * strides[0] + kh * dilations[0] - pads[0] < X.shape(2) and
                                                 w * strides[1] + kw * dilations[1] - pads[1] >= 0 and
                                                 w * strides[1] + kw * dilations[1] - pads[1] < X.shape(3)):
-                                            #! nid: compute
+                                            #! label: compute
                                             Y[n, g * (W.shape(0) // group) + c_out, h, w] += X[
                                                     n,
                                                     g * W.shape(1) + c_in,
@@ -90,23 +90,23 @@ def conv_(X,
     else:
 
         # yapf: disable
-        #! nid: L_n
+        #! label: L_n
         for n in range(X.shape(0)):
-            #! nid: L_g
+            #! label: L_g
             for g in range(group):
-                #! nid: L_c_out
+                #! label: L_c_out
                 for c_out in range(W.shape(0) // group):
-                    #! nid: L_h
+                    #! label: L_h
                     for h in range(Y.shape(2)):
-                        #! nid: L_w
+                        #! label: L_w
                         for w in range(Y.shape(3)):
-                            #! nid: init
+                            #! label: init
                             Y[n, g * (W.shape(0) // group) + c_out, h, w] = B[g * (W.shape(0) // group) + c_out]
-                            #! nid: L_c_in
+                            #! label: L_c_in
                             for c_in in range(W.shape(1)):
-                                #! nid: L_kh
+                                #! label: L_kh
                                 for kh in range(W.shape(2)):
-                                    #! nid: L_kw
+                                    #! label: L_kw
                                     for kw in range(W.shape(3)):
                                         # h_in = h * stride + kh * dilation - pad
                                         # w_in = w * stride + kw * dilation - pad
@@ -115,7 +115,7 @@ def conv_(X,
                                                 h * strides[0] + kh * dilations[0] - pads[0] < X.shape(2) and
                                                 w * strides[1] + kw * dilations[1] - pads[1] >= 0 and
                                                 w * strides[1] + kw * dilations[1] - pads[1] < X.shape(3)):
-                                            #! nid: compute
+                                            #! label: compute
                                             Y[n, g * (W.shape(0) // group) + c_out, h, w] += X[
                                                     n,
                                                     g * W.shape(1) + c_in,
@@ -175,7 +175,7 @@ def conv(X,
     if B is not None:
         dtype = core.up_cast(dtype, B.dtype)
         mtype = core.same_mtype(mtype, B.mtype)
-    #! nid: V_Y
+    #! label: V_Y
     Y = core.empty([
         X.shape(0),
         W.shape(0),
@@ -184,6 +184,6 @@ def conv(X,
         calc_out_size(X.shape(3), dilations[1], W.shape(3), pads[1], pads[3],
                       strides[1])
     ], dtype, mtype)
-    #! nid: recur
+    #! label: recur
     conv_(X, W, B, Y, auto_pad, dilations, group, kernel_shape, pads, strides)
     return Y
