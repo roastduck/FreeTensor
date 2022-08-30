@@ -25,6 +25,13 @@ typedef Ref<AnyNode> Any;
 #define makeAny(...) makeNode(Any, __VA_ARGS__)
 inline Stmt _makeAny() { return Any::make(); }
 
+/**
+ * A sequence of any number of statements, or a so-called statement block in
+ * some languages
+ *
+ * Tips: turning a statement into an empty StmtSeq is a handful way to delete
+ * the statment in a Mutator
+ */
 class StmtSeqNode : public StmtNode {
   public:
     SubTreeList<StmtNode> stmts_ = ChildOf{this};
@@ -52,6 +59,16 @@ inline Stmt _makeStmtSeq(std::initializer_list<Stmt> stmts,
     return s;
 }
 
+/**
+ * Define a (tensor) variable
+ *
+ * The scope of the variable is `body_`, which means scopes in FreeTensor
+ * follows FILO (stack) rule
+ *
+ * It is NOT allowed to modify the shape of a `VarDef` inside its body. This
+ * rule is enforced in the frontend (see the checkings on `borrowed_vardefs` in
+ * `VarRef` in `expr.py`) and each pass should keep this rule
+ */
 class VarDefNode : public StmtNode {
   public:
     std::string name_;
@@ -84,6 +101,11 @@ Stmt _makeVarDef(const std::string &name, Tbuffer &&buffer,
     return d;
 }
 
+/**
+ * Assignment
+ *
+ * Semantics: `var_[indices_] = expr_`
+ */
 class StoreNode : public StmtNode {
   public:
     std::string var_;
@@ -118,6 +140,11 @@ Stmt _makeStore(const std::string &var, const std::vector<Expr> &indices,
     return s;
 }
 
+/**
+ * Explicit memory allocation
+ *
+ * Only used for variables with `.../heap` memory types
+ */
 class AllocNode : public StmtNode {
   public:
     std::string var_;
@@ -135,6 +162,11 @@ inline Stmt _makeAlloc(const std::string &var,
     return a;
 }
 
+/**
+ * Explicit memory free
+ *
+ * Only used for variables with `.../heap` memory types
+ */
 class FreeNode : public StmtNode {
   public:
     std::string var_;
@@ -152,6 +184,14 @@ inline Stmt _makeFree(const std::string &var,
     return f;
 }
 
+/**
+ * A variant of `Store` for `+=`, `-=`, `*=`, etc
+ *
+ * Example: `var_[indices_] += expr_`
+ *
+ * These operations follow commutative law. Making them the special `ReduceTo`
+ * nodes helps analyzing dependences more accurately
+ */
 class ReduceToNode : public StmtNode {
   public:
     std::string var_;
@@ -193,6 +233,9 @@ Stmt _makeReduceTo(const std::string &var, const std::vector<Expr> &indices,
     return a;
 }
 
+/**
+ * For loop in a integral range
+ */
 class ForNode : public StmtNode {
   public:
     std::string iter_;
@@ -231,6 +274,9 @@ Stmt _makeFor(const std::string &iter, Tbegin &&begin, Tend &&end, Tstep &&step,
     return f;
 }
 
+/**
+ * If-then-else branch
+ */
 class IfNode : public StmtNode {
   public:
     SubTree<ExprNode> cond_ = ChildOf{this};
