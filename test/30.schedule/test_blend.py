@@ -287,7 +287,7 @@ def test_unsolvable_dependency():
                     ("y2", (), "int32", "inout", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 2, label="L1") as i:
             y1[()] = y2[()] * i + 1
-            y2[()] = (y2[()] + i) * 2
+            y2[()] = y2[()] * i + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
