@@ -1,5 +1,4 @@
 #include <analyze/deps.h>
-#include <pass/flatten_stmt_seq.h>
 #include <pass/simplify.h>
 #include <schedule/blend.h>
 
@@ -170,7 +169,8 @@ Expr BlendPass::visit(const Load &_op) {
 }
 
 Stmt blend(const Stmt &_ast, const ID &loop) {
-    auto ast = simplify(_ast); // Const prop for ForNode::len_
+    auto ast =
+        simplify(_ast); // Make things like range(n, n + 4) constant ranges
 
     FindAllScopesInside finder(loop);
     finder(ast);
@@ -191,7 +191,6 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
 
     auto loopVari = findLoopVariance(ast);
     ast = BlendPass(loop, loopVari.first, loopVari.second)(ast);
-    ast = flattenStmtSeq(ast);
     return ast;
 }
 

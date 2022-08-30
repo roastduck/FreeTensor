@@ -16,10 +16,10 @@
 #include <driver.h>
 #include <lower.h>
 #include <omp_utils.h>
+#include <pass/const_fold.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_reduction.h>
-#include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/as_matmul.h>
 #include <schedule/blend.h>
@@ -44,11 +44,19 @@
 
 namespace freetensor {
 
+Stmt Schedule::quickOptimizations(const Stmt &_ast) {
+    auto ast = _ast;
+    ast = constFold(ast);
+    ast = makeReduction(ast);
+    ast = flattenStmtSeq(ast);
+    return ast;
+}
+
 Schedule::Schedule(const Stmt &ast, int verbose)
     : verbose_(verbose), memoized_(Ref<MemoizedSchedules>::make()),
       rng_(Ref<OpenMPRandomEngine>::make(0)) /* TODO: set seed */,
       randCtx_(Ref<RandCtx<OpenMPRandomEngine>>::make(*rng_)) {
-    openTrans_.emplace_back(simplify(ast), ScheduleLog());
+    openTrans_.emplace_back(quickOptimizations(ast), ScheduleLog());
 }
 
 void Schedule::beginTransaction() { openTrans_.emplace_back(ast(), logs()); }
@@ -80,10 +88,12 @@ void Schedule::abortTransaction() {
 }
 
 const Stmt &Schedule::ast() const { return openTrans_.back().ast_; }
-Stmt &Schedule::ast() { return openTrans_.back().ast_; }
+void Schedule::setAst(const Stmt &ast) { openTrans_.back().ast_ = ast; }
 
 const ScheduleLog &Schedule::logs() const { return openTrans_.back().logs_; }
-ScheduleLog &Schedule::logs() { return openTrans_.back().logs_; }
+void Schedule::setLogs(const ScheduleLog &logs) {
+    openTrans_.back().logs_ = logs;
+}
 
 std::vector<Stmt>
 Schedule::findAll(const std::function<bool(const Stmt &)> &filter) const {
@@ -117,19 +127,17 @@ Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
                 : BaseClass(f, p) {}                                           \
         };                                                                     \
         return Ref<ScheduleLogItem##TYPE>::make(func, params);                 \
-    })(FUNC, std::make_tuple(__VA_ARGS__))
+    })(futureSchedule(FUNC), std::make_tuple(__VA_ARGS__))
 
 std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts,
                                   int shift) {
     beginTransaction();
-    auto log =
-        appendLog(MAKE_LOG(Split, std::bind_front(freetensor::split, ast()), id,
-                           factor, nparts, shift));
+    auto log = appendLog(
+        MAKE_LOG(Split, freetensor::split, id, factor, nparts, shift));
     try {
-        auto ret = log->getResult();
-        ast() = ret.first;
+        auto ret = applyLog(log);
         commitTransaction();
-        return ret.second;
+        return ret;
     } catch (const InvalidSchedule &e) {
         abortTransaction();
         throw InvalidSchedule(log, ast(), e.what());
@@ -138,10 +146,9 @@ std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts,
 
 void Schedule::reorder(const std::vector<ID> &order) {
     beginTransaction();
-    auto log = appendLog(
-        MAKE_LOG(Reorder, std::bind_front(freetensor::reorder, ast()), order));
+    auto log = appendLog(MAKE_LOG(Reorder, freetensor::reorder, order));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -151,13 +158,11 @@ void Schedule::reorder(const std::vector<ID> &order) {
 
 ID Schedule::merge(const ID &loop1, const ID &loop2) {
     beginTransaction();
-    auto log = appendLog(MAKE_LOG(
-        Merge, std::bind_front(freetensor::merge, ast()), loop1, loop2));
+    auto log = appendLog(MAKE_LOG(Merge, freetensor::merge, loop1, loop2));
     try {
-        auto ret = log->getResult();
-        ast() = ret.first;
+        auto ret = applyLog(log);
         commitTransaction();
-        return ret.second;
+        return ret;
     } catch (const InvalidSchedule &e) {
         abortTransaction();
         throw InvalidSchedule(log, ast(), e.what());
@@ -171,7 +176,7 @@ std::vector<ID> Schedule::permute(
     //! FIXME: put this into schedule logs
     try {
         auto ret = freetensor::permute(ast(), loopsId, transformFunc);
-        ast() = ret.first;
+        setAst(quickOptimizations(ret.first));
         commitTransaction();
         return ret.second;
     } catch (const InvalidSchedule &e) {
@@ -184,14 +189,12 @@ std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
                   const std::string &suffix0, const std::string &suffix1) {
     beginTransaction();
-    auto log =
-        appendLog(MAKE_LOG(Fission, std::bind_front(freetensor::fission, ast()),
-                           loop, side, splitter, suffix0, suffix1));
+    auto log = appendLog(MAKE_LOG(Fission, freetensor::fission, loop, side,
+                                  splitter, suffix0, suffix1));
     try {
-        auto ret = log->getResult();
-        ast() = ret.first;
+        auto ret = applyLog(log);
         commitTransaction();
-        return ret.second;
+        return ret;
     } catch (const InvalidSchedule &e) {
         abortTransaction();
         throw InvalidSchedule(log, ast(), e.what());
@@ -200,13 +203,12 @@ Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
 
 ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict) {
     beginTransaction();
-    auto log = appendLog(MAKE_LOG(
-        Fuse, std::bind_front(freetensor::fuse, ast()), loop0, loop1, strict));
+    auto log =
+        appendLog(MAKE_LOG(Fuse, freetensor::fuse, loop0, loop1, strict));
     try {
-        auto ret = log->getResult();
-        ast() = ret.first;
+        auto ret = applyLog(log);
         commitTransaction();
-        return ret.second;
+        return ret;
     } catch (const InvalidSchedule &e) {
         abortTransaction();
         throw InvalidSchedule(log, ast(), e.what());
@@ -215,7 +217,6 @@ ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict) {
 
 ID Schedule::fuse(const ID &loop0, bool strict) {
     beginTransaction();
-    ast() = flattenStmtSeq(ast());
     auto l0 = find(loop0);
 
     auto isTrivialScope = [](const Stmt &s) {
@@ -279,10 +280,9 @@ ID Schedule::fuse(const ID &loop0, bool strict) {
 
 void Schedule::swap(const std::vector<ID> &order) {
     beginTransaction();
-    auto log = appendLog(
-        MAKE_LOG(Swap, std::bind_front(freetensor::swap, ast()), order));
+    auto log = appendLog(MAKE_LOG(Swap, freetensor::swap, order));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -292,10 +292,9 @@ void Schedule::swap(const std::vector<ID> &order) {
 
 void Schedule::blend(const ID &loop) {
     beginTransaction();
-    auto log = appendLog(
-        MAKE_LOG(Blend, std::bind_front(freetensor::blend, ast()), loop));
+    auto log = appendLog(MAKE_LOG(Blend, freetensor::blend, loop));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -306,13 +305,11 @@ void Schedule::blend(const ID &loop) {
 std::tuple<ID, ID, std::string, ID>
 Schedule::cache(const ID &stmt, const std::string &var, MemType mtype) {
     beginTransaction();
-    auto log = appendLog(MAKE_LOG(
-        Cache, std::bind_front(freetensor::cache, ast()), stmt, var, mtype));
+    auto log = appendLog(MAKE_LOG(Cache, freetensor::cache, stmt, var, mtype));
     try {
-        auto ret = log->getResult();
-        ast() = ret.first;
+        auto ret = applyLog(log);
         commitTransaction();
-        return ret.second;
+        return ret;
     } catch (const InvalidSchedule &e) {
         abortTransaction();
         throw InvalidSchedule(log, ast(), e.what());
@@ -323,14 +320,12 @@ std::tuple<ID, ID, std::string, ID>
 Schedule::cacheReduction(const ID &stmt, const std::string &var,
                          MemType mtype) {
     beginTransaction();
-    auto log = appendLog(MAKE_LOG(
-        CacheReduction, std::bind_front(freetensor::cacheReduction, ast()),
-        stmt, var, mtype));
+    auto log = appendLog(
+        MAKE_LOG(CacheReduction, freetensor::cacheReduction, stmt, var, mtype));
     try {
-        auto ret = log->getResult();
-        ast() = ret.first;
+        auto ret = applyLog(log);
         commitTransaction();
-        return ret.second;
+        return ret;
     } catch (const InvalidSchedule &e) {
         abortTransaction();
         throw InvalidSchedule(log, ast(), e.what());
@@ -339,11 +334,10 @@ Schedule::cacheReduction(const ID &stmt, const std::string &var,
 
 void Schedule::setMemType(const ID &def, MemType mtype) {
     beginTransaction();
-    auto log = appendLog(
-        MAKE_LOG(SetMemType, std::bind_front(freetensor::setMemType, ast()),
-                 def, mtype));
+    auto log =
+        appendLog(MAKE_LOG(SetMemType, freetensor::setMemType, def, mtype));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -354,11 +348,10 @@ void Schedule::setMemType(const ID &def, MemType mtype) {
 void Schedule::varSplit(const ID &def, int dim, VarSplitMode mode, int factor,
                         int nparts) {
     beginTransaction();
-    auto log = appendLog(MAKE_LOG(VarSplit,
-                                  std::bind_front(freetensor::varSplit, ast()),
-                                  def, dim, mode, factor, nparts));
+    auto log = appendLog(MAKE_LOG(VarSplit, freetensor::varSplit, def, dim,
+                                  mode, factor, nparts));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -368,10 +361,9 @@ void Schedule::varSplit(const ID &def, int dim, VarSplitMode mode, int factor,
 
 void Schedule::varMerge(const ID &def, int dim) {
     beginTransaction();
-    auto log = appendLog(MAKE_LOG(
-        VarMerge, std::bind_front(freetensor::varMerge, ast()), def, dim));
+    auto log = appendLog(MAKE_LOG(VarMerge, freetensor::varMerge, def, dim));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -381,11 +373,10 @@ void Schedule::varMerge(const ID &def, int dim) {
 
 void Schedule::varReorder(const ID &def, const std::vector<int> &order) {
     beginTransaction();
-    auto log = appendLog(
-        MAKE_LOG(VarReorder, std::bind_front(freetensor::varReorder, ast()),
-                 def, order));
+    auto log =
+        appendLog(MAKE_LOG(VarReorder, freetensor::varReorder, def, order));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -400,7 +391,7 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
         auto stmt = _stmt, dst = _dst;
         auto stmtBody = stmt;
         while (true) {
-            ast() = hoistVarOverStmtSeq(ast());
+            setAst(hoistVarOverStmtSeq(ast())); // FIXME: No pass here
             Stmt s = findStmt(ast(), stmt);
             Stmt d = findStmt(ast(), dst);
 
@@ -498,10 +489,9 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
 
 void Schedule::inlining(const ID &def) {
     beginTransaction();
-    auto log = appendLog(
-        MAKE_LOG(Inline, std::bind_front(freetensor::inlining, ast()), def));
+    auto log = appendLog(MAKE_LOG(Inline, freetensor::inlining, def));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -512,10 +502,9 @@ void Schedule::inlining(const ID &def) {
 void Schedule::parallelize(const ID &loop, const ParallelScope &parallel) {
     beginTransaction();
     auto log = appendLog(
-        MAKE_LOG(Parallelize, std::bind_front(freetensor::parallelize, ast()),
-                 loop, parallel));
+        MAKE_LOG(Parallelize, freetensor::parallelize, loop, parallel));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -525,10 +514,9 @@ void Schedule::parallelize(const ID &loop, const ParallelScope &parallel) {
 
 void Schedule::unroll(const ID &loop, bool immediate) {
     beginTransaction();
-    auto log = appendLog(MAKE_LOG(
-        Unroll, std::bind_front(freetensor::unroll, ast()), loop, immediate));
+    auto log = appendLog(MAKE_LOG(Unroll, freetensor::unroll, loop, immediate));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -538,10 +526,9 @@ void Schedule::unroll(const ID &loop, bool immediate) {
 
 void Schedule::vectorize(const ID &loop) {
     beginTransaction();
-    auto log = appendLog(MAKE_LOG(
-        Vectorize, std::bind_front(freetensor::vectorize, ast()), loop));
+    auto log = appendLog(MAKE_LOG(Vectorize, freetensor::vectorize, loop));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -552,10 +539,9 @@ void Schedule::vectorize(const ID &loop) {
 void Schedule::separateTail(bool noDuplicateVarDefs) {
     beginTransaction();
     auto log = appendLog(
-        MAKE_LOG(SeparateTail, std::bind_front(freetensor::separateTail, ast()),
-                 noDuplicateVarDefs));
+        MAKE_LOG(SeparateTail, freetensor::separateTail, noDuplicateVarDefs));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -565,10 +551,9 @@ void Schedule::separateTail(bool noDuplicateVarDefs) {
 
 void Schedule::asMatMul(const ID &loop) {
     beginTransaction();
-    auto log = appendLog(
-        MAKE_LOG(AsMatMul, std::bind_front(freetensor::asMatMul, ast()), loop));
+    auto log = appendLog(MAKE_LOG(AsMatMul, freetensor::asMatMul, loop));
     try {
-        ast() = log->getResult();
+        applyLog(log);
         commitTransaction();
     } catch (const InvalidSchedule &e) {
         abortTransaction();
@@ -643,8 +628,6 @@ void Schedule::autoUseLib(const Target &target) {
 }
 
 void Schedule::autoReorder(const Target &target) {
-    ast() = makeReduction(ast());
-
     auto allLoops = findAllLoops(ast());
     std::vector<FindDepsDir> direction;
     direction.reserve(allLoops.size());

@@ -49,6 +49,33 @@ class Schedule {
     Ref<RandCtx<OpenMPRandomEngine>> randCtx_;
 
   private:
+    void setAst(const Stmt &ast);
+    void setLogs(const ScheduleLog &log);
+
+    /**
+     * Prelude and conclude passes for each schedule
+     *
+     * Some quick passes that performed when the `Schedule` object is
+     * constructed and after each schedule
+     */
+    static Stmt quickOptimizations(const Stmt &ast);
+
+    /**
+     * Generate a function that invokes a schedule on the current `ast()`, and
+     * apply `quickOptimizations`
+     */
+    template <class F> auto futureSchedule(const F &sched) {
+        return [&](auto &&...args) {
+            auto ret = sched(ast(), std::forward<decltype(args)>(args)...);
+            if constexpr (std::convertible_to<decltype(ret), Stmt>) {
+                return quickOptimizations(ret);
+            } else { // pair(Stmt, other info)
+                return std::make_pair(quickOptimizations(ret.first),
+                                      ret.second);
+            }
+        };
+    }
+
     /**
      * Append a new schedule log to logs, and try looking up an identical
      * schedule from `MemoizedSchedules`
@@ -59,13 +86,32 @@ class Schedule {
      */
     template <class T> T appendLog(const T &_log) {
         auto log = _log;
-        logs() = logs().push(log);
-        logs() = memoized_->lookup(logs());
+        setLogs(logs().push(log));
+        setLogs(memoized_->lookup(logs()));
         ASSERT(logs().top()->type() == log->type());
         log = logs().top().as<typename decltype(log)::Object>();
         log->run();
         memoized_->save(logs());
         return log;
+    }
+
+    /**
+     * Apply a schedule log
+     *
+     * If the log is memoized, simply retrieve the memoized result. If the
+     * result is an exception, re-throw it
+     *
+     * `Schedule::ast()` is updated, and other return values are returned
+     */
+    template <class T> auto applyLog(const T &log) {
+        auto ret = log->getResult();
+        if constexpr (std::convertible_to<decltype(ret), Stmt>) {
+            setAst(ret);
+            return;
+        } else { // pair(Stmt, other info)
+            setAst(ret.first);
+            return ret.second;
+        }
     }
 
   public:
@@ -122,13 +168,11 @@ class Schedule {
     /**
      * @return : The statements being transformed, without a function signature
      */
-    Stmt &ast();
     const Stmt &ast() const;
 
     /**
      * @return : Logs of all schedules applied
      */
-    ScheduleLog &logs();
     const ScheduleLog &logs() const;
 
     /**
