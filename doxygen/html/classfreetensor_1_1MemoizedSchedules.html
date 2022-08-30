@@ -77,10 +77,8 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:afd63e55d218aae11db12610ed1672e82"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a3ade010f117f2ddf99e1c076eae94715">ScheduleLog</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MemoizedSchedules.html#afd63e55d218aae11db12610ed1672e82">lookup</a> (const <a class="el" href="namespacefreetensor.html#a3ade010f117f2ddf99e1c076eae94715">ScheduleLog</a> &amp;log)</td></tr>
-<tr class="separator:afd63e55d218aae11db12610ed1672e82"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4bad65765209466227a617be8b7d991b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MemoizedSchedules.html#a4bad65765209466227a617be8b7d991b">save</a> (const <a class="el" href="namespacefreetensor.html#a3ade010f117f2ddf99e1c076eae94715">ScheduleLog</a> &amp;log)</td></tr>
-<tr class="separator:a4bad65765209466227a617be8b7d991b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9af278c55500848e3c38291c02da62a6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a3ade010f117f2ddf99e1c076eae94715">ScheduleLog</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MemoizedSchedules.html#a9af278c55500848e3c38291c02da62a6">lookupOrCreate</a> (const <a class="el" href="namespacefreetensor.html#a3ade010f117f2ddf99e1c076eae94715">ScheduleLog</a> &amp;log)</td></tr>
+<tr class="separator:a9af278c55500848e3c38291c02da62a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Storage of all tried scheduling decisions for all <code><a class="el" href="classfreetensor_1_1Schedule.html">Schedule</a></code>s <code>fork</code>ed from a common one</p>
@@ -88,8 +86,8 @@ Public Member Functions</h2></td></tr>
 <p >This class is thread-safe</p>
 <p >This class is not named cache or storage, to avoid confusion with hardware features </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="afd63e55d218aae11db12610ed1672e82" name="afd63e55d218aae11db12610ed1672e82"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afd63e55d218aae11db12610ed1672e82">&#9670;&nbsp;</a></span>lookup()</h2>
+<a id="a9af278c55500848e3c38291c02da62a6" name="a9af278c55500848e3c38291c02da62a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9af278c55500848e3c38291c02da62a6">&#9670;&nbsp;</a></span>lookupOrCreate()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -98,7 +96,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacefreetensor.html#a3ade010f117f2ddf99e1c076eae94715">ScheduleLog</a> freetensor::MemoizedSchedules::lookup </td>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a3ade010f117f2ddf99e1c076eae94715">ScheduleLog</a> freetensor::MemoizedSchedules::lookupOrCreate </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a3ade010f117f2ddf99e1c076eae94715">ScheduleLog</a> &amp;&#160;</td>
           <td class="paramname"><em>log</em></td><td>)</td>
@@ -112,34 +110,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <p >Lookup for a particular schedule</p>
-<p >If there is a memoized result, return the memoized one to save memory (so the shared linked lists form a tree). If not found, return the new log </p>
-
-</div>
-</div>
-<a id="a4bad65765209466227a617be8b7d991b" name="a4bad65765209466227a617be8b7d991b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4bad65765209466227a617be8b7d991b">&#9670;&nbsp;</a></span>save()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void freetensor::MemoizedSchedules::save </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a3ade010f117f2ddf99e1c076eae94715">ScheduleLog</a> &amp;&#160;</td>
-          <td class="paramname"><em>log</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p >Save a new log </p>
+<p >If there is a memoized result, return the memoized one to save memory (so the shared linked lists form a tree). If not found, save and return the new log </p>
 
 </div>
 </div>

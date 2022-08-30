@@ -84,27 +84,22 @@ $(function() {
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    std::mutex lock_;</div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>  <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno"><a class="line" href="classfreetensor_1_1MemoizedSchedules.html#afd63e55d218aae11db12610ed1672e82">   37</a></span>    <a class="code hl_class" href="classfreetensor_1_1SharedLinkedList.html">ScheduleLog</a> <a class="code hl_function" href="classfreetensor_1_1MemoizedSchedules.html#afd63e55d218aae11db12610ed1672e82">lookup</a>(<span class="keyword">const</span> <a class="code hl_class" href="classfreetensor_1_1SharedLinkedList.html">ScheduleLog</a> &amp;log) {</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno"><a class="line" href="classfreetensor_1_1MemoizedSchedules.html#a9af278c55500848e3c38291c02da62a6">   37</a></span>    <a class="code hl_class" href="classfreetensor_1_1SharedLinkedList.html">ScheduleLog</a> <a class="code hl_function" href="classfreetensor_1_1MemoizedSchedules.html#a9af278c55500848e3c38291c02da62a6">lookupOrCreate</a>(<span class="keyword">const</span> <a class="code hl_class" href="classfreetensor_1_1SharedLinkedList.html">ScheduleLog</a> &amp;log) {</div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>        std::lock_guard&lt;std::mutex&gt; guard(lock_);</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> it = memoized_.find(log); it != memoized_.end()) {</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>            <span class="keywordflow">return</span> *it;</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>            <span class="keywordflow">return</span> log;</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        }</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    }</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno"><a class="line" href="classfreetensor_1_1MemoizedSchedules.html#a4bad65765209466227a617be8b7d991b">   49</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classfreetensor_1_1MemoizedSchedules.html#a4bad65765209466227a617be8b7d991b">save</a>(<span class="keyword">const</span> <a class="code hl_class" href="classfreetensor_1_1SharedLinkedList.html">ScheduleLog</a> &amp;log) {</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        std::lock_guard&lt;std::mutex&gt; guard(lock_);</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        memoized_.insert(log);</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    }</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>};</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>} <span class="comment">// namespace freetensor</span></div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_MEMORIZED_SCHEDULES_H</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>            memoized_.insert(log);</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>            <span class="keywordflow">return</span> log;</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        }</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    }</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>};</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_MEMORIZED_SCHEDULES_H</span></div>
 <div class="ttc" id="aclassfreetensor_1_1MemoizedSchedules_html"><div class="ttname"><a href="classfreetensor_1_1MemoizedSchedules.html">freetensor::MemoizedSchedules</a></div><div class="ttdef"><b>Definition:</b> memoized_schedules.h:25</div></div>
-<div class="ttc" id="aclassfreetensor_1_1MemoizedSchedules_html_a4bad65765209466227a617be8b7d991b"><div class="ttname"><a href="classfreetensor_1_1MemoizedSchedules.html#a4bad65765209466227a617be8b7d991b">freetensor::MemoizedSchedules::save</a></div><div class="ttdeci">void save(const ScheduleLog &amp;log)</div><div class="ttdef"><b>Definition:</b> memoized_schedules.h:49</div></div>
-<div class="ttc" id="aclassfreetensor_1_1MemoizedSchedules_html_afd63e55d218aae11db12610ed1672e82"><div class="ttname"><a href="classfreetensor_1_1MemoizedSchedules.html#afd63e55d218aae11db12610ed1672e82">freetensor::MemoizedSchedules::lookup</a></div><div class="ttdeci">ScheduleLog lookup(const ScheduleLog &amp;log)</div><div class="ttdef"><b>Definition:</b> memoized_schedules.h:37</div></div>
+<div class="ttc" id="aclassfreetensor_1_1MemoizedSchedules_html_a9af278c55500848e3c38291c02da62a6"><div class="ttname"><a href="classfreetensor_1_1MemoizedSchedules.html#a9af278c55500848e3c38291c02da62a6">freetensor::MemoizedSchedules::lookupOrCreate</a></div><div class="ttdeci">ScheduleLog lookupOrCreate(const ScheduleLog &amp;log)</div><div class="ttdef"><b>Definition:</b> memoized_schedules.h:37</div></div>
 <div class="ttc" id="aclassfreetensor_1_1SharedLinkedList_html"><div class="ttname"><a href="classfreetensor_1_1SharedLinkedList.html">freetensor::SharedLinkedList&lt; Ref&lt; ScheduleLogItem &gt;, ScheduleLogItemHash, ScheduleLogItemEqual &gt;</a></div></div>
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
 <div class="ttc" id="aschedule__log_8h_html"><div class="ttname"><a href="schedule__log_8h.html">schedule_log.h</a></div></div>

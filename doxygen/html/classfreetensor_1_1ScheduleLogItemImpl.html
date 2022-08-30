@@ -90,8 +90,9 @@ Collaboration diagram for freetensor::ScheduleLogItemImpl&lt; TYPE, _Invocable, 
 <div class="dyncontent">
 <div class="center"><img src="classfreetensor_1_1ScheduleLogItemImpl__coll__graph.png" border="0" usemap="#afreetensor_1_1ScheduleLogItemImpl_3_01TYPE_00_01__Invocable_00_01__Params_00_01__Result_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="afreetensor_1_1ScheduleLogItemImpl_3_01TYPE_00_01__Invocable_00_01__Params_00_01__Result_01_4_coll__map" id="afreetensor_1_1ScheduleLogItemImpl_3_01TYPE_00_01__Invocable_00_01__Params_00_01__Result_01_4_coll__map">
-<area shape="rect" title=" " alt="" coords="5,80,215,136"/>
+<area shape="rect" title=" " alt="" coords="92,95,301,151"/>
 <area shape="rect" href="classfreetensor_1_1ScheduleLogItem.html" title=" " alt="" coords="5,5,215,32"/>
+<area shape="rect" title=" " alt="" coords="239,5,331,32"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -146,6 +147,8 @@ Protected Attributes</h2></td></tr>
 <tr class="separator:acfe997720fd0f989d4d1bf3de24d0932"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ea2cf276644aa8223b3f4fd521e65d0"><td class="memItemLeft" align="right" valign="top">std::variant&lt; std::nullopt_t, <a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html#a39a0a57db5b10d33615ea1f7a9fec29a">Result</a>, std::exception_ptr &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html#a4ea2cf276644aa8223b3f4fd521e65d0">result_</a></td></tr>
 <tr class="separator:a4ea2cf276644aa8223b3f4fd521e65d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f19e2e37e8527440dfb2d012940ac5f"><td class="memItemLeft" align="right" valign="top">std::mutex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html#a0f19e2e37e8527440dfb2d012940ac5f">lock_</a></td></tr>
+<tr class="separator:a0f19e2e37e8527440dfb2d012940ac5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8">ScheduleType</a> TYPE, class _Invocable, class _Params, class _Result&gt;<br />
@@ -481,6 +484,30 @@ template&lt;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html#ab025e0f19406f5481fb90e98e5f61d95">Invocable</a> <a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html">freetensor::ScheduleLogItemImpl</a>&lt; TYPE, _Invocable, _Params, _Result &gt;::doSchedule_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0f19e2e37e8527440dfb2d012940ac5f" name="a0f19e2e37e8527440dfb2d012940ac5f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f19e2e37e8527440dfb2d012940ac5f">&#9670;&nbsp;</a></span>lock_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8">ScheduleType</a> TYPE, class _Invocable , class _Params , class _Result &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::mutex <a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html">freetensor::ScheduleLogItemImpl</a>&lt; TYPE, _Invocable, _Params, _Result &gt;::lock_</td>
         </tr>
       </table>
   </td>
