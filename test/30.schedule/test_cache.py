@@ -175,7 +175,7 @@ def test_no_stmt():
         with ft.For("i", 0, 4, label="L1") as i:
             y[i] = 0
             with ft.For("j", 0, 8, label="L2") as j:
-                y[i] = y[i] + x[i, j] * 2
+                y[i] += x[i, j] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
