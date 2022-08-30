@@ -13,6 +13,6 @@ var searchData=
   ['square_10',['Square',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915faceb46ca115d05c51aa5a16a8867c3304',1,'freetensor']]],
   ['stmtseq_11',['StmtSeq',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa0ae03baea0e27ab09a03a9de3df3a2ad',1,'freetensor']]],
   ['store_12',['Store',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fafdb0c388de01d545017cdf9ccf00eb72',1,'freetensor']]],
-  ['sub_13',['Sub',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fae80155eceb940c89e2de63ad05868db2',1,'freetensor']]],
+  ['sub_13',['Sub',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fae80155eceb940c89e2de63ad05868db2',1,'freetensor::Sub()'],['../namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3ae80155eceb940c89e2de63ad05868db2',1,'freetensor::Sub()']]],
   ['swap_14',['Swap',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a8778f5cc5ee1685fb97ad92e33e63225',1,'freetensor']]]
 ];

@@ -95,6 +95,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ac495b7249928a41b5e56b2f75b5cc46e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a362a30b0080119ed8db6315d97a8b8d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FrontendVar.html#a362a30b0080119ed8db6315d97a8b8d0">asStore</a> (const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;value) const</td></tr>
 <tr class="separator:a362a30b0080119ed8db6315d97a8b8d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78312323ac2c1508252c82d56b4ce10b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FrontendVar.html#a78312323ac2c1508252c82d56b4ce10b">asReduceTo</a> (<a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3">ReduceOp</a> op, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;value, bool atomic=false) const</td></tr>
+<tr class="separator:a78312323ac2c1508252c82d56b4ce10b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97edbda6ec5251b4b590f0bac6b12bda"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classfreetensor_1_1FrontendVarIdx.html">FrontendVarIdx</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FrontendVar.html#a97edbda6ec5251b4b590f0bac6b12bda">chainIndices</a> (const std::vector&lt; <a class="el" href="classfreetensor_1_1FrontendVarIdx.html">FrontendVarIdx</a> &gt; &amp;next) const</td></tr>
 <tr class="separator:a97edbda6ec5251b4b590f0bac6b12bda"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
@@ -170,6 +172,46 @@ Public Member Functions</h2></td></tr>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a78312323ac2c1508252c82d56b4ce10b" name="a78312323ac2c1508252c82d56b4ce10b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78312323ac2c1508252c82d56b4ce10b">&#9670;&nbsp;</a></span>asReduceTo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::FrontendVar::asReduceTo </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3">ReduceOp</a>&#160;</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;&#160;</td>
+          <td class="paramname"><em>metadata</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>atomic</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">

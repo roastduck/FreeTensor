@@ -163,6 +163,8 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.expr">expr</a>
         <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.AlreadyMadeReduceTo">AlreadyMadeReduceTo</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.VarRef">VarRef</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.abs">abs()</a>
@@ -2973,6 +2975,48 @@ and also exposed to users via multi-stage programming</p>
 
 
 
+<h4 id="freetensor.core.expr.AlreadyMadeReduceTo" class="doc doc-heading">
+        <code>
+AlreadyMadeReduceTo        </code>
+
+
+
+<a href="#freetensor.core.expr.AlreadyMadeReduceTo" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>A single-value type that marks a ReduceTo node is already made, and there is no need to</p>
+<p>make another Store node</p>
+<p>In standard Python data model, functions like <strong>iadd</strong> returns the modified self, and
+<strong>setitem</strong> does a self-assignment. We do the augmenting assignment directly in <strong>iadd</strong>
+and return AlreadyMadeReduceTo, so we do not have to Store it again</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">AlreadyMadeReduceTo</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A single-value type that marks a ReduceTo node is already made, and there is no need to</span>
+<span class="sd">    make another Store node</span>
+
+<span class="sd">    In standard Python data model, functions like __iadd__ returns the modified self, and</span>
+<span class="sd">    __setitem__ does a self-assignment. We do the augmenting assignment directly in __iadd__</span>
+<span class="sd">    and return AlreadyMadeReduceTo, so we do not have to Store it again</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+</code></pre></div>
+        </details>
+
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h4 id="freetensor.core.expr.VarRef" class="doc doc-heading">
         <code>
 VarRef            (<span title="freetensor_ffi.FrontendVar">FrontendVar</span>)
@@ -3026,15 +3070,11 @@ on <code>VarRef</code> objects generates AST nodes</p>
     <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="n">var</span> <span class="o">=</span> <span class="n">VarRef</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
                      <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chain_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse_key</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">AlreadyMadeReduceTo</span><span class="p">:</span>
+            <span class="k">return</span>
         <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="c1"># In standard Python data model, functions like __iadd__</span>
-                <span class="c1"># returns the modified self, and __setitem__ does a self-</span>
-                <span class="c1"># assignment. We do the augmenting assignment directly</span>
-                <span class="c1"># in __iadd__ and return None, so we do not have to do</span>
-                <span class="c1"># it again here</span>
-                <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
-                <span class="n">libop</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
+            <span class="n">libop</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
             <span class="k">return</span>
         <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">atype</span> <span class="o">==</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AccessType</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidProgram</span><span class="p">(</span><span class="s2">&quot;Cannot modify an </span><span class="se">\&quot;</span><span class="s2">input</span><span class="se">\&quot;</span><span class="s2"> tensor `&quot;</span> <span class="o">+</span>
@@ -3120,8 +3160,11 @@ on <code>VarRef</code> objects generates AST nodes</p>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
             <span class="n">libop</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-            <span class="k">return</span>  <span class="c1"># Don&#39;t return self. See __setitem__</span>
-        <span class="k">return</span> <span class="bp">NotImplemented</span>
+            <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span>
+        <span class="n">top</span><span class="o">.</span><span class="n">append_stmt</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">as_reduce_to</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">ReduceOp</span><span class="o">.</span><span class="n">Add</span><span class="p">,</span> <span class="n">top</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">(),</span> <span class="n">other</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
 
     <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -3139,8 +3182,11 @@ on <code>VarRef</code> objects generates AST nodes</p>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
             <span class="n">libop</span><span class="o">.</span><span class="n">sub_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-            <span class="k">return</span>  <span class="c1"># Don&#39;t return self. See __setitem__</span>
-        <span class="k">return</span> <span class="bp">NotImplemented</span>
+            <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span>
+        <span class="n">top</span><span class="o">.</span><span class="n">append_stmt</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">as_reduce_to</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">ReduceOp</span><span class="o">.</span><span class="n">Sub</span><span class="p">,</span> <span class="n">top</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">(),</span> <span class="n">other</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
 
     <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -3158,8 +3204,11 @@ on <code>VarRef</code> objects generates AST nodes</p>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
             <span class="n">libop</span><span class="o">.</span><span class="n">mul_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-            <span class="k">return</span>  <span class="c1"># Don&#39;t return self. See __setitem__</span>
-        <span class="k">return</span> <span class="bp">NotImplemented</span>
+            <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span>
+        <span class="n">top</span><span class="o">.</span><span class="n">append_stmt</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">as_reduce_to</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">ReduceOp</span><span class="o">.</span><span class="n">Mul</span><span class="p">,</span> <span class="n">top</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">(),</span> <span class="n">other</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
 
     <span class="k">def</span> <span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -3177,8 +3226,8 @@ on <code>VarRef</code> objects generates AST nodes</p>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
             <span class="n">libop</span><span class="o">.</span><span class="n">truediv_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-            <span class="k">return</span>  <span class="c1"># Don&#39;t return self. See __setitem__</span>
-        <span class="k">return</span> <span class="bp">NotImplemented</span>
+            <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
+        <span class="k">return</span> <span class="bp">NotImplemented</span>  <span class="c1"># Fallback to x = x / y</span>
 
     <span class="k">def</span> <span class="fm">__floordiv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -3196,8 +3245,8 @@ on <code>VarRef</code> objects generates AST nodes</p>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
             <span class="n">libop</span><span class="o">.</span><span class="n">floordiv_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-            <span class="k">return</span>  <span class="c1"># Don&#39;t return self. See __setitem__</span>
-        <span class="k">return</span> <span class="bp">NotImplemented</span>
+            <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
+        <span class="k">return</span> <span class="bp">NotImplemented</span>  <span class="c1"># Fallback to x = x // y</span>
 
     <span class="k">def</span> <span class="fm">__mod__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -3215,8 +3264,8 @@ on <code>VarRef</code> objects generates AST nodes</p>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
             <span class="n">libop</span><span class="o">.</span><span class="n">mod_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-            <span class="k">return</span>  <span class="c1"># Don&#39;t return self. See __setitem__</span>
-        <span class="k">return</span> <span class="bp">NotImplemented</span>
+            <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
+        <span class="k">return</span> <span class="bp">NotImplemented</span>  <span class="c1"># Fallback to x = x % y</span>
 
     <span class="k">def</span> <span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
