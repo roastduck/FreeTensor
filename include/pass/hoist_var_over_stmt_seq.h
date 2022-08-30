@@ -24,6 +24,14 @@ class HoistVarOverStmtSeq : public Mutator {
     Stmt visit(const StmtSeq &op) override;
 };
 
+/**
+ * Transform things like `VarDef { stmt0 VarDef { stmt1 }}` into `VarDef {
+ * VarDef { stmt0 stmt1 }}`
+ *
+ * This is not a optimization pass. It is intended to used inside other passes
+ * and make them simpler. It is suggest to run `sinkVar` after these passes to
+ * revert the effect of `hoistVarOverStmtSeq`
+ */
 Stmt hoistVarOverStmtSeq(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(hoistVarOverStmtSeq)

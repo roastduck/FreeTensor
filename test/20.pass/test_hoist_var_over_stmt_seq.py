@@ -83,3 +83,49 @@ def test_rename_nested_2():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_no_hoisting_affected_shape_front():
+    with ft.VarDef("n", (), "int32", "inout", "cpu") as n:
+        n[...] += 1
+        with ft.VarDef([("x", (n[...],), "int32", "cache", "cpu"),
+                        ("y", (n[...],), "int32", "cache", "cpu")]) as (x, y):
+            with ft.For("i", 0, n[...]) as i:
+                y[i] = x[i] + 1
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.hoist_var_over_stmt_seq(ast)
+    print(ast)
+
+    with ft.VarDef("n", (), "int32", "inout", "cpu") as n:
+        n[...] += 1
+        with ft.VarDef([("x", (n[...],), "int32", "cache", "cpu"),
+                        ("y", (n[...],), "int32", "cache", "cpu")]) as (x, y):
+            with ft.For("i", 0, n[...]) as i:
+                y[i] = x[i] + 1
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_no_hoisting_affected_shape_back():
+    with ft.VarDef("n", (), "int32", "inout", "cpu") as n:
+        with ft.VarDef([("x", (n[...],), "int32", "cache", "cpu"),
+                        ("y", (n[...],), "int32", "cache", "cpu")]) as (x, y):
+            with ft.For("i", 0, n[...]) as i:
+                y[i] = x[i] + 1
+        n[...] += 1
+        # We can't hoist `x` or `y` even `n += 1` is at the back, beacuse we
+        # forbit modifying the shape inside its VarDef
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.hoist_var_over_stmt_seq(ast)
+    print(ast)
+
+    with ft.VarDef("n", (), "int32", "inout", "cpu") as n:
+        with ft.VarDef([("x", (n[...],), "int32", "cache", "cpu"),
+                        ("y", (n[...],), "int32", "cache", "cpu")]) as (x, y):
+            with ft.For("i", 0, n[...]) as i:
+                y[i] = x[i] + 1
+        n[...] += 1
+    std = ft.pop_ast()
+
+    assert std.match(ast)

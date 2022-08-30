@@ -63,9 +63,9 @@ class VarRef(ffi.FrontendVar):
     def __setitem__(self, key, value):
         var = VarRef(self.name, self.vardef, self.full_shape, self.dtype,
                      self.mtype, self.chain_indices(self._parse_key(key)))
-        if value is AlreadyMadeReduceTo:
-            return
         if var.ndim > 0:
+            if value is AlreadyMadeReduceTo:
+                return
             from .. import libop
             libop.assign(var, value)
             return
@@ -77,6 +77,8 @@ class VarRef(ffi.FrontendVar):
                 "Cannot modify tensor `" + self.name +
                 "` becuase it has been borrowed in another tensor's shape, "
                 "a tensor slice, or a range of a loop")
+        if value is AlreadyMadeReduceTo:  # Following the checks above
+            return
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_metadata(), value))
 
