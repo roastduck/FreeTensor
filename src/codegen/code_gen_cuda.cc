@@ -304,6 +304,10 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
             os() << "atomicAdd(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
             break;
+        case ReduceOp::Sub:
+            os() << "atomicSub(&", genAddr(), os() << ", ", genExpr();
+            os() << ");" << std::endl;
+            break;
         case ReduceOp::Min:
             os() << "atomicMin(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
@@ -327,6 +331,9 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
         switch (op->op_) {
         case ReduceOp::Add:
             genAddr(), os() << " += ", genExpr();
+            break;
+        case ReduceOp::Sub:
+            genAddr(), os() << " -= ", genExpr();
             break;
         case ReduceOp::Mul:
             genAddr(), os() << " *= ", genExpr();

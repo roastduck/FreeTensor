@@ -246,6 +246,9 @@ void PrintVisitor::visit(const ReduceTo &op) {
     case ReduceOp::Add:
         os() << "+=";
         break;
+    case ReduceOp::Sub:
+        os() << "-=";
+        break;
     case ReduceOp::Mul:
         os() << "*=";
         break;
@@ -560,6 +563,9 @@ void PrintVisitor::visit(const For &op) {
         switch (reduction->op_) {
         case ReduceOp::Add:
             os() << "+= ";
+            break;
+        case ReduceOp::Sub:
+            os() << "-= ";
             break;
         case ReduceOp::Mul:
             os() << "*= ";

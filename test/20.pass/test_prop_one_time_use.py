@@ -138,7 +138,7 @@ def test_modify_self_no_prop():
                 t[i] = x[i]
                 x[i] = 0
             with ft.For("i", 0, 5) as i:
-                t[i] = t[i] - 1
+                t[i] = t[i] * 2 + 1
                 y[i] = t[i]
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
@@ -150,7 +150,7 @@ def test_modify_self_no_prop():
                 t[i] = x[i]
                 x[i] = 0
             with ft.For("i", 0, 5) as i:
-                t[i] = t[i] - 1
+                t[i] = t[i] * 2 + 1
                 y[i] = t[i]
     std = ft.pop_ast()
 

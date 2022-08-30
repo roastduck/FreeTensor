@@ -23,6 +23,7 @@ FREE:       '@!free';
 // ReduceTo
 ATOMIC:     '@!atomic';
 PLUSEQ:     '+=';
+SUBEQ:      '-=';
 STAREQ:     '*=';
 MINEQ:      '@!min=';
 MAXEQ:      '@!max=';

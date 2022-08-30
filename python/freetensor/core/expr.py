@@ -176,7 +176,10 @@ class VarRef(ffi.FrontendVar):
             from .. import libop
             libop.sub_to(self, other)
             return AlreadyMadeReduceTo
-        return NotImplemented
+        top = ctx_stack.top()
+        top.append_stmt(
+            self.as_reduce_to(ffi.ReduceOp.Sub, top.get_metadata(), other))
+        return AlreadyMadeReduceTo
 
     def __mul__(self, other):
         if self.ndim > 0:
@@ -217,7 +220,7 @@ class VarRef(ffi.FrontendVar):
             from .. import libop
             libop.truediv_to(self, other)
             return AlreadyMadeReduceTo
-        return NotImplemented
+        return NotImplemented  # Fallback to x = x / y
 
     def __floordiv__(self, other):
         if self.ndim > 0:
@@ -236,7 +239,7 @@ class VarRef(ffi.FrontendVar):
             from .. import libop
             libop.floordiv_to(self, other)
             return AlreadyMadeReduceTo
-        return NotImplemented
+        return NotImplemented  # Fallback to x = x // y
 
     def __mod__(self, other):
         if self.ndim > 0:
@@ -255,7 +258,7 @@ class VarRef(ffi.FrontendVar):
             from .. import libop
             libop.mod_to(self, other)
             return AlreadyMadeReduceTo
-        return NotImplemented
+        return NotImplemented  # Fallback to x = x % y
 
     def __lt__(self, other):
         if self.ndim > 0:

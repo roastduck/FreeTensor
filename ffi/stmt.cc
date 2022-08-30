@@ -63,6 +63,7 @@ void init_ffi_ast_stmt(py::module_ &m) {
         .def_readonly("var", &FreeNode::var_);
     py::enum_<ReduceOp>(m, "ReduceOp")
         .value("Add", ReduceOp::Add)
+        .value("Sub", ReduceOp::Sub)
         .value("Max", ReduceOp::Max)
         .value("Min", ReduceOp::Min)
         .value("Mul", ReduceOp::Mul)
