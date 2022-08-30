@@ -49,6 +49,7 @@ class RemoteTaskSchedulerTest(ft.RemoteTaskScheduler):
         tmpuid = self.task_uid_assign()
         tmptask = MeasureTaskTest(tmpuid, rounds, warmups, attached_params,
                                   Sketches)
+        tmptask.host_type = "default"
         tmplock = threading.Event()
         self.task_register(tmptask, tmplock)
         tmplock.wait()
@@ -79,27 +80,27 @@ class RemoteTaskSchedulerTest(ft.RemoteTaskScheduler):
 
     def remote_task_receive(self, src_host_uid: str, task: Dict) -> int:
         #receive and decoding(refer to the beginning of the file)
-        if task["task_type"] == 0:
-            if task["trans_c"] == 0:
+        if task["task_type"] == "control":
+            if task["trans_c"] == "log":
                 pass
-            elif task["trans_c"] == 1:
+            elif task["trans_c"] == "avail":
                 self.update_availability(src_host_uid, task["time_stamp"])
-            elif task["trans_c"] == 2:
+            elif task["trans_c"] == "inavail":
                 self.update_inavailability(src_host_uid, task["time_stamp"])
-            elif task["trans_c"] == 3:
+            elif task["trans_c"] == "task_request":
                 t = threading.Thread(target=self.task_submit,
                                      args=(src_host_uid,))
                 t.start()
-            elif task["trans_c"] == 4:
+            elif task["trans_c"] == "q_check":
                 return self.is_in_execution_queue(task["src_server_uid"],
                                                   task["submit_uid"])
         else:
             if self.verbose > 0:
                 print("receiving")
             self.update_availability(src_host_uid, task["time_stamp"])
-            if task["task_type"] == 1:
+            if task["task_type"] == "search":
                 pass
-            elif task["task_type"] == 2:
+            elif task["task_type"] == "measure":
                 tmptask = MeasureTaskTest.dict2self(task)
 
             self.task_execution(tmptask)
@@ -135,8 +136,8 @@ def test_full_function():
 
 def test_full_function_with_delay():
     rts = RemoteTaskSchedulerTest(
-        0.04,
-        0.04,
+        0.4,
+        0.4,
     )
     rts.verbose = 0
     tmplist = []
@@ -176,3 +177,43 @@ def test_full_function_stress_test():
 
             tmpthreadlist = []
         print((rts.recalls, rts.inavailability_counter))
+
+
+@pytest.mark.skip()
+def test_full_function_with_package_loss():
+    rts = RemoteTaskSchedulerTest(0, 0, 0.01)
+    rts.verbose = 0
+    tmplist = []
+    tmpthreadlist = []
+    for i in range(64):
+        tmplist.append(0)
+
+    for i in range(1000):
+        thread_test = threading.Thread(target=measure_submit,
+                                       args=(rts, tmplist))
+        thread_test.start()
+        tmpthreadlist.append(thread_test)
+
+    for t in tmpthreadlist:
+        t.join()
+    print(rts.recalls)
+
+
+@pytest.mark.skip()
+def test_full_function_with_delay_and_package_loss():
+    rts = RemoteTaskSchedulerTest(0.04, 0.04, 0.01)
+    rts.verbose = 0
+    tmplist = []
+    tmpthreadlist = []
+    for i in range(64):
+        tmplist.append(0)
+
+    for i in range(400):
+        thread_test = threading.Thread(target=measure_submit,
+                                       args=(rts, tmplist))
+        thread_test.start()
+        tmpthreadlist.append(thread_test)
+
+    for t in tmpthreadlist:
+        t.join()
+    print(rts.recalls)
