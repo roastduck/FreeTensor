@@ -151,7 +151,7 @@ def test_not_hoisting_when_being_updated():
         with ft.For("i", 0, 4) as i:
             with ft.If(n[()] < x[i]):
                 y[i] = 0
-                n[()] = n[()] + x[i]
+                n[()] += x[i]
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
@@ -163,8 +163,8 @@ def test_not_hoisting_when_being_updated():
         with ft.For("i", 0, 4) as i:
             with ft.If(n[()] < x[i]):
                 y[i] = 0
-                n[()] = n[()] + x[i]
-    std = ft.make_reduction(ft.pop_ast())
+                n[()] += x[i]
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -177,7 +177,7 @@ def test_hoist_then_merge():
                 with ft.If(i % 2 == 0):
                     y[i, j] = x[i, j]
             with ft.If(i % 2 == 0):
-                y[i, 0] = y[i, 0] + 1
+                y[i, 0] += 1
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, skip_passes=['use_builtin_div'], verbose=1)
 
@@ -187,8 +187,8 @@ def test_hoist_then_merge():
             with ft.If(i % 2 == 0):
                 with ft.For("j", 0, 4) as j:
                     y[i, j] = x[i, j]
-                y[i, 0] = y[i, 0] + 1
-    std = ft.make_reduction(ft.pop_ast())
+                y[i, 0] += 1
+    std = ft.pop_ast()
 
     assert std.match(ast)
 

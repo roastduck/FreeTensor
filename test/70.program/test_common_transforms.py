@@ -58,10 +58,9 @@ def test_tiling():
                                                "cache", "cpu") as cw:
                                     cw[0, 0] = 0
                                     with ft.For("k", 0, 256) as k:
-                                        cw[0,
-                                           0] = cw[0, 0] + ar[i1, k] * br[k, j1]
+                                        cw[0, 0] += ar[i1, k] * br[k, j1]
                                     c[i1 + 32 * i0, 32 * j0 + j1] = cw[0, 0]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
     assert std.match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -108,9 +107,9 @@ def test_tiled_reduction():
             with ft.VarDef("yw", (1,), "float32", "cache", "cpu") as yw:
                 yw[0] = 0.0
                 with ft.For("i1", 0, 64) as i1:
-                    yw[0] = yw[0] + x[i1 + 64 * i0]
-                y[0] = y[0] + yw[0]
-    std = ft.make_reduction(ft.pop_ast())
+                    yw[0] += x[i1 + 64 * i0]
+                y[0] += yw[0]
+    std = ft.pop_ast()
     assert std.match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -159,11 +158,11 @@ def test_parallel_reduction():
             with ft.For("i0", 0, 4) as i0:
                 yw[i0, 0] = 0.0
                 with ft.For("i1", 0, 64) as i1:
-                    yw[i0, 0] = yw[i0, 0] + x[i1 + 64 * i0]
+                    yw[i0, 0] += x[i1 + 64 * i0]
             y[0] = 0
             with ft.For("i0", 0, 4) as i0:
-                y[0] = y[0] + yw[i0, 0]
-    std = ft.make_reduction(ft.pop_ast())
+                y[0] += yw[i0, 0]
+    std = ft.pop_ast()
     assert std.match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -320,6 +319,6 @@ def test_vectorize_spmv():
             with ft.For("j", 0, 64, label="Lj") as j:
                 with ft.For("i1", 0, 4) as i1:
                     y[i1 + 4 * i0] += x1[i1 + 4 * i0, j] * x2[j]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)

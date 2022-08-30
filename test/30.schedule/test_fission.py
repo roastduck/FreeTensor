@@ -374,7 +374,7 @@ def test_correct_dependency_multi_loop_2():
                     d_a[i, j] += d_y_old[()] * b[j]
                     d_b[j] += d_y_old[()] * a[i, j]
             d_y[i] = 0
-    ast = ft.make_reduction(ft.pop_ast())
+    ast = ft.pop_ast()
     print(ast)
     s = ft.Schedule(ast)
     s.fission("L1", ft.FissionSide.Before, "S0")
@@ -398,7 +398,7 @@ def test_correct_dependency_multi_loop_2():
                 d_a[i, j] += d_y_old[i, j] * b[j]
                 d_b[j] += d_y_old[i, j] * a[i, j]
             d_y[i] = 0
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -587,7 +587,7 @@ def test_scan_without_dep():
             a[i] += a[i - 1]
         with ft.For("i", 1, 10) as i:
             b[i] += a[i - 1]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -629,7 +629,7 @@ def test_reversed_scan_without_dep():
             a[i] += a[i + 1]
         with ft.For("i", 8, -1, -1) as i:
             b[i] += a[i + 1]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 

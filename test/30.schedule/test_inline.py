@@ -307,7 +307,7 @@ def test_different_iter_with_uncertain_offset_no_inline():
         s.inline("T")
     ast_ = s.ast()  # Should not changed
     print(ast_)
-    assert ast_.match(ft.make_reduction(ast))
+    assert ast_.match(ast)
 
 
 def test_different_iter_non_linear():
@@ -417,7 +417,7 @@ def test_no_inline_defined_inside_a_loop():
     with pytest.raises(ft.InvalidSchedule):
         s.inline("U")
     ast_ = s.ast()  # Should not changed
-    assert ast_.match(ft.make_reduction(ast))
+    assert ast_.match(ast)
 
 
 def test_def_then_use_then_def_in_the_same_place():

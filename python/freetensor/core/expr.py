@@ -16,6 +16,18 @@ import freetensor_ffi as ffi
 from .context import ctx_stack
 
 
+class AlreadyMadeReduceTo:
+    """
+    A single-value type that marks a ReduceTo node is already made, and there is no need to
+    make another Store node
+
+    In standard Python data model, functions like __iadd__ returns the modified self, and
+    __setitem__ does a self-assignment. We do the augmenting assignment directly in __iadd__
+    and return AlreadyMadeReduceTo, so we do not have to Store it again
+    """
+    pass
+
+
 class VarRef(ffi.FrontendVar):
     '''
     Variable of FreeTensor
@@ -51,15 +63,11 @@ class VarRef(ffi.FrontendVar):
     def __setitem__(self, key, value):
         var = VarRef(self.name, self.vardef, self.full_shape, self.dtype,
                      self.mtype, self.chain_indices(self._parse_key(key)))
+        if value is AlreadyMadeReduceTo:
+            return
         if var.ndim > 0:
-            if value is not None:
-                # In standard Python data model, functions like __iadd__
-                # returns the modified self, and __setitem__ does a self-
-                # assignment. We do the augmenting assignment directly
-                # in __iadd__ and return None, so we do not have to do
-                # it again here
-                from .. import libop
-                libop.assign(var, value)
+            from .. import libop
+            libop.assign(var, value)
             return
         if var.vardef.atype == ffi.AccessType("input"):
             raise ffi.InvalidProgram("Cannot modify an \"input\" tensor `" +
@@ -145,8 +153,11 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.add_to(self, other)
-            return  # Don't return self. See __setitem__
-        return NotImplemented
+            return AlreadyMadeReduceTo
+        top = ctx_stack.top()
+        top.append_stmt(
+            self.as_reduce_to(ffi.ReduceOp.Add, top.get_metadata(), other))
+        return AlreadyMadeReduceTo
 
     def __sub__(self, other):
         if self.ndim > 0:
@@ -164,7 +175,7 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.sub_to(self, other)
-            return  # Don't return self. See __setitem__
+            return AlreadyMadeReduceTo
         return NotImplemented
 
     def __mul__(self, other):
@@ -183,8 +194,11 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.mul_to(self, other)
-            return  # Don't return self. See __setitem__
-        return NotImplemented
+            return AlreadyMadeReduceTo
+        top = ctx_stack.top()
+        top.append_stmt(
+            self.as_reduce_to(ffi.ReduceOp.Mul, top.get_metadata(), other))
+        return AlreadyMadeReduceTo
 
     def __truediv__(self, other):
         if self.ndim > 0:
@@ -202,7 +216,7 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.truediv_to(self, other)
-            return  # Don't return self. See __setitem__
+            return AlreadyMadeReduceTo
         return NotImplemented
 
     def __floordiv__(self, other):
@@ -221,7 +235,7 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.floordiv_to(self, other)
-            return  # Don't return self. See __setitem__
+            return AlreadyMadeReduceTo
         return NotImplemented
 
     def __mod__(self, other):
@@ -240,7 +254,7 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.mod_to(self, other)
-            return  # Don't return self. See __setitem__
+            return AlreadyMadeReduceTo
         return NotImplemented
 
     def __lt__(self, other):

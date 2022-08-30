@@ -198,7 +198,7 @@ def test_duplicate_vardef():
                 with ft.If(t[()] < 0):
                     t[()] *= -1
                 y[i] = t[()] + 2
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -232,7 +232,7 @@ def test_no_duplicate_vardef():
                     y[i] = t[()] + 1
                 with ft.Else():
                     y[i] = t[()] + 2
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 

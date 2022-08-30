@@ -37,7 +37,7 @@ def test_multiple_choices_no_remove_2():
             y[i] = 0
         with ft.For("i", 0, 4) as i:
             with ft.For("j", 0, 5) as j:
-                y[i] = y[i] + j
+                y[i] += j
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
@@ -47,8 +47,8 @@ def test_multiple_choices_no_remove_2():
             y[i] = 0
         with ft.For("i", 0, 4) as i:
             with ft.For("j", 0, 5) as j:
-                y[i] = y[i] + j
-    std = ft.make_reduction(ft.pop_ast())
+                y[i] += j
+    std = ft.pop_ast()
 
     assert std.match(ast)
 

@@ -9,7 +9,7 @@ def test_cache_read():
             y[i] = 0
             with ft.For("j", 0, 8, label="L2") as j:
                 ft.MarkLabel("S0")
-                y[i] = y[i] + x[i, j] * (x[i, j] + 1)
+                y[i] += x[i, j] * (x[i, j] + 1)
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache("S0", "x", "cpu")
@@ -24,8 +24,8 @@ def test_cache_read():
             with ft.For("j", 0, 8) as j:
                 with ft.VarDef("b", (1, 1), "int32", "cache", "cpu") as b:
                     b[0, 0] = x[i, j]
-                    y[i] = y[i] + b[0, 0] * (b[0, 0] + 1)
-    std = ft.make_reduction(ft.pop_ast())
+                    y[i] += b[0, 0] * (b[0, 0] + 1)
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -56,7 +56,7 @@ def test_cache_write():
                 with ft.For("j", 0, 8) as j:
                     b[0] += x[i, j] * 2
                 y[i] = b[0]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -67,8 +67,8 @@ def test_reduction():
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 8, label="L2") as j:
                 with ft.For("k", 0, 8, label="L3") as k:
-                    y[i, j] = y[i, j] + x[i, j, k] * 2
-    ast = ft.make_reduction(ft.pop_ast())
+                    y[i, j] += x[i, j, k] * 2
+    ast = ft.pop_ast()
     print(ast)
     s = ft.Schedule(ast)
     s.cache("L2", "y", "cpu")
@@ -87,7 +87,7 @@ def test_reduction():
                         b[0, j] += x[i, j, k] * 2
                 with ft.For("j1", 0, 8) as j:
                     y[i, j] = b[0, j]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -208,7 +208,7 @@ def test_local_var_as_index():
         with ft.For("i", 0, 4, label="L1") as i:
             y[i] = 0
             with ft.For("j", 0, 8, label="L2") as j:
-                y[i] = y[i] + x[i, j] * 2
+                y[i] += x[i, j] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache("L2", "x", "cpu")
@@ -224,8 +224,8 @@ def test_local_var_as_index():
                 with ft.For("j1", 0, 8) as j:
                     b[0, j] = x[i, j]
                 with ft.For("j2", 0, 8) as j:
-                    y[i] = y[i] + b[0, j] * 2
-    std = ft.make_reduction(ft.pop_ast())
+                    y[i] += b[0, j] * 2
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -240,7 +240,7 @@ def test_cache_with_condition():
             y[i] = 0
             with ft.For("j", 0, 8, label="L2") as j:
                 with ft.If(n[()] > 0):
-                    y[i] = y[i] + x[i, j] * 2
+                    y[i] += x[i, j] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache("L2", "x", "cpu")
@@ -260,8 +260,8 @@ def test_cache_with_condition():
                     with ft.For("j1", 0, 8) as j:
                         b[0, j] = x[i, j]
                     with ft.For("j2", 0, 8) as j:
-                        y[i] = y[i] + b[0, j] * 2
-    std = ft.make_reduction(ft.pop_ast())
+                        y[i] += b[0, j] * 2
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -278,9 +278,9 @@ def test_cache_with_multiple_conditions():
             with ft.For("j", 0, 8, label="L2") as j:
                 with ft.If(n[()] > 0):
                     with ft.If(m[()] > 0):
-                        y[i] = y[i] + x[i, j] * 2
+                        y[i] += x[i, j] * 2
                 with ft.If(n[()] < 0):
-                    y[i] = y[i] + x[i, j] * 3
+                    y[i] += x[i, j] * 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache("L2", "x", "cpu")
@@ -303,10 +303,10 @@ def test_cache_with_multiple_conditions():
                 with ft.For("j2", 0, 8) as j:
                     with ft.If(n[()] > 0):
                         with ft.If(m[()] > 0):
-                            y[i] = y[i] + b[0, j] * 2
+                            y[i] += b[0, j] * 2
                     with ft.If(n[()] < 0):
-                        y[i] = y[i] + b[0, j] * 3
-    std = ft.make_reduction(ft.pop_ast())
+                        y[i] += b[0, j] * 3
+    std = ft.pop_ast()
 
     assert std.match(ast)
 

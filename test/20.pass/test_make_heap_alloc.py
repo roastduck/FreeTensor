@@ -171,5 +171,5 @@ def test_transform_dynamic_size():
                     s[...] += y[i]
                     m[...] *= y[i]
                 ft.Free(y)
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
     assert std.match(ast)

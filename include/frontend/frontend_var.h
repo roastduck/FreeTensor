@@ -101,6 +101,8 @@ class FrontendVar {
 
     Expr asLoad() const;
     Stmt asStore(const Metadata &metadata, const Expr &value) const;
+    Stmt asReduceTo(ReduceOp op, const Metadata &metadata, const Expr &value,
+                    bool atomic = false) const;
 
     std::vector<FrontendVarIdx>
     chainIndices(const std::vector<FrontendVarIdx> &next) const;

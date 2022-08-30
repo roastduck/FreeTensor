@@ -183,7 +183,7 @@ def test_using_local_var_no_prop():
                     t[i] = s[()] * 2  # No prop t
             with ft.For("i", 0, 5) as i:
                 y[i] = t[i]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 

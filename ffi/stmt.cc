@@ -61,6 +61,13 @@ void init_ffi_ast_stmt(py::module_ &m) {
         .def_readonly("var", &AllocNode::var_);
     py::class_<FreeNode, Free>(m, "Free", pyStmt)
         .def_readonly("var", &FreeNode::var_);
+    py::enum_<ReduceOp>(m, "ReduceOp")
+        .value("Add", ReduceOp::Add)
+        .value("Max", ReduceOp::Max)
+        .value("Min", ReduceOp::Min)
+        .value("Mul", ReduceOp::Mul)
+        .value("And", ReduceOp::LAnd)
+        .value("Or", ReduceOp::LOr);
     py::class_<ReduceToNode, ReduceTo>(m, "ReduceTo", pyStmt)
         .def_readonly("var", &ReduceToNode::var_)
         .def_property_readonly("indices",
@@ -124,6 +131,12 @@ void init_ffi_ast_stmt(py::module_ &m) {
                                const Expr &, const Metadata &, const ID &)>(
               &_makeStore<const Expr &>),
           "var"_a, "indices"_a, "expr"_a, "metadata"_a,
+          py::arg_v("id", ID(), "ID()"));
+    m.def("makeReduceTo",
+          static_cast<Stmt (*)(const std::string &, const std::vector<Expr> &,
+                               ReduceOp, const Expr &, bool, const Metadata &,
+                               const ID &)>(&_makeReduceTo<const Expr &>),
+          "var"_a, "indices"_a, "op"_a, "expr"_a, "atomic"_a, "metadata"_a,
           py::arg_v("id", ID(), "ID()"));
     m.def("makeAlloc",
           static_cast<Stmt (*)(const std::string &, const Metadata &,

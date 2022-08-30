@@ -115,7 +115,7 @@ def test_reduction_better_not_parallelized():
             with ft.For("j", 0, 1000, label="Lj") as j:
                 y[i] += x[i, j]
 
-    ast = ft.make_reduction(ft.pop_ast())
+    ast = ft.pop_ast()
     print(ast)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
