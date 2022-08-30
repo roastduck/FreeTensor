@@ -28,6 +28,8 @@ static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
     switch (reduceOp) {
     case ReduceOp::Add:
         return makeAdd(lhs, rhs);
+    case ReduceOp::Sub:
+        return makeSub(lhs, rhs);
     case ReduceOp::Mul:
         return makeMul(lhs, rhs);
     case ReduceOp::Max:

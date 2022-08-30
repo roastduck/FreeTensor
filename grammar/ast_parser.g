@@ -213,6 +213,10 @@ reduceOp returns [ReduceOp op]
       {
         $op = ReduceOp::Add;
       }
+    | SUBEQ
+      {
+        $op = ReduceOp::Sub;
+      }
     | STAREQ
       {
         $op = ReduceOp::Mul;

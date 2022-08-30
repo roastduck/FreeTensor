@@ -14,7 +14,7 @@ def test_reuse_over_loop():
                         t[k] += x[i, j, k]
                 with ft.For("k", 0, 6, label="Lk2"):
                     y[i, k] = t[k] * 2
-    ast = ft.make_reduction(ft.pop_ast())
+    ast = ft.pop_ast()
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_t"]))
     print(ast)
@@ -34,7 +34,7 @@ def test_reuse_over_loop():
                     with ft.For("k", 0, 6):
                         t_tape[i, k] = t[k]
                         y[i, k] = t[k] * 2
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -55,7 +55,7 @@ def test_multiple_assignments():
                 with ft.For("k", 0, 6, label="Lk2"):
                     y[i, k, 0] = t[k, 0] * 2
                     y[i, k, 1] = t[k, 1] * 2
-    ast = ft.make_reduction(ft.pop_ast())
+    ast = ft.pop_ast()
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_t"]))
     print(ast)
@@ -79,7 +79,7 @@ def test_multiple_assignments():
                         y[i, k, 0] = t[k, 0] * 2
                         t_tape[i, k, 1] = t[k, 1]
                         y[i, k, 1] = t[k, 1] * 2
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -97,7 +97,7 @@ def test_reuse_over_loop_with_offset():
                         t[k] += x[i - 2, j, k]
                 with ft.For("k", 0, 6, label="Lk2"):
                     y[i - 2, k] = t[k] * 2
-    ast = ft.make_reduction(ft.pop_ast())
+    ast = ft.pop_ast()
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_t"]))
     print(ast)
@@ -117,7 +117,7 @@ def test_reuse_over_loop_with_offset():
                     with ft.For("k", 0, 6):
                         t_tape[i + -2, k] = t[k]
                         y[i + -2, k] = t[k] * 2
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -135,7 +135,7 @@ def test_reuse_over_stmt_seq():
                 t[k] = x[5 - k] * k
             with ft.For("k", 0, 6, label="Lk2"):
                 y[k] *= t[k]
-    ast = ft.make_reduction(ft.pop_ast())
+    ast = ft.pop_ast()
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_t"]))
     print(ast)
@@ -155,7 +155,7 @@ def test_reuse_over_stmt_seq():
                 with ft.For("k", 0, 6):
                     t_tape[1, k] = t[k]
                     y[k] *= t[k]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -184,7 +184,7 @@ def test_reuse_different_lengths():
                         t[k] += x2[i, j, k]
                 with ft.For("k", 0, 6):
                     y2[i, k] = t[k] * 2
-    ast = ft.make_reduction(ft.pop_ast())
+    ast = ft.pop_ast()
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_t"]))
     print(ast)
@@ -215,7 +215,7 @@ def test_reuse_different_lengths():
                     with ft.For("k", 0, 6):
                         t_tape[4 + i, k] = t[k]
                         y2[i, k] = t[k] * 2
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -233,7 +233,7 @@ def test_no_need_to_copy():
                         t[i, k] += x[i, j, k]
                 with ft.For("k", 0, 6, label="Lk2"):
                     y[i, k] = t[i, k] * 2
-    ast = ft.make_reduction(ft.pop_ast())
+    ast = ft.pop_ast()
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_t"]))
     print(ast)
@@ -250,7 +250,7 @@ def test_no_need_to_copy():
                         t[i, k] += x[i, j, k]
                 with ft.For("k", 0, 6):
                     y[i, k] = t[i, k] * 2
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -270,7 +270,7 @@ def test_circular_reuse():
                         h[i] = c[i] * 2 + 1
                 with ft.For("i", 0, 128, label='Li2') as i:
                     y[i] = h[i]
-    ast = ft.make_reduction(ft.pop_ast())
+    ast = ft.pop_ast()
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_c", "V_h"]))
     print(ast)
@@ -296,6 +296,6 @@ def test_circular_reuse():
                     with ft.For("i", 0, 128, label='Li2') as i:
                         h_tape[100, i] = h[i]
                         y[i] = h[i]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)

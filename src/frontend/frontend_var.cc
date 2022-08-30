@@ -91,6 +91,23 @@ Stmt FrontendVar::asStore(const Metadata &metadata, const Expr &value) const {
     return makeStore(name_, std::move(indices), value, metadata);
 }
 
+Stmt FrontendVar::asReduceTo(ReduceOp op, const Metadata &metadata,
+                             const Expr &value, bool atomic) const {
+    if (ndim() != 0) {
+        throw InvalidProgram(
+            name_ + " is of a " + std::to_string(fullShape_.size()) +
+            "-D shape, but " + std::to_string((int)fullShape_.size() - ndim()) +
+            "-D indices are given");
+    }
+    std::vector<Expr> indices;
+    indices.reserve(indices_.size());
+    for (auto &&idx : indices_) {
+        ASSERT(idx.type() == FrontendVarIdxType::Single);
+        indices.emplace_back(idx.single());
+    }
+    return makeReduceTo(name_, std::move(indices), op, value, atomic, metadata);
+}
+
 std::vector<FrontendVarIdx>
 FrontendVar::chainIndices(const std::vector<FrontendVarIdx> &next) const {
     std::vector<FrontendVarIdx> indices;

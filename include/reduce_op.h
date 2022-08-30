@@ -6,7 +6,16 @@
 
 namespace freetensor {
 
-enum class ReduceOp : int { Add, Mul, Min, Max, LAnd, LOr };
+/**
+ * Operation of a `ReduceTo` node
+ *
+ * All operations should obey the commutative law. Note that although `-` does
+ * not obey the commutative law, `-=` does
+ *
+ * Here is no support for `/=` because of the lack of support from OpenMP and
+ * CUDA
+ */
+enum class ReduceOp : int { Add, Sub, Mul, Min, Max, LAnd, LOr };
 
 Expr neutralVal(DataType dtype, ReduceOp op);
 

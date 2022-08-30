@@ -213,6 +213,10 @@ Stmt LowerVector::visit(const ReduceTo &op) {
                 return makeEval(makeIntrinsic(
                     "*((" + vtype + "*)&(%)) += make_" + vtype + "(%)",
                     {newLoad, (*this)(op->expr_)}, DataType::Void, false));
+            case ReduceOp::Sub:
+                return makeEval(makeIntrinsic(
+                    "*((" + vtype + "*)&(%)) -= make_" + vtype + "(%)",
+                    {newLoad, (*this)(op->expr_)}, DataType::Void, false));
             case ReduceOp::Max:
                 return makeEval(
                     makeIntrinsic("*((" + vtype + "*)&(%)) = max(*((*" + vtype +

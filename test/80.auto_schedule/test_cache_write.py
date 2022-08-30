@@ -26,8 +26,7 @@ def test_cache_write():
                     for p in range(a):
                         #! label: L5
                         for q in range(a):
-                            y[i, j, p,
-                              q] = y[i, j, p, q] + w[i, j, p, k] * x[i, j, k, q]
+                            y[i, j, p, q] += w[i, j, p, k] * x[i, j, k, q]
 
     with ft.VarDef([("w", (m, m, a, b), "int32", "input", "cpu"),
                     ("x", (m, m, b, a), "int32", "input", "cpu"),
@@ -44,16 +43,13 @@ def test_cache_write():
                 with ft.For("k", 0, b, label='L3') as k:
                     with ft.For("p", 0, a, label='L6') as p:
                         with ft.For("q", 0, a, label='L7') as q:
-                            yc[i, j, p,
-                               q] = yc[i, j, p,
-                                       q] + w[i, j, p, k] * x[i, j, k, q]
+                            yc[i, j, p, q] += w[i, j, p, k] * x[i, j, k, q]
         with ft.For("i0", 0, m) as i0:
             with ft.For("i1", 0, m) as i1:
                 with ft.For("i2", 0, a) as i2:
                     with ft.For("i3", 0, a) as i3:
                         y[i0, i1, i2, i3] = yc[i0, i1, i2, i3]
     std = ft.pop_ast()
-    std = ft.make_reduction(std)
 
     s = ft.Schedule(test)
     s = ft.AutoSchedule(s, target, device, rule_set={"cache_write"})
@@ -75,8 +71,7 @@ def test_non_perfect_loop():
                 with ft.For("k", 0, b, label='L3') as k:
                     with ft.For("p", 0, a, label='L6') as p:
                         with ft.For("q", 0, a, label='L7') as q:
-                            y[i, j, p,
-                              q] = y[i, j, p, q] + w[i, j, p, k] * x[i, j, k, q]
+                            y[i, j, p, q] += w[i, j, p, k] * x[i, j, k, q]
 
     s = ft.pop_ast()
 
@@ -100,14 +95,11 @@ def test_non_perfect_loop():
                     with ft.For("k", 0, b, label='L3') as k:
                         with ft.For("p", 0, a, label='L6') as p:
                             with ft.For("q", 0, a, label='L7') as q:
-                                yc[0, 0, p,
-                                   q] = yc[0, 0, p,
-                                           q] + w[i, j, p, k] * x[i, j, k, q]
+                                yc[0, 0, p, q] += w[i, j, p, k] * x[i, j, k, q]
                     with ft.For("i2", 0, a) as i2:
                         with ft.For("i3", 0, a) as i3:
                             y[i, j, i2, i3] = yc[0, 0, i2, i3]
     std = ft.pop_ast()
-    std = ft.make_reduction(std)
     print(std)
     assert std.match(ast)
 

@@ -314,6 +314,9 @@ template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
     case ReduceOp::Add:
         genAddr(), this->os() << " += ", genExpr();
         break;
+    case ReduceOp::Sub:
+        genAddr(), this->os() << " -= ", genExpr();
+        break;
     case ReduceOp::Mul:
         genAddr(), this->os() << " *= ", genExpr();
         break;

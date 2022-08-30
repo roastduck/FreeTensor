@@ -728,7 +728,7 @@ def test_simplex_local_2():
                         t[0, j] += t[0, i]
                     with ft.For("j$2", 0, 10) as j:
                         y[b, i, j] = t[0, j] + 1
-    assert ft.make_reduction(ft.pop_ast()).match(func.body)
+    assert ft.pop_ast().match(func.body)
 
 
 def test_relax_shared_shape_to_constants():

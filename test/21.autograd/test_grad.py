@@ -85,7 +85,7 @@ def test_branching_exprs():
         d_x2[()] = ft.if_then_else(x1[()] <= 0, d_y3[()], 0) + ft.if_then_else(
             x2[()] > x1[()], d_y2[()], 0) + ft.if_then_else(
                 x2[()] < x1[()], d_y1[()], 0)
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -113,7 +113,7 @@ def test_math_funcs():
                                                                   d_y2, d_y3):
         d_x[()] = 2 * d_y3[()] * x[()] + d_y2[()] * ft.exp(x[()]) + d_y1[
             ()] / (2 * ft.sqrt(x[()]))
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -147,7 +147,7 @@ def test_use_forward_value_when_taped():
         with ft.For("i", 3, -1, -1) as i:
             with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
                 d_x[i] = 2 * (d_y1[i] * y1[i] + 2 * (d_y2[i] * t[i]))
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -176,7 +176,7 @@ def test_use_taped_forward_value():
         with ft.For("i", 3, -1, -1) as i:
             with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
                 d_x[i] = ((d_y2[i] * 3) + (d_y1[i] * 2)) * t[i]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -211,7 +211,7 @@ def test_multiple_statements():
             d_x3[()] = d_y2[()] + d_y1[()] * (x1[()] + x2[()])
             d_x1[()] = d_t[()]
             d_x2[()] = d_t[()]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -275,7 +275,7 @@ def test_dependent_iterations():
                 d_y_old[()] = d_y[()]
                 d_y[()] = -1 * d_y_old[()]
                 d_x[i] = d_y_old[()]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -296,7 +296,7 @@ def test_assign_quick_path():
         with ft.For("i", 3, -1, -1) as i:
             d_x[i] = d_y[()]
             d_y[()] = 0
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -316,7 +316,7 @@ def test_reduce_sum_quick_path():
                     ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, d_y):
         with ft.For("i", 3, -1, -1) as i:
             d_x[i] = d_y[()]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -339,7 +339,7 @@ def test_atypical_loop():
                 d_y_old[()] = d_y[()]
                 d_y[()] = -1 * d_y_old[()]
                 d_x[i + 2] = d_y_old[()]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -391,7 +391,7 @@ def test_nested_loops():
                     d_x[j] += d_t[i] * w0[i, j]
                     d_w0[i, j] = d_t[i] * x[j]
                 d_t[i] = 0
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -478,7 +478,7 @@ def test_tape_2():
                     d_x3[i] = d_y[i] * t[i]
                     d_x1[i] = d_t[()]
                     d_x2[i] = d_t[()]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(backward)
 
@@ -523,7 +523,7 @@ def test_tape_3():
                     with ft.For("j", 4, -1, -1, label="Lj") as j:
                         d_x2[i, j, k] = d_y[i, k] * t[i, k]
                     d_y[i, k] = 0
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(backward)
 
@@ -563,7 +563,7 @@ def test_tape_4():
                     d_t[()] = d_t_old[()] * x[i]
                     d_x[i] = d_t_old[()] * t[i]
             d_t[()] = 0
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(backward)
 
@@ -624,16 +624,16 @@ def test_tape_5():
                     dh[i] = dy[i]
                 with ft.For("k", 99, -1, -1) as k:
                     with ft.For("l", 255, -1, -1) as l:
-                        df[l] = df[l] + dh[l]
+                        df[l] += dh[l]
                         dh[l] = 0
                     with ft.For("l", 255, -1, -1) as l:
                         with ft.For("j", 255, -1, -1) as j:
-                            du[j, l] = du[j, l] + df[l] * h_tape[k, j]
-                            dh[j] = dh[j] + df[l] * u[j, l]
+                            du[j, l] += df[l] * h_tape[k, j]
+                            dh[j] += df[l] * u[j, l]
                         df[l] = 0
             with ft.For("l", 255, -1, -1) as l:
                 dh[l] = 0
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(backward)
 
@@ -782,7 +782,7 @@ def test_tape_mode_all():
             with ft.For("i", 3, -1, -1) as i:
                 d_x1[i] = d_t[i]
                 d_x2[i] += d_t[i]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(backward)
 
@@ -832,7 +832,7 @@ def test_tape_mode_nothing():
             with ft.For("i", 3, -1, -1) as i:
                 d_x1[i] = d_t[i]
                 d_x2[i] += d_t[i]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(backward)
 
@@ -884,7 +884,7 @@ def test_tape_mode_no_reuse_only():
             with ft.For("i", 3, -1, -1) as i:
                 d_x1[i] = d_t[i]
                 d_x2[i] += d_t[i]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(backward)
 

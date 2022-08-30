@@ -191,8 +191,8 @@ def test_inner_for():
     ]) as (x, y1, y2):
         with ft.For("i", 0, 2, label="L1") as i:
             with ft.For("j", 0, x[i]):
-                y1[i] = y1[i] * 2
-                y2[i] = y2[i] * 3
+                y1[i] *= 2
+                y2[i] *= 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
@@ -206,14 +206,14 @@ def test_inner_for():
         ("y2", (2,), "int32", "inout", "cpu"),
     ]) as (x, y1, y2):
         with ft.For("j", 0, x[0]):
-            y1[0] = y1[0] * 2
+            y1[0] *= 2
         with ft.For("j", 0, x[1]):
-            y1[1] = y1[1] * 2
+            y1[1] *= 2
         with ft.For("j", 0, x[0]):
-            y2[0] = y2[0] * 3
+            y2[0] *= 3
         with ft.For("j", 0, x[1]):
-            y2[1] = y2[1] * 3
-    std = ft.make_reduction(ft.pop_ast())
+            y2[1] *= 3
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -226,8 +226,8 @@ def test_inner_for_fuse():
     ]) as (x, y1, y2):
         with ft.For("i", 0, 2, label="L1") as i:
             with ft.For("j", 0, x[()]):
-                y1[i] = y1[i] * 2
-                y2[i] = y2[i] * 3
+                y1[i] *= 2
+                y2[i] *= 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
@@ -241,11 +241,11 @@ def test_inner_for_fuse():
         ("y2", (2,), "int32", "inout", "cpu"),
     ]) as (x, y1, y2):
         with ft.For("j", 0, x[()]):
-            y1[0] = y1[0] * 2
-            y1[1] = y1[1] * 2
-            y2[0] = y2[0] * 3
-            y2[1] = y2[1] * 3
-    std = ft.make_reduction(ft.pop_ast())
+            y1[0] *= 2
+            y1[1] *= 2
+            y2[0] *= 3
+            y2[1] *= 3
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -258,8 +258,8 @@ def test_inner_for_fuse_different_begin():
     ]) as (x, y1, y2):
         with ft.For("i", 0, 2, label="L1") as i:
             with ft.For("j", i, x[()] + i):
-                y1[i] = y1[i] * 2
-                y2[i] = y2[i] * 3
+                y1[i] *= 2
+                y2[i] *= 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
@@ -273,11 +273,11 @@ def test_inner_for_fuse_different_begin():
         ("y2", (2,), "int32", "inout", "cpu"),
     ]) as (x, y1, y2):
         with ft.For("j", 0, x[()]):
-            y1[0] = y1[0] * 2
-            y1[1] = y1[1] * 2
-            y2[0] = y2[0] * 3
-            y2[1] = y2[1] * 3
-    std = ft.make_reduction(ft.pop_ast())
+            y1[0] *= 2
+            y1[1] *= 2
+            y2[0] *= 3
+            y2[1] *= 3
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -286,8 +286,8 @@ def test_unsolvable_dependency():
     with ft.VarDef([("y1", (), "int32", "inout", "cpu"),
                     ("y2", (), "int32", "inout", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 2, label="L1") as i:
-            y1[()] = y2[()] * i
-            y2[()] = y2[()] + i
+            y1[()] = y2[()] * i + 1
+            y2[()] = y2[()] * i + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):

@@ -17,6 +17,10 @@ Stmt ReplaceUses::visit(const ReduceTo &op) {
             return (*this)(makeStore(op->var_, op->indices_,
                                      makeAdd(replace_.at(op), op->expr_),
                                      op->metadata(), op->id()));
+        case ReduceOp::Sub:
+            return (*this)(makeStore(op->var_, op->indices_,
+                                     makeSub(replace_.at(op), op->expr_),
+                                     op->metadata(), op->id()));
         case ReduceOp::Mul:
             return (*this)(makeStore(op->var_, op->indices_,
                                      makeMul(replace_.at(op), op->expr_),
