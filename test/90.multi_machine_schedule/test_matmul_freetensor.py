@@ -5,6 +5,7 @@ import time
 import pytest
 import xmlrpc.client
 
+
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_matmul():
     a = 256
