@@ -29,14 +29,14 @@ class MeasureTaskTest(ft.MeasureTask):
 
 
 class RemoteTaskSchedulerTest(ft.RemoteTaskScheduler):
-    task_internet_delay: float
-    result_internet_delay: float
-    package_loss_rate: float
+    task_internet_delay: float = 0.0
+    result_internet_delay: float = 0.0
+    package_loss_rate: float = 0.0
 
     def __init__(self,
-                 _task_internet_delay=0,
-                 _result_internet_delay=0,
-                 _package_loss_rate=0) -> None:
+                 _task_internet_delay=0.0,
+                 _result_internet_delay=0.0,
+                 _package_loss_rate=0.0) -> None:
         super().__init__()
         self.task_internet_delay = _task_internet_delay
         self.result_internet_delay = _result_internet_delay
