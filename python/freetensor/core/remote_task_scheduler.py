@@ -191,13 +191,21 @@ class MeasureTask(Task):
     def args_deserialization(cls, attached_params: tuple,
                              params: List) -> tuple:
         target, device, args, kws = attached_params
-        return ((ffi.load_target((target[0], target[1].data)),
-                 ffi.load_device((device[0], device[1].data)),
-                 [ffi.load_array((array[0], array[1].data)) for array in args
-                 ], {
-                     key: ffi.load_array((array[0], array[1].data))
-                     for key, array in kws.items()
-                 }), [ffi.load_ast(func) for func in params])
+        if type(target[1]) is not bytes:
+            target[1] = target[1].data
+        if type(device[1]) is not bytes:
+            device[1] = device[1].data
+        for array in args:
+            if type(array[1]) is not bytes:
+                array[1] = array[1].data
+        for key, array in kws.items():
+            if type(array[1]) is not bytes:
+                array[1] = array[1].data
+
+        return ((ffi.load_target(target), ffi.load_device(device),
+                 [ffi.load_array(array) for array in args
+                 ], {key: ffi.load_array(array) for key, array in kws.items()}),
+                [ffi.load_ast(func) for func in params])
 
     @classmethod
     def args_serialization(cls, attached_params: tuple, params: List) -> tuple:
