@@ -140,14 +140,14 @@ void init_ffi_pass(py::module_ &m) {
            const std::optional<std::vector<ID>> &togetherIds) {
             return hoistVarOverStmtSeq(func, togetherIds);
         },
-        "func"_a, "together_ids"_a);
+        "func"_a, "together_ids"_a = std::nullopt);
     m.def(
         "hoist_var_over_stmt_seq",
         [](const Stmt &stmt,
            const std::optional<std::vector<ID>> &togetherIds) {
             return hoistVarOverStmtSeq(stmt, togetherIds);
         },
-        "stmt"_a, "together_ids"_a);
+        "stmt"_a, "together_ids"_a = std::nullopt);
 
     // CPU
     m.def("cpu_lower_parallel_reduction",
