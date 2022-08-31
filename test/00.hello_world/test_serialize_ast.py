@@ -352,6 +352,7 @@ def test_io_tensor():
     print(ast2)
     assert ast2.match(ast)
 
+
 def test_fission_metadata():
     with ft.VarDef("x", (8,), "int32", "output", "cpu") as x:
         with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
