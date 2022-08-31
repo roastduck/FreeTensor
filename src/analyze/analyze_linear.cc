@@ -61,11 +61,11 @@ Opt<std::pair<LinearExpr<int64_t>, ASTNodeType>> linearComp(const Expr &expr) {
     case ASTNodeType::EQ:
     case ASTNodeType::NE:
         return Opt<std::pair<LinearExpr<int64_t>, ASTNodeType>>::make(
-            std::make_pair(linear(makeSub(expr.as<BinaryExprNode>()->lhs_,
-                                          expr.as<BinaryExprNode>()->rhs_)),
-                           expr->nodeType()));
+            linear(makeSub(expr.as<BinaryExprNode>()->lhs_,
+                           expr.as<BinaryExprNode>()->rhs_)),
+            expr->nodeType());
     default:
-        return nullptr;
+        return std::nullopt;
     }
 }
 

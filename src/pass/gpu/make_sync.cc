@@ -17,21 +17,21 @@ namespace gpu {
 void FindAllThreads::visit(const For &op) {
     if (op->property_->parallel_ == threadIdxX) {
         if (op->len_->nodeType() == ASTNodeType::IntConst) {
-            thx_ = Opt<int>::make(op->len_.as<IntConstNode>()->val_);
+            thx_ = op->len_.as<IntConstNode>()->val_;
         } else {
-            thx_ = nullptr;
+            thx_ = std::nullopt;
         }
     } else if (op->property_->parallel_ == threadIdxY) {
         if (op->len_->nodeType() == ASTNodeType::IntConst) {
-            thy_ = Opt<int>::make(op->len_.as<IntConstNode>()->val_);
+            thy_ = op->len_.as<IntConstNode>()->val_;
         } else {
-            thy_ = nullptr;
+            thy_ = std::nullopt;
         }
     } else if (op->property_->parallel_ == threadIdxZ) {
         if (op->len_->nodeType() == ASTNodeType::IntConst) {
-            thz_ = Opt<int>::make(op->len_.as<IntConstNode>()->val_);
+            thz_ = op->len_.as<IntConstNode>()->val_;
         } else {
-            thz_ = nullptr;
+            thz_ = std::nullopt;
         }
     }
     Visitor::visit(op);

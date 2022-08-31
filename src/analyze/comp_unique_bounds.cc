@@ -76,7 +76,7 @@ int64_t CompUniqueBounds::getIntUpper(const Expr &op) {
 Opt<int64_t> CompUniqueBounds::getInt(const Expr &op) {
     auto lower = getIntLower(op);
     auto upper = getIntUpper(op);
-    return lower == upper ? Opt<int64_t>::make(lower) : nullptr;
+    return lower == upper ? Opt<int64_t>::make(lower) : std::nullopt;
 }
 
 CompUniqueBounds::LowerBoundsList CompUniqueBounds::getDefinedLower(

@@ -2,6 +2,7 @@
 #include <unordered_map>
 
 #include <analyze/deps.h>
+#include <pass/hoist_var_over_stmt_seq.h>
 #include <schedule/swap.h>
 
 namespace freetensor {
@@ -36,8 +37,10 @@ Stmt Swap::visit(const StmtSeq &_op) {
 }
 
 Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
+    auto ast = hoistVarOverStmtSeq(_ast, order);
+
     Swap mutator(order);
-    auto ast = mutator(_ast);
+    ast = mutator(ast);
     auto scope = mutator.scope();
     if (!scope.isValid()) {
         throw InvalidSchedule("Statements not found or not consecutive");

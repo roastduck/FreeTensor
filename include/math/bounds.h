@@ -99,7 +99,7 @@ lin2bounds(const LinearExpr<T> &_lin, ASTNodeType cmp, const Expr &x) {
         }
     }
     if (!selfK.isValid() || *selfK == 0) {
-        return RetType(nullptr, nullptr);
+        return RetType(std::nullopt, std::nullopt);
     }
 
     // 3. Normalize according to selfK
@@ -118,21 +118,21 @@ lin2bounds(const LinearExpr<T> &_lin, ASTNodeType cmp, const Expr &x) {
     // x < 1/selfK * y <==> x <= 1/selfK * y - 1/selfK
     switch (cmp) {
     case ASTNodeType::LE:
-        return RetType(nullptr, Opt<UpperBound>::make(lin));
+        return RetType(std::nullopt, Opt<UpperBound>::make(lin));
     case ASTNodeType::LT:
-        return RetType(nullptr,
+        return RetType(std::nullopt,
                        Opt<UpperBound>::make(LinearExpr<Rational<int64_t>>{
                            lin.coeff_, lin.bias_ - 1 / std::abs(*selfK)}));
     case ASTNodeType::GE:
-        return RetType(Opt<LowerBound>::make(lin), nullptr);
+        return RetType(Opt<LowerBound>::make(lin), std::nullopt);
     case ASTNodeType::GT:
         return RetType(Opt<LowerBound>::make(LinearExpr<Rational<int64_t>>{
                            lin.coeff_, lin.bias_ + 1 / std::abs(*selfK)}),
-                       nullptr);
+                       std::nullopt);
     case ASTNodeType::EQ:
         return RetType(Opt<LowerBound>::make(lin), Opt<UpperBound>::make(lin));
     default:
-        return RetType(nullptr, nullptr);
+        return RetType(std::nullopt, std::nullopt);
     }
 }
 

@@ -8,12 +8,13 @@ namespace freetensor {
 template <class T> class Opt {
     std::optional<T> opt_;
 
-  private:
-    Opt(std::optional<T> &&opt) : opt_(std::move(opt)) {}
-
   public:
     Opt() = default;
-    Opt(std::nullptr_t) : Opt() {}
+    Opt(std::nullopt_t) : Opt() {}
+    Opt(const T &item) : opt_(item) {}
+    Opt(T &&item) : opt_(std::move(item)) {}
+    Opt(const std::optional<T> &opt) : opt_(opt) {}
+    Opt(std::optional<T> &&opt) : opt_(std::move(opt)) {}
 
     bool isValid() const { return opt_.has_value(); }
 
@@ -39,9 +40,11 @@ template <class T> class Opt {
 
     operator std::optional<T>() { return opt_; }
 
-    static Opt make() { return Opt(T()); }
-    static Opt make(T &&x) { return Opt(std::move(x)); }
-    static Opt make(const T &x) { return Opt(x); }
+    static Opt make(T &&x) { return std::make_optional(std::move(x)); }
+    static Opt make(const T &x) { return std::make_optional(x); }
+    template <class... Args> static Opt make(Args &&...args) {
+        return std::make_optional<T>(std::forward<Args>(args)...);
+    }
 
     friend bool operator==(const Opt &lhs, const Opt &rhs) {
         return lhs.opt_ == rhs.opt_;
