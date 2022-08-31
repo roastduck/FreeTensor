@@ -387,6 +387,16 @@ template <PBMapRef T> PBMap lexmin(T &&map) {
     return isl_map_lexmin(PBRefTake<T>(map));
 }
 
+template <PBSetRef T> PBSet lexmax(T &&set) {
+    DEBUG_PROFILE_VERBOSE("lexmax", "nBasic=" + std::to_string(set.nBasic()));
+    return isl_set_lexmax(PBRefTake<T>(set));
+}
+
+template <PBSetRef T> PBSet lexmin(T &&set) {
+    DEBUG_PROFILE_VERBOSE("lexmin", "nBasic=" + std::to_string(set.nBasic()));
+    return isl_set_lexmin(PBRefTake<T>(set));
+}
+
 template <PBSpaceRef T> PBMap identity(T &&space) {
     DEBUG_PROFILE("identity");
     return isl_map_identity(PBRefTake<T>(space));
@@ -410,24 +420,6 @@ template <PBSpaceRef T> PBMap lexLE(T &&space) {
 template <PBSpaceRef T> PBMap lexLT(T &&space) {
     DEBUG_PROFILE("lexLT");
     return isl_map_lex_lt(PBRefTake<T>(space));
-}
-
-inline PBMap lexLE(PBSpace &&space) {
-    DEBUG_PROFILE("lexLE");
-    return isl_map_lex_le(space.move());
-}
-inline PBMap lexLE(const PBSpace &space) {
-    DEBUG_PROFILE("lexLE");
-    return isl_map_lex_le(space.copy());
-}
-
-inline PBMap lexLT(PBSpace &&space) {
-    DEBUG_PROFILE("lexLT");
-    return isl_map_lex_lt(space.move());
-}
-inline PBMap lexLT(const PBSpace &space) {
-    DEBUG_PROFILE("lexLT");
-    return isl_map_lex_lt(space.copy());
 }
 
 inline PBSpace spaceAlloc(const PBCtx &ctx, unsigned nparam, unsigned nIn,
@@ -483,6 +475,32 @@ template <PBSetRef T> PBVal dimMinVal(T &&set, int pos) {
 
 template <PBSpaceRef T> PBSpace spaceMapFromSet(T &&space) {
     return isl_space_map_from_set(PBRefTake<T>(space));
+}
+
+template <PBMapRef T> PBSet flattenMapToSet(T &&map) {
+    return isl_set_flatten(isl_map_wrap(PBRefTake<T>(map)));
+}
+
+/**
+ * @brief Compute the set of coefficients corresponded to the given set
+ *
+ * The output coefficient set will be of the same dimension as the given set
+ *
+ * Let the variables of the input set $X$ be $x_i$, and that of the output
+ * coefficient set $C$ be $c_i$, then this procedure guarantees:
+ * $\{c_i\} \in C \Leftrightarrow \forall \{x_i\} \in X, \Sigma c_i x_i \geq 0$
+ *
+ * @param set the input set
+ * @return PBSet set of valid coefficients for the input set
+ */
+template <PBSetRef T> PBSet coefficients(T &&set) {
+    auto coefficientsMap = isl_map_from_basic_map(
+        isl_basic_set_unwrap(isl_set_coefficients(PBRefTake<T>(set))));
+    auto constantsDomainSpace =
+        isl_space_domain(isl_map_get_space(coefficientsMap));
+    return apply(
+        PBSet(isl_set_from_point(isl_point_zero(constantsDomainSpace))),
+        PBMap(coefficientsMap));
 }
 
 inline bool operator==(const PBSet &lhs, const PBSet &rhs) {
