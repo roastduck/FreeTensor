@@ -351,3 +351,23 @@ def test_io_tensor():
     ast2 = ft.load_ast(txt)
     print(ast2)
     assert ast2.match(ast)
+
+
+def test_fission_metadata():
+    with ft.VarDef("x", (8,), "int32", "output", "cpu") as x:
+        with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
+            with ft.For("i", 0, 8, label="L") as i:
+                x[i] = i
+                ft.MarkLabel("Y")
+                y[i] = i
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.fission("L", ft.FissionSide.Before, "Y")
+    ast = s.ast()
+    txt = ft.dump_ast(ast)
+    print(txt)
+    assert '$fission.0' in txt
+    assert '$fission.1' in txt
+    ast2 = ft.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
