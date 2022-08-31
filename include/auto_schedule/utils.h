@@ -79,12 +79,12 @@ inline std::vector<std::pair<ID, int>> splitLoop(Schedule &schedule, ID loop,
         if (tiling[i] != 1) {
             auto t = schedule.split(loop, tiling[i]);
             loop = t.first;
-            result[n - i - 1] = std::make_pair(t.second, tiling[i]);
+            result[n - i - 1] = {t.second, tiling[i]};
         } else {
-            result[n - i - 1] = std::make_pair("", 1);
+            result[n - i - 1] = {{}, 1};
         }
     }
-    result[0] = std::make_pair(loop, tiling[n - 1]);
+    result[0] = {loop, tiling[n - 1]};
     return result;
 }
 
@@ -93,17 +93,18 @@ inline Schedule::IDMap fissionLoops(Schedule &schedule,
     int n = loops.size();
     Schedule::IDMap ret;
     for (int i = n - 1; i >= 0; i--) {
-        auto now =
-            schedule.fission(loops[i], FissionSide::After, splitter).second;
+        auto [before, after] =
+            schedule.fission(loops[i], FissionSide::After, splitter);
         if (ret.empty()) {
-            ret = now;
+            ret = after;
         } else {
             for (auto &&[key, value] : ret) {
-                ret[key] = now[value];
+                ret[key] = after[value];
             }
-            ret[loops[i]] = loops[i].strId() + ".b";
+            ret[loops[i]] = after[loops[i]];
         }
-        splitter = loops[i].strId() + ".a";
+        ASSERT(before.count(loops[i]) == 1);
+        splitter = before[loops[i]];
     }
     return ret;
 }

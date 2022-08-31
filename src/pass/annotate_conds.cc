@@ -30,13 +30,12 @@ Stmt AnnotateConds::visit(const StmtSeq &op) {
             }
         }
         if (annotate.isValid()) {
-            auto assume =
-                makeAssume("", annotate, makeStmtSeq("", std::move(stmts)));
+            auto assume = makeAssume(annotate, makeStmtSeq(std::move(stmts)));
             stmts = {assume};
         }
         stmts.emplace_back((*this)(stmt));
     }
-    return makeStmtSeq(op->id(), std::move(stmts));
+    return makeStmtSeq(std::move(stmts), op->metadata(), op->id());
 }
 
 Stmt AnnotateConds::visit(const For &op) {
@@ -73,9 +72,9 @@ Stmt AnnotateConds::visit(const For &op) {
     auto body = (*this)(op->body_);
     conds_.resize(oldCondsSize);
 
-    return makeFor(op->id(), op->iter_, std::move(begin), std::move(end),
-                   std::move(step), std::move(len), op->property_,
-                   std::move(body));
+    return makeFor(op->iter_, std::move(begin), std::move(end), std::move(step),
+                   std::move(len), op->property_, std::move(body),
+                   op->metadata(), op->id());
 }
 
 Stmt AnnotateConds::visit(const If &op) {
@@ -94,8 +93,8 @@ Stmt AnnotateConds::visit(const If &op) {
         conds_.resize(oldCondsSize);
     }
 
-    return makeIf(op->id(), std::move(cond), std::move(thenCase),
-                  std::move(elseCase));
+    return makeIf(std::move(cond), std::move(thenCase), std::move(elseCase),
+                  op->metadata(), op->id());
 }
 
 Stmt AnnotateConds::visit(const Assert &op) {
@@ -106,7 +105,8 @@ Stmt AnnotateConds::visit(const Assert &op) {
     auto body = (*this)(op->body_);
     conds_.resize(oldCondsSize);
 
-    return makeAssert(op->id(), std::move(cond), std::move(body));
+    return makeAssert(std::move(cond), std::move(body), op->metadata(),
+                      op->id());
 }
 
 Stmt AnnotateConds::visit(const Assume &op) { return (*this)(op->body_); }

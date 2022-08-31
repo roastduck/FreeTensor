@@ -21,11 +21,11 @@ class FindAllIfs : public Visitor {
     void visit(const If &op) override;
 };
 
-class AppendIDs : public Mutator {
-    std::string suffix_;
+class WrapMetadata : public Mutator {
+    std::string op_;
 
   public:
-    AppendIDs(const std::string &suffix) : suffix_(suffix) {}
+    WrapMetadata(const std::string &op) : op_(op) {}
 
   protected:
     Stmt visitStmt(const Stmt &op) override;

@@ -13,12 +13,12 @@ def test_tiling():
         ("b", (256, 256), "float32", "input", "cpu"),
         ("c", (256, 256), "float32", "output", "cpu"),
     ]) as (a, b, c):
-        with ft.For("i", 0, 256, nid="Li") as i:
-            with ft.For("j", 0, 256, nid="Lj") as j:
+        with ft.For("i", 0, 256, label="Li") as i:
+            with ft.For("j", 0, 256, label="Lj") as j:
                 with ft.NamedScope("S0"):
                     c[i, j] = 0
-                    with ft.For("k", 0, 256, nid="Lk") as k:
-                        ft.MarkNid("S1")
+                    with ft.For("k", 0, 256, label="Lk") as k:
+                        ft.MarkLabel("S1")
                         c[i, j] = c[i, j] + a[i, k] * b[k, j]
 
     i, j = "Li", "Lj"
@@ -58,10 +58,9 @@ def test_tiling():
                                                "cache", "cpu") as cw:
                                     cw[0, 0] = 0
                                     with ft.For("k", 0, 256) as k:
-                                        cw[0,
-                                           0] = cw[0, 0] + ar[i1, k] * br[k, j1]
+                                        cw[0, 0] += ar[i1, k] * br[k, j1]
                                     c[i1 + 32 * i0, 32 * j0 + j1] = cw[0, 0]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
     assert std.match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -87,7 +86,7 @@ def test_tiled_reduction():
         ("y", (1,), "float32", "output", "cpu"),
     ]) as (x, y):
         y[0] = 0
-        with ft.For("i", 0, 256, nid="Li") as i:
+        with ft.For("i", 0, 256, label="Li") as i:
             y[0] = y[0] + x[i]
 
     i = "Li"
@@ -108,9 +107,9 @@ def test_tiled_reduction():
             with ft.VarDef("yw", (1,), "float32", "cache", "cpu") as yw:
                 yw[0] = 0.0
                 with ft.For("i1", 0, 64) as i1:
-                    yw[0] = yw[0] + x[i1 + 64 * i0]
-                y[0] = y[0] + yw[0]
-    std = ft.make_reduction(ft.pop_ast())
+                    yw[0] += x[i1 + 64 * i0]
+                y[0] += yw[0]
+    std = ft.pop_ast()
     assert std.match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -133,9 +132,9 @@ def test_parallel_reduction():
         ("x", (256,), "float32", "input", "cpu"),
         ("y", (1,), "float32", "output", "cpu"),
     ]) as (x, y):
-        ft.MarkNid("S0")
+        ft.MarkLabel("S0")
         y[0] = 0
-        with ft.For("i", 0, 256, nid="Li") as i:
+        with ft.For("i", 0, 256, label="Li") as i:
             y[0] = y[0] + x[i]
 
     i, S0 = "Li", "S0"
@@ -144,8 +143,8 @@ def test_parallel_reduction():
     s = ft.Schedule(func)
     i0, i1 = s.split(i, 64)
     init, final, _, _ = s.cache_reduction(i1, "y", "cpu")
-    final = s.move_to(final, ft.MoveToSide.After, i0)
-    S0 = s.move_to(S0, ft.MoveToSide.Before, final)
+    _, final = s.move_to(final, ft.MoveToSide.After, i0)
+    _, S0 = s.move_to(S0, ft.MoveToSide.Before, final)
 
     s.parallelize(i0, "openmp")
 
@@ -159,11 +158,11 @@ def test_parallel_reduction():
             with ft.For("i0", 0, 4) as i0:
                 yw[i0, 0] = 0.0
                 with ft.For("i1", 0, 64) as i1:
-                    yw[i0, 0] = yw[i0, 0] + x[i1 + 64 * i0]
+                    yw[i0, 0] += x[i1 + 64 * i0]
             y[0] = 0
             with ft.For("i0", 0, 4) as i0:
-                y[0] = y[0] + yw[i0, 0]
-    std = ft.make_reduction(ft.pop_ast())
+                y[0] += yw[i0, 0]
+    std = ft.pop_ast()
     assert std.match(func.body)
 
     code = ft.codegen(func, target, verbose=True)
@@ -192,12 +191,12 @@ def test_dynamic_tiling():
             ("b", (k, m), "float32", "input", "cpu"),
             ("c", (n, m), "float32", "output", "cpu"),
         ]) as (a, b, c):
-            with ft.For("i", 0, n, nid="Li") as i:
-                with ft.For("j", 0, m, nid="Lj") as j:
+            with ft.For("i", 0, n, label="Li") as i:
+                with ft.For("j", 0, m, label="Lj") as j:
                     with ft.NamedScope("S0"):
                         c[i, j] = 0
-                        with ft.For("p", 0, k, nid="Lp") as p:
-                            ft.MarkNid("S1")
+                        with ft.For("p", 0, k, label="Lp") as p:
+                            ft.MarkLabel("S1")
                             c[i, j] = c[i, j] + a[i, p] * b[p, j]
 
     i, j = "Li", "Lj"
@@ -250,10 +249,10 @@ def test_collaborative_fetch():
         ("b", (256, 32), "float32", "input", "gpu/global"),
         ("c", (32, 32), "float32", "output", "gpu/global"),
     ]) as (a, b, c):
-        with ft.For("i", 0, 32, nid="Li") as i:
-            with ft.For("j", 0, 32, nid="Lj") as j:
+        with ft.For("i", 0, 32, label="Li") as i:
+            with ft.For("j", 0, 32, label="Lj") as j:
                 c[i, j] = 0
-                with ft.For("k", 0, 256, nid="Lk") as k:
+                with ft.For("k", 0, 256, label="Lk") as k:
                     c[i, j] = c[i, j] + a[i, k] * b[k, j]
 
     i, j, k = "Li", "Lj", "Lk"
@@ -267,12 +266,12 @@ def test_collaborative_fetch():
     s.parallelize(j, "threadIdx.x")
     s.parallelize(
         s.find(
-            lambda x: x.type() == ft.ASTNodeType.For and x.body.nid == fill_a),
+            lambda x: x.type() == ft.ASTNodeType.For and x.body.id == fill_a),
         "threadIdx.x",
     )
     s.parallelize(
         s.find(
-            lambda x: x.type() == ft.ASTNodeType.For and x.body.nid == fill_b),
+            lambda x: x.type() == ft.ASTNodeType.For and x.body.id == fill_b),
         "threadIdx.y",
     )
     func = ft.lower(s.func(), target, verbose=1)
@@ -295,18 +294,18 @@ def test_vectorize_spmv():
     with ft.VarDef([("x1", (64, 64), "int32", "input", "cpu"),
                     ("x2", (64,), "int32", "input", "cpu"),
                     ("y", (64,), "int32", "output", "cpu")]) as (x1, x2, y):
-        with ft.For("i", 0, 64, nid="Li") as i:
-            ft.MarkNid("S0")
+        with ft.For("i", 0, 64, label="Li") as i:
+            ft.MarkLabel("S0")
             y[i] = 0
-            with ft.For("j", 0, 64, nid="Lj") as j:
+            with ft.For("j", 0, 64, label="Lj") as j:
                 y[i] += x1[i, j] * x2[j]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     i0, i1 = s.split("Li", 4)
     s.reorder([i0, "Lj", i1])
-    s.move_to("S0", ft.MoveToSide.Before, "Lj")
+    S0, _ = s.move_to("S0", ft.MoveToSide.Before, "Lj")
     s.vectorize(i1)
-    s.vectorize(s.find("S0.a").parent_stmt())  # FIXME: do not hard-code S0.a
+    s.vectorize(s.find(S0).parent_stmt())
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -317,9 +316,9 @@ def test_vectorize_spmv():
         with ft.For("i0", 0, 16) as i0:
             with ft.For("i1", 0, 4) as i1:
                 y[i1 + 4 * i0] = 0
-            with ft.For("j", 0, 64, nid="Lj") as j:
+            with ft.For("j", 0, 64, label="Lj") as j:
                 with ft.For("i1", 0, 4) as i1:
                     y[i1 + 4 * i0] += x1[i1 + 4 * i0, j] * x2[j]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)

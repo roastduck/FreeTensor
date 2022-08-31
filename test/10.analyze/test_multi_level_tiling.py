@@ -12,9 +12,9 @@ def test_basic():
                         x,
                         y,
                     ):
-        with ft.For("i", 0, a, nid='L1') as i:
-            with ft.For("j", 0, a, nid='L2') as j:
-                with ft.For("k", 0, b, nid='L3') as k:
+        with ft.For("i", 0, a, label='L1') as i:
+            with ft.For("j", 0, a, label='L2') as j:
+                with ft.For("k", 0, b, label='L3') as k:
                     y[i, j] = y[i, j] + w[i, k] * x[k, j]
     ast = ft.pop_ast()
     fors_with_data_reuse = ft.find_multi_level_tiling(ast)
@@ -32,8 +32,8 @@ def test_basic_2():
                         x,
                         y,
                     ):
-        with ft.For("i", 0, a, nid='L1') as i:
-            with ft.For("j", 0, a, nid='L2') as j:
+        with ft.For("i", 0, a, label='L1') as i:
+            with ft.For("j", 0, a, label='L2') as j:
                 y[i, j] = y[i, j] + w[i, j] * x[0, j]
     ast = ft.pop_ast()
     fors_with_data_reuse = ft.find_multi_level_tiling(ast)
@@ -50,12 +50,12 @@ def test_middle_store():
                     ("x", (m, m, b, a), "int32", "input", "cpu"),
                     ("y", (m, m, a, a), "int32", "output", "cpu"),
                     ("z", (m, m), "int32", "output", "cpu")]) as (w, x, y, z):
-        with ft.For("i", 0, m, nid='L1') as i:
-            with ft.For("j", 0, m, nid='L2') as j:
+        with ft.For("i", 0, m, label='L1') as i:
+            with ft.For("j", 0, m, label='L2') as j:
                 z[i, j] = i * j
-                with ft.For("p", 0, a, nid='L3') as p:
-                    with ft.For("k", 0, b, nid='L4') as k:
-                        with ft.For("q", 0, a, nid='L5') as q:
+                with ft.For("p", 0, a, label='L3') as p:
+                    with ft.For("k", 0, b, label='L4') as k:
+                        with ft.For("q", 0, a, label='L5') as q:
                             y[i, j, p,
                               q] = y[i, j, p, q] + w[i, j, p, k] * x[i, j, k, q]
     ast = ft.pop_ast()
@@ -74,15 +74,15 @@ def test_two_branches():
                     ("y", (m, m, a, a), "int32", "output", "cpu"),
                     ("z", (m, m, a, a), "int32", "output", "cpu")]) as (w, x, y,
                                                                         z):
-        with ft.For("i", 0, m, nid='L1') as i:
-            with ft.For("j", 0, m, nid='L2') as j:
-                with ft.For("k", 0, b, nid='L3') as k:
-                    with ft.For("p", 0, a, nid='L4') as p:
-                        with ft.For("q", 0, a, nid='L5') as q:
+        with ft.For("i", 0, m, label='L1') as i:
+            with ft.For("j", 0, m, label='L2') as j:
+                with ft.For("k", 0, b, label='L3') as k:
+                    with ft.For("p", 0, a, label='L4') as p:
+                        with ft.For("q", 0, a, label='L5') as q:
                             y[i, j, p,
                               q] = y[i, j, p, q] + w[i, j, p, k] * x[i, j, k, q]
-                with ft.For("p", 0, b, nid='L6') as p:
-                    with ft.For("q", 0, a, nid='L7') as q:
+                with ft.For("p", 0, b, label='L6') as p:
+                    with ft.For("q", 0, a, label='L7') as q:
                         z[i, j, p, q] = w[i, j, p, 1] * x[i, j, 1, q]
     ast = ft.pop_ast()
     fors_with_data_reuse = ft.find_multi_level_tiling(ast)
@@ -100,15 +100,15 @@ def test_no_data_reuse():
                     ("y", (m, m, a, a), "int32", "output", "cpu"),
                     ("z", (m, m, a, a), "int32", "output", "cpu")]) as (w, x, y,
                                                                         z):
-        with ft.For("i", 0, m, nid='L1') as i:
-            with ft.For("j", 0, m, nid='L2') as j:
-                with ft.For("k", 0, b, nid='L3') as k:
-                    with ft.For("p", 0, a, nid='L4') as p:
-                        with ft.For("q", 0, a, nid='L5') as q:
+        with ft.For("i", 0, m, label='L1') as i:
+            with ft.For("j", 0, m, label='L2') as j:
+                with ft.For("k", 0, b, label='L3') as k:
+                    with ft.For("p", 0, a, label='L4') as p:
+                        with ft.For("q", 0, a, label='L5') as q:
                             y[i, j, p,
                               q] = y[i, j, p, q] + w[i, j, p, k] * x[i, j, k, q]
-                with ft.For("p", 0, a, nid='L6') as p:
-                    with ft.For("q", 0, a, nid='L7') as q:
+                with ft.For("p", 0, a, label='L6') as p:
+                    with ft.For("q", 0, a, label='L7') as q:
                         z[i, j, p, q] = y[i, j, p, q]
     ast = ft.pop_ast()
     fors_with_data_reuse = ft.find_multi_level_tiling(ast)
@@ -126,14 +126,14 @@ def test_no_data_reuse_exchange():
                     ("y", (m, m, a, a), "int32", "output", "cpu"),
                     ("z", (m, m, a, a), "int32", "output", "cpu")]) as (w, x, y,
                                                                         z):
-        with ft.For("i", 0, m, nid='L1') as i:
-            with ft.For("j", 0, m, nid='L2') as j:
-                with ft.For("p", 0, a, nid='L6') as p:
-                    with ft.For("q", 0, a, nid='L7') as q:
+        with ft.For("i", 0, m, label='L1') as i:
+            with ft.For("j", 0, m, label='L2') as j:
+                with ft.For("p", 0, a, label='L6') as p:
+                    with ft.For("q", 0, a, label='L7') as q:
                         z[i, j, p, q] = y[i, j, p, q]
-                with ft.For("k", 0, b, nid='L3') as k:
-                    with ft.For("p", 0, a, nid='L4') as p:
-                        with ft.For("q", 0, a, nid='L5') as q:
+                with ft.For("k", 0, b, label='L3') as k:
+                    with ft.For("p", 0, a, label='L4') as p:
+                        with ft.For("q", 0, a, label='L5') as q:
                             y[i, j, p,
                               q] = y[i, j, p, q] + w[i, j, p, k] * x[i, j, k, q]
     ast = ft.pop_ast()
@@ -154,16 +154,16 @@ def test_root_and_branch():
                     ("u", (m, m), "int32", "output", "cpu"),
                     ("v", (m,), "int32", "input", "cpu")]) as (w, x, y, z, u,
                                                                v):
-        with ft.For("i", 0, m, nid='L1') as i:
-            with ft.For("j", 0, m, nid='L2') as j:
+        with ft.For("i", 0, m, label='L1') as i:
+            with ft.For("j", 0, m, label='L2') as j:
                 u[i, j] = j * v[i]
-                with ft.For("k", 0, b, nid='L3') as k:
-                    with ft.For("p", 0, a, nid='L4') as p:
-                        with ft.For("q", 0, a, nid='L5') as q:
+                with ft.For("k", 0, b, label='L3') as k:
+                    with ft.For("p", 0, a, label='L4') as p:
+                        with ft.For("q", 0, a, label='L5') as q:
                             y[i, j, p,
                               q] = y[i, j, p, q] + w[i, j, p, k] * x[i, j, k, q]
-                with ft.For("p", 0, a, nid='L6') as p:
-                    with ft.For("q", 0, a, nid='L7') as q:
+                with ft.For("p", 0, a, label='L6') as p:
+                    with ft.For("q", 0, a, label='L7') as q:
                         z[i, j, p, q] = y[i, j, p, q]
     ast = ft.pop_ast()
     fors_with_data_reuse = ft.find_multi_level_tiling(ast)
@@ -182,16 +182,16 @@ def test_root_with_no_data_reuse():
                     ("z", (m, m, a, a), "int32", "output", "cpu"),
                     ("u", (m, m), "int32", "output", "cpu")]) as (w, x, y, z,
                                                                   u):
-        with ft.For("i", 0, m, nid='L1') as i:
-            with ft.For("j", 0, m, nid='L2') as j:
+        with ft.For("i", 0, m, label='L1') as i:
+            with ft.For("j", 0, m, label='L2') as j:
                 u[i, j] = i * j
-                with ft.For("k", 0, b, nid='L3') as k:
-                    with ft.For("p", 0, a, nid='L4') as p:
-                        with ft.For("q", 0, a, nid='L5') as q:
+                with ft.For("k", 0, b, label='L3') as k:
+                    with ft.For("p", 0, a, label='L4') as p:
+                        with ft.For("q", 0, a, label='L5') as q:
                             y[i, j, p,
                               q] = y[i, j, p, q] + w[i, j, p, k] * x[i, j, k, q]
-                with ft.For("p", 0, a, nid='L6') as p:
-                    with ft.For("q", 0, a, nid='L7') as q:
+                with ft.For("p", 0, a, label='L6') as p:
+                    with ft.For("q", 0, a, label='L7') as q:
                         z[i, j, p, q] = y[i, j, p, q]
     ast = ft.pop_ast()
     fors_with_data_reuse = ft.find_multi_level_tiling(ast)

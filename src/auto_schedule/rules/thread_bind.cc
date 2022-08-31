@@ -41,9 +41,9 @@ void ThreadBindPart::apply(Schedule &schedule, SubSketch &subSketch) {
             threadLoops.push_back(tiles[i].first);
         }
     }
-    ID blockID = mergeLoops(schedule, blockLoops);
-    ID vthreadID = mergeLoops(schedule, vthreadLoops);
-    ID threadID = mergeLoops(schedule, threadLoops);
+    auto blockID = mergeLoops(schedule, blockLoops);
+    auto vthreadID = mergeLoops(schedule, vthreadLoops);
+    auto threadID = mergeLoops(schedule, threadLoops);
     if (blockID.isValid()) {
         schedule.parallelize(blockID, blockIdxX);
         lastParallelizedID_ = blockID;

@@ -88,7 +88,8 @@ void CountScopeLen::visit(const Assert &op) {
 void AnalyzeVersion::visit(const Load &op) {
     BaseClass::visit(op);
     if (op->var_ == var_) {
-        versions_[ID(op, curStmt())] = makeSub(offset_, makeIntConst(1));
+        versions_[StmtOrExprID(op, curStmt())] =
+            makeSub(offset_, makeIntConst(1));
     }
 }
 
@@ -150,7 +151,7 @@ void AnalyzeVersion::visit(const StmtSeq &op) {
     offset_ = oldOffset;
 }
 
-std::pair<std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
+std::pair<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>>
 analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
     auto op = flattenStmtSeq(_op);
 
@@ -193,7 +194,7 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
         })
         .eraseOutsideVarDef(false)(op, found2);
 
-    std::unordered_map<ID, Expr> versions;
+    std::unordered_map<StmtOrExprID, Expr> versions;
     std::unordered_map<ID, Expr> totLens;
     for (auto &&defId : intermediates) {
         auto &&scopes = affectingScopes[defId];

@@ -10,7 +10,7 @@ target = device.target()
 def test_not_found():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             y[i] = x[i] + 1
     func = ft.Func("main", ["x", "y"], [], ft.pop_ast())
 
@@ -25,7 +25,7 @@ def test_not_found():
 
 def test_dep_not_met():
     with ft.VarDef("y", (5,), "int32", "inout", "cpu") as y:
-        with ft.For("i", 1, 5, nid="L1") as i:
+        with ft.For("i", 1, 5, label="L1") as i:
             y[i] = y[i - 1] + y[i]
     func = ft.Func("main", ["y"], [], ft.pop_ast())
 

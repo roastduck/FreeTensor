@@ -81,7 +81,7 @@ def test_multiple_bounds():
                     with ft.If(j < i):
                         y1[i, j] += b[j]
                         y2[i, j] += b[j]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -108,7 +108,7 @@ def test_bound_only_on_reads():
             with ft.For("i", 0, 4) as i:
                 y1[i] = b[i] + 1
                 y2[i] = b[i] + 2
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 

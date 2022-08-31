@@ -4,11 +4,8 @@ import xmlrpc.client as client
 import sys, socket, uuid, os, time
 import _thread
 
-List = {}
+machineInfo = {}
 quit_server = False
-
-if os.path.exists('./machine_list'):
-    os.remove('./machine_list')
 
 
 def check_connection():
@@ -16,31 +13,21 @@ def check_connection():
 
 
 def register_machine(remoteInfo, sev_status):
-    """机器注册函数，从每个机器拉取网络地址和端口并且分配uuid，同时更新每个机器的本地列表"""
-    global List
+    """The machine registering function that pulls address and ports from available machines and generates an uid for them"""
+    global machineInfo
     print("Registering %s:%d" % (remoteInfo[0], remoteInfo[1]))
     UID = str(uuid.uuid4())
-    try:
-        with open('./machine_list', 'a') as fileList:
-            fileList.write(remoteInfo[0] + ',' + str(remoteInfo[1]) + ',' +
-                           UID + '\n')  #用uuid4函数分配随机不同的uuid
-            fileList.close
-    except IOError:
-        print(
-            "Error occured when creating or writing into the FILE of MACHINE LIST"
-        )
-
-    List[UID] = [remoteInfo[0], remoteInfo[1], sev_status]
+    machineInfo[UID] = [remoteInfo[0], remoteInfo[1], sev_status]
     broadcast(UID, sev_status, new_tag=True)
     remote_server = connect(remoteInfo)
-    for uid, info in List.items():
+    for uid, info in machineInfo.items():
         if uid != UID:
             remote_server.change_status(uid, info[2], True)
     return str(UID)
 
 
 def connect(addr):
-    """允许失败五次的连接，每次连接之间间隔0.1s"""
+    """The number of failed connections can be allowed to be 5 at most."""
     if "http" not in addr[0]:
         addr[0] = "http://" + addr[0]
     for cnt in range(5):
@@ -61,9 +48,9 @@ def connect(addr):
 
 
 def broadcast(host_uid, status, new_tag=False):
-    """向所有机器广播host_uid的状态变更"""
-    List[host_uid][2] = status
-    for uid, addr in List.items():
+    """Broadcast the status change of the machine host_uid to other machines"""
+    machineInfo[host_uid][2] = status
+    for uid, addr in machineInfo.items():
         if uid != host_uid:
             remote_server = connect(addr)
             remote_server.change_status(host_uid, status, new_tag)
@@ -71,28 +58,24 @@ def broadcast(host_uid, status, new_tag=False):
 
 def task_submit(remote_host_uid, src_host_uid, task):
     remote_host_uid = str(remote_host_uid)
-    if remote_host_uid not in List:
+    if remote_host_uid not in machineInfo:
         return -1
-    remote_server = connect(List[remote_host_uid])
+    remote_server = connect(machineInfo[remote_host_uid])
     return remote_server.remote_task_receive(src_host_uid, task)
 
 
 def result_submit(remote_host_uid, src_host_uid, task_result):
     remote_host_uid = str(remote_host_uid)
-    if remote_host_uid not in List:
+    if remote_host_uid not in machineInfo:
         return -1
-    remote_server = connect(List[remote_host_uid])
+    remote_server = connect(machineInfo[remote_host_uid])
     return remote_server.remote_result_receive(src_host_uid, task_result)
 
 
-def run_center(test = False):
-    # 获取内网IP和可用端口
+def run_center(addr='127.0.0.1'):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.connect(("8.8.8.8", 80))
-        if not test:
-            SocketName = (s.getsockname()[0], 8047)  #初始化端口为8047，需要手动用ufw开防火墙端口
-        else:
-            SocketName = ('127.0.0.1', 8047)  #初始化端口为8047，需要手动用ufw开防火墙端口
+        # the initial port is 8047 and you may have to open it through the firewall
+        SocketName = (addr, 8047)
         s.close()
 
     global server
@@ -106,16 +89,12 @@ def run_center(test = False):
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        if os.path.exists('./machine_list'):
-            os.remove('./machine_list')
         print("\nKeyboard interrupt received, exiting.")
         sys.exit(0)
 
 
 def server_shutdown():
-    if os.path.exists('./machine_list'):
-        os.remove('./machine_list')
-    for uid, addr in List.items():
+    for uid, addr in machineInfo.items():
         remote_server = connect(addr)
         remote_server.quit()
         print(uid + ' quitted.')

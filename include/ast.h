@@ -7,6 +7,8 @@
 #include <string>
 
 #include <data_type.h>
+#include <id.h>
+#include <metadata.h>
 #include <ref.h>
 #include <serialize/to_string.h>
 #include <sub_tree.h>
@@ -176,39 +178,29 @@ typedef Ref<StmtNode> Stmt;
 /**
  * Identify an Stmt or Expr acrossing passes, so we do not need to pass pointers
  *
- * An Stmt is identified by a string-typed id_ property, which is unique to each
- * Stmt node
- *
  * An Expr is identified by the hash of itself, combined with the string-typed
  * ID of the Stmt its in, so that any identical Expr in the same Stmt is treated
  * as the same node
  */
-class ID {
-    friend StmtNode;
-
-    std::string stmtId_;
-    Expr expr_; /// null for Stmt
+class StmtOrExprID {
+    ID stmtId_;
+    Expr expr_;
 
   public:
-    ID() {}
-    ID(const char *stmtId) : stmtId_(stmtId) {}
-    ID(const std::string &stmtId) : stmtId_(stmtId) {}
-    explicit ID(const Stmt &stmt);
+    StmtOrExprID(const ID &stmtId) : stmtId_(stmtId) {}
 
-    template <class T> ID(const Expr &expr, T &&parent) : ID(parent) {
+    StmtOrExprID(const Expr &expr, const ID &stmtId)
+        : stmtId_(stmtId), expr_(expr) {}
+
+    template <std::convertible_to<Stmt> T>
+    StmtOrExprID(const Expr &expr, T &&parent) : stmtId_(parent->id()) {
         expr_ = expr;
     }
 
-    bool isValid() const { return !stmtId_.empty(); }
-
-    const std::string &strId() const;
-
-    friend std::ostream &operator<<(std::ostream &os, const ID &id);
-    friend bool operator==(const ID &lhs, const ID &rhs);
-    friend struct ::std::hash<ID>;
+    friend std::ostream &operator<<(std::ostream &os, const StmtOrExprID &id);
+    friend bool operator==(const StmtOrExprID &lhs, const StmtOrExprID &rhs);
+    friend struct ::std::hash<StmtOrExprID>;
 };
-
-std::ostream &operator<<(std::ostream &os, const ID &id);
 
 /**
  * Base class of all statement nodes in an AST
@@ -216,15 +208,15 @@ std::ostream &operator<<(std::ostream &os, const ID &id);
 class StmtNode : public ASTNode {
     friend ID;
 
-    std::string id_;
-    static std::atomic<uint64_t> idCnt_;
+    ID id_;
+    Metadata metadata_;
 
   public:
-    static std::string newId();
-
-    void setId(const ID &id);
+    void setId(const ID &id = ID::make());
     ID id() const;
-    bool hasNamedId() const;
+
+    const Metadata &metadata() const { return metadata_; }
+    Metadata &metadata() { return metadata_; }
 
     bool isStmt() const override { return true; }
 
@@ -253,12 +245,33 @@ AST lcaAST(const AST &lhs, const AST &rhs);
 Expr lcaExpr(const Expr &lhs, const Expr &rhs);
 Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs);
 
+/**
+ * Construct TransformedMetadata with specified operation and source Stmts.
+ *
+ * The children Metadatas are retrieved from the provided Stmts.
+ *
+ * @param op operation of the TransformedMetadata
+ * @param sourceStmts variadic parameters that accept the source Stmts.
+ */
+template <typename... Srcs>
+requires(std::convertible_to<Srcs, Stmt> &&...) auto makeMetadata(
+    const std::string &op, Srcs &&...sourceStmts) {
+    auto metadataFrom = [](const Stmt &s) -> Metadata {
+        if (s->metadata().isValid())
+            return s->metadata();
+        else
+            return makeMetadata(s->id());
+    };
+    return makeMetadata(op,
+                        std::vector<Metadata>{metadataFrom(sourceStmts)...});
+}
+
 } // namespace freetensor
 
 namespace std {
 
-template <> struct hash<freetensor::ID> {
-    size_t operator()(const freetensor::ID &id) const;
+template <> struct hash<freetensor::StmtOrExprID> {
+    size_t operator()(const freetensor::StmtOrExprID &id) const;
 };
 
 } // namespace std

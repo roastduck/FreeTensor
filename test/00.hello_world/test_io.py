@@ -66,9 +66,9 @@ def test_torch_cuda():
         @ft.optimize(schedule_callback=sch)
         def test(x: ft.Var[(2, 2), "int32"]):
             y = ft.empty((2, 2), "int32")
-            #! nid: Li
+            #! label: Li
             for i in range(2):
-                #! nid: Lj
+                #! label: Lj
                 for j in range(2):
                     y[i, j] = x[i, j] + 1
             return y

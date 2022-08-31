@@ -26,9 +26,9 @@ void FindAllIfs::visit(const If &op) {
     results_.insert(op->id());
 }
 
-Stmt AppendIDs::visitStmt(const Stmt &op) {
+Stmt WrapMetadata::visitStmt(const Stmt &op) {
     auto ret = Mutator::visitStmt(op);
-    ret->setId(op->id().strId() + suffix_);
+    ret->metadata() = makeMetadata(op_, ret);
     return ret;
 }
 
@@ -117,24 +117,23 @@ Stmt SeparateTail::visit(const For &_op) {
             return old;
         }
         auto &&sep = separations[i];
-        auto front =
-            makeFor(old->id(), old->iter_, old->begin_, sep, old->step_,
-                    makeCeilDiv(makeSub(sep, old->begin_), old->step_),
-                    old->property_, old->body_);
+        auto front = makeFor(old->iter_, old->begin_, sep, old->step_,
+                             makeCeilDiv(makeSub(sep, old->begin_), old->step_),
+                             old->property_, old->body_, old->metadata());
         auto back = makeFor(
-            old->id(), old->iter_,
+            old->iter_,
             makeAdd(makeMul(makeCeilDiv(makeSub(sep, old->begin_), old->step_),
                             old->step_),
                     old->begin_),
             old->end_, old->step_,
             makeCeilDiv(makeSub(old->end_, sep), old->step_), old->property_,
-            old->body_);
-        front = dfs(i + 1, AppendIDs(".front")(front).as<ForNode>());
-        back = dfs(i + 1, AppendIDs(".back")(back).as<ForNode>());
-        auto separated = makeStmtSeq("", {front, back});
-        auto ret = makeIf(
-            "", makeLAnd(makeGE(sep, old->begin_), makeLE(sep, old->end_)),
-            separated, dfs(i + 1, old));
+            old->body_, old->metadata());
+        front = dfs(i + 1, WrapMetadata("separate-front")(front).as<ForNode>());
+        back = dfs(i + 1, WrapMetadata("separate-back")(back).as<ForNode>());
+        auto separated = makeStmtSeq({front, back});
+        auto ret =
+            makeIf(makeLAnd(makeGE(sep, old->begin_), makeLE(sep, old->end_)),
+                   separated, dfs(i + 1, old));
         nextCandidates_.insert(ret->id());
         return ret;
     };

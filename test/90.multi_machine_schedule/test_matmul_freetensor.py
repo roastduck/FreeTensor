@@ -13,7 +13,7 @@ def test_matmul():
     # c = 64
     device = ft.GPU()
     target = device.target()
-    t = threading.Thread(target=ft.run_center, args=(True,))
+    t = threading.Thread(target=ft.run_center)
     t.start()
     time.sleep(3)
     client = ft.MultiMachineScheduler()
@@ -91,4 +91,3 @@ def test_matmul():
     print(code)
     tmpserver = xmlrpc.client.ServerProxy('http://127.0.0.1:8047')
     tmpserver.shutdown_center()
-

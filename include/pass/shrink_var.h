@@ -51,7 +51,7 @@ class ShrinkVar : public Mutator {
                                         : makeGE(idx, l);
             }
         }
-        return guard.isValid() ? makeIf("", std::move(guard), op) : op;
+        return guard.isValid() ? makeIf(std::move(guard), op) : op;
     }
 
   protected:

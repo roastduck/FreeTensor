@@ -30,19 +30,41 @@ void init_ffi_schedule(py::module_ &m) {
         .def_readonly("time", &AutoScheduleTuneTrial::time_)
         .def_readonly("stddev", &AutoScheduleTuneTrial::stddev_);
 
+    py::class_<Selector, Ref<Selector>>(m, "Selector")
+        .def(
+            py::init([](const std::string &str) { return parseSelector(str); }))
+        .def("match", &Selector::match);
+    py::implicitly_convertible<std::string, Selector>();
+
     py::class_<Schedule>(m, "Schedule")
         .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
         .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
+        .def(py::init<const Schedule &>(), "schedule"_a)
+        .def_property_readonly("verbose", &Schedule::verbose)
         .def("fork", &Schedule::fork)
-        .def("ast", &Schedule::ast)
+        .def("begin_transaction", &Schedule::beginTransaction)
+        .def("commit_transaction", &Schedule::commitTransaction)
+        .def("abort_transaction", &Schedule::abortTransaction)
+        .def("ast",
+             static_cast<const Stmt &(Schedule::*)() const>(&Schedule::ast))
         .def("func", &Schedule::func)
         .def("logs",
              [](const Schedule &s) {
-                 auto &&log = s.logs();
+                 auto &&log = s.logs().asVector();
                  std::vector<std::string> ret;
                  ret.reserve(log.size());
                  for (auto &&item : log) {
                      ret.emplace_back(toString(*item));
+                 }
+                 return ret;
+             })
+        .def("pretty_logs",
+             [](const Schedule &s) {
+                 auto &&log = s.logs().asVector();
+                 std::vector<std::string> ret;
+                 ret.reserve(log.size());
+                 for (auto &&item : log) {
+                     ret.emplace_back(item->toPrettyString());
                  }
                  return ret;
              })
@@ -51,12 +73,17 @@ void init_ffi_schedule(py::module_ &m) {
                          &Schedule::find))
         .def("find",
              static_cast<Stmt (Schedule::*)(const ID &) const>(&Schedule::find))
+        .def("find",
+             static_cast<Stmt (Schedule::*)(const Ref<Selector> &) const>(
+                 &Schedule::find))
         .def("find_all", static_cast<std::vector<Stmt> (Schedule::*)(
                              const std::function<bool(const Stmt &)> &) const>(
                              &Schedule::findAll))
         .def("find_all",
              static_cast<std::vector<Stmt> (Schedule::*)(const ID &) const>(
                  &Schedule::findAll))
+        .def("find_all", static_cast<std::vector<Stmt> (Schedule::*)(
+                             const Ref<Selector> &) const>(&Schedule::findAll))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1, "shift"_a = 0)
         .def("reorder", &Schedule::reorder, "order"_a)
@@ -68,7 +95,7 @@ void init_ffi_schedule(py::module_ &m) {
                 auto wrappedTransformFunc =
                     [transformFunc](const std::vector<Expr> &args) {
                         py::list pyArgs((ssize_t)args.size());
-                        for (auto &&[i, e]: iter::enumerate(args))
+                        for (auto &&[i, e] : iter::enumerate(args))
                             pyArgs[i] = e;
                         return transformFunc(*pyArgs).cast<std::vector<Expr>>();
                     };
@@ -76,7 +103,7 @@ void init_ffi_schedule(py::module_ &m) {
             },
             "loops_id"_a, "transform_func"_a)
         .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,
-             "suffix0"_a = ".a", "suffix1"_a = ".b")
+             "suffix0"_a = ".0", "suffix1"_a = ".1")
         .def("fuse",
              static_cast<ID (Schedule::*)(const ID &, const ID &, bool)>(
                  &Schedule::fuse),
@@ -108,10 +135,11 @@ void init_ffi_schedule(py::module_ &m) {
                  return s.autoSchedule(target);
              })
         .def("auto_use_lib", &Schedule::autoUseLib)
-        .def("auto_fuse",
+        .def("auto_reorder", &Schedule::autoReorder)
+        .def("auto_fission_fuse",
              [](Schedule &s, const Target &target) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda
-                 return s.autoFuse(target);
+                 return s.autoFissionFuse(target);
              })
         .def("auto_parallelize", &Schedule::autoParallelize)
         .def("auto_set_mem_type", &Schedule::autoSetMemType)

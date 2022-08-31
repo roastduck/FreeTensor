@@ -7,7 +7,7 @@ using namespace pybind11::literals;
 
 void init_ffi_ast_stmt(py::module_ &m) {
     auto pyStmt = m.attr("Stmt").cast<py::class_<StmtNode, Stmt>>();
-    pyStmt.def_property_readonly("nid", &StmtNode::id)
+    pyStmt.def_property_readonly("id", &StmtNode::id)
         .def("node",
              [](const Stmt &op) {
                  WARNING("`x.node()` is deprecated. Please directly use `x`");
@@ -61,6 +61,14 @@ void init_ffi_ast_stmt(py::module_ &m) {
         .def_readonly("var", &AllocNode::var_);
     py::class_<FreeNode, Free>(m, "Free", pyStmt)
         .def_readonly("var", &FreeNode::var_);
+    py::enum_<ReduceOp>(m, "ReduceOp")
+        .value("Add", ReduceOp::Add)
+        .value("Sub", ReduceOp::Sub)
+        .value("Max", ReduceOp::Max)
+        .value("Min", ReduceOp::Min)
+        .value("Mul", ReduceOp::Mul)
+        .value("And", ReduceOp::LAnd)
+        .value("Or", ReduceOp::LOr);
     py::class_<ReduceToNode, ReduceTo>(m, "ReduceTo", pyStmt)
         .def_readonly("var", &ReduceToNode::var_)
         .def_property_readonly("indices",
@@ -110,43 +118,59 @@ void init_ffi_ast_stmt(py::module_ &m) {
     // makers
     m.def("makeAny", &_makeAny);
     m.def("makeStmtSeq",
-          static_cast<Stmt (*)(const ID &, const std::vector<Stmt> &)>(
-              &_makeStmtSeq),
-          "id"_a, "stmts"_a);
+          static_cast<Stmt (*)(const std::vector<Stmt> &, const Metadata &,
+                               const ID &)>(&_makeStmtSeq),
+          "stmts"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeVarDef",
-          static_cast<Stmt (*)(const ID &, const std::string &,
-                               const Ref<Buffer> &, const Ref<Tensor> &,
-                               const Stmt &, bool)>(&_makeVarDef),
-          "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a);
+          static_cast<Stmt (*)(const std::string &, const Ref<Buffer> &,
+                               const Ref<Tensor> &, const Stmt &, bool,
+                               const Metadata &, const ID &)>(&_makeVarDef),
+          "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a,
+          "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeStore",
-          static_cast<Stmt (*)(const ID &, const std::string &,
-                               const std::vector<Expr> &, const Expr &)>(
+          static_cast<Stmt (*)(const std::string &, const std::vector<Expr> &,
+                               const Expr &, const Metadata &, const ID &)>(
               &_makeStore<const Expr &>),
-          "nid"_a, "var"_a, "indices"_a, "expr"_a);
+          "var"_a, "indices"_a, "expr"_a, "metadata"_a,
+          py::arg_v("id", ID(), "ID()"));
+    m.def("makeReduceTo",
+          static_cast<Stmt (*)(const std::string &, const std::vector<Expr> &,
+                               ReduceOp, const Expr &, bool, const Metadata &,
+                               const ID &)>(&_makeReduceTo<const Expr &>),
+          "var"_a, "indices"_a, "op"_a, "expr"_a, "atomic"_a, "metadata"_a,
+          py::arg_v("id", ID(), "ID()"));
     m.def("makeAlloc",
-          static_cast<Stmt (*)(const ID &, const std::string &)>(&_makeAlloc),
-          "nid"_a, "var"_a);
+          static_cast<Stmt (*)(const std::string &, const Metadata &,
+                               const ID &)>(&_makeAlloc),
+          "var"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeFree",
-          static_cast<Stmt (*)(const ID &, const std::string &)>(&_makeFree),
-          "nid"_a, "var"_a);
+          static_cast<Stmt (*)(const std::string &, const Metadata &,
+                               const ID &)>(&_makeFree),
+          "var"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeFor",
-          static_cast<Stmt (*)(const ID &, const std::string &, const Expr &,
-                               const Expr &, const Expr &, const Expr &,
-                               const Ref<ForProperty> &, const Stmt &)>(
-              &_makeFor),
-          "nid"_a, "iter"_a, "begin"_a, "end"_a, "step"_a, "len"_a,
-          "property"_a, "body"_a);
+          static_cast<Stmt (*)(const std::string &, const Expr &, const Expr &,
+                               const Expr &, const Expr &,
+                               const Ref<ForProperty> &, const Stmt &,
+                               const Metadata &, const ID &)>(&_makeFor),
+          "iter"_a, "begin"_a, "end"_a, "step"_a, "len"_a, "property"_a,
+          "body"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeIf",
-          static_cast<Stmt (*)(const ID &, const Expr &, const Stmt &,
-                               const Stmt &)>(&_makeIf),
-          "nid"_a, "cond"_a, "thenCase"_a, "elseCase"_a = nullptr);
+          static_cast<Stmt (*)(const Expr &, const Stmt &, const Stmt &,
+                               const Metadata &, const ID &)>(&_makeIf),
+          "cond"_a, "thenCase"_a, "elseCase"_a, "metadata"_a,
+          py::arg_v("id", ID(), "ID()"));
+    m.def("makeIf",
+          static_cast<Stmt (*)(const Expr &, const Stmt &, const Metadata &,
+                               const ID &)>(&_makeIf),
+          "cond"_a, "thenCase"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeAssert",
-          static_cast<Stmt (*)(const ID &, const Expr &, const Stmt &)>(
-              &_makeAssert),
-          "nid"_a, "cond"_a, "body"_a);
+          static_cast<Stmt (*)(const Expr &, const Stmt &, const Metadata &,
+                               const ID &)>(&_makeAssert),
+          "cond"_a, "body"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
     m.def("makeEval",
-          static_cast<Stmt (*)(const ID &, const Expr &)>(&_makeEval), "nid"_a,
-          "expr"_a);
+          static_cast<Stmt (*)(const Expr &, const Metadata &, const ID &)>(
+              &_makeEval),
+          "expr"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
 }
 
 } // namespace freetensor

@@ -26,9 +26,7 @@ class MergeFor : public Mutator {
     MergeFor(const Stmt &root, const For oldOuter, const For &oldInner)
         : root_(root), oldOuter_(oldOuter), oldInner_(oldInner),
           outerLen_(oldOuter_->len_), innerLen_(oldInner_->len_),
-          newIter_("m." + oldOuter_->iter_ + "." + oldInner_->iter_),
-          newId_("merged." + oldOuter_->id().strId() + "." +
-                 oldInner_->id().strId()) {}
+          newIter_("m." + oldOuter_->iter_ + "." + oldInner_->iter_) {}
 
     const std::string &newIter() const { return newIter_; }
     const ID &newId() const { return newId_; }

@@ -27,11 +27,11 @@ Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
                                      return writes.count(var);
                                  })) {
                     auto thenCase =
-                        makeStmtSeq("", {if1->thenCase_, if2->thenCase_});
+                        makeStmtSeq({if1->thenCase_, if2->thenCase_});
                     Stmt elseCase;
                     if (if1->elseCase_.isValid() && if2->elseCase_.isValid()) {
                         elseCase =
-                            makeStmtSeq("", {if1->elseCase_, if2->elseCase_});
+                            makeStmtSeq({if1->elseCase_, if2->elseCase_});
                     } else if (if1->elseCase_.isValid() &&
                                !if2->elseCase_.isValid()) {
                         elseCase = if1->elseCase_;
@@ -40,8 +40,7 @@ Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
                         elseCase = if2->elseCase_;
                     }
                     stmts.pop_back();
-                    stmts.emplace_back(makeIf("", if1->cond_,
-                                              std::move(thenCase),
+                    stmts.emplace_back(makeIf(if1->cond_, std::move(thenCase),
                                               std::move(elseCase)));
                     isFixPoint_ = false;
                     continue;
@@ -68,10 +67,11 @@ Stmt MergeAndHoistIf::visit(const VarDef &_op) {
         if (!branch->elseCase_.isValid() &&
             checkAllDefined(names(), branch->cond_)) {
             isFixPoint_ = false;
-            return makeIf(branch->id(), branch->cond_,
-                          makeVarDef(op->id(), op->name_,
-                                     std::move(op->buffer_), op->ioTensor_,
-                                     branch->thenCase_, op->pinned_));
+            return makeIf(branch->cond_,
+                          makeVarDef(op->name_, std::move(op->buffer_),
+                                     op->ioTensor_, branch->thenCase_,
+                                     op->pinned_, op->metadata(), op->id()),
+                          branch->metadata(), branch->id());
         }
     }
     return op;
@@ -93,10 +93,12 @@ Stmt MergeAndHoistIf::visit(const For &_op) {
                                  return writes.count(var);
                              })) {
                 isFixPoint_ = false;
-                return makeIf(branch->id(), branch->cond_,
-                              makeFor(op->id(), op->iter_, op->begin_, op->end_,
+                return makeIf(branch->cond_,
+                              makeFor(op->iter_, op->begin_, op->end_,
                                       op->step_, op->len_, op->property_,
-                                      branch->thenCase_));
+                                      branch->thenCase_, op->metadata(),
+                                      op->id()),
+                              branch->metadata(), branch->id());
             }
         }
     }

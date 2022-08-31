@@ -75,7 +75,7 @@ Expr FrontendVar::asLoad() const {
     return makeLoad(name_, std::move(indices), dtype_);
 }
 
-Stmt FrontendVar::asStore(const ID &id, const Expr &value) const {
+Stmt FrontendVar::asStore(const Metadata &metadata, const Expr &value) const {
     if (ndim() != 0) {
         throw InvalidProgram(
             name_ + " is of a " + std::to_string(fullShape_.size()) +
@@ -88,7 +88,24 @@ Stmt FrontendVar::asStore(const ID &id, const Expr &value) const {
         ASSERT(idx.type() == FrontendVarIdxType::Single);
         indices.emplace_back(idx.single());
     }
-    return makeStore(id, name_, std::move(indices), value);
+    return makeStore(name_, std::move(indices), value, metadata);
+}
+
+Stmt FrontendVar::asReduceTo(ReduceOp op, const Metadata &metadata,
+                             const Expr &value, bool atomic) const {
+    if (ndim() != 0) {
+        throw InvalidProgram(
+            name_ + " is of a " + std::to_string(fullShape_.size()) +
+            "-D shape, but " + std::to_string((int)fullShape_.size() - ndim()) +
+            "-D indices are given");
+    }
+    std::vector<Expr> indices;
+    indices.reserve(indices_.size());
+    for (auto &&idx : indices_) {
+        ASSERT(idx.type() == FrontendVarIdxType::Single);
+        indices.emplace_back(idx.single());
+    }
+    return makeReduceTo(name_, std::move(indices), op, value, atomic, metadata);
 }
 
 std::vector<FrontendVarIdx>

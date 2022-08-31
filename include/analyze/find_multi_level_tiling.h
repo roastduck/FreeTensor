@@ -67,24 +67,19 @@ inline std::vector<ForsWithDataReuse> findMultiLevelTiling(const Stmt &ast) {
     return find.result();
 }
 
-inline std::vector<ID> fakeFindMultiLevelTiling(const Stmt &ast) {
+inline std::vector<std::string> fakeFindMultiLevelTiling(const Stmt &ast) {
     std::vector<ForsWithDataReuse> src = findMultiLevelTiling(ast);
-    std::vector<ID> ret;
+    std::vector<std::string> ret;
     std::string s("S "), r("R "), sp(" ");
+    std::ostringstream oss;
+    oss << manipMetadataSkipLocation;
     for (unsigned i = 0; i < src.size(); i++) {
-        std::string item;
         const ForsWithDataReuse &nw = src[i];
-        for (const auto &loop : nw.spaceLoops) {
-            item.append(s);
-            item.append(loop.id.strId());
-            item.append(sp);
-        }
-        for (const auto &loop : nw.reductionLoops) {
-            item.append(r);
-            item.append(loop.id.strId());
-            item.append(sp);
-        }
-        ret.push_back(item);
+        for (const auto &loop : nw.spaceLoops)
+            oss << "S " << loop.metadata << " ";
+        for (const auto &loop : nw.reductionLoops)
+            oss << "R " << loop.metadata << " ";
+        ret.push_back(oss.str());
     }
     return ret;
 }

@@ -42,7 +42,7 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
     const std::unordered_set<ID> &needTapes_;       // Store or ReduceTo IDs
     const std::unordered_map<Stmt, Expr> &scopeLen_;
     Expr totLen_;
-    std::unordered_map<ID, Expr> &versions_;
+    std::unordered_map<StmtOrExprID, Expr> &versions_;
     std::string tapeName_;
     Expr offset_ = makeIntConst(0);
 
@@ -50,7 +50,8 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
     AnalyzeVersion(const ID &def, const std::unordered_set<ID> &affectingScopes,
                    const std::unordered_set<ID> &needTapes,
                    const std::unordered_map<Stmt, Expr> &scopeLen,
-                   const Expr &totLen, std::unordered_map<ID, Expr> &versions)
+                   const Expr &totLen,
+                   std::unordered_map<StmtOrExprID, Expr> &versions)
         : def_(def), affectingScopes_(affectingScopes), needTapes_(needTapes),
           scopeLen_(scopeLen), totLen_(totLen), versions_(versions) {}
 
@@ -71,7 +72,7 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
  *
  * @return : (node -> versions, VarDef IDs -> total version counts)
  */
-std::pair<std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
+std::pair<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>>
 analyzeVersion(const Stmt &op, const std::unordered_set<ID> &intermediates);
 
 } // namespace freetensor

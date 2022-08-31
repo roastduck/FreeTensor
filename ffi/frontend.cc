@@ -30,7 +30,9 @@ void init_ffi_frontend(py::module_ &m) {
         .def("shape", static_cast<std::vector<Expr> (FrontendVar::*)() const>(
                           &FrontendVar::shape))
         .def("as_load", &FrontendVar::asLoad)
-        .def("as_store", &FrontendVar::asStore)
+        .def("as_store", &FrontendVar::asStore, "metadata"_a, "value"_a)
+        .def("as_reduce_to", &FrontendVar::asReduceTo, "op"_a, "metadata"_a,
+             "value"_a, "atomic"_a = false)
         .def("chain_indices", &FrontendVar::chainIndices)
         .def("__repr__", [](const FrontendVar &var) { return toString(var); });
 

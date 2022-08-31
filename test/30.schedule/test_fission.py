@@ -7,9 +7,9 @@ def test_fission_after():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
-                ft.MarkNid("S0")
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                ft.MarkLabel("S0")
                 y[i, j] = i + j
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
@@ -38,10 +38,10 @@ def test_fission_before():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 y[i, j] = i + j
-                ft.MarkNid("S0")
+                ft.MarkLabel("S0")
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -66,9 +66,9 @@ def test_fission_before():
 
 def test_fission_after_empty():
     with ft.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
-                ft.MarkNid("S0")
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                ft.MarkLabel("S0")
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -89,9 +89,9 @@ def test_fission_after_empty():
 
 def test_fission_before_empty():
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
-                ft.MarkNid("S0")
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                ft.MarkLabel("S0")
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -115,10 +115,10 @@ def test_stmt_in_if():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 with ft.If(i > 1):
-                    ft.MarkNid("S0")
+                    ft.MarkLabel("S0")
                     y[i, j] = i + j
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
@@ -149,10 +149,10 @@ def test_buffer_hoist():
         ("x1", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
     ]) as (x0, x1, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 with ft.VarDef("buf", (8,), "int32", "cache", "cpu") as b:
-                    ft.MarkNid("S0")
+                    ft.MarkLabel("S0")
                     b[j] = x0[i, j] + x1[i, j]
                     y[i, j] = b[j] * b[j]
     ast = ft.pop_ast(verbose=True)
@@ -185,11 +185,11 @@ def test_buffer_no_hoist():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
     ]) as (x0, x1, y, z):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 with ft.VarDef("buf", (4, 8), "int32", "cache", "cpu") as b:
                     b[i, j] = x0[i, j] + x1[i, j]
-                    ft.MarkNid("S0")
+                    ft.MarkLabel("S0")
                     y[i, j] = b[i, j] * b[i, j]
                     z[i, j] = x0[i, j] * 2
     ast = ft.pop_ast(verbose=True)
@@ -222,10 +222,10 @@ def test_correct_dependency_after():
         ("x1", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
     ]) as (x0, x1, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 with ft.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
-                    ft.MarkNid("S0")
+                    ft.MarkLabel("S0")
                     b[0] = x0[i, j] + x1[i, j]
                     y[i, j] = b[0] * b[0]
     ast = ft.pop_ast(verbose=True)
@@ -257,11 +257,11 @@ def test_correct_dependency_before():
         ("x1", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
     ]) as (x0, x1, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 with ft.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
                     b[0] = x0[i, j] + x1[i, j]
-                    ft.MarkNid("S0")
+                    ft.MarkLabel("S0")
                     y[i, j] = b[0] * b[0]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -292,10 +292,10 @@ def test_correct_dependency_loop_step():
         ("x1", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
     ]) as (x0, x1, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 7, 2, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 7, 2, label="L2") as j:
                 with ft.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
-                    ft.MarkNid("S0")
+                    ft.MarkLabel("S0")
                     b[0] = x0[i, j] + x1[i, j]
                     y[i, j] = b[0] * b[0]
     ast = ft.pop_ast(verbose=True)
@@ -327,10 +327,10 @@ def test_correct_dependency_multi_loop_1():
         ("x1", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
     ]) as (x0, x1, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 with ft.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
-                    ft.MarkNid("S0")
+                    ft.MarkLabel("S0")
                     b[0] = x0[i, j] + x1[i, j]
                     y[i, j] = b[0] * b[0]
     ast = ft.pop_ast(verbose=True)
@@ -364,17 +364,17 @@ def test_correct_dependency_multi_loop_2():
                     ("d_a", (4, 4), "float32", "inout", "cpu"),
                     ("d_b", (4,), "float32", "inout", "cpu")]) as (a, b, d_y,
                                                                    d_a, d_b):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 4) as j:
                 with ft.VarDef("d_y_old", (), "float32", "cache",
                                "cpu") as d_y_old:
                     d_y_old[()] = d_y[i]
                     d_y[i] = 2 * d_y_old[()]
-                    ft.MarkNid("S0")
+                    ft.MarkLabel("S0")
                     d_a[i, j] += d_y_old[()] * b[j]
                     d_b[j] += d_y_old[()] * a[i, j]
             d_y[i] = 0
-    ast = ft.make_reduction(ft.pop_ast())
+    ast = ft.pop_ast()
     print(ast)
     s = ft.Schedule(ast)
     s.fission("L1", ft.FissionSide.Before, "S0")
@@ -398,7 +398,7 @@ def test_correct_dependency_multi_loop_2():
                 d_a[i, j] += d_y_old[i, j] * b[j]
                 d_b[j] += d_y_old[i, j] * a[i, j]
             d_y[i] = 0
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -406,11 +406,11 @@ def test_correct_dependency_multi_loop_2():
 def test_correct_dependency_real_dep():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
+        with ft.For("i", 0, 4, label="L1") as i:
             with ft.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
-                ft.MarkNid("S0")
+                ft.MarkLabel("S0")
                 b[0] = x[i] * 2
-                with ft.For("j", 0, 8, nid="L2") as j:
+                with ft.For("j", 0, 8, label="L2") as j:
                     y[i, j] = b[0] * b[0]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -439,9 +439,9 @@ def test_correct_dependency_unable_resolve():
         ("y", (4, 8), "int32", "output", "cpu"),
         ("buf", (1,), "int32", "inout", "cpu"),
     ]) as (x0, x1, y, b):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
-                ft.MarkNid("S0")
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                ft.MarkLabel("S0")
                 b[0] = x0[i, j] + x1[i, j]
                 y[i, j] = b[0] * b[0]
     ast = ft.pop_ast(verbose=True)
@@ -458,11 +458,11 @@ def test_correct_dependency_no_need_to_modify_no_dep():
         ("x1", (4, 4), "int32", "input", "cpu"),
         ("y", (4, 4, 4), "int32", "output", "cpu"),
     ]) as (x0, x1, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 4, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 4, label="L2") as j:
                 with ft.VarDef("buf", (4,), "int32", "cache", "cpu") as b:
-                    with ft.For("k", 0, 4, nid="L3") as k:
-                        ft.MarkNid("S0")
+                    with ft.For("k", 0, 4, label="L3") as k:
+                        ft.MarkLabel("S0")
                         b[k] = x0[i, k]
                         y[i, j, k] = b[k] * x1[i, j]
     ast = ft.pop_ast(verbose=True)
@@ -495,12 +495,12 @@ def test_correct_dependency_no_need_to_modify_broadcast():
         ("x1", (4, 4), "int32", "input", "cpu"),
         ("y", (4, 4, 4), "int32", "output", "cpu"),
     ]) as (x0, x1, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 4, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 4, label="L2") as j:
                 with ft.VarDef("buf", (), "int32", "cache", "cpu") as b:
-                    ft.MarkNid("S0")
+                    ft.MarkLabel("S0")
                     b[()] = x0[i]
-                    with ft.For("k", 0, 4, nid="L3") as k:
+                    with ft.For("k", 0, 4, label="L3") as k:
                         y[i, j, k] = b[()] * x1[i, j]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -531,11 +531,11 @@ def test_correct_dependency_overwritten_store():
         ("x1", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
     ]) as (x0, x1, y):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 with ft.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
                     b[0] = 1  # (1)
-                    ft.MarkNid("S0")
+                    ft.MarkLabel("S0")
                     with ft.If(j > 1):
                         b[0] += x0[i, j] + x1[i, j]  # (2)
                     y[i, j] = b[0] * b[0]  # (3)
@@ -569,8 +569,8 @@ def test_correct_dependency_overwritten_store():
 def test_scan_without_dep():
     with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
                     ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
-        with ft.For("i", 1, 10, nid='L1') as i:
-            ft.MarkNid("S0")
+        with ft.For("i", 1, 10, label='L1') as i:
+            ft.MarkLabel("S0")
             a[i] += a[i - 1]
             b[i] += a[i - 1]
 
@@ -587,7 +587,7 @@ def test_scan_without_dep():
             a[i] += a[i - 1]
         with ft.For("i", 1, 10) as i:
             b[i] += a[i - 1]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -595,8 +595,8 @@ def test_scan_without_dep():
 def test_scan_with_dep():
     with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
                     ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
-        with ft.For("i", 0, 9, nid='L1') as i:
-            ft.MarkNid("S0")
+        with ft.For("i", 0, 9, label='L1') as i:
+            ft.MarkLabel("S0")
             a[i] += a[i + 1]
             b[i] += a[i + 1]
 
@@ -611,8 +611,8 @@ def test_scan_with_dep():
 def test_reversed_scan_without_dep():
     with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
                     ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
-        with ft.For("i", 8, -1, -1, nid='L1') as i:
-            ft.MarkNid("S0")
+        with ft.For("i", 8, -1, -1, label='L1') as i:
+            ft.MarkLabel("S0")
             a[i] += a[i + 1]
             b[i] += a[i + 1]
 
@@ -629,7 +629,7 @@ def test_reversed_scan_without_dep():
             a[i] += a[i + 1]
         with ft.For("i", 8, -1, -1) as i:
             b[i] += a[i + 1]
-    std = ft.make_reduction(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -637,8 +637,8 @@ def test_reversed_scan_without_dep():
 def test_reversed_scan_with_dep():
     with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
                     ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
-        with ft.For("i", 9, 0, -1, nid='L1') as i:
-            ft.MarkNid("S0")
+        with ft.For("i", 9, 0, -1, label='L1') as i:
+            ft.MarkLabel("S0")
             a[i] += a[i - 1]
             b[i] += a[i - 1]
 

@@ -1,18 +1,15 @@
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
+#include <analyze/find_stmt.h>
 #include <pass/merge_and_hoist_if.h>
 #include <schedule/fission.h>
 
 namespace freetensor {
 
 Stmt HoistVar::visitStmt(const Stmt &op) {
-    if (before_.isValid()) {
-        isAfter_ |= op->id() == before_;
-    }
+    isAfter_ |= op->id() == before_;
     auto ret = Mutator::visitStmt(op);
-    if (after_.isValid()) {
-        isAfter_ |= op->id() == after_;
-    }
+    isAfter_ |= op->id() == after_;
     return ret;
 }
 
@@ -24,8 +21,6 @@ Stmt HoistVar::visit(const For &op) {
                 xLoops_[def->name_].emplace_back(op->id());
             }
             innerLoops_.emplace_back(op->id());
-        } else {
-            outerScopes_.emplace_back(op->id());
         }
         return ret;
     } else {
@@ -37,44 +32,9 @@ Stmt HoistVar::visit(const For &op) {
         }
         innerLoops_.emplace_back(op->id());
         for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
-            ret = makeVarDef((*i)->id(), std::move((*i)->name_),
-                             std::move(((*i)->buffer_)),
-                             std::move((*i)->ioTensor_), ret, (*i)->pinned_);
-        }
-        return ret;
-    }
-}
-
-Stmt HoistVar::visit(const StmtSeq &op) {
-    if (!inside_) {
-        outerScopes_.emplace_back(op->id());
-        return Mutator::visit(op);
-    } else {
-        std::vector<Stmt> before, after;
-        for (auto &&_stmt : op->stmts_) {
-            bool thisIsAfter = false;
-            if (!after.empty()) {
-                thisIsAfter = isAfter_;
-            }
-            auto stmt = (*this)(_stmt);
-            if (!before.empty()) {
-                thisIsAfter = isAfter_;
-            }
-            (thisIsAfter ? after : before).emplace_back(stmt);
-        }
-        Stmt ret;
-        if (after.empty()) {
-            ret = makeStmtSeq(op->id(), std::move(before));
-        } else if (before.empty()) {
-            ret = makeStmtSeq(op->id(), std::move(after));
-        } else {
-            auto beforeNode = before.size() > 1
-                                  ? makeStmtSeq("", std::move(before))
-                                  : before[0];
-            auto afterNode =
-                after.size() > 1 ? makeStmtSeq("", std::move(after)) : after[0];
-            scopePairs_.emplace_back(beforeNode->id(), afterNode->id());
-            ret = makeStmtSeq(op->id(), {beforeNode, afterNode});
+            ret = makeVarDef(std::move((*i)->name_), std::move(((*i)->buffer_)),
+                             std::move((*i)->ioTensor_), ret, (*i)->pinned_,
+                             (*i)->metadata(), (*i)->id());
         }
         return ret;
     }
@@ -157,16 +117,12 @@ Stmt FissionFor::visitStmt(const Stmt &op) {
     } else {
         auto oldAnyInside = anyInside_;
         anyInside_ = false;
-        if (before_.isValid()) {
-            isAfter_ |= op->id() == before_;
-        }
+        isAfter_ |= op->id() == before_;
         anyInside_ |= (isPart0_ && !isAfter_) || (!isPart0_ && isAfter_);
         auto ret = Mutator::visitStmt(op);
-        if (after_.isValid()) {
-            isAfter_ |= op->id() == after_;
-        }
+        isAfter_ |= op->id() == after_;
         if (!anyInside_) {
-            ret = makeStmtSeq("", {});
+            ret = makeStmtSeq({});
         }
         anyInside_ |= oldAnyInside;
         return ret;
@@ -174,12 +130,17 @@ Stmt FissionFor::visitStmt(const Stmt &op) {
 }
 
 void FissionFor::markNewId(const Stmt &op, bool isPart0) {
-    ID oldId = op->id(), newId;
+    ID oldId = op->id();
+    if (isPart0 ? op0_ : op1_)
+        op->setId();
+    ID newId = op->id();
     if (isPart0) {
-        op->setId(newId = oldId.strId() + suffix0_);
+        if (op0_)
+            op->metadata() = makeMetadata(*op0_, op);
         ids0_.emplace(oldId, newId);
     } else {
-        op->setId(newId = oldId.strId() + suffix1_);
+        if (op1_)
+            op->metadata() = makeMetadata(*op1_, op);
         ids1_.emplace(oldId, newId);
     }
 }
@@ -202,13 +163,13 @@ Stmt FissionFor::visit(const For &op) {
         isPart0_ = false, isAfter_ = false, anyInside_ = false;
         auto part1 = (*this)(op->body_);
         inside_ = false;
-        auto for0 = makeFor(op->id(), op->iter_, begin, end, step, len,
-                            op->property_, part0);
-        auto for1 = makeFor(op->id(), op->iter_, begin, end, step, len,
-                            op->property_, part1);
+        auto for0 = makeFor(op->iter_, begin, end, step, len, op->property_,
+                            part0, op->metadata(), op->id());
+        auto for1 = makeFor(op->iter_, begin, end, step, len, op->property_,
+                            part1, op->metadata(), op->id());
         markNewId(for0, true);
         markNewId(for1, false);
-        return makeStmtSeq("", {for0, for1});
+        return makeStmtSeq({for0, for1});
     }
 }
 
@@ -285,15 +246,14 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
         const std::string &suffix0, const std::string &suffix1) {
     // FIXME: Check the condition is not variant when splitting an If
 
-    if (suffix0 == suffix1) {
-        throw InvalidSchedule("suffix0 cannot be the same with suffix1");
-    }
+    if (suffix0.empty() && suffix1.empty())
+        throw InvalidSchedule(
+            "Cannot preserve ID and Metadata for both first and second parts");
 
-    HoistVar hoist(loop, side == FissionSide::Before ? splitter : "",
-                   side == FissionSide::After ? splitter : "");
-    FissionFor mutator(loop, side == FissionSide::Before ? splitter : "",
-                       side == FissionSide::After ? splitter : "", suffix0,
-                       suffix1);
+    auto before = side == FissionSide::Before ? splitter : ID{};
+    auto after = side == FissionSide::After ? splitter : ID{};
+    HoistVar hoist(loop, before, after);
+    FissionFor mutator(loop, before, after, suffix0, suffix1);
 
     auto ast = hoist(_ast);
     if (!hoist.found()) {
@@ -334,23 +294,28 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
             toAdd[d.defId()].emplace_back(id);
         }
     };
+    auto beforeStmt = before.isValid() ? findStmt(ast, before) : nullptr;
+    auto afterStmt = after.isValid() ? findStmt(ast, after) : nullptr;
     FindDeps()
         .direction(disjunct)
+        .filterSubAST(loop)
         .filterEarlier([&](const AccessPoint &earlier) {
-            for (auto &&[beforeId, afterId] : hoist.scopePairs()) {
-                if (earlier.stmt_->ancestorById(afterId).isValid()) {
-                    return true;
-                }
+            // Reverse dependence: earlier at the second fissioned part
+            if (beforeStmt.isValid()) {
+                return !earlier.stmt_->isBefore(beforeStmt);
+            } else {
+                ASSERT(afterStmt.isValid());
+                return afterStmt->isBefore(earlier.stmt_);
             }
-            return false;
         })
         .filterLater([&](const AccessPoint &later) {
-            for (auto &&[beforeId, afterId] : hoist.scopePairs()) {
-                if (later.stmt_->ancestorById(beforeId).isValid()) {
-                    return true;
-                }
+            // Reverse dependence: later at the first fissioned part
+            if (beforeStmt.isValid()) {
+                return later.stmt_->isBefore(beforeStmt);
+            } else {
+                ASSERT(afterStmt.isValid());
+                return !afterStmt->isBefore(later.stmt_);
             }
-            return false;
         })(ast, found);
 
     AddDimToVar adder(toAdd);
@@ -358,7 +323,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
 
     ast = mutator(ast);
     ast = mergeAndHoistIf(ast);
-    return std::make_pair(ast, std::make_pair(mutator.ids0(), mutator.ids1()));
+    return {ast, {mutator.ids0(), mutator.ids1()}};
 }
 
 } // namespace freetensor

@@ -4,7 +4,7 @@ import pytest
 
 def test_memoize_success():
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
-        with ft.For("i", 0, 8, nid="L1") as i:
+        with ft.For("i", 0, 8, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s1 = ft.Schedule(ast)
@@ -20,8 +20,8 @@ def test_memoize_success():
 def test_memoize_failure():
     with ft.VarDef("y", (1,), "int32", "output", "cpu") as y:
         y[0] = 0
-        with ft.For("i", 0, 4, nid="L1") as i:
-            with ft.For("j", 0, 8, nid="L2") as j:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
                 y[0] = y[0] * i + j
     ast = ft.pop_ast(verbose=True)
     s1 = ft.Schedule(ast)

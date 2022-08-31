@@ -218,7 +218,7 @@ void AutoSchedule::searchOneRound(size_t n, size_t nExploit, size_t nExplore) {
     auto bs = getBestSchedule();
     if (verbose_ >= 1) {
         logger() << "Best schedule:" << std::endl;
-        for (auto log : bs.logs()) {
+        for (auto log : bs.logs().asVector()) {
             logger() << *log << std::endl;
         }
         logger() << "Best AST: " << std::endl

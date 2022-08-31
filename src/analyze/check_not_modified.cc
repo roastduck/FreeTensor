@@ -33,18 +33,18 @@ Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
     auto op = Mutator::visitStmt(_op);
     auto ret = op;
     if (op->id() == s0_) {
-        auto eval = makeEval("", s0Expr_);
+        auto eval = makeEval(s0Expr_);
         s0Eval_ = eval->id();
         ret = s0Side_ == CheckNotModifiedSide::Before
-                  ? makeStmtSeq("", {eval, ret})
-                  : makeStmtSeq("", {ret, eval});
+                  ? makeStmtSeq({eval, ret})
+                  : makeStmtSeq({ret, eval});
     }
     if (op->id() == s1_) {
-        auto eval = makeEval("", s1Expr_);
+        auto eval = makeEval(s1Expr_);
         s1Eval_ = eval->id();
         ret = s1Side_ == CheckNotModifiedSide::Before
-                  ? makeStmtSeq("", {eval, ret})
-                  : makeStmtSeq("", {ret, eval});
+                  ? makeStmtSeq({eval, ret})
+                  : makeStmtSeq({ret, eval});
     }
     return ret;
 }

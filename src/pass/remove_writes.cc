@@ -28,6 +28,8 @@ static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
     switch (reduceOp) {
     case ReduceOp::Add:
         return makeAdd(lhs, rhs);
+    case ReduceOp::Sub:
+        return makeSub(lhs, rhs);
     case ReduceOp::Mul:
         return makeMul(lhs, rhs);
     case ReduceOp::Max:
@@ -152,7 +154,7 @@ Stmt RemoveWrites::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     if (op->body_->nodeType() == ASTNodeType::StmtSeq &&
         op->body_.as<StmtSeqNode>()->stmts_.empty()) {
-        return makeStmtSeq("", {});
+        return makeStmtSeq({});
     }
     return op;
 }
@@ -167,13 +169,14 @@ Stmt RemoveWrites::visit(const If &_op) {
                      (op->elseCase_->nodeType() != ASTNodeType::StmtSeq ||
                       !op->elseCase_.as<StmtSeqNode>()->stmts_.empty());
     if (!thenValid && !elseValid) {
-        return makeStmtSeq("", {});
+        return makeStmtSeq({});
     }
     if (!elseValid) {
-        return makeIf(op->id(), op->cond_, op->thenCase_);
+        return makeIf(op->cond_, op->thenCase_, op->metadata(), op->id());
     }
     if (!thenValid) {
-        return makeIf(op->id(), makeLNot(op->cond_), op->elseCase_);
+        return makeIf(makeLNot(op->cond_), op->elseCase_, op->metadata(),
+                      op->id());
     }
     return op;
 }
@@ -427,13 +430,15 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                     if (earlier->nodeType() == ASTNodeType::Store) {
                         redundant.insert(_earlier);
                         replacement[_later] =
-                            makeStore(later->id(), l->var_, l->indices_,
-                                      makeReduce(l->op_, newExpr, l->expr_));
+                            makeStore(l->var_, l->indices_,
+                                      makeReduce(l->op_, newExpr, l->expr_),
+                                      later->metadata(), later->id());
                     } else if (earlier.as<ReduceToNode>()->op_ == l->op_) {
                         redundant.insert(_earlier);
-                        replacement[_later] = makeReduceTo(
-                            later->id(), l->var_, l->indices_, l->op_,
-                            makeReduce(l->op_, newExpr, l->expr_), false);
+                        replacement[_later] =
+                            makeReduceTo(l->var_, l->indices_, l->op_,
+                                         makeReduce(l->op_, newExpr, l->expr_),
+                                         false, later->metadata(), later->id());
                     }
                 } catch (const ParserError &e) {
                     // do nothing
@@ -446,13 +451,15 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                     if (earlier->nodeType() == ASTNodeType::Store) {
                         redundant.insert(_earlier);
                         replacement[_later] =
-                            makeStore(later->id(), l->var_, l->indices_,
-                                      makeReduce(l->op_, expr, l->expr_));
+                            makeStore(l->var_, l->indices_,
+                                      makeReduce(l->op_, expr, l->expr_),
+                                      later->metadata(), later->id());
                     } else if (earlier.as<ReduceToNode>()->op_ == l->op_) {
                         redundant.insert(_earlier);
-                        replacement[_later] = makeReduceTo(
-                            later->id(), l->var_, l->indices_, l->op_,
-                            makeReduce(l->op_, expr, l->expr_), false);
+                        replacement[_later] =
+                            makeReduceTo(l->var_, l->indices_, l->op_,
+                                         makeReduce(l->op_, expr, l->expr_),
+                                         false, later->metadata(), later->id());
                     }
                 }
             }
@@ -463,7 +470,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     for (auto &&[_store, item] : type2Results) {
         auto &&[def, cond, loop] = item;
         auto store = _store.as<StmtNode>();
-        replacement.emplace(store, makeIf("", cond, store));
+        replacement.emplace(store, makeIf(cond, store));
     }
 
     op = RemoveWrites(redundant, replacement)(op);

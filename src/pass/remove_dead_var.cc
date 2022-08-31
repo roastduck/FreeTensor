@@ -3,11 +3,11 @@
 namespace freetensor {
 
 Stmt RemoveAllWrites::visit(const Store &op) {
-    return var_ == op->var_ ? makeStmtSeq("", {}) : Mutator::visit(op);
+    return var_ == op->var_ ? makeStmtSeq({}) : Mutator::visit(op);
 }
 
 Stmt RemoveAllWrites::visit(const ReduceTo &op) {
-    return var_ == op->var_ ? makeStmtSeq("", {}) : Mutator::visit(op);
+    return var_ == op->var_ ? makeStmtSeq({}) : Mutator::visit(op);
 }
 
 Expr RemoveDeadVar::visit(const Load &_op) {

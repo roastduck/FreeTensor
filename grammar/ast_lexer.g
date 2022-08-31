@@ -23,6 +23,7 @@ FREE:       '@!free';
 // ReduceTo
 ATOMIC:     '@!atomic';
 PLUSEQ:     '+=';
+SUBEQ:      '-=';
 STAREQ:     '*=';
 MINEQ:      '@!min=';
 MAXEQ:      '@!max=';
@@ -94,3 +95,18 @@ LBRACE:     '{';
 RBRACE:     '}';
 COMMA:      ',';
 RARROW:     '->';
+
+BEGIN_META:   '#!' -> pushMode(INSIDE_METADATA);
+
+mode INSIDE_METADATA;
+
+WhiteSpacesMeta:    [ \t\r]+ -> skip;
+
+INTEGER_META:       [0-9]+;
+LABEL_META:         [a-zA-Z0-9_\-]+;
+ID_META:            '#' [0-9]+;
+ANON_META:          '#<anon>';
+LARROW_META:        '<~';
+TRANSFORM_OP:       '$';
+
+END_META:   '\n' -> popMode;

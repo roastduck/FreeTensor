@@ -9,14 +9,14 @@ def test_basic():
         ("y3", (4,), "int32", "output", "cpu"),
         ("y4", (4,), "int32", "output", "cpu"),
     ]) as (y1, y2, y3, y4):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            ft.MarkNid("S1")
+        with ft.For("i", 0, 4, label="L1") as i:
+            ft.MarkLabel("S1")
             y1[i] = i + 1
-            ft.MarkNid("S2")
+            ft.MarkLabel("S2")
             y2[i] = i + 2
-            ft.MarkNid("S3")
+            ft.MarkLabel("S3")
             y3[i] = i + 3
-            ft.MarkNid("S4")
+            ft.MarkLabel("S4")
             y4[i] = i + 4
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -48,14 +48,14 @@ def test_not_consecutive():
         ("y3", (4,), "int32", "output", "cpu"),
         ("y4", (4,), "int32", "output", "cpu"),
     ]) as (y1, y2, y3, y4):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            ft.MarkNid("S1")
+        with ft.For("i", 0, 4, label="L1") as i:
+            ft.MarkLabel("S1")
             y1[i] = i + 1
-            ft.MarkNid("S2")
+            ft.MarkLabel("S2")
             y2[i] = i + 2
-            ft.MarkNid("S3")
+            ft.MarkLabel("S3")
             y3[i] = i + 3
-            ft.MarkNid("S4")
+            ft.MarkLabel("S4")
             y4[i] = i + 4
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -68,10 +68,10 @@ def test_not_consecutive():
 def test_dependency():
     with ft.VarDef([("y1", (4,), "int32", "inout", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
-        with ft.For("i", 0, 4, nid="L1") as i:
-            ft.MarkNid("S1")
+        with ft.For("i", 0, 4, label="L1") as i:
+            ft.MarkLabel("S1")
             y1[i] = i + 1
-            ft.MarkNid("S2")
+            ft.MarkLabel("S2")
             y2[i] = y1[i] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)

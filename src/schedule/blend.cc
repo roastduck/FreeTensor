@@ -53,9 +53,9 @@ Stmt BlendPass::visit(const For &op) {
                 ret = (*this)(op->body_);
                 offset_.erase(op->iter_);
                 auto len = (*this)(op->len_);
-                ret = makeFor(op->id(), op->iter_, makeIntConst(0), len,
-                              makeIntConst(1), len, op->property_,
-                              std::move(ret));
+                ret = makeFor(op->iter_, makeIntConst(0), len, makeIntConst(1),
+                              len, op->property_, std::move(ret),
+                              op->metadata(), op->id());
             }
             return ret;
         } else {
@@ -68,15 +68,15 @@ Stmt BlendPass::visit(const If &op) {
     if (inLoop_) {
         Stmt thenCase, elseCase;
         if (!envStack_.empty() || isVariant(exprVari_, op->cond_, loop_)) {
-            envStack_.emplace_back(makeIf("", op->cond_, op->thenCase_));
+            envStack_.emplace_back(makeIf(op->cond_, op->thenCase_));
             thenCase = (*this)(op->thenCase_);
             envStack_.pop_back();
             if (op->elseCase_.isValid()) {
                 envStack_.emplace_back(
-                    makeIf("", makeLNot(op->cond_), op->elseCase_));
+                    makeIf(makeLNot(op->cond_), op->elseCase_));
                 elseCase = (*this)(op->elseCase_);
                 envStack_.pop_back();
-                return makeStmtSeq("", {thenCase, elseCase});
+                return makeStmtSeq({thenCase, elseCase});
             } else {
                 return thenCase;
             }
@@ -84,11 +84,11 @@ Stmt BlendPass::visit(const If &op) {
             thenCase = (*this)(op->thenCase_);
             if (op->elseCase_.isValid()) {
                 elseCase = (*this)(op->elseCase_);
-                return makeIf(op->id(), (*this)(op->cond_), std::move(thenCase),
-                              std::move(elseCase));
+                return makeIf((*this)(op->cond_), std::move(thenCase),
+                              std::move(elseCase), op->metadata(), op->id());
             } else {
-                return makeIf(op->id(), (*this)(op->cond_),
-                              std::move(thenCase));
+                return makeIf((*this)(op->cond_), std::move(thenCase),
+                              op->metadata(), op->id());
             }
         }
     } else {
@@ -105,7 +105,8 @@ Stmt BlendPass::visit(const Assert &op) {
             envStack_.pop_back();
         } else {
             ret = Mutator::visit(op);
-            ret = makeAssert(op->id(), (*this)(op->cond_), std::move(ret));
+            ret = makeAssert((*this)(op->cond_), std::move(ret), op->metadata(),
+                             op->id());
         }
         return ret;
     } else {
@@ -139,9 +140,9 @@ Stmt BlendPass::visit(const VarDef &op) {
         defs_.pop_back();
 
         for (int k = len_ - 1; k >= 0; k--) {
-            body = makeVarDef("", op->name_ + "." + std::to_string(k),
-                              std::move(b), std::move(ioTensor),
-                              std::move(body), op->pinned_);
+            body =
+                makeVarDef(op->name_ + "." + std::to_string(k), std::move(b),
+                           std::move(ioTensor), std::move(body), op->pinned_);
         }
         return body;
     } else {

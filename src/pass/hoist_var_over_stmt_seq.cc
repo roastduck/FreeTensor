@@ -60,7 +60,8 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
             if (namesCnt.at(def->name_) > 1) {
                 if (def->buffer_->atype() == AccessType::Cache) {
                     ASSERT(!rename_.count(def->name_));
-                    rename_[def->name_] = def->name_ + "." + def->id().strId();
+                    rename_[def->name_] =
+                        def->name_ + "." + toString(def->id());
                     _newDef = (*this)(stmt);
                     rename_.erase(def->name_);
                 } else {
@@ -82,11 +83,12 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
             stmts.emplace_back((*this)(stmt));
         }
     }
-    auto ret = makeStmtSeq("", std::move(stmts));
+    auto ret = makeStmtSeq(std::move(stmts));
     for (auto i = defs.rbegin(); i != defs.rend(); i++) {
         auto &&def = *i;
-        ret = makeVarDef(def->id(), def->name_, def->buffer_, def->ioTensor_,
-                         std::move(ret), def->pinned_);
+        ret =
+            makeVarDef(def->name_, def->buffer_, def->ioTensor_, std::move(ret),
+                       def->pinned_, def->metadata(), def->id());
     }
     return ret;
 }

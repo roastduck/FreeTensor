@@ -168,8 +168,9 @@ void FindSingleElementWise::visit(const Load &op) {
 }
 
 void FindSingleElementWise::visit(const For &op) {
-    stack_.emplace_back(
-        ForInfo{op->id(), -1, op->len_.as<IntConstNode>()->val_}, op->iter_);
+    stack_.emplace_back(ForInfo{op->id(), op->metadata(), -1,
+                                op->len_.as<IntConstNode>()->val_},
+                        op->iter_);
     BaseClass::visit(op);
 }
 

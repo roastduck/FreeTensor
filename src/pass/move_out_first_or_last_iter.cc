@@ -39,10 +39,10 @@ Stmt MoveOutFirstOrLastIter::visit(const For &_op) {
 
             Stmt ret = op;
             if (toFront.isValid()) {
-                ret = makeStmtSeq("", {toFront, ret});
+                ret = makeStmtSeq({toFront, ret});
             }
             if (toBack.isValid()) {
-                ret = makeStmtSeq("", {ret, toBack});
+                ret = makeStmtSeq({ret, toBack});
             }
             return ret;
         }

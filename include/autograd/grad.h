@@ -83,13 +83,13 @@ class PropagateProvides : public SymbolTable<Visitor> {
 class ReplaceByTape : public Mutator {
     const SymbolTableInterface &symbolTable_;
     const std::unordered_map<ID, std::string> &tapeMap_;
-    const std::unordered_map<ID, Expr> &versions_;
+    const std::unordered_map<StmtOrExprID, Expr> &versions_;
     Stmt parent_;
 
   public:
     ReplaceByTape(const SymbolTableInterface &symbolTable,
                   const std::unordered_map<ID, std::string> &tapeMap,
-                  const std::unordered_map<ID, Expr> &versions,
+                  const std::unordered_map<StmtOrExprID, Expr> &versions,
                   const Stmt &parent)
         : symbolTable_(symbolTable), tapeMap_(tapeMap), versions_(versions),
           parent_(parent) {}
@@ -159,7 +159,7 @@ class Grad : public SymbolTable<Mutator> {
     const std::unordered_set<ID> &tapes_;
     const std::unordered_set<ID> &affectedDefs_;
     const std::unordered_map<ID, std::string> &tapeMap_;
-    const std::unordered_map<ID, Expr> &versions_;
+    const std::unordered_map<StmtOrExprID, Expr> &versions_;
     const std::unordered_map<ID, Expr> &totLens_;
     const std::unordered_set<Stmt> &notSingleWrite_;
 
@@ -179,7 +179,7 @@ class Grad : public SymbolTable<Mutator> {
          const std::unordered_set<ID> &tapes,
          const std::unordered_set<ID> &affectedDefs,
          const std::unordered_map<ID, std::string> &tapeMap,
-         const std::unordered_map<ID, Expr> &versions,
+         const std::unordered_map<StmtOrExprID, Expr> &versions,
          const std::unordered_map<ID, Expr> &totLens,
          const std::unordered_set<Stmt> &notSingleWrite)
         : requires_(_requires), provides_(provides), tapes_(tapes),
