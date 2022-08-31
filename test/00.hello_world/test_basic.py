@@ -331,12 +331,23 @@ def test_error_modifying_input_tensor():
         func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
 
 
-def test_error_modifying_shape_of_a_var_when_using_it():
+def test_error_modifying_shape_of_a_var_when_using_it_in_store():
     with pytest.raises(ft.InvalidProgram):
         with ft.VarDef("n", (), "int32", "inout") as n:
             with ft.VarDef([("x", (n[()],), "float32", "input"),
                             ("y", (n[()],), "float32", "output")]) as (x, y):
                 n[()] = 0  # Error
+                with ft.For("i", 0, n[()]) as i:
+                    y[i] = x[i] + 1
+        func = ft.lower(ft.Func("main", ["n", "x", "y"], [], ft.pop_ast()))
+
+
+def test_error_modifying_shape_of_a_var_when_using_it_in_reduce_to():
+    with pytest.raises(ft.InvalidProgram):
+        with ft.VarDef("n", (), "int32", "inout") as n:
+            with ft.VarDef([("x", (n[()],), "float32", "input"),
+                            ("y", (n[()],), "float32", "output")]) as (x, y):
+                n[()] += 1  # Error
                 with ft.For("i", 0, n[()]) as i:
                     y[i] = x[i] + 1
         func = ft.lower(ft.Func("main", ["n", "x", "y"], [], ft.pop_ast()))

@@ -60,11 +60,10 @@ class Schedule {
     template <class T> T appendLog(const T &_log) {
         auto log = _log;
         logs() = logs().push(log);
-        logs() = memoized_->lookup(logs());
+        logs() = memoized_->lookupOrCreate(logs());
         ASSERT(logs().top()->type() == log->type());
         log = logs().top().as<typename decltype(log)::Object>();
         log->run();
-        memoized_->save(logs());
         return log;
     }
 

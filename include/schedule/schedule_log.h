@@ -4,6 +4,7 @@
 #include <array>
 #include <exception>
 #include <iostream>
+#include <mutex>
 #include <variant>
 
 #include <ast.h>
@@ -148,6 +149,7 @@ class ScheduleLogItemImpl : public ScheduleLogItem {
     Params params_;
     std::variant<std::nullopt_t, Result, std::exception_ptr> result_ =
         std::nullopt;
+    std::mutex lock_;
 
   public:
     ScheduleLogItemImpl(const Invocable &doSchedule, const Params &params)
@@ -184,6 +186,7 @@ class ScheduleLogItemImpl : public ScheduleLogItem {
      * Run a schedule and save its result or its exception
      */
     void run() override {
+        std::lock_guard<std::mutex> guard(lock_);
         if (std::holds_alternative<std::nullopt_t>(result_)) {
             try {
                 result_ = std::apply(doSchedule_, getIDFromPack(params_));
