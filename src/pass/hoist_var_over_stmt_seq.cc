@@ -1,5 +1,8 @@
+#include <algorithm>
+
 #include <analyze/all_defs.h>
 #include <analyze/all_uses.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
@@ -67,6 +70,16 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
             if (hasIntersect(parentAllWrites, shapeAllReads)) {
                 goto no_hoist;
             }
+            if (togetherIds_.isValid()) {
+                auto togetherInside = findStmt(def, [&](const Stmt &s) {
+                    return std::find(togetherIds_->begin(), togetherIds_->end(),
+                                     s->id()) != togetherIds_->end();
+                });
+                if (togetherInside.empty() ||
+                    togetherInside.size() == togetherIds_->size()) {
+                    goto no_hoist;
+                }
+            }
 
             isFixPoint_ = false;
             Stmt _newDef;
@@ -108,7 +121,8 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
     return ret;
 }
 
-Stmt hoistVarOverStmtSeq(const Stmt &_op) {
+Stmt hoistVarOverStmtSeq(const Stmt &_op,
+                         const Opt<std::vector<ID>> &togetherIds) {
     auto op = _op;
     for (int i = 0;; i++) {
         if (i > 100) {
@@ -116,7 +130,7 @@ Stmt hoistVarOverStmtSeq(const Stmt &_op) {
                     "is a bug");
             break;
         }
-        HoistVarOverStmtSeq mutator;
+        HoistVarOverStmtSeq mutator(togetherIds);
         op = flattenStmtSeq(op);
         op = mutator(op);
         if (mutator.isFixPoint()) {

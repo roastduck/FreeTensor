@@ -308,7 +308,7 @@ Opt<std::string> GenPBExpr::gen(const Expr &op) {
     if (results_.count(op)) {
         return Opt<std::string>::make(results_.at(op));
     }
-    return nullptr;
+    return std::nullopt;
 }
 
 } // namespace freetensor
