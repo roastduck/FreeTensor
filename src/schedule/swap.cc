@@ -3,6 +3,7 @@
 
 #include <analyze/deps.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/sink_var.h>
 #include <schedule/swap.h>
 
 namespace freetensor {
@@ -77,7 +78,8 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
         throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
     FindDeps().filter(filter)(ast, found);
-    return ast;
+
+    return sinkVar(ast);
 }
 
 } // namespace freetensor
