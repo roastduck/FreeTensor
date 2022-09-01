@@ -1716,8 +1716,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:abc76b2ea62da573002dd8493a2592e5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a347f7684c28340f2c1710b73f1440dfe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a347f7684c28340f2c1710b73f1440dfe">hoistReturnVars</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func)</td></tr>
 <tr class="separator:a347f7684c28340f2c1710b73f1440dfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac991a9e232d84a66a28130388a6c627c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac991a9e232d84a66a28130388a6c627c">hoistVarOverStmtSeq</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
-<tr class="separator:ac991a9e232d84a66a28130388a6c627c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fa8ce5b0704def92cf5737c50fb13ef"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6fa8ce5b0704def92cf5737c50fb13ef">hoistVarOverStmtSeq</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1Opt.html">Opt</a>&lt; std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;togetherIds=std::nullopt)</td></tr>
+<tr class="separator:a6fa8ce5b0704def92cf5737c50fb13ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9813bc231cf4bdd83d0f220024948bea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9813bc231cf4bdd83d0f220024948bea">makeConstShape</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::vector&lt; <a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150">MemType</a> &gt; &amp;mtypes)</td></tr>
 <tr class="separator:a9813bc231cf4bdd83d0f220024948bea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b4c984aecaea6f0e74adc5a0f769204"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8b4c984aecaea6f0e74adc5a0f769204">makeHeapAlloc</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
@@ -9133,8 +9133,8 @@ template&lt;class T , class Hash , class KeyEqual &gt; </div>
 
 </div>
 </div>
-<a id="ac991a9e232d84a66a28130388a6c627c" name="ac991a9e232d84a66a28130388a6c627c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac991a9e232d84a66a28130388a6c627c">&#9670;&nbsp;</a></span>hoistVarOverStmtSeq()</h2>
+<a id="a6fa8ce5b0704def92cf5737c50fb13ef" name="a6fa8ce5b0704def92cf5737c50fb13ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6fa8ce5b0704def92cf5737c50fb13ef">&#9670;&nbsp;</a></span>hoistVarOverStmtSeq()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -9143,13 +9143,27 @@ template&lt;class T , class Hash , class KeyEqual &gt; </div>
           <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::hoistVarOverStmtSeq </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
-          <td class="paramname"><em>op</em></td><td>)</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Opt.html">Opt</a>&lt; std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>togetherIds</em> = <code>std::nullopt</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 <p >Transform things like <code>VarDef { stmt0 VarDef { stmt1 }}</code> into <code>VarDef { VarDef { stmt0 stmt1 }}</code></p>
-<p >This is not a optimization pass. It is intended to used inside other passes and make them simpler. It is suggest to run <code>sinkVar</code> after these passes to revert the effect of <code>hoistVarOverStmtSeq</code> </p>
+<p >This is not a optimization pass. It is intended to used inside other passes and make them simpler. It is suggest to run <code>sinkVar</code> after these passes to revert the effect of <code>hoistVarOverStmtSeq</code></p>
+<ul>
+<li><code>hoistVarOverStmtSeq(op)</code>: Hoist all <code>VarDef</code>s if possbile</li>
+<li><code>hoistVarOverStmtSeq(op, togetherIds)</code>: Hoist some <code>VarDef</code>s to make all statements in <code>togetherIds</code> are in the same <code>VarDef</code>s, while leaving other <code>VarDef</code>s untouched </li>
+</ul>
 
 </div>
 </div>

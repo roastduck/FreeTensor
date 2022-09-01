@@ -28,7 +28,7 @@ var searchData=
   ['hasher_25',['Hasher',['../classfreetensor_1_1Hasher.html',1,'freetensor']]],
   ['hasidenticalcoeff_26',['hasIdenticalCoeff',['../namespacefreetensor.html#a930511aee85d7501baa25d338a98f312',1,'freetensor']]],
   ['hasintersect_27',['hasIntersect',['../namespacefreetensor.html#ab1a3dc4e23ae7dc6f08e4bfb0d359e8b',1,'freetensor']]],
-  ['hasloop_28',['hasLoop',['../classfreetensor_1_1SymbolTableInterface.html#ae9e7f338b17e2a7ae54d2bac45e9f0b6',1,'freetensor::SymbolTableInterface::hasLoop()'],['../classfreetensor_1_1SymbolTableData.html#abcea1227e9aafc989ba125b1e77713c1',1,'freetensor::SymbolTableData::hasLoop()'],['../classfreetensor_1_1SymbolTable.html#afe803ffaa9c2db5ea90454e511ea12f3',1,'freetensor::SymbolTable::hasLoop()'],['../classfreetensor_1_1Z3SimplifyWithSymbolTable.html#ad52c60cb1adaae99ae64c8363d6449f5',1,'freetensor::Z3SimplifyWithSymbolTable::hasLoop()']]],
+  ['hasloop_28',['hasLoop',['../classfreetensor_1_1SymbolTableData.html#abcea1227e9aafc989ba125b1e77713c1',1,'freetensor::SymbolTableData::hasLoop()'],['../classfreetensor_1_1Z3SimplifyWithSymbolTable.html#ad52c60cb1adaae99ae64c8363d6449f5',1,'freetensor::Z3SimplifyWithSymbolTable::hasLoop()'],['../classfreetensor_1_1SymbolTable.html#afe803ffaa9c2db5ea90454e511ea12f3',1,'freetensor::SymbolTable::hasLoop()'],['../classfreetensor_1_1SymbolTableInterface.html#ae9e7f338b17e2a7ae54d2bac45e9f0b6',1,'freetensor::SymbolTableInterface::hasLoop()']]],
   ['haspart_29',['hasPart',['../structfreetensor_1_1SubSketch.html#a7e55cc8c69b1a57276f3ce769c11ef2e',1,'freetensor::SubSketch']]],
   ['hassideeffect_30',['hasSideEffect',['../classfreetensor_1_1CheckSideEffect.html#ad3e86e44c6bca86f63336ffb9e0efa4e',1,'freetensor::CheckSideEffect']]],
   ['hassideeffect_5f_31',['hasSideEffect_',['../classfreetensor_1_1IntrinsicNode.html#aeca4ad776321cc88e6f4483ac547508a',1,'freetensor::IntrinsicNode']]],
@@ -36,9 +36,10 @@ var searchData=
   ['hoist_5freturn_5fvars_2eh_33',['hoist_return_vars.h',['../hoist__return__vars_8h.html',1,'']]],
   ['hoist_5fvar_5fover_5fstmt_5fseq_2ecc_34',['hoist_var_over_stmt_seq.cc',['../hoist__var__over__stmt__seq_8cc.html',1,'']]],
   ['hoist_5fvar_5fover_5fstmt_5fseq_2eh_35',['hoist_var_over_stmt_seq.h',['../hoist__var__over__stmt__seq_8h.html',1,'']]],
-  ['hoistreturnvars_36',['HoistReturnVars',['../classfreetensor_1_1HoistReturnVars.html',1,'freetensor::HoistReturnVars'],['../classfreetensor_1_1HoistReturnVars.html#a6b9b1b2dec1751e9786c6e24f96cb30a',1,'freetensor::HoistReturnVars::HoistReturnVars()']]],
+  ['hoistreturnvars_36',['HoistReturnVars',['../classfreetensor_1_1HoistReturnVars.html',1,'freetensor']]],
   ['hoistreturnvars_37',['hoistReturnVars',['../namespacefreetensor.html#a347f7684c28340f2c1710b73f1440dfe',1,'freetensor']]],
-  ['hoistvar_38',['HoistVar',['../classfreetensor_1_1HoistVar.html',1,'freetensor::HoistVar'],['../classfreetensor_1_1HoistVar.html#a0575330471930ac6ba8d60006bbc8a7f',1,'freetensor::HoistVar::HoistVar()']]],
-  ['hoistvaroverstmtseq_39',['HoistVarOverStmtSeq',['../classfreetensor_1_1HoistVarOverStmtSeq.html',1,'freetensor']]],
-  ['hoistvaroverstmtseq_40',['hoistVarOverStmtSeq',['../namespacefreetensor.html#ac991a9e232d84a66a28130388a6c627c',1,'freetensor']]]
+  ['hoistreturnvars_38',['HoistReturnVars',['../classfreetensor_1_1HoistReturnVars.html#a6b9b1b2dec1751e9786c6e24f96cb30a',1,'freetensor::HoistReturnVars']]],
+  ['hoistvar_39',['HoistVar',['../classfreetensor_1_1HoistVar.html',1,'freetensor::HoistVar'],['../classfreetensor_1_1HoistVar.html#a0575330471930ac6ba8d60006bbc8a7f',1,'freetensor::HoistVar::HoistVar()']]],
+  ['hoistvaroverstmtseq_40',['HoistVarOverStmtSeq',['../classfreetensor_1_1HoistVarOverStmtSeq.html',1,'freetensor::HoistVarOverStmtSeq'],['../classfreetensor_1_1HoistVarOverStmtSeq.html#aa033f16249fe22eba77d6e8b7760f58e',1,'freetensor::HoistVarOverStmtSeq::HoistVarOverStmtSeq()']]],
+  ['hoistvaroverstmtseq_41',['hoistVarOverStmtSeq',['../namespacefreetensor.html#a6fa8ce5b0704def92cf5737c50fb13ef',1,'freetensor']]]
 ];
