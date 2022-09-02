@@ -94,16 +94,6 @@ Stmt StmtNode::parentStmt() const {
     return nullptr;
 }
 
-Stmt StmtNode::parentCtrlFlow() const {
-    for (auto p = parentStmt(); p.isValid(); p = p->parentStmt()) {
-        if (p->nodeType() != ASTNodeType::StmtSeq &&
-            p->nodeType() != ASTNodeType::VarDef) {
-            return p;
-        }
-    }
-    return nullptr;
-}
-
 Ref<StmtNode> StmtNode::parentStmtByFilter(
     const std::function<bool(const Stmt &)> &filter) const {
     for (auto p = parentStmt(); p.isValid(); p = p->parentStmt()) {
@@ -138,6 +128,55 @@ Stmt StmtNode::nextStmt() const {
         }
     }
     return nullptr;
+}
+
+Stmt StmtNode::parentCtrlFlow() const {
+    for (auto p = parentStmt(); p.isValid(); p = p->parentStmt()) {
+        if (p->isCtrlFlow()) {
+            return p;
+        }
+    }
+    return nullptr;
+}
+
+Stmt StmtNode::prevInCtrlFlow() const {
+    Stmt ret = self().as<StmtNode>();
+    while (!ret->prevStmt().isValid()) {
+        if (auto p = ret->parentStmt(); p.isValid() && !p->isCtrlFlow()) {
+            ret = p;
+        } else {
+            return nullptr;
+        }
+    }
+    ret = ret->prevStmt();
+    while (!ret->isCtrlFlow()) {
+        if (auto &&children = ret->children(); !children.empty()) {
+            ret = children.back();
+        } else {
+            break;
+        }
+    }
+    return ret;
+}
+
+Stmt StmtNode::nextInCtrlFlow() const {
+    Stmt ret = self().as<StmtNode>();
+    while (!ret->nextStmt().isValid()) {
+        if (auto p = ret->parentStmt(); p.isValid() && !p->isCtrlFlow()) {
+            ret = p;
+        } else {
+            return nullptr;
+        }
+    }
+    ret = ret->nextStmt();
+    while (!ret->isCtrlFlow()) {
+        if (auto &&children = ret->children(); !children.empty()) {
+            ret = children.front();
+        } else {
+            break;
+        }
+    }
+    return ret;
 }
 
 Stmt StmtNode::ancestorById(const ID &lookup) const {

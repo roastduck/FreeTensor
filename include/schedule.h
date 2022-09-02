@@ -57,6 +57,9 @@ class Schedule {
      *
      * Some quick passes that performed when the `Schedule` object is
      * constructed and after each schedule
+     *
+     * These passes shall not change the statment IDs and Metadata, which means
+     * return values from each schedule will be preserved
      */
     static Stmt quickOptimizations(const Stmt &ast);
 
@@ -86,7 +89,7 @@ class Schedule {
      */
     template <class T> T appendLog(const T &_log) {
         auto log = _log;
-        setLogs(memoized_->lookupOrCreate(logs()));
+        setLogs(memoized_->lookupOrCreate(logs().push(log)));
         ASSERT(logs().top()->type() == log->type());
         log = logs().top().as<typename decltype(log)::Object>();
         log->run();

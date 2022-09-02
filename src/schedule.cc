@@ -391,7 +391,6 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
         auto stmt = _stmt, dst = _dst;
         auto stmtBody = stmt;
         while (true) {
-            setAst(hoistVarOverStmtSeq(ast())); // FIXME: No pass here
             Stmt s = findStmt(ast(), stmt);
             Stmt d = findStmt(ast(), dst);
 
@@ -399,7 +398,7 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
                 if (d->isAncestorOf(s)) {
                     return side == MoveToSide::Before;
                 }
-                if (auto prev = s->prevStmt(); prev.isValid()) {
+                if (auto prev = s->prevInCtrlFlow(); prev.isValid()) {
                     return d->isBefore(side == MoveToSide::After ? prev : s);
                 } else {
                     return d->isBefore(s);
@@ -409,7 +408,7 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
                 if (d->isAncestorOf(s)) {
                     return side == MoveToSide::After;
                 }
-                if (auto next = s->nextStmt(); next.isValid()) {
+                if (auto next = s->nextInCtrlFlow(); next.isValid()) {
                     return (side == MoveToSide::Before ? next : s)->isBefore(d);
                 } else {
                     return s->isBefore(d);
@@ -417,24 +416,24 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
             };
 
             if (movingUp()) {
-                if (s->prevStmt().isValid()) {
+                if (s->prevInCtrlFlow().isValid()) {
                     std::vector<ID> orderRev;
-                    while (s->prevStmt().isValid() && movingUp()) {
-                        s = s->prevStmt();
+                    while (s->prevInCtrlFlow().isValid() && movingUp()) {
+                        s = s->prevInCtrlFlow();
                         orderRev.emplace_back(s->id());
                     }
                     orderRev.emplace_back(stmt);
                     std::vector<ID> order(orderRev.rbegin(), orderRev.rend());
                     swap(order);
                 } else {
-                    while (!s->prevStmt().isValid() && movingUp()) {
+                    while (!s->prevInCtrlFlow().isValid() && movingUp()) {
                         s = s->parentCtrlFlow();
                     }
                     if (s->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
-                            ast(),
-                            "Fission a If node in a StmtSeq is not currently "
-                            "supported in moveTo");
+                            ast(), "Fission a " + toString(s->nodeType()) +
+                                       " node in a StmtSeq is not currently "
+                                       "supported in moveTo");
                         // TODO: Fission IfNode
                     }
                     auto idMapBefore =
@@ -446,23 +445,23 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
                 // TODO: Fuse if d is inner of s
 
             } else if (movingDown()) {
-                if (s->nextStmt().isValid()) {
+                if (s->nextInCtrlFlow().isValid()) {
                     std::vector<ID> order;
-                    while (s->nextStmt().isValid() && movingDown()) {
-                        s = s->nextStmt();
+                    while (s->nextInCtrlFlow().isValid() && movingDown()) {
+                        s = s->nextInCtrlFlow();
                         order.emplace_back(s->id());
                     }
                     order.emplace_back(stmt);
                     swap(order);
                 } else {
-                    while (!s->nextStmt().isValid() && movingDown()) {
+                    while (!s->nextInCtrlFlow().isValid() && movingDown()) {
                         s = s->parentCtrlFlow();
                     }
                     if (s->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
-                            ast(),
-                            "Fission a If node in a StmtSeq is not currently "
-                            "supported in moveTo");
+                            ast(), "Fission a " + toString(s->nodeType()) +
+                                       " node in a StmtSeq is not currently "
+                                       "supported in moveTo");
                         // TODO: Fission IfNode
                     }
                     // Leave IDs of the other statements unchanged
