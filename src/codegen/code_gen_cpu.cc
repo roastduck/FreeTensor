@@ -67,10 +67,15 @@ void CodeGenCPU::visit(const VarDef &op) {
 
         switch (op->buffer_->mtype()) {
         case MemType::CPUHeap:
-            // e.g. mdspan_r<float, std::extents<5, 5>> x;
+            // e.g. UncheckedOpt<mdspan_r<float, std::extents<5, 5>>> x_opt;
+            //      auto &x = *x_opt;
             this->makeIndent();
+            this->os() << "UncheckedOpt<";
             genMdPtrType(op->buffer_);
-            this->os() << " " << name << ";" << std::endl;
+            this->os() << "> " << name << "_opt;" << std::endl;
+            this->makeIndent();
+            this->os() << "auto &" << name << " = *" << name << "_opt;"
+                       << std::endl;
             this->markDefBuffer(op);
             (*this)(op->body_);
             this->markUndefBuffer(op);

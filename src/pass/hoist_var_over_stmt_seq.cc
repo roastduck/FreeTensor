@@ -1,4 +1,9 @@
+#include <algorithm>
+
 #include <analyze/all_defs.h>
+#include <analyze/all_uses.h>
+#include <analyze/find_stmt.h>
+#include <container_utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 
@@ -45,6 +50,8 @@ Stmt HoistVarOverStmtSeq::visit(const ReduceTo &_op) {
 }
 
 Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
+    auto parentAllWrites = allWrites(op);
+
     std::unordered_map<std::string, int> namesCnt, ioNamesCnt;
     for (auto &&[id, name] : allDefs(op)) {
         namesCnt[name]++;
@@ -54,8 +61,27 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
     std::vector<VarDef> defs;
     for (auto &&stmt : op->stmts_) {
         if (stmt->nodeType() == ASTNodeType::VarDef) {
-            isFixPoint_ = false;
             auto def = stmt.as<VarDefNode>();
+
+            std::unordered_set<std::string> shapeAllReads;
+            for (auto &&dim : def->buffer_->tensor()->shape()) {
+                shapeAllReads = uni(shapeAllReads, allReads(dim));
+            }
+            if (hasIntersect(parentAllWrites, shapeAllReads)) {
+                goto no_hoist;
+            }
+            if (togetherIds_.isValid()) {
+                auto togetherInside = findStmt(def, [&](const Stmt &s) {
+                    return std::find(togetherIds_->begin(), togetherIds_->end(),
+                                     s->id()) != togetherIds_->end();
+                });
+                if (togetherInside.empty() ||
+                    togetherInside.size() == togetherIds_->size()) {
+                    goto no_hoist;
+                }
+            }
+
+            isFixPoint_ = false;
             Stmt _newDef;
             if (namesCnt.at(def->name_) > 1) {
                 if (def->buffer_->atype() == AccessType::Cache) {
@@ -79,9 +105,11 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
             auto newDef = _newDef.as<VarDefNode>();
             defs.emplace_back(newDef);
             stmts.emplace_back(newDef->body_);
-        } else {
-            stmts.emplace_back((*this)(stmt));
+            continue;
         }
+
+    no_hoist:
+        stmts.emplace_back((*this)(stmt));
     }
     auto ret = makeStmtSeq(std::move(stmts));
     for (auto i = defs.rbegin(); i != defs.rend(); i++) {
@@ -93,7 +121,8 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
     return ret;
 }
 
-Stmt hoistVarOverStmtSeq(const Stmt &_op) {
+Stmt hoistVarOverStmtSeq(const Stmt &_op,
+                         const Opt<std::vector<ID>> &togetherIds) {
     auto op = _op;
     for (int i = 0;; i++) {
         if (i > 100) {
@@ -101,7 +130,7 @@ Stmt hoistVarOverStmtSeq(const Stmt &_op) {
                     "is a bug");
             break;
         }
-        HoistVarOverStmtSeq mutator;
+        HoistVarOverStmtSeq mutator(togetherIds);
         op = flattenStmtSeq(op);
         op = mutator(op);
         if (mutator.isFixPoint()) {

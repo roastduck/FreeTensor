@@ -79,3 +79,41 @@ def test_dependency():
         s.swap(["S2", "S1"])
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
+
+
+def test_crossing_var_def():
+    with ft.VarDef([
+        ("x", (4,), "int32", "input", "cpu"),
+        ("y1", (4,), "int32", "output", "cpu"),
+        ("y2", (4, 4), "int32", "output", "cpu"),
+    ]) as (x, y1, y2):
+        with ft.For("i", 0, 4, label="L1") as i:
+            ft.MarkLabel("S1")
+            y1[i] = i
+            with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+                with ft.For("j", 0, 4, label="L2") as j:
+                    t[j] = x[i] * x[j]
+                with ft.For("j", 0, 4, label="L3") as j:
+                    y2[i, j] = t[j]
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.swap(["L2", "S1"])
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, skip_passes=["prop_one_time_use"], verbose=1)
+
+    with ft.VarDef([
+        ("x", (4,), "int32", "input", "cpu"),
+        ("y1", (4,), "int32", "output", "cpu"),
+        ("y2", (4, 4), "int32", "output", "cpu"),
+    ]) as (x, y1, y2):
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+                with ft.For("j", 0, 4) as j:
+                    t[j] = x[i] * x[j]
+                y1[i] = i
+                with ft.For("j", 0, 4) as j:
+                    y2[i, j] = t[j]
+    std = ft.pop_ast()
+
+    assert std.match(ast)

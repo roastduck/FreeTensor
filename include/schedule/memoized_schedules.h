@@ -31,24 +31,17 @@ class MemoizedSchedules {
      * Lookup for a particular schedule
      *
      * If there is a memoized result, return the memoized one to save memory
-     * (so the shared linked lists form a tree). If not found, return the new
-     * log
+     * (so the shared linked lists form a tree). If not found, save and return
+     * the new log
      */
-    ScheduleLog lookup(const ScheduleLog &log) {
+    ScheduleLog lookupOrCreate(const ScheduleLog &log) {
         std::lock_guard<std::mutex> guard(lock_);
         if (auto it = memoized_.find(log); it != memoized_.end()) {
             return *it;
         } else {
+            memoized_.insert(log);
             return log;
         }
-    }
-
-    /**
-     * Save a new log
-     */
-    void save(const ScheduleLog &log) {
-        std::lock_guard<std::mutex> guard(lock_);
-        memoized_.insert(log);
     }
 };
 

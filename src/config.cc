@@ -47,7 +47,7 @@ static Opt<std::string> getStrEnv(const char *name) {
     std::lock_guard<std::mutex> guard(lock); // getenv is not thread safe
     char *env = getenv(name);
     if (env == nullptr) {
-        return nullptr;
+        return std::nullopt;
     } else {
         return Opt<std::string>::make(env);
     }
@@ -65,17 +65,17 @@ static Opt<bool> getBoolEnv(const char *name) {
     if (auto _env = getStrEnv(name); _env.isValid()) {
         auto &&env = tolower(*_env);
         if (env == "true" || env == "yes" || env == "on" || env == "1") {
-            return Opt<bool>::make(true);
+            return true;
         } else if (env == "false" || env == "no" || env == "off" ||
                    env == "0") {
-            return Opt<bool>::make(false);
+            return false;
         } else {
             ERROR(
                 (std::string) "Value of " + name +
                 " must be true/yes/on/1 or false/no/off/0 (case insensitive)");
         }
     } else {
-        return nullptr;
+        return std::nullopt;
     }
 }
 
