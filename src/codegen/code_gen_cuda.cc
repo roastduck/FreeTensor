@@ -255,8 +255,8 @@ void CodeGenCUDA::visit(const Alloc &op) {
     ASSERT(buf->mtype() == MemType::GPUGlobalHeap);
 
     // e.g.
-    // x = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 * sizeof(int)));
-    os() << mangle(op->var_) << " = ";
+    // x_opt = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 * sizeof(int)));
+    os() << mangle(op->var_) << "_opt = ";
     genMdPtrDef(buf, [&]() {
         os() << "cudaNew(";
         for (auto &&dim : shape) {
@@ -271,12 +271,20 @@ void CodeGenCUDA::visit(const Alloc &op) {
 void CodeGenCUDA::visit(const Free &op) {
     ASSERT(buffer(op->var_)->mtype() == MemType::GPUGlobalHeap);
 
-    // e.g.
-    // cudaFree(x.data_handle());
-
-    auto id = mangle(op->var_);
+    // e.g. auto x_ptr = x.data_handle();
+    //      x_opt.drop();
+    //      x_opt = std::nullopt;
+    //      cudaFree(x_ptr);
+    auto &&name = mangle(op->var_);
     makeIndent();
-    os() << "cudaFree(" << id << ".data_handle());" << std::endl;
+    os() << "auto " << name << "_ptr = " << name << ".data_handle();"
+         << std::endl;
+    makeIndent();
+    os() << name << "_opt.drop();" << std::endl;
+    makeIndent();
+    os() << name << "_opt = std::nullopt;" << std::endl;
+    makeIndent();
+    os() << "cudaFree(" << name << "_ptr);" << std::endl;
 }
 
 void CodeGenCUDA::visit(const ReduceTo &op) {
@@ -500,11 +508,16 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 throw InvalidProgram("gpu/global/heap memory allocated from "
                                      "inside a kernel is not supported");
             } else {
-                // e.g.
-                // mdspan_r<float, extents<5, 5>> x;
+                // e.g. UncheckedOpt<mdspan_r<float, std::extents<5, 5>>> x_opt;
+                //      auto &x = *x_opt;
+                auto &&name = mangle(op->name_);
                 makeIndent();
+                os() << "UncheckedOpt<";
                 genMdPtrType(op->buffer_);
-                os() << " " << mangle(op->name_) << ";";
+                os() << "> " << name << "_opt;" << std::endl;
+                makeIndent();
+                os() << "auto &" << name << " = *" << name << "_opt;"
+                     << std::endl;
 
                 markDefBuffer(op);
                 (*this)(op->body_);

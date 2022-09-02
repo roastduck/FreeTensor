@@ -1,5 +1,5 @@
-#ifndef GPU_RUNTIME_H
-#define GPU_RUNTIME_H
+#ifndef FREE_TENSOR_GPU_RUNTIME_H
+#define FREE_TENSOR_GPU_RUNTIME_H
 
 #include <algorithm>
 #include <assert.h>
@@ -11,6 +11,7 @@
 #include "gpu_context.h"
 
 #include "mdspan.h"
+#include "unchecked_opt.h"
 
 #include "../3rd-party/cuda-samples/Common/helper_math.h"
 
@@ -141,4 +142,4 @@ inline __host__ __device__ double runtime_floor(double x) { return floor(x); }
 inline __host__ __device__ float runtime_ceil(float x) { return ceilf(x); }
 inline __host__ __device__ double runtime_ceil(double x) { return ceil(x); }
 
-#endif // GPU_RUNTIME_H
+#endif // FREE_TENSOR_GPU_RUNTIME_H
