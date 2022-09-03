@@ -32,6 +32,7 @@ Expr RenameIter::visit(const Var &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
     if (op->name_ == oldName_) {
+        ASSERT(!newName_.empty());
         op->name_ = newName_;
     }
     return op;
@@ -44,6 +45,7 @@ Stmt RenameIter::visit(const For &_op) {
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
         op->iter_ = newName_;
+        newName_.clear();
         return op;
     } else {
         return Mutator::visit(_op);
@@ -95,26 +97,36 @@ Stmt Reorder::visit(const StmtSeq &_op) {
         }
 
         if (!beforeStmts.empty()) {
-            if (oldInner_->property_->parallel_ != serialScope) {
-                throw InvalidSchedule("Imperfect nesting is not allowed when "
-                                      "the inner loop is parallelized");
-            }
-            before =
-                makeIf(makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                       RenameIter{oldInner_->iter_}(
-                           beforeStmts.size() == 1 ? beforeStmts[0]
-                                                   : makeStmtSeq(beforeStmts)));
+            before = beforeStmts.size() == 1 ? beforeStmts[0]
+                                             : makeStmtSeq(beforeStmts);
         }
         if (!afterStmts.empty()) {
-            if (oldInner_->property_->parallel_ != serialScope) {
-                throw InvalidSchedule("Imperfect nesting is not allowed when "
-                                      "the inner loop is parallelized");
+            after = afterStmts.size() == 1 ? afterStmts[0]
+                                           : makeStmtSeq(afterStmts);
+        }
+        if (inner.isValid()) {
+            // Otherwise, some outer visit(StmtSeq) will add the guards for us
+
+            if (before.isValid()) {
+                if (oldInner_->property_->parallel_ != serialScope) {
+                    throw InvalidSchedule(
+                        "Imperfect nesting is not allowed when "
+                        "the inner loop is parallelized");
+                }
+                before =
+                    makeIf(makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
+                           RenameIter{oldInner_->iter_}(before));
             }
-            after =
-                makeIf(makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                       RenameIter{oldInner_->iter_}(
-                           afterStmts.size() == 1 ? afterStmts[0]
-                                                  : makeStmtSeq(afterStmts)));
+            if (after.isValid()) {
+                if (oldInner_->property_->parallel_ != serialScope) {
+                    throw InvalidSchedule(
+                        "Imperfect nesting is not allowed when "
+                        "the inner loop is parallelized");
+                }
+                after =
+                    makeIf(makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
+                           RenameIter{oldInner_->iter_}(after));
+            }
         }
 
         std::vector<Stmt> stmts;
