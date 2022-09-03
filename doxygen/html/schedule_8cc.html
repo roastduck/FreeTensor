@@ -88,10 +88,10 @@ $(function() {
 <code>#include &lt;<a class="el" href="driver_8h_source.html">driver.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="lower_8h_source.html">lower.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="omp__utils_8h_source.html">omp_utils.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="const__fold_8h_source.html">pass/const_fold.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="flatten__stmt__seq_8h_source.html">pass/flatten_stmt_seq.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="hoist__var__over__stmt__seq_8h_source.html">pass/hoist_var_over_stmt_seq.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="make__reduction_8h_source.html">pass/make_reduction.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="simplify_8h_source.html">pass/simplify.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="schedule_8h_source.html">schedule.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="as__matmul_8h_source.html">schedule/as_matmul.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="blend_8h_source.html">schedule/blend.h</a>&gt;</code><br />
@@ -118,56 +118,56 @@ Include dependency graph for schedule.cc:</div>
 <div class="dyncontent">
 <div class="center"><img src="schedule_8cc__incl.png" border="0" usemap="#asrc_2schedule_8cc" alt=""/></div>
 <map name="asrc_2schedule_8cc" id="asrc_2schedule_8cc">
-<area shape="rect" title=" " alt="" coords="2405,5,2527,32"/>
-<area shape="rect" title=" " alt="" coords="246,348,331,375"/>
-<area shape="rect" title=" " alt="" coords="378,348,482,375"/>
-<area shape="rect" href="all__defs_8h.html" title=" " alt="" coords="2045,266,2185,293"/>
-<area shape="rect" href="all__stmts_8h.html" title=" " alt="" coords="2501,266,2650,293"/>
-<area shape="rect" href="count__contig__access__loops_8h.html" title=" " alt="" coords="2515,169,2675,211"/>
-<area shape="rect" href="deps_8h.html" title=" " alt="" coords="1078,177,1198,203"/>
-<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="453,266,583,293"/>
-<area shape="rect" href="find__all__loops_8h.html" title=" " alt="" coords="3091,177,3270,203"/>
-<area shape="rect" href="find__indexing__loops_8h.html" title=" " alt="" coords="2261,259,2425,300"/>
-<area shape="rect" href="find__stmt_8h.html" title=" " alt="" coords="2340,177,2491,203"/>
-<area shape="rect" href="get__loop__nest__tree_8h.html" title=" " alt="" coords="2699,169,2867,211"/>
-<area shape="rect" href="auto__schedule_2utils_8h.html" title=" " alt="" coords="603,87,763,114"/>
-<area shape="rect" href="schedule_8h.html" title=" " alt="" coords="839,177,931,203"/>
-<area shape="rect" href="fission_8h.html" title=" " alt="" coords="709,266,847,293"/>
-<area shape="rect" href="include_2codegen_2code__gen_8h.html" title=" " alt="" coords="1162,266,1317,293"/>
-<area shape="rect" href="driver_8h.html" title=" " alt="" coords="3349,177,3420,203"/>
-<area shape="rect" href="lower_8h.html" title=" " alt="" coords="1597,177,1666,203"/>
-<area shape="rect" href="simplify_8h.html" title=" " alt="" coords="1648,266,1767,293"/>
-<area shape="rect" href="omp__utils_8h.html" title=" " alt="" coords="955,177,1054,203"/>
-<area shape="rect" href="flatten__stmt__seq_8h.html" title=" " alt="" coords="2960,87,3137,114"/>
-<area shape="rect" href="hoist__var__over__stmt__seq_8h.html" title=" " alt="" coords="3447,169,3599,211"/>
+<area shape="rect" title=" " alt="" coords="2392,5,2513,32"/>
+<area shape="rect" title=" " alt="" coords="331,348,417,375"/>
+<area shape="rect" title=" " alt="" coords="629,348,733,375"/>
+<area shape="rect" href="all__defs_8h.html" title=" " alt="" coords="1911,266,2051,293"/>
+<area shape="rect" href="all__stmts_8h.html" title=" " alt="" coords="2075,266,2225,293"/>
+<area shape="rect" href="count__contig__access__loops_8h.html" title=" " alt="" coords="2130,169,2290,211"/>
+<area shape="rect" href="deps_8h.html" title=" " alt="" coords="1074,177,1194,203"/>
+<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="513,266,643,293"/>
+<area shape="rect" href="find__all__loops_8h.html" title=" " alt="" coords="2514,177,2693,203"/>
+<area shape="rect" href="find__indexing__loops_8h.html" title=" " alt="" coords="2660,259,2824,300"/>
+<area shape="rect" href="find__stmt_8h.html" title=" " alt="" coords="2717,177,2868,203"/>
+<area shape="rect" href="get__loop__nest__tree_8h.html" title=" " alt="" coords="2893,169,3061,211"/>
+<area shape="rect" href="auto__schedule_2utils_8h.html" title=" " alt="" coords="718,87,878,114"/>
+<area shape="rect" href="schedule_8h.html" title=" " alt="" coords="901,177,993,203"/>
+<area shape="rect" href="fission_8h.html" title=" " alt="" coords="718,266,857,293"/>
+<area shape="rect" href="include_2codegen_2code__gen_8h.html" title=" " alt="" coords="1529,266,1683,293"/>
+<area shape="rect" href="driver_8h.html" title=" " alt="" coords="3136,177,3207,203"/>
+<area shape="rect" href="lower_8h.html" title=" " alt="" coords="226,348,295,375"/>
+<area shape="rect" href="omp__utils_8h.html" title=" " alt="" coords="1262,177,1361,203"/>
+<area shape="rect" href="const__fold_8h.html" title=" " alt="" coords="2896,87,3031,114"/>
+<area shape="rect" href="flatten__stmt__seq_8h.html" title=" " alt="" coords="3055,87,3232,114"/>
+<area shape="rect" href="hoist__var__over__stmt__seq_8h.html" title=" " alt="" coords="3282,169,3434,211"/>
 <area shape="rect" href="make__reduction_8h.html" title=" " alt="" coords="5,348,177,375"/>
-<area shape="rect" href="as__matmul_8h.html" title=" " alt="" coords="2044,177,2213,203"/>
-<area shape="rect" href="blend_8h.html" title=" " alt="" coords="3368,266,3500,293"/>
-<area shape="rect" href="cache_8h.html" title=" " alt="" coords="3161,87,3296,114"/>
-<area shape="rect" href="check__loop__order_8h.html" title=" " alt="" coords="2826,259,2983,300"/>
-<area shape="rect" href="fuse_8h.html" title=" " alt="" coords="2943,177,3067,203"/>
-<area shape="rect" href="inlining_8h.html" title=" " alt="" coords="3626,348,3770,375"/>
-<area shape="rect" href="merge_8h.html" title=" " alt="" coords="3321,87,3459,114"/>
-<area shape="rect" href="schedule_2multi__level__tiling_8h.html" title=" " alt="" coords="3483,80,3641,121"/>
-<area shape="rect" href="schedule_2parallelize_8h.html" title=" " alt="" coords="1768,348,1932,375"/>
-<area shape="rect" href="permute_8h.html" title=" " alt="" coords="3665,87,3816,114"/>
-<area shape="rect" href="reorder_8h.html" title=" " alt="" coords="3840,87,3983,114"/>
-<area shape="rect" href="separate__tail_8h.html" title=" " alt="" coords="1391,266,1573,293"/>
-<area shape="rect" href="set__mem__type_8h.html" title=" " alt="" coords="3693,177,3887,203"/>
-<area shape="rect" href="split_8h.html" title=" " alt="" coords="4007,87,4131,114"/>
-<area shape="rect" href="swap_8h.html" title=" " alt="" coords="4155,87,4286,114"/>
-<area shape="rect" href="schedule_2unroll_8h.html" title=" " alt="" coords="4310,87,4443,114"/>
-<area shape="rect" href="var__merge_8h.html" title=" " alt="" coords="4468,87,4635,114"/>
-<area shape="rect" href="var__reorder_8h.html" title=" " alt="" coords="157,266,327,293"/>
-<area shape="rect" href="vectorize_8h.html" title=" " alt="" coords="4659,87,4815,114"/>
-<area shape="rect" title=" " alt="" coords="1345,423,1459,449"/>
-<area shape="rect" href="visitor_8h.html" title=" " alt="" coords="2650,348,2725,375"/>
-<area shape="rect" title=" " alt="" coords="2161,423,2285,449"/>
-<area shape="rect" href="analyze__linear_8h.html" title=" " alt="" coords="3109,266,3292,293"/>
-<area shape="rect" href="symbol__table_8h.html" title=" " alt="" coords="1544,348,1721,375"/>
-<area shape="rect" title=" " alt="" coords="1113,348,1200,375"/>
-<area shape="rect" title=" " alt="" coords="658,348,738,375"/>
-<area shape="rect" title=" " alt="" coords="973,266,1037,293"/>
+<area shape="rect" href="as__matmul_8h.html" title=" " alt="" coords="1936,177,2105,203"/>
+<area shape="rect" href="blend_8h.html" title=" " alt="" coords="3284,266,3416,293"/>
+<area shape="rect" href="cache_8h.html" title=" " alt="" coords="3256,87,3391,114"/>
+<area shape="rect" href="check__loop__order_8h.html" title=" " alt="" coords="3051,259,3209,300"/>
+<area shape="rect" href="fuse_8h.html" title=" " alt="" coords="2365,177,2489,203"/>
+<area shape="rect" href="inlining_8h.html" title=" " alt="" coords="3458,177,3602,203"/>
+<area shape="rect" href="merge_8h.html" title=" " alt="" coords="3415,87,3554,114"/>
+<area shape="rect" href="schedule_2multi__level__tiling_8h.html" title=" " alt="" coords="3578,80,3735,121"/>
+<area shape="rect" href="schedule_2parallelize_8h.html" title=" " alt="" coords="1401,348,1565,375"/>
+<area shape="rect" href="permute_8h.html" title=" " alt="" coords="3760,87,3911,114"/>
+<area shape="rect" href="reorder_8h.html" title=" " alt="" coords="3935,87,4077,114"/>
+<area shape="rect" href="separate__tail_8h.html" title=" " alt="" coords="1273,266,1454,293"/>
+<area shape="rect" href="set__mem__type_8h.html" title=" " alt="" coords="3543,348,3736,375"/>
+<area shape="rect" href="split_8h.html" title=" " alt="" coords="4101,87,4225,114"/>
+<area shape="rect" href="swap_8h.html" title=" " alt="" coords="4250,87,4381,114"/>
+<area shape="rect" href="schedule_2unroll_8h.html" title=" " alt="" coords="4405,87,4538,114"/>
+<area shape="rect" href="var__merge_8h.html" title=" " alt="" coords="4563,87,4729,114"/>
+<area shape="rect" href="var__reorder_8h.html" title=" " alt="" coords="166,266,337,293"/>
+<area shape="rect" href="vectorize_8h.html" title=" " alt="" coords="4753,87,4909,114"/>
+<area shape="rect" title=" " alt="" coords="1426,423,1541,449"/>
+<area shape="rect" href="visitor_8h.html" title=" " alt="" coords="2614,348,2689,375"/>
+<area shape="rect" title=" " alt="" coords="2308,423,2432,449"/>
+<area shape="rect" href="analyze__linear_8h.html" title=" " alt="" coords="2351,266,2533,293"/>
+<area shape="rect" href="symbol__table_8h.html" title=" " alt="" coords="1692,348,1869,375"/>
+<area shape="rect" title=" " alt="" coords="1192,348,1279,375"/>
+<area shape="rect" title=" " alt="" coords="825,348,905,375"/>
+<area shape="rect" title=" " alt="" coords="1033,266,1097,293"/>
 </map>
 </div>
 </div><table class="memberdecls">
@@ -228,7 +228,7 @@ Macros</h2></td></tr>
 <div class="line">                : BaseClass(f, p) {}                                           \</div>
 <div class="line">        };                                                                     \</div>
 <div class="line">        return Ref&lt;ScheduleLogItem##TYPE&gt;::make(func, params);                 \</div>
-<div class="line">    })(FUNC, std::make_tuple(__VA_ARGS__))</div>
+<div class="line">    })(futureSchedule(FUNC), std::make_tuple(__VA_ARGS__))</div>
 <div class="ttc" id="anamespacefreetensor_html_a72ad71770fd2211715907e3189e380d5"><div class="ttname"><a href="namespacefreetensor.html#a72ad71770fd2211715907e3189e380d5">freetensor::apply</a></div><div class="ttdeci">PBSet apply(T &amp;&amp;lhs, U &amp;&amp;rhs)</div><div class="ttdef"><b>Definition:</b> presburger.h:365</div></div>
 <div class="ttc" id="anamespacefreetensor_html_aa2167252e741aa103c5129991760f9eb"><div class="ttname"><a href="namespacefreetensor.html#aa2167252e741aa103c5129991760f9eb">freetensor::getPackFromID</a></div><div class="ttdeci">auto getPackFromID(auto schedule, const std::tuple&lt; Args... &gt; &amp;args)</div><div class="ttdef"><b>Definition:</b> schedule_log.h:119</div></div>
 </div><!-- fragment -->
