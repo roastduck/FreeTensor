@@ -33,7 +33,7 @@ class Schedule(ffi.Schedule):
 
         ret = super().ast()
         if self.verbose >= 1:
-            print(f"The scheduled AST is :\n{ret}")
+            print(f"The scheduled AST is:\n{ret}")
         return ret
 
     def func(self):
@@ -43,7 +43,7 @@ class Schedule(ffi.Schedule):
 
         ret = super().func()
         if self.verbose >= 1:
-            print(f"The scheduled Func is :\n{ret}")
+            print(f"The scheduled Func is:\n{ret}")
         return ret
 
     def fork(self):
