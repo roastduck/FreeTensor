@@ -6,6 +6,7 @@ import sys
 import numpy as np
 import functools
 import inspect
+from numbers import Number
 from typing import Callable, Dict, List, Sequence, Optional, Any, Union
 from dataclasses import dataclass
 
@@ -384,6 +385,17 @@ class dynamic_range(StagedIterable):
         if not isinstance(name, str):
             raise _overload.error(
                 'dynamic_range only supports exactly one target variable')
+
+        # Early optimizations
+        if isinstance(self.start, Number) and isinstance(
+                self.stop, Number) and isinstance(self.step, Number):
+            if not range(self.start, self.stop, self.step):
+                return
+            if len(range(self.start, self.stop, self.step)) == 1:
+                with LifetimeScope():
+                    body(self.start)
+                return
+
         with _overload.allow_shortcut_scope(False):
             with For(_overload.fullname(name), self.start, self.stop,
                      self.step) as iter_var:

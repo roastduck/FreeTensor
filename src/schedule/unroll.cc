@@ -60,7 +60,8 @@ Stmt ImmediateUnroll::visit(const For &op) {
 }
 
 Stmt unroll(const Stmt &_ast, const ID &loop, bool immediate) {
-    auto ast = simplify(_ast); // Const prop for ForNode::len_
+    auto ast =
+        simplify(_ast); // Make things like range(n, n + 4) constant ranges
     bool done = false;
     if (immediate) {
         ImmediateUnroll mutator(loop);

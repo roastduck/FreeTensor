@@ -35,6 +35,7 @@ inline Stmt _makeAny() { return Any::make(); }
 class StmtSeqNode : public StmtNode {
   public:
     SubTreeList<StmtNode> stmts_ = ChildOf{this};
+    std::vector<Stmt> children() const override { return stmts_; }
     void compHash() override;
     DEFINE_NODE_TRAIT(StmtSeq);
 };
@@ -81,6 +82,7 @@ class VarDefNode : public StmtNode {
                /// `buffer_`. `dtype` of `ioTensor_` is currently unused
     SubTree<StmtNode> body_ = ChildOf{this};
     bool pinned_; /// If pinned, SinkVar and ShrinkVar will not alter this node
+    std::vector<Stmt> children() const override { return {body_}; }
     void compHash() override;
     DEFINE_NODE_TRAIT(VarDef);
 };
@@ -250,6 +252,9 @@ class ForNode : public StmtNode {
     SubTree<ForProperty> property_ = ChildOf{this};
     SubTree<StmtNode> body_ = ChildOf{this};
 
+    bool isCtrlFlow() const override { return true; }
+    std::vector<Stmt> children() const override { return {body_}; }
+
     void compHash() override;
 
     DEFINE_NODE_TRAIT(For);
@@ -282,6 +287,8 @@ class IfNode : public StmtNode {
     SubTree<ExprNode> cond_ = ChildOf{this};
     SubTree<StmtNode> thenCase_ = ChildOf{this};
     SubTree<StmtNode, NullPolicy::Nullable> elseCase_ = ChildOf{this};
+
+    bool isCtrlFlow() const override { return true; }
 
     void compHash() override;
 
@@ -320,6 +327,8 @@ class AssertNode : public StmtNode {
   public:
     SubTree<ExprNode> cond_ = ChildOf{this};
     SubTree<StmtNode> body_ = ChildOf{this};
+    bool isCtrlFlow() const override { return true; }
+    std::vector<Stmt> children() const override { return {body_}; }
     void compHash() override;
     DEFINE_NODE_TRAIT(Assert);
 };
@@ -351,6 +360,7 @@ class AssumeNode : public StmtNode {
   public:
     SubTree<ExprNode> cond_ = ChildOf{this};
     SubTree<StmtNode> body_ = ChildOf{this};
+    std::vector<Stmt> children() const override { return {body_}; }
     void compHash() override;
     DEFINE_NODE_TRAIT(Assume);
 };
@@ -417,6 +427,7 @@ class MatMulNode : public StmtNode {
     bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
     SubTree<StmtNode> equivalent_ = ChildOf{
         this}; // Equivalent loop statements, to help dependency analysis
+    std::vector<Stmt> children() const override { return {equivalent_}; }
     void compHash() override;
     DEFINE_NODE_TRAIT(MatMul);
 };

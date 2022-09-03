@@ -1,7 +1,6 @@
 #include <sstream>
 
 #include <analyze/deps.h>
-#include <pass/make_reduction.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/reorder.h>
 
@@ -136,7 +135,7 @@ Stmt Reorder::visit(const StmtSeq &_op) {
 }
 
 Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
-    auto ast = makeReduction(_ast);
+    auto ast = _ast;
 
     CheckLoopOrder checker(dstOrder);
     checker(ast);

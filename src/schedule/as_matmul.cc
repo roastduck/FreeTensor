@@ -1,5 +1,3 @@
-#include <pass/make_reduction.h>
-#include <pass/simplify.h>
 #include <schedule/as_matmul.h>
 
 namespace freetensor {
@@ -279,11 +277,6 @@ Stmt AsMatMul::visit(const VarDef &op) {
     }
 }
 
-Stmt asMatMul(const Stmt &_ast, const ID &loop) {
-    auto ast = simplify(_ast); // const prop
-    ast = makeReduction(ast);
-    ast = AsMatMul(loop)(ast);
-    return ast;
-}
+Stmt asMatMul(const Stmt &ast, const ID &loop) { return AsMatMul(loop)(ast); }
 
 } // namespace freetensor
