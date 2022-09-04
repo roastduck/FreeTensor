@@ -19,8 +19,8 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
     // count maximum count of perfectly nested loops at loop0 and loop1
     auto countPerfectNest = [](const For &loop) {
         int n = 0;
-        for (auto inner = loop; inner->body_->nodeType() == ASTNodeType::For;
-             inner = inner->body_.as<ForNode>())
+        for (Stmt inner = loop; inner->nodeType() == ASTNodeType::For;
+             inner = inner.as<ForNode>()->body_)
             n++;
         return n;
     };
@@ -40,6 +40,8 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             "PlutoFuse: loop 1 `#" + toString(loop1) +
             "` has less than required nesting levels: " + toString(nestLevel1) +
             " existed, but " + toString(nestLevel) + " required");
+
+    std::cout << "nesting levels = " << nestLevel << std::endl;
 
     // List common outer loops
     std::deque<For> outers;
@@ -69,14 +71,19 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
     PBCtx ctx;
 
     auto findIter = [](const AccessPoint &ap, const std::string var) {
+        std::vector<int> outerDims;
+        outerDims.reserve(ap.iter_.size());
         for (auto &&[i, iterAxis] : iter::enumerate(ap.iter_))
-            if (iterAxis.realIter_->nodeType() == ASTNodeType::Var &&
-                iterAxis.realIter_.as<VarNode>()->name_ == var)
-                return i;
+            if (iterAxis.realIter_->nodeType() == ASTNodeType::Var) {
+                if (iterAxis.realIter_.as<VarNode>()->name_ == var)
+                    return std::pair{i, std::move(outerDims)};
+                else
+                    outerDims.push_back(i);
+            }
         ASSERT(false);
     };
 
-    auto getDeps = [&, iterPos = -1](const For &l0, const For &l1) mutable {
+    auto getDeps = [&](const For &l0, const For &l1) mutable {
         std::vector<PBSet> deps;
         FindDeps()
             .noProjectOutProvateAxis(true)
@@ -89,18 +96,31 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             .direction(outersSame)(ast, [&](const Dependency &d) {
                 // later to earlier map, but projects out unrelated dims
                 auto hMap = d.later2EarlierIter_;
-                // remove inner input dims
-                auto iter0Pos = findIter(d.earlier_, l0->iter_) + nestLevel;
-                hMap.projectOutOutputDims(iter0Pos, hMap.nOutDims() - iter0Pos);
-                auto iter1Pos = findIter(d.later_, l1->iter_) + nestLevel;
-                hMap.projectOutInputDims(iter1Pos, hMap.nInDims() - iter1Pos);
 
-                // sanity check: outer iterators should always be the same
-                ASSERT(iter0Pos == iter1Pos);
-                if (iterPos != -1)
-                    ASSERT(iterPos == (int)iter0Pos);
-                else
-                    iterPos = iter0Pos;
+                // remove inner dims for outer
+                auto [pos0, outerDims0] = findIter(d.earlier_, l0->iter_);
+                pos0 += nestLevel;
+                hMap.projectOutOutputDims(pos0, hMap.nOutDims() - pos0);
+                pos0 -= nestLevel;
+                for (int i = outerDims0.size() - 1; i >= 0;
+                     pos0 = outerDims0[i--])
+                    hMap.projectOutOutputDims(outerDims0[i] + 1,
+                                              pos0 - outerDims0[i] - 1);
+                hMap.projectOutOutputDims(0, pos0);
+
+                // remove inner dims for later
+                auto [pos1, outerDims1] = findIter(d.later_, l1->iter_);
+                pos1 += nestLevel;
+                hMap.projectOutInputDims(pos1, hMap.nInDims() - pos1);
+                pos1 -= nestLevel;
+                for (int i = outerDims1.size() - 1; i >= 0;
+                     pos1 = outerDims1[i--])
+                    hMap.projectOutInputDims(outerDims1[i] + 1,
+                                             pos1 - outerDims1[i] - 1);
+                hMap.projectOutInputDims(0, pos1);
+
+                std::cout << l0->metadata() << " -> " << l1->metadata() << ": "
+                          << hMap << std::endl;
 
                 // flatten to set for later coefficients computation;
                 // later dimensions first, so the first half would be target,
