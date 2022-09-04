@@ -42,21 +42,23 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             " existed, but " + toString(nestLevel) + " required");
 
     // List common outer loops
-    int nOuter = 0;
-    for (Stmt outer = check.loop0().loop_; outer->parentStmt().isValid();
+    std::deque<For> outers;
+    for (Stmt outer = check.loop0().loop_->parentStmt(); outer.isValid();
          outer = outer->parentStmt())
         if (outer->nodeType() == ASTNodeType::For)
-            nOuter++;
-    std::vector<For> outers(nOuter);
-    for (Stmt outer = check.loop0().loop_; outer->parentStmt().isValid();
-         outer = outer->parentStmt())
-        if (outer->nodeType() == ASTNodeType::For)
-            outers[nOuter--] = outer.as<ForNode>();
+            outers.push_front(outer.as<ForNode>());
+
     // Sanity check: the two loops should have the same outer loops given the
     // CheckFuseAccessible passed; just check if the innermost one aligns
-    ASSERT(check.loop1().loop_->parentStmtByFilter([](const Stmt &s) {
-        return s->nodeType() == ASTNodeType::For;
-    }) == outers.back());
+    auto loop1InnermostOuter = check.loop1().loop_->parentStmtByFilter(
+        [](const Stmt &s) { return s->nodeType() == ASTNodeType::For; });
+    // outers are empty, loop1 should also have no outer
+    if (outers.empty())
+        ASSERT(!loop1InnermostOuter.isValid());
+    // outers exist, the innermost outer of loop1 should be the same as loop0
+    else
+        ASSERT(loop1InnermostOuter == outers.back());
+
     std::vector<FindDepsDir> outersSame{outers | iter::imap([&](const For &f) {
                                             return std::pair{
                                                 NodeIDOrParallelScope(f->id()),
@@ -77,6 +79,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
     auto getDeps = [&, iterPos = -1](const For &l0, const For &l1) mutable {
         std::vector<PBSet> deps;
         FindDeps()
+            .noProjectOutProvateAxis(true)
             .filterEarlier([&](const AccessPoint &p) {
                 return p.stmt_->ancestorById(l0->id()).isValid();
             })
@@ -87,10 +90,10 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
                 // later to earlier map, but projects out unrelated dims
                 auto hMap = d.later2EarlierIter_;
                 // remove inner input dims
-                auto iter0Pos = findIter(d.later_, l0->iter_) + nestLevel;
-                hMap.projectOutInputDims(iter0Pos, hMap.nInDims() - iter0Pos);
-                auto iter1Pos = findIter(d.earlier_, l1->iter_) + nestLevel;
-                hMap.projectOutOutputDims(iter1Pos, hMap.nOutDims() - iter1Pos);
+                auto iter0Pos = findIter(d.earlier_, l0->iter_) + nestLevel;
+                hMap.projectOutOutputDims(iter0Pos, hMap.nOutDims() - iter0Pos);
+                auto iter1Pos = findIter(d.later_, l1->iter_) + nestLevel;
+                hMap.projectOutInputDims(iter1Pos, hMap.nInDims() - iter1Pos);
 
                 // sanity check: outer iterators should always be the same
                 ASSERT(iter0Pos == iter1Pos);
@@ -117,24 +120,24 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             nParamsOld = nParams;
 
         oss << "{ [";
-        // source params
+        // target params
         for (int i = 0; i < nParams; ++i) {
             if (i > 0)
                 oss << ", ";
-            oss << "sp" << i;
+            oss << "tp" << i;
         }
-        // source loops
+        // target loops
         for (int i = 0; i < nestLevel; ++i) {
             if (i > 0 || nParams > 0)
                 oss << ", ";
-            oss << "si" << i;
+            oss << "ti" << i;
         }
-        // target params
+        // source params
         for (int i = 0; i < nParams; ++i)
-            oss << ", tp" << i;
-        // target loops
+            oss << ", sp" << i;
+        // source loops
         for (int i = 0; i < nestLevel; ++i)
-            oss << ", ti" << i;
+            oss << ", si" << i;
         oss << "] -> [";
     };
 
@@ -168,7 +171,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             for (int i = 0; i < nestLevel; ++i) {
                 if (i > 0 || nParams > 0)
                     oss << ", ";
-                oss << "ti - si" << i;
+                oss << "ti" << i << " - si" << i;
             }
             // loop 1 params coefficients, no effect
             for (int i = 0; i < nParams; ++i)
@@ -196,7 +199,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             for (int i = 0; i < nestLevel; ++i) {
                 if (i > 0 || nParams > 0)
                     oss << ", ";
-                oss << "si - ti" << i;
+                oss << "si" << i << " - ti" << i;
             }
             // loop 1 params coefficients, no effect
             for (int i = 0; i < nParams; ++i)
@@ -243,14 +246,14 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             for (int i = 0; i < nestLevel; ++i) {
                 if (i > 0 || nParams > 0)
                     oss << ", ";
-                oss << ", 0";
+                oss << "0";
             }
             // loop 1 params coefficients, difference is always 0
             for (int i = 0; i < nParams; ++i)
                 oss << ", 0";
             // loop 1 loops coefficients, difference
             for (int i = 0; i < nestLevel; ++i)
-                oss << "ti - si" << i;
+                oss << ", ti" << i << " - si" << i;
             oss << "] }";
             legalityMap = PBMap(ctx, oss.str());
         }
@@ -271,14 +274,14 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             for (int i = 0; i < nestLevel; ++i) {
                 if (i > 0 || nParams > 0)
                     oss << ", ";
-                oss << ", 0";
+                oss << "0";
             }
             // loop 1 params coefficients, negated difference always 0
             for (int i = 0; i < nParams; ++i)
                 oss << ", 0";
             // loop 1 loops coefficients, negated difference
             for (int i = 0; i < nestLevel; ++i)
-                oss << "si - ti" << i;
+                oss << ", si" << i << " - ti" << i;
             oss << "] }";
             boundingMap = PBMap(ctx, oss.str());
         }
