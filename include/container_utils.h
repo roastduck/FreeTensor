@@ -176,6 +176,21 @@ std::ostream &operator<<(std::ostream &os, std::tuple<Ts...> const &tuple) {
         tuple);
 }
 
+/**
+ * Collect a range into a container
+ */
+struct _Collect {
+    template <typename R> auto operator()(R &&r) {
+        return std::vector<std::decay_t<decltype(*std::begin(r))>>(
+            std::begin(r), std::end(r));
+    }
+};
+inline _Collect collect;
+
+template <typename R> auto operator|(R &&r, _Collect c) {
+    return c(std::forward<R>(r));
+}
+
 } // namespace freetensor
 
 #endif // FREE_TENSOR_CONTAINER_UTILS_H

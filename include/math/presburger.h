@@ -104,6 +104,17 @@ class PBMap {
 
     isl_size nBasic() const { return isl_map_n_basic_map(map_); }
 
+    isl_size nInDims() const { return isl_map_dim(map_, isl_dim_in); }
+    isl_size nOutDims() const { return isl_map_dim(map_, isl_dim_out); }
+
+    void projectOutInputDims(unsigned first, unsigned n) {
+        map_ = isl_map_project_out(map_, isl_dim_in, first, n);
+    }
+
+    void projectOutOutputDims(unsigned first, unsigned n) {
+        map_ = isl_map_project_out(map_, isl_dim_out, first, n);
+    }
+
     friend std::ostream &operator<<(std::ostream &os, const PBMap &map) {
         return os << isl_map_to_str(map.map_);
     }
@@ -202,6 +213,12 @@ class PBSet {
     }
 
     isl_size nBasic() const { return isl_set_n_basic_set(set_); }
+
+    isl_size nDims() const { return isl_set_dim(set_, isl_dim_set); }
+
+    void removeDims(unsigned first, unsigned n) {
+        set_ = isl_set_remove_dims(set_, isl_dim_set, first, n);
+    }
 
     friend std::ostream &operator<<(std::ostream &os, const PBSet &set) {
         return os << isl_set_to_str(set.set_);
@@ -360,6 +377,12 @@ template <PBMapRef T, PBMapRef U> PBMap uni(T &&lhs, U &&rhs) {
     DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
                                      "," + std::to_string(rhs.nBasic()));
     return isl_map_union(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
+template <PBSetRef T, PBSetRef U> PBSet uni(T &&lhs, U &&rhs) {
+    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                     "," + std::to_string(rhs.nBasic()));
+    return isl_set_union(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
 template <PBSetRef T, PBMapRef U> PBSet apply(T &&lhs, U &&rhs) {

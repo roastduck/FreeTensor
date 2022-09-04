@@ -32,6 +32,7 @@
 #include <schedule/multi_level_tiling.h>
 #include <schedule/parallelize.h>
 #include <schedule/permute.h>
+#include <schedule/pluto_fuse.h>
 #include <schedule/reorder.h>
 #include <schedule/separate_tail.h>
 #include <schedule/set_mem_type.h>
@@ -570,6 +571,22 @@ void Schedule::asMatMul(const ID &loop) {
     try {
         ast() = log->getResult();
         commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
+}
+
+ID Schedule::plutoFuse(const ID &loop0, const ID &loop1, int nestLevel = -1) {
+    beginTransaction();
+    auto log = appendLog(MAKE_LOG(PlutoFuse,
+                                  std::bind_front(freetensor::plutoFuse, ast()),
+                                  loop0, loop1, nestLevel));
+    try {
+        ID result;
+        std::tie(ast(), result) = log->getResult();
+        commitTransaction();
+        return result;
     } catch (const InvalidSchedule &e) {
         abortTransaction();
         throw InvalidSchedule(log, ast(), e.what());
