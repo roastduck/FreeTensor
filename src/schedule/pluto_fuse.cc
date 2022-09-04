@@ -118,22 +118,22 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
 
         oss << "{ [";
         // source params
-        for (auto i : iter::range(nParams)) {
+        for (int i = 0; i < nParams; ++i) {
             if (i > 0)
                 oss << ", ";
             oss << "sp" << i;
         }
         // source loops
-        for (auto i : iter::range(nestLevel)) {
+        for (int i = 0; i < nestLevel; ++i) {
             if (i > 0 || nParams > 0)
                 oss << ", ";
             oss << "si" << i;
         }
         // target params
-        for (auto i : iter::range(nParams))
+        for (int i = 0; i < nParams; ++i)
             oss << ", tp" << i;
         // target loops
-        for (auto i : iter::range(nestLevel))
+        for (int i = 0; i < nestLevel; ++i)
             oss << ", ti" << i;
         oss << "] -> [";
     };
@@ -156,25 +156,25 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             printMapSource(oss, nParams);
 
             // coefficients for bounds have no effect here
-            for (auto i : iter::range(nParams)) {
+            for (int i = 0; i < nParams; ++i) {
                 if (i > 0)
                     oss << ", ";
                 oss << "0";
             }
             // loop 0 params coefficients, difference is always 0
-            for (auto i : iter::range(nParams))
+            for (int i = 0; i < nParams; ++i)
                 oss << ", 0";
             // loop 0 loops coefficients, difference
-            for (auto i : iter::range(nestLevel)) {
+            for (int i = 0; i < nestLevel; ++i) {
                 if (i > 0 || nParams > 0)
                     oss << ", ";
                 oss << "ti - si" << i;
             }
             // loop 1 params coefficients, no effect
-            for (auto i : iter::range(nParams))
+            for (int i = 0; i < nParams; ++i)
                 oss << ", 0";
             // loop 1 loops coefficients, no effect
-            for (auto i : iter::range(nestLevel))
+            for (int i = 0; i < nestLevel; ++i)
                 oss << ", 0";
             oss << "] }";
             legalityMap = PBMap(ctx, oss.str());
@@ -184,25 +184,25 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             printMapSource(oss, nParams);
 
             // repeat params first for bounding coefficients
-            for (auto i : iter::range(nParams)) {
+            for (int i = 0; i < nParams; ++i) {
                 if (i > 0)
                     oss << ", ";
                 oss << "sp" << i;
             }
             // loop 0 params coefficients, negated difference always 0
-            for (auto i : iter::range(nParams))
+            for (int i = 0; i < nParams; ++i)
                 oss << ", 0";
             // loop 0 loops coefficients, negated difference
-            for (auto i : iter::range(nestLevel)) {
+            for (int i = 0; i < nestLevel; ++i) {
                 if (i > 0 || nParams > 0)
                     oss << ", ";
                 oss << "si - ti" << i;
             }
             // loop 1 params coefficients, no effect
-            for (auto i : iter::range(nParams))
+            for (int i = 0; i < nParams; ++i)
                 oss << ", 0";
             // loop 1 loops coefficients, no effect
-            for (auto i : iter::range(nestLevel))
+            for (int i = 0; i < nestLevel; ++i)
                 oss << ", 0";
             oss << "] }";
             boundingMap = PBMap(ctx, oss.str());
@@ -231,25 +231,25 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             printMapSource(oss, nParams);
 
             // coefficients for bounds have no effect here
-            for (auto i : iter::range(nParams)) {
+            for (int i = 0; i < nParams; ++i) {
                 if (i > 0)
                     oss << ", ";
                 oss << "0";
             }
             // loop 0 params coefficients, no effect
-            for (auto i : iter::range(nParams))
+            for (int i = 0; i < nParams; ++i)
                 oss << ", 0";
             // loop 0 loops coefficients, no effect
-            for (auto i : iter::range(nestLevel)) {
+            for (int i = 0; i < nestLevel; ++i) {
                 if (i > 0 || nParams > 0)
                     oss << ", ";
                 oss << ", 0";
             }
             // loop 1 params coefficients, difference is always 0
-            for (auto i : iter::range(nParams))
+            for (int i = 0; i < nParams; ++i)
                 oss << ", 0";
             // loop 1 loops coefficients, difference
-            for (auto i : iter::range(nestLevel))
+            for (int i = 0; i < nestLevel; ++i)
                 oss << "ti - si" << i;
             oss << "] }";
             legalityMap = PBMap(ctx, oss.str());
@@ -259,25 +259,25 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             printMapSource(oss, nParams);
 
             // repeat params first for bounding coefficients
-            for (auto i : iter::range(nParams)) {
+            for (int i = 0; i < nParams; ++i) {
                 if (i > 0)
                     oss << ", ";
                 oss << "sp" << i;
             }
             // loop 0 params coefficients, no effect
-            for (auto i : iter::range(nParams))
+            for (int i = 0; i < nParams; ++i)
                 oss << ", 0";
             // loop 0 loops coefficients, no effect
-            for (auto i : iter::range(nestLevel)) {
+            for (int i = 0; i < nestLevel; ++i) {
                 if (i > 0 || nParams > 0)
                     oss << ", ";
                 oss << ", 0";
             }
             // loop 1 params coefficients, negated difference always 0
-            for (auto i : iter::range(nParams))
+            for (int i = 0; i < nParams; ++i)
                 oss << ", 0";
             // loop 1 loops coefficients, negated difference
-            for (auto i : iter::range(nestLevel))
+            for (int i = 0; i < nestLevel; ++i)
                 oss << "si - ti" << i;
             oss << "] }";
             boundingMap = PBMap(ctx, oss.str());
@@ -306,25 +306,25 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             printMapSource(oss, nParams);
 
             // coefficients for bounds have no effect here
-            for (auto i : iter::range(nParams)) {
+            for (int i = 0; i < nParams; ++i) {
                 if (i > 0)
                     oss << ", ";
                 oss << "0";
             }
             // source params, negative
-            for (auto i : iter::range(nParams))
+            for (int i = 0; i < nParams; ++i)
                 oss << ", -sp" << i;
             // source loops, negative
-            for (auto i : iter::range(nestLevel)) {
+            for (int i = 0; i < nestLevel; ++i) {
                 if (i > 0 || nParams > 0)
                     oss << ", ";
                 oss << "-si" << i;
             }
             // target params, negative
-            for (auto i : iter::range(nParams))
+            for (int i = 0; i < nParams; ++i)
                 oss << ", tp" << i;
             // target loops, negative
-            for (auto i : iter::range(nestLevel))
+            for (int i = 0; i < nestLevel; ++i)
                 oss << ", ti" << i;
             oss << "] }";
             legalityMap = PBMap(ctx, oss.str());
@@ -334,25 +334,25 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             printMapSource(oss, nParams);
 
             // repeat params first for bounding coefficients
-            for (auto i : iter::range(nParams)) {
+            for (int i = 0; i < nParams; ++i) {
                 if (i > 0)
                     oss << ", ";
                 oss << "sp" << i;
             }
             // source params, positive
-            for (auto i : iter::range(nParams))
+            for (int i = 0; i < nParams; ++i)
                 oss << ", sp" << i;
             // source loops, positive
-            for (auto i : iter::range(nestLevel)) {
+            for (int i = 0; i < nestLevel; ++i) {
                 if (i > 0 || nParams > 0)
                     oss << ", ";
                 oss << "si" << i;
             }
             // target params, negative
-            for (auto i : iter::range(nParams))
+            for (int i = 0; i < nParams; ++i)
                 oss << ", -tp" << i;
             // target loops, negative
-            for (auto i : iter::range(nestLevel))
+            for (int i = 0; i < nestLevel; ++i)
                 oss << ", -ti" << i;
             oss << "] }";
             boundingMap = PBMap(ctx, oss.str());

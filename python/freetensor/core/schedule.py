@@ -672,6 +672,10 @@ class Schedule(ffi.Schedule):
         """
         super().as_matmul(self._lookup(loop))
 
+    def pluto_fuse(self, loop0, loop1, nest_level=None):
+        super().pluto_fuse(self._lookup(loop0), self._lookup(loop1),
+                           nest_level if nest_level is not None else -1)
+
     def auto_schedule(self, target):
         """
         (Experimental) Automatic scheduling using some heuristics

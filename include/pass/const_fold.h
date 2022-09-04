@@ -124,7 +124,7 @@ class ConstFold : public Mutator {
             case DataType::Bool:
                 return wrap(bool(v));
             default:
-                ASSERT(false && "Unrecognized variable type assigned")
+                ASSERT(false && "Unrecognized variable type assigned");
             }
         });
     }

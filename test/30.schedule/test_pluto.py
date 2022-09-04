@@ -1,0 +1,20 @@
+import freetensor as ft
+import pytest
+
+
+def test_pluto_fuse():
+
+    @ft.transform
+    def kernel(x: ft.Var[(256, 256), "float32", "inout"]):
+        #! label: L0
+        for i in range(256):
+            for j in range(255):
+                x[i, j + 1] += x[i, j]
+        #! label: L1
+        for i in range(256):
+            for j in range(255):
+                x[i, 254 - j] += x[i, 255 - j]
+
+    print(kernel)
+    kernel = ft.schedule(kernel, lambda s: s.pluto_fuse("L0", "L1"))
+    print(kernel)
