@@ -4,6 +4,7 @@
 #include <functional>
 #include <unordered_map>
 
+#include <analyze/find_stmt.h>
 #include <auto_schedule/structs.h>
 #include <driver/target.h>
 #include <func.h>
@@ -13,7 +14,6 @@
 #include <schedule/memoized_schedules.h>
 #include <schedule/schedule_log.h>
 #include <schedule/var_split.h>
-#include <selector.h>
 #include <stmt.h>
 
 namespace freetensor {
@@ -182,56 +182,30 @@ class Schedule {
     int verbose() const { return verbose_; }
 
     /**
-     * Find all nodes in the current AST satisfying a given condition
+     * Find all nodes (maybe non-existing) in the current AST satisfying a given
+     * condition
      *
-     * @param filter : A callback. Return true for acceptance
+     * @param filter : A callback that returns true for acceptance, or a
+     * `Selector`, or an `ID`
      */
-    std::vector<Stmt>
-    findAll(const std::function<bool(const Stmt &)> &filter) const;
+    template <class T> std::vector<Stmt> findAll(const T &filter) const {
+        return findAllStmt(ast(), filter);
+    }
 
     /**
      * Find the only one nodes in the current AST satisfying a given condition
      *
-     * @param filter : A callback. Return true for acceptance
-     * @throw Error : if there is more than one, or there is no node found
+     * @param filter : A callback that returns true for acceptance, or a
+     * `Selector`, or an `ID`
+     * @throw InvalidSchedule : if there is more than one, or there is no node
+     * found
      */
-    Stmt find(const std::function<bool(const Stmt &)> &filter) const;
-
-    /**
-     * Find a (maybe non-existing) node in the current AST by ID
-     *
-     * @param id: ID
-     */
-    std::vector<Stmt> findAll(const ID &id) const {
-        return findAll([&id](const Stmt &c) { return c->id() == id; });
-    }
-
-    /**
-     * Find a node in the current AST by ID
-     *
-     * @param id: ID
-     */
-    Stmt find(const ID &id) const {
-        return find([&id](const Stmt &c) { return c->id() == id; });
-    }
-
-    /**
-     * Find all node(s) in the current AST with a given selector
-     *
-     * @param selector: selector used to match a sub-tree
-     */
-    std::vector<Stmt> findAll(const Ref<Selector> &selector) const {
-        return findAll(
-            [&selector](const Stmt &c) { return selector->match(c); });
-    }
-
-    /**
-     * Find a node in the current AST with a given selector
-     *
-     * @param selector: selector used to match a sub-tree
-     */
-    Stmt find(const Ref<Selector> &selector) const {
-        return find([&selector](const Stmt &c) { return selector->match(c); });
+    template <class T> Stmt find(const T &filter) const {
+        try {
+            return findStmt(ast(), filter);
+        } catch (const UnexpectedQueryResult &e) {
+            throw InvalidSchedule(e.what());
+        }
     }
 
     /**

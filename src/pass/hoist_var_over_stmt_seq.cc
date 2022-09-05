@@ -71,7 +71,7 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
                 goto no_hoist;
             }
             if (togetherIds_.isValid()) {
-                auto togetherInside = findStmt(def, [&](const Stmt &s) {
+                auto togetherInside = findAllStmt(def, [&](const Stmt &s) {
                     return std::find(togetherIds_->begin(), togetherIds_->end(),
                                      s->id()) != togetherIds_->end();
                 });

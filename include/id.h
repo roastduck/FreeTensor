@@ -28,6 +28,8 @@ class ID {
 
     bool isValid() const { return id_ != -1; }
 
+    operator int64_t() const { return id_; }
+
     friend std::ostream &operator<<(std::ostream &os, const ID &id);
     friend bool operator==(const ID &lhs, const ID &rhs);
     friend struct ::std::hash<ID>;

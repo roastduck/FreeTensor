@@ -70,17 +70,17 @@ Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev,
     name2buffer_.reserve(nParams);
     for (size_t i = 0; i < nParams; i++) {
         name2param_[f->params_[i].name_] = i;
-        auto nodes = findStmt(f->body_, [&](const Stmt &s) -> bool {
-            return s->nodeType() == ASTNodeType::VarDef &&
-                   s.as<VarDefNode>()->name_ == f->params_[i].name_;
-        });
-        if (nodes.size() != 1) {
+        try {
+            auto node = findStmt(f->body_, [&](const Stmt &s) -> bool {
+                return s->nodeType() == ASTNodeType::VarDef &&
+                       s.as<VarDefNode>()->name_ == f->params_[i].name_;
+            });
+            name2buffer_[f->params_[i].name_] = node.as<VarDefNode>()->buffer_;
+        } catch (const UnexpectedQueryResult &e) {
             throw DriverError(
                 "Name " + f->params_[i].name_ +
                 " should be existent and unique in the AST as a paramerter");
         }
-        name2buffer_[f->params_[i].name_] =
-            nodes.front().as<VarDefNode>()->buffer_;
     }
     buildAndLoad();
 }

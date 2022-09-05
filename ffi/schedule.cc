@@ -67,20 +67,20 @@ void init_ffi_schedule(py::module_ &m) {
                  }
                  return ret;
              })
+        .def("find",
+             static_cast<Stmt (Schedule::*)(const ID &) const>(&Schedule::find))
         .def("find", static_cast<Stmt (Schedule::*)(
                          const std::function<bool(const Stmt &)> &) const>(
                          &Schedule::find))
         .def("find",
-             static_cast<Stmt (Schedule::*)(const ID &) const>(&Schedule::find))
-        .def("find",
              static_cast<Stmt (Schedule::*)(const Ref<Selector> &) const>(
                  &Schedule::find))
-        .def("find_all", static_cast<std::vector<Stmt> (Schedule::*)(
-                             const std::function<bool(const Stmt &)> &) const>(
-                             &Schedule::findAll))
         .def("find_all",
              static_cast<std::vector<Stmt> (Schedule::*)(const ID &) const>(
                  &Schedule::findAll))
+        .def("find_all", static_cast<std::vector<Stmt> (Schedule::*)(
+                             const std::function<bool(const Stmt &)> &) const>(
+                             &Schedule::findAll))
         .def("find_all", static_cast<std::vector<Stmt> (Schedule::*)(
                              const Ref<Selector> &) const>(&Schedule::findAll))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
