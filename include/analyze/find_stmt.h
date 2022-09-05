@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_FIND_STMT_H
 #define FREE_TENSOR_FIND_STMT_H
 
+#include <func.h>
 #include <selector.h>
 #include <visitor.h>
 
@@ -89,6 +90,14 @@ inline Stmt findStmt(const Stmt &ast, const Ref<Selector> &selector) {
             "find_all_stmts or Schedule.find_all");
     }
     return candidates.front();
+}
+
+template <class T>
+std::vector<Stmt> findAllStmt(const Func &func, const T &filter) {
+    return findAllStmt(func->body_, filter);
+}
+template <class T> Stmt findStmt(const Func &func, const T &filter) {
+    return findStmt(func->body_, filter);
 }
 
 } // namespace freetensor

@@ -15,8 +15,8 @@ def test_flop():
 
     features = ft.structural_feature(ast)
 
-    S1 = features[ft.lookup_id(ast, 'S1')]
-    L1 = features[ft.lookup_id(ast, 'L1')]
+    S1 = features[ft.find_stmt(ast, 'S1').id]
+    L1 = features[ft.find_stmt(ast, 'L1').id]
 
     assert S1.op_cnt[ft.DataType('float32')] == 2
     assert L1.op_cnt[ft.DataType('float32')] == 64
@@ -34,8 +34,8 @@ def test_access_count():
 
     features = ft.structural_feature(ast)
 
-    S1 = features[ft.lookup_id(ast, 'S1')]
-    L1 = features[ft.lookup_id(ast, 'L1')]
+    S1 = features[ft.find_stmt(ast, 'S1').id]
+    L1 = features[ft.find_stmt(ast, 'L1').id]
 
     assert S1.load_cnt[ft.MemType('cpu')] == 1
     assert S1.store_cnt[ft.MemType('cpu')] == 1
@@ -60,9 +60,9 @@ def test_access_count_overlap():
 
     features = ft.structural_feature(ast)
 
-    S1 = features[ft.lookup_id(ast, 'S1')]
-    L1 = features[ft.lookup_id(ast, 'L1')]
-    L2 = features[ft.lookup_id(ast, 'L2')]
+    S1 = features[ft.find_stmt(ast, 'S1').id]
+    L1 = features[ft.find_stmt(ast, 'L1').id]
+    L2 = features[ft.find_stmt(ast, 'L2').id]
 
     assert L1.load_cnt[ft.MemType('cpu')] == 32
     assert L1.store_cnt[ft.MemType('cpu')] == 32
@@ -87,8 +87,8 @@ def test_access_area():
 
     features = ft.structural_feature(ast)
 
-    S1 = features[ft.lookup_id(ast, 'S1')]
-    L1 = features[ft.lookup_id(ast, 'L1')]
+    S1 = features[ft.find_stmt(ast, 'S1').id]
+    L1 = features[ft.find_stmt(ast, 'L1').id]
 
     assert S1.load_area[ft.MemType('cpu')] == 1
     assert S1.store_area[ft.MemType('cpu')] == 1
@@ -113,9 +113,9 @@ def test_access_area_overlap():
 
     features = ft.structural_feature(ast)
 
-    S1 = features[ft.lookup_id(ast, 'S1')]
-    L1 = features[ft.lookup_id(ast, 'L1')]
-    L2 = features[ft.lookup_id(ast, 'L2')]
+    S1 = features[ft.find_stmt(ast, 'S1').id]
+    L1 = features[ft.find_stmt(ast, 'L1').id]
+    L2 = features[ft.find_stmt(ast, 'L2').id]
 
     assert L1.load_area[ft.MemType('cpu')] == 32
     assert L1.store_area[ft.MemType('cpu')] == 32

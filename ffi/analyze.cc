@@ -31,6 +31,10 @@ void init_ffi_analyze(py::module_ &m) {
 
     m.def("find_multi_level_tiling", fakeFindMultiLevelTiling);
 
+    m.def("find_all_stmt",
+          static_cast<std::vector<Stmt> (*)(const Stmt &, const ID &)>(
+              &findAllStmt),
+          "ast"_a, "id"_a);
     m.def("find_stmt",
           static_cast<Stmt (*)(const Stmt &, const ID &)>(&findStmt), "ast"_a,
           "id"_a);
@@ -52,6 +56,31 @@ void init_ffi_analyze(py::module_ &m) {
           static_cast<Stmt (*)(const Stmt &, const Ref<Selector> &selector)>(
               &findStmt),
           "ast"_a, "selector"_a);
+    m.def("find_all_stmt",
+          static_cast<std::vector<Stmt> (*)(const Func &, const ID &)>(
+              &findAllStmt),
+          "func"_a, "id"_a);
+    m.def("find_stmt",
+          static_cast<Stmt (*)(const Func &, const ID &)>(&findStmt), "func"_a,
+          "id"_a);
+    m.def("find_all_stmt",
+          static_cast<std::vector<Stmt> (*)(
+              const Func &, const std::function<bool(const Stmt &)> &filter)>(
+              &findAllStmt),
+          "func"_a, "filter"_a);
+    m.def("find_stmt",
+          static_cast<Stmt (*)(
+              const Func &, const std::function<bool(const Stmt &)> &filter)>(
+              &findStmt),
+          "func"_a, "filter"_a);
+    m.def("find_all_stmt",
+          static_cast<std::vector<Stmt> (*)(
+              const Func &, const Ref<Selector> &selector)>(&findAllStmt),
+          "func"_a, "selector"_a);
+    m.def("find_stmt",
+          static_cast<Stmt (*)(const Func &, const Ref<Selector> &selector)>(
+              &findStmt),
+          "func"_a, "selector"_a);
 
     m.def("all_reads",
           static_cast<std::unordered_set<std::string> (*)(const AST &, bool)>(
