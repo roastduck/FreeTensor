@@ -18,17 +18,18 @@ bool NodeTypeSelector::match(const Stmt &stmt) const {
 }
 
 bool ChildSelector::match(const Stmt &stmt) const {
-    return child_->match(stmt) && stmt->parent()->isAST() &&
-           stmt->parent().as<ASTNode>()->isStmt() &&
-           parent_->match(stmt->parent().as<StmtNode>());
+    if (!child_->match(stmt)) {
+        return false;
+    }
+    auto p = stmt->parentStmt();
+    return p.isValid() && parent_->match(p);
 }
 
 bool DescendantSelector::match(const Stmt &_stmt) const {
     auto stmt = _stmt;
     if (!descendant_->match(stmt))
         return false;
-    while (stmt->parent()->isAST() && stmt->parent().as<ASTNode>()->isStmt()) {
-        stmt = stmt->parent().as<StmtNode>();
+    for (stmt = stmt->parentStmt(); stmt.isValid(); stmt = stmt->parentStmt()) {
         if (ancestor_->match(stmt))
             return true;
     }

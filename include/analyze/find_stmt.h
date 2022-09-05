@@ -1,6 +1,8 @@
 #ifndef FREE_TENSOR_FIND_STMT_H
 #define FREE_TENSOR_FIND_STMT_H
 
+#include <func.h>
+#include <selector.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -22,9 +24,17 @@ inline Stmt findStmt(const Stmt &ast, const ID &id) {
     FindStmtById visitor(id);
     visitor(ast);
     if (!visitor.result().isValid()) {
-        throw InvalidSchedule("Statement " + toString(id) + " not found");
+        throw UnexpectedQueryResult("Statement " + toString(id) + " not found");
     }
     return visitor.result();
+}
+inline std::vector<Stmt> findAllStmt(const Stmt &ast, const ID &id) {
+    FindStmtById visitor(id);
+    visitor(ast);
+    if (!visitor.result().isValid()) {
+        return {};
+    }
+    return {visitor.result()};
 }
 
 class FindStmtByFilter : public Visitor {
@@ -41,10 +51,53 @@ class FindStmtByFilter : public Visitor {
 };
 
 inline std::vector<Stmt>
-findStmt(const Stmt &ast, const std::function<bool(const Stmt &)> &filter) {
+findAllStmt(const Stmt &ast, const std::function<bool(const Stmt &)> &filter) {
     FindStmtByFilter visitor(filter);
     visitor(ast);
     return visitor.results();
+}
+inline Stmt findStmt(const Stmt &ast,
+                     const std::function<bool(const Stmt &)> &filter) {
+    auto candidates = findAllStmt(ast, filter);
+    if (candidates.empty()) {
+        throw UnexpectedQueryResult(
+            "No statement found by filter. Consider using find_all_stmts or "
+            "Schedule.find_all");
+    }
+    if (candidates.size() > 1) {
+        throw UnexpectedQueryResult(
+            "Multiple statements found by filter. Consider using "
+            "find_all_stmts or Schedule.find_all");
+    }
+    return candidates.front();
+}
+
+inline std::vector<Stmt> findAllStmt(const Stmt &ast,
+                                     const Ref<Selector> &selector) {
+    return findAllStmt(
+        ast, [&selector](const Stmt &c) { return selector->match(c); });
+}
+inline Stmt findStmt(const Stmt &ast, const Ref<Selector> &selector) {
+    auto candidates = findAllStmt(ast, selector);
+    if (candidates.empty()) {
+        throw UnexpectedQueryResult(
+            "No statement found by selector. Consider using find_all_stmts or "
+            "Schedule.find_all");
+    }
+    if (candidates.size() > 1) {
+        throw UnexpectedQueryResult(
+            "Multiple statements found by selector. Consider using "
+            "find_all_stmts or Schedule.find_all");
+    }
+    return candidates.front();
+}
+
+template <class T>
+std::vector<Stmt> findAllStmt(const Func &func, const T &filter) {
+    return findAllStmt(func->body_, filter);
+}
+template <class T> Stmt findStmt(const Func &func, const T &filter) {
+    return findStmt(func->body_, filter);
 }
 
 } // namespace freetensor

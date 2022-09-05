@@ -629,12 +629,11 @@ gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
     std::vector<FuncParam> forwardParams, backwardParams;
     std::vector<FuncRet> backwardRets;
     for (auto &&param : func->params_) {
-        auto nodes = findStmt(func->body_, [&](const Stmt &stmt) {
+        auto node = findStmt(func->body_, [&](const Stmt &stmt) {
             return stmt->nodeType() == ASTNodeType::VarDef &&
                    stmt.as<VarDefNode>()->name_ == param.name_;
         });
-        ASSERT(nodes.size() == 1);
-        if (nodes.front().template as<VarDefNode>()->buffer_->atype() ==
+        if (node.template as<VarDefNode>()->buffer_->atype() ==
             AccessType::Input) {
             auto closureArr = Ref<Ref<Array>>::make();
             // Redirect input arguments from forward to backward
@@ -678,15 +677,12 @@ gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
         if (inplace) {
             backwardParams.emplace_back(dzdx, nullptr, false);
         } else {
-            auto nodes = findStmt(backward, [&](const Stmt &stmt) {
+            auto node = findStmt(backward, [&](const Stmt &stmt) {
                 return stmt->nodeType() == ASTNodeType::VarDef &&
                        stmt.as<VarDefNode>()->name_ == dzdx;
             });
-            ASSERT(nodes.size() == 1);
-            auto dtype = nodes.front()
-                             .template as<VarDefNode>()
-                             ->buffer_->tensor()
-                             ->dtype();
+            auto dtype =
+                node.template as<VarDefNode>()->buffer_->tensor()->dtype();
             backwardRets.emplace_back(dzdx, dtype, nullptr, false);
         }
     }

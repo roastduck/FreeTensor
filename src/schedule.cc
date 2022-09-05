@@ -8,7 +8,6 @@
 #include <analyze/deps.h>
 #include <analyze/find_all_loops.h>
 #include <analyze/find_indexing_loops.h>
-#include <analyze/find_stmt.h>
 #include <analyze/get_loop_nest_tree.h>
 #include <auto_schedule/utils.h>
 #include <codegen/code_gen.h>
@@ -93,21 +92,6 @@ void Schedule::setAst(const Stmt &ast) { openTrans_.back().ast_ = ast; }
 const ScheduleLog &Schedule::logs() const { return openTrans_.back().logs_; }
 void Schedule::setLogs(const ScheduleLog &logs) {
     openTrans_.back().logs_ = logs;
-}
-
-std::vector<Stmt>
-Schedule::findAll(const std::function<bool(const Stmt &)> &filter) const {
-    return findStmt(ast(), filter);
-}
-
-Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
-    auto ret = findStmt(ast(), filter);
-    if (ret.size() != 1) {
-        throw InvalidSchedule("find: There is " + std::to_string(ret.size()) +
-                              " nodes matching the given condition. "
-                              "Consider using findAll");
-    }
-    return ret[0];
 }
 
 // Make a log item with specifc parameter and result types
@@ -989,7 +973,7 @@ void Schedule::autoParallelize(const Target &target) {
                                        serialScope;
                         };
                         bool childIsWarp =
-                            !findStmt(merged, isParallelLoop).empty();
+                            !findAllStmt(merged, isParallelLoop).empty();
                         // We guarantee the following requirements in order:
                         // 1. make sure all SMs are used
                         // 2. if there are enough threads, make sure blockDim is

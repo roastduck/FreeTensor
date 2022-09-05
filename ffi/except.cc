@@ -9,6 +9,7 @@ void init_ffi_except(py::module_ &m) {
     py::register_exception<InvalidProgram>(m, "InvalidProgram");
     py::register_exception<DriverError>(m, "DriverError");
     py::register_exception<AssertAlwaysFalse>(m, "AssertAlwaysFalse");
+    py::register_exception<UnexpectedQueryResult>(m, "UnexpectedQueryResult");
 
     py::register_exception_translator([](std::exception_ptr p) {
         try {

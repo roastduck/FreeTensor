@@ -45,6 +45,11 @@ class ParserError : public Error {
     ParserError(const std::string &msg) : Error(msg) {}
 };
 
+class UnexpectedQueryResult : public Error {
+  public:
+    UnexpectedQueryResult(const std::string &msg) : Error(msg) {}
+};
+
 /**
  * SIGINT as an exception
  *

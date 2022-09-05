@@ -19,6 +19,8 @@ PYBIND11_MODULE(freetensor_ffi, m) {
     // FrontendVar depends on Expr declaration
     init_ffi_frontend(m);
 
+    init_ffi_reduce_op(m);
+
     // Expr depends on FrontendVar
     init_ffi_ast_expr(m);
 
@@ -31,6 +33,7 @@ PYBIND11_MODULE(freetensor_ffi, m) {
     // Stmt depends on Tensor declaration
     init_ffi_ast_stmt(m);
 
+    init_ffi_selector(m);
     init_ffi_analyze(m);
     init_ffi_codegen(m);
     init_ffi_driver(m);

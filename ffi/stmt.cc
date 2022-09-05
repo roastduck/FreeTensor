@@ -61,14 +61,6 @@ void init_ffi_ast_stmt(py::module_ &m) {
         .def_readonly("var", &AllocNode::var_);
     py::class_<FreeNode, Free>(m, "Free", pyStmt)
         .def_readonly("var", &FreeNode::var_);
-    py::enum_<ReduceOp>(m, "ReduceOp")
-        .value("Add", ReduceOp::Add)
-        .value("Sub", ReduceOp::Sub)
-        .value("Max", ReduceOp::Max)
-        .value("Min", ReduceOp::Min)
-        .value("Mul", ReduceOp::Mul)
-        .value("And", ReduceOp::LAnd)
-        .value("Or", ReduceOp::LOr);
     py::class_<ReduceToNode, ReduceTo>(m, "ReduceTo", pyStmt)
         .def_readonly("var", &ReduceToNode::var_)
         .def_property_readonly("indices",
