@@ -24,11 +24,13 @@ void init_ffi_buffer(py::module_ &m);
 void init_ffi_frontend(py::module_ &m);
 void init_ffi_metadata(py::module_ &m);
 
+void init_ffi_reduce_op(py::module_ &m);
 void init_ffi_ast(py::module_ &m);
 void init_ffi_ast_func(py::module_ &m);
 void init_ffi_ast_expr(py::module_ &m);
 void init_ffi_ast_stmt(py::module_ &m);
 
+void init_ffi_selector(py::module_ &m);
 void init_ffi_schedule(py::module_ &m);
 void init_ffi_analyze(py::module_ &m);
 void init_ffi_autograd(py::module_ &m);

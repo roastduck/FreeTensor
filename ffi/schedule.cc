@@ -30,12 +30,6 @@ void init_ffi_schedule(py::module_ &m) {
         .def_readonly("time", &AutoScheduleTuneTrial::time_)
         .def_readonly("stddev", &AutoScheduleTuneTrial::stddev_);
 
-    py::class_<Selector, Ref<Selector>>(m, "Selector")
-        .def(
-            py::init([](const std::string &str) { return parseSelector(str); }))
-        .def("match", &Selector::match);
-    py::implicitly_convertible<std::string, Selector>();
-
     py::class_<Schedule>(m, "Schedule")
         .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
         .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
