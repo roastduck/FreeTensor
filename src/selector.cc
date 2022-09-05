@@ -18,22 +18,25 @@ bool NodeTypeSelector::match(const Stmt &stmt) const {
 }
 
 bool ChildSelector::match(const Stmt &stmt) const {
-    if (!child_->match(stmt)) {
-        return false;
-    }
     auto p = stmt->parentStmt();
     return p.isValid() && parent_->match(p);
 }
 
 bool DescendantSelector::match(const Stmt &_stmt) const {
-    auto stmt = _stmt;
-    if (!descendant_->match(stmt))
-        return false;
-    for (stmt = stmt->parentStmt(); stmt.isValid(); stmt = stmt->parentStmt()) {
+    for (auto stmt = _stmt->parentStmt(); stmt.isValid();
+         stmt = stmt->parentStmt()) {
         if (ancestor_->match(stmt))
             return true;
     }
     return false;
+}
+
+bool BothLeafSelector::match(const Metadata &md) const {
+    return lhs_->match(md) && rhs_->match(md);
+}
+
+bool EitherLeafSelector::match(const Metadata &md) const {
+    return lhs_->match(md) || rhs_->match(md);
 }
 
 bool IDSelector::match(const Stmt &stmt) const { return stmt->id() == id_; }
@@ -70,7 +73,7 @@ bool CallerSelector::match(const Metadata &_md) const {
     auto md = _md.as<SourceMetadataContent>();
     if (!md->caller().isValid())
         return false;
-    return self_->match(md) && caller_->match(md->caller());
+    return caller_->match(md->caller());
 }
 
 Ref<Selector> parseSelector(const std::string &str) {

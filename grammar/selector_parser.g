@@ -24,8 +24,14 @@ leafSelector
 	)* RightBracket {
         $s = Ref<TransformedSelector>::make($TransformOp.text.substr(1), srcs);
     }
-	| <assoc=right> l1 = leafSelector CallerArrow l2 = leafSelector {
-        $s = Ref<CallerSelector>::make($l1.s, $l2.s);
+	| s1 = leafSelector And s2 = leafSelector {
+        $s = Ref<BothLeafSelector>::make($s1.s, $s2.s);
+    }
+	| s1 = leafSelector Or s2 = leafSelector {
+        $s = Ref<EitherLeafSelector>::make($s1.s, $s2.s);
+    }
+	| <assoc=right> callee = leafSelector CallerArrow caller = leafSelector {
+        $s = Ref<BothLeafSelector>::make($callee.s, Ref<CallerSelector>::make($caller.s));
     };
 
 selector
@@ -60,9 +66,12 @@ selector
 	| s1 = selector Or s2 = selector {
         $s = Ref<EitherSelector>::make($s1.s, $s2.s);
     }
-	| child = selector ChildArrow parent = selector {
-        $s = Ref<ChildSelector>::make($parent.s, $child.s);
+	| <assoc=right> child = selector ChildArrow parent = selector {
+        $s = Ref<BothSelector>::make($child.s, Ref<ChildSelector>::make($parent.s));
     }
-	| descendant = selector DescendantArrow ancestor = selector {
-        $s = Ref<DescendantSelector>::make($ancestor.s, $descendant.s);
+	| <assoc=right> descendant = selector DescendantArrow ancestor = selector {
+        $s = Ref<BothSelector>::make($descendant.s, Ref<DescendantSelector>::make($ancestor.s));
+    }
+	| <assoc=right> callee = selector CallerArrow caller = leafSelector {
+        $s = Ref<BothSelector>::make($callee.s, Ref<CallerSelector>::make($caller.s));
     };
