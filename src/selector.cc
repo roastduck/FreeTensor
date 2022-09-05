@@ -48,11 +48,7 @@ bool IDSelector::match(const Metadata &md) const {
 bool LabelSelector::match(const Metadata &md) const {
     if (!md.isValid() || md->getType() != MetadataType::Source)
         return false;
-    const auto &labelsSet = md.as<SourceMetadataContent>()->labelsSet();
-    for (const auto &l : labels_)
-        if (labelsSet.count(l) == 0)
-            return false;
-    return true;
+    return md.as<SourceMetadataContent>()->labelsSet().count(label_);
 }
 
 bool TransformedSelector::match(const Metadata &_md) const {

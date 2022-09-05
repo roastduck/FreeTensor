@@ -93,10 +93,10 @@ class IDSelector : public LeafSelector {
 };
 
 class LabelSelector : public LeafSelector {
-    std::vector<std::string> labels_;
+    std::string label_;
 
   public:
-    LabelSelector(const std::vector<std::string> &label) : labels_(label) {}
+    LabelSelector(const std::string &label) : label_(label) {}
     bool match(const Metadata &md) const override;
 };
 
