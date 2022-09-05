@@ -20,7 +20,8 @@ NodeTypeEval: '<Eval>';
 
 ChildArrow: '<-';
 DescendantArrow: '<<-';
-CallerArrow: '<~';
+DirectCallerArrow: '<~';
+CallerArrow: '<<~';
 
 LeftBracket: '{';
 RightBracket: '}';

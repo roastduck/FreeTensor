@@ -27,6 +27,12 @@ leafSelector returns[Ref<LeafSelector> s]
 	| s1 = leafSelector Or s2 = leafSelector {
         $s = Ref<EitherLeafSelector>::make($s1.s, $s2.s);
     }
+	| DirectCallerArrow caller = leafSelector {
+        $s = Ref<DirectCallerSelector>::make($caller.s);
+    }
+	| <assoc=right> callee = leafSelector DirectCallerArrow caller = leafSelector {
+        $s = Ref<BothLeafSelector>::make($callee.s, Ref<DirectCallerSelector>::make($caller.s));
+    }
 	| CallerArrow caller = leafSelector {
         $s = Ref<CallerSelector>::make($caller.s);
     }
@@ -85,6 +91,9 @@ selector returns[Ref<Selector> s]
     }
 	| <assoc=right> descendant = selector DescendantArrow ancestor = selector {
         $s = Ref<BothSelector>::make($descendant.s, Ref<DescendantSelector>::make($ancestor.s));
+    }
+	| <assoc=right> callee = selector DirectCallerArrow caller = leafSelector {
+        $s = Ref<BothSelector>::make($callee.s, Ref<DirectCallerSelector>::make($caller.s));
     }
 	| <assoc=right> callee = selector CallerArrow caller = leafSelector {
         $s = Ref<BothSelector>::make($callee.s, Ref<CallerSelector>::make($caller.s));

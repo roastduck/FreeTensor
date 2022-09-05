@@ -46,7 +46,7 @@ bool IDSelector::match(const Metadata &md) const {
 }
 
 bool LabelSelector::match(const Metadata &md) const {
-    if (!md.isValid() || md->getType() != MetadataType::Source)
+    if (md->getType() != MetadataType::Source)
         return false;
     return md.as<SourceMetadataContent>()->labelsSet().count(label_);
 }
@@ -63,13 +63,27 @@ bool TransformedSelector::match(const Metadata &_md) const {
     return true;
 }
 
-bool CallerSelector::match(const Metadata &_md) const {
+bool DirectCallerSelector::match(const Metadata &_md) const {
     if (_md->getType() != MetadataType::Source)
         return false;
     auto md = _md.as<SourceMetadataContent>();
     if (!md->caller().isValid())
         return false;
     return caller_->match(md->caller());
+}
+
+bool CallerSelector::match(const Metadata &_md) const {
+    if (_md->getType() != MetadataType::Source)
+        return false;
+    for (auto md = _md.as<SourceMetadataContent>()->caller(); md.isValid();) {
+        if (caller_->match(md)) {
+            return true;
+        }
+        if (md->getType() == MetadataType::Source) {
+            md = md.as<SourceMetadataContent>()->caller();
+        }
+    }
+    return false;
 }
 
 Ref<Selector> parseSelector(const std::string &str) {

@@ -111,6 +111,14 @@ class TransformedSelector : public LeafSelector {
     bool match(const Metadata &md) const override;
 };
 
+class DirectCallerSelector : public LeafSelector {
+    Ref<LeafSelector> caller_;
+
+  public:
+    DirectCallerSelector(const Ref<LeafSelector> &caller) : caller_(caller) {}
+    bool match(const Metadata &md) const override;
+};
+
 class CallerSelector : public LeafSelector {
     Ref<LeafSelector> caller_;
 

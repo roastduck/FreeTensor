@@ -101,3 +101,30 @@ def test_select_callee_2():
     results = ft.find_all_stmt(f, "<For><~g")
     results_by_label = ft.find_all_stmt(f, "L2")
     assert sorted_ids(results) == sorted_ids(results_by_label)
+
+
+def test_select_indirect_callee():
+
+    @ft.inline
+    def h(y):
+        #! label: L3
+        for i in range(8):
+            y[i] = i
+
+    @ft.inline
+    def g(y):
+        #! label: L2
+        for i in range(8):
+            #! label: h
+            h(y[i])
+
+    @ft.transform(verbose=True)
+    def f(y: ft.Var[(8, 8, 8), "int32", "output"]):
+        #! label: L1
+        for i in range(8):
+            #! label: g
+            g(y[i])
+
+    results = ft.find_all_stmt(f, "<For><<~g")
+    results_by_label = ft.find_all_stmt(f, "L2|L3")
+    assert sorted_ids(results) == sorted_ids(results_by_label)
