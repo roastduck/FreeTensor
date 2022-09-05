@@ -172,12 +172,13 @@ print(y)
 </code></pre>
 <p>One important thing is to track labels of the loops, because the labels will change after schedules. You get labels (to be precise, IDs, which is can be looked-up by labels) of new loops generated from one schedule from its return values (<code>outer</code> and <code>inner</code> in this case), and pass them to a next schedule.</p>
 <h2 id="specify-what-to-schedule-by-selectors">Specify What to Schedule by Selectors<a class="headerlink" href="#specify-what-to-schedule-by-selectors" title="Permanent link">&para;</a></h2>
-<p>In the example above, we label a loop <code>Li</code> and apply schedules on it. It is straight-forward in a tiny example, but as programs grow, it often gets hard to track each statement by a unique label, especially there are inlined function calls. To make things easy, FreeTensor supports specifying a statment by a selector, written in the following rules:</p>
+<p>In the example above, we label a loop <code>Li</code> and apply schedules on it. It is straight-forward in a tiny example, but as programs grow, it often gets hard to track each statement by a unique label, especially there are inlined function calls. To make things easy, FreeTensor supports specifying a statement by a selector, written in the following rules:</p>
 <ol>
 <li>A label is a selector. E.g., <code>Li</code> matches a statement with a label <code>Li</code>.</li>
 <li>(For debugging only) A numerical ID is also a selector. E.g., <code>#31</code>.</li>
 <li>A selector can be extended to match a new statement produced by a previous schedule. E.g., <code>$split.0{Li}</code> matches the outer loop split from the loop <code>Li</code>. This is useful when return values from schedules are hard to track.</li>
-<li>Selectors can be combined to match a statement in a function call. E.g., <code>Li&lt;~C1</code> matches a statment labeled <code>Li</code> called by a call site <code>C1</code>.</li>
+<li>Selectors can be combined to match a statement in a function call. <code>Li&lt;~C1</code> matches a statement labeled <code>Li</code> DIRECTLY called by a call site <code>C1</code>. <code>Li&lt;&lt;~C1</code> matches a statement DIRECTLY or INDIRECTLY called by a call site <code>C1</code>.</li>
+<li>Selectors can be combined with logical "and" or "or". <code>Li|Lj</code> matches a statement labeled <code>Li</code> OR <code>Lj</code>. <code>Li&amp;Lj</code> matches a statement labeled <code>Li&amp;Lj</code>.</li>
 </ol>
 <p>All schedules support passing selectors.</p>
 <h2 id="auto-scheduling-experimental">Auto Scheduling (Experimental)<a class="headerlink" href="#auto-scheduling-experimental" title="Permanent link">&para;</a></h2>

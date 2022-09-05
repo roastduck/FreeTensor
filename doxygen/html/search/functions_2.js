@@ -11,8 +11,9 @@ var searchData=
   ['blend_8',['blend',['../classfreetensor_1_1Schedule.html#adb236565d0d590d7f4ee357d7b06911d',1,'freetensor::Schedule::blend()'],['../namespacefreetensor.html#ad09881baed3d1f77547e8d47c4d1431b',1,'freetensor::blend()']]],
   ['blendpass_9',['BlendPass',['../classfreetensor_1_1BlendPass.html#a48be69817094551c1f39845209252e62',1,'freetensor::BlendPass']]],
   ['borrowfromraw_10',['borrowFromRaw',['../classfreetensor_1_1Array.html#a66a9d8884b80bb399e419f46c0473676',1,'freetensor::Array']]],
-  ['bothselector_11',['BothSelector',['../classfreetensor_1_1BothSelector.html#a01972ca9267d475cbf441de67b3bd4ee',1,'freetensor::BothSelector']]],
-  ['buffer_12',['buffer',['../classfreetensor_1_1SymbolTableInterface.html#a2afdaf2b1dca02deebaff0fbf20c11ef',1,'freetensor::SymbolTableInterface::buffer()'],['../classfreetensor_1_1SymbolTableData.html#a52968bbce30ec09728b37700831cccd9',1,'freetensor::SymbolTableData::buffer()'],['../classfreetensor_1_1SymbolTable.html#acf44b2e9ac614c58006e64b138c2a329',1,'freetensor::SymbolTable::buffer()'],['../classfreetensor_1_1Z3SimplifyWithSymbolTable.html#a59387234af40c0461db6b85b5d169801',1,'freetensor::Z3SimplifyWithSymbolTable::buffer()']]],
-  ['builtinsimplify_13',['BuiltinSimplify',['../classfreetensor_1_1BuiltinSimplify.html#a03d431a4e9cb9b24f6ab0157252c7fbb',1,'freetensor::BuiltinSimplify']]],
-  ['builtinsimplify_14',['builtinSimplify',['../namespacefreetensor.html#a5c54f4c7a864a4e7051d226cfff73cb1',1,'freetensor']]]
+  ['bothleafselector_11',['BothLeafSelector',['../classfreetensor_1_1BothLeafSelector.html#a8bd0b2d2e138fc2cf7eadf0f57d05322',1,'freetensor::BothLeafSelector']]],
+  ['bothselector_12',['BothSelector',['../classfreetensor_1_1BothSelector.html#a01972ca9267d475cbf441de67b3bd4ee',1,'freetensor::BothSelector']]],
+  ['buffer_13',['buffer',['../classfreetensor_1_1SymbolTableInterface.html#a2afdaf2b1dca02deebaff0fbf20c11ef',1,'freetensor::SymbolTableInterface::buffer()'],['../classfreetensor_1_1SymbolTableData.html#a52968bbce30ec09728b37700831cccd9',1,'freetensor::SymbolTableData::buffer()'],['../classfreetensor_1_1SymbolTable.html#acf44b2e9ac614c58006e64b138c2a329',1,'freetensor::SymbolTable::buffer()'],['../classfreetensor_1_1Z3SimplifyWithSymbolTable.html#a59387234af40c0461db6b85b5d169801',1,'freetensor::Z3SimplifyWithSymbolTable::buffer()']]],
+  ['builtinsimplify_14',['BuiltinSimplify',['../classfreetensor_1_1BuiltinSimplify.html#a03d431a4e9cb9b24f6ab0157252c7fbb',1,'freetensor::BuiltinSimplify']]],
+  ['builtinsimplify_15',['builtinSimplify',['../namespacefreetensor.html#a5c54f4c7a864a4e7051d226cfff73cb1',1,'freetensor']]]
 ];
