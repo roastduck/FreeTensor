@@ -1,10 +1,42 @@
 import functools
 from collections.abc import Sequence
-from typing import Optional, Callable, Union, List
+from typing import Optional, Callable, Union, List, Dict
 
 import freetensor_ffi as ffi
 from freetensor_ffi import (MemType, ParallelScope, ID, Selector, FissionSide,
                             MoveToSide)
+from .analyze import find_stmt
+
+
+class IDMap:
+    '''
+    A dict-like container recording an ID-to-ID mapping, representing what IDs
+    become what IDs after a schedule
+
+    An IDMap can be looked up by numerical ID, or by Stmt instances or Selector
+    strings of the original (before applying schedule) AST
+    '''
+
+    def __init__(self, old_ast, id_map: Dict[ID, ID]):
+        self.old_ast = old_ast
+        self.id_map = id_map
+
+    def _lookup(self, pattern: Union[ID, ffi.Stmt, Selector, str]) -> ID:
+        if isinstance(pattern, ID):
+            return pattern
+        elif isinstance(pattern, ffi.Stmt):
+            return pattern.id
+        else:
+            return find_stmt(self.old_ast, Selector(pattern)).id
+
+    def __contains__(self, key):
+        return self._lookup(key) in self.id_map
+
+    def __getitem__(self, key):
+        return self.id_map[self._lookup(key)]
+
+    def __iter__(self):
+        return iter(self.map)
 
 
 class Schedule(ffi.Schedule):
@@ -203,15 +235,17 @@ class Schedule(ffi.Schedule):
 
         Returns
         -------
-        (map, map)
+        (IDMap, IDMap)
             ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd loop})
         """
+        old_ast = self.ast()
         splitter_list = self._lookup_list(splitter)  # In DFS order
         if side == FissionSide.Before:
             splitter = splitter_list[0]
         else:
             splitter = splitter_list[-1]
-        return super().fission(self._lookup(loop), side, splitter)
+        map1, map2 = super().fission(self._lookup(loop), side, splitter)
+        return IDMap(old_ast, map1), IDMap(old_ast, map2)
 
     def fuse(self, loop0, loop1=None, strict=False):
         """
