@@ -9129,6 +9129,20 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">Selector</span><span class="p">(</span><span class="n">pattern</span><span class="p">))</span><span class="o">.</span><span class="n">id</span>
 
+    <span class="k">def</span> <span class="nf">_lookup_list</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ID</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">ID</span><span class="p">],</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">],</span> <span class="n">Selector</span><span class="p">,</span>
+                             <span class="n">List</span><span class="p">[</span><span class="n">Selector</span><span class="p">],</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ID</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">,</span>
+                                    <span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">,</span> <span class="n">pattern</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">ID</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">pattern</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">pattern</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="n">Selector</span><span class="p">(</span><span class="n">pattern</span><span class="p">))]</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Schedule</span><span class="p">):</span>
             <span class="c1"># from native Schedule object</span>
@@ -9290,8 +9304,9 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        side : FissionSide</span>
 <span class="sd">            If `After`, `splitter` is the last statement of the first loop. If `Before`,</span>
 <span class="sd">            `splitter` is the first statement of the second loop</span>
-<span class="sd">        splitter : str, ID or Stmt</span>
-<span class="sd">            Where to fission the loop</span>
+<span class="sd">        splitter : str (Selector string), ID, Stmt, or list of them</span>
+<span class="sd">            Where to fission the loop. If multiple statement are selected, fission the</span>
+<span class="sd">            look before or after all of them</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
@@ -9303,7 +9318,12 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        (map, map)</span>
 <span class="sd">            ({old ID -&gt; new ID in 1st loop}, {old ID -&gt; new ID in 2nd loop})</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fission</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">splitter</span><span class="p">))</span>
+        <span class="n">splitter_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">(</span><span class="n">splitter</span><span class="p">)</span>  <span class="c1"># In DFS order</span>
+        <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="n">FissionSide</span><span class="o">.</span><span class="n">Before</span><span class="p">:</span>
+            <span class="n">splitter</span> <span class="o">=</span> <span class="n">splitter_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">splitter</span> <span class="o">=</span> <span class="n">splitter_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fission</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="n">splitter</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop0</span><span class="p">,</span> <span class="n">loop1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -9350,15 +9370,16 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        order : array like of str, ID or Stmt</span>
-<span class="sd">            The statements</span>
+<span class="sd">        order : List[str (Selector string), ID, List[ID], Stmt, or List[Stmt]]</span>
+<span class="sd">            The statements. If one item of the `order` list contains multiple</span>
+<span class="sd">            statements, the `order` list will be flattened</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        InvalidSchedule</span>
 <span class="sd">            if the statements are not found or the dependencies cannot be solved</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">swap</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">order</span><span class="p">])</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">swap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">blend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -9583,8 +9604,9 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">            The statement to be moved</span>
 <span class="sd">        side : MoveToSide</span>
 <span class="sd">            Whether `stmt` will be BEFORE or AFTER `dst</span>
-<span class="sd">        dst : str, ID or Stmt</span>
-<span class="sd">            Insert `stmt` to be directly after this statement</span>
+<span class="sd">        dst : str (Selector string), ID, Stmt, or list of them</span>
+<span class="sd">            Insert `stmt` to be directly after this statement. If multiple</span>
+<span class="sd">            statements are selected, move to before or after all of them</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
@@ -9597,7 +9619,12 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">            (The new ID of the moved statement, The out-most newly introduced</span>
 <span class="sd">            statments including the added loops)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">move_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">stmt</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">dst</span><span class="p">))</span>
+        <span class="n">dst_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>  <span class="c1"># In DFS order</span>
+        <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="n">MoveToSide</span><span class="o">.</span><span class="n">Before</span><span class="p">:</span>
+            <span class="n">dst</span> <span class="o">=</span> <span class="n">dst_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dst</span> <span class="o">=</span> <span class="n">dst_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">move_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">stmt</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">inline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vardef</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -10678,7 +10705,8 @@ cache variable, ID of the VarDef node of the cache variable)</p></li>
             <li><p><strong>loop</strong> (<code>str, ID or Stmt</code>) – The loop to be fissioned</p></li>
             <li><p><strong>side</strong> (<code>FissionSide</code>) – If <code>After</code>, <code>splitter</code> is the last statement of the first loop. If <code>Before</code>,
 <code>splitter</code> is the first statement of the second loop</p></li>
-            <li><p><strong>splitter</strong> (<code>str, ID or Stmt</code>) – Where to fission the loop</p></li>
+            <li><p><strong>splitter</strong> (<code>str (Selector string), ID, Stmt, or list of them</code>) – Where to fission the loop. If multiple statement are selected, fission the
+look before or after all of them</p></li>
         </ul>
       </td>
     </tr>
@@ -10732,8 +10760,9 @@ cache variable, ID of the VarDef node of the cache variable)</p></li>
 <span class="sd">    side : FissionSide</span>
 <span class="sd">        If `After`, `splitter` is the last statement of the first loop. If `Before`,</span>
 <span class="sd">        `splitter` is the first statement of the second loop</span>
-<span class="sd">    splitter : str, ID or Stmt</span>
-<span class="sd">        Where to fission the loop</span>
+<span class="sd">    splitter : str (Selector string), ID, Stmt, or list of them</span>
+<span class="sd">        Where to fission the loop. If multiple statement are selected, fission the</span>
+<span class="sd">        look before or after all of them</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -10745,7 +10774,12 @@ cache variable, ID of the VarDef node of the cache variable)</p></li>
 <span class="sd">    (map, map)</span>
 <span class="sd">        ({old ID -&gt; new ID in 1st loop}, {old ID -&gt; new ID in 2nd loop})</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fission</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">splitter</span><span class="p">))</span>
+    <span class="n">splitter_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">(</span><span class="n">splitter</span><span class="p">)</span>  <span class="c1"># In DFS order</span>
+    <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="n">FissionSide</span><span class="o">.</span><span class="n">Before</span><span class="p">:</span>
+        <span class="n">splitter</span> <span class="o">=</span> <span class="n">splitter_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">splitter</span> <span class="o">=</span> <span class="n">splitter_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fission</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="n">splitter</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -11132,7 +11166,8 @@ around the moved statement, which is equivalent to fission these loops</p>
         <ul class="first simple">
             <li><p><strong>stmt</strong> (<code>str, ID or Stmt</code>) – The statement to be moved</p></li>
             <li><p><strong>side</strong> (<code>MoveToSide</code>) – Whether <code>stmt</code> will be BEFORE or AFTER `dst</p></li>
-            <li><p><strong>dst</strong> (<code>str, ID or Stmt</code>) – Insert <code>stmt</code> to be directly after this statement</p></li>
+            <li><p><strong>dst</strong> (<code>str (Selector string), ID, Stmt, or list of them</code>) – Insert <code>stmt</code> to be directly after this statement. If multiple
+statements are selected, move to before or after all of them</p></li>
         </ul>
       </td>
     </tr>
@@ -11189,8 +11224,9 @@ statments including the added loops)</p></li>
 <span class="sd">        The statement to be moved</span>
 <span class="sd">    side : MoveToSide</span>
 <span class="sd">        Whether `stmt` will be BEFORE or AFTER `dst</span>
-<span class="sd">    dst : str, ID or Stmt</span>
-<span class="sd">        Insert `stmt` to be directly after this statement</span>
+<span class="sd">    dst : str (Selector string), ID, Stmt, or list of them</span>
+<span class="sd">        Insert `stmt` to be directly after this statement. If multiple</span>
+<span class="sd">        statements are selected, move to before or after all of them</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -11203,7 +11239,12 @@ statments including the added loops)</p></li>
 <span class="sd">        (The new ID of the moved statement, The out-most newly introduced</span>
 <span class="sd">        statments including the added loops)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">move_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">stmt</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">dst</span><span class="p">))</span>
+    <span class="n">dst_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>  <span class="c1"># In DFS order</span>
+    <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="n">MoveToSide</span><span class="o">.</span><span class="n">Before</span><span class="p">:</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">dst_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">dst_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">move_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">stmt</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -11865,7 +11906,8 @@ loops</p>
       <th class="field-name">Parameters:</th>
       <td class="field-body">
         <ul class="first simple">
-            <li><p><strong>order</strong> (<code>array like of str, ID or Stmt</code>) – The statements</p></li>
+            <li><p><strong>order</strong> (<code>List[str (Selector string), ID, List[ID], Stmt, or List[Stmt]]</code>) – The statements. If one item of the <code>order</code> list contains multiple
+statements, the <code>order</code> list will be flattened</p></li>
         </ul>
       </td>
     </tr>
@@ -11897,15 +11939,16 @@ loops</p>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    order : array like of str, ID or Stmt</span>
-<span class="sd">        The statements</span>
+<span class="sd">    order : List[str (Selector string), ID, List[ID], Stmt, or List[Stmt]]</span>
+<span class="sd">        The statements. If one item of the `order` list contains multiple</span>
+<span class="sd">        statements, the `order` list will be flattened</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    InvalidSchedule</span>
 <span class="sd">        if the statements are not found or the dependencies cannot be solved</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">swap</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">order</span><span class="p">])</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">swap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
 </code></pre></div>
         </details>
     </div>
