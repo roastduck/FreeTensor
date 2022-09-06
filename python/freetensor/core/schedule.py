@@ -192,8 +192,9 @@ class Schedule(ffi.Schedule):
         side : FissionSide
             If `After`, `splitter` is the last statement of the first loop. If `Before`,
             `splitter` is the first statement of the second loop
-        splitter : str, ID or Stmt
-            Where to fission the loop
+        splitter : str (Selector string), ID, Stmt, or list of them
+            Where to fission the loop. If multiple statement are selected, fission the
+            look before or after all of them
 
         Raises
         ------
@@ -205,7 +206,12 @@ class Schedule(ffi.Schedule):
         (map, map)
             ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd loop})
         """
-        return super().fission(self._lookup(loop), side, self._lookup(splitter))
+        splitter_list = self._lookup_list(splitter)  # In DFS order
+        if side == FissionSide.Before:
+            splitter = splitter_list[0]
+        else:
+            splitter = splitter_list[-1]
+        return super().fission(self._lookup(loop), side, splitter)
 
     def fuse(self, loop0, loop1=None, strict=False):
         """
