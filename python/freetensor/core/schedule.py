@@ -492,8 +492,9 @@ class Schedule(ffi.Schedule):
             The statement to be moved
         side : MoveToSide
             Whether `stmt` will be BEFORE or AFTER `dst
-        dst : str, ID or Stmt
-            Insert `stmt` to be directly after this statement
+        dst : str (Selector string), ID, Stmt, or list of them
+            Insert `stmt` to be directly after this statement. If multiple
+            statements are selected, move to before or after all of them
 
         Raises
         ------
@@ -506,7 +507,12 @@ class Schedule(ffi.Schedule):
             (The new ID of the moved statement, The out-most newly introduced
             statments including the added loops)
         """
-        return super().move_to(self._lookup(stmt), side, self._lookup(dst))
+        dst_list = self._lookup_list(dst)  # In DFS order
+        if side == MoveToSide.Before:
+            dst = dst_list[0]
+        else:
+            dst = dst_list[-1]
+        return super().move_to(self._lookup(stmt), side, dst)
 
     def inline(self, vardef):
         """
