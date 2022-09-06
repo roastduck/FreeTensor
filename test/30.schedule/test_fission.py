@@ -14,7 +14,10 @@ def test_fission_after():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
+    map0, map1 = s.fission("L2", ft.FissionSide.After, "S0")
+    assert s.find(map0["L2"]) == s.find("$fission.0{L2}")
+    assert s.find(map1["L2"]) == s.find("$fission.1{L2}")
+
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -45,7 +48,10 @@ def test_fission_before():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.Before, "S0")
+    map0, map1 = s.fission("L2", ft.FissionSide.Before, "S0")
+    assert s.find(map0["L2"]) == s.find("$fission.0{L2}")
+    assert s.find(map1["L2"]) == s.find("$fission.1{L2}")
+
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
