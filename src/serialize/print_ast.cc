@@ -84,7 +84,8 @@ void PrintVisitor::printMetadataAndId(const Stmt &op) {
     makeIndent();
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
-    if (printAllId_ || op->metadata().isValid()) {
+    if (printAllId_ ||
+        (op->metadata().isValid() && op->metadata()->printByDefault())) {
         makeIndent();
         os() << "#!";
         if (printAllId_)
@@ -99,19 +100,19 @@ void PrintVisitor::printMetadataAndId(const Stmt &op) {
 std::string PrintVisitor::escape(const std::string &name) {
     ASSERT(!name.empty());
 
-    bool should_escape = false;
+    bool shouldEscape = false;
     if (keywords.count(name))
-        should_escape = true;
+        shouldEscape = true;
     else if (!isalpha(name[0]) && name[0] != '_')
-        should_escape = true;
+        shouldEscape = true;
     else
         for (size_t i = 1, n = name.length(); i < n; i++)
             if (!isalnum(name[i]) && name[i] != '_') {
-                should_escape = true;
+                shouldEscape = true;
                 break;
             }
 
-    if (should_escape)
+    if (shouldEscape)
         return '`' + name + '`';
     else
         return name;
@@ -638,7 +639,7 @@ void PrintVisitor::visit(const If &op) {
 
 void PrintVisitor::visit(const Assert &op) {
     makeIndent();
-    os() << "assert ";
+    os() << prettyKeyword("assert ");
     recur(op->cond_);
     os() << " ";
     beginBlock();
@@ -648,7 +649,7 @@ void PrintVisitor::visit(const Assert &op) {
 
 void PrintVisitor::visit(const Assume &op) {
     makeIndent();
-    os() << "assume ";
+    os() << prettyKeyword("assume ");
     recur(op->cond_);
     os() << " ";
     beginBlock();

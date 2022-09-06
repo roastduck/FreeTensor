@@ -96,9 +96,16 @@ metadata returns [Metadata md]
       }
     | LABEL_META { std::vector<std::string> labels{$LABEL_META.text}; }
       (newLabel=LABEL_META { labels.push_back($newLabel.text); })*
-      { Metadata callerMeta; }
-      (LARROW_META caller=metadata { callerMeta = $caller.md; })?
       {
+        // With label, without caller arrow
+        $md = makeMetadata(std::move(labels), std::nullopt, nullptr);
+      }
+    | { std::vector<std::string> labels{$LABEL_META.text}; }
+      (newLabel=LABEL_META { labels.push_back($newLabel.text); })*
+      { Metadata callerMeta; }
+      LARROW_META caller=metadata { callerMeta = $caller.md; }
+      {
+        // With caller arrow, but maybe without labels
         $md = makeMetadata(std::move(labels), std::nullopt, callerMeta);
       }
     | ANON_META
@@ -116,6 +123,10 @@ metadataLine returns [std::pair<Metadata, ID> md_id]
       {
         $md_id.first = $metadata.md;
         $md_id.second = ID::make();
+      }
+    | BEGIN_META INTEGER_META END_META
+      {
+        $md_id.second = ID::make(std::stoi(std::string($INTEGER_META.text)));
       }
     | BEGIN_META INTEGER_META metadata END_META
       {
