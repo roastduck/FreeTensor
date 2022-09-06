@@ -1,5 +1,6 @@
 import functools
-from typing import Optional, Callable, Union
+from collections.abc import Sequence
+from typing import Optional, Callable, Union, List
 
 import freetensor_ffi as ffi
 from freetensor_ffi import (MemType, ParallelScope, ID, Selector, FissionSide,
@@ -15,6 +16,20 @@ class Schedule(ffi.Schedule):
             return pattern.id
         else:
             return self.find(Selector(pattern)).id
+
+    def _lookup_list(
+        self, pattern: Union[ID, List[ID], ffi.Stmt, List[ffi.Stmt], Selector,
+                             List[Selector], str, List[str]]
+    ) -> List[ID]:
+        if isinstance(pattern, Sequence) and not isinstance(pattern, str):
+            return functools.reduce(lambda x, y: x + y,
+                                    map(self._lookup_list, pattern))
+        elif isinstance(pattern, ID):
+            return [pattern]
+        elif isinstance(pattern, ffi.Stmt):
+            return [pattern.id]
+        else:
+            return [item.id for item in self.find_all(Selector(pattern))]
 
     def __init__(self, arg, verbose: int = 0):
         if isinstance(arg, ffi.Schedule):
@@ -237,15 +252,16 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        order : array like of str, ID or Stmt
-            The statements
+        order : List[str (Selector string), ID, List[ID], Stmt, or List[Stmt]]
+            The statements. If one item of the `order` list contains multiple
+            statements, the `order` list will be flattened
 
         Raises
         ------
         InvalidSchedule
             if the statements are not found or the dependencies cannot be solved
         """
-        super().swap([self._lookup(o) for o in order])
+        super().swap(self._lookup_list(order))
 
     def blend(self, loop):
         """
