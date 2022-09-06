@@ -281,6 +281,8 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.schedule">schedule</a>
         <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.schedule.IDMap">IDMap</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.schedule.Schedule">Schedule</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.schedule.schedule">schedule()</a>
@@ -9105,6 +9107,85 @@ single passes</p></li>
 
 
 
+<h4 id="freetensor.core.schedule.IDMap" class="doc doc-heading">
+        <code>
+IDMap        </code>
+
+
+
+<a href="#freetensor.core.schedule.IDMap" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>A dict-like container recording an ID-to-ID mapping, representing what IDs</p>
+<p>become what IDs after a schedule</p>
+<p>An IDMap can be looked up by numerical ID, or by Stmt instances or Selector
+strings of the original (before applying schedule) AST</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">IDMap</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    A dict-like container recording an ID-to-ID mapping, representing what IDs</span>
+<span class="sd">    become what IDs after a schedule</span>
+
+<span class="sd">    An IDMap can be looked up by numerical ID, or by Stmt instances or Selector</span>
+<span class="sd">    strings of the original (before applying schedule) AST</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_ast</span><span class="p">,</span> <span class="n">id_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">ID</span><span class="p">,</span> <span class="n">ID</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">old_ast</span> <span class="o">=</span> <span class="n">old_ast</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id_map</span> <span class="o">=</span> <span class="n">id_map</span>
+
+    <span class="k">def</span> <span class="nf">_lookup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ID</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">,</span> <span class="n">Selector</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ID</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">ID</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">pattern</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">pattern</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">find_stmt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">old_ast</span><span class="p">,</span> <span class="n">Selector</span><span class="p">(</span><span class="n">pattern</span><span class="p">))</span><span class="o">.</span><span class="n">id</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_map</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_map</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h4 id="freetensor.core.schedule.Schedule" class="doc doc-heading">
         <code>
 Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
@@ -9315,15 +9396,17 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        (map, map)</span>
+<span class="sd">        (IDMap, IDMap)</span>
 <span class="sd">            ({old ID -&gt; new ID in 1st loop}, {old ID -&gt; new ID in 2nd loop})</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">old_ast</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ast</span><span class="p">()</span>
         <span class="n">splitter_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">(</span><span class="n">splitter</span><span class="p">)</span>  <span class="c1"># In DFS order</span>
         <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="n">FissionSide</span><span class="o">.</span><span class="n">Before</span><span class="p">:</span>
             <span class="n">splitter</span> <span class="o">=</span> <span class="n">splitter_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">splitter</span> <span class="o">=</span> <span class="n">splitter_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fission</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="n">splitter</span><span class="p">)</span>
+        <span class="n">map1</span><span class="p">,</span> <span class="n">map2</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fission</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="n">splitter</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">IDMap</span><span class="p">(</span><span class="n">old_ast</span><span class="p">,</span> <span class="n">map1</span><span class="p">),</span> <span class="n">IDMap</span><span class="p">(</span><span class="n">old_ast</span><span class="p">,</span> <span class="n">map2</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop0</span><span class="p">,</span> <span class="n">loop1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -10738,7 +10821,7 @@ look before or after all of them</p></li>
     <th class="field-name">Returns:</th>
     <td class="field-body">
         <ul class="first simple">
-          <li><p><code>(map, map)</code> – ({old ID -&gt; new ID in 1st loop}, {old ID -&gt; new ID in 2nd loop})</p></li>
+          <li><p><code>(IDMap, IDMap)</code> – ({old ID -&gt; new ID in 1st loop}, {old ID -&gt; new ID in 2nd loop})</p></li>
         </ul>
     </td>
     </tr>
@@ -10771,15 +10854,17 @@ look before or after all of them</p></li>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    (map, map)</span>
+<span class="sd">    (IDMap, IDMap)</span>
 <span class="sd">        ({old ID -&gt; new ID in 1st loop}, {old ID -&gt; new ID in 2nd loop})</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">old_ast</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ast</span><span class="p">()</span>
     <span class="n">splitter_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">(</span><span class="n">splitter</span><span class="p">)</span>  <span class="c1"># In DFS order</span>
     <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="n">FissionSide</span><span class="o">.</span><span class="n">Before</span><span class="p">:</span>
         <span class="n">splitter</span> <span class="o">=</span> <span class="n">splitter_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">splitter</span> <span class="o">=</span> <span class="n">splitter_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fission</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="n">splitter</span><span class="p">)</span>
+    <span class="n">map1</span><span class="p">,</span> <span class="n">map2</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fission</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span> <span class="n">side</span><span class="p">,</span> <span class="n">splitter</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">IDMap</span><span class="p">(</span><span class="n">old_ast</span><span class="p">,</span> <span class="n">map1</span><span class="p">),</span> <span class="n">IDMap</span><span class="p">(</span><span class="n">old_ast</span><span class="p">,</span> <span class="n">map2</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
