@@ -193,6 +193,21 @@ class Schedule {
     }
 
     /**
+     * Find all nodes (at least one) in the current AST satisfying a given
+     * condition
+     *
+     * @param filter : A callback that returns true for acceptance, or a
+     * `Selector`, or an `ID`
+     */
+    template <class T> std::vector<Stmt> findAtLeastOne(const T &filter) const {
+        auto ret = findAllStmt(ast(), filter);
+        if (ret.empty()) {
+            throw InvalidSchedule(ast(), "No statement found by filter");
+        }
+        return ret;
+    }
+
+    /**
      * Find the only one nodes in the current AST satisfying a given condition
      *
      * @param filter : A callback that returns true for acceptance, or a
@@ -204,7 +219,7 @@ class Schedule {
         try {
             return findStmt(ast(), filter);
         } catch (const UnexpectedQueryResult &e) {
-            throw InvalidSchedule(e.what());
+            throw InvalidSchedule(ast(), e.what());
         }
     }
 

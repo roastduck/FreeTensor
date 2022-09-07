@@ -77,6 +77,16 @@ void init_ffi_schedule(py::module_ &m) {
                              &Schedule::findAll))
         .def("find_all", static_cast<std::vector<Stmt> (Schedule::*)(
                              const Ref<Selector> &) const>(&Schedule::findAll))
+        .def("find_at_least_one",
+             static_cast<std::vector<Stmt> (Schedule::*)(const ID &) const>(
+                 &Schedule::findAtLeastOne))
+        .def("find_at_least_one",
+             static_cast<std::vector<Stmt> (Schedule::*)(
+                 const std::function<bool(const Stmt &)> &) const>(
+                 &Schedule::findAtLeastOne))
+        .def("find_at_least_one",
+             static_cast<std::vector<Stmt> (Schedule::*)(const Ref<Selector> &)
+                             const>(&Schedule::findAtLeastOne))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1, "shift"_a = 0)
         .def("reorder", &Schedule::reorder, "order"_a)
