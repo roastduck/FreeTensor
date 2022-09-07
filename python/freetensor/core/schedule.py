@@ -61,7 +61,9 @@ class Schedule(ffi.Schedule):
         elif isinstance(pattern, ffi.Stmt):
             return [pattern.id]
         else:
-            return [item.id for item in self.find_all(Selector(pattern))]
+            return [
+                item.id for item in self.find_at_least_one(Selector(pattern))
+            ]
 
     def __init__(self, arg, verbose: int = 0):
         if isinstance(arg, ffi.Schedule):
