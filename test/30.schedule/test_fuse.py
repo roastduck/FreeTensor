@@ -13,11 +13,10 @@ def test_basic():
             with ft.For("j2", 0, 8, label="L2b") as j:
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
-    s.fuse("L2a", "L2b")
-    ast = s.ast()
-    print(ast)
-    ast = ft.lower(ast, verbose=1)
+    s = ft.Schedule(ast, verbose=2)
+    fused = s.fuse("L2a", "L2b")
+    assert s.find(fused) == s.find("$fuse{L2a, L2b}")
+    ast = ft.lower(s.ast(), verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),

@@ -8,11 +8,10 @@ def test_basic():
             with ft.For("j", 0, 8, label="L2") as j:
                 y[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
-    s.merge("L1", "L2")
-    ast = s.ast()
-    print(ast)
-    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
+    s = ft.Schedule(ast, verbose=2)
+    merged = s.merge("L1", "L2")
+    assert s.find(merged) == s.find("$merge{L1, L2}")
+    ast = ft.lower(s.ast(), skip_passes=["use_builtin_div"], verbose=1)
 
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 32) as i:

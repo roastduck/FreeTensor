@@ -13,14 +13,11 @@ def test_fission_after():
                 y[i, j] = i + j
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
+    s = ft.Schedule(ast, verbose=2)
     map0, map1 = s.fission("L2", ft.FissionSide.After, "S0")
     assert s.find(map0["L2"]) == s.find("$fission.0{L2}")
     assert s.find(map1["L2"]) == s.find("$fission.1{L2}")
-
-    ast = s.ast()
-    print(ast)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(s.ast(), verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -47,14 +44,11 @@ def test_fission_before():
                 ft.MarkLabel("S0")
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
+    s = ft.Schedule(ast, verbose=2)
     map0, map1 = s.fission("L2", ft.FissionSide.Before, "S0")
     assert s.find(map0["L2"]) == s.find("$fission.0{L2}")
     assert s.find(map1["L2"]) == s.find("$fission.1{L2}")
-
-    ast = s.ast()
-    print(ast)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(s.ast(), verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
