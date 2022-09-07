@@ -74,14 +74,14 @@ $(function() {
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#ifdef FT_WITH_CUDA</span></div>
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;unordered_map&gt;</span></div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;unordered_set&gt;</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;<a class="code" href="target_8h.html">driver/target.h</a>&gt;</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="func_8h.html">func.h</a>&gt;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="bounds_8h.html">math/bounds.h</a>&gt;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="mutator_8h.html">mutator.h</a>&gt;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="opt_8h.html">opt.h</a>&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;unordered_map&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;unordered_set&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="target_8h.html">driver/target.h</a>&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="func_8h.html">func.h</a>&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="bounds_8h.html">math/bounds.h</a>&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="mutator_8h.html">mutator.h</a>&gt;</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="visitor_8h.html">visitor.h</a>&gt;</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacefreetensor.html">freetensor</a> {</div>
@@ -95,9 +95,9 @@ $(function() {
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="keyword">class </span>FindAllThreads : <span class="keyword">public</span> Visitor {</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keywordtype">int</span> warpSize_;</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    Opt&lt;int&gt; thx_ = <a class="code hl_function" href="classfreetensor_1_1Opt.html#a27984ee7db2d80112fc930132d09268e">Opt&lt;int&gt;::make</a>(1);</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    Opt&lt;int&gt; thy_ = <a class="code hl_function" href="classfreetensor_1_1Opt.html#a27984ee7db2d80112fc930132d09268e">Opt&lt;int&gt;::make</a>(1);</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    Opt&lt;int&gt; thz_ = <a class="code hl_function" href="classfreetensor_1_1Opt.html#a27984ee7db2d80112fc930132d09268e">Opt&lt;int&gt;::make</a>(1);</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    std::optional&lt;int&gt; thx_ = 1;</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    std::optional&lt;int&gt; thy_ = 1;</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    std::optional&lt;int&gt; thz_ = 1;</div>
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    std::unordered_map&lt;ID, ThreadInfo&gt; results_;</div>
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>  <span class="keyword">public</span>:</div>
@@ -170,7 +170,6 @@ $(function() {
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_GPU_MAKE_SYNC_H</span></div>
 <div class="ttc" id="abounds_8h_html"><div class="ttname"><a href="bounds_8h.html">bounds.h</a></div></div>
-<div class="ttc" id="aclassfreetensor_1_1Opt_html_a27984ee7db2d80112fc930132d09268e"><div class="ttname"><a href="classfreetensor_1_1Opt.html#a27984ee7db2d80112fc930132d09268e">freetensor::Opt::make</a></div><div class="ttdeci">static Opt make(T &amp;&amp;x)</div><div class="ttdef"><b>Definition:</b> opt.h:43</div></div>
 <div class="ttc" id="afunc_8h_html"><div class="ttname"><a href="func_8h.html">func.h</a></div></div>
 <div class="ttc" id="amutator_8h_html"><div class="ttname"><a href="mutator_8h.html">mutator.h</a></div></div>
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
@@ -183,7 +182,6 @@ $(function() {
 <div class="ttc" id="anamespacefreetensor_html_ad8c8899f085110927482888ecf8e8b6d"><div class="ttname"><a href="namespacefreetensor.html#ad8c8899f085110927482888ecf8e8b6d">freetensor::Assert</a></div><div class="ttdeci">Ref&lt; AssertNode &gt; Assert</div><div class="ttdef"><b>Definition:</b> stmt.h:343</div></div>
 <div class="ttc" id="anamespacefreetensor_html_afa443a46bd7b0cab600c0bc6fef85f96"><div class="ttname"><a href="namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96">freetensor::StmtSeq</a></div><div class="ttdeci">Ref&lt; StmtSeqNode &gt; StmtSeq</div><div class="ttdef"><b>Definition:</b> stmt.h:42</div></div>
 <div class="ttc" id="anamespacestd_html"><div class="ttname"><a href="namespacestd.html">std</a></div><div class="ttdoc">STL namespace.</div></div>
-<div class="ttc" id="aopt_8h_html"><div class="ttname"><a href="opt_8h.html">opt.h</a></div></div>
 <div class="ttc" id="atarget_8h_html"><div class="ttname"><a href="target_8h.html">target.h</a></div></div>
 <div class="ttc" id="avisitor_8h_html"><div class="ttname"><a href="visitor_8h.html">visitor.h</a></div></div>
 </div><!-- fragment --></div><!-- contents -->

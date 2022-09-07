@@ -73,15 +73,15 @@ $(function() {
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define FREE_TENSOR_Z3_SIMPLIFY</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;deque&gt;</span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;unordered_map&gt;</span></div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;z3++.h&gt;</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;<a class="code" href="symbol__table_8h.html">analyze/symbol_table.h</a>&gt;</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="func_8h.html">func.h</a>&gt;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="hash_8h.html">hash.h</a>&gt;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="mutator_8h.html">mutator.h</a>&gt;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="opt_8h.html">opt.h</a>&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;unordered_map&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;z3++.h&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="symbol__table_8h.html">analyze/symbol_table.h</a>&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="func_8h.html">func.h</a>&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="hash_8h.html">hash.h</a>&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="mutator_8h.html">mutator.h</a>&gt;</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="visitor_8h.html">visitor.h</a>&gt;</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacefreetensor.html">freetensor</a> {</div>
@@ -96,8 +96,8 @@ $(function() {
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    z3::context ctx_;</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    z3::solver solver_;</div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="comment">// We use Opt because there is no z3::expr::expr()</span></div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    std::unordered_map&lt;Expr, Opt&lt;z3::expr&gt;&gt; z3Exprs_;</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="comment">// We use std::optional because there is no z3::expr::expr()</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    std::unordered_map&lt;Expr, std::optional&lt;z3::expr&gt;&gt; z3Exprs_;</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>  <span class="keyword">public</span>:</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Z3Simplify.html#a0d040e0a8e73461b0cd4163b8c3cb5ab">   43</a></span>    <a class="code hl_function" href="classfreetensor_1_1Z3Simplify.html#a0d040e0a8e73461b0cd4163b8c3cb5ab">Z3Simplify</a>() : solver_(ctx_) {}</div>
@@ -235,7 +235,6 @@ $(function() {
 <div class="ttc" id="anamespacefreetensor_html_a4dc24d31542f15ddfec5a97a3dfb6661"><div class="ttname"><a href="namespacefreetensor.html#a4dc24d31542f15ddfec5a97a3dfb6661">freetensor::z3Simplify</a></div><div class="ttdeci">Stmt z3Simplify(const Stmt &amp;op)</div><div class="ttdef"><b>Definition:</b> z3_simplify.cc:522</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a8b7e165b3601cc722c7b357347dc6de9"><div class="ttname"><a href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">freetensor::Stmt</a></div><div class="ttdeci">Ref&lt; StmtNode &gt; Stmt</div><div class="ttdef"><b>Definition:</b> ast.h:175</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a9fc9252c3954dc411dae3a03e6821f6c"><div class="ttname"><a href="namespacefreetensor.html#a9fc9252c3954dc411dae3a03e6821f6c">freetensor::DEFINE_PASS_FOR_FUNC</a></div><div class="ttdeci">DEFINE_PASS_FOR_FUNC(makeHeapAlloc)</div></div>
-<div class="ttc" id="aopt_8h_html"><div class="ttname"><a href="opt_8h.html">opt.h</a></div></div>
 <div class="ttc" id="asymbol__table_8h_html"><div class="ttname"><a href="symbol__table_8h.html">symbol_table.h</a></div></div>
 <div class="ttc" id="avisitor_8h_html"><div class="ttname"><a href="visitor_8h.html">visitor.h</a></div></div>
 </div><!-- fragment --></div><!-- contents -->

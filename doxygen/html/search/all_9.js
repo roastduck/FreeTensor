@@ -40,6 +40,6 @@ var searchData=
   ['hoistreturnvars_37',['hoistReturnVars',['../namespacefreetensor.html#a347f7684c28340f2c1710b73f1440dfe',1,'freetensor']]],
   ['hoistreturnvars_38',['HoistReturnVars',['../classfreetensor_1_1HoistReturnVars.html#a6b9b1b2dec1751e9786c6e24f96cb30a',1,'freetensor::HoistReturnVars']]],
   ['hoistvar_39',['HoistVar',['../classfreetensor_1_1HoistVar.html',1,'freetensor::HoistVar'],['../classfreetensor_1_1HoistVar.html#a0575330471930ac6ba8d60006bbc8a7f',1,'freetensor::HoistVar::HoistVar()']]],
-  ['hoistvaroverstmtseq_40',['HoistVarOverStmtSeq',['../classfreetensor_1_1HoistVarOverStmtSeq.html',1,'freetensor::HoistVarOverStmtSeq'],['../classfreetensor_1_1HoistVarOverStmtSeq.html#aa033f16249fe22eba77d6e8b7760f58e',1,'freetensor::HoistVarOverStmtSeq::HoistVarOverStmtSeq()']]],
-  ['hoistvaroverstmtseq_41',['hoistVarOverStmtSeq',['../namespacefreetensor.html#a6fa8ce5b0704def92cf5737c50fb13ef',1,'freetensor']]]
+  ['hoistvaroverstmtseq_40',['HoistVarOverStmtSeq',['../classfreetensor_1_1HoistVarOverStmtSeq.html',1,'freetensor::HoistVarOverStmtSeq'],['../classfreetensor_1_1HoistVarOverStmtSeq.html#ac9a952597067498d0a3f9989906d985a',1,'freetensor::HoistVarOverStmtSeq::HoistVarOverStmtSeq()']]],
+  ['hoistvaroverstmtseq_41',['hoistVarOverStmtSeq',['../namespacefreetensor.html#ad011792a62e69506f3d9b178a1e25a56',1,'freetensor']]]
 ];

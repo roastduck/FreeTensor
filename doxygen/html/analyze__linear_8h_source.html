@@ -72,12 +72,12 @@ $(function() {
 <a href="analyze__linear_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef FREE_TENSOR_ANALYZE_LINEAR_H</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define FREE_TENSOR_ANALYZE_LINEAR_H</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;unordered_map&gt;</span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;unordered_set&gt;</span></div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;<a class="code" href="hash_8h.html">hash.h</a>&gt;</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;<a class="code" href="linear_8h.html">math/linear.h</a>&gt;</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;<a class="code" href="opt_8h.html">opt.h</a>&gt;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;unordered_map&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;unordered_set&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;<a class="code" href="hash_8h.html">hash.h</a>&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;<a class="code" href="linear_8h.html">math/linear.h</a>&gt;</span></div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="visitor_8h.html">visitor.h</a>&gt;</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacefreetensor.html">freetensor</a> {</div>
@@ -103,11 +103,12 @@ $(function() {
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>LinearExpr&lt;int64_t&gt; <a class="code hl_function" href="namespacefreetensor.html#af3cd2c80175823e84d9f3e9555d6be3a">linear</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr);</div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>Opt&lt;std::pair&lt;LinearExpr&lt;int64_t&gt;, <a class="code hl_enumeration" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a>&gt;&gt; <a class="code hl_function" href="namespacefreetensor.html#a094d45218d81710da962614bfea3ff12">linearComp</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr);</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>} <span class="comment">// namespace freetensor</span></div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_ANALYZE_LINEAR_H</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>std::optional&lt;std::pair&lt;LinearExpr&lt;int64_t&gt;, <a class="code hl_enumeration" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a>&gt;&gt;</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><a class="code hl_function" href="namespacefreetensor.html#af829069b1e3ed28eda73073303915af0">linearComp</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr);</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_ANALYZE_LINEAR_H</span></div>
 <div class="ttc" id="aclassfreetensor_1_1AnalyzeLinear_html"><div class="ttname"><a href="classfreetensor_1_1AnalyzeLinear.html">freetensor::AnalyzeLinear</a></div><div class="ttdef"><b>Definition:</b> analyze_linear.h:14</div></div>
 <div class="ttc" id="aclassfreetensor_1_1AnalyzeLinear_html_a3539a4dd2c4865aa29c0528e2173253d"><div class="ttname"><a href="classfreetensor_1_1AnalyzeLinear.html#a3539a4dd2c4865aa29c0528e2173253d">freetensor::AnalyzeLinear::result</a></div><div class="ttdeci">const std::unordered_map&lt; AST, LinearExpr&lt; int64_t &gt; &gt; &amp; result() const</div><div class="ttdef"><b>Definition:</b> analyze_linear.h:18</div></div>
 <div class="ttc" id="aclassfreetensor_1_1AnalyzeLinear_html_a65215f53f154439780b6619a6e542ad4"><div class="ttname"><a href="classfreetensor_1_1AnalyzeLinear.html#a65215f53f154439780b6619a6e542ad4">freetensor::AnalyzeLinear::visitExpr</a></div><div class="ttdeci">void visitExpr(const Expr &amp;op) override</div><div class="ttdef"><b>Definition:</b> analyze_linear.cc:5</div></div>
@@ -117,11 +118,10 @@ $(function() {
 <div class="ttc" id="ahash_8h_html"><div class="ttname"><a href="hash_8h.html">hash.h</a></div></div>
 <div class="ttc" id="alinear_8h_html"><div class="ttname"><a href="linear_8h.html">linear.h</a></div></div>
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
-<div class="ttc" id="anamespacefreetensor_html_a094d45218d81710da962614bfea3ff12"><div class="ttname"><a href="namespacefreetensor.html#a094d45218d81710da962614bfea3ff12">freetensor::linearComp</a></div><div class="ttdeci">Opt&lt; std::pair&lt; LinearExpr&lt; int64_t &gt;, ASTNodeType &gt; &gt; linearComp(const Expr &amp;expr)</div><div class="ttdef"><b>Definition:</b> analyze_linear.cc:55</div></div>
 <div class="ttc" id="anamespacefreetensor_html_acfa6f07a5497b3d187fe112708aa335b"><div class="ttname"><a href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">freetensor::Expr</a></div><div class="ttdeci">Ref&lt; ExprNode &gt; Expr</div><div class="ttdef"><b>Definition:</b> ast.h:173</div></div>
 <div class="ttc" id="anamespacefreetensor_html_af3cd2c80175823e84d9f3e9555d6be3a"><div class="ttname"><a href="namespacefreetensor.html#af3cd2c80175823e84d9f3e9555d6be3a">freetensor::linear</a></div><div class="ttdeci">LinearExpr&lt; int64_t &gt; linear(const Expr &amp;expr)</div><div class="ttdef"><b>Definition:</b> analyze_linear.cc:49</div></div>
+<div class="ttc" id="anamespacefreetensor_html_af829069b1e3ed28eda73073303915af0"><div class="ttname"><a href="namespacefreetensor.html#af829069b1e3ed28eda73073303915af0">freetensor::linearComp</a></div><div class="ttdeci">std::optional&lt; std::pair&lt; LinearExpr&lt; int64_t &gt;, ASTNodeType &gt; &gt; linearComp(const Expr &amp;expr)</div><div class="ttdef"><b>Definition:</b> analyze_linear.cc:56</div></div>
 <div class="ttc" id="anamespacefreetensor_html_afc87eee71f05eb84c5799d7f3492915f"><div class="ttname"><a href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">freetensor::ASTNodeType</a></div><div class="ttdeci">ASTNodeType</div><div class="ttdef"><b>Definition:</b> ast.h:18</div></div>
-<div class="ttc" id="aopt_8h_html"><div class="ttname"><a href="opt_8h.html">opt.h</a></div></div>
 <div class="ttc" id="avisitor_8h_html"><div class="ttname"><a href="visitor_8h.html">visitor.h</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->

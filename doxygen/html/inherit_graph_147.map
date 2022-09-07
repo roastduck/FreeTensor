@@ -1,3 +1,12 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$structfreetensor_1_1TypeOrMonostate.html" title=" " alt="" coords="5,5,255,32"/>
+<area shape="rect" id="node1" title=" " alt="" coords="5,132,120,159"/>
+<area shape="rect" id="node2" title=" " alt="" coords="168,132,307,159"/>
+<area shape="rect" id="node3" href="$classfreetensor_1_1Error.html" title=" " alt="" coords="355,132,483,159"/>
+<area shape="rect" id="node4" href="$classfreetensor_1_1DriverError.html" title=" " alt="" coords="554,5,722,32"/>
+<area shape="rect" id="node5" href="$classfreetensor_1_1InterruptExcept.html" title=" " alt="" coords="539,56,737,83"/>
+<area shape="rect" id="node6" href="$classfreetensor_1_1InvalidProgram.html" title=" " alt="" coords="540,107,736,133"/>
+<area shape="rect" id="node8" href="$classfreetensor_1_1InvalidSchedule.html" title=" " alt="" coords="538,157,738,184"/>
+<area shape="rect" id="node9" href="$classfreetensor_1_1ParserError.html" title=" " alt="" coords="554,208,722,235"/>
+<area shape="rect" id="node10" href="$classfreetensor_1_1UnexpectedQueryResult.html" title=" " alt="" coords="531,259,745,301"/>
+<area shape="rect" id="node7" href="$classfreetensor_1_1AssertAlwaysFalse.html" title=" " alt="" coords="793,99,979,141"/>
 </map>

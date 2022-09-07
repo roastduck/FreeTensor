@@ -487,8 +487,6 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1OpenMPScope.html">OpenMPScope</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Opt.html">Opt</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1OutputIntermediates.html">OutputIntermediates</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1ParallelInfo.html">ParallelInfo</a></td></tr>
@@ -1150,8 +1148,8 @@ Functions</h2></td></tr>
 <tr class="separator:a3458487ff5536c81c275eaa7ba413b69"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af3cd2c80175823e84d9f3e9555d6be3a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; int64_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af3cd2c80175823e84d9f3e9555d6be3a">linear</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr)</td></tr>
 <tr class="separator:af3cd2c80175823e84d9f3e9555d6be3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a094d45218d81710da962614bfea3ff12"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Opt.html">Opt</a>&lt; std::pair&lt; <a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; int64_t &gt;, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a094d45218d81710da962614bfea3ff12">linearComp</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr)</td></tr>
-<tr class="separator:a094d45218d81710da962614bfea3ff12"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af829069b1e3ed28eda73073303915af0"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::pair&lt; <a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; int64_t &gt;, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af829069b1e3ed28eda73073303915af0">linearComp</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr)</td></tr>
+<tr class="separator:af829069b1e3ed28eda73073303915af0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a064af53ab11994f63934022d25f029d6"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a064af53ab11994f63934022d25f029d6">analyzeVersion</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;intermediates)</td></tr>
 <tr class="separator:a064af53ab11994f63934022d25f029d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55735a0fc1a7936615d6a22547c1f616"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a82f6ad361ad8809641d462d42145cd02">DNF</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a55735a0fc1a7936615d6a22547c1f616">asDNF</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr)</td></tr>
@@ -1490,9 +1488,9 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 <tr class="separator:a0155210ceae79b2d681ae275691e9266"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad9b4e85fd2af2ae8d86f1d1e548ae2a5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad9b4e85fd2af2ae8d86f1d1e548ae2a5">alwaysLE</a> (const <a class="el" href="classfreetensor_1_1UpperBound.html">UpperBound</a> &amp;b1, const <a class="el" href="classfreetensor_1_1LowerBound.html">LowerBound</a> &amp;b2)</td></tr>
 <tr class="separator:ad9b4e85fd2af2ae8d86f1d1e548ae2a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e22f753b4990549a04beb85f9a3c074"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:a5e22f753b4990549a04beb85f9a3c074"><td class="memTemplItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1Opt.html">Opt</a>&lt; <a class="el" href="classfreetensor_1_1LowerBound.html">LowerBound</a> &gt;, <a class="el" href="classfreetensor_1_1Opt.html">Opt</a>&lt; <a class="el" href="classfreetensor_1_1UpperBound.html">UpperBound</a> &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5e22f753b4990549a04beb85f9a3c074">lin2bounds</a> (const <a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; T &gt; &amp;_lin, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> cmp, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;x)</td></tr>
-<tr class="separator:a5e22f753b4990549a04beb85f9a3c074"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d5a01408b47c209368417ef2a90e782"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a2d5a01408b47c209368417ef2a90e782"><td class="memTemplItemLeft" align="right" valign="top">std::pair&lt; std::optional&lt; <a class="el" href="classfreetensor_1_1LowerBound.html">LowerBound</a> &gt;, std::optional&lt; <a class="el" href="classfreetensor_1_1UpperBound.html">UpperBound</a> &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2d5a01408b47c209368417ef2a90e782">lin2bounds</a> (const <a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; T &gt; &amp;_lin, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> cmp, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;x)</td></tr>
+<tr class="separator:a2d5a01408b47c209368417ef2a90e782"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6b069428f5477c50bf08adc4ea43e463"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a6b069428f5477c50bf08adc4ea43e463"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6b069428f5477c50bf08adc4ea43e463">add</a> (const <a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; T &gt; &amp;lhs, const <a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; T &gt; &amp;rhs)</td></tr>
 <tr class="separator:a6b069428f5477c50bf08adc4ea43e463"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1720,8 +1718,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:abc76b2ea62da573002dd8493a2592e5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a347f7684c28340f2c1710b73f1440dfe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a347f7684c28340f2c1710b73f1440dfe">hoistReturnVars</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func)</td></tr>
 <tr class="separator:a347f7684c28340f2c1710b73f1440dfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6fa8ce5b0704def92cf5737c50fb13ef"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6fa8ce5b0704def92cf5737c50fb13ef">hoistVarOverStmtSeq</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1Opt.html">Opt</a>&lt; std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;togetherIds=std::nullopt)</td></tr>
-<tr class="separator:a6fa8ce5b0704def92cf5737c50fb13ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad011792a62e69506f3d9b178a1e25a56"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad011792a62e69506f3d9b178a1e25a56">hoistVarOverStmtSeq</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::optional&lt; std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;togetherIds=std::nullopt)</td></tr>
+<tr class="separator:ad011792a62e69506f3d9b178a1e25a56"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9813bc231cf4bdd83d0f220024948bea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9813bc231cf4bdd83d0f220024948bea">makeConstShape</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::vector&lt; <a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150">MemType</a> &gt; &amp;mtypes)</td></tr>
 <tr class="separator:a9813bc231cf4bdd83d0f220024948bea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b4c984aecaea6f0e74adc5a0f769204"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8b4c984aecaea6f0e74adc5a0f769204">makeHeapAlloc</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
@@ -9324,8 +9322,8 @@ template&lt;class T , class Hash , class KeyEqual &gt; </div>
 
 </div>
 </div>
-<a id="a6fa8ce5b0704def92cf5737c50fb13ef" name="a6fa8ce5b0704def92cf5737c50fb13ef"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6fa8ce5b0704def92cf5737c50fb13ef">&#9670;&nbsp;</a></span>hoistVarOverStmtSeq()</h2>
+<a id="ad011792a62e69506f3d9b178a1e25a56" name="ad011792a62e69506f3d9b178a1e25a56"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad011792a62e69506f3d9b178a1e25a56">&#9670;&nbsp;</a></span>hoistVarOverStmtSeq()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -9339,7 +9337,7 @@ template&lt;class T , class Hash , class KeyEqual &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Opt.html">Opt</a>&lt; std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;&#160;</td>
+          <td class="paramtype">const std::optional&lt; std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;&#160;</td>
           <td class="paramname"><em>togetherIds</em> = <code>std::nullopt</code>&#160;</td>
         </tr>
         <tr>
@@ -10215,8 +10213,8 @@ template&lt;PBMapRef T&gt; </div>
 
 </div>
 </div>
-<a id="a5e22f753b4990549a04beb85f9a3c074" name="a5e22f753b4990549a04beb85f9a3c074"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5e22f753b4990549a04beb85f9a3c074">&#9670;&nbsp;</a></span>lin2bounds()</h2>
+<a id="a2d5a01408b47c209368417ef2a90e782" name="a2d5a01408b47c209368417ef2a90e782"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d5a01408b47c209368417ef2a90e782">&#9670;&nbsp;</a></span>lin2bounds()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -10224,7 +10222,7 @@ template&lt;PBMapRef T&gt; </div>
 template&lt;class T &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt; <a class="el" href="classfreetensor_1_1Opt.html">Opt</a>&lt; <a class="el" href="classfreetensor_1_1LowerBound.html">LowerBound</a> &gt;, <a class="el" href="classfreetensor_1_1Opt.html">Opt</a>&lt; <a class="el" href="classfreetensor_1_1UpperBound.html">UpperBound</a> &gt; &gt; freetensor::lin2bounds </td>
+          <td class="memname">std::pair&lt; std::optional&lt; <a class="el" href="classfreetensor_1_1LowerBound.html">LowerBound</a> &gt;, std::optional&lt; <a class="el" href="classfreetensor_1_1UpperBound.html">UpperBound</a> &gt; &gt; freetensor::lin2bounds </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; T &gt; &amp;&#160;</td>
           <td class="paramname"><em>_lin</em>, </td>
@@ -10295,14 +10293,14 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</div>
 
 </div>
 </div>
-<a id="a094d45218d81710da962614bfea3ff12" name="a094d45218d81710da962614bfea3ff12"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a094d45218d81710da962614bfea3ff12">&#9670;&nbsp;</a></span>linearComp()</h2>
+<a id="af829069b1e3ed28eda73073303915af0" name="af829069b1e3ed28eda73073303915af0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af829069b1e3ed28eda73073303915af0">&#9670;&nbsp;</a></span>linearComp()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classfreetensor_1_1Opt.html">Opt</a>&lt; std::pair&lt; <a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; int64_t &gt;, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> &gt; &gt; freetensor::linearComp </td>
+          <td class="memname">std::optional&lt; std::pair&lt; <a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; int64_t &gt;, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> &gt; &gt; freetensor::linearComp </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;&#160;</td>
           <td class="paramname"><em>expr</em></td><td>)</td>
