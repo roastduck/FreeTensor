@@ -8,10 +8,12 @@ def test_basic():
         ("x3", (), "float32", "input", "cpu"),
         ("y", (), "float32", "output", "cpu"),
     ]) as (x1, x2, x3, y):
+        ft.MarkLabel("S0")
         y[()] = (x1[()] + x2[()]) * x3[()]
     ast = ft.pop_ast(verbose=True)
     _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"], set())
     print(ast)
+    assert len(ft.find_all_stmt(ast, "$grad{S0}")) > 0
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
@@ -37,10 +39,12 @@ def test_partial_gradient():
         ("x3", (), "float32", "input", "cpu"),
         ("y", (), "float32", "output", "cpu"),
     ]) as (x1, x2, x3, y):
+        ft.MarkLabel("S0")
         y[()] = (x1[()] + x2[()]) * x3[()]
     ast = ft.pop_ast(verbose=True)
     _, ast, _, _, _ = ft.grad_body(ast, ["x1"], ["y"], set())
     print(ast)
+    assert len(ft.find_all_stmt(ast, "$grad{S0}")) > 0
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
@@ -124,7 +128,7 @@ def test_use_forward_value_when_taped():
         with ft.VarDef("y1", (4,), "float32", "output", "cpu") as y1:
             ft.MarkLabel("V_y2")
             with ft.VarDef("y2", (4,), "float32", "output", "cpu") as y2:
-                with ft.For("i", 0, 4) as i:
+                with ft.For("i", 0, 4, label="L_i") as i:
                     ft.MarkLabel("V_t")
                     with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
                         t[()] = 2 * x[i]
@@ -134,6 +138,8 @@ def test_use_forward_value_when_taped():
     _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y1", "y2"],
                                    ["V_t", "V_y1", "V_y2"])
     print(ast)
+    assert len(ft.find_all_stmt(ast, "$grad{L_i}")) > 0
+    assert len(ft.find_all_stmt(ast, "$tape{V_t}")) > 0
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
@@ -156,7 +162,7 @@ def test_use_taped_forward_value():
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("y1", (4,), "float32", "output", "cpu"),
                     ("y2", (4,), "float32", "output", "cpu")]) as (x, y1, y2):
-        with ft.For("i", 0, 4) as i:
+        with ft.For("i", 0, 4, label="L_i") as i:
             ft.MarkLabel("V_t")
             with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
                 t[()] = ft.exp(x[i])
@@ -165,6 +171,8 @@ def test_use_taped_forward_value():
     ast = ft.pop_ast(verbose=True)
     _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y1", "y2"], ["V_t"])
     print(ast)
+    assert len(ft.find_all_stmt(ast, "$grad{L_i}")) > 0
+    assert len(ft.find_all_stmt(ast, "$tape{V_t}")) > 0
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
@@ -906,5 +914,5 @@ def test_no_deps():
     _, backward, _, _ = ft.grad_(test, ["edge1"], ["edge2"], set())
     print(backward)
     s = ft.Schedule(backward)
-    s.parallelize("Li", "openmp")  # No exception here
+    s.parallelize("$grad{Li}", "openmp")  # No exception here
     print(s.ast())
