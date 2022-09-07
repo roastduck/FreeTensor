@@ -107,6 +107,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5574f50763b75ad856832a458b563f65"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a5574f50763b75ad856832a458b563f65"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a5574f50763b75ad856832a458b563f65">findAll</a> (const T &amp;<a class="el" href="namespacefreetensor.html#a5997edb53e600a6645243d5d2684f129">filter</a>) const</td></tr>
 <tr class="separator:a5574f50763b75ad856832a458b563f65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e8774a9abb8156dceb92789c8aec360"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a6e8774a9abb8156dceb92789c8aec360"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a6e8774a9abb8156dceb92789c8aec360">findAtLeastOne</a> (const T &amp;<a class="el" href="namespacefreetensor.html#a5997edb53e600a6645243d5d2684f129">filter</a>) const</td></tr>
+<tr class="separator:a6e8774a9abb8156dceb92789c8aec360"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d9e820117a0bb7341541f7e338e1e73"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a4d9e820117a0bb7341541f7e338e1e73"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a4d9e820117a0bb7341541f7e338e1e73">find</a> (const T &amp;<a class="el" href="namespacefreetensor.html#a5997edb53e600a6645243d5d2684f129">filter</a>) const</td></tr>
 <tr class="separator:a4d9e820117a0bb7341541f7e338e1e73"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -838,6 +841,41 @@ template&lt;class T &gt; </div>
 </table>
 </div><div class="memdoc">
 <p >Find all nodes (maybe non-existing) in the current AST satisfying a given condition</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filter</td><td>: A callback that returns true for acceptance, or a <code><a class="el" href="classfreetensor_1_1Selector.html">Selector</a></code>, or an <code><a class="el" href="classfreetensor_1_1ID.html">ID</a></code> </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a6e8774a9abb8156dceb92789c8aec360" name="a6e8774a9abb8156dceb92789c8aec360"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e8774a9abb8156dceb92789c8aec360">&#9670;&nbsp;</a></span>findAtLeastOne()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &gt; freetensor::Schedule::findAtLeastOne </td>
+          <td>(</td>
+          <td class="paramtype">const T &amp;&#160;</td>
+          <td class="paramname"><em>filter</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p >Find all nodes (at least one) in the current AST satisfying a given condition</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">filter</td><td>: A callback that returns true for acceptance, or a <code><a class="el" href="classfreetensor_1_1Selector.html">Selector</a></code>, or an <code><a class="el" href="classfreetensor_1_1ID.html">ID</a></code> </td></tr>

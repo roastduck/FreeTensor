@@ -9222,7 +9222,9 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">[</span><span class="n">pattern</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="n">Selector</span><span class="p">(</span><span class="n">pattern</span><span class="p">))]</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">item</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_at_least_one</span><span class="p">(</span><span class="n">Selector</span><span class="p">(</span><span class="n">pattern</span><span class="p">))</span>
+            <span class="p">]</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Schedule</span><span class="p">):</span>
