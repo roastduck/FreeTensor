@@ -164,7 +164,7 @@ std::pair<Stmt, std::vector<ID>> permute(
                 oss << " and ";
 
             auto res = genPBExpr.gen(item);
-            if (!res.isValid())
+            if (!res.has_value())
                 throw InvalidSchedule(
                     "Cannot generate Presburger expression for component " +
                     std::to_string(i) + " of provided transform, which is " +

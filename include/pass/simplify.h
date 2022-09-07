@@ -11,7 +11,6 @@
 #include <func.h>
 #include <math/bounds.h>
 #include <mutator.h>
-#include <opt.h>
 #include <pass/annotate_conds.h>
 #include <pass/const_fold.h>
 #include <visitor.h>

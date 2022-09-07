@@ -2,6 +2,7 @@
 #define FREE_TENSOR_Z3_SIMPLIFY
 
 #include <deque>
+#include <optional>
 #include <unordered_map>
 
 #include <z3++.h>
@@ -10,7 +11,6 @@
 #include <func.h>
 #include <hash.h>
 #include <mutator.h>
-#include <opt.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -36,8 +36,8 @@ class Z3Simplify : public Mutator {
     z3::context ctx_;
     z3::solver solver_;
 
-    // We use Opt because there is no z3::expr::expr()
-    std::unordered_map<Expr, Opt<z3::expr>> z3Exprs_;
+    // We use std::optional because there is no z3::expr::expr()
+    std::unordered_map<Expr, std::optional<z3::expr>> z3Exprs_;
 
   public:
     Z3Simplify() : solver_(ctx_) {}

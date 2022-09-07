@@ -152,7 +152,7 @@ int64_t StructuralFeature::calcArea(
         auto l = makeMinMax(lower);
         auto u = makeMaxMin(upper);
         auto len = makeAdd(makeSub(u, l), makeIntConst(1));
-        if (auto constLen = bound_.getInt(len); constLen.isValid()) {
+        if (auto constLen = bound_.getInt(len); constLen.has_value()) {
             area *= *constLen;
         }
     }
@@ -305,7 +305,7 @@ void StructuralFeature::visit(const For &op) {
 
     updInfo(op, op->begin_);
     updInfo(op, op->end_);
-    if (auto intLen = bound_.getInt(op->len_); intLen.isValid()) {
+    if (auto intLen = bound_.getInt(op->len_); intLen.has_value()) {
         updInfo(op, op->body_, *intLen);
     } else {
         updInfo(op, op->body_, -1);

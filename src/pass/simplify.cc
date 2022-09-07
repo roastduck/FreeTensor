@@ -368,7 +368,7 @@ Expr SimplifyPass::visit(const EQ &_op) {
     if (unique_.getIntUpper(diff) < 0) {
         return makeBoolConst(false);
     }
-    if (auto &&c = unique_.getInt(diff); c.isValid() && *c == 0) {
+    if (auto &&c = unique_.getInt(diff); c.has_value() && *c == 0) {
         return makeBoolConst(true);
     }
     return op;
@@ -391,7 +391,7 @@ Expr SimplifyPass::visit(const NE &_op) {
     if (unique_.getIntUpper(diff) < 0) {
         return makeBoolConst(true);
     }
-    if (auto &&c = unique_.getInt(diff); c.isValid() && *c == 0) {
+    if (auto &&c = unique_.getInt(diff); c.has_value() && *c == 0) {
         return makeBoolConst(false);
     }
     return op;
@@ -573,7 +573,7 @@ Stmt SimplifyPass::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     varScope_.erase(_op->iter_), curScope_--;
 
-    if (auto _intLen = unique_.getInt(op->len_); _intLen.isValid()) {
+    if (auto _intLen = unique_.getInt(op->len_); _intLen.has_value()) {
         auto intLen = *_intLen;
         if (intLen == 1) {
             auto body = ReplaceIter(_op->iter_, op->begin_)(_op->body_);

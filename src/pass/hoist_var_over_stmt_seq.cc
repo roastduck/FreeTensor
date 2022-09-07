@@ -70,7 +70,7 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
             if (hasIntersect(parentAllWrites, shapeAllReads)) {
                 goto no_hoist;
             }
-            if (togetherIds_.isValid()) {
+            if (togetherIds_.has_value()) {
                 auto togetherInside = findAllStmt(def, [&](const Stmt &s) {
                     return std::find(togetherIds_->begin(), togetherIds_->end(),
                                      s->id()) != togetherIds_->end();
@@ -122,7 +122,7 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
 }
 
 Stmt hoistVarOverStmtSeq(const Stmt &_op,
-                         const Opt<std::vector<ID>> &togetherIds) {
+                         const std::optional<std::vector<ID>> &togetherIds) {
     auto op = _op;
     for (int i = 0;; i++) {
         if (i > 100) {

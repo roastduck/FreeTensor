@@ -25,7 +25,7 @@ int Z3Simplify::getVarId(const Expr &op) {
 }
 
 void Z3Simplify::put(const Expr &key, const z3::expr &expr) {
-    z3Exprs_[key] = Opt<z3::expr>::make(expr);
+    z3Exprs_[key] = std::make_optional<z3::expr>(expr);
 }
 
 bool Z3Simplify::exists(const Expr &key) { return z3Exprs_.count(key); }

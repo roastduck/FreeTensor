@@ -1,13 +1,13 @@
 #ifndef FREE_TENSOR_GEN_PB_EXPR_H
 #define FREE_TENSOR_GEN_PB_EXPR_H
 
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 
 #include <analyze/symbol_table.h>
 #include <hash.h>
 #include <math/presburger.h>
-#include <opt.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -37,7 +37,7 @@ class GenPBExpr : public Visitor {
 
     const std::string &varSuffix() const { return varSuffix_; }
 
-    Opt<std::string> gen(const Expr &op);
+    std::optional<std::string> gen(const Expr &op);
 
   protected:
     void visitExpr(const Expr &op) override;

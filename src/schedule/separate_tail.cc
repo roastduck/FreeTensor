@@ -43,17 +43,17 @@ void SeparateTail::genSeparation(
             }
 
             auto norm = linearComp(cond);
-            if (!norm.isValid()) {
+            if (!norm.has_value()) {
                 continue;
             }
 
             auto [lin, type] = *norm;
             auto [lower, upper] = lin2bounds(
                 lin, type == ASTNodeType::NE ? ASTNodeType::EQ : type, iterVar);
-            if (lower.isValid()) {
+            if (lower.has_value()) {
                 callback(lower->expr());
             }
-            if (upper.isValid()) {
+            if (upper.has_value()) {
                 callback(makeAdd(upper->expr(), makeIntConst(1)));
             }
         }
