@@ -73,10 +73,10 @@ int64_t CompUniqueBounds::getIntUpper(const Expr &op) {
     return ret;
 }
 
-Opt<int64_t> CompUniqueBounds::getInt(const Expr &op) {
+std::optional<int64_t> CompUniqueBounds::getInt(const Expr &op) {
     auto lower = getIntLower(op);
     auto upper = getIntUpper(op);
-    return lower == upper ? Opt<int64_t>::make(lower) : std::nullopt;
+    return lower == upper ? std::make_optional<int64_t>(lower) : std::nullopt;
 }
 
 CompUniqueBounds::LowerBoundsList CompUniqueBounds::getDefinedLower(
@@ -207,7 +207,7 @@ void CompUniqueBounds::visitLinear(const Expr &op) {
             if (a->nodeType() == ASTNodeType::FloorDiv) {
                 auto div = a.as<FloorDivNode>();
                 if (auto k1 = getInt(div->rhs_);
-                    k1.isValid() && *k1 > 0 && k % *k1 == 0) {
+                    k1.has_value() && *k1 > 0 && k % *k1 == 0) {
                     auto equ =
                         makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_));
                     for (auto &&b : getLower(equ)) {
@@ -228,7 +228,7 @@ void CompUniqueBounds::visitLinear(const Expr &op) {
             if (a->nodeType() == ASTNodeType::FloorDiv) {
                 auto div = a.as<FloorDivNode>();
                 if (auto k1 = getInt(div->rhs_);
-                    k1.isValid() && *k1 > 0 && k % *k1 == 0) {
+                    k1.has_value() && *k1 > 0 && k % *k1 == 0) {
                     auto equ =
                         makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_));
                     for (auto &&b : getLower(equ)) {
@@ -280,7 +280,7 @@ void CompUniqueBounds::visit(const Square &op) {
 
     auto &lower = lower_[op];
     auto &upper = upper_[op];
-    if (auto k = getInt(op->expr_); k.isValid()) {
+    if (auto k = getInt(op->expr_); k.has_value()) {
         updLower(lower, LowerBound{LinearExpr<Rational<int64_t>>{{}, *k * *k}});
         updUpper(upper, UpperBound{LinearExpr<Rational<int64_t>>{{}, *k * *k}});
     }
@@ -291,7 +291,7 @@ void CompUniqueBounds::visit(const FloorDiv &op) {
 
     auto &lower = lower_[op];
     auto &upper = upper_[op];
-    if (auto k = getInt(op->rhs_); k.isValid()) {
+    if (auto k = getInt(op->rhs_); k.has_value()) {
         if (*k > 0) {
             for (auto &&b : getLower(op->lhs_)) {
                 updLower(lower, floorDiv(b, *k));
@@ -315,7 +315,7 @@ void CompUniqueBounds::visit(const CeilDiv &op) {
 
     auto &lower = lower_[op];
     auto &upper = upper_[op];
-    if (auto k = getInt(op->rhs_); k.isValid()) {
+    if (auto k = getInt(op->rhs_); k.has_value()) {
         if (*k > 0) {
             for (auto &&b : getLower(op->lhs_)) {
                 updLower(lower, ceilDiv(b, *k));
@@ -336,8 +336,8 @@ void CompUniqueBounds::visit(const CeilDiv &op) {
 
 void CompUniqueBounds::visit(const Mod &op) {
     // no need to recurse. getLower or getUpper recurses
-    if (auto &&l = getInt(op->lhs_); l.isValid()) {
-        if (auto &&r = getInt(op->rhs_); r.isValid()) {
+    if (auto &&l = getInt(op->lhs_); l.has_value()) {
+        if (auto &&r = getInt(op->rhs_); r.has_value()) {
             updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{
                                      {}, mod(*l, *r)}});
             updUpper(upper_[op], UpperBound{LinearExpr<Rational<int64_t>>{
@@ -389,7 +389,7 @@ void CompUniqueBounds::visit(const Min &op) {
     }
 
     bool hasConstLower = true;
-    Opt<Rational<int64_t>> constLower;
+    std::optional<Rational<int64_t>> constLower;
     for (auto &&item : all) {
         for (auto &&b : getUpper(item)) {
             updUpper(upper, b);
@@ -397,11 +397,11 @@ void CompUniqueBounds::visit(const Min &op) {
         if (hasConstLower) {
             for (auto &&b : getLower(item)) {
                 if (b.lin().isConst()) {
-                    if (constLower.isValid()) {
+                    if (constLower.has_value()) {
                         *constLower = std::min(*constLower, b.lin().bias_);
                     } else {
-                        constLower =
-                            Opt<Rational<int64_t>>::make(b.lin().bias_);
+                        constLower = std::make_optional<Rational<int64_t>>(
+                            b.lin().bias_);
                     }
                     goto done;
                 }
@@ -410,7 +410,7 @@ void CompUniqueBounds::visit(const Min &op) {
         done:;
         }
     }
-    if (hasConstLower && constLower.isValid()) {
+    if (hasConstLower && constLower.has_value()) {
         updLower(lower, LinearExpr<Rational<int64_t>>{{}, *constLower});
     }
 
@@ -464,7 +464,7 @@ void CompUniqueBounds::visit(const Max &op) {
     }
 
     bool hasConstUpper = true;
-    Opt<Rational<int64_t>> constUpper;
+    std::optional<Rational<int64_t>> constUpper;
     for (auto &&item : all) {
         for (auto &&b : getLower(item)) {
             updLower(lower, b);
@@ -472,11 +472,11 @@ void CompUniqueBounds::visit(const Max &op) {
         if (hasConstUpper) {
             for (auto &&b : getUpper(item)) {
                 if (b.lin().isConst()) {
-                    if (constUpper.isValid()) {
+                    if (constUpper.has_value()) {
                         *constUpper = std::max(*constUpper, b.lin().bias_);
                     } else {
-                        constUpper =
-                            Opt<Rational<int64_t>>::make(b.lin().bias_);
+                        constUpper = std::make_optional<Rational<int64_t>>(
+                            b.lin().bias_);
                     }
                     goto done;
                 }
@@ -485,7 +485,7 @@ void CompUniqueBounds::visit(const Max &op) {
         done:;
         }
     }
-    if (hasConstUpper && constUpper.isValid()) {
+    if (hasConstUpper && constUpper.has_value()) {
         updUpper(upper, LinearExpr<Rational<int64_t>>{{}, *constUpper});
     }
 

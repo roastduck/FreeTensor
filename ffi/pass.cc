@@ -134,20 +134,16 @@ void init_ffi_pass(py::module_ &m) {
     m.def("use_builtin_div",
           static_cast<Stmt (*)(const Stmt &)>(&useBuiltinDiv), "stmt"_a);
 
-    m.def(
-        "hoist_var_over_stmt_seq",
-        [](const Func &func,
-           const std::optional<std::vector<ID>> &togetherIds) {
-            return hoistVarOverStmtSeq(func, togetherIds);
-        },
-        "func"_a, "together_ids"_a = std::nullopt);
-    m.def(
-        "hoist_var_over_stmt_seq",
-        [](const Stmt &stmt,
-           const std::optional<std::vector<ID>> &togetherIds) {
-            return hoistVarOverStmtSeq(stmt, togetherIds);
-        },
-        "stmt"_a, "together_ids"_a = std::nullopt);
+    m.def("hoist_var_over_stmt_seq",
+          static_cast<Func (*)(const Func &,
+                               const std::optional<std::vector<ID>> &)>(
+              &hoistVarOverStmtSeq),
+          "func"_a, "together_ids"_a = std::nullopt);
+    m.def("hoist_var_over_stmt_seq",
+          static_cast<Stmt (*)(const Stmt &,
+                               const std::optional<std::vector<ID>> &)>(
+              &hoistVarOverStmtSeq),
+          "stmt"_a, "together_ids"_a = std::nullopt);
 
     // CPU
     m.def("cpu_lower_parallel_reduction",

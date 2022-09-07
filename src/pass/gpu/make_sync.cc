@@ -37,15 +37,15 @@ void FindAllThreads::visit(const For &op) {
     Visitor::visit(op);
     if (op->property_->parallel_ == threadIdxX) {
         results_[op->id()] =
-            ThreadInfo{op, thx_.isValid() && warpSize_ % *thx_ == 0};
+            ThreadInfo{op, thx_.has_value() && warpSize_ % *thx_ == 0};
     } else if (op->property_->parallel_ == threadIdxY) {
         results_[op->id()] =
-            ThreadInfo{op, thx_.isValid() && thy_.isValid() &&
+            ThreadInfo{op, thx_.has_value() && thy_.has_value() &&
                                warpSize_ % (*thx_ * *thy_) == 0};
     } else if (op->property_->parallel_ == threadIdxZ) {
-        results_[op->id()] =
-            ThreadInfo{op, thx_.isValid() && thy_.isValid() && thz_.isValid() &&
-                               warpSize_ % (*thx_ * *thy_ * *thz_) == 0};
+        results_[op->id()] = ThreadInfo{
+            op, thx_.has_value() && thy_.has_value() && thz_.has_value() &&
+                    warpSize_ % (*thx_ * *thy_ * *thz_) == 0};
     }
 }
 
