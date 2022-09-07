@@ -9286,6 +9286,10 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        possible, plese use the first mode, and then reorder the inner and outer</span>
 <span class="sd">        loops</span>
 
+<span class="sd">        Suppose the original loop is labeled &quot;L&quot;, the split two loops can be</span>
+<span class="sd">        selected by &quot;$split.0{L}&quot; (the outer loop) and &quot;$split.1{L}&quot; (the inner</span>
+<span class="sd">        loop)</span>
+
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        node : str, ID or Stmt</span>
@@ -9333,6 +9337,9 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        `parallelize`, `unroll` and `vectorize` properties will be reset on the</span>
 <span class="sd">        merged loop</span>
+
+<span class="sd">        Suppose the original loops are labeled &quot;L1&quot; and &quot;L2&quot;, the merged loop can</span>
+<span class="sd">        be selected by &quot;$merge{L1, L2}&quot;</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -9391,6 +9398,11 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">            Where to fission the loop. If multiple statement are selected, fission the</span>
 <span class="sd">            look before or after all of them</span>
 
+<span class="sd">        Statements inside the original loop will be distributed to one or both</span>
+<span class="sd">        (happening if they are scope statements) loops. If a statement is</span>
+<span class="sd">        originally labeled &quot;S&quot;, it can be selected by &quot;$fission.0{S}&quot; (from the</span>
+<span class="sd">        first loop) or &quot;$fission.1{S}&quot; (from the second loop) after fission</span>
+
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        InvalidSchedule</span>
@@ -9418,6 +9430,9 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        `parallelize`, `unroll` and `vectorize` properties will be reset on the</span>
 <span class="sd">        fused loop</span>
+
+<span class="sd">        Suppose the original loops are labeled &quot;L1&quot; and &quot;L2&quot;, the fused loop can</span>
+<span class="sd">        be selected by &quot;$fuse{L1, L2}&quot;</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -10792,6 +10807,10 @@ cache variable, ID of the VarDef node of the cache variable)</p></li>
 <code>splitter</code> is the first statement of the second loop</p></li>
             <li><p><strong>splitter</strong> (<code>str (Selector string), ID, Stmt, or list of them</code>) – Where to fission the loop. If multiple statement are selected, fission the
 look before or after all of them</p></li>
+            <li><p><strong>Statements inside the original loop will be distributed to one or both</strong> (<code>None</code>) – </p></li>
+            <li><p><strong>(happening if they are scope statements) loops. If a statement is</strong> (<code>None</code>) – </p></li>
+            <li><p><strong>originally labeled "S", it can be selected by "$fission.0{S}" (from the</strong> (<code>None</code>) – </p></li>
+            <li><p><strong>first loop) or "$fission.1{S}" (from the second loop) after fission</strong> (<code>None</code>) – </p></li>
         </ul>
       </td>
     </tr>
@@ -10848,6 +10867,11 @@ look before or after all of them</p></li>
 <span class="sd">    splitter : str (Selector string), ID, Stmt, or list of them</span>
 <span class="sd">        Where to fission the loop. If multiple statement are selected, fission the</span>
 <span class="sd">        look before or after all of them</span>
+
+<span class="sd">    Statements inside the original loop will be distributed to one or both</span>
+<span class="sd">    (happening if they are scope statements) loops. If a statement is</span>
+<span class="sd">    originally labeled &quot;S&quot;, it can be selected by &quot;$fission.0{S}&quot; (from the</span>
+<span class="sd">    first loop) or &quot;$fission.1{S}&quot; (from the second loop) after fission</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -10950,6 +10974,8 @@ look before or after all of them</p></li>
 <p>To merge nested loops into one, use <code>merge</code> instead</p>
 <p><code>parallelize</code>, <code>unroll</code> and <code>vectorize</code> properties will be reset on the
 fused loop</p>
+<p>Suppose the original loops are labeled "L1" and "L2", the fused loop can
+be selected by "$fuse{L1, L2}"</p>
 
 <table class="field-list">
   <colgroup>
@@ -11014,6 +11040,9 @@ the same length, or there is any dependency cannot be resolved</p></li>
 
 <span class="sd">    `parallelize`, `unroll` and `vectorize` properties will be reset on the</span>
 <span class="sd">    fused loop</span>
+
+<span class="sd">    Suppose the original loops are labeled &quot;L1&quot; and &quot;L2&quot;, the fused loop can</span>
+<span class="sd">    be selected by &quot;$fuse{L1, L2}&quot;</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -11139,6 +11168,8 @@ I/O varible</p></li>
 <p>To fuse consecutive loops, use <code>fuse</code> instead</p>
 <p><code>parallelize</code>, <code>unroll</code> and <code>vectorize</code> properties will be reset on the
 merged loop</p>
+<p>Suppose the original loops are labeled "L1" and "L2", the merged loop can
+be selected by "$merge{L1, L2}"</p>
 
 <table class="field-list">
   <colgroup>
@@ -11198,6 +11229,9 @@ merged loop</p>
 
 <span class="sd">    `parallelize`, `unroll` and `vectorize` properties will be reset on the</span>
 <span class="sd">    merged loop</span>
+
+<span class="sd">    Suppose the original loops are labeled &quot;L1&quot; and &quot;L2&quot;, the merged loop can</span>
+<span class="sd">    be selected by &quot;$merge{L1, L2}&quot;</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -11860,6 +11894,9 @@ nparts)</code> factor into the program, which cannot be recognized by
 polyhedral analysis, which may hinder some following schedules. If
 possible, plese use the first mode, and then reorder the inner and outer
 loops</p>
+<p>Suppose the original loop is labeled "L", the split two loops can be
+selected by "$split.0{L}" (the outer loop) and "$split.1{L}" (the inner
+loop)</p>
 
 <table class="field-list">
   <colgroup>
@@ -11939,6 +11976,10 @@ loops</p>
 <span class="sd">    polyhedral analysis, which may hinder some following schedules. If</span>
 <span class="sd">    possible, plese use the first mode, and then reorder the inner and outer</span>
 <span class="sd">    loops</span>
+
+<span class="sd">    Suppose the original loop is labeled &quot;L&quot;, the split two loops can be</span>
+<span class="sd">    selected by &quot;$split.0{L}&quot; (the outer loop) and &quot;$split.1{L}&quot; (the inner</span>
+<span class="sd">    loop)</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
