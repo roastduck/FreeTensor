@@ -125,6 +125,10 @@ class Schedule(ffi.Schedule):
         possible, plese use the first mode, and then reorder the inner and outer
         loops
 
+        Suppose the original loop is labeled "L", the split two loops can be
+        selected by "$split.0{L}" (the outer loop) and "$split.1{L}" (the inner
+        loop)
+
         Parameters
         ----------
         node : str, ID or Stmt
@@ -172,6 +176,9 @@ class Schedule(ffi.Schedule):
 
         `parallelize`, `unroll` and `vectorize` properties will be reset on the
         merged loop
+
+        Suppose the original loops are labeled "L1" and "L2", the merged loop can
+        be selected by "$merge{L1, L2}"
 
         Parameters
         ----------
@@ -230,6 +237,11 @@ class Schedule(ffi.Schedule):
             Where to fission the loop. If multiple statement are selected, fission the
             look before or after all of them
 
+        Statements inside the original loop will be distributed to one or both
+        (happening if they are scope statements) loops. If a statement is
+        originally labeled "S", it can be selected by "$fission.0{S}" (from the
+        first loop) or "$fission.1{S}" (from the second loop) after fission
+
         Raises
         ------
         InvalidSchedule
@@ -257,6 +269,9 @@ class Schedule(ffi.Schedule):
 
         `parallelize`, `unroll` and `vectorize` properties will be reset on the
         fused loop
+
+        Suppose the original loops are labeled "L1" and "L2", the fused loop can
+        be selected by "$fuse{L1, L2}"
 
         Parameters
         ----------

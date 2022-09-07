@@ -249,6 +249,10 @@ class Schedule {
      * possible, please use the first mode, and then reorder the inner and outer
      * loops
      *
+     * Suppose the original loop is labeled "L", the split two loops can be
+     * selected by "$split.0{L}" (the outer loop) and "$split.1{L}" (the inner
+     * loop)
+     *
      * @param id : ID of the loop to be split
      * @param factor : Length of the inner loop. Set to -1 if using `nparts`
      * @param nparts : Length of the outer loop. Set to -1 if using `factor`
@@ -277,6 +281,9 @@ class Schedule {
      *
      * `parallelize`, `unroll` and `vectorize` properties will be reset on the
      * merged loop
+     *
+     * Suppose the original loops are labeled "L1" and "L2", the merged loop can
+     * be selected by "$merge{L1, L2}"
      *
      * @param loop1, loop2 : ID of the loops to be merged, can be in any order
      * @throw InvalidSchedule if the loops are not directly nested
@@ -312,6 +319,11 @@ class Schedule {
      *
      * To split loop into two nested loops, use `split` instead
      *
+     * Statements inside the original loop will be distributed to one or both
+     * (happening if they are scope statements) loops. If a statement is
+     * originally labeled "S", it can be selected by "$fission.0{S}" (from the
+     * first loop) or "$fission.1{S}" (from the second loop) after fission
+     *
      * @param loop : ID of the loop to be fissioned
      * @param side : If `After`, `splitter` is the last statement of the first
      * loop. If `Before`, `splitter` is the first statement of the second loop
@@ -338,6 +350,9 @@ class Schedule {
      *
      * `parallelize`, `unroll` and `vectorize` properties will be reset on the
      * fused loop
+     *
+     * Suppose the original loops are labeled "L1" and "L2", the fused loop can
+     * be selected by "$fuse{L1, L2}"
      *
      * @param loop0 : ID of the leading loop
      * @param loop1 : ID of the following loop. If omitted, it will try to find

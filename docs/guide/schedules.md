@@ -73,7 +73,7 @@ In the example above, we label a loop `Li` and apply schedules on it. It is stra
 
 1. A label is a selector. E.g., `Li` matches a statement with a label `Li`.
 2. (For debugging only) A numerical ID is also a selector. E.g., `#31`.
-3. A selector can be extended to match a new statement produced by a previous schedule. E.g., `$split.0{Li}` matches the outer loop split from the loop `Li`. This is useful when return values from schedules are hard to track.
+3. A selector can be extended to match a new statement produced by a previous schedule. E.g., `$split.0{Li}` matches the outer loop split from the loop `Li`. This is useful when return values from schedules are hard to track. Please refer the [API document](../../api/#freetensor.core.schedule.Schedule) for detailed grammar.
 4. Selectors can be combined to match a statement in a function call. `Li<~C1` matches a statement labeled `Li` DIRECTLY called by a call site `C1`. `Li<<~C1` matches a statement DIRECTLY or INDIRECTLY called by a call site `C1`.
 5. Selectors can be combined with logical "and" or "or". `Li|Lj` matches a statement labeled `Li` OR `Lj`. `Li&Lj` matches a statement labeled `Li&Lj`.
 

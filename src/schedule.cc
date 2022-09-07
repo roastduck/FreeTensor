@@ -74,7 +74,7 @@ void Schedule::commitTransaction() {
              iter::enumerate(asVector(openTrans_.back().logs_, trans.logs_))) {
             os << (i > 0 ? ", " : "") << *item;
         }
-        os << ", resulting in:" << std::endl << ast() << std::endl;
+        os << ", resulting in:" << std::endl << trans.ast_ << std::endl;
     }
     openTrans_.back() = std::move(trans);
 }
