@@ -101,19 +101,20 @@ $(function() {
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>        } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>            <a class="code hl_define" href="except_8h.html#a28301f76c53b643912da7c538f74e2c6">ASSERT</a>(<span class="keyword">false</span>);</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>        }</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keyword">auto</span> &amp;&amp;end =</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>            ((<a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>)_end).isValid() ? _end : <a class="code hl_define" href="expr_8h.html#ab4dbe0c9fb2d17158eb0eaa315895078">makeAdd</a>(begin, <a class="code hl_define" href="expr_8h.html#a9e7a9d2e805308dc63202c627df2364d">makeMul</a>(_len, step));</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <span class="keyword">auto</span> &amp;&amp;len = ((<a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>)_len).isValid()</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>                         ? _len</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>                         : <a class="code hl_define" href="expr_8h.html#aad916faf0c66e49ccc390c4e4169d690">makeCeilDiv</a>(<a class="code hl_define" href="expr_8h.html#aa83f97be3459d415c2c22fe9a358f3b8">makeSub</a>(_end, begin), step);</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        ret = <a class="code hl_define" href="stmt_8h.html#a550ac86872ea86034ca669e775df9696">makeFor</a>(*iter, begin, end, step, len, property, ret);</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    }</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordflow">return</span> ret;</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>}</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>} <span class="comment">// namespace freetensor</span></div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_MAKE_NESTED_LOOPS_H</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keyword">auto</span> &amp;&amp;end = ((<a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>)_end).isValid()</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>                         ? (<a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>)_end</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>                         : <a class="code hl_define" href="expr_8h.html#ab4dbe0c9fb2d17158eb0eaa315895078">makeAdd</a>(begin, <a class="code hl_define" href="expr_8h.html#a9e7a9d2e805308dc63202c627df2364d">makeMul</a>(_len, step));</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        <span class="keyword">auto</span> &amp;&amp;len = ((<a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>)_len).isValid()</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>                         ? (<a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>)_len</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>                         : <a class="code hl_define" href="expr_8h.html#aad916faf0c66e49ccc390c4e4169d690">makeCeilDiv</a>(<a class="code hl_define" href="expr_8h.html#aa83f97be3459d415c2c22fe9a358f3b8">makeSub</a>(_end, begin), step);</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        ret = <a class="code hl_define" href="stmt_8h.html#a550ac86872ea86034ca669e775df9696">makeFor</a>(*iter, begin, end, step, len, property, ret);</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    }</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordflow">return</span> ret;</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>}</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_MAKE_NESTED_LOOPS_H</span></div>
 <div class="ttc" id="aclassfreetensor_1_1Ref_html"><div class="ttname"><a href="classfreetensor_1_1Ref.html">freetensor::Ref&lt; StmtNode &gt;</a></div></div>
 <div class="ttc" id="aexcept_8h_html_a28301f76c53b643912da7c538f74e2c6"><div class="ttname"><a href="except_8h.html#a28301f76c53b643912da7c538f74e2c6">ASSERT</a></div><div class="ttdeci">#define ASSERT(expr)</div><div class="ttdef"><b>Definition:</b> except.h:86</div></div>
 <div class="ttc" id="aexpr_8h_html_a9e7a9d2e805308dc63202c627df2364d"><div class="ttname"><a href="expr_8h.html#a9e7a9d2e805308dc63202c627df2364d">makeMul</a></div><div class="ttdeci">#define makeMul(...)</div><div class="ttdef"><b>Definition:</b> expr.h:176</div></div>
