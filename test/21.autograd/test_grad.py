@@ -379,10 +379,10 @@ def test_nested_loops():
                     ("d_w1", (4, 4), "float32", "output", "cpu"),
                     ("d_y", (4,), "float32", "inout", "cpu")
                    ]) as (x, d_x, w0, d_w0, w1, d_w1, d_y):
-        with ft.For("i0", 3, -1, -1) as i:
+        with ft.For("i0", 0, 4) as i:
             d_x[i] = 0
         with ft.VarDef("d_t", (4,), "float32", "cache", "cpu") as d_t:
-            with ft.For("i1", 3, -1, -1) as i:
+            with ft.For("i1", 0, 4) as i:
                 d_t[i] = 0
             with ft.VarDef("t", (4,), "float32", "cache", "cpu") as t:
                 with ft.For("i", 0, 4) as i:
@@ -618,15 +618,15 @@ def test_tape_5():
                     ("h.tape", (101, 256), "float32", "input", "cpu"),
                     ("f.tape", (100, 256), "float32", "input", "cpu")
                    ]) as (x, x_grad, dy, u, du, h_tape, f_tape):
-        with ft.For(".x.grad.i0", 99, -1, -1) as _x_grad_i0:
-            with ft.For(".x.grad.i1", 3, -1, -1) as _x_grad_i1:
+        with ft.For(".x.grad.i0", 0, 100) as _x_grad_i0:
+            with ft.For(".x.grad.i1", 0, 4) as _x_grad_i1:
                 x_grad[_x_grad_i0, _x_grad_i1] = 0
-        with ft.For(".u.grad.i0", 255, -1, -1) as _du_i0:
-            with ft.For(".u.grad.i1", 255, -1, -1) as _du_i1:
+        with ft.For(".u.grad.i0", 0, 256) as _du_i0:
+            with ft.For(".u.grad.i1", 0, 256) as _du_i1:
                 du[_du_i0, _du_i1] = 0
         with ft.VarDef("h.grad", (256,), "float32", "cache", "cpu") as dh:
             with ft.VarDef("f.grad", (256,), "float32", "cache", "cpu") as df:
-                with ft.For(".f.grad.i0", 255, -1, -1) as _df_i0:
+                with ft.For(".f.grad.i0", 0, 256) as _df_i0:
                     df[_df_i0] = 0
                 with ft.For("i", 255, -1, -1) as i:
                     dh[i] = dy[i]
@@ -724,7 +724,7 @@ def test_use_tape_in_cond():
                     ("d_x3", (4,), "float32", "output", "cpu"),
                     ("d_y", (4,), "float32", "inout", "cpu")
                    ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y):
-        with ft.For("i0", 3, -1, -1) as i:
+        with ft.For("i0", 0, 4) as i:
             d_x3[i] = 0
         with ft.For("i", 3, -1, -1) as i:
             with ft.VarDef([("t.tape", (4,), "float32", "input", "cpu"),

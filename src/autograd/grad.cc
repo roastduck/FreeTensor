@@ -8,6 +8,7 @@
 #include <pass/float_simplify.h>
 #include <pass/hoist_return_vars.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/make_nested_loops.h>
 #include <pass/make_reduction.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_cyclic_assign.h>
@@ -251,8 +252,10 @@ Stmt Grad::visit(const VarDef &_op) {
             Stmt grad = op->body_;
             if ((op->buffer_->atype() != AccessType::Output &&
                  op->buffer_->atype() != AccessType::InOut)) {
-                // We use reverse order in the init, so it can be better fused
-                // with the backward pass
+                // Initialize gradients to 0. Later when we compute gradients
+                // for each statements, we add the local result to it. This is
+                // because when `y = f(x)` and `z = g(x)` both exist, `dw/dx =
+                // dw/dy dy/dx + dw/dz dz/dx`
                 std::vector<std::string> iters;
                 std::vector<Expr> indices;
                 int nDim = op->buffer_->tensor()->shape().size();
@@ -264,16 +267,13 @@ Stmt Grad::visit(const VarDef &_op) {
                     indices.emplace_back(makeVar(iter));
                     iters.emplace_back(std::move(iter));
                 }
-                auto init =
-                    makeStore(gradName, std::move(indices), makeIntConst(0));
-                for (int i = nDim - 1; i >= 0; i--) {
-                    init = makeFor(iters[i],
-                                   makeSub(op->buffer_->tensor()->shape()[i],
-                                           makeIntConst(1)),
-                                   makeIntConst(-1), makeIntConst(-1),
-                                   op->buffer_->tensor()->shape()[i],
-                                   Ref<ForProperty>::make(), init);
-                }
+                auto init = makeNestedLoops(
+                    iters, iter::repeat(makeIntConst(0)),
+                    op->buffer_->tensor()->shape(),
+                    iter::repeat(makeIntConst(1)),
+                    op->buffer_->tensor()->shape(),
+                    iter::repeat(Ref<ForProperty>::make()),
+                    makeStore(gradName, std::move(indices), makeIntConst(0)));
                 grad = makeStmtSeq({init, grad});
             }
 
