@@ -150,6 +150,10 @@ Stmt MakeFillAndFlush::visit(const VarDef &op) {
 Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
     auto op = Mutator::visitStmt(_op);
     if (op->id() == stmt_) {
+        if (!reduce_.isValid()) {
+            throw InvalidSchedule("The cached statement is not reducing into "
+                                  "the specific variable");
+        }
         std::vector<Expr> indices;
         ASSERT(def_.isValid());
         int nDim = def_->buffer_->tensor()->shape().size();
