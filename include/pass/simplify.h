@@ -13,6 +13,7 @@
 #include <mutator.h>
 #include <pass/annotate_conds.h>
 #include <pass/const_fold.h>
+#include <pass/flatten_stmt_seq.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -116,6 +117,7 @@ template <class Simplifier> Stmt simplifyImpl(const Stmt &_op) {
     for (int i = 0;; i++) {
         op = annotateConds(op);
         auto newOp = Simplifier()(op);
+        newOp = flattenStmtSeq(newOp);
         if (HashComparator()(newOp, op) || i > 100) {
             if (i > 100) {
                 WARNING("SimplifyPass iterates over 100 rounds. Maybe there is "

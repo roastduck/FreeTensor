@@ -251,14 +251,16 @@ class Schedule {
      *
      * Suppose the original loop is labeled "L", the split two loops can be
      * selected by "$split.0{L}" (the outer loop) and "$split.1{L}" (the inner
-     * loop)
+     * loop). If one of the resulting loop is proved to have only a single
+     * iteration, it will be removed
      *
      * @param id : ID of the loop to be split
      * @param factor : Length of the inner loop. Set to -1 if using `nparts`
      * @param nparts : Length of the outer loop. Set to -1 if using `factor`
      * @param shift : Shift of iteration base. Defaults to zero
      * @throw InvalidSchedule if the loop is not found
-     * @return : (outer loop ID, inner loop ID)
+     * @return : (outer loop ID, inner loop ID), either ID can be invalid if
+     * the loop is proved to have only a single iteration
      */
     std::pair<ID, ID> split(const ID &id, int factor = -1, int nparts = -1,
                             int shift = 0);
@@ -322,7 +324,8 @@ class Schedule {
      * Statements inside the original loop will be distributed to one or both
      * (happening if they are scope statements) loops. If a statement is
      * originally labeled "S", it can be selected by "$fission.0{S}" (from the
-     * first loop) or "$fission.1{S}" (from the second loop) after fission
+     * first loop) or "$fission.1{S}" (from the second loop) after fission. If
+     * one of the resulting loop has an empty body, it will be removed
      *
      * @param loop : ID of the loop to be fissioned
      * @param side : If `After`, `splitter` is the last statement of the first
@@ -336,7 +339,8 @@ class Schedule {
      * empty together with `suffix0`.
      * @throw InvalidSchedule if any dependency cannot be resolved
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
-     * loop})
+     * loop}). If a loop is removed because it has an empty body, it will not be
+     * in the returned map
      */
     std::pair<IDMap, IDMap> fission(const ID &loop, FissionSide side,
                                     const ID &splitter,

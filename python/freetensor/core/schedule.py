@@ -127,7 +127,8 @@ class Schedule(ffi.Schedule):
 
         Suppose the original loop is labeled "L", the split two loops can be
         selected by "$split.0{L}" (the outer loop) and "$split.1{L}" (the inner
-        loop)
+        loop). If one of the resulting loop is proved to have only a single
+        iteration, it will be removed
 
         Parameters
         ----------
@@ -145,10 +146,13 @@ class Schedule(ffi.Schedule):
 
         Returns
         -------
-        (ID, ID)
-            (outer loop ID, inner loop ID)
+        (Optional[ID], Optional[ID])
+            (outer loop ID, inner loop ID), either ID can be None if the loop is
+            proved to have only a single iteration
         """
-        return super().split(self._lookup(node), factor, nparts, shift)
+        return (
+            i if i else None
+            for i in super().split(self._lookup(node), factor, nparts, shift))
 
     def reorder(self, order):
         """
@@ -240,7 +244,8 @@ class Schedule(ffi.Schedule):
         Statements inside the original loop will be distributed to one or both
         (happening if they are scope statements) loops. If a statement is
         originally labeled "S", it can be selected by "$fission.0{S}" (from the
-        first loop) or "$fission.1{S}" (from the second loop) after fission
+        first loop) or "$fission.1{S}" (from the second loop) after fission. If
+        one of the resulting loop has an empty body, it will be removed
 
         Raises
         ------
@@ -250,7 +255,9 @@ class Schedule(ffi.Schedule):
         Returns
         -------
         (IDMap, IDMap)
-            ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd loop})
+            ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd loop}). If a loop
+            is removed because it has an empty body, it will not be in the returned map
+
         """
         old_ast = self.ast()
         splitter_list = self._lookup_list(splitter)  # In DFS order

@@ -9,21 +9,6 @@
 
 namespace freetensor {
 
-static bool isEmptyStmt(const Stmt &op) {
-    if (!op.isValid()) { // In case If->elseCase_ == nullptr
-        return true;
-    }
-    if (op->nodeType() == ASTNodeType::StmtSeq) {
-        for (auto &&stmt : op.as<StmtSeqNode>()->stmts_) {
-            if (!isEmptyStmt(stmt)) {
-                return false;
-            }
-        }
-        return true;
-    }
-    return false;
-}
-
 class CountHeavyOps : public Visitor {
     int cnt_ = 0;
 
@@ -554,10 +539,6 @@ Stmt SimplifyPass::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
     varScope_.erase(_op->name_), curScope_--;
-
-    if (isEmptyStmt(op->body_) && op->buffer_->atype() == AccessType::Cache) {
-        return makeStmtSeq({});
-    }
     return op;
 }
 
@@ -589,9 +570,6 @@ Stmt SimplifyPass::visit(const For &_op) {
         return makeIf(makeEQ(op->len_, makeIntConst(1)), body);
     }
 
-    if (isEmptyStmt(op->body_)) {
-        return makeStmtSeq({});
-    }
     return op;
 }
 
@@ -612,27 +590,9 @@ Stmt SimplifyPass::visit(const If &_op) {
         }
     }
 
-    auto __op =
-        BaseClass::visit(makeIf(std::move(cond), _op->thenCase_, _op->elseCase_,
-                                _op->metadata(), _op->id())
-                             .as<IfNode>());
-    ASSERT(__op->nodeType() == ASTNodeType::If);
-    auto op = __op.as<IfNode>();
-    bool emptyThen = isEmptyStmt(op->thenCase_);
-    bool emptyElse = isEmptyStmt(op->elseCase_);
-    if (emptyThen && emptyElse) {
-        return makeStmtSeq({});
-    }
-    if (op->elseCase_.isValid()) {
-        if (emptyThen) {
-            return makeIf(makeLNot(op->cond_), op->elseCase_, op->metadata(),
-                          op->id());
-        }
-        if (emptyElse) {
-            op->elseCase_ = nullptr;
-        }
-    }
-    return op;
+    return BaseClass::visit(makeIf(std::move(cond), _op->thenCase_,
+                                   _op->elseCase_, _op->metadata(), _op->id())
+                                .as<IfNode>());
 }
 
 Stmt SimplifyPass::visit(const Assert &_op) {
