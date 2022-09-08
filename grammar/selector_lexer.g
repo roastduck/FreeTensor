@@ -2,6 +2,7 @@ lexer grammar selector_lexer;
 
 WhiteSpaces: [ \t\n\r]+ -> skip;
 
+Not: '!';
 And: '&';
 Or: '|';
 Label: [a-zA-Z0-9_\-]+;
@@ -23,6 +24,10 @@ DescendantArrow: '<<-';
 DirectCallerArrow: '<~';
 CallerArrow: '<<~';
 
+Star: '*';
+
 LeftBracket: '{';
 RightBracket: '}';
+LeftParen: '(';
+RightParen: ')';
 Comma: ',';

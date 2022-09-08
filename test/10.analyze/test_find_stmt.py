@@ -63,6 +63,26 @@ def test_select_descendant():
     assert sorted_ids(results) == sorted_ids(results_by_label)
 
 
+def test_select_descendant_with_middle():
+    with ft.VarDef([("a", (8, 8), "int32", "input", "cpu"),
+                    ("b", (8, 8), "int32", "input", "cpu"),
+                    ("c", (8, 8), "int32", "output", "cpu")]) as (a, b, c):
+        with ft.For("i", 0, 8, label="Li") as i:
+            with ft.For("j", 0, 8, label="Lj") as j:
+                c[i, j] = 0
+                with ft.For("k", 0, 8, label="Lk") as k:
+                    c[i, j] += a[i, k] * b[k, j]
+    ast = ft.pop_ast(verbose=True)
+
+    results = ft.find_all_stmt(ast, "<For><-(!<For><-)*Li")
+    results_by_label = ft.find_all_stmt(ast, "Lj")
+    assert sorted_ids(results) == sorted_ids(results_by_label)
+
+    results = ft.find_all_stmt(ast, "<For><-(!<For><-)*Lj")
+    results_by_label = ft.find_all_stmt(ast, "Lk")
+    assert sorted_ids(results) == sorted_ids(results_by_label)
+
+
 def test_select_callee_1():
 
     @ft.inline

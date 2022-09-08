@@ -5,6 +5,8 @@
 
 namespace freetensor {
 
+bool NotSelector::match(const Stmt &stmt) const { return !sub_->match(stmt); }
+
 bool BothSelector::match(const Stmt &stmt) const {
     return lhs_->match(stmt) && rhs_->match(stmt);
 }
@@ -27,8 +29,15 @@ bool DescendantSelector::match(const Stmt &_stmt) const {
          stmt = stmt->parentStmt()) {
         if (ancestor_->match(stmt))
             return true;
+        if (middle_.isValid() && !middle_->match(stmt)) {
+            return false;
+        }
     }
     return false;
+}
+
+bool NotLeafSelector::match(const Metadata &md) const {
+    return !sub_->match(md);
 }
 
 bool BothLeafSelector::match(const Metadata &md) const {
@@ -78,6 +87,9 @@ bool CallerSelector::match(const Metadata &_md) const {
     for (auto md = _md.as<SourceMetadataContent>()->caller(); md.isValid();) {
         if (caller_->match(md)) {
             return true;
+        }
+        if (middle_.isValid() && !middle_->match(md)) {
+            return false;
         }
         if (md->getType() == MetadataType::Source) {
             md = md.as<SourceMetadataContent>()->caller();
