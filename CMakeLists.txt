@@ -58,7 +58,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp/runtime/src)
 # 2. Generator
 find_package(Java QUIET REQUIRED COMPONENTS Runtime)
-set(ANTLR_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr-4.10.1-complete.jar)
+set(ANTLR_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr-4.11.1-complete.jar)
 macro(ANTLR_TARGET Name InputFile)
     set(ANTLR_ONE_VALUE_ARGS PACKAGE)
     set(ANTLR_MULTI_VALUE_ARGS COMPILE_FLAGS DEPENDS)
