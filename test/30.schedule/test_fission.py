@@ -72,7 +72,9 @@ def test_fission_after_empty():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
+    map0, map1 = s.fission("L2", ft.FissionSide.After, "S0")
+    assert s.find(map0["L2"]) == s.find("$fission.0{L2}")
+    assert "L2" not in map1
     ast = s.ast()
     print(ast)
     ast = ft.simplify(ast)
@@ -95,7 +97,9 @@ def test_fission_before_empty():
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.Before, "S0")
+    map0, map1 = s.fission("L2", ft.FissionSide.Before, "S0")
+    assert "L2" not in map0
+    assert s.find(map1["L2"]) == s.find("$fission.1{L2}")
     ast = s.ast()
     print(ast)
     ast = ft.simplify(ast)

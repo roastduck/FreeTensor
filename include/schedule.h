@@ -324,7 +324,8 @@ class Schedule {
      * Statements inside the original loop will be distributed to one or both
      * (happening if they are scope statements) loops. If a statement is
      * originally labeled "S", it can be selected by "$fission.0{S}" (from the
-     * first loop) or "$fission.1{S}" (from the second loop) after fission
+     * first loop) or "$fission.1{S}" (from the second loop) after fission. If
+     * one of the resulting loop has an empty body, it will be removed
      *
      * @param loop : ID of the loop to be fissioned
      * @param side : If `After`, `splitter` is the last statement of the first
@@ -338,7 +339,8 @@ class Schedule {
      * empty together with `suffix0`.
      * @throw InvalidSchedule if any dependency cannot be resolved
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
-     * loop})
+     * loop}). If a loop is removed because it has an empty body, it will not be
+     * in the returned map
      */
     std::pair<IDMap, IDMap> fission(const ID &loop, FissionSide side,
                                     const ID &splitter,
