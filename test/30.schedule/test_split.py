@@ -145,6 +145,44 @@ def test_shift():
     assert std.match(ast)
 
 
+def test_factor_too_short():
+    with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 8, label="L1") as i:
+            y[i] = i
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast, verbose=2)
+    outer, inner = s.split("L1", 16)
+    assert outer is None
+    assert s.find(inner) == s.find("$split.1{L1}")
+    ast = ft.lower(s.ast(), verbose=1)
+
+    with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 8, label="L1") as i:
+            y[i] = i
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_nparts_too_short():
+    with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 8, label="L1") as i:
+            y[i] = i
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast, verbose=2)
+    outer, inner = s.split("L1", nparts=16)
+    assert s.find(outer) == s.find("$split.0{L1}")
+    assert inner is None
+    ast = ft.lower(s.ast(), verbose=1)
+
+    with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 8, label="L1") as i:
+            y[i] = i
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_not_found():
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
