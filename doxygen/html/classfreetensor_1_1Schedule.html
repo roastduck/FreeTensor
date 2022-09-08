@@ -930,7 +930,7 @@ template&lt;class T &gt; </div>
 </div><div class="memdoc">
 <p >Fission a loop into two loops each containing part of the statements, one followed by another</p>
 <p >To split loop into two nested loops, use <code>split</code> instead</p>
-<p >Statements inside the original loop will be distributed to one or both (happening if they are scope statements) loops. If a statement is originally labeled "S", it can be selected by "$fission.0{S}" (from the first loop) or "$fission.1{S}" (from the second loop) after fission</p>
+<p >Statements inside the original loop will be distributed to one or both (happening if they are scope statements) loops. If a statement is originally labeled "S", it can be selected by "$fission.0{S}" (from the first loop) or "$fission.1{S}" (from the second loop) after fission. If one of the resulting loop has an empty body, it will be removed</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">loop</td><td>: <a class="el" href="classfreetensor_1_1ID.html">ID</a> of the loop to be fissioned </td></tr>
@@ -947,7 +947,7 @@ template&lt;class T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>: ({old <a class="el" href="classfreetensor_1_1ID.html">ID</a> -&gt; new <a class="el" href="classfreetensor_1_1ID.html">ID</a> in 1st loop}, {old <a class="el" href="classfreetensor_1_1ID.html">ID</a> -&gt; new <a class="el" href="classfreetensor_1_1ID.html">ID</a> in 2nd loop}) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>: ({old <a class="el" href="classfreetensor_1_1ID.html">ID</a> -&gt; new <a class="el" href="classfreetensor_1_1ID.html">ID</a> in 1st loop}, {old <a class="el" href="classfreetensor_1_1ID.html">ID</a> -&gt; new <a class="el" href="classfreetensor_1_1ID.html">ID</a> in 2nd loop}). If a loop is removed because it has an empty body, it will not be in the returned map </dd></dl>
 
 </div>
 </div>
@@ -1617,7 +1617,7 @@ template&lt;class T &gt; </div>
 <li>Specify <code>nparts</code> and leave <code>factor</code> to -1. It will result in an outer loop with length <code>nparts</code>, and an inner loop with length <code>ceil(n / nparts)</code>, where <code>n</code> is the original loop length added by <code>shift</code>. The original iterator <code>i</code> will be transformed to <code>i0 * ceil(n / nparts) + i1</code>, where <code>i0</code> and <code>i1</code> are the iterators of the new outer and inner loops, respectively</li>
 </ol>
 <p >Please note that the second mode will introduce an <code>i0 * ceil(n / nparts)</code> factor into the program, which cannot be recognized by polyhedral analysis, which may hinder some following schedules. If possible, please use the first mode, and then reorder the inner and outer loops</p>
-<p >Suppose the original loop is labeled "L", the split two loops can be selected by "$split.0{L}" (the outer loop) and "$split.1{L}" (the inner loop)</p>
+<p >Suppose the original loop is labeled "L", the split two loops can be selected by "$split.0{L}" (the outer loop) and "$split.1{L}" (the inner loop). If one of the resulting loop is proved to have only a single iteration, it will be removed</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">id</td><td>: <a class="el" href="classfreetensor_1_1ID.html">ID</a> of the loop to be split </td></tr>
@@ -1633,7 +1633,7 @@ template&lt;class T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>: (outer loop <a class="el" href="classfreetensor_1_1ID.html">ID</a>, inner loop <a class="el" href="classfreetensor_1_1ID.html">ID</a>) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>: (outer loop <a class="el" href="classfreetensor_1_1ID.html">ID</a>, inner loop <a class="el" href="classfreetensor_1_1ID.html">ID</a>), either <a class="el" href="classfreetensor_1_1ID.html">ID</a> can be invalid if the loop is proved to have only a single iteration </dd></dl>
 
 </div>
 </div>

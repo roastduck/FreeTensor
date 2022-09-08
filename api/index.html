@@ -9288,7 +9288,8 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        Suppose the original loop is labeled &quot;L&quot;, the split two loops can be</span>
 <span class="sd">        selected by &quot;$split.0{L}&quot; (the outer loop) and &quot;$split.1{L}&quot; (the inner</span>
-<span class="sd">        loop)</span>
+<span class="sd">        loop). If one of the resulting loop is proved to have only a single</span>
+<span class="sd">        iteration, it will be removed</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -9306,10 +9307,13 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        (ID, ID)</span>
-<span class="sd">            (outer loop ID, inner loop ID)</span>
+<span class="sd">        (Optional[ID], Optional[ID])</span>
+<span class="sd">            (outer loop ID, inner loop ID), either ID can be None if the loop is</span>
+<span class="sd">            proved to have only a single iteration</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">node</span><span class="p">),</span> <span class="n">factor</span><span class="p">,</span> <span class="n">nparts</span><span class="p">,</span> <span class="n">shift</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">i</span> <span class="k">if</span> <span class="n">i</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">node</span><span class="p">),</span> <span class="n">factor</span><span class="p">,</span> <span class="n">nparts</span><span class="p">,</span> <span class="n">shift</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">reorder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -9401,7 +9405,8 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        Statements inside the original loop will be distributed to one or both</span>
 <span class="sd">        (happening if they are scope statements) loops. If a statement is</span>
 <span class="sd">        originally labeled &quot;S&quot;, it can be selected by &quot;$fission.0{S}&quot; (from the</span>
-<span class="sd">        first loop) or &quot;$fission.1{S}&quot; (from the second loop) after fission</span>
+<span class="sd">        first loop) or &quot;$fission.1{S}&quot; (from the second loop) after fission. If</span>
+<span class="sd">        one of the resulting loop has an empty body, it will be removed</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
@@ -9411,7 +9416,9 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        (IDMap, IDMap)</span>
-<span class="sd">            ({old ID -&gt; new ID in 1st loop}, {old ID -&gt; new ID in 2nd loop})</span>
+<span class="sd">            ({old ID -&gt; new ID in 1st loop}, {old ID -&gt; new ID in 2nd loop}). If a loop</span>
+<span class="sd">            is removed because it has an empty body, it will not be in the returned map</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">old_ast</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ast</span><span class="p">()</span>
         <span class="n">splitter_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">(</span><span class="n">splitter</span><span class="p">)</span>  <span class="c1"># In DFS order</span>
@@ -10810,7 +10817,8 @@ look before or after all of them</p></li>
             <li><p><strong>Statements inside the original loop will be distributed to one or both</strong> (<code>None</code>) – </p></li>
             <li><p><strong>(happening if they are scope statements) loops. If a statement is</strong> (<code>None</code>) – </p></li>
             <li><p><strong>originally labeled "S", it can be selected by "$fission.0{S}" (from the</strong> (<code>None</code>) – </p></li>
-            <li><p><strong>first loop) or "$fission.1{S}" (from the second loop) after fission</strong> (<code>None</code>) – </p></li>
+            <li><p><strong>first loop) or "$fission.1{S}" (from the second loop) after fission. If</strong> (<code>None</code>) – </p></li>
+            <li><p><strong>one of the resulting loop has an empty body, it will be removed</strong> (<code>None</code>) – </p></li>
         </ul>
       </td>
     </tr>
@@ -10842,7 +10850,8 @@ look before or after all of them</p></li>
     <th class="field-name">Returns:</th>
     <td class="field-body">
         <ul class="first simple">
-          <li><p><code>(IDMap, IDMap)</code> – ({old ID -&gt; new ID in 1st loop}, {old ID -&gt; new ID in 2nd loop})</p></li>
+          <li><p><code>(IDMap, IDMap)</code> – ({old ID -&gt; new ID in 1st loop}, {old ID -&gt; new ID in 2nd loop}). If a loop
+is removed because it has an empty body, it will not be in the returned map</p></li>
         </ul>
     </td>
     </tr>
@@ -10871,7 +10880,8 @@ look before or after all of them</p></li>
 <span class="sd">    Statements inside the original loop will be distributed to one or both</span>
 <span class="sd">    (happening if they are scope statements) loops. If a statement is</span>
 <span class="sd">    originally labeled &quot;S&quot;, it can be selected by &quot;$fission.0{S}&quot; (from the</span>
-<span class="sd">    first loop) or &quot;$fission.1{S}&quot; (from the second loop) after fission</span>
+<span class="sd">    first loop) or &quot;$fission.1{S}&quot; (from the second loop) after fission. If</span>
+<span class="sd">    one of the resulting loop has an empty body, it will be removed</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -10881,7 +10891,9 @@ look before or after all of them</p></li>
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    (IDMap, IDMap)</span>
-<span class="sd">        ({old ID -&gt; new ID in 1st loop}, {old ID -&gt; new ID in 2nd loop})</span>
+<span class="sd">        ({old ID -&gt; new ID in 1st loop}, {old ID -&gt; new ID in 2nd loop}). If a loop</span>
+<span class="sd">        is removed because it has an empty body, it will not be in the returned map</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">old_ast</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ast</span><span class="p">()</span>
     <span class="n">splitter_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">(</span><span class="n">splitter</span><span class="p">)</span>  <span class="c1"># In DFS order</span>
@@ -11896,7 +11908,8 @@ possible, plese use the first mode, and then reorder the inner and outer
 loops</p>
 <p>Suppose the original loop is labeled "L", the split two loops can be
 selected by "$split.0{L}" (the outer loop) and "$split.1{L}" (the inner
-loop)</p>
+loop). If one of the resulting loop is proved to have only a single
+iteration, it will be removed</p>
 
 <table class="field-list">
   <colgroup>
@@ -11942,7 +11955,8 @@ loop)</p>
     <th class="field-name">Returns:</th>
     <td class="field-body">
         <ul class="first simple">
-          <li><p><code>(ID, ID)</code> – (outer loop ID, inner loop ID)</p></li>
+          <li><p><code>(Optional[ID], Optional[ID])</code> – (outer loop ID, inner loop ID), either ID can be None if the loop is
+proved to have only a single iteration</p></li>
         </ul>
     </td>
     </tr>
@@ -11979,7 +11993,8 @@ loop)</p>
 
 <span class="sd">    Suppose the original loop is labeled &quot;L&quot;, the split two loops can be</span>
 <span class="sd">    selected by &quot;$split.0{L}&quot; (the outer loop) and &quot;$split.1{L}&quot; (the inner</span>
-<span class="sd">    loop)</span>
+<span class="sd">    loop). If one of the resulting loop is proved to have only a single</span>
+<span class="sd">    iteration, it will be removed</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -11997,10 +12012,13 @@ loop)</p>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    (ID, ID)</span>
-<span class="sd">        (outer loop ID, inner loop ID)</span>
+<span class="sd">    (Optional[ID], Optional[ID])</span>
+<span class="sd">        (outer loop ID, inner loop ID), either ID can be None if the loop is</span>
+<span class="sd">        proved to have only a single iteration</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">node</span><span class="p">),</span> <span class="n">factor</span><span class="p">,</span> <span class="n">nparts</span><span class="p">,</span> <span class="n">shift</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">i</span> <span class="k">if</span> <span class="n">i</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">node</span><span class="p">),</span> <span class="n">factor</span><span class="p">,</span> <span class="n">nparts</span><span class="p">,</span> <span class="n">shift</span><span class="p">))</span>
 </code></pre></div>
         </details>
     </div>
