@@ -1,3 +1,6 @@
+#include <cmath>
+#include <numeric>
+
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 #include <pass/flatten_stmt_seq.h>
@@ -40,6 +43,8 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             "PlutoFuse: loop 1 `#" + toString(loop1) +
             "` has less than required nesting levels: " + toString(nestLevel1) +
             " existed, but " + toString(nestLevel) + " required");
+
+    ASSERT(nestLevel > 0);
 
     std::cout << "nesting levels = " << nestLevel << std::endl;
 
@@ -97,6 +102,10 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
                 // later to earlier map, but projects out unrelated dims
                 auto hMap = d.later2EarlierIter_;
 
+                if (hMap.nParamDims() > 0)
+                    throw InvalidSchedule("PlutoFuse: load in loop ranges "
+                                          "currently not supported.");
+
                 // remove inner dims for outer
                 auto [pos0, outerDims0] = findIter(d.earlier_, l0->iter_);
                 pos0 += nestLevel;
@@ -125,20 +134,25 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
                 // flatten to set for later coefficients computation;
                 // later dimensions first, so the first half would be target,
                 // and second half being source
-                deps.emplace_back(ctx, toString(flattenMapToSet(hMap)));
+                auto hSet = flattenMapToSet(std::move(hMap));
+
+                if (deps.size() > 0)
+                    ASSERT(hSet.nDims() == deps[0].nDims());
+                deps.emplace_back(ctx, toString(std::move(hSet)));
             });
         return deps;
     };
 
-    auto printMapSource = [&, mapSource = std::string(),
-                           nParamsOld = -1](int nParams) mutable {
+    int nParams = -1;
+    auto printMapSource = [&,
+                           mapSource = std::string()](int nParamsNew) mutable {
         // the Pluto "parameter"s are the outer dimensions for us.
         // their number should keep the same throughout this schedule.
-        if (nParamsOld != -1) {
-            ASSERT(nParamsOld == nParams);
+        if (nParams != -1) {
+            ASSERT(nParams == nParamsNew);
             return mapSource;
         }
-        nParamsOld = nParams;
+        nParams = nParamsNew;
 
         std::ostringstream oss;
         oss << "{ [";
@@ -164,7 +178,12 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
         return mapSource = oss.str();
     };
 
+    // constraints for bounding and valid coefficients
     std::vector<PBSet> coeffSets0, coeffSets1, coeffSets1to0;
+    // sets for coefficients strictly satisfying certain dependence
+    std::vector<PBSet> satSets0, satSets1, satSets1to0;
+    // whether a dependence have been satisfied already
+    std::vector<bool> satisfied0, satisfied1, satisfied1to0;
 
     // Dependences inside loop 0
     auto dep0 = getDeps(check.loop0().loop_, check.loop0().loop_);
@@ -246,6 +265,11 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
                                           coefficients(apply(d, boundingMap)));
                      }) |
                      collect;
+        satSets0 = dep0 | iter::imap([&](const auto &d) {
+                       return coefficients(apply(d, legalityMap), 1);
+                   }) |
+                   collect;
+        satisfied0.resize(dep0.size(), false);
     }
 
     // Dependences inside loop 1
@@ -328,6 +352,11 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
                                           coefficients(apply(d, boundingMap)));
                      }) |
                      collect;
+        satSets1 = dep1 | iter::imap([&](const auto &d) {
+                       return coefficients(apply(d, legalityMap), 1);
+                   }) |
+                   collect;
+        satisfied1.resize(dep1.size(), false);
     }
 
     // Dependences between loop 0 and 1
@@ -411,11 +440,157 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
                                  coefficients(apply(d, boundingMap)));
             }) |
             collect;
+        satSets1to0 = dep1to0 | iter::imap([&](const auto &d) {
+                          return coefficients(apply(d, legalityMap), 1);
+                      }) |
+                      collect;
+        satisfied1to0.resize(dep1to0.size(), false);
     }
 
-    std::cout << coeffSets0 << std::endl;
-    std::cout << coeffSets1 << std::endl;
-    std::cout << coeffSets1to0 << std::endl;
+    //! FIXME: handle case of no dependence
+    ASSERT(nParams != -1);
+
+    // construct the map from coefficients to optimize targets
+    PBMap optimizeMap;
+    {
+        auto cBound = [](int i) { return "cb" + toString(i); };
+
+        const std::string c0Sum = "c0sum";
+        const std::string delta0 = "d0";
+        const std::string deltaL0 = "dl0";
+        auto c0Param = [](int i) { return "c0p" + toString(i); };
+        auto c0Iter = [](int i) { return "c0i" + toString(i); };
+        auto c0 = [&](int i) {
+            if (i < nParams + 1)
+                return c0Param(i);
+            else
+                return c0Iter(i - nParams - 1);
+        };
+
+        const std::string c1Sum = "c1sum";
+        const std::string delta1 = "d1";
+        const std::string deltaL1 = "dl1";
+        auto c1Param = [](int i) { return "c1p" + toString(i); };
+        auto c1Iter = [](int i) { return "c1i" + toString(i); };
+        auto c1 = [&](int i) {
+            if (i < nParams + 1)
+                return c1Param(i);
+            else
+                return c1Iter(i - nParams - 1);
+        };
+
+        // the coefficients set includes following dimensions:
+        // 1. (nParams + 1) bounding coefficients
+        // 2. (nParams + 1 + nestLevel) loop 0 permuting coefficients
+        // 3. (nParams + 1 + nestLevel) loop 1 permuting coefficients
+        auto inputs =
+            iter::chain(iter::range(nParams + 1) | iter::imap(cBound),
+                        iter::range(nParams + 1) | iter::imap(c0Param),
+                        iter::range(nestLevel) | iter::imap(c0Iter),
+                        iter::range(nParams + 1) | iter::imap(c1Param),
+                        iter::range(nestLevel) | iter::imap(c1Iter)) |
+            collect;
+
+        // then the outputs which are optimize targets
+        auto outputs =
+            iter::chain(
+                // 1. the distance bounds go first, as main optimizing targets
+                iter::range(nParams + 1) | iter::imap(cBound) | collect,
+                // 2.1. sum of coefficients absolute for loop 0
+                std::array{c0Sum},
+                // 2.2. binary decision variable for avoiding zeros
+                std::array{delta0, deltaL0},
+                // 2.3. reversed coefficients of loop 0 iterations
+                //      they are reversed because we want to select outer loops
+                //      earlier, preserving the original loop order
+                iter::range(nestLevel - 1, -1, -1) | iter::imap(c0Iter) |
+                    collect,
+                // 2.4. coefficients of loop 0 params and constant
+                iter::range(nParams + 1) | iter::imap(c0Param) | collect,
+                // 3.1. sum of coefficients absolute for loop 1
+                std::array{c1Sum},
+                // 3.2. binary decision variable for avoiding zeros
+                std::array{delta1, deltaL1},
+                // 3.3. reversed coefficients of loop 1 iterations
+                iter::range(nestLevel - 1, -1, -1) | iter::imap(c1Iter) |
+                    collect,
+                // 3.4. coefficients of loop 1 params and constant
+                iter::range(nParams + 1) | iter::imap(c1Param) | collect) |
+            collect;
+
+        auto sumConstraints = [&](const auto &cSum, const auto &c) {
+            return iter::range(nParams + 1 + nestLevel) | iter::powerset |
+                   iter::imap([&](const auto &v) {
+                       std::ostringstream oss;
+                       oss << cSum << " >= 0";
+                       size_t iv = 0;
+                       for (int i = 0; i < nParams + 1 + nestLevel; ++i) {
+                           if (iv < v.size() && i == v[iv]) {
+                               iv++;
+                               oss << " + ";
+                           } else
+                               oss << " - ";
+                           oss << c(i);
+                       }
+                       return oss.str();
+                   }) |
+                   collect;
+        };
+
+        auto iterNonZeroConstraints = [&](const auto &cIter, const auto &delta,
+                                          const auto &deltaL) {
+            auto rangeConstraints =
+                iter::range(nestLevel) | iter::imap([&](int i) {
+                    return std::array{cIter(i) + " >= -2", cIter(i) + " <= 2"};
+                }) |
+                iter::chain.from_iterable | collect;
+            auto skewedExpr =
+                iter::range(nestLevel) | iter::imap([&](int i) {
+                    return toString((int)std::pow(5, i)) + cIter(i);
+                }) |
+                join(" + ");
+            auto bound = (int)std::pow(5, nestLevel);
+            return iter::chain(
+                       rangeConstraints,
+                       std::array{
+                           skewedExpr + " >= 1 - " + toString(bound) + delta,
+                           skewedExpr + " <= " + toString(bound - 1) + " - " +
+                               toString(bound) + delta,
+                           delta + " >= 0",
+                           delta + " <= 1",
+                           deltaL + " >= 0",
+                           deltaL + " <= 1",
+                       }) |
+                   collect;
+        };
+
+        // constraints excluding trivial results (all zero)
+        auto constraints =
+            iter::chain(sumConstraints(c0Sum, c0), sumConstraints(c1Sum, c1),
+                        iterNonZeroConstraints(c0Iter, delta0, deltaL0),
+                        iterNonZeroConstraints(c1Iter, delta1, deltaL1)) |
+            collect;
+
+        optimizeMap = PBMap(ctx, "{ [" + join(inputs, ", ") + "] -> [" +
+                                     join(outputs, ", ") +
+                                     "]: " + join(constraints, " and ") + "}");
+        std::cout << optimizeMap << std::endl;
+    }
+
+    // start computing permuted dimensions
+    for (int i = 0; i < nestLevel; ++i) {
+        //! FIXME: handle parameters from loads
+        auto problem = universeSet(
+            spaceSetAlloc(ctx, 0, (nParams + 1) * 3 + nestLevel * 2));
+        // constructing the coefficients' space
+        for (const auto &c : iter::chain(coeffSets0, coeffSets1, coeffSets1to0))
+            problem = intersect(std::move(problem), c);
+        std::cout << problem << std::endl;
+        // map the coefficients to optimize targets
+        std::cout << lexmin(apply(problem, optimizeMap)) << std::endl;
+        //! FIXME: compute linear independence constraints
+        break;
+    }
 
     return {ast, {}};
 }

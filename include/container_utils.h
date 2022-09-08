@@ -5,6 +5,7 @@
 #include <cctype>
 #include <iostream>
 #include <ranges>
+#include <sstream>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -189,6 +190,33 @@ inline _Collect collect;
 
 template <typename R> auto operator|(R &&r, _Collect c) {
     return c(std::forward<R>(r));
+}
+
+/**
+ * Join a sequence of elements to a string with given splitter
+ */
+struct _Join {
+    const std::string &splitter;
+};
+
+template <typename Container>
+std::string join(const Container &c, const std::string &splitter) {
+    std::ostringstream oss;
+    bool first = true;
+    for (const auto &s : c) {
+        if (!first)
+            oss << splitter;
+        oss << s;
+        first = false;
+    }
+    return oss.str();
+}
+
+inline auto join(const std::string &splitter) { return _Join{splitter}; }
+
+template <typename Container>
+auto operator|(const Container &c, const _Join &joiner) {
+    return join(c, joiner.splitter);
 }
 
 } // namespace freetensor

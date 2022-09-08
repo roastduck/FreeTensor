@@ -106,6 +106,7 @@ class PBMap {
 
     isl_size nInDims() const { return isl_map_dim(map_, isl_dim_in); }
     isl_size nOutDims() const { return isl_map_dim(map_, isl_dim_out); }
+    isl_size nParamDims() const { return isl_map_dim(map_, isl_dim_param); }
 
     void projectOutInputDims(unsigned first, unsigned n) {
         map_ = isl_map_project_out(map_, isl_dim_in, first, n);
@@ -511,19 +512,22 @@ template <PBMapRef T> PBSet flattenMapToSet(T &&map) {
  *
  * Let the variables of the input set $X$ be $x_i$, and that of the output
  * coefficient set $C$ be $c_i$, then this procedure guarantees:
- * $\{c_i\} \in C \Leftrightarrow \forall \{x_i\} \in X, \Sigma c_i x_i \geq 0$
+ * $\{c_i\} \in C \Leftrightarrow \forall \{x_i\} \in X, \Sigma c_i x_i \geq c$
  *
  * @param set the input set
+ * @param c the RHS constant
  * @return PBSet set of valid coefficients for the input set
  */
-template <PBSetRef T> PBSet coefficients(T &&set) {
+template <PBSetRef T> PBSet coefficients(T &&set, int64_t c = 0) {
     auto coefficientsMap = isl_map_from_basic_map(
         isl_basic_set_unwrap(isl_set_coefficients(PBRefTake<T>(set))));
-    auto constantsDomainSpace =
-        isl_space_domain(isl_map_get_space(coefficientsMap));
-    return apply(
-        PBSet(isl_set_from_point(isl_point_zero(constantsDomainSpace))),
-        PBMap(coefficientsMap));
+    auto ctx = isl_map_get_ctx(coefficientsMap);
+    auto paramsSpace = isl_space_domain(isl_map_get_space(coefficientsMap));
+    auto nParams = isl_space_dim(paramsSpace, isl_dim_set);
+    auto cPoint = isl_point_zero(paramsSpace);
+    isl_point_set_coordinate_val(cPoint, isl_dim_set, nParams - 1,
+                                 isl_val_int_from_si(ctx, c));
+    return apply(PBSet(isl_set_from_point(cPoint)), PBMap(coefficientsMap));
 }
 
 inline bool operator==(const PBSet &lhs, const PBSet &rhs) {
