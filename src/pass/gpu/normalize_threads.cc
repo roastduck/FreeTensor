@@ -133,6 +133,10 @@ bool CheckThreadNum::isLegalLen(const Expr &expr) {
 
 bool CheckThreadNum::isLegalLen(const std::unordered_set<std::string> &names) {
     for (auto &&name : names) {
+        if (hasLoop(name)) {
+            // Only iterators from outside of the kernel is OK
+            return !openLoopsInKernel_.count(loop(name));
+        }
         if (!hasDef(name) || buffer(name)->mtype() != MemType::ByValue) {
             return false;
         }
@@ -141,11 +145,16 @@ bool CheckThreadNum::isLegalLen(const std::unordered_set<std::string> &names) {
 }
 
 Stmt CheckThreadNum::visit(const For &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::For);
-    auto op = __op.as<ForNode>();
+    if (std::holds_alternative<CUDAScope>(_op->property_->parallel_)) {
+        openLoopsInKernel_.insert(_op);
 
-    if (op->property_->parallel_ != serialScope) {
+        auto oldInKernel = inKernel_;
+        inKernel_ = true;
+        auto __op = BaseClass::visit(_op);
+        ASSERT(__op->nodeType() == ASTNodeType::For);
+        auto op = __op.as<ForNode>();
+        inKernel_ = oldInKernel;
+
         if (!isLegalLen(op->begin_)) {
             op->body_ =
                 makeIf(makeGE(makeVar(op->iter_), op->begin_), op->body_);
@@ -160,9 +169,13 @@ Stmt CheckThreadNum::visit(const For &_op) {
                 }
             }
             if (!begin.isValid()) {
-                throw InvalidProgram("Length of " +
-                                     toString(op->property_->parallel_) +
-                                     " should have a finite bound");
+                throw InvalidProgram(
+                    "Length of " + toString(op->property_->parallel_) +
+                    " should have a finite bound. Note: if you are making a "
+                    "dynamic ranged threadIdx or blockIdx loop, please use "
+                    "memory type \"byvalue\" for its range, because it is used "
+                    "both for launching the kernel and guarding the execution "
+                    "inside the kernel");
             }
             op->begin_ = std::move(begin);
         }
@@ -178,18 +191,32 @@ Stmt CheckThreadNum::visit(const For &_op) {
                 }
             }
             if (!end.isValid()) {
-                throw InvalidProgram("Length of " +
-                                     toString(op->property_->parallel_) +
-                                     " should have a finite bound");
+                throw InvalidProgram(
+                    "Length of " + toString(op->property_->parallel_) +
+                    " should have a finite bound. Note: if you are making a "
+                    "dynamic ranged threadIdx or blockIdx loop, please use "
+                    "memory type \"byvalue\" for its range, because it is used "
+                    "both for launching the kernel and guarding the execution "
+                    "inside the kernel");
             }
             op->end_ = std::move(end);
         }
         ASSERT(op->step_->nodeType() == ASTNodeType::IntConst &&
                op->step_.as<IntConstNode>()->val_ == 1);
         op->len_ = makeSub(op->end_, op->begin_);
-    }
 
-    return op;
+        openLoopsInKernel_.erase(_op);
+        return op;
+    } else {
+        if (inKernel_) {
+            openLoopsInKernel_.insert(_op);
+            auto ret = BaseClass::visit(_op);
+            openLoopsInKernel_.erase(_op);
+            return ret;
+        } else {
+            return BaseClass::visit(_op);
+        }
+    }
 }
 
 Stmt normalizeThreads(const Stmt &_op) {

@@ -488,6 +488,32 @@ def test_use_cpu_iters():
     assert np.array_equal(y_np, y_std)
 
 
+def test_dynamic_thread_dim_by_cpu_iters():
+    with ft.VarDef([("n", (4,), "int32", "input", "byvalue"),
+                    ("y", (4, 20), "int32", "inout", "gpu/global")]) as (n, y):
+        with ft.For("i", 0, 4, label="Li") as i:
+            with ft.For("j", 0, n[i], label="Lj") as j:
+                y[i, j] = i * j
+
+    with device:
+        s = ft.Schedule(ft.Func("main", ["n", "y"], [], ft.pop_ast()))
+        s.parallelize('Lj', "threadIdx.x")
+        func = ft.lower(s.func(), verbose=1)
+        code = ft.codegen(func, verbose=True)
+        n_np = np.array([5, 10, 15, 20], dtype="int32")
+        y_np = np.zeros((4, 20), dtype="int32")
+        n_arr = ft.Array(n_np)
+        y_arr = ft.Array(y_np)
+        ft.build_binary(code)(n_arr, y_arr)
+        y_np = y_arr.numpy()
+
+    y_std = np.array([[i * j if j < n else 0
+                       for j in range(20)]
+                      for i, n in enumerate([5, 10, 15, 20])],
+                     dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
 def test_intrinsic():
 
     @ft.transform
