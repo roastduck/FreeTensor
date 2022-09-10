@@ -703,6 +703,8 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
         auto orthoConstraints = [&](const auto &cIterFusedValue,
                                     const auto &cIter, const auto &deltaL) {
             auto ortho = orthogonalMatrix(cIterFusedValue);
+            if (ortho.empty())
+                return std::vector<std::string>{"true"};
             auto orthoDots =
                 ortho | iter::imap([&](const auto &o) {
                     return "(" +
