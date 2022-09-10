@@ -41,7 +41,7 @@ std::vector<std::string> nonZeroConstraints(int n, const auto &fVar,
         iter::chain.from_iterable | collect;
     auto skewedExpr =
         iter::range(n) | iter::imap([&](int i) {
-            return toString((int)std::pow(varBound * 2 + 1, i)) + fVar(i);
+            return toString((int)std::pow(varBound * 2 + 1, i)) + "*" + fVar(i);
         }) |
         join(" + ");
     auto bound = (int)std::pow(varBound * 2 + 1, n);
@@ -555,35 +555,37 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
     //! FIXME: handle case of no dependence
     ASSERT(nParams != -1);
 
+    // variable names
+    auto cBound = [](int i) { return "cb" + toString(i); };
+
+    const std::string c0Sum = "c0sum";
+    const std::string delta0 = "d0";
+    const std::string deltaL0 = "dl0";
+    auto c0Param = [](int i) { return "c0p" + toString(i); };
+    auto c0Iter = [](int i) { return "c0i" + toString(i); };
+    auto c0 = [&](int i) {
+        if (i < nParams + 1)
+            return c0Param(i);
+        else
+            return c0Iter(i - nParams - 1);
+    };
+
+    const std::string c1Sum = "c1sum";
+    const std::string delta1 = "d1";
+    const std::string deltaL1 = "dl1";
+    auto c1Param = [](int i) { return "c1p" + toString(i); };
+    auto c1Iter = [](int i) { return "c1i" + toString(i); };
+    auto c1 = [&](int i) {
+        if (i < nParams + 1)
+            return c1Param(i);
+        else
+            return c1Iter(i - nParams - 1);
+    };
+
     // construct the map from coefficients to optimize targets
     PBMap optimizeMap;
+    std::function<PBSet(const std::vector<std::string> &)> orthoSetGen;
     {
-        auto cBound = [](int i) { return "cb" + toString(i); };
-
-        const std::string c0Sum = "c0sum";
-        const std::string delta0 = "d0";
-        const std::string deltaL0 = "dl0";
-        auto c0Param = [](int i) { return "c0p" + toString(i); };
-        auto c0Iter = [](int i) { return "c0i" + toString(i); };
-        auto c0 = [&](int i) {
-            if (i < nParams + 1)
-                return c0Param(i);
-            else
-                return c0Iter(i - nParams - 1);
-        };
-
-        const std::string c1Sum = "c1sum";
-        const std::string delta1 = "d1";
-        const std::string deltaL1 = "dl1";
-        auto c1Param = [](int i) { return "c1p" + toString(i); };
-        auto c1Iter = [](int i) { return "c1i" + toString(i); };
-        auto c1 = [&](int i) {
-            if (i < nParams + 1)
-                return c1Param(i);
-            else
-                return c1Iter(i - nParams - 1);
-        };
-
         // the coefficients set includes following dimensions:
         // 1. (nParams + 1) bounding coefficients
         // 2. (nParams + 1 + nestLevel) loop 0 permuting coefficients
@@ -641,14 +643,21 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
                         loopConstraints(c1Sum, c1, c1Iter, delta1, deltaL1)) |
             collect;
 
-        optimizeMap = PBMap(ctx, "{ [" + join(inputs, ", ") + "] -> [" +
-                                     join(outputs, ", ") +
-                                     "]: " + join(constraints, " and ") + "}");
+        auto outputsStr = join(outputs, ", ");
+        optimizeMap =
+            PBMap(ctx, "{ [" + join(inputs, ", ") + "] -> [" + outputsStr +
+                           "]: " + join(constraints, " and ") + "}");
+        orthoSetGen = [&ctx, outputsStr = std::move(outputsStr)](
+                          const std::vector<std::string> &orthoConstraints) {
+            return PBSet(ctx, "{ [" + outputsStr + "]: " +
+                                  join(orthoConstraints, " and ") + " }");
+        };
     }
     auto revOptimizeMap = reverse(optimizeMap);
+    PBSet orthoSet = orthoSetGen({});
 
-    std::vector<std::vector<int>> c0ParamFused, c0IterFused;
-    std::vector<std::vector<int>> c1ParamFused, c1IterFused;
+    std::vector<std::vector<int>> c0ParamFusedValue, c0IterFusedValue;
+    std::vector<std::vector<int>> c1ParamFusedValue, c1IterFusedValue;
     // start computing permuted dimensions
     for (int i = 0; i < nestLevel; ++i) {
         //! FIXME: handle parameters from loads
@@ -661,7 +670,8 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             if (!satisfied)
                 problem = intersect(std::move(problem), coeffSet);
         // map the coefficients to optimize targets
-        auto solution = lexmin(apply(problem, optimizeMap));
+        auto solution =
+            lexmin(intersect(std::move(orthoSet), apply(problem, optimizeMap)));
         if (solution.empty())
             break;
         auto optimized =
@@ -673,26 +683,43 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             collect;
         std::cout << optimized << std::endl;
         //! TODO: extract coefficients and construct orthogonal constraints
-        c0ParamFused.push_back({
+        c0ParamFusedValue.push_back({
             optimized.begin() + (nParams + 1),
             optimized.begin() + (nParams + 1) * 2,
         });
-        c0IterFused.push_back({
+        c0IterFusedValue.push_back({
             optimized.begin() + (nParams + 1) * 2,
             optimized.begin() + (nParams + 1) * 2 + nestLevel,
         });
-        c1ParamFused.push_back({
+        c1ParamFusedValue.push_back({
             optimized.begin() + (nParams + 1) * 2 + nestLevel,
             optimized.begin() + (nParams + 1) * 3 + nestLevel,
         });
-        c1IterFused.push_back({
+        c1IterFusedValue.push_back({
             optimized.begin() + (nParams + 1) * 3 + nestLevel,
             optimized.end(),
         });
-        orthogonalMatrix(c0IterFused);
-        orthogonalMatrix(c1IterFused);
-        //! FIXME: construct orthogonal constraints
-        break;
+
+        auto orthoConstraints = [&](const auto &cIterFusedValue,
+                                    const auto &cIter, const auto &deltaL) {
+            auto ortho = orthogonalMatrix(cIterFusedValue);
+            auto orthoDots =
+                ortho | iter::imap([&](const auto &o) {
+                    return "(" +
+                           (iter::range(nestLevel) | iter::imap([&](int i) {
+                                return toString(o[i]) + cIter(i);
+                            }) |
+                            join(" + ")) +
+                           ")";
+                }) |
+                collect;
+            return nonZeroConstraints(
+                ortho.size(), [&](int i) { return orthoDots[i]; }, deltaL);
+        };
+        orthoSet = orthoSetGen(
+            iter::chain(orthoConstraints(c0IterFusedValue, c0Iter, deltaL0),
+                        orthoConstraints(c1IterFusedValue, c1Iter, deltaL1)) |
+            collect);
     }
 
     return {ast, {}};
