@@ -18,3 +18,21 @@ def test_pluto_fuse():
     print(kernel)
     kernel = ft.schedule(kernel, lambda s: s.pluto_fuse("L0", "L1"))
     print(kernel)
+
+
+def test_pluto_fuse_2():
+
+    @ft.transform
+    def kernel(x: ft.Var[(256, 256), "float32", "inout"]):
+        #! label: L0
+        for i in range(256):
+            for j in range(255):
+                x[i, j + 1] += x[i, j]
+        #! label: L1
+        for i in range(256):
+            for j in range(255):
+                x[255 - i, 254 - j] += x[255 - i, 255 - j]
+
+    print(kernel)
+    kernel = ft.schedule(kernel, lambda s: s.pluto_fuse("L0", "L1"))
+    print(kernel)

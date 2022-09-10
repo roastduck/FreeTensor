@@ -9,6 +9,116 @@
 
 namespace freetensor {
 
+namespace {
+
+std::vector<std::string> absSumConstraints(int n, const std::string &sum,
+                                           const auto &fVar) {
+    return iter::range(n) | iter::powerset | iter::imap([&](const auto &v) {
+               std::ostringstream oss;
+               oss << sum << " >= 0";
+               size_t iv = 0;
+               for (int i = 0; i < n; ++i) {
+                   if (iv < v.size() && i == v[iv]) {
+                       iv++;
+                       oss << " + ";
+                   } else
+                       oss << " - ";
+                   oss << fVar(i);
+               }
+               return oss.str();
+           }) |
+           collect;
+}
+
+std::vector<std::string> nonZeroConstraints(int n, const auto &fVar,
+                                            const std::string delta,
+                                            int varBound = 2) {
+    auto rangeConstraints =
+        iter::range(n) | iter::imap([&](int i) {
+            return std::array{fVar(i) + " >= -" + toString(varBound),
+                              fVar(i) + " <= " + toString(varBound)};
+        }) |
+        iter::chain.from_iterable | collect;
+    auto skewedExpr =
+        iter::range(n) | iter::imap([&](int i) {
+            return toString((int)std::pow(varBound * 2 + 1, i)) + fVar(i);
+        }) |
+        join(" + ");
+    auto bound = (int)std::pow(varBound * 2 + 1, n);
+    return iter::chain(rangeConstraints,
+                       std::array{
+                           skewedExpr + " >= 1 - " + toString(bound) + delta,
+                           skewedExpr + " <= " + toString(bound - 1) + " - " +
+                               toString(bound) + delta,
+                           delta + " >= 0",
+                           delta + " <= 1",
+                       }) |
+           collect;
+}
+
+std::vector<std::vector<int>>
+orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
+    // sanity check
+    ASSERT(vectors.size() > 0);
+    for (size_t i = 1; i < vectors.size(); ++i)
+        ASSERT(vectors[i].size() == vectors[0].size());
+    int nDims = vectors[0].size();
+
+    auto fVar = [](int i) { return "i" + toString(i); };
+    auto fOrtho = [&](const std::vector<int> &v) {
+        return (iter::range(nDims) |
+                iter::imap([&](int i) { return toString(v[i]) + fVar(i); }) |
+                join(" + ")) +
+               " = 0";
+    };
+    auto setHeader = "{ [sum, " +
+                     (iter::range(nDims) | iter::imap(fVar) | join(", ")) +
+                     ", delta]: ";
+    auto setFooter = " }";
+
+    PBCtx ctx;
+    PBSet orthogonalSet(
+        ctx, setHeader +
+                 (iter::chain(
+                      // orthogonal constraints
+                      vectors | iter::imap(fOrtho) | collect,
+                      // non-zero constraints to exclude trivial result
+                      nonZeroConstraints(nDims, fVar, "delta"),
+                      // abs sum constraints to find vector nearest to zero
+                      absSumConstraints(nDims, "sum", fVar)) |
+                  join(" and ")) +
+                 setFooter);
+
+    std::vector<std::vector<int>> result;
+    while (!orthogonalSet.empty()) {
+        // lexmin and sample to solve
+        auto solution = sample(lexmin(orthogonalSet)).coordinates();
+        // extract the vector into result
+        std::vector<int> v;
+        v.reserve(solution.size() - 2);
+        for (size_t i = 1; i < solution.size() - 1; ++i) {
+            ASSERT(solution[i].denSi() == 1);
+            v.emplace_back(solution[i].numSi());
+        }
+        result.emplace_back(std::move(v));
+        // inject new constraint to find next orthogonal vector
+        PBSet newConstraint(ctx, setHeader + fOrtho(result.back()) + setFooter);
+        orthogonalSet = intersect(std::move(orthogonalSet), newConstraint);
+    }
+
+    std::cout << ">> Orthogonal Matrix of [ ";
+    for (const auto &v : vectors)
+        std::cout << "[" << v << "] ";
+    std::cout << "] is: [ ";
+    for (const auto &v : result)
+        std::cout << "[" << v << "] ";
+    std::cout << "]" << std::endl;
+
+    return result;
+}
+
+} // namespace
+
 std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
                               const ID &loop1, int nestLevel) {
     // flatten first so we get perfectly nested loops as much as possible
@@ -45,8 +155,6 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             " existed, but " + toString(nestLevel) + " required");
 
     ASSERT(nestLevel > 0);
-
-    std::cout << "nesting levels = " << nestLevel << std::endl;
 
     // List common outer loops
     std::deque<For> outers;
@@ -127,9 +235,6 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
                     hMap.projectOutInputDims(outerDims1[i] + 1,
                                              pos1 - outerDims1[i] - 1);
                 hMap.projectOutInputDims(0, pos1);
-
-                std::cout << l0->metadata() << " -> " << l1->metadata() << ": "
-                          << hMap << std::endl;
 
                 // flatten to set for later coefficients computation;
                 // later dimensions first, so the first half would be target,
@@ -518,77 +623,75 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
                 iter::range(nParams + 1) | iter::imap(c1Param) | collect) |
             collect;
 
-        auto sumConstraints = [&](const auto &cSum, const auto &c) {
-            return iter::range(nParams + 1 + nestLevel) | iter::powerset |
-                   iter::imap([&](const auto &v) {
-                       std::ostringstream oss;
-                       oss << cSum << " >= 0";
-                       size_t iv = 0;
-                       for (int i = 0; i < nParams + 1 + nestLevel; ++i) {
-                           if (iv < v.size() && i == v[iv]) {
-                               iv++;
-                               oss << " + ";
-                           } else
-                               oss << " - ";
-                           oss << c(i);
-                       }
-                       return oss.str();
-                   }) |
-                   collect;
-        };
-
-        auto iterNonZeroConstraints = [&](const auto &cIter, const auto &delta,
-                                          const auto &deltaL) {
-            auto rangeConstraints =
-                iter::range(nestLevel) | iter::imap([&](int i) {
-                    return std::array{cIter(i) + " >= -2", cIter(i) + " <= 2"};
-                }) |
-                iter::chain.from_iterable | collect;
-            auto skewedExpr =
-                iter::range(nestLevel) | iter::imap([&](int i) {
-                    return toString((int)std::pow(5, i)) + cIter(i);
-                }) |
-                join(" + ");
-            auto bound = (int)std::pow(5, nestLevel);
+        auto loopConstraints = [&](const auto &cSum, const auto &c,
+                                   const auto &cIter, const auto &delta,
+                                   const auto &deltaL) {
             return iter::chain(
-                       rangeConstraints,
-                       std::array{
-                           skewedExpr + " >= 1 - " + toString(bound) + delta,
-                           skewedExpr + " <= " + toString(bound - 1) + " - " +
-                               toString(bound) + delta,
-                           delta + " >= 0",
-                           delta + " <= 1",
-                           deltaL + " >= 0",
-                           deltaL + " <= 1",
-                       }) |
-                   collect;
+                absSumConstraints(nParams + 1 + nestLevel, cSum, c),
+                nonZeroConstraints(nestLevel, cIter, delta),
+                std::array{
+                    deltaL + " >= 0",
+                    deltaL + " <= 1",
+                });
         };
 
         // constraints excluding trivial results (all zero)
         auto constraints =
-            iter::chain(sumConstraints(c0Sum, c0), sumConstraints(c1Sum, c1),
-                        iterNonZeroConstraints(c0Iter, delta0, deltaL0),
-                        iterNonZeroConstraints(c1Iter, delta1, deltaL1)) |
+            iter::chain(loopConstraints(c0Sum, c0, c0Iter, delta0, deltaL0),
+                        loopConstraints(c1Sum, c1, c1Iter, delta1, deltaL1)) |
             collect;
 
         optimizeMap = PBMap(ctx, "{ [" + join(inputs, ", ") + "] -> [" +
                                      join(outputs, ", ") +
                                      "]: " + join(constraints, " and ") + "}");
-        std::cout << optimizeMap << std::endl;
     }
+    auto revOptimizeMap = reverse(optimizeMap);
 
+    std::vector<std::vector<int>> c0ParamFused, c0IterFused;
+    std::vector<std::vector<int>> c1ParamFused, c1IterFused;
     // start computing permuted dimensions
     for (int i = 0; i < nestLevel; ++i) {
         //! FIXME: handle parameters from loads
         auto problem = universeSet(
             spaceSetAlloc(ctx, 0, (nParams + 1) * 3 + nestLevel * 2));
         // constructing the coefficients' space
-        for (const auto &c : iter::chain(coeffSets0, coeffSets1, coeffSets1to0))
-            problem = intersect(std::move(problem), c);
-        std::cout << problem << std::endl;
+        for (const auto &[satisfied, coeffSet] :
+             iter::zip(iter::chain(satisfied0, satisfied1, satisfied1to0),
+                       iter::chain(coeffSets0, coeffSets1, coeffSets1to0)))
+            if (!satisfied)
+                problem = intersect(std::move(problem), coeffSet);
         // map the coefficients to optimize targets
-        std::cout << lexmin(apply(problem, optimizeMap)) << std::endl;
-        //! FIXME: compute linear independence constraints
+        auto solution = lexmin(apply(problem, optimizeMap));
+        if (solution.empty())
+            break;
+        auto optimized =
+            sample(apply(std::move(solution), revOptimizeMap)).coordinates() |
+            iter::imap([&](const PBVal &val) {
+                ASSERT(val.denSi() == 1);
+                return val.numSi();
+            }) |
+            collect;
+        std::cout << optimized << std::endl;
+        //! TODO: extract coefficients and construct orthogonal constraints
+        c0ParamFused.push_back({
+            optimized.begin() + (nParams + 1),
+            optimized.begin() + (nParams + 1) * 2,
+        });
+        c0IterFused.push_back({
+            optimized.begin() + (nParams + 1) * 2,
+            optimized.begin() + (nParams + 1) * 2 + nestLevel,
+        });
+        c1ParamFused.push_back({
+            optimized.begin() + (nParams + 1) * 2 + nestLevel,
+            optimized.begin() + (nParams + 1) * 3 + nestLevel,
+        });
+        c1IterFused.push_back({
+            optimized.begin() + (nParams + 1) * 3 + nestLevel,
+            optimized.end(),
+        });
+        orthogonalMatrix(c0IterFused);
+        orthogonalMatrix(c1IterFused);
+        //! FIXME: construct orthogonal constraints
         break;
     }
 

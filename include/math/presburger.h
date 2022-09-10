@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <isl/aff.h>
 #include <isl/ctx.h>
@@ -317,6 +318,57 @@ class PBFunc {
     }
 };
 
+class PBPoint {
+    isl_point *point_ = nullptr;
+
+  public:
+    PBPoint() {}
+    PBPoint(isl_point *point) : point_(point) {}
+
+    ~PBPoint() {
+        if (point_ != nullptr) {
+            isl_point_free(point_);
+        }
+    }
+
+    PBPoint(const PBPoint &other) : point_(other.copy()) {}
+    PBPoint &operator=(const PBPoint &other) {
+        if (point_ != nullptr) {
+            isl_point_free(point_);
+        }
+        point_ = other.copy();
+        return *this;
+    }
+
+    PBPoint(PBPoint &&other) : point_(other.move()) {}
+    PBPoint &operator=(PBPoint &&other) {
+        if (point_ != nullptr) {
+            isl_point_free(point_);
+        }
+        point_ = other.move();
+        return *this;
+    }
+
+    bool isValid() const { return point_ != nullptr; }
+
+    isl_point *get() const { return GET_ISL_PTR(point_); }
+    isl_point *copy() const { return COPY_ISL_PTR(point_, point); }
+    isl_point *move() { return MOVE_ISL_PTR(point_); }
+
+    bool isVoid() const { return isl_point_is_void(point_); }
+
+    std::vector<PBVal> coordinates() const {
+        ASSERT(!isVoid());
+        std::vector<PBVal> result;
+        isl_size nCoord = isl_space_dim(
+            PBSpace(isl_point_get_space(point_)).get(), isl_dim_set);
+        for (isl_size i = 0; i < nCoord; ++i)
+            result.emplace_back(
+                isl_point_get_coordinate_val(point_, isl_dim_set, i));
+        return result;
+    }
+};
+
 template <typename T>
 concept PBMapRef = std::same_as<PBMap, std::decay_t<T>>;
 template <typename T>
@@ -503,6 +555,10 @@ template <PBSpaceRef T> PBSpace spaceMapFromSet(T &&space) {
 
 template <PBMapRef T> PBSet flattenMapToSet(T &&map) {
     return isl_set_flatten(isl_map_wrap(PBRefTake<T>(map)));
+}
+
+template <PBSetRef T> PBPoint sample(T &&set) {
+    return isl_set_sample_point(PBRefTake<T>(set));
 }
 
 /**
