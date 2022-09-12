@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iostream>
 
+#include <analyze/all_uses.h>
 #include <hash.h>
 
 namespace freetensor {
@@ -27,6 +28,16 @@ template <class T> struct LinearExpr {
     T bias_;
 
     bool isConst() const { return coeff_.empty(); }
+
+    std::unordered_set<std::string> allNames() const {
+        std::unordered_set<std::string> names;
+        for (auto &&[k, a] : coeff_) {
+            for (auto &&name : ::freetensor::allNames(a)) {
+                names.insert(name);
+            }
+        }
+        return names;
+    }
 };
 
 template <class T>

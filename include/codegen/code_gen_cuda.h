@@ -11,7 +11,7 @@ namespace freetensor {
 
 struct CodeGenCUDAStream : public CodeGenStream {
     std::unordered_map<ParallelScope, Expr> threadDim_;
-    int64_t sharedSize_ = 0;
+    Expr sharedSize_ = makeIntConst(0);
 };
 
 class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
@@ -20,8 +20,9 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
 
   private:
     int nKernel_ = 0;
-    int64_t sharedStackTop_ = 0, globalStackTop_ = 0;
-    int64_t globalSize_ = 0;
+    Expr sharedStackTop_ = makeIntConst(0);
+    Expr globalStackTop_ = makeIntConst(0);
+    Expr globalSize_ = makeIntConst(0);
     std::unordered_set<Stmt> streamScopes_;
     bool inCublas_ = false;
 
@@ -32,9 +33,12 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
 
     using CodeGenC<CodeGenCUDAStream>::genMdPtrType;
 
-    int64_t globalSize() const { return globalSize_; }
+    Expr globalSize() const { return globalSize_; }
 
   private:
+    bool isConstOrByValue(const std::unordered_set<std::string> &names) const;
+    bool isConstOrByValue(const Expr &x) const;
+
     bool inKernel() const;
 
     void exprOr1(const std::unordered_map<ParallelScope, Expr> &dict,

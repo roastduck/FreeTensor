@@ -1,8 +1,10 @@
 #include <itertools.hpp>
 
+#include <analyze/all_uses.h>
 #include <codegen/code_gen_cuda.h>
 #include <except.h>
 #include <math/utils.h>
+#include <pass/const_fold.h>
 #include <pass/simplify.h>
 #include <serialize/mangle.h>
 
@@ -23,6 +25,27 @@ static std::string genCUBLASType(DataType dtype) {
     default:
         ASSERT(false);
     }
+}
+
+bool CodeGenCUDA::isConstOrByValue(const Expr &x) const {
+    return isConstOrByValue(allNames(x));
+}
+
+bool CodeGenCUDA::isConstOrByValue(
+    const std::unordered_set<std::string> &names) const {
+    for (auto &&item : names) {
+        if (hasLoop(item)) {
+            // TODO: We should allow using iterators defined outside
+            // of a kernel
+            return false;
+        }
+        if (hasDef(item)) {
+            if (buffer(item)->mtype() != MemType::ByValue) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
@@ -46,7 +69,7 @@ void CodeGenCUDA::genScalar(const VarDef &def,
                             const std::vector<Expr> &indices) {
     auto &&var = def->name_;
     auto mtype = buffer(var)->mtype();
-    if (indices.empty() &&
+    if (indices.empty() && def->buffer_->atype() == AccessType::Cache &&
         (mtype == MemType::GPUGlobal || mtype == MemType::GPUShared)) {
         os() << "*" << mangle(var);
     } else if (!inKernel() &&
@@ -397,7 +420,7 @@ void CodeGenCUDA::visit(const For &op) {
         if (!inKernel()) {
             std::string kernel = "kernel" + std::to_string(nKernel_++);
             pushStream(kernel);
-            sharedStackTop_ = 0;
+            sharedStackTop_ = makeIntConst(0);
             auto oldGlobalStackTop = globalStackTop_;
             beginBlock();
             (*this)(op->body_);
@@ -410,14 +433,12 @@ void CodeGenCUDA::visit(const For &op) {
             Stream &stream = poppedStream_.back();
             const auto &dim = stream.threadDim_;
             auto sharedSize = stream.sharedSize_;
-            if (sharedSize > 96 * 1024) {
-                throw InvalidProgram("Shared memory too large");
-            }
 
             makeIndent();
             os() << "checkCudaError(cudaFuncSetAttribute(" << kernel
-                 << ", cudaFuncAttributeMaxDynamicSharedMemorySize, "
-                 << std::to_string(sharedSize) << "));" << std::endl;
+                 << ", cudaFuncAttributeMaxDynamicSharedMemorySize, ";
+            (*this)(sharedSize);
+            os() << "));" << std::endl;
             makeIndent();
             os() << kernel << "<<<dim3(";
             exprOr1(dim, blockIdxX);
@@ -431,7 +452,9 @@ void CodeGenCUDA::visit(const For &op) {
             exprOr1(dim, threadIdxY);
             os() << ", ";
             exprOr1(dim, threadIdxZ);
-            os() << "), " << std::to_string(sharedSize) << ", __stream>>>(";
+            os() << "), ";
+            (*this)(sharedSize);
+            os() << ", __stream>>>(";
             bool first = true;
             for (auto &&[name, buffer] : stream.useBuffers_) {
                 os() << (first ? "" : ", ") << mangle(name);
@@ -469,35 +492,41 @@ void CodeGenCUDA::visit(const VarDef &op) {
             auto &&shape = tensor->shape();
             makeIndent();
             os() << "auto " << mangle(op->name_) << " = ";
-            genMdPtrDef(op->buffer_,
-                        "__glmem + " + std::to_string(globalStackTop_));
+            genMdPtrDef(op->buffer_, [this]() {
+                os() << "__glmem + (";
+                (*this)(globalStackTop_);
+                os() << ")";
+            });
             os() << ";" << std::endl;
 
-            int64_t size = sizeOf(tensor->dtype());
+            Expr size = makeIntConst(sizeOf(tensor->dtype()));
             for (auto &&dim : shape) {
-                if (dim->nodeType() == ASTNodeType::IntConst) {
-                    size *= dim.as<IntConstNode>()->val_;
+                if (isConstOrByValue(dim)) {
+                    size = makeMul(size, dim);
                 } else {
                     throw InvalidProgram(
                         "Currently dynamic sized gpu/global "
-                        "memory allocated from inside a kernel is not "
-                        "supported");
+                        "memory other than \"byvalue\" memory type allocated "
+                        "from inside a kernel is not supported");
                 }
             }
 
             // Align to 128 bytes (TODO: look up cache line size from Target)
-            size = ceilDiv<int64_t>(size, 128) * 128;
+            size = makeMul(makeCeilDiv(size, makeIntConst(128)),
+                           makeIntConst(128));
 
-            globalSize_ = std::max(globalSize_, globalStackTop_ + size);
+            globalSize_ =
+                constFold(makeMax(globalSize_, makeAdd(globalStackTop_, size)));
 
-            globalStackTop_ += size;
+            auto oldGlobalStackTop = globalStackTop_;
+            globalStackTop_ = constFold(makeAdd(globalStackTop_, size));
             markDefBuffer(op);
             (*this)(op->body_);
             if (inKernel()) {
-                // globalStackTop_ -= size;
+                // globalStackTop_ = oldGlobalStackTop;
                 // FIXME: We have to add some sync before reusing global buffers
             } else {
-                globalStackTop_ -= size;
+                globalStackTop_ = oldGlobalStackTop;
             }
             markUndefBuffer(op);
             break;
@@ -539,28 +568,33 @@ void CodeGenCUDA::visit(const VarDef &op) {
             auto &&shape = tensor->shape();
             makeIndent();
             os() << "auto " << mangle(op->name_) << " = ";
-            genMdPtrDef(op->buffer_,
-                        "__shmem + " + std::to_string(sharedStackTop_));
+            genMdPtrDef(op->buffer_, [this]() {
+                os() << "__shmem + (";
+                (*this)(sharedStackTop_);
+                os() << ")";
+            });
             os() << ";" << std::endl;
 
-            int64_t size = sizeOf(tensor->dtype());
+            Expr size = makeIntConst(sizeOf(tensor->dtype()));
             for (auto &&dim : shape) {
-                if (dim->nodeType() == ASTNodeType::IntConst) {
-                    size *= dim.as<IntConstNode>()->val_;
+                if (isConstOrByValue(dim)) {
+                    size = makeMul(size, dim);
                 } else {
                     throw InvalidProgram("Currently dynamic sized gpu/shared "
-                                         "memory is not supported");
+                                         "memory other than \"byvalue\" memory "
+                                         "type is not supported");
                 }
             }
 
-            streamStack_.back().sharedSize_ = std::max(
-                streamStack_.back().sharedSize_, sharedStackTop_ + size);
+            streamStack_.back().sharedSize_ =
+                constFold(makeMax(streamStack_.back().sharedSize_,
+                                  makeAdd(sharedStackTop_, size)));
 
             markDefBuffer(op);
-            sharedStackTop_ += size;
+            sharedStackTop_ = constFold(makeAdd(sharedStackTop_, size));
             (*this)(op->body_);
-            // sharedStackTop_ -= size;
-            // FIXME: We have to add some sync before reusing shared buffers
+            // FIXME: Restore sharedStackTop_, but we have to add some sync
+            // before reusing shared buffers
             markUndefBuffer(op);
             break;
         }
@@ -722,8 +756,11 @@ extern "C" {
             s += "\n";
 
             // Allocate stack for gpu/global
+            auto globalSize = visitor.globalSize();
+            // FIXME: Support non-constant
+            ASSERT(globalSize->nodeType() == ASTNodeType::IntConst);
             s += "uint8_t *__glmem = (uint8_t*)cudaNew(" +
-                 std::to_string(visitor.globalSize()) + ");\n";
+                 std::to_string(globalSize.as<IntConstNode>()->val_) + ");\n";
             s += "\n";
 
             s += stream.os_.str();

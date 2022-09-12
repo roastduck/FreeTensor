@@ -4,6 +4,7 @@
 
 #include <container_utils.h>
 #include <hash.h>
+#include <pass/const_fold.h>
 #include <pass/gpu/lower_parallel_reduction.h>
 #include <pass/make_nested_loops.h>
 #include <pass/simplify.h>
@@ -16,6 +17,30 @@ namespace {
 
 template <class T, class U> std::vector<T> asVec(U &&adaptor) {
     return std::vector<T>(adaptor.begin(), adaptor.end());
+}
+
+Expr makeCeilLog2(const Expr &_x) {
+    // Suppose x is a non-negative integer
+    auto x = constFold(_x);
+    if (x->nodeType() == ASTNodeType::IntConst) {
+        return makeIntConst(
+            (63 - __builtin_clzll(
+                      (unsigned long long)(x.as<IntConstNode>()->val_ - 1))) +
+            1);
+    }
+    switch (x->dtype()) {
+    case DataType::Int32:
+        // Similar to __builtin_clz, defined in gpu_runtime.h
+        return makeIntrinsic("((31 - clz((unsigned int)((%) - 1))) + 1)", {x},
+                             DataType::Int32, false);
+    case DataType::Int64:
+        // Similar to __builtin_clzll, defined in gpu_runtime.h
+        return makeIntrinsic(
+            "((63 - clzll((unsigned long long)((%) - 1))) + 1)", {x},
+            DataType::Int32, false); // clzll returns int
+    default:
+        ASSERT(false);
+    }
 }
 
 } // namespace
@@ -45,11 +70,6 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     loopStack_.pop_back();
 
-    if (op->len_->nodeType() != ASTNodeType::IntConst) {
-        ERROR("Parallel reduction on a dynamic-lengthed loop is not "
-              "supported yet");
-    }
-    auto len = op->len_.as<IntConstNode>()->val_;
     auto nth = makeSub(makeVar(op->iter_), op->begin_);
 
     // Note that we are before normalize_threads, so there will be no
@@ -94,7 +114,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         //   => 2^p < len
         //   => p < log_2 len
         //   => p < floor(log_2(len - 1)) + 1
-        auto count = (63 - __builtin_clzll((unsigned long long)(len - 1))) + 1;
+        auto count = makeCeilLog2(op->len_);
         auto k = makeIntrinsic("1 << (%)", {makeVar("__reduce_p")},
                                DataType::Int32, false);
         auto reduceStmt = makeIf(
@@ -105,10 +125,13 @@ Stmt LowerParallelReduction::visit(const For &_op) {
                 workspace, cat({nth}, indices), r->op_,
                 makeLoad(workspace, cat({makeAdd(nth, k)}, indices), dtype),
                 false));
-        reduceStmt = makeFor("__reduce_p", makeIntConst(0), makeIntConst(count),
-                             makeIntConst(1), makeIntConst(count),
-                             Ref<ForProperty>::make()->withUnroll(),
-                             std::move(reduceStmt));
+        auto prop = Ref<ForProperty>::make();
+        if (count->nodeType() == ASTNodeType::IntConst) {
+            prop = prop->withUnroll();
+        }
+        reduceStmt =
+            makeFor("__reduce_p", makeIntConst(0), count, makeIntConst(1),
+                    count, prop, std::move(reduceStmt));
         flushStmt = makeStmtSeq({reduceStmt, flushStmt});
 
         initStmt =
