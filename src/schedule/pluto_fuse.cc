@@ -745,7 +745,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                        iter::chain(coeffSets0, coeffSets1, coeffSets1to0)))
             if (!satisfied)
                 problem = intersect(std::move(problem), coeffSet);
-        // map the coefficients to optimize targets
+        // map the coefficients to optimize targets, and perform optimization
         auto solution =
             lexmin(intersect(std::move(orthoSet), apply(problem, optimizeMap)));
         if (solution.empty())
@@ -759,7 +759,48 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
             collect;
         std::cout << optimized << std::endl;
 
-        //!TODO: exclude fake fusion
+        // check and exclude fake fusion
+        auto loopSetToRange = [&](int coeffBase) {
+            return PBMap(
+                ctx,
+                "{ [" +
+                    (iter::chain(iter::range(nParams) | iter::imap([](int i) {
+                                     return "p" + toString(i);
+                                 }),
+                                 iter::range(nestLevel) | iter::imap([](int i) {
+                                     return "x" + toString(i);
+                                 })) |
+                     join(", ")) +
+                    "] -> [" +
+                    (iter::chain(
+                         iter::range(nParams + 1) | iter::imap([&](int i) {
+                             auto c = toString(optimized[coeffBase + i]);
+                             if (i == nParams)
+                                 return c;
+                             else
+                                 return c + "p" + toString(i);
+                         }),
+                         iter::range(nestLevel) | iter::imap([&](int i) {
+                             auto c = toString(
+                                 optimized[coeffBase + nParams + 1 + i]);
+                             return c + "x" + toString(i);
+                         })) |
+                     join(" + ")) +
+                    "] }");
+        };
+        PBSet loop0Range = apply(loop0Set, loopSetToRange(nParams + 1));
+        PBSet loop1Range =
+            apply(loop1Set, loopSetToRange((nParams + 1) * 2 + nestLevel));
+        // if the two loops has no overlap on the result axis, they are not
+        // actually fused so we bail out
+        if (intersect(
+                // range of values that less than the maximum of loop 0
+                apply(lexmax(loop0Range), lexGE(spaceSetAlloc(ctx, 0, 1))),
+                // ... and from loop 1
+                loop1Range)
+                // ... don't overlap
+                .empty())
+            break;
 
         // save coefficients' values
         c0ParamFusedValue.push_back({
