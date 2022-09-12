@@ -78,7 +78,7 @@ class CompTransientBounds : public BaseClass,
             }
 
             auto norm = linearComp(cond);
-            if (!norm.isValid()) {
+            if (!norm.has_value()) {
                 continue;
             }
 
@@ -91,11 +91,11 @@ class CompTransientBounds : public BaseClass,
                 if (a->nodeType() == ASTNodeType::Var ||
                     a->nodeType() == ASTNodeType::Load) {
                     auto [lower, upper] = lin2bounds(lin, type, a);
-                    if (lower.isValid()) {
+                    if (lower.has_value()) {
                         transients_[a].expr_ = a;
                         transients_[a].lower_.emplace_back(lower->expr());
                     }
-                    if (upper.isValid()) {
+                    if (upper.has_value()) {
                         transients_[a].expr_ = a;
                         transients_[a].upper_.emplace_back(upper->expr());
                     }

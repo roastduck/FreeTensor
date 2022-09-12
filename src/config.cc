@@ -1,13 +1,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <mutex>
+#include <optional>
 #include <unistd.h>
 
 #include <config.h>
 #include <container_utils.h>
 #include <driver/device.h>
-#include <except.h>
-#include <opt.h>
 #include <serialize/to_string.h>
 
 namespace freetensor {
@@ -42,40 +41,40 @@ static std::vector<fs::path> fileInDirs(const std::string &filename,
     return ret;
 }
 
-static Opt<std::string> getStrEnv(const char *name) {
+static std::optional<std::string> getStrEnv(const char *name) {
     static std::mutex lock;
     std::lock_guard<std::mutex> guard(lock); // getenv is not thread safe
     char *env = getenv(name);
     if (env == nullptr) {
-        return nullptr;
+        return std::nullopt;
     } else {
-        return Opt<std::string>::make(env);
+        return std::make_optional<std::string>(env);
     }
 }
 
 static std::string getStrEnvRequired(const char *name) {
-    if (auto &&ret = getStrEnv(name); ret.isValid()) {
+    if (auto &&ret = getStrEnv(name); ret.has_value()) {
         return *ret;
     } else {
         ERROR((std::string) "Environment varialbe " + name + " not found");
     }
 }
 
-static Opt<bool> getBoolEnv(const char *name) {
-    if (auto _env = getStrEnv(name); _env.isValid()) {
+static std::optional<bool> getBoolEnv(const char *name) {
+    if (auto _env = getStrEnv(name); _env.has_value()) {
         auto &&env = tolower(*_env);
         if (env == "true" || env == "yes" || env == "on" || env == "1") {
-            return Opt<bool>::make(true);
+            return true;
         } else if (env == "false" || env == "no" || env == "off" ||
                    env == "0") {
-            return Opt<bool>::make(false);
+            return false;
         } else {
             ERROR(
                 (std::string) "Value of " + name +
                 " must be true/yes/on/1 or false/no/off/0 (case insensitive)");
         }
     } else {
-        return nullptr;
+        return std::nullopt;
     }
 }
 
@@ -120,23 +119,23 @@ void Config::init() {
 #endif // FT_BACKEND_COMPILER_NVCC
 #endif // FT_WITH_CUDA
 
-    if (auto flag = getBoolEnv("FT_PRETTY_PRINT"); flag.isValid()) {
+    if (auto flag = getBoolEnv("FT_PRETTY_PRINT"); flag.has_value()) {
         Config::setPrettyPrint(*flag);
     }
-    if (auto flag = getBoolEnv("FT_PRINT_ALL_ID"); flag.isValid()) {
+    if (auto flag = getBoolEnv("FT_PRINT_ALL_ID"); flag.has_value()) {
         Config::setPrintAllId(*flag);
     }
-    if (auto flag = getBoolEnv("FT_WERROR"); flag.isValid()) {
+    if (auto flag = getBoolEnv("FT_WERROR"); flag.has_value()) {
         Config::setWerror(*flag);
     }
-    if (auto flag = getBoolEnv("FT_DEBUG_BINARY"); flag.isValid()) {
+    if (auto flag = getBoolEnv("FT_DEBUG_BINARY"); flag.has_value()) {
         Config::setDebugBinary(*flag);
     }
-    if (auto path = getStrEnv("FT_BACKEND_COMPILER_CXX"); path.isValid()) {
+    if (auto path = getStrEnv("FT_BACKEND_COMPILER_CXX"); path.has_value()) {
         Config::setBackendCompilerCXX(makePaths(*path));
     }
 #ifdef FT_WITH_CUDA
-    if (auto path = getStrEnv("FT_BACKEND_COMPILER_NVCC"); path.isValid()) {
+    if (auto path = getStrEnv("FT_BACKEND_COMPILER_NVCC"); path.has_value()) {
         Config::setBackendCompilerNVCC(makePaths(*path));
     }
 #endif // FT_WITH_CUDA

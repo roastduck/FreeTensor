@@ -322,3 +322,81 @@ def test_crossing_var_def():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_after_multiple_statements():
+    with ft.VarDef([
+        ("y1", (4,), "int32", "output", "cpu"),
+        ("y2", (4,), "int32", "output", "cpu"),
+        ("y3", (4,), "int32", "output", "cpu"),
+        ("y4", (4,), "int32", "output", "cpu"),
+    ]) as (y1, y2, y3, y4):
+        with ft.For("i", 0, 4, label="L1") as i:
+            ft.MarkLabel("S1")
+            y1[i] = i + 1
+            ft.MarkLabel("S2")
+            y2[i] = i + 2
+            ft.MarkLabel("S3")
+            y3[i] = i + 3
+            ft.MarkLabel("S4")
+            y4[i] = i + 4
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.move_to("S4", ft.MoveToSide.After, "S1|S2")
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([
+        ("y1", (4,), "int32", "output", "cpu"),
+        ("y2", (4,), "int32", "output", "cpu"),
+        ("y3", (4,), "int32", "output", "cpu"),
+        ("y4", (4,), "int32", "output", "cpu"),
+    ]) as (y1, y2, y3, y4):
+        with ft.For("i", 0, 4) as i:
+            y1[i] = i + 1
+            y2[i] = i + 2
+            y4[i] = i + 4
+            y3[i] = i + 3
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_before_multiple_statements():
+    with ft.VarDef([
+        ("y1", (4,), "int32", "output", "cpu"),
+        ("y2", (4,), "int32", "output", "cpu"),
+        ("y3", (4,), "int32", "output", "cpu"),
+        ("y4", (4,), "int32", "output", "cpu"),
+    ]) as (y1, y2, y3, y4):
+        with ft.For("i", 0, 4, label="L1") as i:
+            ft.MarkLabel("S1")
+            y1[i] = i + 1
+            ft.MarkLabel("S2")
+            y2[i] = i + 2
+            ft.MarkLabel("S3")
+            y3[i] = i + 3
+            ft.MarkLabel("S4")
+            y4[i] = i + 4
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.move_to("S1", ft.MoveToSide.Before, "S3|S4")
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([
+        ("y1", (4,), "int32", "output", "cpu"),
+        ("y2", (4,), "int32", "output", "cpu"),
+        ("y3", (4,), "int32", "output", "cpu"),
+        ("y4", (4,), "int32", "output", "cpu"),
+    ]) as (y1, y2, y3, y4):
+        with ft.For("i", 0, 4) as i:
+            y2[i] = i + 2
+            y1[i] = i + 1
+            y3[i] = i + 3
+            y4[i] = i + 4
+    std = ft.pop_ast()
+
+    assert std.match(ast)

@@ -1,12 +1,12 @@
 #ifndef FREE_TENSOR_ANALYZE_LINEAR_H
 #define FREE_TENSOR_ANALYZE_LINEAR_H
 
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 
 #include <hash.h>
 #include <math/linear.h>
-#include <opt.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -39,7 +39,8 @@ LinearExpr<int64_t> linear(const Expr &expr);
 /**
  * Try to represent an comparison as a "LINEAR OP 0" form
  */
-Opt<std::pair<LinearExpr<int64_t>, ASTNodeType>> linearComp(const Expr &expr);
+std::optional<std::pair<LinearExpr<int64_t>, ASTNodeType>>
+linearComp(const Expr &expr);
 
 } // namespace freetensor
 

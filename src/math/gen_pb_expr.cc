@@ -303,12 +303,12 @@ void GenPBExpr::visit(const IfExpr &op) {
     }
 }
 
-Opt<std::string> GenPBExpr::gen(const Expr &op) {
+std::optional<std::string> GenPBExpr::gen(const Expr &op) {
     (*this)(op);
     if (results_.count(op)) {
-        return Opt<std::string>::make(results_.at(op));
+        return std::make_optional<std::string>(results_.at(op));
     }
-    return nullptr;
+    return std::nullopt;
 }
 
 } // namespace freetensor

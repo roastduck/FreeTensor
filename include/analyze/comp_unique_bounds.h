@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_COMP_UNIQUE_BOUNDS_H
 #define FREE_TENSOR_COMP_UNIQUE_BOUNDS_H
 
+#include <optional>
 #include <unordered_set>
 
 #include <analyze/comp_transient_bounds.h>
@@ -55,7 +56,7 @@ class CompUniqueBounds : public Visitor {
 
     int64_t getIntLower(const Expr &op);
     int64_t getIntUpper(const Expr &op);
-    Opt<int64_t> getInt(const Expr &op);
+    std::optional<int64_t> getInt(const Expr &op);
 
     /**
      * Get all bounds defined by only variables or iterators in `names`

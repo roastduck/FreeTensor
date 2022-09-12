@@ -110,7 +110,25 @@ def test_no_stmt():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.cache_reduction("S0", "x", "cpu")
+        s.cache_reduction("S0", "y", "cpu")
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ast)
+
+
+def test_no_reduction_into_specific_var():
+    with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
+                    ("y", (4, 8), "int32", "inout", "cpu"),
+                    ("z", (4, 8), "int32", "inout", "cpu")]) as (x, y, z):
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                ft.MarkLabel("S0")
+                y[i, j] += x[i, j] * 2
+                ft.MarkLabel("S1")
+                z[i, j] += x[i, j] * 3
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    with pytest.raises(ft.InvalidSchedule):
+        s.cache_reduction("S1", "y", "cpu")
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 

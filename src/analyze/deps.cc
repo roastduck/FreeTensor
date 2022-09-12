@@ -219,7 +219,7 @@ Ref<std::string> AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
                                           GenPBExpr::VarMap &externals) {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
-        if (auto linstr = genPBExpr.gen(list[i]); linstr.isValid()) {
+        if (auto linstr = genPBExpr.gen(list[i]); linstr.has_value()) {
             ret += *linstr;
             for (auto &&[expr, str] : genPBExpr.vars(list[i])) {
                 if (expr->nodeType() == ASTNodeType::Load) {
@@ -244,7 +244,7 @@ Ref<std::string> AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                                        GenPBExpr::VarMap &externals) {
     std::string ret;
     for (auto &&cond : conds) {
-        if (auto str = genPBExpr.gen(cond); str.isValid()) {
+        if (auto str = genPBExpr.gen(cond); str.has_value()) {
             for (auto &&[expr, str] : genPBExpr.vars(cond)) {
                 if (expr->nodeType() == ASTNodeType::Load) {
                     externals[expr] = str;

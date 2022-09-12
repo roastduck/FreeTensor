@@ -1,5 +1,5 @@
-#ifndef GPU_CONTEXT_H
-#define GPU_CONTEXT_H
+#ifndef FREE_TENSOR_GPU_CONTEXT_H
+#define FREE_TENSOR_GPU_CONTEXT_H
 
 #include <cublas_v2.h>
 #include <iostream>
@@ -80,4 +80,4 @@ class GPUContext : public Context {
 
 extern "C" typedef GPUContext *GPUContext_t;
 
-#endif // GPU_CONTEXT_H
+#endif // FREE_TENSOR_GPU_CONTEXT_H

@@ -17,35 +17,35 @@ namespace gpu {
 void FindAllThreads::visit(const For &op) {
     if (op->property_->parallel_ == threadIdxX) {
         if (op->len_->nodeType() == ASTNodeType::IntConst) {
-            thx_ = Opt<int>::make(op->len_.as<IntConstNode>()->val_);
+            thx_ = op->len_.as<IntConstNode>()->val_;
         } else {
-            thx_ = nullptr;
+            thx_ = std::nullopt;
         }
     } else if (op->property_->parallel_ == threadIdxY) {
         if (op->len_->nodeType() == ASTNodeType::IntConst) {
-            thy_ = Opt<int>::make(op->len_.as<IntConstNode>()->val_);
+            thy_ = op->len_.as<IntConstNode>()->val_;
         } else {
-            thy_ = nullptr;
+            thy_ = std::nullopt;
         }
     } else if (op->property_->parallel_ == threadIdxZ) {
         if (op->len_->nodeType() == ASTNodeType::IntConst) {
-            thz_ = Opt<int>::make(op->len_.as<IntConstNode>()->val_);
+            thz_ = op->len_.as<IntConstNode>()->val_;
         } else {
-            thz_ = nullptr;
+            thz_ = std::nullopt;
         }
     }
     Visitor::visit(op);
     if (op->property_->parallel_ == threadIdxX) {
         results_[op->id()] =
-            ThreadInfo{op, thx_.isValid() && warpSize_ % *thx_ == 0};
+            ThreadInfo{op, thx_.has_value() && warpSize_ % *thx_ == 0};
     } else if (op->property_->parallel_ == threadIdxY) {
         results_[op->id()] =
-            ThreadInfo{op, thx_.isValid() && thy_.isValid() &&
+            ThreadInfo{op, thx_.has_value() && thy_.has_value() &&
                                warpSize_ % (*thx_ * *thy_) == 0};
     } else if (op->property_->parallel_ == threadIdxZ) {
-        results_[op->id()] =
-            ThreadInfo{op, thx_.isValid() && thy_.isValid() && thz_.isValid() &&
-                               warpSize_ % (*thx_ * *thy_ * *thz_) == 0};
+        results_[op->id()] = ThreadInfo{
+            op, thx_.has_value() && thy_.has_value() && thz_.has_value() &&
+                    warpSize_ % (*thx_ * *thy_ * *thz_) == 0};
     }
 }
 

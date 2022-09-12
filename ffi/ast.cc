@@ -78,10 +78,12 @@ void init_ffi_ast(py::module_ &m) {
         .def("__hash__", [](const ID &id) { return std::hash<ID>()(id); })
         .def(
             "__eq__", [](const ID &lhs, const ID &rhs) { return lhs == rhs; },
-            py::is_operator());
+            py::is_operator())
+        .def("__bool__", &ID::isValid)
+        .def("__int__", [](const ID &id) -> uint64_t { return id; });
 
     m.def("make_id", static_cast<ID (*)()>(&ID::make));
-    m.def("make_id", static_cast<ID (*)(int64_t)>(&ID::make));
+    m.def("make_id", static_cast<ID (*)(uint64_t)>(&ID::make));
 
 #ifdef FT_DEBUG_LOG_NODE
     pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);

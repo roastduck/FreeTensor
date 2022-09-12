@@ -34,6 +34,7 @@ class VarNode : public ExprNode {
 typedef Ref<VarNode> Var;
 #define makeVar(...) makeNode(Var, __VA_ARGS__)
 inline Expr _makeVar(const std::string &name) {
+    ASSERT(!name.empty());
     Var v = Var::make();
     v->name_ = name;
     return v;
@@ -52,6 +53,7 @@ typedef Ref<LoadNode> Load;
 #define makeLoad(...) makeNode(Load, __VA_ARGS__)
 template <class Tindices>
 Expr _makeLoad(const std::string &var, Tindices &&indices, DataType loadType) {
+    ASSERT(!var.empty());
     Load l = Load::make();
     l->var_ = var;
     l->indices_ = std::forward<Tindices>(indices);
@@ -60,6 +62,7 @@ Expr _makeLoad(const std::string &var, Tindices &&indices, DataType loadType) {
 }
 inline Expr _makeLoad(const std::string &var, const std::vector<Expr> &indices,
                       DataType loadType) {
+    ASSERT(!var.empty());
     Load l = Load::make();
     l->var_ = var;
     l->indices_ = indices;

@@ -9,7 +9,6 @@
 
 #include <buffer.h>
 #include <driver/target_type.h>
-#include <opt.h>
 #include <ref.h>
 
 namespace freetensor {

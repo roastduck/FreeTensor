@@ -2,11 +2,11 @@
 #define FREE_TENSOR_SKETCH_H
 
 #include <map>
+#include <optional>
 #include <utility>
 #include <vector>
 
 #include <analyze/find_multi_level_tiling.h>
-#include <opt.h>
 #include <random.h>
 #include <schedule.h>
 
@@ -136,9 +136,9 @@ class Sketch {
     //                |          +--------+-> upd model
     //                |                   |
     //                +-----> code ----> time
-    Opt<Schedule> genSchedule_;
+    std::optional<Schedule> genSchedule_;
     Func lowered_;
-    Opt<std::vector<double>> feature_;
+    std::optional<std::vector<double>> feature_;
 
   public:
     Sketch() = default;

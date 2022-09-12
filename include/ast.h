@@ -220,12 +220,36 @@ class StmtNode : public ASTNode {
 
     bool isStmt() const override { return true; }
 
+    /**
+     * For, If and Assert are control flow, while StmtSeq, VarDef and Assume are
+     * not
+     */
+    virtual bool isCtrlFlow() const { return false; }
+
+    virtual std::vector<Ref<StmtNode>> children() const { return {}; }
+
+    /**
+     * Parent, next or previous statement
+     *
+     * @{
+     */
     Ref<StmtNode> parentStmt() const;
-    Ref<StmtNode> parentCtrlFlow() const;
     Ref<StmtNode>
     parentStmtByFilter(const std::function<bool(const Stmt &)> &filter) const;
     Ref<StmtNode> prevStmt() const;
     Ref<StmtNode> nextStmt() const;
+    /** @} */
+
+    /**
+     * Parent, next or previous statment, ignoring VarDef, StmtSeq or Assume
+     * nodes
+     *
+     * @{
+     */
+    Ref<StmtNode> parentCtrlFlow() const;
+    Ref<StmtNode> prevInCtrlFlow() const;
+    Ref<StmtNode> nextInCtrlFlow() const;
+    /** @} */
 
     /**
      * Find an ancestor by ID. `this` itself is also considered

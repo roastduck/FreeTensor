@@ -8,6 +8,7 @@
 #include <pass/float_simplify.h>
 #include <pass/hoist_return_vars.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/make_nested_loops.h>
 #include <pass/make_reduction.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_cyclic_assign.h>
@@ -141,9 +142,7 @@ Expr ReplaceByTape::visit(const Load &_op) {
 
 Stmt Grad::visit(const StmtSeq &op) {
     if (isRecompute_) {
-        auto ret = BaseClass::visit(op);
-        ret->metadata() = nullptr;
-        return ret;
+        return BaseClass::visit(op);
     } else {
         std::vector<Stmt> stmts;
         stmts.reserve(op->stmts_.size() * 2);
@@ -155,7 +154,7 @@ Stmt Grad::visit(const StmtSeq &op) {
         for (auto it = op->stmts_.rbegin(); it != op->stmts_.rend(); it++) {
             stmts.emplace_back((*this)(*it));
         }
-        return makeStmtSeq(std::move(stmts), op->metadata(), op->id());
+        return makeStmtSeq(std::move(stmts), makeMetadata("grad", op));
     }
 }
 
@@ -169,8 +168,6 @@ Stmt Grad::visit(const For &_op) {
         op->end_ = replaceByTape(op->end_);
         op->step_ = replaceByTape(op->step_);
         op->len_ = replaceByTape(op->len_);
-        op->setId();
-        op->metadata() = nullptr;
     } else {
         auto noDeps = op->property_->noDeps_;
         for (auto &&fwdVar : op->property_->noDeps_) {
@@ -190,6 +187,8 @@ Stmt Grad::visit(const For &_op) {
         op->end_ = std::move(end);
         op->step_ = std::move(step);
         op->len_ = std::move(len);
+        op->metadata() = makeMetadata("grad", op);
+        op->setId();
     }
     return op;
 }
@@ -200,9 +199,9 @@ Stmt Grad::visit(const If &_op) {
     auto op = __op.as<IfNode>();
     ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
     op->cond_ = replaceByTape(op->cond_);
-    if (isRecompute_) {
+    if (!isRecompute_) {
+        op->metadata() = makeMetadata("grad", op);
         op->setId();
-        op->metadata() = nullptr;
     }
     return op;
 }
@@ -213,9 +212,9 @@ Stmt Grad::visit(const Assert &_op) {
     auto op = __op.as<AssertNode>();
     ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
     op->cond_ = replaceByTape(op->cond_);
-    if (isRecompute_) {
+    if (!isRecompute_) {
+        op->metadata() = makeMetadata("grad", op);
         op->setId();
-        op->metadata() = nullptr;
     }
     return op;
 }
@@ -238,8 +237,6 @@ Stmt Grad::visit(const VarDef &_op) {
     recomputed_.erase(op->name_);
 
     if (isRecompute_) {
-        op->setId();
-        op->metadata() = nullptr;
         return op;
     } else {
         VarDef ret = op;
@@ -255,8 +252,10 @@ Stmt Grad::visit(const VarDef &_op) {
             Stmt grad = op->body_;
             if ((op->buffer_->atype() != AccessType::Output &&
                  op->buffer_->atype() != AccessType::InOut)) {
-                // We use reverse order in the init, so it can be better fused
-                // with the backward pass
+                // Initialize gradients to 0. Later when we compute gradients
+                // for each statements, we add the local result to it. This is
+                // because when `y = f(x)` and `z = g(x)` both exist, `dw/dx =
+                // dw/dy dy/dx + dw/dz dz/dx`
                 std::vector<std::string> iters;
                 std::vector<Expr> indices;
                 int nDim = op->buffer_->tensor()->shape().size();
@@ -268,16 +267,13 @@ Stmt Grad::visit(const VarDef &_op) {
                     indices.emplace_back(makeVar(iter));
                     iters.emplace_back(std::move(iter));
                 }
-                auto init =
-                    makeStore(gradName, std::move(indices), makeIntConst(0));
-                for (int i = nDim - 1; i >= 0; i--) {
-                    init = makeFor(iters[i],
-                                   makeSub(op->buffer_->tensor()->shape()[i],
-                                           makeIntConst(1)),
-                                   makeIntConst(-1), makeIntConst(-1),
-                                   op->buffer_->tensor()->shape()[i],
-                                   Ref<ForProperty>::make(), init);
-                }
+                auto init = makeNestedLoops(
+                    iters, iter::repeat(makeIntConst(0)),
+                    op->buffer_->tensor()->shape(),
+                    iter::repeat(makeIntConst(1)),
+                    op->buffer_->tensor()->shape(),
+                    iter::repeat(Ref<ForProperty>::make()),
+                    makeStore(gradName, std::move(indices), makeIntConst(0)));
                 grad = makeStmtSeq({init, grad});
             }
 
@@ -331,14 +327,12 @@ Stmt Grad::visit(const Store &op) {
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
         if (!recomputed && !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
-            auto ret = ReplaceByTape(*this, tapeMap_, versions_, op)(op);
-            ret->setId();
-            ret->metadata() = nullptr;
-            return ret;
+            return ReplaceByTape(*this, tapeMap_, versions_, op)(op);
         } else {
             return makeStmtSeq({});
         }
     } else {
+        auto newMetadata = makeMetadata("grad", op);
         std::vector<Stmt> stmts;
         if (gradNames_.count(op->var_)) {
             auto &&grad = gradNames_.at(op->var_);
@@ -353,11 +347,12 @@ Stmt Grad::visit(const Store &op) {
                 exprVisitor(op->expr_);
 
                 for (auto &&stmt : exprVisitor.appends()) {
+                    stmt->metadata() = newMetadata;
                     stmts.emplace_back(stmt);
                 }
                 if (notSingleWrite_.count(op)) {
                     stmts.emplace_back(
-                        makeStore(grad, indices, makeIntConst(0)));
+                        makeStore(grad, indices, makeIntConst(0), newMetadata));
                 }
                 return makeStmtSeq(std::move(stmts));
             } else {
@@ -367,10 +362,11 @@ Stmt Grad::visit(const Store &op) {
                 // d_y[i] = 0
                 // deduce d_x[i] and d_y[i] using d_y.old
                 auto oldGrad = grad + ".old";
+                stmts.emplace_back(makeStore(
+                    oldGrad, {}, makeLoad(grad, indices, b->tensor()->dtype()),
+                    newMetadata));
                 stmts.emplace_back(
-                    makeStore(oldGrad, {},
-                              makeLoad(grad, indices, b->tensor()->dtype())));
-                stmts.emplace_back(makeStore(grad, indices, makeIntConst(0)));
+                    makeStore(grad, indices, makeIntConst(0), newMetadata));
 
                 ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
                 GradExpr exprVisitor(
@@ -380,6 +376,7 @@ Stmt Grad::visit(const Store &op) {
                 exprVisitor(op->expr_);
 
                 for (auto &&stmt : exprVisitor.appends()) {
+                    stmt->metadata() = newMetadata;
                     stmts.emplace_back(stmt);
                 }
                 return makeVarDef(
@@ -404,14 +401,12 @@ Stmt Grad::visit(const ReduceTo &op) {
         if (!recomputed && b->atype() == AccessType::Cache &&
             !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
-            auto ret = ReplaceByTape(*this, tapeMap_, versions_, op)(op);
-            ret->setId();
-            ret->metadata() = nullptr;
-            return ret;
+            return ReplaceByTape(*this, tapeMap_, versions_, op)(op);
         } else {
             return makeStmtSeq({});
         }
     } else {
+        auto newMetadata = makeMetadata("grad", op);
         std::vector<Stmt> stmts;
         if (gradNames_.count(op->var_)) {
             auto &&grad = gradNames_.at(op->var_);
@@ -427,6 +422,7 @@ Stmt Grad::visit(const ReduceTo &op) {
                 exprVisitor(op->expr_);
 
                 for (auto &&stmt : exprVisitor.appends()) {
+                    stmt->metadata() = newMetadata;
                     stmts.emplace_back(stmt);
                 }
                 return makeStmtSeq(std::move(stmts));
@@ -629,12 +625,11 @@ gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
     std::vector<FuncParam> forwardParams, backwardParams;
     std::vector<FuncRet> backwardRets;
     for (auto &&param : func->params_) {
-        auto nodes = findStmt(func->body_, [&](const Stmt &stmt) {
+        auto node = findStmt(func->body_, [&](const Stmt &stmt) {
             return stmt->nodeType() == ASTNodeType::VarDef &&
                    stmt.as<VarDefNode>()->name_ == param.name_;
         });
-        ASSERT(nodes.size() == 1);
-        if (nodes.front().template as<VarDefNode>()->buffer_->atype() ==
+        if (node.template as<VarDefNode>()->buffer_->atype() ==
             AccessType::Input) {
             auto closureArr = Ref<Ref<Array>>::make();
             // Redirect input arguments from forward to backward
@@ -678,15 +673,12 @@ gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
         if (inplace) {
             backwardParams.emplace_back(dzdx, nullptr, false);
         } else {
-            auto nodes = findStmt(backward, [&](const Stmt &stmt) {
+            auto node = findStmt(backward, [&](const Stmt &stmt) {
                 return stmt->nodeType() == ASTNodeType::VarDef &&
                        stmt.as<VarDefNode>()->name_ == dzdx;
             });
-            ASSERT(nodes.size() == 1);
-            auto dtype = nodes.front()
-                             .template as<VarDefNode>()
-                             ->buffer_->tensor()
-                             ->dtype();
+            auto dtype =
+                node.template as<VarDefNode>()->buffer_->tensor()->dtype();
             backwardRets.emplace_back(dzdx, dtype, nullptr, false);
         }
     }

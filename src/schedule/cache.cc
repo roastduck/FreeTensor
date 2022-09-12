@@ -4,7 +4,6 @@
 #include <itertools.hpp>
 
 #include <pass/make_nested_loops.h>
-#include <pass/make_reduction.h>
 #include <pass/remove_writes.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
@@ -151,6 +150,10 @@ Stmt MakeFillAndFlush::visit(const VarDef &op) {
 Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
     auto op = Mutator::visitStmt(_op);
     if (op->id() == stmt_) {
+        if (!reduce_.isValid()) {
+            throw InvalidSchedule("The cached statement is not reducing into "
+                                  "the specific variable");
+        }
         std::vector<Expr> indices;
         ASSERT(def_.isValid());
         int nDim = def_->buffer_->tensor()->shape().size();
@@ -280,10 +283,8 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
 std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
 cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
                MemType mtype) {
-    auto ast = makeReduction(_ast);
-
     MakeCacheVar makeCacheVar(stmt, var, mtype, true);
-    ast = makeCacheVar(ast);
+    auto ast = makeCacheVar(_ast);
     auto newVar = makeCacheVar.newVar();
     auto oldDef = makeCacheVar.oldDef();
     auto newDef = makeCacheVar.newDef();

@@ -151,6 +151,9 @@ bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
  * or Variant during iterations. The variability of an expression is the "meet"
  * of its sub-expressions' variability. The variability of a variable is the
  * "meet" of variability of all expressions stored to it
+ *
+ * It is suggested to call pass/simplify before this function, to avoid false
+ * variants like `i - i`
  */
 std::pair<LoopVariExprMap, LoopVariUniqVarMap> findLoopVariance(const Stmt &op);
 

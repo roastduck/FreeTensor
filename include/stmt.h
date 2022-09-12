@@ -35,6 +35,7 @@ inline Stmt _makeAny() { return Any::make(); }
 class StmtSeqNode : public StmtNode {
   public:
     SubTreeList<StmtNode> stmts_ = ChildOf{this};
+    std::vector<Stmt> children() const override { return stmts_; }
     void compHash() override;
     DEFINE_NODE_TRAIT(StmtSeq);
 };
@@ -81,6 +82,7 @@ class VarDefNode : public StmtNode {
                /// `buffer_`. `dtype` of `ioTensor_` is currently unused
     SubTree<StmtNode> body_ = ChildOf{this};
     bool pinned_; /// If pinned, SinkVar and ShrinkVar will not alter this node
+    std::vector<Stmt> children() const override { return {body_}; }
     void compHash() override;
     DEFINE_NODE_TRAIT(VarDef);
 };
@@ -90,6 +92,7 @@ template <class Tbuffer, class TioTensor, class Tbody>
 Stmt _makeVarDef(const std::string &name, Tbuffer &&buffer,
                  TioTensor &&ioTensor, Tbody &&body, bool pinned,
                  const Metadata &metadata = nullptr, const ID &id = {}) {
+    ASSERT(!name.empty());
     VarDef d = VarDef::make();
     d->metadata() = metadata;
     d->setId(id);
@@ -119,6 +122,7 @@ typedef Ref<StoreNode> Store;
 template <class Tindices, class Texpr>
 Stmt _makeStore(const std::string &var, Tindices &&indices, Texpr &&expr,
                 const Metadata &metadata = nullptr, const ID &id = {}) {
+    ASSERT(!var.empty());
     Store s = Store::make();
     s->metadata() = metadata;
     s->setId(id);
@@ -131,6 +135,7 @@ template <class Texpr>
 Stmt _makeStore(const std::string &var, const std::vector<Expr> &indices,
                 Texpr &&expr, const Metadata &metadata = nullptr,
                 const ID &id = {}) {
+    ASSERT(!var.empty());
     Store s = Store::make();
     s->metadata() = metadata;
     s->setId(id);
@@ -155,6 +160,7 @@ typedef Ref<AllocNode> Alloc;
 #define makeAlloc(...) makeNode(Alloc, __VA_ARGS__)
 inline Stmt _makeAlloc(const std::string &var,
                        const Metadata &metadata = nullptr, const ID &id = {}) {
+    ASSERT(!var.empty());
     Alloc a = Alloc::make();
     a->metadata() = metadata;
     a->setId(id);
@@ -177,6 +183,7 @@ typedef Ref<FreeNode> Free;
 #define makeFree(...) makeNode(Free, __VA_ARGS__)
 inline Stmt _makeFree(const std::string &var,
                       const Metadata &metadata = nullptr, const ID &id = {}) {
+    ASSERT(!var.empty());
     Free f = Free::make();
     f->metadata() = metadata;
     f->setId(id);
@@ -208,6 +215,7 @@ template <class Tindices, class Texpr>
 Stmt _makeReduceTo(const std::string &var, Tindices &&indices, ReduceOp op,
                    Texpr &&expr, bool atomic,
                    const Metadata &metadata = nullptr, const ID &id = {}) {
+    ASSERT(!var.empty());
     ReduceTo a = ReduceTo::make();
     a->metadata() = metadata;
     a->setId(id);
@@ -222,6 +230,7 @@ template <class Texpr>
 Stmt _makeReduceTo(const std::string &var, const std::vector<Expr> &indices,
                    ReduceOp op, Texpr &&expr, bool atomic,
                    const Metadata &metadata = nullptr, const ID &id = {}) {
+    ASSERT(!var.empty());
     ReduceTo a = ReduceTo::make();
     a->metadata() = metadata;
     a->setId(id);
@@ -250,6 +259,9 @@ class ForNode : public StmtNode {
     SubTree<ForProperty> property_ = ChildOf{this};
     SubTree<StmtNode> body_ = ChildOf{this};
 
+    bool isCtrlFlow() const override { return true; }
+    std::vector<Stmt> children() const override { return {body_}; }
+
     void compHash() override;
 
     DEFINE_NODE_TRAIT(For);
@@ -261,6 +273,7 @@ template <class Tbegin, class Tend, class Tstep, class Tlen, class Tbody,
 Stmt _makeFor(const std::string &iter, Tbegin &&begin, Tend &&end, Tstep &&step,
               Tlen &&len, Tproperty &&property, Tbody &&body,
               const Metadata &metadata = nullptr, const ID &id = {}) {
+    ASSERT(!iter.empty());
     For f = For::make();
     f->metadata() = metadata;
     f->setId(id);
@@ -282,6 +295,8 @@ class IfNode : public StmtNode {
     SubTree<ExprNode> cond_ = ChildOf{this};
     SubTree<StmtNode> thenCase_ = ChildOf{this};
     SubTree<StmtNode, NullPolicy::Nullable> elseCase_ = ChildOf{this};
+
+    bool isCtrlFlow() const override { return true; }
 
     void compHash() override;
 
@@ -320,6 +335,8 @@ class AssertNode : public StmtNode {
   public:
     SubTree<ExprNode> cond_ = ChildOf{this};
     SubTree<StmtNode> body_ = ChildOf{this};
+    bool isCtrlFlow() const override { return true; }
+    std::vector<Stmt> children() const override { return {body_}; }
     void compHash() override;
     DEFINE_NODE_TRAIT(Assert);
 };
@@ -351,6 +368,7 @@ class AssumeNode : public StmtNode {
   public:
     SubTree<ExprNode> cond_ = ChildOf{this};
     SubTree<StmtNode> body_ = ChildOf{this};
+    std::vector<Stmt> children() const override { return {body_}; }
     void compHash() override;
     DEFINE_NODE_TRAIT(Assume);
 };
@@ -417,6 +435,7 @@ class MatMulNode : public StmtNode {
     bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
     SubTree<StmtNode> equivalent_ = ChildOf{
         this}; // Equivalent loop statements, to help dependency analysis
+    std::vector<Stmt> children() const override { return {equivalent_}; }
     void compHash() override;
     DEFINE_NODE_TRAIT(MatMul);
 };

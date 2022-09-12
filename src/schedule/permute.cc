@@ -3,8 +3,6 @@
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <math/parse_pb_expr.h>
-#include <pass/flatten_stmt_seq.h>
-#include <pass/make_reduction.h>
 #include <pass/shrink_for.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/permute.h>
@@ -90,8 +88,7 @@ std::pair<Stmt, std::vector<ID>> permute(
     if (loopsId.size() == 0)
         throw InvalidSchedule("No loop is specified");
 
-    // flatten the AST first since we expect perfectly nested loops
-    auto ast = flattenStmtSeq(_ast);
+    auto ast = _ast;
 
     // look for the loops specified
     CheckLoopOrder checker(loopsId);
@@ -167,7 +164,7 @@ std::pair<Stmt, std::vector<ID>> permute(
                 oss << " and ";
 
             auto res = genPBExpr.gen(item);
-            if (!res.isValid())
+            if (!res.has_value())
                 throw InvalidSchedule(
                     "Cannot generate Presburger expression for component " +
                     std::to_string(i) + " of provided transform, which is " +

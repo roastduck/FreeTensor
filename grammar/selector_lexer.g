@@ -14,10 +14,14 @@ NodeTypeFor: '<For>';
 NodeTypeIf: '<If>';
 NodeTypeAssert: '<Assert>';
 NodeTypeAssume: '<Assume>';
+NodeTypeStore: '<Store>';
+NodeTypeReduceTo: '<ReduceTo>';
+NodeTypeEval: '<Eval>';
 
 ChildArrow: '<-';
 DescendantArrow: '<<-';
-CallerArrow: '<~';
+DirectCallerArrow: '<~';
+CallerArrow: '<<~';
 
 LeftBracket: '{';
 RightBracket: '}';

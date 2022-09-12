@@ -1,5 +1,5 @@
-#ifndef CPU_RUNTIME_H
-#define CPU_RUNTIME_H
+#ifndef FREE_TENSOR_CPU_RUNTIME_H
+#define FREE_TENSOR_CPU_RUNTIME_H
 
 #include <algorithm> // min, max
 #include <array>     // ByValue
@@ -16,6 +16,7 @@
 
 #include "cpu_context.h"
 #include "mdspan.h"
+#include "unchecked_opt.h"
 
 #define restrict __restrict__
 #define __ByValArray std::array
@@ -44,4 +45,4 @@ template <class T> T runtime_square(T x) { return x * x; }
 
 template <class T> T runtime_sigmoid(T x) { return 1.0 / (1.0 + std::exp(-x)); }
 
-#endif // CPU_RUNTIME_H
+#endif // FREE_TENSOR_CPU_RUNTIME_H

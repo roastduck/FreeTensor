@@ -24,6 +24,7 @@ class MetadataContent {
     virtual ~MetadataContent() {}
 
     virtual MetadataType getType() const = 0;
+    virtual bool printByDefault() const = 0;
     virtual void print(std::ostream &os, bool skipLocation,
                        int nIndent) const = 0;
 };
@@ -51,6 +52,7 @@ class TransformedMetadataContent : public MetadataContent {
     ~TransformedMetadataContent() override = default;
 
     MetadataType getType() const override { return MetadataType::Transformed; }
+    bool printByDefault() const override { return true; }
     void print(std::ostream &os, bool skipLocation, int nIndent) const override;
 
     const std::string &op() const { return op_; }
@@ -82,6 +84,7 @@ class SourceMetadataContent : public MetadataContent {
     const Metadata &caller() const { return callerMetadata_; }
 
     MetadataType getType() const override { return MetadataType::Source; }
+    bool printByDefault() const override { return !labels_.empty(); }
     void print(std::ostream &os, bool skipLocation, int nIndent) const override;
 };
 using SourceMetadata = Ref<SourceMetadataContent>;
@@ -98,6 +101,7 @@ class AnonymousMetadataContent : public MetadataContent {
     AnonymousMetadataContent(const ID &id);
     ~AnonymousMetadataContent() override = default;
     MetadataType getType() const override { return MetadataType::Anonymous; }
+    bool printByDefault() const override { return false; }
     void print(std::ostream &os, bool skipLocation, int nIndent) const override;
 
     ID id() const { return id_; }
