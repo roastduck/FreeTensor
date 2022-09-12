@@ -16,7 +16,7 @@ leafSelector returns[Ref<LeafSelector> s]
         $s = Ref<LabelSelector>::make($Label.text);
     }
 	| Id {
-        $s = Ref<IDSelector>::make(ID::make(std::stoi($Id.text)));
+        $s = Ref<IDSelector>::make(ID::make(std::stoi($Id.text.substr(1))));
     }
 	| TransformOp LeftBracket leafSelector { std::vector<Ref<LeafSelector>> srcs{$leafSelector.s}; }
 		(
