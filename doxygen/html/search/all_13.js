@@ -84,7 +84,7 @@ var searchData=
   ['sharedlinkedlist_81',['SharedLinkedList',['../classfreetensor_1_1SharedLinkedList.html',1,'freetensor']]],
   ['sharedlinkedlist_3c_20randcond_20_3e_82',['SharedLinkedList&lt; RandCond &gt;',['../classfreetensor_1_1SharedLinkedList.html',1,'freetensor']]],
   ['sharedlinkedlist_3c_20ref_3c_20schedulelogitem_20_3e_2c_20schedulelogitemhash_2c_20schedulelogitemequal_20_3e_83',['SharedLinkedList&lt; Ref&lt; ScheduleLogItem &gt;, ScheduleLogItemHash, ScheduleLogItemEqual &gt;',['../classfreetensor_1_1SharedLinkedList.html',1,'freetensor']]],
-  ['sharedsize_5f_84',['sharedSize_',['../structfreetensor_1_1CodeGenCUDAStream.html#a5c67a16aa6fd359aaacd287711f2d995',1,'freetensor::CodeGenCUDAStream']]],
+  ['sharedsize_5f_84',['sharedSize_',['../structfreetensor_1_1CodeGenCUDAStream.html#ac018ea68458e5e7047bf965e16fc5e35',1,'freetensor::CodeGenCUDAStream']]],
   ['sharedstacksize_85',['sharedStackSize',['../classfreetensor_1_1CodeGenCPU.html#a28d711990d63eb170e2561ccfd2f296d',1,'freetensor::CodeGenCPU']]],
   ['shrink_5ffor_2ecc_86',['shrink_for.cc',['../shrink__for_8cc.html',1,'']]],
   ['shrink_5ffor_2eh_87',['shrink_for.h',['../shrink__for_8h.html',1,'']]],

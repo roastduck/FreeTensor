@@ -49,7 +49,7 @@ var searchData=
   ['gettype_46',['getType',['../classfreetensor_1_1TransformedMetadataContent.html#ac49732da6035f13b3607ef8cd6e7ece1',1,'freetensor::TransformedMetadataContent::getType()'],['../classfreetensor_1_1MetadataContent.html#aa06068ad01a43c08841a0a28c83e17df',1,'freetensor::MetadataContent::getType()'],['../classfreetensor_1_1SourceMetadataContent.html#a1595b05695306b90f4b2f64aafde2bfa',1,'freetensor::SourceMetadataContent::getType()'],['../classfreetensor_1_1AnonymousMetadataContent.html#a338a12fce7c51ee9c063ef047fbcd7f5',1,'freetensor::AnonymousMetadataContent::getType()']]],
   ['getupper_47',['getUpper',['../classfreetensor_1_1CompUniqueBounds.html#a2fafcb1d095ef9f3fa7c96c388eaa878',1,'freetensor::CompUniqueBounds']]],
   ['getvarid_48',['getVarId',['../classfreetensor_1_1Z3Simplify.html#aee88484abb8e1ced538b07e43f31af13',1,'freetensor::Z3Simplify']]],
-  ['globalsize_49',['globalSize',['../classfreetensor_1_1CodeGenCUDA.html#af2d86c53d587dfc009022f60b5762692',1,'freetensor::CodeGenCUDA']]],
+  ['globalsize_49',['globalSize',['../classfreetensor_1_1CodeGenCUDA.html#aa27c16876ae95eb1df98986f2234d4a4',1,'freetensor::CodeGenCUDA']]],
   ['gpu_50',['GPU',['../namespacefreetensor.html#a000c2c313211c04f40116e7f8117d66ba52f9ec21735243ad9917cda3ca077d32',1,'freetensor']]],
   ['gpu_2eh_51',['gpu.h',['../gpu_8h.html',1,'']]],
   ['gpuglobal_52',['GPUGlobal',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a039a6b51382edf8b7702c0d077e9e9a4',1,'freetensor']]],

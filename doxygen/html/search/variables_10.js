@@ -7,7 +7,7 @@ var searchData=
   ['scopes_5f_4',['scopes_',['../structfreetensor_1_1LoopInScopes.html#a7c406c9beb250fc7973344796e775986',1,'freetensor::LoopInScopes']]],
   ['self_5f_5',['self_',['../structfreetensor_1_1Dependency.html#a3cc08a572f3593244b312b97bfc604c6',1,'freetensor::Dependency']]],
   ['serialscope_6',['serialScope',['../namespacefreetensor.html#aa8dc7802e672c0af3efcb5af10d51eca',1,'freetensor']]],
-  ['sharedsize_5f_7',['sharedSize_',['../structfreetensor_1_1CodeGenCUDAStream.html#a5c67a16aa6fd359aaacd287711f2d995',1,'freetensor::CodeGenCUDAStream']]],
+  ['sharedsize_5f_7',['sharedSize_',['../structfreetensor_1_1CodeGenCUDAStream.html#ac018ea68458e5e7047bf965e16fc5e35',1,'freetensor::CodeGenCUDAStream']]],
   ['small_5fitem_5fper_5fblock_8',['SMALL_ITEM_PER_BLOCK',['../namespacefreetensor.html#a105dea86b1e2cc2da1f2663b73764ffc',1,'freetensor']]],
   ['small_5fitem_5fsize_9',['SMALL_ITEM_SIZE',['../namespacefreetensor.html#a3342f38ffc80085de8393c669271cce4',1,'freetensor']]],
   ['spaceloops_10',['spaceLoops',['../structfreetensor_1_1ForsWithDataReuse.html#a53b17ac3423e553c47e5925eb5a29c49',1,'freetensor::ForsWithDataReuse']]],
