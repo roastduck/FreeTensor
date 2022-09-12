@@ -1,10 +1,31 @@
 #include <algorithm>
-#include <limits>
 
+#include <analyze/all_uses.h>
 #include <pass/make_const_shape.h>
 #include <pass/pb_simplify.h>
 
 namespace freetensor {
+
+bool MakeConstShape::isConstOrByValue(const Expr &x) const {
+    return isConstOrByValue(allNames(x));
+}
+
+bool MakeConstShape::isConstOrByValue(
+    const std::unordered_set<std::string> &names) const {
+    for (auto &&item : names) {
+        if (hasLoop(item)) {
+            // TODO: For CUDA, we should allow using iterators defined outside
+            // of a kernel
+            return false;
+        }
+        if (hasDef(item)) {
+            if (buffer(item)->mtype() != MemType::ByValue) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
 
 Stmt MakeConstShape::visit(const VarDef &_op) {
     auto __op = BaseClass::visit(_op);
@@ -20,24 +41,24 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
     for (size_t i = 0; i < ndim; i++) {
         auto &dim = op->buffer_->tensor()->shape()[i];
         const Expr &oldDim = _op->buffer_->tensor()->shape()[i];
-        if (dim->nodeType() == ASTNodeType::IntConst) {
+        if (isConstOrByValue(dim)) {
             continue;
         }
-        int64_t result = std::numeric_limits<int64_t>::max();
+        Expr result;
         for (auto b : unique_.getUpper(oldDim)) {
-            if (b.lin().isConst()) {
-                auto bias = b.lin().bias_;
-                result = std::min(result, floorDiv(bias.p_, bias.q_));
+            if (isConstOrByValue(b.lin().allNames())) {
+                result =
+                    result.isValid() ? makeMin(result, b.expr()) : b.expr();
             }
         }
-        if (result == std::numeric_limits<int64_t>::max()) {
+        if (!result.isValid()) {
             throw InvalidProgram("Unable to relax dimension " +
                                  std::to_string(i) + ": " + toString(dim) +
                                  " of " + toString(op->id()) + "(" +
                                  toString(op->metadata()) + "): " + op->name_ +
                                  " to a constant");
         }
-        dim = makeIntConst(result);
+        dim = std::move(result);
         op->pinned_ = true;
     }
     return op;

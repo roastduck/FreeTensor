@@ -758,13 +758,13 @@ def test_simplex_local_2():
 
 
 def test_relax_shared_shape_to_constants():
-    with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
+    with ft.VarDef("n", (), "int32", "input", "gpu/global") as n:
         with ft.VarDef([
             ("x", (4, 256), "int32", "input", "gpu/global"),
             ("y", (4, 256), "int32", "output", "gpu/global"),
         ]) as (x, y):
-            with ft.Assert(n <= 256):
-                with ft.For("i", 0, 4, label="L0") as i:
+            with ft.For("i", 0, 4, label="L0") as i:
+                with ft.Assert(n <= 256):
                     with ft.VarDef("t", (n,), "int32", "cache",
                                    "gpu/shared") as t:
                         with ft.For("j", 0, n, label="L1") as j:
@@ -778,13 +778,13 @@ def test_relax_shared_shape_to_constants():
     s.parallelize("L0", "threadIdx.x")
     func = ft.lower(s.func(), target, verbose=1)
 
-    with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
+    with ft.VarDef("n", (), "int32", "input", "gpu/global") as n:
         with ft.VarDef([
             ("x", (4, 256), "int32", "input", "gpu/global"),
             ("y", (4, 256), "int32", "output", "gpu/global"),
         ]) as (x, y):
-            with ft.Assert(n <= 256):
-                with ft.For(".threadIdx.y", 0, 4) as i:
+            with ft.For(".threadIdx.y", 0, 4) as i:
+                with ft.Assert(n <= 256):
                     with ft.VarDef("t", (4, 256), "int32", "cache",
                                    "gpu/shared") as t:
                         with ft.For("j", 0, n) as j:
