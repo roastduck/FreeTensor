@@ -85,11 +85,7 @@ Stmt ShrinkFor::visit(const For &_op) {
     auto lower = makeMinMax(newRange_.at(var).first);
     auto upper = makeMaxMin(newRange_.at(var).second);
 
-    if (op->property_->unroll_ ||
-        (std::holds_alternative<CUDAScope>(op->property_->parallel_) &&
-         std::get<CUDAScope>(op->property_->parallel_).level_ ==
-             CUDAScope::Thread &&
-         !op->property_->reductions_.empty())) {
+    if (op->property_->unroll_) {
         // Backends do not support these loops to be of variable lengths
         lower = makeIntConst(bound_.getIntLower(lower));
         upper = makeIntConst(bound_.getIntUpper(upper));

@@ -177,12 +177,7 @@ const std::unordered_set<std::string> &UpperBound::allNames() {
     if (allNames_.has_value()) {
         return *allNames_;
     }
-    allNames_ = std::make_optional<std::unordered_set<std::string>>();
-    for (auto &&[k, a] : lin_.coeff_) {
-        for (auto &&use : ::freetensor::allNames(a)) {
-            allNames_->insert(use);
-        }
-    }
+    allNames_ = std::make_optional(lin_.allNames());
     return *allNames_;
 }
 
@@ -190,12 +185,7 @@ const std::unordered_set<std::string> &LowerBound::allNames() {
     if (allNames_.has_value()) {
         return *allNames_;
     }
-    allNames_ = std::make_optional<std::unordered_set<std::string>>();
-    for (auto &&[k, a] : lin_.coeff_) {
-        for (auto &&use : ::freetensor::allNames(a)) {
-            allNames_->insert(use);
-        }
-    }
+    allNames_ = std::make_optional(lin_.allNames());
     return *allNames_;
 }
 

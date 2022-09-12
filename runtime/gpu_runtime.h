@@ -142,4 +142,19 @@ inline __host__ __device__ double runtime_floor(double x) { return floor(x); }
 inline __host__ __device__ float runtime_ceil(float x) { return ceilf(x); }
 inline __host__ __device__ double runtime_ceil(double x) { return ceil(x); }
 
+inline __host__ __device__ int clz(unsigned int x) {
+#if defined(__CUDA_ARCH__)
+    return __clz((int)x);
+#else
+    return __builtin_clz(x);
+#endif
+}
+inline __host__ __device__ int clzll(unsigned long long x) {
+#if defined(__CUDA_ARCH__)
+    return __clzll((long long)x);
+#else
+    return __builtin_clz(x);
+#endif
+}
+
 #endif // FREE_TENSOR_GPU_RUNTIME_H
