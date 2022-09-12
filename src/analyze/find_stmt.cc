@@ -12,10 +12,11 @@ void FindStmtById::visitStmt(const Stmt &op) {
 }
 
 void FindStmtByFilter::visitStmt(const Stmt &op) {
-    Visitor::visitStmt(op);
     if (filter_(op)) {
         results_.emplace_back(op);
+        // Emplace before recursion: DFS pre order
     }
+    Visitor::visitStmt(op);
 }
 
 Stmt findStmt(const Stmt &ast, const ID &id) {

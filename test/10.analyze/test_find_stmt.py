@@ -175,3 +175,23 @@ def test_select_indirect_callee_anonymous_call_site():
     results = ft.find_all_stmt(f, "<For><<~g")
     results_by_label = ft.find_all_stmt(f, "L2|L3")
     assert sorted_ids(results) == sorted_ids(results_by_label)
+
+
+def test_find_in_dfs_pre_order():
+    with ft.VarDef([("y", (8, 8), "int32", "output", "cpu"),
+                    ("z", (8, 8), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("i", 0, 8, label="Li") as i:
+            with ft.For("j", 0, 8, label="Lj") as j:
+                ft.MarkLabel("S0")
+                y[i, j] = i + j
+                ft.MarkLabel("S1")
+                z[i, j] = i * j
+    ast = ft.pop_ast(verbose=True)
+
+    results = ft.find_all_stmt(ast, "(<For>|<Store>)<<-Li")
+    results_by_label = [
+        ft.find_stmt(ast, "Lj"),
+        ft.find_stmt(ast, "S0"),
+        ft.find_stmt(ast, "S1")
+    ]
+    assert results == results_by_label  # No sort
