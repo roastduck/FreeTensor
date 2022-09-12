@@ -226,16 +226,19 @@ class RPCTool(object):
         if server_uid in self.scheduler_host_list:
             self.scheduler_host_list.discard(server_uid)
             self.scheduler_host_list_lock.release()
-            self.pool.submit(self.scheduler_host_remove, server_uid)
+            try:
+                self.pool.submit(self.scheduler_host_remove, server_uid)
+            except Exception:
+                pass
         else:
             self.scheduler_host_list_lock.release()
 
     def scheduler_host_add(self, server_uid: str):
-        if not (self.scheduler == None):
+        if not (self.scheduler is None):
             self.scheduler.add_host(server_uid)
 
     def scheduler_host_remove(self, server_uid: str):
-        if not (self.scheduler == None):
+        if not (self.scheduler is None):
             self.scheduler.remove_host(server_uid)
 
     def serialize(self, tmpdict: Dict):
@@ -275,7 +278,7 @@ class RPCTool(object):
                   raw_message: Dict,
                   pipe: multiprocessing.Pipe,
                   timeout=30):
-        if host_address == None:
+        if host_address is None:
             pipe.send({"function": "return", "return_status": "fail"})
         try:
             sock: socket.socket = self.get_socket(host_address)
@@ -440,7 +443,10 @@ class RPCTool(object):
     def update_status(self, host_list: Dict[str, Dict]):
         # pool = ThreadPoolExecutor(3)
         for i in list(host_list):
-            self.pool.submit(self.update_status_single, i, host_list[i])
+            try:
+                self.pool.submit(self.update_status_single, i, host_list[i])
+            except Exception:
+                pass
 
     def exchange_status_recv(self, sock: socket.socket, data: Dict):
         if self.update_status_single_dict("", data):
@@ -504,12 +510,15 @@ class RPCTool(object):
 
     def remove_host_gracefully(self, host_uid: str):
         self.host_list_lock.acquire()
-        if host_uid in self.host_list:
-            self.host_list[host_uid].setdefault("tries",
-                                                self.max_reconnect_retries)
-            self.host_list[host_uid]["tries"] -= 1
-            if self.host_list[host_uid]["tries"] < 0:
-                self.remove_host(host_uid)
+        try:
+            if host_uid in self.host_list:
+                self.host_list[host_uid].setdefault("tries",
+                                                    self.max_reconnect_retries)
+                self.host_list[host_uid]["tries"] -= 1
+                if self.host_list[host_uid]["tries"] < 0:
+                    self.remove_host(host_uid)
+        except Exception:
+            pass
         self.host_list_lock.release()
 
     def refresh_host(self, host_uid: str):
@@ -536,3 +545,4 @@ class RPCTool(object):
             # self.send(self.get_address(i),message, -1)
         if self.verbose > 0:
             print("request sent")
+        self.pool.shutdown(wait=True, cancel_futures=True)
