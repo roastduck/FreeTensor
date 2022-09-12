@@ -215,26 +215,28 @@ class RPCTool(object):
     def scheduler_list_auto_append(self, server_uid: str):
         self.scheduler_host_list_lock.acquire()
         if server_uid in self.scheduler_host_list:
-            pass
+            self.scheduler_host_list_lock.release()
         else:
             self.scheduler_host_list.add(server_uid)
-            self.scheduler_host_add(server_uid)
-        self.scheduler_host_list_lock.release()
+            self.scheduler_host_list_lock.release()
+            self.pool(self.scheduler_host_add, server_uid)
 
     def scheduler_list_auto_remove(self, server_uid: str):
         self.scheduler_host_list_lock.acquire()
         if server_uid in self.scheduler_host_list:
             self.scheduler_host_list.discard(server_uid)
-            self.scheduler_host_remove(server_uid)
+            self.scheduler_host_list_lock.release()
+            self.pool.submit(self.scheduler_host_remove, server_uid)
         else:
-            pass
-        self.scheduler_host_list_lock.release()
+            self.scheduler_host_list_lock.release()
 
     def scheduler_host_add(self, server_uid: str):
-        self.scheduler.add_host()
+        if not (self.scheduler == None):
+            self.scheduler.add_host(server_uid)
 
     def scheduler_host_remove(self, server_uid: str):
-        self.scheduler.remove_host()
+        if not (self.scheduler == None):
+            self.scheduler.remove_host(server_uid)
 
     def serialize(self, tmpdict: Dict):
         return pickle.dumps(tmpdict)
@@ -258,6 +260,7 @@ class RPCTool(object):
             except Exception as e:
                 time.sleep(1)
                 print(e)
+                print(message)
             else:
                 break
         return ret_val

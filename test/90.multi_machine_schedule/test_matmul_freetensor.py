@@ -1,19 +1,18 @@
 import freetensor as ft
 import numpy as np
-import threading
 import time
 import pytest
-import xmlrpc.client
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_matmul():
     NPORT = 27227
+    time.sleep(3)
     tmp = ft.RPCTool(host="None",
                      self_server_ip="127.0.0.1",
-                     self_server_port=NPORT)
-    time.sleep(3)
-    # tmp.server_auto_shutdown(5)
+                     self_server_port=NPORT,
+                     sev_status=[])
+    tmp.server_auto_shutdown(10)
     client = ft.MultiMachineScheduler(addr="127.0.0.1", port=NPORT)
     a = 256
     b = 256
@@ -95,4 +94,3 @@ def test_matmul():
     print(code)
 
     client.rpctool.end_server()
-    tmp.end_server()
