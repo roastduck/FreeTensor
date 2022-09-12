@@ -1,13 +1,11 @@
 import freetensor as ft
 import numpy as np
-import time
 import pytest
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_matmul():
     NPORT = 27227
-    time.sleep(3)
     tmp = ft.RPCTool(host="None",
                      self_server_ip="127.0.0.1",
                      self_server_port=NPORT,

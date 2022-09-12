@@ -459,6 +459,8 @@ class RPCTool(object):
         return False
 
     def server_auto_shutdown(self, timeout: float = 5.0):
+        if timeout <= 0.0:
+            return
 
         def server_auto_shutdown_base(self: RPCTool, timeout: float):
             while True:
