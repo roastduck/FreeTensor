@@ -66,6 +66,11 @@ class DescendantSelector : public Selector {
     bool match(const Stmt &stmt) const override;
 };
 
+class RootNodeSelector : public Selector {
+  public:
+    bool match(const Stmt &stmt) const override;
+};
+
 class LeafSelector : public Selector {
   public:
     virtual bool match(const Metadata &md) const = 0;
@@ -144,6 +149,11 @@ class CallerSelector : public LeafSelector {
     CallerSelector(const Ref<LeafSelector> &caller,
                    const Ref<LeafSelector> &middle = nullptr)
         : caller_(caller), middle_(middle) {}
+    bool match(const Metadata &md) const override;
+};
+
+class RootCallSelector : public LeafSelector {
+  public:
     bool match(const Metadata &md) const override;
 };
 

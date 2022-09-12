@@ -24,6 +24,9 @@ leafSelector returns[Ref<LeafSelector> s]
 	)* RightBracket {
         $s = Ref<TransformedSelector>::make($TransformOp.text.substr(1), srcs);
     }
+    | RootCall {
+        $s = Ref<RootCallSelector>::make();
+    }
     | Not sub=leafSelector {
         $s = Ref<NotLeafSelector>::make($sub.s);
     }
@@ -85,6 +88,9 @@ selector returns[Ref<Selector> s]
     }
 	| NodeTypeEval {
         $s = Ref<NodeTypeSelector>::make(ASTNodeType::Eval);
+    }
+    | RootNode {
+        $s = Ref<RootNodeSelector>::make();
     }
     | Not sub=selector {
         $s = Ref<NotSelector>::make($sub.s);

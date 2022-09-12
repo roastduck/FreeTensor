@@ -36,6 +36,10 @@ bool DescendantSelector::match(const Stmt &_stmt) const {
     return false;
 }
 
+bool RootNodeSelector::match(const Stmt &stmt) const {
+    return !stmt->parentStmt().isValid();
+}
+
 bool NotLeafSelector::match(const Metadata &md) const {
     return !sub_->match(md);
 }
@@ -96,6 +100,12 @@ bool CallerSelector::match(const Metadata &_md) const {
         }
     }
     return false;
+}
+
+bool RootCallSelector::match(const Metadata &md) const {
+    if (md->getType() != MetadataType::Source)
+        return false;
+    return !md.as<SourceMetadataContent>()->caller().isValid();
 }
 
 Ref<Selector> parseSelector(const std::string &str) {

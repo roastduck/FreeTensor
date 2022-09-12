@@ -554,8 +554,8 @@ void Schedule::autoSchedule(const Target &target, const Ref<RandTrace> &trace) {
 
 void Schedule::autoUseLib(const Target &target) {
     // Try to implement each top-level loops with lib calls
-    for (auto &&_loop :
-         findAll("<For><-(!<For><-)*#" + toString(ast()->id()))) {
+    for (auto &&_loop : findAll("<For><-(!<For><-)*-|")) {
+        // Suppose the root node is not <For>. It should be <VarDef>
         auto loop = _loop.as<ForNode>();
         try {
             asMatMul(loop->id());
@@ -662,8 +662,8 @@ void Schedule::autoReorder(const Target &target) {
             visitNest(subNest.as<ForNode>());
         }
     };
-    for (auto &&subNest :
-         findAll("<For><-(!<For><-)*#" + toString(ast()->id()))) {
+    for (auto &&subNest : findAll("<For><-(!<For><-)*-|")) {
+        // Suppose the root node is not <For>. It should be <VarDef>
         visitNest(subNest.as<ForNode>());
     }
 }
@@ -761,7 +761,8 @@ void Schedule::autoFissionFuse(const Target &target,
         }
         fissionFrom[thisId] = thisId;
     };
-    for (auto &&loop : findAll("<For><-(!<For><-)*#" + toString(ast()->id()))) {
+    for (auto &&loop : findAll("<For><-(!<For><-)*-|")) {
+        // Suppose the root node is not <For>. It should be <VarDef>
         tryFission(loop.as<ForNode>());
     }
 
@@ -1046,8 +1047,8 @@ void Schedule::autoParallelize(const Target &target) {
             }
         }
     };
-    for (auto &&_root :
-         findAll("<For><-(!<For><-)*#" + toString(ast()->id()))) {
+    for (auto &&_root : findAll("<For><-(!<For><-)*-|")) {
+        // Suppose the root node is not <For>. It should be <VarDef>
         auto root = _root.as<ForNode>();
         // If the outer most loop is too short, we try the second outer loops
         // instead
