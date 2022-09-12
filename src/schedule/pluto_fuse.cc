@@ -3,6 +3,7 @@
 
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <pass/flatten_stmt_seq.h>
 #include <schedule/fuse.h>
 #include <schedule/pluto_fuse.h>
@@ -117,40 +118,76 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
     return result;
 }
 
+constexpr const char *FAKE_ACCESS_VAR = "__pluto_fake_access";
+
+class InjectFakeAccess : public Mutator {
+    ID target_;
+
+  public:
+    InjectFakeAccess(const ID &target) : target_(target) {}
+
+  protected:
+    Stmt visit(const For &op) override {
+        if (op->id() != target_)
+            return Mutator::visit(op);
+
+        auto newBody = makeStmtSeq({
+            makeVarDef(FAKE_ACCESS_VAR,
+                       makeBuffer(makeTensor({}, DataType::Int32),
+                                  AccessType::Cache, MemType::ByValue),
+                       nullptr,
+                       makeEval(makeLoad(FAKE_ACCESS_VAR, {}, DataType::Int32)),
+                       false),
+            op->body_,
+        });
+
+        return makeFor(op->iter_, op->begin_, op->end_, op->step_, op->len_,
+                       op->property_, newBody);
+    }
+};
+
 } // namespace
 
-std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
-                              const ID &loop1, int nestLevel) {
+std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
+                              const ID &loop1Id, int nestLevel) {
     // flatten first so we get perfectly nested loops as much as possible
     auto ast = flattenStmtSeq(_ast);
 
     // check accessed vardefs: those vardefs accessed by loop1 should not have
     // their shapes modified in loop0
-    CheckFuseAccessible check(loop0, loop1);
+    CheckFuseAccessible check(loop0Id, loop1Id);
     check.check(ast);
 
     // count maximum count of perfectly nested loops at loop0 and loop1
     auto countPerfectNest = [](const For &loop) {
         int n = 0;
-        for (Stmt inner = loop; inner->nodeType() == ASTNodeType::For;
+        Stmt inner;
+        for (inner = loop; inner->nodeType() == ASTNodeType::For;
              inner = inner.as<ForNode>()->body_)
             n++;
-        return n;
+        return std::pair{n, inner->parentStmt()->id()};
     };
-    int nestLevel0 = countPerfectNest(check.loop0().loop_);
-    int nestLevel1 = countPerfectNest(check.loop1().loop_);
+    auto [nestLevel0, inner0] = countPerfectNest(check.loop0().loop_);
+    auto [nestLevel1, inner1] = countPerfectNest(check.loop1().loop_);
+
+    // inject fake accesses to extract loop space
+    ast = InjectFakeAccess(inner0)(ast);
+    ast = InjectFakeAccess(inner1)(ast);
+
+    auto loop0 = findStmt(ast, loop0Id).as<ForNode>();
+    auto loop1 = findStmt(ast, loop1Id).as<ForNode>();
 
     // Process nestLevel nested loops each side; default to
     if (nestLevel == -1)
         nestLevel = std::min(nestLevel0, nestLevel1);
     else if (nestLevel0 < nestLevel)
         throw InvalidSchedule(
-            "PlutoFuse: loop 0 `#" + toString(loop0) +
+            "PlutoFuse: loop 0 `#" + toString(loop0Id) +
             "` has less than required nesting levels: " + toString(nestLevel0) +
             " existed, but " + toString(nestLevel) + " required");
     else if (nestLevel1 < nestLevel)
         throw InvalidSchedule(
-            "PlutoFuse: loop 1 `#" + toString(loop1) +
+            "PlutoFuse: loop 1 `#" + toString(loop1Id) +
             "` has less than required nesting levels: " + toString(nestLevel1) +
             " existed, but " + toString(nestLevel) + " required");
 
@@ -158,14 +195,14 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
 
     // List common outer loops
     std::deque<For> outers;
-    for (Stmt outer = check.loop0().loop_->parentStmt(); outer.isValid();
+    for (Stmt outer = loop0->parentStmt(); outer.isValid();
          outer = outer->parentStmt())
         if (outer->nodeType() == ASTNodeType::For)
             outers.push_front(outer.as<ForNode>());
 
     // Sanity check: the two loops should have the same outer loops given the
     // CheckFuseAccessible passed; just check if the innermost one aligns
-    auto loop1InnermostOuter = check.loop1().loop_->parentStmtByFilter(
+    auto loop1InnermostOuter = loop1->parentStmtByFilter(
         [](const Stmt &s) { return s->nodeType() == ASTNodeType::For; });
     // outers are empty, loop1 should also have no outer
     if (outers.empty())
@@ -182,6 +219,28 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
                                         collect};
 
     PBCtx ctx;
+    PBSet loop0Set, loop1Set;
+
+    auto extractLoopSet = [&](const AccessPoint &p) {
+        auto iterList = AnalyzeDeps::makeIterList(p.iter_, p.iter_.size());
+        GenPBExpr gen;
+        GenPBExpr::VarMap externals;
+        auto conds = *AnalyzeDeps::makeCond(gen, p.conds_, RelaxMode::Possible,
+                                            externals);
+        if (externals.size() > 0)
+            ERROR("PlutoFuse: external variables currently "
+                  "not supported.");
+
+        PBSet loopSet(ctx, "{ " + iterList + ": " + conds + " }");
+
+        // project out constant dims
+        for (int64_t i = p.iter_.size() - 1; i >= 0; --i)
+            if (p.iter_[i].realIter_->nodeType() != ASTNodeType::Var) {
+                loopSet.projectOutDims(i, 1);
+            }
+
+        return loopSet;
+    };
 
     auto findIter = [](const AccessPoint &ap, const std::string var) {
         std::vector<int> outerDims;
@@ -196,10 +255,25 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
         ASSERT(false);
     };
 
-    auto getDeps = [&](const For &l0, const For &l1) mutable {
+    auto getDeps = [&](const For &l0, const For &l1,
+                       bool handleFakeAccess = false) mutable {
         std::vector<PBSet> deps;
         FindDeps()
             .noProjectOutProvateAxis(true)
+            .filterAccess([&](const AccessPoint &p) {
+                if (p.def_->name_ == FAKE_ACCESS_VAR) {
+                    if (handleFakeAccess) {
+                        if (p.stmt_->ancestorById(loop0Id).isValid()) {
+                            loop0Set = extractLoopSet(p);
+                        } else {
+                            ASSERT(p.stmt_->ancestorById(loop1Id).isValid());
+                            loop1Set = extractLoopSet(p);
+                        }
+                    }
+                    return false;
+                }
+                return true;
+            })
             .filterEarlier([&](const AccessPoint &p) {
                 return p.stmt_->ancestorById(l0->id()).isValid();
             })
@@ -291,7 +365,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
     std::vector<bool> satisfied0, satisfied1, satisfied1to0;
 
     // Dependences inside loop 0
-    auto dep0 = getDeps(check.loop0().loop_, check.loop0().loop_);
+    auto dep0 = getDeps(loop0, loop0);
     if (dep0.size() > 0) {
         // ti (target iter) and si (source iter) both on loop 0.
         // legality problem:
@@ -378,7 +452,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
     }
 
     // Dependences inside loop 1
-    auto dep1 = getDeps(check.loop1().loop_, check.loop1().loop_);
+    auto dep1 = getDeps(loop1, loop1);
     if (dep1.size() > 0) {
         // ti (target iter) and si (source iter) both on loop 1.
         // legality problem:
@@ -465,7 +539,9 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
     }
 
     // Dependences between loop 0 and 1
-    auto dep1to0 = getDeps(check.loop0().loop_, check.loop1().loop_);
+    auto dep1to0 = getDeps(loop0, loop1, true);
+    std::cout << "loop 0: " << loop0Set << std::endl;
+    std::cout << "loop 1: " << loop1Set << std::endl;
     if (dep1to0.size() > 0) {
         // i0 = si (source iter)
         // i1 = ti (target iter)
@@ -682,7 +758,10 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             }) |
             collect;
         std::cout << optimized << std::endl;
-        //! TODO: extract coefficients and construct orthogonal constraints
+
+        //!TODO: exclude fake fusion
+
+        // save coefficients' values
         c0ParamFusedValue.push_back({
             optimized.begin() + (nParams + 1),
             optimized.begin() + (nParams + 1) * 2,
@@ -700,6 +779,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0,
             optimized.end(),
         });
 
+        // prepare orthogonal constraints for next iteration
         auto orthoConstraints = [&](const auto &cIterFusedValue,
                                     const auto &cIter, const auto &deltaL) {
             auto ortho = orthogonalMatrix(cIterFusedValue);

@@ -218,8 +218,8 @@ class PBSet {
 
     isl_size nDims() const { return isl_set_dim(set_, isl_dim_set); }
 
-    void removeDims(unsigned first, unsigned n) {
-        set_ = isl_set_remove_dims(set_, isl_dim_set, first, n);
+    void projectOutDims(unsigned first, unsigned n) {
+        set_ = isl_set_project_out(set_, isl_dim_set, first, n);
     }
 
     friend std::ostream &operator<<(std::ostream &os, const PBSet &set) {
