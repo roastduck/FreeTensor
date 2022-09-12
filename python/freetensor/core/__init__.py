@@ -28,6 +28,4 @@ from .optimize import optimize
 from .task_scheduler import TaskScheduler
 from .remote_task_scheduler import RemoteTaskScheduler, MultiMachineScheduler, MeasureTask
 
-from . import RPCTools
-from .RPCTools import run_center
-from .RPCTools import shutdown_center, RPCTool
+from .RpcTool import RPCTool

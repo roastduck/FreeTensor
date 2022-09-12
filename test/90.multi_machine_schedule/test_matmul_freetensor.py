@@ -8,16 +8,19 @@ import xmlrpc.client
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_matmul():
+    NPORT = 27227
+    tmp = ft.RPCTool(host="None",
+                     self_server_ip="127.0.0.1",
+                     self_server_port=NPORT)
+    time.sleep(3)
+    # tmp.server_auto_shutdown(5)
+    client = ft.MultiMachineScheduler(addr="127.0.0.1", port=NPORT)
     a = 256
     b = 256
     m = 4
     # c = 64
     device = ft.GPU()
     target = device.target()
-    t = threading.Thread(target=ft.run_center)
-    t.start()
-    time.sleep(3)
-    client = ft.MultiMachineScheduler()
 
     @ft.transform
     # def test(w, x, y):
@@ -90,5 +93,6 @@ def test_matmul():
     print(func)
     code = ft.codegen(func, target)
     print(code)
-    tmpserver = xmlrpc.client.ServerProxy('http://127.0.0.1:8047')
-    tmpserver.shutdown_center()
+
+    client.rpctool.end_server()
+    tmp.end_server()

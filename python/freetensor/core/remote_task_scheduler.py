@@ -753,7 +753,7 @@ class RemoteTaskScheduler(object):
 
     def get_self_uid(self, server_uid: str) -> None:
         #online initialization
-        self.remove_host(server_uid)
+        self.remove_host(self.self_server_uid)
         self.self_server_uid = server_uid
         self.add_host(server_uid, self.self_sev_status)
 
@@ -765,6 +765,10 @@ class MultiMachineScheduler(RemoteTaskScheduler):
                  port: int = 8047,
                  sev_status: List[str] = ["default"]) -> None:
         super().__init__(sev_status)
-        rpctool = core.RPCTool(self, addr, port, sev_status)
+        rpctool = core.RPCTool(scheduler=self,
+                               host=addr,
+                               port=port,
+                               sev_status=sev_status)
         self.bind_rpctool(rpctool)
+        self.get_self_uid(self.rpctool.self_host_uid)
         self.init_lock = True
