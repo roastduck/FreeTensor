@@ -23,6 +23,5 @@ var searchData=
   ['streamstack_5f_20',['streamStack_',['../classfreetensor_1_1CodeGen.html#ad0a4a99f229715b4f6ad38f994393ac6',1,'freetensor::CodeGen']]],
   ['stridea_5f_21',['stridea_',['../classfreetensor_1_1MatMulNode.html#afb5ee412e447e27f97606ada6124e60e',1,'freetensor::MatMulNode']]],
   ['strideb_5f_22',['strideb_',['../classfreetensor_1_1MatMulNode.html#afb12f7051dad0223f6e5fe0a380f6a08',1,'freetensor::MatMulNode']]],
-  ['stridec_5f_23',['stridec_',['../classfreetensor_1_1MatMulNode.html#a82efe76eb75e567c400820c805589ba0',1,'freetensor::MatMulNode']]],
-  ['subloops_5f_24',['subLoops_',['../structfreetensor_1_1LoopNest.html#a58e1c780410b7688c711be24c75fcbff',1,'freetensor::LoopNest']]]
+  ['stridec_5f_23',['stridec_',['../classfreetensor_1_1MatMulNode.html#a82efe76eb75e567c400820c805589ba0',1,'freetensor::MatMulNode']]]
 ];

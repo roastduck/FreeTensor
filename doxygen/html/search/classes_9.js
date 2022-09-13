@@ -14,9 +14,8 @@ var searchData=
   ['logctrl_11',['LogCtrl',['../classfreetensor_1_1LogCtrl.html',1,'freetensor']]],
   ['logger_12',['Logger',['../classfreetensor_1_1Logger.html',1,'freetensor']]],
   ['loopinscopes_13',['LoopInScopes',['../structfreetensor_1_1LoopInScopes.html',1,'freetensor']]],
-  ['loopnest_14',['LoopNest',['../structfreetensor_1_1LoopNest.html',1,'freetensor']]],
-  ['lornode_15',['LOrNode',['../classfreetensor_1_1LOrNode.html',1,'freetensor']]],
-  ['lowerbound_16',['LowerBound',['../classfreetensor_1_1LowerBound.html',1,'freetensor']]],
-  ['lowerparallelreduction_17',['LowerParallelReduction',['../classfreetensor_1_1cpu_1_1LowerParallelReduction.html',1,'freetensor::cpu']]],
-  ['ltnode_18',['LTNode',['../classfreetensor_1_1LTNode.html',1,'freetensor']]]
+  ['lornode_14',['LOrNode',['../classfreetensor_1_1LOrNode.html',1,'freetensor']]],
+  ['lowerbound_15',['LowerBound',['../classfreetensor_1_1LowerBound.html',1,'freetensor']]],
+  ['lowerparallelreduction_16',['LowerParallelReduction',['../classfreetensor_1_1cpu_1_1LowerParallelReduction.html',1,'freetensor::cpu']]],
+  ['ltnode_17',['LTNode',['../classfreetensor_1_1LTNode.html',1,'freetensor']]]
 ];

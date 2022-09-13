@@ -1,11 +1,13 @@
 <map id="freetensor::LeafSelector" name="freetensor::LeafSelector">
-<area shape="rect" id="node1" title=" " alt="" coords="204,173,383,200"/>
+<area shape="rect" id="node1" title=" " alt="" coords="204,224,383,251"/>
 <area shape="rect" id="node3" href="$classfreetensor_1_1BothLeafSelector.html" title=" " alt="" coords="442,5,650,32"/>
 <area shape="rect" id="node4" href="$classfreetensor_1_1CallerSelector.html" title=" " alt="" coords="452,56,640,83"/>
 <area shape="rect" id="node5" href="$classfreetensor_1_1DirectCallerSelector.html" title=" " alt="" coords="459,107,633,149"/>
 <area shape="rect" id="node6" href="$classfreetensor_1_1EitherLeafSelector.html" title=" " alt="" coords="438,173,654,200"/>
 <area shape="rect" id="node7" href="$classfreetensor_1_1IDSelector.html" title=" " alt="" coords="464,224,628,251"/>
 <area shape="rect" id="node8" href="$classfreetensor_1_1LabelSelector.html" title=" " alt="" coords="453,275,639,301"/>
-<area shape="rect" id="node9" href="$classfreetensor_1_1TransformedSelector.html" title=" " alt="" coords="431,325,661,352"/>
-<area shape="rect" id="node2" href="$classfreetensor_1_1Selector.html" title=" " alt="" coords="5,173,156,200"/>
+<area shape="rect" id="node9" href="$classfreetensor_1_1NotLeafSelector.html" title=" " alt="" coords="445,325,647,352"/>
+<area shape="rect" id="node10" href="$classfreetensor_1_1RootCallSelector.html" title=" " alt="" coords="443,376,649,403"/>
+<area shape="rect" id="node11" href="$classfreetensor_1_1TransformedSelector.html" title=" " alt="" coords="431,427,661,453"/>
+<area shape="rect" id="node2" href="$classfreetensor_1_1Selector.html" title=" " alt="" coords="5,224,156,251"/>
 </map>

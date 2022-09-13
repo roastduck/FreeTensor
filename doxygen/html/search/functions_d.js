@@ -21,9 +21,11 @@ var searchData=
   ['nodetype_18',['nodeType',['../classfreetensor_1_1ASTNode.html#a9231cccded096dfb8a9b7070a4f39baf',1,'freetensor::ASTNode']]],
   ['nodetypeselector_19',['NodeTypeSelector',['../classfreetensor_1_1NodeTypeSelector.html#a419b3a7a2e0db07b68dd975862797f7f',1,'freetensor::NodeTypeSelector']]],
   ['noprojectoutprovateaxis_20',['noProjectOutProvateAxis',['../classfreetensor_1_1FindDeps.html#ac60c7bb079a0aa635accc44c1acfff2e',1,'freetensor::FindDeps']]],
-  ['notlexlessafterpermu_21',['notLexLessAfterPermu',['../namespacefreetensor.html#affd9024564fe030fc074d18560f25e5b',1,'freetensor']]],
-  ['nowsubnum_22',['nowSubNum',['../classfreetensor_1_1Sketch.html#adde45ed793cf85e181b62134645022be',1,'freetensor::Sketch']]],
-  ['nowsubsketch_23',['nowSubSketch',['../classfreetensor_1_1Sketch.html#aa45221226e616bb1330d168cb2fecb75',1,'freetensor::Sketch::nowSubSketch()'],['../classfreetensor_1_1Sketch.html#a751b9aab36ae535323bec9db51224c17',1,'freetensor::Sketch::nowSubSketch() const']]],
-  ['num_24',['num',['../classfreetensor_1_1Device.html#a21e8a9ed5f036f7aff100c0b170a713c',1,'freetensor::Device']]],
-  ['numsi_25',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]]
+  ['notleafselector_21',['NotLeafSelector',['../classfreetensor_1_1NotLeafSelector.html#acbe94c3111fd1e598e869ed8fe375676',1,'freetensor::NotLeafSelector']]],
+  ['notlexlessafterpermu_22',['notLexLessAfterPermu',['../namespacefreetensor.html#affd9024564fe030fc074d18560f25e5b',1,'freetensor']]],
+  ['notselector_23',['NotSelector',['../classfreetensor_1_1NotSelector.html#ace9cc116660caf9043a31b1c8fc1797f',1,'freetensor::NotSelector']]],
+  ['nowsubnum_24',['nowSubNum',['../classfreetensor_1_1Sketch.html#adde45ed793cf85e181b62134645022be',1,'freetensor::Sketch']]],
+  ['nowsubsketch_25',['nowSubSketch',['../classfreetensor_1_1Sketch.html#aa45221226e616bb1330d168cb2fecb75',1,'freetensor::Sketch::nowSubSketch()'],['../classfreetensor_1_1Sketch.html#a751b9aab36ae535323bec9db51224c17',1,'freetensor::Sketch::nowSubSketch() const']]],
+  ['num_26',['num',['../classfreetensor_1_1Device.html#a21e8a9ed5f036f7aff100c0b170a713c',1,'freetensor::Device']]],
+  ['numsi_27',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]]
 ];
