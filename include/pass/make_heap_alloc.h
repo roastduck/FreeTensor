@@ -11,7 +11,7 @@ namespace freetensor {
 
 class InsertAlloc : public Mutator {
     std::string var_;
-    bool isOuterMost_ = true, delayed_ = false;
+    bool inserted_ = false, delayed_ = false;
 
   public:
     InsertAlloc(const std::string &var) : var_(var) {}
@@ -26,7 +26,7 @@ class InsertAlloc : public Mutator {
 
 class InsertFree : public Mutator {
     std::string var_;
-    bool isOuterMost_ = true, madeEarly_ = false;
+    bool inserted_ = false, madeEarly_ = false;
 
   public:
     InsertFree(const std::string &var) : var_(var) {}
@@ -43,18 +43,17 @@ class MakeHeapAlloc : public ConstFold {
     // Inherit ConstFold for determine dynamic sizes
     typedef ConstFold BaseClass;
 
-    bool inCublas_ = false;
-    int forDepth_ = 0;
+    bool inKernel_ = false;
 
   private:
-    bool inKernel() const;
+    bool inKernel() const { return inKernel_; }
     bool isDynamicSized(const VarDef &op) const;
 
   protected:
     using BaseClass::visit;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;
-    Stmt visit(const MatMul &op) override;
+    Stmt visit(const MatMul &op) override { return op; }
 };
 
 /**
