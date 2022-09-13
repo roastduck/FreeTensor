@@ -81,26 +81,28 @@ $(function() {
 <code>#include &lt;unordered_map&gt;</code><br />
 <code>#include &lt;unordered_set&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
-<code>#include &lt;itertools.hpp&gt;</code><br />
+<code>#include &lt;range/v3/range.hpp&gt;</code><br />
+<code>#include &lt;range/v3/view.hpp&gt;</code><br />
 <code>#include &lt;<a class="el" href="except_8h_source.html">except.h</a>&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for container_utils.h:</div>
 <div class="dyncontent">
 <div class="center"><img src="container__utils_8h__incl.png" border="0" usemap="#ainclude_2container__utils_8h" alt=""/></div>
 <map name="ainclude_2container__utils_8h" id="ainclude_2container__utils_8h">
-<area shape="rect" title=" " alt="" coords="387,5,568,32"/>
+<area shape="rect" title=" " alt="" coords="396,5,577,32"/>
 <area shape="rect" title=" " alt="" coords="5,80,91,107"/>
 <area shape="rect" title=" " alt="" coords="115,80,181,107"/>
-<area shape="rect" title=" " alt="" coords="209,155,289,181"/>
-<area shape="rect" title=" " alt="" coords="256,80,323,107"/>
-<area shape="rect" title=" " alt="" coords="735,155,793,181"/>
-<area shape="rect" title=" " alt="" coords="450,80,505,107"/>
-<area shape="rect" title=" " alt="" coords="529,80,653,107"/>
-<area shape="rect" title=" " alt="" coords="677,80,792,107"/>
-<area shape="rect" title=" " alt="" coords="817,80,879,107"/>
-<area shape="rect" title=" " alt="" coords="904,80,1008,107"/>
-<area shape="rect" href="except_8h.html" title=" " alt="" coords="347,80,426,107"/>
-<area shape="rect" title=" " alt="" coords="343,155,430,181"/>
+<area shape="rect" title=" " alt="" coords="148,155,228,181"/>
+<area shape="rect" title=" " alt="" coords="411,80,477,107"/>
+<area shape="rect" title=" " alt="" coords="364,155,423,181"/>
+<area shape="rect" title=" " alt="" coords="502,80,557,107"/>
+<area shape="rect" title=" " alt="" coords="581,80,705,107"/>
+<area shape="rect" title=" " alt="" coords="729,80,844,107"/>
+<area shape="rect" title=" " alt="" coords="869,80,931,107"/>
+<area shape="rect" title=" " alt="" coords="955,80,1103,107"/>
+<area shape="rect" title=" " alt="" coords="1128,80,1269,107"/>
+<area shape="rect" href="except_8h.html" title=" " alt="" coords="257,80,335,107"/>
+<area shape="rect" title=" " alt="" coords="253,155,339,181"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -108,56 +110,56 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="container__utils_8h__dep__incl.png" border="0" usemap="#ainclude_2container__utils_8hdep" alt=""/></div>
 <map name="ainclude_2container__utils_8hdep" id="ainclude_2container__utils_8hdep">
-<area shape="rect" title=" " alt="" coords="2351,5,2532,32"/>
-<area shape="rect" href="comp__transient__bounds_8h.html" title=" " alt="" coords="941,557,1105,599"/>
-<area shape="rect" href="structural__feature_8cc.html" title=" " alt="" coords="5,825,168,867"/>
-<area shape="rect" href="comp__unique__bounds_8cc.html" title=" " alt="" coords="1595,736,1781,777"/>
-<area shape="rect" href="deps_8h.html" title=" " alt="" coords="2157,743,2328,770"/>
-<area shape="rect" href="deps_8cc.html" title=" " alt="" coords="3800,833,3949,859"/>
-<area shape="rect" href="merge__no__deps__hint_8cc.html" title=" " alt="" coords="3973,825,4139,867"/>
-<area shape="rect" href="remove__writes_8cc.html" title=" " alt="" coords="4163,833,4357,859"/>
-<area shape="rect" href="schedule_8cc.html" title=" " alt="" coords="4382,833,4503,859"/>
-<area shape="rect" href="buffer_8h.html" title=" " alt="" coords="683,408,805,435"/>
-<area shape="rect" href="data__type_8h.html" title=" " alt="" coords="982,87,1133,114"/>
-<area shape="rect" href="parallel__scope_8h.html" title=" " alt="" coords="2555,87,2733,114"/>
-<area shape="rect" href="config_8cc.html" title=" " alt="" coords="2758,87,2861,114"/>
-<area shape="rect" href="frontend__var_8cc.html" title=" " alt="" coords="2885,80,3043,121"/>
-<area shape="rect" href="annotate__conds_8cc.html" title=" " alt="" coords="3068,87,3268,114"/>
-<area shape="rect" href="hoist__var__over__stmt__seq_8cc.html" title=" " alt="" coords="3291,80,3434,121"/>
-<area shape="rect" href="rand__var_8cc.html" title=" " alt="" coords="3458,80,3606,121"/>
-<area shape="rect" href="comp__unique__bounds_8h.html" title=" " alt="" coords="770,647,934,688"/>
-<area shape="rect" href="structural__feature_8h.html" title=" " alt="" coords="563,736,754,777"/>
-<area shape="rect" href="shrink__for_8h.html" title=" " alt="" coords="779,736,925,777"/>
-<area shape="rect" href="simplify_8h.html" title=" " alt="" coords="950,743,1119,770"/>
-<area shape="rect" href="use__builtin__div_8h.html" title=" " alt="" coords="360,736,539,777"/>
-<area shape="rect" href="permute_8cc.html" title=" " alt="" coords="193,833,373,859"/>
-<area shape="rect" href="grad_8cc.html" title=" " alt="" coords="957,833,1112,859"/>
-<area shape="rect" href="make__parallel__reduction_8cc.html" title=" " alt="" coords="1136,825,1307,867"/>
-<area shape="rect" href="blend_8cc.html" title=" " alt="" coords="397,833,558,859"/>
-<area shape="rect" href="fuse_8cc.html" title=" " alt="" coords="582,833,735,859"/>
-<area shape="rect" href="inlining_8cc.html" title=" " alt="" coords="760,833,933,859"/>
-<area shape="rect" href="all__no__reuse__defs_8cc.html" title=" " alt="" coords="1724,825,1863,867"/>
-<area shape="rect" href="analyze__version_8cc.html" title=" " alt="" coords="1887,825,2038,867"/>
-<area shape="rect" href="check__not__modified_8cc.html" title=" " alt="" coords="2062,825,2229,867"/>
-<area shape="rect" href="prop__one__time__use_8cc.html" title=" " alt="" coords="2253,825,2429,867"/>
-<area shape="rect" href="remove__cyclic__assign_8cc.html" title=" " alt="" coords="2453,825,2627,867"/>
-<area shape="rect" href="sink__var_8cc.html" title=" " alt="" coords="2651,833,2802,859"/>
-<area shape="rect" href="tensor__prop__const_8cc.html" title=" " alt="" coords="2826,825,2982,867"/>
-<area shape="rect" href="check__var__cross__parallel_8cc.html" title=" " alt="" coords="3007,825,3172,867"/>
-<area shape="rect" href="fission_8cc.html" title=" " alt="" coords="3197,833,3363,859"/>
-<area shape="rect" href="schedule_2parallelize_8cc.html" title=" " alt="" coords="3387,833,3581,859"/>
-<area shape="rect" href="reorder_8cc.html" title=" " alt="" coords="3605,833,3776,859"/>
-<area shape="rect" href="swap_8cc.html" title=" " alt="" coords="1331,833,1490,859"/>
-<area shape="rect" href="vectorize_8cc.html" title=" " alt="" coords="1514,833,1699,859"/>
-<area shape="rect" href="target_8h.html" title=" " alt="" coords="482,483,649,509"/>
-<area shape="rect" href="func_8h.html" title=" " alt="" coords="803,565,917,591"/>
-<area shape="rect" href="stmt_8h.html" title=" " alt="" coords="965,483,1080,509"/>
-<area shape="rect" href="buffer_8cc.html" title=" " alt="" coords="673,483,773,509"/>
-<area shape="rect" href="ast_8h.html" title=" " alt="" coords="1050,177,1155,203"/>
-<area shape="rect" href="expr_8h.html" title=" " alt="" coords="823,259,937,285"/>
-<area shape="rect" href="reduce__op_8h.html" title=" " alt="" coords="963,333,1115,360"/>
-<area shape="rect" href="tensor_8h.html" title=" " alt="" coords="763,333,888,360"/>
-<area shape="rect" href="ast__parser__base_8h.html" title=" " alt="" coords="823,169,975,211"/>
+<area shape="rect" title=" " alt="" coords="2731,5,2912,32"/>
+<area shape="rect" href="comp__transient__bounds_8h.html" title=" " alt="" coords="427,80,591,121"/>
+<area shape="rect" href="structural__feature_8cc.html" title=" " alt="" coords="5,348,168,389"/>
+<area shape="rect" href="auto__schedule_8cc.html" title=" " alt="" coords="703,348,875,389"/>
+<area shape="rect" href="shrink__for_8h.html" title=" " alt="" coords="47,259,193,300"/>
+<area shape="rect" href="code__gen__cpu_8cc.html" title=" " alt="" coords="406,348,573,389"/>
+<area shape="rect" href="code__gen__cuda_8cc.html" title=" " alt="" coords="899,348,1066,389"/>
+<area shape="rect" href="cpu_2lower__parallel__reduction_8cc.html" title=" " alt="" coords="1289,348,1453,389"/>
+<area shape="rect" href="make__parallel__reduction_8cc.html" title=" " alt="" coords="1768,348,1939,389"/>
+<area shape="rect" href="cache_8cc.html" title=" " alt="" coords="2701,355,2864,382"/>
+<area shape="rect" href="inlining_8cc.html" title=" " alt="" coords="1091,355,1264,382"/>
+<area shape="rect" href="comp__unique__bounds_8cc.html" title=" " alt="" coords="636,259,823,300"/>
+<area shape="rect" href="deps_8h.html" title=" " alt="" coords="1973,87,2144,114"/>
+<area shape="rect" href="deps_8cc.html" title=" " alt="" coords="1297,177,1447,203"/>
+<area shape="rect" href="merge__no__deps__hint_8cc.html" title=" " alt="" coords="2349,169,2515,211"/>
+<area shape="rect" href="prop__one__time__use_8cc.html" title=" " alt="" coords="2539,169,2715,211"/>
+<area shape="rect" href="remove__writes_8cc.html" title=" " alt="" coords="2739,177,2933,203"/>
+<area shape="rect" href="sink__var_8cc.html" title=" " alt="" coords="2958,177,3109,203"/>
+<area shape="rect" href="tensor__prop__const_8cc.html" title=" " alt="" coords="3133,169,3289,211"/>
+<area shape="rect" href="schedule_8cc.html" title=" " alt="" coords="1050,177,1171,203"/>
+<area shape="rect" href="buffer_8h.html" title=" " alt="" coords="2711,87,2833,114"/>
+<area shape="rect" href="include_2codegen_2code__gen_8h.html" title=" " alt="" coords="1049,80,1212,121"/>
+<area shape="rect" href="data__type_8h.html" title=" " alt="" coords="2909,87,3059,114"/>
+<area shape="rect" href="frontend__var_8h.html" title=" " alt="" coords="3135,80,3321,121"/>
+<area shape="rect" href="frontend__var_8cc.html" title=" " alt="" coords="3365,169,3523,211"/>
+<area shape="rect" href="parallel__scope_8h.html" title=" " alt="" coords="3345,87,3524,114"/>
+<area shape="rect" href="make__nested__loops_8h.html" title=" " alt="" coords="1345,259,1540,300"/>
+<area shape="rect" href="shrink__var_8h.html" title=" " alt="" coords="3396,259,3543,300"/>
+<area shape="rect" href="fixed__length__feature_8cc.html" title=" " alt="" coords="3649,80,3828,121"/>
+<area shape="rect" href="config_8cc.html" title=" " alt="" coords="3853,87,3955,114"/>
+<area shape="rect" href="match__ast_8cc.html" title=" " alt="" coords="3979,87,4154,114"/>
+<area shape="rect" href="driver_8cc.html" title=" " alt="" coords="4178,87,4278,114"/>
+<area shape="rect" href="hash_8cc.html" title=" " alt="" coords="4302,87,4397,114"/>
+<area shape="rect" href="metadata_8cc.html" title=" " alt="" coords="4421,87,4547,114"/>
+<area shape="rect" href="annotate__conds_8cc.html" title=" " alt="" coords="4572,87,4772,114"/>
+<area shape="rect" href="hoist__var__over__stmt__seq_8cc.html" title=" " alt="" coords="4795,80,4938,121"/>
+<area shape="rect" href="make__reduction_8cc.html" title=" " alt="" coords="4962,87,5163,114"/>
+<area shape="rect" href="pb__simplify_8cc.html" title=" " alt="" coords="5188,87,5359,114"/>
+<area shape="rect" href="rand__var_8cc.html" title=" " alt="" coords="5383,80,5531,121"/>
+<area shape="rect" href="check__loop__order_8cc.html" title=" " alt="" coords="5555,80,5701,121"/>
+<area shape="rect" href="print__ast_8cc.html" title=" " alt="" coords="5725,80,5859,121"/>
+<area shape="rect" href="comp__unique__bounds_8h.html" title=" " alt="" coords="487,169,651,211"/>
+<area shape="rect" href="structural__feature_8h.html" title=" " alt="" coords="421,259,611,300"/>
+<area shape="rect" href="simplify_8h.html" title=" " alt="" coords="999,266,1169,293"/>
+<area shape="rect" href="use__builtin__div_8h.html" title=" " alt="" coords="217,259,396,300"/>
+<area shape="rect" href="grad_8cc.html" title=" " alt="" coords="1477,355,1632,382"/>
+<area shape="rect" href="all__no__reuse__defs_8cc.html" title=" " alt="" coords="1769,169,1908,211"/>
+<area shape="rect" href="analyze__version_8cc.html" title=" " alt="" coords="1983,169,2134,211"/>
+<area shape="rect" href="check__not__modified_8cc.html" title=" " alt="" coords="2158,169,2325,211"/>
+<area shape="rect" href="remove__cyclic__assign_8cc.html" title=" " alt="" coords="1572,169,1745,211"/>
 </map>
 </div>
 </div>
