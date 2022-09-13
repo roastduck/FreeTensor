@@ -1,5 +1,5 @@
-#ifndef CPU_CONTEXT_H
-#define CPU_CONTEXT_H
+#ifndef FREE_TENSOR_CPU_CONTEXT_H
+#define FREE_TENSOR_CPU_CONTEXT_H
 
 #include "context.h"
 
@@ -7,4 +7,4 @@ class CPUContext : public Context {};
 
 extern "C" typedef CPUContext *CPUContext_t;
 
-#endif // CPU_CONTEXT_H
+#endif // FREE_TENSOR_CPU_CONTEXT_H

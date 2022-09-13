@@ -1,3 +1,6 @@
+#ifndef FREE_TENSOR_MDSPAN_H
+#define FREE_TENSOR_MDSPAN_H
+
 #include <cstdint>
 
 #include "../3rd-party/mdspan/mdspan.hpp"
@@ -72,3 +75,5 @@ template <class T, class Layout, class Accessor, size_t... Ss>
 auto toArrPtr(const mdspan<T, extents<Ss...>, Layout, Accessor> &s) {
     return (typename arr_ptr_t<T, Ss...>::type)s.data_handle();
 }
+
+#endif // FREE_TENSOR_MDSPAN_H

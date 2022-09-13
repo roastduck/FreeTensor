@@ -1,7 +1,6 @@
 #include <algorithm>
 
-#include <itertools.hpp>
-
+#include <container_utils.h>
 #include <debug/match_ast.h>
 #include <pass/flatten_stmt_seq.h>
 
@@ -52,7 +51,7 @@ void MatchVisitor::visit(const StmtSeq &op) {
     CHECK(instance_->nodeType() == ASTNodeType::StmtSeq);
     auto instance = instance_.as<StmtSeqNode>();
     CHECK(op->stmts_.size() == instance->stmts_.size());
-    for (auto &&[oStmt, iStmt] : iter::zip(op->stmts_, instance->stmts_)) {
+    for (auto &&[oStmt, iStmt] : views::zip(op->stmts_, instance->stmts_)) {
         RECURSE(oStmt, iStmt);
     }
 }
@@ -68,7 +67,7 @@ void MatchVisitor::visit(const VarDef &op) {
     auto &&lshape = op->buffer_->tensor()->shape();
     auto &&rshape = instance->buffer_->tensor()->shape();
     CHECK(lshape.size() == rshape.size());
-    for (auto &&[ldim, rdim] : iter::zip(lshape, rshape)) {
+    for (auto &&[ldim, rdim] : views::zip(lshape, rshape)) {
         RECURSE(ldim, rdim);
     }
     RECURSE(op->body_, instance->body_);
@@ -97,7 +96,7 @@ void MatchVisitor::visit(const Store &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Store);
     auto instance = instance_.as<StoreNode>();
     CHECK(matchName(op->var_, instance->var_));
-    for (auto &&[oIdx, iIdx] : iter::zip(op->indices_, instance->indices_)) {
+    for (auto &&[oIdx, iIdx] : views::zip(op->indices_, instance->indices_)) {
         RECURSE(oIdx, iIdx);
     }
     RECURSE(op->expr_, instance->expr_);
@@ -107,7 +106,7 @@ void MatchVisitor::visit(const Load &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Load);
     auto instance = instance_.as<LoadNode>();
     CHECK(matchName(op->var_, instance->var_));
-    for (auto &&[oIdx, iIdx] : iter::zip(op->indices_, instance->indices_)) {
+    for (auto &&[oIdx, iIdx] : views::zip(op->indices_, instance->indices_)) {
         RECURSE(oIdx, iIdx);
     }
 }
@@ -116,7 +115,7 @@ void MatchVisitor::visit(const ReduceTo &op) {
     CHECK(instance_->nodeType() == ASTNodeType::ReduceTo);
     auto instance = instance_.as<ReduceToNode>();
     CHECK(matchName(op->var_, instance->var_));
-    for (auto &&[oIdx, iIdx] : iter::zip(op->indices_, instance->indices_)) {
+    for (auto &&[oIdx, iIdx] : views::zip(op->indices_, instance->indices_)) {
         RECURSE(oIdx, iIdx);
     }
     CHECK(op->op_ == instance->op_);
@@ -164,7 +163,7 @@ void MatchVisitor::visit(const Add &op) {
     std::sort(thisOperands.begin(), thisOperands.end());
     do {
         isMatched_ = true;
-        for (auto &&[oOp, iOp] : iter::zip(thisOperands, instanceOperands)) {
+        for (auto &&[oOp, iOp] : views::zip(thisOperands, instanceOperands)) {
             TRY_RECURSE(oOp, iOp);
             if (!isMatched_) {
                 goto fail;
@@ -222,7 +221,7 @@ void MatchVisitor::visit(const Mul &op) {
     std::sort(thisOperands.begin(), thisOperands.end());
     do {
         isMatched_ = true;
-        for (auto &&[oOp, iOp] : iter::zip(thisOperands, instanceOperands)) {
+        for (auto &&[oOp, iOp] : views::zip(thisOperands, instanceOperands)) {
             TRY_RECURSE(oOp, iOp);
             if (!isMatched_) {
                 goto fail;
@@ -478,7 +477,7 @@ void MatchVisitor::visit(const Intrinsic &op) {
     auto instance = instance_.as<IntrinsicNode>();
     CHECK(op->format_ == instance->format_);
     CHECK(op->params_.size() == instance->params_.size());
-    for (auto &&[oParam, iParam] : iter::zip(op->params_, instance->params_)) {
+    for (auto &&[oParam, iParam] : views::zip(op->params_, instance->params_)) {
         RECURSE(oParam, iParam);
     }
     CHECK(op->retType_ == instance->retType_);

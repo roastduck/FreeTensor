@@ -3,8 +3,6 @@
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <math/parse_pb_expr.h>
-#include <pass/flatten_stmt_seq.h>
-#include <pass/make_reduction.h>
 #include <pass/shrink_for.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/permute.h>
@@ -34,7 +32,7 @@ class Permute : public Mutator {
             if (!condition.isValid())
                 condition = makeBoolConst(true);
             // iterate over the loops
-            for (auto &&[i, l] : iter::enumerate(loopsId_)) {
+            for (auto &&[i, l] : views::enumerate(loopsId_)) {
                 // sanity check
                 ASSERT(inner->id() == l &&
                        inner->nodeType() == ASTNodeType::For);
@@ -60,7 +58,7 @@ class Permute : public Mutator {
             // wrap with the conditions
             inner = makeIf(condition, inner);
             // wrap with the new loops
-            for (auto &&newIter : iter::reversed(reversePermute_.args_)) {
+            for (auto &&newIter : views::reverse(reversePermute_.args_)) {
                 inner = makeFor(newIter, makeIntConst(INT32_MIN),
                                 makeIntConst(INT32_MAX), makeIntConst(1),
                                 makeIntConst(int64_t(INT32_MAX) - INT32_MIN),
@@ -90,8 +88,7 @@ std::pair<Stmt, std::vector<ID>> permute(
     if (loopsId.size() == 0)
         throw InvalidSchedule("No loop is specified");
 
-    // flatten the AST first since we expect perfectly nested loops
-    auto ast = flattenStmtSeq(_ast);
+    auto ast = _ast;
 
     // look for the loops specified
     CheckLoopOrder checker(loopsId);
@@ -102,7 +99,7 @@ std::pair<Stmt, std::vector<ID>> permute(
     {
         auto error = [&](const std::string &content) {
             std::string msg = "Loops ";
-            for (auto &&[i, item] : iter::enumerate(loopsId)) {
+            for (auto &&[i, item] : views::enumerate(loopsId)) {
                 msg += (i > 0 ? ", " : "") + toString(item);
             }
             msg += " ";
@@ -114,7 +111,7 @@ std::pair<Stmt, std::vector<ID>> permute(
             error(
                 "should be perfectly nested without any statements in between");
 
-        for (auto &&[i, item] : iter::enumerate(loops))
+        for (auto &&[i, item] : views::enumerate(loops))
             if (loopsId[i] != item->id())
                 error("should be in the same order as the input");
     }
@@ -123,7 +120,7 @@ std::pair<Stmt, std::vector<ID>> permute(
     std::string permuteMapStr;
     {
         auto originalIter =
-            iter::range(loops.size()) | iter::imap([](auto &&i) {
+            views::ints(0ul, loops.size()) | views::transform([](auto &&i) {
                 return makeVar("din" + std::to_string(i))
                     .template as<VarNode>();
             });
@@ -131,7 +128,7 @@ std::pair<Stmt, std::vector<ID>> permute(
             transformFunc({originalIter.begin(), originalIter.end()});
 
         // check for loads in the permuted iteration expressions
-        for (auto &&[i, expr] : iter::enumerate(permutedIter))
+        for (auto &&[i, expr] : views::enumerate(permutedIter))
             if (allReads(expr).size() > 0)
                 throw InvalidSchedule(
                     "Unexpected load in component " + std::to_string(i) +
@@ -142,7 +139,7 @@ std::pair<Stmt, std::vector<ID>> permute(
 
         oss << "{[";
         // sources
-        for (auto &&[i, item] : iter::enumerate(originalIter)) {
+        for (auto &&[i, item] : views::enumerate(originalIter)) {
             if (i > 0)
                 oss << ", ";
             oss << mangle(item->name_);
@@ -152,7 +149,7 @@ std::pair<Stmt, std::vector<ID>> permute(
 
         // destinations
         // give them names here since they are not in the permutedIter
-        for (auto i : iter::range(permutedIter.size())) {
+        for (auto i : views::ints(0ul, permutedIter.size())) {
             if (i > 0)
                 oss << ", ";
             oss << "dout" << i;
@@ -162,12 +159,12 @@ std::pair<Stmt, std::vector<ID>> permute(
 
         // generate presburger expressions for original iter -> permuted iter
         GenPBExpr genPBExpr;
-        for (auto &&[i, item] : iter::enumerate(permutedIter)) {
+        for (auto &&[i, item] : views::enumerate(permutedIter)) {
             if (i > 0)
                 oss << " and ";
 
             auto res = genPBExpr.gen(item);
-            if (!res.isValid())
+            if (!res.has_value())
                 throw InvalidSchedule(
                     "Cannot generate Presburger expression for component " +
                     std::to_string(i) + " of provided transform, which is " +
@@ -200,7 +197,7 @@ std::pair<Stmt, std::vector<ID>> permute(
                     .as<ForNode>())
         evenOuterLoops.emplace_back(node->id(), DepDirection::Same);
 
-    auto dir = loopsId | iter::imap([&](auto &&l) -> FindDepsDir {
+    auto dir = loopsId | views::transform([&](auto &&l) -> FindDepsDir {
                    auto d = evenOuterLoops;
                    d.emplace_back(l, DepDirection::Different);
                    return d;
@@ -210,10 +207,10 @@ std::pair<Stmt, std::vector<ID>> permute(
     auto getExtractDimMap = [](int begin, int end, int total) {
         std::ostringstream oss;
         oss << "{[";
-        for (auto i : iter::range(total))
+        for (auto i : views::ints(0, total))
             oss << (i > 0 ? ", " : "") << "din" << i;
         oss << "] -> [";
-        for (auto i : iter::range(begin, end))
+        for (auto i : views::ints(begin, end))
             oss << (i > begin ? ", " : "") << "dout" << i - begin << " = din"
                 << i;
         oss << "]}";

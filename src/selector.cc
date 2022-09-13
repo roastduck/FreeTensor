@@ -5,6 +5,8 @@
 
 namespace freetensor {
 
+bool NotSelector::match(const Stmt &stmt) const { return !sub_->match(stmt); }
+
 bool BothSelector::match(const Stmt &stmt) const {
     return lhs_->match(stmt) && rhs_->match(stmt);
 }
@@ -18,21 +20,36 @@ bool NodeTypeSelector::match(const Stmt &stmt) const {
 }
 
 bool ChildSelector::match(const Stmt &stmt) const {
-    return child_->match(stmt) && stmt->parent()->isAST() &&
-           stmt->parent().as<ASTNode>()->isStmt() &&
-           parent_->match(stmt->parent().as<StmtNode>());
+    auto p = stmt->parentStmt();
+    return p.isValid() && parent_->match(p);
 }
 
 bool DescendantSelector::match(const Stmt &_stmt) const {
-    auto stmt = _stmt;
-    if (!descendant_->match(stmt))
-        return false;
-    while (stmt->parent()->isAST() && stmt->parent().as<ASTNode>()->isStmt()) {
-        stmt = stmt->parent().as<StmtNode>();
+    for (auto stmt = _stmt->parentStmt(); stmt.isValid();
+         stmt = stmt->parentStmt()) {
         if (ancestor_->match(stmt))
             return true;
+        if (middle_.isValid() && !middle_->match(stmt)) {
+            return false;
+        }
     }
     return false;
+}
+
+bool RootNodeSelector::match(const Stmt &stmt) const {
+    return !stmt->parentStmt().isValid();
+}
+
+bool NotLeafSelector::match(const Metadata &md) const {
+    return !sub_->match(md);
+}
+
+bool BothLeafSelector::match(const Metadata &md) const {
+    return lhs_->match(md) && rhs_->match(md);
+}
+
+bool EitherLeafSelector::match(const Metadata &md) const {
+    return lhs_->match(md) || rhs_->match(md);
 }
 
 bool IDSelector::match(const Stmt &stmt) const { return stmt->id() == id_; }
@@ -42,13 +59,9 @@ bool IDSelector::match(const Metadata &md) const {
 }
 
 bool LabelSelector::match(const Metadata &md) const {
-    if (!md.isValid() || md->getType() != MetadataType::Source)
+    if (md->getType() != MetadataType::Source)
         return false;
-    const auto &labelsSet = md.as<SourceMetadataContent>()->labelsSet();
-    for (const auto &l : labels_)
-        if (labelsSet.count(l) == 0)
-            return false;
-    return true;
+    return md.as<SourceMetadataContent>()->labelsSet().count(label_);
 }
 
 bool TransformedSelector::match(const Metadata &_md) const {
@@ -57,19 +70,42 @@ bool TransformedSelector::match(const Metadata &_md) const {
     auto md = _md.as<TransformedMetadataContent>();
     if (md->op() != op_ || sources_.size() != md->sources().size())
         return false;
-    for (auto &&[sel, md] : iter::zip(sources_, md->sources()))
+    for (auto &&[sel, md] : views::zip(sources_, md->sources()))
         if (!sel->match(md))
             return false;
     return true;
 }
 
-bool CallerSelector::match(const Metadata &_md) const {
+bool DirectCallerSelector::match(const Metadata &_md) const {
     if (_md->getType() != MetadataType::Source)
         return false;
     auto md = _md.as<SourceMetadataContent>();
     if (!md->caller().isValid())
         return false;
-    return self_->match(md) && caller_->match(md->caller());
+    return caller_->match(md->caller());
+}
+
+bool CallerSelector::match(const Metadata &_md) const {
+    if (_md->getType() != MetadataType::Source)
+        return false;
+    for (auto md = _md.as<SourceMetadataContent>()->caller(); md.isValid();) {
+        if (caller_->match(md)) {
+            return true;
+        }
+        if (middle_.isValid() && !middle_->match(md)) {
+            return false;
+        }
+        if (md->getType() == MetadataType::Source) {
+            md = md.as<SourceMetadataContent>()->caller();
+        }
+    }
+    return false;
+}
+
+bool RootCallSelector::match(const Metadata &md) const {
+    if (md->getType() != MetadataType::Source)
+        return false;
+    return !md.as<SourceMetadataContent>()->caller().isValid();
 }
 
 Ref<Selector> parseSelector(const std::string &str) {

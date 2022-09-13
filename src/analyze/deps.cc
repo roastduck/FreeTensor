@@ -1,8 +1,6 @@
 #include <algorithm>
 #include <sstream>
 
-#include <itertools.hpp>
-
 #include <analyze/deps.h>
 #include <container_utils.h>
 #include <except.h>
@@ -219,7 +217,7 @@ Ref<std::string> AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
                                           GenPBExpr::VarMap &externals) {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
-        if (auto linstr = genPBExpr.gen(list[i]); linstr.isValid()) {
+        if (auto linstr = genPBExpr.gen(list[i]); linstr.has_value()) {
             ret += *linstr;
             for (auto &&[expr, str] : genPBExpr.vars(list[i])) {
                 if (expr->nodeType() == ASTNodeType::Load) {
@@ -244,7 +242,7 @@ Ref<std::string> AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                                        GenPBExpr::VarMap &externals) {
     std::string ret;
     for (auto &&cond : conds) {
-        if (auto str = genPBExpr.gen(cond); str.isValid()) {
+        if (auto str = genPBExpr.gen(cond); str.has_value()) {
             for (auto &&[expr, str] : genPBExpr.vars(cond)) {
                 if (expr->nodeType() == ASTNodeType::Load) {
                     externals[expr] = str;
@@ -337,7 +335,7 @@ PBMap AnalyzeDeps::makeEqForBothOps(
     std::ostringstream os;
     os << "{" << makeNdList("d", iterDim) << " -> " << makeNdList("d_", iterDim)
        << ": ";
-    for (auto &&[i, crd] : iter::enumerate(coord)) {
+    for (auto &&[i, crd] : views::enumerate(coord)) {
         if (i > 0) {
             os << " and ";
         }
@@ -585,7 +583,7 @@ void AnalyzeDeps::projectOutPrivateAxis(
         }
 
         for (auto &&[common, other, otherMap] :
-             iter::zip(oCommonDims, otherList, otherMapList)) {
+             views::zip(oCommonDims, otherList, otherMapList)) {
             if (common + 1 < (int)other->iter_.size()) {
                 otherMap = applyDomain(
                     std::move(otherMap),
@@ -764,8 +762,8 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         depAllList(earlierList.size());
     PBMap psDepAllUnion;
     for (auto &&[i, earlier, earlierMap, earlierExternals] :
-         iter::zip(iter::count(), earlierList, earlierMapList,
-                   earlierExternalsList)) {
+         views::zip(views::ints(0, ranges::unreachable), earlierList,
+                    earlierMapList, earlierExternalsList)) {
         earlierMap =
             makeAccMap(presburger, *earlier, iterDim, accDim, earlierRelax_,
                        "earlier" + std::to_string(i), earlierExternals);
@@ -773,8 +771,9 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     projectOutPrivateAxis(presburger, later, earlierList, earlierMapList,
                           iterDim);
     for (auto &&[i, earlier, earlierMap, earlierExternals, es2a, depAll] :
-         iter::zip(iter::count(), earlierList, earlierMapList,
-                   earlierExternalsList, es2aList, depAllList)) {
+         views::zip(views::ints(0, ranges::unreachable), earlierList,
+                    earlierMapList, earlierExternalsList, es2aList,
+                    depAllList)) {
         if (earlierMap.empty()) {
             continue;
         }
@@ -812,7 +811,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     psNearest = coalesce(std::move(psNearest));
 
     for (auto &&[earlier, es2a, earlierMap, depAll] :
-         iter::zip(earlierList, es2aList, earlierMapList, depAllList)) {
+         views::zip(earlierList, es2aList, earlierMapList, depAllList)) {
         if (depAll.isValid()) {
             checkAgainstCond(
                 presburger, later, earlier, depAll,
@@ -850,16 +849,17 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     std::vector<GenPBExpr::VarMap> laterExternalsList(laterList.size());
     std::vector<PBMap> ls2aList(laterList.size()), depAllList(laterList.size());
     PBMap spDepAllUnion;
-    for (auto &&[i, later, laterMap, laterExternals] : iter::zip(
-             iter::count(), laterList, laterMapList, laterExternalsList)) {
+    for (auto &&[i, later, laterMap, laterExternals] :
+         views::zip(views::ints(0, ranges::unreachable), laterList,
+                    laterMapList, laterExternalsList)) {
         laterMap = makeAccMap(presburger, *later, iterDim, accDim, laterRelax_,
                               "later" + std::to_string(i), laterExternals);
     }
     projectOutPrivateAxis(presburger, earlier, laterList, laterMapList,
                           iterDim);
     for (auto &&[i, later, laterMap, laterExternals, ls2a, depAll] :
-         iter::zip(iter::count(), laterList, laterMapList, laterExternalsList,
-                   ls2aList, depAllList)) {
+         views::zip(views::ints(0, ranges::unreachable), laterList,
+                    laterMapList, laterExternalsList, ls2aList, depAllList)) {
         if (laterMap.empty()) {
             continue;
         }
@@ -898,7 +898,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     spNearest = coalesce(std::move(spNearest));
 
     for (auto &&[later, ls2a, laterMap, depAll] :
-         iter::zip(laterList, ls2aList, laterMapList, depAllList)) {
+         views::zip(laterList, ls2aList, laterMapList, depAllList)) {
         if (depAll.isValid()) {
             checkAgainstCond(
                 presburger, later, earlier, depAll,

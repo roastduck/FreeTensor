@@ -22,9 +22,9 @@ void Sketch::addPart(const SketchPart &p) {
 }
 
 const Schedule &Sketch::genSchedule() {
-    if (genSchedule_.isValid())
+    if (genSchedule_.has_value())
         return *genSchedule_;
-    genSchedule_ = Opt<Schedule>::make(schedule_.fork());
+    genSchedule_ = std::make_optional<Schedule>(schedule_.fork());
     for (auto &sub : subs_) {
         for (auto &part : sub.parts) {
             part.second->apply(*genSchedule_, sub);
@@ -87,9 +87,9 @@ const Func &Sketch::lowered() {
 }
 
 const std::vector<double> &Sketch::feature() {
-    if (!feature_.isValid()) {
-        feature_ =
-            Opt<std::vector<double>>::make(fixedLengthFeature(lowered()));
+    if (!feature_.has_value()) {
+        feature_ = std::make_optional<std::vector<double>>(
+            fixedLengthFeature(lowered()));
     }
     return *feature_;
 }

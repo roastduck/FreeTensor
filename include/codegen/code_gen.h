@@ -8,9 +8,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include <itertools.hpp>
-
 #include <analyze/symbol_table.h>
+#include <container_utils.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -36,7 +35,7 @@ template <class Stream> class CodeGen : public SymbolTable<Visitor> {
     void makeIndent();
 
     template <class T> void printList(T &&list) {
-        for (auto &&[i, item] : iter::enumerate(list)) {
+        for (auto &&[i, item] : views::enumerate(list)) {
             os() << (i > 0 ? ", " : "");
             (*this)(item);
         }

@@ -1,7 +1,6 @@
-#include <itertools.hpp>
-
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
+#include <container_utils.h>
 #include <math/parse_pb_expr.h>
 #include <pass/replace_iter.h>
 #include <pass/replace_uses.h>
@@ -119,14 +118,14 @@ Stmt tensorPropConst(const Stmt &_op) {
                     std::unordered_map<std::string, Expr> islVarToNewIter,
                         oldIterToNewIter;
                     for (auto &&[newIter, arg] :
-                         iter::zip(repInfo.laterIters_, args)) {
+                         views::zip(repInfo.laterIters_, args)) {
                         islVarToNewIter[arg] =
                             newIter.realIter_ == newIter.iter_
                                 ? newIter.iter_
                                 : makeMul(makeIntConst(-1), newIter.realIter_);
                     }
                     for (auto &&[oldIter, value] :
-                         iter::zip(repInfo.earlierIters_, values)) {
+                         views::zip(repInfo.earlierIters_, values)) {
                         if (oldIter.realIter_->nodeType() == ASTNodeType::Var) {
                             oldIterToNewIter[oldIter.realIter_.as<VarNode>()
                                                  ->name_] =

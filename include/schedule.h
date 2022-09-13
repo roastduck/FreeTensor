@@ -4,6 +4,7 @@
 #include <functional>
 #include <unordered_map>
 
+#include <analyze/find_stmt.h>
 #include <auto_schedule/structs.h>
 #include <driver/target.h>
 #include <func.h>
@@ -13,7 +14,6 @@
 #include <schedule/memoized_schedules.h>
 #include <schedule/schedule_log.h>
 #include <schedule/var_split.h>
-#include <selector.h>
 #include <stmt.h>
 
 namespace freetensor {
@@ -49,6 +49,36 @@ class Schedule {
     Ref<RandCtx<OpenMPRandomEngine>> randCtx_;
 
   private:
+    void setAst(const Stmt &ast);
+    void setLogs(const ScheduleLog &log);
+
+    /**
+     * Prelude and conclude passes for each schedule
+     *
+     * Some quick passes that performed when the `Schedule` object is
+     * constructed and after each schedule
+     *
+     * These passes shall not change the statment IDs and Metadata, which means
+     * return values from each schedule will be preserved
+     */
+    static Stmt quickOptimizations(const Stmt &ast);
+
+    /**
+     * Generate a function that invokes a schedule on the current `ast()`, and
+     * apply `quickOptimizations`
+     */
+    template <class F> auto futureSchedule(const F &sched) {
+        return [&](auto &&...args) {
+            auto ret = sched(ast(), std::forward<decltype(args)>(args)...);
+            if constexpr (std::convertible_to<decltype(ret), Stmt>) {
+                return quickOptimizations(ret);
+            } else { // pair(Stmt, other info)
+                return std::make_pair(quickOptimizations(ret.first),
+                                      ret.second);
+            }
+        };
+    }
+
     /**
      * Append a new schedule log to logs, and try looking up an identical
      * schedule from `MemoizedSchedules`
@@ -59,13 +89,30 @@ class Schedule {
      */
     template <class T> T appendLog(const T &_log) {
         auto log = _log;
-        logs() = logs().push(log);
-        logs() = memoized_->lookup(logs());
+        setLogs(memoized_->lookupOrCreate(logs().push(log)));
         ASSERT(logs().top()->type() == log->type());
         log = logs().top().as<typename decltype(log)::Object>();
         log->run();
-        memoized_->save(logs());
         return log;
+    }
+
+    /**
+     * Apply a schedule log
+     *
+     * If the log is memoized, simply retrieve the memoized result. If the
+     * result is an exception, re-throw it
+     *
+     * `Schedule::ast()` is updated, and other return values are returned
+     */
+    template <class T> auto applyLog(const T &log) {
+        auto ret = log->getResult();
+        if constexpr (std::convertible_to<decltype(ret), Stmt>) {
+            setAst(ret);
+            return;
+        } else { // pair(Stmt, other info)
+            setAst(ret.first);
+            return ret.second;
+        }
     }
 
   public:
@@ -122,13 +169,11 @@ class Schedule {
     /**
      * @return : The statements being transformed, without a function signature
      */
-    Stmt &ast();
     const Stmt &ast() const;
 
     /**
      * @return : Logs of all schedules applied
      */
-    ScheduleLog &logs();
     const ScheduleLog &logs() const;
 
     /**
@@ -137,56 +182,45 @@ class Schedule {
     int verbose() const { return verbose_; }
 
     /**
-     * Find all nodes in the current AST satisfying a given condition
+     * Find all nodes (maybe non-existing) in the current AST satisfying a given
+     * condition
      *
-     * @param filter : A callback. Return true for acceptance
+     * @param filter : A callback that returns true for acceptance, or a
+     * `Selector`, or an `ID`
      */
-    std::vector<Stmt>
-    findAll(const std::function<bool(const Stmt &)> &filter) const;
+    template <class T> std::vector<Stmt> findAll(const T &filter) const {
+        return findAllStmt(ast(), filter);
+    }
+
+    /**
+     * Find all nodes (at least one) in the current AST satisfying a given
+     * condition
+     *
+     * @param filter : A callback that returns true for acceptance, or a
+     * `Selector`, or an `ID`
+     */
+    template <class T> std::vector<Stmt> findAtLeastOne(const T &filter) const {
+        auto ret = findAllStmt(ast(), filter);
+        if (ret.empty()) {
+            throw InvalidSchedule(ast(), "No statement found by filter");
+        }
+        return ret;
+    }
 
     /**
      * Find the only one nodes in the current AST satisfying a given condition
      *
-     * @param filter : A callback. Return true for acceptance
-     * @throw Error : if there is more than one, or there is no node found
+     * @param filter : A callback that returns true for acceptance, or a
+     * `Selector`, or an `ID`
+     * @throw InvalidSchedule : if there is more than one, or there is no node
+     * found
      */
-    Stmt find(const std::function<bool(const Stmt &)> &filter) const;
-
-    /**
-     * Find a (maybe non-existing) node in the current AST by ID
-     *
-     * @param id: ID
-     */
-    std::vector<Stmt> findAll(const ID &id) const {
-        return findAll([&id](const Stmt &c) { return c->id() == id; });
-    }
-
-    /**
-     * Find a node in the current AST by ID
-     *
-     * @param id: ID
-     */
-    Stmt find(const ID &id) const {
-        return find([&id](const Stmt &c) { return c->id() == id; });
-    }
-
-    /**
-     * Find all node(s) in the current AST with a given selector
-     *
-     * @param selector: selector used to match a sub-tree
-     */
-    std::vector<Stmt> findAll(const Ref<Selector> &selector) const {
-        return findAll(
-            [&selector](const Stmt &c) { return selector->match(c); });
-    }
-
-    /**
-     * Find a node in the current AST with a given selector
-     *
-     * @param selector: selector used to match a sub-tree
-     */
-    Stmt find(const Ref<Selector> &selector) const {
-        return find([&selector](const Stmt &c) { return selector->match(c); });
+    template <class T> Stmt find(const T &filter) const {
+        try {
+            return findStmt(ast(), filter);
+        } catch (const UnexpectedQueryResult &e) {
+            throw InvalidSchedule(ast(), e.what());
+        }
     }
 
     /**
@@ -215,12 +249,18 @@ class Schedule {
      * possible, please use the first mode, and then reorder the inner and outer
      * loops
      *
+     * Suppose the original loop is labeled "L", the split two loops can be
+     * selected by "$split.0{L}" (the outer loop) and "$split.1{L}" (the inner
+     * loop). If one of the resulting loop is proved to have only a single
+     * iteration, it will be removed
+     *
      * @param id : ID of the loop to be split
      * @param factor : Length of the inner loop. Set to -1 if using `nparts`
      * @param nparts : Length of the outer loop. Set to -1 if using `factor`
      * @param shift : Shift of iteration base. Defaults to zero
      * @throw InvalidSchedule if the loop is not found
-     * @return : (outer loop ID, inner loop ID)
+     * @return : (outer loop ID, inner loop ID), either ID can be invalid if
+     * the loop is proved to have only a single iteration
      */
     std::pair<ID, ID> split(const ID &id, int factor = -1, int nparts = -1,
                             int shift = 0);
@@ -243,6 +283,9 @@ class Schedule {
      *
      * `parallelize`, `unroll` and `vectorize` properties will be reset on the
      * merged loop
+     *
+     * Suppose the original loops are labeled "L1" and "L2", the merged loop can
+     * be selected by "$merge{L1, L2}"
      *
      * @param loop1, loop2 : ID of the loops to be merged, can be in any order
      * @throw InvalidSchedule if the loops are not directly nested
@@ -278,6 +321,12 @@ class Schedule {
      *
      * To split loop into two nested loops, use `split` instead
      *
+     * Statements inside the original loop will be distributed to one or both
+     * (happening if they are scope statements) loops. If a statement is
+     * originally labeled "S", it can be selected by "$fission.0{S}" (from the
+     * first loop) or "$fission.1{S}" (from the second loop) after fission. If
+     * one of the resulting loop has an empty body, it will be removed
+     *
      * @param loop : ID of the loop to be fissioned
      * @param side : If `After`, `splitter` is the last statement of the first
      * loop. If `Before`, `splitter` is the first statement of the second loop
@@ -290,7 +339,8 @@ class Schedule {
      * empty together with `suffix0`.
      * @throw InvalidSchedule if any dependency cannot be resolved
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
-     * loop})
+     * loop}). If a loop is removed because it has an empty body, it will not be
+     * in the returned map
      */
     std::pair<IDMap, IDMap> fission(const ID &loop, FissionSide side,
                                     const ID &splitter,
@@ -304,6 +354,9 @@ class Schedule {
      *
      * `parallelize`, `unroll` and `vectorize` properties will be reset on the
      * fused loop
+     *
+     * Suppose the original loops are labeled "L1" and "L2", the fused loop can
+     * be selected by "$fuse{L1, L2}"
      *
      * @param loop0 : ID of the leading loop
      * @param loop1 : ID of the following loop. If omitted, it will try to find

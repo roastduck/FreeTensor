@@ -14,6 +14,14 @@ class Selector {
     virtual bool match(const Stmt &stmt) const = 0;
 };
 
+class NotSelector : public Selector {
+    Ref<Selector> sub_;
+
+  public:
+    NotSelector(const Ref<Selector> &sub) : sub_(sub) {}
+    bool match(const Stmt &stmt) const override;
+};
+
 class BothSelector : public Selector {
     Ref<Selector> lhs_, rhs_;
 
@@ -41,21 +49,25 @@ class NodeTypeSelector : public Selector {
 };
 
 class ChildSelector : public Selector {
-    Ref<Selector> parent_, child_;
+    Ref<Selector> parent_;
 
   public:
-    ChildSelector(const Ref<Selector> &parent, const Ref<Selector> &child)
-        : parent_(parent), child_(child) {}
+    ChildSelector(const Ref<Selector> &parent) : parent_(parent) {}
     bool match(const Stmt &stmt) const override;
 };
 
 class DescendantSelector : public Selector {
-    Ref<Selector> ancestor_, descendant_;
+    Ref<Selector> ancestor_, middle_;
 
   public:
     DescendantSelector(const Ref<Selector> &ancestor,
-                       const Ref<Selector> &descendant)
-        : ancestor_(ancestor), descendant_(descendant) {}
+                       const Ref<Selector> &middle = nullptr)
+        : ancestor_(ancestor), middle_(middle) {}
+    bool match(const Stmt &stmt) const override;
+};
+
+class RootNodeSelector : public Selector {
+  public:
     bool match(const Stmt &stmt) const override;
 };
 
@@ -65,6 +77,33 @@ class LeafSelector : public Selector {
     virtual bool match(const Stmt &stmt) const override {
         return stmt->metadata().isValid() && match(stmt->metadata());
     }
+};
+
+class NotLeafSelector : public LeafSelector {
+    Ref<LeafSelector> sub_;
+
+  public:
+    NotLeafSelector(const Ref<LeafSelector> &sub) : sub_(sub) {}
+    bool match(const Metadata &md) const override;
+};
+
+class BothLeafSelector : public LeafSelector {
+    Ref<LeafSelector> lhs_, rhs_;
+
+  public:
+    BothLeafSelector(const Ref<LeafSelector> &lhs, const Ref<LeafSelector> &rhs)
+        : lhs_(lhs), rhs_(rhs) {}
+    bool match(const Metadata &md) const override;
+};
+
+class EitherLeafSelector : public LeafSelector {
+    Ref<LeafSelector> lhs_, rhs_;
+
+  public:
+    EitherLeafSelector(const Ref<LeafSelector> &lhs,
+                       const Ref<LeafSelector> &rhs)
+        : lhs_(lhs), rhs_(rhs) {}
+    bool match(const Metadata &md) const override;
 };
 
 class IDSelector : public LeafSelector {
@@ -77,10 +116,10 @@ class IDSelector : public LeafSelector {
 };
 
 class LabelSelector : public LeafSelector {
-    std::vector<std::string> labels_;
+    std::string label_;
 
   public:
-    LabelSelector(const std::vector<std::string> &label) : labels_(label) {}
+    LabelSelector(const std::string &label) : label_(label) {}
     bool match(const Metadata &md) const override;
 };
 
@@ -95,13 +134,26 @@ class TransformedSelector : public LeafSelector {
     bool match(const Metadata &md) const override;
 };
 
-class CallerSelector : public LeafSelector {
-    Ref<LeafSelector> self_, caller_;
+class DirectCallerSelector : public LeafSelector {
+    Ref<LeafSelector> caller_;
 
   public:
-    CallerSelector(const Ref<LeafSelector> &self,
-                   const Ref<LeafSelector> &caller)
-        : self_(self), caller_(caller) {}
+    DirectCallerSelector(const Ref<LeafSelector> &caller) : caller_(caller) {}
+    bool match(const Metadata &md) const override;
+};
+
+class CallerSelector : public LeafSelector {
+    Ref<LeafSelector> caller_, middle_;
+
+  public:
+    CallerSelector(const Ref<LeafSelector> &caller,
+                   const Ref<LeafSelector> &middle = nullptr)
+        : caller_(caller), middle_(middle) {}
+    bool match(const Metadata &md) const override;
+};
+
+class RootCallSelector : public LeafSelector {
+  public:
     bool match(const Metadata &md) const override;
 };
 

@@ -323,7 +323,17 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
 
     ast = mutator(ast);
     ast = mergeAndHoistIf(ast);
-    return {ast, {mutator.ids0(), mutator.ids1()}};
+
+    auto ids0 = mutator.ids0();
+    auto ids1 = mutator.ids1();
+    if (findAllStmt(ast, ids0.at(loop)).empty()) {
+        ids0.clear();
+    }
+    if (findAllStmt(ast, ids1.at(loop)).empty()) {
+        ids1.clear();
+    }
+
+    return {ast, {ids0, ids1}};
 }
 
 } // namespace freetensor

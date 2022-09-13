@@ -15,18 +15,20 @@ namespace freetensor {
 class ID {
     friend class StmtNode;
 
-    int64_t id_;
+    uint64_t id_;
 
-    static std::atomic_int64_t globalIdCnt_;
-    explicit ID(int64_t id) : id_(id) {}
+    static std::atomic_uint64_t globalIdCnt_;
+    explicit ID(uint64_t id) : id_(id) {}
 
   public:
-    ID() : id_(-1) {}
+    ID() : id_(0) {}
 
     static ID make() { return ID(globalIdCnt_++); }
-    static ID make(int64_t id) { return ID(id); }
+    static ID make(uint64_t id) { return ID(id); }
 
-    bool isValid() const { return id_ != -1; }
+    bool isValid() const { return id_ != 0; }
+
+    operator uint64_t() const { return id_; }
 
     friend std::ostream &operator<<(std::ostream &os, const ID &id);
     friend bool operator==(const ID &lhs, const ID &rhs);

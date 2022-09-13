@@ -4,6 +4,7 @@
 #include <array>
 #include <exception>
 #include <iostream>
+#include <mutex>
 #include <variant>
 
 #include <ast.h>
@@ -88,7 +89,8 @@ auto getIDFromPack(const std::tuple<Args...> &args) {
             return arg.first;
         else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
                                           std::vector<IDMetadataPack>>) {
-            auto ids = arg | iter::imap([&](auto pack) { return pack.first; });
+            auto ids =
+                arg | views::transform([&](auto pack) { return pack.first; });
             return std::vector<ID>(ids.begin(), ids.end());
         } else
             return arg;
@@ -106,7 +108,7 @@ auto getMetadataFromPack(const std::tuple<Args...> &args) {
         else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
                                           std::vector<IDMetadataPack>>) {
             auto metas =
-                arg | iter::imap([&](auto pack) { return pack.second; });
+                arg | views::transform([&](auto pack) { return pack.second; });
             return std::vector<Metadata>(metas.begin(), metas.end());
         } else
             return arg;
@@ -123,7 +125,7 @@ auto getPackFromID(auto schedule, const std::tuple<Args...> &args) {
         else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
                                           std::vector<ID>>) {
             auto packs =
-                arg | iter::imap([&](auto id) {
+                arg | views::transform([&](auto id) {
                     return IDMetadataPack{id, schedule->find(id)->metadata()};
                 });
             return std::vector<IDMetadataPack>(packs.begin(), packs.end());
@@ -149,6 +151,7 @@ class ScheduleLogItemImpl : public ScheduleLogItem {
     Params params_;
     std::variant<std::nullopt_t, Result, std::exception_ptr> result_ =
         std::nullopt;
+    std::mutex lock_;
 
   public:
     ScheduleLogItemImpl(const Invocable &doSchedule, const Params &params)
@@ -185,6 +188,7 @@ class ScheduleLogItemImpl : public ScheduleLogItem {
      * Run a schedule and save its result or its exception
      */
     void run() override {
+        std::lock_guard<std::mutex> guard(lock_);
         if (std::holds_alternative<std::nullopt_t>(result_)) {
             try {
                 result_ = std::apply(doSchedule_, getIDFromPack(params_));

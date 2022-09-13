@@ -1,6 +1,5 @@
-#include <itertools.hpp>
-
 #include <codegen/code_gen_cpu.h>
+#include <container_utils.h>
 #include <math/utils.h>
 #include <pass/simplify.h>
 #include <serialize/mangle.h>
@@ -33,7 +32,7 @@ void CodeGenCPU::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
          << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
     makeIndent();
     os() << rawPtr << " = malloc(";
-    for (auto &&[i, dim] : iter::enumerate(tensor->shape())) {
+    for (auto &&[i, dim] : views::enumerate(tensor->shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
         os() << ") * ";
@@ -67,10 +66,15 @@ void CodeGenCPU::visit(const VarDef &op) {
 
         switch (op->buffer_->mtype()) {
         case MemType::CPUHeap:
-            // e.g. mdspan_r<float, std::extents<5, 5>> x;
+            // e.g. UncheckedOpt<mdspan_r<float, std::extents<5, 5>>> x_opt;
+            //      auto &x = *x_opt;
             this->makeIndent();
+            this->os() << "UncheckedOpt<";
             genMdPtrType(op->buffer_);
-            this->os() << " " << name << ";" << std::endl;
+            this->os() << "> " << name << "_opt;" << std::endl;
+            this->makeIndent();
+            this->os() << "auto &" << name << " = *" << name << "_opt;"
+                       << std::endl;
             this->markDefBuffer(op);
             (*this)(op->body_);
             this->markUndefBuffer(op);
@@ -212,7 +216,7 @@ void CodeGenCPU::visit(const For &op) {
                 first = false;
                 if (!buffer(r->var_)->tensor()->shape().empty()) {
                     os() << mangle(r->var_) << "_ptr";
-                    for (auto &&[b, e] : iter::zip(r->begins_, r->ends_)) {
+                    for (auto &&[b, e] : views::zip(r->begins_, r->ends_)) {
                         os() << "[";
                         (*this)(b);
                         os() << ":";

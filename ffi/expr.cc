@@ -321,8 +321,6 @@ void init_ffi_ast_expr(py::module_ &m) {
                                DataType, bool)>(&_makeIntrinsic),
           "fmt"_a, "params"_a, "retType"_a = DataType::Void,
           "hasSideEffect"_a = false);
-
-    m.def("neutral_val", &neutralVal);
 }
 
 } // namespace freetensor

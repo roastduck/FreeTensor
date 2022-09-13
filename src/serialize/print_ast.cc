@@ -1,8 +1,7 @@
 #include <cctype>
 
-#include <itertools.hpp>
-
 #include <config.h>
+#include <container_utils.h>
 #include <serialize/print_ast.h>
 
 #include "../codegen/detail/code_gen.h"
@@ -84,7 +83,8 @@ void PrintVisitor::printMetadataAndId(const Stmt &op) {
     makeIndent();
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
-    if (printAllId_ || op->metadata().isValid()) {
+    if (printAllId_ ||
+        (op->metadata().isValid() && op->metadata()->printByDefault())) {
         makeIndent();
         os() << "#!";
         if (printAllId_)
@@ -99,19 +99,19 @@ void PrintVisitor::printMetadataAndId(const Stmt &op) {
 std::string PrintVisitor::escape(const std::string &name) {
     ASSERT(!name.empty());
 
-    bool should_escape = false;
+    bool shouldEscape = false;
     if (keywords.count(name))
-        should_escape = true;
+        shouldEscape = true;
     else if (!isalpha(name[0]) && name[0] != '_')
-        should_escape = true;
+        shouldEscape = true;
     else
         for (size_t i = 1, n = name.length(); i < n; i++)
             if (!isalnum(name[i]) && name[i] != '_') {
-                should_escape = true;
+                shouldEscape = true;
                 break;
             }
 
-    if (should_escape)
+    if (shouldEscape)
         return '`' + name + '`';
     else
         return name;
@@ -127,7 +127,7 @@ void PrintVisitor::visitStmt(const Stmt &op) {
 void PrintVisitor::visit(const Func &op) {
     makeIndent();
     os() << "func " << prettyFuncName(op->name_) << "(";
-    for (auto &&[i, param] : iter::enumerate(op->params_)) {
+    for (auto &&[i, param] : views::enumerate(op->params_)) {
         os() << (i > 0 ? ", " : "") << prettyVarDefName(param.name_);
         if (param.closure_.isValid()) {
             os() << " @!closure /* " << param.closure_.get() << " */";
@@ -136,7 +136,7 @@ void PrintVisitor::visit(const Func &op) {
     os() << ") ";
     if (!op->returns_.empty()) {
         os() << "-> ";
-        for (auto &&[i, ret] : iter::enumerate(op->returns_)) {
+        for (auto &&[i, ret] : views::enumerate(op->returns_)) {
             auto &&[name, dtype, closure, returnClosure] = ret;
             os() << (i > 0 ? ", " : "") << prettyVarDefName(name) << ": "
                  << ::freetensor::toString(dtype);
@@ -546,7 +546,7 @@ void PrintVisitor::visit(const For &op) {
     if (!op->property_->noDeps_.empty()) {
         makeIndent();
         os() << "@!no_deps : ";
-        for (auto &&[i, var] : iter::enumerate(op->property_->noDeps_)) {
+        for (auto &&[i, var] : views::enumerate(op->property_->noDeps_)) {
             os() << (i == 0 ? "" : ", ");
             os() << prettyVarDefName(var);
         }
@@ -582,7 +582,7 @@ void PrintVisitor::visit(const For &op) {
         os() << ": ";
 
         os() << prettyVarDefName(reduction->var_);
-        for (auto &&[b, e] : iter::zip(reduction->begins_, reduction->ends_)) {
+        for (auto &&[b, e] : views::zip(reduction->begins_, reduction->ends_)) {
             os() << "[";
             (*this)(b);
             os() << ":";
@@ -638,7 +638,7 @@ void PrintVisitor::visit(const If &op) {
 
 void PrintVisitor::visit(const Assert &op) {
     makeIndent();
-    os() << "assert ";
+    os() << prettyKeyword("assert ");
     recur(op->cond_);
     os() << " ";
     beginBlock();
@@ -648,7 +648,7 @@ void PrintVisitor::visit(const Assert &op) {
 
 void PrintVisitor::visit(const Assume &op) {
     makeIndent();
-    os() << "assume ";
+    os() << prettyKeyword("assume ");
     recur(op->cond_);
     os() << " ";
     beginBlock();

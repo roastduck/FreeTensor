@@ -1,3 +1,4 @@
+#include <analyze/find_stmt.h>
 #include <pass/simplify.h>
 #include <schedule/split.h>
 
@@ -66,10 +67,21 @@ std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &_ast, const ID &id,
     if (!mutator.found()) {
         throw InvalidSchedule("Loop not found");
     }
-    ast = simplify(ast); // try to remove divisions, or it will hinder
-                         // the dependency analysis
-    return std::make_pair(ast,
-                          std::make_pair(mutator.outerId(), mutator.innerId()));
+
+    // 1. try to remove divisions, or it will hinder the dependency analysis
+    // 2. remove 1-lengthed loop
+    ast = simplify(ast);
+
+    auto outerId = mutator.outerId();
+    auto innerId = mutator.innerId();
+    if (findAllStmt(ast, outerId).empty()) {
+        outerId = {};
+    }
+    if (findAllStmt(ast, innerId).empty()) {
+        innerId = {};
+    }
+
+    return std::make_pair(ast, std::make_pair(outerId, innerId));
 }
 
 } // namespace freetensor

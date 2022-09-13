@@ -2,11 +2,11 @@
 #define FREE_TENSOR_BOUNDS_H
 
 #include <iostream>
+#include <optional>
 #include <unordered_set>
 
 #include <math/linear.h>
 #include <math/rational.h>
-#include <opt.h>
 
 namespace freetensor {
 
@@ -16,7 +16,7 @@ ASTNodeType reverseCmp(ASTNodeType type);
 
 class UpperBound {
     Expr expr_;
-    Opt<std::unordered_set<std::string>> allNames_;
+    std::optional<std::unordered_set<std::string>> allNames_;
     LinearExpr<Rational<int64_t>> lin_;
 
   public:
@@ -36,7 +36,7 @@ class UpperBound {
 
 class LowerBound {
     Expr expr_;
-    Opt<std::unordered_set<std::string>> allNames_;
+    std::optional<std::unordered_set<std::string>> allNames_;
     LinearExpr<Rational<int64_t>> lin_;
 
   public:
@@ -80,26 +80,27 @@ bool alwaysLE(const UpperBound &b1, const LowerBound &b2);
  * E.g. convert "2 * x + 3 * y > 0" to x > -3/2 * y"
  */
 template <class T>
-std::pair<Opt<LowerBound>, Opt<UpperBound>>
+std::pair<std::optional<LowerBound>, std::optional<UpperBound>>
 lin2bounds(const LinearExpr<T> &_lin, ASTNodeType cmp, const Expr &x) {
-    typedef std::pair<Opt<LowerBound>, Opt<UpperBound>> RetType;
+    typedef std::pair<std::optional<LowerBound>, std::optional<UpperBound>>
+        RetType;
 
     // 1. Remove x from lin
     // 2. Convert to a rational linear because we need to do division later
     LinearExpr<Rational<int64_t>> lin;
-    Opt<Rational<int64_t>> selfK;
+    std::optional<Rational<int64_t>> selfK;
     lin.bias_ = _lin.bias_;
     lin.coeff_.reserve(_lin.coeff_.size() - 1);
     for (auto &&[k, a] : _lin.coeff_) {
         if (HashComparator()(a, x)) {
-            ASSERT(!selfK.isValid());
-            selfK = Opt<Rational<int64_t>>::make(k);
+            ASSERT(!selfK.has_value());
+            selfK = std::make_optional<Rational<int64_t>>(k);
         } else {
             lin.coeff_.emplace_back(Scale<Rational<int64_t>>{k, a});
         }
     }
-    if (!selfK.isValid() || *selfK == 0) {
-        return RetType(nullptr, nullptr);
+    if (!selfK.has_value() || *selfK == 0) {
+        return RetType(std::nullopt, std::nullopt);
     }
 
     // 3. Normalize according to selfK
@@ -118,21 +119,24 @@ lin2bounds(const LinearExpr<T> &_lin, ASTNodeType cmp, const Expr &x) {
     // x < 1/selfK * y <==> x <= 1/selfK * y - 1/selfK
     switch (cmp) {
     case ASTNodeType::LE:
-        return RetType(nullptr, Opt<UpperBound>::make(lin));
+        return RetType(std::nullopt, std::make_optional<UpperBound>(lin));
     case ASTNodeType::LT:
-        return RetType(nullptr,
-                       Opt<UpperBound>::make(LinearExpr<Rational<int64_t>>{
-                           lin.coeff_, lin.bias_ - 1 / std::abs(*selfK)}));
+        return RetType(
+            std::nullopt,
+            std::make_optional<UpperBound>(LinearExpr<Rational<int64_t>>{
+                lin.coeff_, lin.bias_ - 1 / std::abs(*selfK)}));
     case ASTNodeType::GE:
-        return RetType(Opt<LowerBound>::make(lin), nullptr);
+        return RetType(std::make_optional<LowerBound>(lin), std::nullopt);
     case ASTNodeType::GT:
-        return RetType(Opt<LowerBound>::make(LinearExpr<Rational<int64_t>>{
-                           lin.coeff_, lin.bias_ + 1 / std::abs(*selfK)}),
-                       nullptr);
+        return RetType(
+            std::make_optional<LowerBound>(LinearExpr<Rational<int64_t>>{
+                lin.coeff_, lin.bias_ + 1 / std::abs(*selfK)}),
+            std::nullopt);
     case ASTNodeType::EQ:
-        return RetType(Opt<LowerBound>::make(lin), Opt<UpperBound>::make(lin));
+        return RetType(std::make_optional<LowerBound>(lin),
+                       std::make_optional<UpperBound>(lin));
     default:
-        return RetType(nullptr, nullptr);
+        return RetType(std::nullopt, std::nullopt);
     }
 }
 

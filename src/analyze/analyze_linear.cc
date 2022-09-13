@@ -52,7 +52,8 @@ LinearExpr<int64_t> linear(const Expr &expr) {
     return visitor.result().at(expr);
 }
 
-Opt<std::pair<LinearExpr<int64_t>, ASTNodeType>> linearComp(const Expr &expr) {
+std::optional<std::pair<LinearExpr<int64_t>, ASTNodeType>>
+linearComp(const Expr &expr) {
     switch (expr->nodeType()) {
     case ASTNodeType::LT:
     case ASTNodeType::LE:
@@ -60,12 +61,12 @@ Opt<std::pair<LinearExpr<int64_t>, ASTNodeType>> linearComp(const Expr &expr) {
     case ASTNodeType::GE:
     case ASTNodeType::EQ:
     case ASTNodeType::NE:
-        return Opt<std::pair<LinearExpr<int64_t>, ASTNodeType>>::make(
-            std::make_pair(linear(makeSub(expr.as<BinaryExprNode>()->lhs_,
-                                          expr.as<BinaryExprNode>()->rhs_)),
-                           expr->nodeType()));
+        return std::make_optional<std::pair<LinearExpr<int64_t>, ASTNodeType>>(
+            linear(makeSub(expr.as<BinaryExprNode>()->lhs_,
+                           expr.as<BinaryExprNode>()->rhs_)),
+            expr->nodeType());
     default:
-        return nullptr;
+        return std::nullopt;
     }
 }
 

@@ -1,6 +1,5 @@
-#include <itertools.hpp>
-
 #include <analyze/fixed_length_feature.h>
+#include <container_utils.h>
 
 namespace freetensor {
 
@@ -20,7 +19,7 @@ static std::vector<double> interpolate(const std::vector<double> &bodyFeat,
     } else {
         size_t n = bodyFeat.size();
         std::vector<double> ret(n);
-        for (auto &&[r, body, tot] : iter::zip(ret, bodyFeat, totFeat)) {
+        for (auto &&[r, body, tot] : views::zip(ret, bodyFeat, totFeat)) {
             if (body == -1 || tot == -1) {
                 r = -1;
             } else {
@@ -45,7 +44,7 @@ static std::vector<double> scale(const std::vector<double> &feat, int64_t k) {
 static void mixTo(std::vector<double> &parent,
                   const std::vector<double> &child) {
     ASSERT(parent.size() == child.size());
-    for (auto &&[ch, par] : iter::zip(child, parent)) {
+    for (auto &&[ch, par] : views::zip(child, parent)) {
         if (ch == -1 || par == -1) {
             par = -1;
         } else {

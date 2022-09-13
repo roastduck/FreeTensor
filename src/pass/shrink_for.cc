@@ -46,7 +46,7 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
     default:;
     }
     if (checker.hasSideEffect()) {
-        for (auto &&[_var, _names] : iter::zip(iterStack_, namesStack_)) {
+        for (auto &&[_var, _names] : views::zip(iterStack_, namesStack_)) {
             auto &&names = _names;
 
             // Trigger recomputing in analyze/comp_unique_bounds
@@ -85,11 +85,7 @@ Stmt ShrinkFor::visit(const For &_op) {
     auto lower = makeMinMax(newRange_.at(var).first);
     auto upper = makeMaxMin(newRange_.at(var).second);
 
-    if (op->property_->unroll_ ||
-        (std::holds_alternative<CUDAScope>(op->property_->parallel_) &&
-         std::get<CUDAScope>(op->property_->parallel_).level_ ==
-             CUDAScope::Thread &&
-         !op->property_->reductions_.empty())) {
+    if (op->property_->unroll_) {
         // Backends do not support these loops to be of variable lengths
         lower = makeIntConst(bound_.getIntLower(lower));
         upper = makeIntConst(bound_.getIntUpper(upper));

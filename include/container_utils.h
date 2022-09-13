@@ -12,11 +12,14 @@
 #include <unordered_set>
 #include <vector>
 
-#include <itertools.hpp>
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
 
 #include <except.h>
 
 namespace freetensor {
+
+namespace views = ranges::views;
 
 template <class T, class V1, class V2, class Hash, class KeyEqual>
 std::unordered_map<T, std::pair<V1, V2>, Hash, KeyEqual>
@@ -157,7 +160,7 @@ inline std::string slice(const std::string &s, int begin) {
 template <class T>
 requires std::ranges::range<T> && (!std::convertible_to<T, std::string>)
 std::ostream &operator<<(std::ostream &os, const T &r) {
-    for (auto &&[i, item] : iter::enumerate(r)) {
+    for (auto &&[i, item] : views::enumerate(r)) {
         os << (i > 0 ? ", " : "") << item;
     }
     return os;

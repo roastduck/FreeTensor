@@ -110,6 +110,43 @@ def test_loop_in_between():
     assert std.match(ast)
 
 
+def test_multiple_loops_in_between_separated_by_vardef():
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4, 8), "int32", "output", "cpu"),
+                    ("w", (4, 8), "int32", "output", "cpu"),
+                    ("n", (), "int32", "input", "cpu")]) as (y, z, w, n):
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                z[i, j] = i * j
+            with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
+                t[...] = n[...] * i
+                with ft.For("j", 0, 8, label="L2") as j:
+                    w[i, j] = t[...]
+            with ft.For("j", 0, 8, label="L3") as j:
+                y[i, j] = i + j
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L3", "L1"]), verbose=1)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4, 8), "int32", "output", "cpu"),
+                    ("w", (4, 8), "int32", "output", "cpu"),
+                    ("n", (), "int32", "input", "cpu")]) as (y, z, w, n):
+        with ft.For("j", 0, 8) as j:
+            with ft.For("i", 0, 4) as i:
+                with ft.If(j == 0):
+                    with ft.For("j1", 0, 8) as j1:
+                        z[i, j1] = i * j1
+                    with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
+                        t[...] = n[...] * i
+                        with ft.For("j2", 0, 8) as j2:
+                            w[i, j2] = t[...]
+                y[i, j] = i + j
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_legal_dependence():
     with ft.VarDef("y", (8,), "int32", "inout", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:

@@ -1,7 +1,5 @@
 #include <algorithm>
 
-#include <itertools.hpp>
-
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <analyze/merge_no_deps_hint.h>
@@ -20,7 +18,7 @@ std::vector<std::string> mergeNoDepsHint(const Stmt &ast,
     }
 
     std::vector<std::string> ret, candidates;
-    for (auto &&[i, loop] : iter::enumerate(loopNodes)) {
+    for (auto &&[i, loop] : views::enumerate(loopNodes)) {
         if (i == 0) {
             ret = loop->property_->noDeps_;
             candidates = loop->property_->noDeps_;

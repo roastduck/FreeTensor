@@ -1,8 +1,7 @@
-#include <itertools.hpp>
-
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <analyze/find_all_loops.h>
+#include <container_utils.h>
 #include <pass/sink_var.h>
 
 namespace freetensor {
@@ -38,7 +37,7 @@ Stmt SinkVar::visit(const VarDef &_op) {
     case ASTNodeType::StmtSeq: {
         auto seq = op->body_.as<StmtSeqNode>();
         int firstUse = -1, lastUse = -1;
-        for (auto &&[i, stmt] : iter::enumerate(seq->stmts_)) {
+        for (auto &&[i, stmt] : views::enumerate(seq->stmts_)) {
             if (allUses(stmt).count(_op->name_)) {
                 if (firstUse == -1) {
                     firstUse = i;
@@ -68,7 +67,7 @@ Stmt SinkVar::visit(const VarDef &_op) {
                          seq->stmts_.end());
             isFixPoint_ = false;
             ret = makeStmtSeq(std::move(stmts), seq->metadata(), seq->id());
-            for (auto &&def : iter::reversed(inners)) {
+            for (auto &&def : views::reverse(inners)) {
                 ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
                                  std::move(ret), def->pinned_, def->metadata(),
                                  def->id());
@@ -92,7 +91,7 @@ Stmt SinkVar::visit(const VarDef &_op) {
             ret = makeFor(loop->iter_, loop->begin_, loop->end_, loop->step_,
                           loop->len_, loop->property_, std::move(loopBody),
                           loop->metadata(), loop->id());
-            for (auto &&def : iter::reversed(inners)) {
+            for (auto &&def : views::reverse(inners)) {
                 ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
                                  std::move(ret), def->pinned_, def->metadata(),
                                  def->id());
@@ -114,7 +113,7 @@ Stmt SinkVar::visit(const VarDef &_op) {
         }
         ret = makeIf(branch->cond_, std::move(thenCase), std::move(elseCase),
                      branch->metadata(), branch->id());
-        for (auto &&def : iter::reversed(inners)) {
+        for (auto &&def : views::reverse(inners)) {
             ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
                              std::move(ret), def->pinned_, def->metadata(),
                              def->id());
@@ -128,7 +127,7 @@ Stmt SinkVar::visit(const VarDef &_op) {
                                ass->body_, false, _op->metadata(), _op->id());
         ret =
             makeAssert(ass->cond_, std::move(body), ass->metadata(), ass->id());
-        for (auto &&def : iter::reversed(inners)) {
+        for (auto &&def : views::reverse(inners)) {
             ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
                              std::move(ret), def->pinned_, def->metadata(),
                              def->id());

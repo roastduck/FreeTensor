@@ -1,7 +1,6 @@
 #include <algorithm>
 
-#include <itertools.hpp>
-
+#include <container_utils.h>
 #include <schedule/check_loop_order.h>
 
 namespace freetensor {
@@ -51,7 +50,7 @@ void CheckLoopOrder::visit(const StmtSeq &op) {
 const std::vector<For> &CheckLoopOrder::order() const {
     if (curOrder_.size() != dstOrder_.size()) {
         std::string msg = "Loops ";
-        for (auto &&[i, item] : iter::enumerate(dstOrder_)) {
+        for (auto &&[i, item] : views::enumerate(dstOrder_)) {
             msg += (i > 0 ? ", " : "") + toString(item);
         }
         msg += " should be directly nested";

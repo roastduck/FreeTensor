@@ -17,7 +17,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Check whther 3rd-party modules exist
-foreach(MODULE IN ITEMS antlr/antlr4 cppitertools cuda-samples isl pybind11 z3)
+foreach(MODULE IN ITEMS antlr/antlr4 range-v3 cuda-samples isl pybind11 z3)
     file(GLOB RESULT ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/${MODULE}/*)
     list(LENGTH RESULT RES_LEN)
     if(RES_LEN EQUAL 0)
@@ -58,7 +58,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp/runtime/src)
 # 2. Generator
 find_package(Java QUIET REQUIRED COMPONENTS Runtime)
-set(ANTLR_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr-4.10.1-complete.jar)
+set(ANTLR_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr-4.11.1-complete.jar)
 macro(ANTLR_TARGET Name InputFile)
     set(ANTLR_ONE_VALUE_ARGS PACKAGE)
     set(ANTLR_MULTI_VALUE_ARGS COMPILE_FLAGS DEPENDS)
@@ -205,7 +205,7 @@ target_include_directories(freetensor PUBLIC
     ${CUDA_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/z3/src/api/c++
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/cppitertools)
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/range-v3/include)
 target_include_directories(freetensor PRIVATE ${ANTLR_INCLUDES})
 
 file(GLOB_RECURSE FFI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ffi/*.cc)

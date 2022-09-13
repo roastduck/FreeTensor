@@ -1,5 +1,4 @@
 #include <analyze/deps.h>
-#include <pass/make_reduction.h>
 #include <schedule/parallelize.h>
 
 namespace freetensor {
@@ -50,7 +49,7 @@ Expr Parallelize::visit(const Var &op) {
 Stmt parallelize(const Stmt &_ast, const ID &loop,
                  const ParallelScope &parallel) {
     Parallelize mutator(loop, parallel);
-    auto ast = makeReduction(_ast);
+    auto ast = _ast;
     auto oldAst = ast;
     ast = mutator(ast);
     if (!mutator.done()) {

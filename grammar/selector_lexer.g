@@ -2,6 +2,7 @@ lexer grammar selector_lexer;
 
 WhiteSpaces: [ \t\n\r]+ -> skip;
 
+Not: '!';
 And: '&';
 Or: '|';
 Label: [a-zA-Z0-9_\-]+;
@@ -14,11 +15,21 @@ NodeTypeFor: '<For>';
 NodeTypeIf: '<If>';
 NodeTypeAssert: '<Assert>';
 NodeTypeAssume: '<Assume>';
+NodeTypeStore: '<Store>';
+NodeTypeReduceTo: '<ReduceTo>';
+NodeTypeEval: '<Eval>';
 
 ChildArrow: '<-';
 DescendantArrow: '<<-';
-CallerArrow: '<~';
+RootNode: '-|';
+DirectCallerArrow: '<~';
+CallerArrow: '<<~';
+RootCall: '~|';
+
+Star: '*';
 
 LeftBracket: '{';
 RightBracket: '}';
+LeftParen: '(';
+RightParen: ')';
 Comma: ',';

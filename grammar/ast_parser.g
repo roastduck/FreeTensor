@@ -75,7 +75,7 @@ func returns [Func node]
         }
       }
         )?
-        '{' stmts '}'
+        LBRACE stmts RBRACE
       {
         std::vector<FuncParam> params;
         for (auto &&[name, isClosure] : $params.vec) {
@@ -89,16 +89,23 @@ func returns [Func node]
     ;
 
 metadata returns [Metadata md]
-    : TRANSFORM_OP LABEL_META '{' metadata { std::vector<Metadata> sources{$metadata.md}; }
-      (',' newMd=metadata { sources.push_back($newMd.md); })+ '}'
+    : TRANSFORM_OP LABEL_META LBRACE_META metadata { std::vector<Metadata> sources{$metadata.md}; }
+      (',' newMd=metadata { sources.push_back($newMd.md); })* RBRACE_META
       {
         $md = makeMetadata($LABEL_META.text, std::move(sources));
       }
     | LABEL_META { std::vector<std::string> labels{$LABEL_META.text}; }
       (newLabel=LABEL_META { labels.push_back($newLabel.text); })*
-      { Metadata callerMeta; }
-      (LARROW_META caller=metadata { callerMeta = $caller.md; })?
       {
+        // With label, without caller arrow
+        $md = makeMetadata(std::move(labels), std::nullopt, nullptr);
+      }
+    | { std::vector<std::string> labels{$LABEL_META.text}; }
+      (newLabel=LABEL_META { labels.push_back($newLabel.text); })*
+      { Metadata callerMeta; }
+      LARROW_META caller=metadata { callerMeta = $caller.md; }
+      {
+        // With caller arrow, but maybe without labels
         $md = makeMetadata(std::move(labels), std::nullopt, callerMeta);
       }
     | ANON_META
@@ -116,6 +123,10 @@ metadataLine returns [std::pair<Metadata, ID> md_id]
       {
         $md_id.first = $metadata.md;
         $md_id.second = ID::make();
+      }
+    | BEGIN_META INTEGER_META END_META
+      {
+        $md_id.second = ID::make(std::stoi(std::string($INTEGER_META.text)));
       }
     | BEGIN_META INTEGER_META metadata END_META
       {
@@ -193,11 +204,11 @@ stmtWithoutID returns [Stmt node]
       {
         $node = makeEval($expr.node);
       }
-    | '{' '}'
+    | LBRACE RBRACE
       {
         $node = makeStmtSeq({});
       }
-    | '{' stmts '}'
+    | LBRACE stmts RBRACE
       {
         $node = $stmts.node;
       }
@@ -272,7 +283,7 @@ varDef returns [Stmt node]
       {
         name2dtype_[$var.name] = $dtype.type;
       }
-        '{' stmts '}'
+        LBRACE stmts RBRACE
       {
         name2dtype_.erase($var.name);
         Ref<Tensor> t = makeTensor($actual_shape.vec, $dtype.type);
@@ -333,7 +344,7 @@ forProperty returns [Ref<ForProperty> property]
 for returns [Stmt node]
     : forProperty
         FOR var IN begin=expr ':' end=expr ':' step=expr ':' len=expr
-        '{' stmts '}'
+        LBRACE stmts RBRACE
       {
           $node = makeFor($var.name, $begin.node, $end.node, $step.node, $len.node,
                           $forProperty.property, $stmts.node);
@@ -341,25 +352,25 @@ for returns [Stmt node]
     ;
 
 if returns [Stmt node]
-    : IF cond=expr '{' thenCase=stmts '}'
+    : IF cond=expr LBRACE thenCase=stmts RBRACE
       {
         $node = makeIf($cond.node, $thenCase.node);
       }
-    | IF cond=expr '{' thenCase=stmts '}' ELSE '{' elseCase=stmts '}'
+    | IF cond=expr LBRACE thenCase=stmts RBRACE ELSE LBRACE elseCase=stmts RBRACE
       {
         $node = makeIf($cond.node, $thenCase.node, $elseCase.node);
       }
     ;
 
 assertNode returns [Stmt node]
-    : ASSERT_TOKEN cond=expr '{' stmts '}'
+    : ASSERT_TOKEN cond=expr LBRACE stmts RBRACE
       {
         $node = makeAssert($cond.node, $stmts.node);
       }
     ;
 
 assume returns [Stmt node]
-    : ASSUME '(' cond=expr ')' '{' stmts '}'
+    : ASSUME '(' cond=expr ')' LBRACE stmts RBRACE
       {
         $node = makeAssume($cond.node, $stmts.node);
       }

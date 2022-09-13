@@ -69,12 +69,15 @@ One important thing is to track labels of the loops, because the labels will cha
 
 ## Specify What to Schedule by Selectors
 
-In the example above, we label a loop `Li` and apply schedules on it. It is straight-forward in a tiny example, but as programs grow, it often gets hard to track each statement by a unique label, especially there are inlined function calls. To make things easy, FreeTensor supports specifying a statment by a selector, written in the following rules:
+In the example above, we label a loop `Li` and apply schedules on it. It is straight-forward in a tiny example, but as programs grow, it often gets hard to track each statement by a unique label, especially there are inlined function calls. To make things easy, FreeTensor supports specifying a statement by a selector, written in the following rules:
 
 1. A label is a selector. E.g., `Li` matches a statement with a label `Li`.
 2. (For debugging only) A numerical ID is also a selector. E.g., `#31`.
-3. A selector can be extended to match a new statement produced by a previous schedule. E.g., `$split.0{Li}` matches the outer loop split from the loop `Li`. This is useful when return values from schedules are hard to track.
-4. Selectors can be combined to match a statement in a function call. E.g., `Li<~C1` matches a statment labeled `Li` called by a call site `C1`.
+3. A node type surrounded in angle brackets (`<>`) is also a selector. E.g., `<For>` matches for-loop statements.
+4. A selector can be extended to match a new statement produced by a previous schedule. E.g., `$split.0{Li}` matches the outer loop split from the loop `Li`. This is useful when return values from schedules are hard to track. Please refer the [API document](../../api/#freetensor.core.schedule.Schedule) for detailed grammar.
+5. Selectors can be combined to match a statement by nesting order. `A<-B` matches a statement `A` DIRECTLY nested in another statement `B`. `A<<-B` matches a statement DIRECTLY or INDIRECTLY nested in another statement `B`. `A<-(B<-)*C` matches a statement `A` DIRECTLY or INDIRECTLY nested in another statement `C` with intermedaite nesting statements satisfying the condition in `B`. (`A`, `B`, `C` can be nested selectors.) Use `-|` for root node.
+6. Selectors can be combined to match a statement in a function call. `A<~B` matches a statement `A` DIRECTLY called by a call site `B`. `A<<~B` matches a statement DIRECTLY or INDIRECTLY called by a call site `B`. `A<~(B<~)*C` matches a statement `A` DIRECTLY or INDIRECTLY called by a call site `C` with intermediate call sites satisfying the condition in `B`. (`A`, `B`, `C` can be nested selectors.) Use `~|` for root function.
+7. Selectors can be combined with logical "and" (`&`), "or" (`|`), "not" (`!`) and parentheses. E.g., `Li|Lj` matches a statement labeled `Li` OR `Lj`. `Li&Lj` matches a statement labeled `Li&Lj`.
 
 All schedules support passing selectors.
 

@@ -13,11 +13,11 @@ def test_fission_after():
                 y[i, j] = i + j
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
-    ast = s.ast()
-    print(ast)
-    ast = ft.lower(ast, verbose=1)
+    s = ft.Schedule(ast, verbose=2)
+    map0, map1 = s.fission("L2", ft.FissionSide.After, "S0")
+    assert s.find(map0["L2"]) == s.find("$fission.0{L2}")
+    assert s.find(map1["L2"]) == s.find("$fission.1{L2}")
+    ast = ft.lower(s.ast(), verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -44,11 +44,11 @@ def test_fission_before():
                 ft.MarkLabel("S0")
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.Before, "S0")
-    ast = s.ast()
-    print(ast)
-    ast = ft.lower(ast, verbose=1)
+    s = ft.Schedule(ast, verbose=2)
+    map0, map1 = s.fission("L2", ft.FissionSide.Before, "S0")
+    assert s.find(map0["L2"]) == s.find("$fission.0{L2}")
+    assert s.find(map1["L2"]) == s.find("$fission.1{L2}")
+    ast = ft.lower(s.ast(), verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -72,7 +72,9 @@ def test_fission_after_empty():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
+    map0, map1 = s.fission("L2", ft.FissionSide.After, "S0")
+    assert s.find(map0["L2"]) == s.find("$fission.0{L2}")
+    assert "L2" not in map1
     ast = s.ast()
     print(ast)
     ast = ft.simplify(ast)
@@ -95,7 +97,9 @@ def test_fission_before_empty():
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.Before, "S0")
+    map0, map1 = s.fission("L2", ft.FissionSide.Before, "S0")
+    assert "L2" not in map0
+    assert s.find(map1["L2"]) == s.find("$fission.1{L2}")
     ast = s.ast()
     print(ast)
     ast = ft.simplify(ast)
@@ -646,3 +650,77 @@ def test_reversed_scan_with_dep():
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.fission("L1", ft.FissionSide.After, "S0")
+
+
+def test_fission_after_multiple_statements():
+    with ft.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+        ("w", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z, w):
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                ft.MarkLabel("S0")
+                y[i, j] = i + j
+                ft.MarkLabel("S1")
+                z[i, j] = i * j
+                ft.MarkLabel("S2")
+                w[i, j] = i
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.fission("L2", ft.FissionSide.After, "S0|S1")
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+        ("w", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z, w):
+        with ft.For("i", 0, 4) as i:
+            with ft.For("j", 0, 8) as j:
+                y[i, j] = i + j
+                z[i, j] = i * j
+            with ft.For("j", 0, 8) as j:
+                w[i, j] = i
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_fission_before_multiple_statements():
+    with ft.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+        ("w", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z, w):
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                ft.MarkLabel("S0")
+                y[i, j] = i + j
+                ft.MarkLabel("S1")
+                z[i, j] = i * j
+                ft.MarkLabel("S2")
+                w[i, j] = i
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.fission("L2", ft.FissionSide.Before, "S1|S2")
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+        ("w", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z, w):
+        with ft.For("i", 0, 4) as i:
+            with ft.For("j", 0, 8) as j:
+                y[i, j] = i + j
+            with ft.For("j", 0, 8) as j:
+                z[i, j] = i * j
+                w[i, j] = i
+    std = ft.pop_ast()
+
+    assert std.match(ast)

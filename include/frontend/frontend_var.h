@@ -3,8 +3,7 @@
 
 #include <iostream>
 
-#include <itertools.hpp>
-
+#include <container_utils.h>
 #include <debug.h>
 #include <expr.h>
 #include <serialize/to_string.h>
@@ -110,7 +109,7 @@ class FrontendVar {
 
 inline std::ostream &operator<<(std::ostream &os, const FrontendVar &var) {
     os << var.name() << "[";
-    for (auto &&[i, idx] : iter::enumerate(var.indices())) {
+    for (auto &&[i, idx] : views::enumerate(var.indices())) {
         os << (i == 0 ? "" : ", ") << idx;
     }
     return os << "]";

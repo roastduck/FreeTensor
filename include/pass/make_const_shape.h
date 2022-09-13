@@ -10,12 +10,18 @@ namespace freetensor {
 /**
  * Some backends do not support local variables with dynamic shapes. This pass
  * relaxed selected shapes to constants
+ *
+ * The "byvalue" memory type is treated as constants
  */
 class MakeConstShape : public CompTransientBounds<SymbolTable<Mutator>> {
     typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
     PBCompBounds unique_;
     const std::vector<MemType> &mtypes_;
+
+  private:
+    bool isConstOrByValue(const std::unordered_set<std::string> &names) const;
+    bool isConstOrByValue(const Expr &x) const;
 
   public:
     MakeConstShape(const std::vector<MemType> &mtypes)

@@ -351,3 +351,52 @@ def test_io_tensor():
     ast2 = ft.load_ast(txt)
     print(ast2)
     assert ast2.match(ast)
+
+
+def test_fission_metadata():
+    with ft.VarDef("x", (8,), "int32", "output", "cpu") as x:
+        with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
+            with ft.For("i", 0, 8, label="L") as i:
+                x[i] = i
+                ft.MarkLabel("Y")
+                y[i] = i
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.fission("L", ft.FissionSide.Before, "Y")
+    ast = s.ast()
+    txt = ft.dump_ast(ast)
+    print(txt)
+    assert '$fission.0' in txt
+    assert '$fission.1' in txt
+    ast2 = ft.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+
+def test_anonymous_call_site():
+
+    @ft.inline
+    def h(y):
+        #! label: L3
+        for i in range(8):
+            y[i] = i
+
+    @ft.inline
+    def g(y):
+        #! label: L2
+        for i in range(8):
+            # Anonymous call site!
+            h(y[i])
+
+    @ft.transform(verbose=True)
+    def f(y: ft.Var[(8, 8, 8), "int32", "output"]):
+        #! label: L1
+        for i in range(8):
+            #! label: g
+            g(y[i])
+
+    txt = ft.dump_ast(f)
+    print(txt)
+    f2 = ft.load_ast(txt)
+    print(f2)
+    assert f2.body.match(f.body)

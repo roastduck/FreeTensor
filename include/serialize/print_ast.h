@@ -164,7 +164,7 @@ std::string toString(const AST &op, bool pretty, bool printAllId,
  * Serialize function for storing an AST and loading it back
  */
 inline std::string dumpAST(const AST &op, bool dtypeInLoad = false) {
-    return toString(op, false, false, dtypeInLoad);
+    return toString(op, false, true, dtypeInLoad);
 }
 
 /**

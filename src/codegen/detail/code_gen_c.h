@@ -30,7 +30,7 @@ void CodeGenC<Stream>::genMdPtrType(std::ostream &os, const Ref<Buffer> &buf,
         os << "const ";
     }
     os << gen(buf->tensor()->dtype()) << ", extents<";
-    for (auto &&[i, dim] : iter::enumerate(buf->tensor()->shape())) {
+    for (auto &&[i, dim] : views::enumerate(buf->tensor()->shape())) {
         os << (i > 0 ? ", " : "");
         if (dim->nodeType() == ASTNodeType::IntConst) {
             os << dim.template as<IntConstNode>()->val_;
@@ -86,7 +86,7 @@ void CodeGenC<Stream>::genScalar(const VarDef &def,
         if (!def->buffer_->tensor()->shape().empty()) {
             // TODO: Switch bracket after C++23
             this->os() << "(";
-            for (auto &&[i, index] : iter::enumerate(indices)) {
+            for (auto &&[i, index] : views::enumerate(indices)) {
                 this->os() << (i > 0 ? ", " : "");
                 (*this)(index);
             }
@@ -273,8 +273,8 @@ template <class Stream> void CodeGenC<Stream>::visit(const Alloc &op) {
     auto &&dtype = tensor->dtype();
 
     // e.g.
-    // x = mdspan_r<int, extents<5, 5>>(new int[n*m*l]);
-    this->os() << mangle(op->var_) << " = ";
+    // x_opt = mdspan_r<int, extents<5, 5>>(new int[n*m*l]);
+    this->os() << mangle(op->var_) << "_opt = ";
     genMdPtrDef(buf, [&]() {
         this->os() << "new " << gen(dtype) << "[";
         for (auto i = 0lu; i < shape.size(); ++i) {
@@ -290,11 +290,21 @@ template <class Stream> void CodeGenC<Stream>::visit(const Alloc &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Free &op) {
-    this->makeIndent();
 
-    // e.g. delete[] x.data_handle();
-    this->os() << "delete[] " << mangle(op->var_) << ".data_handle();"
+    // e.g. auto x_ptr = x.data_handle();
+    //      x_opt.drop();
+    //      x_opt = std::nullopt;
+    //      delete[] x_ptr;
+    auto &&name = mangle(op->var_);
+    this->makeIndent();
+    this->os() << "auto " << name << "_ptr = " << name << ".data_handle();"
                << std::endl;
+    this->makeIndent();
+    this->os() << name << "_opt.drop();" << std::endl;
+    this->makeIndent();
+    this->os() << name << "_opt = std::nullopt;" << std::endl;
+    this->makeIndent();
+    this->os() << "delete[] " << name << "_ptr;" << std::endl;
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {

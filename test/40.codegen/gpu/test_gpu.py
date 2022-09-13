@@ -488,6 +488,32 @@ def test_use_cpu_iters():
     assert np.array_equal(y_np, y_std)
 
 
+def test_dynamic_thread_dim_by_cpu_iters():
+    with ft.VarDef([("n", (4,), "int32", "input", "byvalue"),
+                    ("y", (4, 20), "int32", "inout", "gpu/global")]) as (n, y):
+        with ft.For("i", 0, 4, label="Li") as i:
+            with ft.For("j", 0, n[i], label="Lj") as j:
+                y[i, j] = i * j
+
+    with device:
+        s = ft.Schedule(ft.Func("main", ["n", "y"], [], ft.pop_ast()))
+        s.parallelize('Lj', "threadIdx.x")
+        func = ft.lower(s.func(), verbose=1)
+        code = ft.codegen(func, verbose=True)
+        n_np = np.array([5, 10, 15, 20], dtype="int32")
+        y_np = np.zeros((4, 20), dtype="int32")
+        n_arr = ft.Array(n_np)
+        y_arr = ft.Array(y_np)
+        ft.build_binary(code)(n_arr, y_arr)
+        y_np = y_arr.numpy()
+
+    y_std = np.array([[i * j if j < n else 0
+                       for j in range(20)]
+                      for i, n in enumerate([5, 10, 15, 20])],
+                     dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
 def test_intrinsic():
 
     @ft.transform
@@ -732,13 +758,13 @@ def test_simplex_local_2():
 
 
 def test_relax_shared_shape_to_constants():
-    with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
+    with ft.VarDef("n", (), "int32", "input", "gpu/global") as n:
         with ft.VarDef([
             ("x", (4, 256), "int32", "input", "gpu/global"),
             ("y", (4, 256), "int32", "output", "gpu/global"),
         ]) as (x, y):
-            with ft.Assert(n <= 256):
-                with ft.For("i", 0, 4, label="L0") as i:
+            with ft.For("i", 0, 4, label="L0") as i:
+                with ft.Assert(n <= 256):
                     with ft.VarDef("t", (n,), "int32", "cache",
                                    "gpu/shared") as t:
                         with ft.For("j", 0, n, label="L1") as j:
@@ -752,13 +778,13 @@ def test_relax_shared_shape_to_constants():
     s.parallelize("L0", "threadIdx.x")
     func = ft.lower(s.func(), target, verbose=1)
 
-    with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
+    with ft.VarDef("n", (), "int32", "input", "gpu/global") as n:
         with ft.VarDef([
             ("x", (4, 256), "int32", "input", "gpu/global"),
             ("y", (4, 256), "int32", "output", "gpu/global"),
         ]) as (x, y):
-            with ft.Assert(n <= 256):
-                with ft.For(".threadIdx.y", 0, 4) as i:
+            with ft.For(".threadIdx.y", 0, 4) as i:
+                with ft.Assert(n <= 256):
                     with ft.VarDef("t", (4, 256), "int32", "cache",
                                    "gpu/shared") as t:
                         with ft.For("j", 0, n) as j:
