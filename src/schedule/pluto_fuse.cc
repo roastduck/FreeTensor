@@ -220,6 +220,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
 
     PBCtx ctx;
     PBSet loop0Set, loop1Set;
+    std::vector<IterAxis> outerAxes;
 
     auto extractLoopSet = [&](const AccessPoint &p) {
         auto iterList = AnalyzeDeps::makeIterList(p.iter_, p.iter_.size());
@@ -265,6 +266,12 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                     if (handleFakeAccess) {
                         if (p.stmt_->ancestorById(loop0Id).isValid()) {
                             loop0Set = extractLoopSet(p);
+                            outerAxes = p.iter_ |
+                                        iter::filter([](const IterAxis &axis) {
+                                            return axis.realIter_->nodeType() ==
+                                                   ASTNodeType::Var;
+                                        }) |
+                                        collect;
                         } else {
                             ASSERT(p.stmt_->ancestorById(loop1Id).isValid());
                             loop1Set = extractLoopSet(p);
