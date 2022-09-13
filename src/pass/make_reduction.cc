@@ -1,6 +1,5 @@
-#include <itertools.hpp>
-
 #include <analyze/all_uses.h>
+#include <container_utils.h>
 #include <hash.h>
 #include <pass/make_reduction.h>
 
@@ -11,7 +10,7 @@ bool MakeReduction::isSameElem(const Store &s, const Load &l) {
         return false;
     }
     ASSERT(s->indices_.size() == l->indices_.size());
-    for (auto &&[sIdx, lIdx] : iter::zip(s->indices_, l->indices_)) {
+    for (auto &&[sIdx, lIdx] : views::zip(s->indices_, l->indices_)) {
         if (!HashComparator()(sIdx, lIdx)) {
             return false;
         }
@@ -34,11 +33,11 @@ Stmt MakeReduction::doMake(Store op, ReduceOp reduceOp) {
         };
         recur(expr);
 
-        for (auto &&[i, item] : iter::enumerate(items)) {
+        for (auto &&[i, item] : views::enumerate(items)) {
             if (item->nodeType() == ASTNodeType::Load &&
                 isSameElem(op, item.as<LoadNode>())) {
                 Expr others;
-                for (auto &&[j, other] : iter::enumerate(items)) {
+                for (auto &&[j, other] : views::enumerate(items)) {
                     if (i != j) {
                         if (canonicalOnly_ && allReads(other).count(op->var_)) {
                             goto fail;

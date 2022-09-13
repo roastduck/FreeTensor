@@ -1,7 +1,6 @@
-#include <itertools.hpp>
-
 #include <analyze/all_uses.h>
 #include <codegen/code_gen_cuda.h>
+#include <container_utils.h>
 #include <except.h>
 #include <math/utils.h>
 #include <pass/const_fold.h>
@@ -57,7 +56,7 @@ void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
          << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
     makeIndent();
     os() << "checkCudaError(cudaMalloc(&" << rawPtr << ", ";
-    for (auto &&[i, dim] : iter::enumerate(tensor->shape())) {
+    for (auto &&[i, dim] : views::enumerate(tensor->shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
         os() << ") * ";

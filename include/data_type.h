@@ -3,8 +3,6 @@
 
 #include <array>
 
-#include <itertools.hpp>
-
 #include <container_utils.h>
 #include <except.h>
 #include <serialize/to_string.h>
@@ -35,14 +33,14 @@ inline std::ostream &operator<<(std::ostream &os, DataType dtype) {
 
 inline DataType parseDType(const std::string &_str) {
     auto &&str = tolower(_str);
-    for (auto &&[i, s] : iter::enumerate(dataTypeNames)) {
+    for (auto &&[i, s] : views::enumerate(dataTypeNames)) {
         if (s == str) {
             return (DataType)i;
         }
     }
     std::string msg = "Unrecognized access type \"" + _str +
                       "\". Candidates are (case-insensitive): ";
-    for (auto &&[i, s] : iter::enumerate(dataTypeNames)) {
+    for (auto &&[i, s] : views::enumerate(dataTypeNames)) {
         msg += (i > 0 ? ", " : "");
         msg += s;
     }

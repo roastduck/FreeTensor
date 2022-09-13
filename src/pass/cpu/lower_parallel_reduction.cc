@@ -1,5 +1,4 @@
-#include <itertools.hpp>
-
+#include <container_utils.h>
 #include <hash.h>
 #include <pass/cpu/lower_parallel_reduction.h>
 #include <pass/make_nested_loops.h>
@@ -21,7 +20,8 @@ std::vector<std::pair<For, int>>
 LowerParallelReduction::reducedBy(const ReduceTo &op) {
     std::vector<std::pair<For, int>> ret;
     for (auto &&loop : loopStack_) {
-        for (auto &&[k, item] : iter::enumerate(loop->property_->reductions_)) {
+        for (auto &&[k, item] :
+             views::enumerate(loop->property_->reductions_)) {
             if (item->var_ == op->var_) {
                 ret.emplace_back(loop, k);
                 break;
@@ -53,7 +53,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         auto workspace =
             "__reduce_" + toString(op->id()) + "_" + std::to_string(i);
         std::vector<Expr> workspaceShape;
-        for (auto &&[begin, end] : iter::zip(r->begins_, r->ends_)) {
+        for (auto &&[begin, end] : views::zip(r->begins_, r->ends_)) {
             workspaceShape.emplace_back(makeSub(end, begin));
         }
 
@@ -65,19 +65,21 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             makeStore(workspace, indices, neutralVal(dtype, r->op_));
         auto flushStmt =
             makeReduceTo(r->var_,
-                         asVec<Expr>(iter::imap(
+                         asVec<Expr>(views::zip_with(
                              [](auto &&x, auto &&y) { return makeAdd(x, y); },
                              r->begins_, indices)),
                          r->op_, makeLoad(workspace, indices, dtype), false);
         initStmt = makeNestedLoops(
-            indices, iter::repeat(makeIntConst(0)), workspaceShape,
-            iter::repeat(makeIntConst(1)), workspaceShape,
-            iter::repeat(Ref<ForProperty>::make()->withParallel(OpenMPScope{})),
+            indices, views::repeat(makeIntConst(0)), workspaceShape,
+            views::repeat(makeIntConst(1)), workspaceShape,
+            views::repeat(
+                Ref<ForProperty>::make()->withParallel(OpenMPScope{})),
             initStmt);
         flushStmt = makeNestedLoops(
-            indices, iter::repeat(makeIntConst(0)), workspaceShape,
-            iter::repeat(makeIntConst(1)), workspaceShape,
-            iter::repeat(Ref<ForProperty>::make()->withParallel(OpenMPScope{})),
+            indices, views::repeat(makeIntConst(0)), workspaceShape,
+            views::repeat(makeIntConst(1)), workspaceShape,
+            views::repeat(
+                Ref<ForProperty>::make()->withParallel(OpenMPScope{})),
             flushStmt);
         initStmts.emplace_back(std::move(initStmt));
         flushStmts.emplace_back(std::move(flushStmt));
@@ -98,7 +100,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     stmts.insert(stmts.end(), flushStmts.begin(), flushStmts.end());
     Stmt ret = makeStmtSeq(std::move(stmts));
     for (auto &&[workspace, wsShape, dtype] :
-         iter::zip(workspaces, workspaceShapes, dtypes)) {
+         views::zip(workspaces, workspaceShapes, dtypes)) {
         ret = makeVarDef(workspace,
                          makeBuffer(makeTensor(wsShape, dtype),
                                     AccessType::Cache, MemType::CPU),
@@ -131,9 +133,9 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
         ASSERT(op->indices_.size() == begins.size());
         return makeReduceTo(
             workspace,
-            asVec<Expr>(
-                iter::imap([](auto &&x, auto &&y) { return makeSub(x, y); },
-                           op->indices_, begins)),
+            asVec<Expr>(views::zip_with(
+                [](auto &&x, auto &&y) { return makeSub(x, y); }, op->indices_,
+                begins)),
             op->op_, op->expr_, false, op->metadata(), op->id());
     }
 

@@ -5,8 +5,6 @@
 #include <iostream>
 #include <string>
 
-#include <itertools.hpp>
-
 #include <container_utils.h>
 #include <serialize/to_string.h>
 #include <sub_tree.h>
@@ -38,14 +36,14 @@ inline std::ostream &operator<<(std::ostream &os, AccessType atype) {
 
 inline AccessType parseAType(const std::string &_str) {
     auto &&str = tolower(_str);
-    for (auto &&[i, s] : iter::enumerate(accessTypeNames)) {
+    for (auto &&[i, s] : views::enumerate(accessTypeNames)) {
         if (s == str) {
             return (AccessType)i;
         }
     }
     std::string msg = "Unrecognized access type \"" + _str +
                       "\". Candidates are (case-insensitive): ";
-    for (auto &&[i, s] : iter::enumerate(accessTypeNames)) {
+    for (auto &&[i, s] : views::enumerate(accessTypeNames)) {
         msg += (i > 0 ? ", " : "");
         msg += s;
     }
@@ -79,14 +77,14 @@ inline std::ostream &operator<<(std::ostream &os, MemType mtype) {
 
 inline MemType parseMType(const std::string &_str) {
     auto &&str = tolower(_str);
-    for (auto &&[i, s] : iter::enumerate(memTypeNames)) {
+    for (auto &&[i, s] : views::enumerate(memTypeNames)) {
         if (s == str) {
             return (MemType)i;
         }
     }
     std::string msg = "Unrecognized memory type \"" + _str +
                       "\". Candidates are (case-insensitive): ";
-    for (auto &&[i, s] : iter::enumerate(memTypeNames)) {
+    for (auto &&[i, s] : views::enumerate(memTypeNames)) {
         msg += (i > 0 ? ", " : "");
         msg += s;
     }

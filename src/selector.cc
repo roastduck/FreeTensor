@@ -70,7 +70,7 @@ bool TransformedSelector::match(const Metadata &_md) const {
     auto md = _md.as<TransformedMetadataContent>();
     if (md->op() != op_ || sources_.size() != md->sources().size())
         return false;
-    for (auto &&[sel, md] : iter::zip(sources_, md->sources()))
+    for (auto &&[sel, md] : views::zip(sources_, md->sources()))
         if (!sel->match(md))
             return false;
     return true;

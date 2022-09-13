@@ -1,7 +1,6 @@
-#include <itertools.hpp>
-
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <container_utils.h>
 #include <hash.h>
 #include <math/parse_pb_expr.h>
 #include <pass/hoist_var_over_stmt_seq.h>
@@ -91,14 +90,14 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                     std::unordered_map<std::string, Expr> islVarToNewIter,
                         oldIterToNewIter;
                     for (auto &&[newIter, arg] :
-                         iter::zip(dep.later_.iter_, args)) {
+                         views::zip(dep.later_.iter_, args)) {
                         islVarToNewIter[arg] =
                             newIter.realIter_ == newIter.iter_
                                 ? newIter.iter_
                                 : makeMul(makeIntConst(-1), newIter.realIter_);
                     }
                     for (auto &&[oldIter, value] :
-                         iter::zip(dep.earlier_.iter_, values)) {
+                         views::zip(dep.earlier_.iter_, values)) {
                         if (oldIter.realIter_->nodeType() == ASTNodeType::Var) {
                             oldIterToNewIter[oldIter.realIter_.as<VarNode>()
                                                  ->name_] =

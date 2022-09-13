@@ -88,7 +88,8 @@ auto getIDFromPack(const std::tuple<Args...> &args) {
             return arg.first;
         else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
                                           std::vector<IDMetadataPack>>) {
-            auto ids = arg | iter::imap([&](auto pack) { return pack.first; });
+            auto ids =
+                arg | views::transform([&](auto pack) { return pack.first; });
             return std::vector<ID>(ids.begin(), ids.end());
         } else
             return arg;
@@ -106,7 +107,7 @@ auto getMetadataFromPack(const std::tuple<Args...> &args) {
         else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
                                           std::vector<IDMetadataPack>>) {
             auto metas =
-                arg | iter::imap([&](auto pack) { return pack.second; });
+                arg | views::transform([&](auto pack) { return pack.second; });
             return std::vector<Metadata>(metas.begin(), metas.end());
         } else
             return arg;
@@ -123,7 +124,7 @@ auto getPackFromID(auto schedule, const std::tuple<Args...> &args) {
         else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
                                           std::vector<ID>>) {
             auto packs =
-                arg | iter::imap([&](auto id) {
+                arg | views::transform([&](auto id) {
                     return IDMetadataPack{id, schedule->find(id)->metadata()};
                 });
             return std::vector<IDMetadataPack>(packs.begin(), packs.end());

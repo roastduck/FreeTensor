@@ -205,7 +205,8 @@ target_include_directories(freetensor PUBLIC
     ${CUDA_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/z3/src/api/c++
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/cppitertools)
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/cppitertools
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/range-v3/include)
 target_include_directories(freetensor PRIVATE ${ANTLR_INCLUDES})
 
 file(GLOB_RECURSE FFI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ffi/*.cc)

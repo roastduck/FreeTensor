@@ -1,8 +1,7 @@
-#include <itertools.hpp>
-
 #include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
 #include <analyze/deps.h>
+#include <container_utils.h>
 #include <hash.h>
 #include <math/min_max.h>
 #include <pass/make_nested_loops.h>
@@ -77,8 +76,8 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                 goto use_atomic;
             }
             for (auto &&[i, idx, dim] :
-                 iter::zip(iter::count(), _op->indices_,
-                           buffer(_op->var_)->tensor()->shape())) {
+                 views::zip(views::ints(0, ranges::unreachable), _op->indices_,
+                            buffer(_op->var_)->tensor()->shape())) {
                 // use _op because isVariant needs it
                 if (isVariant(variantMap_, idx, loopId)) {
                     goto use_atomic;
@@ -106,11 +105,11 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                     ASSERT(allLowers.size() == lowers.size());
                     ASSERT(allUppers.size() == uppers.size());
                     for (auto &&[allLowersItem, lowersItem] :
-                         iter::zip(allLowers, lowers)) {
+                         views::zip(allLowers, lowers)) {
                         allLowersItem.emplace_back(lowersItem);
                     }
                     for (auto &&[allUppersItem, uppersItem] :
-                         iter::zip(allUppers, uppers)) {
+                         views::zip(allUppers, uppers)) {
                         allUppersItem.emplace_back(uppersItem);
                     }
                     goto done;
@@ -121,11 +120,11 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                     lowers.size()),
                     allUppers(uppers.size());
                 for (auto &&[allLowersItem, lowersItem] :
-                     iter::zip(allLowers, lowers)) {
+                     views::zip(allLowers, lowers)) {
                     allLowersItem.emplace_back(lowersItem);
                 }
                 for (auto &&[allUppersItem, uppersItem] :
-                     iter::zip(allUppers, uppers)) {
+                     views::zip(allUppers, uppers)) {
                     allUppersItem.emplace_back(uppersItem);
                 }
                 forReductions_[loopId].emplace_back(ReductionItemFactors{
@@ -150,7 +149,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             for (auto &&loop : serialOverRed_.at(op->id())) {
                 bool noPreserve = true;
                 for (auto &&[idx, preserve] :
-                     iter::zip(_op->indices_, preserveDim)) {
+                     views::zip(_op->indices_, preserveDim)) {
                     // use _op because isVariant needs it
                     if (isVariant(variantMap_, idx, loop->id())) {
                         if (isDenseOver(idx, loop->iter_)) {
@@ -172,8 +171,8 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             op->var_ += ".atomic_cache." + toString(op->id());
             op->indices_ = {};
             for (auto &&[preserve, idx, dim] :
-                 iter::zip(preserveDim, _op->indices_,
-                           buffer(_op->var_)->tensor()->shape())) {
+                 views::zip(preserveDim, _op->indices_,
+                            buffer(_op->var_)->tensor()->shape())) {
                 if (preserve) {
                     op->indices_.emplace_back(idx);
                     newShape.emplace_back(dim);
@@ -241,13 +240,13 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                 makeReduceTo(reduce->var_, targetIndices, reduce->op_,
                              makeLoad(cacheName, cacheIndices, dtype), true);
             init = makeNestedLoops(
-                cacheIndices, iter::repeat(makeIntConst(0)), newShape,
-                iter::repeat(makeIntConst(1)), newShape,
-                iter::repeat(Ref<ForProperty>::make()), init);
+                cacheIndices, views::repeat(makeIntConst(0)), newShape,
+                views::repeat(makeIntConst(1)), newShape,
+                views::repeat(Ref<ForProperty>::make()), init);
             flush = makeNestedLoops(
-                cacheIndices, iter::repeat(makeIntConst(0)), newShape,
-                iter::repeat(makeIntConst(1)), newShape,
-                iter::repeat(Ref<ForProperty>::make()), flush);
+                cacheIndices, views::repeat(makeIntConst(0)), newShape,
+                views::repeat(makeIntConst(1)), newShape,
+                views::repeat(Ref<ForProperty>::make()), flush);
             ret = makeVarDef(cacheName,
                              makeBuffer(makeTensor(newShape, dtype),
                                         AccessType::Cache, mtype),

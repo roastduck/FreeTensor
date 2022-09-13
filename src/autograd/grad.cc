@@ -268,11 +268,11 @@ Stmt Grad::visit(const VarDef &_op) {
                     iters.emplace_back(std::move(iter));
                 }
                 auto init = makeNestedLoops(
-                    iters, iter::repeat(makeIntConst(0)),
+                    iters, views::repeat(makeIntConst(0)),
                     op->buffer_->tensor()->shape(),
-                    iter::repeat(makeIntConst(1)),
+                    views::repeat(makeIntConst(1)),
                     op->buffer_->tensor()->shape(),
-                    iter::repeat(Ref<ForProperty>::make()),
+                    views::repeat(Ref<ForProperty>::make()),
                     makeStore(gradName, std::move(indices), makeIntConst(0)));
                 grad = makeStmtSeq({init, grad});
             }

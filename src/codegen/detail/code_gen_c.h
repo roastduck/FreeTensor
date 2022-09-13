@@ -30,7 +30,7 @@ void CodeGenC<Stream>::genMdPtrType(std::ostream &os, const Ref<Buffer> &buf,
         os << "const ";
     }
     os << gen(buf->tensor()->dtype()) << ", extents<";
-    for (auto &&[i, dim] : iter::enumerate(buf->tensor()->shape())) {
+    for (auto &&[i, dim] : views::enumerate(buf->tensor()->shape())) {
         os << (i > 0 ? ", " : "");
         if (dim->nodeType() == ASTNodeType::IntConst) {
             os << dim.template as<IntConstNode>()->val_;
@@ -86,7 +86,7 @@ void CodeGenC<Stream>::genScalar(const VarDef &def,
         if (!def->buffer_->tensor()->shape().empty()) {
             // TODO: Switch bracket after C++23
             this->os() << "(";
-            for (auto &&[i, index] : iter::enumerate(indices)) {
+            for (auto &&[i, index] : views::enumerate(indices)) {
                 this->os() << (i > 0 ? ", " : "");
                 (*this)(index);
             }

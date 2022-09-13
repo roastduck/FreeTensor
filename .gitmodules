@@ -20,3 +20,6 @@
 [submodule "3rd-party/mdspan"]
 	path = 3rd-party/mdspan
 	url = git@github.com:kokkos/mdspan.git
+[submodule "3rd-party/range-v3"]
+	path = 3rd-party/range-v3
+	url = git@github.com:ericniebler/range-v3.git
