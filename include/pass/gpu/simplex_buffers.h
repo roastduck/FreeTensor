@@ -5,10 +5,9 @@
 
 #include <unordered_set>
 
-#include <itertools.hpp>
-
 #include <analyze/analyze_linear.h>
 #include <analyze/symbol_table.h>
+#include <container_utils.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -83,7 +82,7 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
         } else {
             ASSERT(offsets_.at(defId).size() == thisOffsets.size());
             for (auto &&[old, cur] :
-                 iter::zip(offsets_.at(defId), thisOffsets)) {
+                 views::zip(offsets_.at(defId), thisOffsets)) {
                 if (old.isValid() &&
                     (!cur.isValid() || old->offset_ != cur->offset_)) {
                     old = nullptr;
@@ -122,7 +121,7 @@ class ApplySimplexOffset : public SymbolTable<Mutator> {
         if (offsets_.count(defId)) {
             auto &&offset = offsets_.at(defId);
             ASSERT(offset.size() == op->indices_.size());
-            for (auto &&[off, idx] : iter::zip(offset, op->indices_)) {
+            for (auto &&[off, idx] : views::zip(offset, op->indices_)) {
                 if (off.isValid()) {
                     for (auto &&[scope, k] : off->offset_) {
                         idx =

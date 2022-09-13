@@ -3,8 +3,7 @@
 
 #include <type_traits>
 
-#include <itertools.hpp>
-
+#include <container_utils.h>
 #include <stmt.h>
 
 namespace freetensor {
@@ -23,10 +22,8 @@ Stmt makeNestedLoops(Titers &&iters, Tbegins &&begins, Tends &&ends,
                      Tsteps &&steps, Tlens &&lens, Tproperties &&properties,
                      Tbody &&body) {
     Stmt ret = std::forward<Tbody>(body);
-    for (auto &&[_iter, begin, _end, step, _len, property] :
-         iter::zip(iter::reversed(iters), iter::reversed(begins),
-                   iter::reversed(ends), iter::reversed(steps),
-                   iter::reversed(lens), iter::reversed(properties))) {
+    for (auto &&[_iter, begin, _end, step, _len, property] : views::reverse(
+             views::zip(iters, begins, ends, steps, lens, properties))) {
         std::string *iter = nullptr;
         if constexpr (std::is_same_v<std::decay_t<decltype(_iter)>,
                                      std::string>) {

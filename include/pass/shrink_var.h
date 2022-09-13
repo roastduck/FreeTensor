@@ -3,9 +3,8 @@
 
 #include <unordered_map>
 
-#include <itertools.hpp>
-
 #include <analyze/comp_access_bound.h>
+#include <container_utils.h>
 #include <func.h>
 #include <mutator.h>
 
@@ -24,7 +23,7 @@ class ShrinkVar : public Mutator {
         if (lower_.count(op->var_)) {
             auto &&offset = lower_.at(op->var_);
             ASSERT(offset.size() == op->indices_.size());
-            for (auto &&[idx, off] : iter::zip(op->indices_, offset)) {
+            for (auto &&[idx, off] : views::zip(op->indices_, offset)) {
                 idx = makeSub(idx, off);
             }
         }
@@ -38,7 +37,7 @@ class ShrinkVar : public Mutator {
         if (upper_.count(op->var_)) {
             auto &&upper = upper_.at(op->var_);
             ASSERT(upper.size() == op->indices_.size());
-            for (auto &&[idx, u] : iter::zip(oldOp->indices_, upper)) {
+            for (auto &&[idx, u] : views::zip(oldOp->indices_, upper)) {
                 guard = guard.isValid() ? makeLAnd(guard, makeLE(idx, u))
                                         : makeLE(idx, u);
             }
@@ -46,7 +45,7 @@ class ShrinkVar : public Mutator {
         if (lower_.count(op->var_)) {
             auto &&lower = lower_.at(op->var_);
             ASSERT(lower.size() == op->indices_.size());
-            for (auto &&[idx, l] : iter::zip(oldOp->indices_, lower)) {
+            for (auto &&[idx, l] : views::zip(oldOp->indices_, lower)) {
                 guard = guard.isValid() ? makeLAnd(guard, makeGE(idx, l))
                                         : makeGE(idx, l);
             }

@@ -1,12 +1,11 @@
 #ifndef FREE_TENSOR_SHRINK_FOR_H
 #define FREE_TENSOR_SHRINK_FOR_H
 
-#include <itertools.hpp>
-
 #include <analyze/check_all_defined.h>
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
+#include <container_utils.h>
 #include <func.h>
 #include <hash.h>
 #include <mutator.h>

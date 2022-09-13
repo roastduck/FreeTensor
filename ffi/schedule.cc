@@ -98,7 +98,7 @@ void init_ffi_schedule(py::module_ &m) {
                 auto wrappedTransformFunc =
                     [transformFunc](const std::vector<Expr> &args) {
                         py::list pyArgs((ssize_t)args.size());
-                        for (auto &&[i, e] : iter::enumerate(args))
+                        for (auto &&[i, e] : views::enumerate(args))
                             pyArgs[i] = e;
                         return transformFunc(*pyArgs).cast<std::vector<Expr>>();
                     };

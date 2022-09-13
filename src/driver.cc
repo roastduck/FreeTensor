@@ -10,10 +10,9 @@
 #include <sys/wait.h>    // waitpid
 #include <unistd.h>      // rmdir
 
-#include <itertools.hpp>
-
 #include <analyze/find_stmt.h>
 #include <config.h>
+#include <container_utils.h>
 #include <debug.h>
 #include <driver.h>
 #include <except.h>
@@ -314,8 +313,8 @@ void Driver::setArgs(const std::vector<Ref<Array>> &args,
             }
         }
     }
-    for (auto &&[i, rawArg, param] :
-         iter::zip(iter::count(), rawArgs, f_->params_)) {
+    for (auto &&[i, rawArg, param] : views::zip(
+             views::ints(0, ranges::unreachable), rawArgs, f_->params_)) {
         auto &&buffer = name2buffer_.at(param.name_);
         if (rawArg == nullptr && param.isInClosure()) {
             if (!param.closure_->isValid()) {

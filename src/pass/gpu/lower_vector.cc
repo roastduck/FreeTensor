@@ -45,7 +45,7 @@ std::string LowerVector::vecType(DataType dtype) const {
 bool LowerVector::hasVectorIndices(const std::vector<Expr> &indices,
                                    const std::vector<Expr> &shape) {
     Expr index;
-    for (auto &&[idx, dim] : iter::zip(indices, shape)) {
+    for (auto &&[idx, dim] : views::zip(indices, shape)) {
         index = index.isValid() ? makeAdd(makeMul(index, dim), idx) : idx;
     }
     if (!index.isValid()) {

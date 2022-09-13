@@ -1,7 +1,5 @@
 #include <algorithm>
 
-#include <itertools.hpp>
-
 #include <analyze/all_defs.h>
 #include <analyze/all_stmts.h>
 #include <analyze/count_contig_access_loops.h>
@@ -69,8 +67,8 @@ void Schedule::commitTransaction() {
     if (verbose_ >= 2) {
         auto &&os = logger();
         os << "Committing schedule(s): ";
-        for (auto &&[i, item] :
-             iter::enumerate(asVector(openTrans_.back().logs_, trans.logs_))) {
+        auto logs = asVector(openTrans_.back().logs_, trans.logs_);
+        for (auto &&[i, item] : views::enumerate(logs)) {
             os << (i > 0 ? ", " : "") << *item;
         }
         os << ", resulting in:" << std::endl << trans.ast_ << std::endl;
@@ -590,7 +588,7 @@ void Schedule::autoUseLib(const Target &target) {
                 }
                 auto stmts =
                     allStmts(loop, {ASTNodeType::Store, ASTNodeType::ReduceTo});
-                for (auto &&[i, stmt] : iter::enumerate(stmts)) {
+                for (auto &&[i, stmt] : views::enumerate(stmts)) {
                     beginTransaction();
                     try {
                         fission(loop->id(), FissionSide::Before, stmt->id(),
@@ -713,10 +711,10 @@ void Schedule::autoFissionFuse(const Target &target,
         // Try fission
         auto thisId = nest->id();
         int partCnt = 0;
-        for (auto &&[i, _splitter] : iter::enumerate(
-                 findAll("(<For>|<Store>|<ReduceTo>|<Eval>)<-(!<For><-)*#" +
-                         toString(nest->id())))) {
-            auto &&splitter = _splitter;
+        auto splitters =
+            findAll("(<For>|<Store>|<ReduceTo>|<Eval>)<-(!<For><-)*#" +
+                    toString(nest->id()));
+        for (auto &&[i, splitter] : views::enumerate(splitters)) {
             if (i == 0) {
                 continue;
             }

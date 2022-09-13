@@ -46,7 +46,7 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
     default:;
     }
     if (checker.hasSideEffect()) {
-        for (auto &&[_var, _names] : iter::zip(iterStack_, namesStack_)) {
+        for (auto &&[_var, _names] : views::zip(iterStack_, namesStack_)) {
             auto &&names = _names;
 
             // Trigger recomputing in analyze/comp_unique_bounds

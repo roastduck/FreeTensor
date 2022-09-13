@@ -1,7 +1,6 @@
 #include <sstream>
 
-#include <itertools.hpp>
-
+#include <container_utils.h>
 #include <metadata.h>
 
 namespace freetensor {
@@ -75,7 +74,7 @@ TransformedMetadataContent::TransformedMetadataContent(
 void TransformedMetadataContent::print(std::ostream &os, bool printLocation,
                                        int nIndent) const {
     os << Indent(nIndent) << "$" << op_ << "{" << nl;
-    for (auto &&[i, src] : iter::enumerate(sources_)) {
+    for (auto &&[i, src] : views::enumerate(sources_)) {
         if (i != 0)
             os << ", " << nl;
         src->print(os, printLocation, nIndent + 1);
@@ -98,7 +97,7 @@ SourceMetadataContent::SourceMetadataContent(
 void SourceMetadataContent::print(std::ostream &os, bool printLocation,
                                   int nIndent) const {
     os << Indent(nIndent);
-    for (auto &&[i, l] : iter::enumerate(labels_)) {
+    for (auto &&[i, l] : views::enumerate(labels_)) {
         if (i != 0)
             os << " ";
         os << l;

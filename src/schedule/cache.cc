@@ -1,8 +1,7 @@
 #include <climits>
 #include <cmath>
 
-#include <itertools.hpp>
-
+#include <container_utils.h>
 #include <pass/make_nested_loops.h>
 #include <pass/remove_writes.h>
 #include <pass/shrink_var.h>
@@ -92,7 +91,7 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         Expr idx1d, sizeLim;
         if (def_->ioTensor_.isValid()) {
             for (auto &&[idx, dim] :
-                 iter::zip(indices, def_->buffer_->tensor()->shape())) {
+                 views::zip(indices, def_->buffer_->tensor()->shape())) {
                 idx1d = idx1d.isValid() ? makeMul(idx1d, dim) : nullptr;
                 idx1d = idx1d.isValid() ? makeAdd(idx1d, idx) : idx;
             }
@@ -109,9 +108,9 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         if (idx1d.isValid()) {
             fill = makeIf(makeLT(idx1d, sizeLim), fill);
         }
-        fill = makeNestedLoops(indices, rwRange_.lower_, iter::repeat(nullptr),
-                               iter::repeat(makeIntConst(1)), rwRange_.len_,
-                               iter::repeat(Ref<ForProperty>::make()), fill);
+        fill = makeNestedLoops(indices, rwRange_.lower_, views::repeat(nullptr),
+                               views::repeat(makeIntConst(1)), rwRange_.len_,
+                               views::repeat(Ref<ForProperty>::make()), fill);
         if (rwRange_.cond_.isValid()) {
             fill = makeIf(rwRange_.cond_, fill);
         }
@@ -124,9 +123,9 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         if (idx1d.isValid()) {
             flush = makeIf(makeLT(idx1d, sizeLim), flush);
         }
-        flush = makeNestedLoops(indices, wRange_.lower_, iter::repeat(nullptr),
-                                iter::repeat(makeIntConst(1)), wRange_.len_,
-                                iter::repeat(Ref<ForProperty>::make()), flush);
+        flush = makeNestedLoops(indices, wRange_.lower_, views::repeat(nullptr),
+                                views::repeat(makeIntConst(1)), wRange_.len_,
+                                views::repeat(Ref<ForProperty>::make()), flush);
         if (wRange_.cond_.isValid()) {
             flush = makeIf(wRange_.cond_, flush);
         }
@@ -166,7 +165,7 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
         Expr idx1d, sizeLim;
         if (def_->ioTensor_.isValid()) {
             for (auto &&[idx, dim] :
-                 iter::zip(indices, def_->buffer_->tensor()->shape())) {
+                 views::zip(indices, def_->buffer_->tensor()->shape())) {
                 idx1d = idx1d.isValid() ? makeMul(idx1d, dim) : nullptr;
                 idx1d = idx1d.isValid() ? makeAdd(idx1d, idx) : idx;
             }
@@ -182,9 +181,9 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
         if (idx1d.isValid()) {
             init = makeIf(makeLT(idx1d, sizeLim), init);
         }
-        init = makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
-                               iter::repeat(makeIntConst(1)), range_.len_,
-                               iter::repeat(Ref<ForProperty>::make()), init);
+        init = makeNestedLoops(indices, range_.lower_, views::repeat(nullptr),
+                               views::repeat(makeIntConst(1)), range_.len_,
+                               views::repeat(Ref<ForProperty>::make()), init);
 
         Stmt reduce = makeReduceTo(
             oldVar_, indices, reduce_->op_,
@@ -195,9 +194,9 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
             reduce = makeIf(makeLT(idx1d, sizeLim), reduce);
         }
         reduce =
-            makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
-                            iter::repeat(makeIntConst(1)), range_.len_,
-                            iter::repeat(Ref<ForProperty>::make()), reduce);
+            makeNestedLoops(indices, range_.lower_, views::repeat(nullptr),
+                            views::repeat(makeIntConst(1)), range_.len_,
+                            views::repeat(Ref<ForProperty>::make()), reduce);
 
         op = makeStmtSeq({init, op, reduce});
     }
