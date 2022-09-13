@@ -11,9 +11,6 @@
 [submodule "3rd-party/cuda-samples"]
     path = 3rd-party/cuda-samples
     url = git@github.com:NVIDIA/cuda-samples.git
-[submodule "3rd-party/cppitertools"]
-	path = 3rd-party/cppitertools
-	url = git@github.com:ryanhaining/cppitertools.git
 [submodule "3rd-party/antlr/antlr4"]
 	path = 3rd-party/antlr/antlr4
 	url = git@github.com:antlr/antlr4.git
