@@ -36,7 +36,7 @@ class FindStmtByFilter : public Visitor {
 /**
  * Find all statements from an AST by ID, filter or selector
  *
- * @return : All statements satisfying the given condition, in DFS order
+ * @return : All statements satisfying the given condition, in DFS pre order
  *
  * @{
  */
@@ -44,6 +44,10 @@ std::vector<Stmt> findAllStmt(const Stmt &ast, const ID &id);
 std::vector<Stmt> findAllStmt(const Stmt &ast,
                               const std::function<bool(const Stmt &)> &filter);
 std::vector<Stmt> findAllStmt(const Stmt &ast, const Ref<Selector> &selector);
+inline std::vector<Stmt> findAllStmt(const Stmt &ast,
+                                     const std::string &pattern) {
+    return findAllStmt(ast, parseSelector(pattern));
+}
 template <class T>
 std::vector<Stmt> findAllStmt(const Func &func, const T &filter) {
     return findAllStmt(func->body_, filter);
@@ -61,6 +65,9 @@ std::vector<Stmt> findAllStmt(const Func &func, const T &filter) {
 Stmt findStmt(const Stmt &ast, const ID &id);
 Stmt findStmt(const Stmt &ast, const std::function<bool(const Stmt &)> &filter);
 Stmt findStmt(const Stmt &ast, const Ref<Selector> &selector);
+inline Stmt findStmt(const Stmt &ast, const std::string &pattern) {
+    return findStmt(ast, parseSelector(pattern));
+}
 template <class T> Stmt findStmt(const Func &func, const T &filter) {
     return findStmt(func->body_, filter);
 }

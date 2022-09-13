@@ -8,7 +8,6 @@
 #include <analyze/deps.h>
 #include <analyze/find_all_loops.h>
 #include <analyze/find_indexing_loops.h>
-#include <analyze/get_loop_nest_tree.h>
 #include <auto_schedule/utils.h>
 #include <codegen/code_gen.h>
 #include <container_utils.h>
@@ -555,16 +554,17 @@ void Schedule::autoSchedule(const Target &target, const Ref<RandTrace> &trace) {
 
 void Schedule::autoUseLib(const Target &target) {
     // Try to implement each top-level loops with lib calls
-    auto loopNestTree = getLoopNestTree(ast());
-    for (auto &&loop : loopNestTree->subLoops_) {
+    for (auto &&_loop : findAll("<For><-(!<For><-)*-|")) {
+        // Suppose the root node is not <For>. It should be <VarDef>
+        auto loop = _loop.as<ForNode>();
         try {
-            asMatMul(loop->loop_->id());
+            asMatMul(loop->id());
         } catch (const InvalidSchedule &e) {
             // If the loop is marked as preferLibs, we inline all local
             // variables, fission all the statments apart, and try applying to
             // each of them
             bool isPreferLibs = false;
-            for (For l = loop->loop_;;) {
+            for (For l = loop;;) {
                 if (l->property_->preferLibs_) {
                     isPreferLibs = true;
                     break;
@@ -581,24 +581,24 @@ void Schedule::autoUseLib(const Target &target) {
             }
             if (isPreferLibs) {
                 for (auto &&[defId, name] :
-                     allDefs(loop->loop_, {AccessType::Cache})) {
+                     allDefs(loop, {AccessType::Cache})) {
                     try {
                         inlining(defId);
                     } catch (const InvalidSchedule &e) {
                         // do nothing
                     }
                 }
-                auto stmts = allStmts(
-                    loop->loop_, {ASTNodeType::Store, ASTNodeType::ReduceTo});
+                auto stmts =
+                    allStmts(loop, {ASTNodeType::Store, ASTNodeType::ReduceTo});
                 for (auto &&[i, stmt] : iter::enumerate(stmts)) {
                     beginTransaction();
                     try {
-                        fission(loop->loop_->id(), FissionSide::Before,
-                                stmt->id(), "." + toString(i), "");
+                        fission(loop->id(), FissionSide::Before, stmt->id(),
+                                "." + toString(i), "");
                         auto libStmtId =
-                            fission(loop->loop_->id(), FissionSide::After,
-                                    stmt->id(), "." + toString(i) + ".lib", "")
-                                .first.at(loop->loop_->id());
+                            fission(loop->id(), FissionSide::After, stmt->id(),
+                                    "." + toString(i) + ".lib", "")
+                                .first.at(loop->id());
                         asMatMul(libStmtId);
                         commitTransaction();
                     } catch (const InvalidSchedule &e) {
@@ -634,33 +634,37 @@ void Schedule::autoReorder(const Target &target) {
             }
         });
 
-    std::function<void(const Ref<LoopNest> &nest)> visitNest =
-        [&, this](const Ref<LoopNest> &_nest) {
-            Ref<LoopNest> nest = _nest;
-
-            // Currently we only reorder loops in a perfect loop nest
-            std::vector<ID> perfectNest = {nest->loop_->id()};
-            while (nest->subLoops_.size() == 1) {
-                nest = nest->subLoops_.front();
-                perfectNest.emplace_back(nest->loop_->id());
+    std::function<void(For nest)> visitNest = [&, this](For nest) {
+        // Currently we only reorder loops in a perfect loop nest
+        std::vector<ID> perfectNest = {nest->id()};
+        while (true) {
+            if (auto inners =
+                    findAll("<For><-(!<For><-)*#" + toString(nest->id()));
+                inners.size() == 1) {
+                nest = inners.front().as<ForNode>();
+                perfectNest.emplace_back(nest->id());
+            } else {
+                break;
             }
+        }
 
-            auto sorted = perfectNest;
-            std::stable_sort(sorted.begin(), sorted.end(),
-                             [&](const ID &lhs, const ID &rhs) {
-                                 return depLevel[lhs] < depLevel[rhs];
-                             });
-            if (sorted != perfectNest) {
-                reorder(sorted);
-            }
+        auto sorted = perfectNest;
+        std::stable_sort(sorted.begin(), sorted.end(),
+                         [&](const ID &lhs, const ID &rhs) {
+                             return depLevel[lhs] < depLevel[rhs];
+                         });
+        if (sorted != perfectNest) {
+            reorder(sorted);
+        }
 
-            for (auto &&subNest : nest->subLoops_) {
-                visitNest(subNest);
-            }
-        };
-    auto nest = getLoopNestTree(ast());
-    for (auto &&sub : nest->subLoops_) {
-        visitNest(sub);
+        for (auto &&subNest :
+             findAll("<For><-(!<For><-)*#" + toString(nest->id()))) {
+            visitNest(subNest.as<ForNode>());
+        }
+    };
+    for (auto &&subNest : findAll("<For><-(!<For><-)*-|")) {
+        // Suppose the root node is not <For>. It should be <VarDef>
+        visitNest(subNest.as<ForNode>());
     }
 }
 
@@ -699,30 +703,23 @@ void Schedule::autoFissionFuse(const Target &target,
     // Try to fission a loop into consecutive loops. Only fission at
     // beginnings of each sub-loops, and at each leaf nodes (Store, ReduceTo,
     // Eval)
-    std::function<std::vector<ID>(const Ref<LoopNest> &nest)> tryFission =
-        [&, this](const Ref<LoopNest> &nest) -> std::vector<ID> {
-        std::vector<ID> newOuters, newInners;
-
+    std::function<void(For nest)> tryFission = [&, this](For nest) {
         // Recurse first
-        for (auto &&subNest : nest->subLoops_) {
-            auto fissioned = tryFission(subNest);
-            for (auto &&item : fissioned) {
-                newInners.emplace_back(item);
-            }
+        for (auto &&subNest :
+             findAll("<For><-(!<For><-)*#" + toString(nest->id()))) {
+            tryFission(subNest.as<ForNode>());
         }
 
         // Try fission
-        std::vector<ID> splitters = newInners;
-        for (auto &&stmt : nest->leafStmts_) {
-            splitters.emplace_back(stmt->id());
-        }
-        auto thisId = nest->loop_->id();
+        auto thisId = nest->id();
         int partCnt = 0;
-        for (auto &&[i, item] : iter::enumerate(splitters)) {
+        for (auto &&[i, _splitter] : iter::enumerate(
+                 findAll("(<For>|<Store>|<ReduceTo>|<Eval>)<-(!<For><-)*#" +
+                         toString(nest->id())))) {
+            auto &&splitter = _splitter;
             if (i == 0) {
                 continue;
             }
-            auto &&splitter = find(item);
             bool frontHasDep =
                 FindDeps()
                     .direction({{{thisId, DepDirection::Different}}})
@@ -753,7 +750,6 @@ void Schedule::autoFissionFuse(const Target &target,
                             fission(thisId, FissionSide::Before, splitter->id(),
                                     "." + toString(partCnt), "")
                                 .first.at(thisId);
-                        newOuters.emplace_back(newId);
                         fissionFrom[newId] = thisId;
                         partCnt++;
                         commitTransaction();
@@ -763,82 +759,77 @@ void Schedule::autoFissionFuse(const Target &target,
                 }
             }
         }
-        newOuters.emplace_back(thisId);
         fissionFrom[thisId] = thisId;
-        return newOuters;
     };
-    auto nest = getLoopNestTree(ast());
-    for (auto &&sub : nest->subLoops_) {
-        tryFission(sub);
+    for (auto &&loop : findAll("<For><-(!<For><-)*-|")) {
+        // Suppose the root node is not <For>. It should be <VarDef>
+        tryFission(loop.as<ForNode>());
     }
 
     // Try to fuse each pair of consecutive loops, unless they are just
     // fissioned from the same loop
-    std::function<void(const Ref<LoopNest> &nest)> tryFuse =
-        [&, this](const Ref<LoopNest> &nest) {
-            Ref<LoopNest> last;
-            ID lastId;
-            for (auto &&subNest : nest->subLoops_) {
-                auto thisId = subNest->loop_->id();
-                if (!last.isValid()) {
-                    goto skip;
-                }
-                if (fissionFrom.count(thisId) && fissionFrom.count(lastId) &&
-                    fissionFrom.at(thisId) == fissionFrom.at(lastId)) {
-                    goto skip;
-                }
+    std::function<void(Stmt)> tryFuse = [&, this](Stmt root) {
+        For last;
+        ID lastId;
+        for (auto &&_loop :
+             findAll("<For><-(!<For><-)*#" + toString(root->id()))) {
+            auto loop = _loop.as<ForNode>();
+            auto loopId = loop->id();
+            if (!last.isValid()) {
+                goto skip;
+            }
+            if (fissionFrom.count(loopId) && fissionFrom.count(lastId) &&
+                fissionFrom.at(loopId) == fissionFrom.at(lastId)) {
+                goto skip;
+            }
+            {
+                bool thisHasDep =
+                    FindDeps()
+                        .direction({{{loopId, DepDirection::Different}}})
+                        .filterSubAST(loopId)
+                        .exists(ast());
+                bool lastHasDep =
+                    FindDeps()
+                        .direction({{{lastId, DepDirection::Different}}})
+                        .filterSubAST(lastId)
+                        .exists(ast());
+                bool depDiff = thisHasDep != lastHasDep;
                 {
-                    bool thisHasDep =
-                        FindDeps()
-                            .direction({{{thisId, DepDirection::Different}}})
-                            .filterSubAST(thisId)
-                            .exists(ast());
-                    bool lastHasDep =
-                        FindDeps()
-                            .direction({{{lastId, DepDirection::Different}}})
-                            .filterSubAST(lastId)
-                            .exists(ast());
-                    bool depDiff = thisHasDep != lastHasDep;
-                    {
-                        RandCondGuard _(conds, depDiffCondName, depDiff);
-                        if (randCtx_->decide(
-                                decisionId, decisionName, conds,
-                                {depDiff ? 1 : 0, depDiff ? 0 : 1}, trace,
-                                "fuse " + toString(lastId) + " and " +
-                                    toString(thisId) + "?")) {
-                            beginTransaction();
+                    RandCondGuard _(conds, depDiffCondName, depDiff);
+                    if (randCtx_->decide(decisionId, decisionName, conds,
+                                         {depDiff ? 1 : 0, depDiff ? 0 : 1},
+                                         trace,
+                                         "fuse " + toString(lastId) + " and " +
+                                             toString(loopId) + "?")) {
+                        beginTransaction();
+                        try {
                             try {
-                                try {
-                                    lastId = moveTo(lastId, MoveToSide::Before,
-                                                    thisId)
-                                                 .first;
-                                } catch (const InvalidSchedule &e) {
-                                    thisId = moveTo(thisId, MoveToSide::After,
-                                                    lastId)
-                                                 .first;
-                                }
-                                thisId = fuse(lastId, thisId, true);
-                                subNest->subLoops_.insert(
-                                    subNest->subLoops_.begin(),
-                                    last->subLoops_.begin(),
-                                    last->subLoops_.end());
-                                last->subLoops_.clear();
-                                commitTransaction();
+                                lastId =
+                                    moveTo(lastId, MoveToSide::Before, loopId)
+                                        .first;
                             } catch (const InvalidSchedule &e) {
-                                abortTransaction();
-                                tryFuse(last);
+                                loopId =
+                                    moveTo(loopId, MoveToSide::After, lastId)
+                                        .first;
                             }
+                            loopId = fuse(lastId, loopId, true);
+                            loop = find(loopId).as<ForNode>();
+                            commitTransaction();
+                        } catch (const InvalidSchedule &e) {
+                            abortTransaction();
+                            tryFuse(last);
                         }
                     }
                 }
-            skip:
-                lastId = thisId, last = subNest;
             }
-            if (last.isValid()) {
-                tryFuse(last);
-            }
-        };
-    tryFuse(getLoopNestTree(ast()));
+        skip:
+            lastId = loopId, last = loop;
+        }
+        if (last.isValid()) {
+            tryFuse(last);
+        }
+    };
+    tryFuse(ast());
 }
 
 void Schedule::autoParallelize(const Target &target) {
@@ -901,166 +892,173 @@ void Schedule::autoParallelize(const Target &target) {
 #endif // FT_WITH_CUDA
 
     // Try to merge and parallelize as many outer loops as possible
-    std::function<void(const Ref<LoopNest> &)> autoParallelizeOuter =
-        [&](const Ref<LoopNest> &_root) {
-            auto root = _root;
+    std::function<void(For)> autoParallelizeOuter = [&](For root) {
 #ifdef FT_WITH_CUDA
-            bool parentIsWarp = false;
-            while (root->loop_->property_->parallel_ != serialScope &&
-                   root->subLoops_.size() == 1) {
-                root = root->subLoops_.front();
+        bool parentIsWarp = false;
+        while (root->property_->parallel_ != serialScope) {
+            if (auto inners =
+                    findAll("<For><-(!<For><-)*#" + toString(root->id()));
+                inners.size() == 1) {
+                root = inners.front().as<ForNode>();
                 parentIsWarp = true;
+            } else {
+                break;
             }
+        }
 #endif // FT_WITH_CUDA
 
-            // Count how many loops we can merge and drop the result. Don't
-            // worry about repeatly doing the same merging, because we have
-            // memoized schedules
-            int maxMergeLevel = 0;
+        // Count how many loops we can merge and drop the result. Don't
+        // worry about repeatly doing the same merging, because we have
+        // memoized schedules
+        int maxMergeLevel = 0;
+        beginTransaction();
+        try {
+            ID mergedId;
+            auto loop = root;
+            while (true) {
+                ID loopId = loop->id();
+                if (find(loopId).as<ForNode>()->property_->parallel_ !=
+                    serialScope) {
+                    break;
+                }
+                mergedId =
+                    mergedId.isValid() ? merge(mergedId, loopId) : loopId;
+                maxMergeLevel++;
+                if (auto inners =
+                        findAll("<For><-(!<For><-)*#" + toString(loopId));
+                    inners.size() == 1) {
+                    loop = inners.front().as<ForNode>();
+                } else {
+                    break;
+                }
+            }
+        } catch (const InvalidSchedule &e) {
+            // do nothing
+        }
+        abortTransaction();
+
+        // Suppose we can merge n loops at maximum, we try merging and
+        // parallelizing n loops first, then try n - 1, n - 2, and so on.
+        bool done = false;
+        for (int mergeLevel = maxMergeLevel; mergeLevel > 0; mergeLevel--) {
             beginTransaction();
             try {
                 ID mergedId;
-                Ref<LoopNest> loop = root;
-                while (true) {
-                    ID loopId = loop->loop_->id();
-                    if (find(loopId).as<ForNode>()->property_->parallel_ !=
-                        serialScope) {
-                        break;
-                    }
+                auto loop = root;
+                for (int i = 0; i < mergeLevel; i++) {
+                    ID loopId = loop->id();
                     mergedId =
                         mergedId.isValid() ? merge(mergedId, loopId) : loopId;
-                    maxMergeLevel++;
-                    if (loop->subLoops_.size() == 1) {
-                        loop = loop->subLoops_.front();
-                    } else {
-                        break;
+                    if (i + 1 < mergeLevel) {
+                        loop = find("<For><-(!<For><-)*#" + toString(loopId))
+                                   .as<ForNode>();
                     }
                 }
-            } catch (const InvalidSchedule &e) {
-                // do nothing
-            }
-            abortTransaction();
 
-            // Suppose we can merge n loops at maximum, we try merging and
-            // parallelizing n loops first, then try n - 1, n - 2, and so on.
-            bool done = false;
-            for (int mergeLevel = maxMergeLevel; mergeLevel > 0; mergeLevel--) {
-                beginTransaction();
-                try {
-                    ID mergedId;
-                    Ref<LoopNest> loop = root;
-                    for (int i = 0; i < mergeLevel; i++) {
-                        ID loopId = loop->loop_->id();
-                        mergedId = mergedId.isValid() ? merge(mergedId, loopId)
-                                                      : loopId;
-                        if (i + 1 < mergeLevel) {
-                            ASSERT(loop->subLoops_.size() == 1);
-                            loop = loop->subLoops_.front();
-                        }
-                    }
-
-                    switch (target.type()) {
-                    case TargetType::CPU:
-                        parallelize(mergedId, OpenMPScope{});
-                        break;
+                switch (target.type()) {
+                case TargetType::CPU:
+                    parallelize(mergedId, OpenMPScope{});
+                    break;
 
 #ifdef FT_WITH_CUDA
-                    case TargetType::GPU: {
-                        auto merged = find(mergedId);
-                        auto isParallelLoop = [](const Stmt &s) {
-                            return s->nodeType() == ASTNodeType::For &&
-                                   s.as<ForNode>()->property_->parallel_ !=
-                                       serialScope;
-                        };
-                        bool childIsWarp =
-                            !findAllStmt(merged, isParallelLoop).empty();
-                        // We guarantee the following requirements in order:
-                        // 1. make sure all SMs are used
-                        // 2. if there are enough threads, make sure blockDim is
-                        // not too large If the loop length is constant, we
-                        // split it only once, to reduce redundant guards, and
-                        // save time for dependency analysis. If not, we split
-                        // it twice, and merge once
-                        int numSM = ((GPUTarget &)target).multiProcessorCount();
-                        int maxThreads =
-                            256; // Can be max thread per block (1024), but our
-                                 // generated kernels are huge, so set it lower
-                                 // to reserve for more registers. TODO: no
-                                 // magic number
-                        if (parentIsWarp || childIsWarp) {
-                            maxThreads /= ((GPUTarget &)target).warpSize();
-                        }
-                        ID l1, l1b, l2;
-                        if (auto loopNode = merged.as<ForNode>();
-                            loopNode->len_->nodeType() ==
-                            ASTNodeType::IntConst) {
-                            auto len = loopNode->len_.as<IntConstNode>()->val_;
-                            if (len < numSM * maxThreads) {
-                                std::tie(l1, l2) = split(mergedId, -1, numSM);
-                            } else {
-                                std::tie(l1, l2) = split(mergedId, maxThreads);
-                            }
-                        } else {
-                            // We don't use the `nparts` mode of `split`,
-                            // because it will hinder dependency analysis.
-                            // Instead, we use the `factor` mode and then
-                            // reorder. See the doc string of `split` for
-                            // details
-                            std::tie(l2, l1) = split(mergedId, numSM);
-                            reorder({l1, l2});
-                            if (!findAll(l2).empty()) {
-                                std::tie(l1b, l2) = split(l2, maxThreads);
-                            }
-                        }
-                        if (!findAll(l1).empty()) {
-                            if (l1b.isValid() && !findAll(l1b).empty()) {
-                                // We are unable to fuse `l1` and `l1b` back to
-                                // one loop. Because the length of `l1b` is not
-                                // a constant, a division by this length will be
-                                // introduced, which is not supported by ISL and
-                                // may probably lead to false dependencies
-                                parallelize(l1, blockIdxY);
-                                parallelize(l1b, blockIdxX);
-                            } else {
-                                parallelize(l1, blockIdxX);
-                            }
-                        }
-                        if (!findAll(l2).empty()) {
-                            parallelize(l2, (!parentIsWarp && !childIsWarp)
-                                                ? threadIdxX
-                                                : threadIdxY);
-                        }
-                        break;
+                case TargetType::GPU: {
+                    auto merged = find(mergedId);
+                    auto isParallelLoop = [](const Stmt &s) {
+                        return s->nodeType() == ASTNodeType::For &&
+                               s.as<ForNode>()->property_->parallel_ !=
+                                   serialScope;
+                    };
+                    bool childIsWarp =
+                        !findAllStmt(merged, isParallelLoop).empty();
+                    // We guarantee the following requirements in order:
+                    // 1. make sure all SMs are used
+                    // 2. if there are enough threads, make sure blockDim is
+                    // not too large If the loop length is constant, we
+                    // split it only once, to reduce redundant guards, and
+                    // save time for dependency analysis. If not, we split
+                    // it twice, and merge once
+                    int numSM = ((GPUTarget &)target).multiProcessorCount();
+                    int maxThreads = 256; // Can be max thread per block (1024),
+                                          // but our generated kernels are huge,
+                                          // so set it lower to reserve for more
+                                          // registers. TODO: no magic number
+                    if (parentIsWarp || childIsWarp) {
+                        maxThreads /= ((GPUTarget &)target).warpSize();
                     }
+                    ID l1, l1b, l2;
+                    if (auto loopNode = merged.as<ForNode>();
+                        loopNode->len_->nodeType() == ASTNodeType::IntConst) {
+                        auto len = loopNode->len_.as<IntConstNode>()->val_;
+                        if (len < numSM * maxThreads) {
+                            std::tie(l1, l2) = split(mergedId, -1, numSM);
+                        } else {
+                            std::tie(l1, l2) = split(mergedId, maxThreads);
+                        }
+                    } else {
+                        // We don't use the `nparts` mode of `split`,
+                        // because it will hinder dependency analysis.
+                        // Instead, we use the `factor` mode and then
+                        // reorder. See the doc string of `split` for
+                        // details
+                        std::tie(l2, l1) = split(mergedId, numSM);
+                        reorder({l1, l2});
+                        if (!findAll(l2).empty()) {
+                            std::tie(l1b, l2) = split(l2, maxThreads);
+                        }
+                    }
+                    if (!findAll(l1).empty()) {
+                        if (l1b.isValid() && !findAll(l1b).empty()) {
+                            // We are unable to fuse `l1` and `l1b` back to
+                            // one loop. Because the length of `l1b` is not
+                            // a constant, a division by this length will be
+                            // introduced, which is not supported by ISL and
+                            // may probably lead to false dependencies
+                            parallelize(l1, blockIdxY);
+                            parallelize(l1b, blockIdxX);
+                        } else {
+                            parallelize(l1, blockIdxX);
+                        }
+                    }
+                    if (!findAll(l2).empty()) {
+                        parallelize(l2, (!parentIsWarp && !childIsWarp)
+                                            ? threadIdxX
+                                            : threadIdxY);
+                    }
+                    break;
+                }
 
 #endif // FT_WITH_CUDA
-                    default:
-                        ASSERT(false);
-                    }
-
-                    done = true;
-                    commitTransaction();
-                    break;
-                } catch (const InvalidSchedule &e) {
-                    abortTransaction();
+                default:
+                    ASSERT(false);
                 }
-            }
 
-            if (!done) {
-                for (auto &&subLoop : root->subLoops_) {
-                    autoParallelizeOuter(subLoop);
-                }
+                done = true;
+                commitTransaction();
+                break;
+            } catch (const InvalidSchedule &e) {
+                abortTransaction();
             }
-        };
-    auto loopNestTree = getLoopNestTree(ast());
-    for (const Ref<LoopNest> &root : loopNestTree->subLoops_) {
+        }
+
+        if (!done) {
+            for (auto &&subLoop :
+                 findAll("<For><-(!<For><-)*#" + toString(root->id()))) {
+                autoParallelizeOuter(subLoop.as<ForNode>());
+            }
+        }
+    };
+    for (auto &&_root : findAll("<For><-(!<For><-)*-|")) {
+        // Suppose the root node is not <For>. It should be <VarDef>
+        auto root = _root.as<ForNode>();
         // If the outer most loop is too short, we try the second outer loops
         // instead
-        if (root->subLoops_.size() > 1 &&
-            root->loop_->len_->nodeType() == ASTNodeType::IntConst &&
-            root->loop_->len_.as<IntConstNode>()->val_ < 32) {
-            for (const Ref<LoopNest> &root2 : root->subLoops_) {
-                autoParallelizeOuter(root2);
+        if (auto &&inners =
+                findAll("<For><-(!<For><-)*#" + toString(root->id()));
+            inners.size() > 1 &&
+            root->len_->nodeType() == ASTNodeType::IntConst &&
+            root->len_.as<IntConstNode>()->val_ < 32) {
+            for (auto &&inner : inners) {
+                autoParallelizeOuter(inner.as<ForNode>());
             }
         } else {
             autoParallelizeOuter(root);
@@ -1111,22 +1109,15 @@ void Schedule::autoUnroll(const Target &target) {
     }
 
     // Unroll very short loops
-    std::function<void(const Ref<LoopNest> &nest)> visitNest =
-        [&, this](const Ref<LoopNest> &nest) {
-            auto &&loop = nest->loop_;
-            if (loop.isValid()) { // not root
-                if (loop->property_->parallel_ == serialScope &&
-                    !loop->property_->vectorize_ && !loop->property_->unroll_ &&
-                    loop->len_->nodeType() == ASTNodeType::IntConst &&
-                    loop->len_.as<IntConstNode>()->val_ <= 4) {
-                    unroll(loop->id());
-                }
-            }
-            for (auto &&subNest : nest->subLoops_) {
-                visitNest(subNest);
-            }
-        };
-    visitNest(getLoopNestTree(ast()));
+    for (auto &&_loop : findAll("<For>")) {
+        auto loop = _loop.as<ForNode>();
+        if (loop->property_->parallel_ == serialScope &&
+            !loop->property_->vectorize_ && !loop->property_->unroll_ &&
+            loop->len_->nodeType() == ASTNodeType::IntConst &&
+            loop->len_.as<IntConstNode>()->val_ <= 4) {
+            unroll(loop->id());
+        }
+    }
 }
 
 std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
