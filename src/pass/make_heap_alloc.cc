@@ -3,77 +3,39 @@
 
 namespace freetensor {
 
-Stmt InsertAlloc::visit(const StmtSeq &_op) {
-    bool isOuterMostOld = isOuterMost_;
-    isOuterMost_ = false;
-
-    auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
-    auto op = __op.as<StmtSeqNode>();
-
-    isOuterMost_ = isOuterMostOld;
-    if (!isOuterMost_) {
-        return op;
+Stmt InsertAlloc::visit(const StmtSeq &op) {
+    for (size_t i = 0, n = op->stmts_.size(); i < n; i++) {
+        if (allUses(op->stmts_[i]).count(var_)) {
+            std::vector<Stmt> stmts = op->stmts_;
+            stmts[i] = (*this)(op->stmts_[i]);
+            if (!inserted_) {
+                stmts.insert(stmts.begin() + i, makeAlloc(var_));
+                inserted_ = true;
+            }
+            return makeStmtSeq(std::move(stmts));
+        } else {
+            delayed_ = true;
+        }
     }
-
-    int i = 0;
-    while (allUses(op->stmts_[i]).count(var_) == 0) {
-        delayed_ = true;
-        ++i;
-    }
-
-    ASSERT(i < (int)op->stmts_.size());
-
-    if (op->stmts_[i]->nodeType() == ASTNodeType::For ||
-        op->stmts_[i]->nodeType() == ASTNodeType::If ||
-        op->stmts_[i]->nodeType() == ASTNodeType::Store ||
-        op->stmts_[i]->nodeType() == ASTNodeType::Load ||
-        op->stmts_[i]->nodeType() == ASTNodeType::ReduceTo ||
-        op->stmts_[i]->isExpr()) {
-        op->stmts_.insert(op->stmts_.begin() + i, makeAlloc(var_));
-    } else {
-        op->stmts_[i] = (*this)(op->stmts_[i]);
-    }
-
-    return op;
+    ERROR("Variable defined but not used");
 }
 
-Stmt InsertFree::visit(const StmtSeq &_op) {
-    bool isOuterMostOld = isOuterMost_;
-    isOuterMost_ = false;
-
-    auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
-    auto op = __op.as<StmtSeqNode>();
-
-    isOuterMost_ = isOuterMostOld;
-    if (!isOuterMost_) {
-        return op;
+Stmt InsertFree::visit(const StmtSeq &op) {
+    for (size_t i = op->stmts_.size() - 1; ~i; i--) {
+        if (allUses(op->stmts_[i]).count(var_)) {
+            std::vector<Stmt> stmts = op->stmts_;
+            stmts[i] = (*this)(op->stmts_[i]);
+            if (!inserted_) {
+                stmts.insert(stmts.begin() + i + 1, makeFree(var_));
+                inserted_ = true;
+            }
+            return makeStmtSeq(std::move(stmts));
+        } else {
+            madeEarly_ = true;
+        }
     }
-
-    int i = op->stmts_.size() - 1;
-    while (allUses(op->stmts_[i]).count(var_) == 0) {
-        --i;
-        madeEarly_ = true;
-    }
-
-    ASSERT(i >= 0);
-
-    if (op->stmts_[i]->nodeType() == ASTNodeType::For ||
-        op->stmts_[i]->nodeType() == ASTNodeType::If ||
-        op->stmts_[i]->nodeType() == ASTNodeType::Store ||
-        op->stmts_[i]->nodeType() == ASTNodeType::Load ||
-        op->stmts_[i]->nodeType() == ASTNodeType::ReduceTo ||
-        op->stmts_[i]->isExpr()) {
-        op->stmts_.insert(op->stmts_.begin() + i + 1, makeFree(var_));
-    } else {
-        op->stmts_[i] = (*this)(op->stmts_[i]);
-    }
-
-    return op;
+    ERROR("Variable defined but not used");
 }
-
-bool MakeHeapAlloc::inKernel() const { return forDepth_ != 0 || inCublas_; }
 
 bool MakeHeapAlloc::isDynamicSized(const VarDef &op) const {
     for (auto &&dim : op->buffer_->tensor()->shape()) {
@@ -92,6 +54,10 @@ Stmt MakeHeapAlloc::visit(const VarDef &_op) {
     if (op->buffer_->atype() != AccessType::Cache ||
         op->buffer_->tensor()->shape().size() == 0) {
         return op;
+    }
+
+    if (!allUses(op->body_).count(op->name_)) {
+        return op->body_;
     }
 
     switch (op->buffer_->mtype()) {
@@ -146,21 +112,12 @@ Stmt MakeHeapAlloc::visit(const VarDef &_op) {
 }
 
 Stmt MakeHeapAlloc::visit(const For &_op) {
-    bool delta_depth =
-        ((_op->property_->parallel_ != serialScope) &&
-         std::holds_alternative<CUDAScope>(_op->property_->parallel_));
-    if (delta_depth)
-        ++forDepth_;
+    bool oldInKernel = inKernel_;
+    if (std::holds_alternative<CUDAScope>(_op->property_->parallel_)) {
+        inKernel_ = true;
+    }
     auto ret = BaseClass::visit(_op);
-    if (delta_depth)
-        --forDepth_;
-    return ret;
-}
-
-Stmt MakeHeapAlloc::visit(const MatMul &_op) {
-    inCublas_ = true;
-    auto ret = BaseClass::visit(_op);
-    inCublas_ = false;
+    inKernel_ = oldInKernel;
     return ret;
 }
 

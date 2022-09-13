@@ -278,6 +278,7 @@ void CodeGenCUDA::visit(const Alloc &op) {
 
     // e.g.
     // x_opt = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 * sizeof(int)));
+    makeIndent();
     os() << mangle(op->var_) << "_opt = ";
     genMdPtrDef(buf, [&]() {
         os() << "cudaNew(";
