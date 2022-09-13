@@ -22,10 +22,8 @@ Stmt makeNestedLoops(Titers &&iters, Tbegins &&begins, Tends &&ends,
                      Tsteps &&steps, Tlens &&lens, Tproperties &&properties,
                      Tbody &&body) {
     Stmt ret = std::forward<Tbody>(body);
-    for (auto &&[_iter, begin, _end, step, _len, property] :
-         views::zip(views::reverse(iters), views::reverse(begins),
-                    views::reverse(ends), views::reverse(steps),
-                    views::reverse(lens), views::reverse(properties))) {
+    for (auto &&[_iter, begin, _end, step, _len, property] : views::reverse(
+             views::zip(iters, begins, ends, steps, lens, properties))) {
         std::string *iter = nullptr;
         if constexpr (std::is_same_v<std::decay_t<decltype(_iter)>,
                                      std::string>) {
