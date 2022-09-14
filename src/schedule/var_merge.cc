@@ -1,3 +1,4 @@
+#include <schedule.h>
 #include <schedule/var_merge.h>
 
 namespace freetensor {
@@ -60,6 +61,19 @@ Stmt varMerge(const Stmt &_ast, const ID &def, int dim) {
         throw InvalidSchedule(toString(def) + " not found");
     }
     return ast;
+}
+
+void Schedule::varMerge(const ID &def, int dim) {
+    beginTransaction();
+    auto log =
+        appendLog(MAKE_SCHEDULE_LOG(VarMerge, freetensor::varMerge, def, dim));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

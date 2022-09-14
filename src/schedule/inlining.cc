@@ -7,6 +7,7 @@
 #include <pass/replace_iter.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
+#include <schedule.h>
 #include <schedule/inlining.h>
 
 namespace freetensor {
@@ -170,6 +171,18 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
     ast = simplify(ast);
 
     return ast;
+}
+
+void Schedule::inlining(const ID &def) {
+    beginTransaction();
+    auto log = appendLog(MAKE_SCHEDULE_LOG(Inline, freetensor::inlining, def));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

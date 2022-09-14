@@ -1,4 +1,5 @@
 #include <analyze/all_uses.h>
+#include <schedule.h>
 #include <schedule/var_reorder.h>
 
 namespace freetensor {
@@ -67,6 +68,19 @@ Stmt varReorder(const Stmt &_ast, const ID &def,
         throw InvalidSchedule(toString(def) + " not found");
     }
     return ast;
+}
+
+void Schedule::varReorder(const ID &def, const std::vector<int> &order) {
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_SCHEDULE_LOG(VarReorder, freetensor::varReorder, def, order));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

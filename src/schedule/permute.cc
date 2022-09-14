@@ -4,6 +4,7 @@
 #include <analyze/deps.h>
 #include <math/parse_pb_expr.h>
 #include <pass/shrink_for.h>
+#include <schedule.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/permute.h>
 #include <serialize/mangle.h>
@@ -299,6 +300,22 @@ std::pair<Stmt, std::vector<ID>> permute(
     return {
         ast,
         {permuter.permutedLoopsId().begin(), permuter.permutedLoopsId().end()}};
+}
+
+std::vector<ID> Schedule::permute(
+    const std::vector<ID> &loopsId,
+    const std::function<std::vector<Expr>(std::vector<Expr>)> &transformFunc) {
+    beginTransaction();
+    //! FIXME: put this into schedule logs
+    try {
+        auto ret = freetensor::permute(ast(), loopsId, transformFunc);
+        setAst(quickOptimizations(ret.first));
+        commitTransaction();
+        return ret.second;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw;
+    }
 }
 
 } // namespace freetensor

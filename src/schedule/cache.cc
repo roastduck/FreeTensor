@@ -6,6 +6,7 @@
 #include <pass/remove_writes.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
+#include <schedule.h>
 #include <schedule/cache.h>
 #include <schedule/check_var_cross_parallel.h>
 
@@ -306,6 +307,37 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
     return {ast,
             {std::move(initStmt), std::move(reduceStmt), std::move(newVar),
              std::move(newDef)}};
+}
+
+std::tuple<ID, ID, std::string, ID>
+Schedule::cache(const ID &stmt, const std::string &var, MemType mtype) {
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_SCHEDULE_LOG(Cache, freetensor::cache, stmt, var, mtype));
+    try {
+        auto ret = applyLog(log);
+        commitTransaction();
+        return ret;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
+}
+
+std::tuple<ID, ID, std::string, ID>
+Schedule::cacheReduction(const ID &stmt, const std::string &var,
+                         MemType mtype) {
+    beginTransaction();
+    auto log = appendLog(MAKE_SCHEDULE_LOG(
+        CacheReduction, freetensor::cacheReduction, stmt, var, mtype));
+    try {
+        auto ret = applyLog(log);
+        commitTransaction();
+        return ret;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor
