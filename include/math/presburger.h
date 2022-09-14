@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include <isl/aff.h>
@@ -597,6 +598,128 @@ inline bool operator==(const PBMap &lhs, const PBMap &rhs) {
                                        "," + std::to_string(rhs.nBasic()));
     return isl_map_is_equal(lhs.get(), rhs.get());
 }
+
+class PBBuildExpr {
+    std::string expr_;
+    explicit PBBuildExpr(const std::string &expr) : expr_(expr) {}
+    friend class PBBuilder;
+
+  public:
+    PBBuildExpr(const PBBuildExpr &) = default;
+    PBBuildExpr(PBBuildExpr &&) = default;
+    PBBuildExpr &operator=(const PBBuildExpr &) = default;
+    PBBuildExpr &operator=(PBBuildExpr &&) = default;
+
+    PBBuildExpr operator+(const PBBuildExpr &other) {
+        return PBBuildExpr("(" + expr_ + " + " + other.expr_ + ")");
+    }
+
+    PBBuildExpr operator-(const PBBuildExpr &other) {
+        return PBBuildExpr("(" + expr_ + " - " + other.expr_ + ")");
+    }
+
+    PBBuildExpr operator*(const PBBuildExpr &other) {
+        return PBBuildExpr("(" + expr_ + " * " + other.expr_ + ")");
+    }
+
+    PBBuildExpr operator/(const PBBuildExpr &other) {
+        return PBBuildExpr("floor(" + expr_ + " / " + other.expr_ + ")");
+    }
+
+    friend PBBuildExpr ceilDiv(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("ceil(" + a.expr_ + " / " + b.expr_ + ")");
+    }
+
+    PBBuildExpr operator%(const PBBuildExpr &other) {
+        return PBBuildExpr("(" + expr_ + " % " + other.expr_ + ")");
+    }
+
+    PBBuildExpr operator>(const PBBuildExpr &other) {
+        return PBBuildExpr("(" + expr_ + " > " + other.expr_ + ")");
+    }
+
+    PBBuildExpr operator>=(const PBBuildExpr &other) {
+        return PBBuildExpr("(" + expr_ + " >= " + other.expr_ + ")");
+    }
+
+    PBBuildExpr operator<(const PBBuildExpr &other) {
+        return PBBuildExpr("(" + expr_ + " < " + other.expr_ + ")");
+    }
+
+    PBBuildExpr operator<=(const PBBuildExpr &other) {
+        return PBBuildExpr("(" + expr_ + " <= " + other.expr_ + ")");
+    }
+
+    PBBuildExpr operator&&(const PBBuildExpr &other) {
+        return PBBuildExpr("(" + expr_ + " and " + other.expr_ + ")");
+    }
+
+    PBBuildExpr operator||(const PBBuildExpr &other) {
+        return PBBuildExpr("(" + expr_ + " or " + other.expr_ + ")");
+    }
+};
+
+class PBBuilder {
+    int anonVarNum = 0;
+    std::unordered_set<std::string> namedVars;
+
+    std::vector<PBBuildExpr> constraints;
+
+  protected:
+    PBBuildExpr newVar(const std::string &name = "");
+    std::vector<PBBuildExpr> newVars(int n, const std::string &prefix = "");
+
+    std::string getConstraintsStr() const;
+
+  public:
+    PBBuilder() = default;
+    PBBuilder(const PBBuilder &) = default;
+    PBBuilder(PBBuilder &&) = default;
+    PBBuilder &operator=(const PBBuilder &) = default;
+    PBBuilder &operator=(PBBuilder &&) = default;
+
+    void addConstraint(const PBBuildExpr &constraint);
+    void addConstraint(PBBuildExpr &&constraint);
+};
+
+class PBMapBuilder : PBBuilder {
+    std::vector<PBBuildExpr> inputs;
+    std::vector<PBBuildExpr> outputs;
+
+  public:
+    PBMapBuilder() = default;
+    PBMapBuilder(const PBMapBuilder &) = default;
+    PBMapBuilder(PBMapBuilder &&) = default;
+    PBMapBuilder &operator=(const PBMapBuilder &) = default;
+    PBMapBuilder &operator=(PBMapBuilder &&) = default;
+
+    void addInput(const PBBuildExpr &expr);
+    PBBuildExpr newInput(const std::string &name);
+    std::vector<PBBuildExpr> newInputs(int n, const std::string &prefix = "");
+
+    void addOutput(const PBBuildExpr &expr);
+    PBBuildExpr newOutput(const std::string &name);
+    std::vector<PBBuildExpr> newOutputs(int n, const std::string &prefix = "");
+
+    PBMap build(const PBCtx &ctx) const;
+};
+
+class PBSetBuilder : PBBuilder {
+    std::vector<PBBuildExpr> vars;
+
+  public:
+    PBSetBuilder() = default;
+    PBSetBuilder(const PBSetBuilder &) = default;
+    PBSetBuilder(PBSetBuilder &&) = default;
+    PBSetBuilder &operator=(const PBSetBuilder &) = default;
+    PBSetBuilder &operator=(PBSetBuilder &&) = default;
+
+    void addVar(const PBBuildExpr &expr);
+    PBBuildExpr newVar(const std::string &name);
+    std::vector<PBBuildExpr> newVars(int n, const std::string &prefix = "");
+
+    PBSet build(const PBCtx &ctx) const;
+};
 
 } // namespace freetensor
 
