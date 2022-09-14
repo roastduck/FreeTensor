@@ -48,3 +48,44 @@ def test_fission_when_prefer_libs():
     print(s.logs())
     assert "as_matmul($fission.0.lib{Li})" in s.pretty_logs()
     assert "as_matmul($fission.1.lib{Li})" in s.pretty_logs()
+
+
+def test_auto_reorder_dims():
+
+    @ft.transform
+    def test(x, y, z):
+        x: ft.Var[(100, 1000, 10), "float32", "input", "cpu"]
+        y: ft.Var[(1000, 1000), "float32", "input", "cpu"]
+        z: ft.Var[(100, 1000, 10), "float32", "output", "cpu"]
+
+        #! label: Va
+        a = ft.empty((100, 1000, 10), "float32", "cpu")
+        #! label: Vb
+        b = ft.empty((1000, 1000), "float32", "cpu")
+        #! label: Vc
+        c = ft.empty((100, 1000, 10), "float32", "cpu")
+
+        ft.libop.assign(a, x)
+        ft.libop.assign(b, y)
+
+        #! label: Li
+        for i0 in range(100):
+            for j in range(1000):
+                for i1 in range(10):
+                    c[i0, j, i1] = 0
+                    for k in range(1000):
+                        c[i0, j, i1] += a[i0, k, i1] * b[k, j]
+
+        ft.libop.assign(z, c)
+
+    print(test)
+    s = ft.Schedule(test)
+    s.auto_use_lib(ft.CPU())
+    print(s.ast())
+    print(s.logs())
+    logs = s.pretty_logs()
+    assert logs == [
+        "var_reorder(Va, 0, 2, 1)", "var_reorder(Vc, 0, 2, 1)", "as_matmul(Li)"
+    ] or logs == [
+        "var_reorder(Vc, 0, 2, 1)", "var_reorder(Va, 0, 2, 1)", "as_matmul(Li)"
+    ]

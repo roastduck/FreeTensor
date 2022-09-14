@@ -8,14 +8,6 @@ namespace freetensor {
 
 namespace cpu {
 
-namespace {
-
-template <class T, class U> std::vector<T> asVec(U &&adaptor) {
-    return std::vector<T>(adaptor.begin(), adaptor.end());
-}
-
-} // namespace
-
 std::vector<std::pair<For, int>>
 LowerParallelReduction::reducedBy(const ReduceTo &op) {
     std::vector<std::pair<For, int>> ret;
@@ -65,7 +57,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             makeStore(workspace, indices, neutralVal(dtype, r->op_));
         auto flushStmt =
             makeReduceTo(r->var_,
-                         asVec<Expr>(views::zip_with(
+                         ranges::to<std::vector<Expr>>(views::zip_with(
                              [](auto &&x, auto &&y) { return makeAdd(x, y); },
                              r->begins_, indices)),
                          r->op_, makeLoad(workspace, indices, dtype), false);
@@ -133,7 +125,7 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
         ASSERT(op->indices_.size() == begins.size());
         return makeReduceTo(
             workspace,
-            asVec<Expr>(views::zip_with(
+            ranges::to<std::vector<Expr>>(views::zip_with(
                 [](auto &&x, auto &&y) { return makeSub(x, y); }, op->indices_,
                 begins)),
             op->op_, op->expr_, false, op->metadata(), op->id());

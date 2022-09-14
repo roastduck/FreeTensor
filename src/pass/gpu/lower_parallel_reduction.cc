@@ -13,10 +13,6 @@ namespace gpu {
 
 namespace {
 
-template <class T, class U> std::vector<T> asVec(U &&adaptor) {
-    return std::vector<T>(adaptor.begin(), adaptor.end());
-}
-
 Expr makeCeilLog2(const Expr &_x) {
     // Suppose x is a non-negative integer
     auto x = constFold(_x);
@@ -99,7 +95,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
                                   neutralVal(dtype, r->op_));
         auto flushStmt = makeReduceTo(
             r->var_,
-            asVec<Expr>(views::zip_with(
+            ranges::to<std::vector<Expr>>(views::zip_with(
                 [](auto &&x, auto &&y) { return makeAdd(x, y); }, r->begins_,
                 indices)),
             r->op_, makeLoad(workspace, cat({makeIntConst(0)}, indices), dtype),
