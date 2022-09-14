@@ -1,4 +1,5 @@
 #include <analyze/deps.h>
+#include <schedule.h>
 #include <schedule/vectorize.h>
 
 namespace freetensor {
@@ -27,6 +28,19 @@ Stmt vectorize(const Stmt &_ast, const ID &loop) {
         .direction({{{loop, DepDirection::Normal}}})
         .filterSubAST(loop)(ast, found);
     return ast;
+}
+
+void Schedule::vectorize(const ID &loop) {
+    beginTransaction();
+    auto log =
+        appendLog(MAKE_SCHEDULE_LOG(Vectorize, freetensor::vectorize, loop));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

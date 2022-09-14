@@ -1,6 +1,7 @@
 #include <sstream>
 
 #include <analyze/deps.h>
+#include <schedule.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/reorder.h>
 
@@ -193,6 +194,19 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
     }
 
     return ast;
+}
+
+void Schedule::reorder(const std::vector<ID> &order) {
+    beginTransaction();
+    auto log =
+        appendLog(MAKE_SCHEDULE_LOG(Reorder, freetensor::reorder, order));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

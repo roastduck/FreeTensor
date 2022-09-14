@@ -1,3 +1,4 @@
+#include <schedule.h>
 #include <schedule/check_var_cross_parallel.h>
 #include <schedule/set_mem_type.h>
 
@@ -44,6 +45,19 @@ Stmt setMemType(const Stmt &_ast, const ID &def, MemType mtype) {
     }
     checkVarCrossParallel(ast, def, mtype);
     return ast;
+}
+
+void Schedule::setMemType(const ID &def, MemType mtype) {
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_SCHEDULE_LOG(SetMemType, freetensor::setMemType, def, mtype));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

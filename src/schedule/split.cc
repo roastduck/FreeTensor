@@ -1,5 +1,6 @@
 #include <analyze/find_stmt.h>
 #include <pass/simplify.h>
+#include <schedule.h>
 #include <schedule/split.h>
 
 namespace freetensor {
@@ -82,6 +83,21 @@ std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &_ast, const ID &id,
     }
 
     return std::make_pair(ast, std::make_pair(outerId, innerId));
+}
+
+std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts,
+                                  int shift) {
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_SCHEDULE_LOG(Split, freetensor::split, id, factor, nparts, shift));
+    try {
+        auto ret = applyLog(log);
+        commitTransaction();
+        return ret;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

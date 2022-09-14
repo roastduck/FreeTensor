@@ -1,5 +1,6 @@
 #include <analyze/deps.h>
 #include <pass/simplify.h>
+#include <schedule.h>
 #include <schedule/blend.h>
 
 namespace freetensor {
@@ -192,6 +193,18 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
     auto loopVari = findLoopVariance(ast);
     ast = BlendPass(loop, loopVari.first, loopVari.second)(ast);
     return ast;
+}
+
+void Schedule::blend(const ID &loop) {
+    beginTransaction();
+    auto log = appendLog(MAKE_SCHEDULE_LOG(Blend, freetensor::blend, loop));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

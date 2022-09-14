@@ -1,3 +1,4 @@
+#include <schedule.h>
 #include <schedule/as_matmul.h>
 
 namespace freetensor {
@@ -274,5 +275,18 @@ Stmt AsMatMul::visit(const VarDef &op) {
 }
 
 Stmt asMatMul(const Stmt &ast, const ID &loop) { return AsMatMul(loop)(ast); }
+
+void Schedule::asMatMul(const ID &loop) {
+    beginTransaction();
+    auto log =
+        appendLog(MAKE_SCHEDULE_LOG(AsMatMul, freetensor::asMatMul, loop));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
+}
 
 } // namespace freetensor

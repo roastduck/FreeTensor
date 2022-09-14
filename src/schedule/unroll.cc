@@ -1,5 +1,6 @@
 #include <pass/remove_writes.h>
 #include <pass/simplify.h>
+#include <schedule.h>
 #include <schedule/unroll.h>
 
 namespace freetensor {
@@ -77,6 +78,19 @@ Stmt unroll(const Stmt &_ast, const ID &loop, bool immediate) {
         throw InvalidSchedule("Loop " + toString(loop) + " not found");
     }
     return ast;
+}
+
+void Schedule::unroll(const ID &loop, bool immediate) {
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_SCHEDULE_LOG(Unroll, freetensor::unroll, loop, immediate));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor
