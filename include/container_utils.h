@@ -181,28 +181,13 @@ std::ostream &operator<<(std::ostream &os, std::tuple<Ts...> const &tuple) {
 }
 
 /**
- * Collect a range into a container
- */
-struct _Collect {
-    template <typename R> auto operator()(R &&r) {
-        return std::vector<std::decay_t<decltype(*std::begin(r))>>(
-            std::begin(r), std::end(r));
-    }
-};
-inline _Collect collect;
-
-template <typename R> auto operator|(R &&r, _Collect c) {
-    return c(std::forward<R>(r));
-}
-
-/**
  * Join a sequence of elements to a string with given splitter
  */
 struct _Join {
     const std::string &splitter;
 };
 
-template <typename Container>
+template <std::ranges::range Container>
 std::string join(const Container &c, const std::string &splitter) {
     std::ostringstream oss;
     bool first = true;
@@ -217,7 +202,7 @@ std::string join(const Container &c, const std::string &splitter) {
 
 inline auto join(const std::string &splitter) { return _Join{splitter}; }
 
-template <typename Container>
+template <std::ranges::range Container>
 auto operator|(const Container &c, const _Join &joiner) {
     return join(c, joiner.splitter);
 }

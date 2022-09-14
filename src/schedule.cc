@@ -544,14 +544,12 @@ void Schedule::asMatMul(const ID &loop) {
 
 ID Schedule::plutoFuse(const ID &loop0, const ID &loop1, int nestLevel) {
     beginTransaction();
-    auto log = appendLog(MAKE_LOG(PlutoFuse,
-                                  std::bind_front(freetensor::plutoFuse, ast()),
-                                  loop0, loop1, nestLevel));
+    auto log = appendLog(
+        MAKE_LOG(PlutoFuse, freetensor::plutoFuse, loop0, loop1, nestLevel));
     try {
-        ID result;
-        std::tie(ast(), result) = log->getResult();
+        auto ret = applyLog(log);
         commitTransaction();
-        return result;
+        return ret;
     } catch (const InvalidSchedule &e) {
         abortTransaction();
         throw InvalidSchedule(log, ast(), e.what());

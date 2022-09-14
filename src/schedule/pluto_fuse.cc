@@ -14,47 +14,45 @@ namespace {
 
 std::vector<std::string> absSumConstraints(int n, const std::string &sum,
                                            const auto &fVar) {
-    return iter::range(n) | iter::powerset | iter::imap([&](const auto &v) {
+    return views::ints(0, 1 << n) | views::transform([&](const auto &num) {
                std::ostringstream oss;
                oss << sum << " >= 0";
-               size_t iv = 0;
                for (int i = 0; i < n; ++i) {
-                   if (iv < v.size() && i == v[iv]) {
-                       iv++;
+                   if ((num >> i) & 1)
                        oss << " + ";
-                   } else
+                   else
                        oss << " - ";
                    oss << fVar(i);
                }
                return oss.str();
            }) |
-           collect;
+           ranges::to<std::vector>();
 }
 
 std::vector<std::string> nonZeroConstraints(int n, const auto &fVar,
                                             const std::string delta,
                                             int varBound = 2) {
     auto rangeConstraints =
-        iter::range(n) | iter::imap([&](int i) {
+        views::ints(0, n) | views::transform([&](int i) {
             return std::array{fVar(i) + " >= -" + toString(varBound),
                               fVar(i) + " <= " + toString(varBound)};
         }) |
-        iter::chain.from_iterable | collect;
+        views::join | ranges::to<std::vector>();
     auto skewedExpr =
-        iter::range(n) | iter::imap([&](int i) {
+        views::ints(0, n) | views::transform([&](int i) {
             return toString((int)std::pow(varBound * 2 + 1, i)) + "*" + fVar(i);
         }) |
         join(" + ");
     auto bound = (int)std::pow(varBound * 2 + 1, n);
-    return iter::chain(rangeConstraints,
-                       std::array{
-                           skewedExpr + " >= 1 - " + toString(bound) + delta,
-                           skewedExpr + " <= " + toString(bound - 1) + " - " +
-                               toString(bound) + delta,
-                           delta + " >= 0",
-                           delta + " <= 1",
-                       }) |
-           collect;
+    auto excludeZero = std::array{
+        skewedExpr + " >= 1 - " + toString(bound) + delta,
+        skewedExpr + " <= " + toString(bound - 1) + " - " + toString(bound) +
+            delta,
+        delta + " >= 0",
+        delta + " <= 1",
+    };
+    return views::concat(rangeConstraints, excludeZero) |
+           ranges::to<std::vector>();
 }
 
 std::vector<std::vector<int>>
@@ -67,28 +65,35 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
 
     auto fVar = [](int i) { return "i" + toString(i); };
     auto fOrtho = [&](const std::vector<int> &v) {
-        return (iter::range(nDims) |
-                iter::imap([&](int i) { return toString(v[i]) + fVar(i); }) |
+        return (views::ints(0, nDims) | views::transform([&](int i) {
+                    return toString(v[i]) + fVar(i);
+                }) |
                 join(" + ")) +
                " = 0";
     };
-    auto setHeader = "{ [sum, " +
-                     (iter::range(nDims) | iter::imap(fVar) | join(", ")) +
-                     ", delta]: ";
+    auto setHeader =
+        "{ [sum, " +
+        (views::ints(0, nDims) | views::transform(fVar) | join(", ")) +
+        ", delta]: ";
     auto setFooter = " }";
 
     PBCtx ctx;
-    PBSet orthogonalSet(
-        ctx, setHeader +
-                 (iter::chain(
-                      // orthogonal constraints
-                      vectors | iter::imap(fOrtho) | collect,
-                      // non-zero constraints to exclude trivial result
-                      nonZeroConstraints(nDims, fVar, "delta"),
-                      // abs sum constraints to find vector nearest to zero
-                      absSumConstraints(nDims, "sum", fVar)) |
-                  join(" and ")) +
-                 setFooter);
+    PBSet orthogonalSet;
+    {
+        auto nonZero = nonZeroConstraints(nDims, fVar, "delta");
+        auto absSum = absSumConstraints(nDims, "sum", fVar);
+        orthogonalSet = PBSet(
+            ctx, setHeader +
+                     (views::concat(
+                          // orthogonal constraints
+                          vectors | views::transform(fOrtho),
+                          // non-zero constraints to exclude trivial result
+                          nonZero,
+                          // abs sum constraints to find vector nearest to zero
+                          absSum) |
+                      join(" and ")) +
+                     setFooter);
+    }
 
     std::vector<std::vector<int>> result;
     while (!orthogonalSet.empty()) {
@@ -211,12 +216,12 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     else
         ASSERT(loop1InnermostOuter == outers.back());
 
-    std::vector<FindDepsDir> outersSame{outers | iter::imap([&](const For &f) {
-                                            return std::pair{
-                                                NodeIDOrParallelScope(f->id()),
-                                                DepDirection::Same};
-                                        }) |
-                                        collect};
+    std::vector<FindDepsDir> outersSame{
+        outers | views::transform([&](const For &f) {
+            return std::pair{NodeIDOrParallelScope(f->id()),
+                             DepDirection::Same};
+        }) |
+        ranges::to<std::vector>()};
 
     PBCtx ctx;
     PBSet loop0Set, loop1Set;
@@ -246,7 +251,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     auto findIter = [](const AccessPoint &ap, const std::string var) {
         std::vector<int> outerDims;
         outerDims.reserve(ap.iter_.size());
-        for (auto &&[i, iterAxis] : iter::enumerate(ap.iter_))
+        for (auto &&[i, iterAxis] : views::enumerate(ap.iter_))
             if (iterAxis.realIter_->nodeType() == ASTNodeType::Var) {
                 if (iterAxis.realIter_.as<VarNode>()->name_ == var)
                     return std::pair{i, std::move(outerDims)};
@@ -267,11 +272,11 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                         if (p.stmt_->ancestorById(loop0Id).isValid()) {
                             loop0Set = extractLoopSet(p);
                             outerAxes = p.iter_ |
-                                        iter::filter([](const IterAxis &axis) {
+                                        views::filter([](const IterAxis &axis) {
                                             return axis.realIter_->nodeType() ==
                                                    ASTNodeType::Var;
                                         }) |
-                                        collect;
+                                        ranges::to<std::vector>();
                         } else {
                             ASSERT(p.stmt_->ancestorById(loop1Id).isValid());
                             loop1Set = extractLoopSet(p);
@@ -446,15 +451,15 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                 PBMap(ctx, printMapSource(nParams) + oss.str().substr(2));
         }
         // generate constraints
-        coeffSets0 = dep0 | iter::imap([&](const auto &d) {
+        coeffSets0 = dep0 | views::transform([&](const auto &d) {
                          return intersect(coefficients(apply(d, legalityMap)),
                                           coefficients(apply(d, boundingMap)));
                      }) |
-                     collect;
-        satSets0 = dep0 | iter::imap([&](const auto &d) {
+                     ranges::to<std::vector>();
+        satSets0 = dep0 | views::transform([&](const auto &d) {
                        return coefficients(apply(d, legalityMap), 1);
                    }) |
-                   collect;
+                   ranges::to<std::vector>();
         satisfied0.resize(dep0.size(), false);
     }
 
@@ -533,15 +538,15 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                 PBMap(ctx, printMapSource(nParams) + oss.str().substr(2));
         }
         // generate constraints
-        coeffSets1 = dep1 | iter::imap([&](const auto &d) {
+        coeffSets1 = dep1 | views::transform([&](const auto &d) {
                          return intersect(coefficients(apply(d, legalityMap)),
                                           coefficients(apply(d, boundingMap)));
                      }) |
-                     collect;
-        satSets1 = dep1 | iter::imap([&](const auto &d) {
+                     ranges::to<std::vector>();
+        satSets1 = dep1 | views::transform([&](const auto &d) {
                        return coefficients(apply(d, legalityMap), 1);
                    }) |
-                   collect;
+                   ranges::to<std::vector>();
         satisfied1.resize(dep1.size(), false);
     }
 
@@ -623,15 +628,15 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
         }
         // generate constraints
         coeffSets1to0 =
-            dep1to0 | iter::imap([&](const auto &d) {
+            dep1to0 | views::transform([&](const auto &d) {
                 return intersect(coefficients(apply(d, legalityMap)),
                                  coefficients(apply(d, boundingMap)));
             }) |
-            collect;
-        satSets1to0 = dep1to0 | iter::imap([&](const auto &d) {
+            ranges::to<std::vector>();
+        satSets1to0 = dep1to0 | views::transform([&](const auto &d) {
                           return coefficients(apply(d, legalityMap), 1);
                       }) |
-                      collect;
+                      ranges::to<std::vector>();
         satisfied1to0.resize(dep1to0.size(), false);
     }
 
@@ -667,77 +672,75 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
 
     // construct the map from coefficients to optimize targets
     PBMap optimizeMap;
-    std::function<PBSet(const std::vector<std::string> &)> orthoSetGen;
+    std::string optimizeTargets;
     {
         // the coefficients set includes following dimensions:
         // 1. (nParams + 1) bounding coefficients
         // 2. (nParams + 1 + nestLevel) loop 0 permuting coefficients
         // 3. (nParams + 1 + nestLevel) loop 1 permuting coefficients
-        auto inputs =
-            iter::chain(iter::range(nParams + 1) | iter::imap(cBound),
-                        iter::range(nParams + 1) | iter::imap(c0Param),
-                        iter::range(nestLevel) | iter::imap(c0Iter),
-                        iter::range(nParams + 1) | iter::imap(c1Param),
-                        iter::range(nestLevel) | iter::imap(c1Iter)) |
-            collect;
+        auto inputs = views::concat(
+            views::ints(0, nParams + 1) | views::transform(cBound),
+            views::ints(0, nParams + 1) | views::transform(c0Param),
+            views::ints(0, nestLevel) | views::transform(c0Iter),
+            views::ints(0, nParams + 1) | views::transform(c1Param),
+            views::ints(0, nestLevel) | views::transform(c1Iter));
 
         // then the outputs which are optimize targets
-        auto outputs =
-            iter::chain(
-                // 1. the distance bounds go first, as main optimizing targets
-                iter::range(nParams + 1) | iter::imap(cBound) | collect,
-                // 2.1. sum of coefficients absolute for loop 0
-                std::array{c0Sum},
-                // 2.2. binary decision variable for avoiding zeros
-                std::array{delta0, deltaL0},
-                // 2.3. reversed coefficients of loop 0 iterations
-                //      they are reversed because we want to select outer loops
-                //      earlier, preserving the original loop order
-                iter::range(nestLevel - 1, -1, -1) | iter::imap(c0Iter) |
-                    collect,
-                // 2.4. coefficients of loop 0 params and constant
-                iter::range(nParams + 1) | iter::imap(c0Param) | collect,
-                // 3.1. sum of coefficients absolute for loop 1
-                std::array{c1Sum},
-                // 3.2. binary decision variable for avoiding zeros
-                std::array{delta1, deltaL1},
-                // 3.3. reversed coefficients of loop 1 iterations
-                iter::range(nestLevel - 1, -1, -1) | iter::imap(c1Iter) |
-                    collect,
-                // 3.4. coefficients of loop 1 params and constant
-                iter::range(nParams + 1) | iter::imap(c1Param) | collect) |
-            collect;
+        std::array extraOut0{c0Sum, delta0, deltaL0};
+        std::array extraOut1{c1Sum, delta1, deltaL1};
+        auto outputs = views::concat(
+            // 1. the distance bounds go first, as main optimizing targets
+            views::ints(0, nParams + 1) | views::transform(cBound),
+            // 2.1. sum of coefficients absolute for loop 0
+            //   and
+            // 2.2. binary decision variable for avoiding zeros
+            extraOut0,
+            // 2.3. reversed coefficients of loop 0 iterations
+            //      they are reversed because we want to select outer loops
+            //      earlier, preserving the original loop order
+            views::reverse(views::ints(0, nestLevel)) |
+                views::transform(c0Iter),
+            // 2.4. coefficients of loop 0 params and constant
+            views::ints(0, nParams + 1) | views::transform(c0Param),
+            // 3.1. sum of coefficients absolute for loop 1
+            //   and
+            // 3.2. binary decision variable for avoiding zeros
+            extraOut1,
+            // 3.3. reversed coefficients of loop 1 iterations
+            views::reverse(views::ints(0, nestLevel)) |
+                views::transform(c1Iter),
+            // 3.4. coefficients of loop 1 params and constant
+            views::ints(0, nParams + 1) | views::transform(c1Param));
 
         auto loopConstraints = [&](const auto &cSum, const auto &c,
                                    const auto &cIter, const auto &delta,
                                    const auto &deltaL) {
-            return iter::chain(
-                absSumConstraints(nParams + 1 + nestLevel, cSum, c),
-                nonZeroConstraints(nestLevel, cIter, delta),
-                std::array{
-                    deltaL + " >= 0",
-                    deltaL + " <= 1",
-                });
+            auto absSum = absSumConstraints(nParams + 1 + nestLevel, cSum, c);
+            auto nonZero = nonZeroConstraints(nestLevel, cIter, delta);
+            std::array limitDeltaL{
+                deltaL + " >= 0",
+                deltaL + " <= 1",
+            };
+            return views::concat(absSum, nonZero, limitDeltaL) |
+                   ranges::to<std::vector>();
         };
 
         // constraints excluding trivial results (all zero)
-        auto constraints =
-            iter::chain(loopConstraints(c0Sum, c0, c0Iter, delta0, deltaL0),
-                        loopConstraints(c1Sum, c1, c1Iter, delta1, deltaL1)) |
-            collect;
+        auto constraints0 = loopConstraints(c0Sum, c0, c0Iter, delta0, deltaL0);
+        auto constraints1 = loopConstraints(c1Sum, c1, c1Iter, delta1, deltaL1);
+        auto constraints = views::concat(constraints0, constraints1);
 
-        auto outputsStr = join(outputs, ", ");
+        auto optimizeTargets = join(outputs, ", ");
         optimizeMap =
-            PBMap(ctx, "{ [" + join(inputs, ", ") + "] -> [" + outputsStr +
+            PBMap(ctx, "{ [" + join(inputs, ", ") + "] -> [" + optimizeTargets +
                            "]: " + join(constraints, " and ") + "}");
-        orthoSetGen = [&ctx, outputsStr = std::move(outputsStr)](
-                          const std::vector<std::string> &orthoConstraints) {
-            return PBSet(ctx, "{ [" + outputsStr + "]: " +
-                                  join(orthoConstraints, " and ") + " }");
-        };
     }
+    auto orthoSetGen = [&](const auto &orthoConstraints) {
+        return PBSet(ctx, "{ [" + optimizeTargets +
+                              "]: " + join(orthoConstraints, " and ") + " }");
+    };
     auto revOptimizeMap = reverse(optimizeMap);
-    PBSet orthoSet = orthoSetGen({});
+    PBSet orthoSet = orthoSetGen(std::vector<std::string>{});
 
     std::vector<std::vector<int>> c0ParamFusedValue, c0IterFusedValue;
     std::vector<std::vector<int>> c1ParamFusedValue, c1IterFusedValue;
@@ -748,8 +751,8 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
             spaceSetAlloc(ctx, 0, (nParams + 1) * 3 + nestLevel * 2));
         // constructing the coefficients' space
         for (const auto &[satisfied, coeffSet] :
-             iter::zip(iter::chain(satisfied0, satisfied1, satisfied1to0),
-                       iter::chain(coeffSets0, coeffSets1, coeffSets1to0)))
+             views::zip(views::concat(satisfied0, satisfied1, satisfied1to0),
+                        views::concat(coeffSets0, coeffSets1, coeffSets1to0)))
             if (!satisfied)
                 problem = intersect(std::move(problem), coeffSet);
         // map the coefficients to optimize targets, and perform optimization
@@ -757,13 +760,13 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
             lexmin(intersect(std::move(orthoSet), apply(problem, optimizeMap)));
         if (solution.empty())
             break;
-        auto optimized =
-            sample(apply(std::move(solution), revOptimizeMap)).coordinates() |
-            iter::imap([&](const PBVal &val) {
-                ASSERT(val.denSi() == 1);
-                return val.numSi();
-            }) |
-            collect;
+        auto solutionVals =
+            sample(apply(std::move(solution), revOptimizeMap)).coordinates();
+        auto optimized = solutionVals | views::transform([&](const PBVal &val) {
+                             ASSERT(val.denSi() == 1);
+                             return val.numSi();
+                         }) |
+                         ranges::to<std::vector>();
         std::cout << optimized << std::endl;
 
         // check and exclude fake fusion
@@ -771,27 +774,31 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
             return PBMap(
                 ctx,
                 "{ [" +
-                    (iter::chain(iter::range(nParams) | iter::imap([](int i) {
-                                     return "p" + toString(i);
-                                 }),
-                                 iter::range(nestLevel) | iter::imap([](int i) {
-                                     return "x" + toString(i);
-                                 })) |
+                    (views::concat(views::ints(0, nParams) |
+                                       views::transform([](int i) {
+                                           return "p" + toString(i);
+                                       }),
+                                   views::ints(0, nestLevel) |
+                                       views::transform([](int i) {
+                                           return "x" + toString(i);
+                                       })) |
                      join(", ")) +
                     "] -> [" +
-                    (iter::chain(
-                         iter::range(nParams + 1) | iter::imap([&](int i) {
-                             auto c = toString(optimized[coeffBase + i]);
-                             if (i == nParams)
-                                 return c;
-                             else
-                                 return c + "p" + toString(i);
-                         }),
-                         iter::range(nestLevel) | iter::imap([&](int i) {
-                             auto c = toString(
-                                 optimized[coeffBase + nParams + 1 + i]);
-                             return c + "x" + toString(i);
-                         })) |
+                    (views::concat(
+                         views::ints(0, nParams + 1) |
+                             views::transform([&](int i) {
+                                 auto c = toString(optimized[coeffBase + i]);
+                                 if (i == nParams)
+                                     return c;
+                                 else
+                                     return c + "p" + toString(i);
+                             }),
+                         views::ints(0, nestLevel) |
+                             views::transform([&](int i) {
+                                 auto c = toString(
+                                     optimized[coeffBase + nParams + 1 + i]);
+                                 return c + "x" + toString(i);
+                             })) |
                      join(" + ")) +
                     "] }");
         };
@@ -833,23 +840,22 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
             auto ortho = orthogonalMatrix(cIterFusedValue);
             if (ortho.empty())
                 return std::vector<std::string>{"true"};
-            auto orthoDots =
-                ortho | iter::imap([&](const auto &o) {
-                    return "(" +
-                           (iter::range(nestLevel) | iter::imap([&](int i) {
-                                return toString(o[i]) + cIter(i);
-                            }) |
-                            join(" + ")) +
-                           ")";
-                }) |
-                collect;
+            auto orthoDots = ortho | views::transform([&](const auto &o) {
+                                 return "(" +
+                                        (views::ints(0, nestLevel) |
+                                         views::transform([&](int i) {
+                                             return toString(o[i]) + cIter(i);
+                                         }) |
+                                         join(" + ")) +
+                                        ")";
+                             }) |
+                             ranges::to<std::vector>();
             return nonZeroConstraints(
                 ortho.size(), [&](int i) { return orthoDots[i]; }, deltaL);
         };
-        orthoSet = orthoSetGen(
-            iter::chain(orthoConstraints(c0IterFusedValue, c0Iter, deltaL0),
-                        orthoConstraints(c1IterFusedValue, c1Iter, deltaL1)) |
-            collect);
+        auto ortho0 = orthoConstraints(c0IterFusedValue, c0Iter, deltaL0);
+        auto ortho1 = orthoConstraints(c1IterFusedValue, c1Iter, deltaL1);
+        orthoSet = orthoSetGen(views::concat(ortho0, ortho1));
     }
 
     return {ast, {}};
