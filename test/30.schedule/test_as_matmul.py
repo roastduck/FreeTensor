@@ -23,7 +23,7 @@ def test_not_plain_iterator():
         s.as_matmul("L1")
 
 
-def test_splitted_dim_not_contiguous_iterating_range():
+def test_splitted_dim_not_contiguous_because_of_not_full_iterating_range():
 
     @ft.transform
     def test(a, b, c):
@@ -35,6 +35,25 @@ def test_splitted_dim_not_contiguous_iterating_range():
             for i in range(48):
                 for j in range(72):
                     for k1 in range(3):  # Invalid because not 4
+                        c[i, j] += a[i, k0, k1] * b[k0, k1, j]
+
+    s = ft.Schedule(test)
+    with pytest.raises(ft.InvalidSchedule):
+        s.as_matmul("L1")
+
+
+def test_splitted_dim_not_contiguous_because_of_steps():
+
+    @ft.transform
+    def test(a, b, c):
+        a: ft.Var[(48, 16, 4), "float32", "input", "cpu"]
+        b: ft.Var[(16, 4, 72), "float32", "input", "cpu"]
+        c: ft.Var[(48, 72), "float32", "inout", "cpu"]
+        #! label: L1
+        for k0 in range(0, 16, 2):
+            for i in range(48):
+                for j in range(72):
+                    for k1 in range(4):
                         c[i, j] += a[i, k0, k1] * b[k0, k1, j]
 
     s = ft.Schedule(test)

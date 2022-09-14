@@ -40,7 +40,7 @@ def test_basic():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-def test_reverse_idx():
+def test_reversed_idx():
 
     @ft.transform
     def test(a, b, c):
@@ -52,6 +52,37 @@ def test_reverse_idx():
             for j in range(72):
                 for k in range(64):
                     c[47 - i, 71 - j] += a[47 - i, 63 - k] * b[63 - k, 71 - j]
+
+    s = ft.Schedule(test)
+    s.as_matmul("L1")
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
+    assert "mkl_set_num_threads_local(0)" in str(code)
+    a_np = np.random.uniform(size=(48, 64)).astype("float32")
+    b_np = np.random.uniform(size=(64, 72)).astype("float32")
+    c_np = np.random.uniform(size=(48, 72)).astype("float32")
+    a_arr = ft.Array(a_np)
+    b_arr = ft.Array(b_np)
+    c_arr = ft.Array(c_np.copy())
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    c_result = c_arr.numpy()
+
+    assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
+
+
+def test_reversed_step():
+
+    @ft.transform
+    def test(a, b, c):
+        a: ft.Var[(48, 64), "float32", "input", "cpu"]
+        b: ft.Var[(64, 72), "float32", "input", "cpu"]
+        c: ft.Var[(48, 72), "float32", "inout", "cpu"]
+        #! label: L1
+        for i in range(47, -1, -1):
+            for j in range(71, -1, -1):
+                for k in range(63, -1, -1):
+                    c[i, j] += a[i, k] * b[k, j]
 
     s = ft.Schedule(test)
     s.as_matmul("L1")
