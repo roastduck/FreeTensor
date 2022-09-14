@@ -285,14 +285,32 @@ $(function() {
 <div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>                         ScheduleLogItemEqual&gt;</div>
 <div class="line"><a id="l00234" name="l00234"></a><span class="lineno"><a class="line" href="namespacefreetensor.html#a3ade010f117f2ddf99e1c076eae94715">  234</a></span>    <a class="code hl_typedef" href="namespacefreetensor.html#a3ade010f117f2ddf99e1c076eae94715">ScheduleLog</a>;</div>
 <div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span> </div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>} <span class="comment">// namespace freetensor</span></div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span> </div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_SCHEDULE_LOG_H</span></div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno"><a class="line" href="schedule__log_8h.html#aab20961d7f0b3fbf69abff932e7180b0">  240</a></span><span class="preprocessor">#define MAKE_SCHEDULE_LOG(TYPE, FUNC, ...)                                     \</span></div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span><span class="preprocessor">    ([this](const auto &amp;func, const auto &amp;_params) {                           \</span></div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span><span class="preprocessor">        auto params = getPackFromID(this, _params);                            \</span></div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span><span class="preprocessor">        </span><span class="comment">/* decay is required: we must not store an reference */</span><span class="preprocessor">                \</span></div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span><span class="preprocessor">        typedef ScheduleLogItemImpl&lt;                                           \</span></div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span><span class="preprocessor">            ScheduleType::TYPE, std::decay_t&lt;decltype(func)&gt;,                  \</span></div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span><span class="preprocessor">            std::decay_t&lt;decltype(params)&gt;,                                    \</span></div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span><span class="preprocessor">            std::decay_t&lt;decltype(std::apply(func, _params))&gt;&gt;                 \</span></div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span><span class="preprocessor">            BaseClass;                                                         \</span></div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span><span class="preprocessor">        class ScheduleLogItem##TYPE : public BaseClass {                       \</span></div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span><span class="preprocessor">          public:                                                              \</span></div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span><span class="preprocessor">            ScheduleLogItem##TYPE(const typename BaseClass::Invocable &amp;f,      \</span></div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span><span class="preprocessor">                                  const typename BaseClass::Params &amp;p)         \</span></div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span><span class="preprocessor">                : BaseClass(f, p) {}                                           \</span></div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span><span class="preprocessor">        };                                                                     \</span></div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span><span class="preprocessor">        return Ref&lt;ScheduleLogItem##TYPE&gt;::make(func, params);                 \</span></div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span><span class="preprocessor">    })(futureSchedule(FUNC), std::make_tuple(__VA_ARGS__))</span></div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span> </div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span> </div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_SCHEDULE_LOG_H</span></div>
 <div class="ttc" id="aast_8h_html"><div class="ttname"><a href="ast_8h.html">ast.h</a></div></div>
 <div class="ttc" id="aclassfreetensor_1_1AsMatMul_html"><div class="ttname"><a href="classfreetensor_1_1AsMatMul.html">freetensor::AsMatMul</a></div><div class="ttdef"><b>Definition:</b> as_matmul.h:16</div></div>
 <div class="ttc" id="aclassfreetensor_1_1ID_html"><div class="ttname"><a href="classfreetensor_1_1ID.html">freetensor::ID</a></div><div class="ttdef"><b>Definition:</b> id.h:15</div></div>
 <div class="ttc" id="aclassfreetensor_1_1Parallelize_html"><div class="ttname"><a href="classfreetensor_1_1Parallelize.html">freetensor::Parallelize</a></div><div class="ttdef"><b>Definition:</b> parallelize.h:11</div></div>
-<div class="ttc" id="aclassfreetensor_1_1Permute_html"><div class="ttname"><a href="classfreetensor_1_1Permute.html">freetensor::Permute</a></div><div class="ttdef"><b>Definition:</b> permute.cc:13</div></div>
+<div class="ttc" id="aclassfreetensor_1_1Permute_html"><div class="ttname"><a href="classfreetensor_1_1Permute.html">freetensor::Permute</a></div><div class="ttdef"><b>Definition:</b> permute.cc:14</div></div>
 <div class="ttc" id="aclassfreetensor_1_1Ref_html"><div class="ttname"><a href="classfreetensor_1_1Ref.html">freetensor::Ref</a></div><div class="ttdef"><b>Definition:</b> ref.h:24</div></div>
 <div class="ttc" id="aclassfreetensor_1_1Reorder_html"><div class="ttname"><a href="classfreetensor_1_1Reorder.html">freetensor::Reorder</a></div><div class="ttdef"><b>Definition:</b> reorder.h:25</div></div>
 <div class="ttc" id="aclassfreetensor_1_1ScheduleLogItemImpl_html"><div class="ttname"><a href="classfreetensor_1_1ScheduleLogItemImpl.html">freetensor::ScheduleLogItemImpl</a></div><div class="ttdef"><b>Definition:</b> schedule_log.h:142</div></div>

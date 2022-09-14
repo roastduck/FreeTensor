@@ -1,7 +1,7 @@
 var searchData=
 [
   ['magenta_0',['MAGENTA',['../print__ast_8cc.html#a6f699060902f800f12aaae150f3a708e',1,'print_ast.cc']]],
-  ['make_5flog_1',['MAKE_LOG',['../schedule_8cc.html#ad474ec41602566489ec2184b3310df29',1,'schedule.cc']]],
+  ['make_5fschedule_5flog_1',['MAKE_SCHEDULE_LOG',['../schedule__log_8h.html#aab20961d7f0b3fbf69abff932e7180b0',1,'schedule_log.h']]],
   ['makeabs_2',['makeAbs',['../expr_8h.html#aac13b2b6fe607876c525791f7d0763b6',1,'expr.h']]],
   ['makeadd_3',['makeAdd',['../expr_8h.html#ab4dbe0c9fb2d17158eb0eaa315895078',1,'expr.h']]],
   ['makealloc_4',['makeAlloc',['../stmt_8h.html#a824d549ce591efd6045b943940d9ffce',1,'stmt.h']]],

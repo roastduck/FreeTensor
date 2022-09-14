@@ -1,10 +1,10 @@
 <map id="include/debug/profile.h" name="include/debug/profile.h">
-<area shape="rect" id="node1" title=" " alt="" coords="2867,5,3037,32"/>
-<area shape="rect" id="node2" href="$presburger_8h.html" title=" " alt="" coords="2759,80,2951,107"/>
-<area shape="rect" id="node38" href="$profile_8cc.html" title=" " alt="" coords="2975,80,3123,107"/>
-<area shape="rect" id="node3" href="$deps_8h.html" title=" " alt="" coords="2171,244,2341,271"/>
-<area shape="rect" id="node27" href="$gen__pb__expr_8h.html" title=" " alt="" coords="2775,155,2934,196"/>
-<area shape="rect" id="node28" href="$pb__simplify_8h.html" title=" " alt="" coords="4165,244,4357,271"/>
+<area shape="rect" id="node1" title=" " alt="" coords="3133,5,3304,32"/>
+<area shape="rect" id="node2" href="$presburger_8h.html" title=" " alt="" coords="3025,80,3217,107"/>
+<area shape="rect" id="node40" href="$profile_8cc.html" title=" " alt="" coords="3242,80,3390,107"/>
+<area shape="rect" id="node3" href="$deps_8h.html" title=" " alt="" coords="2360,244,2531,271"/>
+<area shape="rect" id="node28" href="$gen__pb__expr_8h.html" title=" " alt="" coords="3042,155,3201,196"/>
+<area shape="rect" id="node29" href="$pb__simplify_8h.html" title=" " alt="" coords="4553,244,4745,271"/>
 <area shape="rect" id="node4" href="$all__no__reuse__defs_8cc.html" title=" " alt="" coords="5,319,144,360"/>
 <area shape="rect" id="node5" href="$analyze__version_8cc.html" title=" " alt="" coords="169,319,319,360"/>
 <area shape="rect" id="node6" href="$check__not__modified_8cc.html" title=" " alt="" coords="343,319,510,360"/>
@@ -17,24 +17,26 @@
 <area shape="rect" id="node13" href="$remove__writes_8cc.html" title=" " alt="" coords="1668,326,1863,353"/>
 <area shape="rect" id="node14" href="$sink__var_8cc.html" title=" " alt="" coords="1887,326,2038,353"/>
 <area shape="rect" id="node15" href="$tensor__prop__const_8cc.html" title=" " alt="" coords="2062,319,2218,360"/>
-<area shape="rect" id="node16" href="$schedule_8cc.html" title=" " alt="" coords="3111,505,3233,531"/>
-<area shape="rect" id="node17" href="$blend_8cc.html" title=" " alt="" coords="2294,326,2455,353"/>
-<area shape="rect" id="node18" href="$check__var__cross__parallel_8cc.html" title=" " alt="" coords="2480,319,2645,360"/>
-<area shape="rect" id="node19" href="$fission_8cc.html" title=" " alt="" coords="2670,326,2837,353"/>
-<area shape="rect" id="node20" href="$fuse_8cc.html" title=" " alt="" coords="2861,326,3014,353"/>
-<area shape="rect" id="node21" href="$inlining_8cc.html" title=" " alt="" coords="3039,326,3212,353"/>
-<area shape="rect" id="node22" href="$schedule_2parallelize_8cc.html" title=" " alt="" coords="3237,326,3430,353"/>
-<area shape="rect" id="node23" href="$permute_8cc.html" title=" " alt="" coords="3547,415,3727,442"/>
-<area shape="rect" id="node24" href="$reorder_8cc.html" title=" " alt="" coords="3505,326,3676,353"/>
-<area shape="rect" id="node25" href="$swap_8cc.html" title=" " alt="" coords="3701,326,3859,353"/>
-<area shape="rect" id="node26" href="$vectorize_8cc.html" title=" " alt="" coords="3883,326,4069,353"/>
-<area shape="rect" id="node37" href="$gen__pb__expr_8cc.html" title=" " alt="" coords="2763,244,2946,271"/>
-<area shape="rect" id="node29" href="$make__const__shape_8h.html" title=" " alt="" coords="4265,319,4450,360"/>
-<area shape="rect" id="node33" href="$make__const__shape_8cc.html" title=" " alt="" coords="4344,408,4501,449"/>
-<area shape="rect" id="node34" href="$shrink__for_8h.html" title=" " alt="" coords="4093,319,4240,360"/>
-<area shape="rect" id="node36" href="$pb__simplify_8cc.html" title=" " alt="" coords="4525,326,4696,353"/>
-<area shape="rect" id="node30" href="$lower_8h.html" title=" " alt="" coords="4153,415,4273,442"/>
-<area shape="rect" id="node31" href="$auto__schedule_8cc.html" title=" " alt="" coords="4021,497,4193,539"/>
-<area shape="rect" id="node32" href="$sketch_8cc.html" title=" " alt="" coords="4217,505,4420,531"/>
-<area shape="rect" id="node35" href="$shrink__for_8cc.html" title=" " alt="" coords="3967,415,4129,442"/>
+<area shape="rect" id="node16" href="$auto__fission__fuse_8cc.html" title=" " alt="" coords="2242,319,2427,360"/>
+<area shape="rect" id="node17" href="$auto__reorder_8cc.html" title=" " alt="" coords="2451,326,2658,353"/>
+<area shape="rect" id="node18" href="$blend_8cc.html" title=" " alt="" coords="2682,326,2843,353"/>
+<area shape="rect" id="node19" href="$check__var__cross__parallel_8cc.html" title=" " alt="" coords="2868,319,3033,360"/>
+<area shape="rect" id="node20" href="$fission_8cc.html" title=" " alt="" coords="3058,326,3225,353"/>
+<area shape="rect" id="node21" href="$fuse_8cc.html" title=" " alt="" coords="3249,326,3402,353"/>
+<area shape="rect" id="node22" href="$inlining_8cc.html" title=" " alt="" coords="3427,326,3600,353"/>
+<area shape="rect" id="node23" href="$schedule_2parallelize_8cc.html" title=" " alt="" coords="3625,326,3818,353"/>
+<area shape="rect" id="node24" href="$permute_8cc.html" title=" " alt="" coords="4015,415,4195,442"/>
+<area shape="rect" id="node25" href="$reorder_8cc.html" title=" " alt="" coords="3893,326,4064,353"/>
+<area shape="rect" id="node26" href="$swap_8cc.html" title=" " alt="" coords="4089,326,4247,353"/>
+<area shape="rect" id="node27" href="$vectorize_8cc.html" title=" " alt="" coords="4271,326,4457,353"/>
+<area shape="rect" id="node39" href="$gen__pb__expr_8cc.html" title=" " alt="" coords="3030,244,3213,271"/>
+<area shape="rect" id="node30" href="$make__const__shape_8h.html" title=" " alt="" coords="4653,319,4838,360"/>
+<area shape="rect" id="node35" href="$make__const__shape_8cc.html" title=" " alt="" coords="4797,408,4955,449"/>
+<area shape="rect" id="node36" href="$shrink__for_8h.html" title=" " alt="" coords="4481,319,4628,360"/>
+<area shape="rect" id="node38" href="$pb__simplify_8cc.html" title=" " alt="" coords="4913,326,5084,353"/>
+<area shape="rect" id="node31" href="$lower_8h.html" title=" " alt="" coords="4653,415,4773,442"/>
+<area shape="rect" id="node32" href="$auto__schedule_8cc.html" title=" " alt="" coords="4415,497,4587,539"/>
+<area shape="rect" id="node33" href="$sketch_8cc.html" title=" " alt="" coords="4612,505,4815,531"/>
+<area shape="rect" id="node34" href="$schedule_8cc.html" title=" " alt="" coords="4839,505,4961,531"/>
+<area shape="rect" id="node37" href="$shrink__for_8cc.html" title=" " alt="" coords="4467,415,4629,442"/>
 </map>

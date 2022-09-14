@@ -1,7 +1,7 @@
 <map id="include/analyze/track_stmt.h" name="include/analyze/track_stmt.h">
-<area shape="rect" id="node1" title=" " alt="" coords="1115,5,1277,47"/>
+<area shape="rect" id="node1" title=" " alt="" coords="1203,5,1365,47"/>
 <area shape="rect" id="node2" href="$analyze__version_8h.html" title=" " alt="" coords="165,95,344,136"/>
-<area shape="rect" id="node5" href="$deps_8h.html" title=" " alt="" coords="2140,102,2311,129"/>
+<area shape="rect" id="node5" href="$deps_8h.html" title=" " alt="" coords="2229,102,2400,129"/>
 <area shape="rect" id="node3" href="$analyze__version_8cc.html" title=" " alt="" coords="179,184,330,225"/>
 <area shape="rect" id="node4" href="$output__intermediates_8cc.html" title=" " alt="" coords="5,184,155,225"/>
 <area shape="rect" id="node6" href="$all__no__reuse__defs_8cc.html" title=" " alt="" coords="355,184,493,225"/>
@@ -15,15 +15,16 @@
 <area shape="rect" id="node14" href="$remove__writes_8cc.html" title=" " alt="" coords="1843,191,2037,218"/>
 <area shape="rect" id="node15" href="$sink__var_8cc.html" title=" " alt="" coords="2062,191,2213,218"/>
 <area shape="rect" id="node16" href="$tensor__prop__const_8cc.html" title=" " alt="" coords="2237,184,2393,225"/>
-<area shape="rect" id="node17" href="$schedule_8cc.html" title=" " alt="" coords="2417,191,2538,218"/>
-<area shape="rect" id="node18" href="$blend_8cc.html" title=" " alt="" coords="2562,191,2723,218"/>
-<area shape="rect" id="node19" href="$check__var__cross__parallel_8cc.html" title=" " alt="" coords="2748,184,2913,225"/>
-<area shape="rect" id="node20" href="$fission_8cc.html" title=" " alt="" coords="2938,191,3105,218"/>
-<area shape="rect" id="node21" href="$fuse_8cc.html" title=" " alt="" coords="3129,191,3282,218"/>
-<area shape="rect" id="node22" href="$inlining_8cc.html" title=" " alt="" coords="3307,191,3480,218"/>
-<area shape="rect" id="node23" href="$schedule_2parallelize_8cc.html" title=" " alt="" coords="3505,191,3698,218"/>
-<area shape="rect" id="node24" href="$permute_8cc.html" title=" " alt="" coords="3722,191,3902,218"/>
-<area shape="rect" id="node25" href="$reorder_8cc.html" title=" " alt="" coords="3927,191,4097,218"/>
-<area shape="rect" id="node26" href="$swap_8cc.html" title=" " alt="" coords="4122,191,4281,218"/>
-<area shape="rect" id="node27" href="$vectorize_8cc.html" title=" " alt="" coords="4305,191,4490,218"/>
+<area shape="rect" id="node17" href="$auto__fission__fuse_8cc.html" title=" " alt="" coords="2417,184,2602,225"/>
+<area shape="rect" id="node18" href="$auto__reorder_8cc.html" title=" " alt="" coords="2626,191,2833,218"/>
+<area shape="rect" id="node19" href="$blend_8cc.html" title=" " alt="" coords="2857,191,3018,218"/>
+<area shape="rect" id="node20" href="$check__var__cross__parallel_8cc.html" title=" " alt="" coords="3043,184,3208,225"/>
+<area shape="rect" id="node21" href="$fission_8cc.html" title=" " alt="" coords="3233,191,3399,218"/>
+<area shape="rect" id="node22" href="$fuse_8cc.html" title=" " alt="" coords="3423,191,3577,218"/>
+<area shape="rect" id="node23" href="$inlining_8cc.html" title=" " alt="" coords="3601,191,3775,218"/>
+<area shape="rect" id="node24" href="$schedule_2parallelize_8cc.html" title=" " alt="" coords="3799,191,3993,218"/>
+<area shape="rect" id="node25" href="$permute_8cc.html" title=" " alt="" coords="4017,191,4197,218"/>
+<area shape="rect" id="node26" href="$reorder_8cc.html" title=" " alt="" coords="4221,191,4392,218"/>
+<area shape="rect" id="node27" href="$swap_8cc.html" title=" " alt="" coords="4417,191,4575,218"/>
+<area shape="rect" id="node28" href="$vectorize_8cc.html" title=" " alt="" coords="4599,191,4785,218"/>
 </map>
