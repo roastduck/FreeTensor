@@ -46,17 +46,13 @@ Stmt AsMatMul::visitStmt(const Stmt &op) {
 Stmt AsMatMul::visit(const For &op) {
     if (inside_) {
         iterMap_[op->iter_] = nestCnt_++;
-        nests_.emplace_back(op);
         auto ret = BaseClass::visit(op);
-        nests_.pop_back();
         iterMap_.erase(op->iter_), nestCnt_--;
         return ret;
     } else if (op->id() == loop_) {
         inside_ = true;
         iterMap_[op->iter_] = nestCnt_++;
-        nests_.emplace_back(op);
         auto ret = BaseClass::visit(op);
-        nests_.pop_back();
         iterMap_.erase(op->iter_), nestCnt_--;
         inside_ = false;
 

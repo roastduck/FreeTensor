@@ -9,7 +9,7 @@ target = ft.CPU()
 device = ft.CPU()
 
 
-def test_mkl_basic():
+def test_basic():
 
     @ft.transform
     def test(a, b, c):
@@ -40,7 +40,7 @@ def test_mkl_basic():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-def test_mkl_reverse_idx():
+def test_reverse_idx():
 
     @ft.transform
     def test(a, b, c):
@@ -71,7 +71,7 @@ def test_mkl_reverse_idx():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-def test_mkl_trans_a():
+def test_trans_a():
 
     @ft.transform
     def test(a, b, c):
@@ -101,7 +101,7 @@ def test_mkl_trans_a():
     assert np.all(np.isclose(c_result, c_np + a_np.transpose() @ b_np))
 
 
-def test_mkl_trans_b():
+def test_trans_b():
 
     @ft.transform
     def test(a, b, c):
@@ -131,7 +131,7 @@ def test_mkl_trans_b():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np.transpose()))
 
 
-def test_mkl_trans_c():
+def test_trans_c():
 
     @ft.transform
     def test(a, b, c):
@@ -161,7 +161,7 @@ def test_mkl_trans_c():
     assert np.all(np.isclose(c_result, c_np + (a_np @ b_np).transpose()))
 
 
-def test_mkl_batch():
+def test_batch():
 
     @ft.transform
     def test(a, b, c):
@@ -192,7 +192,7 @@ def test_mkl_batch():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-def test_mkl_splitted_dim():
+def test_splitted_dim():
 
     @ft.transform
     def test(a, b, c):
@@ -225,7 +225,7 @@ def test_mkl_splitted_dim():
                    c_np + a_np.reshape(48, 64) @ b_np.reshape(64, 72)))
 
 
-def test_mkl_with_init():
+def test_with_init():
 
     @ft.transform
     def test(a, b, c):
@@ -256,7 +256,40 @@ def test_mkl_with_init():
     assert np.all(np.isclose(c_result, a_np @ b_np))
 
 
-def test_mkl_in_parallel():
+def test_splitted_dim_with_init():
+
+    @ft.transform
+    def test(a, b, c):
+        a: ft.Var[(3, 16, 64), "float32", "input", "cpu"]
+        b: ft.Var[(64, 72), "float32", "input", "cpu"]
+        c: ft.Var[(3, 16, 72), "float32", "inout", "cpu"]
+        #! label: L1
+        for i0 in range(3):
+            for i1 in range(16):
+                for j in range(72):
+                    c[i0, i1, j] = 0
+                    for k in range(64):
+                        c[i0, i1, j] += a[i0, i1, k] * b[k, j]
+
+    s = ft.Schedule(test)
+    s.as_matmul("L1")
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
+    a_np = np.random.uniform(size=(3, 16, 64)).astype("float32")
+    b_np = np.random.uniform(size=(64, 72)).astype("float32")
+    c_np = np.random.uniform(size=(3, 16, 72)).astype("float32")
+    a_arr = ft.Array(a_np)
+    b_arr = ft.Array(b_np)
+    c_arr = ft.Array(c_np.copy())
+    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    c_result = c_arr.numpy()
+
+    assert np.all(
+        np.isclose(c_result, (a_np.reshape(48, 64) @ b_np).reshape(3, 16, 72)))
+
+
+def test_in_parallel():
 
     @ft.transform
     def test(a, b, c):
@@ -290,7 +323,7 @@ def test_mkl_in_parallel():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-def test_mkl_matrix_vector():
+def test_matrix_vector():
 
     @ft.transform
     def test(a, b, c):
@@ -320,7 +353,7 @@ def test_mkl_matrix_vector():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-def test_mkl_vector_matrix():
+def test_vector_matrix():
 
     @ft.transform
     def test(a, b, c):
@@ -350,7 +383,7 @@ def test_mkl_vector_matrix():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-def test_mkl_vardef_in_loop():
+def test_vardef_in_loop():
 
     @ft.transform
     def test(a, b, c):
