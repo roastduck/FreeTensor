@@ -7,6 +7,7 @@
 #include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
 #include <analyze/symbol_table.h>
+#include <container_utils.h>
 #include <hash.h>
 #include <mutator.h>
 
@@ -18,7 +19,6 @@ class AsMatMul : public SymbolTable<Mutator> {
     ID loop_;
 
     int nestCnt_ = 0;
-    std::vector<For> nests_;
     std::unordered_map<std::string, int> iterMap_; // iter var -> nest cnt
     std::unordered_set<std::string> outerDefs_;
     std::vector<VarDef> innerDefs_;
@@ -44,8 +44,9 @@ class AsMatMul : public SymbolTable<Mutator> {
         std::vector<int> order;
         Expr baseAddr = makeLoad(acc->var_, acc->indices_,
                                  buffer(acc->var_)->tensor()->dtype());
-        for (size_t i = 0, n = acc->indices_.size(); i < n; i++) {
-            auto &&idx = acc->indices_[i];
+        for (auto &&[idx, dimLen, baseIdx] :
+             views::zip(acc->indices_, buffer(acc->var_)->tensor()->shape(),
+                        baseAddr.as<LoadNode>()->indices_)) {
             auto &&lin = analyzeLinear(idx);
             if (lin.coeff_.size() != 1 ||
                 std::abs(lin.coeff_.front().k_) != 1 ||
@@ -60,19 +61,17 @@ class AsMatMul : public SymbolTable<Mutator> {
             if (!iterMap_.count(var->name_)) {
                 continue; // not a dim in matmul
             } else {
-                baseAddr.as<LoadNode>()->indices_[i] = makeIntConst(0);
+                baseIdx = makeIntConst(0);
             }
-            int loop = iterMap_.at(var->name_);
-            if (!HashComparator()(nests_[loop]->len_,
-                                  buffer(acc->var_)->tensor()->shape()[i])) {
+            int loopLevel = iterMap_.at(var->name_);
+            if (!HashComparator()(loop(var->name_)->len_, dimLen)) {
                 throw InvalidSchedule(
                     "Iterator " + var->name_ + " of " + acc->var_ +
-                    " should loop over the entire range (" +
-                    toString(buffer(acc->var_)->tensor()->shape()[i]) +
-                    "), instead of " + toString(nests_[loop]->len_));
+                    " should loop over the entire range (" + toString(dimLen) +
+                    "), instead of " + toString(loop(var->name_)->len_));
             }
-            usedBy[loop] = true;
-            order.emplace_back(loop);
+            usedBy[loopLevel] = true;
+            order.emplace_back(loopLevel);
         }
         return std::make_tuple(usedBy, order, baseAddr);
     }
@@ -83,8 +82,8 @@ class AsMatMul : public SymbolTable<Mutator> {
         Expr len, stride;
         bool thisDimIn = false, lastDimIn = false;
         Expr lastInDim;
-        for (size_t i = 0, n = acc->indices_.size(); i < n; i++) {
-            auto &&idx = acc->indices_[i];
+        for (auto &&[idx, dimLen] :
+             views::zip(acc->indices_, buffer(acc->var_)->tensor()->shape())) {
             auto &&lin = analyzeLinear(idx);
             lastDimIn = thisDimIn;
             thisDimIn = true;
@@ -107,14 +106,12 @@ class AsMatMul : public SymbolTable<Mutator> {
                             toString(idx) + " should be contiguous");
                     }
                 }
-                Expr thisLen = buffer(acc->var_)->tensor()->shape()[i];
-                len = len.isValid() ? makeMul(len, thisLen) : (Expr)thisLen;
+                len = len.isValid() ? makeMul(len, dimLen) : (Expr)dimLen;
                 lastInDim = idx;
             } else {
                 if (len.isValid()) {
-                    Expr thisLen = buffer(acc->var_)->tensor()->shape()[i];
-                    stride = stride.isValid() ? makeMul(stride, thisLen)
-                                              : (Expr)thisLen;
+                    stride = stride.isValid() ? makeMul(stride, dimLen)
+                                              : (Expr)dimLen;
                 }
             }
         }
