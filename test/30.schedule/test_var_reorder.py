@@ -71,3 +71,35 @@ def test_not_a_permutation():
         s.var_reorder("Dx", [2, 0])
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
+
+
+def test_no_reorder_external_lib():
+
+    @ft.transform
+    def test(x, y, z):
+        x: ft.Var[(48, 64), "float32", "input", "cpu"]
+        y: ft.Var[(64, 72), "float32", "input", "cpu"]
+        z: ft.Var[(48, 72), "float32", "inout", "cpu"]
+
+        #! label: Va
+        a = ft.empty((48, 64), "float32", "cpu")
+        #! label: Vb
+        b = ft.empty((64, 72), "float32", "cpu")
+        #! label: Vc
+        c = ft.empty((48, 72), "float32", "cpu")
+
+        ft.assign(a, x)
+        ft.assign(b, y)
+
+        #! label: L1
+        for i in range(48):
+            for j in range(72):
+                for k in range(64):
+                    c[i, j] += a[i, k] * b[k, j]
+
+        ft.assign(z, c)
+
+    s = ft.Schedule(test)
+    s.as_matmul("L1")
+    with pytest.raises(ft.InvalidSchedule):
+        s.var_reorder("Va", [1, 0])
