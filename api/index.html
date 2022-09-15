@@ -9008,7 +9008,7 @@ partial function of <code>lower</code> will be returned, which can be used as a
 decorator</p></li>
             <li><p><strong>target</strong> (<code>Optional[freetensor_ffi.Target]</code>) – Lower the AST to a target with target-specific passes, then the AST can
 be used for codegen. If not set, use the default Target in Config</p></li>
-            <li><p><strong>skip_passes</strong> (<code>Optional[Sequence[str]]</code>) – Skip some pass for testing or debugging. Names in <code>skipPasses</code> are in
+            <li><p><strong>skip_passes</strong> (<code>Optional[Sequence[str]]</code>) – Skip some pass for testing or debugging. Names in <code>skip_passes</code> are in
 underscore_style, as in Python. Please note that some passes will not be
 skipped even specified in these parameter, because they are indirectly
 called in some other passes</p></li>
@@ -9038,7 +9038,7 @@ single passes</p></li>
 <span class="sd">        Lower the AST to a target with target-specific passes, then the AST can</span>
 <span class="sd">        be used for codegen. If not set, use the default Target in Config</span>
 <span class="sd">    skip_passes : Sequence[str] (Optional)</span>
-<span class="sd">        Skip some pass for testing or debugging. Names in `skipPasses` are in</span>
+<span class="sd">        Skip some pass for testing or debugging. Names in `skip_passes` are in</span>
 <span class="sd">        underscore_style, as in Python. Please note that some passes will not be</span>
 <span class="sd">        skipped even specified in these parameter, because they are indirectly</span>
 <span class="sd">        called in some other passes</span>
