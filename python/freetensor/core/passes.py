@@ -51,7 +51,7 @@ def lower(ast=None,
         Lower the AST to a target with target-specific passes, then the AST can
         be used for codegen. If not set, use the default Target in Config
     skip_passes : Sequence[str] (Optional)
-        Skip some pass for testing or debugging. Names in `skipPasses` are in
+        Skip some pass for testing or debugging. Names in `skip_passes` are in
         underscore_style, as in Python. Please note that some passes will not be
         skipped even specified in these parameter, because they are indirectly
         called in some other passes
