@@ -10,7 +10,7 @@ std::ostream &operator<<(std::ostream &os, const PBBuildExpr &e) {
 
 PBBuildExpr PBBuilder::newVar(const std::string &name) {
     if (name.empty())
-        return PBBuildExpr("anon" + toString(anonVarNum++));
+        return PBBuildExpr("anon" + toString(anonVarNum_++));
     else {
         ASSERT(!namedVars.contains(name));
         namedVars.insert(name);
@@ -28,15 +28,15 @@ std::vector<PBBuildExpr> PBBuilder::newVars(int n, const std::string &prefix) {
 }
 
 std::string PBBuilder::getConstraintsStr() const {
-    return join(constraints, " and ");
+    return join(constraints_, " and ");
 }
 
 void PBBuilder::addConstraint(const PBBuildExpr &constraint) {
-    constraints.emplace_back(constraint);
+    constraints_.emplace_back(constraint);
 }
 
 void PBBuilder::addConstraint(PBBuildExpr &&constraint) {
-    constraints.emplace_back(std::move(constraint));
+    constraints_.emplace_back(std::move(constraint));
 }
 
 void PBMapBuilder::addInput(const PBBuildExpr &expr) {

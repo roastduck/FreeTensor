@@ -34,20 +34,20 @@ PBBuildExpr nonZeroConstraint(const std::vector<PBBuildExpr> &vars,
                               const PBBuildExpr &delta, int varBound = 2) {
     auto n = vars.size();
     PBBuildExpr ret = true;
-    for (const auto &var : vars)
-        ret = ret && var >= -varBound && var <= varBound;
+    if (n > 0u) {
+        for (const auto &var : vars)
+            ret = ret && var >= -varBound && var <= varBound;
 
-    PBBuildExpr skewedExpr = 0;
-    for (unsigned i = 0; i < n; ++i) {
-        skewedExpr += int(std::pow(varBound * 2 + 1, i)) * vars[i];
+        PBBuildExpr skewedExpr = 0;
+        for (unsigned i = 0; i < n; ++i) {
+            skewedExpr += int(std::pow(varBound * 2 + 1, i)) * vars[i];
+        }
+
+        auto bound = (int)std::pow(varBound * 2 + 1, n);
+        ret = ret && skewedExpr >= 1 - bound * delta;
+        ret = ret && skewedExpr <= bound - 1 - bound * delta;
     }
-
-    auto bound = (int)std::pow(varBound * 2 + 1, n);
-    ret = ret && skewedExpr >= 1 - bound * delta;
-    ret = ret && skewedExpr <= bound - 1 - bound * delta;
-    ret = ret && delta >= 0 && delta <= 1;
-
-    return ret;
+    return ret && delta >= 0 && delta <= 1;
 }
 
 std::vector<std::vector<int>>
@@ -72,6 +72,7 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
     PBCtx ctx;
     builder.addConstraint(nonZeroConstraint(vars, delta));
     builder.addConstraint(absSumConstraint(sum, vars));
+    builder.addConstraints(vectors | views::transform(fOrtho));
     PBSet orthogonalSet = builder.build(ctx);
     builder.clearConstraints();
 
@@ -92,14 +93,6 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
         orthogonalSet = intersect(std::move(orthogonalSet), builder.build(ctx));
         builder.clearConstraints();
     }
-
-    std::cout << ">> Orthogonal Matrix of [ ";
-    for (const auto &v : vectors)
-        std::cout << "[" << v << "] ";
-    std::cout << "] is: [ ";
-    for (const auto &v : result)
-        std::cout << "[" << v << "] ";
-    std::cout << "]" << std::endl;
 
     return result;
 }
@@ -337,7 +330,6 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
         // loop 1 no effect
         builder.addOutputs(views::repeat_n(0, nParams + 1 + nestLevel1));
         auto legalityMap = builder.build(ctx);
-        std::cout << legalityMap << std::endl;
         builder.clearOutputs();
 
         // bounding problem:
@@ -353,13 +345,11 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
         // loop 1 no effect
         builder.addOutputs(views::repeat_n(0, nParams + 1 + nestLevel1));
         auto boundingMap = builder.build(ctx);
-        std::cout << boundingMap << std::endl;
 
         coeffSets0.reserve(dep0.size());
         satSets0.reserve(dep0.size());
         satisfied0.resize(dep0.size(), false);
         for (const auto &d : dep0) {
-            std::cout << d << std::endl;
             coeffSets0.push_back(
                 intersect(coefficients(apply(d, legalityMap)),
                           coefficients(apply(d, boundingMap))));
@@ -528,10 +518,12 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     PBSetBuilder orthoSetBuilder;
     orthoSetBuilder.addVars(builder.outputs());
 
-    std::vector<std::vector<int>> c0ParamFusedValue, c0IterFusedValue;
-    std::vector<std::vector<int>> c1ParamFusedValue, c1IterFusedValue;
+    std::vector<std::vector<int>> c0ParamValue, c0IterValue;
+    std::vector<std::vector<int>> c1ParamValue, c1IterValue;
     // start computing permuted dimensions
-    for (int i = 0; i < std::min(nestLevel0, nestLevel1); ++i) {
+    int fusedLevel;
+    for (fusedLevel = 0; fusedLevel < std::min(nestLevel0, nestLevel1);
+         ++fusedLevel) {
         //! FIXME: handle parameters from loads
         auto problem = universeSet(
             spaceSetAlloc(ctx, 0, (nParams + 1) * 3 + nestLevel0 + nestLevel1));
@@ -543,11 +535,9 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                 problem = intersect(std::move(problem), coeffSet);
 
         // construct orthogonal constraints
-        auto orthoConstraint = [&](const auto &cIterFusedValue,
-                                   const auto &cIters, const auto &deltaL) {
-            auto ortho = orthogonalMatrix(cIterFusedValue);
-            if (ortho.empty())
-                return PBBuildExpr(true);
+        auto orthoConstraint = [&](const auto &cIterValue, const auto &cIters,
+                                   const auto &deltaL) {
+            auto ortho = orthogonalMatrix(cIterValue);
             std::vector<PBBuildExpr> orthoDots;
             orthoDots.reserve(ortho.size());
             for (auto &&o : ortho) {
@@ -558,11 +548,11 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
             }
             return nonZeroConstraint(orthoDots, deltaL);
         };
-        if (i > 0) {
+        if (fusedLevel > 0) {
             orthoSetBuilder.addConstraint(
-                orthoConstraint(c0IterFusedValue, c0Iters, delta0L));
+                orthoConstraint(c0IterValue, c0Iters, delta0L));
             orthoSetBuilder.addConstraint(
-                orthoConstraint(c1IterFusedValue, c1Iters, delta1L));
+                orthoConstraint(c1IterValue, c1Iters, delta1L));
         }
         auto orthoSet = orthoSetBuilder.build(ctx);
         orthoSetBuilder.clearConstraints();
@@ -579,7 +569,6 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                              return val.numSi();
                          }) |
                          ranges::to<std::vector>();
-        std::cout << optimized << std::endl;
 
         // check and exclude fake fusion
         auto loopSetToRange = [&](const PBSet &loopSet, int coeffBase,
@@ -611,22 +600,62 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
             break;
 
         // save coefficients' values
-        c0ParamFusedValue.push_back({
+        c0ParamValue.push_back({
             optimized.begin() + (nParams + 1),
             optimized.begin() + (nParams + 1) * 2,
         });
-        c0IterFusedValue.push_back({
+        c0IterValue.push_back({
             optimized.begin() + (nParams + 1) * 2,
             optimized.begin() + (nParams + 1) * 2 + nestLevel0,
         });
-        c1ParamFusedValue.push_back({
+        c1ParamValue.push_back({
             optimized.begin() + (nParams + 1) * 2 + nestLevel0,
             optimized.begin() + (nParams + 1) * 3 + nestLevel0,
         });
-        c1IterFusedValue.push_back({
+        c1IterValue.push_back({
             optimized.begin() + (nParams + 1) * 3 + nestLevel0,
             optimized.end(),
         });
+    }
+
+    ASSERT(c0ParamValue.size() == unsigned(fusedLevel));
+    ASSERT(c0IterValue.size() == unsigned(fusedLevel));
+    ASSERT(c1ParamValue.size() == unsigned(fusedLevel));
+    ASSERT(c1IterValue.size() == unsigned(fusedLevel));
+
+    // fill rest dimensions
+    auto restOrtho0 = orthogonalMatrix(c0IterValue);
+    c0IterValue.insert(c0IterValue.end(), restOrtho0.begin(), restOrtho0.end());
+    for (int i = 0; i < nestLevel0 - fusedLevel; ++i)
+        c0ParamValue.emplace_back(0, nestLevel0);
+
+    auto restOrtho1 = orthogonalMatrix(c1IterValue);
+    c1IterValue.insert(c1IterValue.end(), restOrtho1.begin(), restOrtho1.end());
+    for (int i = 0; i < nestLevel1 - fusedLevel; ++i)
+        c1ParamValue.emplace_back(0, nestLevel1);
+
+    std::cout << "c0 =" << std::endl;
+    std::cout << "[ ";
+    for (int i = 0; i < nestLevel0; ++i) {
+        if (i != 0)
+            std::cout << "  ";
+        std::cout << "[ " << c0ParamValue[i] << " | " << c0IterValue[i] << " ]";
+        if (i != nestLevel0)
+            std::cout << "," << std::endl;
+        else
+            std::cout << " ]" << std::endl;
+    }
+
+    std::cout << "c1 =" << std::endl;
+    std::cout << "[ ";
+    for (int i = 0; i < nestLevel1; ++i) {
+        if (i != 0)
+            std::cout << "  ";
+        std::cout << "[ " << c1ParamValue[i] << " | " << c1IterValue[i] << " ]";
+        if (i != nestLevel1)
+            std::cout << "," << std::endl;
+        else
+            std::cout << " ]" << std::endl;
     }
 
     return {ast, {}};

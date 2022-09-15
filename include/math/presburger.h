@@ -689,10 +689,10 @@ class PBBuildExpr {
 };
 
 class PBBuilder {
-    int anonVarNum = 0;
+    int anonVarNum_ = 0;
     std::unordered_set<std::string> namedVars;
 
-    std::vector<PBBuildExpr> constraints;
+    std::vector<PBBuildExpr> constraints_;
 
   protected:
     PBBuildExpr newVar(const std::string &name = "");
@@ -714,7 +714,8 @@ class PBBuilder {
         for (auto &&c : constraints)
             addConstraint(c);
     }
-    void clearConstraints() { constraints.clear(); };
+    const std::vector<PBBuildExpr> &constraints() const { return constraints_; }
+    void clearConstraints() { constraints_.clear(); };
 };
 
 class PBMapBuilder : public PBBuilder {
