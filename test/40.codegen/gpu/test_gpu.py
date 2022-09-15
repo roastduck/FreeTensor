@@ -439,7 +439,7 @@ def test_dynamic_2d_array():
     assert np.array_equal(y_np, y_std)
 
 
-def test_dynamic_thread_dim():
+def test_dynamic_thread_dim_1():
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ft.VarDef([
             ("x", (n, n), "int32", "input", "gpu/global"),
@@ -465,6 +465,50 @@ def test_dynamic_thread_dim():
 
     y_std = x_np + 1
     assert np.array_equal(y_np, y_std)
+
+
+def test_dynamic_thread_dim_2():
+
+    @ft.transform()
+    def func(x, offset, y):
+        x: ft.Var[(27, 256), "float32", "input", "gpu/global"]
+        offset: ft.Var[(28,), "int32", "input", "byvalue"]
+        y: ft.Var[(256,), "float32", "output", "gpu/global"]
+
+        #! label: Li
+        for i in range(27):
+            cur_start = offset[i]
+            cur_end = offset[i + 1]
+            #! label: La
+            for a in range(cur_start, cur_end):
+                #! label: Loc
+                for oc in range(256):
+                    y[oc] += x[i, oc]
+
+    s = ft.Schedule(func)
+    by, la = s.split("La", factor=4)
+    bx, loc = s.split("Loc", factor=4)
+    s.reorder([by, bx, la, loc])
+    s.parallelize(by, "blockIdx.y")
+    s.parallelize(bx, "blockIdx.x")
+    s.parallelize(la, "threadIdx.y")
+    s.parallelize(loc, "threadIdx.x")
+    func = s.func()
+    func = ft.lower(func, target, verbose=1)
+
+    with ft.VarDef([("x", (27, 256), "float32", "input", "gpu/global"),
+                    ("offset", (28,), "int32", "input", "byvalue"),
+                    ("y", (256,), "float32", "output", "gpu/global")
+                   ]) as (x, offset, y):
+        with ft.For("i", 0, 27) as i:
+            with ft.For("blockIdx.y", 0, ft.any()) as by:
+                with ft.For("blockIdx.x", 0, 64) as bx:
+                    with ft.For("threadIdx.y", 0,
+                                ft.min(offset[i + 1] + -1 * offset[i],
+                                       4)) as ty:
+                        with ft.If(ty < ft.any()):
+                            ft.Any()
+    assert ft.pop_ast().match(func.body)
 
 
 def test_use_cpu_iters():
