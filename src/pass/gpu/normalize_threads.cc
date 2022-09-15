@@ -135,9 +135,10 @@ bool CheckThreadNum::isLegalLen(const std::unordered_set<std::string> &names) {
     for (auto &&name : names) {
         if (hasLoop(name)) {
             // Only iterators from outside of the kernel is OK
-            return !openLoopsInKernel_.count(loop(name));
-        }
-        if (!hasDef(name) || buffer(name)->mtype() != MemType::ByValue) {
+            if (openLoopsInKernel_.count(loop(name))) {
+                return false;
+            }
+        } else if (!hasDef(name) || buffer(name)->mtype() != MemType::ByValue) {
             return false;
         }
     }
