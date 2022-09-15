@@ -542,10 +542,10 @@ void Schedule::asMatMul(const ID &loop) {
     }
 }
 
-ID Schedule::plutoFuse(const ID &loop0, const ID &loop1, int nestLevel) {
+ID Schedule::plutoFuse(const ID &loop0, const ID &loop1) {
     beginTransaction();
     auto log = appendLog(
-        MAKE_LOG(PlutoFuse, freetensor::plutoFuse, loop0, loop1, nestLevel));
+        MAKE_LOG(PlutoFuse, freetensor::plutoFuse, loop0, loop1));
     try {
         auto ret = applyLog(log);
         commitTransaction();

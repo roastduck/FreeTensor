@@ -3,7 +3,12 @@
 
 namespace freetensor {
 
-PBBuildExpr PBBuilder::newVar(const std::string &name = "") {
+std::ostream &operator<<(std::ostream &os, const PBBuildExpr &e) {
+    os << e.expr_;
+    return os;
+}
+
+PBBuildExpr PBBuilder::newVar(const std::string &name) {
     if (name.empty())
         return PBBuildExpr("anon" + toString(anonVarNum++));
     else {
@@ -13,12 +18,13 @@ PBBuildExpr PBBuilder::newVar(const std::string &name = "") {
     }
 }
 
-std::vector<PBBuildExpr> PBBuilder::newVars(int n,
-                                            const std::string &prefix = "") {
+std::vector<PBBuildExpr> PBBuilder::newVars(int n, const std::string &prefix) {
     std::vector<PBBuildExpr> ret;
     ret.reserve(n);
     for (int i = 0; i < n; i++)
-        ret.emplace_back(prefix.empty() ? prefix : prefix + toString(i));
+        ret.push_back(
+            PBBuildExpr(prefix.empty() ? prefix : prefix + toString(i)));
+    return ret;
 }
 
 std::string PBBuilder::getConstraintsStr() const {
@@ -34,52 +40,58 @@ void PBBuilder::addConstraint(PBBuildExpr &&constraint) {
 }
 
 void PBMapBuilder::addInput(const PBBuildExpr &expr) {
-    inputs.emplace_back(expr);
+    inputs_.emplace_back(expr);
 }
 PBBuildExpr PBMapBuilder::newInput(const std::string &name) {
     auto var = PBBuilder::newVar(name);
     addInput(var);
     return var;
 }
-std::vector<PBBuildExpr>
-PBMapBuilder::newInputs(int n, const std::string &prefix = "") {
-    for (const auto &var : PBBuilder::newVars(n, prefix))
+std::vector<PBBuildExpr> PBMapBuilder::newInputs(int n,
+                                                 const std::string &prefix) {
+    auto ret = PBBuilder::newVars(n, prefix);
+    for (const auto &var : ret)
         addInput(var);
+    return ret;
 }
 
 void PBMapBuilder::addOutput(const PBBuildExpr &expr) {
-    outputs.emplace_back(expr);
+    outputs_.emplace_back(expr);
 }
 PBBuildExpr PBMapBuilder::newOutput(const std::string &name) {
     auto var = PBBuilder::newVar(name);
     addOutput(var);
     return var;
 }
-std::vector<PBBuildExpr>
-PBMapBuilder::newOutputs(int n, const std::string &prefix = "") {
-    for (const auto &var : PBBuilder::newVars(n, prefix))
+std::vector<PBBuildExpr> PBMapBuilder::newOutputs(int n,
+                                                  const std::string &prefix) {
+    auto ret = PBBuilder::newVars(n, prefix);
+    for (const auto &var : ret)
         addOutput(var);
+    return ret;
 }
 
 PBMap PBMapBuilder::build(const PBCtx &ctx) const {
-    return {ctx, "{ [" + join(inputs, ", ") + "] -> [" + join(outputs, ", ") +
+    return {ctx, "{ [" + join(inputs_, ", ") + "] -> [" + join(outputs_, ", ") +
                      "]: " + getConstraintsStr() + " }"};
 }
 
-void PBSetBuilder::addVar(const PBBuildExpr &expr) { vars.emplace_back(expr); }
+void PBSetBuilder::addVar(const PBBuildExpr &expr) { vars_.emplace_back(expr); }
 PBBuildExpr PBSetBuilder::newVar(const std::string &name) {
     auto var = PBBuilder::newVar(name);
     addVar(var);
     return var;
 }
 std::vector<PBBuildExpr> PBSetBuilder::newVars(int n,
-                                               const std::string &prefix = "") {
-    for (const auto &var : PBBuilder::newVars(n, prefix))
+                                               const std::string &prefix) {
+    auto ret = PBBuilder::newVars(n, prefix);
+    for (const auto &var : ret)
         addVar(var);
+    return ret;
 }
 
 PBSet PBSetBuilder::build(const PBCtx &ctx) const {
-    return {ctx, "{ [" + join(vars, ", ") + "]: " + getConstraintsStr() + " }"};
+    return {ctx, "{ [" + join(vars_, ", ") + "]: " + getConstraintsStr() + " }"};
 }
 
 } // namespace freetensor

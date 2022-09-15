@@ -12,47 +12,42 @@ namespace freetensor {
 
 namespace {
 
-std::vector<std::string> absSumConstraints(int n, const std::string &sum,
-                                           const auto &fVar) {
-    return views::ints(0, 1 << n) | views::transform([&](const auto &num) {
-               std::ostringstream oss;
-               oss << sum << " >= 0";
-               for (int i = 0; i < n; ++i) {
-                   if ((num >> i) & 1)
-                       oss << " + ";
-                   else
-                       oss << " - ";
-                   oss << fVar(i);
-               }
-               return oss.str();
-           }) |
-           ranges::to<std::vector>();
+PBBuildExpr absSumConstraint(const PBBuildExpr &sumVar,
+                             const std::vector<PBBuildExpr> &vars) {
+    auto n = vars.size();
+    PBBuildExpr ret = true;
+    ASSERT(n < 31);
+    for (int i = 0; i < (1 << n); ++i) {
+        PBBuildExpr absSum = 0;
+        for (unsigned bit = 0; bit < n; ++bit) {
+            if ((i >> bit) & 1)
+                absSum += vars[bit];
+            else
+                absSum -= vars[bit];
+        }
+        ret = ret && sumVar >= absSum;
+    }
+    return ret;
 }
 
-std::vector<std::string> nonZeroConstraints(int n, const auto &fVar,
-                                            const std::string delta,
-                                            int varBound = 2) {
-    auto rangeConstraints =
-        views::ints(0, n) | views::transform([&](int i) {
-            return std::array{fVar(i) + " >= -" + toString(varBound),
-                              fVar(i) + " <= " + toString(varBound)};
-        }) |
-        views::join | ranges::to<std::vector>();
-    auto skewedExpr =
-        views::ints(0, n) | views::transform([&](int i) {
-            return toString((int)std::pow(varBound * 2 + 1, i)) + "*" + fVar(i);
-        }) |
-        join(" + ");
+PBBuildExpr nonZeroConstraint(const std::vector<PBBuildExpr> &vars,
+                              const PBBuildExpr &delta, int varBound = 2) {
+    auto n = vars.size();
+    PBBuildExpr ret = true;
+    for (const auto &var : vars)
+        ret = ret && var >= -varBound && var <= varBound;
+
+    PBBuildExpr skewedExpr = 0;
+    for (unsigned i = 0; i < n; ++i) {
+        skewedExpr += int(std::pow(varBound * 2 + 1, i)) * vars[i];
+    }
+
     auto bound = (int)std::pow(varBound * 2 + 1, n);
-    auto excludeZero = std::array{
-        skewedExpr + " >= 1 - " + toString(bound) + delta,
-        skewedExpr + " <= " + toString(bound - 1) + " - " + toString(bound) +
-            delta,
-        delta + " >= 0",
-        delta + " <= 1",
-    };
-    return views::concat(rangeConstraints, excludeZero) |
-           ranges::to<std::vector>();
+    ret = ret && skewedExpr >= 1 - bound * delta;
+    ret = ret && skewedExpr <= bound - 1 - bound * delta;
+    ret = ret && delta >= 0 && delta <= 1;
+
+    return ret;
 }
 
 std::vector<std::vector<int>>
@@ -63,37 +58,22 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
         ASSERT(vectors[i].size() == vectors[0].size());
     int nDims = vectors[0].size();
 
-    auto fVar = [](int i) { return "i" + toString(i); };
-    auto fOrtho = [&](const std::vector<int> &v) {
-        return (views::ints(0, nDims) | views::transform([&](int i) {
-                    return toString(v[i]) + fVar(i);
-                }) |
-                join(" + ")) +
-               " = 0";
+    PBSetBuilder builder;
+    auto sum = builder.newVar("sum");
+    auto vars = builder.newVars(nDims, "x");
+    auto delta = builder.newVar("delta");
+    auto fOrtho = [&](const std::vector<int> &coeffs) {
+        PBBuildExpr ortho = 0;
+        for (auto &&[c, x] : views::zip(coeffs, vars))
+            ortho += c * x;
+        return ortho == 0;
     };
-    auto setHeader =
-        "{ [sum, " +
-        (views::ints(0, nDims) | views::transform(fVar) | join(", ")) +
-        ", delta]: ";
-    auto setFooter = " }";
 
     PBCtx ctx;
-    PBSet orthogonalSet;
-    {
-        auto nonZero = nonZeroConstraints(nDims, fVar, "delta");
-        auto absSum = absSumConstraints(nDims, "sum", fVar);
-        orthogonalSet = PBSet(
-            ctx, setHeader +
-                     (views::concat(
-                          // orthogonal constraints
-                          vectors | views::transform(fOrtho),
-                          // non-zero constraints to exclude trivial result
-                          nonZero,
-                          // abs sum constraints to find vector nearest to zero
-                          absSum) |
-                      join(" and ")) +
-                     setFooter);
-    }
+    builder.addConstraint(nonZeroConstraint(vars, delta));
+    builder.addConstraint(absSumConstraint(sum, vars));
+    PBSet orthogonalSet = builder.build(ctx);
+    builder.clearConstraints();
 
     std::vector<std::vector<int>> result;
     while (!orthogonalSet.empty()) {
@@ -108,8 +88,9 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
         }
         result.emplace_back(std::move(v));
         // inject new constraint to find next orthogonal vector
-        PBSet newConstraint(ctx, setHeader + fOrtho(result.back()) + setFooter);
-        orthogonalSet = intersect(std::move(orthogonalSet), newConstraint);
+        builder.addConstraint(fOrtho(result.back()));
+        orthogonalSet = intersect(std::move(orthogonalSet), builder.build(ctx));
+        builder.clearConstraints();
     }
 
     std::cout << ">> Orthogonal Matrix of [ ";
@@ -151,10 +132,57 @@ class InjectFakeAccess : public Mutator {
     }
 };
 
+PBSet extractLoopSet(const PBCtx &ctx, const AccessPoint &p) {
+    auto iterList = AnalyzeDeps::makeIterList(p.iter_, p.iter_.size());
+    GenPBExpr gen;
+    GenPBExpr::VarMap externals;
+    auto conds =
+        *AnalyzeDeps::makeCond(gen, p.conds_, RelaxMode::Possible, externals);
+    if (externals.size() > 0)
+        ERROR("PlutoFuse: external variables currently "
+              "not supported.");
+
+    PBSet loopSet(ctx, "{ " + iterList + ": " + conds + " }");
+
+    // project out constant dims
+    for (int64_t i = p.iter_.size() - 1; i >= 0; --i)
+        if (p.iter_[i].realIter_->nodeType() != ASTNodeType::Var)
+            loopSet.projectOutDims(i, 1);
+
+    return loopSet;
+}
+
+std::vector<IterAxis> extractVarAxes(const std::vector<IterAxis> &axes,
+                                     const For &targetLoop) {
+    std::vector<IterAxis> ret;
+    for (auto &&axis : axes)
+        if (axis.realIter_->nodeType() == ASTNodeType::Var) {
+            if (axis.realIter_.as<VarNode>()->name_ == targetLoop->iter_)
+                return ret;
+            ret.emplace_back(axis);
+        }
+    ASSERT(false && "PlutoFuse: target loop is not found as expected");
+}
+
+std::pair<int, std::vector<int>> findIterFromAP(const AccessPoint &ap,
+                                                const std::string var) {
+    std::vector<int> outerDims;
+    int n = ap.iter_.size();
+    outerDims.reserve(n);
+    for (int i = 0; i < n; ++i)
+        if (ap.iter_[i].realIter_->nodeType() == ASTNodeType::Var) {
+            if (ap.iter_[i].realIter_.as<VarNode>()->name_ == var)
+                return std::pair{i, std::move(outerDims)};
+            else
+                outerDims.push_back(i);
+        }
+    ASSERT(false);
+}
+
 } // namespace
 
 std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
-                              const ID &loop1Id, int nestLevel) {
+                              const ID &loop1Id) {
     // flatten first so we get perfectly nested loops as much as possible
     auto ast = flattenStmtSeq(_ast);
 
@@ -182,22 +210,6 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     auto loop0 = findStmt(ast, loop0Id).as<ForNode>();
     auto loop1 = findStmt(ast, loop1Id).as<ForNode>();
 
-    // Process nestLevel nested loops each side; default to
-    if (nestLevel == -1)
-        nestLevel = std::min(nestLevel0, nestLevel1);
-    else if (nestLevel0 < nestLevel)
-        throw InvalidSchedule(
-            "PlutoFuse: loop 0 `#" + toString(loop0Id) +
-            "` has less than required nesting levels: " + toString(nestLevel0) +
-            " existed, but " + toString(nestLevel) + " required");
-    else if (nestLevel1 < nestLevel)
-        throw InvalidSchedule(
-            "PlutoFuse: loop 1 `#" + toString(loop1Id) +
-            "` has less than required nesting levels: " + toString(nestLevel1) +
-            " existed, but " + toString(nestLevel) + " required");
-
-    ASSERT(nestLevel > 0);
-
     // List common outer loops
     std::deque<For> outers;
     for (Stmt outer = loop0->parentStmt(); outer.isValid();
@@ -216,52 +228,15 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     else
         ASSERT(loop1InnermostOuter == outers.back());
 
-    std::vector<FindDepsDir> outersSame{
-        outers | views::transform([&](const For &f) {
-            return std::pair{NodeIDOrParallelScope(f->id()),
-                             DepDirection::Same};
-        }) |
-        ranges::to<std::vector>()};
+    std::vector<FindDepsDir> outersSame{{}};
+    for (auto &&f : outers)
+        outersSame[0].emplace_back(f->id(), DepDirection::Same);
 
     PBCtx ctx;
     PBSet loop0Set, loop1Set;
     std::vector<IterAxis> outerAxes;
 
-    auto extractLoopSet = [&](const AccessPoint &p) {
-        auto iterList = AnalyzeDeps::makeIterList(p.iter_, p.iter_.size());
-        GenPBExpr gen;
-        GenPBExpr::VarMap externals;
-        auto conds = *AnalyzeDeps::makeCond(gen, p.conds_, RelaxMode::Possible,
-                                            externals);
-        if (externals.size() > 0)
-            ERROR("PlutoFuse: external variables currently "
-                  "not supported.");
-
-        PBSet loopSet(ctx, "{ " + iterList + ": " + conds + " }");
-
-        // project out constant dims
-        for (int64_t i = p.iter_.size() - 1; i >= 0; --i)
-            if (p.iter_[i].realIter_->nodeType() != ASTNodeType::Var) {
-                loopSet.projectOutDims(i, 1);
-            }
-
-        return loopSet;
-    };
-
-    auto findIter = [](const AccessPoint &ap, const std::string var) {
-        std::vector<int> outerDims;
-        outerDims.reserve(ap.iter_.size());
-        for (auto &&[i, iterAxis] : views::enumerate(ap.iter_))
-            if (iterAxis.realIter_->nodeType() == ASTNodeType::Var) {
-                if (iterAxis.realIter_.as<VarNode>()->name_ == var)
-                    return std::pair{i, std::move(outerDims)};
-                else
-                    outerDims.push_back(i);
-            }
-        ASSERT(false);
-    };
-
-    auto getDeps = [&](const For &l0, const For &l1,
+    auto getDeps = [&](const For &l0, int n0, const For &l1, int n1,
                        bool handleFakeAccess = false) mutable {
         std::vector<PBSet> deps;
         FindDeps()
@@ -270,16 +245,11 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                 if (p.def_->name_ == FAKE_ACCESS_VAR) {
                     if (handleFakeAccess) {
                         if (p.stmt_->ancestorById(loop0Id).isValid()) {
-                            loop0Set = extractLoopSet(p);
-                            outerAxes = p.iter_ |
-                                        views::filter([](const IterAxis &axis) {
-                                            return axis.realIter_->nodeType() ==
-                                                   ASTNodeType::Var;
-                                        }) |
-                                        ranges::to<std::vector>();
+                            loop0Set = extractLoopSet(ctx, p);
+                            outerAxes = extractVarAxes(p.iter_, loop0);
                         } else {
                             ASSERT(p.stmt_->ancestorById(loop1Id).isValid());
-                            loop1Set = extractLoopSet(p);
+                            loop1Set = extractLoopSet(ctx, p);
                         }
                     }
                     return false;
@@ -301,10 +271,10 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                                           "currently not supported.");
 
                 // remove inner dims for outer
-                auto [pos0, outerDims0] = findIter(d.earlier_, l0->iter_);
-                pos0 += nestLevel;
+                auto [pos0, outerDims0] = findIterFromAP(d.earlier_, l0->iter_);
+                pos0 += n0;
                 hMap.projectOutOutputDims(pos0, hMap.nOutDims() - pos0);
-                pos0 -= nestLevel;
+                pos0 -= n0;
                 for (int i = outerDims0.size() - 1; i >= 0;
                      pos0 = outerDims0[i--])
                     hMap.projectOutOutputDims(outerDims0[i] + 1,
@@ -312,10 +282,10 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                 hMap.projectOutOutputDims(0, pos0);
 
                 // remove inner dims for later
-                auto [pos1, outerDims1] = findIter(d.later_, l1->iter_);
-                pos1 += nestLevel;
+                auto [pos1, outerDims1] = findIterFromAP(d.later_, l1->iter_);
+                pos1 += n1;
                 hMap.projectOutInputDims(pos1, hMap.nInDims() - pos1);
-                pos1 -= nestLevel;
+                pos1 -= n1;
                 for (int i = outerDims1.size() - 1; i >= 0;
                      pos1 = outerDims1[i--])
                     hMap.projectOutInputDims(outerDims1[i] + 1,
@@ -334,40 +304,11 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
         return deps;
     };
 
-    int nParams = -1;
-    auto printMapSource = [&,
-                           mapSource = std::string()](int nParamsNew) mutable {
-        // the Pluto "parameter"s are the outer dimensions for us.
-        // their number should keep the same throughout this schedule.
-        if (nParams != -1) {
-            ASSERT(nParams == nParamsNew);
-            return mapSource;
-        }
-        nParams = nParamsNew;
-
-        std::ostringstream oss;
-        oss << "{ [";
-        // target params
-        for (int i = 0; i < nParams; ++i) {
-            if (i > 0)
-                oss << ", ";
-            oss << "tp" << i;
-        }
-        // target loops
-        for (int i = 0; i < nestLevel; ++i) {
-            if (i > 0 || nParams > 0)
-                oss << ", ";
-            oss << "ti" << i;
-        }
-        // source params
-        for (int i = 0; i < nParams; ++i)
-            oss << ", sp" << i;
-        // source loops
-        for (int i = 0; i < nestLevel; ++i)
-            oss << ", si" << i;
-        oss << "] -> [";
-        return mapSource = oss.str();
-    };
+    // find dependences
+    auto dep0 = getDeps(loop0, nestLevel0, loop0, nestLevel0);
+    auto dep1 = getDeps(loop1, nestLevel1, loop1, nestLevel1);
+    auto dep1to0 = getDeps(loop0, nestLevel0, loop1, nestLevel1, true);
+    int nParams = outerAxes.size();
 
     // constraints for bounding and valid coefficients
     std::vector<PBSet> coeffSets0, coeffSets1, coeffSets1to0;
@@ -376,385 +317,256 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     // whether a dependence have been satisfied already
     std::vector<bool> satisfied0, satisfied1, satisfied1to0;
 
-    // Dependences inside loop 0
-    auto dep0 = getDeps(loop0, loop0);
-    if (dep0.size() > 0) {
+    // process dependences inside loop 0
+    if (!dep0.empty()) {
         // ti (target iter) and si (source iter) both on loop 0.
+        // this part has no constraint on c1.
+        PBMapBuilder builder;
+        auto tp = builder.newInputs(nParams, "tp");
+        auto ti = builder.newInputs(nestLevel0, "ti");
+        auto sp = builder.newInputs(nParams, "sp");
+        auto si = builder.newInputs(nestLevel0, "si");
+
         // legality problem:
         // c0 * ti - c0 * si >= 0
+        // bounds and loop 0 param coefficients, difference is always 0
+        builder.addOutputs(views::repeat_n(0, (nParams + 1) * 2));
+        // loop 0 loops coefficients, difference of iters
+        builder.addOutputs(views::zip_with(
+            [](auto &&ti, auto &&si) { return ti - si; }, ti, si));
+        // loop 1 no effect
+        builder.addOutputs(views::repeat_n(0, nParams + 1 + nestLevel1));
+        auto legalityMap = builder.build(ctx);
+        std::cout << legalityMap << std::endl;
+        builder.clearOutputs();
+
         // bounding problem:
         // c * parameters - (c0 * ti - c0 * si) >= 0
-        // this part has no constraint on c1.
-        PBMap legalityMap, boundingMap;
-        const int nParams = dep0[0].nDims() / 2 - nestLevel;
-        {
-            std::ostringstream oss;
+        // bounds coefficients applied to params, use sp (should have sp===tp)
+        builder.addOutputs(sp);
+        builder.addOutput(1);
+        // loop 0 param coefficients, difference is always 0
+        builder.addOutputs(views::repeat_n(0, nParams + 1));
+        // loop 0 loops coefficients, negated difference of iters
+        builder.addOutputs(views::zip_with(
+            [](auto &&ti, auto &&si) { return -(ti - si); }, ti, si));
+        // loop 1 no effect
+        builder.addOutputs(views::repeat_n(0, nParams + 1 + nestLevel1));
+        auto boundingMap = builder.build(ctx);
+        std::cout << boundingMap << std::endl;
 
-            // coefficients for bounds have no effect here
-            for (int i = 0; i < nParams; ++i)
-                oss << ", 0";
-            oss << ", 0";
-
-            // loop 0 params coefficients, difference is always 0
-            for (int i = 0; i < nParams; ++i)
-                oss << ", 0";
-            // loop 0 constant coefficient, difference is always 0
-            oss << ", 0";
-            // loop 0 loops coefficients, difference
-            for (int i = 0; i < nestLevel; ++i)
-                oss << ", ti" << i << " - si" << i;
-
-            // loop 1 params coefficients, no effect
-            for (int i = 0; i < nParams; ++i)
-                oss << ", 0";
-            // loop 1 constant coefficient, no effect
-            oss << ", 0";
-            // loop 1 loops coefficients, no effect
-            for (int i = 0; i < nestLevel; ++i)
-                oss << ", 0";
-
-            oss << "] }";
-
-            legalityMap =
-                PBMap(ctx, printMapSource(nParams) + oss.str().substr(2));
-        }
-        {
-            std::ostringstream oss;
-
-            // repeat params first for bounding coefficients
-            for (int i = 0; i < nParams; ++i)
-                oss << ", sp" << i;
-            // constant coefficient in bounding
-            oss << ", 1";
-
-            // loop 0 params coefficients, negated difference always 0
-            for (int i = 0; i < nParams; ++i)
-                oss << ", 0";
-            // loop 0 constant coefficient, negated difference always 0
-            oss << ", 0";
-            // loop 0 loops coefficients, negated difference
-            for (int i = 0; i < nestLevel; ++i)
-                oss << ", si" << i << " - ti" << i;
-
-            // loop 1 params coefficients, no effect
-            for (int i = 0; i < nParams; ++i)
-                oss << ", 0";
-            // loop 1 constant coefficient, no effect
-            oss << ", 0";
-            // loop 1 loops coefficients, no effect
-            for (int i = 0; i < nestLevel; ++i)
-                oss << ", 0";
-
-            oss << "] }";
-
-            boundingMap =
-                PBMap(ctx, printMapSource(nParams) + oss.str().substr(2));
-        }
-        // generate constraints
-        coeffSets0 = dep0 | views::transform([&](const auto &d) {
-                         return intersect(coefficients(apply(d, legalityMap)),
-                                          coefficients(apply(d, boundingMap)));
-                     }) |
-                     ranges::to<std::vector>();
-        satSets0 = dep0 | views::transform([&](const auto &d) {
-                       return coefficients(apply(d, legalityMap), 1);
-                   }) |
-                   ranges::to<std::vector>();
+        coeffSets0.reserve(dep0.size());
+        satSets0.reserve(dep0.size());
         satisfied0.resize(dep0.size(), false);
+        for (const auto &d : dep0) {
+            std::cout << d << std::endl;
+            coeffSets0.push_back(
+                intersect(coefficients(apply(d, legalityMap)),
+                          coefficients(apply(d, boundingMap))));
+            satSets0.push_back(coefficients(apply(d, legalityMap), 1));
+        }
     }
 
-    // Dependences inside loop 1
-    auto dep1 = getDeps(loop1, loop1);
-    if (dep1.size() > 0) {
+    // process dependences inside loop 1
+    if (!dep1.empty()) {
         // ti (target iter) and si (source iter) both on loop 1.
+        // this part has no constraint on c0.
+        PBMapBuilder builder;
+        auto tp = builder.newInputs(nParams, "tp");
+        auto ti = builder.newInputs(nestLevel1, "ti");
+        auto sp = builder.newInputs(nParams, "sp");
+        auto si = builder.newInputs(nestLevel1, "si");
+
         // legality problem:
         // c1 * ti - c1 * si >= 0
+        // bounds coefficients, no effect
+        builder.addOutputs(views::repeat_n(0, nParams + 1));
+        // loop 0 no effect
+        builder.addOutputs(views::repeat_n(0, nParams + 1 + nestLevel0));
+        // loop 1 param coefficients, difference is always 0
+        builder.addOutputs(views::repeat_n(0, nParams + 1));
+        // loop 1 loops coefficients, difference of iters
+        builder.addOutputs(views::zip_with(
+            [](auto &&ti, auto &&si) { return ti - si; }, ti, si));
+        auto legalityMap = builder.build(ctx);
+        builder.clearOutputs();
+
         // bounding problem:
         // c * parameters - (c1 * ti - c1 * si) >= 0
-        // this part has no constraint on c0.
-        PBMap legalityMap, boundingMap;
-        const int nParams = dep1[0].nDims() / 2 - nestLevel;
-        {
-            std::ostringstream oss;
+        // bounds coefficients applied to params, use sp (should have sp===tp)
+        builder.addOutputs(sp);
+        builder.addOutput(1);
+        // loop 0 no effect
+        builder.addOutputs(views::repeat_n(0, nParams + 1 + nestLevel0));
+        // loop 1 param coefficients, difference is always 0
+        builder.addOutputs(views::repeat_n(0, nParams + 1));
+        // loop 1 loops coefficients, negated difference of iters
+        builder.addOutputs(views::zip_with(
+            [](auto &&ti, auto &&si) { return -(ti - si); }, ti, si));
+        auto boundingMap = builder.build(ctx);
 
-            // coefficients for bounds have no effect here
-            for (int i = 0; i < nParams; ++i)
-                oss << ", 0";
-            oss << ", 0";
-
-            // loop 0 params coefficients, no effect
-            for (int i = 0; i < nParams; ++i)
-                oss << ", 0";
-            // loop 0 constant coefficient, no effect
-            oss << ", 0";
-            // loop 0 loops coefficients, no effect
-            for (int i = 0; i < nestLevel; ++i)
-                oss << ", 0";
-
-            // loop 1 params coefficients, difference is always 0
-            for (int i = 0; i < nParams; ++i)
-                oss << ", 0";
-            // loop 1 constant coefficient, difference is always 0
-            oss << ", 0";
-            // loop 1 loops coefficients, difference
-            for (int i = 0; i < nestLevel; ++i)
-                oss << ", ti" << i << " - si" << i;
-
-            oss << "] }";
-
-            legalityMap =
-                PBMap(ctx, printMapSource(nParams) + oss.str().substr(2));
-        }
-        {
-            std::ostringstream oss;
-
-            // repeat params first for bounding coefficients
-            for (int i = 0; i < nParams; ++i)
-                oss << ", sp" << i;
-            // constant coefficient in bounding
-            oss << ", 1";
-
-            // loop 0 params coefficients, no effect
-            for (int i = 0; i < nParams; ++i)
-                oss << ", 0";
-            // loop 0 constant coefficient, no effect
-            oss << ", 0";
-            // loop 0 loops coefficients, no effect
-            for (int i = 0; i < nestLevel; ++i)
-                oss << ", 0";
-
-            // loop 1 params coefficients, negated difference always 0
-            for (int i = 0; i < nParams; ++i)
-                oss << ", 0";
-            // loop 1 constant coefficient, negated difference always 0
-            oss << ", 0";
-            // loop 1 loops coefficients, negated difference
-            for (int i = 0; i < nestLevel; ++i)
-                oss << ", si" << i << " - ti" << i;
-
-            oss << "] }";
-
-            boundingMap =
-                PBMap(ctx, printMapSource(nParams) + oss.str().substr(2));
-        }
-        // generate constraints
-        coeffSets1 = dep1 | views::transform([&](const auto &d) {
-                         return intersect(coefficients(apply(d, legalityMap)),
-                                          coefficients(apply(d, boundingMap)));
-                     }) |
-                     ranges::to<std::vector>();
-        satSets1 = dep1 | views::transform([&](const auto &d) {
-                       return coefficients(apply(d, legalityMap), 1);
-                   }) |
-                   ranges::to<std::vector>();
+        coeffSets1.reserve(dep1.size());
+        satSets1.reserve(dep1.size());
         satisfied1.resize(dep1.size(), false);
+        for (const auto &d : dep1) {
+            coeffSets1.push_back(
+                intersect(coefficients(apply(d, legalityMap)),
+                          coefficients(apply(d, boundingMap))));
+            satSets1.push_back(coefficients(apply(d, legalityMap), 1));
+        }
     }
 
     // Dependences between loop 0 and 1
-    auto dep1to0 = getDeps(loop0, loop1, true);
-    std::cout << "loop 0: " << loop0Set << std::endl;
-    std::cout << "loop 1: " << loop1Set << std::endl;
-    if (dep1to0.size() > 0) {
+    if (!dep1to0.empty()) {
         // i0 = si (source iter)
         // i1 = ti (target iter)
+        PBMapBuilder builder;
+        auto p0 = builder.newInputs(nParams, "p0");
+        auto i0 = builder.newInputs(nestLevel0, "i0");
+        auto p1 = builder.newInputs(nParams, "p1");
+        auto i1 = builder.newInputs(nestLevel1, "i1");
+
+        auto negate = views::transform([](auto &&x) { return -x; });
+
         // legality problem:
         // c1 * i1 - c0 * i0 >= 0
+        // bounds coefficients, no effect
+        builder.addOutputs(views::repeat_n(0, nParams + 1));
+        // c0
+        builder.addOutputs(p0 | negate);
+        builder.addOutput(-1);
+        builder.addOutputs(i0 | negate);
+        // c1
+        builder.addOutputs(p1);
+        builder.addOutput(1);
+        builder.addOutputs(i1);
+        auto legalityMap = builder.build(ctx);
+        builder.clearOutputs();
+
         // bounding problem:
         // c * parameters - (c1 * i1 - c0 * i0) >= 0
-        PBMap legalityMap, boundingMap;
-        const int nParams = dep1to0[0].nDims() / 2 - nestLevel;
-        {
-            std::ostringstream oss;
+        // bounds coefficients
+        builder.addOutputs(p0);
+        builder.addOutput(1);
+        // c0
+        builder.addOutputs(p0);
+        builder.addOutput(1);
+        builder.addOutputs(i0);
+        // c1
+        builder.addOutputs(p1 | negate);
+        builder.addOutput(-1);
+        builder.addOutputs(i1 | negate);
+        auto boundingMap = builder.build(ctx);
 
-            // coefficients for bounds have no effect here
-            for (int i = 0; i < nParams; ++i)
-                oss << ", 0";
-            oss << ", 0";
-
-            // source params, negative
-            for (int i = 0; i < nParams; ++i)
-                oss << ", -sp" << i;
-            // source constant, negative
-            oss << ", -1";
-            // source loops, negative
-            for (int i = 0; i < nestLevel; ++i)
-                oss << ", -si" << i;
-
-            // target params, positive
-            for (int i = 0; i < nParams; ++i)
-                oss << ", tp" << i;
-            // target constant, positive
-            oss << ", 1";
-            // target loops, positive
-            for (int i = 0; i < nestLevel; ++i)
-                oss << ", ti" << i;
-
-            oss << "] }";
-
-            legalityMap =
-                PBMap(ctx, printMapSource(nParams) + oss.str().substr(2));
-        }
-        {
-            std::ostringstream oss;
-
-            // repeat params first for bounding coefficients
-            for (int i = 0; i < nParams; ++i)
-                oss << ", sp" << i;
-            // constant coefficient in bounding
-            oss << ", 1";
-
-            // source params, positive
-            for (int i = 0; i < nParams; ++i)
-                oss << ", sp" << i;
-            // target constant, positive
-            oss << ", 1";
-            // source loops, positive
-            for (int i = 0; i < nestLevel; ++i)
-                oss << ", si" << i;
-
-            // target params, negative
-            for (int i = 0; i < nParams; ++i)
-                oss << ", -tp" << i;
-            // target constant, negative
-            oss << ", -1";
-            // target loops, negative
-            for (int i = 0; i < nestLevel; ++i)
-                oss << ", -ti" << i;
-
-            oss << "] }";
-
-            boundingMap =
-                PBMap(ctx, printMapSource(nParams) + oss.str().substr(2));
-        }
-        // generate constraints
-        coeffSets1to0 =
-            dep1to0 | views::transform([&](const auto &d) {
-                return intersect(coefficients(apply(d, legalityMap)),
-                                 coefficients(apply(d, boundingMap)));
-            }) |
-            ranges::to<std::vector>();
-        satSets1to0 = dep1to0 | views::transform([&](const auto &d) {
-                          return coefficients(apply(d, legalityMap), 1);
-                      }) |
-                      ranges::to<std::vector>();
+        coeffSets1to0.reserve(dep1to0.size());
+        satSets1to0.reserve(dep1to0.size());
         satisfied1to0.resize(dep1to0.size(), false);
+        for (const auto &d : dep1to0) {
+            coeffSets1to0.push_back(
+                intersect(coefficients(apply(d, legalityMap)),
+                          coefficients(apply(d, boundingMap))));
+            satSets1to0.push_back(coefficients(apply(d, legalityMap), 1));
+        }
     }
-
-    //! FIXME: handle case of no dependence
-    ASSERT(nParams != -1);
-
-    // variable names
-    auto cBound = [](int i) { return "cb" + toString(i); };
-
-    const std::string c0Sum = "c0sum";
-    const std::string delta0 = "d0";
-    const std::string deltaL0 = "dl0";
-    auto c0Param = [](int i) { return "c0p" + toString(i); };
-    auto c0Iter = [](int i) { return "c0i" + toString(i); };
-    auto c0 = [&](int i) {
-        if (i < nParams + 1)
-            return c0Param(i);
-        else
-            return c0Iter(i - nParams - 1);
-    };
-
-    const std::string c1Sum = "c1sum";
-    const std::string delta1 = "d1";
-    const std::string deltaL1 = "dl1";
-    auto c1Param = [](int i) { return "c1p" + toString(i); };
-    auto c1Iter = [](int i) { return "c1i" + toString(i); };
-    auto c1 = [&](int i) {
-        if (i < nParams + 1)
-            return c1Param(i);
-        else
-            return c1Iter(i - nParams - 1);
-    };
 
     // construct the map from coefficients to optimize targets
-    PBMap optimizeMap;
-    std::string optimizeTargets;
-    {
-        // the coefficients set includes following dimensions:
-        // 1. (nParams + 1) bounding coefficients
-        // 2. (nParams + 1 + nestLevel) loop 0 permuting coefficients
-        // 3. (nParams + 1 + nestLevel) loop 1 permuting coefficients
-        auto inputs = views::concat(
-            views::ints(0, nParams + 1) | views::transform(cBound),
-            views::ints(0, nParams + 1) | views::transform(c0Param),
-            views::ints(0, nestLevel) | views::transform(c0Iter),
-            views::ints(0, nParams + 1) | views::transform(c1Param),
-            views::ints(0, nestLevel) | views::transform(c1Iter));
+    PBMapBuilder builder;
 
-        // then the outputs which are optimize targets
-        std::array extraOut0{c0Sum, delta0, deltaL0};
-        std::array extraOut1{c1Sum, delta1, deltaL1};
-        auto outputs = views::concat(
-            // 1. the distance bounds go first, as main optimizing targets
-            views::ints(0, nParams + 1) | views::transform(cBound),
-            // 2.1. sum of coefficients absolute for loop 0
-            //   and
-            // 2.2. binary decision variable for avoiding zeros
-            extraOut0,
-            // 2.3. reversed coefficients of loop 0 iterations
-            //      they are reversed because we want to select outer loops
-            //      earlier, preserving the original loop order
-            views::reverse(views::ints(0, nestLevel)) |
-                views::transform(c0Iter),
-            // 2.4. coefficients of loop 0 params and constant
-            views::ints(0, nParams + 1) | views::transform(c0Param),
-            // 3.1. sum of coefficients absolute for loop 1
-            //   and
-            // 3.2. binary decision variable for avoiding zeros
-            extraOut1,
-            // 3.3. reversed coefficients of loop 1 iterations
-            views::reverse(views::ints(0, nestLevel)) |
-                views::transform(c1Iter),
-            // 3.4. coefficients of loop 1 params and constant
-            views::ints(0, nParams + 1) | views::transform(c1Param));
+    // the coefficients set includes following dimensions:
+    // 1. (nParams + 1) bounding coefficients
+    auto cBounds = builder.newInputs(nParams + 1, "cb");
+    // 2. (nParams + 1 + nestLevel0) loop 0 permuting coefficients
+    auto c0Params = builder.newInputs(nParams + 1, "c0p");
+    auto c0Iters = builder.newInputs(nestLevel0, "c0i");
+    auto c0 = c0Params;
+    c0.insert(c0.end(), c0Iters.begin(), c0Iters.end());
+    // 3. (nParams + 1 + nestLevel1) loop 1 permuting coefficients
+    auto c1Params = builder.newInputs(nParams + 1, "c1p");
+    auto c1Iters = builder.newInputs(nestLevel1, "c1i");
+    auto c1 = c1Params;
+    c1.insert(c1.end(), c1Iters.begin(), c1Iters.end());
 
-        auto loopConstraints = [&](const auto &cSum, const auto &c,
-                                   const auto &cIter, const auto &delta,
-                                   const auto &deltaL) {
-            auto absSum = absSumConstraints(nParams + 1 + nestLevel, cSum, c);
-            auto nonZero = nonZeroConstraints(nestLevel, cIter, delta);
-            std::array limitDeltaL{
-                deltaL + " >= 0",
-                deltaL + " <= 1",
-            };
-            return views::concat(absSum, nonZero, limitDeltaL) |
-                   ranges::to<std::vector>();
-        };
+    // optimize targets
+    // 1. the distance bounds go first, as main optimizing targets
+    builder.addOutputs(cBounds);
+    // 2.1. sum of coefficients absolute for loop 0
+    auto c0Sum = builder.newOutput("c0sum");
+    // 2.2. binary decision variable for avoiding zeros
+    auto delta0 = builder.newOutput("d0");
+    auto delta0L = builder.newOutput("d0l");
+    // 2.3. reversed coefficients of loop 0 iterations
+    //      they are reversed because we want to select outer loops
+    //      earlier, preserving the original loop order
+    builder.addOutputs(c0Iters | views::reverse);
+    // 2.4. coefficients of loop 0 params and constant
+    builder.addOutputs(c0Params);
+    // 3.1. sum of coefficients absolute for loop 1
+    auto c1Sum = builder.newOutput("c1sum");
+    // 3.2. binary decision variable for avoiding zeros
+    auto delta1 = builder.newOutput("d1");
+    auto delta1L = builder.newOutput("d1l");
+    // 3.3. reversed coefficients of loop 1 iterations
+    builder.addOutputs(c1Iters | views::reverse);
+    // 3.4. coefficients of loop 1 params and constant
+    builder.addOutputs(c1Params);
 
-        // constraints excluding trivial results (all zero)
-        auto constraints0 = loopConstraints(c0Sum, c0, c0Iter, delta0, deltaL0);
-        auto constraints1 = loopConstraints(c1Sum, c1, c1Iter, delta1, deltaL1);
-        auto constraints = views::concat(constraints0, constraints1);
+    // the constraints on one loop
+    builder.addConstraints({
+        absSumConstraint(c0Sum, c0),
+        nonZeroConstraint(c0Iters, delta0),
+        delta0L >= 0,
+        delta0L <= 1,
+        absSumConstraint(c1Sum, c1),
+        nonZeroConstraint(c1Iters, delta1),
+        delta1L >= 0,
+        delta1L <= 1,
+    });
 
-        auto optimizeTargets = join(outputs, ", ");
-        optimizeMap =
-            PBMap(ctx, "{ [" + join(inputs, ", ") + "] -> [" + optimizeTargets +
-                           "]: " + join(constraints, " and ") + "}");
-    }
-    auto orthoSetGen = [&](const auto &orthoConstraints) {
-        return PBSet(ctx, "{ [" + optimizeTargets +
-                              "]: " + join(orthoConstraints, " and ") + " }");
-    };
+    auto optimizeMap = builder.build(ctx);
     auto revOptimizeMap = reverse(optimizeMap);
-    PBSet orthoSet = orthoSetGen(std::vector<std::string>{});
+
+    PBSetBuilder orthoSetBuilder;
+    orthoSetBuilder.addVars(builder.outputs());
 
     std::vector<std::vector<int>> c0ParamFusedValue, c0IterFusedValue;
     std::vector<std::vector<int>> c1ParamFusedValue, c1IterFusedValue;
     // start computing permuted dimensions
-    for (int i = 0; i < nestLevel; ++i) {
+    for (int i = 0; i < std::min(nestLevel0, nestLevel1); ++i) {
         //! FIXME: handle parameters from loads
         auto problem = universeSet(
-            spaceSetAlloc(ctx, 0, (nParams + 1) * 3 + nestLevel * 2));
+            spaceSetAlloc(ctx, 0, (nParams + 1) * 3 + nestLevel0 + nestLevel1));
         // constructing the coefficients' space
         for (const auto &[satisfied, coeffSet] :
              views::zip(views::concat(satisfied0, satisfied1, satisfied1to0),
                         views::concat(coeffSets0, coeffSets1, coeffSets1to0)))
             if (!satisfied)
                 problem = intersect(std::move(problem), coeffSet);
+
+        // construct orthogonal constraints
+        auto orthoConstraint = [&](const auto &cIterFusedValue,
+                                   const auto &cIters, const auto &deltaL) {
+            auto ortho = orthogonalMatrix(cIterFusedValue);
+            if (ortho.empty())
+                return PBBuildExpr(true);
+            std::vector<PBBuildExpr> orthoDots;
+            orthoDots.reserve(ortho.size());
+            for (auto &&o : ortho) {
+                orthoDots.emplace_back(0);
+                ASSERT(o.size() == cIters.size());
+                for (size_t i = 0; i < cIters.size(); ++i)
+                    orthoDots.back() += o[i] * cIters[i];
+            }
+            return nonZeroConstraint(orthoDots, deltaL);
+        };
+        if (i > 0) {
+            orthoSetBuilder.addConstraint(
+                orthoConstraint(c0IterFusedValue, c0Iters, delta0L));
+            orthoSetBuilder.addConstraint(
+                orthoConstraint(c1IterFusedValue, c1Iters, delta1L));
+        }
+        auto orthoSet = orthoSetBuilder.build(ctx);
+        orthoSetBuilder.clearConstraints();
+
         // map the coefficients to optimize targets, and perform optimization
         auto solution =
             lexmin(intersect(std::move(orthoSet), apply(problem, optimizeMap)));
@@ -770,41 +582,23 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
         std::cout << optimized << std::endl;
 
         // check and exclude fake fusion
-        auto loopSetToRange = [&](int coeffBase) {
-            return PBMap(
-                ctx,
-                "{ [" +
-                    (views::concat(views::ints(0, nParams) |
-                                       views::transform([](int i) {
-                                           return "p" + toString(i);
-                                       }),
-                                   views::ints(0, nestLevel) |
-                                       views::transform([](int i) {
-                                           return "x" + toString(i);
-                                       })) |
-                     join(", ")) +
-                    "] -> [" +
-                    (views::concat(
-                         views::ints(0, nParams + 1) |
-                             views::transform([&](int i) {
-                                 auto c = toString(optimized[coeffBase + i]);
-                                 if (i == nParams)
-                                     return c;
-                                 else
-                                     return c + "p" + toString(i);
-                             }),
-                         views::ints(0, nestLevel) |
-                             views::transform([&](int i) {
-                                 auto c = toString(
-                                     optimized[coeffBase + nParams + 1 + i]);
-                                 return c + "x" + toString(i);
-                             })) |
-                     join(" + ")) +
-                    "] }");
+        auto loopSetToRange = [&](const PBSet &loopSet, int coeffBase,
+                                  int nestLevel) {
+            PBMapBuilder builder;
+            auto p = builder.newInputs(nParams, "p");
+            auto x = builder.newInputs(nestLevel, "x");
+            PBBuildExpr result = 0;
+            for (int i = 0; i < nParams; ++i)
+                result += optimized[coeffBase + i] * p[i];
+            result += optimized[coeffBase + nParams];
+            for (int i = 0; i < nestLevel; ++i)
+                result += optimized[coeffBase + nParams + 1 + i] * x[i];
+            builder.addOutput(result);
+            return apply(loopSet, builder.build(ctx));
         };
-        PBSet loop0Range = apply(loop0Set, loopSetToRange(nParams + 1));
-        PBSet loop1Range =
-            apply(loop1Set, loopSetToRange((nParams + 1) * 2 + nestLevel));
+        auto loop0Range = loopSetToRange(loop0Set, nParams + 1, nestLevel0);
+        PBSet loop1Range = loopSetToRange(
+            loop1Set, (nParams + 1) * 2 + nestLevel0, nestLevel1);
         // if the two loops has no overlap on the result axis, they are not
         // actually fused so we bail out
         if (intersect(
@@ -823,39 +617,16 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
         });
         c0IterFusedValue.push_back({
             optimized.begin() + (nParams + 1) * 2,
-            optimized.begin() + (nParams + 1) * 2 + nestLevel,
+            optimized.begin() + (nParams + 1) * 2 + nestLevel0,
         });
         c1ParamFusedValue.push_back({
-            optimized.begin() + (nParams + 1) * 2 + nestLevel,
-            optimized.begin() + (nParams + 1) * 3 + nestLevel,
+            optimized.begin() + (nParams + 1) * 2 + nestLevel0,
+            optimized.begin() + (nParams + 1) * 3 + nestLevel0,
         });
         c1IterFusedValue.push_back({
-            optimized.begin() + (nParams + 1) * 3 + nestLevel,
+            optimized.begin() + (nParams + 1) * 3 + nestLevel0,
             optimized.end(),
         });
-
-        // prepare orthogonal constraints for next iteration
-        auto orthoConstraints = [&](const auto &cIterFusedValue,
-                                    const auto &cIter, const auto &deltaL) {
-            auto ortho = orthogonalMatrix(cIterFusedValue);
-            if (ortho.empty())
-                return std::vector<std::string>{"true"};
-            auto orthoDots = ortho | views::transform([&](const auto &o) {
-                                 return "(" +
-                                        (views::ints(0, nestLevel) |
-                                         views::transform([&](int i) {
-                                             return toString(o[i]) + cIter(i);
-                                         }) |
-                                         join(" + ")) +
-                                        ")";
-                             }) |
-                             ranges::to<std::vector>();
-            return nonZeroConstraints(
-                ortho.size(), [&](int i) { return orthoDots[i]; }, deltaL);
-        };
-        auto ortho0 = orthoConstraints(c0IterFusedValue, c0Iter, deltaL0);
-        auto ortho1 = orthoConstraints(c1IterFusedValue, c1Iter, deltaL1);
-        orthoSet = orthoSetGen(views::concat(ortho0, ortho1));
     }
 
     return {ast, {}};

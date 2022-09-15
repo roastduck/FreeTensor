@@ -610,53 +610,82 @@ class PBBuildExpr {
     PBBuildExpr &operator=(const PBBuildExpr &) = default;
     PBBuildExpr &operator=(PBBuildExpr &&) = default;
 
-    PBBuildExpr operator+(const PBBuildExpr &other) {
-        return PBBuildExpr("(" + expr_ + " + " + other.expr_ + ")");
+    PBBuildExpr(bool b) : expr_(b ? "true" : "false") {}
+    PBBuildExpr(std::integral auto i) : expr_(toString(i)) {}
+
+    friend PBBuildExpr operator+(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " + " + b.expr_ + ")");
+    }
+    PBBuildExpr &operator+=(const PBBuildExpr &other) {
+        return *this = *this + other;
     }
 
-    PBBuildExpr operator-(const PBBuildExpr &other) {
-        return PBBuildExpr("(" + expr_ + " - " + other.expr_ + ")");
+    PBBuildExpr operator-() const { return PBBuildExpr("(-" + expr_ + ")"); }
+    friend PBBuildExpr operator-(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " - " + b.expr_ + ")");
+    }
+    PBBuildExpr &operator-=(const PBBuildExpr &other) {
+        return *this = *this - other;
     }
 
-    PBBuildExpr operator*(const PBBuildExpr &other) {
-        return PBBuildExpr("(" + expr_ + " * " + other.expr_ + ")");
+    friend PBBuildExpr operator*(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " * " + b.expr_ + ")");
+    }
+    PBBuildExpr &operator*=(const PBBuildExpr &other) {
+        return *this = *this * other;
     }
 
-    PBBuildExpr operator/(const PBBuildExpr &other) {
-        return PBBuildExpr("floor(" + expr_ + " / " + other.expr_ + ")");
+    friend PBBuildExpr operator/(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " / " + b.expr_ + ")");
+    }
+    PBBuildExpr &operator/=(const PBBuildExpr &other) {
+        return *this = *this / other;
     }
 
     friend PBBuildExpr ceilDiv(const PBBuildExpr &a, const PBBuildExpr &b) {
         return PBBuildExpr("ceil(" + a.expr_ + " / " + b.expr_ + ")");
     }
 
-    PBBuildExpr operator%(const PBBuildExpr &other) {
-        return PBBuildExpr("(" + expr_ + " % " + other.expr_ + ")");
+    friend PBBuildExpr operator%(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " % " + b.expr_ + ")");
+    }
+    PBBuildExpr &operator%=(const PBBuildExpr &other) {
+        return *this = *this % other;
     }
 
-    PBBuildExpr operator>(const PBBuildExpr &other) {
-        return PBBuildExpr("(" + expr_ + " > " + other.expr_ + ")");
+    friend PBBuildExpr operator<(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " < " + b.expr_ + ")");
     }
 
-    PBBuildExpr operator>=(const PBBuildExpr &other) {
-        return PBBuildExpr("(" + expr_ + " >= " + other.expr_ + ")");
+    friend PBBuildExpr operator<=(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " <= " + b.expr_ + ")");
     }
 
-    PBBuildExpr operator<(const PBBuildExpr &other) {
-        return PBBuildExpr("(" + expr_ + " < " + other.expr_ + ")");
+    friend PBBuildExpr operator>(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " > " + b.expr_ + ")");
     }
 
-    PBBuildExpr operator<=(const PBBuildExpr &other) {
-        return PBBuildExpr("(" + expr_ + " <= " + other.expr_ + ")");
+    friend PBBuildExpr operator>=(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " >= " + b.expr_ + ")");
     }
 
-    PBBuildExpr operator&&(const PBBuildExpr &other) {
-        return PBBuildExpr("(" + expr_ + " and " + other.expr_ + ")");
+    friend PBBuildExpr operator==(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " = " + b.expr_ + ")");
     }
 
-    PBBuildExpr operator||(const PBBuildExpr &other) {
-        return PBBuildExpr("(" + expr_ + " or " + other.expr_ + ")");
+    friend PBBuildExpr operator!=(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " != " + b.expr_ + ")");
     }
+
+    friend PBBuildExpr operator&&(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " and " + b.expr_ + ")");
+    }
+
+    friend PBBuildExpr operator||(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " or " + b.expr_ + ")");
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const PBBuildExpr &e);
 };
 
 class PBBuilder {
@@ -680,11 +709,17 @@ class PBBuilder {
 
     void addConstraint(const PBBuildExpr &constraint);
     void addConstraint(PBBuildExpr &&constraint);
+    template <typename T = std::initializer_list<PBBuildExpr>>
+    void addConstraints(T &&constraints) {
+        for (auto &&c : constraints)
+            addConstraint(c);
+    }
+    void clearConstraints() { constraints.clear(); };
 };
 
-class PBMapBuilder : PBBuilder {
-    std::vector<PBBuildExpr> inputs;
-    std::vector<PBBuildExpr> outputs;
+class PBMapBuilder : public PBBuilder {
+    std::vector<PBBuildExpr> inputs_;
+    std::vector<PBBuildExpr> outputs_;
 
   public:
     PBMapBuilder() = default;
@@ -694,18 +729,30 @@ class PBMapBuilder : PBBuilder {
     PBMapBuilder &operator=(PBMapBuilder &&) = default;
 
     void addInput(const PBBuildExpr &expr);
+    void addInputs(auto exprs) {
+        for (auto &&e : exprs)
+            addInput(e);
+    }
     PBBuildExpr newInput(const std::string &name);
     std::vector<PBBuildExpr> newInputs(int n, const std::string &prefix = "");
+    const std::vector<PBBuildExpr> &inputs() const { return inputs_; }
+    void clearInputs() { inputs_.clear(); }
 
     void addOutput(const PBBuildExpr &expr);
+    void addOutputs(auto exprs) {
+        for (auto &&e : exprs)
+            addOutput(e);
+    }
     PBBuildExpr newOutput(const std::string &name);
     std::vector<PBBuildExpr> newOutputs(int n, const std::string &prefix = "");
+    const std::vector<PBBuildExpr> &outputs() const { return outputs_; }
+    void clearOutputs() { outputs_.clear(); }
 
     PBMap build(const PBCtx &ctx) const;
 };
 
-class PBSetBuilder : PBBuilder {
-    std::vector<PBBuildExpr> vars;
+class PBSetBuilder : public PBBuilder {
+    std::vector<PBBuildExpr> vars_;
 
   public:
     PBSetBuilder() = default;
@@ -715,8 +762,14 @@ class PBSetBuilder : PBBuilder {
     PBSetBuilder &operator=(PBSetBuilder &&) = default;
 
     void addVar(const PBBuildExpr &expr);
+    void addVars(auto exprs) {
+        for (auto &&e : exprs)
+            addVar(e);
+    }
     PBBuildExpr newVar(const std::string &name);
     std::vector<PBBuildExpr> newVars(int n, const std::string &prefix = "");
+    const std::vector<PBBuildExpr> &vars() const { return vars_; }
+    void clearVars() { vars_.clear(); }
 
     PBSet build(const PBCtx &ctx) const;
 };
