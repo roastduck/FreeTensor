@@ -664,10 +664,11 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
             std::cout << " ]" << std::endl;
     }
 
-    //!TODO: compute permutation according to the coefficients via reverse(PBMap)
-    //!TODO: transform original ast according to computed permutation
+    //! TODO: compute permutation according to the coefficients via
+    //! reverse(PBMap)
+    //! TODO: transform original ast according to computed permutation
 
-    return {origianl_ast, {}};
+    return {original_ast, {}};
 }
 
 } // namespace freetensor
