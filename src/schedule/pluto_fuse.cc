@@ -4,6 +4,7 @@
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
+#include <math/parse_pb_expr.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <schedule/fuse.h>
@@ -174,6 +175,12 @@ std::pair<int, std::vector<int>> findIterFromAP(const AccessPoint &ap,
         }
     ASSERT(false);
 }
+
+struct RenamePBFuncVar : public Mutator {
+    std::unordered_map<std::string, Expr> renameMap_;
+
+    Expr visit(const Var &op) override { return renameMap_.at(op->name_); }
+};
 
 } // namespace
 
@@ -566,7 +573,6 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
             lexmin(intersect(std::move(orthoSet), apply(problem, optimizeMap)));
         if (solution.empty())
             break;
-        std::cout << solution << std::endl;
 
         auto solutionVals =
             sample(apply(std::move(solution), revOptimizeMap)).coordinates();
@@ -640,41 +646,71 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     for (int i = 0; i < nestLevel1 - fusedLevel; ++i)
         c1ParamValue.emplace_back(nParams + 1, 0);
 
-    std::cout << "c0 =" << std::endl;
-    std::cout << "[ ";
-    for (int i = 0; i < nestLevel0; ++i) {
-        if (i != 0)
-            std::cout << "  ";
-        std::cout << "[ " << c0ParamValue[i] << " | " << c0IterValue[i] << " ]";
-        if (i != nestLevel0)
-            std::cout << "," << std::endl;
-        else
-            std::cout << " ]" << std::endl;
-    }
-
-    std::cout << "c1 =" << std::endl;
-    std::cout << "[ ";
-    for (int i = 0; i < nestLevel1; ++i) {
-        if (i != 0)
-            std::cout << "  ";
-        std::cout << "[ " << c1ParamValue[i] << " | " << c1IterValue[i] << " ]";
-        if (i != nestLevel1)
-            std::cout << "," << std::endl;
-        else
-            std::cout << " ]" << std::endl;
-    }
-
-    //! TODO: compute permutation according to the coefficients via
-    //! reverse(PBMap)
     std::vector<Var> fusedLoopsVar, remainLoop0Var, remainLoop1Var;
     for (int i = 0; i < fusedLevel; ++i)
-        fusedLoopsVar.push_back(makeVar("fuse_i" + toString(i)));
+        fusedLoopsVar.push_back(makeVar("fuse_i" + toString(i)).as<VarNode>());
     for (int i = fusedLevel; i < nestLevel0; ++i)
-        remainLoop0Var.push_back(makeVar("rem0_i" + toString(i)));
+        remainLoop0Var.push_back(makeVar("rem0_i" + toString(i)).as<VarNode>());
     for (int i = fusedLevel; i < nestLevel1; ++i)
-        remainLoop1Var.push_back(makeVar("rem1_i" + toString(i)));
-    std::vector<Expr> loop0VarReplacement, loop1VarReplacement;
-    {}
+        remainLoop1Var.push_back(makeVar("rem1_i" + toString(i)).as<VarNode>());
+
+    struct Replacement {
+        std::vector<Expr> vars_;
+        Expr cond_;
+    };
+
+    auto genReplacement = [&](const std::vector<std::vector<int>> &cParamValue,
+                              const std::vector<std::vector<int>> &cIterValue,
+                              const std::vector<Var> &remainLoopVar,
+                              const PBSet &loopSet, int nestLevel) {
+        PBMapBuilder builder;
+        auto params = builder.newOutputs(nParams);
+        auto newIter = builder.newInputs(nestLevel);
+        auto oldIter = builder.newOutputs(nestLevel);
+        for (int i = 0; i < nestLevel; ++i) {
+            PBBuildExpr iter = 0;
+            for (int j = 0; j < nParams; ++j)
+                iter += cParamValue[i][j] * params[j];
+            iter += cParamValue[i][nParams];
+            for (int j = 0; j < nestLevel; ++j)
+                iter += cIterValue[i][j] * oldIter[j];
+            builder.addConstraint(iter == newIter[i]);
+        }
+        auto newToOld = builder.build(ctx);
+        newToOld = intersectRange(std::move(newToOld), loopSet);
+        newToOld.moveDimsOutputToInput(0, nParams, 0);
+
+        auto func = parseSimplePBFunc(toString(PBFunc(newToOld)));
+        ASSERT(func.args_.size() == unsigned(nParams + nestLevel));
+        ASSERT(func.values_.size() == unsigned(nestLevel));
+
+        RenamePBFuncVar renamer;
+        for (int i = 0; i < nParams; ++i)
+            renamer.renameMap_[func.args_[i]] = outerAxes[i].iter_;
+        for (int i = 0; i < fusedLevel; ++i)
+            renamer.renameMap_[func.args_[nParams + i]] = fusedLoopsVar[i];
+        for (int i = fusedLevel; i < nestLevel; ++i)
+            renamer.renameMap_[func.args_[nParams + i]] =
+                remainLoopVar[i - fusedLevel];
+
+        Replacement result;
+        result.vars_.reserve(nestLevel);
+        for (int i = 0; i < nestLevel; ++i)
+            result.vars_.emplace_back(renamer(func.values_[i]));
+        result.cond_ = renamer(func.cond_);
+
+        return result;
+    };
+
+    auto loop0VarReplacement = genReplacement(
+        c0ParamValue, c0IterValue, remainLoop0Var, loop0Set, nestLevel0);
+    auto loop1VarReplacement = genReplacement(
+        c1ParamValue, c1IterValue, remainLoop1Var, loop1Set, nestLevel1);
+
+    std::cout << loop0VarReplacement.vars_ << std::endl;
+    std::cout << loop0VarReplacement.cond_ << std::endl;
+    std::cout << loop1VarReplacement.vars_ << std::endl;
+    std::cout << loop1VarReplacement.cond_ << std::endl;
 
     //! TODO: transform original ast according to computed permutation
 

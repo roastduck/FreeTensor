@@ -22,15 +22,10 @@ std::vector<PBBuildExpr> PBBuilder::newVars(int n, const std::string &prefix) {
     std::vector<PBBuildExpr> ret;
     ret.reserve(n);
     for (int i = 0; i < n; i++)
-        ret.push_back(
-            PBBuildExpr(prefix.empty() ? prefix : prefix + toString(i)));
+        ret.push_back(newVar(prefix.empty() ? prefix : prefix + toString(i)));
     return ret;
 }
 
-std::string PBBuilder::getParamsStr() const {
-    if (!params_.empty())
-        return "[" + join(params_, ", ") + "] -> ";
-}
 std::string PBBuilder::getConstraintsStr() const {
     return join(constraints_, " and ");
 }
@@ -41,18 +36,6 @@ void PBBuilder::addConstraint(const PBBuildExpr &constraint) {
 
 void PBBuilder::addConstraint(PBBuildExpr &&constraint) {
     constraints_.emplace_back(std::move(constraint));
-}
-
-PBBuildExpr PBBuilder::newParam(const std::string &name) {
-    auto var = PBBuilder::newVar(name);
-    params_.emplace_back(var);
-    return var;
-}
-std::vector<PBBuildExpr> PBBuilder::newParams(int n,
-                                              const std::string &prefix = "") {
-    auto ret = PBBuilder::newVars(n, prefix);
-    params_.insert(params_.end(), ret.begin(), ret.end());
-    return ret;
 }
 
 void PBMapBuilder::addInput(const PBBuildExpr &expr) {

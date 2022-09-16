@@ -113,9 +113,15 @@ class PBMap {
     void projectOutInputDims(unsigned first, unsigned n) {
         map_ = isl_map_project_out(map_, isl_dim_in, first, n);
     }
-
     void projectOutOutputDims(unsigned first, unsigned n) {
         map_ = isl_map_project_out(map_, isl_dim_out, first, n);
+    }
+
+    void moveDimsInputToOutput(unsigned first, unsigned n, unsigned target) {
+        map_ = isl_map_move_dims(map_, isl_dim_out, target, isl_dim_in, first, n);
+    }
+    void moveDimsOutputToInput(unsigned first, unsigned n, unsigned target) {
+        map_ = isl_map_move_dims(map_, isl_dim_in, target, isl_dim_out, first, n);
     }
 
     friend std::ostream &operator<<(std::ostream &os, const PBMap &map) {
@@ -427,6 +433,19 @@ template <PBSetRef T, PBSetRef U> PBSet intersect(T &&lhs, U &&rhs) {
     return isl_set_intersect(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
+template <PBMapRef T, PBSetRef U> PBMap intersectDomain(T &&lhs, U &&rhs) {
+    DEBUG_PROFILE_VERBOSE("intersectDomain",
+                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
+                              std::to_string(rhs.nBasic()));
+    return isl_map_intersect_domain(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+template <PBMapRef T, PBSetRef U> PBMap intersectRange(T &&lhs, U &&rhs) {
+    DEBUG_PROFILE_VERBOSE("intersectRange",
+                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
+                              std::to_string(rhs.nBasic()));
+    return isl_map_intersect_range(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
 template <PBMapRef T, PBMapRef U> PBMap uni(T &&lhs, U &&rhs) {
     DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
                                      "," + std::to_string(rhs.nBasic()));
@@ -692,14 +711,12 @@ class PBBuilder {
     int anonVarNum_ = 0;
     std::unordered_set<std::string> namedVars;
 
-    std::vector<PBBuildExpr> params_;
     std::vector<PBBuildExpr> constraints_;
 
   protected:
     PBBuildExpr newVar(const std::string &name = "");
     std::vector<PBBuildExpr> newVars(int n, const std::string &prefix = "");
 
-    std::string getParamsStr() const;
     std::string getConstraintsStr() const;
 
   public:
@@ -708,11 +725,6 @@ class PBBuilder {
     PBBuilder(PBBuilder &&) = default;
     PBBuilder &operator=(const PBBuilder &) = default;
     PBBuilder &operator=(PBBuilder &&) = default;
-
-    PBBuildExpr newParam(const std::string &name);
-    std::vector<PBBuildExpr> newParams(int n, const std::string &prefix = "");
-    const std::vector<PBBuildExpr> &params() const { return params_; }
-    void clearParams() { params_.clear(); }
 
     void addConstraint(const PBBuildExpr &constraint);
     void addConstraint(PBBuildExpr &&constraint);
