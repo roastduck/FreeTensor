@@ -5,6 +5,7 @@
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <pass/flatten_stmt_seq.h>
+#include <pass/hoist_var_over_stmt_seq.h>
 #include <schedule/fuse.h>
 #include <schedule/pluto_fuse.h>
 
@@ -85,11 +86,13 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
         v.reserve(solution.size() - 2);
         for (size_t i = 1; i < solution.size() - 1; ++i) {
             ASSERT(solution[i].denSi() == 1);
-            v.emplace_back(solution[i].numSi());
+            // put negated value into v since the result is minimized but we
+            // want positive results
+            v.emplace_back(-solution[i].numSi());
         }
-        result.emplace_back(std::move(v));
         // inject new constraint to find next orthogonal vector
-        builder.addConstraint(fOrtho(result.back()));
+        builder.addConstraint(fOrtho(v));
+        result.emplace_back(std::move(v));
         orthogonalSet = intersect(std::move(orthogonalSet), builder.build(ctx));
         builder.clearConstraints();
     }
@@ -177,12 +180,12 @@ std::pair<int, std::vector<int>> findIterFromAP(const AccessPoint &ap,
 std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                               const ID &loop1Id) {
     // flatten first so we get perfectly nested loops as much as possible
-    auto ast = flattenStmtSeq(_ast);
+    auto original_ast = flattenStmtSeq(hoistVarOverStmtSeq(_ast));
 
     // check accessed vardefs: those vardefs accessed by loop1 should not have
     // their shapes modified in loop0
     CheckFuseAccessible check(loop0Id, loop1Id);
-    check.check(ast);
+    check.check(original_ast);
 
     // count maximum count of perfectly nested loops at loop0 and loop1
     auto countPerfectNest = [](const For &loop) {
@@ -197,6 +200,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     auto [nestLevel1, inner1] = countPerfectNest(check.loop1().loop_);
 
     // inject fake accesses to extract loop space
+    auto ast = original_ast;
     ast = InjectFakeAccess(inner0)(ast);
     ast = InjectFakeAccess(inner1)(ast);
 
@@ -562,6 +566,8 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
             lexmin(intersect(std::move(orthoSet), apply(problem, optimizeMap)));
         if (solution.empty())
             break;
+        std::cout << solution << std::endl;
+
         auto solutionVals =
             sample(apply(std::move(solution), revOptimizeMap)).coordinates();
         auto optimized = solutionVals | views::transform([&](const PBVal &val) {
@@ -592,7 +598,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
         // actually fused so we bail out
         if (intersect(
                 // range of values that less than the maximum of loop 0
-                apply(lexmax(loop0Range), lexGE(spaceSetAlloc(ctx, 0, 1))),
+                apply(lexmax(loop0Range), lexGT(spaceSetAlloc(ctx, 0, 1))),
                 // ... and from loop 1
                 loop1Range)
                 // ... don't overlap
@@ -627,12 +633,12 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     auto restOrtho0 = orthogonalMatrix(c0IterValue);
     c0IterValue.insert(c0IterValue.end(), restOrtho0.begin(), restOrtho0.end());
     for (int i = 0; i < nestLevel0 - fusedLevel; ++i)
-        c0ParamValue.emplace_back(0, nestLevel0);
+        c0ParamValue.emplace_back(nParams + 1, 0);
 
     auto restOrtho1 = orthogonalMatrix(c1IterValue);
     c1IterValue.insert(c1IterValue.end(), restOrtho1.begin(), restOrtho1.end());
     for (int i = 0; i < nestLevel1 - fusedLevel; ++i)
-        c1ParamValue.emplace_back(0, nestLevel1);
+        c1ParamValue.emplace_back(nParams + 1, 0);
 
     std::cout << "c0 =" << std::endl;
     std::cout << "[ ";
@@ -658,7 +664,10 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
             std::cout << " ]" << std::endl;
     }
 
-    return {ast, {}};
+    //!TODO: compute permutation according to the coefficients via reverse(PBMap)
+    //!TODO: transform original ast according to computed permutation
+
+    return {origianl_ast, {}};
 }
 
 } // namespace freetensor
