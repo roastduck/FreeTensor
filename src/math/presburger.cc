@@ -27,6 +27,10 @@ std::vector<PBBuildExpr> PBBuilder::newVars(int n, const std::string &prefix) {
     return ret;
 }
 
+std::string PBBuilder::getParamsStr() const {
+    if (!params_.empty())
+        return "[" + join(params_, ", ") + "] -> ";
+}
 std::string PBBuilder::getConstraintsStr() const {
     return join(constraints_, " and ");
 }
@@ -37,6 +41,18 @@ void PBBuilder::addConstraint(const PBBuildExpr &constraint) {
 
 void PBBuilder::addConstraint(PBBuildExpr &&constraint) {
     constraints_.emplace_back(std::move(constraint));
+}
+
+PBBuildExpr PBBuilder::newParam(const std::string &name) {
+    auto var = PBBuilder::newVar(name);
+    params_.emplace_back(var);
+    return var;
+}
+std::vector<PBBuildExpr> PBBuilder::newParams(int n,
+                                              const std::string &prefix = "") {
+    auto ret = PBBuilder::newVars(n, prefix);
+    params_.insert(params_.end(), ret.begin(), ret.end());
+    return ret;
 }
 
 void PBMapBuilder::addInput(const PBBuildExpr &expr) {
@@ -91,7 +107,8 @@ std::vector<PBBuildExpr> PBSetBuilder::newVars(int n,
 }
 
 PBSet PBSetBuilder::build(const PBCtx &ctx) const {
-    return {ctx, "{ [" + join(vars_, ", ") + "]: " + getConstraintsStr() + " }"};
+    return {ctx,
+            "{ [" + join(vars_, ", ") + "]: " + getConstraintsStr() + " }"};
 }
 
 } // namespace freetensor

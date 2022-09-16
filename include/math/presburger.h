@@ -692,12 +692,14 @@ class PBBuilder {
     int anonVarNum_ = 0;
     std::unordered_set<std::string> namedVars;
 
+    std::vector<PBBuildExpr> params_;
     std::vector<PBBuildExpr> constraints_;
 
   protected:
     PBBuildExpr newVar(const std::string &name = "");
     std::vector<PBBuildExpr> newVars(int n, const std::string &prefix = "");
 
+    std::string getParamsStr() const;
     std::string getConstraintsStr() const;
 
   public:
@@ -706,6 +708,11 @@ class PBBuilder {
     PBBuilder(PBBuilder &&) = default;
     PBBuilder &operator=(const PBBuilder &) = default;
     PBBuilder &operator=(PBBuilder &&) = default;
+
+    PBBuildExpr newParam(const std::string &name);
+    std::vector<PBBuildExpr> newParams(int n, const std::string &prefix = "");
+    const std::vector<PBBuildExpr> &params() const { return params_; }
+    void clearParams() { params_.clear(); }
 
     void addConstraint(const PBBuildExpr &constraint);
     void addConstraint(PBBuildExpr &&constraint);

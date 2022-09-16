@@ -666,6 +666,16 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
 
     //! TODO: compute permutation according to the coefficients via
     //! reverse(PBMap)
+    std::vector<Var> fusedLoopsVar, remainLoop0Var, remainLoop1Var;
+    for (int i = 0; i < fusedLevel; ++i)
+        fusedLoopsVar.push_back(makeVar("fuse_i" + toString(i)));
+    for (int i = fusedLevel; i < nestLevel0; ++i)
+        remainLoop0Var.push_back(makeVar("rem0_i" + toString(i)));
+    for (int i = fusedLevel; i < nestLevel1; ++i)
+        remainLoop1Var.push_back(makeVar("rem1_i" + toString(i)));
+    std::vector<Expr> loop0VarReplacement, loop1VarReplacement;
+    {}
+
     //! TODO: transform original ast according to computed permutation
 
     return {original_ast, {}};
