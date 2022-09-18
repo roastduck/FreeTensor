@@ -250,6 +250,7 @@ struct PlutoFuse : public Mutator {
     const PermuteInfo &permute0_, &permute1_;
 
     For loop0_ = nullptr, loop1_ = nullptr;
+    ID fusedId_;
 
     PlutoFuse(const ID &loop0Id, const ID &loop1Id,
               const std::vector<std::string> &fusedLoopsVar,
@@ -321,13 +322,14 @@ struct PlutoFuse : public Mutator {
                                 Ref<ForProperty>::make(), fusedLoop,
                                 makeMetadata("pluto_fuse.fused." + toString(i),
                                              loop0_, loop1_));
+        fusedId_ = fusedLoop->id();
         return fusedLoop;
     }
 };
 
 } // namespace
 
-std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
+std::pair<Stmt, std::pair<ID, int>> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                               const ID &loop1Id) {
     // flatten first so we get perfectly nested loops as much as possible
     auto ast = flattenStmtSeq(hoistVarOverStmtSeq(_ast));
@@ -678,7 +680,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     std::vector<std::vector<int>> c0ParamValue, c0IterValue;
     std::vector<std::vector<int>> c1ParamValue, c1IterValue;
     // start computing permuted dimensions
-    int fusedLevel;
+    int fusedLevel, parallelCount = 0;
     for (fusedLevel = 0; fusedLevel < std::min(nestLevel0, nestLevel1);
          ++fusedLevel) {
         //! FIXME: handle parameters from loads
@@ -727,6 +729,12 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                              return val.numSi();
                          }) |
                          ranges::to<std::vector>();
+
+        bool isParallel = true;
+        for (int i = 0; i < nParams + 1; ++i)
+            isParallel = isParallel && optimized[i] == 0;
+        if (isParallel)
+            parallelCount++;
 
         // check and exclude fake fusion
         auto loopSetToRange = [&](const PBSet &loopSet, int coeffBase,
@@ -820,7 +828,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     ast = shrinkFor(ast);
     ast = sinkVar(ast);
 
-    return {ast, {}};
+    return {ast, {fuser.fusedId_, parallelCount}};
 }
 
 } // namespace freetensor

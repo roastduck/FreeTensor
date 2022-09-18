@@ -5,7 +5,7 @@
 
 namespace freetensor {
 
-std::pair<Stmt, ID> plutoFuse(const Stmt &ast, const ID &loop0, const ID &loop1);
+std::pair<Stmt, std::pair<ID, int>> plutoFuse(const Stmt &ast, const ID &loop0, const ID &loop1);
 
 } // namespace freetensor
 

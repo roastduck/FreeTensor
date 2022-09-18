@@ -542,7 +542,7 @@ void Schedule::asMatMul(const ID &loop) {
     }
 }
 
-ID Schedule::plutoFuse(const ID &loop0, const ID &loop1) {
+std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1) {
     beginTransaction();
     auto log = appendLog(
         MAKE_LOG(PlutoFuse, freetensor::plutoFuse, loop0, loop1));

@@ -759,7 +759,7 @@ class Schedule(ffi.Schedule):
         super().as_matmul(self._lookup(loop))
 
     def pluto_fuse(self, loop0, loop1):
-        super().pluto_fuse(self._lookup(loop0), self._lookup(loop1))
+        return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1))
 
     def auto_schedule(self, target):
         """

@@ -16,7 +16,10 @@ def test_pluto_fuse():
                 x[i, 254 - j] += x[i, 255 - j]
 
     print(kernel)
-    kernel = ft.schedule(kernel, lambda s: s.pluto_fuse("L0", "L1"))
+    s = ft.Schedule(kernel)
+    _, parallelism = s.pluto_fuse("L0", "L1")
+    assert parallelism == 1
+    kernel = s.func()
     print(kernel)
 
 
@@ -34,7 +37,10 @@ def test_pluto_fuse_2():
                 x[255 - i, 254 - j] += x[255 - i, 255 - j]
 
     print(kernel)
-    kernel = ft.schedule(kernel, lambda s: s.pluto_fuse("L0", "L1"))
+    s = ft.Schedule(kernel)
+    _, parallelism = s.pluto_fuse("L0", "L1")
+    assert parallelism == 1
+    kernel = s.func()
     print(kernel)
 
 
@@ -52,5 +58,8 @@ def test_pluto_fuse_3():
                 x[255 - i, j] += x[255 - i, j + 1]
 
     print(kernel)
-    kernel = ft.schedule(kernel, lambda s: s.pluto_fuse("L0", "L1"))
+    s = ft.Schedule(kernel)
+    _, parallelism = s.pluto_fuse("L0", "L1")
+    assert parallelism == 1
+    kernel = s.func()
     print(kernel)
