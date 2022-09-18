@@ -7,6 +7,8 @@
 #include <math/parse_pb_expr.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/simplify.h>
+#include <pass/sink_var.h>
 #include <schedule/fuse.h>
 #include <schedule/pluto_fuse.h>
 
@@ -149,16 +151,19 @@ PBSet extractLoopSet(const PBCtx &ctx, const AccessPoint &p) {
     return loopSet;
 }
 
-std::vector<IterAxis> extractVarAxes(const std::vector<IterAxis> &axes,
-                                     const For &targetLoop) {
-    std::vector<IterAxis> ret;
+std::pair<std::vector<IterAxis>, std::vector<IterAxis>>
+extractVarAxes(const std::vector<IterAxis> &axes, const For &targetLoop) {
+    bool inLoop = false;
+    std::vector<IterAxis> outer, inner;
     for (auto &&axis : axes)
         if (axis.realIter_->nodeType() == ASTNodeType::Var) {
             if (axis.realIter_.as<VarNode>()->name_ == targetLoop->iter_)
-                return ret;
-            ret.emplace_back(axis);
+                inLoop = true;
+            (inLoop ? inner : outer).emplace_back(axis);
         }
-    ASSERT(false && "PlutoFuse: target loop is not found as expected");
+    if (!inLoop)
+        ERROR("PlutoFuse: target loop not found in fake access");
+    return {std::move(outer), std::move(inner)};
 }
 
 std::pair<int, std::vector<int>> findIterFromAP(const AccessPoint &ap,
@@ -176,10 +181,148 @@ std::pair<int, std::vector<int>> findIterFromAP(const AccessPoint &ap,
     ASSERT(false);
 }
 
-struct RenamePBFuncVar : public Mutator {
-    std::unordered_map<std::string, Expr> renameMap_;
+struct ReplaceVar : public Mutator {
+    std::unordered_map<std::string, Expr> replaceMap_;
 
-    Expr visit(const Var &op) override { return renameMap_.at(op->name_); }
+    Expr visit(const Var &op) override { return replaceMap_.at(op->name_); }
+};
+
+struct PermuteInfo {
+    std::vector<Expr> vars_;
+    Expr cond_;
+
+    PermuteInfo(const std::vector<std::vector<int>> &cParamValue,
+                const std::vector<std::vector<int>> &cIterValue,
+                const std::vector<IterAxis> &paramAxes,
+                const std::vector<IterAxis> &oldLoopAxes,
+                const std::vector<std::string> &loopVars, const PBCtx &ctx,
+                const PBSet &loopSet) {
+        int nParams = paramAxes.size(), nestLevel = loopVars.size();
+        ASSERT(oldLoopAxes.size() == loopVars.size());
+
+        PBMapBuilder builder;
+        auto params = builder.newOutputs(nParams);
+        auto newIter = builder.newInputs(nestLevel);
+        auto oldIter = builder.newOutputs(nestLevel);
+        for (int i = 0; i < nestLevel; ++i) {
+            PBBuildExpr iter = 0;
+            for (int j = 0; j < nParams; ++j)
+                iter += cParamValue[i][j] * params[j];
+            iter += cParamValue[i][nParams];
+            for (int j = 0; j < nestLevel; ++j)
+                iter += cIterValue[i][j] * oldIter[j];
+            builder.addConstraint(iter == newIter[i]);
+        }
+        auto newToOld = builder.build(ctx);
+        newToOld = intersectRange(std::move(newToOld), loopSet);
+        newToOld.moveDimsOutputToInput(0, nParams, 0);
+
+        auto func = parseSimplePBFunc(toString(PBFunc(newToOld)));
+        ASSERT(func.args_.size() == unsigned(nParams + nestLevel));
+        ASSERT(func.values_.size() == unsigned(nestLevel));
+
+        ReplaceVar renamer;
+        for (int i = 0; i < nParams; ++i)
+            renamer.replaceMap_[func.args_[i]] = paramAxes[i].iter_;
+        for (int i = 0; i < nestLevel; ++i)
+            renamer.replaceMap_[func.args_[nParams + i]] = makeVar(loopVars[i]);
+
+        vars_.reserve(nestLevel);
+        for (int i = 0; i < nestLevel; ++i) {
+            auto rawIter = renamer(func.values_[i]);
+            if (oldLoopAxes[i].iter_ !=
+                oldLoopAxes[i].realIter_) // negative step
+                vars_.push_back(makeSub(makeIntConst(0), rawIter));
+            else
+                vars_.push_back(rawIter);
+        }
+        cond_ = renamer(func.cond_);
+    }
+};
+
+struct PlutoFuse : public Mutator {
+    // original loops ID
+    ID loop0Id_, loop1Id_;
+    // new var names
+    const std::vector<std::string> &fusedLoopsVar_, &remainLoop0Var_,
+        &remainLoop1Var_;
+    // permute info: what to replace the original vars and extra conditions
+    const PermuteInfo &permute0_, &permute1_;
+
+    For loop0_ = nullptr, loop1_ = nullptr;
+
+    PlutoFuse(const ID &loop0Id, const ID &loop1Id,
+              const std::vector<std::string> &fusedLoopsVar,
+              const std::vector<std::string> &remainLoop0Var,
+              const std::vector<std::string> &remainLoop1Var,
+              const PermuteInfo &permute0, const PermuteInfo &permute1)
+        : loop0Id_(loop0Id), loop1Id_(loop1Id), fusedLoopsVar_(fusedLoopsVar),
+          remainLoop0Var_(remainLoop0Var), remainLoop1Var_(remainLoop1Var),
+          permute0_(permute0), permute1_(permute1) {}
+
+    Stmt visit(const For &op) override {
+        if (op->id() == loop0Id_) {
+            loop0_ = op;
+            return makeStmtSeq({});
+        } else if (op->id() != loop1Id_)
+            return Mutator::visit(op);
+
+        // At loop 1, replace with the fused loop
+        loop1_ = op;
+
+        // sanity check: loop 0 should be already found
+        ASSERT(loop0_.isValid());
+        // sanity check: vars size match
+        ASSERT(fusedLoopsVar_.size() + remainLoop0Var_.size() ==
+               permute0_.vars_.size());
+        ASSERT(fusedLoopsVar_.size() + remainLoop1Var_.size() ==
+               permute1_.vars_.size());
+
+        // sanity check and construct the vars replacing map
+        ReplaceVar loop0Replace, loop1Replace;
+        Stmt loop0Inner = loop0_, loop1Inner = loop1_;
+        for (auto &&replaced : permute0_.vars_) {
+            ASSERT(loop0Inner->nodeType() == ASTNodeType::For);
+            loop0Replace.replaceMap_[loop0Inner.as<ForNode>()->iter_] =
+                replaced;
+            loop0Inner = loop0Inner.as<ForNode>()->body_;
+        }
+        for (auto &&replaced : permute1_.vars_) {
+            ASSERT(loop1Inner->nodeType() == ASTNodeType::For);
+            loop1Replace.replaceMap_[loop1Inner.as<ForNode>()->iter_] =
+                replaced;
+            loop1Inner = loop1Inner.as<ForNode>()->body_;
+        }
+
+        auto genInner = [&](const PermuteInfo &pi, const For &loop,
+                            const Stmt &loopInner, ReplaceVar replacer,
+                            const std::vector<std::string> &remainLoopVar) {
+            auto body = replacer(loopInner);
+            body = makeIf(pi.cond_, body);
+            for (int i = remainLoopVar.size() - 1; i >= 0; --i)
+                body = makeFor(
+                    remainLoopVar[i], makeIntConst(INT32_MIN),
+                    makeIntConst(INT32_MAX), makeIntConst(1),
+                    makeIntConst(int64_t(INT32_MAX) - INT32_MIN),
+                    Ref<ForProperty>::make(), body,
+                    makeMetadata("pluto_fuse.inner." + toString(i), loop));
+            return body;
+        };
+        auto fusedLoop = makeStmtSeq({
+            genInner(permute0_, loop0_, loop0Inner, loop0Replace,
+                     remainLoop0Var_),
+            genInner(permute1_, loop1_, loop1Inner, loop1Replace,
+                     remainLoop1Var_),
+        });
+        for (int i = fusedLoopsVar_.size() - 1; i >= 0; --i)
+            fusedLoop = makeFor(fusedLoopsVar_[i], makeIntConst(INT32_MIN),
+                                makeIntConst(INT32_MAX), makeIntConst(1),
+                                makeIntConst(int64_t(INT32_MAX) - INT32_MIN),
+                                Ref<ForProperty>::make(), fusedLoop,
+                                makeMetadata("pluto_fuse.fused." + toString(i),
+                                             loop0_, loop1_));
+        return fusedLoop;
+    }
 };
 
 } // namespace
@@ -187,12 +330,12 @@ struct RenamePBFuncVar : public Mutator {
 std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                               const ID &loop1Id) {
     // flatten first so we get perfectly nested loops as much as possible
-    auto original_ast = flattenStmtSeq(hoistVarOverStmtSeq(_ast));
+    auto ast = flattenStmtSeq(hoistVarOverStmtSeq(_ast));
 
     // check accessed vardefs: those vardefs accessed by loop1 should not have
     // their shapes modified in loop0
     CheckFuseAccessible check(loop0Id, loop1Id);
-    check.check(original_ast);
+    check.check(ast);
 
     // count maximum count of perfectly nested loops at loop0 and loop1
     auto countPerfectNest = [](const For &loop) {
@@ -207,12 +350,12 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     auto [nestLevel1, inner1] = countPerfectNest(check.loop1().loop_);
 
     // inject fake accesses to extract loop space
-    auto ast = original_ast;
-    ast = InjectFakeAccess(inner0)(ast);
-    ast = InjectFakeAccess(inner1)(ast);
+    auto fakeAccessAst = ast;
+    fakeAccessAst = InjectFakeAccess(inner0)(fakeAccessAst);
+    fakeAccessAst = InjectFakeAccess(inner1)(fakeAccessAst);
 
-    auto loop0 = findStmt(ast, loop0Id).as<ForNode>();
-    auto loop1 = findStmt(ast, loop1Id).as<ForNode>();
+    auto loop0 = findStmt(fakeAccessAst, loop0Id).as<ForNode>();
+    auto loop1 = findStmt(fakeAccessAst, loop1Id).as<ForNode>();
 
     // List common outer loops
     std::deque<For> outers;
@@ -238,7 +381,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
 
     PBCtx ctx;
     PBSet loop0Set, loop1Set;
-    std::vector<IterAxis> outerAxes;
+    std::vector<IterAxis> outerAxes, loop0Axes, loop1Axes;
 
     auto getDeps = [&](const For &l0, int n0, const For &l1, int n1,
                        bool handleFakeAccess = false) mutable {
@@ -250,10 +393,12 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
                     if (handleFakeAccess) {
                         if (p.stmt_->ancestorById(loop0Id).isValid()) {
                             loop0Set = extractLoopSet(ctx, p);
-                            outerAxes = extractVarAxes(p.iter_, loop0);
+                            std::tie(outerAxes, loop0Axes) =
+                                extractVarAxes(p.iter_, loop0);
                         } else {
                             ASSERT(p.stmt_->ancestorById(loop1Id).isValid());
                             loop1Set = extractLoopSet(ctx, p);
+                            loop1Axes = extractVarAxes(p.iter_, loop1).second;
                         }
                     }
                     return false;
@@ -266,7 +411,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
             .filterLater([&](const AccessPoint &p) {
                 return p.stmt_->ancestorById(l1->id()).isValid();
             })
-            .direction(outersSame)(ast, [&](const Dependency &d) {
+            .direction(outersSame)(fakeAccessAst, [&](const Dependency &d) {
                 // later to earlier map, but projects out unrelated dims
                 auto hMap = d.later2EarlierIter_;
 
@@ -646,75 +791,35 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     for (int i = 0; i < nestLevel1 - fusedLevel; ++i)
         c1ParamValue.emplace_back(nParams + 1, 0);
 
-    std::vector<Var> fusedLoopsVar, remainLoop0Var, remainLoop1Var;
+    std::vector<std::string> fusedLoopsVar, remainLoop0Var, remainLoop1Var;
     for (int i = 0; i < fusedLevel; ++i)
-        fusedLoopsVar.push_back(makeVar("fuse_i" + toString(i)).as<VarNode>());
+        fusedLoopsVar.push_back("fuse_i" + toString(i));
     for (int i = fusedLevel; i < nestLevel0; ++i)
-        remainLoop0Var.push_back(makeVar("rem0_i" + toString(i)).as<VarNode>());
+        remainLoop0Var.push_back("rem0_i" + toString(i));
     for (int i = fusedLevel; i < nestLevel1; ++i)
-        remainLoop1Var.push_back(makeVar("rem1_i" + toString(i)).as<VarNode>());
+        remainLoop1Var.push_back("rem1_i" + toString(i));
 
-    struct Replacement {
-        std::vector<Expr> vars_;
-        Expr cond_;
-    };
+    PermuteInfo loop0Permute(c0ParamValue, c0IterValue, outerAxes, loop0Axes,
+                             views::concat(fusedLoopsVar, remainLoop0Var) |
+                                 ranges::to<std::vector>(),
+                             ctx, loop0Set);
+    PermuteInfo loop1Permute(c1ParamValue, c1IterValue, outerAxes, loop1Axes,
+                             views::concat(fusedLoopsVar, remainLoop1Var) |
+                                 ranges::to<std::vector>(),
+                             ctx, loop1Set);
 
-    auto genReplacement = [&](const std::vector<std::vector<int>> &cParamValue,
-                              const std::vector<std::vector<int>> &cIterValue,
-                              const std::vector<Var> &remainLoopVar,
-                              const PBSet &loopSet, int nestLevel) {
-        PBMapBuilder builder;
-        auto params = builder.newOutputs(nParams);
-        auto newIter = builder.newInputs(nestLevel);
-        auto oldIter = builder.newOutputs(nestLevel);
-        for (int i = 0; i < nestLevel; ++i) {
-            PBBuildExpr iter = 0;
-            for (int j = 0; j < nParams; ++j)
-                iter += cParamValue[i][j] * params[j];
-            iter += cParamValue[i][nParams];
-            for (int j = 0; j < nestLevel; ++j)
-                iter += cIterValue[i][j] * oldIter[j];
-            builder.addConstraint(iter == newIter[i]);
-        }
-        auto newToOld = builder.build(ctx);
-        newToOld = intersectRange(std::move(newToOld), loopSet);
-        newToOld.moveDimsOutputToInput(0, nParams, 0);
+    std::cout << loop0Permute.vars_ << std::endl;
+    std::cout << loop0Permute.cond_ << std::endl;
+    std::cout << loop1Permute.vars_ << std::endl;
+    std::cout << loop1Permute.cond_ << std::endl;
 
-        auto func = parseSimplePBFunc(toString(PBFunc(newToOld)));
-        ASSERT(func.args_.size() == unsigned(nParams + nestLevel));
-        ASSERT(func.values_.size() == unsigned(nestLevel));
+    PlutoFuse fuser(loop0Id, loop1Id, fusedLoopsVar, remainLoop0Var,
+                    remainLoop1Var, loop0Permute, loop1Permute);
+    ast = fuser(ast);
+    ast = simplify(ast);
+    ast = sinkVar(ast);
 
-        RenamePBFuncVar renamer;
-        for (int i = 0; i < nParams; ++i)
-            renamer.renameMap_[func.args_[i]] = outerAxes[i].iter_;
-        for (int i = 0; i < fusedLevel; ++i)
-            renamer.renameMap_[func.args_[nParams + i]] = fusedLoopsVar[i];
-        for (int i = fusedLevel; i < nestLevel; ++i)
-            renamer.renameMap_[func.args_[nParams + i]] =
-                remainLoopVar[i - fusedLevel];
-
-        Replacement result;
-        result.vars_.reserve(nestLevel);
-        for (int i = 0; i < nestLevel; ++i)
-            result.vars_.emplace_back(renamer(func.values_[i]));
-        result.cond_ = renamer(func.cond_);
-
-        return result;
-    };
-
-    auto loop0VarReplacement = genReplacement(
-        c0ParamValue, c0IterValue, remainLoop0Var, loop0Set, nestLevel0);
-    auto loop1VarReplacement = genReplacement(
-        c1ParamValue, c1IterValue, remainLoop1Var, loop1Set, nestLevel1);
-
-    std::cout << loop0VarReplacement.vars_ << std::endl;
-    std::cout << loop0VarReplacement.cond_ << std::endl;
-    std::cout << loop1VarReplacement.vars_ << std::endl;
-    std::cout << loop1VarReplacement.cond_ << std::endl;
-
-    //! TODO: transform original ast according to computed permutation
-
-    return {original_ast, {}};
+    return {ast, {}};
 }
 
 } // namespace freetensor
