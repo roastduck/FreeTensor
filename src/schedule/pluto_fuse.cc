@@ -329,8 +329,8 @@ struct PlutoFuse : public Mutator {
 
 } // namespace
 
-std::pair<Stmt, std::pair<ID, int>> plutoFuse(const Stmt &_ast, const ID &loop0Id,
-                              const ID &loop1Id) {
+std::pair<Stmt, std::pair<ID, int>>
+plutoFuse(const Stmt &_ast, const ID &loop0Id, const ID &loop1Id) {
     // flatten first so we get perfectly nested loops as much as possible
     auto ast = flattenStmtSeq(hoistVarOverStmtSeq(_ast));
 
@@ -717,13 +717,25 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuse(const Stmt &_ast, const ID &loop0I
         orthoSetBuilder.clearConstraints();
 
         // map the coefficients to optimize targets, and perform optimization
-        auto solution =
-            lexmin(intersect(std::move(orthoSet), apply(problem, optimizeMap)));
+        auto solution = apply(
+            lexmin(intersect(std::move(orthoSet), apply(problem, optimizeMap))),
+            revOptimizeMap);
         if (solution.empty())
             break;
 
-        auto solutionVals =
-            sample(apply(std::move(solution), revOptimizeMap)).coordinates();
+        // check satisfied and mark; already satisfied dependences won't be
+        // included in inner levels
+        for (size_t i = 0; i < dep0.size(); ++i)
+            if (!intersect(solution, satSets0[i]).empty())
+                satisfied0[i] = true;
+        for (size_t i = 0; i < dep1.size(); ++i)
+            if (!intersect(solution, satSets1[i]).empty())
+                satisfied1[i] = true;
+        for (size_t i = 0; i < dep1to0.size(); ++i)
+            if (!intersect(solution, satSets1to0[i]).empty())
+                satisfied1to0[i] = true;
+
+        auto solutionVals = sample(std::move(solution)).coordinates();
         auto optimized = solutionVals | views::transform([&](const PBVal &val) {
                              ASSERT(val.denSi() == 1);
                              return val.numSi();
@@ -816,11 +828,6 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuse(const Stmt &_ast, const ID &loop0I
                              views::concat(fusedLoopsVar, remainLoop1Var) |
                                  ranges::to<std::vector>(),
                              ctx, loop1Set);
-
-    std::cout << loop0Permute.vars_ << std::endl;
-    std::cout << loop0Permute.cond_ << std::endl;
-    std::cout << loop1Permute.vars_ << std::endl;
-    std::cout << loop1Permute.cond_ << std::endl;
 
     PlutoFuse fuser(loop0Id, loop1Id, fusedLoopsVar, remainLoop0Var,
                     remainLoop1Var, loop0Permute, loop1Permute);

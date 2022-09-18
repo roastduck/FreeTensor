@@ -602,7 +602,7 @@ template <PBSetRef T> PBSet coefficients(T &&set, int64_t c = 0) {
     auto nParams = isl_space_dim(paramsSpace, isl_dim_set);
     auto cPoint = isl_point_zero(paramsSpace);
     isl_point_set_coordinate_val(cPoint, isl_dim_set, nParams - 1,
-                                 isl_val_int_from_si(ctx, c));
+                                 isl_val_int_from_si(ctx, -c));
     return apply(PBSet(isl_set_from_point(cPoint)), PBMap(coefficientsMap));
 }
 
