@@ -7,7 +7,7 @@
 #include <math/parse_pb_expr.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
-#include <pass/simplify.h>
+#include <pass/shrink_for.h>
 #include <pass/sink_var.h>
 #include <schedule/fuse.h>
 #include <schedule/pluto_fuse.h>
@@ -816,7 +816,7 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     PlutoFuse fuser(loop0Id, loop1Id, fusedLoopsVar, remainLoop0Var,
                     remainLoop1Var, loop0Permute, loop1Permute);
     ast = fuser(ast);
-    ast = simplify(ast);
+    ast = shrinkFor(ast);
     ast = sinkVar(ast);
 
     return {ast, {}};

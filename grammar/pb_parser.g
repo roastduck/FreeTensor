@@ -25,9 +25,9 @@ func returns [PBFuncAST ast]
     ;
 
 simpleFunc returns [SimplePBFuncAST ast]
-    : varList '->' exprList (':' expr
+    : varList '->' exprList (':' boolExpr
       {
-        $ast.cond_ = $expr.node;
+        $ast.cond_ = $boolExpr.node;
       }
         )?
       {
@@ -125,45 +125,37 @@ expr returns [Expr node]
       {
         $node = makeMax($expr0.node, $expr1.node);
       }
-    | expr0=expr '<=' expr1=expr
-      {
-        $node = makeLE($expr0.node, $expr1.node);
-      }
-    | expr0=expr '<' expr1=expr
-      {
-        $node = makeLT($expr0.node, $expr1.node);
-      }
-    | expr0=expr '>=' expr1=expr
-      {
-        $node = makeGE($expr0.node, $expr1.node);
-      }
-    | expr0=expr '>' expr1=expr
-      {
-        $node = makeGT($expr0.node, $expr1.node);
-      }
-    | expr0=expr '=' expr1=expr
-      {
-        $node = makeEQ($expr0.node, $expr1.node);
-      }
-    | expr0=expr '!=' expr1=expr
-      {
-        $node = makeNE($expr0.node, $expr1.node);
-      }
-    | expr0=expr AND expr1=expr
-      {
-        $node = makeLAnd($expr0.node, $expr1.node);
-      }
-    | expr0=expr OR expr1=expr
-      {
-        $node = makeLOr($expr0.node, $expr1.node);
-      }
-    | NOT expr
-      {
-        $node = makeLNot($expr.node);
-      }
     | '-' expr0=expr
       {
         $node = makeSub(makeIntConst(0), $expr0.node);
+      }
+    ;
+
+boolExpr returns [Expr node]
+    : expr0=expr
+      {
+        std::function<Expr(Expr, Expr)> make;
+        $node = makeBoolConst(true);
+        Expr last = $expr0.node;
+      }
+      (('<=' { make = [](Expr a, Expr b) { return makeLE(a, b); }; }
+       |'>=' { make = [](Expr a, Expr b) { return makeGE(a, b); }; }
+       |'<' { make = [](Expr a, Expr b) { return makeLT(a, b); }; }
+       |'>' { make = [](Expr a, Expr b) { return makeGT(a, b); }; }
+       |'=' { make = [](Expr a, Expr b) { return makeEQ(a, b); }; }
+       |'!=' { make = [](Expr a, Expr b) { return makeNE(a, b); }; })
+      expr1=expr { $node = makeLAnd($node, make(last, $expr1.node)); last = $expr1.node; })+
+    | boolExpr0=boolExpr AND boolExpr1=boolExpr
+      {
+        $node = makeLAnd($boolExpr0.node, $boolExpr1.node);
+      }
+    | boolExpr0=boolExpr OR boolExpr1=boolExpr
+      {
+        $node = makeLOr($boolExpr0.node, $boolExpr1.node);
+      }
+    | NOT boolExpr
+      {
+        $node = makeLNot($boolExpr.node);
       }
     ;
 
