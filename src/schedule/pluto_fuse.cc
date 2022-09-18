@@ -566,11 +566,12 @@ std::pair<Stmt, ID> plutoFuse(const Stmt &_ast, const ID &loop0Id,
     if (!dep1to0.empty()) {
         // i0 = si (source iter)
         // i1 = ti (target iter)
+        // later first, so p0 and i0 goes first
         PBMapBuilder builder;
-        auto p0 = builder.newInputs(nParams, "p0");
-        auto i0 = builder.newInputs(nestLevel0, "i0");
         auto p1 = builder.newInputs(nParams, "p1");
         auto i1 = builder.newInputs(nestLevel1, "i1");
+        auto p0 = builder.newInputs(nParams, "p0");
+        auto i0 = builder.newInputs(nestLevel0, "i0");
 
         auto negate = views::transform([](auto &&x) { return -x; });
 
