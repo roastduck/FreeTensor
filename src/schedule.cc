@@ -28,7 +28,7 @@
 #include <schedule/multi_level_tiling.h>
 #include <schedule/parallelize.h>
 #include <schedule/permute.h>
-#include <schedule/pluto_fuse.h>
+#include <schedule/pluto.h>
 #include <schedule/reorder.h>
 #include <schedule/separate_tail.h>
 #include <schedule/set_mem_type.h>
@@ -546,6 +546,20 @@ std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1) {
     beginTransaction();
     auto log = appendLog(
         MAKE_LOG(PlutoFuse, freetensor::plutoFuse, loop0, loop1));
+    try {
+        auto ret = applyLog(log);
+        commitTransaction();
+        return ret;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
+}
+
+std::pair<ID, int> Schedule::plutoPermute(const ID &loop) {
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_LOG(PlutoPermute, freetensor::plutoPermute, loop));
     try {
         auto ret = applyLog(log);
         commitTransaction();

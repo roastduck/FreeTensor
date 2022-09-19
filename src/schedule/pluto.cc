@@ -10,7 +10,7 @@
 #include <pass/shrink_for.h>
 #include <pass/sink_var.h>
 #include <schedule/fuse.h>
-#include <schedule/pluto_fuse.h>
+#include <schedule/pluto.h>
 
 namespace freetensor {
 
@@ -327,13 +327,8 @@ struct PlutoFuse : public Mutator {
     }
 };
 
-} // namespace
-
-std::pair<Stmt, std::pair<ID, int>>
-plutoFuse(const Stmt &_ast, const ID &loop0Id, const ID &loop1Id) {
-    // flatten first so we get perfectly nested loops as much as possible
-    auto ast = flattenStmtSeq(hoistVarOverStmtSeq(_ast));
-
+std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
+                                                  const ID &loop1Id) {
     // check accessed vardefs: those vardefs accessed by loop1 should not have
     // their shapes modified in loop0
     CheckFuseAccessible check(loop0Id, loop1Id);
@@ -836,6 +831,56 @@ plutoFuse(const Stmt &_ast, const ID &loop0Id, const ID &loop1Id) {
     ast = sinkVar(ast);
 
     return {ast, {fuser.fusedId_, parallelCount}};
+}
+
+class InjectEmptyLoop : public Mutator {
+    ID target_;
+    bool clearingBody_;
+    ID emptyLoopId_;
+
+  public:
+    InjectEmptyLoop(const ID &target) : target_(target), clearingBody_(false) {}
+
+    const ID &emptyLoopId() const { return emptyLoopId_; }
+
+  protected:
+    Stmt visit(const For &op) override {
+        if (clearingBody_) {
+            Stmt body;
+            // recurse into next level when it's still a loop
+            if (op->body_->nodeType() == ASTNodeType::For)
+                body = (*this)(op->body_);
+            // nest loops end, clear the body
+            else
+                body = makeStmtSeq({});
+            // reset the id to avoid conflict
+            return makeFor(op->iter_, op->begin_, op->end_, op->step_, op->len_,
+                           op->property_, body);
+        } else if (op->id() == target_) {
+            clearingBody_ = true;
+            auto emptyLoop = (*this)(op);
+            emptyLoopId_ = emptyLoop->id();
+            clearingBody_ = false;
+            return makeStmtSeq({emptyLoop, op});
+        }
+        return Mutator::visit(op);
+    }
+};
+
+} // namespace
+
+std::pair<Stmt, std::pair<ID, int>>
+plutoFuse(const Stmt &ast, const ID &loop0Id, const ID &loop1Id) {
+    // flatten first so we get perfectly nested loops as much as possible
+    return plutoFuseImpl(flattenStmtSeq(hoistVarOverStmtSeq(ast)), loop0Id,
+                         loop1Id);
+}
+
+std::pair<Stmt, std::pair<ID, int>> plutoPermute(const Stmt &_ast,
+                                                 const ID &loop) {
+    InjectEmptyLoop injecter(loop);
+    auto ast = injecter(flattenStmtSeq(hoistVarOverStmtSeq(_ast)));
+    return plutoFuseImpl(ast, injecter.emptyLoopId(), loop);
 }
 
 } // namespace freetensor

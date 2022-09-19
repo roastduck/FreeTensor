@@ -761,6 +761,9 @@ class Schedule(ffi.Schedule):
     def pluto_fuse(self, loop0, loop1):
         return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1))
 
+    def pluto_permute(self, loop):
+        return super().pluto_permute(self._lookup(loop))
+
     def auto_schedule(self, target):
         """
         (Experimental) Automatic scheduling using some heuristics

@@ -94,3 +94,27 @@ def test_pluto_fuse_imbalanced_nest():
     print(kernel)
     assert parallelism == 0
     assert kernel.body.match(kernel_expected.body)
+
+
+def test_pluto_permute_reorder():
+
+    @ft.transform
+    def kernel(x: ft.Var[(256, 256), "float32", "inout"]):
+        #! label: L0
+        for i in range(1, 256):
+            for j in range(256):
+                x[i, j] += x[i - 1, j]
+
+    @ft.transform
+    def kernel_expected(x: ft.Var[(256, 256), "float32", "inout"]):
+        for j in range(256):
+            for i in range(1, 256):
+                x[i, j] += x[i + -1, j]
+
+    print(kernel)
+    s = ft.Schedule(kernel)
+    _, parallelism = s.pluto_permute("L0")
+    kernel = s.func()
+    print(kernel)
+    assert parallelism == 1
+    assert kernel.body.match(kernel_expected.body)

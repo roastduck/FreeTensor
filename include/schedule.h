@@ -693,6 +693,7 @@ class Schedule {
     void asMatMul(const ID &loop);
 
     std::pair<ID, int> plutoFuse(const ID &loop0, const ID &loop1);
+    std::pair<ID, int> plutoPermute(const ID &loop);
 
     /**
      * (Experimental) Automatic scheduling using some heuristics
