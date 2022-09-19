@@ -127,7 +127,7 @@ class InjectFakeAccess : public Mutator {
         });
 
         return makeFor(op->iter_, op->begin_, op->end_, op->step_, op->len_,
-                       op->property_, newBody);
+                       op->property_, newBody, op->metadata(), op->id());
     }
 };
 
