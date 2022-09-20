@@ -118,10 +118,12 @@ class PBMap {
     }
 
     void moveDimsInputToOutput(unsigned first, unsigned n, unsigned target) {
-        map_ = isl_map_move_dims(map_, isl_dim_out, target, isl_dim_in, first, n);
+        map_ =
+            isl_map_move_dims(map_, isl_dim_out, target, isl_dim_in, first, n);
     }
     void moveDimsOutputToInput(unsigned first, unsigned n, unsigned target) {
-        map_ = isl_map_move_dims(map_, isl_dim_in, target, isl_dim_out, first, n);
+        map_ =
+            isl_map_move_dims(map_, isl_dim_in, target, isl_dim_out, first, n);
     }
 
     friend std::ostream &operator<<(std::ostream &os, const PBMap &map) {
