@@ -9,6 +9,7 @@
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/shrink_for.h>
 #include <pass/sink_var.h>
+#include <schedule.h>
 #include <schedule/fuse.h>
 #include <schedule/pluto.h>
 
@@ -881,6 +882,34 @@ std::pair<Stmt, std::pair<ID, int>> plutoPermute(const Stmt &_ast,
     InjectEmptyLoop injecter(loop);
     auto ast = injecter(flattenStmtSeq(hoistVarOverStmtSeq(_ast)));
     return plutoFuseImpl(ast, injecter.emptyLoopId(), loop);
+}
+
+std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1) {
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_SCHEDULE_LOG(PlutoFuse, freetensor::plutoFuse, loop0, loop1));
+    try {
+        auto ret = applyLog(log);
+        commitTransaction();
+        return ret;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
+}
+
+std::pair<ID, int> Schedule::plutoPermute(const ID &loop) {
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_SCHEDULE_LOG(PlutoPermute, freetensor::plutoPermute, loop));
+    try {
+        auto ret = applyLog(log);
+        commitTransaction();
+        return ret;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

@@ -236,6 +236,28 @@ typedef SharedLinkedList<Ref<ScheduleLogItem>, ScheduleLogItemHash,
                          ScheduleLogItemEqual>
     ScheduleLog;
 
+/**
+ * Make a log item with specifc parameter and result types, used in each
+ * schedule
+ */
+#define MAKE_SCHEDULE_LOG(TYPE, FUNC, ...)                                     \
+    ([this](const auto &func, const auto &_params) {                           \
+        auto params = getPackFromID(this, _params);                            \
+        /* decay is required: we must not store an reference */                \
+        typedef ScheduleLogItemImpl<                                           \
+            ScheduleType::TYPE, std::decay_t<decltype(func)>,                  \
+            std::decay_t<decltype(params)>,                                    \
+            std::decay_t<decltype(std::apply(func, _params))>>                 \
+            BaseClass;                                                         \
+        class ScheduleLogItem##TYPE : public BaseClass {                       \
+          public:                                                              \
+            ScheduleLogItem##TYPE(const typename BaseClass::Invocable &f,      \
+                                  const typename BaseClass::Params &p)         \
+                : BaseClass(f, p) {}                                           \
+        };                                                                     \
+        return Ref<ScheduleLogItem##TYPE>::make(func, params);                 \
+    })(futureSchedule(FUNC), std::make_tuple(__VA_ARGS__))
+
 } // namespace freetensor
 
 #endif // FREE_TENSOR_SCHEDULE_LOG_H

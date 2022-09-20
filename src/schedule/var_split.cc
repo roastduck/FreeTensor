@@ -1,3 +1,4 @@
+#include <schedule.h>
 #include <schedule/var_split.h>
 
 namespace freetensor {
@@ -80,6 +81,20 @@ Stmt varSplit(const Stmt &_ast, const ID &def, int dim, VarSplitMode mode,
         throw InvalidSchedule(toString(def) + " not found");
     }
     return ast;
+}
+
+void Schedule::varSplit(const ID &def, int dim, VarSplitMode mode, int factor,
+                        int nparts) {
+    beginTransaction();
+    auto log = appendLog(MAKE_SCHEDULE_LOG(VarSplit, freetensor::varSplit, def,
+                                           dim, mode, factor, nparts));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

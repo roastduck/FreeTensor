@@ -4,7 +4,8 @@ import pytest
 device = ft.CPU()
 target = device.target()
 
-# For normal test cases, please refer to test/codegen
+# This file only tests for invalid cases. Valid cases are tested per backend
+# in test/40.codegen
 
 
 def test_not_found():

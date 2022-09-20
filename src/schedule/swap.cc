@@ -4,6 +4,7 @@
 #include <analyze/deps.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/sink_var.h>
+#include <schedule.h>
 #include <schedule/swap.h>
 
 namespace freetensor {
@@ -80,6 +81,18 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
     FindDeps().filter(filter)(ast, found);
 
     return sinkVar(ast);
+}
+
+void Schedule::swap(const std::vector<ID> &order) {
+    beginTransaction();
+    auto log = appendLog(MAKE_SCHEDULE_LOG(Swap, freetensor::swap, order));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

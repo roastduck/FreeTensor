@@ -10,7 +10,7 @@ device = ft.GPU()
 target = device.target()
 
 
-def test_cublas_basic():
+def test_basic():
 
     @ft.transform
     def test(a, b, c):

@@ -10,6 +10,7 @@
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
 #include <pass/tensor_prop_const.h>
+#include <schedule.h>
 #include <schedule/fuse.h>
 
 namespace freetensor {
@@ -301,6 +302,83 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     ast = shrinkVar(ast);
     ast = removeDeadVar(ast);
     return std::make_pair(ast, mutator.fused());
+}
+
+ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict) {
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_SCHEDULE_LOG(Fuse, freetensor::fuse, loop0, loop1, strict));
+    try {
+        auto ret = applyLog(log);
+        commitTransaction();
+        return ret;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
+}
+
+ID Schedule::fuse(const ID &loop0, bool strict) {
+    beginTransaction();
+    auto l0 = find(loop0);
+
+    auto isTrivialScope = [](const Stmt &s) {
+        switch (s->nodeType()) {
+        case ASTNodeType::StmtSeq:
+        case ASTNodeType::VarDef:
+        case ASTNodeType::Assert:
+        case ASTNodeType::Assume:
+            return true;
+        case ASTNodeType::If:
+            return !s.as<IfNode>()->elseCase_.isValid();
+        default:
+            return false;
+        }
+    };
+    auto firstStmtInTrivalScope = [](const Stmt &s) -> Stmt {
+        switch (s->nodeType()) {
+        case ASTNodeType::StmtSeq:
+            return s.as<StmtSeqNode>()->stmts_.empty()
+                       ? nullptr
+                       : (Stmt)s.as<StmtSeqNode>()->stmts_.front();
+        case ASTNodeType::VarDef:
+            return s.as<VarDefNode>()->body_;
+        case ASTNodeType::Assert:
+            return s.as<AssertNode>()->body_;
+        case ASTNodeType::Assume:
+            return s.as<AssumeNode>()->body_;
+        case ASTNodeType::If:
+            return s.as<IfNode>()->elseCase_.isValid()
+                       ? nullptr
+                       : (Stmt)s.as<IfNode>()->thenCase_;
+        default:
+            return nullptr;
+        }
+    };
+
+    auto s = l0;
+    while (!s->nextStmt().isValid() && s->parentStmt().isValid() &&
+           isTrivialScope(s->parentStmt())) {
+        s = s->parentStmt();
+    }
+    if (s.isValid()) {
+        if (s = s->nextStmt(); s.isValid()) {
+            while (s.isValid() && s->nodeType() != ASTNodeType::For &&
+                   isTrivialScope(s)) {
+                s = firstStmtInTrivalScope(s);
+            }
+            if (s.isValid() && s->nodeType() == ASTNodeType::For) {
+                auto ret = fuse(loop0, s->id(), strict);
+                commitTransaction();
+                return ret;
+            }
+        }
+    }
+
+    abortTransaction();
+    throw InvalidSchedule("Invalid fuse(" + toString(loop0) +
+                          "): Unable to find a following loop of " +
+                          toString(loop0));
 }
 
 } // namespace freetensor
