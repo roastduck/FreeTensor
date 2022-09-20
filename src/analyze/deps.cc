@@ -318,7 +318,7 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
     return PBMap(presburger, ret);
 }
 
-std::string AnalyzeDeps::makeNdList(const std::string &name, int n) const {
+std::string AnalyzeDeps::makeNdList(const std::string &name, int n) {
     std::string ret;
     for (int i = 0; i < n; i++) {
         ret += name + std::to_string(i);

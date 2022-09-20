@@ -313,16 +313,19 @@ class AnalyzeDeps {
 
     const std::vector<std::function<void()>> &tasks() const { return tasks_; }
 
-  private:
-    std::string makeIterList(const std::vector<IterAxis> &list, int n);
-    std::string makeNdList(const std::string &name, int n) const;
-    Ref<std::string> makeAccList(GenPBExpr &genPBExpr,
-                                 const std::vector<Expr> &list, RelaxMode relax,
-                                 GenPBExpr::VarMap &externals);
-    Ref<std::string> makeCond(GenPBExpr &genPBExpr,
-                              const std::vector<Expr> &conds, RelaxMode relax,
-                              GenPBExpr::VarMap &externals);
+  public:
+    static std::string makeIterList(const std::vector<IterAxis> &list, int n);
+    static std::string makeNdList(const std::string &name, int n);
+    static Ref<std::string> makeAccList(GenPBExpr &genPBExpr,
+                                        const std::vector<Expr> &list,
+                                        RelaxMode relax,
+                                        GenPBExpr::VarMap &externals);
+    static Ref<std::string> makeCond(GenPBExpr &genPBExpr,
+                                     const std::vector<Expr> &conds,
+                                     RelaxMode relax,
+                                     GenPBExpr::VarMap &externals);
 
+  private:
     PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
                      int accDim, RelaxMode relax, const std::string &extSuffix,
                      GenPBExpr::VarMap &externals);

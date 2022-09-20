@@ -35,15 +35,17 @@ class FuseFor : public Mutator {
     Stmt visit(const StmtSeq &op) override;
 };
 
-class CheckAccessible : public Visitor {
+class CheckFuseAccessible : public Visitor {
     ID id0_, id1_;
     LoopInScopes loop0InScopes_, loop1InScopes_;
 
   public:
-    CheckAccessible(const ID &id0, const ID &id1) : id0_(id0), id1_(id1) {}
+    CheckFuseAccessible(const ID &id0, const ID &id1) : id0_(id0), id1_(id1) {}
 
     const LoopInScopes &loop0() const { return loop0InScopes_; }
     const LoopInScopes &loop1() const { return loop1InScopes_; }
+
+    void check(const Stmt &ast);
 
   protected:
     void visit(const StmtSeq &op) override;

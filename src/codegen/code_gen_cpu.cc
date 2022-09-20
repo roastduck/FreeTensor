@@ -104,7 +104,7 @@ void CodeGenCPU::visit(const VarDef &op) {
                 } else {
                     ERROR("BUG: Dyanmic sized variables cannot be allocated on "
                           "stack. Should be transformed to heap-allocated in "
-                          "pass/make_heap_alloc")
+                          "pass/make_heap_alloc");
                 }
             }
 

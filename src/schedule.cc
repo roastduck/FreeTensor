@@ -22,6 +22,7 @@
 #include <schedule/multi_level_tiling.h>
 #include <schedule/parallelize.h>
 #include <schedule/permute.h>
+#include <schedule/pluto.h>
 #include <schedule/reorder.h>
 #include <schedule/separate_tail.h>
 #include <schedule/set_mem_type.h>

@@ -5,6 +5,7 @@
 #include <cctype>
 #include <iostream>
 #include <ranges>
+#include <sstream>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -177,6 +178,33 @@ std::ostream &operator<<(std::ostream &os, std::tuple<Ts...> const &tuple) {
             return ((os << (i++ > 0 ? ", " : "") << t), ...);
         },
         tuple);
+}
+
+/**
+ * Join a sequence of elements to a string with given splitter
+ */
+struct _Join {
+    const std::string &splitter;
+};
+
+template <std::ranges::range Container>
+std::string join(const Container &c, const std::string &splitter) {
+    std::ostringstream oss;
+    bool first = true;
+    for (const auto &s : c) {
+        if (!first)
+            oss << splitter;
+        oss << s;
+        first = false;
+    }
+    return oss.str();
+}
+
+inline auto join(const std::string &splitter) { return _Join{splitter}; }
+
+template <std::ranges::range Container>
+auto operator|(const Container &c, const _Join &joiner) {
+    return join(c, joiner.splitter);
 }
 
 } // namespace freetensor

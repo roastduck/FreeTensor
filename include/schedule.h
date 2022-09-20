@@ -693,6 +693,30 @@ class Schedule {
     void asMatMul(const ID &loop);
 
     /**
+     * Use Pluto+ algorithm to permute and fuse two loops, with as most
+     * parallelizable loops as possible at outermost levels.
+     * The two loops are required to be consequent; all directly nested levels
+     * are detected and subject to permutation. Remaining levels that cannot be
+     * fused are left inside the fused loops as two statements
+     *
+     * @param loop0 : The first loop to fuse
+     * @param loop1 : The second loop to fuse
+     * @return std::pair<ID, int> : The ID of fused loop and level of
+     * parallelizable loops
+     */
+    std::pair<ID, int> plutoFuse(const ID &loop0, const ID &loop1);
+    
+    /**
+     * Use Pluto+ algorithm to permute a single loop, with as most
+     * parallelizable loops as possible at outermost levels.
+     *
+     * @param loop : The loop to permute
+     * @return std::pair<ID, int> : The ID of permuted loop and level of
+     * parallelizable loops
+     */
+    std::pair<ID, int> plutoPermute(const ID &loop);
+
+    /**
      * (Experimental) Automatic scheduling using some heuristics
      *
      * @param target : Target architecture
