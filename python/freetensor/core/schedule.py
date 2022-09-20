@@ -759,9 +759,48 @@ class Schedule(ffi.Schedule):
         super().as_matmul(self._lookup(loop))
 
     def pluto_fuse(self, loop0, loop1):
+        """
+        Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable
+        loops as possible at outermost levels.
+        The two loops are required to be consequent; all directly nested levels are
+        detected and subject to permutation. Remaining levels that cannot be fused are
+        left inside the fused loops as two statements
+
+        Parameters
+        ----------
+        loop0 : str, ID or Stmt
+            The first loop to fuse
+        loop1 : str, ID or Stmt
+            The second loop to fuse
+
+        Returns
+        -------
+        (ID, int)
+            The ID of fused loop and level of parallelizable loops
+
+        Raises
+        ------
+        InvalidSchedule
+            if the loops are not consequent
+        """
         return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1))
 
     def pluto_permute(self, loop):
+        """
+        Use Pluto+ algorithm to permute a single loop, with as most parallelizable loops
+        as possible at outermost levels.
+
+        Parameters
+        ----------
+        loop : str, ID or Stmt
+            The loop to permute
+
+        Returns
+        -------
+        (ID, int)
+            The ID of permuted loop and level of parallelizable loops
+
+        """
         return super().pluto_permute(self._lookup(loop))
 
     def auto_schedule(self, target):
