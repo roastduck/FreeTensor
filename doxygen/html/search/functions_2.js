@@ -14,6 +14,7 @@ var searchData=
   ['bothleafselector_11',['BothLeafSelector',['../classfreetensor_1_1BothLeafSelector.html#a8bd0b2d2e138fc2cf7eadf0f57d05322',1,'freetensor::BothLeafSelector']]],
   ['bothselector_12',['BothSelector',['../classfreetensor_1_1BothSelector.html#a01972ca9267d475cbf441de67b3bd4ee',1,'freetensor::BothSelector']]],
   ['buffer_13',['buffer',['../classfreetensor_1_1SymbolTableInterface.html#a2afdaf2b1dca02deebaff0fbf20c11ef',1,'freetensor::SymbolTableInterface::buffer()'],['../classfreetensor_1_1SymbolTableData.html#a52968bbce30ec09728b37700831cccd9',1,'freetensor::SymbolTableData::buffer()'],['../classfreetensor_1_1SymbolTable.html#acf44b2e9ac614c58006e64b138c2a329',1,'freetensor::SymbolTable::buffer()'],['../classfreetensor_1_1Z3SimplifyWithSymbolTable.html#a59387234af40c0461db6b85b5d169801',1,'freetensor::Z3SimplifyWithSymbolTable::buffer()']]],
-  ['builtinsimplify_14',['BuiltinSimplify',['../classfreetensor_1_1BuiltinSimplify.html#a03d431a4e9cb9b24f6ab0157252c7fbb',1,'freetensor::BuiltinSimplify']]],
-  ['builtinsimplify_15',['builtinSimplify',['../namespacefreetensor.html#a5c54f4c7a864a4e7051d226cfff73cb1',1,'freetensor']]]
+  ['build_14',['build',['../classfreetensor_1_1PBMapBuilder.html#adfd40ce5de8835fed589042c83db5546',1,'freetensor::PBMapBuilder::build()'],['../classfreetensor_1_1PBSetBuilder.html#aed62f3ca77d91fa81b29936f7d65a400',1,'freetensor::PBSetBuilder::build()']]],
+  ['builtinsimplify_15',['BuiltinSimplify',['../classfreetensor_1_1BuiltinSimplify.html#a03d431a4e9cb9b24f6ab0157252c7fbb',1,'freetensor::BuiltinSimplify']]],
+  ['builtinsimplify_16',['builtinSimplify',['../namespacefreetensor.html#a5c54f4c7a864a4e7051d226cfff73cb1',1,'freetensor']]]
 ];

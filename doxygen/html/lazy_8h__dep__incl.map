@@ -1,6 +1,6 @@
 <map id="include/lazy.h" name="include/lazy.h">
-<area shape="rect" id="node1" title=" " alt="" coords="2182,5,2293,32"/>
-<area shape="rect" id="node2" href="$deps_8h.html" title=" " alt="" coords="2152,80,2323,107"/>
+<area shape="rect" id="node1" title=" " alt="" coords="2279,5,2390,32"/>
+<area shape="rect" id="node2" href="$deps_8h.html" title=" " alt="" coords="2249,80,2420,107"/>
 <area shape="rect" id="node3" href="$all__no__reuse__defs_8cc.html" title=" " alt="" coords="5,155,144,196"/>
 <area shape="rect" id="node4" href="$analyze__version_8cc.html" title=" " alt="" coords="169,155,319,196"/>
 <area shape="rect" id="node5" href="$check__not__modified_8cc.html" title=" " alt="" coords="343,155,510,196"/>
@@ -22,7 +22,8 @@
 <area shape="rect" id="node21" href="$inlining_8cc.html" title=" " alt="" coords="3427,162,3600,189"/>
 <area shape="rect" id="node22" href="$schedule_2parallelize_8cc.html" title=" " alt="" coords="3625,162,3818,189"/>
 <area shape="rect" id="node23" href="$permute_8cc.html" title=" " alt="" coords="3842,162,4022,189"/>
-<area shape="rect" id="node24" href="$reorder_8cc.html" title=" " alt="" coords="4047,162,4217,189"/>
-<area shape="rect" id="node25" href="$swap_8cc.html" title=" " alt="" coords="4242,162,4401,189"/>
-<area shape="rect" id="node26" href="$vectorize_8cc.html" title=" " alt="" coords="4425,162,4610,189"/>
+<area shape="rect" id="node24" href="$pluto_8cc.html" title=" " alt="" coords="4046,162,4205,189"/>
+<area shape="rect" id="node25" href="$reorder_8cc.html" title=" " alt="" coords="4229,162,4400,189"/>
+<area shape="rect" id="node26" href="$swap_8cc.html" title=" " alt="" coords="4425,162,4583,189"/>
+<area shape="rect" id="node27" href="$vectorize_8cc.html" title=" " alt="" coords="4607,162,4793,189"/>
 </map>

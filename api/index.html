@@ -9919,6 +9919,51 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">))</span>
 
+    <span class="k">def</span> <span class="nf">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop0</span><span class="p">,</span> <span class="n">loop1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable</span>
+<span class="sd">        loops as possible at outermost levels.</span>
+<span class="sd">        The two loops are required to be consequent; all directly nested levels are</span>
+<span class="sd">        detected and subject to permutation. Remaining levels that cannot be fused are</span>
+<span class="sd">        left inside the fused loops as two statements</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        loop0 : str, ID or Stmt</span>
+<span class="sd">            The first loop to fuse</span>
+<span class="sd">        loop1 : str, ID or Stmt</span>
+<span class="sd">            The second loop to fuse</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        (ID, int)</span>
+<span class="sd">            The ID of fused loop and level of parallelizable loops</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        InvalidSchedule</span>
+<span class="sd">            if the loops are not consequent</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop1</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Use Pluto+ algorithm to permute a single loop, with as most parallelizable loops</span>
+<span class="sd">        as possible at outermost levels.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        loop : str, ID or Stmt</span>
+<span class="sd">            The loop to permute</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        (ID, int)</span>
+<span class="sd">            The ID of permuted loop and level of parallelizable loops</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">))</span>
+
     <span class="k">def</span> <span class="nf">auto_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        (Experimental) Automatic scheduling using some heuristics</span>
@@ -11605,6 +11650,183 @@ terms returned by <code>transformFunc</code> when called with original iteration
 <span class="sd">        the list of IDs of permuted loops</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">permute</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">loops</span><span class="p">],</span> <span class="n">transform_func</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.schedule.Schedule.pluto_fuse" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop0</span><span class="p">,</span> <span class="n">loop1</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.schedule.Schedule.pluto_fuse" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable</p>
+<p>loops as possible at outermost levels.
+The two loops are required to be consequent; all directly nested levels are
+detected and subject to permutation. Remaining levels that cannot be fused are
+left inside the fused loops as two statements</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>loop0</strong> (<code>str, ID or Stmt</code>) – The first loop to fuse</p></li>
+            <li><p><strong>loop1</strong> (<code>str, ID or Stmt</code>) – The second loop to fuse</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Exceptions:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><code>InvalidSchedule</code> – if the loops are not consequent</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+        <ul class="first simple">
+          <li><p><code>(ID, int)</code> – The ID of fused loop and level of parallelizable loops</p></li>
+        </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop0</span><span class="p">,</span> <span class="n">loop1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable</span>
+<span class="sd">    loops as possible at outermost levels.</span>
+<span class="sd">    The two loops are required to be consequent; all directly nested levels are</span>
+<span class="sd">    detected and subject to permutation. Remaining levels that cannot be fused are</span>
+<span class="sd">    left inside the fused loops as two statements</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    loop0 : str, ID or Stmt</span>
+<span class="sd">        The first loop to fuse</span>
+<span class="sd">    loop1 : str, ID or Stmt</span>
+<span class="sd">        The second loop to fuse</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    (ID, int)</span>
+<span class="sd">        The ID of fused loop and level of parallelizable loops</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    InvalidSchedule</span>
+<span class="sd">        if the loops are not consequent</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop1</span><span class="p">))</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.schedule.Schedule.pluto_permute" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.schedule.Schedule.pluto_permute" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Use Pluto+ algorithm to permute a single loop, with as most parallelizable loops</p>
+<p>as possible at outermost levels.</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>loop</strong> (<code>str, ID or Stmt</code>) – The loop to permute</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+        <ul class="first simple">
+          <li><p><code>(ID, int)</code> – The ID of permuted loop and level of parallelizable loops</p></li>
+        </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use Pluto+ algorithm to permute a single loop, with as most parallelizable loops</span>
+<span class="sd">    as possible at outermost levels.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    loop : str, ID or Stmt</span>
+<span class="sd">        The loop to permute</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    (ID, int)</span>
+<span class="sd">        The ID of permuted loop and level of parallelizable loops</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">))</span>
 </code></pre></div>
         </details>
     </div>

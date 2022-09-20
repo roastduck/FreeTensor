@@ -6,10 +6,12 @@ var searchData=
   ['parent_5f_3',['parent_',['../structfreetensor_1_1ChildOf.html#ac074bb1a5b7178878b4cc97ebb025779',1,'freetensor::ChildOf']]],
   ['parts_4',['parts',['../structfreetensor_1_1SubSketch.html#ae7d48201cff46e6d4a02697a9020e987',1,'freetensor::SubSketch']]],
   ['pat_5f_5',['pat_',['../classfreetensor_1_1MultiLevelTilingPart.html#ad6a177f8d7ac5c623f7c8b1334d33cce',1,'freetensor::MultiLevelTilingPart']]],
-  ['pinned_5f_6',['pinned_',['../classfreetensor_1_1VarDefNode.html#a1357a236110a6a62afae933a1596532b',1,'freetensor::VarDefNode']]],
-  ['poppedstream_5f_7',['poppedStream_',['../classfreetensor_1_1CodeGen.html#ad88eaf7974cc70ec638f44aaf7c894eb',1,'freetensor::CodeGen']]],
-  ['preferlibs_5f_8',['preferLibs_',['../structfreetensor_1_1ForProperty.html#a74f1f20aae6c5ad274cda8a72c1ad988',1,'freetensor::ForProperty']]],
-  ['presburger_5f_9',['presburger_',['../structfreetensor_1_1Dependency.html#a6b21e029774b028c8767f1800d71e121',1,'freetensor::Dependency']]],
-  ['property_5f_10',['property_',['../classfreetensor_1_1ForNode.html#a7392b8561b7bd0cd3be9bdf91761f7bd',1,'freetensor::ForNode']]],
-  ['ptr_5f_11',['ptr_',['../structfreetensor_1_1ArrayCopy.html#a959516e15e2f79277ec360b9bd9d159e',1,'freetensor::ArrayCopy']]]
+  ['permute0_5f_6',['permute0_',['../pluto_8cc.html#a3023f49cb701fac1a11495b34d60915a',1,'pluto.cc']]],
+  ['permute1_5f_7',['permute1_',['../pluto_8cc.html#a673b5c905b84cdd66ba3524847604637',1,'pluto.cc']]],
+  ['pinned_5f_8',['pinned_',['../classfreetensor_1_1VarDefNode.html#a1357a236110a6a62afae933a1596532b',1,'freetensor::VarDefNode']]],
+  ['poppedstream_5f_9',['poppedStream_',['../classfreetensor_1_1CodeGen.html#ad88eaf7974cc70ec638f44aaf7c894eb',1,'freetensor::CodeGen']]],
+  ['preferlibs_5f_10',['preferLibs_',['../structfreetensor_1_1ForProperty.html#a74f1f20aae6c5ad274cda8a72c1ad988',1,'freetensor::ForProperty']]],
+  ['presburger_5f_11',['presburger_',['../structfreetensor_1_1Dependency.html#a6b21e029774b028c8767f1800d71e121',1,'freetensor::Dependency']]],
+  ['property_5f_12',['property_',['../classfreetensor_1_1ForNode.html#a7392b8561b7bd0cd3be9bdf91761f7bd',1,'freetensor::ForNode']]],
+  ['ptr_5f_13',['ptr_',['../structfreetensor_1_1ArrayCopy.html#a959516e15e2f79277ec360b9bd9d159e',1,'freetensor::ArrayCopy']]]
 ];

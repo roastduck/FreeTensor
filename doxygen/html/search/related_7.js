@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['weak_0',['Weak',['../classfreetensor_1_1Ref.html#adf9fa69cb9febeaa8c3d76dec9b3b9db',1,'freetensor::Ref']]]
+  ['ref_0',['Ref',['../classfreetensor_1_1Ref.html#aed701787ab4897bc9a5cdc70f97c3292',1,'freetensor::Ref::Ref()'],['../classfreetensor_1_1EnableSelf.html#aed701787ab4897bc9a5cdc70f97c3292',1,'freetensor::EnableSelf::Ref()']]]
 ];

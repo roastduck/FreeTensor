@@ -1,7 +1,7 @@
 <map id="include/analyze/track_stmt.h" name="include/analyze/track_stmt.h">
 <area shape="rect" id="node1" title=" " alt="" coords="1203,5,1365,47"/>
 <area shape="rect" id="node2" href="$analyze__version_8h.html" title=" " alt="" coords="165,95,344,136"/>
-<area shape="rect" id="node5" href="$deps_8h.html" title=" " alt="" coords="2229,102,2400,129"/>
+<area shape="rect" id="node5" href="$deps_8h.html" title=" " alt="" coords="2327,102,2497,129"/>
 <area shape="rect" id="node3" href="$analyze__version_8cc.html" title=" " alt="" coords="179,184,330,225"/>
 <area shape="rect" id="node4" href="$output__intermediates_8cc.html" title=" " alt="" coords="5,184,155,225"/>
 <area shape="rect" id="node6" href="$all__no__reuse__defs_8cc.html" title=" " alt="" coords="355,184,493,225"/>
@@ -24,7 +24,8 @@
 <area shape="rect" id="node23" href="$inlining_8cc.html" title=" " alt="" coords="3601,191,3775,218"/>
 <area shape="rect" id="node24" href="$schedule_2parallelize_8cc.html" title=" " alt="" coords="3799,191,3993,218"/>
 <area shape="rect" id="node25" href="$permute_8cc.html" title=" " alt="" coords="4017,191,4197,218"/>
-<area shape="rect" id="node26" href="$reorder_8cc.html" title=" " alt="" coords="4221,191,4392,218"/>
-<area shape="rect" id="node27" href="$swap_8cc.html" title=" " alt="" coords="4417,191,4575,218"/>
-<area shape="rect" id="node28" href="$vectorize_8cc.html" title=" " alt="" coords="4599,191,4785,218"/>
+<area shape="rect" id="node26" href="$pluto_8cc.html" title=" " alt="" coords="4221,191,4379,218"/>
+<area shape="rect" id="node27" href="$reorder_8cc.html" title=" " alt="" coords="4404,191,4575,218"/>
+<area shape="rect" id="node28" href="$swap_8cc.html" title=" " alt="" coords="4599,191,4758,218"/>
+<area shape="rect" id="node29" href="$vectorize_8cc.html" title=" " alt="" coords="4782,191,4967,218"/>
 </map>

@@ -8,9 +8,12 @@ var searchData=
   ['reductionlooptiling_5',['reductionLoopTiling',['../structfreetensor_1_1MultiLevelTilingAnnotation.html#acdd3e1524308428978e7a1b3418b11ff',1,'freetensor::MultiLevelTilingAnnotation']]],
   ['reductionlooptimes_5f_6',['reductionLoopTimes_',['../classfreetensor_1_1MultiLevelTilingPart.html#acea5a4ddbe3fbaad59c32221cce45a08',1,'freetensor::MultiLevelTilingPart']]],
   ['reductions_5f_7',['reductions_',['../structfreetensor_1_1ForProperty.html#aeecb09bc83d34f64242bd15a63a7984f',1,'freetensor::ForProperty']]],
-  ['result_5f_8',['result_',['../classfreetensor_1_1ScheduleLogItemImpl.html#a4ea2cf276644aa8223b3f4fd521e65d0',1,'freetensor::ScheduleLogItemImpl']]],
-  ['rettype_5f_9',['retType_',['../classfreetensor_1_1IntrinsicNode.html#aabdf2f79d915080781d4d4dfa53fa720',1,'freetensor::IntrinsicNode']]],
-  ['returnclosure_5f_10',['returnClosure_',['../structfreetensor_1_1FuncRet.html#a7fbbcc654f0d8b28041d3cbd46dca838',1,'freetensor::FuncRet']]],
-  ['returns_5f_11',['returns_',['../classfreetensor_1_1FuncNode.html#ad79b48ec957b8fbebce7c13725d2fc16',1,'freetensor::FuncNode']]],
-  ['rhs_5f_12',['rhs_',['../classfreetensor_1_1BinaryExprNode.html#ae87839d910b0d33dd0c7760ac14dc28a',1,'freetensor::BinaryExprNode']]]
+  ['remainloop0var_5f_8',['remainLoop0Var_',['../pluto_8cc.html#a1cc86141cfef2f53f699f230e3168265',1,'pluto.cc']]],
+  ['remainloop1var_5f_9',['remainLoop1Var_',['../pluto_8cc.html#aec66f0faaaa5aecd106cdaff1a3f9a02',1,'pluto.cc']]],
+  ['replacemap_5f_10',['replaceMap_',['../pluto_8cc.html#aada0db24c2f3a9379f2fb4cd4c78ae62',1,'pluto.cc']]],
+  ['result_5f_11',['result_',['../classfreetensor_1_1ScheduleLogItemImpl.html#a4ea2cf276644aa8223b3f4fd521e65d0',1,'freetensor::ScheduleLogItemImpl']]],
+  ['rettype_5f_12',['retType_',['../classfreetensor_1_1IntrinsicNode.html#aabdf2f79d915080781d4d4dfa53fa720',1,'freetensor::IntrinsicNode']]],
+  ['returnclosure_5f_13',['returnClosure_',['../structfreetensor_1_1FuncRet.html#a7fbbcc654f0d8b28041d3cbd46dca838',1,'freetensor::FuncRet']]],
+  ['returns_5f_14',['returns_',['../classfreetensor_1_1FuncNode.html#ad79b48ec957b8fbebce7c13725d2fc16',1,'freetensor::FuncNode']]],
+  ['rhs_5f_15',['rhs_',['../classfreetensor_1_1BinaryExprNode.html#ae87839d910b0d33dd0c7760ac14dc28a',1,'freetensor::BinaryExprNode']]]
 ];

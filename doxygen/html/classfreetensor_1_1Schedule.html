@@ -153,6 +153,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a5acb3fd33acc0a8940fc36fe97a9a9da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a37ef938b9a97cc35d911120950648c55"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a37ef938b9a97cc35d911120950648c55">asMatMul</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
 <tr class="separator:a37ef938b9a97cc35d911120950648c55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab4565d7a9c2f6e5113ae398bfb0fbb0f"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#ab4565d7a9c2f6e5113ae398bfb0fbb0f">plutoFuse</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop0, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1)</td></tr>
+<tr class="separator:ab4565d7a9c2f6e5113ae398bfb0fbb0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1871c7e369172916d64cdcbf32779453"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a1871c7e369172916d64cdcbf32779453">plutoPermute</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
+<tr class="separator:a1871c7e369172916d64cdcbf32779453"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab07b305c56ef33cab76de9e874c295c3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#ab07b305c56ef33cab76de9e874c295c3">autoSchedule</a> (const <a class="el" href="classfreetensor_1_1Target.html">Target</a> &amp;target, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a> &gt; &amp;trace=nullptr)</td></tr>
 <tr class="separator:ab07b305c56ef33cab76de9e874c295c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f6e8a418824aeaf48e5966d9046e8b4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a7f6e8a418824aeaf48e5966d9046e8b4">autoUseLib</a> (const <a class="el" href="classfreetensor_1_1Target.html">Target</a> &amp;target)</td></tr>
@@ -1455,6 +1459,69 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
+<a id="ab4565d7a9c2f6e5113ae398bfb0fbb0f" name="ab4565d7a9c2f6e5113ae398bfb0fbb0f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab4565d7a9c2f6e5113ae398bfb0fbb0f">&#9670;&nbsp;</a></span>plutoFuse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; freetensor::Schedule::plutoFuse </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>loop0</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>loop1</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable loops as possible at outermost levels. The two loops are required to be consequent; all directly nested levels are detected and subject to permutation. Remaining levels that cannot be fused are left inside the fused loops as two statements</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">loop0</td><td>: The first loop to fuse </td></tr>
+    <tr><td class="paramname">loop1</td><td>: The second loop to fuse </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>std::pair&lt;ID, int&gt; : The <a class="el" href="classfreetensor_1_1ID.html">ID</a> of fused loop and level of parallelizable loops </dd></dl>
+
+</div>
+</div>
+<a id="a1871c7e369172916d64cdcbf32779453" name="a1871c7e369172916d64cdcbf32779453"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1871c7e369172916d64cdcbf32779453">&#9670;&nbsp;</a></span>plutoPermute()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; freetensor::Schedule::plutoPermute </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>loop</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Use Pluto+ algorithm to permute a single loop, with as most parallelizable loops as possible at outermost levels.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">loop</td><td>: The loop to permute </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>std::pair&lt;ID, int&gt; : The <a class="el" href="classfreetensor_1_1ID.html">ID</a> of permuted loop and level of parallelizable loops </dd></dl>
+
+</div>
+</div>
 <a id="a7152785074bdd363a5eb0091819b9152" name="a7152785074bdd363a5eb0091819b9152"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7152785074bdd363a5eb0091819b9152">&#9670;&nbsp;</a></span>reorder()</h2>
 
@@ -1981,6 +2048,7 @@ template&lt;class T &gt; </div>
 <li>src/schedule/<a class="el" href="move__to_8cc.html">move_to.cc</a></li>
 <li>src/schedule/<a class="el" href="schedule_2parallelize_8cc.html">parallelize.cc</a></li>
 <li>src/schedule/<a class="el" href="permute_8cc.html">permute.cc</a></li>
+<li>src/schedule/<a class="el" href="pluto_8cc.html">pluto.cc</a></li>
 <li>src/schedule/<a class="el" href="reorder_8cc.html">reorder.cc</a></li>
 <li>src/schedule/<a class="el" href="separate__tail_8cc.html">separate_tail.cc</a></li>
 <li>src/schedule/<a class="el" href="set__mem__type_8cc.html">set_mem_type.cc</a></li>

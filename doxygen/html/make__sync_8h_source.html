@@ -113,13 +113,13 @@ $(function() {
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>};</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="keyword">class </span>CopyParts : <span class="keyword">public</span> Mutator {</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> cond_;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> <a class="code hl_variable" href="pluto_8cc.html#a18df27463f94902658763b6f62efcf3d">cond_</a>;</div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keyword">const</span> std::vector&lt;Stmt&gt; &amp;splitters_;</div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    std::unordered_set&lt;Stmt&gt; fullParts_;</div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>  <span class="keyword">public</span>:</div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    CopyParts(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;cond, <span class="keyword">const</span> std::vector&lt;Stmt&gt; &amp;splitters)</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        : cond_(cond), splitters_(splitters) {}</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        : <a class="code hl_variable" href="pluto_8cc.html#a18df27463f94902658763b6f62efcf3d">cond_</a>(cond), splitters_(splitters) {}</div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>  <span class="keyword">protected</span>:</div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visitStmt(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op) <span class="keyword">override</span>;</div>
@@ -182,6 +182,7 @@ $(function() {
 <div class="ttc" id="anamespacefreetensor_html_ad8c8899f085110927482888ecf8e8b6d"><div class="ttname"><a href="namespacefreetensor.html#ad8c8899f085110927482888ecf8e8b6d">freetensor::Assert</a></div><div class="ttdeci">Ref&lt; AssertNode &gt; Assert</div><div class="ttdef"><b>Definition:</b> stmt.h:343</div></div>
 <div class="ttc" id="anamespacefreetensor_html_afa443a46bd7b0cab600c0bc6fef85f96"><div class="ttname"><a href="namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96">freetensor::StmtSeq</a></div><div class="ttdeci">Ref&lt; StmtSeqNode &gt; StmtSeq</div><div class="ttdef"><b>Definition:</b> stmt.h:42</div></div>
 <div class="ttc" id="anamespacestd_html"><div class="ttname"><a href="namespacestd.html">std</a></div><div class="ttdoc">STL namespace.</div></div>
+<div class="ttc" id="apluto_8cc_html_a18df27463f94902658763b6f62efcf3d"><div class="ttname"><a href="pluto_8cc.html#a18df27463f94902658763b6f62efcf3d">cond_</a></div><div class="ttdeci">Expr cond_</div><div class="ttdef"><b>Definition:</b> pluto.cc:193</div></div>
 <div class="ttc" id="atarget_8h_html"><div class="ttname"><a href="target_8h.html">target.h</a></div></div>
 <div class="ttc" id="avisitor_8h_html"><div class="ttname"><a href="visitor_8h.html">visitor.h</a></div></div>
 </div><!-- fragment --></div><!-- contents -->

@@ -68,6 +68,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classfreetensor_1_1AnalyzeDeps-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">freetensor::AnalyzeDeps Class Reference</div></div>
 </div><!--header-->
@@ -83,6 +84,17 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a4814ed5550b68edb193cae657c138cab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa11527c730681f0486e351790797a97f"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::function&lt; void()&gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1AnalyzeDeps.html#aa11527c730681f0486e351790797a97f">tasks</a> () const</td></tr>
 <tr class="separator:aa11527c730681f0486e351790797a97f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:ab970fa36326586e2b8dc827700d48821"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1AnalyzeDeps.html#ab970fa36326586e2b8dc827700d48821">makeIterList</a> (const std::vector&lt; <a class="el" href="structfreetensor_1_1IterAxis.html">IterAxis</a> &gt; &amp;list, int <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>)</td></tr>
+<tr class="separator:ab970fa36326586e2b8dc827700d48821"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7114cebdedcaeeee683dbd6eba4bb68"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1AnalyzeDeps.html#aa7114cebdedcaeeee683dbd6eba4bb68">makeNdList</a> (const std::string &amp;name, int <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>)</td></tr>
+<tr class="separator:aa7114cebdedcaeeee683dbd6eba4bb68"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af1db304b7f61b542fc2e0ebfb928c890"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1AnalyzeDeps.html#af1db304b7f61b542fc2e0ebfb928c890">makeAccList</a> (<a class="el" href="classfreetensor_1_1GenPBExpr.html">GenPBExpr</a> &amp;genPBExpr, const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;list, <a class="el" href="namespacefreetensor.html#a80560a57b432656df642136e27321cad">RelaxMode</a> relax, <a class="el" href="classfreetensor_1_1GenPBExpr.html#a435adddd945f29a6411809fd25972de1">GenPBExpr::VarMap</a> &amp;externals)</td></tr>
+<tr class="separator:af1db304b7f61b542fc2e0ebfb928c890"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac40e725747c5af72fb409b3917ef8453"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1AnalyzeDeps.html#ac40e725747c5af72fb409b3917ef8453">makeCond</a> (<a class="el" href="classfreetensor_1_1GenPBExpr.html">GenPBExpr</a> &amp;genPBExpr, const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;conds, <a class="el" href="namespacefreetensor.html#a80560a57b432656df642136e27321cad">RelaxMode</a> relax, <a class="el" href="classfreetensor_1_1GenPBExpr.html#a435adddd945f29a6411809fd25972de1">GenPBExpr::VarMap</a> &amp;externals)</td></tr>
+<tr class="separator:ac40e725747c5af72fb409b3917ef8453"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Find RAW, WAR and WAW dependencies </p>
@@ -221,6 +233,174 @@ Public Member Functions</h2></td></tr>
           <td></td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af1db304b7f61b542fc2e0ebfb928c890" name="af1db304b7f61b542fc2e0ebfb928c890"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af1db304b7f61b542fc2e0ebfb928c890">&#9670;&nbsp;</a></span>makeAccList()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; std::string &gt; freetensor::AnalyzeDeps::makeAccList </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1GenPBExpr.html">GenPBExpr</a> &amp;&#160;</td>
+          <td class="paramname"><em>genPBExpr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>list</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#a80560a57b432656df642136e27321cad">RelaxMode</a>&#160;</td>
+          <td class="paramname"><em>relax</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1GenPBExpr.html#a435adddd945f29a6411809fd25972de1">GenPBExpr::VarMap</a> &amp;&#160;</td>
+          <td class="paramname"><em>externals</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac40e725747c5af72fb409b3917ef8453" name="ac40e725747c5af72fb409b3917ef8453"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac40e725747c5af72fb409b3917ef8453">&#9670;&nbsp;</a></span>makeCond()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; std::string &gt; freetensor::AnalyzeDeps::makeCond </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1GenPBExpr.html">GenPBExpr</a> &amp;&#160;</td>
+          <td class="paramname"><em>genPBExpr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>conds</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#a80560a57b432656df642136e27321cad">RelaxMode</a>&#160;</td>
+          <td class="paramname"><em>relax</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1GenPBExpr.html#a435adddd945f29a6411809fd25972de1">GenPBExpr::VarMap</a> &amp;&#160;</td>
+          <td class="paramname"><em>externals</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab970fa36326586e2b8dc827700d48821" name="ab970fa36326586e2b8dc827700d48821"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab970fa36326586e2b8dc827700d48821">&#9670;&nbsp;</a></span>makeIterList()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string freetensor::AnalyzeDeps::makeIterList </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="structfreetensor_1_1IterAxis.html">IterAxis</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>list</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>n</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa7114cebdedcaeeee683dbd6eba4bb68" name="aa7114cebdedcaeeee683dbd6eba4bb68"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa7114cebdedcaeeee683dbd6eba4bb68">&#9670;&nbsp;</a></span>makeNdList()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string freetensor::AnalyzeDeps::makeNdList </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>n</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>

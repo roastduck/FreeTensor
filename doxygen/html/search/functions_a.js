@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['kill_5fconstant_0',['kill_constant',['../classfreetensor_1_1ScalarPropConst.html#a9986433956681fd5f067c2a151caad51',1,'freetensor::ScalarPropConst']]],
-  ['kill_5fiter_1',['kill_iter',['../classfreetensor_1_1ScalarPropConst.html#a905605c10ff48d153c028beea63948d5',1,'freetensor::ScalarPropConst']]],
-  ['kill_5fiter_5fdep_5fentry_2',['kill_iter_dep_entry',['../classfreetensor_1_1ScalarPropConst.html#a706d16a29e74b28277a2f03778fe445d',1,'freetensor::ScalarPropConst']]]
+  ['join_0',['join',['../namespacefreetensor.html#a49ff326369829548736d879fd6016bf8',1,'freetensor::join(const Container &amp;c, const std::string &amp;splitter)'],['../namespacefreetensor.html#ae3e2fd2cf2584ecf6a901f9b28328df1',1,'freetensor::join(const std::string &amp;splitter)']]]
 ];

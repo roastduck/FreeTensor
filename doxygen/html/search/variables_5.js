@@ -29,5 +29,7 @@ var searchData=
   ['format_5f_26',['format_',['../classfreetensor_1_1IntrinsicNode.html#a46ca08a5198126dd51140b8eb7814211',1,'freetensor::IntrinsicNode']]],
   ['fors_27',['fors',['../structfreetensor_1_1ElementWiseInfo.html#a99c6938a054e3e0efc0e1fafdc900840',1,'freetensor::ElementWiseInfo']]],
   ['frontspacelooptimes_5f_28',['frontSpaceLoopTimes_',['../classfreetensor_1_1MultiLevelTilingPart.html#a396506b3dd5f600a2c9c18e7eb4e1ebe',1,'freetensor::MultiLevelTilingPart']]],
-  ['funcstr_5f_29',['funcStr_',['../prop__one__time__use_8cc.html#a99be30d469cc586e90851672dc410c08',1,'funcStr_():&#160;prop_one_time_use.cc'],['../remove__writes_8cc.html#a99be30d469cc586e90851672dc410c08',1,'funcStr_():&#160;remove_writes.cc'],['../tensor__prop__const_8cc.html#a99be30d469cc586e90851672dc410c08',1,'funcStr_():&#160;tensor_prop_const.cc']]]
+  ['funcstr_5f_29',['funcStr_',['../prop__one__time__use_8cc.html#a99be30d469cc586e90851672dc410c08',1,'funcStr_():&#160;prop_one_time_use.cc'],['../remove__writes_8cc.html#a99be30d469cc586e90851672dc410c08',1,'funcStr_():&#160;remove_writes.cc'],['../tensor__prop__const_8cc.html#a99be30d469cc586e90851672dc410c08',1,'funcStr_():&#160;tensor_prop_const.cc']]],
+  ['fusedid_5f_30',['fusedId_',['../pluto_8cc.html#afe84782242293194b76ba5f0517bf2ff',1,'pluto.cc']]],
+  ['fusedloopsvar_5f_31',['fusedLoopsVar_',['../pluto_8cc.html#a0339342c95deaef39a7a6d1f85e7d330',1,'pluto.cc']]]
 ];
