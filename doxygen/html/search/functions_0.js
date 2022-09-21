@@ -51,7 +51,7 @@ var searchData=
   ['_5fmakesub_48',['_makeSub',['../namespacefreetensor.html#a3b202c26ac59d51b95bbbe263ad31275',1,'freetensor']]],
   ['_5fmaketanh_49',['_makeTanh',['../namespacefreetensor.html#a23425589018647096d042159b45856a9',1,'freetensor']]],
   ['_5fmakevar_50',['_makeVar',['../namespacefreetensor.html#a97aa155dcc7c5e89d937d23c6e74691a',1,'freetensor']]],
-  ['_5fmakevardef_51',['_makeVarDef',['../namespacefreetensor.html#a75311cae41a4ef1c2864c40c8d655857',1,'freetensor']]],
+  ['_5fmakevardef_51',['_makeVarDef',['../namespacefreetensor.html#a639108205228a2cf8a6589b02c8093e9',1,'freetensor']]],
   ['_5fmultileveltiling_52',['_multiLevelTiling',['../namespacefreetensor.html#a348c30d39d8efb2fe76079a3c96bd2e9',1,'freetensor']]],
   ['_5frandomfillarray_53',['_randomFillArray',['../namespacefreetensor.html#ae508b4bca4f3eb72e0a438d228b560d6',1,'freetensor']]]
 ];

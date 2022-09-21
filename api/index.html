@@ -9045,7 +9045,7 @@ single passes</p></li>
 <span class="sd">    verbose : int (Optional)</span>
 <span class="sd">        0 = print nothing. 1 = print the lowered AST. 2 = print AST after every</span>
 <span class="sd">        single passes</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">if</span> <span class="n">ast</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
@@ -17104,7 +17104,7 @@ instead, which supports generic types</p>
 
 
 <h4 id="freetensor.core.stmt.VarDef" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">VarDef</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">VarDef</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.stmt.VarDef" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -17116,7 +17116,7 @@ instead, which supports generic types</p>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/stmt.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">VarDef</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">VarDef</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    A factory function that creates a VarDef or a series of nested `VarDef`s</span>
 
@@ -17126,7 +17126,7 @@ instead, which supports generic types</p>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_VarsDef</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_VarDef</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_VarDef</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>

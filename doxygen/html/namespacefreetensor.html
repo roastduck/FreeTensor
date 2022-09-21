@@ -1918,9 +1918,9 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:a5e45d6052296f2c617262081a0c95d91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a55f223a613f23ad4c6c3207d2e5f1c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0a55f223a613f23ad4c6c3207d2e5f1c">_makeStmtSeq</a> (std::initializer_list&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &gt; stmts, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={})</td></tr>
 <tr class="separator:a0a55f223a613f23ad4c6c3207d2e5f1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a75311cae41a4ef1c2864c40c8d655857"><td class="memTemplParams" colspan="2">template&lt;class Tbuffer , class TioTensor , class Tbody &gt; </td></tr>
-<tr class="memitem:a75311cae41a4ef1c2864c40c8d655857"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a75311cae41a4ef1c2864c40c8d655857">_makeVarDef</a> (const std::string &amp;name, Tbuffer &amp;&amp;buffer, TioTensor &amp;&amp;ioTensor, Tbody &amp;&amp;body, bool pinned, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={})</td></tr>
-<tr class="separator:a75311cae41a4ef1c2864c40c8d655857"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a639108205228a2cf8a6589b02c8093e9"><td class="memTemplParams" colspan="2">template&lt;class Tbuffer , class Tbody &gt; </td></tr>
+<tr class="memitem:a639108205228a2cf8a6589b02c8093e9"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a639108205228a2cf8a6589b02c8093e9">_makeVarDef</a> (const std::string &amp;name, Tbuffer &amp;&amp;buffer, const std::optional&lt; std::string &gt; &amp;viewOf, Tbody &amp;&amp;body, bool pinned, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={})</td></tr>
+<tr class="separator:a639108205228a2cf8a6589b02c8093e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39c6a569f50f67c0c9f997f3a7ab2b71"><td class="memTemplParams" colspan="2">template&lt;class Tindices , class Texpr &gt; </td></tr>
 <tr class="memitem:a39c6a569f50f67c0c9f997f3a7ab2b71"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a39c6a569f50f67c0c9f997f3a7ab2b71">_makeStore</a> (const std::string &amp;var, Tindices &amp;&amp;indices, Texpr &amp;&amp;expr, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={})</td></tr>
 <tr class="separator:a39c6a569f50f67c0c9f997f3a7ab2b71"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -6059,13 +6059,13 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a75311cae41a4ef1c2864c40c8d655857" name="a75311cae41a4ef1c2864c40c8d655857"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a75311cae41a4ef1c2864c40c8d655857">&#9670;&nbsp;</a></span>_makeVarDef()</h2>
+<a id="a639108205228a2cf8a6589b02c8093e9" name="a639108205228a2cf8a6589b02c8093e9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a639108205228a2cf8a6589b02c8093e9">&#9670;&nbsp;</a></span>_makeVarDef()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Tbuffer , class TioTensor , class Tbody &gt; </div>
+template&lt;class Tbuffer , class Tbody &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::_makeVarDef </td>
@@ -6082,8 +6082,8 @@ template&lt;class Tbuffer , class TioTensor , class Tbody &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">TioTensor &amp;&amp;&#160;</td>
-          <td class="paramname"><em>ioTensor</em>, </td>
+          <td class="paramtype">const std::optional&lt; std::string &gt; &amp;&#160;</td>
+          <td class="paramname"><em>viewOf</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>

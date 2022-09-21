@@ -172,12 +172,12 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:a1f8699b56e362d55156983dfb1b20613"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a17c9ddd7b2a2090366cc662d1ba5b1c1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#a17c9ddd7b2a2090366cc662d1ba5b1c1">CodeGen</a> (int indentSize=2)</td></tr>
 <tr class="separator:a17c9ddd7b2a2090366cc662d1ba5b1c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8f00ebfa150d63d71a076d67096d2836"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#a8f00ebfa150d63d71a076d67096d2836">markDefBuffer</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op)</td></tr>
-<tr class="separator:a8f00ebfa150d63d71a076d67096d2836"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a069777387dfe1e0910a3f9b5fe72cb54"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#a069777387dfe1e0910a3f9b5fe72cb54">markUseBuffer</a> (const std::string &amp;name)</td></tr>
-<tr class="separator:a069777387dfe1e0910a3f9b5fe72cb54"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a73c70c210c6f626bec16ccdee0ec0d54"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#a73c70c210c6f626bec16ccdee0ec0d54">markUndefBuffer</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op)</td></tr>
-<tr class="separator:a73c70c210c6f626bec16ccdee0ec0d54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade98cbc0f7bc1ec8767e57d11eb2da79"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#ade98cbc0f7bc1ec8767e57d11eb2da79">markDef</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op)</td></tr>
+<tr class="separator:ade98cbc0f7bc1ec8767e57d11eb2da79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af04a3e0a600e5924e2efdfc25d8e329d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#af04a3e0a600e5924e2efdfc25d8e329d">markUse</a> (const std::string &amp;name)</td></tr>
+<tr class="separator:af04a3e0a600e5924e2efdfc25d8e329d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96db2563ff8eb7dfe7ab5eca9fe05479"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#a96db2563ff8eb7dfe7ab5eca9fe05479">markUndef</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op)</td></tr>
+<tr class="separator:a96db2563ff8eb7dfe7ab5eca9fe05479"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1be7fa40699bdc5b9f80b6034c2065e5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#a1be7fa40699bdc5b9f80b6034c2065e5">markDefIter</a> (const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op)</td></tr>
 <tr class="separator:a1be7fa40699bdc5b9f80b6034c2065e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5747e4e3094fc83f134e7a15f2f6ac8b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#a5747e4e3094fc83f134e7a15f2f6ac8b">markUseIter</a> (const std::string &amp;name)</td></tr>
@@ -410,8 +410,8 @@ template&lt;class Stream &gt; </div>
 
 </div>
 </div>
-<a id="a8f00ebfa150d63d71a076d67096d2836" name="a8f00ebfa150d63d71a076d67096d2836"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8f00ebfa150d63d71a076d67096d2836">&#9670;&nbsp;</a></span>markDefBuffer()</h2>
+<a id="ade98cbc0f7bc1ec8767e57d11eb2da79" name="ade98cbc0f7bc1ec8767e57d11eb2da79"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade98cbc0f7bc1ec8767e57d11eb2da79">&#9670;&nbsp;</a></span>markDef()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -422,7 +422,7 @@ template&lt;class Stream &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classfreetensor_1_1CodeGen.html">freetensor::CodeGen</a>&lt; Stream &gt;::markDefBuffer </td>
+          <td class="memname">void <a class="el" href="classfreetensor_1_1CodeGen.html">freetensor::CodeGen</a>&lt; Stream &gt;::markDef </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;&#160;</td>
           <td class="paramname"><em>op</em></td><td>)</td>
@@ -466,8 +466,8 @@ template&lt;class Stream &gt; </div>
 
 </div>
 </div>
-<a id="a73c70c210c6f626bec16ccdee0ec0d54" name="a73c70c210c6f626bec16ccdee0ec0d54"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a73c70c210c6f626bec16ccdee0ec0d54">&#9670;&nbsp;</a></span>markUndefBuffer()</h2>
+<a id="a96db2563ff8eb7dfe7ab5eca9fe05479" name="a96db2563ff8eb7dfe7ab5eca9fe05479"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a96db2563ff8eb7dfe7ab5eca9fe05479">&#9670;&nbsp;</a></span>markUndef()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -478,7 +478,7 @@ template&lt;class Stream &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classfreetensor_1_1CodeGen.html">freetensor::CodeGen</a>&lt; Stream &gt;::markUndefBuffer </td>
+          <td class="memname">void <a class="el" href="classfreetensor_1_1CodeGen.html">freetensor::CodeGen</a>&lt; Stream &gt;::markUndef </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;&#160;</td>
           <td class="paramname"><em>op</em></td><td>)</td>
@@ -522,8 +522,8 @@ template&lt;class Stream &gt; </div>
 
 </div>
 </div>
-<a id="a069777387dfe1e0910a3f9b5fe72cb54" name="a069777387dfe1e0910a3f9b5fe72cb54"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a069777387dfe1e0910a3f9b5fe72cb54">&#9670;&nbsp;</a></span>markUseBuffer()</h2>
+<a id="af04a3e0a600e5924e2efdfc25d8e329d" name="af04a3e0a600e5924e2efdfc25d8e329d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af04a3e0a600e5924e2efdfc25d8e329d">&#9670;&nbsp;</a></span>markUse()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -534,7 +534,7 @@ template&lt;class Stream &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classfreetensor_1_1CodeGen.html">freetensor::CodeGen</a>&lt; Stream &gt;::markUseBuffer </td>
+          <td class="memname">void <a class="el" href="classfreetensor_1_1CodeGen.html">freetensor::CodeGen</a>&lt; Stream &gt;::markUse </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>name</em></td><td>)</td>
