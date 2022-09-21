@@ -638,7 +638,14 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
 
     // optimize targets
     // 1. the distance bounds go first, as main optimizing targets
-    builder.addOutputs(cBounds);
+    //    for each bounding coefficients except the last one (for constant), we
+    //    need to minimize its absolute value to avoid -inf results
+    for (int i = 0; i < nParams; ++i) {
+        auto abs = builder.newOutput("abs_cb" + toString(i));
+        builder.addConstraint(abs >= cBounds[i] && abs >= -cBounds[i]);
+        builder.addOutput(cBounds[i]);
+    }
+    builder.addOutput(cBounds[nParams]);
     // 2.1. sum of coefficients absolute for loop 0
     auto c0Sum = builder.newOutput("c0sum");
     // 2.2. binary decision variable for avoiding zeros
