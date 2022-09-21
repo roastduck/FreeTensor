@@ -104,7 +104,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         ret = makeVarDef(workspace,
                          makeBuffer(makeTensor(wsShape, dtype),
                                     AccessType::Cache, MemType::CPU),
-                         nullptr, ret, false);
+                         std::nullopt, ret, false);
     }
 
     return ret;

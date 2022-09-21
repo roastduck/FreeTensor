@@ -14,20 +14,27 @@ Stmt VarMerge::visit(const VarDef &_op) {
         }
         factor_ = _op->buffer_->tensor()->shape()[dim_ + 1];
         var_ = _op->name_;
+        newVar_ =
+            _op->buffer_->atype() == AccessType::Cache ? var_ : var_ + ".view";
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::VarDef);
         auto op = __op.as<VarDefNode>();
         var_.clear();
-
-        if (op->buffer_->atype() != AccessType::Cache &&
-            !op->ioTensor_.isValid()) {
-            op->ioTensor_ = op->buffer_->tensor();
-        }
+        newVar_.clear();
 
         auto &shape = op->buffer_->tensor()->shape();
         shape[dim_] = makeMul(shape[dim_], shape[dim_ + 1]);
         shape.erase(shape.begin() + dim_ + 1);
-        return op;
+
+        if (op->buffer_->atype() != AccessType::Cache) {
+            op->name_ += ".view";
+            op->viewOf_ = _op->name_;
+            op->buffer_->setAtype(AccessType::Cache);
+            return makeVarDef(_op->name_, _op->buffer_, std::nullopt, op,
+                              false);
+        } else {
+            return op;
+        }
     } else {
         return Mutator::visit(_op);
     }

@@ -183,12 +183,8 @@ void PrintVisitor::visit(const VarDef &op) {
     os() << ::freetensor::toString(tensor->dtype()) << "[";
     printList(tensor->shape());
     os() << "] ";
-    if (op->ioTensor_.isValid()) {
-        os() << "@!io_tensor = ";
-        os() << ::freetensor::toString(op->ioTensor_->dtype()) << "[";
-        printList(op->ioTensor_->shape());
-        os() << "] ";
-        os() << " ";
+    if (op->viewOf_.has_value()) {
+        os() << "@!view_of = " << prettyVarDefName(*op->viewOf_) << " ";
     }
     if (op->pinned_) {
         os() << "@!pinned ";

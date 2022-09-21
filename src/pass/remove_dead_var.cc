@@ -11,7 +11,7 @@ Stmt RemoveAllWrites::visit(const ReduceTo &op) {
 }
 
 Expr RemoveDeadVar::visit(const Load &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
     if (destination_ != op->var_) {
@@ -22,24 +22,39 @@ Expr RemoveDeadVar::visit(const Load &_op) {
 
 Stmt RemoveDeadVar::visit(const Store &op) {
     destination_ = op->var_;
-    auto ret = Mutator::visit(op);
+    auto ret = BaseClass::visit(op);
     destination_.clear();
     return ret;
 }
 
 Stmt RemoveDeadVar::visit(const ReduceTo &op) {
     destination_ = op->var_;
-    auto ret = Mutator::visit(op);
+    auto ret = BaseClass::visit(op);
     destination_.clear();
     return ret;
 }
 
 Stmt RemoveDeadVar::visit(const VarDef &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
-    if (op->buffer_->atype() == AccessType::Cache && !uses_.count(op->name_)) {
+    if (uses_.count(op->name_)) {
+        for (auto source = op; source->viewOf_.has_value();) {
+            source = def(*source->viewOf_);
+            uses_.insert(source->name_);
+        }
+    }
+
+    bool writtenToOutput = op->buffer_->atype() == AccessType::Output;
+    for (auto source = op; source->viewOf_.has_value();) {
+        source = def(*source->viewOf_);
+        if (source->buffer_->atype() == AccessType::Output) {
+            writtenToOutput = true;
+        }
+    }
+    if (op->buffer_->atype() == AccessType::Cache && !writtenToOutput &&
+        !uses_.count(op->name_)) {
         isFixPoint_ = false;
         return RemoveAllWrites(op->name_)(op->body_);
     }

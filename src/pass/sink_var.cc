@@ -60,7 +60,7 @@ Stmt SinkVar::visit(const VarDef &_op) {
             stmts.insert(stmts.end(), seq->stmts_.begin(),
                          seq->stmts_.begin() + firstUse);
             stmts.insert(stmts.end(),
-                         makeVarDef(_op->name_, _op->buffer_, _op->ioTensor_,
+                         makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
                                     std::move(segment), false, _op->metadata(),
                                     _op->id()));
             stmts.insert(stmts.end(), seq->stmts_.begin() + lastUse + 1,
@@ -68,7 +68,7 @@ Stmt SinkVar::visit(const VarDef &_op) {
             isFixPoint_ = false;
             ret = makeStmtSeq(std::move(stmts), seq->metadata(), seq->id());
             for (auto &&def : views::reverse(inners)) {
-                ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
+                ret = makeVarDef(def->name_, def->buffer_, def->viewOf_,
                                  std::move(ret), def->pinned_, def->metadata(),
                                  def->id());
             }
@@ -85,14 +85,14 @@ Stmt SinkVar::visit(const VarDef &_op) {
         if (!deps_.count(std::make_pair(_op->name_, loop->id())) ||
             !isVariant(variantMap_, _op, loop->id())) {
             auto loopBody =
-                makeVarDef(_op->name_, _op->buffer_, _op->ioTensor_,
-                           loop->body_, false, _op->metadata(), _op->id());
+                makeVarDef(_op->name_, _op->buffer_, _op->viewOf_, loop->body_,
+                           false, _op->metadata(), _op->id());
             isFixPoint_ = false;
             ret = makeFor(loop->iter_, loop->begin_, loop->end_, loop->step_,
                           loop->len_, loop->property_, std::move(loopBody),
                           loop->metadata(), loop->id());
             for (auto &&def : views::reverse(inners)) {
-                ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
+                ret = makeVarDef(def->name_, def->buffer_, def->viewOf_,
                                  std::move(ret), def->pinned_, def->metadata(),
                                  def->id());
             }
@@ -104,17 +104,17 @@ Stmt SinkVar::visit(const VarDef &_op) {
         auto branch = op->body_.as<IfNode>();
         Stmt thenCase, elseCase;
         thenCase =
-            makeVarDef(_op->name_, _op->buffer_, _op->ioTensor_,
+            makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
                        branch->thenCase_, false, makeMetadata("sink.1", _op));
         if (branch->elseCase_.isValid()) {
-            elseCase = makeVarDef(_op->name_, _op->buffer_, _op->ioTensor_,
+            elseCase = makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
                                   branch->elseCase_, false,
                                   makeMetadata("sink.0", _op));
         }
         ret = makeIf(branch->cond_, std::move(thenCase), std::move(elseCase),
                      branch->metadata(), branch->id());
         for (auto &&def : views::reverse(inners)) {
-            ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
+            ret = makeVarDef(def->name_, def->buffer_, def->viewOf_,
                              std::move(ret), def->pinned_, def->metadata(),
                              def->id());
         }
@@ -123,12 +123,12 @@ Stmt SinkVar::visit(const VarDef &_op) {
 
     case ASTNodeType::Assert: {
         auto ass = op->body_.as<AssertNode>();
-        auto body = makeVarDef(_op->name_, _op->buffer_, _op->ioTensor_,
+        auto body = makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
                                ass->body_, false, _op->metadata(), _op->id());
         ret =
             makeAssert(ass->cond_, std::move(body), ass->metadata(), ass->id());
         for (auto &&def : views::reverse(inners)) {
-            ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_,
+            ret = makeVarDef(def->name_, def->buffer_, def->viewOf_,
                              std::move(ret), def->pinned_, def->metadata(),
                              def->id());
         }

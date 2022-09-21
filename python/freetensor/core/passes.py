@@ -58,7 +58,7 @@ def lower(ast=None,
     verbose : int (Optional)
         0 = print nothing. 1 = print the lowered AST. 2 = print AST after every
         single passes
-        '''
+    '''
 
     if ast is not None:
         return ffi.lower(ast, target,

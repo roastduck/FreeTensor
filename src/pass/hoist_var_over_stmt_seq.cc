@@ -114,9 +114,8 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
     auto ret = makeStmtSeq(std::move(stmts));
     for (auto i = defs.rbegin(); i != defs.rend(); i++) {
         auto &&def = *i;
-        ret =
-            makeVarDef(def->name_, def->buffer_, def->ioTensor_, std::move(ret),
-                       def->pinned_, def->metadata(), def->id());
+        ret = makeVarDef(def->name_, def->buffer_, def->viewOf_, std::move(ret),
+                         def->pinned_, def->metadata(), def->id());
     }
     return ret;
 }

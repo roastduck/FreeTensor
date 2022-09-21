@@ -70,6 +70,7 @@ void MatchVisitor::visit(const VarDef &op) {
     for (auto &&[ldim, rdim] : views::zip(lshape, rshape)) {
         RECURSE(ldim, rdim);
     }
+    CHECK(op->viewOf_ == instance->viewOf_);
     RECURSE(op->body_, instance->body_);
     clearName(op->name_);
 }
