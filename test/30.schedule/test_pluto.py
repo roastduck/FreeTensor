@@ -145,3 +145,29 @@ def test_pluto_permute_fully_parallelizable():
     print(kernel)
     assert parallelism == 2
     assert kernel.body.match(kernel_expected.body)
+
+
+def test_pluto_permute_inner_loop():
+
+    @ft.transform
+    def kernel(x: ft.Var[(256, 256, 5), "float32", "inout"]):
+        #! label: L0
+        for i in range(1, 256):
+            for j in range(256):
+                x[i, j] = x[i - 1, j] * 5
+
+    @ft.simplify
+    @ft.transform
+    def kernel_expected(x: ft.Var[(256, 256, 5), "float32", "inout"]):
+        #! label: L0
+        for j in range(256):
+            for i in range(1, 256):
+                x[i, j] = x[i + -1, j] * 5
+
+    print(kernel)
+    s = ft.Schedule(kernel)
+    _, parallelism = s.pluto_permute("L0")
+    kernel = s.func()
+    print(kernel)
+    assert parallelism == 1
+    assert kernel.body.match(kernel_expected.body)
