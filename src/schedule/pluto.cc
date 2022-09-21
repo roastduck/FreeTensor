@@ -72,7 +72,7 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
         // extract the vector into result
         std::vector<int> v;
         v.reserve(nDims);
-        for (size_t i = nDims; i < 2 * nDims; ++i) {
+        for (int i = nDims; i < 2 * nDims; ++i) {
             ASSERT(solution[i].denSi() == 1);
             // put negated value into v since the result is minimized but we
             // want positive results
