@@ -79,7 +79,7 @@ class VarDefNode : public StmtNode {
      * This `VarDef` node can be a view of another `VarDef` node, represented by
      * the name of its source `VarDef`
      *
-     * Alternatively access of a `VarDef` and the `VarDef` it views is ALWAYS
+     * Simultaneously access of a `VarDef` and the `VarDef` it views is ALWAYS
      * treated as dependences
      *
      * This is useful when we want to alter the shape of an `VarDef` with

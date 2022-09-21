@@ -158,7 +158,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
             auto &&d = def(op->var_);
             writes_[d->id()].emplace_back(ap);
 
-            // Alternatively access of a `VarDef` and the `VarDef` it views is
+            // Simultaneously access of a `VarDef` and the `VarDef` it views is
             // ALWAYS treated as dependences
             for (auto source = d; source->viewOf_.has_value();) {
                 source = def(*source->viewOf_);

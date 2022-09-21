@@ -188,7 +188,7 @@ void FindAccessPoint::visit(const Load &op) {
         auto &&d = def(op->var_);
         reads_[def(op->var_)->id()].emplace_back(ap);
 
-        // Alternatively access of a `VarDef` and the `VarDef` it views is
+        // Simultaneously access of a `VarDef` and the `VarDef` it views is
         // ALWAYS treated as dependences
         for (auto source = d; source->viewOf_.has_value();) {
             source = def(*source->viewOf_);
