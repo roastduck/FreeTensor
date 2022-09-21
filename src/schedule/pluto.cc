@@ -670,6 +670,23 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     auto optimizeMap = builder.build(ctx);
     auto revOptimizeMap = reverse(optimizeMap);
 
+    // constrain the bounding function to be >= 0, avoiding unbound optimum when
+    // no dependence occurs
+    {
+        PBMapBuilder builder;
+
+        auto params = builder.newInputs(nParams, "p");
+        auto iters0 = builder.newInputs(nestLevel0, "i0_");
+
+        builder.addOutputs(params);
+        builder.addOutput(1);
+        builder.addOutputs(
+            views::repeat_n(0, (nParams + 1) * 2 + nestLevel0 + nestLevel1));
+        optimizeMap =
+            intersectDomain(std::move(optimizeMap),
+                            coefficients(apply(loop0Set, builder.build(ctx))));
+    }
+
     PBSetBuilder orthoSetBuilder;
     orthoSetBuilder.addVars(builder.outputs());
 
@@ -711,6 +728,8 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         }
         auto orthoSet = orthoSetBuilder.build(ctx);
         orthoSetBuilder.clearConstraints();
+
+        std::cout << apply(problem, optimizeMap) << std::endl;
 
         // map the coefficients to optimize targets, and perform optimization
         auto solution = apply(

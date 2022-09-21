@@ -118,3 +118,30 @@ def test_pluto_permute_reorder():
     print(kernel)
     assert parallelism == 1
     assert kernel.body.match(kernel_expected.body)
+
+
+def test_pluto_permute_fully_parallelizable():
+
+    @ft.transform
+    def kernel(x: ft.Var[(256, 256), "float32", "output"],
+               y: ft.Var[(258, 258), "float32", "input"]):
+        #! label: L0
+        for i in range(256):
+            for j in range(256):
+                x[i, j] = y[i - 1, j - 1] + y[i + 1, j + 1]
+
+    @ft.transform
+    def kernel_expected(x: ft.Var[(256, 256), "float32", "output"],
+                        y: ft.Var[(258, 258), "float32", "input"]):
+        #! label: L0
+        for i in range(256):
+            for j in range(256):
+                x[i, j] = y[i + -1, j + -1] + y[i + 1, j + 1]
+
+    print(kernel)
+    s = ft.Schedule(kernel)
+    _, parallelism = s.pluto_permute("L0")
+    kernel = s.func()
+    print(kernel)
+    assert parallelism == 2
+    assert kernel.body.match(kernel_expected.body)
