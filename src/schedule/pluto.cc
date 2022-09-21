@@ -185,7 +185,12 @@ std::pair<int, std::vector<int>> findIterFromAP(const AccessPoint &ap,
 struct ReplaceVar : public Mutator {
     std::unordered_map<std::string, Expr> replaceMap_;
 
-    Expr visit(const Var &op) override { return replaceMap_.at(op->name_); }
+    Expr visit(const Var &op) override {
+        if (replaceMap_.contains(op->name_))
+            return replaceMap_.at(op->name_);
+        else
+            return Mutator::visit(op);
+    }
 };
 
 struct PermuteInfo {
