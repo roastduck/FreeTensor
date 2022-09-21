@@ -8,6 +8,9 @@ using namespace pybind11::literals;
 void init_ffi_ast_stmt(py::module_ &m) {
     auto pyStmt = m.attr("Stmt").cast<py::class_<StmtNode, Stmt>>();
     pyStmt.def_property_readonly("id", &StmtNode::id)
+        .def_property(
+            "metadata", [](const Stmt &op) { return op->metadata(); },
+            [](Stmt &op, const Metadata &md) { op->metadata() = md; })
         .def("node",
              [](const Stmt &op) {
                  WARNING("`x.node()` is deprecated. Please directly use `x`");
