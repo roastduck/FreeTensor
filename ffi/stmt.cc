@@ -45,9 +45,7 @@ void init_ffi_ast_stmt(py::module_ &m) {
         .def_property_readonly(
             "buffer",
             [](const VarDef &op) -> Ref<Buffer> { return op->buffer_; })
-        .def_property_readonly(
-            "io_tensor",
-            [](const VarDef &op) -> Ref<Tensor> { return op->ioTensor_; })
+        .def_readonly("view_of", &VarDefNode::viewOf_)
         .def_property_readonly(
             "body", [](const VarDef &op) -> Stmt { return op->body_; });
     py::class_<StoreNode, Store>(m, "Store", pyStmt)
@@ -113,12 +111,13 @@ void init_ffi_ast_stmt(py::module_ &m) {
           static_cast<Stmt (*)(const std::vector<Stmt> &, const Metadata &,
                                const ID &)>(&_makeStmtSeq),
           "stmts"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
-    m.def("makeVarDef",
-          static_cast<Stmt (*)(const std::string &, const Ref<Buffer> &,
-                               const Ref<Tensor> &, const Stmt &, bool,
-                               const Metadata &, const ID &)>(&_makeVarDef),
-          "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a,
-          "metadata"_a, py::arg_v("id", ID(), "ID()"));
+    m.def(
+        "makeVarDef",
+        static_cast<Stmt (*)(const std::string &, const Ref<Buffer> &,
+                             const std::optional<std::string> &, const Stmt &,
+                             bool, const Metadata &, const ID &)>(&_makeVarDef),
+        "name"_a, "buffer"_a, "view_of"_a, "body"_a, "pinned"_a, "metadata"_a,
+        py::arg_v("id", ID(), "ID()"));
     m.def("makeStore",
           static_cast<Stmt (*)(const std::string &, const std::vector<Expr> &,
                                const Expr &, const Metadata &, const ID &)>(

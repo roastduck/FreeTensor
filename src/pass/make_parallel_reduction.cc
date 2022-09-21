@@ -250,7 +250,8 @@ Stmt MakeParallelReduction::visit(const For &_op) {
             ret = makeVarDef(cacheName,
                              makeBuffer(makeTensor(newShape, dtype),
                                         AccessType::Cache, mtype),
-                             nullptr, makeStmtSeq({init, ret, flush}), false);
+                             std::nullopt, makeStmtSeq({init, ret, flush}),
+                             false);
         }
         return ret;
     } else {

@@ -29,6 +29,7 @@ void FindAllIfs::visit(const If &op) {
 
 Stmt WrapMetadata::visitStmt(const Stmt &op) {
     auto ret = Mutator::visitStmt(op);
+    ret->setId();
     ret->metadata() = makeMetadata(op_, ret);
     return ret;
 }

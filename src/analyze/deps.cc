@@ -185,7 +185,25 @@ void FindAccessPoint::visit(const Load &op) {
            normalizeExprs(op->indices_),
            normalizeExprs(conds_)};
     if (accFilter_ == nullptr || accFilter_(*ap)) {
+        auto &&d = def(op->var_);
         reads_[def(op->var_)->id()].emplace_back(ap);
+
+        // Alternatively access of a `VarDef` and the `VarDef` it views is
+        // ALWAYS treated as dependences
+        for (auto source = d; source->viewOf_.has_value();) {
+            source = def(*source->viewOf_);
+            auto ap = Ref<AccessPoint>::make();
+            *ap = {op,
+                   curStmt(),
+                   source,
+                   source->buffer_,
+                   defAxis_.at(source->name_),
+                   cur_,
+                   std::vector<Expr>(source->buffer_->tensor()->shape().size(),
+                                     makeAnyExpr()),
+                   normalizeExprs(conds_)};
+            reads_[source->id()].emplace_back(ap);
+        }
     }
 }
 

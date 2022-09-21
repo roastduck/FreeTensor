@@ -32,7 +32,13 @@ def find_borrowed_vardefs(exprs: Sequence):
 
 class _VarDef:
 
-    def __init__(self, name: str, shape, dtype, atype, mtype=None):
+    def __init__(self,
+                 name: str,
+                 shape,
+                 dtype,
+                 atype,
+                 mtype=None,
+                 view_of=None):
         '''
         Scope used for creating a VarDef AST node. A VarRef will be returned as a
         reference to the variable of the VarDef node
@@ -55,6 +61,8 @@ class _VarDef:
         mtype : str or MemType (Optional)
             Memory type of the variable. If omitted, the main memory type of the
             default Target in config will be used
+        view_of : str (Optional)
+            (Internal use only) Set the VarDef node of another VarDef node
         '''
 
         self.name = name
@@ -74,6 +82,7 @@ class _VarDef:
             self.mtype = ffi.MemType(mtype)
         else:
             self.mtype = config.default_target().main_mem_type()
+        self.view_of = view_of
 
         self.borrower_cnt = 0
         self.borrowed_vardefs = find_borrowed_vardefs(self.shape)
@@ -112,7 +121,8 @@ class _VarDef:
         body = ctx_stack.pop().make_stmt()
         top = ctx_stack.top()
         top.append_stmt(
-            ffi.makeVarDef(self.name, buf, None, body, False, self.metadata))
+            ffi.makeVarDef(self.name, buf, self.view_of, body, False,
+                           self.metadata))
 
 
 class _VarsDef:
@@ -133,7 +143,7 @@ class _VarsDef:
             d.__exit__(exc_type, exc_value, traceback)
 
 
-def VarDef(*args):
+def VarDef(*args, **kvs):
     '''
     A factory function that creates a VarDef or a series of nested `VarDef`s
 
@@ -143,7 +153,7 @@ def VarDef(*args):
     if len(args) == 1:
         return _VarsDef(args[0])
     else:
-        return _VarDef(*args)
+        return _VarDef(*args, **kvs)
 
 
 class For:

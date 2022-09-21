@@ -25,7 +25,7 @@ Stmt MergeFor::visit(const For &_op) {
                     op->body_, makeMetadata("merge", oldOuter_, oldInner_));
         newId_ = ret->id();
         for (auto &&def : intermediateDefs_) {
-            ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_, ret,
+            ret = makeVarDef(def->name_, def->buffer_, def->viewOf_, ret,
                              def->pinned_, def->metadata(), def->id());
         }
         return ret;

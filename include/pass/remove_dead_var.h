@@ -3,6 +3,7 @@
 
 #include <unordered_set>
 
+#include <analyze/symbol_table.h>
 #include <func.h>
 #include <mutator.h>
 
@@ -19,7 +20,9 @@ class RemoveAllWrites : public Mutator {
     Stmt visit(const ReduceTo &op) override;
 };
 
-class RemoveDeadVar : public Mutator {
+class RemoveDeadVar : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     std::unordered_set<std::string> uses_;
     std::string destination_;
     bool isFixPoint_ = true;
@@ -28,6 +31,7 @@ class RemoveDeadVar : public Mutator {
     bool isFixPoint() const { return isFixPoint_; }
 
   protected:
+    using BaseClass::visit;
     Expr visit(const Load &op) override;
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;

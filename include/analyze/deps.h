@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <analyze/find_loop_variance.h>
+#include <analyze/find_stmt.h>
 #include <analyze/symbol_table.h>
 #include <analyze/track_stmt.h>
 #include <container_utils.h>
@@ -154,7 +155,26 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                normalizeExprs(op->indices_),
                normalizeExprs(conds_)};
         if (accFilter_ == nullptr || accFilter_(*ap)) {
-            writes_[def(op->var_)->id()].emplace_back(ap);
+            auto &&d = def(op->var_);
+            writes_[d->id()].emplace_back(ap);
+
+            // Alternatively access of a `VarDef` and the `VarDef` it views is
+            // ALWAYS treated as dependences
+            for (auto source = d; source->viewOf_.has_value();) {
+                source = def(*source->viewOf_);
+                auto ap = Ref<AccessPoint>::make();
+                *ap = {
+                    op,
+                    curStmt(),
+                    source,
+                    source->buffer_,
+                    defAxis_.at(source->name_),
+                    cur_,
+                    std::vector<Expr>(source->buffer_->tensor()->shape().size(),
+                                      makeAnyExpr()),
+                    normalizeExprs(conds_)};
+                writes_[source->id()].emplace_back(ap);
+            }
         }
     }
 

@@ -109,7 +109,7 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
             return makeVarDef(tapeName,
                               makeBuffer(std::move(tensor), AccessType::Output,
                                          toGlobalMemType(op->buffer_->mtype())),
-                              nullptr, op, false);
+                              std::nullopt, op, false);
         }
     } else {
         return BaseClass::visit(_op);

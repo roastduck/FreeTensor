@@ -231,7 +231,7 @@ void CodeGenCUDA::visit(const Ceil &op) {
 void CodeGenCUDA::visit(const Store &op) {
     if (buffer(op->var_)->mtype() == MemType::GPUWarp) {
         auto id = mangle(op->var_);
-        markUseBuffer(op->var_);
+        markUse(op->var_);
         makeIndent();
         os() << id;
         for (int i = 1; i < (int)op->indices_.size(); i++) {
@@ -250,7 +250,7 @@ void CodeGenCUDA::visit(const Store &op) {
 void CodeGenCUDA::visit(const Load &op) {
     if (buffer(op->var_)->mtype() == MemType::GPUWarp) {
         auto id = mangle(op->var_);
-        markUseBuffer(op->var_);
+        markUse(op->var_);
         // mask
         os() << "__shfl_sync(0x1f, ";
         // var
@@ -270,8 +270,9 @@ void CodeGenCUDA::visit(const Load &op) {
 }
 
 void CodeGenCUDA::visit(const Alloc &op) {
-    auto &&buf = buffer(op->var_);
-    auto &&tensor = buf->tensor();
+    auto &&vardef = def(op->var_);
+    auto &&buf = vardef->buffer_;
+    auto &&tensor = vardef->buffer_->tensor();
     auto &&shape = tensor->shape();
     auto &&dtype = tensor->dtype();
     ASSERT(buf->mtype() == MemType::GPUGlobalHeap);
@@ -280,7 +281,7 @@ void CodeGenCUDA::visit(const Alloc &op) {
     // x_opt = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 * sizeof(int)));
     makeIndent();
     os() << mangle(op->var_) << "_opt = ";
-    genMdPtrDef(buf, [&]() {
+    genMdPtrDef(vardef, [&]() {
         os() << "cudaNew(";
         for (auto &&dim : shape) {
             (*this)(dim);
@@ -311,7 +312,7 @@ void CodeGenCUDA::visit(const Free &op) {
 }
 
 void CodeGenCUDA::visit(const ReduceTo &op) {
-    markUseBuffer(op->var_);
+    markUse(op->var_);
     makeIndent();
 
     auto genAddr = [&]() {
@@ -456,7 +457,7 @@ void CodeGenCUDA::visit(const For &op) {
             (*this)(sharedSize);
             os() << ", __stream>>>(";
             bool first = true;
-            for (auto &&[name, buffer] : stream.useBuffers_) {
+            for (auto &&[name, d] : stream.useDefs_) {
                 os() << (first ? "" : ", ") << mangle(name);
                 first = false;
             }
@@ -480,7 +481,7 @@ void CodeGenCUDA::visit(const For &op) {
 }
 
 void CodeGenCUDA::visit(const VarDef &op) {
-    if (op->buffer_->atype() != AccessType::Cache) {
+    if (op->buffer_->atype() != AccessType::Cache || op->viewOf_.has_value()) {
         CodeGenC::visit(op);
 
     } else {
@@ -492,7 +493,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
             auto &&shape = tensor->shape();
             makeIndent();
             os() << "auto " << mangle(op->name_) << " = ";
-            genMdPtrDef(op->buffer_, [this]() {
+            genMdPtrDef(op, [this]() {
                 os() << "__glmem + (";
                 (*this)(globalStackTop_);
                 os() << ")";
@@ -520,7 +521,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             auto oldGlobalStackTop = globalStackTop_;
             globalStackTop_ = constFold(makeAdd(globalStackTop_, size));
-            markDefBuffer(op);
+            markDef(op);
             (*this)(op->body_);
             if (inKernel()) {
                 // globalStackTop_ = oldGlobalStackTop;
@@ -528,7 +529,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
             } else {
                 globalStackTop_ = oldGlobalStackTop;
             }
-            markUndefBuffer(op);
+            markUndef(op);
             break;
         }
 
@@ -542,15 +543,15 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 auto &&name = mangle(op->name_);
                 makeIndent();
                 os() << "UncheckedOpt<";
-                genMdPtrType(op->buffer_);
+                genMdPtrType(op);
                 os() << "> " << name << "_opt;" << std::endl;
                 makeIndent();
                 os() << "auto &" << name << " = *" << name << "_opt;"
                      << std::endl;
 
-                markDefBuffer(op);
+                markDef(op);
                 (*this)(op->body_);
-                markUndefBuffer(op);
+                markUndef(op);
             }
             break;
         }
@@ -568,7 +569,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
             auto &&shape = tensor->shape();
             makeIndent();
             os() << "auto " << mangle(op->name_) << " = ";
-            genMdPtrDef(op->buffer_, [this]() {
+            genMdPtrDef(op, [this]() {
                 os() << "__shmem + (";
                 (*this)(sharedStackTop_);
                 os() << ")";
@@ -590,12 +591,12 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 constFold(makeMax(streamStack_.back().sharedSize_,
                                   makeAdd(sharedStackTop_, size)));
 
-            markDefBuffer(op);
+            markDef(op);
             sharedStackTop_ = constFold(makeAdd(sharedStackTop_, size));
             (*this)(op->body_);
             // FIXME: Restore sharedStackTop_, but we have to add some sync
             // before reusing shared buffers
-            markUndefBuffer(op);
+            markUndef(op);
             break;
         }
 
@@ -635,9 +636,9 @@ void CodeGenCUDA::visit(const VarDef &op) {
             }
             os() << ";" << std::endl;
 
-            markDefBuffer(op);
+            markDef(op);
             (*this)(op->body_);
-            markUndefBuffer(op);
+            markUndef(op);
             break;
         }
 
@@ -796,8 +797,9 @@ extern "C" {
         dynamic_dim:
             os << stream.name_ << "(";
             bool first = true;
-            for (auto &&[name, buffer] : stream.useBuffers_) {
+            for (auto &&[name, d] : stream.useDefs_) {
                 os << (first ? "" : ", ");
+                auto &&buffer = d->buffer_;
                 auto &&tensor = buffer->tensor();
                 auto &&shape = tensor->shape();
 
@@ -818,7 +820,7 @@ extern "C" {
 
                 default:
                     // e.g. mdspan<float, extents<5, 5>> x
-                    visitor.genMdPtrType(os, buffer,
+                    visitor.genMdPtrType(os, d,
                                          buffer->atype() == AccessType::Input);
                     os << " " << mangle(name);
                 }

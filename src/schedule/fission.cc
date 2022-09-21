@@ -34,7 +34,7 @@ Stmt HoistVar::visit(const For &op) {
         innerLoops_.emplace_back(op->id());
         for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
             ret = makeVarDef(std::move((*i)->name_), std::move(((*i)->buffer_)),
-                             std::move((*i)->ioTensor_), ret, (*i)->pinned_,
+                             std::move((*i)->viewOf_), ret, (*i)->pinned_,
                              (*i)->metadata(), (*i)->id());
         }
         return ret;

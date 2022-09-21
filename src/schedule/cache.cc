@@ -22,8 +22,8 @@ Stmt MakeCacheVar::visitStmt(const Stmt &op) {
         inStmt_ = false;
         Ref<Buffer> newBuffer =
             makeBuffer(def_->buffer_->tensor(), AccessType::Cache, mtype_);
-        ret = makeVarDef(newVar_, std::move(newBuffer), nullptr, std::move(ret),
-                         false);
+        ret = makeVarDef(newVar_, std::move(newBuffer), std::nullopt,
+                         std::move(ret), false);
         oldDef_ = def_->id();
         newDef_ = ret->id();
         return ret;
@@ -78,7 +78,7 @@ Stmt MakeCacheVar::visit(const ReduceTo &_op) {
 }
 
 Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
-    auto op = Mutator::visitStmt(_op);
+    auto op = BaseClass::visitStmt(_op);
     if (op->id() == stmt_) {
         std::vector<Expr> indices;
         ASSERT(def_.isValid());
@@ -90,13 +90,17 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         }
 
         Expr idx1d, sizeLim;
-        if (def_->ioTensor_.isValid()) {
+        if (def_->viewOf_.has_value()) {
+            auto source = def_;
+            while (source->viewOf_.has_value()) {
+                source = def(*source->viewOf_);
+            }
             for (auto &&[idx, dim] :
                  views::zip(indices, def_->buffer_->tensor()->shape())) {
                 idx1d = idx1d.isValid() ? makeMul(idx1d, dim) : nullptr;
                 idx1d = idx1d.isValid() ? makeAdd(idx1d, idx) : idx;
             }
-            for (Expr dim : def_->ioTensor_->shape()) {
+            for (Expr dim : source->buffer_->tensor()->shape()) {
                 sizeLim = sizeLim.isValid() ? makeMul(sizeLim, dim) : dim;
             }
         }
@@ -139,16 +143,16 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
 Stmt MakeFillAndFlush::visit(const VarDef &op) {
     if (op->id() == oldDef_) {
         def_ = op;
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         def_ = nullptr;
         return ret;
     } else {
-        return Mutator::visit(op);
+        return BaseClass::visit(op);
     }
 }
 
 Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
-    auto op = Mutator::visitStmt(_op);
+    auto op = BaseClass::visitStmt(_op);
     if (op->id() == stmt_) {
         if (!reduce_.isValid()) {
             throw InvalidSchedule("The cached statement is not reducing into "
@@ -164,13 +168,17 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
         }
 
         Expr idx1d, sizeLim;
-        if (def_->ioTensor_.isValid()) {
+        if (def_->viewOf_.has_value()) {
+            auto source = def_;
+            while (source->viewOf_.has_value()) {
+                source = def(*source->viewOf_);
+            }
             for (auto &&[idx, dim] :
                  views::zip(indices, def_->buffer_->tensor()->shape())) {
                 idx1d = idx1d.isValid() ? makeMul(idx1d, dim) : nullptr;
                 idx1d = idx1d.isValid() ? makeAdd(idx1d, idx) : idx;
             }
-            for (Expr dim : def_->ioTensor_->shape()) {
+            for (Expr dim : source->buffer_->tensor()->shape()) {
                 sizeLim = sizeLim.isValid() ? makeMul(sizeLim, dim) : dim;
             }
         }
@@ -208,21 +216,21 @@ Stmt MakeInitAndReduce::visit(const VarDef &op) {
     if (op->id() == oldDef_) {
         def_ = op;
         reduce_ = nullptr;
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         def_ = nullptr;
         return ret;
     } else if (op->id() == newDef_) {
         inNewVar_ = true;
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         inNewVar_ = false;
         return ret;
     } else {
-        return Mutator::visit(op);
+        return BaseClass::visit(op);
     }
 }
 
 Stmt MakeInitAndReduce::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     if (inNewVar_ && op->var_ == newVar_) {
@@ -240,7 +248,7 @@ Stmt MakeInitAndReduce::visit(const Store &op) {
         throw InvalidSchedule(
             "Any Store node in a cache_reduce region is not allowed");
     }
-    return Mutator::visit(op);
+    return BaseClass::visit(op);
 }
 
 Expr MakeInitAndReduce::visit(const Load &op) {
@@ -248,7 +256,7 @@ Expr MakeInitAndReduce::visit(const Load &op) {
         throw InvalidSchedule(
             "Any Load node in a cache_reduce region is not allowed");
     }
-    return Mutator::visit(op);
+    return BaseClass::visit(op);
 }
 
 std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>

@@ -6,6 +6,7 @@
 #include <functional>
 #include <vector>
 
+#include <analyze/find_stmt.h>
 #include <codegen/code_gen_c.h>
 #include <serialize/mangle.h>
 
@@ -14,8 +15,10 @@
 namespace freetensor {
 
 template <class Stream>
-void CodeGenC<Stream>::genMdPtrType(std::ostream &os, const Ref<Buffer> &buf,
+void CodeGenC<Stream>::genMdPtrType(std::ostream &os, const VarDef &def,
                                     bool isConst) {
+    auto &&buf = def->buffer_;
+
     if (buf->tensor()->shape().empty()) {
         // Use reference for scalars
         if (isConst) {
@@ -25,7 +28,16 @@ void CodeGenC<Stream>::genMdPtrType(std::ostream &os, const Ref<Buffer> &buf,
         return;
     }
 
-    os << "mdspan_r<";
+    bool isRestricted = true;
+    if (def->viewOf_.has_value() ||
+        !findAllStmt(def, [&](const Stmt &inner) {
+             return inner->nodeType() == ASTNodeType::VarDef &&
+                    inner.as<VarDefNode>()->viewOf_ == def->name_;
+         }).empty()) {
+        isRestricted = false;
+    }
+
+    os << (isRestricted ? "mdspan_r<" : "mdspan<");
     if (isConst) {
         os << "const ";
     }
@@ -42,18 +54,20 @@ void CodeGenC<Stream>::genMdPtrType(std::ostream &os, const Ref<Buffer> &buf,
 }
 
 template <class Stream>
-void CodeGenC<Stream>::genMdPtrDef(const Ref<Buffer> &buf,
+void CodeGenC<Stream>::genMdPtrDef(const VarDef &def,
                                    const std::function<void()> &genRawPtr,
                                    bool isConst) {
+    auto &&buf = def->buffer_;
+
     if (buf->tensor()->shape().empty()) {
         // Use reference for scalars
-        genMdPtrType(buf, isConst);
+        genMdPtrType(def, isConst);
         this->os() << " = *";
         genRawPtr();
         return;
     }
 
-    genMdPtrType(buf, isConst);
+    genMdPtrType(def, isConst);
     this->os() << "((";
     if (isConst) {
         this->os() << "const ";
@@ -114,7 +128,18 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
     auto &&shape = tensor->shape();
     auto name = mangle(op->name_);
 
-    if (op->buffer_->atype() == AccessType::Cache) {
+    if (op->viewOf_.has_value()) {
+        // e.g. auto x = mdspan_r<const float, extents<5, 5>>(y.data_handle());
+        auto source = op;
+        while (source->viewOf_.has_value()) {
+            source = this->def(*source->viewOf_);
+        }
+        this->os() << "auto " << name << " = ";
+        genMdPtrDef(op, mangle(source->name_) + ".data_handle()",
+                    source->buffer_->atype() == AccessType::Input);
+        this->os() << ";" << std::endl;
+
+    } else if (op->buffer_->atype() == AccessType::Cache) {
         // e.g. 1. float x;
         //      2. float x[5][5][5];
         this->os() << gen(tensor->dtype()) << " " << name;
@@ -154,10 +179,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             std::string dimPtr = "_retDims[" + std::to_string(nthReturn) + "]";
             this->os() << "if (" + rawPtr + " == NULL) ";
             this->beginBlock();
-            this->genAlloc(op->ioTensor_.isValid()
-                               ? (Ref<Tensor>)op->ioTensor_
-                               : (Ref<Tensor>)op->buffer_->tensor(),
-                           rawPtr, shapePtr, dimPtr);
+            this->genAlloc(op->buffer_->tensor(), rawPtr, shapePtr, dimPtr);
             this->endBlock();
             this->makeIndent();
         }
@@ -235,16 +257,16 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
                 // e.g.
                 // auto x = mdspan_r<const float, extents<5, 5>>(_params[0]);
                 this->os() << "auto " << name << " = ";
-                genMdPtrDef(op->buffer_, rawPtr,
+                genMdPtrDef(op, rawPtr,
                             op->buffer_->atype() == AccessType::Input);
                 this->os() << ";" << std::endl;
             }
         }
     }
 
-    this->markDefBuffer(op);
+    this->markDef(op);
     (*this)(op->body_);
-    this->markUndefBuffer(op);
+    this->markUndef(op);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Var &op) {
@@ -254,7 +276,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Var &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
-    this->markUseBuffer(op->var_);
+    this->markUse(op->var_);
 
     this->makeIndent();
     this->genScalar(op);
@@ -264,18 +286,18 @@ template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Alloc &op) {
-    this->markUseBuffer(op->var_);
+    this->markUse(op->var_);
     this->makeIndent();
 
-    auto &&buf = BaseClass::buffer(op->var_);
-    auto &&tensor = buf->tensor();
+    auto &&def = BaseClass::def(op->var_);
+    auto &&tensor = def->buffer_->tensor();
     auto &&shape = tensor->shape();
     auto &&dtype = tensor->dtype();
 
     // e.g.
     // x_opt = mdspan_r<int, extents<5, 5>>(new int[n*m*l]);
     this->os() << mangle(op->var_) << "_opt = ";
-    genMdPtrDef(buf, [&]() {
+    genMdPtrDef(def, [&]() {
         this->os() << "new " << gen(dtype) << "[";
         for (auto i = 0lu; i < shape.size(); ++i) {
             if (i != 0lu)
@@ -308,12 +330,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const Free &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {
-    this->markUseBuffer(op->var_);
+    this->markUse(op->var_);
     this->genScalar(op);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
-    this->markUseBuffer(op->var_);
+    this->markUse(op->var_);
 
     this->makeIndent();
 
