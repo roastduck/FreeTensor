@@ -3,11 +3,14 @@
 
 #include <algorithm>
 
+#include <analyze/symbol_table.h>
 #include <mutator.h>
 
 namespace freetensor {
 
-class VarReorder : public Mutator {
+class VarReorder : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     ID def_;
     std::string var_;
     std::vector<int> order_;
@@ -47,6 +50,7 @@ class VarReorder : public Mutator {
     }
 
   protected:
+    using BaseClass::visit;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;

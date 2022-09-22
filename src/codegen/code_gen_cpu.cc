@@ -58,7 +58,8 @@ void CodeGenCPU::visit(const VarDef &op) {
     auto &&tensor = op->buffer_->tensor();
     auto &&shape = tensor->shape();
 
-    if (op->buffer_->atype() != AccessType::Cache || shape.empty()) {
+    if (op->buffer_->atype() != AccessType::Cache || op->viewOf_.has_value() ||
+        shape.empty()) {
         CodeGenC::visit(op);
 
     } else {
@@ -70,14 +71,14 @@ void CodeGenCPU::visit(const VarDef &op) {
             //      auto &x = *x_opt;
             this->makeIndent();
             this->os() << "UncheckedOpt<";
-            genMdPtrType(op->buffer_);
+            genMdPtrType(op);
             this->os() << "> " << name << "_opt;" << std::endl;
             this->makeIndent();
             this->os() << "auto &" << name << " = *" << name << "_opt;"
                        << std::endl;
-            this->markDefBuffer(op);
+            this->markDef(op);
             (*this)(op->body_);
-            this->markUndefBuffer(op);
+            this->markUndef(op);
             break;
 
         case MemType::CPU: {
@@ -94,7 +95,7 @@ void CodeGenCPU::visit(const VarDef &op) {
             } else {
                 rawPtr = "&__stack[" + std::to_string(sharedStackTop_) + "]";
             }
-            this->genMdPtrDef(op->buffer_, rawPtr);
+            this->genMdPtrDef(op, rawPtr);
             this->os() << ";" << std::endl;
 
             int64_t size = sizeOf(tensor->dtype());
@@ -115,17 +116,17 @@ void CodeGenCPU::visit(const VarDef &op) {
                 threadStackSize_ =
                     std::max(threadStackSize_, threadStackTop_ + size);
                 threadStackTop_ += size;
-                this->markDefBuffer(op);
+                this->markDef(op);
                 (*this)(op->body_);
-                this->markUndefBuffer(op);
+                this->markUndef(op);
                 threadStackTop_ -= size;
             } else {
                 sharedStackSize_ =
                     std::max(sharedStackSize_, sharedStackTop_ + size);
                 sharedStackTop_ += size;
-                this->markDefBuffer(op);
+                this->markDef(op);
                 (*this)(op->body_);
-                this->markUndefBuffer(op);
+                this->markUndef(op);
                 sharedStackTop_ -= size;
             }
             break;

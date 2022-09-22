@@ -105,7 +105,7 @@ class InjectFakeAccess : public Mutator {
             makeVarDef(FAKE_ACCESS_VAR,
                        makeBuffer(makeTensor({}, DataType::Int32),
                                   AccessType::Cache, MemType::ByValue),
-                       nullptr,
+                       std::nullopt,
                        makeEval(makeLoad(FAKE_ACCESS_VAR, {}, DataType::Int32)),
                        false),
             op->body_,

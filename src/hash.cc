@@ -65,9 +65,8 @@ size_t Hasher::compHash(const VarDefNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     h = ((h + std::hash<std::string>()(op.name_)) * K2 + B2) % P;
     h = ((h + op.buffer_->hash()) * K2 + B2) % P;
-    if (op.ioTensor_.isValid()) {
-        h = ((h + op.ioTensor_->hash()) * K2 + B2) % P;
-    }
+    h = ((h + std::hash<std::optional<std::string>>()(op.viewOf_)) * K2 + B2) %
+        P;
     h = ((h + op.body_->hash()) * K2 + B2) % P;
     h = ((h + std::hash<bool>()((int)op.pinned_)) * K2 + B2) % P;
     return (h * K3 + B3) % P;
@@ -261,10 +260,7 @@ bool HashComparator::compare(const VarDef &lhs, const VarDef &rhs) const {
     if (!(*this)(lhs->buffer_, rhs->buffer_)) {
         return false;
     }
-    if (lhs->ioTensor_.isValid() != rhs->ioTensor_.isValid()) {
-        return false;
-    }
-    if (lhs->ioTensor_.isValid() && !(*this)(lhs->ioTensor_, rhs->ioTensor_)) {
+    if (lhs->viewOf_ != rhs->viewOf_) {
         return false;
     }
     if (!(*this)(lhs->body_, rhs->body_)) {

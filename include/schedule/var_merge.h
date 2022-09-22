@@ -7,7 +7,7 @@ namespace freetensor {
 
 class VarMerge : public Mutator {
     ID def_;
-    std::string var_;
+    std::string var_, newVar_;
     int dim_;
     Expr factor_;
     bool found_ = false;
@@ -20,6 +20,7 @@ class VarMerge : public Mutator {
   private:
     template <class T> T mergeMemAcc(const T &op) {
         if (op->var_ == var_) {
+            op->var_ = newVar_;
             Expr a = op->indices_[dim_], b = op->indices_[dim_ + 1];
             op->indices_[dim_] = makeAdd(makeMul(a, factor_), b);
             op->indices_.erase(op->indices_.begin() + dim_ + 1);

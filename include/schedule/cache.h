@@ -2,6 +2,7 @@
 #define FREE_TENSOR_CACHE_H
 
 #include <analyze/comp_access_bound.h>
+#include <analyze/symbol_table.h>
 #include <mutator.h>
 
 namespace freetensor {
@@ -47,7 +48,9 @@ class MakeCacheVar : public Mutator {
     Stmt visit(const ReduceTo &op) override;
 };
 
-class MakeFillAndFlush : public Mutator {
+class MakeFillAndFlush : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     ID stmt_;
     std::string oldVar_, newVar_;
     ID oldDef_, fillStmt_, flushStmt_;
@@ -69,7 +72,9 @@ class MakeFillAndFlush : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
-class MakeInitAndReduce : public Mutator {
+class MakeInitAndReduce : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     ID stmt_;
     std::string oldVar_, newVar_;
     ID oldDef_, newDef_, initStmt_, reduceStmt_;

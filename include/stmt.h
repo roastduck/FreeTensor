@@ -74,12 +74,20 @@ class VarDefNode : public StmtNode {
   public:
     std::string name_;
     SubTree<Buffer> buffer_ = ChildOf{this};
-    SubTree<Tensor, NullPolicy::Nullable> ioTensor_ = ChildOf{
-        this}; /// We may alter the shape of a `VarDef` in a schedule or
-               /// a pass, but we might want a variable to keep its original
-               /// shape during I/O or in an internal allocation. If `ioTensor_`
-               /// is set, use its shape for I/O. Otherwise, use the shape of
-               /// `buffer_`. `dtype` of `ioTensor_` is currently unused
+
+    /**
+     * This `VarDef` node can be a view of another `VarDef` node, represented by
+     * the name of its source `VarDef`
+     *
+     * Simultaneously access of a `VarDef` and the `VarDef` it views is ALWAYS
+     * treated as dependences
+     *
+     * This is useful when we want to alter the shape of an `VarDef` with
+     * non-`cache` access type, whose shape must be kept during I/O or in an
+     * internal allocation
+     */
+    std::optional<std::string> viewOf_;
+
     SubTree<StmtNode> body_ = ChildOf{this};
     bool pinned_; /// If pinned, SinkVar and ShrinkVar will not alter this node
     std::vector<Stmt> children() const override { return {body_}; }
@@ -88,17 +96,18 @@ class VarDefNode : public StmtNode {
 };
 typedef Ref<VarDefNode> VarDef;
 #define makeVarDef(...) makeNode(VarDef, __VA_ARGS__)
-template <class Tbuffer, class TioTensor, class Tbody>
+template <class Tbuffer, class Tbody>
 Stmt _makeVarDef(const std::string &name, Tbuffer &&buffer,
-                 TioTensor &&ioTensor, Tbody &&body, bool pinned,
-                 const Metadata &metadata = nullptr, const ID &id = {}) {
+                 const std::optional<std::string> &viewOf, Tbody &&body,
+                 bool pinned, const Metadata &metadata = nullptr,
+                 const ID &id = {}) {
     ASSERT(!name.empty());
     VarDef d = VarDef::make();
     d->metadata() = metadata;
     d->setId(id);
     d->name_ = name;
     d->buffer_ = SubTree<Buffer>(buffer);
-    d->ioTensor_ = std::forward<TioTensor>(ioTensor);
+    d->viewOf_ = viewOf;
     d->body_ = std::forward<Tbody>(body);
     d->pinned_ = pinned;
     return d;

@@ -336,7 +336,7 @@ def test_assoc_priority_3():
     assert ast2.match(ast)
 
 
-def test_io_tensor():
+def test_view():
     ft.MarkLabel("Dy")
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
@@ -347,7 +347,7 @@ def test_io_tensor():
     ast = s.ast()
     txt = ft.dump_ast(ast)
     print(txt)
-    assert '@!io_tensor' in txt
+    assert '@!view_of' in txt
     ast2 = ft.load_ast(txt)
     print(ast2)
     assert ast2.match(ast)

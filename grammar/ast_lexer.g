@@ -15,7 +15,7 @@ FUNC:       'func';
 ANY:        'Any';
 
 // VarDef
-IO_TENSOR:  '@!io_tensor';
+VIEW_OF:    '@!view_of';
 PINNED:     '@!pinned';
 ALLOC:      '@!alloc';
 FREE:       '@!free';

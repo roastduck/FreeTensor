@@ -30,25 +30,23 @@ template <class Stream> void CodeGen<Stream>::makeIndent() {
     }
 }
 
-template <class Stream> void CodeGen<Stream>::markDefBuffer(const VarDef &op) {
+template <class Stream> void CodeGen<Stream>::markDef(const VarDef &op) {
     var2Stream_[op->name_] = streamStack_.back().name_;
     pushDef(op);
 }
 
-template <class Stream>
-void CodeGen<Stream>::markUseBuffer(const std::string &name) {
+template <class Stream> void CodeGen<Stream>::markUse(const std::string &name) {
     auto &&stream = var2Stream_.at(name);
-    auto &&b = buffer(name);
+    auto &&d = def(name);
     for (auto it = streamStack_.rbegin(); it != streamStack_.rend(); it++) {
         if (it->name_ == stream) {
             break;
         }
-        it->useBuffers_[name] = b;
+        it->useDefs_[name] = d;
     }
 }
 
-template <class Stream>
-void CodeGen<Stream>::markUndefBuffer(const VarDef &op) {
+template <class Stream> void CodeGen<Stream>::markUndef(const VarDef &op) {
     var2Stream_.erase(op->name_);
     popDef(op);
 }
