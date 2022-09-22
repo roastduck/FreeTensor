@@ -17,24 +17,6 @@ namespace freetensor {
 
 namespace {
 
-PBBuildExpr absSumConstraint(const PBBuildExpr &sumVar,
-                             const std::vector<PBBuildExpr> &vars) {
-    auto n = vars.size();
-    PBBuildExpr ret = true;
-    ASSERT(n < 31);
-    for (int i = 0; i < (1 << n); ++i) {
-        PBBuildExpr absSum = 0;
-        for (unsigned bit = 0; bit < n; ++bit) {
-            if ((i >> bit) & 1)
-                absSum += vars[bit];
-            else
-                absSum -= vars[bit];
-        }
-        ret = ret && sumVar >= absSum;
-    }
-    return ret;
-}
-
 PBBuildExpr nonZeroConstraint(const std::vector<PBBuildExpr> &vars,
                               const PBBuildExpr &delta, int varBound = 2) {
     auto n = vars.size();
@@ -64,7 +46,7 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
     int nDims = vectors[0].size();
 
     PBSetBuilder builder;
-    auto sum = builder.newVar("sum");
+    auto abss = builder.newVars(nDims, "abs_x");
     auto vars = builder.newVars(nDims, "x");
     auto delta = builder.newVar("delta");
     auto fOrtho = [&](const std::vector<int> &coeffs) {
@@ -76,7 +58,9 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
 
     PBCtx ctx;
     builder.addConstraint(nonZeroConstraint(vars, delta));
-    builder.addConstraint(absSumConstraint(sum, vars));
+    builder.addConstraints(views::zip_with(
+        [](auto &&abs, auto &&x) { return abs >= x && abs >= -x; }, abss,
+        vars));
     builder.addConstraints(vectors | views::transform(fOrtho));
     PBSet orthogonalSet = builder.build(ctx);
     builder.clearConstraints();
@@ -87,8 +71,8 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
         auto solution = sample(lexmin(orthogonalSet)).coordinates();
         // extract the vector into result
         std::vector<int> v;
-        v.reserve(solution.size() - 2);
-        for (size_t i = 1; i < solution.size() - 1; ++i) {
+        v.reserve(nDims);
+        for (int i = nDims; i < 2 * nDims; ++i) {
             ASSERT(solution[i].denSi() == 1);
             // put negated value into v since the result is minimized but we
             // want positive results
@@ -185,7 +169,12 @@ std::pair<int, std::vector<int>> findIterFromAP(const AccessPoint &ap,
 struct ReplaceVar : public Mutator {
     std::unordered_map<std::string, Expr> replaceMap_;
 
-    Expr visit(const Var &op) override { return replaceMap_.at(op->name_); }
+    Expr visit(const Var &op) override {
+        if (replaceMap_.contains(op->name_))
+            return replaceMap_.at(op->name_);
+        else
+            return Mutator::visit(op);
+    }
 };
 
 struct PermuteInfo {
@@ -623,45 +612,58 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     // 2. (nParams + 1 + nestLevel0) loop 0 permuting coefficients
     auto c0Params = builder.newInputs(nParams + 1, "c0p");
     auto c0Iters = builder.newInputs(nestLevel0, "c0i");
-    auto c0 = c0Params;
-    c0.insert(c0.end(), c0Iters.begin(), c0Iters.end());
     // 3. (nParams + 1 + nestLevel1) loop 1 permuting coefficients
     auto c1Params = builder.newInputs(nParams + 1, "c1p");
     auto c1Iters = builder.newInputs(nestLevel1, "c1i");
-    auto c1 = c1Params;
-    c1.insert(c1.end(), c1Iters.begin(), c1Iters.end());
 
     // optimize targets
     // 1. the distance bounds go first, as main optimizing targets
-    builder.addOutputs(cBounds);
-    // 2.1. sum of coefficients absolute for loop 0
-    auto c0Sum = builder.newOutput("c0sum");
-    // 2.2. binary decision variable for avoiding zeros
+    //    for each bounding coefficients except the last one (for constant), we
+    //    need to minimize its absolute value to avoid -inf results
+    for (int i = 0; i < nParams; ++i) {
+        auto abs = builder.newOutput("abs_cb" + toString(i));
+        builder.addConstraint(abs >= cBounds[i] && abs >= -cBounds[i]);
+        builder.addOutput(cBounds[i]);
+    }
+    builder.addOutput(cBounds[nParams]);
+    // 2.1. binary decision variable for avoiding zeros
     auto delta0 = builder.newOutput("d0");
     auto delta0L = builder.newOutput("d0l");
-    // 2.3. reversed coefficients of loop 0 iterations
+    // 2.2. reversed coefficients of loop 0 iterations
     //      they are reversed because we want to select outer loops
     //      earlier, preserving the original loop order
-    builder.addOutputs(c0Iters | views::reverse);
-    // 2.4. coefficients of loop 0 params and constant
-    builder.addOutputs(c0Params);
-    // 3.1. sum of coefficients absolute for loop 1
-    auto c1Sum = builder.newOutput("c1sum");
-    // 3.2. binary decision variable for avoiding zeros
+    for (int i = nestLevel0 - 1; i >= 0; --i) {
+        auto abs = builder.newOutput("abs_c0i" + toString(i));
+        builder.addConstraint(abs >= c0Iters[i] && abs >= -c0Iters[i]);
+        builder.addOutput(c0Iters[i]);
+    }
+    // 2.3. coefficients of loop 0 params and constant
+    for (int i = 0; i < nParams + 1; ++i) {
+        auto abs = builder.newOutput("abs_c0p" + toString(i));
+        builder.addConstraint(abs >= c0Params[i] && abs >= -c0Params[i]);
+        builder.addOutput(c0Params[i]);
+    }
+    // 3.1. binary decision variable for avoiding zeros
     auto delta1 = builder.newOutput("d1");
     auto delta1L = builder.newOutput("d1l");
-    // 3.3. reversed coefficients of loop 1 iterations
-    builder.addOutputs(c1Iters | views::reverse);
-    // 3.4. coefficients of loop 1 params and constant
-    builder.addOutputs(c1Params);
+    // 3.2. reversed coefficients of loop 1 iterations
+    for (int i = nestLevel1 - 1; i >= 0; --i) {
+        auto abs = builder.newOutput("abs_c1i" + toString(i));
+        builder.addConstraint(abs >= c1Iters[i] && abs >= -c1Iters[i]);
+        builder.addOutput(c1Iters[i]);
+    }
+    // 3.3. coefficients of loop 1 params and constant
+    for (int i = 0; i < nParams + 1; ++i) {
+        auto abs = builder.newOutput("abs_c1p" + toString(i));
+        builder.addConstraint(abs >= c1Params[i] && abs >= -c1Params[i]);
+        builder.addOutput(c1Params[i]);
+    }
 
     // the constraints on one loop
     builder.addConstraints({
-        absSumConstraint(c0Sum, c0),
         nonZeroConstraint(c0Iters, delta0),
         delta0L >= 0,
         delta0L <= 1,
-        absSumConstraint(c1Sum, c1),
         nonZeroConstraint(c1Iters, delta1),
         delta1L >= 0,
         delta1L <= 1,
@@ -669,6 +671,23 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
 
     auto optimizeMap = builder.build(ctx);
     auto revOptimizeMap = reverse(optimizeMap);
+
+    // constrain the bounding function to be >= 0, avoiding unbound optimum when
+    // no dependence occurs
+    {
+        PBMapBuilder builder;
+
+        auto params = builder.newInputs(nParams, "p");
+        auto iters0 = builder.newInputs(nestLevel0, "i0_");
+
+        builder.addOutputs(params);
+        builder.addOutput(1);
+        builder.addOutputs(
+            views::repeat_n(0, (nParams + 1) * 2 + nestLevel0 + nestLevel1));
+        optimizeMap =
+            intersectDomain(std::move(optimizeMap),
+                            coefficients(apply(loop0Set, builder.build(ctx))));
+    }
 
     PBSetBuilder orthoSetBuilder;
     orthoSetBuilder.addVars(builder.outputs());
