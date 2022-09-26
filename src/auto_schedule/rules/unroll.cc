@@ -1,4 +1,3 @@
-#include <analyze/get_loop_nest_tree.h>
 #include <auto_schedule/rules/parallelize.h>
 #include <auto_schedule/rules/thread_bind.h>
 #include <auto_schedule/rules/unroll.h>
@@ -31,28 +30,28 @@ void UnrollPart::apply(Schedule &schedule, SubSketch &subSketch) {
         }
         root = schedule.find(lastParallelizedID).as<ForNode>()->body_;
     }
-    std::function<int(const Ref<LoopNest> &nest)> visitNest =
-        [&](const Ref<LoopNest> &nest) {
-            int sz = 0;
-            for (auto &&subNest : nest->subLoops_) {
-                sz += visitNest(subNest);
-            }
-            if (sz == 0) {
-                sz = vthreadSize;
-            }
-            auto &&loop = nest->loop_;
-            if (loop.isValid()) { // not root
-                if (loop->property_->parallel_ == serialScope &&
-                    !loop->property_->vectorize_ && !loop->property_->unroll_ &&
-                    loop->len_->nodeType() == ASTNodeType::IntConst &&
-                    sz * loop->len_.as<IntConstNode>()->val_ <= maxSize_) {
-                    sz *= loop->len_.as<IntConstNode>()->val_;
-                    schedule.unroll(loop->id());
-                }
-            }
-            return sz;
-        };
-    visitNest(getLoopNestTree(root));
+    std::function<int(const For &)> visitNest = [&](const For &loop) {
+        int sz = 0;
+        for (auto &&subNest :
+             schedule.findAll("<For><-(!<For><-)*#" + toString(loop->id()))) {
+            sz += visitNest(subNest.as<ForNode>());
+        }
+        if (sz == 0) {
+            sz = vthreadSize;
+        }
+        if (loop->property_->parallel_ == serialScope &&
+            !loop->property_->vectorize_ && !loop->property_->unroll_ &&
+            loop->len_->nodeType() == ASTNodeType::IntConst &&
+            sz * loop->len_.as<IntConstNode>()->val_ <= maxSize_) {
+            sz *= loop->len_.as<IntConstNode>()->val_;
+            schedule.unroll(loop->id());
+        }
+        return sz;
+    };
+    for (auto &&loop :
+         schedule.findAll("<For><-(!<For><-)*#" + toString(root->id()))) {
+        visitNest(loop.as<ForNode>());
+    }
 }
 
 void UnrollPart::genRandAnnotation(RNG &gen) {

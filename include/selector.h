@@ -14,6 +14,14 @@ class Selector {
     virtual bool match(const Stmt &stmt) const = 0;
 };
 
+class NotSelector : public Selector {
+    Ref<Selector> sub_;
+
+  public:
+    NotSelector(const Ref<Selector> &sub) : sub_(sub) {}
+    bool match(const Stmt &stmt) const override;
+};
+
 class BothSelector : public Selector {
     Ref<Selector> lhs_, rhs_;
 
@@ -49,10 +57,17 @@ class ChildSelector : public Selector {
 };
 
 class DescendantSelector : public Selector {
-    Ref<Selector> ancestor_;
+    Ref<Selector> ancestor_, middle_;
 
   public:
-    DescendantSelector(const Ref<Selector> &ancestor) : ancestor_(ancestor) {}
+    DescendantSelector(const Ref<Selector> &ancestor,
+                       const Ref<Selector> &middle = nullptr)
+        : ancestor_(ancestor), middle_(middle) {}
+    bool match(const Stmt &stmt) const override;
+};
+
+class RootNodeSelector : public Selector {
+  public:
     bool match(const Stmt &stmt) const override;
 };
 
@@ -62,6 +77,14 @@ class LeafSelector : public Selector {
     virtual bool match(const Stmt &stmt) const override {
         return stmt->metadata().isValid() && match(stmt->metadata());
     }
+};
+
+class NotLeafSelector : public LeafSelector {
+    Ref<LeafSelector> sub_;
+
+  public:
+    NotLeafSelector(const Ref<LeafSelector> &sub) : sub_(sub) {}
+    bool match(const Metadata &md) const override;
 };
 
 class BothLeafSelector : public LeafSelector {
@@ -120,10 +143,17 @@ class DirectCallerSelector : public LeafSelector {
 };
 
 class CallerSelector : public LeafSelector {
-    Ref<LeafSelector> caller_;
+    Ref<LeafSelector> caller_, middle_;
 
   public:
-    CallerSelector(const Ref<LeafSelector> &caller) : caller_(caller) {}
+    CallerSelector(const Ref<LeafSelector> &caller,
+                   const Ref<LeafSelector> &middle = nullptr)
+        : caller_(caller), middle_(middle) {}
+    bool match(const Metadata &md) const override;
+};
+
+class RootCallSelector : public LeafSelector {
+  public:
     bool match(const Metadata &md) const override;
 };
 

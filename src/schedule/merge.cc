@@ -1,5 +1,6 @@
 #include <analyze/merge_no_deps_hint.h>
 #include <pass/tensor_prop_const.h>
+#include <schedule.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/merge.h>
 
@@ -24,7 +25,7 @@ Stmt MergeFor::visit(const For &_op) {
                     op->body_, makeMetadata("merge", oldOuter_, oldInner_));
         newId_ = ret->id();
         for (auto &&def : intermediateDefs_) {
-            ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_, ret,
+            ret = makeVarDef(def->name_, def->buffer_, def->viewOf_, ret,
                              def->pinned_, def->metadata(), def->id());
         }
         return ret;
@@ -136,6 +137,20 @@ std::pair<Stmt, ID> merge(const Stmt &_ast, const ID &loop1, const ID &loop2) {
     MergeFor mutator(ast, outer, inner);
     ast = mutator(ast);
     return std::make_pair(ast, mutator.newId());
+}
+
+ID Schedule::merge(const ID &loop1, const ID &loop2) {
+    beginTransaction();
+    auto log =
+        appendLog(MAKE_SCHEDULE_LOG(Merge, freetensor::merge, loop1, loop2));
+    try {
+        auto ret = applyLog(log);
+        commitTransaction();
+        return ret;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

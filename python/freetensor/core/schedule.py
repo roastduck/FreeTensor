@@ -230,6 +230,12 @@ class Schedule(ffi.Schedule):
 
         To split loop into two nested loops, use `split` instead
 
+        Statements inside the original loop will be distributed to one or both
+        (happening if they are scope statements) loops. If a statement is
+        originally labeled "S", it can be selected by "$fission.0{S}" (from the
+        first loop) or "$fission.1{S}" (from the second loop) after fission. If
+        one of the resulting loop has an empty body, it will be removed
+
         Parameters
         ----------
         loop : str, ID or Stmt
@@ -240,12 +246,6 @@ class Schedule(ffi.Schedule):
         splitter : str (Selector string), ID, Stmt, or list of them
             Where to fission the loop. If multiple statement are selected, fission the
             look before or after all of them
-
-        Statements inside the original loop will be distributed to one or both
-        (happening if they are scope statements) loops. If a statement is
-        originally labeled "S", it can be selected by "$fission.0{S}" (from the
-        first loop) or "$fission.1{S}" (from the second loop) after fission. If
-        one of the resulting loop has an empty body, it will be removed
 
         Raises
         ------
@@ -757,6 +757,51 @@ class Schedule(ffi.Schedule):
             if the loop cannot be transformed to be a matrix multiplication
         """
         super().as_matmul(self._lookup(loop))
+
+    def pluto_fuse(self, loop0, loop1):
+        """
+        Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable
+        loops as possible at outermost levels.
+        The two loops are required to be consequent; all directly nested levels are
+        detected and subject to permutation. Remaining levels that cannot be fused are
+        left inside the fused loops as two statements
+
+        Parameters
+        ----------
+        loop0 : str, ID or Stmt
+            The first loop to fuse
+        loop1 : str, ID or Stmt
+            The second loop to fuse
+
+        Returns
+        -------
+        (ID, int)
+            The ID of fused loop and level of parallelizable loops
+
+        Raises
+        ------
+        InvalidSchedule
+            if the loops are not consequent
+        """
+        return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1))
+
+    def pluto_permute(self, loop):
+        """
+        Use Pluto+ algorithm to permute a single loop, with as most parallelizable loops
+        as possible at outermost levels.
+
+        Parameters
+        ----------
+        loop : str, ID or Stmt
+            The loop to permute
+
+        Returns
+        -------
+        (ID, int)
+            The ID of permuted loop and level of parallelizable loops
+
+        """
+        return super().pluto_permute(self._lookup(loop))
 
     def auto_schedule(self, target):
         """

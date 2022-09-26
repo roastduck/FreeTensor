@@ -5,17 +5,21 @@
 #include <cctype>
 #include <iostream>
 #include <ranges>
+#include <sstream>
 #include <string>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-#include <itertools.hpp>
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
 
 #include <except.h>
 
 namespace freetensor {
+
+namespace views = ranges::views;
 
 template <class T, class V1, class V2, class Hash, class KeyEqual>
 std::unordered_map<T, std::pair<V1, V2>, Hash, KeyEqual>
@@ -156,7 +160,7 @@ inline std::string slice(const std::string &s, int begin) {
 template <class T>
 requires std::ranges::range<T> && (!std::convertible_to<T, std::string>)
 std::ostream &operator<<(std::ostream &os, const T &r) {
-    for (auto &&[i, item] : iter::enumerate(r)) {
+    for (auto &&[i, item] : views::enumerate(r)) {
         os << (i > 0 ? ", " : "") << item;
     }
     return os;
@@ -174,6 +178,33 @@ std::ostream &operator<<(std::ostream &os, std::tuple<Ts...> const &tuple) {
             return ((os << (i++ > 0 ? ", " : "") << t), ...);
         },
         tuple);
+}
+
+/**
+ * Join a sequence of elements to a string with given splitter
+ */
+struct _Join {
+    const std::string &splitter;
+};
+
+template <std::ranges::range Container>
+std::string join(const Container &c, const std::string &splitter) {
+    std::ostringstream oss;
+    bool first = true;
+    for (const auto &s : c) {
+        if (!first)
+            oss << splitter;
+        oss << s;
+        first = false;
+    }
+    return oss.str();
+}
+
+inline auto join(const std::string &splitter) { return _Join{splitter}; }
+
+template <std::ranges::range Container>
+auto operator|(const Container &c, const _Join &joiner) {
+    return join(c, joiner.splitter);
 }
 
 } // namespace freetensor

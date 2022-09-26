@@ -7,6 +7,7 @@
 #include <math/bounds.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
+#include <schedule.h>
 #include <schedule/separate_tail.h>
 
 namespace freetensor {
@@ -28,6 +29,7 @@ void FindAllIfs::visit(const If &op) {
 
 Stmt WrapMetadata::visitStmt(const Stmt &op) {
     auto ret = Mutator::visitStmt(op);
+    ret->setId();
     ret->metadata() = makeMetadata(op_, ret);
     return ret;
 }
@@ -166,6 +168,19 @@ Stmt separateTail(const Stmt &_ast, bool noDuplicateVarDefs) {
     }
 
     return ast;
+}
+
+void Schedule::separateTail(bool noDuplicateVarDefs) {
+    beginTransaction();
+    auto log = appendLog(MAKE_SCHEDULE_LOG(
+        SeparateTail, freetensor::separateTail, noDuplicateVarDefs));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

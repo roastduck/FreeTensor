@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_set>
+#include <vector>
 
 #include <isl/aff.h>
 #include <isl/ctx.h>
@@ -104,6 +106,26 @@ class PBMap {
 
     isl_size nBasic() const { return isl_map_n_basic_map(map_); }
 
+    isl_size nInDims() const { return isl_map_dim(map_, isl_dim_in); }
+    isl_size nOutDims() const { return isl_map_dim(map_, isl_dim_out); }
+    isl_size nParamDims() const { return isl_map_dim(map_, isl_dim_param); }
+
+    void projectOutInputDims(unsigned first, unsigned n) {
+        map_ = isl_map_project_out(map_, isl_dim_in, first, n);
+    }
+    void projectOutOutputDims(unsigned first, unsigned n) {
+        map_ = isl_map_project_out(map_, isl_dim_out, first, n);
+    }
+
+    void moveDimsInputToOutput(unsigned first, unsigned n, unsigned target) {
+        map_ =
+            isl_map_move_dims(map_, isl_dim_out, target, isl_dim_in, first, n);
+    }
+    void moveDimsOutputToInput(unsigned first, unsigned n, unsigned target) {
+        map_ =
+            isl_map_move_dims(map_, isl_dim_in, target, isl_dim_out, first, n);
+    }
+
     friend std::ostream &operator<<(std::ostream &os, const PBMap &map) {
         return os << isl_map_to_str(map.map_);
     }
@@ -203,6 +225,12 @@ class PBSet {
 
     isl_size nBasic() const { return isl_set_n_basic_set(set_); }
 
+    isl_size nDims() const { return isl_set_dim(set_, isl_dim_set); }
+
+    void projectOutDims(unsigned first, unsigned n) {
+        set_ = isl_set_project_out(set_, isl_dim_set, first, n);
+    }
+
     friend std::ostream &operator<<(std::ostream &os, const PBSet &set) {
         return os << isl_set_to_str(set.set_);
     }
@@ -299,6 +327,57 @@ class PBFunc {
     }
 };
 
+class PBPoint {
+    isl_point *point_ = nullptr;
+
+  public:
+    PBPoint() {}
+    PBPoint(isl_point *point) : point_(point) {}
+
+    ~PBPoint() {
+        if (point_ != nullptr) {
+            isl_point_free(point_);
+        }
+    }
+
+    PBPoint(const PBPoint &other) : point_(other.copy()) {}
+    PBPoint &operator=(const PBPoint &other) {
+        if (point_ != nullptr) {
+            isl_point_free(point_);
+        }
+        point_ = other.copy();
+        return *this;
+    }
+
+    PBPoint(PBPoint &&other) : point_(other.move()) {}
+    PBPoint &operator=(PBPoint &&other) {
+        if (point_ != nullptr) {
+            isl_point_free(point_);
+        }
+        point_ = other.move();
+        return *this;
+    }
+
+    bool isValid() const { return point_ != nullptr; }
+
+    isl_point *get() const { return GET_ISL_PTR(point_); }
+    isl_point *copy() const { return COPY_ISL_PTR(point_, point); }
+    isl_point *move() { return MOVE_ISL_PTR(point_); }
+
+    bool isVoid() const { return isl_point_is_void(point_); }
+
+    std::vector<PBVal> coordinates() const {
+        ASSERT(!isVoid());
+        std::vector<PBVal> result;
+        isl_size nCoord = isl_space_dim(
+            PBSpace(isl_point_get_space(point_)).get(), isl_dim_set);
+        for (isl_size i = 0; i < nCoord; ++i)
+            result.emplace_back(
+                isl_point_get_coordinate_val(point_, isl_dim_set, i));
+        return result;
+    }
+};
+
 template <typename T>
 concept PBMapRef = std::same_as<PBMap, std::decay_t<T>>;
 template <typename T>
@@ -356,10 +435,29 @@ template <PBSetRef T, PBSetRef U> PBSet intersect(T &&lhs, U &&rhs) {
     return isl_set_intersect(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
+template <PBMapRef T, PBSetRef U> PBMap intersectDomain(T &&lhs, U &&rhs) {
+    DEBUG_PROFILE_VERBOSE("intersectDomain",
+                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
+                              std::to_string(rhs.nBasic()));
+    return isl_map_intersect_domain(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+template <PBMapRef T, PBSetRef U> PBMap intersectRange(T &&lhs, U &&rhs) {
+    DEBUG_PROFILE_VERBOSE("intersectRange",
+                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
+                              std::to_string(rhs.nBasic()));
+    return isl_map_intersect_range(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
 template <PBMapRef T, PBMapRef U> PBMap uni(T &&lhs, U &&rhs) {
     DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
                                      "," + std::to_string(rhs.nBasic()));
     return isl_map_union(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
+template <PBSetRef T, PBSetRef U> PBSet uni(T &&lhs, U &&rhs) {
+    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                     "," + std::to_string(rhs.nBasic()));
+    return isl_set_union(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
 template <PBSetRef T, PBMapRef U> PBSet apply(T &&lhs, U &&rhs) {
@@ -387,6 +485,16 @@ template <PBMapRef T> PBMap lexmin(T &&map) {
     return isl_map_lexmin(PBRefTake<T>(map));
 }
 
+template <PBSetRef T> PBSet lexmax(T &&set) {
+    DEBUG_PROFILE_VERBOSE("lexmax", "nBasic=" + std::to_string(set.nBasic()));
+    return isl_set_lexmax(PBRefTake<T>(set));
+}
+
+template <PBSetRef T> PBSet lexmin(T &&set) {
+    DEBUG_PROFILE_VERBOSE("lexmin", "nBasic=" + std::to_string(set.nBasic()));
+    return isl_set_lexmin(PBRefTake<T>(set));
+}
+
 template <PBSpaceRef T> PBMap identity(T &&space) {
     DEBUG_PROFILE("identity");
     return isl_map_identity(PBRefTake<T>(space));
@@ -410,24 +518,6 @@ template <PBSpaceRef T> PBMap lexLE(T &&space) {
 template <PBSpaceRef T> PBMap lexLT(T &&space) {
     DEBUG_PROFILE("lexLT");
     return isl_map_lex_lt(PBRefTake<T>(space));
-}
-
-inline PBMap lexLE(PBSpace &&space) {
-    DEBUG_PROFILE("lexLE");
-    return isl_map_lex_le(space.move());
-}
-inline PBMap lexLE(const PBSpace &space) {
-    DEBUG_PROFILE("lexLE");
-    return isl_map_lex_le(space.copy());
-}
-
-inline PBMap lexLT(PBSpace &&space) {
-    DEBUG_PROFILE("lexLT");
-    return isl_map_lex_lt(space.move());
-}
-inline PBMap lexLT(const PBSpace &space) {
-    DEBUG_PROFILE("lexLT");
-    return isl_map_lex_lt(space.copy());
 }
 
 inline PBSpace spaceAlloc(const PBCtx &ctx, unsigned nparam, unsigned nIn,
@@ -485,6 +575,39 @@ template <PBSpaceRef T> PBSpace spaceMapFromSet(T &&space) {
     return isl_space_map_from_set(PBRefTake<T>(space));
 }
 
+template <PBMapRef T> PBSet flattenMapToSet(T &&map) {
+    return isl_set_flatten(isl_map_wrap(PBRefTake<T>(map)));
+}
+
+template <PBSetRef T> PBPoint sample(T &&set) {
+    return isl_set_sample_point(PBRefTake<T>(set));
+}
+
+/**
+ * @brief Compute the set of coefficients corresponded to the given set
+ *
+ * The output coefficient set will be of the same dimension as the given set
+ *
+ * Let the variables of the input set $X$ be $x_i$, and that of the output
+ * coefficient set $C$ be $c_i$, then this procedure guarantees:
+ * $\{c_i\} \in C \Leftrightarrow \forall \{x_i\} \in X, \Sigma c_i x_i \geq c$
+ *
+ * @param set the input set
+ * @param c the RHS constant
+ * @return PBSet set of valid coefficients for the input set
+ */
+template <PBSetRef T> PBSet coefficients(T &&set, int64_t c = 0) {
+    auto coefficientsMap = isl_map_from_basic_map(
+        isl_basic_set_unwrap(isl_set_coefficients(PBRefTake<T>(set))));
+    auto ctx = isl_map_get_ctx(coefficientsMap);
+    auto paramsSpace = isl_space_domain(isl_map_get_space(coefficientsMap));
+    auto nParams = isl_space_dim(paramsSpace, isl_dim_set);
+    auto cPoint = isl_point_zero(paramsSpace);
+    isl_point_set_coordinate_val(cPoint, isl_dim_set, nParams - 1,
+                                 isl_val_int_from_si(ctx, -c));
+    return apply(PBSet(isl_set_from_point(cPoint)), PBMap(coefficientsMap));
+}
+
 inline bool operator==(const PBSet &lhs, const PBSet &rhs) {
     DEBUG_PROFILE_VERBOSE("equal", "nBasic=" + std::to_string(lhs.nBasic()) +
                                        "," + std::to_string(rhs.nBasic()));
@@ -496,6 +619,182 @@ inline bool operator==(const PBMap &lhs, const PBMap &rhs) {
                                        "," + std::to_string(rhs.nBasic()));
     return isl_map_is_equal(lhs.get(), rhs.get());
 }
+
+class PBBuildExpr {
+    std::string expr_;
+    explicit PBBuildExpr(const std::string &expr) : expr_(expr) {}
+    friend class PBBuilder;
+
+  public:
+    PBBuildExpr(const PBBuildExpr &) = default;
+    PBBuildExpr(PBBuildExpr &&) = default;
+    PBBuildExpr &operator=(const PBBuildExpr &) = default;
+    PBBuildExpr &operator=(PBBuildExpr &&) = default;
+
+    PBBuildExpr(bool b) : expr_(b ? "true" : "false") {}
+    PBBuildExpr(std::integral auto i) : expr_(toString(i)) {}
+
+    friend PBBuildExpr operator+(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " + " + b.expr_ + ")");
+    }
+    PBBuildExpr &operator+=(const PBBuildExpr &other) {
+        return *this = *this + other;
+    }
+
+    PBBuildExpr operator-() const { return PBBuildExpr("(-" + expr_ + ")"); }
+    friend PBBuildExpr operator-(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " - " + b.expr_ + ")");
+    }
+    PBBuildExpr &operator-=(const PBBuildExpr &other) {
+        return *this = *this - other;
+    }
+
+    friend PBBuildExpr operator*(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " * " + b.expr_ + ")");
+    }
+    PBBuildExpr &operator*=(const PBBuildExpr &other) {
+        return *this = *this * other;
+    }
+
+    friend PBBuildExpr operator/(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " / " + b.expr_ + ")");
+    }
+    PBBuildExpr &operator/=(const PBBuildExpr &other) {
+        return *this = *this / other;
+    }
+
+    friend PBBuildExpr ceilDiv(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("ceil(" + a.expr_ + " / " + b.expr_ + ")");
+    }
+
+    friend PBBuildExpr operator%(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " % " + b.expr_ + ")");
+    }
+    PBBuildExpr &operator%=(const PBBuildExpr &other) {
+        return *this = *this % other;
+    }
+
+    friend PBBuildExpr operator<(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " < " + b.expr_ + ")");
+    }
+
+    friend PBBuildExpr operator<=(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " <= " + b.expr_ + ")");
+    }
+
+    friend PBBuildExpr operator>(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " > " + b.expr_ + ")");
+    }
+
+    friend PBBuildExpr operator>=(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " >= " + b.expr_ + ")");
+    }
+
+    friend PBBuildExpr operator==(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " = " + b.expr_ + ")");
+    }
+
+    friend PBBuildExpr operator!=(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " != " + b.expr_ + ")");
+    }
+
+    friend PBBuildExpr operator&&(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " and " + b.expr_ + ")");
+    }
+
+    friend PBBuildExpr operator||(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("(" + a.expr_ + " or " + b.expr_ + ")");
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const PBBuildExpr &e);
+};
+
+class PBBuilder {
+    int anonVarNum_ = 0;
+    std::unordered_set<std::string> namedVars;
+
+    std::vector<PBBuildExpr> constraints_;
+
+  protected:
+    PBBuildExpr newVar(const std::string &name = "");
+    std::vector<PBBuildExpr> newVars(int n, const std::string &prefix = "");
+
+    std::string getConstraintsStr() const;
+
+  public:
+    PBBuilder() = default;
+    PBBuilder(const PBBuilder &) = default;
+    PBBuilder(PBBuilder &&) = default;
+    PBBuilder &operator=(const PBBuilder &) = default;
+    PBBuilder &operator=(PBBuilder &&) = default;
+
+    void addConstraint(const PBBuildExpr &constraint);
+    void addConstraint(PBBuildExpr &&constraint);
+    template <typename T = std::initializer_list<PBBuildExpr>>
+    void addConstraints(T &&constraints) {
+        for (auto &&c : constraints)
+            addConstraint(c);
+    }
+    const std::vector<PBBuildExpr> &constraints() const { return constraints_; }
+    void clearConstraints() { constraints_.clear(); };
+};
+
+class PBMapBuilder : public PBBuilder {
+    std::vector<PBBuildExpr> inputs_;
+    std::vector<PBBuildExpr> outputs_;
+
+  public:
+    PBMapBuilder() = default;
+    PBMapBuilder(const PBMapBuilder &) = default;
+    PBMapBuilder(PBMapBuilder &&) = default;
+    PBMapBuilder &operator=(const PBMapBuilder &) = default;
+    PBMapBuilder &operator=(PBMapBuilder &&) = default;
+
+    void addInput(const PBBuildExpr &expr);
+    void addInputs(auto exprs) {
+        for (auto &&e : exprs)
+            addInput(e);
+    }
+    PBBuildExpr newInput(const std::string &name);
+    std::vector<PBBuildExpr> newInputs(int n, const std::string &prefix = "");
+    const std::vector<PBBuildExpr> &inputs() const { return inputs_; }
+    void clearInputs() { inputs_.clear(); }
+
+    void addOutput(const PBBuildExpr &expr);
+    void addOutputs(auto exprs) {
+        for (auto &&e : exprs)
+            addOutput(e);
+    }
+    PBBuildExpr newOutput(const std::string &name);
+    std::vector<PBBuildExpr> newOutputs(int n, const std::string &prefix = "");
+    const std::vector<PBBuildExpr> &outputs() const { return outputs_; }
+    void clearOutputs() { outputs_.clear(); }
+
+    PBMap build(const PBCtx &ctx) const;
+};
+
+class PBSetBuilder : public PBBuilder {
+    std::vector<PBBuildExpr> vars_;
+
+  public:
+    PBSetBuilder() = default;
+    PBSetBuilder(const PBSetBuilder &) = default;
+    PBSetBuilder(PBSetBuilder &&) = default;
+    PBSetBuilder &operator=(const PBSetBuilder &) = default;
+    PBSetBuilder &operator=(PBSetBuilder &&) = default;
+
+    void addVar(const PBBuildExpr &expr);
+    void addVars(auto exprs) {
+        for (auto &&e : exprs)
+            addVar(e);
+    }
+    PBBuildExpr newVar(const std::string &name);
+    std::vector<PBBuildExpr> newVars(int n, const std::string &prefix = "");
+    const std::vector<PBBuildExpr> &vars() const { return vars_; }
+    void clearVars() { vars_.clear(); }
+
+    PBSet build(const PBCtx &ctx) const;
+};
 
 } // namespace freetensor
 

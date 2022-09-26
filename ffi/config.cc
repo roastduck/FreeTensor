@@ -34,9 +34,10 @@ void init_ffi_config(py::module_ &m) {
     m.def(
         "set_backend_compiler_cxx",
         [](const std::vector<std::string> &paths) {
-            auto pathsFs = paths | iter::imap([](const std::string &path) {
-                               return std::filesystem::path(path);
-                           });
+            auto pathsFs =
+                paths | views::transform([](const std::string &path) {
+                    return std::filesystem::path(path);
+                });
             Config::setBackendCompilerCXX({pathsFs.begin(), pathsFs.end()});
         },
         "Set backend compiler used to compile generated C++ code, unescaped "
@@ -52,9 +53,10 @@ void init_ffi_config(py::module_ &m) {
     m.def(
         "set_backend_compiler_nvcc",
         [](const std::vector<std::string> &paths) {
-            auto pathsFs = paths | iter::imap([](const std::string &path) {
-                               return std::filesystem::path(path);
-                           });
+            auto pathsFs =
+                paths | views::transform([](const std::string &path) {
+                    return std::filesystem::path(path);
+                });
             Config::setBackendCompilerNVCC({pathsFs.begin(), pathsFs.end()});
         },
         "Set backend compiler used to compile generated CUDA code, unescaped "

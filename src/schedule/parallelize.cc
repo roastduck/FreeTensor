@@ -1,4 +1,5 @@
 #include <analyze/deps.h>
+#include <schedule.h>
 #include <schedule/parallelize.h>
 
 namespace freetensor {
@@ -96,6 +97,19 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
             .filter(filter)(ast, found);
     }
     return ast;
+}
+
+void Schedule::parallelize(const ID &loop, const ParallelScope &parallel) {
+    beginTransaction();
+    auto log = appendLog(MAKE_SCHEDULE_LOG(Parallelize, freetensor::parallelize,
+                                           loop, parallel));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

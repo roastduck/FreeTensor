@@ -1,3 +1,4 @@
+#include <schedule.h>
 #include <schedule/var_split.h>
 
 namespace freetensor {
@@ -20,21 +21,13 @@ Stmt VarSplit::visit(const VarDef &_op) {
         }
 
         var_ = _op->name_;
+        newVar_ =
+            _op->buffer_->atype() == AccessType::Cache ? var_ : var_ + ".view";
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::VarDef);
         auto op = __op.as<VarDefNode>();
         var_.clear();
-
-        if (fixedSize_) {
-            if (!op->ioTensor_.isValid()) {
-                op->ioTensor_ = op->buffer_->tensor();
-            }
-        } else {
-            if (op->buffer_->atype() != AccessType::Cache) {
-                throw InvalidSchedule(
-                    "Using RelaxedSize mode in an I/O variable is not allowed");
-            }
-        }
+        newVar_.clear();
 
         auto &shape = op->buffer_->tensor()->shape();
         if (factor_ != -1) {
@@ -45,7 +38,21 @@ Stmt VarSplit::visit(const VarDef &_op) {
             shape[dim_] = dynFactor_;
             shape.insert(shape.begin() + dim_, makeIntConst(nparts_));
         }
-        return op;
+
+        if (op->buffer_->atype() != AccessType::Cache) {
+            if (fixedSize_) {
+                op->name_ += ".view";
+                op->viewOf_ = _op->name_;
+                op->buffer_->setAtype(AccessType::Cache);
+                return makeVarDef(_op->name_, _op->buffer_, std::nullopt, op,
+                                  false);
+            } else {
+                throw InvalidSchedule(
+                    "Using RelaxedSize mode in an I/O variable is not allowed");
+            }
+        } else {
+            return op;
+        }
     } else {
         return Mutator::visit(_op);
     }
@@ -80,6 +87,20 @@ Stmt varSplit(const Stmt &_ast, const ID &def, int dim, VarSplitMode mode,
         throw InvalidSchedule(toString(def) + " not found");
     }
     return ast;
+}
+
+void Schedule::varSplit(const ID &def, int dim, VarSplitMode mode, int factor,
+                        int nparts) {
+    beginTransaction();
+    auto log = appendLog(MAKE_SCHEDULE_LOG(VarSplit, freetensor::varSplit, def,
+                                           dim, mode, factor, nparts));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

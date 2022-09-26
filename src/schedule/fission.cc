@@ -2,6 +2,7 @@
 #include <analyze/find_loop_variance.h>
 #include <analyze/find_stmt.h>
 #include <pass/merge_and_hoist_if.h>
+#include <schedule.h>
 #include <schedule/fission.h>
 
 namespace freetensor {
@@ -33,7 +34,7 @@ Stmt HoistVar::visit(const For &op) {
         innerLoops_.emplace_back(op->id());
         for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
             ret = makeVarDef(std::move((*i)->name_), std::move(((*i)->buffer_)),
-                             std::move((*i)->ioTensor_), ret, (*i)->pinned_,
+                             std::move((*i)->viewOf_), ret, (*i)->pinned_,
                              (*i)->metadata(), (*i)->id());
         }
         return ret;
@@ -334,6 +335,22 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     }
 
     return {ast, {ids0, ids1}};
+}
+
+std::pair<Schedule::IDMap, Schedule::IDMap>
+Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
+                  const std::string &suffix0, const std::string &suffix1) {
+    beginTransaction();
+    auto log = appendLog(MAKE_SCHEDULE_LOG(Fission, freetensor::fission, loop,
+                                           side, splitter, suffix0, suffix1));
+    try {
+        auto ret = applyLog(log);
+        commitTransaction();
+        return ret;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

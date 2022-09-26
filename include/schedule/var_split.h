@@ -9,7 +9,7 @@ enum VarSplitMode : int { FixedSize, RelaxedSize };
 
 class VarSplit : public Mutator {
     ID def_;
-    std::string var_;
+    std::string var_, newVar_;
     int dim_;
     bool fixedSize_;
     int factor_, nparts_;
@@ -26,6 +26,7 @@ class VarSplit : public Mutator {
   private:
     template <class T> T splitMemAcc(const T &op) {
         if (op->var_ == var_) {
+            op->var_ = newVar_;
             Expr x = op->indices_[dim_];
             op->indices_[dim_] = makeFloorDiv(x, dynFactor_);
             op->indices_.insert(op->indices_.begin() + dim_ + 1,

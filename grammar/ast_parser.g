@@ -274,22 +274,22 @@ load returns [Expr node]
 
 varDef returns [Stmt node]
     @init {
-        Ref<Tensor> ioTensor;
+        std::optional<std::string> viewOf;
         bool pinned = false;
     }
-    : atype mtype var ':' dtype actual_shape=shape
-        (IO_TENSOR '=' io_dtype=dtype io_shape=shape { ioTensor = makeTensor($io_shape.vec, $io_dtype.type); })?
+    : atype mtype name=var ':' dtype actual_shape=shape
+        (VIEW_OF '=' view_of=var { viewOf = $var.name; })?
         (PINNED { pinned = true; })?
       {
         name2dtype_[$var.name] = $dtype.type;
       }
         LBRACE stmts RBRACE
       {
-        name2dtype_.erase($var.name);
+        name2dtype_.erase($name.name);
         Ref<Tensor> t = makeTensor($actual_shape.vec, $dtype.type);
         Ref<Buffer> b = makeBuffer(std::move(t), $atype.type, $mtype.type);
         Expr sizeLim = nullptr;
-        $node = makeVarDef($var.name, std::move(b), std::move(ioTensor), $stmts.node, pinned);
+        $node = makeVarDef($name.name, std::move(b), std::move(viewOf), $stmts.node, pinned);
       }
     ;
 

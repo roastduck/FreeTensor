@@ -1,5 +1,4 @@
-#include <itertools.hpp>
-
+#include <container_utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/pb_simplify.h>
 #include <serialize/mangle.h>
@@ -39,11 +38,11 @@ void PBCompBounds::visitExpr(const Expr &op) {
         }
 
         std::string str = "{[";
-        for (auto &&[i, var] : iter::enumerate(vars)) {
+        for (auto &&[i, var] : views::enumerate(vars)) {
             str += (i == 0 ? "" : ", ") + var.second;
         }
         str += "] -> [" + *expr + "]";
-        for (auto &&[i, cond] : iter::enumerate(condExprs)) {
+        for (auto &&[i, cond] : views::enumerate(condExprs)) {
             str += (i == 0 ? ": " : " and ") + cond;
         }
         str += "}";

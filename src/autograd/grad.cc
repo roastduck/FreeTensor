@@ -268,16 +268,16 @@ Stmt Grad::visit(const VarDef &_op) {
                     iters.emplace_back(std::move(iter));
                 }
                 auto init = makeNestedLoops(
-                    iters, iter::repeat(makeIntConst(0)),
+                    iters, views::repeat(makeIntConst(0)),
                     op->buffer_->tensor()->shape(),
-                    iter::repeat(makeIntConst(1)),
+                    views::repeat(makeIntConst(1)),
                     op->buffer_->tensor()->shape(),
-                    iter::repeat(Ref<ForProperty>::make()),
+                    views::repeat(Ref<ForProperty>::make()),
                     makeStore(gradName, std::move(indices), makeIntConst(0)));
                 grad = makeStmtSeq({init, grad});
             }
 
-            grad = makeVarDef(gradName, op->buffer_, op->ioTensor_, grad,
+            grad = makeVarDef(gradName, op->buffer_, std::nullopt, grad,
                               op->pinned_, makeMetadata("grad", op));
             switch (op->buffer_->atype()) {
             case AccessType::Input:
@@ -293,7 +293,7 @@ Stmt Grad::visit(const VarDef &_op) {
                 ASSERT(false);
             }
 
-            ret = makeVarDef(op->name_, op->buffer_, op->ioTensor_, grad,
+            ret = makeVarDef(op->name_, op->buffer_, op->viewOf_, grad,
                              op->pinned_, op->metadata(), op->id())
                       .as<VarDefNode>();
         }
@@ -305,7 +305,7 @@ Stmt Grad::visit(const VarDef &_op) {
         if (tapeMap_.count(op->id())) {
             auto tapeVar = tapeMap_.at(op->id());
             if (tapeVar != ret->name_) {
-                ret = makeVarDef(tapeVar, ret->buffer_, ret->ioTensor_, ret,
+                ret = makeVarDef(tapeVar, ret->buffer_, std::nullopt, ret,
                                  ret->pinned_, makeMetadata("tape", ret))
                           .as<VarDefNode>();
                 auto &shape = ret->buffer_->tensor()->shape();
@@ -383,7 +383,7 @@ Stmt Grad::visit(const Store &op) {
                     oldGrad,
                     makeBuffer(makeTensor({}, b->tensor()->dtype()),
                                AccessType::Cache, b->mtype()),
-                    nullptr, makeStmtSeq(std::move(stmts)), false);
+                    std::nullopt, makeStmtSeq(std::move(stmts)), false);
             }
         } else {
             return makeStmtSeq({});

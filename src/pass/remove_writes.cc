@@ -401,14 +401,14 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                     std::unordered_map<std::string, Expr> islVarToNewIter,
                         oldIterToNewIter;
                     for (auto &&[newIter, arg] :
-                         iter::zip(repInfo.laterIters_, args)) {
+                         views::zip(repInfo.laterIters_, args)) {
                         islVarToNewIter[arg] =
                             newIter.realIter_ == newIter.iter_
                                 ? newIter.iter_
                                 : makeMul(makeIntConst(-1), newIter.realIter_);
                     }
                     for (auto &&[oldIter, value] :
-                         iter::zip(repInfo.earlierIters_, values)) {
+                         views::zip(repInfo.earlierIters_, values)) {
                         if (oldIter.realIter_->nodeType() == ASTNodeType::Var) {
                             oldIterToNewIter[oldIter.realIter_.as<VarNode>()
                                                  ->name_] =

@@ -72,23 +72,22 @@ class InterruptExcept : public Error {
 void reportWarning(const std::string &msg);
 
 #define ERROR(msg)                                                             \
-    {                                                                          \
+    do {                                                                       \
         throw ::freetensor::Error((std::string) "[ERROR] " __FILE__ ":" +      \
                                   std::to_string(__LINE__) + ": " + (msg));    \
-    }
+    } while (0)
 
 #define WARNING(msg)                                                           \
-    {                                                                          \
+    do {                                                                       \
         reportWarning((std::string) "[WARNING] " __FILE__ ":" +                \
                       std::to_string(__LINE__) + ": " + (msg));                \
-    }
+    } while (0)
 
 #define ASSERT(expr)                                                           \
-    {                                                                          \
-        if (!(expr)) {                                                         \
-            ERROR("Assertion false: " #expr)                                   \
-        }                                                                      \
-    }
+    do {                                                                       \
+        if (!(expr))                                                           \
+            ERROR("Assertion false: " #expr);                                  \
+    } while (0)
 
 } // namespace freetensor
 

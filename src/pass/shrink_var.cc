@@ -1,4 +1,5 @@
 #include <analyze/all_defs.h>
+#include <analyze/find_stmt.h>
 #include <pass/remove_dead_var.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
@@ -7,9 +8,13 @@
 namespace freetensor {
 
 Stmt ShrinkVar::visit(const VarDef &_op) {
+    auto isViewOfThis = [&](const Stmt &inner) {
+        return inner->nodeType() == ASTNodeType::VarDef &&
+               inner.as<VarDefNode>()->viewOf_ == _op->name_;
+    };
     if (_op->buffer_->atype() != AccessType::Cache ||
-        _op->ioTensor_.isValid() || _op->pinned_ ||
-        !newRange_.count(_op->id())) {
+        _op->viewOf_.has_value() || !findAllStmt(_op, isViewOfThis).empty() ||
+        _op->pinned_ || !newRange_.count(_op->id())) {
         return Mutator::visit(_op);
     }
 

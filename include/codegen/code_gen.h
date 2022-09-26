@@ -8,9 +8,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include <itertools.hpp>
-
 #include <analyze/symbol_table.h>
+#include <container_utils.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -19,7 +18,7 @@ struct CodeGenStream {
     std::string name_;
     std::ostringstream os_;
     int nIndent_ = 0;
-    std::unordered_map<std::string, Ref<Buffer>> useBuffers_;
+    std::unordered_map<std::string, VarDef> useDefs_;
     std::unordered_set<std::string> useIters_;
 
     CodeGenStream();
@@ -36,7 +35,7 @@ template <class Stream> class CodeGen : public SymbolTable<Visitor> {
     void makeIndent();
 
     template <class T> void printList(T &&list) {
-        for (auto &&[i, item] : iter::enumerate(list)) {
+        for (auto &&[i, item] : views::enumerate(list)) {
             os() << (i > 0 ? ", " : "");
             (*this)(item);
         }
@@ -44,9 +43,9 @@ template <class Stream> class CodeGen : public SymbolTable<Visitor> {
 
     CodeGen(int indentSize = 2);
 
-    void markDefBuffer(const VarDef &op);
-    void markUseBuffer(const std::string &name);
-    void markUndefBuffer(const VarDef &op);
+    void markDef(const VarDef &op);
+    void markUse(const std::string &name);
+    void markUndef(const VarDef &op);
 
     void markDefIter(const For &op);
     void markUseIter(const std::string &name);

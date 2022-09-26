@@ -1,3 +1,4 @@
+#include <schedule.h>
 #include <schedule/as_matmul.h>
 
 namespace freetensor {
@@ -46,17 +47,13 @@ Stmt AsMatMul::visitStmt(const Stmt &op) {
 Stmt AsMatMul::visit(const For &op) {
     if (inside_) {
         iterMap_[op->iter_] = nestCnt_++;
-        nests_.emplace_back(op);
         auto ret = BaseClass::visit(op);
-        nests_.pop_back();
         iterMap_.erase(op->iter_), nestCnt_--;
         return ret;
     } else if (op->id() == loop_) {
         inside_ = true;
         iterMap_[op->iter_] = nestCnt_++;
-        nests_.emplace_back(op);
         auto ret = BaseClass::visit(op);
-        nests_.pop_back();
         iterMap_.erase(op->iter_), nestCnt_--;
         inside_ = false;
 
@@ -80,7 +77,7 @@ Stmt AsMatMul::visit(const For &op) {
                          stridea_, strideb_, stridec_, batchSize_, aIsRowMajor_,
                          bIsRowMajor_, cIsRowMajor_, ret);
         for (auto &&def : innerDefs_) {
-            ret = makeVarDef(def->name_, def->buffer_, def->ioTensor_, ret,
+            ret = makeVarDef(def->name_, def->buffer_, def->viewOf_, ret,
                              def->pinned_, def->metadata(), def->id());
         }
         return ret;
@@ -278,5 +275,18 @@ Stmt AsMatMul::visit(const VarDef &op) {
 }
 
 Stmt asMatMul(const Stmt &ast, const ID &loop) { return AsMatMul(loop)(ast); }
+
+void Schedule::asMatMul(const ID &loop) {
+    beginTransaction();
+    auto log =
+        appendLog(MAKE_SCHEDULE_LOG(AsMatMul, freetensor::asMatMul, loop));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
+}
 
 } // namespace freetensor

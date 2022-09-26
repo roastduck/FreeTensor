@@ -1,5 +1,4 @@
-#include <itertools.hpp>
-
+#include <container_utils.h>
 #include <hash.h>
 
 namespace freetensor {
@@ -66,9 +65,8 @@ size_t Hasher::compHash(const VarDefNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     h = ((h + std::hash<std::string>()(op.name_)) * K2 + B2) % P;
     h = ((h + op.buffer_->hash()) * K2 + B2) % P;
-    if (op.ioTensor_.isValid()) {
-        h = ((h + op.ioTensor_->hash()) * K2 + B2) % P;
-    }
+    h = ((h + std::hash<std::optional<std::string>>()(op.viewOf_)) * K2 + B2) %
+        P;
     h = ((h + op.body_->hash()) * K2 + B2) % P;
     h = ((h + std::hash<bool>()((int)op.pinned_)) * K2 + B2) % P;
     return (h * K3 + B3) % P;
@@ -247,7 +245,7 @@ bool HashComparator::compare(const StmtSeq &lhs, const StmtSeq &rhs) const {
     if (lhs->stmts_.size() != rhs->stmts_.size()) {
         return false;
     }
-    for (auto &&[l, r] : iter::zip(lhs->stmts_, rhs->stmts_)) {
+    for (auto &&[l, r] : views::zip(lhs->stmts_, rhs->stmts_)) {
         if (!(*this)(l, r)) {
             return false;
         }
@@ -262,10 +260,7 @@ bool HashComparator::compare(const VarDef &lhs, const VarDef &rhs) const {
     if (!(*this)(lhs->buffer_, rhs->buffer_)) {
         return false;
     }
-    if (lhs->ioTensor_.isValid() != rhs->ioTensor_.isValid()) {
-        return false;
-    }
-    if (lhs->ioTensor_.isValid() && !(*this)(lhs->ioTensor_, rhs->ioTensor_)) {
+    if (lhs->viewOf_ != rhs->viewOf_) {
         return false;
     }
     if (!(*this)(lhs->body_, rhs->body_)) {
@@ -284,7 +279,7 @@ bool HashComparator::compare(const Store &lhs, const Store &rhs) const {
     if (lhs->indices_.size() != rhs->indices_.size()) {
         return false;
     }
-    for (auto &&[l, r] : iter::zip(lhs->indices_, rhs->indices_)) {
+    for (auto &&[l, r] : views::zip(lhs->indices_, rhs->indices_)) {
         if (!(*this)(l, r)) {
             return false;
         }
@@ -316,7 +311,7 @@ bool HashComparator::compare(const ReduceTo &lhs, const ReduceTo &rhs) const {
     if (lhs->indices_.size() != rhs->indices_.size()) {
         return false;
     }
-    for (auto &&[l, r] : iter::zip(lhs->indices_, rhs->indices_)) {
+    for (auto &&[l, r] : views::zip(lhs->indices_, rhs->indices_)) {
         if (!(*this)(l, r)) {
             return false;
         }
@@ -445,7 +440,7 @@ bool HashComparator::compare(const Load &lhs, const Load &rhs) const {
     if (lhs->indices_.size() != rhs->indices_.size()) {
         return false;
     }
-    for (auto &&[l, r] : iter::zip(lhs->indices_, rhs->indices_)) {
+    for (auto &&[l, r] : views::zip(lhs->indices_, rhs->indices_)) {
         if (!(*this)(l, r)) {
             return false;
         }
@@ -470,7 +465,7 @@ bool HashComparator::compare(const Intrinsic &lhs, const Intrinsic &rhs) const {
     if (lhs->params_.size() != rhs->params_.size()) {
         return false;
     }
-    for (auto &&[l, r] : iter::zip(lhs->params_, rhs->params_)) {
+    for (auto &&[l, r] : views::zip(lhs->params_, rhs->params_)) {
         if (!(*this)(l, r)) {
             return false;
         }
@@ -489,7 +484,7 @@ bool HashComparator::operator()(const Ref<Tensor> &lhs,
     if (lhs->shape().size() != rhs->shape().size()) {
         return false;
     }
-    for (auto &&[l, r] : iter::zip(lhs->shape(), rhs->shape())) {
+    for (auto &&[l, r] : views::zip(lhs->shape(), rhs->shape())) {
         if (!(*this)(l, r)) {
             return false;
         }
@@ -525,7 +520,7 @@ bool HashComparator::operator()(const Ref<ReductionItem> &lhs,
     if (lhs->begins_.size() != rhs->begins_.size()) {
         return false;
     }
-    for (auto &&[ll, rr] : iter::zip(lhs->begins_, rhs->begins_)) {
+    for (auto &&[ll, rr] : views::zip(lhs->begins_, rhs->begins_)) {
         if (!(*this)(ll, rr)) {
             return false;
         }
@@ -533,7 +528,7 @@ bool HashComparator::operator()(const Ref<ReductionItem> &lhs,
     if (lhs->ends_.size() != rhs->ends_.size()) {
         return false;
     }
-    for (auto &&[ll, rr] : iter::zip(lhs->ends_, rhs->ends_)) {
+    for (auto &&[ll, rr] : views::zip(lhs->ends_, rhs->ends_)) {
         if (!(*this)(ll, rr)) {
             return false;
         }
@@ -555,7 +550,7 @@ bool HashComparator::operator()(const Ref<ForProperty> &lhs,
     if (lhs->reductions_.size() != rhs->reductions_.size()) {
         return false;
     }
-    for (auto &&[l, r] : iter::zip(lhs->reductions_, rhs->reductions_)) {
+    for (auto &&[l, r] : views::zip(lhs->reductions_, rhs->reductions_)) {
         if (!(*this)(l, r)) {
             return false;
         }
@@ -563,7 +558,7 @@ bool HashComparator::operator()(const Ref<ForProperty> &lhs,
     if (lhs->noDeps_.size() != rhs->noDeps_.size()) {
         return false;
     }
-    for (auto &&[l, r] : iter::zip(lhs->noDeps_, rhs->noDeps_)) {
+    for (auto &&[l, r] : views::zip(lhs->noDeps_, rhs->noDeps_)) {
         if (l != r) {
             return false;
         }

@@ -1,5 +1,6 @@
 #include <analyze/deps.h>
 #include <pass/simplify.h>
+#include <schedule.h>
 #include <schedule/blend.h>
 
 namespace freetensor {
@@ -124,24 +125,14 @@ Stmt BlendPass::visit(const VarDef &op) {
             makeTensor(std::move(shape), op->buffer_->tensor()->dtype());
         Ref<Buffer> b = makeBuffer(std::move(t), op->buffer_->atype(),
                                    op->buffer_->mtype());
-        Ref<Tensor> ioTensor;
-        if (op->ioTensor_.isValid()) {
-            std::vector<Expr> shape;
-            shape.reserve(op->ioTensor_->shape().size());
-            for (auto &&dim : op->ioTensor_->shape()) {
-                shape.emplace_back((*this)(dim));
-            }
-            ioTensor = makeTensor(std::move(shape), op->ioTensor_->dtype());
-        }
 
         defs_.emplace_back(op);
         auto body = (*this)(op->body_);
         defs_.pop_back();
 
         for (int k = len_ - 1; k >= 0; k--) {
-            body =
-                makeVarDef(op->name_ + "." + std::to_string(k), std::move(b),
-                           std::move(ioTensor), std::move(body), op->pinned_);
+            body = makeVarDef(op->name_ + "." + std::to_string(k), std::move(b),
+                              op->viewOf_, std::move(body), op->pinned_);
         }
         return body;
     } else {
@@ -192,6 +183,18 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
     auto loopVari = findLoopVariance(ast);
     ast = BlendPass(loop, loopVari.first, loopVari.second)(ast);
     return ast;
+}
+
+void Schedule::blend(const ID &loop) {
+    beginTransaction();
+    auto log = appendLog(MAKE_SCHEDULE_LOG(Blend, freetensor::blend, loop));
+    try {
+        applyLog(log);
+        commitTransaction();
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

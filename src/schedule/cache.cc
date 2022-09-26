@@ -1,12 +1,12 @@
 #include <climits>
 #include <cmath>
 
-#include <itertools.hpp>
-
+#include <container_utils.h>
 #include <pass/make_nested_loops.h>
 #include <pass/remove_writes.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
+#include <schedule.h>
 #include <schedule/cache.h>
 #include <schedule/check_var_cross_parallel.h>
 
@@ -22,8 +22,8 @@ Stmt MakeCacheVar::visitStmt(const Stmt &op) {
         inStmt_ = false;
         Ref<Buffer> newBuffer =
             makeBuffer(def_->buffer_->tensor(), AccessType::Cache, mtype_);
-        ret = makeVarDef(newVar_, std::move(newBuffer), nullptr, std::move(ret),
-                         false);
+        ret = makeVarDef(newVar_, std::move(newBuffer), std::nullopt,
+                         std::move(ret), false);
         oldDef_ = def_->id();
         newDef_ = ret->id();
         return ret;
@@ -78,7 +78,7 @@ Stmt MakeCacheVar::visit(const ReduceTo &_op) {
 }
 
 Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
-    auto op = Mutator::visitStmt(_op);
+    auto op = BaseClass::visitStmt(_op);
     if (op->id() == stmt_) {
         std::vector<Expr> indices;
         ASSERT(def_.isValid());
@@ -90,13 +90,17 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         }
 
         Expr idx1d, sizeLim;
-        if (def_->ioTensor_.isValid()) {
+        if (def_->viewOf_.has_value()) {
+            auto source = def_;
+            while (source->viewOf_.has_value()) {
+                source = def(*source->viewOf_);
+            }
             for (auto &&[idx, dim] :
-                 iter::zip(indices, def_->buffer_->tensor()->shape())) {
+                 views::zip(indices, def_->buffer_->tensor()->shape())) {
                 idx1d = idx1d.isValid() ? makeMul(idx1d, dim) : nullptr;
                 idx1d = idx1d.isValid() ? makeAdd(idx1d, idx) : idx;
             }
-            for (Expr dim : def_->ioTensor_->shape()) {
+            for (Expr dim : source->buffer_->tensor()->shape()) {
                 sizeLim = sizeLim.isValid() ? makeMul(sizeLim, dim) : dim;
             }
         }
@@ -109,9 +113,9 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         if (idx1d.isValid()) {
             fill = makeIf(makeLT(idx1d, sizeLim), fill);
         }
-        fill = makeNestedLoops(indices, rwRange_.lower_, iter::repeat(nullptr),
-                               iter::repeat(makeIntConst(1)), rwRange_.len_,
-                               iter::repeat(Ref<ForProperty>::make()), fill);
+        fill = makeNestedLoops(indices, rwRange_.lower_, views::repeat(nullptr),
+                               views::repeat(makeIntConst(1)), rwRange_.len_,
+                               views::repeat(Ref<ForProperty>::make()), fill);
         if (rwRange_.cond_.isValid()) {
             fill = makeIf(rwRange_.cond_, fill);
         }
@@ -124,9 +128,9 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         if (idx1d.isValid()) {
             flush = makeIf(makeLT(idx1d, sizeLim), flush);
         }
-        flush = makeNestedLoops(indices, wRange_.lower_, iter::repeat(nullptr),
-                                iter::repeat(makeIntConst(1)), wRange_.len_,
-                                iter::repeat(Ref<ForProperty>::make()), flush);
+        flush = makeNestedLoops(indices, wRange_.lower_, views::repeat(nullptr),
+                                views::repeat(makeIntConst(1)), wRange_.len_,
+                                views::repeat(Ref<ForProperty>::make()), flush);
         if (wRange_.cond_.isValid()) {
             flush = makeIf(wRange_.cond_, flush);
         }
@@ -139,16 +143,16 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
 Stmt MakeFillAndFlush::visit(const VarDef &op) {
     if (op->id() == oldDef_) {
         def_ = op;
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         def_ = nullptr;
         return ret;
     } else {
-        return Mutator::visit(op);
+        return BaseClass::visit(op);
     }
 }
 
 Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
-    auto op = Mutator::visitStmt(_op);
+    auto op = BaseClass::visitStmt(_op);
     if (op->id() == stmt_) {
         if (!reduce_.isValid()) {
             throw InvalidSchedule("The cached statement is not reducing into "
@@ -164,13 +168,17 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
         }
 
         Expr idx1d, sizeLim;
-        if (def_->ioTensor_.isValid()) {
+        if (def_->viewOf_.has_value()) {
+            auto source = def_;
+            while (source->viewOf_.has_value()) {
+                source = def(*source->viewOf_);
+            }
             for (auto &&[idx, dim] :
-                 iter::zip(indices, def_->buffer_->tensor()->shape())) {
+                 views::zip(indices, def_->buffer_->tensor()->shape())) {
                 idx1d = idx1d.isValid() ? makeMul(idx1d, dim) : nullptr;
                 idx1d = idx1d.isValid() ? makeAdd(idx1d, idx) : idx;
             }
-            for (Expr dim : def_->ioTensor_->shape()) {
+            for (Expr dim : source->buffer_->tensor()->shape()) {
                 sizeLim = sizeLim.isValid() ? makeMul(sizeLim, dim) : dim;
             }
         }
@@ -182,9 +190,9 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
         if (idx1d.isValid()) {
             init = makeIf(makeLT(idx1d, sizeLim), init);
         }
-        init = makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
-                               iter::repeat(makeIntConst(1)), range_.len_,
-                               iter::repeat(Ref<ForProperty>::make()), init);
+        init = makeNestedLoops(indices, range_.lower_, views::repeat(nullptr),
+                               views::repeat(makeIntConst(1)), range_.len_,
+                               views::repeat(Ref<ForProperty>::make()), init);
 
         Stmt reduce = makeReduceTo(
             oldVar_, indices, reduce_->op_,
@@ -195,9 +203,9 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
             reduce = makeIf(makeLT(idx1d, sizeLim), reduce);
         }
         reduce =
-            makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
-                            iter::repeat(makeIntConst(1)), range_.len_,
-                            iter::repeat(Ref<ForProperty>::make()), reduce);
+            makeNestedLoops(indices, range_.lower_, views::repeat(nullptr),
+                            views::repeat(makeIntConst(1)), range_.len_,
+                            views::repeat(Ref<ForProperty>::make()), reduce);
 
         op = makeStmtSeq({init, op, reduce});
     }
@@ -208,21 +216,21 @@ Stmt MakeInitAndReduce::visit(const VarDef &op) {
     if (op->id() == oldDef_) {
         def_ = op;
         reduce_ = nullptr;
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         def_ = nullptr;
         return ret;
     } else if (op->id() == newDef_) {
         inNewVar_ = true;
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         inNewVar_ = false;
         return ret;
     } else {
-        return Mutator::visit(op);
+        return BaseClass::visit(op);
     }
 }
 
 Stmt MakeInitAndReduce::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     if (inNewVar_ && op->var_ == newVar_) {
@@ -240,7 +248,7 @@ Stmt MakeInitAndReduce::visit(const Store &op) {
         throw InvalidSchedule(
             "Any Store node in a cache_reduce region is not allowed");
     }
-    return Mutator::visit(op);
+    return BaseClass::visit(op);
 }
 
 Expr MakeInitAndReduce::visit(const Load &op) {
@@ -248,7 +256,7 @@ Expr MakeInitAndReduce::visit(const Load &op) {
         throw InvalidSchedule(
             "Any Load node in a cache_reduce region is not allowed");
     }
-    return Mutator::visit(op);
+    return BaseClass::visit(op);
 }
 
 std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
@@ -307,6 +315,37 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
     return {ast,
             {std::move(initStmt), std::move(reduceStmt), std::move(newVar),
              std::move(newDef)}};
+}
+
+std::tuple<ID, ID, std::string, ID>
+Schedule::cache(const ID &stmt, const std::string &var, MemType mtype) {
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_SCHEDULE_LOG(Cache, freetensor::cache, stmt, var, mtype));
+    try {
+        auto ret = applyLog(log);
+        commitTransaction();
+        return ret;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
+}
+
+std::tuple<ID, ID, std::string, ID>
+Schedule::cacheReduction(const ID &stmt, const std::string &var,
+                         MemType mtype) {
+    beginTransaction();
+    auto log = appendLog(MAKE_SCHEDULE_LOG(
+        CacheReduction, freetensor::cacheReduction, stmt, var, mtype));
+    try {
+        auto ret = applyLog(log);
+        commitTransaction();
+        return ret;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
 }
 
 } // namespace freetensor

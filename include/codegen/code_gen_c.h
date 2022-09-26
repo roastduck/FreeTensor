@@ -29,18 +29,18 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
                           const std::string &dimPtr) = 0;
 
     // Generate a pointer to an multi-dimensional array
-    virtual void genMdPtrType(std::ostream &os, const Ref<Buffer> &buf,
+    virtual void genMdPtrType(std::ostream &os, const VarDef &def,
                               bool isConst = false);
-    virtual void genMdPtrType(const Ref<Buffer> &buf, bool isConst = false) {
-        genMdPtrType(this->os(), buf, isConst);
+    virtual void genMdPtrType(const VarDef &def, bool isConst = false) {
+        genMdPtrType(this->os(), def, isConst);
     }
-    virtual void genMdPtrDef(const Ref<Buffer> &buf,
+    virtual void genMdPtrDef(const VarDef &def,
                              const std::function<void()> &genRawPtr,
                              bool isConst = false);
-    void genMdPtrDef(const Ref<Buffer> &buf, const std::string &rawPtr,
+    void genMdPtrDef(const VarDef &def, const std::string &rawPtr,
                      bool isConst = false) {
         this->genMdPtrDef(
-            buf, [&]() { this->os() << rawPtr; }, isConst);
+            def, [&]() { this->os() << rawPtr; }, isConst);
     }
 
     // Generate the access to a scalar or an element of an array

@@ -34,18 +34,21 @@ enum class ScheduleType : int {
     SeparateTail,
     AsMatMul,
     Permute,
+    PlutoFuse,
+    PlutoPermute,
     // ------
     NumTypes,
 };
 
 constexpr std::array scheduleTypeNames = {
-    "split",        "reorder",   "merge",
-    "fission",      "fuse",      "swap",
-    "blend",        "cache",     "cache_reduction",
-    "set_mem_type", "var_split", "var_merge",
-    "var_reorder",  "inline",    "parallelize",
-    "unroll",       "vectorize", "separate_tail",
-    "as_matmul",    "permute",
+    "split",         "reorder",   "merge",
+    "fission",       "fuse",      "swap",
+    "blend",         "cache",     "cache_reduction",
+    "set_mem_type",  "var_split", "var_merge",
+    "var_reorder",   "inline",    "parallelize",
+    "unroll",        "vectorize", "separate_tail",
+    "as_matmul",     "permute",   "pluto_fuse",
+    "pluto_permute",
 };
 static_assert(scheduleTypeNames.size() == (size_t)ScheduleType::NumTypes);
 
@@ -88,7 +91,8 @@ auto getIDFromPack(const std::tuple<Args...> &args) {
             return arg.first;
         else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
                                           std::vector<IDMetadataPack>>) {
-            auto ids = arg | iter::imap([&](auto pack) { return pack.first; });
+            auto ids =
+                arg | views::transform([&](auto pack) { return pack.first; });
             return std::vector<ID>(ids.begin(), ids.end());
         } else
             return arg;
@@ -106,7 +110,7 @@ auto getMetadataFromPack(const std::tuple<Args...> &args) {
         else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
                                           std::vector<IDMetadataPack>>) {
             auto metas =
-                arg | iter::imap([&](auto pack) { return pack.second; });
+                arg | views::transform([&](auto pack) { return pack.second; });
             return std::vector<Metadata>(metas.begin(), metas.end());
         } else
             return arg;
@@ -123,7 +127,7 @@ auto getPackFromID(auto schedule, const std::tuple<Args...> &args) {
         else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
                                           std::vector<ID>>) {
             auto packs =
-                arg | iter::imap([&](auto id) {
+                arg | views::transform([&](auto id) {
                     return IDMetadataPack{id, schedule->find(id)->metadata()};
                 });
             return std::vector<IDMetadataPack>(packs.begin(), packs.end());
@@ -231,6 +235,28 @@ struct ScheduleLogItemHash {
 typedef SharedLinkedList<Ref<ScheduleLogItem>, ScheduleLogItemHash,
                          ScheduleLogItemEqual>
     ScheduleLog;
+
+/**
+ * Make a log item with specifc parameter and result types, used in each
+ * schedule
+ */
+#define MAKE_SCHEDULE_LOG(TYPE, FUNC, ...)                                     \
+    ([this](const auto &func, const auto &_params) {                           \
+        auto params = getPackFromID(this, _params);                            \
+        /* decay is required: we must not store an reference */                \
+        typedef ScheduleLogItemImpl<                                           \
+            ScheduleType::TYPE, std::decay_t<decltype(func)>,                  \
+            std::decay_t<decltype(params)>,                                    \
+            std::decay_t<decltype(std::apply(func, _params))>>                 \
+            BaseClass;                                                         \
+        class ScheduleLogItem##TYPE : public BaseClass {                       \
+          public:                                                              \
+            ScheduleLogItem##TYPE(const typename BaseClass::Invocable &f,      \
+                                  const typename BaseClass::Params &p)         \
+                : BaseClass(f, p) {}                                           \
+        };                                                                     \
+        return Ref<ScheduleLogItem##TYPE>::make(func, params);                 \
+    })(futureSchedule(FUNC), std::make_tuple(__VA_ARGS__))
 
 } // namespace freetensor
 

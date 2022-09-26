@@ -4,7 +4,7 @@ import pytest
 device = ft.CPU()
 target = device.target()
 
-# Please refer to test/codegen for some architecture dependent test cases
+# Please refer to test/40.codegen for some architecture dependent test cases
 
 
 def test_not_found():

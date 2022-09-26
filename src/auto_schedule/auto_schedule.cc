@@ -2,8 +2,6 @@
 #include <queue>
 #include <utility>
 
-#include <itertools.hpp>
-
 #include <analyze/find_elementwise.h>
 #include <analyze/structural_feature.h>
 #include <auto_schedule/auto_schedule.h>
@@ -16,6 +14,7 @@
 #include <auto_schedule/rules/unroll.h>
 #include <auto_schedule/utils.h>
 #include <codegen/code_gen.h>
+#include <container_utils.h>
 #include <driver.h>
 #include <lower.h>
 #include <omp_utils.h>
@@ -247,7 +246,7 @@ AutoSchedule::testAndAdd(const std::vector<Ref<Sketch>> &sketches) {
     ASSERT(features.size() == n);
     auto &&[times, stddevs] = measure(sketches);
     std::vector<double> flopsList;
-    for (auto [t, stddev] : iter::zip(times, stddevs)) {
+    for (auto [t, stddev] : views::zip(times, stddevs)) {
         if (t < 1e20) {
             flopsList.emplace_back(flop_ / t);
         }
@@ -255,7 +254,7 @@ AutoSchedule::testAndAdd(const std::vector<Ref<Sketch>> &sketches) {
     updateFunc_(features, flopsList);
     double allAvg = 0, maxStddevPercent = 0;
     int cnt = 0;
-    for (auto &&[t, stddev, sketch] : iter::zip(times, stddevs, sketches)) {
+    for (auto &&[t, stddev, sketch] : views::zip(times, stddevs, sketches)) {
         if (t < 1e20) {
             cnt++;
             allAvg += t;

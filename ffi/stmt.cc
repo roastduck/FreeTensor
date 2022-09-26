@@ -8,6 +8,9 @@ using namespace pybind11::literals;
 void init_ffi_ast_stmt(py::module_ &m) {
     auto pyStmt = m.attr("Stmt").cast<py::class_<StmtNode, Stmt>>();
     pyStmt.def_property_readonly("id", &StmtNode::id)
+        .def_property(
+            "metadata", [](const Stmt &op) { return op->metadata(); },
+            [](Stmt &op, const Metadata &md) { op->metadata() = md; })
         .def("node",
              [](const Stmt &op) {
                  WARNING("`x.node()` is deprecated. Please directly use `x`");
@@ -34,7 +37,10 @@ void init_ffi_ast_stmt(py::module_ &m) {
         .def("prev_stmt", &StmtNode::prevStmt)
         .def("next_stmt", &StmtNode::nextStmt)
         .def("parent_stmt", &StmtNode::parentStmt)
-        .def("parent_stmt", &StmtNode::parentStmtByFilter, "filter"_a);
+        .def("parent_stmt", &StmtNode::parentStmtByFilter, "filter"_a)
+        .def("prev_in_ctrlflow", &StmtNode::prevInCtrlFlow)
+        .def("next_in_ctrlflow", &StmtNode::nextInCtrlFlow)
+        .def("parent_ctrlflow", &StmtNode::parentCtrlFlow);
 
     py::class_<StmtSeqNode, StmtSeq>(m, "StmtSeq", pyStmt)
         .def_property_readonly(
@@ -45,9 +51,7 @@ void init_ffi_ast_stmt(py::module_ &m) {
         .def_property_readonly(
             "buffer",
             [](const VarDef &op) -> Ref<Buffer> { return op->buffer_; })
-        .def_property_readonly(
-            "io_tensor",
-            [](const VarDef &op) -> Ref<Tensor> { return op->ioTensor_; })
+        .def_readonly("view_of", &VarDefNode::viewOf_)
         .def_property_readonly(
             "body", [](const VarDef &op) -> Stmt { return op->body_; });
     py::class_<StoreNode, Store>(m, "Store", pyStmt)
@@ -113,12 +117,13 @@ void init_ffi_ast_stmt(py::module_ &m) {
           static_cast<Stmt (*)(const std::vector<Stmt> &, const Metadata &,
                                const ID &)>(&_makeStmtSeq),
           "stmts"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
-    m.def("makeVarDef",
-          static_cast<Stmt (*)(const std::string &, const Ref<Buffer> &,
-                               const Ref<Tensor> &, const Stmt &, bool,
-                               const Metadata &, const ID &)>(&_makeVarDef),
-          "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a,
-          "metadata"_a, py::arg_v("id", ID(), "ID()"));
+    m.def(
+        "makeVarDef",
+        static_cast<Stmt (*)(const std::string &, const Ref<Buffer> &,
+                             const std::optional<std::string> &, const Stmt &,
+                             bool, const Metadata &, const ID &)>(&_makeVarDef),
+        "name"_a, "buffer"_a, "view_of"_a, "body"_a, "pinned"_a, "metadata"_a,
+        py::arg_v("id", ID(), "ID()"));
     m.def("makeStore",
           static_cast<Stmt (*)(const std::string &, const std::vector<Expr> &,
                                const Expr &, const Metadata &, const ID &)>(

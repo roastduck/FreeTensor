@@ -10,6 +10,7 @@
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
 #include <pass/tensor_prop_const.h>
+#include <schedule.h>
 #include <schedule/fuse.h>
 
 namespace freetensor {
@@ -174,7 +175,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                 if (stmt->nodeType() == ASTNodeType::VarDef) {
                     auto def = stmt.as<VarDefNode>();
                     fused = makeVarDef(def->name_, std::move(def->buffer_),
-                                       def->ioTensor_, fused, def->pinned_,
+                                       def->viewOf_, fused, def->pinned_,
                                        def->metadata(), def->id());
                 } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
                     auto seq = stmt.as<StmtSeqNode>();
@@ -189,7 +190,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                 if (stmt->nodeType() == ASTNodeType::VarDef) {
                     auto def = stmt.as<VarDefNode>();
                     fused = makeVarDef(def->name_, std::move(def->buffer_),
-                                       def->ioTensor_, fused, def->pinned_,
+                                       def->viewOf_, fused, def->pinned_,
                                        def->metadata(), def->id());
                 } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
                     auto seq = stmt.as<StmtSeqNode>();
@@ -220,7 +221,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
     return op;
 }
 
-void CheckAccessible::visit(const StmtSeq &op) {
+void CheckFuseAccessible::visit(const StmtSeq &op) {
     Visitor::visit(op);
     if (!loop0InScopes_.loop_.isValid()) {
         for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
@@ -245,27 +246,31 @@ void CheckAccessible::visit(const StmtSeq &op) {
     }
 }
 
-std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
-                         bool strict) {
-    CheckAccessible check(loop0, loop1);
-    check(_ast);
-    if (!check.loop0().loop_.isValid()) {
+void CheckFuseAccessible::check(const Stmt &ast) {
+    (*this)(ast);
+
+    if (!loop0().loop_.isValid()) {
         throw InvalidSchedule("Loops not found in a StmtSeq");
     }
 
-    for (auto &&stmt : check.loop1().scopes_) {
+    for (auto &&stmt : loop1().scopes_) {
         if (stmt->nodeType() == ASTNodeType::VarDef) {
             for (auto &&shape :
                  stmt.as<VarDefNode>()->buffer_->tensor()->shape()) {
-                if (!checkNotModified(_ast, shape, CheckNotModifiedSide::Before,
-                                      loop0, CheckNotModifiedSide::Before,
-                                      loop1)) {
+                if (!checkNotModified(ast, shape, CheckNotModifiedSide::Before,
+                                      id0_, CheckNotModifiedSide::Before,
+                                      id1_)) {
                     throw InvalidSchedule("The shape of Vars in loop1 "
                                           "shouldn't be changed in loop0");
                 }
             }
         }
     }
+}
+
+std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
+                         bool strict) {
+    CheckFuseAccessible(loop0, loop1).check(_ast);
 
     FuseFor mutator(_ast, loop0, loop1, strict);
     auto ast = mutator(_ast);
@@ -297,6 +302,83 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     ast = shrinkVar(ast);
     ast = removeDeadVar(ast);
     return std::make_pair(ast, mutator.fused());
+}
+
+ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict) {
+    beginTransaction();
+    auto log = appendLog(
+        MAKE_SCHEDULE_LOG(Fuse, freetensor::fuse, loop0, loop1, strict));
+    try {
+        auto ret = applyLog(log);
+        commitTransaction();
+        return ret;
+    } catch (const InvalidSchedule &e) {
+        abortTransaction();
+        throw InvalidSchedule(log, ast(), e.what());
+    }
+}
+
+ID Schedule::fuse(const ID &loop0, bool strict) {
+    beginTransaction();
+    auto l0 = find(loop0);
+
+    auto isTrivialScope = [](const Stmt &s) {
+        switch (s->nodeType()) {
+        case ASTNodeType::StmtSeq:
+        case ASTNodeType::VarDef:
+        case ASTNodeType::Assert:
+        case ASTNodeType::Assume:
+            return true;
+        case ASTNodeType::If:
+            return !s.as<IfNode>()->elseCase_.isValid();
+        default:
+            return false;
+        }
+    };
+    auto firstStmtInTrivalScope = [](const Stmt &s) -> Stmt {
+        switch (s->nodeType()) {
+        case ASTNodeType::StmtSeq:
+            return s.as<StmtSeqNode>()->stmts_.empty()
+                       ? nullptr
+                       : (Stmt)s.as<StmtSeqNode>()->stmts_.front();
+        case ASTNodeType::VarDef:
+            return s.as<VarDefNode>()->body_;
+        case ASTNodeType::Assert:
+            return s.as<AssertNode>()->body_;
+        case ASTNodeType::Assume:
+            return s.as<AssumeNode>()->body_;
+        case ASTNodeType::If:
+            return s.as<IfNode>()->elseCase_.isValid()
+                       ? nullptr
+                       : (Stmt)s.as<IfNode>()->thenCase_;
+        default:
+            return nullptr;
+        }
+    };
+
+    auto s = l0;
+    while (!s->nextStmt().isValid() && s->parentStmt().isValid() &&
+           isTrivialScope(s->parentStmt())) {
+        s = s->parentStmt();
+    }
+    if (s.isValid()) {
+        if (s = s->nextStmt(); s.isValid()) {
+            while (s.isValid() && s->nodeType() != ASTNodeType::For &&
+                   isTrivialScope(s)) {
+                s = firstStmtInTrivalScope(s);
+            }
+            if (s.isValid() && s->nodeType() == ASTNodeType::For) {
+                auto ret = fuse(loop0, s->id(), strict);
+                commitTransaction();
+                return ret;
+            }
+        }
+    }
+
+    abortTransaction();
+    throw InvalidSchedule("Invalid fuse(" + toString(loop0) +
+                          "): Unable to find a following loop of " +
+                          toString(loop0));
 }
 
 } // namespace freetensor
