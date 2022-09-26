@@ -765,14 +765,16 @@ class MultiMachineScheduler(RemoteTaskScheduler):
                  port: int = 8047,
                  sev_status: List[str] = ["default"],
                  self_server_ip="localhost",
-                 self_server_port=0) -> None:
+                 self_server_port=0,
+                 is_auto_pex=True) -> None:
         super().__init__(sev_status)
         rpctool = core.RPCTool(scheduler=self,
                                host=addr,
                                port=port,
                                sev_status=sev_status,
                                self_server_ip=self_server_ip,
-                               self_server_port=self_server_port)
+                               self_server_port=self_server_port,
+                               is_auto_pex=is_auto_pex)
         self.bind_rpctool(rpctool)
         self.get_self_uid(self.rpctool.self_host_uid)
         self.init_lock = True

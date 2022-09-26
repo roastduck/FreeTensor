@@ -150,7 +150,8 @@ class RPCTool(object):
                  sev_status: List[str] = ["default"],
                  is_center=True,
                  self_server_port=0,
-                 self_server_ip="localhost") -> None:
+                 self_server_ip="localhost",
+                 is_auto_pex=True) -> None:
         HOST, PORT = self_server_ip, self_server_port
         server = RPCToolThreadedTCPServer(
             (HOST, PORT), RPCToolThreadedTCPRequestHandler, self)
@@ -176,7 +177,8 @@ class RPCTool(object):
         self.is_center = is_center
         self.internet_init()
         #self.scheduler.get_self_uid(self.self_host_uid)
-        self.server_auto_pex(15)
+        if is_auto_pex:
+            self.server_auto_pex(15)
 
     def remote_task_submit(self, server_uid: str, task: Dict):
         tmpdict = {

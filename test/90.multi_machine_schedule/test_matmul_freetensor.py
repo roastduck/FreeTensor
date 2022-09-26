@@ -16,10 +16,12 @@ def test_matmul():
     tmp = ft.RPCTool(host="None",
                      self_server_ip="127.0.0.1",
                      self_server_port=NPORT,
-                     sev_status=[])
+                     sev_status=[],
+                     is_auto_pex=False)
     tmp.server_auto_shutdown(10)
     client = ft.MultiMachineScheduler(addr="127.0.0.1",
-                                      port=tmp.self_server.server_address[1])
+                                      port=tmp.self_server.server_address[1],
+                                      is_auto_pex=False)
     a = 256
     b = 256
     m = 4
