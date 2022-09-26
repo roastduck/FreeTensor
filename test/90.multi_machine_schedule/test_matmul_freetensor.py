@@ -2,6 +2,7 @@ import freetensor as ft
 import numpy as np
 import pytest
 import sys
+import threading
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
@@ -11,13 +12,14 @@ def test_matmul():
         target = device.target()
     except Exception:
         sys.exit(1)
-    NPORT = 27227
+    NPORT = 0
     tmp = ft.RPCTool(host="None",
                      self_server_ip="127.0.0.1",
                      self_server_port=NPORT,
                      sev_status=[])
     tmp.server_auto_shutdown(10)
-    client = ft.MultiMachineScheduler(addr="127.0.0.1", port=NPORT)
+    client = ft.MultiMachineScheduler(addr="127.0.0.1",
+                                      port=tmp.self_server.server_address[1])
     a = 256
     b = 256
     m = 4
@@ -95,4 +97,7 @@ def test_matmul():
     code = ft.codegen(func, target)
     print(code)
 
-    client.rpctool.end_server()
+    t = threading.Thread(target=client.rpctool.end_server)
+    t.start()
+    # tmp.end_server()
+    t.join()

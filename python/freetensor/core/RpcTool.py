@@ -22,7 +22,7 @@ def send_msg(sock: socket.socket, msg):
 
 def recv_msg(sock: socket.socket, timeout=30):
     # Read message length and unpack it into an unsigned long long
-    sock.settimeout(timeout)
+    sock.settimeout(max(timeout, 5))
     raw_msglen = recvall(sock, 8)
     if not raw_msglen:
         return None
@@ -249,6 +249,7 @@ class RPCTool(object):
 
     def send_with_retries(self, sock: socket.socket, message: Dict, timeout=30):
         ret_val = {"function": "return", "return_status": "fail"}
+        sock.settimeout(max(timeout, 5))
         for i in range(3):
             try:
                 send_msg(sock, self.serialize(message))
@@ -361,7 +362,9 @@ class RPCTool(object):
             return False
 
     def pingrecv(self, sock: socket.socket, data: Dict):
-        if data["target_uid"] == self.self_host_uid:
+        if self.server_closed == True:
+            return
+        if (data["target_uid"] == self.self_host_uid):
             tmpdict = {"function": "return", "return_status": "success"}
         else:
             tmpdict = {"function": "return", "return_status": "not_available"}
@@ -449,7 +452,9 @@ class RPCTool(object):
                 pass
 
     def exchange_status_recv(self, sock: socket.socket, data: Dict):
-        if self.update_status_single_dict("", data):
+        if self.server_closed == True:
+            return
+        elif self.update_status_single_dict("", data):
             tmpdict = self.update_status_single_base(data["host_uid"])
         else:
             tmpdict = {"function": "return", "return_status": "not_available"}
@@ -545,4 +550,4 @@ class RPCTool(object):
             # self.send(self.get_address(i),message, -1)
         if self.verbose > 0:
             print("request sent")
-        self.pool.shutdown(wait=True, cancel_futures=True)
+        # self.pool.shutdown(wait=True, cancel_futures=True)
