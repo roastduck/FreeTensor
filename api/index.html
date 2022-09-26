@@ -9391,6 +9391,12 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
 <span class="sd">        To split loop into two nested loops, use `split` instead</span>
 
+<span class="sd">        Statements inside the original loop will be distributed to one or both</span>
+<span class="sd">        (happening if they are scope statements) loops. If a statement is</span>
+<span class="sd">        originally labeled &quot;S&quot;, it can be selected by &quot;$fission.0{S}&quot; (from the</span>
+<span class="sd">        first loop) or &quot;$fission.1{S}&quot; (from the second loop) after fission. If</span>
+<span class="sd">        one of the resulting loop has an empty body, it will be removed</span>
+
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        loop : str, ID or Stmt</span>
@@ -9401,12 +9407,6 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        splitter : str (Selector string), ID, Stmt, or list of them</span>
 <span class="sd">            Where to fission the loop. If multiple statement are selected, fission the</span>
 <span class="sd">            look before or after all of them</span>
-
-<span class="sd">        Statements inside the original loop will be distributed to one or both</span>
-<span class="sd">        (happening if they are scope statements) loops. If a statement is</span>
-<span class="sd">        originally labeled &quot;S&quot;, it can be selected by &quot;$fission.0{S}&quot; (from the</span>
-<span class="sd">        first loop) or &quot;$fission.1{S}&quot; (from the second loop) after fission. If</span>
-<span class="sd">        one of the resulting loop has an empty body, it will be removed</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
@@ -10843,6 +10843,11 @@ cache variable, ID of the VarDef node of the cache variable)</p></li>
       <p>Fission a loop into two loops each containing part of the statements, one</p>
 <p>followed by another</p>
 <p>To split loop into two nested loops, use <code>split</code> instead</p>
+<p>Statements inside the original loop will be distributed to one or both
+(happening if they are scope statements) loops. If a statement is
+originally labeled "S", it can be selected by "$fission.0{S}" (from the
+first loop) or "$fission.1{S}" (from the second loop) after fission. If
+one of the resulting loop has an empty body, it will be removed</p>
 
 <table class="field-list">
   <colgroup>
@@ -10859,11 +10864,6 @@ cache variable, ID of the VarDef node of the cache variable)</p></li>
 <code>splitter</code> is the first statement of the second loop</p></li>
             <li><p><strong>splitter</strong> (<code>str (Selector string), ID, Stmt, or list of them</code>) – Where to fission the loop. If multiple statement are selected, fission the
 look before or after all of them</p></li>
-            <li><p><strong>Statements inside the original loop will be distributed to one or both</strong> (<code>None</code>) – </p></li>
-            <li><p><strong>(happening if they are scope statements) loops. If a statement is</strong> (<code>None</code>) – </p></li>
-            <li><p><strong>originally labeled "S", it can be selected by "$fission.0{S}" (from the</strong> (<code>None</code>) – </p></li>
-            <li><p><strong>first loop) or "$fission.1{S}" (from the second loop) after fission. If</strong> (<code>None</code>) – </p></li>
-            <li><p><strong>one of the resulting loop has an empty body, it will be removed</strong> (<code>None</code>) – </p></li>
         </ul>
       </td>
     </tr>
@@ -10911,6 +10911,12 @@ is removed because it has an empty body, it will not be in the returned map</p><
 
 <span class="sd">    To split loop into two nested loops, use `split` instead</span>
 
+<span class="sd">    Statements inside the original loop will be distributed to one or both</span>
+<span class="sd">    (happening if they are scope statements) loops. If a statement is</span>
+<span class="sd">    originally labeled &quot;S&quot;, it can be selected by &quot;$fission.0{S}&quot; (from the</span>
+<span class="sd">    first loop) or &quot;$fission.1{S}&quot; (from the second loop) after fission. If</span>
+<span class="sd">    one of the resulting loop has an empty body, it will be removed</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    loop : str, ID or Stmt</span>
@@ -10921,12 +10927,6 @@ is removed because it has an empty body, it will not be in the returned map</p><
 <span class="sd">    splitter : str (Selector string), ID, Stmt, or list of them</span>
 <span class="sd">        Where to fission the loop. If multiple statement are selected, fission the</span>
 <span class="sd">        look before or after all of them</span>
-
-<span class="sd">    Statements inside the original loop will be distributed to one or both</span>
-<span class="sd">    (happening if they are scope statements) loops. If a statement is</span>
-<span class="sd">    originally labeled &quot;S&quot;, it can be selected by &quot;$fission.0{S}&quot; (from the</span>
-<span class="sd">    first loop) or &quot;$fission.1{S}&quot; (from the second loop) after fission. If</span>
-<span class="sd">    one of the resulting loop has an empty body, it will be removed</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
