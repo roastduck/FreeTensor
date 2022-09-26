@@ -1,10 +1,16 @@
 import freetensor as ft
 import numpy as np
 import pytest
+import sys
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_matmul():
+    try:
+        device = ft.GPU()
+        target = device.target()
+    except Exception:
+        sys.exit(1)
     NPORT = 27227
     tmp = ft.RPCTool(host="None",
                      self_server_ip="127.0.0.1",
@@ -16,8 +22,6 @@ def test_matmul():
     b = 256
     m = 4
     # c = 64
-    device = ft.GPU()
-    target = device.target()
 
     @ft.transform
     # def test(w, x, y):
