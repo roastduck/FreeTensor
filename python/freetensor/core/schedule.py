@@ -230,6 +230,12 @@ class Schedule(ffi.Schedule):
 
         To split loop into two nested loops, use `split` instead
 
+        Statements inside the original loop will be distributed to one or both
+        (happening if they are scope statements) loops. If a statement is
+        originally labeled "S", it can be selected by "$fission.0{S}" (from the
+        first loop) or "$fission.1{S}" (from the second loop) after fission. If
+        one of the resulting loop has an empty body, it will be removed
+
         Parameters
         ----------
         loop : str, ID or Stmt
@@ -240,12 +246,6 @@ class Schedule(ffi.Schedule):
         splitter : str (Selector string), ID, Stmt, or list of them
             Where to fission the loop. If multiple statement are selected, fission the
             look before or after all of them
-
-        Statements inside the original loop will be distributed to one or both
-        (happening if they are scope statements) loops. If a statement is
-        originally labeled "S", it can be selected by "$fission.0{S}" (from the
-        first loop) or "$fission.1{S}" (from the second loop) after fission. If
-        one of the resulting loop has an empty body, it will be removed
 
         Raises
         ------
