@@ -11,6 +11,7 @@ from uuid import uuid4
 from concurrent.futures import ThreadPoolExecutor
 import random
 from .. import core
+import sys
 
 
 #rewrite send/recv to ensure stable data transfer
@@ -287,7 +288,7 @@ class RPCTool(object):
             sock.close()
         except Exception:
             pipe.send({"function": "return", "return_status": "fail"})
-        return
+        sys.exit(0)
 
     def send(self, host_address, raw_message: Dict, timeout=30):
         send_pipe, recv_pipe = multiprocessing.Pipe()
@@ -550,4 +551,4 @@ class RPCTool(object):
             # self.send(self.get_address(i),message, -1)
         if self.verbose > 0:
             print("request sent")
-        # self.pool.shutdown(wait=True, cancel_futures=True)
+        self.pool.shutdown(wait=True, cancel_futures=True)
