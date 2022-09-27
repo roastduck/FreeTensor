@@ -112,4 +112,4 @@ def matmul():
     t.start()
     tmp.end_server()
     t.join()
-    sys.exit(0)
+    # sys.exit(0)

@@ -307,6 +307,7 @@ class RPCTool(object):
         t = multiprocessing.Process(target=self.send_base,
                                     args=(host_address, raw_message, send_pipe,
                                           timeout))
+        t.daemon = True
         t.start()
         t.join()
         return recv_pipe.recv()
