@@ -238,7 +238,11 @@ class RPCTool(object):
             self.scheduler_host_list.discard(server_uid)
             self.scheduler_host_list_lock.release()
             try:
-                self.pool.submit(self.scheduler_host_remove, server_uid)
+                t = threading.Thread(target=self.scheduler_host_remove,
+                                     args=(server_uid,))
+                t.daemon = True
+                t.start()
+                # self.pool.submit(self.scheduler_host_remove, server_uid)
             except Exception:
                 pass
         else:
@@ -498,9 +502,11 @@ class RPCTool(object):
                     time.sleep(1)
             self.end_server()
 
-        self.pool.submit(server_auto_shutdown_base, self, timeout)
-        # t = threading.Thread(target=server_auto_shutdown_base, args=(self, timeout))
-        # t.start()
+        # self.pool.submit(server_auto_shutdown_base, self, timeout)
+        t = threading.Thread(target=server_auto_shutdown_base,
+                             args=(self, timeout))
+        t.daemon = True
+        t.start()
 
     def server_auto_pex(self, interval: float = 15.0):
 
@@ -516,7 +522,10 @@ class RPCTool(object):
                               tmpdict, -1)
             print("pex end")
 
-        self.pool.submit(server_auto_pex_base, self, interval)
+        t = threading.Thread(target=server_auto_pex_base, args=(self, interval))
+        t.daemon = True
+        t.start()
+        # self.pool.submit(server_auto_pex_base, self, interval)
 
     def remove_host(self, host_uid: str):
         self.host_list_lock.acquire()
