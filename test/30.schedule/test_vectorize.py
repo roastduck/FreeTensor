@@ -37,3 +37,20 @@ def test_dep_not_met():
     code_ = ft.codegen(s.func(), target)
 
     assert str(code) == str(code_)
+
+
+def test_dep_not_met_reduction():
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[...] = 0
+        with ft.For("i", 0, 4, label="L1") as i:
+            y[...] += x[i]
+    func = ft.Func("main", ["x", "y"], [], ft.pop_ast())
+
+    s = ft.Schedule(func)
+    code = ft.codegen(s.func(), target)
+    with pytest.raises(ft.InvalidSchedule):
+        s.vectorize("L1")
+    code_ = ft.codegen(s.func(), target)
+
+    assert str(code) == str(code_)
