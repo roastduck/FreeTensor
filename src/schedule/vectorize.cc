@@ -26,6 +26,7 @@ Stmt vectorize(const Stmt &_ast, const ID &loop) {
     };
     FindDeps()
         .direction({{{loop, DepDirection::Normal}}})
+        .ignoreReductionWAW(false)
         .filterSubAST(loop)(ast, found);
     return ast;
 }
