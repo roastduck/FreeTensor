@@ -19,7 +19,7 @@ def test_matmul():
                      self_server_port=NPORT,
                      sev_status=[],
                      is_auto_pex=False)
-    # tmp.server_auto_shutdown(10)
+    tmp.server_auto_shutdown(20)
     client = ft.MultiMachineScheduler(addr="127.0.0.1",
                                       port=tmp.self_server.server_address[1],
                                       is_auto_pex=False)
@@ -102,5 +102,5 @@ def test_matmul():
 
     t = threading.Thread(target=client.rpctool.end_server)
     t.start()
-    tmp.end_server()
+    # tmp.end_server()
     t.join()

@@ -124,9 +124,9 @@ key: "function":
 
 
 class RPCTool(object):
-    host_list: Dict[str, Dict] = {}
+    host_list: Dict[str, Dict]
     host_list_lock = threading.RLock()
-    scheduler_host_list: set = set()
+    scheduler_host_list: set
     scheduler_host_list_lock: threading.RLock = threading.RLock()
 
     self_server: RPCToolThreadedTCPServer
@@ -140,7 +140,7 @@ class RPCTool(object):
     is_center: bool
     max_connection: int = 200
     max_reconnect_retries: int = 5
-    pool = ThreadPoolExecutor()
+    pool: ThreadPoolExecutor
     server_closed = False
 
     def __init__(self,
@@ -156,6 +156,10 @@ class RPCTool(object):
         server = RPCToolThreadedTCPServer(
             (HOST, PORT), RPCToolThreadedTCPRequestHandler, self)
         self.self_server = server
+        self.pool = ThreadPoolExecutor()
+        self.scheduler_host_list = set()
+        self.host_list = {}
+        self.server_closed = False
 
         # Start a thread with the server -- that thread will then start one
         # more thread for each request
@@ -181,6 +185,8 @@ class RPCTool(object):
             self.server_auto_pex(15)
 
     def remote_task_submit(self, server_uid: str, task: Dict):
+        if self.server_closed:
+            return -1
         tmpdict = {
             "function": "transfer",
             "host_uid": self.self_host_uid,
@@ -195,6 +201,8 @@ class RPCTool(object):
             return -1
 
     def remote_result_submit(self, server_uid: str, taskresult: Dict):
+        if self.server_closed:
+            return
         tmpdict = {
             "function": "transfer",
             "host_uid": self.self_host_uid,
@@ -284,12 +292,14 @@ class RPCTool(object):
                   timeout=30):
         if host_address is None:
             pipe.send({"function": "return", "return_status": "fail"})
-        try:
-            sock: socket.socket = self.get_socket(host_address)
-            pipe.send(self.send_with_retries(sock, raw_message, timeout))
-            sock.close()
-        except Exception:
-            pipe.send({"function": "return", "return_status": "fail"})
+            return
+        else:
+            try:
+                sock: socket.socket = self.get_socket(host_address)
+                pipe.send(self.send_with_retries(sock, raw_message, timeout))
+                sock.close()
+            except Exception:
+                pipe.send({"function": "return", "return_status": "fail"})
         sys.exit(0)
 
     def send(self, host_address, raw_message: Dict, timeout=30):
