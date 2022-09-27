@@ -434,6 +434,8 @@ class RPCTool(object):
     def update_status_single_dict(self, host_uid: str, ret: Dict):
         if ret["function"] == "exchange_status":
             if ret["target_uid"] == self.self_host_uid:
+                if ret["host_uid"] == "":
+                    return False
                 mykeys = {"address", "last_modify_time", "sev_status"}
                 host_info = {}
                 for key in mykeys:
