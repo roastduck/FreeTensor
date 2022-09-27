@@ -3,11 +3,19 @@ import numpy as np
 import pytest
 import sys
 import threading
+import multiprocessing
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
-# @pytest.mark.skip()
 def test_matmul():
+    t = multiprocessing.Process(target=matmul)
+    t.start()
+    t.join()
+    assert (t.exitcode == 0)
+
+
+# @pytest.mark.skip()
+def matmul():
     try:
         device = ft.GPU()
         target = device.target()
@@ -18,11 +26,11 @@ def test_matmul():
                      self_server_ip="127.0.0.1",
                      self_server_port=NPORT,
                      sev_status=[],
-                     is_auto_pex=False)
-    tmp.server_auto_shutdown(20)
+                     is_auto_pex=True)
+    # tmp.server_auto_shutdown(20)
     client = ft.MultiMachineScheduler(addr="127.0.0.1",
                                       port=tmp.self_server.server_address[1],
-                                      is_auto_pex=False)
+                                      is_auto_pex=True)
     a = 256
     b = 256
     m = 4
@@ -102,5 +110,6 @@ def test_matmul():
 
     t = threading.Thread(target=client.rpctool.end_server)
     t.start()
-    # tmp.end_server()
+    tmp.end_server()
     t.join()
+    sys.exit(0)

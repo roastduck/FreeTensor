@@ -566,3 +566,4 @@ class RPCTool(object):
         if self.verbose > 0:
             print("request sent")
         self.pool.shutdown(wait=True, cancel_futures=True)
+        del self.scheduler
