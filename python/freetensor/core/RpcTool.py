@@ -551,6 +551,8 @@ class RPCTool(object):
             except Exception:
                 pass
             # self.send(self.get_address(i),message, -1)
+        for i in host_list:
+            self.remove_host(i)
         if self.verbose > 0:
             print("request sent")
         self.pool.shutdown(wait=True, cancel_futures=True)
