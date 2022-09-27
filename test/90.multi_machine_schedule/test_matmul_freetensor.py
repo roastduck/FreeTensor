@@ -114,5 +114,6 @@ def matmul():
     t2 = threading.Thread(target=tmp.end_server)
     t2.daemon = True
     t2.start()
-    # t.join()
+    t.join(5)
+    t2.join(5)
     # sys.exit(0)
