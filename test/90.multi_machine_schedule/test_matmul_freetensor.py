@@ -109,7 +109,10 @@ def matmul():
     print(code)
 
     t = threading.Thread(target=client.rpctool.end_server)
+    t.daemon = True
     t.start()
-    tmp.end_server()
-    t.join()
+    t2 = threading.Thread(target=tmp.end_server)
+    t2.daemon = True
+    t2.start()
+    # t.join()
     # sys.exit(0)
