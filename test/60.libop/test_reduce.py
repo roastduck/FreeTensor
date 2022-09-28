@@ -99,6 +99,34 @@ def test_keepdims(libop_func, torch_func, dtype):
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype', [
+    (libop.reduce_sum_, torch.sum, "float32"),
+    (libop.reduce_prod_, torch.prod, "float32"),
+    (libop.reduce_max_, torch.max, "float32"),
+    (libop.reduce_min_, torch.min, "float32"),
+    (libop.all_, torch.all, "bool"),
+    (libop.any_, torch.any, "bool"),
+])
+def test_reduce_all_dims(libop_func, torch_func, dtype):
+    device = ft.CPU()
+
+    @ft.optimize(device=device, verbose=1)
+    def f(x, y):
+        x: ft.Var[(3, 4, 5), dtype, "input", "cpu"]
+        y: ft.Var[(1, 1, 1), dtype, "output", "cpu"]
+        #! label: reduce
+        libop_func(x, y, axes=None, keepdims=True)
+
+    x_torch = rand(3, 4, 5, dtype=dtype)
+    x_arr = ft.Array(x_torch.numpy())
+    y_torch = zeros(1, 1, 1, dtype=dtype)
+    y_arr = ft.Array(y_torch.numpy())
+    f(x_arr, y_arr)
+    y_torch = torch.tensor(y_arr.numpy())
+
+    assert same(y_torch, torch_func(x_torch).reshape(1, 1, 1), dtype=dtype)
+
+
+@pytest.mark.parametrize('libop_func, torch_func, dtype', [
     (libop.reduce_sum, torch.sum, "float32"),
     (libop.reduce_prod, torch.prod, "float32"),
     (libop.reduce_max, lambda *args, **kvs: torch.max(*args, **kvs).values,

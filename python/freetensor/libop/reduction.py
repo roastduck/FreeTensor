@@ -24,6 +24,11 @@ def _y_ndim(x_ndim, axes, keepdims):
 
 def _circular_axes(axes, x_ndim, keepdims):
     # ONNX >= 13 treats axes as a tensor, which we don't support for now
+
+    # None for all dimensions
+    if axes is None:
+        return core.static_range(x_ndim)
+
     return sorted(
         map(lambda x: x
             if x >= 0 else _y_ndim(x_ndim, axes, keepdims) + x, axes))
