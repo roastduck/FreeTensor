@@ -250,9 +250,10 @@ class RPCTool(object):
 
     def scheduler_host_add(self, server_uid: str):
         if not (self.scheduler is None):
-            if not(server_uid in self.scheduler.server_list):
-                sev_dict=self.host_list.get(server_uid, {})
-                self.scheduler.add_host(server_uid, sev_dict.get("sev_status", ["default"]))
+            if not (server_uid in self.scheduler.server_list):
+                sev_dict = self.host_list.get(server_uid, {})
+                self.scheduler.add_host(server_uid,
+                                        sev_dict.get("sev_status", ["default"]))
 
     def scheduler_host_remove(self, server_uid: str):
         if not (self.scheduler is None):
@@ -496,7 +497,7 @@ class RPCTool(object):
     def server_auto_shutdown(self, timeout: float = 5.0):
         time.sleep(10)
         if timeout <= 0.0:
-            while(1):
+            while (1):
                 time.sleep(100)
             return
 
