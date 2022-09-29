@@ -6,7 +6,10 @@ parser.add_argument("--gatewayaddr",
                     type=str,
                     help="known_server(gateway)_ip",
                     default="127.0.0.1")
-parser.add_argument("--gatewayport", type=int, help="known_server(gateway)_port", default=8047)
+parser.add_argument("--gatewayport",
+                    type=int,
+                    help="known_server(gateway)_port",
+                    default=8047)
 parser.add_argument("--sevstatus",
                     help="the_queue_of\
 this_server, use this flag more than once\
@@ -19,10 +22,7 @@ parser.add_argument("--ip",
                     help="self_server_ip",
                     default="localhost")
 
-parser.add_argument("--port",
-                    type=int,
-                    help="self_server_port",
-                    default=0)
+parser.add_argument("--port", type=int, help="self_server_port", default=0)
 
 parser.add_argument("--timeout",
                     type=float,
@@ -36,7 +36,6 @@ pex. Warning: without pex, you may fail to discover some peers if connection los
                    )
 
 args = parser.parse_args()
-
 
 client = ft.MultiMachineScheduler(addr=args.gatewayaddr,
                                   port=args.gatewayport,
