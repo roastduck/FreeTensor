@@ -230,7 +230,7 @@ class RPCTool(object):
         else:
             self.scheduler_host_list.add(server_uid)
             self.scheduler_host_list_lock.release()
-            self.pool(self.scheduler_host_add, server_uid)
+        self.pool.submit(self.scheduler_host_add, server_uid)
 
     def scheduler_list_auto_remove(self, server_uid: str):
         self.scheduler_host_list_lock.acquire()
@@ -250,7 +250,9 @@ class RPCTool(object):
 
     def scheduler_host_add(self, server_uid: str):
         if not (self.scheduler is None):
-            self.scheduler.add_host(server_uid)
+            if not(server_uid in self.scheduler.server_list):
+                sev_dict=self.host_list.get(server_uid, {})
+                self.scheduler.add_host(server_uid, sev_dict.get("sev_status", ["default"]))
 
     def scheduler_host_remove(self, server_uid: str):
         if not (self.scheduler is None):
@@ -270,12 +272,12 @@ class RPCTool(object):
                 send_msg(sock, self.serialize(message))
                 if timeout <= 0:
                     sock.shutdown(2)
-                    sock.close()
+                    # sock.close()
                     return None
                 else:
                     ret_val = self.deserialize(recv_msg(sock, timeout))
                     sock.shutdown(2)
-                    sock.close()
+                    # sock.close()
             except Exception as e:
                 time.sleep(1)
                 print(e)
@@ -301,7 +303,7 @@ class RPCTool(object):
             try:
                 sock: socket.socket = self.get_socket(host_address)
                 pipe.send(self.send_with_retries(sock, raw_message, timeout))
-                sock.close()
+                # sock.close()
             except Exception:
                 pipe.send({"function": "return", "return_status": "fail"})
         sys.exit(0)
@@ -437,6 +439,8 @@ class RPCTool(object):
                 if ret["host_uid"] == "":
                     return False
                 mykeys = {"address", "last_modify_time", "sev_status"}
+                if type(ret["sev_status"]) == str:
+                    ret["sev_status"] = [ret["sev_status"]]
                 host_info = {}
                 for key in mykeys:
                     host_info[key] = ret[key]
@@ -474,7 +478,7 @@ class RPCTool(object):
     def exchange_status_recv(self, sock: socket.socket, data: Dict):
         if self.server_closed == True:
             return
-        elif self.update_status_single_dict("", data):
+        elif self.update_status_single_dict(data.get("host_uid", ""), data):
             tmpdict = self.update_status_single_base(data["host_uid"])
         else:
             tmpdict = {"function": "return", "return_status": "not_available"}
@@ -490,7 +494,10 @@ class RPCTool(object):
         return False
 
     def server_auto_shutdown(self, timeout: float = 5.0):
+        time.sleep(10)
         if timeout <= 0.0:
+            while(1):
+                time.sleep(100)
             return
 
         def server_auto_shutdown_base(self: RPCTool, timeout: float):
@@ -507,7 +514,7 @@ class RPCTool(object):
         # self.pool.submit(server_auto_shutdown_base, self, timeout)
         t = threading.Thread(target=server_auto_shutdown_base,
                              args=(self, timeout))
-        t.daemon = True
+        # t.daemon = True
         t.start()
 
     def server_auto_pex(self, interval: float = 15.0):

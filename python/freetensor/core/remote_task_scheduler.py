@@ -509,6 +509,7 @@ class RemoteTaskScheduler(object):
                     tmpbool = True
                     break
             if tmpbool:
+                print(uidkey)
                 t = threading.Thread(target=self.report_availability,
                                      args=(uidkey, tmpdict))
                 t.start()
@@ -719,6 +720,8 @@ class RemoteTaskScheduler(object):
 
     def add_host(self, _server_uid: str, sev_status: List[str]) -> None:
         #add a host to the known server list
+        if self.verbose>0:
+            print(_server_uid, " ", sev_status)
         self.server_list_lock.acquire()
         self.server_list[_server_uid] = (sev_status, time.time())
         for host_type in sev_status:
@@ -728,7 +731,7 @@ class RemoteTaskScheduler(object):
         #update the known server list
         tmpdict: Dict = {
             "task_type": "control",
-            "trans_c": "inavail",
+            "trans_c": "avail",
             "time_stamp": time.time()
         }
         t = threading.Thread(target=self.send_tasks,
