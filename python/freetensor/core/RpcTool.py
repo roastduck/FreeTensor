@@ -499,7 +499,6 @@ class RPCTool(object):
         if timeout <= 0.0:
             while (1):
                 time.sleep(100)
-            return
 
         def server_auto_shutdown_base(self: RPCTool, timeout: float):
             while True:
