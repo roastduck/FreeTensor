@@ -96,6 +96,7 @@ key: "function":
 
         "join": join the network
             "host_uid": str
+            "server_addr": tuple[str, int] #the address of gateway
 
         "exit": leave the network gracefully
             "host_uid": str
@@ -134,6 +135,8 @@ class RPCTool(object):
     scheduler: core.RemoteTaskScheduler
     centre_address: tuple[str, int]
     sev_status: List
+    self_and_gateway_addr: tuple[tuple[str, int], tuple[str, int]]
+
     verbose = 1
     last_active_time: float
     last_modify_time: float
@@ -175,14 +178,30 @@ class RPCTool(object):
         self.scheduler = scheduler
         if host == "None":
             self.centre_address = None
+            self.self_and_gateway_addr = None
         else:
             self.centre_address = (host, port)
+            self.self_and_gateway_addr = self.get_ips(self.centre_address)
         self.sev_status = sev_status
         self.is_center = is_center
         self.internet_init()
         #self.scheduler.get_self_uid(self.self_host_uid)
         if is_auto_pex:
             self.server_auto_pex(15)
+
+    def get_ips(self, gateway_addr: tuple[str, int]):
+        tries = 5
+        while (tries > 0):
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                sock.connect(gateway_addr)
+                return ((sock.getsockname()[0],
+                         self.self_server.server_address[1]),
+                        sock.getpeername())
+            except Exception:
+                tries -= 1
+        return None
 
     def remote_task_submit(self, server_uid: str, task: Dict):
         if self.server_closed:
@@ -352,6 +371,13 @@ class RPCTool(object):
         if self.check_uid_existence(data["host_uid"]):
             tmpdict = {"function": "return", "return_status": "not_available"}
         else:
+            if self.self_and_gateway_addr is None:
+                self.host_list[
+                    self.self_host_uid]["address"] = data["server_addr"]
+                self.self_and_gateway_addr = (
+                    data["server_addr"],
+                    None,
+                )
             tmpdict = self.pex_update_base([])
         self.send_with_retries(sock, tmpdict, -1)
 
@@ -397,14 +423,18 @@ class RPCTool(object):
             try:
                 self.self_host_uid = str(uuid4())
                 self.last_modify_time = time.time()
-                tmpdict = {"function": "join", "host_uid": self.self_host_uid}
+                tmpdict = {
+                    "function": "join",
+                    "host_uid": self.self_host_uid,
+                    "server_addr": self.self_and_gateway_addr[1]
+                }
                 response = self.send(self.centre_address, tmpdict, 10)
             except Exception:
                 time.sleep(1)
             else:
                 if response["function"] == "pex_update":
                     self_info = {
-                        "address": self.self_server.server_address,
+                        "address": self.self_and_gateway_addr[0],
                         "last_modify_time": self.last_modify_time,
                         "sev_status": self.sev_status
                     }
@@ -428,7 +458,7 @@ class RPCTool(object):
             "function": "exchange_status",
             "host_uid": self.self_host_uid,
             "target_uid": host_uid,
-            "address": self.self_server.server_address,
+            "address": (self.self_and_gateway_addr[0]),
             "last_modify_time": self.last_modify_time,
             "sev_status": self.sev_status
         }
