@@ -350,43 +350,39 @@ std::string AnalyzeDeps::makeNdList(const std::string &name, int n) {
 PBMap AnalyzeDeps::makeEqForBothOps(
     PBCtx &presburger, const std::vector<std::pair<int, int>> &coord,
     int iterDim) const {
-    std::ostringstream os;
-    os << "{" << makeNdList("d", iterDim) << " -> " << makeNdList("d_", iterDim)
-       << ": ";
-    for (auto &&[i, crd] : views::enumerate(coord)) {
-        if (i > 0) {
-            os << " and ";
-        }
-        os << "d" << crd.first << " = " << crd.second << " and "
-           << "d_" << crd.first << " = " << crd.second;
-    }
-    os << "}";
-    return PBMap(presburger, os.str());
+    auto map = universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move();
+    for (auto &&[dim, val] : coord)
+        map = isl_map_fix_si(isl_map_fix_si(map, isl_dim_out, dim, val),
+                             isl_dim_in, dim, val);
+    return PBMap(map);
 }
 
 PBMap AnalyzeDeps::makeIneqBetweenOps(PBCtx &presburger, DepDirection mode,
                                       int iterId, int iterDim) const {
-    auto idStr = std::to_string(iterId);
-    std::string ineq;
     switch (mode) {
     case DepDirection::Inv:
-        ineq = ">";
-        break;
+        return PBMap(isl_map_order_gt(
+            universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
+            isl_dim_out, iterId, isl_dim_in, iterId));
     case DepDirection::Normal:
-        ineq = "<";
-        break;
+        return PBMap(isl_map_order_lt(
+            universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
+            isl_dim_out, iterId, isl_dim_in, iterId));
     case DepDirection::Same:
-        ineq = "=";
-        break;
+        return PBMap(isl_map_equate(
+            universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
+            isl_dim_out, iterId, isl_dim_in, iterId));
     case DepDirection::Different:
-        ineq = "!=";
-        break;
+        return uni(
+            PBMap(isl_map_order_lt(
+                universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
+                isl_dim_out, iterId, isl_dim_in, iterId)),
+            PBMap(isl_map_order_gt(
+                universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
+                isl_dim_out, iterId, isl_dim_in, iterId)));
     default:
         ASSERT(false);
     }
-    return PBMap(presburger, "{" + makeNdList("d", iterDim) + " -> " +
-                                 makeNdList("d_", iterDim) + ": d_" + idStr +
-                                 " " + ineq + " d" + idStr + "}");
 }
 
 PBMap AnalyzeDeps::makeConstraintOfSingleLoop(PBCtx &presburger, const ID &loop,
