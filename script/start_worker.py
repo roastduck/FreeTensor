@@ -20,7 +20,7 @@ this_server, use this flag more than once\
 parser.add_argument("--ip",
                     type=str,
                     help="self_server_ip",
-                    default="localhost")
+                    default="0.0.0.0")
 
 parser.add_argument("--port", type=int, help="self_server_port", default=0)
 

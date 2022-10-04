@@ -767,7 +767,7 @@ class MultiMachineScheduler(RemoteTaskScheduler):
                  addr: str = "127.0.0.1",
                  port: int = 8047,
                  sev_status: List[str] = ["default"],
-                 self_server_ip="localhost",
+                 self_server_ip="0.0.0.0",
                  self_server_port=0,
                  is_auto_pex=True) -> None:
         super().__init__(sev_status)
