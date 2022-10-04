@@ -17,10 +17,7 @@ this_server, use this flag more than once\
                     action="append",
                     default=["default"])
 
-parser.add_argument("--ip",
-                    type=str,
-                    help="self_server_ip",
-                    default="0.0.0.0")
+parser.add_argument("--ip", type=str, help="self_server_ip", default="0.0.0.0")
 
 parser.add_argument("--port", type=int, help="self_server_port", default=0)
 
