@@ -49,9 +49,7 @@ Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
     return ret;
 }
 
-struct ModifiedException : public Error {
-    ModifiedException() : Error("") {}
-};
+struct ModifiedException {};
 
 bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
                       CheckNotModifiedSide s0Side, const ID &s0,
@@ -95,7 +93,7 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
     // write -> serialized PBSet
     std::unordered_map<Stmt, std::string> writesWAR;
     auto foundWAR = [&](const Dependency &dep) {
-        // Serialize dep.later2EarlierIter_ because it is from a random PBCtx
+        // Serialize WAR map because it is from a random PBCtx
         writesWAR[dep.later_.stmt_] =
             toString(apply(domain(dep.later2EarlierIter_), dep.laterIter2Idx_));
     };
@@ -108,12 +106,11 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         .noProjectOutProvateAxis(true)(tmpOp, foundWAR);
 
     auto foundRAW = [&](const Dependency &dep) {
-        // Serialize dep.later2EarlierIter_ because it is from a random
-        // PBCtx
+        // re-construct WAR map from stored string in current PBCtx
         auto w0 = PBSet(dep.presburger_, writesWAR[dep.earlier_.stmt_]);
         auto w1 = apply(range(dep.later2EarlierIter_), dep.earlierIter2Idx_);
         if (!intersect(std::move(w0), std::move(w1)).empty())
-            throw ModifiedException();
+            throw ModifiedException{};
     };
     try {
         FindDeps()
