@@ -51,7 +51,7 @@ jobs:
           git submodule foreach --recursive git clean -ffdx
           git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 java@11
+          spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@12.1.0
           source /home/rd/venv-freetensor/bin/activate
           mkdir build
           cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF
@@ -59,6 +59,6 @@ jobs:
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 java@11
+          spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@12.1.0
           source /home/rd/venv-freetensor/bin/activate
           PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p cpu pytest --color=yes test
