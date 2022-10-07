@@ -120,13 +120,12 @@ std::pair<Stmt, std::vector<ID>> permute(
     // prepare the permutation map
     std::string permuteMapStr;
     {
-        auto originalIter =
-            views::ints(0ul, loops.size()) | views::transform([](auto &&i) {
-                return makeVar("din" + std::to_string(i))
-                    .template as<VarNode>();
-            });
-        auto permutedIter =
-            transformFunc({originalIter.begin(), originalIter.end()});
+        auto originalIter = views::ints(0ul, loops.size()) |
+                            views::transform([](auto &&i) {
+                                return makeVar("din" + std::to_string(i));
+                            }) |
+                            ranges::to<std::vector>();
+        auto permutedIter = transformFunc(originalIter);
 
         // check for loads in the permuted iteration expressions
         for (auto &&[i, expr] : views::enumerate(permutedIter))
@@ -143,7 +142,7 @@ std::pair<Stmt, std::vector<ID>> permute(
         for (auto &&[i, item] : views::enumerate(originalIter)) {
             if (i > 0)
                 oss << ", ";
-            oss << mangle(item->name_);
+            oss << mangle(item.as<VarNode>()->name_);
         }
 
         oss << "] -> [";
