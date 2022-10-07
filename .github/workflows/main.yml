@@ -54,7 +54,7 @@ jobs:
           spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@12.1.0
           source /home/rd/venv-freetensor/bin/activate
           mkdir build
-          cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF
+          cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF -DCMAKE_CXX_FLAGS="-Wno-restrict"
           cd build && ninja
       - name: Run PyTest
         run: |
