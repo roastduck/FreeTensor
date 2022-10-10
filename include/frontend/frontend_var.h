@@ -15,7 +15,7 @@ enum class FrontendVarIdxType : int { Single, Slice };
 
 class FrontendVarIdx {
     FrontendVarIdxType type_;
-    Expr start_, stop_;
+    Expr start_, stop_, len_;
 
   public:
     FrontendVarIdxType type() const { return type_; }
@@ -35,18 +35,41 @@ class FrontendVarIdx {
         return stop_;
     }
 
+    const Expr &len() const { return len_; }
+
     static FrontendVarIdx fromSingle(const Expr &single) {
         FrontendVarIdx ret;
         ret.type_ = FrontendVarIdxType::Single;
         ret.start_ = single;
+        ret.len_ = makeIntConst(1);
         return ret;
     }
 
-    static FrontendVarIdx fromSlice(const Expr &start, const Expr &stop) {
+    static FrontendVarIdx fromSlice(const Expr &start, const Expr &stop,
+                                    const Expr &len = nullptr) {
         FrontendVarIdx ret;
         ret.type_ = FrontendVarIdxType::Slice;
-        ret.start_ = start;
-        ret.stop_ = stop;
+        if (start.isValid()) {
+            ret.start_ = start;
+        } else {
+            ASSERT(stop.isValid());
+            ASSERT(len.isValid());
+            ret.start_ = makeSub(stop, len);
+        }
+        if (stop.isValid()) {
+            ret.stop_ = stop;
+        } else {
+            ASSERT(start.isValid());
+            ASSERT(len.isValid());
+            ret.stop_ = makeAdd(start, len);
+        }
+        if (len.isValid()) {
+            ret.len_ = len;
+        } else {
+            ASSERT(start.isValid());
+            ASSERT(stop.isValid());
+            ret.len_ = makeSub(stop, start);
+        }
         return ret;
     }
 };

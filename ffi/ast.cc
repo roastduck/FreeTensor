@@ -5,6 +5,7 @@
 #include <ffi.h>
 #include <frontend/frontend_var.h>
 #include <func.h>
+#include <hash.h>
 #include <serialize/load_ast.h>
 #include <serialize/print_ast.h>
 #include <stmt.h>
@@ -99,6 +100,21 @@ void init_ffi_ast(py::module_ &m) {
                      "`x.node_type()` is deprecated. Please use `x.type()`");
                  return op->nodeType();
              })
+        .def(
+            "same_as",
+            [](const AST &lhs, const AST &rhs) {
+                return HashComparator{}(lhs, rhs);
+            },
+            R"'''(Check whether two ASTs are identical
+
+This funciton compares two ASTs at compile time. The corresponding hash function is
+`hash` instead of `__hash__`. Note that this is different from `__eq__`, which
+builds `EQ` nodes and compares at run time)'''")
+        .def("hash", &ASTNode::hash, R"'''(Compute hash of an AST
+
+This is a normal function `hash` instead of `__hash__`. The corresponding comparing
+function is `same_as` instead of `__eq__`. The latter is used for building `EQ`
+nodes)'''")
         .def("__str__", [](const AST &op) { return toString(op); })
         .def("__repr__", [](const AST &op) {
             return "<" + toString(op->nodeType()) + ": " + toString(op) + ">";

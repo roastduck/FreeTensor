@@ -8,8 +8,10 @@ using namespace pybind11::literals;
 
 void init_ffi_frontend(py::module_ &m) {
     py::class_<FrontendVarIdx>(m, "FrontendVarIdx")
-        .def(py::init(&FrontendVarIdx::fromSingle))
-        .def(py::init(&FrontendVarIdx::fromSlice))
+        .def(py::init<FrontendVarIdx>())
+        .def(py::init(&FrontendVarIdx::fromSingle), "single"_a)
+        .def(py::init(&FrontendVarIdx::fromSlice), "start"_a, "stop"_a,
+             "length"_a = nullptr)
         .def("__repr__",
              [](const FrontendVarIdx &idx) { return toString(idx); });
 
