@@ -439,10 +439,10 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
 
                     if (deps.size() > 0)
                         ASSERT(hSet.nDims() == deps[0].nDims());
-                    PBSet s(ctx, toString(std::move(hSet)));
+                    auto strSet = toString(std::move(hSet));
 
                     std::lock_guard l(m);
-                    deps.push_back(std::move(s));
+                    deps.emplace_back(ctx, strSet);
                 }));
         return deps;
     };
