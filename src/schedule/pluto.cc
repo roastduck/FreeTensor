@@ -373,6 +373,7 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     auto getDeps = [&](const For &l0, int n0, const For &l1, int n1,
                        bool handleFakeAccess = false) mutable {
         std::vector<PBSet> deps;
+        std::mutex m;
         FindDeps()
             .noProjectOutProvateAxis(true)
             .filterAccess([&](const AccessPoint &p) {
@@ -398,7 +399,7 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
             .filterLater([&](const AccessPoint &p) {
                 return p.stmt_->ancestorById(l1->id()).isValid();
             })
-            .direction(outersSame)(fakeAccessAst, [&](const Dependency &d) {
+            .direction(outersSame)(fakeAccessAst, unsyncFunc([&](const Dependency &d) {
                 // later to earlier map, but projects out unrelated dims
                 auto hMap = d.later2EarlierIter_;
 
@@ -435,8 +436,11 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
 
                 if (deps.size() > 0)
                     ASSERT(hSet.nDims() == deps[0].nDims());
-                deps.emplace_back(ctx, toString(std::move(hSet)));
-            });
+                PBSet s(ctx, toString(std::move(hSet)));
+
+                std::lock_guard l(m);
+                deps.push_back(std::move(s));
+            }));
         return deps;
     };
 

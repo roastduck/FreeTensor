@@ -231,7 +231,33 @@ struct Dependency {
     PBMap extraCheck(PBMap dep, const NodeIDOrParallelScope &nodeOrParallel,
                      const DepDirection &dir) const;
 };
-typedef std::function<void(const Dependency &)> FindDepsCallback;
+
+class FindDepsCallback {
+    std::function<void(const Dependency &)> f_;
+    bool synchronized_;
+    std::mutex mutex_;
+
+    template <std::invocable<const Dependency &> F>
+    requires requires(F f, const Dependency &d) {
+        { f(d) } -> std::same_as<void>;
+    }
+    explicit FindDepsCallback(F &&f, bool sync) : f_(f), synchronized_(sync) {}
+
+    friend FindDepsCallback syncFunc(auto &&f);
+    friend FindDepsCallback unsyncFunc(auto &&f);
+
+  public:
+    void operator()(const Dependency &d) const {
+        if (synchronized_) {
+            std::lock_guard lg(mutex_);
+            f_(d);
+        } else {
+            f_(d);
+        }
+    }
+};
+FindDepsCallback syncFunc(auto &&f) { return FindDepsCallback(f, true); }
+FindDepsCallback unsyncFunc(auto &&f) { return FindDepsCallback(f, false); }
 
 typedef int DepType;
 const DepType DEP_WAW = 0x1;
@@ -276,7 +302,6 @@ class AnalyzeDeps {
     const bool noProjectOutProvateAxis_;
 
     std::vector<std::function<void()>> tasks_;
-    std::mutex lock_;
 
   public:
     AnalyzeDeps(
@@ -665,7 +690,18 @@ class FindDeps {
     }
 
     /**
-     * Run FindDeps
+     * Run FindDeps, synchronized as default
+     *
+     * @param op : AST root
+     * @param found : callback
+     */
+    void operator()(const Stmt &op,
+                    const std::function<void(const Dependency &)> &found) {
+        (*this)(op, syncFunc(found));
+    }
+
+    /**
+     * Run FindDeps, with specified synchronize/unsynchronize
      *
      * @param op : AST root
      * @param found : callback
