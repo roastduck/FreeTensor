@@ -1032,7 +1032,9 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
 bool FindDeps::exists(const Stmt &op) {
     struct DepExistsExcept {};
     try {
-        (*this)(op, unsyncFunc([](const Dependency &dep) { throw DepExistsExcept(); }));
+        (*this)(op, unsyncFunc([](const Dependency &dep) {
+                    throw DepExistsExcept();
+                }));
     } catch (const DepExistsExcept &e) {
         return true;
     }
