@@ -32,6 +32,50 @@ static int countHeavyOps(const Expr &op) {
     return visitor.cnt();
 }
 
+static std::vector<Expr> factorize(const Expr &expr) {
+    std::vector<Expr> factors;
+    std::function<void(const Expr &)> recur = [&](const Expr &expr) {
+        if (expr->nodeType() == ASTNodeType::Mul) {
+            recur(expr.as<MulNode>()->lhs_);
+            recur(expr.as<MulNode>()->rhs_);
+        } else {
+            factors.emplace_back(expr);
+        }
+    };
+    recur(expr);
+    return factors;
+}
+
+static std::tuple<std::vector<Expr>, std::vector<Expr>, bool>
+factorDiv(const std::vector<Expr> &_lhs, const std::vector<Expr> &_rhs) {
+    // We use vector scan instead of hash set here to ensure deterministisy
+    auto lhs = _lhs, rhs = _rhs;
+    bool modified = false;
+    for (auto i = rhs.begin(); i != rhs.end();) {
+        for (auto j = lhs.begin(); j != lhs.end();) {
+            if (HashComparator{}(*j, *i)) {
+                i = rhs.erase(i);
+                j = lhs.erase(j);
+                modified = true;
+                goto next;
+            } else {
+                j++;
+            }
+        }
+        i++;
+    next:;
+    }
+    return {lhs, rhs, modified};
+}
+
+static Expr reduceMul(const std::vector<Expr> &factors) {
+    Expr ret;
+    for (auto &&item : factors) {
+        ret = ret.isValid() ? makeMul(ret, item) : item;
+    }
+    return ret.isValid() ? ret : makeIntConst(1);
+}
+
 void FindInnerMostScope::visit(const Var &op) {
     Visitor::visit(op);
     if (!varScope_.count(op->name_)) {
@@ -163,6 +207,13 @@ Expr SimplifyPass::visit(const FloorDiv &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
     auto op = __op.as<FloorDivNode>();
+    if (auto &&[factorsL, factorsR, modified] =
+            factorDiv(factorize(op->lhs_), factorize(op->rhs_));
+        modified) {
+        // floor(a * b / a * c) == floor(b / c)
+        op = makeFloorDiv(reduceMul(factorsL), reduceMul(factorsR))
+                 .as<FloorDivNode>();
+    }
     if (equals(op->rhs_, 1)) {
         return op->lhs_;
     }
@@ -179,6 +230,13 @@ Expr SimplifyPass::visit(const CeilDiv &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::CeilDiv);
     auto op = __op.as<CeilDivNode>();
+    if (auto &&[factorsL, factorsR, modified] =
+            factorDiv(factorize(op->lhs_), factorize(op->rhs_));
+        modified) {
+        // ceil(a * b / a * c) == ceil(b / c)
+        op = makeCeilDiv(reduceMul(factorsL), reduceMul(factorsR))
+                 .as<CeilDivNode>();
+    }
     if (equals(op->rhs_, 1)) {
         return op->lhs_;
     }
@@ -195,6 +253,13 @@ Expr SimplifyPass::visit(const RoundTowards0Div &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::RoundTowards0Div);
     auto op = __op.as<RoundTowards0DivNode>();
+    if (auto &&[factorsL, factorsR, modified] =
+            factorDiv(factorize(op->lhs_), factorize(op->rhs_));
+        modified) {
+        // round(a * b / a * c) == round(b / c)
+        op = makeRoundTowards0Div(reduceMul(factorsL), reduceMul(factorsR))
+                 .as<RoundTowards0DivNode>();
+    }
     if (equals(op->rhs_, 1)) {
         return op->lhs_;
     }
@@ -212,6 +277,13 @@ Expr SimplifyPass::visit(const Mod &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Mod);
     auto op = __op.as<ModNode>();
 
+    if (auto &&[factorsL, factorsR, modified] =
+            factorDiv(factorize(op->lhs_), factorize(op->rhs_));
+        factorsR.empty()) {
+        // (n * m) % n == 0, but (n * m) % (n * k) !== m % k
+        return makeIntConst(0);
+    }
+
     if (unique_.getIntLower(op->rhs_) > 0 &&
         unique_.getIntLower(op->lhs_) >= 0 &&
         unique_.alwaysLT(op->lhs_, op->rhs_)) {
@@ -225,6 +297,10 @@ Expr SimplifyPass::visit(const Mod &_op) {
 
     if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
         auto k = op->rhs_.as<IntConstNode>()->val_;
+
+        if (k == 1 || k == -1) {
+            return makeIntConst(0);
+        }
 
         bool mutated = false;
         std::function<Expr(const Expr &)> f = [&f, &mutated, k](const Expr &x) {
@@ -253,6 +329,22 @@ Expr SimplifyPass::visit(const Mod &_op) {
         }
     }
 
+    return op;
+}
+
+Expr SimplifyPass::visit(const Remainder &_op) {
+    auto __op = BaseClass::visit(_op);
+    if (__op->isConst()) {
+        return __op;
+    }
+    ASSERT(__op->nodeType() == ASTNodeType::Remainder);
+    auto op = __op.as<RemainderNode>();
+    if (auto &&[factorsL, factorsR, modified] =
+            factorDiv(factorize(op->lhs_), factorize(op->rhs_));
+        factorsR.empty()) {
+        // (n * m) %% n == 0, but (n * m) %% (n * k) !== m %% k
+        return makeIntConst(0);
+    }
     return op;
 }
 
