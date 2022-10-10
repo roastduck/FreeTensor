@@ -202,6 +202,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1Dependency.html">freetensor::Dependency</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDepsCallback.html">freetensor::FindDepsCallback</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1AnalyzeDeps.html">freetensor::AnalyzeDeps</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html">freetensor::FindDeps</a></td></tr>
@@ -220,8 +222,6 @@ Typedefs</h2></td></tr>
 <tr class="separator:a0d9af8d1c64e4f7de3f4a47978a0d48d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a660e9e5785610a20b03501993142b2d6"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; NodeIDOrParallelScope, DepDirection &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a660e9e5785610a20b03501993142b2d6">freetensor::FindDepsDir</a></td></tr>
 <tr class="separator:a660e9e5785610a20b03501993142b2d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae26309bbb0c35ef579635c1c3c032463"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; void(const Dependency &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae26309bbb0c35ef579635c1c3c032463">freetensor::FindDepsCallback</a></td></tr>
-<tr class="separator:ae26309bbb0c35ef579635c1c3c032463"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1533555abd55c944984c274ffa629c70"><td class="memItemLeft" align="right" valign="top">typedef int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1533555abd55c944984c274ffa629c70">freetensor::DepType</a></td></tr>
 <tr class="separator:a1533555abd55c944984c274ffa629c70"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -248,6 +248,10 @@ Enumerations</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:a73d1e1e83aedfa00128a25d37494807b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a73d1e1e83aedfa00128a25d37494807b">freetensor::countBandNodeWidth</a> (const Stmt &amp;op)</td></tr>
 <tr class="separator:a73d1e1e83aedfa00128a25d37494807b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad91a290b2ee764917911d477e98ea5b1"><td class="memItemLeft" align="right" valign="top">FindDepsCallback&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad91a290b2ee764917911d477e98ea5b1">freetensor::syncFunc</a> (auto &amp;&amp;f)</td></tr>
+<tr class="separator:ad91a290b2ee764917911d477e98ea5b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39594cb6882b2e5cdd90dc00ffedf363"><td class="memItemLeft" align="right" valign="top">FindDepsCallback&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a39594cb6882b2e5cdd90dc00ffedf363">freetensor::unsyncFunc</a> (auto &amp;&amp;f)</td></tr>
+<tr class="separator:a39594cb6882b2e5cdd90dc00ffedf363"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aadd085acc26e7a87b2397c8148d03356"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aadd085acc26e7a87b2397c8148d03356">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, const Dependency &amp;dep)</td></tr>
 <tr class="separator:aadd085acc26e7a87b2397c8148d03356"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">

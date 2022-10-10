@@ -101,7 +101,9 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ac60c7bb079a0aa635accc44c1acfff2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a321253f924e99db8904430d5ebd5b256"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1FindDeps.html">FindDeps</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html#a321253f924e99db8904430d5ebd5b256">scope2CoordCallback</a> (std::function&lt; void(const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::vector&lt; <a class="el" href="structfreetensor_1_1IterAxis.html">IterAxis</a> &gt; &gt; &amp;)&gt; callback)</td></tr>
 <tr class="separator:a321253f924e99db8904430d5ebd5b256"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac9474d370890b193671f63f8541d8833"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html#ac9474d370890b193671f63f8541d8833">operator()</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="namespacefreetensor.html#ae26309bbb0c35ef579635c1c3c032463">FindDepsCallback</a> &amp;found)</td></tr>
+<tr class="memitem:abf5a71dda35703e2ec550933fc5b0aa6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html#abf5a71dda35703e2ec550933fc5b0aa6">operator()</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::function&lt; void(const <a class="el" href="structfreetensor_1_1Dependency.html">Dependency</a> &amp;)&gt; &amp;found)</td></tr>
+<tr class="separator:abf5a71dda35703e2ec550933fc5b0aa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9474d370890b193671f63f8541d8833"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html#ac9474d370890b193671f63f8541d8833">operator()</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1FindDepsCallback.html">FindDepsCallback</a> &amp;found)</td></tr>
 <tr class="separator:ac9474d370890b193671f63f8541d8833"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2508e6af289012eb9fe994bd7cd52667"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html#a2508e6af289012eb9fe994bd7cd52667">exists</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a2508e6af289012eb9fe994bd7cd52667"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -430,7 +432,7 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="ac9474d370890b193671f63f8541d8833" name="ac9474d370890b193671f63f8541d8833"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac9474d370890b193671f63f8541d8833">&#9670;&nbsp;</a></span>operator()()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ac9474d370890b193671f63f8541d8833">&#9670;&nbsp;</a></span>operator()() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -444,7 +446,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#ae26309bbb0c35ef579635c1c3c032463">FindDepsCallback</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1FindDepsCallback.html">FindDepsCallback</a> &amp;&#160;</td>
           <td class="paramname"><em>found</em>&#160;</td>
         </tr>
         <tr>
@@ -454,7 +456,51 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p >Run <a class="el" href="classfreetensor_1_1FindDeps.html">FindDeps</a></p>
+<p >Run <a class="el" href="classfreetensor_1_1FindDeps.html">FindDeps</a>, with specified synchronize/unsynchronize</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">op</td><td>: AST root </td></tr>
+    <tr><td class="paramname">found</td><td>: callback </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="abf5a71dda35703e2ec550933fc5b0aa6" name="abf5a71dda35703e2ec550933fc5b0aa6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abf5a71dda35703e2ec550933fc5b0aa6">&#9670;&nbsp;</a></span>operator()() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::FindDeps::operator() </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; void(const <a class="el" href="structfreetensor_1_1Dependency.html">Dependency</a> &amp;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>found</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p >Run <a class="el" href="classfreetensor_1_1FindDeps.html">FindDeps</a>, synchronized as default</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">op</td><td>: AST root </td></tr>
