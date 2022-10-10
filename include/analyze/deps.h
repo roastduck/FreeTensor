@@ -235,7 +235,8 @@ struct Dependency {
 class FindDepsCallback {
     std::function<void(const Dependency &)> f_;
     bool synchronized_;
-    std::mutex mutex_;
+    mutable std::mutex
+        mutex_; // mutable to allow const callback object to lock against
 
     template <std::invocable<const Dependency &> F>
     requires requires(F f, const Dependency &d) {
