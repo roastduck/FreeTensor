@@ -605,6 +605,44 @@ def test_mod_2(p):
 
 
 @pytest.mark.parametrize('p', [ft.simplify])
+def test_divisible_1(p):
+    with ft.VarDef([("a", (), "int32", "input", "cpu"),
+                    ("b", (), "int32", "input", "cpu"),
+                    ("c", (), "int32", "output", "cpu")]) as (a, b, c):
+        c[...] = a[...] * b[...] // b[...]
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef([("a", (), "int32", "input", "cpu"),
+                    ("b", (), "int32", "input", "cpu"),
+                    ("c", (), "int32", "output", "cpu")]) as (a, b, c):
+        c[...] = a[...]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+@pytest.mark.parametrize('p', [ft.simplify])
+def test_divisible_2(p):
+    with ft.VarDef([("a", (), "int32", "input", "cpu"),
+                    ("b", (), "int32", "input", "cpu"),
+                    ("c", (), "int32", "output", "cpu")]) as (a, b, c):
+        c[...] = a[...] * b[...] % b[...]
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef([("a", (), "int32", "input", "cpu"),
+                    ("b", (), "int32", "input", "cpu"),
+                    ("c", (), "int32", "output", "cpu")]) as (a, b, c):
+        c[...] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_simplify_not_cmp(p):
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),

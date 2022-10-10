@@ -32,6 +32,39 @@ static int countHeavyOps(const Expr &op) {
     return visitor.cnt();
 }
 
+static std::vector<Expr> factorize(const Expr &expr) {
+    std::vector<Expr> factors;
+    std::function<void(const Expr &)> recur = [&](const Expr &expr) {
+        if (expr->nodeType() == ASTNodeType::Mul) {
+            recur(expr.as<MulNode>()->lhs_);
+            recur(expr.as<MulNode>()->rhs_);
+        } else {
+            factors.emplace_back(expr);
+        }
+    };
+    recur(expr);
+    return factors;
+}
+
+static std::optional<std::vector<Expr>>
+factorDiv(const std::vector<Expr> &lhs, const std::vector<Expr> &rhs) {
+    // We use vector scan instead of hash set here to ensure deterministisy
+    auto ret = lhs;
+    for (auto &&r : rhs) {
+        for (auto it = ret.begin(); it != ret.end();) {
+            if (HashComparator{}(*it, r)) {
+                it = ret.erase(it);
+                goto next;
+            } else {
+                it++;
+            }
+        }
+        return std::nullopt;
+    next:;
+    }
+    return ret;
+}
+
 void FindInnerMostScope::visit(const Var &op) {
     Visitor::visit(op);
     if (!varScope_.count(op->name_)) {
@@ -169,6 +202,14 @@ Expr SimplifyPass::visit(const FloorDiv &_op) {
     if (equals(op->rhs_, -1)) {
         return makeMul(makeIntConst(-1), op->lhs_);
     }
+    if (auto factors = factorDiv(factorize(op->lhs_), factorize(op->rhs_));
+        factors.has_value()) {
+        Expr ret;
+        for (auto &&item : *factors) {
+            ret = ret.isValid() ? makeMul(ret, item) : item;
+        }
+        return ret.isValid() ? ret : makeIntConst(1);
+    }
     return op;
 }
 
@@ -185,6 +226,14 @@ Expr SimplifyPass::visit(const CeilDiv &_op) {
     if (equals(op->rhs_, -1)) {
         return makeMul(makeIntConst(-1), op->lhs_);
     }
+    if (auto factors = factorDiv(factorize(op->lhs_), factorize(op->rhs_));
+        factors.has_value()) {
+        Expr ret;
+        for (auto &&item : *factors) {
+            ret = ret.isValid() ? makeMul(ret, item) : item;
+        }
+        return ret.isValid() ? ret : makeIntConst(1);
+    }
     return op;
 }
 
@@ -200,6 +249,14 @@ Expr SimplifyPass::visit(const RoundTowards0Div &_op) {
     }
     if (equals(op->rhs_, -1)) {
         return makeMul(makeIntConst(-1), op->lhs_);
+    }
+    if (auto factors = factorDiv(factorize(op->lhs_), factorize(op->rhs_));
+        factors.has_value()) {
+        Expr ret;
+        for (auto &&item : *factors) {
+            ret = ret.isValid() ? makeMul(ret, item) : item;
+        }
+        return ret.isValid() ? ret : makeIntConst(1);
     }
     return op;
 }
@@ -251,6 +308,10 @@ Expr SimplifyPass::visit(const Mod &_op) {
         if (mutated) {
             return makeMod(newLhs, op->rhs_);
         }
+    }
+
+    if (factorDiv(factorize(op->lhs_), factorize(op->rhs_)).has_value()) {
+        return makeIntConst(0);
     }
 
     return op;
