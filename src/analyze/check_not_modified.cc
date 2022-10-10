@@ -92,10 +92,14 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
 
     // write -> serialized PBSet
     std::unordered_map<Stmt, std::string> writesWAR;
+    std::mutex m;
     auto foundWAR = [&](const Dependency &dep) {
         // Serialize WAR map because it is from a random PBCtx
-        writesWAR[dep.later_.stmt_] =
+        auto strWAR =
             toString(apply(domain(dep.later2EarlierIter_), dep.laterIter2Idx_));
+        // only lock for writing the map
+        std::lock_guard l(m);
+        writesWAR[dep.later_.stmt_] = strWAR;
     };
     FindDeps()
         .direction({dir})
@@ -103,7 +107,7 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         .filterEarlier([&](const AccessPoint &earlier) {
             return earlier.stmt_->id() == inserter.s0Eval();
         })
-        .noProjectOutProvateAxis(true)(tmpOp, foundWAR);
+        .noProjectOutProvateAxis(true)(tmpOp, unsyncFunc(foundWAR));
 
     auto foundRAW = [&](const Dependency &dep) {
         // re-construct WAR map from stored string in current PBCtx
@@ -122,7 +126,7 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
             .filterEarlier([&](const AccessPoint &earlier) {
                 return writesWAR.contains(earlier.stmt_);
             })
-            .noProjectOutProvateAxis(true)(tmpOp, foundRAW);
+            .noProjectOutProvateAxis(true)(tmpOp, unsyncFunc(foundRAW));
     } catch (const ModifiedException &) {
         return false;
     }

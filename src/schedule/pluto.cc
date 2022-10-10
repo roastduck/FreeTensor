@@ -373,6 +373,7 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     auto getDeps = [&](const For &l0, int n0, const For &l1, int n1,
                        bool handleFakeAccess = false) mutable {
         std::vector<PBSet> deps;
+        std::mutex m;
         FindDeps()
             .noProjectOutProvateAxis(true)
             .filterAccess([&](const AccessPoint &p) {
@@ -398,45 +399,51 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
             .filterLater([&](const AccessPoint &p) {
                 return p.stmt_->ancestorById(l1->id()).isValid();
             })
-            .direction(outersSame)(fakeAccessAst, [&](const Dependency &d) {
-                // later to earlier map, but projects out unrelated dims
-                auto hMap = d.later2EarlierIter_;
+            .direction(outersSame)(
+                fakeAccessAst, unsyncFunc([&](const Dependency &d) {
+                    // later to earlier map, but projects out unrelated dims
+                    auto hMap = d.later2EarlierIter_;
 
-                if (hMap.nParamDims() > 0)
-                    throw InvalidSchedule("PlutoFuse: load in loop ranges "
-                                          "currently not supported.");
+                    if (hMap.nParamDims() > 0)
+                        throw InvalidSchedule("PlutoFuse: load in loop ranges "
+                                              "currently not supported.");
 
-                // remove inner dims for outer
-                auto [pos0, outerDims0] = findIterFromAP(d.earlier_, l0->iter_);
-                pos0 += n0;
-                hMap.projectOutOutputDims(pos0, hMap.nOutDims() - pos0);
-                pos0 -= n0;
-                for (int i = outerDims0.size() - 1; i >= 0;
-                     pos0 = outerDims0[i--])
-                    hMap.projectOutOutputDims(outerDims0[i] + 1,
-                                              pos0 - outerDims0[i] - 1);
-                hMap.projectOutOutputDims(0, pos0);
+                    // remove inner dims for outer
+                    auto [pos0, outerDims0] =
+                        findIterFromAP(d.earlier_, l0->iter_);
+                    pos0 += n0;
+                    hMap.projectOutOutputDims(pos0, hMap.nOutDims() - pos0);
+                    pos0 -= n0;
+                    for (int i = outerDims0.size() - 1; i >= 0;
+                         pos0 = outerDims0[i--])
+                        hMap.projectOutOutputDims(outerDims0[i] + 1,
+                                                  pos0 - outerDims0[i] - 1);
+                    hMap.projectOutOutputDims(0, pos0);
 
-                // remove inner dims for later
-                auto [pos1, outerDims1] = findIterFromAP(d.later_, l1->iter_);
-                pos1 += n1;
-                hMap.projectOutInputDims(pos1, hMap.nInDims() - pos1);
-                pos1 -= n1;
-                for (int i = outerDims1.size() - 1; i >= 0;
-                     pos1 = outerDims1[i--])
-                    hMap.projectOutInputDims(outerDims1[i] + 1,
-                                             pos1 - outerDims1[i] - 1);
-                hMap.projectOutInputDims(0, pos1);
+                    // remove inner dims for later
+                    auto [pos1, outerDims1] =
+                        findIterFromAP(d.later_, l1->iter_);
+                    pos1 += n1;
+                    hMap.projectOutInputDims(pos1, hMap.nInDims() - pos1);
+                    pos1 -= n1;
+                    for (int i = outerDims1.size() - 1; i >= 0;
+                         pos1 = outerDims1[i--])
+                        hMap.projectOutInputDims(outerDims1[i] + 1,
+                                                 pos1 - outerDims1[i] - 1);
+                    hMap.projectOutInputDims(0, pos1);
 
-                // flatten to set for later coefficients computation;
-                // later dimensions first, so the first half would be target,
-                // and second half being source
-                auto hSet = flattenMapToSet(std::move(hMap));
+                    // flatten to set for later coefficients computation;
+                    // later dimensions first, so the first half would be
+                    // target, and second half being source
+                    auto hSet = flattenMapToSet(std::move(hMap));
 
-                if (deps.size() > 0)
-                    ASSERT(hSet.nDims() == deps[0].nDims());
-                deps.emplace_back(ctx, toString(std::move(hSet)));
-            });
+                    if (deps.size() > 0)
+                        ASSERT(hSet.nDims() == deps[0].nDims());
+                    auto strSet = toString(std::move(hSet));
+
+                    std::lock_guard l(m);
+                    deps.emplace_back(ctx, strSet);
+                }));
         return deps;
     };
 

@@ -682,19 +682,16 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
                 goto fail;
             }
         }
-        {
-            std::lock_guard<std::mutex> guard(lock_);
-            if (noProjectOutProvateAxis_) {
-                found_(Dependency{item, getVar(later->op_), *later, *earlier,
-                                  iterDim, res, laterMap, earlierMap,
-                                  presburger, *this});
-            } else {
-                // It will be misleading if we pass Presburger maps to users in
-                // this case
-                found_(Dependency{item, getVar(later->op_), *later, *earlier,
-                                  iterDim, PBMap(), PBMap(), PBMap(),
-                                  presburger, *this});
-            }
+        if (noProjectOutProvateAxis_) {
+            found_(Dependency{item, getVar(later->op_), *later, *earlier,
+                              iterDim, res, laterMap, earlierMap, presburger,
+                              *this});
+        } else {
+            // It will be misleading if we pass Presburger maps to users in
+            // this case
+            found_(Dependency{item, getVar(later->op_), *later, *earlier,
+                              iterDim, PBMap(), PBMap(), PBMap(), presburger,
+                              *this});
         }
     fail:;
     }
@@ -1035,7 +1032,9 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
 bool FindDeps::exists(const Stmt &op) {
     struct DepExistsExcept {};
     try {
-        (*this)(op, [](const Dependency &dep) { throw DepExistsExcept(); });
+        (*this)(op, unsyncFunc([](const Dependency &dep) {
+                    throw DepExistsExcept();
+                }));
     } catch (const DepExistsExcept &e) {
         return true;
     }
