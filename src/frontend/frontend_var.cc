@@ -26,7 +26,7 @@ Expr FrontendVar::shape(const Expr &idx) const {
         Expr dimLen = fullShape_.at(i);
         if (i < indices_.size() &&
             indices_[i].type() == FrontendVarIdxType::Slice) {
-            dimLen = makeSub(indices_[i].stop(), indices_[i].start());
+            dimLen = indices_[i].len();
         }
         if (idx->nodeType() == ASTNodeType::IntConst &&
             (size_t)idx.as<IntConstNode>()->val_ == k) {
@@ -52,7 +52,7 @@ std::vector<Expr> FrontendVar::shape() const {
         Expr dimLen = fullShape_.at(i);
         if (i < indices_.size() &&
             indices_[i].type() == FrontendVarIdxType::Slice) {
-            dimLen = makeSub(indices_[i].stop(), indices_[i].start());
+            dimLen = indices_[i].len();
         }
         ret.emplace_back(dimLen);
     }
