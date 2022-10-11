@@ -23,6 +23,7 @@ from freetensor_ffi import make_heap_alloc
 from freetensor_ffi import make_const_shape
 from freetensor_ffi import use_builtin_div
 from freetensor_ffi import hoist_var_over_stmt_seq
+from freetensor_ffi import flatten_stmt_seq
 from freetensor_ffi import cpu_lower_parallel_reduction
 
 if config.with_cuda():

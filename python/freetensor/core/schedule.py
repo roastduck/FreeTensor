@@ -758,7 +758,7 @@ class Schedule(ffi.Schedule):
         """
         super().as_matmul(self._lookup(loop))
 
-    def pluto_fuse(self, loop0, loop1):
+    def pluto_fuse(self, loop0, loop1, nest_level_0=0, nest_level_1=0):
         """
         Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable
         loops as possible at outermost levels.
@@ -772,6 +772,12 @@ class Schedule(ffi.Schedule):
             The first loop to fuse
         loop1 : str, ID or Stmt
             The second loop to fuse
+        nest_level_0 : int
+            The number of nesting levels of loop 0 to be considered, defaults to maximum
+            possible
+        nest_level_1 : int
+            The number of nesting levels of loop 1 to be considered, defaults to maximum
+            possible
 
         Returns
         -------
@@ -783,9 +789,10 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the loops are not consequent
         """
-        return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1))
+        return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1),
+                                  nest_level_0, nest_level_1)
 
-    def pluto_permute(self, loop):
+    def pluto_permute(self, loop, nest_level=0):
         """
         Use Pluto+ algorithm to permute a single loop, with as most parallelizable loops
         as possible at outermost levels.
@@ -794,6 +801,8 @@ class Schedule(ffi.Schedule):
         ----------
         loop : str, ID or Stmt
             The loop to permute
+        nest_level : int
+            The number of nesting levels to be considered, defaults to maximum possible
 
         Returns
         -------
@@ -801,7 +810,7 @@ class Schedule(ffi.Schedule):
             The ID of permuted loop and level of parallelizable loops
 
         """
-        return super().pluto_permute(self._lookup(loop))
+        return super().pluto_permute(self._lookup(loop), nest_level)
 
     def auto_schedule(self, target):
         """

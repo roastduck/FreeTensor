@@ -318,23 +318,39 @@ struct PlutoFuse : public Mutator {
 };
 
 std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
-                                                  const ID &loop1Id) {
+                                                  const ID &loop1Id,
+                                                  int _nestLevel0,
+                                                  int _nestLevel1) {
     // check accessed vardefs: those vardefs accessed by loop1 should not have
     // their shapes modified in loop0
     CheckFuseAccessible check(loop0Id, loop1Id);
     check.check(ast);
 
     // count maximum count of perfectly nested loops at loop0 and loop1
-    auto countPerfectNest = [](const For &loop) {
-        int n = 0;
+    auto countPerfectNest = [](const For &loop, int n) {
         Stmt inner;
-        for (inner = loop; inner->nodeType() == ASTNodeType::For;
-             inner = inner.as<ForNode>()->body_)
-            n++;
+        if (n == 0) {
+            for (inner = loop; inner->nodeType() == ASTNodeType::For;
+                 inner = inner.as<ForNode>()->body_)
+                n++;
+        } else {
+            int expectedN = n;
+            n = 0;
+            for (inner = loop;
+                 inner->nodeType() == ASTNodeType::For && n < expectedN;
+                 inner = inner.as<ForNode>()->body_)
+                n++;
+            if (n < expectedN)
+                throw InvalidSchedule(
+                    "PlutoFuse: not enough loop nests found for " +
+                    toString(loop));
+        }
         return std::pair{n, inner->parentStmt()->id()};
     };
-    auto [nestLevel0, inner0] = countPerfectNest(check.loop0().loop_);
-    auto [nestLevel1, inner1] = countPerfectNest(check.loop1().loop_);
+    auto [nestLevel0, inner0] =
+        countPerfectNest(check.loop0().loop_, _nestLevel0);
+    auto [nestLevel1, inner1] =
+        countPerfectNest(check.loop1().loop_, _nestLevel1);
 
     // inject fake accesses to extract loop space
     auto fakeAccessAst = ast;
@@ -896,24 +912,29 @@ class InjectEmptyLoop : public Mutator {
 
 } // namespace
 
-std::pair<Stmt, std::pair<ID, int>>
-plutoFuse(const Stmt &ast, const ID &loop0Id, const ID &loop1Id) {
+std::pair<Stmt, std::pair<ID, int>> plutoFuse(const Stmt &ast,
+                                              const ID &loop0Id,
+                                              const ID &loop1Id, int nestLevel0,
+                                              int nestLevel1) {
     // flatten first so we get perfectly nested loops as much as possible
     return plutoFuseImpl(flattenStmtSeq(hoistVarOverStmtSeq(ast)), loop0Id,
-                         loop1Id);
+                         loop1Id, nestLevel0, nestLevel1);
 }
 
-std::pair<Stmt, std::pair<ID, int>> plutoPermute(const Stmt &_ast,
-                                                 const ID &loop) {
+std::pair<Stmt, std::pair<ID, int>>
+plutoPermute(const Stmt &_ast, const ID &loop, int nestLevel) {
     InjectEmptyLoop injecter(loop);
     auto ast = injecter(flattenStmtSeq(hoistVarOverStmtSeq(_ast)));
-    return plutoFuseImpl(ast, injecter.emptyLoopId(), loop);
+    return plutoFuseImpl(ast, injecter.emptyLoopId(), loop, nestLevel,
+                         nestLevel);
 }
 
-std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1) {
+std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1,
+                                       int nestLevel0, int nestLevel1) {
     beginTransaction();
-    auto log = appendLog(
-        MAKE_SCHEDULE_LOG(PlutoFuse, freetensor::plutoFuse, loop0, loop1));
+    auto log =
+        appendLog(MAKE_SCHEDULE_LOG(PlutoFuse, freetensor::plutoFuse, loop0,
+                                    loop1, nestLevel0, nestLevel1));
     try {
         auto ret = applyLog(log);
         commitTransaction();
@@ -924,10 +945,10 @@ std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1) {
     }
 }
 
-std::pair<ID, int> Schedule::plutoPermute(const ID &loop) {
+std::pair<ID, int> Schedule::plutoPermute(const ID &loop, int nestLevel) {
     beginTransaction();
-    auto log = appendLog(
-        MAKE_SCHEDULE_LOG(PlutoPermute, freetensor::plutoPermute, loop));
+    auto log = appendLog(MAKE_SCHEDULE_LOG(
+        PlutoPermute, freetensor::plutoPermute, loop, nestLevel));
     try {
         auto ret = applyLog(log);
         commitTransaction();
