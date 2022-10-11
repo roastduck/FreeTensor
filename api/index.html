@@ -573,6 +573,10 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.flatten_">flatten_()</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.reshape">reshape()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.reshape_">reshape_()</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.unsqueeze">unsqueeze()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.unsqueeze_">unsqueeze_()</a>
@@ -22895,7 +22899,7 @@ dimension</p></li>
     <th class="field-name">Returns:</th>
     <td class="field-body">
         <ul class="first simple">
-          <li><p>The result tensor</p></li>
+          <li><p><code>VarRef</code> – The result tensor</p></li>
         </ul>
     </td>
     </tr>
@@ -22919,7 +22923,7 @@ dimension</p></li>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    VarRef :</span>
+<span class="sd">    VarRef</span>
 <span class="sd">        The result tensor</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">y</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">_flatten_comp_shape</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="p">),</span> <span class="n">core</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">core</span><span class="o">.</span><span class="n">mtype</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
@@ -22996,6 +23000,249 @@ dimension</p></li>
             <span class="n">flatten_</span><span class="p">(</span>
                 <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">//</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)):(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span>
                         <span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">//</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">))],</span> <span class="n">axis</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.libop.reshape.reshape" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.libop.reshape.reshape" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Reshape a tensor into a different shape with the same size</p>
+<p>This operator will try to generate nested loops instead of looping over all
+elements in a plain loop, so schedules can be better applied. It guarantees to
+generates loops in the following cases:</p>
+<ol>
+<li>Splitting a dimension. E.g. 4 to 2x2, and there will be a 2x2 loop nest.</li>
+<li>Merging dimensions. E.g. 2x2 to 4, and there will be a 2x2 loop nest.</li>
+<li>Each non-affecting dimension will be iterated by a unique loop. E.g. 3x5x7
+   to 5x3x7, and there will be a 15x7 loop nest, where the "7" dimension will
+   be iterated by a unique loop.</li>
+</ol>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>x</strong> (<code>VarRef</code>) – The input tensor</p></li>
+            <li><p><strong>shape</strong> (<code>list of expression</code>) – The target shape</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+        <ul class="first simple">
+          <li><p><code>VarRef</code> – The result tensor</p></li>
+        </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/libop/reshape.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@core</span><span class="o">.</span><span class="n">inline</span>
+<span class="k">def</span> <span class="nf">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Reshape a tensor into a different shape with the same size</span>
+
+<span class="sd">    This operator will try to generate nested loops instead of looping over all</span>
+<span class="sd">    elements in a plain loop, so schedules can be better applied. It guarantees to</span>
+<span class="sd">    generates loops in the following cases:</span>
+
+<span class="sd">    1. Splitting a dimension. E.g. 4 to 2x2, and there will be a 2x2 loop nest.</span>
+<span class="sd">    2. Merging dimensions. E.g. 2x2 to 4, and there will be a 2x2 loop nest.</span>
+<span class="sd">    3. Each non-affecting dimension will be iterated by a unique loop. E.g. 3x5x7</span>
+<span class="sd">       to 5x3x7, and there will be a 15x7 loop nest, where the &quot;7&quot; dimension will</span>
+<span class="sd">       be iterated by a unique loop.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : VarRef</span>
+<span class="sd">        The input tensor</span>
+<span class="sd">    shape : list of expression</span>
+<span class="sd">        The target shape</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    VarRef</span>
+<span class="sd">        The result tensor</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">core</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">core</span><span class="o">.</span><span class="n">mtype</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="n">reshape_</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.libop.reshape.reshape_" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">reshape_</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.libop.reshape.reshape_" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Fill a tensor into another tensor with the same size but maybe different shape</p>
+<p>This operator will try to generate nested loops instead of looping over all
+elements in a plain loop, so schedules can be better applied. It guarantees to
+generates loops in the following cases:</p>
+<ol>
+<li>Splitting a dimension. E.g. 4 to 2x2, and there will be a 2x2 loop nest.</li>
+<li>Merging dimensions. E.g. 2x2 to 4, and there will be a 2x2 loop nest.</li>
+<li>Each non-affecting dimension will be iterated by a unique loop. E.g. 3x5x7
+   to 5x3x7, and there will be a 15x7 loop nest, where the "7" dimension will
+   be iterated by a unique loop.</li>
+</ol>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>x</strong> (<code>VarRef</code>) – The input tensor</p></li>
+            <li><p><strong>y</strong> (<code>VarRef</code>) – The result tensor</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/libop/reshape.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@core</span><span class="o">.</span><span class="n">inline</span>
+<span class="k">def</span> <span class="nf">reshape_</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Fill a tensor into another tensor with the same size but maybe different shape</span>
+
+<span class="sd">    This operator will try to generate nested loops instead of looping over all</span>
+<span class="sd">    elements in a plain loop, so schedules can be better applied. It guarantees to</span>
+<span class="sd">    generates loops in the following cases:</span>
+
+<span class="sd">    1. Splitting a dimension. E.g. 4 to 2x2, and there will be a 2x2 loop nest.</span>
+<span class="sd">    2. Merging dimensions. E.g. 2x2 to 4, and there will be a 2x2 loop nest.</span>
+<span class="sd">    3. Each non-affecting dimension will be iterated by a unique loop. E.g. 3x5x7</span>
+<span class="sd">       to 5x3x7, and there will be a 15x7 loop nest, where the &quot;7&quot; dimension will</span>
+<span class="sd">       be iterated by a unique loop.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : VarRef</span>
+<span class="sd">        The input tensor</span>
+<span class="sd">    y : VarRef</span>
+<span class="sd">        The result tensor</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">y</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="n">reshape_</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="n">reshape_</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">factor_x0</span> <span class="o">=</span> <span class="n">_factorize</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="n">factor_y0</span> <span class="o">=</span> <span class="n">_factorize</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="n">x0_divisible_y0</span> <span class="o">=</span> <span class="n">_factor_pairs_divisible</span><span class="p">(</span><span class="n">factor_x0</span><span class="p">,</span> <span class="n">factor_y0</span><span class="p">)</span>
+        <span class="n">y0_divisible_x0</span> <span class="o">=</span> <span class="n">_factor_pairs_divisible</span><span class="p">(</span><span class="n">factor_y0</span><span class="p">,</span> <span class="n">factor_x0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x0_divisible_y0</span> <span class="ow">and</span> <span class="n">y0_divisible_x0</span><span class="p">:</span>
+            <span class="c1"># Identical dimension</span>
+            <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+                <span class="n">reshape_</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">x0_divisible_y0</span><span class="p">:</span>
+            <span class="c1"># Splitting a dimension. Iterating y</span>
+            <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">%</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="n">x_chunk_len</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">//</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+                <span class="c1"># Construct the slice with `length` here to make the next dimension simple</span>
+                <span class="n">reshape_</span><span class="p">(</span>
+                    <span class="n">x</span><span class="p">[</span><span class="n">core</span><span class="o">.</span><span class="n">ffi</span><span class="o">.</span><span class="n">FrontendVarIdx</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">x_chunk_len</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+                                              <span class="n">x_chunk_len</span><span class="p">)],</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">y0_divisible_x0</span><span class="p">:</span>
+            <span class="c1"># Merging dimensions. Iterating x</span>
+            <span class="k">assert</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">%</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="n">y_chunk_len</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">//</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+                <span class="c1"># Construct the slice with `length` here to make the next dimension simple</span>
+                <span class="n">reshape_</span><span class="p">(</span>
+                    <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">core</span><span class="o">.</span><span class="n">ffi</span><span class="o">.</span><span class="n">FrontendVarIdx</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">y_chunk_len</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+                                                    <span class="n">y_chunk_len</span><span class="p">)])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Find next non-affecting dimension, and use one loop to reshape all</span>
+            <span class="c1"># affecting dimensions before it</span>
+            <span class="n">factor_x</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">factor_y</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">while</span> <span class="n">l</span> <span class="o">&lt;</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="n">factor_x</span> <span class="o">=</span> <span class="n">_factor_pairs_mul</span><span class="p">(</span><span class="n">factor_x</span><span class="p">,</span> <span class="n">_factorize</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">l</span><span class="p">)))</span>
+                <span class="n">l</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">while</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+                    <span class="n">factor_y_new</span> <span class="o">=</span> <span class="n">_factor_pairs_mul</span><span class="p">(</span><span class="n">factor_y</span><span class="p">,</span>
+                                                     <span class="n">_factorize</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">r</span><span class="p">)))</span>
+                    <span class="k">if</span> <span class="n">_factor_pairs_divisible</span><span class="p">(</span><span class="n">factor_x</span><span class="p">,</span> <span class="n">factor_y_new</span><span class="p">):</span>
+                        <span class="n">factor_y</span> <span class="o">=</span> <span class="n">factor_y_new</span>
+                        <span class="n">r</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">break</span>
+                <span class="k">if</span> <span class="n">_factor_pairs_divisible</span><span class="p">(</span><span class="n">factor_y</span><span class="p">,</span> <span class="n">factor_x</span><span class="p">):</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_factor_pairs_divisible</span><span class="p">(</span><span class="n">factor_y</span><span class="p">,</span> <span class="n">factor_x</span><span class="p">):</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+            <span class="n">x_lengths</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">l</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">y_lengths</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">core</span><span class="o">.</span><span class="n">static_range</span><span class="p">(</span><span class="n">l</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">x_lengths</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">*</span> <span class="n">x_lengths</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">core</span><span class="o">.</span><span class="n">static_range</span><span class="p">(</span><span class="n">r</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">y_lengths</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">*</span> <span class="n">y_lengths</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">assert</span> <span class="n">x_lengths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">y_lengths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x_lengths</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="n">x_next</span><span class="p">,</span> <span class="n">y_next</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">core</span><span class="o">.</span><span class="n">static_range</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
+                    <span class="n">x_next</span> <span class="o">=</span> <span class="n">x_next</span><span class="p">[</span><span class="n">i</span> <span class="o">//</span> <span class="n">x_lengths</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">core</span><span class="o">.</span><span class="n">static_range</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+                    <span class="n">y_next</span> <span class="o">=</span> <span class="n">y_next</span><span class="p">[</span><span class="n">i</span> <span class="o">//</span> <span class="n">y_lengths</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span>
+                <span class="n">reshape_</span><span class="p">(</span><span class="n">x_next</span><span class="p">,</span> <span class="n">y_next</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
