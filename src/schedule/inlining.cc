@@ -68,9 +68,13 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
     ast = hoistVarOverStmtSeq(ast);
 
     std::unordered_map<Load, Expr> replace;
+    std::mutex m;
     auto found = [&](const Dependency &dep) {
-        if (replace.count(dep.later().as<LoadNode>())) {
-            throw InvalidSchedule("Multiple writes correspond to one read");
+        {
+            std::lock_guard l(m);
+            if (replace.count(dep.later().as<LoadNode>())) {
+                throw InvalidSchedule("Multiple writes correspond to one read");
+            }
         }
         Expr expr, newExpr;
         if (dep.earlier()->nodeType() == ASTNodeType::Store) {
@@ -154,7 +158,10 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                 toString(dep.earlier_.stmt_) + " into " +
                 toString(dep.later_.stmt_));
         }
-        replace[later] = std::move(newExpr);
+        {
+            std::lock_guard l(m);
+            replace[later] = std::move(newExpr);
+        }
     };
     FindDeps()
         .mode(FindDepsMode::KillLater)
@@ -164,7 +171,7 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
         .filterLater([&](const AccessPoint &later) {
             return later.op_->nodeType() == ASTNodeType::Load;
         })
-        .noProjectOutProvateAxis(true)(ast, found);
+        .noProjectOutProvateAxis(true)(ast, unsyncFunc(found));
     ast = MakeInline(def, replace)(ast);
 
     ast = sinkVar(ast);
