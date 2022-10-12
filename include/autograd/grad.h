@@ -206,11 +206,17 @@ class Grad : public SymbolTable<Mutator> {
 /**
  * Reverse mode automatic differentiation
  *
- * @param op : Original AST
+ * @param op : (For `gradBody`) Original AST
+ * @param op : (For `gradFuncInplace` and `gradFuncOutOfPlace`) Original
+ * function
  * @param requires : Name of input variables that need gradients
  * @param provides : Name of output variables whose gradients are known
  * @param tapes : VarDef IDs of intermediate variables that need to be stored in
  * the forward pass
+ * @param tapeInClosure : (For `gradFuncInplace` and `gradFuncOutOfPlace`) True
+ * to pass taped tensors from the forward function to the backward function in
+ * implicit I/O parameters, i.e. in closure. False to pass these tensors as
+ * explicit I/O parameters. Default to true
  * @return : (
  *  Forward AST
  *  Backward AST,
@@ -234,14 +240,15 @@ std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
-                const std::unordered_set<ID> &tapes);
+                const std::unordered_set<ID> &tapes, bool tapeInClosure = true);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
 gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
-                   const std::unordered_set<ID> &tapes);
+                   const std::unordered_set<ID> &tapes,
+                   bool tapeInClosure = true);
 /** @} */
 
 enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
@@ -249,13 +256,19 @@ enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
 /**
  * Reverse mode automatic differentiation
  *
- * @param op : Original AST
+ * @param op : (For `gradBody`) Original AST
+ * @param op : (For `gradFuncInplace` and `gradFuncOutOfPlace`) Original
+ * function
  * @param requires : Name of input variables that need gradients
  * @param provides : Name of output variables whose gradients are known
  * @param tapeMode : Mode of which intermediate variables should be stored. All:
  * store all variables including local scalars; None: store nothing;
  * NoReuseOnly: store variables that only hold one version of data, which means
  * we do not have to store each version of them in their history
+ * @param tapeInClosure : (For `gradFuncInplace` and `gradFuncOutOfPlace`) True
+ * to pass taped tensors from the forward function to the backward function in
+ * implicit I/O parameters, i.e. in closure. False to pass these tensors as
+ * explicit I/O parameters. Default to true
  * @return : (
  *  Forward AST
  *  Backward AST,
@@ -279,14 +292,16 @@ std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
-                GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
+                GradTapeMode tapeMode = GradTapeMode::NoReuseOnly,
+                bool tapeInClosure = true);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
 gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
-                   GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
+                   GradTapeMode tapeMode = GradTapeMode::NoReuseOnly,
+                   bool tapeInClosure = true);
 /** @} */
 
 } // namespace freetensor

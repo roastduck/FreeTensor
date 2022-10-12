@@ -23,6 +23,6 @@ from .staging import (StagingError, StagedAssignable, StagedIterable,
 
 from .meta import *
 from .auto_schedule import *
-from .optimize import optimize
+from .optimize import optimize, optimize_to_pytorch
 
 from .task_scheduler import TaskScheduler

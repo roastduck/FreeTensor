@@ -618,7 +618,7 @@ static std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
                   std::unordered_map<std::string, std::string>>
 gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
              const std::unordered_set<std::string> &provides,
-             const std::unordered_set<ID> &tapes) {
+             const std::unordered_set<ID> &tapes, bool tapeInClosure) {
     auto [forward, backward, requireGrads, provideGrads, tapeMap] =
         gradBody(func->body_, _requires, provides, tapes);
 
@@ -631,10 +631,15 @@ gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
         });
         if (node.template as<VarDefNode>()->buffer_->atype() ==
             AccessType::Input) {
-            auto closureArr = Ref<Ref<Array>>::make();
-            // Redirect input arguments from forward to backward
-            forwardParams.emplace_back(param.name_, closureArr, true);
-            backwardParams.emplace_back(param.name_, closureArr, false);
+            if (tapeInClosure) {
+                auto closureArr = Ref<Ref<Array>>::make();
+                // Redirect input arguments from forward to backward
+                forwardParams.emplace_back(param.name_, closureArr, true);
+                backwardParams.emplace_back(param.name_, closureArr, false);
+            } else {
+                forwardParams.emplace_back(param.name_, nullptr, false);
+                backwardParams.emplace_back(param.name_, nullptr, false);
+            }
         } else {
             // Backward does not need a froward's output argument. If needed, it
             // will be found in the tape
@@ -649,19 +654,31 @@ gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
         auto def = findStmt(func->body_, oriDef);
         auto tapeDType =
             def.template as<VarDefNode>()->buffer_->tensor()->dtype();
-        auto tapeArr = Ref<Ref<Array>>::make(nullptr);
-        if (auto iter = std::find_if(
-                forwardReturns.begin(), forwardReturns.end(),
-                [&](const FuncRet &r) { return r.name_ == tapeName; });
-            iter == forwardReturns.end()) {
-            forwardReturns.emplace_back(tapeName, tapeDType, tapeArr, false);
+        if (tapeInClosure) {
+            auto tapeArr = Ref<Ref<Array>>::make(nullptr);
+            if (auto iter = std::find_if(
+                    forwardReturns.begin(), forwardReturns.end(),
+                    [&](const FuncRet &r) { return r.name_ == tapeName; });
+                iter == forwardReturns.end()) {
+                forwardReturns.emplace_back(tapeName, tapeDType, tapeArr,
+                                            false);
+            } else {
+                // The tape is already a return value
+                ASSERT(!iter->isInClosure());
+                iter->closure_ = tapeArr;
+                iter->returnClosure_ = true;
+            }
+            backwardParams.emplace_back(tapeName, tapeArr, false);
         } else {
-            // The tape is already a return value
-            ASSERT(!iter->isInClosure());
-            iter->closure_ = tapeArr;
-            iter->returnClosure_ = true;
+            if (std::find_if(forwardReturns.begin(), forwardReturns.end(),
+                             [&](const FuncRet &r) {
+                                 return r.name_ == tapeName;
+                             }) == forwardReturns.end()) {
+                forwardReturns.emplace_back(tapeName, tapeDType, nullptr,
+                                            false);
+            }
+            backwardParams.emplace_back(tapeName, nullptr, false);
         }
-        backwardParams.emplace_back(tapeName, tapeArr, false);
     }
     auto forwardFunc = makeFunc(func->name_, std::move(forwardParams),
                                 std::move(forwardReturns), forward);
@@ -698,8 +715,8 @@ std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
-                const std::unordered_set<ID> &tapes) {
-    return gradFuncImpl<true>(func, _requires, provides, tapes);
+                const std::unordered_set<ID> &tapes, bool tapeInClosure) {
+    return gradFuncImpl<true>(func, _requires, provides, tapes, tapeInClosure);
 }
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -707,8 +724,8 @@ std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
-                   const std::unordered_set<ID> &tapes) {
-    return gradFuncImpl<false>(func, _requires, provides, tapes);
+                   const std::unordered_set<ID> &tapes, bool tapeInClosure) {
+    return gradFuncImpl<false>(func, _requires, provides, tapes, tapeInClosure);
 }
 
 static std::vector<ID> _findTapeDefs(const Stmt &op, GradTapeMode mode) {
@@ -751,9 +768,9 @@ std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
-                GradTapeMode tapeMode) {
+                GradTapeMode tapeMode, bool tapeInClosure) {
     return gradFuncInplace(func, _requires, provides,
-                           findTapeDefs(func->body_, tapeMode));
+                           findTapeDefs(func->body_, tapeMode), tapeInClosure);
 }
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -761,9 +778,10 @@ std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
-                   GradTapeMode tapeMode) {
+                   GradTapeMode tapeMode, bool tapeInClosure) {
     return gradFuncOutOfPlace(func, _requires, provides,
-                              findTapeDefs(func->body_, tapeMode));
+                              findTapeDefs(func->body_, tapeMode),
+                              tapeInClosure);
 }
 
 } // namespace freetensor

@@ -163,6 +163,13 @@ class ReturnValuesPack:
                 return v
         raise ffi.DriverError("No such return value named " + key)
 
+    def __contains__(self, key):
+        ''' Test if a return value exists '''
+        for k, v in zip(self.keys, self.values):
+            if k == key:
+                return True
+        return False
+
 
 class Driver(ffi.Driver):
 
@@ -212,19 +219,20 @@ class Driver(ffi.Driver):
             kws[key] = array(kws[key])
         super(Driver, self).set_args(args, kws)
 
-    def collect_returns(self):
+    def collect_returns(self, always_return_pack: bool = False):
         '''
         Collect return values from an invocation
 
         Return values must be collect. Otherwise there will be memory leaks
 
         If there is only one return value, it is returned directly. Otherwise,
-        the return values are packed in a ReturnValuesPack
+        or if `always_return_pack` is set, the return values are packed in a
+        ReturnValuesPack
         '''
         values = super(Driver, self).collect_returns()
-        if len(values) == 0:
+        if len(values) == 0 and not always_return_pack:
             return None
-        elif len(values) == 1:
+        elif len(values) == 1 and not always_return_pack:
             return values[0]
         else:
             return ReturnValuesPack(

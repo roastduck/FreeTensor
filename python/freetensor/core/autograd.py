@@ -32,6 +32,9 @@ class Return:
             ) == 1, f"{func.name} has more than one return value, and you need to specify the number of a return value"
             return func.returns[0].name
 
+    def __str__(self):
+        return f"Return({self.n})"
+
 
 class ArgRetDict:
     ''' Look an object using either a function argument or return value's name or its position '''
@@ -44,6 +47,16 @@ class ArgRetDict:
         if type(key) is Return:
             key = key.get_name(self.func)
         return self.d[key]
+
+    def __contains__(self, key):
+        # Python's auto fallback from __getitem__ to __contains__ only works for
+        # integer index
+        if type(key) is Return:
+            key = key.get_name(self.func)
+        return key in self.d
+
+    def __str__(self):
+        return str(self.d)
 
 
 def grad_body(stmt: ffi.Stmt,
@@ -64,6 +77,7 @@ def _grad_func(impl,
                requires: Sequence[Union[str, Return]],
                provides: Sequence[Union[str, Return]],
                tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+               tape_in_closure: bool = True,
                verbose: Optional[int] = None):
 
     if not issubclass(type(func), ffi.AST):
@@ -77,7 +91,7 @@ def _grad_func(impl,
             prov.add(p)
     if type(tapes) is not GradTapeMode:
         tapes = {find_stmt(func, t).id for t in tapes}
-    fwd, bwd, req_map, prov_map = impl(func, req, prov, tapes)
+    fwd, bwd, req_map, prov_map = impl(func, req, prov, tapes, tape_in_closure)
     if verbose is not None and verbose >= 1:
         print("Forward pass from AD:", file=sys.stderr)
         print(fwd, file=sys.stderr)
@@ -87,9 +101,10 @@ def _grad_func(impl,
 
 
 def grad_(func: ffi.Func,
-          requires: Sequence[Union[str, Return]],
+          requires: Sequence[str],
           provides: Sequence[Union[str, Return]],
           tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+          tape_in_closure: bool = True,
           verbose: Optional[int] = None):
     '''
     Reverse mode automatic differentiation
@@ -119,6 +134,10 @@ def grad_(func: ffi.Func,
         are: All: store all variables including local scalars; None: store nothing;
         NoReuseOnly: store variables that only hold one version of data, which means
         we do not have to store each version of them in their history
+    tape_in_closure : bool
+        True to pass taped tensors from the forward function to the backward function in
+        implicit I/O parameters, i.e. in closure. False to pass these tensors as
+        explicit I/O parameters. Default to True
 
     Returns
     -------
@@ -136,13 +155,15 @@ def grad_(func: ffi.Func,
                       requires,
                       provides,
                       tapes,
+                      tape_in_closure,
                       verbose=verbose)
 
 
 def grad(func: ffi.Func,
-         requires: Sequence[Union[str, Return]],
+         requires: Sequence[str],
          provides: Sequence[Union[str, Return]],
          tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+         tape_in_closure: bool = True,
          verbose: Optional[int] = None):
     '''
     Reverse mode automatic differentiation
@@ -172,6 +193,10 @@ def grad(func: ffi.Func,
         are: All: store all variables including local scalars; None: store nothing;
         NoReuseOnly: store variables that only hold one version of data, which means
         we do not have to store each version of them in their history
+    tape_in_closure : bool
+        True to pass taped tensors from the forward function to the backward function in
+        implicit I/O parameters, i.e. in closure. False to pass these tensors as
+        explicit I/O parameters. Default to True
 
     Returns
     -------
@@ -189,6 +214,7 @@ def grad(func: ffi.Func,
                       requires,
                       provides,
                       tapes,
+                      tape_in_closure,
                       verbose=verbose)
 
 
