@@ -271,6 +271,8 @@
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.optimize.optimize">optimize()</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.optimize.optimize_to_pytorch">optimize_to_pytorch()</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.passes">passes</a>
@@ -1051,12 +1053,24 @@ ArgRetDict        </code>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Return</span><span class="p">:</span>
             <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="c1"># Python&#39;s auto fallback from __getitem__ to __contains__ only works for</span>
+        <span class="c1"># integer index</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Return</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">)</span>
 </code></pre></div>
         </details>
 
 
 
   <div class="doc doc-children">
+
+
 
 
 
@@ -1119,12 +1133,16 @@ Return        </code>
                 <span class="n">func</span><span class="o">.</span><span class="n">returns</span>
             <span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has more than one return value, and you need to specify the number of a return value&quot;</span>
             <span class="k">return</span> <span class="n">func</span><span class="o">.</span><span class="n">returns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Return(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="si">}</span><span class="s2">)&quot;</span>
 </code></pre></div>
         </details>
 
 
 
   <div class="doc doc-children">
+
 
 
 
@@ -1152,7 +1170,7 @@ Return        </code>
 
 
 <h4 id="freetensor.core.autograd.grad" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.autograd.grad" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -1178,7 +1196,7 @@ backward function.</p>
       <td class="field-body">
         <ul class="first simple">
             <li><p><strong>func</strong> (<code>Func</code>) – The original function</p></li>
-            <li><p><strong>requires</strong> (<code>Sequence[Union[str, freetensor.core.autograd.Return]]</code>) – Name of input variables that need gradients</p></li>
+            <li><p><strong>requires</strong> (<code>Sequence[str]</code>) – Name of input variables that need gradients</p></li>
             <li><p><strong>provides</strong> (<code>Sequence[Union[str, freetensor.core.autograd.Return]]</code>) – Name of output variables whose gradients are known. A return value of a
 function can be specified with a <code>Return</code> object</p></li>
             <li><p><strong>tapes</strong> (<code>Union[Sequence, freetensor_ffi.GradTapeMode]</code>) – Intermediate variables that need to be stored from the forward pass and
@@ -1188,6 +1206,9 @@ which intermediate variables to be stored by heuristics. Avail <code>GradTapeMod
 are: All: store all variables including local scalars; None: store nothing;
 NoReuseOnly: store variables that only hold one version of data, which means
 we do not have to store each version of them in their history</p></li>
+            <li><p><strong>tape_in_closure</strong> (<code>bool</code>) – True to pass taped tensors from the forward function to the backward function in
+implicit I/O parameters, i.e. in closure. False to pass these tensors as
+explicit I/O parameters. Default to True</p></li>
         </ul>
       </td>
     </tr>
@@ -1217,9 +1238,10 @@ we do not have to store each version of them in their history</p></li>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/autograd.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">grad</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Func</span><span class="p">,</span>
-         <span class="n">requires</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
+         <span class="n">requires</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
          <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
          <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
+         <span class="n">tape_in_closure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
          <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Reverse mode automatic differentiation</span>
@@ -1249,6 +1271,10 @@ we do not have to store each version of them in their history</p></li>
 <span class="sd">        are: All: store all variables including local scalars; None: store nothing;</span>
 <span class="sd">        NoReuseOnly: store variables that only hold one version of data, which means</span>
 <span class="sd">        we do not have to store each version of them in their history</span>
+<span class="sd">    tape_in_closure : bool</span>
+<span class="sd">        True to pass taped tensors from the forward function to the backward function in</span>
+<span class="sd">        implicit I/O parameters, i.e. in closure. False to pass these tensors as</span>
+<span class="sd">        explicit I/O parameters. Default to True</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1266,6 +1292,7 @@ we do not have to store each version of them in their history</p></li>
                       <span class="n">requires</span><span class="p">,</span>
                       <span class="n">provides</span><span class="p">,</span>
                       <span class="n">tapes</span><span class="p">,</span>
+                      <span class="n">tape_in_closure</span><span class="p">,</span>
                       <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
 </code></pre></div>
         </details>
@@ -1280,7 +1307,7 @@ we do not have to store each version of them in their history</p></li>
 
 
 <h4 id="freetensor.core.autograd.grad_" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.autograd.grad_" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -1306,7 +1333,7 @@ the backward function.</p>
       <td class="field-body">
         <ul class="first simple">
             <li><p><strong>func</strong> (<code>Func</code>) – The original function</p></li>
-            <li><p><strong>requires</strong> (<code>Sequence[Union[str, freetensor.core.autograd.Return]]</code>) – Name of input variables that need gradients</p></li>
+            <li><p><strong>requires</strong> (<code>Sequence[str]</code>) – Name of input variables that need gradients</p></li>
             <li><p><strong>provides</strong> (<code>Sequence[Union[str, freetensor.core.autograd.Return]]</code>) – Name of output variables whose gradients are known. A return value of a
 function can be specified with a <code>Return</code> object</p></li>
             <li><p><strong>tapes</strong> (<code>Union[Sequence, freetensor_ffi.GradTapeMode]</code>) – Intermediate variables that need to be stored from the forward pass and
@@ -1316,6 +1343,9 @@ which intermediate variables to be stored by heuristics. Avail <code>GradTapeMod
 are: All: store all variables including local scalars; None: store nothing;
 NoReuseOnly: store variables that only hold one version of data, which means
 we do not have to store each version of them in their history</p></li>
+            <li><p><strong>tape_in_closure</strong> (<code>bool</code>) – True to pass taped tensors from the forward function to the backward function in
+implicit I/O parameters, i.e. in closure. False to pass these tensors as
+explicit I/O parameters. Default to True</p></li>
         </ul>
       </td>
     </tr>
@@ -1345,9 +1375,10 @@ we do not have to store each version of them in their history</p></li>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/autograd.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Func</span><span class="p">,</span>
-          <span class="n">requires</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
+          <span class="n">requires</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
           <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
           <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
+          <span class="n">tape_in_closure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
           <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Reverse mode automatic differentiation</span>
@@ -1377,6 +1408,10 @@ we do not have to store each version of them in their history</p></li>
 <span class="sd">        are: All: store all variables including local scalars; None: store nothing;</span>
 <span class="sd">        NoReuseOnly: store variables that only hold one version of data, which means</span>
 <span class="sd">        we do not have to store each version of them in their history</span>
+<span class="sd">    tape_in_closure : bool</span>
+<span class="sd">        True to pass taped tensors from the forward function to the backward function in</span>
+<span class="sd">        implicit I/O parameters, i.e. in closure. False to pass these tensors as</span>
+<span class="sd">        explicit I/O parameters. Default to True</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1394,6 +1429,7 @@ we do not have to store each version of them in their history</p></li>
                       <span class="n">requires</span><span class="p">,</span>
                       <span class="n">provides</span><span class="p">,</span>
                       <span class="n">tapes</span><span class="p">,</span>
+                      <span class="n">tape_in_closure</span><span class="p">,</span>
                       <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
 </code></pre></div>
         </details>
@@ -2382,19 +2418,20 @@ Driver            (<span title="freetensor_ffi.Driver">Driver</span>)
             <span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kws</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">collect_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">collect_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">always_return_pack</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Collect return values from an invocation</span>
 
 <span class="sd">        Return values must be collect. Otherwise there will be memory leaks</span>
 
 <span class="sd">        If there is only one return value, it is returned directly. Otherwise,</span>
-<span class="sd">        the return values are packed in a ReturnValuesPack</span>
+<span class="sd">        or if `always_return_pack` is set, the return values are packed in a</span>
+<span class="sd">        ReturnValuesPack</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">values</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">always_return_pack</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">always_return_pack</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ReturnValuesPack</span><span class="p">(</span>
@@ -2568,7 +2605,7 @@ in config</p></li>
 
 
 <h5 id="freetensor.core.driver.Driver.collect_returns" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">collect_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">collect_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">always_return_pack</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.driver.Driver.collect_returns" class="headerlink" title="Permanent link">&para;</a></h5>
@@ -2578,23 +2615,25 @@ in config</p></li>
       <p>Collect return values from an invocation</p>
 <p>Return values must be collect. Otherwise there will be memory leaks</p>
 <p>If there is only one return value, it is returned directly. Otherwise,
-the return values are packed in a ReturnValuesPack</p>
+or if <code>always_return_pack</code> is set, the return values are packed in a
+ReturnValuesPack</p>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/driver.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">collect_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">collect_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">always_return_pack</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Collect return values from an invocation</span>
 
 <span class="sd">    Return values must be collect. Otherwise there will be memory leaks</span>
 
 <span class="sd">    If there is only one return value, it is returned directly. Otherwise,</span>
-<span class="sd">    the return values are packed in a ReturnValuesPack</span>
+<span class="sd">    or if `always_return_pack` is set, the return values are packed in a</span>
+<span class="sd">    ReturnValuesPack</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">values</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">()</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">always_return_pack</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
-    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">always_return_pack</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">ReturnValuesPack</span><span class="p">(</span>
@@ -2709,6 +2748,13 @@ OrderedDict unpacks to keys rather than values</p>
             <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="n">key</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">v</span>
         <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DriverError</span><span class="p">(</span><span class="s2">&quot;No such return value named &quot;</span> <span class="o">+</span> <span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Test if a return value exists &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="n">key</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
 </code></pre></div>
         </details>
 
@@ -2721,6 +2767,39 @@ OrderedDict unpacks to keys rather than values</p>
 
 
 
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.driver.ReturnValuesPack.__contains__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+<a href="#freetensor.core.driver.ReturnValuesPack.__contains__" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Test if a return value exists</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/driver.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Test if a return value exists &#39;&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="n">key</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
@@ -8929,16 +9008,292 @@ Defaults to True</p></li>
         <span class="k">return</span> <span class="n">exe</span>
 
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="n">optimize</span>
-        <span class="k">if</span> <span class="n">schedule_callback</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">schedule_callback</span><span class="o">=</span><span class="n">schedule_callback</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">f</span>
+        <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">optimize</span><span class="p">,</span>
+                                 <span class="n">schedule_callback</span><span class="o">=</span><span class="n">schedule_callback</span><span class="p">,</span>
+                                 <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+                                 <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+                                 <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
+                                 <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.optimize.optimize_to_pytorch" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">optimize_to_pytorch</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">forward_schedule_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">backward_schedule_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.optimize.optimize_to_pytorch" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Compile a FreeTensor function to a PyTorch call, whose gradient can be</p>
+<p>recognized by PyTorch</p>
+<p>The compiled function will be a typical PyTorch's "function" (rather than
+a PyTorch's "module"). Technically, this means it is a wrapper function
+around a PyTorch's <code>Function</code>'s <code>apply</code> method</p>
+<p>Schedules (if any) must be applied to the forward function and the backward
+function separated. For this reason, currently only first-order gradient
+is supported</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>func</strong> (<code>Python function or AST</code>) – The user function to optimize. If not specified, a partial function will
+be returend, which can be used as a decorator</p></li>
+            <li><p><strong>tapes</strong> (<code>Union[Sequence, freetensor_ffi.GradTapeMode]</code>) – Intermediate variables that need to be stored from the forward pass and
+reused in the backward pass. This parameter can be a sequence, which contains
+VarDef selectors of them. It can also be a <code>GradTapeMode</code>, then it will determine
+which intermediate variables to be stored by heuristics. Avail <code>GradTapeMode</code>s
+are: All: store all variables including local scalars; None: store nothing;
+NoReuseOnly: store variables that only hold one version of data, which means
+we do not have to store each version of them in their history</p></li>
+            <li><p><strong>forward_schedule_callback</strong> (<code>Optional[Callable[[freetensor.core.schedule.Schedule], NoneType]]</code>) – Schedule(s) to apply to the forward function</p></li>
+            <li><p><strong>backward_schedule_callback</strong> (<code>Optional[Callable[[freetensor.core.schedule.Schedule], NoneType]]</code>) – Schedule(s) to apply to the backward function</p></li>
+            <li><p><strong>target</strong> (<code>Optional[freetensor_ffi.Target]</code>) – The target architecture. You don't have to set target if you set device</p></li>
+            <li><p><strong>device</strong> (<code>Optional[freetensor.core.driver.Device]</code>) – Where to run the program</p></li>
+            <li><p><strong>default_dynamic_range</strong> (<code>bool</code>) – If True, the built-in range is replaced with freetensor.dynamic_range.
+Defaults to True</p></li>
+            <li><p><strong>verbose</strong> (<code>Optional[int]</code>) – Verbosity level. Can be 0, 1 or 2</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/optimize.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">optimize_to_pytorch</span><span class="p">(</span>
+        <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
+        <span class="n">forward_schedule_callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Schedule</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">backward_schedule_callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Schedule</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Target</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">default_dynamic_range</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Compile a FreeTensor function to a PyTorch call, whose gradient can be</span>
+<span class="sd">    recognized by PyTorch</span>
+
+<span class="sd">    The compiled function will be a typical PyTorch&#39;s &quot;function&quot; (rather than</span>
+<span class="sd">    a PyTorch&#39;s &quot;module&quot;). Technically, this means it is a wrapper function</span>
+<span class="sd">    around a PyTorch&#39;s `Function`&#39;s `apply` method</span>
+
+<span class="sd">    Schedules (if any) must be applied to the forward function and the backward</span>
+<span class="sd">    function separated. For this reason, currently only first-order gradient</span>
+<span class="sd">    is supported</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    func : Python function or AST</span>
+<span class="sd">        The user function to optimize. If not specified, a partial function will</span>
+<span class="sd">        be returend, which can be used as a decorator</span>
+<span class="sd">    tapes : Union[Sequence, GradTapeMode]</span>
+<span class="sd">        Intermediate variables that need to be stored from the forward pass and</span>
+<span class="sd">        reused in the backward pass. This parameter can be a sequence, which contains</span>
+<span class="sd">        VarDef selectors of them. It can also be a `GradTapeMode`, then it will determine</span>
+<span class="sd">        which intermediate variables to be stored by heuristics. Avail `GradTapeMode`s</span>
+<span class="sd">        are: All: store all variables including local scalars; None: store nothing;</span>
+<span class="sd">        NoReuseOnly: store variables that only hold one version of data, which means</span>
+<span class="sd">        we do not have to store each version of them in their history</span>
+<span class="sd">    forward_schedule_callback : Callable (Optional)</span>
+<span class="sd">        Schedule(s) to apply to the forward function</span>
+<span class="sd">    backward_schedule_callback : Callable (Optional)</span>
+<span class="sd">        Schedule(s) to apply to the backward function</span>
+<span class="sd">    target : Target (Optional)</span>
+<span class="sd">        The target architecture. You don&#39;t have to set target if you set device</span>
+<span class="sd">    device : Device (Optional)</span>
+<span class="sd">        Where to run the program</span>
+<span class="sd">    default_dynamic_range : bool</span>
+<span class="sd">        If True, the built-in range is replaced with freetensor.dynamic_range.</span>
+<span class="sd">        Defaults to True</span>
+<span class="sd">    verbose : int (Optional)</span>
+<span class="sd">        Verbosity level. Can be 0, 1 or 2</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">torch</span>
+
+        <span class="c1"># Transform from Python source to AST</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">func</span><span class="p">),</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AST</span><span class="p">):</span>
+            <span class="n">ast</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
+                            <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
+                            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ast</span> <span class="o">=</span> <span class="n">func</span>
+
+        <span class="c1"># Compile lazily because we know `requires` and `provides` only when</span>
+        <span class="c1"># executing. Re-compile when gradient requirements changes</span>
+        <span class="n">saved_requires</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">saved_provides</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">cur_requires</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">cur_provides</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">fwd_exe</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">bwd_exe</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">input_grad_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">output_grad_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">tape_rets</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">def</span> <span class="nf">lazy_compile</span><span class="p">():</span>
+            <span class="k">nonlocal</span> <span class="n">saved_requires</span><span class="p">,</span> <span class="n">saved_provides</span><span class="p">,</span> <span class="n">cur_requires</span><span class="p">,</span> <span class="n">cur_provides</span>
+            <span class="k">nonlocal</span> <span class="n">fwd_exe</span><span class="p">,</span> <span class="n">bwd_exe</span><span class="p">,</span> <span class="n">input_grad_map</span><span class="p">,</span> <span class="n">output_grad_map</span><span class="p">,</span> <span class="n">tape_rets</span>
+            <span class="k">if</span> <span class="n">saved_requires</span> <span class="o">==</span> <span class="n">cur_requires</span> <span class="ow">and</span> <span class="n">saved_provides</span> <span class="o">==</span> <span class="n">cur_provides</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="n">saved_requires</span> <span class="o">=</span> <span class="n">cur_requires</span>
+            <span class="n">saved_provides</span> <span class="o">=</span> <span class="n">cur_provides</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cur_requires</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">fwd_ast</span><span class="p">,</span> <span class="n">bwd_ast</span><span class="p">,</span> <span class="n">input_grad_map</span><span class="p">,</span> <span class="n">output_grad_map</span> <span class="o">=</span> <span class="n">grad</span><span class="p">(</span>
+                    <span class="n">ast</span><span class="p">,</span>
+                    <span class="n">requires</span><span class="o">=</span><span class="n">saved_requires</span><span class="p">,</span>
+                    <span class="n">provides</span><span class="o">=</span><span class="n">saved_provides</span><span class="p">,</span>
+                    <span class="n">tapes</span><span class="o">=</span><span class="n">tapes</span><span class="p">,</span>
+                    <span class="c1"># PyTorch requires explicitly marking saved states via</span>
+                    <span class="c1"># `save_for_backward()`</span>
+                    <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+                <span class="n">tape_rets</span> <span class="o">=</span> <span class="n">fwd_ast</span><span class="o">.</span><span class="n">returns</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">):]</span>
+                <span class="n">fwd_exe</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">fwd_ast</span><span class="p">,</span> <span class="n">forward_schedule_callback</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
+                                   <span class="n">device</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+                <span class="n">bwd_exe</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">bwd_ast</span><span class="p">,</span> <span class="n">backward_schedule_callback</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
+                                   <span class="n">device</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># No one needs grad. No need to do autograd</span>
+                <span class="n">fwd_ast</span> <span class="o">=</span> <span class="n">ast</span>
+                <span class="n">fwd_exe</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">fwd_ast</span><span class="p">,</span> <span class="n">forward_schedule_callback</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
+                                   <span class="n">device</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+                <span class="n">bwd_exe</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">input_grad_map</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">output_grad_map</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">tape_rets</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Generate a PyTorch Function</span>
+        <span class="k">class</span> <span class="nc">GeneratedPyTorchFunction</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">Function</span><span class="p">):</span>
+
+            <span class="nd">@staticmethod</span>
+            <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+                <span class="k">nonlocal</span> <span class="n">cur_requires</span><span class="p">,</span> <span class="n">cur_provides</span>
+
+                <span class="c1"># We only get to know provided gradients of output tensors when we</span>
+                <span class="c1"># run `backward`, but we need to run autograd and compile the program</span>
+                <span class="c1"># here in `forward`. We can only assume gradients are provided for</span>
+                <span class="c1"># every output tensors, even if they are unrelated to the inputs.</span>
+                <span class="c1"># Setting this option to True makes PyTorch generate zero gradient</span>
+                <span class="c1"># for such outputs. (TODO: better solution?)</span>
+                <span class="n">ctx</span><span class="o">.</span><span class="n">set_materialize_grads</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+                <span class="c1"># Gather required gradients of the inputs</span>
+                <span class="n">cur_requires</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">:</span>
+                        <span class="n">cur_requires</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kvs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">:</span>
+                        <span class="n">cur_requires</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+                <span class="c1"># For the reason above, we assume gradients are provided for every</span>
+                <span class="c1"># output tensors</span>
+                <span class="n">cur_provides</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">:</span>
+                    <span class="n">cur_provides</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+                <span class="n">lazy_compile</span><span class="p">()</span>
+                <span class="n">fwd_exe</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+                <span class="n">fwd_exe</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+                <span class="n">returns</span> <span class="o">=</span> <span class="n">fwd_exe</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">(</span><span class="n">always_return_pack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">returns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">torch</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">)</span>
+
+                <span class="c1"># Save states for 1) all inputs, 2) all outputs, and 3) all taped</span>
+                <span class="c1"># tensors. For taped tensors, we need to make them output tensors,</span>
+                <span class="c1"># so PyTorch can recognize them. This is an officially recommanded</span>
+                <span class="c1"># trick at</span>
+                <span class="c1"># https://pytorch.org/tutorials/intermediate/custom_function_double_backward_tutorial.html#saving-intermediate-results</span>
+                <span class="c1"># So, please be aware that only the first part in `returns` are real</span>
+                <span class="c1"># return tensors</span>
+                <span class="n">saved_tensors</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>  <span class="c1"># 1)</span>
+                    <span class="n">saved_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">:</span>  <span class="c1"># 2) and 3)</span>
+                    <span class="n">saved_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+                <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="o">*</span><span class="n">saved_tensors</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">returns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">returns</span>
+
+            <span class="nd">@staticmethod</span>
+            <span class="nd">@torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">once_differentiable</span>
+            <span class="k">def</span> <span class="nf">backward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+                <span class="n">saved_tensors</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span>
+                <span class="n">internal_kvs</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">ret</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+                    <span class="n">internal_kvs</span><span class="p">[</span><span class="n">output_grad_map</span><span class="p">[</span><span class="n">ret</span><span class="o">.</span><span class="n">name</span><span class="p">]]</span> <span class="o">=</span> <span class="n">arg</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
+                    <span class="n">internal_kvs</span><span class="p">[</span><span class="n">output_grad_map</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">saved</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">saved_tensors</span><span class="p">):</span>
+                    <span class="n">internal_kvs</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span>
+                <span class="k">for</span> <span class="n">ret</span><span class="p">,</span> <span class="n">saved</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">,</span>
+                                      <span class="n">saved_tensors</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">):]):</span>
+                    <span class="n">internal_kvs</span><span class="p">[</span><span class="n">ret</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span>
+                <span class="k">for</span> <span class="n">tape_ret</span><span class="p">,</span> <span class="n">saved</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                        <span class="n">tape_rets</span><span class="p">,</span>
+                        <span class="n">saved_tensors</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">):]):</span>
+                    <span class="n">internal_kvs</span><span class="p">[</span><span class="n">tape_ret</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span>
+
+                <span class="n">bwd_exe</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="o">**</span><span class="n">internal_kvs</span><span class="p">)</span>
+                <span class="n">bwd_exe</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+                <span class="n">input_grads</span> <span class="o">=</span> <span class="n">bwd_exe</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">(</span><span class="n">always_return_pack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                <span class="c1"># PyTorch requires returning gradient of inputs in their original</span>
+                <span class="c1"># order. If no gradient is required for an input, set it to None</span>
+                <span class="n">returns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">input_grads</span><span class="p">[</span><span class="n">input_grad_map</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">]]</span><span class="o">.</span><span class="n">torch</span><span class="p">(</span>
+                <span class="p">)</span> <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">input_grad_map</span> <span class="k">else</span> <span class="kc">None</span>
+                                <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+
+                <span class="c1"># Although we borrow data from FreeTensor to PyTorch, the borrowing</span>
+                <span class="c1"># mechanism relys on reference counting on PyTorch Tensors. However,</span>
+                <span class="c1"># PyTorch will copy its tensor objects when doing autograd, but keep</span>
+                <span class="c1"># their data pointers pointing to the original position, which makes</span>
+                <span class="c1"># the borrowing fail. We need to copy pytorch tensors here. (TODO:</span>
+                <span class="c1"># eliminate the copying overhaed)</span>
+                <span class="n">returns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                    <span class="kc">None</span> <span class="k">if</span> <span class="n">item</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">item</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">returns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">returns</span>
+
+        <span class="c1"># Wrap around the PyTorch `Function`, to be a real Python &quot;function&quot;, and</span>
+        <span class="c1"># remove our extra tape outputs</span>
+        <span class="k">def</span> <span class="nf">generatedPyTorchFunction</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+            <span class="n">returns</span> <span class="o">=</span> <span class="n">GeneratedPyTorchFunction</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+            <span class="n">returns_tuple</span> <span class="o">=</span> <span class="n">returns</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span>
+                                                  <span class="n">Sequence</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">returns</span><span class="p">,)</span>
+            <span class="n">returns_tuple</span> <span class="o">=</span> <span class="n">returns_tuple</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="n">returns_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">returns_tuple</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">returns_tuple</span>
+
+        <span class="k">return</span> <span class="n">generatedPyTorchFunction</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
+            <span class="n">optimize_to_pytorch</span><span class="p">,</span>
+            <span class="n">tapes</span><span class="o">=</span><span class="n">tapes</span><span class="p">,</span>
+            <span class="n">forward_schedule_callback</span><span class="o">=</span><span class="n">forward_schedule_callback</span><span class="p">,</span>
+            <span class="n">backward_schedule_callback</span><span class="o">=</span><span class="n">backward_schedule_callback</span><span class="p">,</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+            <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>

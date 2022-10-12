@@ -2023,17 +2023,17 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:a6a2ff2695fb4af33d2fc8380696fd7bc"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6a2ff2695fb4af33d2fc8380696fd7bc">gradBody</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;tapes)</td></tr>
 <tr class="separator:a6a2ff2695fb4af33d2fc8380696fd7bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0cd4fb1313915bddde413e2b9e81ccc"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae0cd4fb1313915bddde413e2b9e81ccc">gradFuncInplace</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;tapes)</td></tr>
-<tr class="separator:ae0cd4fb1313915bddde413e2b9e81ccc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5ca158235b254af55aedcc2055a77434"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5ca158235b254af55aedcc2055a77434">gradFuncOutOfPlace</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;tapes)</td></tr>
-<tr class="separator:a5ca158235b254af55aedcc2055a77434"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35707f3337bf188e494d943b598ce900"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a35707f3337bf188e494d943b598ce900">gradFuncInplace</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;tapes, bool tapeInClosure=true)</td></tr>
+<tr class="separator:a35707f3337bf188e494d943b598ce900"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6719eecc82ed0b1ec70f67efb2d4eef1"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6719eecc82ed0b1ec70f67efb2d4eef1">gradFuncOutOfPlace</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;tapes, bool tapeInClosure=true)</td></tr>
+<tr class="separator:a6719eecc82ed0b1ec70f67efb2d4eef1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:a8c805abf928e276c9daaf4414403651c"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8c805abf928e276c9daaf4414403651c">gradBody</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, <a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4">GradTapeMode</a> tapeMode=<a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ae1f4af8d2ac6c06c8f7620e411e561c3">GradTapeMode::NoReuseOnly</a>)</td></tr>
 <tr class="separator:a8c805abf928e276c9daaf4414403651c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad62e88cb2620c5d13de1547240a86f59"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad62e88cb2620c5d13de1547240a86f59">gradFuncInplace</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, <a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4">GradTapeMode</a> tapeMode=<a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ae1f4af8d2ac6c06c8f7620e411e561c3">GradTapeMode::NoReuseOnly</a>)</td></tr>
-<tr class="separator:ad62e88cb2620c5d13de1547240a86f59"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af44128a119b0b662b6e8c8cf9644f788"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af44128a119b0b662b6e8c8cf9644f788">gradFuncOutOfPlace</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, <a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4">GradTapeMode</a> tapeMode=<a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ae1f4af8d2ac6c06c8f7620e411e561c3">GradTapeMode::NoReuseOnly</a>)</td></tr>
-<tr class="separator:af44128a119b0b662b6e8c8cf9644f788"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c4a4d45bcdc9dda3ad7a1a9ffdc15ea"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1c4a4d45bcdc9dda3ad7a1a9ffdc15ea">gradFuncInplace</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, <a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4">GradTapeMode</a> tapeMode=<a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ae1f4af8d2ac6c06c8f7620e411e561c3">GradTapeMode::NoReuseOnly</a>, bool tapeInClosure=true)</td></tr>
+<tr class="separator:a1c4a4d45bcdc9dda3ad7a1a9ffdc15ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53a0840e6b1d7e82bcc8a9ae1cb83fa9"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a53a0840e6b1d7e82bcc8a9ae1cb83fa9">gradFuncOutOfPlace</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, <a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4">GradTapeMode</a> tapeMode=<a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ae1f4af8d2ac6c06c8f7620e411e561c3">GradTapeMode::NoReuseOnly</a>, bool tapeInClosure=true)</td></tr>
+<tr class="separator:a53a0840e6b1d7e82bcc8a9ae1cb83fa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:a472a884dd71c57ad337f27094accba53"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a472a884dd71c57ad337f27094accba53">toString</a> (const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op)</td></tr>
 <tr class="separator:a472a884dd71c57ad337f27094accba53"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -9144,10 +9144,12 @@ template&lt;typename... Args&gt; </div>
 <p >Reverse mode automatic differentiation</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">op</td><td>: Original AST </td></tr>
+    <tr><td class="paramname">op</td><td>: (For <code>gradBody</code>) Original AST </td></tr>
+    <tr><td class="paramname">op</td><td>: (For <code>gradFuncInplace</code> and <code>gradFuncOutOfPlace</code>) Original function </td></tr>
     <tr><td class="paramname">requires</td><td>: Name of input variables that need gradients </td></tr>
     <tr><td class="paramname">provides</td><td>: Name of output variables whose gradients are known </td></tr>
     <tr><td class="paramname">tapes</td><td>: VarDef IDs of intermediate variables that need to be stored in the forward pass </td></tr>
+    <tr><td class="paramname">tapeInClosure</td><td>: (For <code>gradFuncInplace</code> and <code>gradFuncOutOfPlace</code>) True to pass taped tensors from the forward function to the backward function in implicit I/O parameters, i.e. in closure. False to pass these tensors as explicit I/O parameters. Default to true </td></tr>
   </table>
   </dd>
 </dl>
@@ -9195,10 +9197,12 @@ template&lt;typename... Args&gt; </div>
 <p >Reverse mode automatic differentiation</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">op</td><td>: Original AST </td></tr>
+    <tr><td class="paramname">op</td><td>: (For <code>gradBody</code>) Original AST </td></tr>
+    <tr><td class="paramname">op</td><td>: (For <code>gradFuncInplace</code> and <code>gradFuncOutOfPlace</code>) Original function </td></tr>
     <tr><td class="paramname">requires</td><td>: Name of input variables that need gradients </td></tr>
     <tr><td class="paramname">provides</td><td>: Name of output variables whose gradients are known </td></tr>
     <tr><td class="paramname">tapeMode</td><td>: Mode of which intermediate variables should be stored. All: store all variables including local scalars; None: store nothing; NoReuseOnly: store variables that only hold one version of data, which means we do not have to store each version of them in their history </td></tr>
+    <tr><td class="paramname">tapeInClosure</td><td>: (For <code>gradFuncInplace</code> and <code>gradFuncOutOfPlace</code>) True to pass taped tensors from the forward function to the backward function in implicit I/O parameters, i.e. in closure. False to pass these tensors as explicit I/O parameters. Default to true </td></tr>
   </table>
   </dd>
 </dl>
@@ -9206,8 +9210,8 @@ template&lt;typename... Args&gt; </div>
 
 </div>
 </div>
-<a id="ae0cd4fb1313915bddde413e2b9e81ccc" name="ae0cd4fb1313915bddde413e2b9e81ccc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae0cd4fb1313915bddde413e2b9e81ccc">&#9670;&nbsp;</a></span>gradFuncInplace() <span class="overload">[1/2]</span></h2>
+<a id="a35707f3337bf188e494d943b598ce900" name="a35707f3337bf188e494d943b598ce900"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a35707f3337bf188e494d943b598ce900">&#9670;&nbsp;</a></span>gradFuncInplace() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -9234,7 +9238,13 @@ template&lt;typename... Args&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>tapes</em>&#160;</td>
+          <td class="paramname"><em>tapes</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>tapeInClosure</em> = <code>true</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -9246,8 +9256,8 @@ template&lt;typename... Args&gt; </div>
 
 </div>
 </div>
-<a id="ad62e88cb2620c5d13de1547240a86f59" name="ad62e88cb2620c5d13de1547240a86f59"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad62e88cb2620c5d13de1547240a86f59">&#9670;&nbsp;</a></span>gradFuncInplace() <span class="overload">[2/2]</span></h2>
+<a id="a1c4a4d45bcdc9dda3ad7a1a9ffdc15ea" name="a1c4a4d45bcdc9dda3ad7a1a9ffdc15ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1c4a4d45bcdc9dda3ad7a1a9ffdc15ea">&#9670;&nbsp;</a></span>gradFuncInplace() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -9274,7 +9284,13 @@ template&lt;typename... Args&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4">GradTapeMode</a>&#160;</td>
-          <td class="paramname"><em>tapeMode</em> = <code><a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ae1f4af8d2ac6c06c8f7620e411e561c3">GradTapeMode::NoReuseOnly</a></code>&#160;</td>
+          <td class="paramname"><em>tapeMode</em> = <code><a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ae1f4af8d2ac6c06c8f7620e411e561c3">GradTapeMode::NoReuseOnly</a></code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>tapeInClosure</em> = <code>true</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -9286,8 +9302,8 @@ template&lt;typename... Args&gt; </div>
 
 </div>
 </div>
-<a id="a5ca158235b254af55aedcc2055a77434" name="a5ca158235b254af55aedcc2055a77434"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5ca158235b254af55aedcc2055a77434">&#9670;&nbsp;</a></span>gradFuncOutOfPlace() <span class="overload">[1/2]</span></h2>
+<a id="a6719eecc82ed0b1ec70f67efb2d4eef1" name="a6719eecc82ed0b1ec70f67efb2d4eef1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6719eecc82ed0b1ec70f67efb2d4eef1">&#9670;&nbsp;</a></span>gradFuncOutOfPlace() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -9314,7 +9330,13 @@ template&lt;typename... Args&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>tapes</em>&#160;</td>
+          <td class="paramname"><em>tapes</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>tapeInClosure</em> = <code>true</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -9326,8 +9348,8 @@ template&lt;typename... Args&gt; </div>
 
 </div>
 </div>
-<a id="af44128a119b0b662b6e8c8cf9644f788" name="af44128a119b0b662b6e8c8cf9644f788"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af44128a119b0b662b6e8c8cf9644f788">&#9670;&nbsp;</a></span>gradFuncOutOfPlace() <span class="overload">[2/2]</span></h2>
+<a id="a53a0840e6b1d7e82bcc8a9ae1cb83fa9" name="a53a0840e6b1d7e82bcc8a9ae1cb83fa9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a53a0840e6b1d7e82bcc8a9ae1cb83fa9">&#9670;&nbsp;</a></span>gradFuncOutOfPlace() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -9354,7 +9376,13 @@ template&lt;typename... Args&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4">GradTapeMode</a>&#160;</td>
-          <td class="paramname"><em>tapeMode</em> = <code><a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ae1f4af8d2ac6c06c8f7620e411e561c3">GradTapeMode::NoReuseOnly</a></code>&#160;</td>
+          <td class="paramname"><em>tapeMode</em> = <code><a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ae1f4af8d2ac6c06c8f7620e411e561c3">GradTapeMode::NoReuseOnly</a></code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>tapeInClosure</em> = <code>true</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
