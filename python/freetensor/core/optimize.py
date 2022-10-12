@@ -267,15 +267,6 @@ def optimize_to_pytorch(
                 ) if param.name in input_grad_map else None
                                 for param in ast.params)
 
-                # Although we borrow data from FreeTensor to PyTorch, the borrowing
-                # mechanism relys on reference counting on PyTorch Tensors. However,
-                # PyTorch will copy its tensor objects when doing autograd, but keep
-                # their data pointers pointing to the original position, which makes
-                # the borrowing fail. We need to copy pytorch tensors here. (TODO:
-                # eliminate the copying overhaed)
-                returns = tuple(
-                    None if item is None else item.clone() for item in returns)
-
                 return returns[0] if len(returns) == 1 else returns
 
         # Wrap around the PyTorch `Function`, to be a real Python "function", and
