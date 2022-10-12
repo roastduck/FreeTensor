@@ -89,7 +89,8 @@ void init_ffi_array(py::module_ &m) {
                                     dtype,                                     \
                                     Ref<Device>::make(TargetType::CPU));       \
     }),                                                                        \
-        "data"_a.noconvert(), py::keep_alive<1, 2>()
+        "data"_a.noconvert(),                                                  \
+        py::keep_alive<1, 2>() /* Keep `np` alive whenever `self` alives */
 
 #define SHARE_TO_NUMPY(nativeType, dtype)                                      \
     case dtype: {                                                              \
@@ -152,7 +153,9 @@ void init_ffi_array(py::module_ &m) {
                     "freetensor.Array, for strided PyTorch tensors");
             }
         }),
-        "data"_a.noconvert(), py::keep_alive<1, 2>());
+        "data"_a.noconvert(),
+        py::keep_alive<1,
+                       2>() /* Keep `tensor` alive whenever `self` alives */);
 #endif // FT_WITH_PYTORCH
     pyArray.def(
         "numpy",
@@ -167,7 +170,8 @@ void init_ffi_array(py::module_ &m) {
                 ASSERT(false);
             }
         },
-        py::keep_alive<0, 1>());
+        py::keep_alive<
+            0, 1>() /* Keep `self` alive whenever the return value alives */);
 #ifdef FT_WITH_PYTORCH
     pyArray
         .def(
@@ -180,7 +184,9 @@ void init_ffi_array(py::module_ &m) {
                 return torch::from_blob(arr.rawSharedTo(device), sizes,
                                         options);
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<
+                0,
+                1>() /* Keep `self` alive whenever the return value alives */)
         .def(
             "torch",
             [](Array &arr) -> torch::Tensor {
@@ -192,7 +198,9 @@ void init_ffi_array(py::module_ &m) {
                 return torch::from_blob(arr.rawSharedTo(device), sizes,
                                         options);
             },
-            py::keep_alive<0, 1>());
+            py::keep_alive<
+                0,
+                1>() /* Keep `self` alive whenever the return value alives */);
 #endif // FT_WITH_PYTORCH
     pyArray.def_property_readonly("shape", &Array::shape)
         .def_property_readonly("dtype", &Array::dtype);

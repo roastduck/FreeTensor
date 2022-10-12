@@ -245,8 +245,8 @@ def test_grad():
 
 
 @pytest.mark.skipif(not freetensor.with_pytorch(), reason="requires PyTorch")
-def test_vector_add_pytorch():
-    # Used in docs/index.md and docs/guide/schedules.md
+def test_vector_add_pytorch_io():
+    # Used in docs/guide/first-program.md
 
     import freetensor as ft
     import torch
@@ -266,3 +266,42 @@ def test_vector_add_pytorch():
     print(y)
 
     assert torch.all(y == torch.tensor([3, 5, 7, 9], dtype=torch.int32))
+
+
+@pytest.mark.skipif(not freetensor.with_pytorch(), reason="requires PyTorch")
+def test_vector_add_pytorch_function_integration():
+    # Used in docs/guide/first-program.md
+
+    import freetensor as ft
+    import torch
+
+    n = 4
+
+    # Change this line to ft.optimize_to_pytorch(verbose=1) to see the resulting
+    # native code
+    @ft.optimize_to_pytorch
+    def test(a: ft.Var[(n,), "float32"], b: ft.Var[(n,), "float32"]):
+        y = ft.empty((n,), "float32")
+        for i in range(n):
+            y[i] = a[i] * b[i]
+        return y
+
+    # Forward
+    a = torch.tensor([1, 2, 3, 4], requires_grad=True, dtype=torch.float32)
+    b = torch.tensor([2, 3, 4, 5], requires_grad=True, dtype=torch.float32)
+    y = test(a, b)
+    print("y = ", y)
+
+    assert torch.all(
+        torch.isclose(y, torch.tensor([2, 6, 12, 20], dtype=torch.float32)))
+
+    # Backward
+    y.grad = torch.tensor([1, 1, 1, 1], dtype=torch.float32)
+    y.backward(y.grad)
+    print("a.grad = ", a.grad)
+    print("b.grad = ", b.grad)
+
+    assert torch.all(
+        torch.isclose(a.grad, torch.tensor([2, 3, 4, 5], dtype=torch.float32)))
+    assert torch.all(
+        torch.isclose(b.grad, torch.tensor([1, 2, 3, 4], dtype=torch.float32)))

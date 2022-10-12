@@ -6,6 +6,8 @@ Automatic Differentiation (AD) transforms a program to another program that comp
 
 Suppose there is a program `x -> y -> z -> w` that computes an output `w` from intermediate variables `z` and `y`, and an input variable `x`. Reverse-Mode AD generates a gradient program `dw/dw=1 -> dw/dz -> dw/dy -> dw/dx` that computes `dw/dx` by Chain Rule. `y`, `z` and `w` may be saved in a "tape" when evaluation the original program, to be reused in the gradient one.
 
+If FreeTensor is built with `WITH_PYTORCH=ON`, you can skip this section and turn to the [`@optimize_to_pytorch` integration](../first-program/#copy-free-interface-fromto-pytorch), which integrates seamlessly with PyTorch's autograd mechanism, but will incur some runtime overhead.
+
 Here is an example of Reverse-Mode AD in FreeTensor:
 
 ```python
@@ -40,6 +42,6 @@ You need to call [`ft.grad`](../../api/#freetensor.core.autograd.grad) (or the i
 
 After that, you call `ft.optimize` to optimize and compile the program just as in previous examples, but for both `fwd` and `bwd` this time.
 
-Finally, you execute `fwd` and `bwd`. The parameters and return values of `bwd` are the gradients of `a`, `b` and `y`, which have their own names. To set and get these parameters and return values, you look up for them in two dictionaries `input_grads` and `output_grads` returned from `ft.grad` (in type [`ft.ArgRetDict`](../../api/#freetensor.core.autograd.ArgRetDict). `input_grads` and `output_grads` accept either a name of a parameter, or a special [`ft.Return`](../../api/#freetensor.core.autograd.Return) to specify a return value. When invoking `bwd`, parameters can be set via keyword arguments, and return values can be collect via a bracket (from a special type [`ft.ReturnValuesPack`](../../api/#freetensor.core.driver.ReturnValuesPack).
+Finally, you execute `fwd` and `bwd`. The parameters and return values of `bwd` are the gradients of `a`, `b` and `y`, which have their own names. To set and get these parameters and return values, you look up for them in two dictionaries `input_grads` and `output_grads` returned from `ft.grad` (in type [`ft.ArgRetDict`](../../api/#freetensor.core.autograd.ArgRetDict). `input_grads` and `output_grads` accept either a name of a parameter, or a special [`ft.Return`](../../api/#freetensor.core.autograd.Return) to specify a return value. When invoking `bwd`, parameters can be set via keyword arguments, and return values can be collect via a bracket (from a special type [`ft.ReturnValuesPack`](../../api/#freetensor.core.driver.ReturnValuesPack)).
 
 Intermediate variables are not always have to be saved to the "tape" from the forward function. If a variable is need in the backward function but not saved, it will be re-computed, which is sometimes even faster than saving it due to better locality. By default, FreeTensor uses heuristics to determine which variable to save. To get better performance, you may want to control which intermediate variables should be saved by setting an optional `tapes` parameter in `ft.grad`. `tapes` can either be a different mode, or a explicit list of AST node IDs of all `VarDef` nodes of the variables you want to save.

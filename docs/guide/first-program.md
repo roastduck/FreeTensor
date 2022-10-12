@@ -137,3 +137,34 @@ y = test(torch.tensor([1, 2, 3, 4], dtype=torch.int32),
          torch.tensor([2, 3, 4, 5], dtype=torch.int32)).torch()
 print(y)
 ```
+
+FreeTensor also supports integration with PyTorch's "function" interface. You can use `@ft.optimize_to_pytorch` to directly generate a PyTorch "function" (specifically, a function wrapper around PyTorch's `Function.invoke`, just like usual PyTorch functions). This approach seamlessly integrates with PyTorch's autograd mechanism, but incurs some more runtime overhead (including copying of tensors). Please also note that, because we do not know whether we need to do autograd and which input tensors need gradients until we first run a function, compiling of the FreeTensor code will be delayed to run time. The compiled binary code will be cached and reused if following runs requires the same set of inputs to be derived. The following code shows an example of this approach:
+
+
+```python
+import freetensor as ft
+import torch
+
+n = 4
+
+# Change this line to ft.optimize_to_pytorch(verbose=1) to see the resulting
+# native code
+@ft.optimize_to_pytorch
+def test(a: ft.Var[(n,), "float32"], b: ft.Var[(n,), "float32"]):
+    y = ft.empty((n,), "float32")
+    for i in range(n):
+        y[i] = a[i] * b[i]
+    return y
+
+# Forward
+a = torch.tensor([1, 2, 3, 4], requires_grad=True, dtype=torch.float32)
+b = torch.tensor([2, 3, 4, 5], requires_grad=True, dtype=torch.float32)
+y = test(a, b)
+print("y = ", y)
+
+# Backward
+y.grad = torch.tensor([1, 1, 1, 1], dtype=torch.float32)
+y.backward(y.grad)
+print("a.grad = ", a.grad)
+print("b.grad = ", b.grad)
+```

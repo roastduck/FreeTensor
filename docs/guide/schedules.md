@@ -34,6 +34,8 @@ And you are done. You can have a look at the generated OpenMP multithreaded code
 
 Parameter `s` in `schedule_callback` is a [`Schedule`](../../api/#freetensor.core.schedule.Schedule) object. Besides `parallelize`, there are more supported scheduling primitives.
 
+If you are using the [`@optimize_to_pytorch` integration](../first-program/#copy-free-interface-fromto-pytorch), you need to set schedules for the forward pass and the backward pass separately.
+
 ## Combining Multiple Schdules
 
 Some optimizations can be done by applying multiple schedules. For example, a tiled matrix-multiplication can be done by first `split` the loops, then `reorder` them, and finally apply `cache`s to create tile tensors.
