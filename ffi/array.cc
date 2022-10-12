@@ -174,33 +174,32 @@ void init_ffi_array(py::module_ &m) {
             0, 1>() /* Keep `self` alive whenever the return value alives */);
 #ifdef FT_WITH_PYTORCH
     pyArray
-        .def(
-            "torch",
-            [](Array &arr, const Ref<Device> &device) -> torch::Tensor {
-                std::vector<int64_t> sizes(arr.shape().begin(),
-                                           arr.shape().end());
-                auto options = torch::TensorOptions(dtypeToPyTorch(arr.dtype()))
-                                   .device(deviceToPyTorch(device));
-                return torch::from_blob(arr.rawSharedTo(device), sizes,
-                                        options);
-            },
-            py::keep_alive<
-                0,
-                1>() /* Keep `self` alive whenever the return value alives */)
-        .def(
-            "torch",
-            [](Array &arr) -> torch::Tensor {
-                auto &&device = Config::defaultDevice();
-                std::vector<int64_t> sizes(arr.shape().begin(),
-                                           arr.shape().end());
-                auto options = torch::TensorOptions(dtypeToPyTorch(arr.dtype()))
-                                   .device(deviceToPyTorch(device));
-                return torch::from_blob(arr.rawSharedTo(device), sizes,
-                                        options);
-            },
-            py::keep_alive<
-                0,
-                1>() /* Keep `self` alive whenever the return value alives */);
+        .def("torch",
+             [](const Ref<Array> &arr,
+                const Ref<Device> &device) -> torch::Tensor {
+                 std::vector<int64_t> sizes(arr->shape().begin(),
+                                            arr->shape().end());
+                 auto options =
+                     torch::TensorOptions(dtypeToPyTorch(arr->dtype()))
+                         .device(deviceToPyTorch(device));
+                 Ref<Array> refCntHolder = arr;
+                 auto deleter = [refCntHolder = std::move(refCntHolder)](
+                                    void *) mutable { refCntHolder = nullptr; };
+                 return torch::from_blob(arr->rawSharedTo(device), sizes,
+                                         deleter, options);
+             })
+        .def("torch", [](const Ref<Array> &arr) -> torch::Tensor {
+            auto &&device = Config::defaultDevice();
+            std::vector<int64_t> sizes(arr->shape().begin(),
+                                       arr->shape().end());
+            auto options = torch::TensorOptions(dtypeToPyTorch(arr->dtype()))
+                               .device(deviceToPyTorch(device));
+            Ref<Array> refCntHolder = arr;
+            auto deleter = [refCntHolder = std::move(refCntHolder)](
+                               void *) mutable { refCntHolder = nullptr; };
+            return torch::from_blob(arr->rawSharedTo(device), sizes, deleter,
+                                    options);
+        });
 #endif // FT_WITH_PYTORCH
     pyArray.def_property_readonly("shape", &Array::shape)
         .def_property_readonly("dtype", &Array::dtype);

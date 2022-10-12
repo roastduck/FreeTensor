@@ -138,7 +138,7 @@ y = test(torch.tensor([1, 2, 3, 4], dtype=torch.int32),
 print(y)
 ```
 
-FreeTensor also supports integration with PyTorch's "function" interface. You can use `@ft.optimize_to_pytorch` to directly generate a PyTorch "function" (specifically, a function wrapper around PyTorch's `Function.invoke`, just like usual PyTorch functions). This approach seamlessly integrates with PyTorch's autograd mechanism, but incurs some more runtime overhead (including copying of tensors). Please also note that, because we do not know whether we need to do autograd and which input tensors need gradients until we first run a function, compiling of the FreeTensor code will be delayed to run time. The compiled binary code will be cached and reused if following runs requires the same set of inputs to be derived. The following code shows an example of this approach:
+FreeTensor also supports integration with PyTorch's "function" interface. You can use `@ft.optimize_to_pytorch` to directly generate a PyTorch "function" (specifically, a function wrapper around PyTorch's `Function.invoke`, just like usual PyTorch functions). This approach seamlessly integrates with PyTorch's autograd mechanism, but incurs some more runtime overhead. Please also note that, because we do not know whether we need to do autograd and which input tensors need gradients until we first run a function, compiling of the FreeTensor code will be delayed to run time. The compiled binary code will be cached and reused if following runs requires the same set of inputs to be derived. The following code shows an example of this approach:
 
 
 ```python
