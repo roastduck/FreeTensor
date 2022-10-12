@@ -273,7 +273,13 @@ void PrintVisitor::visit(const IntConst &op) {
 }
 
 void PrintVisitor::visit(const FloatConst &op) {
-    os() << prettyLiteral(std::to_string(op->val_));
+    std::ostringstream oss;
+    if (hexFloat_) {
+        oss << std::hexfloat << op->val_;
+    } else {
+        oss << std::scientific << op->val_;
+    }
+    os() << prettyLiteral(oss.str());
 }
 
 void PrintVisitor::visit(const BoolConst &op) {
@@ -724,8 +730,8 @@ std::string toString(const AST &op, bool pretty, bool printAllId) {
 }
 
 std::string toString(const AST &op, bool pretty, bool printAllId,
-                     bool dtypeInLoad) {
-    PrintVisitor visitor(printAllId, pretty, dtypeInLoad);
+                     bool dtypeInLoad, bool hexFloat) {
+    PrintVisitor visitor(printAllId, pretty, dtypeInLoad, hexFloat);
     visitor(op);
     return visitor.toString(
         [](const CodeGenStream &stream) { return stream.os_.str(); });

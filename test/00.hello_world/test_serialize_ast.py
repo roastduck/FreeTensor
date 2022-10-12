@@ -14,6 +14,18 @@ def test_basic():
     assert ast2.match(ast)
 
 
+def test_float_literal():
+    with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
+        x[2, 3] = 2.5
+        x[1, 0] = 1e-10
+    ast = ft.pop_ast()
+    txt = ft.dump_ast(ast)
+    print(txt)
+    ast2 = ft.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+
 def test_func():
     with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
         x[2, 3] = 2.0

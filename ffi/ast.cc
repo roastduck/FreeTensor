@@ -119,7 +119,8 @@ nodes)'''")
         .def("__repr__", [](const AST &op) {
             return "<" + toString(op->nodeType()) + ": " + toString(op) + ">";
         });
-    m.def("dump_ast", &dumpAST, "ast"_a, "dtype_in_load"_a = false);
+    m.def("dump_ast", &dumpAST, "ast"_a, "dtype_in_load"_a = false,
+          "hex_float"_a = true);
     m.def("load_ast", &loadAST);
 }
 
