@@ -462,7 +462,7 @@ $(function() {
 <div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (op-&gt;val_ == -INFINITY) {</div>
 <div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span>        this-&gt;os() &lt;&lt; <span class="stringliteral">&quot;-INFINITY&quot;</span>;</div>
 <div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span>    } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span>        this-&gt;os() &lt;&lt; std::to_string(op-&gt;val_)</div>
+<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span>        this-&gt;os() &lt;&lt; std::hexfloat &lt;&lt; op-&gt;val_</div>
 <div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>                   &lt;&lt; <span class="stringliteral">&quot;f&quot;</span>; <span class="comment">// FIXME: Determine the actual type</span></div>
 <div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>    }</div>
 <div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>}</div>
