@@ -9261,15 +9261,6 @@ Defaults to True</p></li>
                 <span class="p">)</span> <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">input_grad_map</span> <span class="k">else</span> <span class="kc">None</span>
                                 <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
 
-                <span class="c1"># Although we borrow data from FreeTensor to PyTorch, the borrowing</span>
-                <span class="c1"># mechanism relys on reference counting on PyTorch Tensors. However,</span>
-                <span class="c1"># PyTorch will copy its tensor objects when doing autograd, but keep</span>
-                <span class="c1"># their data pointers pointing to the original position, which makes</span>
-                <span class="c1"># the borrowing fail. We need to copy pytorch tensors here. (TODO:</span>
-                <span class="c1"># eliminate the copying overhaed)</span>
-                <span class="n">returns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
-                    <span class="kc">None</span> <span class="k">if</span> <span class="n">item</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">item</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">)</span>
-
                 <span class="k">return</span> <span class="n">returns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">returns</span>
 
         <span class="c1"># Wrap around the PyTorch `Function`, to be a real Python &quot;function&quot;, and</span>
