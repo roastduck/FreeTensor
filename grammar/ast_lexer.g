@@ -113,5 +113,6 @@ LARROW_META:        '<~';
 TRANSFORM_OP:       '$';
 LBRACE_META:        '{';
 RBRACE_META:        '}';
+COMMA_META:         ',';
 
 END_META:   '\n' -> popMode;
