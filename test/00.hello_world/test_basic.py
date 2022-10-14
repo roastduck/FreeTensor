@@ -309,7 +309,8 @@ def test_inlined_invoke():
     g = ft.lower(ft.Func("g", ["y"], [], ft.pop_ast()))
 
     with ft.VarDef("x", (4, 4), "float32", "inout") as x:
-        ft.Invoke(g, x[2])
+        with ft.Invoke([], g, [x[2]]):
+            pass
     f = ft.lower(ft.Func("f", ["x"], [], ft.pop_ast()), verbose=1)
     code = ft.codegen(f, verbose=True)
 
@@ -320,6 +321,31 @@ def test_inlined_invoke():
 
     x_std = np.zeros((4, 4), dtype="float32")
     x_std[2, 3] = 2.0
+    assert np.array_equal(x_np, x_std)
+
+
+def test_inlined_invoke_with_returns():
+    with ft.VarDef("y", (4,), "float32", "output") as y:
+        y[0] = 1.0
+        y[1] = 3.0
+        y[2] = 2.0
+        y[3] = 4.0
+    g = ft.lower(ft.Func("g", [], [("y", "float32")], ft.pop_ast()))
+
+    with ft.VarDef("x", (4, 4), "float32", "inout") as x:
+        with ft.Invoke(["y"], g) as y:
+            with ft.For("i", 0, 4) as i:
+                x[2, i] = y[i]
+    f = ft.lower(ft.Func("f", ["x"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(f, verbose=True)
+
+    x_np = np.zeros((4, 4), dtype="float32")
+    x_arr = ft.Array(x_np)
+    ft.Driver(f, code)(x=x_arr)
+    x_np = x_arr.numpy()
+
+    x_std = np.zeros((4, 4), dtype="float32")
+    x_std[2] = [1.0, 3.0, 2.0, 4.0]
     assert np.array_equal(x_np, x_std)
 
 

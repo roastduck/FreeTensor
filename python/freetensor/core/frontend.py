@@ -16,11 +16,11 @@ from .context import pop_ast
 from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
                    if_then_else, shape)
 from .stmt import (_VarDef, NamedScope, VarRef, For, If, Else, MarkLabel,
-                   ctx_stack, Func, Assert)
+                   ctx_stack, Func, Assert, Invoke)
 
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
-                      StagedIterable, StagingError, StagingOverload,
-                      TransformError)
+                      StagedUnpackAssignable, StagedIterable, StagingError,
+                      StagingOverload, TransformError)
 
 assert sys.version_info >= (3, 8), \
     "Python version lower than 3.8 is not supported"
@@ -83,14 +83,19 @@ class FreeTensorOverload(StagingOverload):
                         dtype,
                         atype,
                         mtype=None,
-                        capture=None,
-                        override=False):
-        fullname = self.fullname(name) if not override else name
+                        capture=None):
+        fullname = self.fullname(name)
         if capture:
             self.closure[fullname] = capture
 
         return self.lifetime_stack[-1].register_inner_scope(
             _VarDef(fullname, shape, dtype, atype, mtype))
+
+    def register_inlined_invoke(self, ret_names: Sequence[str], func: ffi.Func,
+                                args, kvs):
+        ret_names = [self.fullname(name) for name in ret_names]
+        return self.lifetime_stack[-1].register_inner_scope(
+            Invoke(ret_names, func, args, kvs))
 
     def register_assert(self, pred):
         self.lifetime_stack[-1].register_inner_scope(Assert(pred))
@@ -227,11 +232,18 @@ class VarCreator(StagedAssignable):
     shape: Union[Sequence, VarRef]
     dtype: str
     mtype: str
+    assigned: bool = False
 
     def assign(self, name: str) -> VarRef:
         '''Customized assign behavior. Creates a VarDef with its full name.'''
-        return _overload.register_vardef(name, self.shape, self.dtype, 'cache',
-                                         self.mtype)
+        if not self.assigned:
+            self.assigned = True
+            return _overload.register_vardef(name, self.shape, self.dtype,
+                                             'cache', self.mtype)
+        else:
+            raise _overload.error(
+                "Create new tensors in an `a = b = c`-like multi-assignment "
+                "is not supported")
 
 
 def empty_staging(shape, dtype, mtype=None):
@@ -366,6 +378,29 @@ class Var(StagedTypeAnnotation):
                                          self.atype, self.mtype)
 
 
+@dataclass
+class InlinedInvokeCreator(StagedUnpackAssignable):
+    func: ffi.Func
+    args: list
+    kvs: dict
+    assigned: bool = False
+
+    def assign(self, names) -> Sequence[VarRef]:
+        if not self.assigned:
+            self.assigned = True
+            return _overload.register_inlined_invoke(names, self.func,
+                                                     self.args, self.kvs)
+        else:
+            raise _overload.error(
+                "Receiving return values in an `a = b = f()`-like multi-assignment "
+                "is not supported")
+
+    def __del__(self):
+        if not self.assigned:
+            _overload.register_inlined_invoke([], self.func, self.args,
+                                              self.kvs)
+
+
 class dynamic_range(StagedIterable):
     '''Dynamic range that generates For loop in IR tree.'''
 
@@ -490,8 +525,24 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
         # Despite whether the exception is raised, we need to clean up the ctx_stack
         staged_ast = pop_ast()
 
-    staged = Func(func.__name__, params + list(closure.keys()), returns,
-                  staged_ast, closure)
+    # Enable invoking a transformed AST in another function being transformed,
+    # via `inlined_invoke`
+    def prepare_inlined_invoke(*args, **kvs):
+        if _overload.in_staging():
+            return InlinedInvokeCreator(staged, args, kvs)
+        else:
+            raise _overload.error(
+                'Unexpected call on a transformed AST. A transformed AST can only '
+                'be called in the following two ways: 1) called with actual data '
+                'after `@optimize`, and 2) called from another function to be '
+                '`@transform`ed')
+
+    staged = Func(func.__name__,
+                  params + list(closure.keys()),
+                  returns,
+                  staged_ast,
+                  closure,
+                  custom_callback=prepare_inlined_invoke)
 
     if verbose >= 1:
         print("The transformed AST is:", file=sys.stderr)
