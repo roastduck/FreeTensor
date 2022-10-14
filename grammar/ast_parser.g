@@ -90,7 +90,7 @@ func returns [Func node]
 
 metadata returns [Metadata md]
     : TRANSFORM_OP LABEL_META LBRACE_META metadata { std::vector<Metadata> sources{$metadata.md}; }
-      (',' newMd=metadata { sources.push_back($newMd.md); })* RBRACE_META
+      (COMMA_META newMd=metadata { sources.push_back($newMd.md); })* RBRACE_META
       {
         $md = makeMetadata($LABEL_META.text, std::move(sources));
       }
@@ -313,7 +313,7 @@ forProperty returns [Ref<ForProperty> property]
         $property = Ref<ForProperty>::make();
       }
     | prev=forProperty NO_DEPS ':' var { std::vector<std::string> noDeps = {$var.name}; }
-        (',' var2=var { noDeps.emplace_back($var2.name); })*
+        (COMMA var2=var { noDeps.emplace_back($var2.name); })*
       {
         $property = $prev.property->withNoDeps(std::move(noDeps));
       }
@@ -508,11 +508,11 @@ expr returns [Expr node]
       {
         $node = makeLOr($expr0.node, $expr1.node);
       }
-    | MIN '(' expr0=expr ',' expr1=expr ')'
+    | MIN '(' expr0=expr COMMA expr1=expr ')'
       {
         $node = makeMin($expr0.node, $expr1.node);
       }
-    | MAX '(' expr0=expr ',' expr1=expr ')'
+    | MAX '(' expr0=expr COMMA expr1=expr ')'
       {
         $node = makeMax($expr0.node, $expr1.node);
       }
@@ -525,8 +525,8 @@ expr returns [Expr node]
         $node = $expr.node;
       }
     | INTRINSIC '(' String '->' dtype { std::vector<Expr> params; bool hasSideEffect = false; }
-        (',' expr { params.emplace_back($expr.node); } )*
-        (',' SIDE_EFFECT { hasSideEffect = true; } )?
+        (COMMA expr { params.emplace_back($expr.node); } )*
+        (COMMA SIDE_EFFECT { hasSideEffect = true; } )?
         ')'
       {
         $node = makeIntrinsic(slice($String.text, 1, -1), std::move(params), $dtype.type, hasSideEffect);
@@ -540,7 +540,7 @@ shape returns [std::vector<Expr> vec]
       {
         $vec.emplace_back($expr.node);
       }
-        (',' newExpr=expr
+        (COMMA newExpr=expr
       {
         $vec.emplace_back($newExpr.node);
       }
@@ -565,7 +565,7 @@ params returns [std::vector<std::pair<std::string, bool /* isClosure */>> vec]
       {
         $vec.emplace_back($var.name, $closureFlag.flag);
       }
-        (',' var1=var closureFlag1=closureFlag
+        (COMMA var1=var closureFlag1=closureFlag
       {
         $vec.emplace_back($var1.name, $closureFlag1.flag);
       }
@@ -577,7 +577,7 @@ retVals returns [std::vector<std::tuple<std::string, DataType, bool /* isClosure
       {
         $vec.emplace_back($var.name, $dtype.type, $closureFlag.flag);
       }
-        (',' var1=var ':' dtype1=dtype closureFlag1=closureFlag
+        (COMMA var1=var ':' dtype1=dtype closureFlag1=closureFlag
       {
         $vec.emplace_back($var1.name, $dtype1.type, $closureFlag1.flag);
       }
@@ -589,7 +589,7 @@ indices returns [std::vector<Expr> exprs]
       {
         $exprs.emplace_back($expr.node);
       }
-        (',' newExpr=expr
+        (COMMA newExpr=expr
       {
         $exprs.emplace_back($newExpr.node);
       }

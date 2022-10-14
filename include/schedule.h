@@ -701,20 +701,27 @@ class Schedule {
      *
      * @param loop0 : The first loop to fuse
      * @param loop1 : The second loop to fuse
+     * @param nestLevel0 : The number of nesting levels of loop 0 to be
+     * considered, defaults to maximum possible
+     * @param nestLevel1 : The number of nesting levels of loop 1 to be
+     * considered, defaults to maximum possible
      * @return std::pair<ID, int> : The ID of fused loop and level of
      * parallelizable loops
      */
-    std::pair<ID, int> plutoFuse(const ID &loop0, const ID &loop1);
-    
+    std::pair<ID, int> plutoFuse(const ID &loop0, const ID &loop1,
+                                 int nestLevel0 = 0, int nestLevel1 = 0);
+
     /**
      * Use Pluto+ algorithm to permute a single loop, with as most
      * parallelizable loops as possible at outermost levels.
      *
      * @param loop : The loop to permute
+     * @param nestLevel0 : The number of nesting levels to be considered,
+     * defaults to maximum possible
      * @return std::pair<ID, int> : The ID of permuted loop and level of
      * parallelizable loops
      */
-    std::pair<ID, int> plutoPermute(const ID &loop);
+    std::pair<ID, int> plutoPermute(const ID &loop, int nestLevel = 0);
 
     /**
      * (Experimental) Automatic scheduling using some heuristics

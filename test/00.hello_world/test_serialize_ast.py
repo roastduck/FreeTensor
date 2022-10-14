@@ -385,6 +385,26 @@ def test_fission_metadata():
     assert ast2.match(ast)
 
 
+def test_fuse_metadata():
+    with ft.VarDef("x", (8,), "int32", "output", "cpu") as x:
+        with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
+            with ft.For("i", 0, 8, label="L0") as i:
+                x[i] = i
+            with ft.For("i", 0, 8, label="L1") as i:
+                y[i] = i
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.fuse("L0", "L1")
+    ast = s.ast()
+    txt = ft.dump_ast(ast)
+    print(txt)
+    assert '$fuse' in txt
+    assert '$fuse' in txt
+    ast2 = ft.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+
 def test_anonymous_call_site():
 
     @ft.inline

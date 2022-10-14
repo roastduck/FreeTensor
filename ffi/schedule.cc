@@ -132,8 +132,10 @@ void init_ffi_schedule(py::module_ &m) {
         .def("separate_tail", &Schedule::separateTail,
              "noDuplicateVarDefs"_a = false)
         .def("as_matmul", &Schedule::asMatMul)
-        .def("pluto_fuse", &Schedule::plutoFuse, "loop0"_a, "loop1"_a)
-        .def("pluto_permute", &Schedule::plutoPermute, "loop"_a)
+        .def("pluto_fuse", &Schedule::plutoFuse, "loop0"_a, "loop1"_a,
+             "nest_level_0"_a = 0, "nest_level_1"_a = 0)
+        .def("pluto_permute", &Schedule::plutoPermute, "loop"_a,
+             "nest_level"_a = 0)
         .def("auto_schedule",
              [](Schedule &s, const Target &target) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda
