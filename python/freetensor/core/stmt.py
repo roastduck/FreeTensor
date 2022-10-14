@@ -342,19 +342,45 @@ class NamedScope:
         ctx_stack.top().append_stmt(body)
 
 
-def Invoke(func, *args, **kvs):
+class Invoke:
     '''
     Inlined invocation of another AST
 
-    This scope is internally used by `transformer` and tests
+    `Invoke` is used as a scope (`with Invoke(...) as returned_vars`), so that variables returned by
+    the callee can be used in the socpe
 
     `Invoke` can be used for invoking a gradient function, which has already been lowered as an AST.
     Please note that once a user function has been lowered as an AST, the dimensionalities of its
     tensors get fixed. Therefore, to invoke ordinary user functions, please use `inline` in `transformer`
     instead, which supports generic types
     '''
-    top = ctx_stack.top()
-    top.append_stmt(ffi.inlined_invoke(top.get_metadata(), func, args, kvs))
+
+    def __init__(self, ret_names: Sequence[str], func: ffi.Func, *args, **kvs):
+        self.args = args
+        self.kvs = kvs
+        self.func, returns = ffi.strip_returns(func)
+        self.vardefs = []  # Outer to inner
+        assert len(ret_names) == len(returns)
+        for name, ret in zip(ret_names, returns):
+            self.vardefs.append(
+                _VarDef(name, ret.tensor.shape, ret.tensor.dtype, "cache",
+                        ret.mtype))
+
+    def __enter__(self):
+        varrefs = []
+        ret_names = []
+        for vardef in self.vardefs:
+            varref = vardef.__enter__()
+            varrefs.append(varref)
+            ret_names.append(varref.name)
+        ctx_stack.top().append_stmt(
+            ffi.inlined_invoke(ctx_stack.top().get_metadata(), self.func,
+                               self.args, self.kvs, ret_names))
+        return varrefs[0] if len(varrefs) == 1 else tuple(varrefs)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        for vardef in reversed(self.vardefs):
+            vardef.__exit__(exc_type, exc_value, traceback)
 
 
 def Alloc(var: VarRef):
@@ -387,4 +413,6 @@ def Any():
 
 
 def Func(name, params, returns, body, closure={}):
-    return ffi.makeFunc(name, params, returns, body, closure)
+    return ffi.makeFunc(
+        name, params, list(map(lambda x: (x[0], ffi.DataType(x[1])), returns)),
+        body, closure)

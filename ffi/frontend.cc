@@ -38,6 +38,7 @@ void init_ffi_frontend(py::module_ &m) {
         .def("chain_indices", &FrontendVar::chainIndices)
         .def("__repr__", [](const FrontendVar &var) { return toString(var); });
 
+    m.def("strip_returns", &stripReturns);
     m.def("inlined_invoke", &inlinedInvoke);
 }
 
