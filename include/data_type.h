@@ -38,7 +38,7 @@ inline DataType parseDType(const std::string &_str) {
             return (DataType)i;
         }
     }
-    std::string msg = "Unrecognized access type \"" + _str +
+    std::string msg = "Unrecognized data type \"" + _str +
                       "\". Candidates are (case-insensitive): ";
     for (auto &&[i, s] : views::enumerate(dataTypeNames)) {
         msg += (i > 0 ? ", " : "");

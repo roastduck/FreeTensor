@@ -10,7 +10,7 @@ expressions in `expr.py`
 '''
 
 import collections
-from typing import Sequence, Tuple, Any, Optional
+from typing import Sequence, Mapping, Tuple, Any, Optional
 
 import freetensor_ffi as ffi
 
@@ -355,7 +355,11 @@ class Invoke:
     instead, which supports generic types
     '''
 
-    def __init__(self, ret_names: Sequence[str], func: ffi.Func, *args, **kvs):
+    def __init__(self,
+                 ret_names: Sequence[str],
+                 func: ffi.Func,
+                 args: Sequence = [],
+                 kvs: Mapping = {}):
         self.args = args
         self.kvs = kvs
         self.func, returns = ffi.strip_returns(func)
@@ -412,7 +416,20 @@ def Any():
     ctx_stack.top().append_stmt(ffi.makeAny())
 
 
-def Func(name, params, returns, body, closure={}):
-    return ffi.makeFunc(
-        name, params, list(map(lambda x: (x[0], ffi.DataType(x[1])), returns)),
-        body, closure)
+class Func(ffi.Func):
+
+    def __init__(self,
+                 name,
+                 params,
+                 returns,
+                 body,
+                 closure={},
+                 custom_callback=None):
+        super().__init__(
+            name, params,
+            list(map(lambda x: (x[0], ffi.DataType(x[1])), returns)), body,
+            closure)
+        self.custom_callback = custom_callback
+
+    def __call__(self, *args, **kvs):
+        return self.custom_callback(*args, **kvs)

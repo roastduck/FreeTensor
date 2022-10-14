@@ -309,7 +309,7 @@ def test_inlined_invoke():
     g = ft.lower(ft.Func("g", ["y"], [], ft.pop_ast()))
 
     with ft.VarDef("x", (4, 4), "float32", "inout") as x:
-        with ft.Invoke([], g, x[2]):
+        with ft.Invoke([], g, [x[2]]):
             pass
     f = ft.lower(ft.Func("f", ["x"], [], ft.pop_ast()), verbose=1)
     code = ft.codegen(f, verbose=True)

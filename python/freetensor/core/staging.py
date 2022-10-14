@@ -137,7 +137,7 @@ class StagingOverload:
         -------
         Any :
             The attribute value.
-        
+
         Throws
         ------
         AttributeError :
@@ -202,6 +202,30 @@ class StagingOverload:
                     break
                 except ContinueException:
                     continue
+
+    def unpack_assign_stmt(self, names, values):
+        '''Customized assign wrapper for one or more targets.
+
+        If `value` is instance of `StagedUnpackAssignable`, it's regarded as a customized
+        assign behavior and gets executed with all the assigned targets' names. Otherwise,
+        it calls `assign_stmt` with each sub-assignments.
+
+        Please note that `names` can be nested tuples like `("a", ("b", "c"))`.
+        '''
+        if isinstance(values, StagedUnpackAssignable):
+            return values.assign(names)
+        elif isinstance(names, str):
+            return self.assign_stmt(names, values)
+        else:
+            assert isinstance(names, Sequence)
+            values = tuple(values)
+            if len(names) != len(values):
+                raise self.error(
+                    "Number of return values does not match when unpacking")
+            returns = []
+            for name, value in zip(names, values):
+                returns.append(self.unpack_assign_stmt(name, value))
+            return tuple(returns)
 
     def assign_stmt(self, name: str, value):
         '''Customized assign wrapper.
@@ -560,6 +584,13 @@ class StagedIterable:
         raise NotImplementedError()
 
 
+class StagedUnpackAssignable(abc.ABC):
+
+    @abc.abstractmethod
+    def assign(self, names: Sequence[str]):
+        raise NotImplementedError()
+
+
 class StagedAssignable(abc.ABC):
 
     @abc.abstractmethod
@@ -691,25 +722,49 @@ class Transformer(ast.NodeTransformer):
 
     def visit_Assign(self, old_node: ast.Assign) -> ast.Assign:
         '''Rule:
-        `lhs = rhs` -> `lhs = assign('lhs', rhs)`
-        `x.lhs = rhs` -> `x.lhs = assign('lhs', rhs)`
+        `lhs = rhs` -> `lhs = unpack_assign_stmt('lhs', rhs)`
+        `x.lhs = rhs` -> `x.lhs = unpack_assign_stmt('lhs', rhs)`
+        `a, (b, c) = (x, (y, z))` -> `a, (b, c) = unpack_assign_stmt(('a', ('b', 'c')), (x, (y, z)))`
+        `a = b = c` -> `a = unpack_assign_stmt('a', c); b = unpack_assign_stmt('b', c)`
+
+        If `unpack_assign_stmt` is not overloaded, `assign_stmt` will be called for each item
         '''
         node: ast.Assign = self.generic_visit(old_node)
-        # FIXME: multi-assign not implemented
-        if len(node.targets) == 1 and (isinstance(node.targets[0], ast.Name) or
-                                       isinstance(node.targets[0],
-                                                  ast.Attribute)):
-            name = None
-            if isinstance(node.targets[0], ast.Name):
-                name = node.targets[0].id
-            elif isinstance(node.targets[0], ast.Attribute):
-                name = node.targets[0].attr
-            if name is not None:
-                node = ast.Assign(
-                    node.targets,
-                    call_helper(StagingOverload.assign_stmt, ast.Constant(name),
-                                node.value))
-        return node
+
+        class UnoverloadableExcept(BaseException):
+            pass
+
+        def recursive_get_names(target):
+            if isinstance(target, ast.Name):
+                return ast.Constant(target.id)
+            elif isinstance(target, ast.Attribute):
+                return target.attr
+            elif isinstance(target, ast.Tuple):
+                # Unpacking: (a, b) = c
+                l = []
+                for t in target.elts:
+                    l.append(recursive_get_names(t))
+                return ast.Tuple(l, ast.Load())
+            else:
+                raise UnoverloadableExcept()
+
+        def do_visit_assign(targets):
+            try:
+                names = recursive_get_names(targets)
+                return ast.Assign([targets],
+                                  call_helper(
+                                      StagingOverload.unpack_assign_stmt, names,
+                                      node.value))
+            except UnoverloadableExcept:
+                return ast.Assign([targets], node.value)
+
+        # If there are more than one item in `node.targets`, it means multiple
+        # assignments like `a = b = c`. For unpacking like `(a, b) = c`, it
+        # is represented as one tuple as a target item
+        new_nodes = []
+        for target in node.targets:
+            new_nodes.append(do_visit_assign(target))
+        return new_nodes
 
     def handleType_AnnAssign(self, node: ast.AnnAssign) -> Any:
         x = node.target
