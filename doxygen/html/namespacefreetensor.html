@@ -1474,8 +1474,10 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 <tr class="separator:a92b3ea9bbdfd15a531b662c4235746a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af189e8a2ac51cffa808385c57a3bb56d"><td class="memItemLeft" align="right" valign="top">std::unordered_set&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af189e8a2ac51cffa808385c57a3bb56d">allReads</a> (const <a class="el" href="classfreetensor_1_1FrontendVarIdx.html">FrontendVarIdx</a> &amp;idx)</td></tr>
 <tr class="separator:af189e8a2ac51cffa808385c57a3bb56d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a01fecb96ab04bff7577997347181ddcb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a01fecb96ab04bff7577997347181ddcb">inlinedInvoke</a> (const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;callSiteMetadata, const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func, const std::vector&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1FrontendVar.html">FrontendVar</a> &gt; &gt; &amp;args, const std::unordered_map&lt; std::string, <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1FrontendVar.html">FrontendVar</a> &gt; &gt; &amp;kvs)</td></tr>
-<tr class="separator:a01fecb96ab04bff7577997347181ddcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0525bc98a05b2f0db5a52f4abda3ff23"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, std::vector&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Buffer.html">Buffer</a> &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0525bc98a05b2f0db5a52f4abda3ff23">stripReturns</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func)</td></tr>
+<tr class="separator:a0525bc98a05b2f0db5a52f4abda3ff23"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19299c3dd40cc4de3eedd8af85b32767"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a19299c3dd40cc4de3eedd8af85b32767">inlinedInvoke</a> (const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;callSiteMetadata, const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func, const std::vector&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1FrontendVar.html">FrontendVar</a> &gt; &gt; &amp;args, const std::unordered_map&lt; std::string, <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1FrontendVar.html">FrontendVar</a> &gt; &gt; &amp;kvs, const std::vector&lt; std::string &gt; &amp;retNames)</td></tr>
+<tr class="separator:a19299c3dd40cc4de3eedd8af85b32767"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a11f0f26017a71b5d41fbef30ddbf3f5e"><td class="memTemplParams" colspan="2">template&lt;class Tbody , class Tparams , class Treturns , class Tclosure &gt; </td></tr>
 <tr class="memitem:a11f0f26017a71b5d41fbef30ddbf3f5e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a11f0f26017a71b5d41fbef30ddbf3f5e">_makeFunc</a> (const std::string &amp;name, Tparams &amp;&amp;params, Treturns &amp;&amp;returns, Tbody &amp;&amp;body)</td></tr>
 <tr class="separator:a11f0f26017a71b5d41fbef30ddbf3f5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -9560,8 +9562,8 @@ template&lt;PBSpaceRef T&gt; </div>
 
 </div>
 </div>
-<a id="a01fecb96ab04bff7577997347181ddcb" name="a01fecb96ab04bff7577997347181ddcb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a01fecb96ab04bff7577997347181ddcb">&#9670;&nbsp;</a></span>inlinedInvoke()</h2>
+<a id="a19299c3dd40cc4de3eedd8af85b32767" name="a19299c3dd40cc4de3eedd8af85b32767"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19299c3dd40cc4de3eedd8af85b32767">&#9670;&nbsp;</a></span>inlinedInvoke()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -9588,7 +9590,13 @@ template&lt;PBSpaceRef T&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::unordered_map&lt; std::string, <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1FrontendVar.html">FrontendVar</a> &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>kvs</em>&#160;</td>
+          <td class="paramname"><em>kvs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; std::string &gt; &amp;&#160;</td>
+          <td class="paramname"><em>retNames</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -9597,7 +9605,7 @@ template&lt;PBSpaceRef T&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p >Replace a Function's all arguments by <code><a class="el" href="classfreetensor_1_1FrontendVar.html">FrontendVar</a></code>s and return an Stmt</p>
+<p >Replace a Function's all arguments by <code><a class="el" href="classfreetensor_1_1FrontendVar.html">FrontendVar</a></code>s and return a <code>Stmt</code></p>
 <p >Usually we handle function calls directly in the frontend. But sometimes we may want to call a differentiated function, which is already lowered as an AST. Then, we can use <code>inlinedInvoke</code> to call it </p>
 
 </div>
@@ -14579,6 +14587,26 @@ template&lt;class T &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0525bc98a05b2f0db5a52f4abda3ff23" name="a0525bc98a05b2f0db5a52f4abda3ff23"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0525bc98a05b2f0db5a52f4abda3ff23">&#9670;&nbsp;</a></span>stripReturns()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::pair&lt; <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>, std::vector&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Buffer.html">Buffer</a> &gt; &gt; &gt; freetensor::stripReturns </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;&#160;</td>
+          <td class="paramname"><em>func</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >A preprocessing step between <code>inlinedInvoke</code></p>
+<p >If the callee returns some tensors, gather information of them, in an outer-to-inner order. The caller then needs to create scopes for these tensors, before finally calling <code>inlinedInvoke</code> inside the scopes </p>
 
 </div>
 </div>

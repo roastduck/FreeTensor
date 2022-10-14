@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['parallelize_0',['parallelize',['../classfreetensor_1_1Schedule.html#a9dd6430725b39cc15a3aa5cad99fa2b1',1,'freetensor::Schedule::parallelize()'],['../namespacefreetensor.html#a3f82a2ccf2f6b44322fb09ae50bf88d5',1,'freetensor::parallelize()']]],
-  ['parallelize_1',['Parallelize',['../classfreetensor_1_1Parallelize.html#a4bc01496d920cf43a23060c7156cf49a',1,'freetensor::Parallelize']]],
+  ['parallelize_0',['Parallelize',['../classfreetensor_1_1Parallelize.html#a4bc01496d920cf43a23060c7156cf49a',1,'freetensor::Parallelize']]],
+  ['parallelize_1',['parallelize',['../namespacefreetensor.html#a3f82a2ccf2f6b44322fb09ae50bf88d5',1,'freetensor::parallelize()'],['../classfreetensor_1_1Schedule.html#a9dd6430725b39cc15a3aa5cad99fa2b1',1,'freetensor::Schedule::parallelize()']]],
   ['parallelizepart_2',['ParallelizePart',['../classfreetensor_1_1ParallelizePart.html#a155a3fbbde94cdefdcb646ad16773308',1,'freetensor::ParallelizePart']]],
   ['parent_3',['parent',['../classfreetensor_1_1ASTPart.html#aa9e302679b4020751cd4a440e5469892',1,'freetensor::ASTPart']]],
   ['parentast_4',['parentAST',['../classfreetensor_1_1ASTNode.html#aa4d9b037ae93dde7d2dae10998515127',1,'freetensor::ASTNode']]],
@@ -34,8 +34,8 @@ var searchData=
   ['pbsimplify_31',['pbSimplify',['../namespacefreetensor.html#a351b8ec93ce130376baacb2c4a8d9a0c',1,'freetensor']]],
   ['pbspace_32',['PBSpace',['../classfreetensor_1_1PBSpace.html#a47e5ccf79bd73d3793e221fef01a93c0',1,'freetensor::PBSpace::PBSpace(PBSpace &amp;&amp;other)'],['../classfreetensor_1_1PBSpace.html#a9def2b23cc162a976fe6fbb89b9443c3',1,'freetensor::PBSpace::PBSpace()'],['../classfreetensor_1_1PBSpace.html#a96987a98794e83ec0ee2b68b380d5d05',1,'freetensor::PBSpace::PBSpace(const PBSpace &amp;other)'],['../classfreetensor_1_1PBSpace.html#a9972c06f87538820486b7ad1b66b23f9',1,'freetensor::PBSpace::PBSpace(const PBSet &amp;set)'],['../classfreetensor_1_1PBSpace.html#a93d5cdbf8b1ee0998987b321fdfd6107',1,'freetensor::PBSpace::PBSpace(isl_space *space)']]],
   ['pbval_33',['PBVal',['../classfreetensor_1_1PBVal.html#a24bf4d49e00aae821e23080d56ece4dd',1,'freetensor::PBVal::PBVal(PBVal &amp;&amp;other)'],['../classfreetensor_1_1PBVal.html#a7b495751d80fe19fb39115b00876dbc4',1,'freetensor::PBVal::PBVal(const PBVal &amp;other)'],['../classfreetensor_1_1PBVal.html#af8d7dc3f394eb02741908f065363c366',1,'freetensor::PBVal::PBVal(isl_val *val)'],['../classfreetensor_1_1PBVal.html#a2af31a9e90971be6cc81976f5bbe11d2',1,'freetensor::PBVal::PBVal()']]],
-  ['permute_34',['permute',['../classfreetensor_1_1Schedule.html#a575b7a57ec6518dc5c6cd53bc8d2b8cc',1,'freetensor::Schedule::permute()'],['../namespacefreetensor.html#a9b570067aa5abf04a28cd49e59b1079a',1,'freetensor::permute()']]],
-  ['permute_35',['Permute',['../classfreetensor_1_1Permute.html#a2ab944743a5783643b6b9cebb5b38a22',1,'freetensor::Permute']]],
+  ['permute_34',['Permute',['../classfreetensor_1_1Permute.html#a2ab944743a5783643b6b9cebb5b38a22',1,'freetensor::Permute']]],
+  ['permute_35',['permute',['../namespacefreetensor.html#a9b570067aa5abf04a28cd49e59b1079a',1,'freetensor::permute()'],['../classfreetensor_1_1Schedule.html#a575b7a57ec6518dc5c6cd53bc8d2b8cc',1,'freetensor::Schedule::permute()']]],
   ['permutedloopsid_36',['permutedLoopsId',['../classfreetensor_1_1Permute.html#a81e961f4f856e3225058fe467da8e2a5',1,'freetensor::Permute']]],
   ['plutofuse_37',['plutoFuse',['../classfreetensor_1_1Schedule.html#a90dfec1fb79ef125bd6e3b9c7c247763',1,'freetensor::Schedule::plutoFuse()'],['../namespacefreetensor.html#a783237e4292524972320f3cbd1c1a9c2',1,'freetensor::plutoFuse(const Stmt &amp;ast, const ID &amp;loop0, const ID &amp;loop1, int nestLevel0, int nestLevel1)']]],
   ['plutopermute_38',['plutoPermute',['../namespacefreetensor.html#ad25074ea31411fb37dc85634e4cafea6',1,'freetensor::plutoPermute()'],['../classfreetensor_1_1Schedule.html#a158e7d4ca81fae20bbe34ac7bbed2974',1,'freetensor::Schedule::plutoPermute()']]],
