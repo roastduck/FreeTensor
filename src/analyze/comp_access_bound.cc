@@ -77,14 +77,17 @@ void CompAccessBound::visit(const VarDef &op) {
             ASSERT(access_[j].indices_.size() == n);
             auto &&index = access_[j].indices_[i];
             std::vector<Expr> lowerItem;
-            if (includeTrivialBound_) {
-                lowerItem.emplace_back(makeIntConst(0));
-            }
             if (checkAllDefined(defs_, index)) {
                 lowerItem.emplace_back(index);
             }
             for (auto &&b : access_[j].lower_[i]) {
                 lowerItem.emplace_back(b.expr());
+            }
+            if (includeTrivialBound_ || !lowerItem.empty()) {
+                // If lowerItem is not empty, we still include the trivial
+                // bound, to avoid make a variable even larger after
+                // pass/shrink_var
+                lowerItem.emplace_back(makeIntConst(0));
             }
             lower.emplace_back(std::move(lowerItem));
         }
@@ -93,15 +96,18 @@ void CompAccessBound::visit(const VarDef &op) {
             ASSERT(access_[j].indices_.size() == n);
             auto &&index = access_[j].indices_[i];
             std::vector<Expr> upperItem;
-            if (includeTrivialBound_) {
-                upperItem.emplace_back(makeSub(
-                    op->buffer_->tensor()->shape()[i], makeIntConst(1)));
-            }
             if (checkAllDefined(defs_, index)) {
                 upperItem.emplace_back(index);
             }
             for (auto &&b : access_[j].upper_[i]) {
                 upperItem.emplace_back(b.expr());
+            }
+            if (includeTrivialBound_ || !upperItem.empty()) {
+                // If upperItem is not empty, we still include the trivial
+                // bound, to avoid make a variable even larger after
+                // pass/shrink_var
+                upperItem.emplace_back(makeSub(
+                    op->buffer_->tensor()->shape()[i], makeIntConst(1)));
             }
             upper.emplace_back(std::move(upperItem));
         }

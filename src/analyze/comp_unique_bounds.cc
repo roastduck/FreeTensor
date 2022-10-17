@@ -349,7 +349,7 @@ void CompUniqueBounds::visit(const Mod &op) {
     updUpper(upper_[op], UpperBound{op});
     updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
     for (auto &&item : getUpper(op->rhs_)) {
-        updUpper(upper_[op], item);
+        updUpper(upper_[op], sub(item, LinearExpr<Rational<int64_t>>{{}, 1}));
     }
 }
 
