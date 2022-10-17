@@ -24,7 +24,9 @@ class ShrinkVar : public Mutator {
             auto &&offset = lower_.at(op->var_);
             ASSERT(offset.size() == op->indices_.size());
             for (auto &&[idx, off] : views::zip(op->indices_, offset)) {
-                idx = makeSub(idx, off);
+                if (off.isValid()) {
+                    idx = makeSub(idx, off);
+                }
             }
         }
         return op;
@@ -38,16 +40,20 @@ class ShrinkVar : public Mutator {
             auto &&upper = upper_.at(op->var_);
             ASSERT(upper.size() == op->indices_.size());
             for (auto &&[idx, u] : views::zip(oldOp->indices_, upper)) {
-                guard = guard.isValid() ? makeLAnd(guard, makeLE(idx, u))
-                                        : makeLE(idx, u);
+                if (u.isValid()) {
+                    guard = guard.isValid() ? makeLAnd(guard, makeLE(idx, u))
+                                            : makeLE(idx, u);
+                }
             }
         }
         if (lower_.count(op->var_)) {
             auto &&lower = lower_.at(op->var_);
             ASSERT(lower.size() == op->indices_.size());
             for (auto &&[idx, l] : views::zip(oldOp->indices_, lower)) {
-                guard = guard.isValid() ? makeLAnd(guard, makeGE(idx, l))
-                                        : makeGE(idx, l);
+                if (l.isValid()) {
+                    guard = guard.isValid() ? makeLAnd(guard, makeGE(idx, l))
+                                            : makeGE(idx, l);
+                }
             }
         }
         return guard.isValid() ? makeIf(std::move(guard), op) : op;

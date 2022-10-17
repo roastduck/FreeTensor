@@ -76,7 +76,10 @@ void CompAccessBound::visit(const VarDef &op) {
         for (size_t j = 0, jEnd = access_.size(); j < jEnd; j++) {
             ASSERT(access_[j].indices_.size() == n);
             auto &&index = access_[j].indices_[i];
-            std::vector<Expr> lowerItem({makeIntConst(0)});
+            std::vector<Expr> lowerItem;
+            if (includeTrivialBound_) {
+                lowerItem.emplace_back(makeIntConst(0));
+            }
             if (checkAllDefined(defs_, index)) {
                 lowerItem.emplace_back(index);
             }
@@ -89,8 +92,11 @@ void CompAccessBound::visit(const VarDef &op) {
         for (size_t j = 0, jEnd = access_.size(); j < jEnd; j++) {
             ASSERT(access_[j].indices_.size() == n);
             auto &&index = access_[j].indices_[i];
-            std::vector<Expr> upperItem(
-                {makeSub(op->buffer_->tensor()->shape()[i], makeIntConst(1))});
+            std::vector<Expr> upperItem;
+            if (includeTrivialBound_) {
+                upperItem.emplace_back(makeSub(
+                    op->buffer_->tensor()->shape()[i], makeIntConst(1)));
+            }
             if (checkAllDefined(defs_, index)) {
                 upperItem.emplace_back(index);
             }
@@ -104,7 +110,11 @@ void CompAccessBound::visit(const VarDef &op) {
         auto u = makeMaxMin(upper);
         result_.lower_.emplace_back(l);
         result_.upper_.emplace_back(u);
-        result_.len_.emplace_back(makeAdd(makeSub(u, l), makeIntConst(1)));
+        if (l.isValid() && u.isValid()) {
+            result_.len_.emplace_back(makeAdd(makeSub(u, l), makeIntConst(1)));
+        } else {
+            result_.len_.emplace_back(nullptr);
+        }
     }
 
     for (auto &&item : access_) {
@@ -160,10 +170,12 @@ void CompAccessBound::visit(const For &op) {
 }
 
 AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
-                            CompAccessBoundMode mode) {
+                            CompAccessBoundMode mode,
+                            bool includeTrivialBound) {
     FindMemType finder(varDefId);
     finder(op);
-    CompAccessBound visitor(varDefId, finder.mtype(), mode);
+    CompAccessBound visitor(varDefId, finder.mtype(), mode,
+                            includeTrivialBound);
     visitor(op);
     return visitor.result();
 }
