@@ -76,12 +76,18 @@ void CompAccessBound::visit(const VarDef &op) {
         for (size_t j = 0, jEnd = access_.size(); j < jEnd; j++) {
             ASSERT(access_[j].indices_.size() == n);
             auto &&index = access_[j].indices_[i];
-            std::vector<Expr> lowerItem({makeIntConst(0)});
+            std::vector<Expr> lowerItem;
             if (checkAllDefined(defs_, index)) {
                 lowerItem.emplace_back(index);
             }
             for (auto &&b : access_[j].lower_[i]) {
                 lowerItem.emplace_back(b.expr());
+            }
+            if (includeTrivialBound_ || !lowerItem.empty()) {
+                // If lowerItem is not empty, we still include the trivial
+                // bound, to avoid make a variable even larger after
+                // pass/shrink_var
+                lowerItem.emplace_back(makeIntConst(0));
             }
             lower.emplace_back(std::move(lowerItem));
         }
@@ -89,13 +95,19 @@ void CompAccessBound::visit(const VarDef &op) {
         for (size_t j = 0, jEnd = access_.size(); j < jEnd; j++) {
             ASSERT(access_[j].indices_.size() == n);
             auto &&index = access_[j].indices_[i];
-            std::vector<Expr> upperItem(
-                {makeSub(op->buffer_->tensor()->shape()[i], makeIntConst(1))});
+            std::vector<Expr> upperItem;
             if (checkAllDefined(defs_, index)) {
                 upperItem.emplace_back(index);
             }
             for (auto &&b : access_[j].upper_[i]) {
                 upperItem.emplace_back(b.expr());
+            }
+            if (includeTrivialBound_ || !upperItem.empty()) {
+                // If upperItem is not empty, we still include the trivial
+                // bound, to avoid make a variable even larger after
+                // pass/shrink_var
+                upperItem.emplace_back(makeSub(
+                    op->buffer_->tensor()->shape()[i], makeIntConst(1)));
             }
             upper.emplace_back(std::move(upperItem));
         }
@@ -104,7 +116,11 @@ void CompAccessBound::visit(const VarDef &op) {
         auto u = makeMaxMin(upper);
         result_.lower_.emplace_back(l);
         result_.upper_.emplace_back(u);
-        result_.len_.emplace_back(makeAdd(makeSub(u, l), makeIntConst(1)));
+        if (l.isValid() && u.isValid()) {
+            result_.len_.emplace_back(makeAdd(makeSub(u, l), makeIntConst(1)));
+        } else {
+            result_.len_.emplace_back(nullptr);
+        }
     }
 
     for (auto &&item : access_) {
@@ -160,10 +176,12 @@ void CompAccessBound::visit(const For &op) {
 }
 
 AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
-                            CompAccessBoundMode mode) {
+                            CompAccessBoundMode mode,
+                            bool includeTrivialBound) {
     FindMemType finder(varDefId);
     finder(op);
-    CompAccessBound visitor(varDefId, finder.mtype(), mode);
+    CompAccessBound visitor(varDefId, finder.mtype(), mode,
+                            includeTrivialBound);
     visitor(op);
     return visitor.result();
 }

@@ -1,5 +1,6 @@
 #include <analyze/all_defs.h>
 #include <analyze/find_stmt.h>
+#include <container_utils.h>
 #include <pass/remove_dead_var.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
@@ -33,7 +34,12 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
-    op->buffer_->tensor()->setShape(range.len_);
+    for (auto &&[len, newLen] :
+         views::zip(op->buffer_->tensor()->shape(), range.len_)) {
+        if (newLen.isValid()) {
+            len = newLen;
+        }
+    }
     lower_.erase(_op->name_);
     upper_.erase(_op->name_);
     return op;
@@ -71,7 +77,7 @@ Stmt shrinkVar(const Stmt &_op) {
     std::unordered_map<ID, AccessBound> bounds;
     for (auto &&[varDefId, name] : allDefs(op, {AccessType::Cache})) {
         bounds[varDefId] =
-            compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ);
+            compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ, false);
     }
 
     // (2)
@@ -86,7 +92,8 @@ Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
 
     // (1)
     std::unordered_map<ID, AccessBound> bounds;
-    bounds[varDefId] = compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ);
+    bounds[varDefId] =
+        compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ, false);
 
     // (2)
     op = ShrinkVar(bounds)(op);

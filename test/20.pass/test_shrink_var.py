@@ -137,6 +137,30 @@ def test_read_bound_with_offset():
     assert ft.pop_ast().match(ast)
 
 
+def test_no_changing_unbounded_var():
+    with ft.VarDef([("idx", (4,), "int32", "input", "cpu"),
+                    ("x", (4, 4), "int32", "output", "cpu"),
+                    ("t", (4, 4), "int32", "cache", "cpu"),
+                    ("y", (4, 4), "int32", "output", "cpu")]) as (idx, x, t, y):
+        with ft.For("i", 0, 4) as i:
+            with ft.For("j", 0, 4) as j:
+                t[idx[i], j] = x[idx[i], j] + 1
+                y[idx[i], j] = t[idx[i], j] * 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1, skip_passes=['prop_one_time_use'])
+
+    # This program should be kept as-is. No additional guards should be added
+    with ft.VarDef([("idx", (4,), "int32", "input", "cpu"),
+                    ("x", (4, 4), "int32", "output", "cpu"),
+                    ("t", (4, 4), "int32", "cache", "cpu"),
+                    ("y", (4, 4), "int32", "output", "cpu")]) as (idx, x, t, y):
+        with ft.For("i", 0, 4) as i:
+            with ft.For("j", 0, 4) as j:
+                t[idx[i], j] = x[idx[i], j] + 1
+                y[idx[i], j] = t[idx[i], j] * 2
+    assert ft.pop_ast().match(ast)
+
+
 # FIXME: Fix this test
 #def test_const_in_branch_1():
 #    with ft.VarDef([("x", (5,), "int32", "input", "cpu"),

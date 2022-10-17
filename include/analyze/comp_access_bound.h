@@ -87,13 +87,16 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
         defsAtVarDef_;
 
     CompAccessBoundMode mode_;
+    bool includeTrivialBound_;
 
     AccessBound result_;
 
   public:
     CompAccessBound(const ID &varDefId, MemType mtype,
-                    CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL)
-        : unique_(*this), varDefId_(varDefId), mtype_(mtype), mode_(mode) {}
+                    CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL,
+                    bool includeTrivialBound = true)
+        : unique_(*this), varDefId_(varDefId), mtype_(mtype), mode_(mode),
+          includeTrivialBound_(includeTrivialBound) {}
 
     const AccessBound &result() const { return result_; }
 
@@ -106,8 +109,19 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
     void visit(const For &op) override;
 };
 
+/**
+ * Compute the bound of all indices indexing a particular variable
+ *
+ * @param op : AST to be analyzed
+ * @param varDefId : ID of the variable to be analyzed
+ * @param mode : Choose to analyze read or write or both
+ * @param includeTrivialBound : True to including `lower_i = 0` and `upper_i =
+ * len_i - 1` as trivial bounds. False to return nullptr if no non-trivial bound
+ * is found
+ */
 AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
-                            CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL);
+                            CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL,
+                            bool includeTrivialBound = true);
 
 } // namespace freetensor
 
