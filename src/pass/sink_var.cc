@@ -102,6 +102,11 @@ Stmt SinkVar::visit(const VarDef &_op) {
 
     case ASTNodeType::If: {
         auto branch = op->body_.as<IfNode>();
+        if (allReads(branch->cond_).count(_op->name_)) {
+            // This check is required or we will crash later passes when
+            // encoutering invalid programs like this
+            throw InvalidProgram(_op->name_ + " is used before defining");
+        }
         Stmt thenCase, elseCase;
         thenCase =
             makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
@@ -123,6 +128,11 @@ Stmt SinkVar::visit(const VarDef &_op) {
 
     case ASTNodeType::Assert: {
         auto ass = op->body_.as<AssertNode>();
+        if (allReads(ass->cond_).count(_op->name_)) {
+            // This check is required or we will crash later passes when
+            // encoutering invalid programs like this
+            throw InvalidProgram(_op->name_ + " is used before defining");
+        }
         auto body = makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
                                ass->body_, false, _op->metadata(), _op->id());
         ret =
