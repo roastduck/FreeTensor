@@ -136,8 +136,9 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     }
 
   private:
-    Expr normalizeExpr(const Expr &expr);
-    std::vector<Expr> normalizeExprs(const std::vector<Expr> &expr);
+    Expr normalizeExpr(const Expr &expr, const ID &baseStmtId);
+    std::vector<Expr> normalizeExprs(const std::vector<Expr> &expr,
+                                     const ID &baseStmtId);
 
     template <class T> void visitStoreLike(const T &op) {
         BaseClass::visit(op);
@@ -157,8 +158,8 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                buffer(op->var_),
                defAxis_.at(op->var_),
                cur_,
-               normalizeExprs(op->indices_),
-               normalizeExprs(conds_)};
+               normalizeExprs(op->indices_, op->id()),
+               conds_};
         if (accFilter_ == nullptr || accFilter_(*ap)) {
             auto &&d = def(op->var_);
             writes_[d->id()].emplace_back(ap);
@@ -177,7 +178,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                     cur_,
                     std::vector<Expr>(source->buffer_->tensor()->shape().size(),
                                       makeAnyExpr()),
-                    normalizeExprs(conds_)};
+                    conds_};
                 writes_[source->id()].emplace_back(ap);
             }
         }

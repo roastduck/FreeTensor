@@ -56,16 +56,18 @@ FindAccessPoint::FindAccessPoint(const Stmt &root,
     }
 }
 
-Expr FindAccessPoint::normalizeExpr(const Expr &expr) {
-    return ReplaceIterAndRecordLog(replaceIter_, replaceIterLog_)(expr);
+Expr FindAccessPoint::normalizeExpr(const Expr &expr, const ID &baseStmtId) {
+    return ReplaceIterAndRecordLog(replaceIter_, replaceIterLog_,
+                                   baseStmtId)(expr);
 }
 
 std::vector<Expr>
-FindAccessPoint::normalizeExprs(const std::vector<Expr> &indices) {
+FindAccessPoint::normalizeExprs(const std::vector<Expr> &indices,
+                                const ID &baseStmtId) {
     std::vector<Expr> ret;
     ret.reserve(indices.size());
     for (auto &&expr : indices) {
-        ret.emplace_back(normalizeExpr(expr));
+        ret.emplace_back(normalizeExpr(expr, baseStmtId));
     }
     return ret;
 }
@@ -107,22 +109,27 @@ void FindAccessPoint::visit(const For &op) {
         step->nodeType() == ASTNodeType::IntConst) {
         auto stepVal = step.as<IntConstNode>()->val_;
         if (stepVal > 0) {
-            conds_.emplace_back(makeLAnd(
-                makeLAnd(makeGE(iter, op->begin_), makeLT(iter, op->end_)),
-                makeEQ(makeMod(makeSub(iter, op->begin_), op->step_),
-                       makeIntConst(0))));
+            conds_.emplace_back(normalizeExpr(
+                makeLAnd(
+                    makeLAnd(makeGE(iter, op->begin_), makeLT(iter, op->end_)),
+                    makeEQ(makeMod(makeSub(iter, op->begin_), op->step_),
+                           makeIntConst(0))),
+                op->id()));
             cur_.emplace_back(iter, op->property_->parallel_);
         } else if (stepVal == 0) {
-            conds_.emplace_back(makeEQ(iter, op->begin_));
+            conds_.emplace_back(
+                normalizeExpr(makeEQ(iter, op->begin_), op->id()));
             cur_.emplace_back(iter, op->property_->parallel_);
         } else {
             auto negIter = makeVar(op->iter_ + ".neg");
             auto newIter = makeMul(makeIntConst(-1), negIter);
-            conds_.emplace_back(makeLAnd(
-                makeLAnd(makeLE(newIter, op->begin_),
-                         makeGT(newIter, op->end_)),
-                makeEQ(makeMod(makeSub(newIter, op->begin_), op->step_),
-                       makeIntConst(0))));
+            conds_.emplace_back(normalizeExpr(
+                makeLAnd(
+                    makeLAnd(makeLE(newIter, op->begin_),
+                             makeGT(newIter, op->end_)),
+                    makeEQ(makeMod(makeSub(newIter, op->begin_), op->step_),
+                           makeIntConst(0))),
+                op->id()));
             cur_.emplace_back(negIter, op->property_->parallel_, iter);
             replaceIter_[op->iter_] = newIter;
         }
@@ -151,14 +158,14 @@ void FindAccessPoint::visit(const If &op) {
     (*this)(op->cond_);
 
     if (!op->elseCase_.isValid()) {
-        conds_.emplace_back(op->cond_);
+        conds_.emplace_back(normalizeExpr(op->cond_, op->id()));
         (*this)(op->thenCase_);
         conds_.pop_back();
     } else {
-        conds_.emplace_back(op->cond_);
+        conds_.emplace_back(normalizeExpr(op->cond_, op->id()));
         (*this)(op->thenCase_);
         conds_.pop_back();
-        conds_.emplace_back(makeLNot(op->cond_));
+        conds_.emplace_back(normalizeExpr(makeLNot(op->cond_), op->id()));
         (*this)(op->elseCase_);
         conds_.pop_back();
     }
@@ -183,8 +190,8 @@ void FindAccessPoint::visit(const Load &op) {
            buffer(op->var_),
            defAxis_.at(op->var_),
            cur_,
-           normalizeExprs(op->indices_),
-           normalizeExprs(conds_)};
+           normalizeExprs(op->indices_, curStmt()->id()),
+           conds_};
     if (accFilter_ == nullptr || accFilter_(*ap)) {
         auto &&d = def(op->var_);
         reads_[def(op->var_)->id()].emplace_back(ap);
@@ -202,7 +209,7 @@ void FindAccessPoint::visit(const Load &op) {
                    cur_,
                    std::vector<Expr>(source->buffer_->tensor()->shape().size(),
                                      makeAnyExpr()),
-                   normalizeExprs(conds_)};
+                   conds_};
             reads_[source->id()].emplace_back(ap);
         }
     }
