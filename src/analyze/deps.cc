@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <sstream>
 
+#include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <container_utils.h>
 #include <except.h>
@@ -534,25 +535,17 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
 
     for (auto &&[expr, strs] : intersect(laterExternals, earlierExternals)) {
         auto &&[pStr, oStr] = strs;
-        // If all of the loops are variant, we don't have to make the constraint
-        // at all. This will save time for Presburger solver
-        for (auto c = common; c.isValid(); c = c->parentStmt()) {
-            if (c->nodeType() == ASTNodeType::For) {
-                if (isVariant(*variantExpr_, expr, c->id())) {
-                    goto found;
-                }
-                goto do_compute_constraint;
-            found:;
-            }
-        }
-        continue;
-
-        // Compute the constraint
-    do_compute_constraint:
         auto require = makeExternalEq(presburger, iterDim, pStr, oStr);
         for (auto c = common; c.isValid(); c = c->parentStmt()) {
             if (c->nodeType() == ASTNodeType::For) {
-                if (isVariant(*variantExpr_, expr, c->id())) {
+                // An external expresson is invariant to a loop if:
+                // 1. The expression in earlier is invariant to the loop, and
+                // 2. The expression is not modified in the loop, and
+                // 3. (1 and 2 imply) the expression in later is also invariant
+                bool invariant = !isVariant(*variantExpr_,
+                                            {expr, earlier->stmt_}, c->id()) &&
+                                 !hasIntersect(allReads(expr), allWrites(c));
+                if (!invariant) {
                     // Since idx[i] must be inside loop i, we only have
                     // to call makeIneqBetweenOps, but no need to call
                     // makeConstraintOfSingleLoop

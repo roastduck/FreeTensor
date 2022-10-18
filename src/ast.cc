@@ -85,6 +85,15 @@ Expr ExprNode::parentExpr() const {
     return nullptr;
 }
 
+Stmt ExprNode::parentStmt() const {
+    for (auto p = parentAST(); p.isValid(); p = p->parentAST()) {
+        if (p->isStmt()) {
+            return p.as<StmtNode>();
+        }
+    }
+    return nullptr;
+}
+
 Stmt StmtNode::parentStmt() const {
     for (auto p = parentAST(); p.isValid(); p = p->parentAST()) {
         if (p->isStmt()) {

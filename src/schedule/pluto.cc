@@ -131,7 +131,7 @@ PBSet extractLoopSet(const PBCtx &ctx, const AccessPoint &p) {
     // project out constant dims
     for (int64_t i = p.iter_.size() - 1; i >= 0; --i)
         if (p.iter_[i].realIter_->nodeType() != ASTNodeType::Var)
-            loopSet.projectOutDims(i, 1);
+            loopSet = projectOutDims(std::move(loopSet), i, 1);
 
     return loopSet;
 }
@@ -205,7 +205,7 @@ struct PermuteInfo {
         }
         auto newToOld = builder.build(ctx);
         newToOld = intersectRange(std::move(newToOld), loopSet);
-        newToOld.moveDimsOutputToInput(0, nParams, 0);
+        newToOld = moveDimsOutputToInput(std::move(newToOld), 0, nParams, 0);
 
         auto func = parseSimplePBFunc(toString(PBFunc(newToOld)));
         ASSERT(func.args_.size() == unsigned(nParams + nestLevel));
@@ -428,25 +428,29 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
                     auto [pos0, outerDims0] =
                         findIterFromAP(d.earlier_, l0->iter_);
                     pos0 += n0;
-                    hMap.projectOutOutputDims(pos0, hMap.nOutDims() - pos0);
+                    hMap = projectOutOutputDims(std::move(hMap), pos0,
+                                                hMap.nOutDims() - pos0);
                     pos0 -= n0;
                     for (int i = outerDims0.size() - 1; i >= 0;
                          pos0 = outerDims0[i--])
-                        hMap.projectOutOutputDims(outerDims0[i] + 1,
-                                                  pos0 - outerDims0[i] - 1);
-                    hMap.projectOutOutputDims(0, pos0);
+                        hMap = projectOutOutputDims(std::move(hMap),
+                                                    outerDims0[i] + 1,
+                                                    pos0 - outerDims0[i] - 1);
+                    hMap = projectOutOutputDims(std::move(hMap), 0, pos0);
 
                     // remove inner dims for later
                     auto [pos1, outerDims1] =
                         findIterFromAP(d.later_, l1->iter_);
                     pos1 += n1;
-                    hMap.projectOutInputDims(pos1, hMap.nInDims() - pos1);
+                    hMap = projectOutInputDims(std::move(hMap), pos1,
+                                               hMap.nInDims() - pos1);
                     pos1 -= n1;
                     for (int i = outerDims1.size() - 1; i >= 0;
                          pos1 = outerDims1[i--])
-                        hMap.projectOutInputDims(outerDims1[i] + 1,
-                                                 pos1 - outerDims1[i] - 1);
-                    hMap.projectOutInputDims(0, pos1);
+                        hMap = projectOutInputDims(std::move(hMap),
+                                                   outerDims1[i] + 1,
+                                                   pos1 - outerDims1[i] - 1);
+                    hMap = projectOutInputDims(std::move(hMap), 0, pos1);
 
                     // flatten to set for later coefficients computation;
                     // later dimensions first, so the first half would be

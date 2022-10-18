@@ -143,6 +143,9 @@ typedef Ref<ASTNode> AST;
 #define COPY_DEBUG_INFO(ret, old) (ret)
 #endif
 
+class StmtNode;
+typedef Ref<StmtNode> Stmt;
+
 /**
  * Base class of all expression nodes in an AST
  */
@@ -158,6 +161,7 @@ class ExprNode : public ASTNode {
     virtual bool isUnary() const { return false; }
 
     Ref<ExprNode> parentExpr() const;
+    Ref<StmtNode> parentStmt() const;
 
     void modifiedHook() override {
         ASTNode::modifiedHook();
@@ -171,9 +175,6 @@ class ExprNode : public ASTNode {
     DEFINE_NODE_ACCESS(Expr);
 };
 typedef Ref<ExprNode> Expr;
-
-class StmtNode;
-typedef Ref<StmtNode> Stmt;
 
 /**
  * Identify an Stmt or Expr acrossing passes, so we do not need to pass pointers

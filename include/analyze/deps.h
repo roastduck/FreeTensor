@@ -520,6 +520,9 @@ class FindDeps {
      * - KillBoth: KillEarlier + KillLater
      *
      * Defaults to no restriction
+     *
+     * Note: killing test is insensitive to loop-invariant, which means there
+     * will be false nagative
      */
     FindDeps mode(FindDepsMode m) {
         FindDeps ret = *this;

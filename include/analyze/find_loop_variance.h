@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <analyze/track_stmt.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -16,15 +17,19 @@ enum class LoopVariability : int {
 
 typedef std::unordered_map<std::string, std::unordered_map<ID, LoopVariability>>
     LoopVariTransVarMap;
-typedef std::unordered_map<VarDef, std::unordered_map<ID, LoopVariability>>
+typedef std::unordered_map<ID /* of VarDef */,
+                           std::unordered_map<ID, LoopVariability>>
     LoopVariUniqVarMap;
-typedef std::unordered_map<Expr, std::unordered_map<ID, LoopVariability>>
+typedef std::unordered_map<StmtOrExprID /* of Expr */,
+                           std::unordered_map<ID, LoopVariability>>
     LoopVariExprMap;
 
 /**
  * Initialize all expressions to Unkown to its surrounding loops
  */
-class InitExprVari : public Visitor {
+class InitExprVari : public TrackStmt<Visitor> {
+    typedef TrackStmt<Visitor> BaseClass;
+
     LoopVariExprMap &exprInfo_;
     std::vector<ID> loopStack_;
 
@@ -48,7 +53,9 @@ class InitExprVari : public Visitor {
  * - If all of the expressions stored to it is Invariant, it will become
  * Invariant
  */
-class MarkStores : public Visitor {
+class MarkStores : public TrackStmt<Visitor> {
+    typedef TrackStmt<Visitor> BaseClass;
+
     const std::string &var_;
     std::vector<Expr> &condStack_;
     LoopVariTransVarMap &varInfo_;
@@ -67,7 +74,7 @@ class MarkStores : public Visitor {
     void meetTo(const Expr &from, const std::string &to);
 
     template <class T> void visitMemWrite(const T &op) {
-        Visitor::visit(op);
+        BaseClass::visit(op);
         if (op->var_ == var_) {
             meetTo(op->expr_, op->var_);
             for (auto &&index : op->indices_) {
@@ -86,7 +93,9 @@ class MarkStores : public Visitor {
     void visit(const ReduceTo &op) override { visitMemWrite(op); }
 };
 
-class FindLoopVariance : public Visitor {
+class FindLoopVariance : public TrackStmt<Visitor> {
+    typedef TrackStmt<Visitor> BaseClass;
+
     std::vector<ID> loopStack_;
     std::vector<Expr> condStack_;
     std::unordered_map<std::string, For> loops_;
@@ -124,9 +133,11 @@ class FindLoopVariance : public Visitor {
     void visit(const Cast &op) override;
 };
 
-bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,
+bool isVariant(const LoopVariExprMap &exprInfo, const StmtOrExprID &expr,
                const ID &loop);
 bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
+               const ID &loop);
+bool isVariant(const LoopVariUniqVarMap &varInfo, const ID &defId,
                const ID &loop);
 
 /**

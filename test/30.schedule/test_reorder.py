@@ -268,3 +268,98 @@ def test_local_var():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_dep_by_external_var():
+    with ft.VarDef([("idx1", (4, 8), "int32", "input", "cpu"),
+                    ("idx2", (4, 8), "int32", "input", "cpu"),
+                    ("y", (4, 9), "int32", "output", "cpu")]) as (idx1, idx2,
+                                                                  y):
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                y[idx1[i, j] + i, idx2[i, j] + j] = i + j
+                # May be overriden by some next statements, for example,
+                # when (i, j) == (0, 1), idx1[i, j] + i == 0 + 0 == 0, and
+                # when (i, j) == (1, 0), idx1[i, j] + i == -1 + 1 == 0, and so is to j
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast, verbose=2)
+    with pytest.raises(ft.InvalidSchedule):
+        s.reorder(["L2", "L1"])
+
+
+def test_no_dep_by_invariant_external_var():
+    with ft.VarDef([("idx1", (), "int32", "input", "cpu"),
+                    ("idx2", (), "int32", "input", "cpu"),
+                    ("y", (4, 9), "int32", "output", "cpu")]) as (idx1, idx2,
+                                                                  y):
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                y[idx1[...] + i, idx2[...] + j] = i + j
+                # Nothing will be overwridden, because idx1 and idx2 always keep the same.
+                # After adding with i or j, they are all different among iterations
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast, verbose=2)
+    s.reorder(["L2", "L1"])
+    ast = s.ast()
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("idx1", (), "int32", "input", "cpu"),
+                    ("idx2", (), "int32", "input", "cpu"),
+                    ("y", (4, 9), "int32", "output", "cpu")]) as (idx1, idx2,
+                                                                  y):
+        with ft.For("j", 0, 8, label="L2") as j:
+            with ft.For("i", 0, 4, label="L1") as i:
+                y[idx1[...] + i, idx2[...] + j] = i + j
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_no_dep_by_external_var_variant_of_another_loop():
+    with ft.VarDef([("idx1", (4,), "int32", "input", "cpu"),
+                    ("idx2", (4,), "int32", "input", "cpu"),
+                    ("y", (4, 9), "int32", "output", "cpu")]) as (idx1, idx2,
+                                                                  y):
+        with ft.For("k", 0, 4, label="L0") as k:
+            with ft.For("i", 0, 4, label="L1") as i:
+                with ft.For("j", 0, 8, label="L2") as j:
+                    y[idx1[k] + i, idx2[k] + j] = i + j
+                    # Nothing will be overwridden. Although idx1 and idx2 are related to k,
+                    # we only reorder with respect to the same k, so they can be treated
+                    # as constant values. After adding with i or j, they are all different
+                    # among iterations
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast, verbose=2)
+    s.reorder(["L2", "L1"])
+    ast = s.ast()
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("idx1", (4,), "int32", "input", "cpu"),
+                    ("idx2", (4,), "int32", "input", "cpu"),
+                    ("y", (4, 9), "int32", "output", "cpu")]) as (idx1, idx2,
+                                                                  y):
+        with ft.For("k", 0, 4, label="L0") as k:
+            with ft.For("j", 0, 8, label="L2") as j:
+                with ft.For("i", 0, 4, label="L1") as i:
+                    y[idx1[k] + i, idx2[k] + j] = i + j
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+# FIXME
+#def test_dep_by_external_var_reversed_loop():
+#    with ft.VarDef([("idx1", (4, 8), "int32", "input", "cpu"),
+#                    ("idx2", (4, 8), "int32", "input", "cpu"),
+#                    ("y", (4, 9), "int32", "output", "cpu")]) as (idx1, idx2,
+#                                                                  y):
+#        with ft.For("i", 3, -1, -1, label="L1") as i:
+#            with ft.For("j", 7, -1, -1, label="L2") as j:
+#                y[idx1[i, j] + i, idx2[i, j] + j] = i + j
+#                # May be overriden by some next statements, for example,
+#                # when (i, j) == (0, 1), idx1[i, j] + i == 0 + 0 == 0, and
+#                # when (i, j) == (1, 0), idx1[i, j] + i == -1 + 1 == 0, and so is to j
+#    ast = ft.pop_ast(verbose=True)
+#    s = ft.Schedule(ast, verbose=2)
+#    with pytest.raises(ft.InvalidSchedule):
+#        s.reorder(["L2", "L1"])

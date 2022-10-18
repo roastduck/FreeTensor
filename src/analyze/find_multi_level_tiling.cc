@@ -55,7 +55,9 @@ void FindMultiLevelTiling::storeBuf() {
             std::vector<bool> checkAppear(buf_.size());
             for (unsigned i = 0; i < infoItem.size(); i++) {
                 for (unsigned j = 0; j < buf_.size(); j++) {
-                    if (isVariant(loopVariExprMap_, infoItem[i], buf_[j].id)) {
+                    if (isVariant(loopVariExprMap_,
+                                  {infoItem[i], infoItem[i]->parentStmt()},
+                                  buf_[j].id)) {
                         checkAppear[j] = true;
                     }
                 }
@@ -83,7 +85,8 @@ void FindMultiLevelTiling::storeBuf() {
             std::vector<bool> checkAppear(buf_.size());
             for (unsigned i = 0; i < bufIndices.size(); i++) {
                 for (unsigned j = 0; j < buf_.size(); j++) {
-                    if (isVariant(loopVariExprMap_, bufIndices[i],
+                    if (isVariant(loopVariExprMap_,
+                                  {bufIndices[i], bufIndices[i]->parentStmt()},
                                   buf_[j].id)) {
                         checkAppear[j] = true;
                         tmp.dimIterated[i] = true;
