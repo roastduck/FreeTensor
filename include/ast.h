@@ -198,6 +198,9 @@ class StmtOrExprID {
         expr_ = expr;
     }
 
+    const ID &stmtId() const { return stmtId_; }
+    const Expr &expr() const { return expr_; }
+
     friend std::ostream &operator<<(std::ostream &os, const StmtOrExprID &id);
     friend bool operator==(const StmtOrExprID &lhs, const StmtOrExprID &rhs);
     friend struct ::std::hash<StmtOrExprID>;

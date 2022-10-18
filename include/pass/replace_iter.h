@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 
+#include <hash.h>
 #include <mutator.h>
 
 namespace freetensor {
@@ -21,8 +22,36 @@ class ReplaceIter : public Mutator {
 
   protected:
     Expr visit(const Var &op) override {
-        if (replace_.count(op->name_)) {
-            return replace_.at(op->name_);
+        if (auto it = replace_.find(op->name_); it != replace_.end()) {
+            return it->second;
+        } else {
+            return op;
+        }
+    }
+};
+
+class ReplaceIterAndRecordLog : public Mutator {
+    std::unordered_map<std::string, Expr> replace_;
+    std::unordered_map<StmtOrExprID, Expr> &replacedLog_;
+
+  public:
+    ReplaceIterAndRecordLog(
+        const std::unordered_map<std::string, Expr> &replace,
+        std::unordered_map<StmtOrExprID, Expr> &replacedLog)
+        : replace_(replace), replacedLog_(replacedLog) {}
+
+  protected:
+    Expr visitExpr(const Expr &expr) override {
+        auto newExpr = Mutator::visitExpr(expr);
+        if (!HashComparator{}(expr, newExpr)) {
+            replacedLog_[{expr, expr->parentStmt()}] = newExpr;
+        }
+        return newExpr;
+    }
+
+    Expr visit(const Var &op) override {
+        if (auto it = replace_.find(op->name_); it != replace_.end()) {
+            return it->second;
         } else {
             return op;
         }

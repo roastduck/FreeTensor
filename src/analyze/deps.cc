@@ -56,12 +56,12 @@ FindAccessPoint::FindAccessPoint(const Stmt &root,
     }
 }
 
-Expr FindAccessPoint::normalizeExpr(const Expr &expr) const {
-    return ReplaceIter(replaceIter_)(expr);
+Expr FindAccessPoint::normalizeExpr(const Expr &expr) {
+    return ReplaceIterAndRecordLog(replaceIter_, replaceIterLog_)(expr);
 }
 
 std::vector<Expr>
-FindAccessPoint::normalizeExprs(const std::vector<Expr> &indices) const {
+FindAccessPoint::normalizeExprs(const std::vector<Expr> &indices) {
     std::vector<Expr> ret;
     ret.reserve(indices.size());
     for (auto &&expr : indices) {
@@ -1009,7 +1009,15 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
 
-    auto variantExpr = LAZY(findLoopVariance(op).first);
+    auto variantExpr = Lazy([&]() {
+        auto variantExpr = findLoopVariance(op).first;
+        for (auto &&[from, to] : accFinder.replaceIterLog()) {
+            if (auto it = variantExpr.find(from); it != variantExpr.end()) {
+                variantExpr[{to, from.stmtId()}] = it->second;
+            }
+        }
+        return variantExpr;
+    });
 
     AnalyzeDeps analyzer(
         accFinder.reads(), accFinder.writes(), accFinder.allDefs(),

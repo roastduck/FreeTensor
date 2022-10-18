@@ -347,19 +347,18 @@ def test_no_dep_by_external_var_variant_of_another_loop():
     assert std.match(ast)
 
 
-# FIXME
-#def test_dep_by_external_var_reversed_loop():
-#    with ft.VarDef([("idx1", (4, 8), "int32", "input", "cpu"),
-#                    ("idx2", (4, 8), "int32", "input", "cpu"),
-#                    ("y", (4, 9), "int32", "output", "cpu")]) as (idx1, idx2,
-#                                                                  y):
-#        with ft.For("i", 3, -1, -1, label="L1") as i:
-#            with ft.For("j", 7, -1, -1, label="L2") as j:
-#                y[idx1[i, j] + i, idx2[i, j] + j] = i + j
-#                # May be overriden by some next statements, for example,
-#                # when (i, j) == (0, 1), idx1[i, j] + i == 0 + 0 == 0, and
-#                # when (i, j) == (1, 0), idx1[i, j] + i == -1 + 1 == 0, and so is to j
-#    ast = ft.pop_ast(verbose=True)
-#    s = ft.Schedule(ast, verbose=2)
-#    with pytest.raises(ft.InvalidSchedule):
-#        s.reorder(["L2", "L1"])
+def test_dep_by_external_var_reversed_loop():
+    with ft.VarDef([("idx1", (4, 8), "int32", "input", "cpu"),
+                    ("idx2", (4, 8), "int32", "input", "cpu"),
+                    ("y", (4, 9), "int32", "output", "cpu")]) as (idx1, idx2,
+                                                                  y):
+        with ft.For("i", 3, -1, -1, label="L1") as i:
+            with ft.For("j", 7, -1, -1, label="L2") as j:
+                y[idx1[i, j] + i, idx2[i, j] + j] = i + j
+                # May be overriden by some next statements, for example,
+                # when (i, j) == (0, 1), idx1[i, j] + i == 0 + 0 == 0, and
+                # when (i, j) == (1, 0), idx1[i, j] + i == -1 + 1 == 0, and so is to j
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast, verbose=2)
+    with pytest.raises(ft.InvalidSchedule):
+        s.reorder(["L2", "L1"])

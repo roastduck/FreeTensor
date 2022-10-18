@@ -114,6 +114,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
 
     // For negative steps, replace iter with -neg_iter
     std::unordered_map<std::string, Expr> replaceIter_;
+    std::unordered_map<StmtOrExprID, Expr> replaceIterLog_;
 
   public:
     FindAccessPoint(const Stmt &root, const FindDepsAccFilter &accFilter);
@@ -130,9 +131,13 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
         return scope2coord_;
     }
 
+    const std::unordered_map<StmtOrExprID, Expr> replaceIterLog() const {
+        return replaceIterLog_;
+    }
+
   private:
-    Expr normalizeExpr(const Expr &expr) const;
-    std::vector<Expr> normalizeExprs(const std::vector<Expr> &expr) const;
+    Expr normalizeExpr(const Expr &expr);
+    std::vector<Expr> normalizeExprs(const std::vector<Expr> &expr);
 
     template <class T> void visitStoreLike(const T &op) {
         BaseClass::visit(op);
