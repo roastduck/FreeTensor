@@ -17,7 +17,7 @@ var searchData=
   ['evolutionarysearch_14',['evolutionarySearch',['../classfreetensor_1_1AutoSchedule.html#ad66aa15edb4ac91b2c13b7fe55415561',1,'freetensor::AutoSchedule']]],
   ['exceptsafeparallelfor_15',['exceptSafeParallelFor',['../namespacefreetensor.html#ac3d565eb01f9334350522df497cf9e7a',1,'freetensor']]],
   ['exists_16',['exists',['../classfreetensor_1_1FindDeps.html#a2508e6af289012eb9fe994bd7cd52667',1,'freetensor::FindDeps::exists()'],['../classfreetensor_1_1Z3Simplify.html#a723bb1caea26d9519af537ae06632740',1,'freetensor::Z3Simplify::exists()']]],
-  ['expr_17',['expr',['../classfreetensor_1_1UpperBound.html#ac6c3ae2e0ccd064bfa8603605a3a5006',1,'freetensor::UpperBound::expr()'],['../classfreetensor_1_1LowerBound.html#a4a87b5029c7960bfb87f865ad37c71fa',1,'freetensor::LowerBound::expr()']]],
+  ['expr_17',['expr',['../classfreetensor_1_1StmtOrExprID.html#a49d3d190c3b268552b10ac6b894f81a3',1,'freetensor::StmtOrExprID::expr()'],['../classfreetensor_1_1UpperBound.html#ac6c3ae2e0ccd064bfa8603605a3a5006',1,'freetensor::UpperBound::expr()'],['../classfreetensor_1_1LowerBound.html#a4a87b5029c7960bfb87f865ad37c71fa',1,'freetensor::LowerBound::expr()']]],
   ['exprinfo_18',['exprInfo',['../classfreetensor_1_1FindLoopVariance.html#aa01c53d4bcc2a2378245a8e04dbb74a0',1,'freetensor::FindLoopVariance']]],
   ['extracheck_19',['extraCheck',['../structfreetensor_1_1Dependency.html#a98d2c578630cb0df810fc3aa7e6fe95a',1,'freetensor::Dependency']]]
 ];

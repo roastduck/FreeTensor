@@ -577,6 +577,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReplaceIter.html">ReplaceIter</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReplaceIterAndRecordLog.html">ReplaceIterAndRecordLog</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReplaceUses.html">ReplaceUses</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RootCallSelector.html">RootCallSelector</a></td></tr>
@@ -759,16 +761,16 @@ Typedefs</h2></td></tr>
 <tr class="separator:a1533555abd55c944984c274ffa629c70"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a370ade5be645f87853c1e456ac2b6b6a"><td class="memItemLeft" align="right" valign="top">typedef std::unordered_map&lt; std::string, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a370ade5be645f87853c1e456ac2b6b6a">LoopVariTransVarMap</a></td></tr>
 <tr class="separator:a370ade5be645f87853c1e456ac2b6b6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac962049efa94481ccbaa1cfeb191d15b"><td class="memItemLeft" align="right" valign="top">typedef std::unordered_map&lt; <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a>, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac962049efa94481ccbaa1cfeb191d15b">LoopVariUniqVarMap</a></td></tr>
-<tr class="separator:ac962049efa94481ccbaa1cfeb191d15b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3ba38f14a2846f529627b1eee75bb90d"><td class="memItemLeft" align="right" valign="top">typedef std::unordered_map&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3ba38f14a2846f529627b1eee75bb90d">LoopVariExprMap</a></td></tr>
-<tr class="separator:a3ba38f14a2846f529627b1eee75bb90d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08c5fd132603c854d45098916c635dfb"><td class="memItemLeft" align="right" valign="top">typedef std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a08c5fd132603c854d45098916c635dfb">LoopVariUniqVarMap</a></td></tr>
+<tr class="separator:a08c5fd132603c854d45098916c635dfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2158112a82b5397919cff3bd1291f0d3"><td class="memItemLeft" align="right" valign="top">typedef std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2158112a82b5397919cff3bd1291f0d3">LoopVariExprMap</a></td></tr>
+<tr class="separator:a2158112a82b5397919cff3bd1291f0d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a694935ddfd9f4e178ba59d9aef4d532a"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ASTNode.html">ASTNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a></td></tr>
 <tr class="separator:a694935ddfd9f4e178ba59d9aef4d532a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acfa6f07a5497b3d187fe112708aa335b"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ExprNode.html">ExprNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a></td></tr>
-<tr class="separator:acfa6f07a5497b3d187fe112708aa335b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b7e165b3601cc722c7b357347dc6de9"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1StmtNode.html">StmtNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a></td></tr>
 <tr class="separator:a8b7e165b3601cc722c7b357347dc6de9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acfa6f07a5497b3d187fe112708aa335b"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ExprNode.html">ExprNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a></td></tr>
+<tr class="separator:acfa6f07a5497b3d187fe112708aa335b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abfc2360a99c4b94133850b2662e3360a"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1SketchPartNode.html">SketchPartNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#abfc2360a99c4b94133850b2662e3360a">SketchPart</a></td></tr>
 <tr class="separator:abfc2360a99c4b94133850b2662e3360a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab23d8042ffec81ba7475dbcf7a74bb65"><td class="memItemLeft" align="right" valign="top">typedef std::map&lt; <a class="el" href="namespacefreetensor.html#a576ff05b03be0c005e273255a841860f">SketchPartType</a>, <a class="el" href="namespacefreetensor.html#abfc2360a99c4b94133850b2662e3360a">SketchPart</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab23d8042ffec81ba7475dbcf7a74bb65">PartMap</a></td></tr>
@@ -1200,11 +1202,13 @@ Functions</h2></td></tr>
 <tr class="separator:a0b4c918ffe693363ccd3e25c43806217"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a62170293edd00b9f0d28404db1f4b147"><td class="memItemLeft" align="right" valign="top">std::unordered_map&lt; <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a>, std::vector&lt; <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a62170293edd00b9f0d28404db1f4b147">findIndexingLoops</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a62170293edd00b9f0d28404db1f4b147"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa375fdf785e6a2836bc98f3941a881a7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa375fdf785e6a2836bc98f3941a881a7">isVariant</a> (const <a class="el" href="namespacefreetensor.html#a3ba38f14a2846f529627b1eee75bb90d">LoopVariExprMap</a> &amp;exprInfo, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
-<tr class="separator:aa375fdf785e6a2836bc98f3941a881a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5a5d0dfdcb85a162afb6d4fa9a22c8e6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5a5d0dfdcb85a162afb6d4fa9a22c8e6">isVariant</a> (const <a class="el" href="namespacefreetensor.html#ac962049efa94481ccbaa1cfeb191d15b">LoopVariUniqVarMap</a> &amp;varInfo, const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;def, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
+<tr class="memitem:a044edc480fb1b2a916798ab65225101c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a044edc480fb1b2a916798ab65225101c">isVariant</a> (const <a class="el" href="namespacefreetensor.html#a2158112a82b5397919cff3bd1291f0d3">LoopVariExprMap</a> &amp;exprInfo, const <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a> &amp;expr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
+<tr class="separator:a044edc480fb1b2a916798ab65225101c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a5d0dfdcb85a162afb6d4fa9a22c8e6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5a5d0dfdcb85a162afb6d4fa9a22c8e6">isVariant</a> (const <a class="el" href="namespacefreetensor.html#a08c5fd132603c854d45098916c635dfb">LoopVariUniqVarMap</a> &amp;varInfo, const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;def, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
 <tr class="separator:a5a5d0dfdcb85a162afb6d4fa9a22c8e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa4e47af945a5ef2a6219ac757ce73b58"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a3ba38f14a2846f529627b1eee75bb90d">LoopVariExprMap</a>, <a class="el" href="namespacefreetensor.html#ac962049efa94481ccbaa1cfeb191d15b">LoopVariUniqVarMap</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa4e47af945a5ef2a6219ac757ce73b58">findLoopVariance</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
+<tr class="memitem:a2f2363cfea1cea798e4fffe07cdacafb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2f2363cfea1cea798e4fffe07cdacafb">isVariant</a> (const <a class="el" href="namespacefreetensor.html#a08c5fd132603c854d45098916c635dfb">LoopVariUniqVarMap</a> &amp;varInfo, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;defId, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
+<tr class="separator:a2f2363cfea1cea798e4fffe07cdacafb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4e47af945a5ef2a6219ac757ce73b58"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a2158112a82b5397919cff3bd1291f0d3">LoopVariExprMap</a>, <a class="el" href="namespacefreetensor.html#a08c5fd132603c854d45098916c635dfb">LoopVariUniqVarMap</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa4e47af945a5ef2a6219ac757ce73b58">findLoopVariance</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:aa4e47af945a5ef2a6219ac757ce73b58"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a7d091e7730b935cd8461ca157d016c"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structfreetensor_1_1ForsWithDataReuse.html">ForsWithDataReuse</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9a7d091e7730b935cd8461ca157d016c">findMultiLevelTiling</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast)</td></tr>
 <tr class="separator:a9a7d091e7730b935cd8461ca157d016c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1568,6 +1572,27 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:a2b34ae9ba8409e38bc3385a9047daf55"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a2b34ae9ba8409e38bc3385a9047daf55"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2b34ae9ba8409e38bc3385a9047daf55">PBRefTake</a> (std::remove_reference_t&lt; T &gt; &amp;&amp;t)</td></tr>
 <tr class="separator:a2b34ae9ba8409e38bc3385a9047daf55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d1e7245c23afe3b238f64f581212eb6"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:a6d1e7245c23afe3b238f64f581212eb6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6d1e7245c23afe3b238f64f581212eb6">projectOutAllParams</a> (T &amp;&amp;set)</td></tr>
+<tr class="separator:a6d1e7245c23afe3b238f64f581212eb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04360deda7f6a24434ed5228e848fdb6"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a04360deda7f6a24434ed5228e848fdb6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a04360deda7f6a24434ed5228e848fdb6">projectOutAllParams</a> (T &amp;&amp;map)</td></tr>
+<tr class="separator:a04360deda7f6a24434ed5228e848fdb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fa6873b57da337d7d149dd7b64aa718"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:a6fa6873b57da337d7d149dd7b64aa718"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6fa6873b57da337d7d149dd7b64aa718">projectOutDims</a> (T &amp;&amp;set, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>)</td></tr>
+<tr class="separator:a6fa6873b57da337d7d149dd7b64aa718"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5afcef2360c9672f6562d5b175ae02f1"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a5afcef2360c9672f6562d5b175ae02f1"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5afcef2360c9672f6562d5b175ae02f1">projectOutInputDims</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>)</td></tr>
+<tr class="separator:a5afcef2360c9672f6562d5b175ae02f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a40c1e167e9e4348a4e665b983e6a182f"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a40c1e167e9e4348a4e665b983e6a182f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a40c1e167e9e4348a4e665b983e6a182f">projectOutOutputDims</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>)</td></tr>
+<tr class="separator:a40c1e167e9e4348a4e665b983e6a182f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09b661e797c2fce244e7f8885cbc378a"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a09b661e797c2fce244e7f8885cbc378a"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a09b661e797c2fce244e7f8885cbc378a">moveDimsInputToOutput</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
+<tr class="separator:a09b661e797c2fce244e7f8885cbc378a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6449d19c43f08cd504895cf9b324d4b9"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a6449d19c43f08cd504895cf9b324d4b9"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6449d19c43f08cd504895cf9b324d4b9">moveDimsOutputToInput</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
+<tr class="separator:a6449d19c43f08cd504895cf9b324d4b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8625ab55342e821c0620e7621eb824e4"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
 <tr class="memitem:a8625ab55342e821c0620e7621eb824e4"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8625ab55342e821c0620e7621eb824e4">complement</a> (T &amp;&amp;set)</td></tr>
 <tr class="separator:a8625ab55342e821c0620e7621eb824e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2795,14 +2820,14 @@ template&lt;class K &gt; </div>
 
 </div>
 </div>
-<a id="a3ba38f14a2846f529627b1eee75bb90d" name="a3ba38f14a2846f529627b1eee75bb90d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3ba38f14a2846f529627b1eee75bb90d">&#9670;&nbsp;</a></span>LoopVariExprMap</h2>
+<a id="a2158112a82b5397919cff3bd1291f0d3" name="a2158112a82b5397919cff3bd1291f0d3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2158112a82b5397919cff3bd1291f0d3">&#9670;&nbsp;</a></span>LoopVariExprMap</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef std::unordered_map&lt;<a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>, std::unordered_map&lt;<a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a>&gt; &gt; <a class="el" href="namespacefreetensor.html#a3ba38f14a2846f529627b1eee75bb90d">freetensor::LoopVariExprMap</a></td>
+          <td class="memname">typedef std::unordered_map&lt;<a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a> , std::unordered_map&lt;<a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a>&gt; &gt; <a class="el" href="namespacefreetensor.html#a2158112a82b5397919cff3bd1291f0d3">freetensor::LoopVariExprMap</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -2823,14 +2848,14 @@ template&lt;class K &gt; </div>
 
 </div>
 </div>
-<a id="ac962049efa94481ccbaa1cfeb191d15b" name="ac962049efa94481ccbaa1cfeb191d15b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac962049efa94481ccbaa1cfeb191d15b">&#9670;&nbsp;</a></span>LoopVariUniqVarMap</h2>
+<a id="a08c5fd132603c854d45098916c635dfb" name="a08c5fd132603c854d45098916c635dfb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a08c5fd132603c854d45098916c635dfb">&#9670;&nbsp;</a></span>LoopVariUniqVarMap</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef std::unordered_map&lt;<a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a>, std::unordered_map&lt;<a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a>&gt; &gt; <a class="el" href="namespacefreetensor.html#ac962049efa94481ccbaa1cfeb191d15b">freetensor::LoopVariUniqVarMap</a></td>
+          <td class="memname">typedef std::unordered_map&lt;<a class="el" href="classfreetensor_1_1ID.html">ID</a> , std::unordered_map&lt;<a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a>&gt; &gt; <a class="el" href="namespacefreetensor.html#a08c5fd132603c854d45098916c635dfb">freetensor::LoopVariUniqVarMap</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -8406,7 +8431,7 @@ template&lt;class T &gt; </div>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt; <a class="el" href="namespacefreetensor.html#a3ba38f14a2846f529627b1eee75bb90d">LoopVariExprMap</a>, <a class="el" href="namespacefreetensor.html#ac962049efa94481ccbaa1cfeb191d15b">LoopVariUniqVarMap</a> &gt; freetensor::findLoopVariance </td>
+          <td class="memname">std::pair&lt; <a class="el" href="namespacefreetensor.html#a2158112a82b5397919cff3bd1291f0d3">LoopVariExprMap</a>, <a class="el" href="namespacefreetensor.html#a08c5fd132603c854d45098916c635dfb">LoopVariUniqVarMap</a> &gt; freetensor::findLoopVariance </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
           <td class="paramname"><em>op</em></td><td>)</td>
@@ -8422,7 +8447,7 @@ template&lt;class T &gt; </div>
 <div class="line"> <a class="code hl_enumvalue" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074ba88183b946cc5f0e8c96b2e66e1c74a7e">Unknown</a>  (implemented by the `<a class="code hl_enumeration" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a>` type)</div>
 <div class="line">    |</div>
 <div class="line"> <a class="code hl_enumvalue" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074ba492f18b60811bf85ce118c0c6a1a5c4a">Variant</a>  (implemented by the `<a class="code hl_enumeration" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a>` type)</div>
-<div class="ttc" id="anamespacefreetensor_html_a6c054e1147ea4b32ddffdf213dcc074b"><div class="ttname"><a href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">freetensor::LoopVariability</a></div><div class="ttdeci">LoopVariability</div><div class="ttdef"><b>Definition:</b> find_loop_variance.h:11</div></div>
+<div class="ttc" id="anamespacefreetensor_html_a6c054e1147ea4b32ddffdf213dcc074b"><div class="ttname"><a href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">freetensor::LoopVariability</a></div><div class="ttdeci">LoopVariability</div><div class="ttdef"><b>Definition:</b> find_loop_variance.h:12</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a6c054e1147ea4b32ddffdf213dcc074ba492f18b60811bf85ce118c0c6a1a5c4a"><div class="ttname"><a href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074ba492f18b60811bf85ce118c0c6a1a5c4a">freetensor::LoopVariability::Variant</a></div><div class="ttdeci">@ Variant</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a6c054e1147ea4b32ddffdf213dcc074ba88183b946cc5f0e8c96b2e66e1c74a7e"><div class="ttname"><a href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074ba88183b946cc5f0e8c96b2e66e1c74a7e">freetensor::LoopVariability::Unknown</a></div><div class="ttdeci">@ Unknown</div></div>
 </div><!-- fragment --><p >All variabilities are initialized to Unkown, and will become either Invariant or Variant during iterations. The variability of an expression is the "meet" of its sub-expressions' variability. The variability of a variable is the "meet" of variability of all expressions stored to it</p>
@@ -10026,8 +10051,8 @@ template&lt;class T , class Hash , class KeyEqual &gt; </div>
 
 </div>
 </div>
-<a id="aa375fdf785e6a2836bc98f3941a881a7" name="aa375fdf785e6a2836bc98f3941a881a7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa375fdf785e6a2836bc98f3941a881a7">&#9670;&nbsp;</a></span>isVariant() <span class="overload">[1/2]</span></h2>
+<a id="a044edc480fb1b2a916798ab65225101c" name="a044edc480fb1b2a916798ab65225101c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a044edc480fb1b2a916798ab65225101c">&#9670;&nbsp;</a></span>isVariant() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -10035,13 +10060,13 @@ template&lt;class T , class Hash , class KeyEqual &gt; </div>
         <tr>
           <td class="memname">bool freetensor::isVariant </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a3ba38f14a2846f529627b1eee75bb90d">LoopVariExprMap</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a2158112a82b5397919cff3bd1291f0d3">LoopVariExprMap</a> &amp;&#160;</td>
           <td class="paramname"><em>exprInfo</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a> &amp;&#160;</td>
           <td class="paramname"><em>expr</em>, </td>
         </tr>
         <tr>
@@ -10060,8 +10085,8 @@ template&lt;class T , class Hash , class KeyEqual &gt; </div>
 
 </div>
 </div>
-<a id="a5a5d0dfdcb85a162afb6d4fa9a22c8e6" name="a5a5d0dfdcb85a162afb6d4fa9a22c8e6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5a5d0dfdcb85a162afb6d4fa9a22c8e6">&#9670;&nbsp;</a></span>isVariant() <span class="overload">[2/2]</span></h2>
+<a id="a2f2363cfea1cea798e4fffe07cdacafb" name="a2f2363cfea1cea798e4fffe07cdacafb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f2363cfea1cea798e4fffe07cdacafb">&#9670;&nbsp;</a></span>isVariant() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -10069,7 +10094,41 @@ template&lt;class T , class Hash , class KeyEqual &gt; </div>
         <tr>
           <td class="memname">bool freetensor::isVariant </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#ac962049efa94481ccbaa1cfeb191d15b">LoopVariUniqVarMap</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a08c5fd132603c854d45098916c635dfb">LoopVariUniqVarMap</a> &amp;&#160;</td>
+          <td class="paramname"><em>varInfo</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>defId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>loop</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5a5d0dfdcb85a162afb6d4fa9a22c8e6" name="a5a5d0dfdcb85a162afb6d4fa9a22c8e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5a5d0dfdcb85a162afb6d4fa9a22c8e6">&#9670;&nbsp;</a></span>isVariant() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isVariant </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a08c5fd132603c854d45098916c635dfb">LoopVariUniqVarMap</a> &amp;&#160;</td>
           <td class="paramname"><em>varInfo</em>, </td>
         </tr>
         <tr>
@@ -11741,6 +11800,90 @@ template&lt;class T &gt; </div>
           <td class="paramtype">T *&amp;&#160;</td>
           <td class="paramname"><em>ptr</em></td><td>)</td>
           <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a09b661e797c2fce244e7f8885cbc378a" name="a09b661e797c2fce244e7f8885cbc378a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09b661e797c2fce244e7f8885cbc378a">&#9670;&nbsp;</a></span>moveDimsInputToOutput()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::moveDimsInputToOutput </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>map</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>first</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>n</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>target</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6449d19c43f08cd504895cf9b324d4b9" name="a6449d19c43f08cd504895cf9b324d4b9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6449d19c43f08cd504895cf9b324d4b9">&#9670;&nbsp;</a></span>moveDimsOutputToInput()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::moveDimsOutputToInput </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>map</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>first</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>n</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>target</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -13678,6 +13821,154 @@ template&lt;typename T &gt; </div>
           <td></td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>nestLevel</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a04360deda7f6a24434ed5228e848fdb6" name="a04360deda7f6a24434ed5228e848fdb6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a04360deda7f6a24434ed5228e848fdb6">&#9670;&nbsp;</a></span>projectOutAllParams() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::projectOutAllParams </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>map</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6d1e7245c23afe3b238f64f581212eb6" name="a6d1e7245c23afe3b238f64f581212eb6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6d1e7245c23afe3b238f64f581212eb6">&#9670;&nbsp;</a></span>projectOutAllParams() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBSetRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> freetensor::projectOutAllParams </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>set</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6fa6873b57da337d7d149dd7b64aa718" name="a6fa6873b57da337d7d149dd7b64aa718"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6fa6873b57da337d7d149dd7b64aa718">&#9670;&nbsp;</a></span>projectOutDims()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBSetRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> freetensor::projectOutDims </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>first</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>n</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5afcef2360c9672f6562d5b175ae02f1" name="a5afcef2360c9672f6562d5b175ae02f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5afcef2360c9672f6562d5b175ae02f1">&#9670;&nbsp;</a></span>projectOutInputDims()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::projectOutInputDims </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>map</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>first</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>n</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a40c1e167e9e4348a4e665b983e6a182f" name="a40c1e167e9e4348a4e665b983e6a182f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a40c1e167e9e4348a4e665b983e6a182f">&#9670;&nbsp;</a></span>projectOutOutputDims()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::projectOutOutputDims </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>map</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>first</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>n</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
