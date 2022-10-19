@@ -544,6 +544,12 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
         auto &&[pStr, oStr] = strs;
         auto require = makeExternalEq(presburger, iterDim, pStr, oStr);
         for (auto c = common; c.isValid(); c = c->parentStmt()) {
+            if (eraseOutsideVarDef_ && c->id() == later->def_->id()) {
+                // Quick path: If eraseOutsideVarDef_ enabled, we will enforce
+                // outer loops to be in the same iteration, so no need to do
+                // `require = require || (in different iterations)` below
+                break;
+            }
             if (c->nodeType() == ASTNodeType::For) {
                 // An external expresson is invariant to a loop if:
                 // 1. The expression in earlier is invariant to the loop, and
