@@ -282,8 +282,8 @@ Ref<std::string> AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
             if (relax == RelaxMode::Necessary) {
                 return nullptr;
             } else {
-                // Create a dummy integer variable because ISL does not bool
-                // variables
+                // Create a dummy integer variable because ISL does not support
+                // bool variables
                 if (cond->nodeType() == ASTNodeType::LNot) {
                     auto predicate =
                         "__pred_" +
