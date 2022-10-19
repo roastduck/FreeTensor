@@ -108,12 +108,12 @@ void FindLoopInvariantWrites::visit(const Store &op) {
                     makeMul(makeSub(item->len_, makeIntConst(1)), item->step_));
         Expr thisCond;
         for (auto &&idx : op->indices_) {
-            if (isVariant(variantExpr_, idx, item->id())) {
+            if (isVariant(variantExpr_, {idx, op}, item->id())) {
                 goto fail;
             }
         }
         for (auto &&branch : ifStack_) {
-            if (isVariant(variantExpr_, branch->cond_, item->id())) {
+            if (isVariant(variantExpr_, {branch->cond_, branch}, item->id())) {
                 goto fail;
             }
         }

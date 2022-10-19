@@ -79,7 +79,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                  views::zip(views::ints(0, ranges::unreachable), _op->indices_,
                             buffer(_op->var_)->tensor()->shape())) {
                 // use _op because isVariant needs it
-                if (isVariant(variantMap_, idx, loopId)) {
+                if (isVariant(variantMap_, {idx, _op}, loopId)) {
                     goto use_atomic;
                 }
                 std::vector<Expr> dimLowers{makeIntConst(0)}, dimUppers{dim};
@@ -151,7 +151,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                 for (auto &&[idx, preserve] :
                      views::zip(_op->indices_, preserveDim)) {
                     // use _op because isVariant needs it
-                    if (isVariant(variantMap_, idx, loop->id())) {
+                    if (isVariant(variantMap_, {idx, _op}, loop->id())) {
                         if (isDenseOver(idx, loop->iter_)) {
                             preserve = true;
                             noPreserve = false;

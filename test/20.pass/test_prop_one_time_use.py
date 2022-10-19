@@ -2,7 +2,7 @@ import freetensor as ft
 
 
 def test_basic():
-    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("t", (4,), "int32", "cache", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, t, y):
         with ft.For("i", 0, 4) as i:
@@ -11,7 +11,7 @@ def test_basic():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             y[i] = x[i] * 2 + 2
@@ -21,7 +21,7 @@ def test_basic():
 
 
 def test_multiple_vars():
-    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("t", (4,), "int32", "cache", "cpu"),
                     ("u", (4,), "int32", "cache", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, t, u, y):
@@ -32,7 +32,7 @@ def test_multiple_vars():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             y[i] = x[i] * 2 + 4
@@ -42,7 +42,7 @@ def test_multiple_vars():
 
 
 def test_prop_across_loops():
-    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("t", (4,), "int32", "cache", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, t, y):
         with ft.For("i", 0, 4) as i:
@@ -52,7 +52,7 @@ def test_prop_across_loops():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             y[i] = x[i] * 2 + 2
@@ -62,7 +62,7 @@ def test_prop_across_loops():
 
 
 def test_used_in_many_stmts_no_prop():
-    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
         with ft.For("i", 0, 4) as i:
@@ -73,7 +73,7 @@ def test_used_in_many_stmts_no_prop():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
         with ft.For("i", 0, 4) as i:
@@ -87,7 +87,7 @@ def test_used_in_many_stmts_no_prop():
 
 
 def test_used_in_many_reads_no_prop():
-    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
@@ -96,7 +96,7 @@ def test_used_in_many_reads_no_prop():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
@@ -108,7 +108,7 @@ def test_used_in_many_reads_no_prop():
 
 
 def test_used_in_many_iterations_no_prop():
-    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
@@ -118,7 +118,7 @@ def test_used_in_many_iterations_no_prop():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             with ft.VarDef("t", (), "int32", "cache", "cpu") as t:

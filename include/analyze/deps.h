@@ -114,6 +114,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
 
     // For negative steps, replace iter with -neg_iter
     std::unordered_map<std::string, Expr> replaceIter_;
+    std::unordered_map<StmtOrExprID, Expr> replaceIterLog_;
 
   public:
     FindAccessPoint(const Stmt &root, const FindDepsAccFilter &accFilter);
@@ -130,9 +131,14 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
         return scope2coord_;
     }
 
+    const std::unordered_map<StmtOrExprID, Expr> replaceIterLog() const {
+        return replaceIterLog_;
+    }
+
   private:
-    Expr normalizeExpr(const Expr &expr) const;
-    std::vector<Expr> normalizeExprs(const std::vector<Expr> &expr) const;
+    Expr normalizeExpr(const Expr &expr, const ID &baseStmtId);
+    std::vector<Expr> normalizeExprs(const std::vector<Expr> &expr,
+                                     const ID &baseStmtId);
 
     template <class T> void visitStoreLike(const T &op) {
         BaseClass::visit(op);
@@ -152,8 +158,8 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                buffer(op->var_),
                defAxis_.at(op->var_),
                cur_,
-               normalizeExprs(op->indices_),
-               normalizeExprs(conds_)};
+               normalizeExprs(op->indices_, op->id()),
+               conds_};
         if (accFilter_ == nullptr || accFilter_(*ap)) {
             auto &&d = def(op->var_);
             writes_[d->id()].emplace_back(ap);
@@ -172,7 +178,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                     cur_,
                     std::vector<Expr>(source->buffer_->tensor()->shape().size(),
                                       makeAnyExpr()),
-                    normalizeExprs(conds_)};
+                    conds_};
                 writes_[source->id()].emplace_back(ap);
             }
         }
@@ -520,6 +526,9 @@ class FindDeps {
      * - KillBoth: KillEarlier + KillLater
      *
      * Defaults to no restriction
+     *
+     * Note: killing test is insensitive to loop-invariant, which means there
+     * will be false nagative
      */
     FindDeps mode(FindDepsMode m) {
         FindDeps ret = *this;

@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <sstream>
 
+#include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <container_utils.h>
 #include <except.h>
@@ -55,16 +56,18 @@ FindAccessPoint::FindAccessPoint(const Stmt &root,
     }
 }
 
-Expr FindAccessPoint::normalizeExpr(const Expr &expr) const {
-    return ReplaceIter(replaceIter_)(expr);
+Expr FindAccessPoint::normalizeExpr(const Expr &expr, const ID &baseStmtId) {
+    return ReplaceIterAndRecordLog(replaceIter_, replaceIterLog_,
+                                   baseStmtId)(expr);
 }
 
 std::vector<Expr>
-FindAccessPoint::normalizeExprs(const std::vector<Expr> &indices) const {
+FindAccessPoint::normalizeExprs(const std::vector<Expr> &indices,
+                                const ID &baseStmtId) {
     std::vector<Expr> ret;
     ret.reserve(indices.size());
     for (auto &&expr : indices) {
-        ret.emplace_back(normalizeExpr(expr));
+        ret.emplace_back(normalizeExpr(expr, baseStmtId));
     }
     return ret;
 }
@@ -106,22 +109,27 @@ void FindAccessPoint::visit(const For &op) {
         step->nodeType() == ASTNodeType::IntConst) {
         auto stepVal = step.as<IntConstNode>()->val_;
         if (stepVal > 0) {
-            conds_.emplace_back(makeLAnd(
-                makeLAnd(makeGE(iter, op->begin_), makeLT(iter, op->end_)),
-                makeEQ(makeMod(makeSub(iter, op->begin_), op->step_),
-                       makeIntConst(0))));
+            conds_.emplace_back(normalizeExpr(
+                makeLAnd(
+                    makeLAnd(makeGE(iter, op->begin_), makeLT(iter, op->end_)),
+                    makeEQ(makeMod(makeSub(iter, op->begin_), op->step_),
+                           makeIntConst(0))),
+                op->id()));
             cur_.emplace_back(iter, op->property_->parallel_);
         } else if (stepVal == 0) {
-            conds_.emplace_back(makeEQ(iter, op->begin_));
+            conds_.emplace_back(
+                normalizeExpr(makeEQ(iter, op->begin_), op->id()));
             cur_.emplace_back(iter, op->property_->parallel_);
         } else {
             auto negIter = makeVar(op->iter_ + ".neg");
             auto newIter = makeMul(makeIntConst(-1), negIter);
-            conds_.emplace_back(makeLAnd(
-                makeLAnd(makeLE(newIter, op->begin_),
-                         makeGT(newIter, op->end_)),
-                makeEQ(makeMod(makeSub(newIter, op->begin_), op->step_),
-                       makeIntConst(0))));
+            conds_.emplace_back(normalizeExpr(
+                makeLAnd(
+                    makeLAnd(makeLE(newIter, op->begin_),
+                             makeGT(newIter, op->end_)),
+                    makeEQ(makeMod(makeSub(newIter, op->begin_), op->step_),
+                           makeIntConst(0))),
+                op->id()));
             cur_.emplace_back(negIter, op->property_->parallel_, iter);
             replaceIter_[op->iter_] = newIter;
         }
@@ -150,14 +158,14 @@ void FindAccessPoint::visit(const If &op) {
     (*this)(op->cond_);
 
     if (!op->elseCase_.isValid()) {
-        conds_.emplace_back(op->cond_);
+        conds_.emplace_back(normalizeExpr(op->cond_, op->id()));
         (*this)(op->thenCase_);
         conds_.pop_back();
     } else {
-        conds_.emplace_back(op->cond_);
+        conds_.emplace_back(normalizeExpr(op->cond_, op->id()));
         (*this)(op->thenCase_);
         conds_.pop_back();
-        conds_.emplace_back(makeLNot(op->cond_));
+        conds_.emplace_back(normalizeExpr(makeLNot(op->cond_), op->id()));
         (*this)(op->elseCase_);
         conds_.pop_back();
     }
@@ -182,8 +190,8 @@ void FindAccessPoint::visit(const Load &op) {
            buffer(op->var_),
            defAxis_.at(op->var_),
            cur_,
-           normalizeExprs(op->indices_),
-           normalizeExprs(conds_)};
+           normalizeExprs(op->indices_, curStmt()->id()),
+           conds_};
     if (accFilter_ == nullptr || accFilter_(*ap)) {
         auto &&d = def(op->var_);
         reads_[def(op->var_)->id()].emplace_back(ap);
@@ -201,7 +209,7 @@ void FindAccessPoint::visit(const Load &op) {
                    cur_,
                    std::vector<Expr>(source->buffer_->tensor()->shape().size(),
                                      makeAnyExpr()),
-                   normalizeExprs(conds_)};
+                   conds_};
             reads_[source->id()].emplace_back(ap);
         }
     }
@@ -534,25 +542,17 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
 
     for (auto &&[expr, strs] : intersect(laterExternals, earlierExternals)) {
         auto &&[pStr, oStr] = strs;
-        // If all of the loops are variant, we don't have to make the constraint
-        // at all. This will save time for Presburger solver
-        for (auto c = common; c.isValid(); c = c->parentStmt()) {
-            if (c->nodeType() == ASTNodeType::For) {
-                if (isVariant(*variantExpr_, expr, c->id())) {
-                    goto found;
-                }
-                goto do_compute_constraint;
-            found:;
-            }
-        }
-        continue;
-
-        // Compute the constraint
-    do_compute_constraint:
         auto require = makeExternalEq(presburger, iterDim, pStr, oStr);
         for (auto c = common; c.isValid(); c = c->parentStmt()) {
             if (c->nodeType() == ASTNodeType::For) {
-                if (isVariant(*variantExpr_, expr, c->id())) {
+                // An external expresson is invariant to a loop if:
+                // 1. The expression in earlier is invariant to the loop, and
+                // 2. The expression is not modified in the loop, and
+                // 3. (1 and 2 imply) the expression in later is also invariant
+                bool invariant = !isVariant(*variantExpr_,
+                                            {expr, earlier->stmt_}, c->id()) &&
+                                 !hasIntersect(allReads(expr), allWrites(c));
+                if (!invariant) {
                     // Since idx[i] must be inside loop i, we only have
                     // to call makeIneqBetweenOps, but no need to call
                     // makeConstraintOfSingleLoop
@@ -1016,7 +1016,15 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
 
-    auto variantExpr = LAZY(findLoopVariance(op).first);
+    auto variantExpr = Lazy([&]() {
+        auto variantExpr = findLoopVariance(op).first;
+        for (auto &&[from, to] : accFinder.replaceIterLog()) {
+            if (auto it = variantExpr.find(from); it != variantExpr.end()) {
+                variantExpr[{to, from.stmtId()}] = it->second;
+            }
+        }
+        return variantExpr;
+    });
 
     AnalyzeDeps analyzer(
         accFinder.reads(), accFinder.writes(), accFinder.allDefs(),

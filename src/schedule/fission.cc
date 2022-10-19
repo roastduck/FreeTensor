@@ -263,7 +263,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     }
     auto &&xLoops = hoist.xLoops();
 
-    auto variantExpr = findLoopVariance(ast);
+    auto variants = findLoopVariance(ast);
 
     // var name -> loop id
     std::vector<FindDepsDir> disjunct;
@@ -271,7 +271,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
         disjunct.push_back({{inner, DepDirection::Normal}});
     }
     auto isRealWrite = [&](const ID &loop, const VarDef &def) -> bool {
-        return isVariant(variantExpr.second, def, loop);
+        return isVariant(variants.second, def, loop);
     };
     std::unordered_map<ID, std::vector<ID>> toAdd;
     auto found = [&](const Dependency &d) {

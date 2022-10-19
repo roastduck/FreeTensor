@@ -110,22 +110,6 @@ class PBMap {
     isl_size nOutDims() const { return isl_map_dim(map_, isl_dim_out); }
     isl_size nParamDims() const { return isl_map_dim(map_, isl_dim_param); }
 
-    void projectOutInputDims(unsigned first, unsigned n) {
-        map_ = isl_map_project_out(map_, isl_dim_in, first, n);
-    }
-    void projectOutOutputDims(unsigned first, unsigned n) {
-        map_ = isl_map_project_out(map_, isl_dim_out, first, n);
-    }
-
-    void moveDimsInputToOutput(unsigned first, unsigned n, unsigned target) {
-        map_ =
-            isl_map_move_dims(map_, isl_dim_out, target, isl_dim_in, first, n);
-    }
-    void moveDimsOutputToInput(unsigned first, unsigned n, unsigned target) {
-        map_ =
-            isl_map_move_dims(map_, isl_dim_in, target, isl_dim_out, first, n);
-    }
-
     friend std::ostream &operator<<(std::ostream &os, const PBMap &map) {
         return os << isl_map_to_str(map.map_);
     }
@@ -226,10 +210,6 @@ class PBSet {
     isl_size nBasic() const { return isl_set_n_basic_set(set_); }
 
     isl_size nDims() const { return isl_set_dim(set_, isl_dim_set); }
-
-    void projectOutDims(unsigned first, unsigned n) {
-        set_ = isl_set_project_out(set_, isl_dim_set, first, n);
-    }
 
     friend std::ostream &operator<<(std::ostream &os, const PBSet &set) {
         return os << isl_set_to_str(set.set_);
@@ -395,6 +375,39 @@ template <typename T> auto PBRefTake(std::remove_reference_t<T> &t) {
 template <typename T> auto PBRefTake(std::remove_reference_t<T> &&t) {
     static_assert(!std::is_lvalue_reference_v<T>); // similar to std::forward
     return t.move();
+}
+
+template <PBSetRef T> PBSet projectOutAllParams(T &&set) {
+    return isl_set_project_out_all_params(PBRefTake<T>(set));
+}
+template <PBMapRef T> PBMap projectOutAllParams(T &&map) {
+    return isl_map_project_out_all_params(PBRefTake<T>(map));
+}
+
+template <PBSetRef T>
+PBSet projectOutDims(T &&set, unsigned first, unsigned n) {
+    return isl_set_project_out(PBRefTake<T>(set), isl_dim_set, first, n);
+}
+template <PBMapRef T>
+PBMap projectOutInputDims(T &&map, unsigned first, unsigned n) {
+    return isl_map_project_out(PBRefTake<T>(map), isl_dim_in, first, n);
+}
+template <PBMapRef T>
+PBMap projectOutOutputDims(T &&map, unsigned first, unsigned n) {
+    return isl_map_project_out(PBRefTake<T>(map), isl_dim_out, first, n);
+}
+
+template <PBMapRef T>
+PBMap moveDimsInputToOutput(T &&map, unsigned first, unsigned n,
+                            unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_out, target, isl_dim_in,
+                             first, n);
+}
+template <PBMapRef T>
+PBMap moveDimsOutputToInput(T &&map, unsigned first, unsigned n,
+                            unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_in, target, isl_dim_out,
+                             first, n);
 }
 
 template <PBSetRef T> PBSet complement(T &&set) {

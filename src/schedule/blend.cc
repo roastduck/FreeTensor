@@ -43,7 +43,8 @@ Stmt BlendPass::visit(const For &op) {
     } else {
         if (inLoop_) {
             Stmt ret;
-            if (!envStack_.empty() || isVariant(exprVari_, op->len_, loop_)) {
+            if (!envStack_.empty() ||
+                isVariant(exprVari_, {op->len_, op}, loop_)) {
                 envStack_.emplace_back(op);
                 ret = (*this)(op->body_);
                 envStack_.pop_back();
@@ -67,7 +68,8 @@ Stmt BlendPass::visit(const For &op) {
 Stmt BlendPass::visit(const If &op) {
     if (inLoop_) {
         Stmt thenCase, elseCase;
-        if (!envStack_.empty() || isVariant(exprVari_, op->cond_, loop_)) {
+        if (!envStack_.empty() ||
+            isVariant(exprVari_, {op->cond_, op}, loop_)) {
             envStack_.emplace_back(makeIf(op->cond_, op->thenCase_));
             thenCase = (*this)(op->thenCase_);
             envStack_.pop_back();
@@ -99,7 +101,8 @@ Stmt BlendPass::visit(const If &op) {
 Stmt BlendPass::visit(const Assert &op) {
     if (inLoop_) {
         Stmt ret;
-        if (!envStack_.empty() || isVariant(exprVari_, op->cond_, loop_)) {
+        if (!envStack_.empty() ||
+            isVariant(exprVari_, {op->cond_, op}, loop_)) {
             envStack_.emplace_back(op);
             ret = Mutator::visit(op);
             envStack_.pop_back();
