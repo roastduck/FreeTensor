@@ -291,7 +291,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             return later.op_->nodeType() == ASTNodeType::Store;
         })
         .ignoreReductionWAW(false)
-        .noProjectOutProvateAxis(true)(op, foundOverwriteStore);
+        .noProjectOutPrivateAxis(true)(op, foundOverwriteStore);
     FindDeps()
         .mode(FindDepsMode::KillLater)
         .type(DEP_WAW)
@@ -302,7 +302,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             return later.op_->nodeType() == ASTNodeType::ReduceTo;
         })
         .ignoreReductionWAW(false)
-        .noProjectOutProvateAxis(true)(op, foundOverwriteReduce);
+        .noProjectOutPrivateAxis(true)(op, foundOverwriteReduce);
     FindDeps()
         .filterAccess([&](const AccessPoint &access) {
             return suspect.count(access.def_);

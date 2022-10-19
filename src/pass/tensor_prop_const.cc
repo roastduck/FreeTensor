@@ -87,7 +87,7 @@ Stmt tensorPropConst(const Stmt &_op) {
                 }
                 return true;
             })
-            .noProjectOutProvateAxis(true)(op, foundMust);
+            .noProjectOutPrivateAxis(true)(op, foundMust);
         FindDeps()
             .type(DEP_RAW)
             .filterLater(

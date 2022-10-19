@@ -120,8 +120,8 @@ PBSet extractLoopSet(const PBCtx &ctx, const AccessPoint &p) {
     auto iterList = AnalyzeDeps::makeIterList(p.iter_, p.iter_.size());
     GenPBExpr gen;
     GenPBExpr::VarMap externals;
-    auto conds =
-        *AnalyzeDeps::makeCond(gen, p.conds_, RelaxMode::Possible, externals);
+    auto conds = *AnalyzeDeps::makeCond(gen, p.conds_, RelaxMode::Possible,
+                                        externals, true, p.def_);
     if (externals.size() > 0)
         ERROR("PlutoFuse: external variables currently "
               "not supported.");
@@ -391,7 +391,7 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         std::vector<PBSet> deps;
         std::mutex m;
         FindDeps()
-            .noProjectOutProvateAxis(true)
+            .noProjectOutPrivateAxis(true)
             .filterAccess([&](const AccessPoint &p) {
                 if (p.def_->name_ == FAKE_ACCESS_VAR) {
                     if (handleFakeAccess) {
