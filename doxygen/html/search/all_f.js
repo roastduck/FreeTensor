@@ -40,7 +40,7 @@ var searchData=
   ['nodetypeselector_37',['NodeTypeSelector',['../classfreetensor_1_1NodeTypeSelector.html',1,'freetensor::NodeTypeSelector'],['../classfreetensor_1_1NodeTypeSelector.html#a419b3a7a2e0db07b68dd975862797f7f',1,'freetensor::NodeTypeSelector::NodeTypeSelector()']]],
   ['noncommutativebinaryexpr_38',['NonCommutativeBinaryExpr',['../namespacefreetensor.html#abf60959573d72c4a5b51f6c4bc35212d',1,'freetensor']]],
   ['noncommutativebinaryexprnode_39',['NonCommutativeBinaryExprNode',['../classfreetensor_1_1NonCommutativeBinaryExprNode.html',1,'freetensor']]],
-  ['noprojectoutprovateaxis_40',['noProjectOutProvateAxis',['../classfreetensor_1_1FindDeps.html#ac60c7bb079a0aa635accc44c1acfff2e',1,'freetensor::FindDeps']]],
+  ['noprojectoutprivateaxis_40',['noProjectOutPrivateAxis',['../classfreetensor_1_1FindDeps.html#a0f4de4236b2bef548ef92ba07ee57e1c',1,'freetensor::FindDeps']]],
   ['noreuseonly_41',['NoReuseOnly',['../namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ae1f4af8d2ac6c06c8f7620e411e561c3',1,'freetensor']]],
   ['normal_42',['Normal',['../namespacefreetensor.html#a814262c5e3a8f58a762fdf9c4c0670ada960b44c579bc2f6818d2daaf9e4c16f0',1,'freetensor']]],
   ['normalize_5fthreads_2ecc_43',['normalize_threads.cc',['../normalize__threads_8cc.html',1,'']]],

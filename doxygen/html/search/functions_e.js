@@ -27,7 +27,7 @@ var searchData=
   ['nodeidorparallelscope_24',['NodeIDOrParallelScope',['../structfreetensor_1_1NodeIDOrParallelScope.html#a96327a433b31d54be404b692e9d60eef',1,'freetensor::NodeIDOrParallelScope::NodeIDOrParallelScope(const ID &amp;id)'],['../structfreetensor_1_1NodeIDOrParallelScope.html#a750ffa79e66a4f6c82fa507e7e9957e0',1,'freetensor::NodeIDOrParallelScope::NodeIDOrParallelScope(const ParallelScope &amp;parallel)']]],
   ['nodetype_25',['nodeType',['../classfreetensor_1_1ASTNode.html#a9231cccded096dfb8a9b7070a4f39baf',1,'freetensor::ASTNode']]],
   ['nodetypeselector_26',['NodeTypeSelector',['../classfreetensor_1_1NodeTypeSelector.html#a419b3a7a2e0db07b68dd975862797f7f',1,'freetensor::NodeTypeSelector']]],
-  ['noprojectoutprovateaxis_27',['noProjectOutProvateAxis',['../classfreetensor_1_1FindDeps.html#ac60c7bb079a0aa635accc44c1acfff2e',1,'freetensor::FindDeps']]],
+  ['noprojectoutprivateaxis_27',['noProjectOutPrivateAxis',['../classfreetensor_1_1FindDeps.html#a0f4de4236b2bef548ef92ba07ee57e1c',1,'freetensor::FindDeps']]],
   ['notleafselector_28',['NotLeafSelector',['../classfreetensor_1_1NotLeafSelector.html#acbe94c3111fd1e598e869ed8fe375676',1,'freetensor::NotLeafSelector']]],
   ['notlexlessafterpermu_29',['notLexLessAfterPermu',['../namespacefreetensor.html#affd9024564fe030fc074d18560f25e5b',1,'freetensor']]],
   ['notselector_30',['NotSelector',['../classfreetensor_1_1NotSelector.html#ace9cc116660caf9043a31b1c8fc1797f',1,'freetensor::NotSelector']]],
