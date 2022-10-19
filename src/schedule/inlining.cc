@@ -171,7 +171,7 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
         .filterLater([&](const AccessPoint &later) {
             return later.op_->nodeType() == ASTNodeType::Load;
         })
-        .noProjectOutProvateAxis(true)(ast, unsyncFunc(found));
+        .noProjectOutPrivateAxis(true)(ast, unsyncFunc(found));
     ast = MakeInline(def, replace)(ast);
 
     ast = sinkVar(ast);

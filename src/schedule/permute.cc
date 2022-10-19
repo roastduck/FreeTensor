@@ -225,7 +225,7 @@ std::pair<Stmt, std::vector<ID>> permute(
         .filterAccess([&](const AccessPoint &ap) {
             return ap.def_->isAncestorOf(loops.front());
         })
-        .noProjectOutProvateAxis(true)
+        .noProjectOutPrivateAxis(true)
         .scope2CoordCallback(
             [&](const std::unordered_map<ID, std::vector<IterAxis>>
                     &scope2coord) {

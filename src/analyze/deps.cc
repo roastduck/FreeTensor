@@ -10,6 +10,7 @@
 #include <pass/const_fold.h>
 #include <pass/replace_iter.h>
 #include <serialize/mangle.h>
+#include <serialize/print_ast.h>
 
 namespace freetensor {
 
@@ -109,27 +110,25 @@ void FindAccessPoint::visit(const For &op) {
         step->nodeType() == ASTNodeType::IntConst) {
         auto stepVal = step.as<IntConstNode>()->val_;
         if (stepVal > 0) {
-            conds_.emplace_back(normalizeExpr(
+            pushCond(
                 makeLAnd(
                     makeLAnd(makeGE(iter, op->begin_), makeLT(iter, op->end_)),
                     makeEQ(makeMod(makeSub(iter, op->begin_), op->step_),
                            makeIntConst(0))),
-                op->id()));
+                op->id());
             cur_.emplace_back(iter, op->property_->parallel_);
         } else if (stepVal == 0) {
-            conds_.emplace_back(
-                normalizeExpr(makeEQ(iter, op->begin_), op->id()));
+            pushCond(makeEQ(iter, op->begin_), op->id());
             cur_.emplace_back(iter, op->property_->parallel_);
         } else {
             auto negIter = makeVar(op->iter_ + ".neg");
             auto newIter = makeMul(makeIntConst(-1), negIter);
-            conds_.emplace_back(normalizeExpr(
-                makeLAnd(
-                    makeLAnd(makeLE(newIter, op->begin_),
-                             makeGT(newIter, op->end_)),
-                    makeEQ(makeMod(makeSub(newIter, op->begin_), op->step_),
-                           makeIntConst(0))),
-                op->id()));
+            pushCond(makeLAnd(makeLAnd(makeLE(newIter, op->begin_),
+                                       makeGT(newIter, op->end_)),
+                              makeEQ(makeMod(makeSub(newIter, op->begin_),
+                                             op->step_),
+                                     makeIntConst(0))),
+                     op->id());
             cur_.emplace_back(negIter, op->property_->parallel_, iter);
             replaceIter_[op->iter_] = newIter;
         }
@@ -158,16 +157,16 @@ void FindAccessPoint::visit(const If &op) {
     (*this)(op->cond_);
 
     if (!op->elseCase_.isValid()) {
-        conds_.emplace_back(normalizeExpr(op->cond_, op->id()));
+        pushCond(op->cond_, op->id());
         (*this)(op->thenCase_);
-        conds_.pop_back();
+        popCond();
     } else {
-        conds_.emplace_back(normalizeExpr(op->cond_, op->id()));
+        pushCond(op->cond_, op->id());
         (*this)(op->thenCase_);
-        conds_.pop_back();
-        conds_.emplace_back(normalizeExpr(makeLNot(op->cond_), op->id()));
+        popCond();
+        pushCond(makeLNot(op->cond_), op->id());
         (*this)(op->elseCase_);
-        conds_.pop_back();
+        popCond();
     }
 }
 
@@ -262,12 +261,13 @@ Ref<std::string> AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
     return Ref<std::string>::make("[" + ret + "]");
 }
 
-Ref<std::string> AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
-                                       const std::vector<Expr> &conds,
-                                       RelaxMode relax,
-                                       GenPBExpr::VarMap &externals) {
+Ref<std::string>
+AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
+                      const std::vector<std::pair<Expr, ID>> &conds,
+                      RelaxMode relax, GenPBExpr::VarMap &externals,
+                      bool eraseOutsideVarDef, const VarDef &vardef) {
     std::string ret;
-    for (auto &&cond : conds) {
+    for (auto &&[cond, baseStmtId] : conds) {
         if (auto str = genPBExpr.gen(cond); str.has_value()) {
             for (auto &&[expr, str] : genPBExpr.vars(cond)) {
                 if (expr->nodeType() == ASTNodeType::Load) {
@@ -282,21 +282,31 @@ Ref<std::string> AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
             if (relax == RelaxMode::Necessary) {
                 return nullptr;
             } else {
-                // Create a dummy integer variable because ISL does not bool
-                // variables
+                // Create a dummy integer variable because ISL does not support
+                // bool variables
+                if (eraseOutsideVarDef &&
+                    vardef->ancestorById(baseStmtId).isValid()) {
+                    // If the condition is defined outside of the variable we
+                    // are analyzing, and `eraseOutsideVarDef_` is enabled, we
+                    // can ignore this condition, because all access of this
+                    // variable will hold the same condition value, and the
+                    // condition is newly introduced (which means it is not used
+                    // in indices)
+                    continue;
+                }
                 if (cond->nodeType() == ASTNodeType::LNot) {
                     auto predicate =
                         "__pred_" +
-                        std::to_string(cond.as<LNotNode>()->expr_->hash()) +
-                        genPBExpr.varSuffix();
+                        mangle(dumpAST(cond.as<LNotNode>()->expr_, true)) +
+                        "_" + genPBExpr.varSuffix();
                     externals[cond.as<LNotNode>()->expr_] = predicate;
                     if (!ret.empty()) {
                         ret += " and ";
                     }
                     ret += predicate + " <= 0";
                 } else {
-                    auto predicate = "__pred_" + std::to_string(cond->hash()) +
-                                     genPBExpr.varSuffix();
+                    auto predicate = "__pred_" + mangle(dumpAST(cond, true)) +
+                                     "_" + genPBExpr.varSuffix();
                     externals[cond] = predicate;
                     if (!ret.empty()) {
                         ret += " and ";
@@ -322,7 +332,8 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
         return emptyMap(spaceAlloc(presburger, 0, iterDim, accDim));
     }
     std::string cond;
-    if (auto str = makeCond(genPBExpr, p.conds_, relax, externals);
+    if (auto str = makeCond(genPBExpr, p.conds_, relax, externals,
+                            eraseOutsideVarDef_, p.def_);
         str.isValid()) {
         cond += (cond.empty() || str->empty() ? "" : " and ") + *str;
     } else {
@@ -544,6 +555,12 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
         auto &&[pStr, oStr] = strs;
         auto require = makeExternalEq(presburger, iterDim, pStr, oStr);
         for (auto c = common; c.isValid(); c = c->parentStmt()) {
+            if (eraseOutsideVarDef_ && c->id() == later->def_->id()) {
+                // Quick path: If eraseOutsideVarDef_ enabled, we will enforce
+                // outer loops to be in the same iteration, so no need to do
+                // `require = require || (in different iterations)` below
+                break;
+            }
             if (c->nodeType() == ASTNodeType::For) {
                 // An external expresson is invariant to a loop if:
                 // 1. The expression in earlier is invariant to the loop, and
@@ -583,7 +600,7 @@ void AnalyzeDeps::projectOutPrivateAxis(
     PBCtx &presburger, const Ref<AccessPoint> &point,
     const std::vector<Ref<AccessPoint>> &otherList,
     std::vector<PBMap> &otherMapList, int iterDim) {
-    if (!noProjectOutProvateAxis_) {
+    if (!noProjectOutPrivateAxis_) {
         std::vector<int> oCommonDims(otherList.size(), 0);
         for (size_t i = 0, n = otherList.size(); i < n; i++) {
             auto &&other = otherList[i];
@@ -682,7 +699,7 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
                 goto fail;
             }
         }
-        if (noProjectOutProvateAxis_) {
+        if (noProjectOutPrivateAxis_) {
             found_(Dependency{item, getVar(later->op_), *later, *earlier,
                               iterDim, res, laterMap, earlierMap, presburger,
                               *this});
@@ -1005,7 +1022,7 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
     }
 
     if (mode_ != FindDepsMode::Dep) {
-        noProjectOutProvateAxis_ = true;
+        noProjectOutPrivateAxis_ = true;
     }
 
     FindAccessPoint accFinder(op, accFilter_);
@@ -1030,7 +1047,7 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
         accFinder.reads(), accFinder.writes(), accFinder.allDefs(),
         accFinder.scope2coord(), noDepsFinder.results(), variantExpr,
         direction_, found, mode_, type_, earlierFilter_, laterFilter_, filter_,
-        ignoreReductionWAW_, eraseOutsideVarDef_, noProjectOutProvateAxis_);
+        ignoreReductionWAW_, eraseOutsideVarDef_, noProjectOutPrivateAxis_);
     analyzer.genTasks();
     exceptSafeParallelFor<size_t>(
         0, analyzer.tasks().size(), 1, [&](size_t i) { analyzer.tasks()[i](); },

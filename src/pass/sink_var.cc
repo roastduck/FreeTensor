@@ -6,6 +6,17 @@
 
 namespace freetensor {
 
+bool SinkVar::hasDep(const ID &vardef, const ID &loop) {
+    if (analyzedDeps_.count(vardef)) {
+        return deps_.count({vardef, loop});
+    } else {
+        // Return true (no sink) for now, set `isFixedPoint_ = false` to re-run
+        needDepAnalysis_.insert(vardef);
+        isFixPoint_ = false;
+        return true;
+    }
+}
+
 Stmt SinkVar::visit(const VarDef &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
@@ -79,11 +90,11 @@ Stmt SinkVar::visit(const VarDef &_op) {
     case ASTNodeType::For: {
         auto loop = op->body_.as<ForNode>();
         // Criteria:
-        // 1. All accesses to a variable is indenpendent between each other
+        // 1. All writes to this variable write the same value
         // OR
-        // 2. All writes to this variable write the same value
-        if (!deps_.count(std::make_pair(_op->name_, loop->id())) ||
-            !isVariant(variantMap_, _op, loop->id())) {
+        // 2. All accesses to a variable is indenpendent between each other
+        if (!isVariant(*variantMap_, _op, loop->id()) ||
+            !hasDep(_op->id(), loop->id())) {
             auto loopBody =
                 makeVarDef(_op->name_, _op->buffer_, _op->viewOf_, loop->body_,
                            false, _op->metadata(), _op->id());
@@ -154,30 +165,38 @@ Stmt SinkVar::visit(const VarDef &_op) {
 Stmt sinkVar(const Stmt &_op) {
     auto op = _op;
 
+    auto variantMap = Lazy([op]() { return findLoopVariance(op).second; });
+
     auto allLoops = findAllLoops(op);
     std::vector<FindDepsDir> direction;
     direction.reserve(allLoops.size());
     for (auto &&loop : allLoops) {
         direction.push_back({{loop, DepDirection::Normal}});
     }
-    std::unordered_set<std::pair<std::string, ID>> deps; // {(var, loop)}
-    auto found = [&](const Dependency &d) {
-        ASSERT(d.dir_.size() == 1);
-        deps.emplace(d.var_, d.dir_[0].first.id_);
-    };
-    FindDeps().direction(direction)(op, found);
 
+    std::unordered_set<ID> needDepAnalysis, analyzedDeps;
+    std::unordered_set<std::pair<ID, ID>> deps; // {(vardef, loop)}
     for (int i = 0;; i++) {
         if (i > 100) {
             WARNING("SinkVar iterates over 100 rounds. Maybe there is a bug");
             break;
         }
 
-        // findLoopVariance returns AST node reference instead of IDs, so we
-        // need it once per mutation
-        LoopVariUniqVarMap variantMap = findLoopVariance(op).second;
+        if (!needDepAnalysis.empty()) {
+            FindDeps().direction(direction).filterAccess(
+                [&](const AccessPoint &acc) {
+                    return needDepAnalysis.count(acc.def_->id());
+                })(op, [&](const Dependency &d) {
+                ASSERT(d.dir_.size() == 1);
+                deps.emplace(d.defId(), d.dir_[0].first.id_);
+            });
+            for (auto &&vardef : needDepAnalysis) {
+                analyzedDeps.insert(vardef);
+            }
+            needDepAnalysis.clear();
+        }
 
-        SinkVar mutator(deps, variantMap);
+        SinkVar mutator(deps, analyzedDeps, needDepAnalysis, variantMap);
         op = mutator(op);
         if (mutator.isFixPoint()) {
             break;

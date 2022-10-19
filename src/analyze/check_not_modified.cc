@@ -107,7 +107,7 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         .filterEarlier([&](const AccessPoint &earlier) {
             return earlier.stmt_->id() == inserter.s0Eval();
         })
-        .noProjectOutProvateAxis(true)(tmpOp, unsyncFunc(foundWAR));
+        .noProjectOutPrivateAxis(true)(tmpOp, unsyncFunc(foundWAR));
 
     auto foundRAW = [&](const Dependency &dep) {
         // re-construct WAR map from stored string in current PBCtx
@@ -126,7 +126,7 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
             .filterEarlier([&](const AccessPoint &earlier) {
                 return writesWAR.contains(earlier.stmt_);
             })
-            .noProjectOutProvateAxis(true)(tmpOp, unsyncFunc(foundRAW));
+            .noProjectOutPrivateAxis(true)(tmpOp, unsyncFunc(foundRAW));
     } catch (const ModifiedException &) {
         return false;
     }

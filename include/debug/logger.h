@@ -29,7 +29,8 @@ class Logger {
     Logger() : os_(std::cerr) {
         lock_.lock();
         if (LogCtrl::instance().isEnabled()) {
-            os_ << "[tid " << std::hex << std::this_thread::get_id() << "] ";
+            os_ << "[tid " << std::hex << std::this_thread::get_id() << "] "
+                << std::dec;
         }
     }
     ~Logger() { lock_.unlock(); }

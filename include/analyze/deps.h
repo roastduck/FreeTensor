@@ -42,7 +42,9 @@ struct AccessPoint {
     int defAxis_;                /// The position of the VarDef
     std::vector<IterAxis> iter_; /// The temporal location of the access
     std::vector<Expr> access_;   /// The spacial location of the access
-    std::vector<Expr> conds_;    /// The condition (predicate) of the access
+    std::vector<std::pair<Expr, ID>>
+        conds_; /// - first: The condition (predicate) of the access
+                /// - second: the statement that contribute to the condition)
 };
 
 class FindAllNoDeps : public Visitor {
@@ -98,7 +100,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
 
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
-    std::vector<Expr>
+    std::vector<std::pair<Expr, ID>>
         conds_; // FIXME: There may be out-dated conditions, and we must check
                 // allReads(cond) against allWrites(body) for each If or For
                 // nodes. See pass/simplify. If the condition violates, we may
@@ -115,6 +117,13 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     // For negative steps, replace iter with -neg_iter
     std::unordered_map<std::string, Expr> replaceIter_;
     std::unordered_map<StmtOrExprID, Expr> replaceIterLog_;
+
+  private:
+    void pushCond(const Expr &cond, const ID &baseStmtId) {
+        conds_.emplace_back(normalizeExpr(cond, baseStmtId), baseStmtId);
+    }
+
+    void popCond() { conds_.pop_back(); }
 
   public:
     FindAccessPoint(const Stmt &root, const FindDepsAccFilter &accFilter);
@@ -306,7 +315,7 @@ class AnalyzeDeps {
     const DepType depType_;
     const bool ignoreReductionWAW_;
     const bool eraseOutsideVarDef_;
-    const bool noProjectOutProvateAxis_;
+    const bool noProjectOutPrivateAxis_;
 
     std::vector<std::function<void()>> tasks_;
 
@@ -323,7 +332,7 @@ class AnalyzeDeps {
         const FindDepsAccFilter &earlierFilter,
         const FindDepsAccFilter &laterFilter, const FindDepsFilter &filter,
         bool ignoreReductionWAW, bool eraseOutsideVarDef,
-        bool noProjectOutProvateAxis)
+        bool noProjectOutPrivateAxis)
         : allDefs_(allDefs), scope2coord_(scope2coord),
           noDepsLists_(noDepsLists), variantExpr_(variantExpr),
           direction_(direction), found_(found), earlierFilter_(earlierFilter),
@@ -338,7 +347,7 @@ class AnalyzeDeps {
                           : RelaxMode::Possible),
           depType_(depType), ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef),
-          noProjectOutProvateAxis_(noProjectOutProvateAxis) {
+          noProjectOutPrivateAxis_(noProjectOutPrivateAxis) {
         for (auto &&[id, list] : reads) {
             readsAsEarlier_[id] =
                 ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
@@ -372,10 +381,11 @@ class AnalyzeDeps {
                                         const std::vector<Expr> &list,
                                         RelaxMode relax,
                                         GenPBExpr::VarMap &externals);
-    static Ref<std::string> makeCond(GenPBExpr &genPBExpr,
-                                     const std::vector<Expr> &conds,
-                                     RelaxMode relax,
-                                     GenPBExpr::VarMap &externals);
+    static Ref<std::string>
+    makeCond(GenPBExpr &genPBExpr,
+             const std::vector<std::pair<Expr, ID>> &conds, RelaxMode relax,
+             GenPBExpr::VarMap &externals, bool eraseOutsideVarDef,
+             const VarDef &vardef);
 
   private:
     PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
@@ -509,7 +519,7 @@ class FindDeps {
         scope2CoordCallback_ = nullptr;
     bool ignoreReductionWAW_ = true;
     bool eraseOutsideVarDef_ = true;
-    bool noProjectOutProvateAxis_ = false;
+    bool noProjectOutPrivateAxis_ = false;
 
   public:
     /**
@@ -684,9 +694,9 @@ class FindDeps {
      *
      * Defaults to false
      */
-    FindDeps noProjectOutProvateAxis(bool flag) {
+    FindDeps noProjectOutPrivateAxis(bool flag) {
         FindDeps ret = *this;
-        ret.noProjectOutProvateAxis_ = flag;
+        ret.noProjectOutPrivateAxis_ = flag;
         return ret;
     }
 

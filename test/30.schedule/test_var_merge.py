@@ -51,10 +51,13 @@ def test_view_of_io_var():
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
 
     with ft.VarDef("y", (7, 8), "int32", "output", "cpu") as y:
-        with ft.VarDef("y_view", (56,), "int32", "cache", "cpu",
-                       view_of="y") as y_view:
-            with ft.For("i", 0, 7) as i:
-                with ft.For("j", 0, 8) as j:
+        with ft.For("i", 0, 7) as i:
+            with ft.For("j", 0, 8) as j:
+                with ft.VarDef("y_view", (56,),
+                               "int32",
+                               "cache",
+                               "cpu",
+                               view_of="y") as y_view:
                     y_view[i * 8 + j] = i + j
     std = ft.pop_ast()
 
