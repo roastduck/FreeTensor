@@ -19,8 +19,8 @@ from .stmt import (_VarDef, NamedScope, VarRef, For, If, Else, MarkLabel,
                    ctx_stack, Func, Assert, Invoke)
 
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
-                      StagedUnpackAssignable, StagedIterable, StagingError,
-                      StagingOverload, TransformError)
+                      StagedIterable, StagingError, StagingOverload,
+                      TransformError)
 
 assert sys.version_info >= (3, 8), \
     "Python version lower than 3.8 is not supported"
