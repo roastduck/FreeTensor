@@ -431,5 +431,8 @@ class Func(ffi.Func):
             closure)
         self.custom_callback = custom_callback
 
+        # Mimic a Python function
+        self.__name__ = name
+
     def __call__(self, *args, **kvs):
         return self.custom_callback(*args, **kvs)

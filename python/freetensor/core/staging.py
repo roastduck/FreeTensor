@@ -206,11 +206,14 @@ class StagingOverload:
     def unpack_assign_stmt(self, names, values):
         '''Customized assign wrapper for one or more targets.
 
-        If `value` is instance of `StagedUnpackAssignable`, it's regarded as a customized
+        If `values` is instance of `StagedUnpackAssignable`, it's regarded as a customized
         assign behavior and gets executed with all the assigned targets' names. Otherwise,
         it calls `assign_stmt` with each sub-assignments.
 
         Please note that `names` can be nested tuples like `("a", ("b", "c"))`.
+
+        Please also note that `names` can also be a single string like "a" even if `values`
+        is a tuple. There is no unpacking in this case
         '''
         if isinstance(values, StagedUnpackAssignable):
             return values.assign(names)
@@ -295,6 +298,9 @@ class StagingOverload:
             raise self.error(
                 'Return is only allowed in statically deterministic control flow.'
             )
+        if isinstance(value, StagedUnpackAssignable):
+            # We don't know how many items are there, so no unpacking
+            value = value.assign(funcname)
         if isinstance(value, StagedAssignable):
             value = value.assign(funcname)
         raise ReturnException(value)
@@ -587,7 +593,7 @@ class StagedIterable:
 class StagedUnpackAssignable(abc.ABC):
 
     @abc.abstractmethod
-    def assign(self, names: Sequence[str]):
+    def assign(self, names):
         raise NotImplementedError()
 
 

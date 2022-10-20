@@ -9,6 +9,19 @@
 
 namespace freetensor {
 
+class StripReturns : public Mutator {
+    const std::vector<FuncRet> &returns_;
+    std::vector<Ref<Buffer>> bufToReturn_; // from outer to inner
+
+  public:
+    StripReturns(const std::vector<FuncRet> &returns) : returns_(returns) {}
+
+    const std::vector<Ref<Buffer>> &bufToReturn() const { return bufToReturn_; }
+
+  protected:
+    Stmt visit(const VarDef &op) override;
+};
+
 class InlinedInvoke : public Mutator {
     Metadata callSiteMetadata_;
     const std::unordered_map<std::string, Ref<FrontendVar>> &kvs_;

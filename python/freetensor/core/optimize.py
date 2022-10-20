@@ -4,7 +4,7 @@ from typing import Optional, Callable, Union, Sequence
 import freetensor_ffi as ffi
 from freetensor_ffi import GradTapeMode
 
-from .frontend import transform
+from .frontend import transform, staged_callable
 from .autograd import grad
 from .schedule import Schedule, schedule
 from .passes import lower
@@ -279,7 +279,9 @@ def optimize_to_pytorch(
             return returns_tuple[0] if len(
                 returns_tuple) == 1 else returns_tuple
 
-        return generatedPyTorchFunction
+        # If called inside a FreeTensor funcion, don't care about PyTorch, just
+        # inline the transformed AST
+        return staged_callable(ast, generatedPyTorchFunction)
 
     else:
         return functools.partial(
