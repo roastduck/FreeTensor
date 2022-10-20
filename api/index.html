@@ -245,8 +245,6 @@
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.FreeTensorOverload">FreeTensorOverload</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.InlinedInvokeCreator">InlinedInvokeCreator</a>
-    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.LifetimeScope">LifetimeScope</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.PredefinedVarCreator">PredefinedVarCreator</a>
@@ -7032,6 +7030,9 @@ Can be overridden by subclasses.</p>
         <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
             <span class="s1">&#39;Return is only allowed in statically deterministic control flow.&#39;</span>
         <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">StagedUnpackAssignable</span><span class="p">):</span>
+        <span class="c1"># We don&#39;t know how many items are there, so no unpacking</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">funcname</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">StagedAssignable</span><span class="p">):</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">funcname</span><span class="p">)</span>
     <span class="k">raise</span> <span class="n">ReturnException</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -7059,21 +7060,26 @@ Can be overridden by subclasses.</p>
     <div class="doc doc-contents ">
 
       <p>Customized assign wrapper for one or more targets.</p>
-<p>If <code>value</code> is instance of <code>StagedUnpackAssignable</code>, it's regarded as a customized
+<p>If <code>values</code> is instance of <code>StagedUnpackAssignable</code>, it's regarded as a customized
 assign behavior and gets executed with all the assigned targets' names. Otherwise,
 it calls <code>assign_stmt</code> with each sub-assignments.</p>
 <p>Please note that <code>names</code> can be nested tuples like <code>("a", ("b", "c"))</code>.</p>
+<p>Please also note that <code>names</code> can also be a single string like "a" even if <code>values</code>
+is a tuple. There is no unpacking in this case</p>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">unpack_assign_stmt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Customized assign wrapper for one or more targets.</span>
 
-<span class="sd">    If `value` is instance of `StagedUnpackAssignable`, it&#39;s regarded as a customized</span>
+<span class="sd">    If `values` is instance of `StagedUnpackAssignable`, it&#39;s regarded as a customized</span>
 <span class="sd">    assign behavior and gets executed with all the assigned targets&#39; names. Otherwise,</span>
 <span class="sd">    it calls `assign_stmt` with each sub-assignments.</span>
 
 <span class="sd">    Please note that `names` can be nested tuples like `(&quot;a&quot;, (&quot;b&quot;, &quot;c&quot;))`.</span>
+
+<span class="sd">    Please also note that `names` can also be a single string like &quot;a&quot; even if `values`</span>
+<span class="sd">    is a tuple. There is no unpacking in this case</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">StagedUnpackAssignable</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
@@ -7141,315 +7147,6 @@ it calls <code>assign_stmt</code> with each sub-assignments.</p>
     </div>
 
   </div>
-
-
-
-
-
-  </div>
-
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-class">
-
-
-
-<h4 id="freetensor.core.frontend.InlinedInvokeCreator" class="doc doc-heading">
-        <code>
-InlinedInvokeCreator            (<a class="autorefs autorefs-internal" title="freetensor.core.staging.StagedUnpackAssignable" href="#freetensor.core.staging.StagedUnpackAssignable">StagedUnpackAssignable</a>)
-        </code>
-
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-dataclass"><code>dataclass</code></small>
-  </span>
-
-<a href="#freetensor.core.frontend.InlinedInvokeCreator" class="headerlink" title="Permanent link">&para;</a></h4>
-
-    <div class="doc doc-contents ">
-
-      <p>InlinedInvokeCreator(func: freetensor_ffi.Func, args: list, kvs: dict, assigned: bool = False)</p>
-
-        <details class="quote">
-          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">InlinedInvokeCreator</span><span class="p">(</span><span class="n">StagedUnpackAssignable</span><span class="p">):</span>
-    <span class="n">func</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Func</span>
-    <span class="n">args</span><span class="p">:</span> <span class="nb">list</span>
-    <span class="n">kvs</span><span class="p">:</span> <span class="nb">dict</span>
-    <span class="n">assigned</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-
-    <span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">VarRef</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="k">return</span> <span class="n">_overload</span><span class="o">.</span><span class="n">register_inlined_invoke</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span>
-                                                     <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kvs</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                <span class="s2">&quot;Receiving return values in an `a = b = f()`-like multi-assignment &quot;</span>
-                <span class="s2">&quot;is not supported&quot;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span><span class="p">:</span>
-            <span class="n">_overload</span><span class="o">.</span><span class="n">register_inlined_invoke</span><span class="p">([],</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
-                                              <span class="bp">self</span><span class="o">.</span><span class="n">kvs</span><span class="p">)</span>
-</code></pre></div>
-        </details>
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  <div class="doc doc-object doc-class">
-
-
-
-<h5 id="freetensor.core.frontend.InlinedInvokeCreator.__class__" class="doc doc-heading">
-        <code>
-__class__            (<span title="type">type</span>)
-        </code>
-
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-inherited"><code>inherited</code></small>
-  </span>
-
-<a href="#freetensor.core.frontend.InlinedInvokeCreator.__class__" class="headerlink" title="Permanent link">&para;</a></h5>
-
-    <div class="doc doc-contents ">
-
-      <p>Metaclass for defining Abstract Base Classes (ABCs).</p>
-<p>Use this metaclass to create an ABC.  An ABC can be subclassed
-directly, and then acts as a mix-in class.  You can also register
-unrelated concrete classes (even built-in classes) and unrelated
-ABCs as 'virtual subclasses' -- these and their descendants will
-be considered subclasses of the registering ABC by the built-in
-issubclass() function, but the registering ABC won't show up in
-their MRO (Method Resolution Order) nor will method
-implementations defined by the registering ABC be callable (not
-even via super()).</p>
-
-        <details class="quote">
-          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">ABCMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Metaclass for defining Abstract Base Classes (ABCs).</span>
-
-<span class="sd">    Use this metaclass to create an ABC.  An ABC can be subclassed</span>
-<span class="sd">    directly, and then acts as a mix-in class.  You can also register</span>
-<span class="sd">    unrelated concrete classes (even built-in classes) and unrelated</span>
-<span class="sd">    ABCs as &#39;virtual subclasses&#39; -- these and their descendants will</span>
-<span class="sd">    be considered subclasses of the registering ABC by the built-in</span>
-<span class="sd">    issubclass() function, but the registering ABC won&#39;t show up in</span>
-<span class="sd">    their MRO (Method Resolution Order) nor will method</span>
-<span class="sd">    implementations defined by the registering ABC be callable (not</span>
-<span class="sd">    even via super()).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">_abc_init</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">cls</span>
-
-    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Register a virtual subclass of an ABC.</span>
-
-<span class="sd">        Returns the subclass, to allow usage as a class decorator.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">_abc_register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Override for isinstance(instance, cls).&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">_abc_instancecheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Override for issubclass(subclass, cls).&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">_abc_subclasscheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_dump_registry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Debug helper to print the ABC registry.&quot;&quot;&quot;</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Class: </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Inv. counter: </span><span class="si">{</span><span class="n">get_cache_token</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-        <span class="p">(</span><span class="n">_abc_registry</span><span class="p">,</span> <span class="n">_abc_cache</span><span class="p">,</span> <span class="n">_abc_negative_cache</span><span class="p">,</span>
-         <span class="n">_abc_negative_cache_version</span><span class="p">)</span> <span class="o">=</span> <span class="n">_get_dump</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_abc_registry: </span><span class="si">{</span><span class="n">_abc_registry</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_abc_cache: </span><span class="si">{</span><span class="n">_abc_cache</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_abc_negative_cache: </span><span class="si">{</span><span class="n">_abc_negative_cache</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_abc_negative_cache_version: </span><span class="si">{</span><span class="n">_abc_negative_cache_version</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span>
-              <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_abc_registry_clear</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Clear the registry (for debugging or testing).&quot;&quot;&quot;</span>
-        <span class="n">_reset_registry</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_abc_caches_clear</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Clear the caches (for debugging or testing).&quot;&quot;&quot;</span>
-        <span class="n">_reset_caches</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-</code></pre></div>
-        </details>
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h6 id="freetensor.core.frontend.InlinedInvokeCreator.__class__.__instancecheck__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-<a href="#freetensor.core.frontend.InlinedInvokeCreator.__class__.__instancecheck__" class="headerlink" title="Permanent link">&para;</a></h6>
-
-    <div class="doc doc-contents ">
-
-      <p>Override for isinstance(instance, cls).</p>
-
-        <details class="quote">
-          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Override for isinstance(instance, cls).&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_abc_instancecheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h6 id="freetensor.core.frontend.InlinedInvokeCreator.__class__.__new__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-  </span>
-
-<a href="#freetensor.core.frontend.InlinedInvokeCreator.__class__.__new__" class="headerlink" title="Permanent link">&para;</a></h6>
-
-    <div class="doc doc-contents ">
-
-      <p>Create and return a new object.  See help(type) for accurate signature.</p>
-
-        <details class="quote">
-          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="bp">cls</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="n">_abc_init</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-    <span class="k">return</span> <span class="bp">cls</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h6 id="freetensor.core.frontend.InlinedInvokeCreator.__class__.__subclasscheck__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-<a href="#freetensor.core.frontend.InlinedInvokeCreator.__class__.__subclasscheck__" class="headerlink" title="Permanent link">&para;</a></h6>
-
-    <div class="doc doc-contents ">
-
-      <p>Override for issubclass(subclass, cls).</p>
-
-        <details class="quote">
-          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Override for issubclass(subclass, cls).&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_abc_subclasscheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h6 id="freetensor.core.frontend.InlinedInvokeCreator.__class__.register" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span></code>
-
-
-<a href="#freetensor.core.frontend.InlinedInvokeCreator.__class__.register" class="headerlink" title="Permanent link">&para;</a></h6>
-
-    <div class="doc doc-contents ">
-
-      <p>Register a virtual subclass of an ABC.</p>
-<p>Returns the subclass, to allow usage as a class decorator.</p>
-
-        <details class="quote">
-          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Register a virtual subclass of an ABC.</span>
-
-<span class="sd">    Returns the subclass, to allow usage as a class decorator.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_abc_register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-
-
-  </div>
-
-    </div>
-
-  </div>
-
-
-
-
-
-
-
 
 
 
@@ -9176,11 +8873,19 @@ Python code that is used for transforming</p></li>
         <span class="c1"># Despite whether the exception is raised, we need to clean up the ctx_stack</span>
         <span class="n">staged_ast</span> <span class="o">=</span> <span class="n">pop_ast</span><span class="p">()</span>
 
+    <span class="n">staged</span> <span class="o">=</span> <span class="kc">None</span>
+
     <span class="c1"># Enable invoking a transformed AST in another function being transformed,</span>
     <span class="c1"># via `inlined_invoke`</span>
     <span class="k">def</span> <span class="nf">prepare_inlined_invoke</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+        <span class="k">nonlocal</span> <span class="n">staged</span>
         <span class="k">if</span> <span class="n">_overload</span><span class="o">.</span><span class="n">in_staging</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">InlinedInvokeCreator</span><span class="p">(</span><span class="n">staged</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kvs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)))</span>
+            <span class="k">return</span> <span class="n">_overload</span><span class="o">.</span><span class="n">register_inlined_invoke</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">staged</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kvs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
                 <span class="s1">&#39;Unexpected call on a transformed AST. A transformed AST can only &#39;</span>
@@ -9677,7 +9382,9 @@ Defaults to True</p></li>
             <span class="k">return</span> <span class="n">returns_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span>
                 <span class="n">returns_tuple</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">returns_tuple</span>
 
-        <span class="k">return</span> <span class="n">generatedPyTorchFunction</span>
+        <span class="c1"># If called inside a FreeTensor funcion, don&#39;t care about PyTorch, just</span>
+        <span class="c1"># inline the transformed AST</span>
+        <span class="k">return</span> <span class="n">staged_callable</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">generatedPyTorchFunction</span><span class="p">)</span>
 
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
@@ -15104,7 +14811,7 @@ StagedUnpackAssignable            (<span title="abc.ABC">ABC</span>)
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">StagedUnpackAssignable</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">):</span>
 
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-    <span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 </code></pre></div>
         </details>
@@ -15530,11 +15237,14 @@ StagingOverload        </code>
     <span class="k">def</span> <span class="nf">unpack_assign_stmt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Customized assign wrapper for one or more targets.</span>
 
-<span class="sd">        If `value` is instance of `StagedUnpackAssignable`, it&#39;s regarded as a customized</span>
+<span class="sd">        If `values` is instance of `StagedUnpackAssignable`, it&#39;s regarded as a customized</span>
 <span class="sd">        assign behavior and gets executed with all the assigned targets&#39; names. Otherwise,</span>
 <span class="sd">        it calls `assign_stmt` with each sub-assignments.</span>
 
 <span class="sd">        Please note that `names` can be nested tuples like `(&quot;a&quot;, (&quot;b&quot;, &quot;c&quot;))`.</span>
+
+<span class="sd">        Please also note that `names` can also be a single string like &quot;a&quot; even if `values`</span>
+<span class="sd">        is a tuple. There is no unpacking in this case</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">StagedUnpackAssignable</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
@@ -15619,6 +15329,9 @@ StagingOverload        </code>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
                 <span class="s1">&#39;Return is only allowed in statically deterministic control flow.&#39;</span>
             <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">StagedUnpackAssignable</span><span class="p">):</span>
+            <span class="c1"># We don&#39;t know how many items are there, so no unpacking</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">funcname</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">StagedAssignable</span><span class="p">):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">funcname</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">ReturnException</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -16516,6 +16229,9 @@ Can be overridden by subclasses.</p>
         <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
             <span class="s1">&#39;Return is only allowed in statically deterministic control flow.&#39;</span>
         <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">StagedUnpackAssignable</span><span class="p">):</span>
+        <span class="c1"># We don&#39;t know how many items are there, so no unpacking</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">funcname</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">StagedAssignable</span><span class="p">):</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">funcname</span><span class="p">)</span>
     <span class="k">raise</span> <span class="n">ReturnException</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -16540,21 +16256,26 @@ Can be overridden by subclasses.</p>
     <div class="doc doc-contents ">
 
       <p>Customized assign wrapper for one or more targets.</p>
-<p>If <code>value</code> is instance of <code>StagedUnpackAssignable</code>, it's regarded as a customized
+<p>If <code>values</code> is instance of <code>StagedUnpackAssignable</code>, it's regarded as a customized
 assign behavior and gets executed with all the assigned targets' names. Otherwise,
 it calls <code>assign_stmt</code> with each sub-assignments.</p>
 <p>Please note that <code>names</code> can be nested tuples like <code>("a", ("b", "c"))</code>.</p>
+<p>Please also note that <code>names</code> can also be a single string like "a" even if <code>values</code>
+is a tuple. There is no unpacking in this case</p>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/staging.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">unpack_assign_stmt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Customized assign wrapper for one or more targets.</span>
 
-<span class="sd">    If `value` is instance of `StagedUnpackAssignable`, it&#39;s regarded as a customized</span>
+<span class="sd">    If `values` is instance of `StagedUnpackAssignable`, it&#39;s regarded as a customized</span>
 <span class="sd">    assign behavior and gets executed with all the assigned targets&#39; names. Otherwise,</span>
 <span class="sd">    it calls `assign_stmt` with each sub-assignments.</span>
 
 <span class="sd">    Please note that `names` can be nested tuples like `(&quot;a&quot;, (&quot;b&quot;, &quot;c&quot;))`.</span>
+
+<span class="sd">    Please also note that `names` can also be a single string like &quot;a&quot; even if `values`</span>
+<span class="sd">    is a tuple. There is no unpacking in this case</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">StagedUnpackAssignable</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>

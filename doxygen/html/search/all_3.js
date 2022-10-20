@@ -44,13 +44,15 @@ var searchData=
   ['bothselector_41',['BothSelector',['../classfreetensor_1_1BothSelector.html#a01972ca9267d475cbf441de67b3bd4ee',1,'freetensor::BothSelector::BothSelector()'],['../classfreetensor_1_1BothSelector.html',1,'freetensor::BothSelector']]],
   ['bounds_2ecc_42',['bounds.cc',['../bounds_8cc.html',1,'']]],
   ['bounds_2eh_43',['bounds.h',['../bounds_8h.html',1,'']]],
-  ['buffer_44',['buffer',['../classfreetensor_1_1Z3SimplifyWithSymbolTable.html#a59387234af40c0461db6b85b5d169801',1,'freetensor::Z3SimplifyWithSymbolTable::buffer()'],['../classfreetensor_1_1SymbolTable.html#acf44b2e9ac614c58006e64b138c2a329',1,'freetensor::SymbolTable::buffer()'],['../classfreetensor_1_1SymbolTableData.html#a52968bbce30ec09728b37700831cccd9',1,'freetensor::SymbolTableData::buffer()'],['../classfreetensor_1_1SymbolTableInterface.html#a2afdaf2b1dca02deebaff0fbf20c11ef',1,'freetensor::SymbolTableInterface::buffer()']]],
+  ['buffer_44',['buffer',['../classfreetensor_1_1SymbolTableData.html#a52968bbce30ec09728b37700831cccd9',1,'freetensor::SymbolTableData::buffer()'],['../classfreetensor_1_1SymbolTable.html#acf44b2e9ac614c58006e64b138c2a329',1,'freetensor::SymbolTable::buffer()'],['../classfreetensor_1_1SymbolTableInterface.html#a2afdaf2b1dca02deebaff0fbf20c11ef',1,'freetensor::SymbolTableInterface::buffer()'],['../classfreetensor_1_1Z3SimplifyWithSymbolTable.html#a59387234af40c0461db6b85b5d169801',1,'freetensor::Z3SimplifyWithSymbolTable::buffer()']]],
   ['buffer_45',['Buffer',['../classfreetensor_1_1Buffer.html',1,'freetensor']]],
   ['buffer_2ecc_46',['buffer.cc',['../buffer_8cc.html',1,'']]],
   ['buffer_2eh_47',['buffer.h',['../buffer_8h.html',1,'']]],
-  ['buffer_5f_48',['buffer_',['../classfreetensor_1_1VarDefNode.html#a6092e2ac0f53788f2ef040883cf36101',1,'freetensor::VarDefNode::buffer_()'],['../structfreetensor_1_1AccessPoint.html#ae5dee38c8af03951c72f8fa814ed4978',1,'freetensor::AccessPoint::buffer_()']]],
-  ['build_49',['build',['../classfreetensor_1_1PBSetBuilder.html#aed62f3ca77d91fa81b29936f7d65a400',1,'freetensor::PBSetBuilder::build()'],['../classfreetensor_1_1PBMapBuilder.html#adfd40ce5de8835fed589042c83db5546',1,'freetensor::PBMapBuilder::build()']]],
-  ['builtinsimplify_50',['builtinSimplify',['../namespacefreetensor.html#a5c54f4c7a864a4e7051d226cfff73cb1',1,'freetensor']]],
-  ['builtinsimplify_51',['BuiltinSimplify',['../classfreetensor_1_1BuiltinSimplify.html#a03d431a4e9cb9b24f6ab0157252c7fbb',1,'freetensor::BuiltinSimplify::BuiltinSimplify()'],['../classfreetensor_1_1BuiltinSimplify.html',1,'freetensor::BuiltinSimplify']]],
-  ['byvalue_52',['ByValue',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150ad678aba164b442f27e193f3f05ef614f',1,'freetensor']]]
+  ['buffer_5f_48',['buffer_',['../structfreetensor_1_1AccessPoint.html#ae5dee38c8af03951c72f8fa814ed4978',1,'freetensor::AccessPoint::buffer_()'],['../classfreetensor_1_1VarDefNode.html#a6092e2ac0f53788f2ef040883cf36101',1,'freetensor::VarDefNode::buffer_()']]],
+  ['buftoreturn_49',['bufToReturn',['../classfreetensor_1_1StripReturns.html#a778792e6731241930b9dfcc686c12002',1,'freetensor::StripReturns']]],
+  ['build_50',['build',['../classfreetensor_1_1PBSetBuilder.html#aed62f3ca77d91fa81b29936f7d65a400',1,'freetensor::PBSetBuilder::build()'],['../classfreetensor_1_1PBMapBuilder.html#adfd40ce5de8835fed589042c83db5546',1,'freetensor::PBMapBuilder::build()']]],
+  ['builtinsimplify_51',['BuiltinSimplify',['../classfreetensor_1_1BuiltinSimplify.html#a03d431a4e9cb9b24f6ab0157252c7fbb',1,'freetensor::BuiltinSimplify']]],
+  ['builtinsimplify_52',['builtinSimplify',['../namespacefreetensor.html#a5c54f4c7a864a4e7051d226cfff73cb1',1,'freetensor']]],
+  ['builtinsimplify_53',['BuiltinSimplify',['../classfreetensor_1_1BuiltinSimplify.html',1,'freetensor']]],
+  ['byvalue_54',['ByValue',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150ad678aba164b442f27e193f3f05ef614f',1,'freetensor']]]
 ];
