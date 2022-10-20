@@ -19,8 +19,8 @@ from .stmt import (_VarDef, NamedScope, VarRef, For, If, Else, MarkLabel,
                    ctx_stack, Func, Assert, Invoke)
 
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
-                      StagedUnpackAssignable, StagedIterable, StagingError,
-                      StagingOverload, TransformError)
+                      StagedIterable, StagingError, StagingOverload,
+                      TransformError)
 
 assert sys.version_info >= (3, 8), \
     "Python version lower than 3.8 is not supported"
@@ -378,29 +378,6 @@ class Var(StagedTypeAnnotation):
                                          self.atype, self.mtype)
 
 
-@dataclass
-class InlinedInvokeCreator(StagedUnpackAssignable):
-    func: ffi.Func
-    args: list
-    kvs: dict
-    assigned: bool = False
-
-    def assign(self, names) -> Sequence[VarRef]:
-        if not self.assigned:
-            self.assigned = True
-            return _overload.register_inlined_invoke(names, self.func,
-                                                     self.args, self.kvs)
-        else:
-            raise _overload.error(
-                "Receiving return values in an `a = b = f()`-like multi-assignment "
-                "is not supported")
-
-    def __del__(self):
-        if not self.assigned:
-            _overload.register_inlined_invoke([], self.func, self.args,
-                                              self.kvs)
-
-
 class dynamic_range(StagedIterable):
     '''Dynamic range that generates For loop in IR tree.'''
 
@@ -525,11 +502,19 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
         # Despite whether the exception is raised, we need to clean up the ctx_stack
         staged_ast = pop_ast()
 
+    staged = None
+
     # Enable invoking a transformed AST in another function being transformed,
     # via `inlined_invoke`
     def prepare_inlined_invoke(*args, **kvs):
+        nonlocal staged
         if _overload.in_staging():
-            return InlinedInvokeCreator(staged, args, kvs)
+            if len(returns) == 1:
+                names = (func.__name__,)
+            else:
+                names = tuple(
+                    f"{func.__name__}.{i}" for i in range(len(returns)))
+            return _overload.register_inlined_invoke(names, staged, args, kvs)
         else:
             raise _overload.error(
                 'Unexpected call on a transformed AST. A transformed AST can only '

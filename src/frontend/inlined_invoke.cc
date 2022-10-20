@@ -7,6 +7,17 @@
 
 namespace freetensor {
 
+Stmt StripReturns::visit(const VarDef &op) {
+    if (std::find_if(returns_.begin(), returns_.end(), [&](const FuncRet &ret) {
+            return ret.name_ == op->name_;
+        }) != returns_.end()) {
+        bufToReturn_.emplace_back(op->buffer_);
+        return (*this)(op->body_);
+    } else {
+        return Mutator::visit(op);
+    }
+}
+
 Stmt InlinedInvoke::visitStmt(const Stmt &op) {
     auto ret = Mutator::visitStmt(op);
     ret->metadata() = makeMetadata("inlined_invoke", {callSiteMetadata_});
@@ -75,20 +86,9 @@ Stmt InlinedInvoke::visit(const VarDef &op) {
 
 std::pair<Func, std::vector<Ref<Buffer>>> stripReturns(const Func &_func) {
     auto func = hoistReturnVars(_func);
-    std::vector<Ref<Buffer>> toReturn;
-    while (func->body_->nodeType() == ASTNodeType::VarDef) {
-        if (auto vardef = func->body_.as<VarDefNode>();
-            std::find_if(func->returns_.begin(), func->returns_.end(),
-                         [&](const FuncRet &ret) {
-                             return ret.name_ == vardef->name_;
-                         }) != func->returns_.end()) {
-            toReturn.emplace_back(vardef->buffer_);
-            func->body_ = vardef->body_;
-        } else {
-            break;
-        }
-    }
-    return {func, toReturn};
+    StripReturns mutator(func->returns_);
+    func->body_ = mutator(func->body_);
+    return {func, mutator.bufToReturn()};
 }
 
 Stmt inlinedInvoke(

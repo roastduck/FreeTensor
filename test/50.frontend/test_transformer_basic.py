@@ -1,9 +1,8 @@
 from dataclasses import dataclass
-from typing import Callable, Union
+from typing import Callable
 
 import pytest
 import freetensor as ft
-from freetensor import debug
 import numpy as np
 
 
@@ -517,92 +516,3 @@ def test_tuple_for():
         return y
 
     assert test.body.match(test_expected.body)
-
-
-def test_inlined_invoke_one_arg():
-
-    @ft.transform
-    def g(x: ft.Var[(4,), 'int32', 'inout']):
-        x[1] = 2
-
-    @ft.transform(verbose=2)
-    def f(x: ft.Var[(8, 4), 'int32', 'inout']):
-        g(x[3])
-
-    @ft.transform
-    def expect(x: ft.Var[(8, 4), 'int32', 'inout']):
-        x[3, 1] = 2
-
-    assert expect.body.match(f.body)
-
-
-def test_inlined_invoke_one_return():
-
-    @ft.transform
-    def g():
-        y = ft.empty((4,), "int32")
-        y[0] = 1
-        y[1] = 3
-        y[2] = 2
-        y[3] = 4
-        return y
-
-    @ft.transform(verbose=2)
-    def f(a: ft.Var[(8, 4), 'int32', 'inout']):
-        b = g()
-        for i in range(4):
-            a[2, i] = b[i]
-
-    @ft.transform
-    def expect(a: ft.Var[(8, 4), 'int32', 'inout']):
-        b = ft.empty((4,), "int32")
-        b[0] = 1
-        b[1] = 3
-        b[2] = 2
-        b[3] = 4
-        for i in range(4):
-            a[2, i] = b[i]
-
-    assert expect.body.match(f.body)
-
-
-def test_inlined_invoke_two_returns():
-
-    @ft.transform
-    def g():
-        y = ft.empty((4,), "int32")
-        z = ft.empty((4,), "int32")
-        y[0] = 1
-        y[1] = 3
-        y[2] = 2
-        y[3] = 4
-        z[0] = -1
-        z[1] = -3
-        z[2] = -2
-        z[3] = -4
-        return y, z
-
-    @ft.transform(verbose=2)
-    def f(a: ft.Var[(8, 4), 'int32', 'inout']):
-        b, c = g()
-        for i in range(4):
-            a[2, i] = b[i]
-            a[3, i] = c[i]
-
-    @ft.transform
-    def expect(a: ft.Var[(8, 4), 'int32', 'inout']):
-        b = ft.empty((4,), "int32")
-        c = ft.empty((4,), "int32")
-        b[0] = 1
-        b[1] = 3
-        b[2] = 2
-        b[3] = 4
-        c[0] = -1
-        c[1] = -3
-        c[2] = -2
-        c[3] = -4
-        for i in range(4):
-            a[2, i] = b[i]
-            a[3, i] = c[i]
-
-    assert expect.body.match(f.body)
