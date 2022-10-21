@@ -48,13 +48,17 @@ void Schedule::autoFissionFuse(const Target &target,
         // Try fission
         auto thisId = nest->id();
         int partCnt = 0;
-        auto splitters =
-            findAll("(<For>|<Store>|<ReduceTo>|<Eval>)<-(!<For><-)*#" +
-                    toString(nest->id()));
-        for (auto &&[i, splitter] : views::enumerate(splitters)) {
+        std::vector<ID> splitterIds; // Record IDs because we are mutating ast()
+        for (auto &&splitter :
+             findAll("(<For>|<Store>|<ReduceTo>|<Eval>)<-(!<For><-)*#" +
+                     toString(nest->id()))) {
+            splitterIds.emplace_back(splitter->id());
+        }
+        for (auto &&[i, splitterId] : views::enumerate(splitterIds)) {
             if (i == 0) {
                 continue;
             }
+            auto splitter = find(splitterId);
             bool frontHasDep =
                 FindDeps()
                     .direction({{{thisId, DepDirection::Different}}})
