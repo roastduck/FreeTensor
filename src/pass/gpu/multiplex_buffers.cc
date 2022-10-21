@@ -103,38 +103,45 @@ Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target) {
     FindParallelLoops finder(target);
     finder(op);
 
+    std::unordered_map<ID, std::unordered_set<ID>> affecting,
+        newAffecting; // VarDef ID -> For ID
+    affecting = finder.affecting();
+
     // Criteria:
-    // 1. There is dependencies
+    // 1. The value stored is loop-variant
     // AND
-    // 2. The value stored is loop-variant
+    // 2. There is dependence
 
+    // 1. The value stored is loop-variant
     auto variantMap = findLoopVariance(op).second;
+    for (auto &&[vardef, loops] : affecting) {
+        for (auto &&loop : loops) {
+            if (isVariant(variantMap, vardef, loop)) {
+                newAffecting[vardef].insert(loop);
+            }
+        }
+    }
+    affecting = std::move(newAffecting);
 
+    // 2. There is dependence
     std::vector<FindDepsDir> direction;
-    std::unordered_map<ID, ParallelScope> parallelScopes; // For ID -> parallel
     for (auto &&loop : finder.loops()) {
         direction.emplace_back(
             FindDepsDir{{loop->id(), DepDirection::Different}});
-        parallelScopes[loop->id()] = loop->property_->parallel_;
     }
-    std::unordered_map<ID, std::unordered_set<ID>>
-        affecting; // VarDef ID -> For ID
-    auto found = [&](const Dependency &d) {
-        ASSERT(d.dir_.size() == 1);
-        if (finder.affecting().count(d.defId()) &&
-            finder.affecting().at(d.defId()).count(d.dir_[0].first.id_)) {
-            if (isVariant(variantMap, d.def(), d.dir_[0].first.id_)) {
-                affecting[d.defId()].insert(d.dir_[0].first.id_);
-            }
-        }
-    };
     FindDeps()
         .direction(direction)
-        .filterAccess([](const AccessPoint &acc) {
-            return acc.def_->buffer_->mtype() == MemType::GPUShared ||
-                   acc.def_->buffer_->mtype() == MemType::GPUGlobal;
+        .filterAccess([&](const AccessPoint &acc) {
+            return affecting.count(acc.def_->id());
         })
-        .eraseOutsideVarDef(false)(op, found);
+        .eraseOutsideVarDef(false)(op, [&](const Dependency &d) {
+            ASSERT(d.dir_.size() == 1);
+            if (affecting.count(d.defId()) &&
+                affecting.at(d.defId()).count(d.dir_[0].first.id_)) {
+                newAffecting[d.defId()].insert(d.dir_[0].first.id_);
+            }
+        });
+    affecting = std::move(newAffecting);
 
     return MultiplexMutator(affecting)(op);
 }
