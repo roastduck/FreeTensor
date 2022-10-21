@@ -131,6 +131,7 @@ class FindLoopVariance : public TrackStmt<Visitor> {
     void visit(const Load &op) override;
     void visit(const IfExpr &op) override;
     void visit(const Cast &op) override;
+    void visit(const Intrinsic &op) override;
 };
 
 bool isVariant(const LoopVariExprMap &exprInfo, const StmtOrExprID &expr,

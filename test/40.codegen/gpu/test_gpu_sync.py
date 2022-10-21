@@ -343,18 +343,20 @@ def test_syncthreads_split_branch_out_of_const_loop():
 
     @ft.transform
     def test(x, y):
-        x: ft.Var[(10, 10, 32), "int32", "input", "gpu/global"]
+        x: ft.Var[(10, 10, 64), "int32", "input", "gpu/global"]
         y: ft.Var[(10, 10), "int32", "output", "gpu/global"]
         #! label: L0
         for i in range(3):
             #! label: L1
             for j in range(4):
-                if i * 4 + j < 10:
+                if i * 4 + j < 10:  # THIS BRANCH WILL BE SPLIT
                     #! label: L2
                     for k in range(10):
+                        # THIS LOOP WILL BE EXECUTED EVEN WHEN THE OUTER CONDITION
+                        # IS EVALUATED TO BE FALSE
                         t = ft.empty((2,), "int32", "gpu/shared")
                         #! label: L3
-                        for p in range(32):
+                        for p in range(64):
                             t[p % 2] += x[i * 4 + j, k, p]
                         y[i * 4 + j, k] = t[0]
 
@@ -364,25 +366,160 @@ def test_syncthreads_split_branch_out_of_const_loop():
     s.parallelize("L3", "threadIdx.x")
     func = ft.lower(s.func(), target, verbose=1)
 
-    with ft.VarDef([("x", (10, 10, 32), "int32", "input", "gpu/global"),
+    with ft.VarDef([("x", (10, 10, 64), "int32", "input", "gpu/global"),
                     ("y", (10, 10), "int32", "output", "gpu/global")]) as (x,
                                                                            y):
         with ft.For(".blockIdx.x", 0, 3) as i:
             with ft.For(".threadIdx.y", 0, 4) as j:
-                with ft.For(".threadIdx.x", 0, 32) as p:
+                with ft.For(".threadIdx.x", 0, 64) as p:
                     with ft.For("k", 0, 10) as k:
                         with ft.VarDef("t", (4, 2), "int32", "cache",
                                        "gpu/shared") as t:
                             with ft.If(ft.any()):
                                 ft.Any()  # t
                             ft.Eval(
-                                ft.intrinsic("__syncwarp()",
+                                ft.intrinsic("__syncthreads()",
                                              has_side_effect=True))
                             with ft.If(ft.any()):
                                 with ft.If(p == 0):
                                     ft.Any()  # y
                         ft.Eval(
-                            ft.intrinsic("__syncwarp()", has_side_effect=True))
+                            ft.intrinsic("__syncthreads()",
+                                         has_side_effect=True))
+    assert ft.pop_ast().match(func.body)
+
+
+def test_syncthreads_no_split_branch_out_of_dynamic_loop():
+
+    @ft.transform
+    def test(x, y):
+        lim: ft.Var[(3, 4), "int32", "input", "gpu/global"]
+        x: ft.Var[(10, 10, 64), "int32", "input", "gpu/global"]
+        y: ft.Var[(10, 10), "int32", "output", "gpu/global"]
+        #! label: L0
+        for i in range(3):
+            #! label: L1
+            for j in range(4):
+                if i * 4 + j < 10:  # THIS BRANCH HAS TO BE SPLIT
+                    #! label: L2
+                    for k in range(lim[i, j]):
+                        # THIS LOOP CANNOT BE EXECUTED WHEN THE OUTER CONDITION IS
+                        # EVALUATED TO BE FALSE, BEACUSE lim[i, j] MAY BE INVALID
+                        t = ft.empty((2,), "int32", "gpu/shared")
+                        #! label: L3
+                        for p in range(64):
+                            t[p % 2] += x[i * 4 + j, k, p]
+                        y[i * 4 + j, k] = t[0]
+
+    s = ft.Schedule(test)
+    s.parallelize("L0", "blockIdx.x")
+    s.parallelize("L1", "threadIdx.y")
+    s.parallelize("L3", "threadIdx.x")
+    with pytest.raises(ft.InvalidProgram):
+        func = ft.lower(s.func(), target, verbose=1)
+
+
+def test_syncthreads_no_need_to_split_branch():
+
+    @ft.transform
+    def test(x, y):
+        lim: ft.Var[(3, 4), "int32", "input", "gpu/global"]
+        x: ft.Var[(12, 10, 64), "int32", "input", "gpu/global"]
+        y: ft.Var[(12, 10), "int32", "output", "gpu/global"]
+        #! label: L0
+        for i in range(3):
+            #! label: L1
+            for j in range(4):
+                if i % 2 == 0:
+                    # NO NEED TO SPLIT THIS BRANCH, BECAUSE IS EVALUATED TO THE
+                    # SAME VALUE IN THE SAME THREAD BLOCK, AND WE ONLY SYNC INSIDE
+                    # A THREAD BLOCK
+                    #! label: L2
+                    for k in range(lim[i, j]):
+                        t = ft.empty((2,), "int32", "gpu/shared")
+                        #! label: L3
+                        for p in range(64):
+                            t[p % 2] += x[i * 4 + j, k, p]
+                        y[i * 4 + j, k] = t[0]
+
+    s = ft.Schedule(test)
+    s.parallelize("L0", "blockIdx.x")
+    s.parallelize("L1", "threadIdx.y")
+    s.parallelize("L3", "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=1)
+
+    with ft.VarDef([("lim", (3, 4), "int32", "input", "gpu/global"),
+                    ("x", (12, 10, 64), "int32", "input", "gpu/global"),
+                    ("y", (12, 10), "int32", "output", "gpu/global")
+                   ]) as (lim, x, y):
+        with ft.For(".blockIdx.x", 0, 3) as i:
+            with ft.If(ft.any()):  # HERE OUTSIDE OF k
+                with ft.For(".threadIdx.y", 0, 4) as j:
+                    with ft.For(".threadIdx.x", 0, 64) as p:
+                        with ft.For("k", 0, lim[i, j]) as k:
+                            with ft.VarDef("t", (4, 2), "int32", "cache",
+                                           "gpu/shared") as t:
+                                ft.Any()  # t
+                                ft.Eval(
+                                    ft.intrinsic("__syncthreads()",
+                                                 has_side_effect=True))
+                                with ft.If(p == 0):
+                                    ft.Any()  # y
+                            ft.Eval(
+                                ft.intrinsic("__syncthreads()",
+                                             has_side_effect=True))
+    assert ft.pop_ast().match(func.body)
+
+
+def test_syncthreads_no_need_to_split_branch_warp():
+
+    @ft.transform
+    def test(x, y):
+        lim: ft.Var[(3, 4), "int32", "input", "gpu/global"]
+        x: ft.Var[(12, 10, 32), "int32", "input", "gpu/global"]
+        y: ft.Var[(12, 10), "int32", "output", "gpu/global"]
+        #! label: L0
+        for i in range(3):
+            #! label: L1
+            for j in range(4):
+                if i % 2 == 0:
+                    # NO NEED TO SPLIT THIS BRANCH, BECAUSE WE ONLY NEED __syncwarp(),
+                    # WHICH IS ACTUALLY A MEMORY FLUSH INSTEAD OF A SYNCHRONIZATION
+                    #! label: L2
+                    for k in range(lim[i, j]):
+                        t = ft.empty((2,), "int32", "gpu/shared")
+                        #! label: L3
+                        for p in range(32):
+                            t[p % 2] += x[i * 4 + j, k, p]
+                        y[i * 4 + j, k] = t[0]
+
+    s = ft.Schedule(test)
+    s.parallelize("L0", "threadIdx.z")
+    s.parallelize("L1", "threadIdx.y")
+    s.parallelize("L3", "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=1)
+
+    with ft.VarDef([("lim", (3, 4), "int32", "input", "gpu/global"),
+                    ("x", (12, 10, 32), "int32", "input", "gpu/global"),
+                    ("y", (12, 10), "int32", "output", "gpu/global")
+                   ]) as (lim, x, y):
+        with ft.For(".threadIdx.z", 0, 3) as i:
+            with ft.If(ft.any()):
+                with ft.For(".threadIdx.y", 0, 4) as j:
+                    with ft.For(".threadIdx.x", 0, 32) as p:
+                        with ft.For("k", 0, lim[i, j]) as k:
+                            with ft.VarDef("t", (3, 4, 2), "int32", "cache",
+                                           "gpu/shared") as t:
+                                ft.Any()  # t
+                                with ft.If(p == 0):
+                                    ft.Eval(
+                                        ft.intrinsic("__syncwarp()",
+                                                     has_side_effect=True)
+                                    )  # HERE INSIDE p == 0
+                                    ft.Any()  # y
+                            ft.Eval(
+                                ft.intrinsic("__syncwarp()",
+                                             has_side_effect=True))
     assert ft.pop_ast().match(func.body)
 
 
@@ -410,7 +547,7 @@ def test_syncthreads_split_branch_with_else():
                 y[i] = t[0]
 
     s = ft.Schedule(test)
-    s.parallelize("L0", "blockIdx.x")
+    s.parallelize("L0", "threadIdx.y")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
     func = ft.lower(s.func(), target, verbose=1)
@@ -420,9 +557,10 @@ def test_syncthreads_split_branch_with_else():
         ("y", (4,), "int32", "output", "gpu/global"),
         ("z", (4,), "int32", "inout", "gpu/global"),
     ]) as (x, y, z):
-        with ft.For(".blockIdx.x", 0, 4) as i:
+        with ft.For(".threadIdx.y", 0, 4) as i:
             with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.VarDef("t", (2,), "int32", "cache", "gpu/shared") as t:
+                with ft.VarDef("t", (4, 2), "int32", "cache",
+                               "gpu/shared") as t:
                     with ft.If(i < 2):
                         ft.Any()
                         with ft.If(j == 0):
@@ -434,7 +572,8 @@ def test_syncthreads_split_branch_with_else():
                         with ft.If(j == 0):
                             ft.Any()  # y[i]
 
-                with ft.VarDef("t", (2,), "int32", "cache", "gpu/shared") as t:
+                with ft.VarDef("t", (4, 2), "int32", "cache",
+                               "gpu/shared") as t:
                     with ft.If(i >= 2):
                         ft.Any()
                         with ft.If(j == 0):
@@ -530,7 +669,7 @@ def test_syncthreads_split_branch_and_vardef_with_else():
                 z2[i] = u2[0] + 1
 
     s = ft.Schedule(test)
-    s.parallelize("L0", "blockIdx.x")
+    s.parallelize("L0", "threadIdx.y")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
     func = ft.lower(s.func(), target, verbose=1)
@@ -541,9 +680,10 @@ def test_syncthreads_split_branch_and_vardef_with_else():
         ("z1", (4,), "int32", "inout", "gpu/global"),
         ("z2", (4,), "int32", "inout", "gpu/global"),
     ]) as (x, y, z1, z2):
-        with ft.For(".blockIdx.x", 0, 4) as i:
+        with ft.For(".threadIdx.y", 0, 4) as i:
             with ft.For(".threadIdx.x", 0, 256) as j:
-                with ft.VarDef("t", (2,), "int32", "cache", "gpu/shared") as t:
+                with ft.VarDef("t", (4, 2), "int32", "cache",
+                               "gpu/shared") as t:
                     with ft.If(i < 2):
                         ft.Any()
                     with ft.VarDef("u1", (1,), "int32", "cache",
@@ -561,7 +701,8 @@ def test_syncthreads_split_branch_and_vardef_with_else():
                                 ft.Any()  # z1[i]
                                 ft.Any()  # z2[i]
 
-                with ft.VarDef("t", (2,), "int32", "cache", "gpu/shared") as t:
+                with ft.VarDef("t", (4, 2), "int32", "cache",
+                               "gpu/shared") as t:
                     with ft.If(i >= 2):
                         ft.Any()
                     with ft.VarDef("u2", (1,), "int32", "cache",

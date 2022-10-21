@@ -79,7 +79,10 @@ Stmt CopyParts::visit(const For &_op) {
             throw InvalidProgram(
                 "Unable to insert a synchronizing statment because it requires "
                 "splitting a dynamic loop " +
-                toString(op->id()) + " into two parts");
+                toString(op->id()) +
+                " into two parts, to avoid synchronizing inside a condition "
+                "of " +
+                toString(cond_));
         }
     }
     return op;
@@ -137,13 +140,27 @@ split_this_level:
     return op;
 }
 
-void MakeSync::markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync) {
+void MakeSync::markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync,
+                                    bool needSyncWarp) {
+    if (needSyncWarp) {
+        return;
+    }
     bool inElseCase = false;
     for (auto ctx = stmtInTree; ctx.isValid(); ctx = ctx->parentStmt()) {
         if (ctx->nodeType() == ASTNodeType::If) {
-            (inElseCase ? branchSplittersElse_
-                        : branchSplittersThen_)[ctx->id()]
-                .emplace_back(sync);
+            auto branch = ctx.as<IfNode>();
+            bool needSplitBranch = false;
+            for (auto &&[loop, threadInfo] : loop2thread_) {
+                if (isVariant(variantExprs_, {branch->cond_, branch}, loop)) {
+                    needSplitBranch = true;
+                    break;
+                }
+            }
+            if (needSplitBranch) {
+                (inElseCase ? branchSplittersElse_
+                            : branchSplittersThen_)[ctx->id()]
+                    .emplace_back(sync);
+            }
         }
         inElseCase = ctx->parentStmt().isValid() &&
                      ctx->parentStmt()->nodeType() == ASTNodeType::If &&
@@ -184,7 +201,7 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
         }
         if (!whereToInsert.isValid()) {
             ret = makeStmtSeq({sync, ret});
-            markSyncForSplitting(op->parentStmt(), sync);
+            markSyncForSplitting(op->parentStmt(), sync, needSyncWarp);
         } else {
             syncBeforeFor_[whereToInsert->id()] = sync;
         }
@@ -228,7 +245,7 @@ Stmt MakeSync::visit(const For &_op) {
                 makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
         }
         op->body_ = makeStmtSeq({op->body_, sync});
-        markSyncForSplitting(_op, sync);
+        markSyncForSplitting(_op, sync, needSyncWarp);
         for (CrossThreadDep &dep : deps_) {
             if (dep.visiting_) {
                 if (needSyncThreads) {
@@ -242,7 +259,7 @@ Stmt MakeSync::visit(const For &_op) {
     }
     if (syncBeforeFor_.count(op->id())) {
         auto &&sync = syncBeforeFor_.at(op->id());
-        markSyncForSplitting(_op, sync);
+        markSyncForSplitting(_op, sync, needSyncWarp);
         return makeStmtSeq({sync, op});
     }
     return op;
@@ -320,7 +337,9 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
         .ignoreReductionWAW(false)
         .eraseOutsideVarDef(false)(op, found);
 
-    MakeSync mutator(op, std::move(deps));
+    auto variantExprs = findLoopVariance(op).first;
+
+    MakeSync mutator(op, loop2thread, std::move(deps), std::move(variantExprs));
     op = mutator(op);
 
     return mergeAndHoistIf(op);

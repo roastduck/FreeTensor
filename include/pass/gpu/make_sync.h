@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/find_loop_variance.h>
 #include <driver/target.h>
 #include <func.h>
 #include <math/bounds.h>
@@ -69,17 +70,76 @@ class MakeSync : public Mutator {
     typedef Mutator BaseClass;
 
     Stmt root_;
+    const std::unordered_map<ID, ThreadInfo> &loop2thread_;
     std::vector<CrossThreadDep> deps_;
     std::unordered_map<ID, Stmt> syncBeforeFor_;
     std::unordered_map<ID, std::vector<Stmt>> branchSplittersThen_,
         branchSplittersElse_;
+    LoopVariExprMap variantExprs_;
 
   public:
-    MakeSync(const Stmt root, std::vector<CrossThreadDep> &&deps)
-        : root_(root), deps_(std::move(deps)) {}
+    MakeSync(const Stmt root,
+             const std::unordered_map<ID, ThreadInfo> &loop2thread,
+             std::vector<CrossThreadDep> &&deps, LoopVariExprMap &&variantExprs)
+        : root_(root), loop2thread_(loop2thread), deps_(std::move(deps)),
+          variantExprs_(std::move(variantExprs)) {}
 
   private:
-    void markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync);
+    /**
+     * Mark some `If` nodes to be split, in order to insert a synchronization
+     *
+     * When we are inserting a synchronization, like:
+     *
+     * ```
+     * if cond
+     *   ...
+     *   sync
+     *   ...
+     *
+     * ```
+     *
+     * ..., we can't insert it inside an `If` if `cond` is related to the
+     * affected thread IDs. Otherwise, the threads entering the branch will wait
+     * for the therads not entering the branch infinitely. We have to split the
+     * `If`, like:
+     *
+     * ```
+     * if cond
+     *   ...
+     * sync
+     * if cond
+     *   ...
+     * ```
+     *
+     * However, when we need to add a synchronization inside a `For` which is
+     * further inside an `If`, like:
+     *
+     * ```
+     * if cond
+     *   for ...
+     *     ...
+     *     sync
+     *     ...
+     * ```
+     *
+     * we need to move the `If` to outside of the `For` first. The final program
+     * will be like:
+     *
+     * ```
+     * for ...
+     *   if cond
+     *     ...
+     *   sync
+     *   if cond
+     *     ...
+     * ```
+     *
+     * Splitting an `If` is only needed when adding a `__syncthreads`, rather
+     * than a `__syncwarp`, becasue the latter is simply a memory flush, not an
+     * actual synchronization
+     */
+    void markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync,
+                              bool needSyncWarp);
 
   protected:
     Stmt visitStmt(const Stmt &op) override;
