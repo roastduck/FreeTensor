@@ -200,6 +200,23 @@ void FindLoopVariance::visit(const Cast &op) {
     copyInfo(op->expr_, op);
 }
 
+void FindLoopVariance::visit(const Intrinsic &op) {
+    BaseClass::visit(op);
+    if (op->hasSideEffect_) {
+        for (auto &&loop : loopStack_) {
+            exprInfo_[{op, curStmt()}][loop] = LoopVariability::Variant;
+        }
+    } else {
+        for (auto &&[i, expr] : views::enumerate(op->params_)) {
+            if (i == 0) {
+                copyInfo(expr, op);
+            } else {
+                meetTo(expr, op);
+            }
+        }
+    }
+}
+
 bool isVariant(const LoopVariExprMap &exprInfo, const StmtOrExprID &expr,
                const ID &loop) {
     return exprInfo.count(expr) && exprInfo.at(expr).count(loop);
