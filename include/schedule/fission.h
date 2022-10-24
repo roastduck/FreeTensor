@@ -51,6 +51,8 @@ class HoistVar : public Mutator {
     Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const VarDef &op) override;
+    Stmt visit(const If &op) override;
+    Stmt visit(const Assert &op) override;
     Stmt visit(const Store &op) override;
     Expr visit(const Load &op) override;
     Stmt visit(const ReduceTo &op) override;
