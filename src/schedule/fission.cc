@@ -16,17 +16,32 @@ Stmt HoistVar::visitStmt(const Stmt &op) {
 
 Stmt HoistVar::visit(const For &op) {
     if (op->id() != loop_) {
-        auto ret = Mutator::visit(op);
-        if (inside_) {
+        if (!inside_) {
+            return Mutator::visit(op);
+        } else {
+            // If the For is an ancestor of the splitter, it own expressions are
+            // considered both "before" and "after", so visit them twice, both
+            // before and after visiting its body
+            (*this)(op->begin_), (*this)(op->end_), (*this)(op->step_);
+            auto ret = Mutator::visit(op);
+            (*this)(op->begin_), (*this)(op->end_), (*this)(op->step_);
+
             for (auto &&def : defStack_) {
                 xLoops_[def->name_].emplace_back(op->id());
             }
             innerLoops_.emplace_back(op->id());
+            return ret;
         }
-        return ret;
     } else {
         inside_ = true, isAfter_ = false;
+
+        // If the For is an ancestor of the splitter, it own expressions are
+        // considered both "before" and "after", so visit them twice, both
+        // before and after visiting its body
+        (*this)(op->begin_), (*this)(op->end_), (*this)(op->step_);
         auto ret = Mutator::visit(op);
+        (*this)(op->begin_), (*this)(op->end_), (*this)(op->step_);
+
         inside_ = false;
         for (auto &&def : defStack_) {
             xLoops_[def->name_].emplace_back(op->id());
@@ -47,15 +62,54 @@ Stmt HoistVar::visit(const VarDef &_op) {
     } else {
         part0Vars_.erase(_op->name_);
         part1Vars_.erase(_op->name_);
+
+        // If the VarDef is an ancestor of the splitter, it own expressions are
+        // considered both "before" and "after", so visit them twice, both
+        // before and after visiting its body
+        for (auto &&dim : _op->buffer_->tensor()->shape()) {
+            (*this)(dim);
+        }
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::VarDef);
         auto op = __op.as<VarDefNode>();
+        for (auto &&dim : op->buffer_->tensor()->shape()) {
+            (*this)(dim);
+        }
+
         if (part0Vars_.count(op->name_) && part1Vars_.count(op->name_)) {
             defStack_.emplace_back(op);
             return op->body_;
         } else {
             return op;
         }
+    }
+}
+
+Stmt HoistVar::visit(const If &op) {
+    if (!inside_) {
+        return Mutator::visit(op);
+    } else {
+        // If the If is an ancestor of the splitter, it own expressions are
+        // considered both "before" and "after", so visit them twice, both
+        // before and after visiting its body
+        (*this)(op->cond_);
+        auto ret = Mutator::visit(op);
+        (*this)(op->cond_);
+        return ret;
+    }
+}
+
+Stmt HoistVar::visit(const Assert &op) {
+    if (!inside_) {
+        return Mutator::visit(op);
+    } else {
+        // If the Assert is an ancestor of the splitter, it own expressions are
+        // considered both "before" and "after", so visit them twice, both
+        // before and after visiting its body
+        (*this)(op->cond_);
+        auto ret = Mutator::visit(op);
+        (*this)(op->cond_);
+        return ret;
     }
 }
 
@@ -245,8 +299,6 @@ std::pair<Stmt,
           std::pair<std::unordered_map<ID, ID>, std::unordered_map<ID, ID>>>
 fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
         const std::string &suffix0, const std::string &suffix1) {
-    // FIXME: Check the condition is not variant when splitting an If
-
     if (suffix0.empty() && suffix1.empty())
         throw InvalidSchedule(
             "Cannot preserve ID and Metadata for both first and second parts");
@@ -303,19 +355,23 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
         .filterEarlier([&](const AccessPoint &earlier) {
             // Reverse dependence: earlier at the second fissioned part
             if (beforeStmt.isValid()) {
-                return !earlier.stmt_->isBefore(beforeStmt);
+                return earlier.stmt_->isAncestorOf(beforeStmt) ||
+                       !earlier.stmt_->isBefore(beforeStmt);
             } else {
                 ASSERT(afterStmt.isValid());
-                return afterStmt->isBefore(earlier.stmt_);
+                return earlier.stmt_->isAncestorOf(afterStmt) ||
+                       afterStmt->isBefore(earlier.stmt_);
             }
         })
         .filterLater([&](const AccessPoint &later) {
             // Reverse dependence: later at the first fissioned part
             if (beforeStmt.isValid()) {
-                return later.stmt_->isBefore(beforeStmt);
+                return later.stmt_->isAncestorOf(beforeStmt) ||
+                       later.stmt_->isBefore(beforeStmt);
             } else {
                 ASSERT(afterStmt.isValid());
-                return !afterStmt->isBefore(later.stmt_);
+                return later.stmt_->isAncestorOf(afterStmt) ||
+                       !afterStmt->isBefore(later.stmt_);
             }
         })(ast, found);
 

@@ -290,6 +290,40 @@ def test_correct_dependency_before():
     assert std.match(ast)
 
 
+def test_correct_dependency_branch():
+
+    @ft.transform(verbose=1)
+    def test(x: ft.Var[(3,), "float32"]):
+        y = ft.empty((), "float32")
+        y[()] = 1
+        #! label: L
+        for i in range(3):
+            t = ft.empty((), "float32")
+            t[()] = x[i] * 2
+            if t[()] > 10:
+                #! label: S
+                y[()] /= 2
+        return y
+
+    s = ft.Schedule(test, verbose=1)
+    s.fission("L", ft.FissionSide.Before, "S")
+    test = ft.lower(s.func(), verbose=1, skip_passes=['prop_one_time_use'])
+
+    @ft.transform
+    def expect(x: ft.Var[(3,), "float32"]):
+        y = ft.empty((), "float32")
+        y[()] = 1
+        t = ft.empty((3,), "float32")
+        for i in range(3):
+            t[i] = x[i] * 2
+        for i in range(3):
+            if t[i] > 10:
+                y[()] /= 2
+        return y
+
+    assert expect.body.match(test.body)
+
+
 def test_correct_dependency_loop_step():
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
