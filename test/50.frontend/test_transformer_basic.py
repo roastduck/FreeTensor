@@ -516,3 +516,25 @@ def test_tuple_for():
         return y
 
     assert test.body.match(test_expected.body)
+
+
+@dataclass
+class TestAssigned:
+    attr: ft.VarRef
+
+
+def test_attribute_assign():
+
+    @ft.transform
+    def test():
+        t = TestAssigned()
+        t.attr = ft.var(1, 'float32')
+        return t.attr
+
+    @ft.transform
+    def test_expected():
+        attr = ft.var(1, 'float32')
+        return attr
+
+    # FIXME: check for identical var name
+    assert test.body.match(test_expected.body)
