@@ -331,7 +331,15 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
             return acc.buffer_->mtype() == MemType::GPUGlobal ||
                    acc.buffer_->mtype() == MemType::GPUShared;
         })
-        .filter([](const AccessPoint &later, const AccessPoint &earlier) {
+        .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
+            if (!lcaStmt(later.stmt_, earlier.stmt_)
+                     ->parentStmtByFilter([&](const Stmt &s) {
+                         return loop2thread.count(s->id());
+                     })
+                     .isValid()) {
+                // Crossing kernels, skipping
+                return false;
+            }
             return later.op_ != earlier.op_;
         })
         .ignoreReductionWAW(false)
