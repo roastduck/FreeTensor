@@ -536,5 +536,4 @@ def test_attribute_assign():
         attr = ft.var(1, 'float32')
         return attr
 
-    # FIXME: check for identical var name
     assert test.body.match(test_expected.body)
