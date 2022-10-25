@@ -90,19 +90,17 @@ def test_tune_fuse():
     # We may fuse these loops. But fusing them will make it impossible to parallelize.
     # After tuning, we will end up in not fusing them
     with ft.VarDef([("a", (100, 100, 100), "int32", "input", "cpu"),
-                    ("b", (100, 100, 100), "int32", "output", "cpu"),
-                    ("c", (100, 100, 100), "int32", "output", "cpu")]) as (a, b,
-                                                                           c):
+                    ("b", (100, 100, 100), "int32", "inout", "cpu"),
+                    ("c", (100, 100, 100), "int32", "inout", "cpu")]) as (a, b,
+                                                                          c):
         with ft.For("i", 0, 100, label="Li1") as i:
             with ft.For("j", 0, 100, label="Lj1") as j:
                 with ft.For("k", 0, 100, label="Lk1") as k:
-                    b[i, j, k] = ft.if_then_else(
-                        j > 0 and k > 0, b[i, j - 1, k - 1], 0) + a[i, j, k]
+                    b[i, j, k] = b[i, (j + 1) % 100, (k + 1) % 100] + a[i, j, k]
         with ft.For("i", 0, 100, label="Li2") as i:
             with ft.For("j", 0, 100, label="Lj2") as j:
                 with ft.For("k", 0, 100, label="Lk2") as k:
-                    c[i, j, k] = ft.if_then_else(i > 0, c[i - 1, j, k - 1],
-                                                 0) + a[i, j, k]
+                    c[i, j, k] = c[(i + 1) % 100, j, (k + 1) % 100] + a[i, j, k]
 
     func = ft.Func("main", ["a", "b", "c"], [], ft.pop_ast(verbose=True))
     s = ft.Schedule(func)
@@ -129,16 +127,14 @@ def test_tune_fuse():
 def test_tune_fission():
     # The reverse schedule of `test_tune_fuse`
     with ft.VarDef([("a", (100, 100, 100), "int32", "input", "cpu"),
-                    ("b", (100, 100, 100), "int32", "output", "cpu"),
-                    ("c", (100, 100, 100), "int32", "output", "cpu")]) as (a, b,
-                                                                           c):
+                    ("b", (100, 100, 100), "int32", "inout", "cpu"),
+                    ("c", (100, 100, 100), "int32", "inout", "cpu")]) as (a, b,
+                                                                          c):
         with ft.For("i", 0, 100, label="Li") as i:
             with ft.For("j", 0, 100, label="Lj") as j:
                 with ft.For("k", 0, 100, label="Lk") as k:
-                    b[i, j, k] = ft.if_then_else(
-                        j > 0 and k > 0, b[i, j - 1, k - 1], 0) + a[i, j, k]
-                    c[i, j, k] = ft.if_then_else(i > 0, c[i - 1, j, k - 1],
-                                                 0) + a[i, j, k]
+                    b[i, j, k] = b[i, (j + 1) % 100, (k + 1) % 100] + a[i, j, k]
+                    c[i, j, k] = c[(i + 1) % 100, j, (k + 1) % 100] + a[i, j, k]
 
     func = ft.Func("main", ["a", "b", "c"], [], ft.pop_ast(verbose=True))
     s = ft.Schedule(func)
@@ -165,21 +161,19 @@ def test_tune_fission():
 def test_tune_with_cond():
     # Fuse loops that can parallelize. Don't fuse loops that can't
     with ft.VarDef([("a", (100, 100, 100), "int32", "input", "gpu/global"),
-                    ("b", (100, 100, 100), "int32", "output", "gpu/global"),
-                    ("c", (100, 100, 100), "int32", "output", "gpu/global"),
+                    ("b", (100, 100, 100), "int32", "inout", "gpu/global"),
+                    ("c", (100, 100, 100), "int32", "inout", "gpu/global"),
                     ("y", (100, 100, 100), "int32", "output", "gpu/global")
                    ]) as (a, b, c, y):
         # Fusing L1 and L2 leads to poor parallelization, which is not preferred
         with ft.For("i", 0, 100, label="Li1") as i:
             with ft.For("j", 0, 100, label="Lj1") as j:
                 with ft.For("k", 0, 100, label="Lk1") as k:
-                    b[i, j, k] = ft.if_then_else(
-                        j > 0 and k > 0, b[i, j - 1, k - 1], 0) + a[i, j, k]
+                    b[i, j, k] = b[i, (j + 1) % 100, (k + 1) % 100] + a[i, j, k]
         with ft.For("i", 0, 100, label="Li2") as i:
             with ft.For("j", 0, 100, label="Lj2") as j:
                 with ft.For("k", 0, 100, label="Lk2") as k:
-                    c[i, j, k] = ft.if_then_else(i > 0, c[i - 1, j, k - 1],
-                                                 0) + a[i, j, k]
+                    c[i, j, k] = c[(i + 1) % 100, j, (k + 1) % 100] + a[i, j, k]
         # Fusing L3 and L4 is favorable to reduce kernel launch count
         with ft.VarDef("t", (100, 100, 100), "int32", "cache",
                        "gpu/global") as t:
