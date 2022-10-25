@@ -227,6 +227,25 @@ def test_type1_write_then_reduce():
     assert std.match(ast)
 
 
+def test_type1_write_then_reduce_sub():
+    with ft.VarDef("y", (), "int32", "output", "cpu") as y:
+        y[()] = 1
+        y[()] = y[()] - 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=[
+                       'scalar_prop_const', 'tensor_prop_const',
+                       'prop_one_time_use'
+                   ])
+
+    with ft.VarDef("y", (), "int32", "output", "cpu") as y:
+        y[()] = -1
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_type1_write_then_reduce_across_loops():
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -309,6 +328,25 @@ def test_type1_reduce_then_reduce():
 
     with ft.VarDef("y", (), "int32", "inout", "cpu") as y:
         y[()] += 3
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_type1_reduce_then_reduce_sub():
+    with ft.VarDef("y", (), "int32", "inout", "cpu") as y:
+        y[()] -= 1
+        y[()] -= 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=[
+                       'scalar_prop_const', 'tensor_prop_const',
+                       'prop_one_time_use'
+                   ])
+
+    with ft.VarDef("y", (), "int32", "inout", "cpu") as y:
+        y[()] -= 3
     std = ft.pop_ast()
 
     assert std.match(ast)
