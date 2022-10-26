@@ -120,8 +120,8 @@ PBSet extractLoopSet(const PBCtx &ctx, const AccessPoint &p) {
     auto iterList = AnalyzeDeps::makeIterList(p.iter_, p.iter_.size());
     GenPBExpr gen;
     GenPBExpr::VarMap externals;
-    auto conds = *AnalyzeDeps::makeCond(gen, p.conds_, RelaxMode::Possible,
-                                        externals, true, p.def_);
+    auto conds = AnalyzeDeps::makeCond(gen, p.conds_, RelaxMode::Possible,
+                                       externals, true, p.def_);
     if (externals.size() > 0)
         ERROR("PlutoFuse: external variables currently "
               "not supported.");
