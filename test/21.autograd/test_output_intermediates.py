@@ -299,3 +299,43 @@ def test_circular_reuse():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_dynamic_loop_range():
+
+    @ft.transform(verbose=1)
+    def func(n: ft.Var[(), "int32"], x, y):
+        x: ft.Var[(100, n), "float32"]
+        y: ft.Var[(n,), "float32", "output"]
+
+        for bn in range(100):
+            for pn in range(n * n):
+                #! label: V_z
+                z = ft.empty((), "float32")
+                z[()] = x[bn, pn] + 1
+                y[pn % n] += z[()] * z[()]
+
+    ast = ft.output_intermediates(func.body, set(["V_z"]))
+    print(ast)
+    ast = ft.lower(ast, skip_passes=['float_simplify'], verbose=1)
+
+    @ft.transform
+    def expected(n: ft.Var[(), "int32"], x, y, z_tape):
+        x: ft.Var[(100, n), "float32"]
+        y: ft.Var[(n,), "float32", "output"]
+
+        for bn in range(100):
+            for pn in range(n * n):
+                z_tape: ft.Var[(100 * n * n,), "float32", "output"]
+                #! label: V_z
+                z = ft.empty((), "float32")
+                z[()] = x[bn, pn] + 1
+                # FIXME: Apparently there 3 assignments are the same, but pass/remove_writes can't
+                # eliminate 2 of them, because `bn * (n * n)` and `n * n` are recoginized two
+                # different free variables for isl. Consider directly match the expressions
+                z_tape[bn * (n * n) + pn] = z[()]
+                z_tape[bn * (n * n) + pn + 1 - 1] = z[()]
+                z_tape[bn * (n * n) + pn + 1 - 1] = z[()]
+                y[pn % n] += z[()] * z[()]
+
+    assert expected.body.match(ast)

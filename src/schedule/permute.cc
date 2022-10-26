@@ -162,15 +162,8 @@ std::pair<Stmt, std::vector<ID>> permute(
         for (auto &&[i, item] : views::enumerate(permutedIter)) {
             if (i > 0)
                 oss << " and ";
-
-            auto res = genPBExpr.gen(item);
-            if (!res.has_value())
-                throw InvalidSchedule(
-                    "Cannot generate Presburger expression for component " +
-                    std::to_string(i) + " of provided transform, which is " +
-                    toString(item));
-
-            oss << "dout" << i << " = " << *res;
+            auto &&[res, vars] = genPBExpr.gen(item);
+            oss << "dout" << i << " = " << res;
         }
         // finish serializing the map
         oss << "}";
@@ -245,8 +238,8 @@ std::pair<Stmt, std::vector<ID>> permute(
                         ossRaw << ", ";
                         ossIter << ", ";
                     }
-                    ossRaw << *genPBExpr.gen(innerMostAxes[i].realIter_);
-                    ossIter << *genPBExpr.gen(innerMostAxes[i].iter_);
+                    ossRaw << genPBExpr.gen(innerMostAxes[i].realIter_).first;
+                    ossIter << genPBExpr.gen(innerMostAxes[i].iter_).first;
                 }
                 // use anonymous output variables in ISL
                 PBMap real2iter(pbCtx, "{[" + ossRaw.str() + "] -> [" +

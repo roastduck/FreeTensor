@@ -1,7 +1,6 @@
 #ifndef FREE_TENSOR_GEN_PB_EXPR_H
 #define FREE_TENSOR_GEN_PB_EXPR_H
 
-#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -15,7 +14,15 @@ namespace freetensor {
 /**
  * Serialize expressions to an Presburger expression string
  *
- * Returns nullptr for non-Presburger expressions
+ * If an expression or its sub-expression is not a Presburger expression, it
+ * will be represented by a free variable. E.g., `a + b * (b + 1)` is
+ * non-Presburger, because `b` is multiplied by a non-constant. This expression
+ * will be converted to `a + free_var`. Since `b * (b + 1)` is already been
+ * converted to `free_var`, the sub-expressions `b` and `b + 1` will be dropped,
+ * although their are Presburger themselves. The free variable `free_var` will
+ * be named by the expression itself, with an optional suffix.
+ *
+ * Use `GenPBExpr::gen` to generate a string, and its free variables
  */
 class GenPBExpr : public Visitor {
   public:
@@ -24,25 +31,24 @@ class GenPBExpr : public Visitor {
 
   private:
     std::unordered_map<Expr, std::string> results_;
-    std::unordered_set<Expr> visited_;
-    std::unordered_map<Expr, int> constants_;
-    std::unordered_map<Expr, VarMap> vars_;
+    std::unordered_map<Expr, int>
+        constants_; // isl detects contant literally, so we need to do constant
+                    // folding here
+    std::unordered_map<Expr, VarMap>
+        vars_; // (sub-)expression -> free variables used inside
     Expr parent_ = nullptr;
     std::string varSuffix_;
 
   public:
     GenPBExpr(const std::string &varSuffix = "") : varSuffix_(varSuffix) {}
 
-    const VarMap &vars(const Expr &op) { return vars_[op]; }
-
     const std::string &varSuffix() const { return varSuffix_; }
 
-    std::optional<std::string> gen(const Expr &op);
+    std::pair<std::string, VarMap> gen(const Expr &op);
 
   protected:
     void visitExpr(const Expr &op) override;
     void visit(const Var &op) override;
-    void visit(const Load &op) override;
     void visit(const IntConst &op) override;
     void visit(const BoolConst &op) override;
     void visit(const Add &op) override;

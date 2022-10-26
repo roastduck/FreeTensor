@@ -200,15 +200,18 @@ void FindAccessPoint::visit(const Load &op) {
         for (auto source = d; source->viewOf_.has_value();) {
             source = def(*source->viewOf_);
             auto ap = Ref<AccessPoint>::make();
-            *ap = {op,
-                   curStmt(),
-                   source,
-                   source->buffer_,
-                   defAxis_.at(source->name_),
-                   cur_,
-                   std::vector<Expr>(source->buffer_->tensor()->shape().size(),
-                                     makeAnyExpr()),
-                   conds_};
+            *ap = {
+                op,
+                curStmt(),
+                source,
+                source->buffer_,
+                defAxis_.at(source->name_),
+                cur_,
+                std::vector<Expr>(
+                    source->buffer_->tensor()->shape().size(),
+                    makeIntrinsic("", {}, DataType::Int32,
+                                  false)), // Use Intrinsic as "any expression"
+                conds_};
             reads_[source->id()].emplace_back(ap);
         }
     }
@@ -236,87 +239,59 @@ std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
     return "[" + ret + "]";
 }
 
-Ref<std::string> AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
-                                          const std::vector<Expr> &list,
-                                          RelaxMode relax,
-                                          GenPBExpr::VarMap &externals) {
+std::string AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
+                                     const std::vector<Expr> &list,
+                                     RelaxMode relax,
+                                     GenPBExpr::VarMap &externals) {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
-        if (auto linstr = genPBExpr.gen(list[i]); linstr.has_value()) {
-            ret += *linstr;
-            for (auto &&[expr, str] : genPBExpr.vars(list[i])) {
-                if (expr->nodeType() == ASTNodeType::Load) {
-                    externals[expr] = str;
-                }
+        auto &&[linstr, vars] = genPBExpr.gen(list[i]);
+        ret += linstr;
+        for (auto &&[expr, str] : vars) {
+            if (expr->nodeType() != ASTNodeType::Var) {
+                externals[expr] = str;
             }
-        } else if (relax == RelaxMode::Possible) {
-            ret += mangle("free" + std::to_string(i));
-        } else {
-            return nullptr;
         }
         if (i < iEnd - 1) {
             ret += ", ";
         }
     }
-    return Ref<std::string>::make("[" + ret + "]");
+    return "[" + ret + "]";
 }
 
-Ref<std::string>
-AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
-                      const std::vector<std::pair<Expr, ID>> &conds,
-                      RelaxMode relax, GenPBExpr::VarMap &externals,
-                      bool eraseOutsideVarDef, const VarDef &vardef) {
+std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
+                                  const std::vector<std::pair<Expr, ID>> &conds,
+                                  RelaxMode relax, GenPBExpr::VarMap &externals,
+                                  bool eraseOutsideVarDef,
+                                  const VarDef &vardef) {
     std::string ret;
     for (auto &&[cond, baseStmtId] : conds) {
-        if (auto str = genPBExpr.gen(cond); str.has_value()) {
-            for (auto &&[expr, str] : genPBExpr.vars(cond)) {
-                if (expr->nodeType() == ASTNodeType::Load) {
-                    externals[expr] = str;
-                }
-            }
-            if (!ret.empty()) {
-                ret += " and ";
-            }
-            ret += *str;
-        } else {
-            if (relax == RelaxMode::Necessary) {
-                return nullptr;
-            } else {
-                // Create a dummy integer variable because ISL does not support
-                // bool variables
-                if (eraseOutsideVarDef &&
-                    vardef->ancestorById(baseStmtId).isValid()) {
-                    // If the condition is defined outside of the variable we
-                    // are analyzing, and `eraseOutsideVarDef_` is enabled, we
-                    // can ignore this condition, because all access of this
-                    // variable will hold the same condition value, and the
-                    // condition is newly introduced (which means it is not used
-                    // in indices)
-                    continue;
-                }
-                if (cond->nodeType() == ASTNodeType::LNot) {
-                    auto predicate =
-                        "__pred_" +
-                        mangle(dumpAST(cond.as<LNotNode>()->expr_, true)) +
-                        "_" + genPBExpr.varSuffix();
-                    externals[cond.as<LNotNode>()->expr_] = predicate;
-                    if (!ret.empty()) {
-                        ret += " and ";
-                    }
-                    ret += predicate + " <= 0";
-                } else {
-                    auto predicate = "__pred_" + mangle(dumpAST(cond, true)) +
-                                     "_" + genPBExpr.varSuffix();
-                    externals[cond] = predicate;
-                    if (!ret.empty()) {
-                        ret += " and ";
-                    }
-                    ret += predicate + " > 0";
-                }
+        auto &&[str, vars] = genPBExpr.gen(cond);
+
+        // If the condition is defined outside of the variable we are analyzing,
+        // and external variables in this condition is not used in any indices,
+        // and if `eraseOutsideVarDef_` is enabled, we can safely ignore this
+        // condition, because all access of this variable will hold the same
+        // condition value
+        if (eraseOutsideVarDef && vardef->ancestorById(baseStmtId).isValid() &&
+            std::find_if(vars.begin(), vars.end(),
+                         [](const std::pair<Expr, std::string> &kv) {
+                             return kv.first->nodeType() == ASTNodeType::Var;
+                         }) == vars.end()) {
+            continue;
+        }
+
+        for (auto &&[expr, str] : vars) {
+            if (expr->nodeType() != ASTNodeType::Var) {
+                externals[expr] = str;
             }
         }
+        if (!ret.empty()) {
+            ret += " and ";
+        }
+        ret += str;
     }
-    return Ref<std::string>::make(ret);
+    return ret;
 }
 
 PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
@@ -324,23 +299,12 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
                               const std::string &extSuffix,
                               GenPBExpr::VarMap &externals) {
     GenPBExpr genPBExpr(extSuffix);
-    auto ret = makeIterList(p.iter_, iterDim) + " -> ";
-    if (auto str = makeAccList(genPBExpr, p.access_, relax, externals);
-        str.isValid()) {
-        ret += *str;
-    } else {
-        return emptyMap(spaceAlloc(presburger, 0, iterDim, accDim));
-    }
-    std::string cond;
+    auto ret = makeIterList(p.iter_, iterDim) + " -> " +
+               makeAccList(genPBExpr, p.access_, relax, externals);
     if (auto str = makeCond(genPBExpr, p.conds_, relax, externals,
                             eraseOutsideVarDef_, p.def_);
-        str.isValid()) {
-        cond += (cond.empty() || str->empty() ? "" : " and ") + *str;
-    } else {
-        return emptyMap(spaceAlloc(presburger, 0, iterDim, accDim));
-    }
-    if (!cond.empty()) {
-        ret += ": " + cond;
+        !str.empty()) {
+        ret += ": " + str;
     }
     std::string ext;
     if (!externals.empty()) {

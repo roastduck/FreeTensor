@@ -178,16 +178,18 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
             for (auto source = d; source->viewOf_.has_value();) {
                 source = def(*source->viewOf_);
                 auto ap = Ref<AccessPoint>::make();
-                *ap = {
-                    op,
-                    curStmt(),
-                    source,
-                    source->buffer_,
-                    defAxis_.at(source->name_),
-                    cur_,
-                    std::vector<Expr>(source->buffer_->tensor()->shape().size(),
-                                      makeAnyExpr()),
-                    conds_};
+                *ap = {op,
+                       curStmt(),
+                       source,
+                       source->buffer_,
+                       defAxis_.at(source->name_),
+                       cur_,
+                       std::vector<Expr>(
+                           source->buffer_->tensor()->shape().size(),
+                           makeIntrinsic(
+                               "", {}, DataType::Int32,
+                               false)), // Use Intrinsic as "any expression"
+                       conds_};
                 writes_[source->id()].emplace_back(ap);
             }
         }
@@ -377,15 +379,14 @@ class AnalyzeDeps {
   public:
     static std::string makeIterList(const std::vector<IterAxis> &list, int n);
     static std::string makeNdList(const std::string &name, int n);
-    static Ref<std::string> makeAccList(GenPBExpr &genPBExpr,
-                                        const std::vector<Expr> &list,
-                                        RelaxMode relax,
-                                        GenPBExpr::VarMap &externals);
-    static Ref<std::string>
-    makeCond(GenPBExpr &genPBExpr,
-             const std::vector<std::pair<Expr, ID>> &conds, RelaxMode relax,
-             GenPBExpr::VarMap &externals, bool eraseOutsideVarDef,
-             const VarDef &vardef);
+    static std::string makeAccList(GenPBExpr &genPBExpr,
+                                   const std::vector<Expr> &list,
+                                   RelaxMode relax,
+                                   GenPBExpr::VarMap &externals);
+    static std::string makeCond(GenPBExpr &genPBExpr,
+                                const std::vector<std::pair<Expr, ID>> &conds,
+                                RelaxMode relax, GenPBExpr::VarMap &externals,
+                                bool eraseOutsideVarDef, const VarDef &vardef);
 
   private:
     PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
