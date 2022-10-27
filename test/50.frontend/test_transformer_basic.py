@@ -519,15 +519,15 @@ def test_tuple_for():
 
 
 @dataclass
-class TestAssigned:
-    attr: ft.VarRef
+class DummyAssigned:
+    attr = None
 
 
 def test_attribute_assign():
 
     @ft.transform
     def test():
-        t = TestAssigned()
+        t = DummyAssigned()
         t.attr = ft.var(1, 'float32')
         return t.attr
 
