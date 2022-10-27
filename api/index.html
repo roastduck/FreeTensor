@@ -16467,7 +16467,7 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">target</span><span class="o">.</span><span class="n">attr</span>
+                <span class="k">return</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Tuple</span><span class="p">):</span>
                 <span class="c1"># Unpacking: (a, b) = c</span>
                 <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
@@ -16972,7 +16972,7 @@ if freetensor__annotate__x:
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">target</span><span class="o">.</span><span class="n">attr</span>
+            <span class="k">return</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Tuple</span><span class="p">):</span>
             <span class="c1"># Unpacking: (a, b) = c</span>
             <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
