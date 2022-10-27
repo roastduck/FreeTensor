@@ -90,6 +90,20 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         }
     }
 
+    auto outMostReachableStmtInsideVarDef = [](const Stmt &_s,
+                                               const Stmt &vardef) {
+        Stmt ret = _s;
+        for (auto s = _s; s.isValid(); s = s->parentStmt()) {
+            if (s->nodeType() == ASTNodeType::For) {
+                ret = s;
+            }
+            if (s == vardef) {
+                break;
+            }
+        }
+        return ret;
+    };
+
     // write -> serialized PBSet
     std::unordered_map<Stmt, std::string> writesWAR;
     std::mutex m;
@@ -106,6 +120,10 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         .type(DEP_WAR)
         .filterEarlier([&](const AccessPoint &earlier) {
             return earlier.stmt_->id() == inserter.s0Eval();
+        })
+        .filterLater([&](const AccessPoint &later) {
+            return outMostReachableStmtInsideVarDef(common, later.def_)
+                ->isAncestorOf(later.stmt_);
         })
         .noProjectOutPrivateAxis(true)(tmpOp, unsyncFunc(foundWAR));
 
