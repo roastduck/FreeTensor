@@ -744,7 +744,7 @@ class Transformer(ast.NodeTransformer):
             if isinstance(target, ast.Name):
                 return ast.Constant(target.id)
             elif isinstance(target, ast.Attribute):
-                return target.attr
+                return ast.Constant(target.attr)
             elif isinstance(target, ast.Tuple):
                 # Unpacking: (a, b) = c
                 l = []
