@@ -471,14 +471,22 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     auto dep0 = getDeps(loop0, nestLevel0, loop0, nestLevel0);
     auto dep1 = getDeps(loop1, nestLevel1, loop1, nestLevel1);
     auto dep1to0 = getDeps(loop0, nestLevel0, loop1, nestLevel1, true);
-    int nParams = outerAxes.size();
+    const int nParams = outerAxes.size();
+    const int nDeps = dep0.size() + dep1.size() + dep1to0.size();
 
     // constraints for bounding and valid coefficients
     std::vector<PBSet> coeffSets0, coeffSets1, coeffSets1to0;
-    // sets for coefficients strictly satisfying certain dependence
-    std::vector<PBSet> satSets0, satSets1, satSets1to0;
     // whether a dependence have been satisfied already
     std::vector<bool> satisfied0, satisfied1, satisfied1to0;
+
+    auto separateLowerBound = [&](PBSet &&set, int i) {
+        auto rawSet = set.move();
+        int nOthers = (nParams + 1) * 3 + nestLevel0 + nestLevel1;
+        rawSet = isl_set_insert_dims(rawSet, isl_dim_set, nOthers + 1,
+                                     nDeps - i - 1);
+        rawSet = isl_set_insert_dims(rawSet, isl_dim_set, nOthers, i);
+        return PBSet(rawSet);
+    };
 
     // process dependences inside loop 0
     if (!dep0.empty()) {
@@ -491,7 +499,7 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         auto si = builder.newInputs(nestLevel0, "si");
 
         // legality problem:
-        // c0 * ti - c0 * si >= 0
+        // c0 * ti - c0 * si - lb >= 0
         // bounds and loop 0 param coefficients, difference is always 0
         builder.addOutputs(views::repeat_n(0, (nParams + 1) * 2));
         // loop 0 loops coefficients, difference of iters
@@ -499,6 +507,8 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
             [](auto &&ti, auto &&si) { return ti - si; }, ti, si));
         // loop 1 no effect
         builder.addOutputs(views::repeat_n(0, nParams + 1 + nestLevel1));
+        // lower bound
+        builder.addOutput(-1);
         auto legalityMap = builder.build(ctx);
         builder.clearOutputs();
 
@@ -514,17 +524,17 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
             [](auto &&ti, auto &&si) { return -(ti - si); }, ti, si));
         // loop 1 no effect
         builder.addOutputs(views::repeat_n(0, nParams + 1 + nestLevel1));
+        // lower bound, no effect
+        builder.addOutput(0);
         auto boundingMap = builder.build(ctx);
 
         coeffSets0.reserve(dep0.size());
-        satSets0.reserve(dep0.size());
         satisfied0.resize(dep0.size(), false);
-        for (const auto &d : dep0) {
-            coeffSets0.push_back(
+        for (auto &&[i, d] : views::enumerate(dep0))
+            coeffSets0.push_back(separateLowerBound(
                 intersect(coefficients(apply(d, legalityMap)),
-                          coefficients(apply(d, boundingMap))));
-            satSets0.push_back(coefficients(apply(d, legalityMap), 1));
-        }
+                          coefficients(apply(d, boundingMap))),
+                i));
     }
 
     // process dependences inside loop 1
@@ -538,7 +548,7 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         auto si = builder.newInputs(nestLevel1, "si");
 
         // legality problem:
-        // c1 * ti - c1 * si >= 0
+        // c1 * ti - c1 * si - lb >= 0
         // bounds coefficients, no effect
         builder.addOutputs(views::repeat_n(0, nParams + 1));
         // loop 0 no effect
@@ -548,6 +558,8 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         // loop 1 loops coefficients, difference of iters
         builder.addOutputs(views::zip_with(
             [](auto &&ti, auto &&si) { return ti - si; }, ti, si));
+        // lower bound
+        builder.addOutput(-1);
         auto legalityMap = builder.build(ctx);
         builder.clearOutputs();
 
@@ -563,17 +575,17 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         // loop 1 loops coefficients, negated difference of iters
         builder.addOutputs(views::zip_with(
             [](auto &&ti, auto &&si) { return -(ti - si); }, ti, si));
+        // lower bound, no effect
+        builder.addOutput(0);
         auto boundingMap = builder.build(ctx);
 
         coeffSets1.reserve(dep1.size());
-        satSets1.reserve(dep1.size());
         satisfied1.resize(dep1.size(), false);
-        for (const auto &d : dep1) {
-            coeffSets1.push_back(
+        for (auto &&[i, d] : views::enumerate(dep1))
+            coeffSets1.push_back(separateLowerBound(
                 intersect(coefficients(apply(d, legalityMap)),
-                          coefficients(apply(d, boundingMap))));
-            satSets1.push_back(coefficients(apply(d, legalityMap), 1));
-        }
+                          coefficients(apply(d, boundingMap))),
+                dep0.size() + i));
     }
 
     // Dependences between loop 0 and 1
@@ -590,7 +602,7 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         auto negate = views::transform([](auto &&x) { return -x; });
 
         // legality problem:
-        // c1 * i1 - c0 * i0 >= 0
+        // c1 * i1 - c0 * i0 - lb >= 0
         // bounds coefficients, no effect
         builder.addOutputs(views::repeat_n(0, nParams + 1));
         // c0
@@ -601,6 +613,8 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         builder.addOutputs(p1);
         builder.addOutput(1);
         builder.addOutputs(i1);
+        // lower bound
+        builder.addOutput(-1);
         auto legalityMap = builder.build(ctx);
         builder.clearOutputs();
 
@@ -617,17 +631,17 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         builder.addOutputs(p1 | negate);
         builder.addOutput(-1);
         builder.addOutputs(i1 | negate);
+        // lower bound, no effect
+        builder.addOutput(0);
         auto boundingMap = builder.build(ctx);
 
         coeffSets1to0.reserve(dep1to0.size());
-        satSets1to0.reserve(dep1to0.size());
         satisfied1to0.resize(dep1to0.size(), false);
-        for (const auto &d : dep1to0) {
-            coeffSets1to0.push_back(
+        for (auto &&[i, d] : views::enumerate(dep1to0))
+            coeffSets1to0.push_back(separateLowerBound(
                 intersect(coefficients(apply(d, legalityMap)),
-                          coefficients(apply(d, boundingMap))));
-            satSets1to0.push_back(coefficients(apply(d, legalityMap), 1));
-        }
+                          coefficients(apply(d, boundingMap))),
+                dep0.size() + dep1.size() + i));
     }
 
     // construct the map from coefficients to optimize targets
@@ -642,11 +656,41 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     // 3. (nParams + 1 + nestLevel1) loop 1 permuting coefficients
     auto c1Params = builder.newInputs(nParams + 1, "c1p");
     auto c1Iters = builder.newInputs(nestLevel1, "c1i");
+    auto lowerBounds = builder.newInputs(nDeps, "lb");
 
     // optimize targets
-    // 1. the distance bounds go first, as main optimizing targets
-    //    for each bounding coefficients except the last one (for constant), we
-    //    need to minimize its absolute value to avoid -inf results
+    // 1.1. Feautrier target
+    //
+    //      We try to satisfy as many as possible intra-loop dependences
+    //      when a fully parallelizable loop is not found, while still trying to
+    //      minimize the distance as is in Pluto. Thus, it's composed together
+    //      with Pluto target:
+    //      * if all upper bound coefficients are zero, then lower bounds will
+    //        be zero as well, this is the top-priority for complete
+    //        parallelism;
+    //      * otherwise, try carry as much dependences as possible, following
+    //        Feautrier.
+    //      We don't consider dep1to0 for Feautrier. Making outer loops
+    //      carrying 1->0 dependence is meaningless due to the produced code
+    //      will not run different loop bodies in parallel.
+    PBBuildExpr sumUpperBounds = 0;
+    for (int i = 0; i < nParams + 1; ++i)
+        sumUpperBounds += cBounds[i];
+    PBBuildExpr sumLowerBounds = 0;
+    for (int i = 0; i < nDeps; ++i) {
+        builder.addConstraint(lowerBounds[i] >= 0 && lowerBounds[i] <= 1);
+        if (i < int(dep0.size() + dep1.size()))
+            sumLowerBounds += lowerBounds[i];
+    }
+    auto feautrierTarget = builder.newOutput("ftr");
+    builder.addConstraint(feautrierTarget ==
+                          (nDeps + 1) * max(0, min(sumUpperBounds, 1)) -
+                              sumLowerBounds);
+    // retain lower bounds in optimization target to allow recovering.
+    builder.addOutputs(lowerBounds);
+    // 1.2. Pluto+ targets
+    //      for each bounding coefficients except the last one (for constant),
+    //      we need to minimize its absolute value to avoid -inf results
     for (int i = 0; i < nParams; ++i) {
         auto abs = builder.newOutput("abs_cb" + toString(i));
         builder.addConstraint(abs >= cBounds[i] && abs >= -cBounds[i]);
@@ -709,8 +753,8 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
 
         builder.addOutputs(params);
         builder.addOutput(1);
-        builder.addOutputs(
-            views::repeat_n(0, (nParams + 1) * 2 + nestLevel0 + nestLevel1));
+        builder.addOutputs(views::repeat_n(0, (nParams + 1) * 2 + nestLevel0 +
+                                                  nestLevel1 + nDeps));
         optimizeMap =
             intersectDomain(std::move(optimizeMap),
                             coefficients(apply(loop0Set, builder.build(ctx))));
@@ -726,8 +770,8 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     for (fusedLevel = 0; fusedLevel < std::min(nestLevel0, nestLevel1);
          ++fusedLevel) {
         //! FIXME: handle parameters from loads
-        auto problem = universeSet(
-            spaceSetAlloc(ctx, 0, (nParams + 1) * 3 + nestLevel0 + nestLevel1));
+        auto problem = universeSet(spaceSetAlloc(
+            ctx, 0, (nParams + 1) * 3 + nestLevel0 + nestLevel1 + nDeps));
         // constructing the coefficients' space
         for (const auto &[satisfied, coeffSet] :
              views::zip(views::concat(satisfied0, satisfied1, satisfied1to0),
@@ -765,24 +809,25 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         if (solution.empty())
             break;
 
-        // check satisfied and mark; already satisfied dependences won't be
-        // included in inner levels
-        for (size_t i = 0; i < dep0.size(); ++i)
-            if (!intersect(solution, satSets0[i]).empty())
-                satisfied0[i] = true;
-        for (size_t i = 0; i < dep1.size(); ++i)
-            if (!intersect(solution, satSets1[i]).empty())
-                satisfied1[i] = true;
-        for (size_t i = 0; i < dep1to0.size(); ++i)
-            if (!intersect(solution, satSets1to0[i]).empty())
-                satisfied1to0[i] = true;
-
         auto solutionVals = sample(std::move(solution)).coordinates();
         auto optimized = solutionVals | views::transform([&](const PBVal &val) {
                              ASSERT(val.denSi() == 1);
                              return val.numSi();
                          }) |
                          ranges::to<std::vector>();
+
+        // check satisfied and mark; already satisfied dependences won't be
+        // included in inner levels
+        size_t base = (nParams + 1) * 3 + nestLevel0 + nestLevel1;
+        for (size_t i = 0; i < dep0.size(); ++i)
+            if (optimized[base++])
+                satisfied0[i] = true;
+        for (size_t i = 0; i < dep1.size(); ++i)
+            if (optimized[base++])
+                satisfied1[i] = true;
+        for (size_t i = 0; i < dep1to0.size(); ++i)
+            if (optimized[base++])
+                satisfied1to0[i] = true;
 
         bool isParallel = true;
         for (int i = 0; i < nParams + 1; ++i)
@@ -834,7 +879,7 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         });
         c1IterValue.push_back({
             optimized.begin() + (nParams + 1) * 3 + nestLevel0,
-            optimized.end(),
+            optimized.begin() + (nParams + 1) * 3 + nestLevel0 + nestLevel1,
         });
     }
 

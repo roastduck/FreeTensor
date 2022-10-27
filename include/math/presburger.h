@@ -719,6 +719,14 @@ class PBBuildExpr {
         return PBBuildExpr("(" + a.expr_ + " or " + b.expr_ + ")");
     }
 
+    friend PBBuildExpr max(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("max(" + a.expr_ + ", " + b.expr_ + ")");
+    }
+
+    friend PBBuildExpr min(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("min(" + a.expr_ + ", " + b.expr_ + ")");
+    }
+
     friend std::ostream &operator<<(std::ostream &os, const PBBuildExpr &e);
 };
 

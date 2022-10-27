@@ -18,9 +18,9 @@ def test_pluto_fuse():
     print(kernel)
     s = ft.Schedule(kernel)
     _, parallelism = s.pluto_fuse("L0", "L1")
-    assert parallelism == 1
     kernel = s.func()
     print(kernel)
+    assert parallelism == 1
 
 
 def test_pluto_fuse_2():
@@ -196,5 +196,71 @@ def test_pluto_permute_outer_loop():
     _, parallelism = s.pluto_permute("L0")
     kernel = s.func()
     print(kernel)
+    assert parallelism == 1
+    assert kernel.body.match(kernel_expected.body)
+
+
+def test_pluto_permute_skew_1():
+
+    @ft.transform
+    def kernel(x: ft.Var[(256, 256), "float32", "inout"]):
+        #! label: L0
+        for i in range(1, 255):
+            for j in range(1, 255):
+                x[i, j] += x[i - 1, j] + x[i, j - 1] + x[i + 1, j] + x[i, j + 1]
+
+    @ft.transform
+    def kernel_expected(x: ft.Var[(256, 256), "float32", "inout"]):
+        #! label: L0
+        for ipj in range(2, 2 * 254 + 1):
+            for i in range(ft.max(ipj + -254, 1), ft.min(ipj + -1, 254) + 1):
+                j = ipj + -1 * i
+                x[i, j] += (x[i + -1, j] + x[i, j + -1] + x[i + 1, j] +
+                            x[i, j + 1])
+
+    print(kernel)
+    s = ft.Schedule(kernel)
+    _, parallelism = s.pluto_permute("L0")
+    kernel = s.func()
+    print(kernel)
+    print(kernel_expected)
+    assert parallelism == 1
+    assert kernel.body.match(kernel_expected.body)
+
+
+def test_pluto_permute_skew_2():
+
+    @ft.transform
+    def kernel(x: ft.Var[(256, 256), "float32", "inout"]):
+        #! label: L0
+        for i in range(1, 255):
+            for j in range(1, 255):
+                result = 0
+                for ii in (-1, 0, 1):
+                    for jj in (-1, 0, 1):
+                        result += x[i + ii, j + jj]
+                x[i, j] = result
+
+    @ft.make_reduction
+    @ft.simplify
+    @ft.transform
+    def kernel_expected(x: ft.Var[(256, 256), "float32", "inout"]):
+        #! label: L0
+        for _2ipj in range(3, 3 * 254 + 1):
+            for i in range(ft.max((_2ipj + -253) // 2, 1),
+                           ft.min((_2ipj + -1) // 2, 254) + 1):
+                j = _2ipj + -2 * i
+                result = 0
+                for ii in (-1, 0, 1):
+                    for jj in (-1, 0, 1):
+                        result += x[i + ii, j + jj]
+                x[i, j] = result
+
+    print(kernel)
+    s = ft.Schedule(kernel)
+    _, parallelism = s.pluto_permute("L0")
+    kernel = s.func()
+    print(kernel)
+    print(kernel_expected)
     assert parallelism == 1
     assert kernel.body.match(kernel_expected.body)
