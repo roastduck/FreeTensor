@@ -160,6 +160,8 @@ class ExprNode : public ASTNode {
     virtual bool isBinary() const { return false; }
     virtual bool isUnary() const { return false; }
 
+    virtual std::vector<Ref<ExprNode>> children() const = 0;
+
     Ref<ExprNode> parentExpr() const;
     Ref<StmtNode> parentStmt() const;
 

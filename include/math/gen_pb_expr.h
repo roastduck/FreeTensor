@@ -22,6 +22,13 @@ namespace freetensor {
  * although their are Presburger themselves. The free variable `free_var` will
  * be named by the expression itself, with an optional suffix.
  *
+ * Sometimes there will be too many free varaibles if directly converted from a
+ * user program. For example, if the program accesses an index `x + 2 * y`,
+ * where `x` and `y` are unique to this access, this index can be simplify
+ * represented by one free variable `z`, where `z = x + 2 * y`. If some
+ * (sub-)expressions are not preferred to be a free variable, they can be
+ * specified in the `noNeedToBeVars_` set.
+ *
  * Use `GenPBExpr::gen` to generate a string, and its free variables
  */
 class GenPBExpr : public Visitor {
@@ -38,9 +45,12 @@ class GenPBExpr : public Visitor {
         vars_; // (sub-)expression -> free variables used inside
     Expr parent_ = nullptr;
     std::string varSuffix_;
+    ASTHashSet<Expr> noNeedToBeVars_;
 
   public:
-    GenPBExpr(const std::string &varSuffix = "") : varSuffix_(varSuffix) {}
+    GenPBExpr(const std::string &varSuffix = "",
+              const ASTHashSet<Expr> &noNeedToBeVars = {})
+        : varSuffix_(varSuffix), noNeedToBeVars_(noNeedToBeVars) {}
 
     const std::string &varSuffix() const { return varSuffix_; }
 

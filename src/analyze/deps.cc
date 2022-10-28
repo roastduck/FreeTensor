@@ -297,8 +297,9 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
 PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
                               int iterDim, int accDim, RelaxMode relax,
                               const std::string &extSuffix,
-                              GenPBExpr::VarMap &externals) {
-    GenPBExpr genPBExpr(extSuffix);
+                              GenPBExpr::VarMap &externals,
+                              const ASTHashSet<Expr> &noNeedToBeVars) {
+    GenPBExpr genPBExpr(extSuffix, noNeedToBeVars);
     auto ret = makeIterList(p.iter_, iterDim) + " -> " +
                makeAccList(genPBExpr, p.access_, relax, externals);
     if (auto str = makeCond(genPBExpr, p.conds_, relax, externals,
@@ -678,6 +679,75 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
     }
 }
 
+static ASTHashSet<Expr>
+getNoNeedToBeVars(const std::vector<Ref<AccessPoint>> accesses) {
+    // If an external variables is always used inside a fixed expression, we can
+    // represent the whole expression as an external variable, to reduce the
+    // number of external varaibles. E.g., consider a range of a loop variable
+    // is `0 <= i < n[] * m[]`, if `n[]` and `m[]` are always used as `n[] *
+    // m[]`, we can simply represent the range as `0 <= i < x`, where `x` equals
+    // to `n[] * m[]`. We sum the occurence of each (sub-)expression, to check
+    // for this case
+
+    auto checkAllExprs = [&](auto &&callback) {
+        for (auto &&acc : accesses) {
+            for (auto &&axis : acc->iter_) {
+                callback(axis.iter_);
+            }
+            for (auto &&idx : acc->access_) {
+                callback(idx);
+            }
+            for (auto &&[cond, _] : acc->conds_) {
+                callback(cond);
+            }
+        }
+    };
+
+    ASTHashMap<Expr, int> useCnt;
+    ASTHashSet<Expr> noNeedToBeVars;
+
+    class SumUseCnt : public Visitor {
+        ASTHashMap<Expr, int> &useCnt_;
+
+      public:
+        SumUseCnt(ASTHashMap<Expr, int> &useCnt) : useCnt_(useCnt) {}
+
+      protected:
+        void visitExpr(const Expr &expr) {
+            Visitor::visitExpr(expr);
+            useCnt_[expr]++;
+        }
+    };
+    checkAllExprs(SumUseCnt(useCnt));
+
+    class CheckNoNeedToBeVars : public Visitor {
+        const ASTHashMap<Expr, int> &useCnt_;
+        ASTHashSet<Expr> &noNeedToBeVars_;
+
+      public:
+        CheckNoNeedToBeVars(const ASTHashMap<Expr, int> &useCnt,
+                            ASTHashSet<Expr> &noNeedToBeVars)
+            : useCnt_(useCnt), noNeedToBeVars_(noNeedToBeVars) {}
+
+      protected:
+        void visitExpr(const Expr &expr) {
+            Visitor::visitExpr(expr);
+            for (auto &&child : expr->children()) {
+                if (child->nodeType() == ASTNodeType::Var ||
+                    useCnt_.at(child) > useCnt_.at(expr)) {
+                    return;
+                }
+            }
+            for (auto &&child : expr->children()) {
+                noNeedToBeVars_.insert(child);
+            }
+        }
+    };
+    checkAllExprs(CheckNoNeedToBeVars(useCnt, noNeedToBeVars));
+
+    return noNeedToBeVars;
+}
+
 void AnalyzeDeps::checkDepLatestEarlier(
     const Ref<AccessPoint> &later,
     const std::vector<Ref<AccessPoint>> &_earlierList) {
@@ -734,6 +804,8 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         ASSERT((int)earlier->access_.size() == accDim);
     }
 
+    auto noNeedToBeVars = getNoNeedToBeVars(cat({later}, earlierList));
+
     PBMap allEQ = identity(spaceAlloc(presburger, 0, iterDim, iterDim));
     PBMap eraseVarDefConstraint =
         makeEraseVarDefConstraint(presburger, later, iterDim);
@@ -741,8 +813,9 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         makeNoDepsConstraint(presburger, later->def_->name_, iterDim);
 
     GenPBExpr::VarMap laterExternals;
-    PBMap laterMap = makeAccMap(presburger, *later, iterDim, accDim,
-                                laterRelax_, "later", laterExternals);
+    PBMap laterMap =
+        makeAccMap(presburger, *later, iterDim, accDim, laterRelax_, "later",
+                   laterExternals, noNeedToBeVars);
     if (laterMap.empty()) {
         return;
     }
@@ -756,9 +829,9 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     for (auto &&[i, earlier, earlierMap, earlierExternals] :
          views::zip(views::ints(0, ranges::unreachable), earlierList,
                     earlierMapList, earlierExternalsList)) {
-        earlierMap =
-            makeAccMap(presburger, *earlier, iterDim, accDim, earlierRelax_,
-                       "earlier" + std::to_string(i), earlierExternals);
+        earlierMap = makeAccMap(presburger, *earlier, iterDim, accDim,
+                                earlierRelax_, "earlier" + std::to_string(i),
+                                earlierExternals, noNeedToBeVars);
     }
     projectOutPrivateAxis(presburger, later, earlierList, earlierMapList,
                           iterDim);
@@ -823,6 +896,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         ASSERT((int)later->access_.size() == accDim);
     }
 
+    auto noNeedToBeVars = getNoNeedToBeVars(cat(laterList, {earlier}));
+
     PBMap allEQ = identity(spaceAlloc(presburger, 0, iterDim, iterDim));
     PBMap eraseVarDefConstraint =
         makeEraseVarDefConstraint(presburger, earlier, iterDim);
@@ -830,8 +905,9 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         makeNoDepsConstraint(presburger, earlier->def_->name_, iterDim);
 
     GenPBExpr::VarMap earlierExternals;
-    PBMap earlierMap = makeAccMap(presburger, *earlier, iterDim, accDim,
-                                  earlierRelax_, "earlier", earlierExternals);
+    PBMap earlierMap =
+        makeAccMap(presburger, *earlier, iterDim, accDim, earlierRelax_,
+                   "earlier", earlierExternals, noNeedToBeVars);
     if (earlierMap.empty()) {
         return;
     }
@@ -845,7 +921,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
          views::zip(views::ints(0, ranges::unreachable), laterList,
                     laterMapList, laterExternalsList)) {
         laterMap = makeAccMap(presburger, *later, iterDim, accDim, laterRelax_,
-                              "later" + std::to_string(i), laterExternals);
+                              "later" + std::to_string(i), laterExternals,
+                              noNeedToBeVars);
     }
     projectOutPrivateAxis(presburger, earlier, laterList, laterMapList,
                           iterDim);
