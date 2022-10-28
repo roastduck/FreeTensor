@@ -475,8 +475,6 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     const int nParams = outerAxes.size();
     const int nDeps = dep0.size() + dep1.size() + dep1to0.size();
 
-    std::cout << "[PlutoFuse] nDeps = " << nDeps << std::endl;
-
     // constraints for bounding and valid coefficients
     std::vector<PBSet> coeffSets0, coeffSets1, coeffSets1to0;
     // set of coefficients satisifying the dependence
