@@ -397,16 +397,13 @@ PBMap projectOutOutputDims(T &&map, unsigned first, unsigned n) {
     return isl_map_project_out(PBRefTake<T>(map), isl_dim_out, first, n);
 }
 
-template <PBSetRef T>
-PBSet fixDim(T &&set, unsigned pos, int x) {
+template <PBSetRef T> PBSet fixDim(T &&set, unsigned pos, int x) {
     return isl_set_fix_si(PBRefTake<T>(set), isl_dim_set, pos, x);
 }
-template <PBMapRef T>
-PBMap fixInputDim(T &&map, unsigned pos, int x) {
+template <PBMapRef T> PBMap fixInputDim(T &&map, unsigned pos, int x) {
     return isl_map_fix_si(PBRefTake<T>(map), isl_dim_in, pos, x);
 }
-template <PBMapRef T>
-PBMap fixOutputDim(T &&map, unsigned pos, int x) {
+template <PBMapRef T> PBMap fixOutputDim(T &&map, unsigned pos, int x) {
     return isl_map_fix_si(PBRefTake<T>(map), isl_dim_out, pos, x);
 }
 
