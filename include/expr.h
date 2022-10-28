@@ -18,6 +18,7 @@ class AnyExprNode : public ExprNode {
   public:
     void compHash() override;
     void inferDType() override { ASSERT(false); }
+    std::vector<Expr> children() const override { return {}; }
     DEFINE_NODE_TRAIT(AnyExpr);
 };
 typedef Ref<AnyExprNode> AnyExpr;
@@ -29,6 +30,7 @@ class VarNode : public ExprNode {
     std::string name_;
     void compHash() override;
     void inferDType() override;
+    std::vector<Expr> children() const override { return {}; }
     DEFINE_NODE_TRAIT(Var);
 };
 typedef Ref<VarNode> Var;
@@ -47,6 +49,7 @@ class LoadNode : public ExprNode {
     DataType loadType_;
     void compHash() override;
     void inferDType() override;
+    std::vector<Expr> children() const override { return indices_; }
     DEFINE_NODE_TRAIT(Load);
 };
 typedef Ref<LoadNode> Load;
@@ -73,6 +76,7 @@ inline Expr _makeLoad(const std::string &var, const std::vector<Expr> &indices,
 class ConstNode : public ExprNode {
   public:
     bool isConst() const override { return true; }
+    std::vector<Expr> children() const override { return {}; }
 };
 typedef Ref<ConstNode> Const;
 
@@ -126,6 +130,7 @@ class BinaryExprNode : public ExprNode {
     SubTree<ExprNode> lhs_ = ChildOf{this}, rhs_ = ChildOf{this};
 
     bool isBinary() const override { return true; }
+    std::vector<Expr> children() const override { return {lhs_, rhs_}; }
     virtual bool isCommutative() const = 0;
 };
 typedef Ref<BinaryExprNode> BinaryExpr;
@@ -409,6 +414,7 @@ class UnaryExprNode : public ExprNode {
 
     void compHash() override;
     bool isUnary() const override { return true; }
+    std::vector<Expr> children() const override { return {expr_}; }
 };
 typedef Ref<UnaryExprNode> UnaryExpr;
 
@@ -527,6 +533,9 @@ class IfExprNode : public ExprNode {
     SubTree<ExprNode> elseCase_ = ChildOf{this};
     void compHash() override;
     void inferDType() override;
+    std::vector<Expr> children() const override {
+        return {cond_, thenCase_, elseCase_};
+    }
     DEFINE_NODE_TRAIT(IfExpr);
 };
 typedef Ref<IfExprNode> IfExpr;
@@ -546,6 +555,7 @@ class CastNode : public ExprNode {
     DataType destType_;
     void compHash() override;
     void inferDType() override;
+    std::vector<Expr> children() const override { return {expr_}; }
     DEFINE_NODE_TRAIT(Cast);
 };
 typedef Ref<CastNode> Cast;
@@ -569,6 +579,7 @@ class IntrinsicNode : public ExprNode {
     bool hasSideEffect_;
     void compHash() override;
     void inferDType() override;
+    std::vector<Expr> children() const override { return {params_}; }
     DEFINE_NODE_TRAIT(Intrinsic);
 };
 typedef Ref<IntrinsicNode> Intrinsic;

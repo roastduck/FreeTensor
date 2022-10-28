@@ -391,7 +391,8 @@ class AnalyzeDeps {
   private:
     PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
                      int accDim, RelaxMode relax, const std::string &extSuffix,
-                     GenPBExpr::VarMap &externals);
+                     GenPBExpr::VarMap &externals,
+                     const ASTHashSet<Expr> &noNeedToBeVars);
 
     PBMap makeEqForBothOps(PBCtx &presburger,
                            const std::vector<std::pair<int, int>> &coord,

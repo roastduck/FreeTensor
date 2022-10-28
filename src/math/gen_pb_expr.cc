@@ -20,7 +20,8 @@ void GenPBExpr::visitExpr(const Expr &op) {
         Visitor::visitExpr(op);
         parent_ = oldParent;
 
-        if (!results_.count(op)) {
+        if (!results_.count(op) &&
+            (!noNeedToBeVars_.count(op) || !parent_.isValid())) {
             auto freeVar = mangle(dumpAST(op, true)) + "__ext__" + varSuffix_;
 
             // Since the expression is already a free variable, no need to make
@@ -61,97 +62,127 @@ void GenPBExpr::visit(const BoolConst &op) {
 
 void GenPBExpr::visit(const Add &op) {
     Visitor::visit(op);
-    results_[op] =
-        "(" + results_.at(op->lhs_) + " + " + results_.at(op->rhs_) + ")";
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = std::to_string(constants_[op] = constants_.at(op->lhs_) +
-                                                       constants_.at(op->rhs_));
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] =
+            "(" + results_.at(op->lhs_) + " + " + results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] =
+                std::to_string(constants_[op] = constants_.at(op->lhs_) +
+                                                constants_.at(op->rhs_));
+        }
     }
 }
 
 void GenPBExpr::visit(const Sub &op) {
     Visitor::visit(op);
-    results_[op] =
-        "(" + results_.at(op->lhs_) + " - " + results_.at(op->rhs_) + ")";
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = std::to_string(constants_[op] = constants_.at(op->lhs_) -
-                                                       constants_.at(op->rhs_));
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] =
+            "(" + results_.at(op->lhs_) + " - " + results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] =
+                std::to_string(constants_[op] = constants_.at(op->lhs_) -
+                                                constants_.at(op->rhs_));
+        }
     }
 }
 
 void GenPBExpr::visit(const Mul &op) {
     Visitor::visit(op);
-    if (constants_.count(op->lhs_) || constants_.count(op->rhs_)) {
-        results_[op] =
-            "(" + results_.at(op->lhs_) + " * " + results_.at(op->rhs_) + ")";
-    }
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = std::to_string(constants_[op] = constants_.at(op->lhs_) *
-                                                       constants_.at(op->rhs_));
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        if (constants_.count(op->lhs_) || constants_.count(op->rhs_)) {
+            results_[op] = "(" + results_.at(op->lhs_) + " * " +
+                           results_.at(op->rhs_) + ")";
+        }
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] =
+                std::to_string(constants_[op] = constants_.at(op->lhs_) *
+                                                constants_.at(op->rhs_));
+        }
     }
 }
 
 void GenPBExpr::visit(const LAnd &op) {
     Visitor::visit(op);
-    results_[op] =
-        "(" + results_.at(op->lhs_) + " and " + results_.at(op->rhs_) + ")";
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = boolToStr((constants_[op] = (constants_.at(op->lhs_) &&
-                                                    constants_.at(op->rhs_))));
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] =
+            "(" + results_.at(op->lhs_) + " and " + results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] =
+                boolToStr((constants_[op] = (constants_.at(op->lhs_) &&
+                                             constants_.at(op->rhs_))));
+        }
     }
 }
 
 void GenPBExpr::visit(const LOr &op) {
     Visitor::visit(op);
-    results_[op] =
-        "(" + results_.at(op->lhs_) + " or " + results_.at(op->rhs_) + ")";
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = boolToStr((constants_[op] = (constants_.at(op->lhs_) ||
-                                                    constants_.at(op->rhs_))));
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] =
+            "(" + results_.at(op->lhs_) + " or " + results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] =
+                boolToStr((constants_[op] = (constants_.at(op->lhs_) ||
+                                             constants_.at(op->rhs_))));
+        }
     }
 }
 
 void GenPBExpr::visit(const LNot &op) {
     Visitor::visit(op);
-    results_[op] = "(not " + results_.at(op->expr_) + ")";
-    if (constants_.count(op->expr_)) {
-        results_[op] = boolToStr((constants_[op] = !constants_.at(op->expr_)));
+    if (results_.count(op->expr_)) {
+        results_[op] = "(not " + results_.at(op->expr_) + ")";
+        if (constants_.count(op->expr_)) {
+            results_[op] =
+                boolToStr((constants_[op] = !constants_.at(op->expr_)));
+        }
     }
 }
 
 void GenPBExpr::visit(const LT &op) {
     Visitor::visit(op);
-    results_[op] = results_.at(op->lhs_) + " < " + results_.at(op->rhs_);
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = boolToStr((constants_[op] = (constants_.at(op->lhs_) <
-                                                    constants_.at(op->rhs_))));
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " < " + results_.at(op->rhs_);
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] =
+                boolToStr((constants_[op] = (constants_.at(op->lhs_) <
+                                             constants_.at(op->rhs_))));
+        }
     }
 }
 
 void GenPBExpr::visit(const LE &op) {
     Visitor::visit(op);
-    results_[op] = results_.at(op->lhs_) + " <= " + results_.at(op->rhs_);
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = boolToStr((constants_[op] = (constants_.at(op->lhs_) <=
-                                                    constants_.at(op->rhs_))));
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " <= " + results_.at(op->rhs_);
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] =
+                boolToStr((constants_[op] = (constants_.at(op->lhs_) <=
+                                             constants_.at(op->rhs_))));
+        }
     }
 }
 
 void GenPBExpr::visit(const GT &op) {
     Visitor::visit(op);
-    results_[op] = results_.at(op->lhs_) + " > " + results_.at(op->rhs_);
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = boolToStr((constants_[op] = (constants_.at(op->lhs_) >
-                                                    constants_.at(op->rhs_))));
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " > " + results_.at(op->rhs_);
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] =
+                boolToStr((constants_[op] = (constants_.at(op->lhs_) >
+                                             constants_.at(op->rhs_))));
+        }
     }
 }
 
 void GenPBExpr::visit(const GE &op) {
     Visitor::visit(op);
-    results_[op] = results_.at(op->lhs_) + " >= " + results_.at(op->rhs_);
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = boolToStr((constants_[op] = (constants_.at(op->lhs_) >=
-                                                    constants_.at(op->rhs_))));
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " >= " + results_.at(op->rhs_);
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] =
+                boolToStr((constants_[op] = (constants_.at(op->lhs_) >=
+                                             constants_.at(op->rhs_))));
+        }
     }
 }
 
@@ -161,10 +192,13 @@ void GenPBExpr::visit(const EQ &op) {
         return; // TODO: Convert to a boolean expression
     }
     Visitor::visit(op);
-    results_[op] = results_.at(op->lhs_) + " = " + results_.at(op->rhs_);
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = boolToStr((constants_[op] = (constants_.at(op->lhs_) ==
-                                                    constants_.at(op->rhs_))));
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " = " + results_.at(op->rhs_);
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] =
+                boolToStr((constants_[op] = (constants_.at(op->lhs_) ==
+                                             constants_.at(op->rhs_))));
+        }
     }
 }
 
@@ -174,17 +208,20 @@ void GenPBExpr::visit(const NE &op) {
         return; // TODO: Convert to a boolean expression
     }
     Visitor::visit(op);
-    results_[op] = results_.at(op->lhs_) + " != " + results_.at(op->rhs_);
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = boolToStr((constants_[op] = (constants_.at(op->lhs_) !=
-                                                    constants_.at(op->rhs_))));
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " != " + results_.at(op->rhs_);
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] =
+                boolToStr((constants_[op] = (constants_.at(op->lhs_) !=
+                                             constants_.at(op->rhs_))));
+        }
     }
 }
 
 void GenPBExpr::visit(const FloorDiv &op) {
     Visitor::visit(op);
     // ISL requires a positive divisor
-    if (constants_.count(op->rhs_)) {
+    if (results_.count(op->lhs_) && constants_.count(op->rhs_)) {
         if (constants_.at(op->rhs_) > 0) {
             results_[op] = "floor(" + results_.at(op->lhs_) + " / " +
                            std::to_string(constants_.at(op->rhs_)) + ")";
@@ -203,7 +240,7 @@ void GenPBExpr::visit(const FloorDiv &op) {
 void GenPBExpr::visit(const CeilDiv &op) {
     Visitor::visit(op);
     // ISL requires a positive divisor
-    if (constants_.count(op->rhs_)) {
+    if (results_.count(op->lhs_) && constants_.count(op->rhs_)) {
         if (constants_.at(op->rhs_) > 0) {
             results_[op] = "ceil(" + results_.at(op->lhs_) + " / " +
                            std::to_string(constants_.at(op->rhs_)) + ")";
@@ -222,7 +259,7 @@ void GenPBExpr::visit(const CeilDiv &op) {
 void GenPBExpr::visit(const Mod &op) {
     Visitor::visit(op);
     // ISL requires a positive divisor
-    if (constants_.count(op->rhs_)) {
+    if (results_.count(op->lhs_) && constants_.count(op->rhs_)) {
         if (constants_.at(op->rhs_) > 0) {
             results_[op] = "(" + results_.at(op->lhs_) + " % " +
                            std::to_string(constants_.at(op->rhs_)) + ")";
@@ -240,37 +277,47 @@ void GenPBExpr::visit(const Mod &op) {
 
 void GenPBExpr::visit(const Min &op) {
     Visitor::visit(op);
-    results_[op] =
-        "min(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
         results_[op] =
-            std::to_string(constants_[op] = std::min(constants_.at(op->lhs_),
-                                                     constants_.at(op->rhs_)));
+            "min(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] = std::to_string(
+                constants_[op] =
+                    std::min(constants_.at(op->lhs_), constants_.at(op->rhs_)));
+        }
     }
 }
 
 void GenPBExpr::visit(const Max &op) {
     Visitor::visit(op);
-    results_[op] =
-        "max(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
         results_[op] =
-            std::to_string(constants_[op] = std::max(constants_.at(op->lhs_),
-                                                     constants_.at(op->rhs_)));
+            "max(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            results_[op] = std::to_string(
+                constants_[op] =
+                    std::max(constants_.at(op->lhs_), constants_.at(op->rhs_)));
+        }
     }
 }
 
 void GenPBExpr::visit(const IfExpr &op) {
     Visitor::visit(op);
-    if (constants_.at(op->cond_)) {
-        results_[op] = results_.at(op->thenCase_);
-        if (constants_.count(op->thenCase_)) {
-            constants_[op] = constants_.at(op->thenCase_);
-        }
-    } else {
-        results_[op] = results_.at(op->elseCase_);
-        if (constants_.count(op->elseCase_)) {
-            constants_[op] = constants_.at(op->elseCase_);
+    if (constants_.count(op->cond_)) {
+        if (constants_.at(op->cond_)) {
+            if (results_.count(op->thenCase_)) {
+                results_[op] = results_.at(op->thenCase_);
+                if (constants_.count(op->thenCase_)) {
+                    constants_[op] = constants_.at(op->thenCase_);
+                }
+            }
+        } else {
+            if (results_.count(op->elseCase_)) {
+                results_[op] = results_.at(op->elseCase_);
+                if (constants_.count(op->elseCase_)) {
+                    constants_[op] = constants_.at(op->elseCase_);
+                }
+            }
         }
     }
 }
