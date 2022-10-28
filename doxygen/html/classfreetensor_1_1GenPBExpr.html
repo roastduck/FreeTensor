@@ -107,8 +107,8 @@ Public Types</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:acf90af8a3b971e5e4004fe9a9ab1b339"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1GenPBExpr.html#acf90af8a3b971e5e4004fe9a9ab1b339">GenPBExpr</a> (const std::string &amp;<a class="el" href="classfreetensor_1_1GenPBExpr.html#a047e5f9fb5567b874a63e1d97229758a">varSuffix</a>=&quot;&quot;)</td></tr>
-<tr class="separator:acf90af8a3b971e5e4004fe9a9ab1b339"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79636d263067595c6ad3018462f711e8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1GenPBExpr.html#a79636d263067595c6ad3018462f711e8">GenPBExpr</a> (const std::string &amp;<a class="el" href="classfreetensor_1_1GenPBExpr.html#a047e5f9fb5567b874a63e1d97229758a">varSuffix</a>=&quot;&quot;, const <a class="el" href="namespacefreetensor.html#ae14e59de18f2f50d26e03b5df64a3866">ASTHashSet</a>&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;noNeedToBeVars={})</td></tr>
+<tr class="separator:a79636d263067595c6ad3018462f711e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a047e5f9fb5567b874a63e1d97229758a"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1GenPBExpr.html#a047e5f9fb5567b874a63e1d97229758a">varSuffix</a> () const</td></tr>
 <tr class="separator:a047e5f9fb5567b874a63e1d97229758a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab73acdf741ea217a685b701131e03452"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::string, <a class="el" href="classfreetensor_1_1GenPBExpr.html#a435adddd945f29a6411809fd25972de1">VarMap</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1GenPBExpr.html#ab73acdf741ea217a685b701131e03452">gen</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;op)</td></tr>
@@ -276,6 +276,7 @@ Protected Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Serialize expressions to an Presburger expression string</p>
 <p >If an expression or its sub-expression is not a Presburger expression, it will be represented by a free variable. E.g., <code>a + b * (b + 1)</code> is non-Presburger, because <code>b</code> is multiplied by a non-constant. This expression will be converted to <code>a + free_var</code>. Since <code>b * (b + 1)</code> is already been converted to <code>free_var</code>, the sub-expressions <code>b</code> and <code>b + 1</code> will be dropped, although their are Presburger themselves. The free variable <code>free_var</code> will be named by the expression itself, with an optional suffix.</p>
+<p >Sometimes there will be too many free varaibles if directly converted from a user program. For example, if the program accesses an index <code>x + 2 * y</code>, where <code>x</code> and <code>y</code> are unique to this access, this index can be simplify represented by one free variable <code>z</code>, where <code>z = x + 2 * y</code>. If some (sub-)expressions are not preferred to be a free variable, they can be specified in the <code>noNeedToBeVars_</code> set.</p>
 <p >Use <code><a class="el" href="classfreetensor_1_1GenPBExpr.html#ab73acdf741ea217a685b701131e03452">GenPBExpr::gen</a></code> to generate a string, and its free variables </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a435adddd945f29a6411809fd25972de1" name="a435adddd945f29a6411809fd25972de1"></a>
@@ -293,8 +294,8 @@ Protected Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="acf90af8a3b971e5e4004fe9a9ab1b339" name="acf90af8a3b971e5e4004fe9a9ab1b339"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acf90af8a3b971e5e4004fe9a9ab1b339">&#9670;&nbsp;</a></span>GenPBExpr()</h2>
+<a id="a79636d263067595c6ad3018462f711e8" name="a79636d263067595c6ad3018462f711e8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a79636d263067595c6ad3018462f711e8">&#9670;&nbsp;</a></span>GenPBExpr()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -306,8 +307,18 @@ Protected Member Functions</h2></td></tr>
           <td class="memname">freetensor::GenPBExpr::GenPBExpr </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>varSuffix</em> = <code>&quot;&quot;</code></td><td>)</td>
+          <td class="paramname"><em>varSuffix</em> = <code>&quot;&quot;</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#ae14e59de18f2f50d26e03b5df64a3866">ASTHashSet</a>&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>noNeedToBeVars</em> = <code>{}</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>

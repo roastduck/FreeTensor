@@ -152,6 +152,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:afd3217663573b45a099d40d3307c5641"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6bba4dd78a899d52cdbed054f440e130"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ExprNode.html#a6bba4dd78a899d52cdbed054f440e130">isUnary</a> () const</td></tr>
 <tr class="separator:a6bba4dd78a899d52cdbed054f440e130"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af54e55a56285cd0c00f0715123e38577"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ExprNode.html">ExprNode</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ExprNode.html#af54e55a56285cd0c00f0715123e38577">children</a> () const =0</td></tr>
+<tr class="separator:af54e55a56285cd0c00f0715123e38577"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0cebbd44afd98471eeae527435e984c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ExprNode.html">ExprNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ExprNode.html#ac0cebbd44afd98471eeae527435e984c">parentExpr</a> () const</td></tr>
 <tr class="separator:ac0cebbd44afd98471eeae527435e984c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86eb6c2e44b069973387eb5a07745ae5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1StmtNode.html">StmtNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ExprNode.html#a86eb6c2e44b069973387eb5a07745ae5">parentStmt</a> () const</td></tr>
@@ -242,6 +244,33 @@ Additional Inherited Members</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Base class of all expression nodes in an AST </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="af54e55a56285cd0c00f0715123e38577" name="af54e55a56285cd0c00f0715123e38577"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af54e55a56285cd0c00f0715123e38577">&#9670;&nbsp;</a></span>children()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual std::vector&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ExprNode.html">ExprNode</a> &gt; &gt; freetensor::ExprNode::children </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implemented in <a class="el" href="classfreetensor_1_1AnyExprNode.html#ad1afd1a47e6d4d63d9095d5673f4200e">freetensor::AnyExprNode</a>, <a class="el" href="classfreetensor_1_1VarNode.html#a9913182e60240daca6246cccc2df7be9">freetensor::VarNode</a>, <a class="el" href="classfreetensor_1_1LoadNode.html#a964e7fae2cf27f49d91a0c8f9dee5004">freetensor::LoadNode</a>, <a class="el" href="classfreetensor_1_1ConstNode.html#afe78ef7f64bfe55fe3bf39580b9bda05">freetensor::ConstNode</a>, <a class="el" href="classfreetensor_1_1BinaryExprNode.html#a8c6f7163a9d21a83db11267e5fcd9110">freetensor::BinaryExprNode</a>, <a class="el" href="classfreetensor_1_1UnaryExprNode.html#a59d1c4e01d9070b7f45a0c58ef242c01">freetensor::UnaryExprNode</a>, <a class="el" href="classfreetensor_1_1IfExprNode.html#a3547ea326c92ff0c4b8c06a094aa3a4d">freetensor::IfExprNode</a>, <a class="el" href="classfreetensor_1_1CastNode.html#a5db170738ef82a3f60b2ef042ede9569">freetensor::CastNode</a>, and <a class="el" href="classfreetensor_1_1IntrinsicNode.html#a151559bad2d7b60ac248746ab5129aeb">freetensor::IntrinsicNode</a>.</p>
+
+</div>
+</div>
 <a id="a729d8774d0753b002073ccfdf9e8c5f8" name="a729d8774d0753b002073ccfdf9e8c5f8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a729d8774d0753b002073ccfdf9e8c5f8">&#9670;&nbsp;</a></span>DEFINE_NODE_ACCESS()</h2>
 

@@ -109,6 +109,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a058aba41bf52f8e1f5982c9cd45a0b91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a82b8fd8fc1492bae6b246b4920e7b190"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CastNode.html#a82b8fd8fc1492bae6b246b4920e7b190">inferDType</a> () override</td></tr>
 <tr class="separator:a82b8fd8fc1492bae6b246b4920e7b190"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5db170738ef82a3f60b2ef042ede9569"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CastNode.html#a5db170738ef82a3f60b2ef042ede9569">children</a> () const override</td></tr>
+<tr class="separator:a5db170738ef82a3f60b2ef042ede9569"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af819066b75da8de122838b2e54424b48"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CastNode.html#af819066b75da8de122838b2e54424b48">DEFINE_NODE_TRAIT</a> (<a class="el" href="namespacefreetensor.html#a539a36f725523c1fee5d301a246343bf">Cast</a>)</td></tr>
 <tr class="separator:af819066b75da8de122838b2e54424b48"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1ExprNode"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1ExprNode')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1ExprNode.html">freetensor::ExprNode</a></td></tr>
@@ -120,6 +122,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:afd3217663573b45a099d40d3307c5641 inherit pub_methods_classfreetensor_1_1ExprNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6bba4dd78a899d52cdbed054f440e130 inherit pub_methods_classfreetensor_1_1ExprNode"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ExprNode.html#a6bba4dd78a899d52cdbed054f440e130">isUnary</a> () const</td></tr>
 <tr class="separator:a6bba4dd78a899d52cdbed054f440e130 inherit pub_methods_classfreetensor_1_1ExprNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af54e55a56285cd0c00f0715123e38577 inherit pub_methods_classfreetensor_1_1ExprNode"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ExprNode.html">ExprNode</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ExprNode.html#af54e55a56285cd0c00f0715123e38577">children</a> () const =0</td></tr>
+<tr class="separator:af54e55a56285cd0c00f0715123e38577 inherit pub_methods_classfreetensor_1_1ExprNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0cebbd44afd98471eeae527435e984c inherit pub_methods_classfreetensor_1_1ExprNode"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ExprNode.html">ExprNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ExprNode.html#ac0cebbd44afd98471eeae527435e984c">parentExpr</a> () const</td></tr>
 <tr class="separator:ac0cebbd44afd98471eeae527435e984c inherit pub_methods_classfreetensor_1_1ExprNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86eb6c2e44b069973387eb5a07745ae5 inherit pub_methods_classfreetensor_1_1ExprNode"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1StmtNode.html">StmtNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ExprNode.html#a86eb6c2e44b069973387eb5a07745ae5">parentStmt</a> () const</td></tr>
@@ -213,6 +217,33 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:a9cbe7b3f188f3bc69b7d4ec099f52b31 inherit pro_attribs_classfreetensor_1_1ASTPart"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a5db170738ef82a3f60b2ef042ede9569" name="a5db170738ef82a3f60b2ef042ede9569"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5db170738ef82a3f60b2ef042ede9569">&#9670;&nbsp;</a></span>children()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; freetensor::CastNode::children </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="classfreetensor_1_1ExprNode.html#af54e55a56285cd0c00f0715123e38577">freetensor::ExprNode</a>.</p>
+
+</div>
+</div>
 <a id="a058aba41bf52f8e1f5982c9cd45a0b91" name="a058aba41bf52f8e1f5982c9cd45a0b91"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a058aba41bf52f8e1f5982c9cd45a0b91">&#9670;&nbsp;</a></span>compHash()</h2>
 
