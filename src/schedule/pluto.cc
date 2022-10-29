@@ -321,6 +321,13 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
                                                   const ID &loop1Id,
                                                   int _nestLevel0,
                                                   int _nestLevel1) {
+    bool hoisted = false;
+    // try with vardef hoisted only if they are not at the same level
+    if (findStmt(ast, loop0Id)->parent() != findStmt(ast, loop1Id)->parent()) {
+        hoisted = true;
+        ast = hoistVarOverStmtSeq(ast);
+    }
+
     // check accessed vardefs: those vardefs accessed by loop1 should not have
     // their shapes modified in loop0
     CheckFuseAccessible check(loop0Id, loop1Id);
@@ -941,8 +948,9 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     PlutoFuse fuser(loop0Id, loop1Id, fusedLoopsVar, remainLoop0Var,
                     remainLoop1Var, loop0Permute, loop1Permute);
     ast = fuser(ast);
-    ast = shrinkFor(ast);
-    ast = sinkVar(ast);
+    ast = shrinkFor(ast, findStmt(ast, fuser.fusedId_), false);
+    if (hoisted)
+        ast = sinkVar(ast);
 
     return {ast, {fuser.fusedId_, parallelCount}};
 }
@@ -987,15 +995,14 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuse(const Stmt &ast,
                                               const ID &loop0Id,
                                               const ID &loop1Id, int nestLevel0,
                                               int nestLevel1) {
-    // flatten first so we get perfectly nested loops as much as possible
-    return plutoFuseImpl(flattenStmtSeq(hoistVarOverStmtSeq(ast)), loop0Id,
-                         loop1Id, nestLevel0, nestLevel1);
+    return plutoFuseImpl(flattenStmtSeq(ast), loop0Id, loop1Id, nestLevel0,
+                         nestLevel1);
 }
 
 std::pair<Stmt, std::pair<ID, int>>
 plutoPermute(const Stmt &_ast, const ID &loop, int nestLevel) {
     InjectEmptyLoop injecter(loop);
-    auto ast = injecter(flattenStmtSeq(hoistVarOverStmtSeq(_ast)));
+    auto ast = injecter(_ast);
     return plutoFuseImpl(ast, injecter.emptyLoopId(), loop, nestLevel,
                          nestLevel);
 }

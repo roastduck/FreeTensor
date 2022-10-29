@@ -40,21 +40,29 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
     std::vector<Var> iterStack_;
     std::vector<std::unordered_set<std::string>> namesStack_;
 
+    Stmt subAST_;
+    std::unordered_map<StmtSeq, Stmt> subASTInSeq_;
+    bool inSubAST_ = false;
+
   public:
     ShrinkFor() : bound_(*this) {}
+
+    void setSubAST(const Stmt &subAST);
 
   protected:
     using BaseClass::visit;
 
     Stmt visitStmt(const Stmt &stmt) override;
     Stmt visit(const For &op) override;
+    Stmt visit(const StmtSeq &op) override;
 };
 
 /**
  * Increase the begin and decrease the end index, to remove redundant iterations
  * from For loops
  */
-Stmt shrinkFor(const Stmt &op);
+Stmt shrinkFor(const Stmt &op, const Stmt &subAST = nullptr,
+               bool doSimplify = true);
 
 DEFINE_PASS_FOR_FUNC(shrinkFor)
 

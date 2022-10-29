@@ -18,7 +18,13 @@ void CheckSideEffect::visit(const Intrinsic &op) {
 }
 
 Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
+    if (stmt == subAST_)
+        inSubAST_ = true;
+
     auto ret = BaseClass::visitStmt(stmt);
+
+    if (stmt == subAST_)
+        inSubAST_ = false;
 
     CheckSideEffect checker;
     switch (stmt->nodeType()) {
@@ -65,6 +71,23 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
     }
 
     return ret;
+}
+
+Stmt ShrinkFor::visit(const StmtSeq &op) {
+    if (subAST_.isValid()) {
+        if (inSubAST_)
+            return BaseClass::visit(op);
+        else
+            return makeStmtSeq(
+                op->stmts_ | views::transform([&](const Stmt &s) {
+                    if (subASTInSeq_.contains(op) && s == subASTInSeq_.at(op))
+                        return (*this)(s);
+                    else
+                        return deepCopy(s);
+                }) |
+                ranges::to<std::vector>());
+    } else
+        return BaseClass::visit(op);
 }
 
 Stmt ShrinkFor::visit(const For &_op) {
@@ -115,9 +138,34 @@ Stmt ShrinkFor::visit(const For &_op) {
     return op;
 }
 
-Stmt shrinkFor(const Stmt &_op) {
-    auto op = simplify(_op); // Const prop + eliminate empty loops
-    op = ShrinkFor()(op);
+void ShrinkFor::setSubAST(const Stmt &subAST) {
+    subASTInSeq_.emplace();
+    auto parentStmtSeq = [](const Stmt &s) {
+        return s->parentStmtByFilter([](const Stmt &s) {
+            return s->nodeType() == ASTNodeType::StmtSeq;
+        });
+    };
+    for (Stmt s = parentStmtSeq(subAST), inner = subAST; s.isValid();
+         inner = s, s = parentStmtSeq(s)) {
+        subASTInSeq_.insert({s.as<StmtSeqNode>(), inner});
+        std::cout << s->id() << " is parent of " << inner->id() << std::endl;
+    }
+}
+
+Stmt shrinkFor(const Stmt &_op, const Stmt &subAST, bool doSimplify) {
+    auto op = _op;
+
+    if (doSimplify) // Const prop + eliminate empty loops
+        op = simplify(op);
+
+    ShrinkFor shrinker;
+    if (subAST.isValid())
+        shrinker.setSubAST(subAST);
+    op = shrinker(op);
+
+    if (doSimplify)
+        op = simplify(op);
+
     return simplify(op);
 }
 
