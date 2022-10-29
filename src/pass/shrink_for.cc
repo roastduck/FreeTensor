@@ -146,10 +146,8 @@ void ShrinkFor::setSubAST(const Stmt &subAST) {
         });
     };
     for (Stmt s = parentStmtSeq(subAST), inner = subAST; s.isValid();
-         inner = s, s = parentStmtSeq(s)) {
+         inner = s, s = parentStmtSeq(s))
         subASTInSeq_.insert({s.as<StmtSeqNode>(), inner});
-        std::cout << s->id() << " is parent of " << inner->id() << std::endl;
-    }
 }
 
 Stmt shrinkFor(const Stmt &_op, const Stmt &subAST, bool doSimplify) {
