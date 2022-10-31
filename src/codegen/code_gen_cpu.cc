@@ -158,6 +158,9 @@ void CodeGenCPU::visit(const For &op) {
              inner = inner.as<ForNode>()->body_) {
             collapse++;
             collapsed_.insert(inner.as<ForNode>());
+            if (!inner.as<ForNode>()->property_->reductions_.empty())
+                ERROR("Collapsed inner parallel loop should not have reduction "
+                      "items.");
         }
 
         for (auto &&r : op->property_->reductions_) {

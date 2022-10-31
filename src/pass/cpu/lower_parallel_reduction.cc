@@ -36,10 +36,26 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         return BaseClass::visit(_op);
     }
 
-    loopStack_.emplace_back(_op);
-    auto __op = BaseClass::visit(_op);
+    auto op = deepCopy(_op).as<ForNode>();
+
+    // special case for perfectly nested loops to be collapsed.
+    // reduction variables should be identical among them.
+    if (!loopStack_.empty() && _op->parentStmt() == loopStack_.back()) {
+        auto outer = loopStack_.back();
+        for (auto &&[ro, ri] : views::zip(outer->property_->reductions_,
+                                          op->property_->reductions_))
+            if (!HashComparator()(ro, ri))
+                ERROR(
+                    "Only exactly identical reduction items are supported for "
+                    "perfectly nested parallel loops that are to be "
+                    "collapsed.");
+        op->property_->reductions_.clear();
+    }
+
+    loopStack_.emplace_back(op);
+    auto __op = BaseClass::visit(op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
-    auto op = __op.as<ForNode>();
+    op = __op.as<ForNode>();
     loopStack_.pop_back();
 
     std::vector<Stmt> initStmts, flushStmts;
