@@ -20,6 +20,8 @@ void CheckSideEffect::visit(const Intrinsic &op) {
 Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
     if (stmt == subAST_)
         inSubAST_ = true;
+    if (subAST_.isValid() && !(inSubAST_ || subASTAncestors_.contains(stmt)))
+        return deepCopy(stmt);
 
     auto ret = BaseClass::visitStmt(stmt);
 
@@ -73,23 +75,6 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
     return ret;
 }
 
-Stmt ShrinkFor::visit(const StmtSeq &op) {
-    if (subAST_.isValid()) {
-        if (inSubAST_)
-            return BaseClass::visit(op);
-        else
-            return makeStmtSeq(
-                op->stmts_ | views::transform([&](const Stmt &s) {
-                    if (subASTInSeq_.contains(op) && s == subASTInSeq_.at(op))
-                        return (*this)(s);
-                    else
-                        return deepCopy(s);
-                }) |
-                ranges::to<std::vector>());
-    } else
-        return BaseClass::visit(op);
-}
-
 Stmt ShrinkFor::visit(const For &_op) {
     auto var = makeVar(_op->iter_).as<VarNode>();
     newRange_.erase(var);
@@ -139,15 +124,9 @@ Stmt ShrinkFor::visit(const For &_op) {
 }
 
 void ShrinkFor::setSubAST(const Stmt &subAST) {
-    subASTInSeq_.emplace();
-    auto parentStmtSeq = [](const Stmt &s) {
-        return s->parentStmtByFilter([](const Stmt &s) {
-            return s->nodeType() == ASTNodeType::StmtSeq;
-        });
-    };
-    for (Stmt s = parentStmtSeq(subAST), inner = subAST; s.isValid();
-         inner = s, s = parentStmtSeq(s))
-        subASTInSeq_.insert({s.as<StmtSeqNode>(), inner});
+    subAST_ = subAST;
+    for (Stmt s = subAST->parentStmt(); s.isValid(); s = s->parentStmt())
+        subASTAncestors_.insert(s);
 }
 
 Stmt shrinkFor(const Stmt &_op, const Stmt &subAST, bool doSimplify) {

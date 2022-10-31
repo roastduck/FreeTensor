@@ -41,7 +41,7 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
     std::vector<std::unordered_set<std::string>> namesStack_;
 
     Stmt subAST_;
-    std::unordered_map<StmtSeq, Stmt> subASTInSeq_;
+    std::unordered_set<Stmt> subASTAncestors_;
     bool inSubAST_ = false;
 
   public:
@@ -54,7 +54,6 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
 
     Stmt visitStmt(const Stmt &stmt) override;
     Stmt visit(const For &op) override;
-    Stmt visit(const StmtSeq &op) override;
 };
 
 /**
