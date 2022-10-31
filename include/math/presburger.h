@@ -397,8 +397,7 @@ PBMap projectOutOutputDims(T &&map, unsigned first, unsigned n) {
     return isl_map_project_out(PBRefTake<T>(map), isl_dim_out, first, n);
 }
 
-template <PBSetRef T>
-PBSet insertDims(T &&set, unsigned first, unsigned n) {
+template <PBSetRef T> PBSet insertDims(T &&set, unsigned first, unsigned n) {
     return isl_set_insert_dims(PBRefTake<T>(set), isl_dim_set, first, n);
 }
 template <PBMapRef T>
