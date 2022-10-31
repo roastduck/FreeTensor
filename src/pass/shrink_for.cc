@@ -143,7 +143,7 @@ Stmt shrinkFor(const Stmt &_op, const Stmt &subAST, bool doSimplify) {
     if (doSimplify)
         op = simplify(op);
 
-    return simplify(op);
+    return op;
 }
 
 } // namespace freetensor
