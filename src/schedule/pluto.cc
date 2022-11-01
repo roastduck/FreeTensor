@@ -18,7 +18,7 @@ namespace freetensor {
 namespace {
 
 PBBuildExpr nonZeroConstraint(const std::vector<PBBuildExpr> &vars,
-                              const PBBuildExpr &delta, int varBound = 2) {
+                              const PBBuildExpr &delta, int varBound = 8) {
     auto n = vars.size();
     PBBuildExpr ret = true;
     if (n > 0u) {
