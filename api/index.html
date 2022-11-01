@@ -10380,7 +10380,12 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop0</span><span class="p">,</span> <span class="n">loop1</span><span class="p">,</span> <span class="n">nest_level_0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                   <span class="n">loop0</span><span class="p">,</span>
+                   <span class="n">loop1</span><span class="p">,</span>
+                   <span class="n">nest_level_0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                   <span class="n">nest_level_1</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                   <span class="n">do_simplify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable</span>
 <span class="sd">        loops as possible at outermost levels.</span>
@@ -10400,6 +10405,8 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        nest_level_1 : int</span>
 <span class="sd">            The number of nesting levels of loop 1 to be considered, defaults to maximum</span>
 <span class="sd">            possible</span>
+<span class="sd">        do_simplify : bool</span>
+<span class="sd">            Whether the result is simplified by the way, defaults to true</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -10412,9 +10419,9 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">            if the loops are not consequent</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop1</span><span class="p">),</span>
-                                  <span class="n">nest_level_0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="p">)</span>
+                                  <span class="n">nest_level_0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="p">,</span> <span class="n">do_simplify</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">nest_level</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">nest_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">do_simplify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Use Pluto+ algorithm to permute a single loop, with as most parallelizable loops</span>
 <span class="sd">        as possible at outermost levels.</span>
@@ -10425,6 +10432,8 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">            The loop to permute</span>
 <span class="sd">        nest_level : int</span>
 <span class="sd">            The number of nesting levels to be considered, defaults to maximum possible</span>
+<span class="sd">        do_simplify : bool</span>
+<span class="sd">            Whether the result is simplified by the way, defaults to true</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -10432,7 +10441,8 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">            The ID of permuted loop and level of parallelizable loops</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span> <span class="n">nest_level</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span> <span class="n">nest_level</span><span class="p">,</span>
+                                     <span class="n">do_simplify</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">auto_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -12133,7 +12143,7 @@ terms returned by <code>transformFunc</code> when called with original iteration
 
 
 <h5 id="freetensor.core.schedule.Schedule.pluto_fuse" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop0</span><span class="p">,</span> <span class="n">loop1</span><span class="p">,</span> <span class="n">nest_level_0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop0</span><span class="p">,</span> <span class="n">loop1</span><span class="p">,</span> <span class="n">nest_level_0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">do_simplify</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.schedule.Schedule.pluto_fuse" class="headerlink" title="Permanent link">&para;</a></h5>
@@ -12162,6 +12172,7 @@ left inside the fused loops as two statements</p>
 possible</p></li>
             <li><p><strong>nest_level_1</strong> (<code>int</code>) – The number of nesting levels of loop 1 to be considered, defaults to maximum
 possible</p></li>
+            <li><p><strong>do_simplify</strong> (<code>bool</code>) – Whether the result is simplified by the way, defaults to true</p></li>
         </ul>
       </td>
     </tr>
@@ -12201,7 +12212,12 @@ possible</p></li>
 </table>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop0</span><span class="p">,</span> <span class="n">loop1</span><span class="p">,</span> <span class="n">nest_level_0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+               <span class="n">loop0</span><span class="p">,</span>
+               <span class="n">loop1</span><span class="p">,</span>
+               <span class="n">nest_level_0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+               <span class="n">nest_level_1</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+               <span class="n">do_simplify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable</span>
 <span class="sd">    loops as possible at outermost levels.</span>
@@ -12221,6 +12237,8 @@ possible</p></li>
 <span class="sd">    nest_level_1 : int</span>
 <span class="sd">        The number of nesting levels of loop 1 to be considered, defaults to maximum</span>
 <span class="sd">        possible</span>
+<span class="sd">    do_simplify : bool</span>
+<span class="sd">        Whether the result is simplified by the way, defaults to true</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -12233,7 +12251,7 @@ possible</p></li>
 <span class="sd">        if the loops are not consequent</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop1</span><span class="p">),</span>
-                              <span class="n">nest_level_0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="p">)</span>
+                              <span class="n">nest_level_0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="p">,</span> <span class="n">do_simplify</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -12247,7 +12265,7 @@ possible</p></li>
 
 
 <h5 id="freetensor.core.schedule.Schedule.pluto_permute" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">nest_level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">nest_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">do_simplify</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.schedule.Schedule.pluto_permute" class="headerlink" title="Permanent link">&para;</a></h5>
@@ -12269,6 +12287,7 @@ possible</p></li>
         <ul class="first simple">
             <li><p><strong>loop</strong> (<code>str, ID or Stmt</code>) – The loop to permute</p></li>
             <li><p><strong>nest_level</strong> (<code>int</code>) – The number of nesting levels to be considered, defaults to maximum possible</p></li>
+            <li><p><strong>do_simplify</strong> (<code>bool</code>) – Whether the result is simplified by the way, defaults to true</p></li>
         </ul>
       </td>
     </tr>
@@ -12292,7 +12311,7 @@ possible</p></li>
 </table>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">nest_level</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">nest_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">do_simplify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use Pluto+ algorithm to permute a single loop, with as most parallelizable loops</span>
 <span class="sd">    as possible at outermost levels.</span>
@@ -12303,6 +12322,8 @@ possible</p></li>
 <span class="sd">        The loop to permute</span>
 <span class="sd">    nest_level : int</span>
 <span class="sd">        The number of nesting levels to be considered, defaults to maximum possible</span>
+<span class="sd">    do_simplify : bool</span>
+<span class="sd">        Whether the result is simplified by the way, defaults to true</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -12310,7 +12331,8 @@ possible</p></li>
 <span class="sd">        The ID of permuted loop and level of parallelizable loops</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span> <span class="n">nest_level</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span> <span class="n">nest_level</span><span class="p">,</span>
+                                 <span class="n">do_simplify</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>

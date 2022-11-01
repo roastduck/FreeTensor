@@ -153,10 +153,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a5acb3fd33acc0a8940fc36fe97a9a9da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a37ef938b9a97cc35d911120950648c55"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a37ef938b9a97cc35d911120950648c55">asMatMul</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
 <tr class="separator:a37ef938b9a97cc35d911120950648c55"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a90dfec1fb79ef125bd6e3b9c7c247763"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a90dfec1fb79ef125bd6e3b9c7c247763">plutoFuse</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop0, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1, int nestLevel0=0, int nestLevel1=0)</td></tr>
-<tr class="separator:a90dfec1fb79ef125bd6e3b9c7c247763"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a158e7d4ca81fae20bbe34ac7bbed2974"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a158e7d4ca81fae20bbe34ac7bbed2974">plutoPermute</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, int nestLevel=0)</td></tr>
-<tr class="separator:a158e7d4ca81fae20bbe34ac7bbed2974"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1775be700dd164d77a756aadd5744f4a"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a1775be700dd164d77a756aadd5744f4a">plutoFuse</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop0, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1, int nestLevel0=0, int nestLevel1=0, bool doSimplify=true)</td></tr>
+<tr class="separator:a1775be700dd164d77a756aadd5744f4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a926046480d77aa1e798bed45c78a8898"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a926046480d77aa1e798bed45c78a8898">plutoPermute</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, int nestLevel=0, bool doSimplify=true)</td></tr>
+<tr class="separator:a926046480d77aa1e798bed45c78a8898"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab07b305c56ef33cab76de9e874c295c3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#ab07b305c56ef33cab76de9e874c295c3">autoSchedule</a> (const <a class="el" href="classfreetensor_1_1Target.html">Target</a> &amp;target, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a> &gt; &amp;trace=nullptr)</td></tr>
 <tr class="separator:ab07b305c56ef33cab76de9e874c295c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f6e8a418824aeaf48e5966d9046e8b4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a7f6e8a418824aeaf48e5966d9046e8b4">autoUseLib</a> (const <a class="el" href="classfreetensor_1_1Target.html">Target</a> &amp;target)</td></tr>
@@ -1459,8 +1459,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a90dfec1fb79ef125bd6e3b9c7c247763" name="a90dfec1fb79ef125bd6e3b9c7c247763"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a90dfec1fb79ef125bd6e3b9c7c247763">&#9670;&nbsp;</a></span>plutoFuse()</h2>
+<a id="a1775be700dd164d77a756aadd5744f4a" name="a1775be700dd164d77a756aadd5744f4a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1775be700dd164d77a756aadd5744f4a">&#9670;&nbsp;</a></span>plutoFuse()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1487,7 +1487,13 @@ template&lt;class T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>nestLevel1</em> = <code>0</code>&#160;</td>
+          <td class="paramname"><em>nestLevel1</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>doSimplify</em> = <code>true</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1503,6 +1509,7 @@ template&lt;class T &gt; </div>
     <tr><td class="paramname">loop1</td><td>: The second loop to fuse </td></tr>
     <tr><td class="paramname">nestLevel0</td><td>: The number of nesting levels of loop 0 to be considered, defaults to maximum possible </td></tr>
     <tr><td class="paramname">nestLevel1</td><td>: The number of nesting levels of loop 1 to be considered, defaults to maximum possible </td></tr>
+    <tr><td class="paramname">doSimplify</td><td>: Whether the result is simplified by the way, defaults to true </td></tr>
   </table>
   </dd>
 </dl>
@@ -1510,8 +1517,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a158e7d4ca81fae20bbe34ac7bbed2974" name="a158e7d4ca81fae20bbe34ac7bbed2974"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a158e7d4ca81fae20bbe34ac7bbed2974">&#9670;&nbsp;</a></span>plutoPermute()</h2>
+<a id="a926046480d77aa1e798bed45c78a8898" name="a926046480d77aa1e798bed45c78a8898"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a926046480d77aa1e798bed45c78a8898">&#9670;&nbsp;</a></span>plutoPermute()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1526,7 +1533,13 @@ template&lt;class T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>nestLevel</em> = <code>0</code>&#160;</td>
+          <td class="paramname"><em>nestLevel</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>doSimplify</em> = <code>true</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1540,6 +1553,7 @@ template&lt;class T &gt; </div>
   <table class="params">
     <tr><td class="paramname">loop</td><td>: The loop to permute </td></tr>
     <tr><td class="paramname">nestLevel0</td><td>: The number of nesting levels to be considered, defaults to maximum possible </td></tr>
+    <tr><td class="paramname">doSimplify</td><td>: Whether the result is simplified by the way, defaults to true </td></tr>
   </table>
   </dd>
 </dl>
