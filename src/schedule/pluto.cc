@@ -18,7 +18,7 @@ namespace freetensor {
 namespace {
 
 PBBuildExpr nonZeroConstraint(const std::vector<PBBuildExpr> &vars,
-                              const PBBuildExpr &delta, int varBound = 2) {
+                              const PBBuildExpr &delta, int varBound = 8) {
     auto n = vars.size();
     PBBuildExpr ret = true;
     if (n > 0u) {
@@ -317,10 +317,16 @@ struct PlutoFuse : public Mutator {
     }
 };
 
-std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
-                                                  const ID &loop1Id,
-                                                  int _nestLevel0,
-                                                  int _nestLevel1) {
+std::pair<Stmt, std::pair<ID, int>>
+plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
+              int _nestLevel1, bool doSimplify) {
+    bool hoisted = false;
+    // try with vardef hoisted only if they are not at the same level
+    if (findStmt(ast, loop0Id)->parent() != findStmt(ast, loop1Id)->parent()) {
+        hoisted = true;
+        ast = hoistVarOverStmtSeq(ast);
+    }
+
     // check accessed vardefs: those vardefs accessed by loop1 should not have
     // their shapes modified in loop0
     CheckFuseAccessible check(loop0Id, loop1Id);
@@ -473,7 +479,6 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     auto dep1 = getDeps(loop1, nestLevel1, loop1, nestLevel1);
     auto dep1to0 = getDeps(loop0, nestLevel0, loop1, nestLevel1, true);
     const int nParams = outerAxes.size();
-    const int nDeps = dep0.size() + dep1.size() + dep1to0.size();
 
     // constraints for bounding and valid coefficients
     std::vector<PBSet> coeffSets0, coeffSets1, coeffSets1to0;
@@ -485,13 +490,11 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     // whether a dependence have been satisfied already
     std::vector<bool> satisfied0, satisfied1, satisfied1to0;
 
-    auto separateLowerBound = [&](PBSet &&set, int i) {
-        auto rawSet = set.move();
-        int nOthers = (nParams + 1) * 3 + nestLevel0 + nestLevel1;
-        rawSet = isl_set_insert_dims(rawSet, isl_dim_set, nOthers + 1,
-                                     nDeps - i - 1);
-        rawSet = isl_set_insert_dims(rawSet, isl_dim_set, nOthers, i);
-        return PBSet(rawSet);
+    auto limitLowerBound = [&](PBSet set, int upperBound = 1) {
+        auto ndim = set.nDims();
+        set = lowerBoundDim(std::move(set), ndim - 1, 0);
+        set = upperBoundDim(std::move(set), ndim - 1, upperBound);
+        return set;
     };
 
     // process dependences inside loop 0
@@ -539,8 +542,8 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         satisfied0.resize(dep0.size(), false);
         for (auto &&[i, d] : views::enumerate(dep0)) {
             auto legalSet = coefficients(apply(d, legalityMap));
-            coeffSets0.push_back(separateLowerBound(
-                intersect(legalSet, coefficients(apply(d, boundingMap))), i));
+            coeffSets0.push_back(limitLowerBound(
+                intersect(legalSet, coefficients(apply(d, boundingMap)))));
             auto ndim = legalSet.nDims();
             satSets0.push_back(projectOutDims(
                 fixDim(std::move(legalSet), ndim - 1, 1), ndim - 1, 1));
@@ -594,9 +597,8 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         satisfied1.resize(dep1.size(), false);
         for (auto &&[i, d] : views::enumerate(dep1)) {
             auto legalSet = coefficients(apply(d, legalityMap));
-            coeffSets1.push_back(separateLowerBound(
-                intersect(legalSet, coefficients(apply(d, boundingMap))),
-                dep0.size() + i));
+            coeffSets1.push_back(limitLowerBound(
+                intersect(legalSet, coefficients(apply(d, boundingMap)))));
             auto ndim = legalSet.nDims();
             satSets1.push_back(projectOutDims(
                 fixDim(std::move(legalSet), ndim - 1, 1), ndim - 1, 1));
@@ -655,9 +657,10 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         satisfied1to0.resize(dep1to0.size(), false);
         for (auto &&[i, d] : views::enumerate(dep1to0)) {
             auto legalSet = coefficients(apply(d, legalityMap));
-            coeffSets1to0.push_back(separateLowerBound(
-                intersect(legalSet, coefficients(apply(d, boundingMap))),
-                dep0.size() + dep1.size() + i));
+            // limit lower bound to 0, we don't want to count 1to0 dependences
+            // for Feautrier
+            coeffSets1to0.push_back(limitLowerBound(
+                intersect(legalSet, coefficients(apply(d, boundingMap))), 0));
             auto ndim = legalSet.nDims();
             satSets1to0.push_back(projectOutDims(
                 fixDim(std::move(legalSet), ndim - 1, 1), ndim - 1, 1));
@@ -676,7 +679,7 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     // 3. (nParams + 1 + nestLevel1) loop 1 permuting coefficients
     auto c1Params = builder.newInputs(nParams + 1, "c1p");
     auto c1Iters = builder.newInputs(nestLevel1, "c1i");
-    auto lowerBounds = builder.newInputs(nDeps, "lb");
+    auto sumLowerBounds = builder.newInput("sumlb");
 
     // optimize targets
     // 1.1. Feautrier target
@@ -696,15 +699,10 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     PBBuildExpr sumUpperBounds = 0;
     for (int i = 0; i < nParams + 1; ++i)
         sumUpperBounds += cBounds[i];
-    PBBuildExpr sumLowerBounds = 0;
-    for (int i = 0; i < nDeps; ++i) {
-        builder.addConstraint(lowerBounds[i] >= 0 && lowerBounds[i] <= 1);
-        if (i < int(dep0.size() + dep1.size()))
-            sumLowerBounds += lowerBounds[i];
-    }
     auto feautrierTarget = builder.newOutput("ftr");
     builder.addConstraint(feautrierTarget ==
-                          (nDeps + 1) * max(0, min(sumUpperBounds, 1)) -
+                          (dep0.size() + dep1.size() + 1) *
+                                  max(0, min(sumUpperBounds, 1)) -
                               sumLowerBounds);
     // 1.2. Pluto+ targets
     //      for each bounding coefficients except the last one (for constant),
@@ -772,7 +770,7 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         builder.addOutputs(params);
         builder.addOutput(1);
         builder.addOutputs(views::repeat_n(0, (nParams + 1) * 2 + nestLevel0 +
-                                                  nestLevel1 + nDeps));
+                                                  nestLevel1 + 1));
         optimizeMap =
             intersectDomain(std::move(optimizeMap),
                             coefficients(apply(loop0Set, builder.build(ctx))));
@@ -781,6 +779,18 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     PBSetBuilder orthoSetBuilder;
     orthoSetBuilder.addVars(builder.outputs());
 
+    // combine two coeff sets: sum up their lower bound.
+    PBMap problemCombiner;
+    {
+        PBMapBuilder builder;
+        auto others =
+            builder.newInputs((nParams + 1) * 3 + nestLevel0 + nestLevel1, "i");
+        auto lb = builder.newInputs(2, "lb");
+        builder.addOutputs(others);
+        builder.addOutput(lb[0] + lb[1]);
+        problemCombiner = builder.build(ctx);
+    }
+
     std::vector<std::vector<int>> c0ParamValue, c0IterValue;
     std::vector<std::vector<int>> c1ParamValue, c1IterValue;
     // start computing permuted dimensions
@@ -788,14 +798,25 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     for (fusedLevel = 0; fusedLevel < std::min(nestLevel0, nestLevel1);
          ++fusedLevel) {
         //! FIXME: handle parameters from loads
-        auto problem = universeSet(spaceSetAlloc(
-            ctx, 0, (nParams + 1) * 3 + nestLevel0 + nestLevel1 + nDeps));
+        PBSet problem;
         // constructing the coefficients' space
         for (const auto &[satisfied, coeffSet] :
              views::zip(views::concat(satisfied0, satisfied1, satisfied1to0),
                         views::concat(coeffSets0, coeffSets1, coeffSets1to0)))
-            if (!satisfied)
-                problem = intersect(std::move(problem), coeffSet);
+            if (!satisfied) {
+                if (!problem.isValid())
+                    problem = coeffSet;
+                else {
+                    auto ndim = problem.nDims();
+                    problem =
+                        apply(intersect(insertDims(std::move(problem), ndim, 1),
+                                        insertDims(coeffSet, ndim - 1, 1)),
+                              problemCombiner);
+                }
+            }
+        if (!problem.isValid())
+            problem = limitLowerBound(universeSet(spaceSetAlloc(
+                ctx, 0, (nParams + 1) * 3 + nestLevel0 + nestLevel1 + 1)));
 
         // construct orthogonal constraints
         auto orthoConstraint = [&](const auto &cIterValue, const auto &cIters,
@@ -830,7 +851,7 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
         // cut the lower bounds out of solution
         solution =
             projectOutDims(std::move(solution),
-                           (nParams + 1) * 3 + nestLevel0 + nestLevel1, nDeps);
+                           (nParams + 1) * 3 + nestLevel0 + nestLevel1, 1);
 
         // check satisfied and mark; already satisfied dependences won't be
         // included in inner levels
@@ -941,8 +962,11 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
     PlutoFuse fuser(loop0Id, loop1Id, fusedLoopsVar, remainLoop0Var,
                     remainLoop1Var, loop0Permute, loop1Permute);
     ast = fuser(ast);
-    ast = shrinkFor(ast);
-    ast = sinkVar(ast);
+    ast = shrinkFor(ast, findStmt(ast, fuser.fusedId_), false);
+    if (doSimplify)
+        ast = simplify(ast);
+    if (hoisted)
+        ast = sinkVar(ast);
 
     return {ast, {fuser.fusedId_, parallelCount}};
 }
@@ -986,26 +1010,26 @@ class InjectEmptyLoop : public Mutator {
 std::pair<Stmt, std::pair<ID, int>> plutoFuse(const Stmt &ast,
                                               const ID &loop0Id,
                                               const ID &loop1Id, int nestLevel0,
-                                              int nestLevel1) {
-    // flatten first so we get perfectly nested loops as much as possible
-    return plutoFuseImpl(flattenStmtSeq(hoistVarOverStmtSeq(ast)), loop0Id,
-                         loop1Id, nestLevel0, nestLevel1);
+                                              int nestLevel1, bool doSimplify) {
+    return plutoFuseImpl(flattenStmtSeq(ast), loop0Id, loop1Id, nestLevel0,
+                         nestLevel1, doSimplify);
 }
 
 std::pair<Stmt, std::pair<ID, int>>
-plutoPermute(const Stmt &_ast, const ID &loop, int nestLevel) {
+plutoPermute(const Stmt &_ast, const ID &loop, int nestLevel, bool doSimplify) {
     InjectEmptyLoop injecter(loop);
-    auto ast = injecter(flattenStmtSeq(hoistVarOverStmtSeq(_ast)));
+    auto ast = injecter(_ast);
     return plutoFuseImpl(ast, injecter.emptyLoopId(), loop, nestLevel,
-                         nestLevel);
+                         nestLevel, doSimplify);
 }
 
 std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1,
-                                       int nestLevel0, int nestLevel1) {
+                                       int nestLevel0, int nestLevel1,
+                                       bool doSimplify) {
     beginTransaction();
     auto log =
         appendLog(MAKE_SCHEDULE_LOG(PlutoFuse, freetensor::plutoFuse, loop0,
-                                    loop1, nestLevel0, nestLevel1));
+                                    loop1, nestLevel0, nestLevel1, doSimplify));
     try {
         auto ret = applyLog(log);
         commitTransaction();
@@ -1016,10 +1040,11 @@ std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1,
     }
 }
 
-std::pair<ID, int> Schedule::plutoPermute(const ID &loop, int nestLevel) {
+std::pair<ID, int> Schedule::plutoPermute(const ID &loop, int nestLevel,
+                                          bool doSimplify) {
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(
-        PlutoPermute, freetensor::plutoPermute, loop, nestLevel));
+        PlutoPermute, freetensor::plutoPermute, loop, nestLevel, doSimplify));
     try {
         auto ret = applyLog(log);
         commitTransaction();

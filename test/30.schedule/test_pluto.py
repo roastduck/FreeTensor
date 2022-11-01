@@ -264,3 +264,26 @@ def test_pluto_permute_skew_2():
     print(kernel_expected)
     assert parallelism == 1
     assert kernel.body.match(kernel_expected.body)
+
+
+def test_pluto_permute_skew_3():
+
+    @ft.transform
+    def kernel(x: ft.Var[(256, 256, 256), "float32", "inout"]):
+        #! label: L0
+        for i in range(1, 255):
+            for j in range(1, 255):
+                for k in range(1, 255):
+                    result = 0
+                    for ii in (-1, 0, 1):
+                        for jj in (-1, 0, 1):
+                            for kk in (-1, 0, 1):
+                                result += x[i + ii, j + jj, k + kk]
+                    x[i, j, k] = result
+
+    print(kernel)
+    s = ft.Schedule(kernel)
+    _, parallelism = s.pluto_permute("L0")
+    kernel = s.func()
+    print(kernel)
+    assert parallelism == 2

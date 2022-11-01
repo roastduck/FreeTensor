@@ -71,10 +71,13 @@ void init_ffi_pass(py::module_ &m) {
     m.def("shrink_var", static_cast<Stmt (*)(const Stmt &)>(&shrinkVar),
           "stmt"_a);
 
-    m.def("shrink_for", static_cast<Func (*)(const Func &)>(&shrinkFor),
-          "func"_a);
-    m.def("shrink_for", static_cast<Stmt (*)(const Stmt &)>(&shrinkFor),
-          "stmt"_a);
+    m.def(
+        "shrink_for",
+        [](const Func &f, const Stmt &s, bool b) { return shrinkFor(f, s, b); },
+        "func"_a, "sub_ast"_a = nullptr, "do_simplify"_a = true);
+    m.def("shrink_for",
+          static_cast<Stmt (*)(const Stmt &, const Stmt &, bool)>(&shrinkFor),
+          "stmt"_a, "sub_ast"_a = nullptr, "do_simplify"_a = true);
 
     m.def("merge_and_hoist_if",
           static_cast<Func (*)(const Func &)>(&mergeAndHoistIf), "func"_a);
