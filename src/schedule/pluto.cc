@@ -317,10 +317,9 @@ struct PlutoFuse : public Mutator {
     }
 };
 
-std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
-                                                  const ID &loop1Id,
-                                                  int _nestLevel0,
-                                                  int _nestLevel1) {
+std::pair<Stmt, std::pair<ID, int>>
+plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
+              int _nestLevel1, bool doSimplify) {
     bool hoisted = false;
     // try with vardef hoisted only if they are not at the same level
     if (findStmt(ast, loop0Id)->parent() != findStmt(ast, loop1Id)->parent()) {
@@ -964,6 +963,8 @@ std::pair<Stmt, std::pair<ID, int>> plutoFuseImpl(Stmt ast, const ID &loop0Id,
                     remainLoop1Var, loop0Permute, loop1Permute);
     ast = fuser(ast);
     ast = shrinkFor(ast, findStmt(ast, fuser.fusedId_), false);
+    if (doSimplify)
+        ast = simplify(ast);
     if (hoisted)
         ast = sinkVar(ast);
 
@@ -1009,25 +1010,26 @@ class InjectEmptyLoop : public Mutator {
 std::pair<Stmt, std::pair<ID, int>> plutoFuse(const Stmt &ast,
                                               const ID &loop0Id,
                                               const ID &loop1Id, int nestLevel0,
-                                              int nestLevel1) {
+                                              int nestLevel1, bool doSimplify) {
     return plutoFuseImpl(flattenStmtSeq(ast), loop0Id, loop1Id, nestLevel0,
-                         nestLevel1);
+                         nestLevel1, doSimplify);
 }
 
 std::pair<Stmt, std::pair<ID, int>>
-plutoPermute(const Stmt &_ast, const ID &loop, int nestLevel) {
+plutoPermute(const Stmt &_ast, const ID &loop, int nestLevel, bool doSimplify) {
     InjectEmptyLoop injecter(loop);
     auto ast = injecter(_ast);
     return plutoFuseImpl(ast, injecter.emptyLoopId(), loop, nestLevel,
-                         nestLevel);
+                         nestLevel, doSimplify);
 }
 
 std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1,
-                                       int nestLevel0, int nestLevel1) {
+                                       int nestLevel0, int nestLevel1,
+                                       bool doSimplify) {
     beginTransaction();
     auto log =
         appendLog(MAKE_SCHEDULE_LOG(PlutoFuse, freetensor::plutoFuse, loop0,
-                                    loop1, nestLevel0, nestLevel1));
+                                    loop1, nestLevel0, nestLevel1, doSimplify));
     try {
         auto ret = applyLog(log);
         commitTransaction();
@@ -1038,10 +1040,11 @@ std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1,
     }
 }
 
-std::pair<ID, int> Schedule::plutoPermute(const ID &loop, int nestLevel) {
+std::pair<ID, int> Schedule::plutoPermute(const ID &loop, int nestLevel,
+                                          bool doSimplify) {
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(
-        PlutoPermute, freetensor::plutoPermute, loop, nestLevel));
+        PlutoPermute, freetensor::plutoPermute, loop, nestLevel, doSimplify));
     try {
         auto ret = applyLog(log);
         commitTransaction();
