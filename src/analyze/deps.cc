@@ -14,6 +14,14 @@
 
 namespace freetensor {
 
+template <PBMapRef T> static PBMap dropAllConstraintsNotInvolvingAxes(T &&map) {
+    PBSet wrapped = isl_map_wrap(PBRefTake<T>(map));
+    auto n = wrapped.nDims();
+    PBSet dropped = isl_set_drop_constraints_not_involving_dims(
+        wrapped.move(), isl_dim_set, 0, n);
+    return isl_set_unwrap(dropped.move());
+}
+
 void FindAllNoDeps::visit(const For &op) {
     Visitor::visit(op);
     for (auto &&var : op->property_->noDeps_) {
@@ -854,8 +862,17 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
                                presburger, later, earlier, laterExternals,
                                earlierExternals, iterDim));
         depAll = coalesce(std::move(depAll));
-
         PBMap psDepAll = applyRange(depAll, std::move(ea2s));
+
+        // There may be some unused constraints of external variables in
+        // `psDepAll`. Suppose an external variable is named `x`, it can be
+        // `x_earlier0 = x_later`. This may seem trivial in `psDepAll`, because
+        // it is an empty set when the constraint is not met. However, when all
+        // `psDepAll` are unioned to be `psDelAllUnion`, this constrains become
+        // non-trivial (when the constraint is not met, there may be a non-empty
+        // map) and lead to redundant computation. We drop these contraint here
+        psDepAll = dropAllConstraintsNotInvolvingAxes(std::move(psDepAll));
+
         psDepAllUnion = psDepAllUnion.isValid()
                             ? uni(std::move(psDepAllUnion), std::move(psDepAll))
                             : std::move(psDepAll);
@@ -944,8 +961,17 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
                                presburger, later, earlier, laterExternals,
                                earlierExternals, iterDim));
         depAll = coalesce(std::move(depAll));
-
         PBMap spDepAll = applyDomain(depAll, std::move(la2s));
+
+        // There may be some unused constraints of external variables in
+        // `spDepAll`. Suppose an external variable is named `x`, it can be
+        // `x_earlier = x_later0`. This may seem trivial in `spDepAll`, because
+        // it is an empty set when the constraint is not met. However, when all
+        // `spDepAll` are unioned to be `spDelAllUnion`, this constrains become
+        // non-trivial (when the constraint is not met, there may be a non-empty
+        // map) and lead to redundant computation. We drop these contraint here
+        spDepAll = dropAllConstraintsNotInvolvingAxes(std::move(spDepAll));
+
         spDepAllUnion = spDepAllUnion.isValid()
                             ? uni(std::move(spDepAllUnion), std::move(spDepAll))
                             : std::move(spDepAll);
