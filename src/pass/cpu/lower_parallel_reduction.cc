@@ -42,13 +42,20 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     // reduction variables should be identical among them.
     if (!loopStack_.empty() && _op->parentStmt() == loopStack_.back()) {
         auto outer = loopStack_.back();
-        for (auto &&[ro, ri] : views::zip(outer->property_->reductions_,
-                                          op->property_->reductions_))
-            if (!HashComparator()(ro, ri))
-                ERROR(
-                    "Only exactly identical reduction items are supported for "
-                    "perfectly nested parallel loops that are to be "
-                    "collapsed.");
+        bool identical = true;
+        if (outer->property_->reductions_.size() !=
+            op->property_->reductions_.size())
+            identical = false;
+        else
+            for (auto &&[ro, ri] : views::zip(outer->property_->reductions_,
+                                              op->property_->reductions_))
+                if (!HashComparator()(ro, ri)) {
+                    identical = false;
+                    break;
+                }
+        if (!identical)
+            ERROR("Only exactly identical reduction items are supported for "
+                  "perfectly nested parallel loops that are to be collapsed.");
         op->property_->reductions_.clear();
     }
 
