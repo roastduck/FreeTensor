@@ -90,7 +90,18 @@ class MarkStores : public TrackStmt<Visitor> {
     void visit(const For &op) override;
     void visit(const If &op) override;
     void visit(const Store &op) override { visitMemWrite(op); }
-    void visit(const ReduceTo &op) override { visitMemWrite(op); }
+    void visit(const ReduceTo &op) override {
+        visitMemWrite(op);
+        for (auto p = op->parentStmt(); p.isValid(); p = p->parentStmt()) {
+            if (p->nodeType() == ASTNodeType::VarDef &&
+                p.as<VarDefNode>()->name_ == op->var_) {
+                break;
+            }
+            if (p->nodeType() == ASTNodeType::For) {
+                varInfo_[op->var_][p->id()] = LoopVariability::Variant;
+            }
+        }
+    }
 };
 
 class FindLoopVariance : public TrackStmt<Visitor> {
