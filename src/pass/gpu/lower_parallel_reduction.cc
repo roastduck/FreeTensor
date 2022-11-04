@@ -211,8 +211,8 @@ Stmt lowerParallelReduction(const Stmt &_op) {
     auto op = _op;
 
     // For each parallel reduction, we don't reduce onto the target variable
-    // directly, but first reduce into a thread-local workspce (implemented by a
-    // therad-number-fold sized tensor), then do a binary reduction on the
+    // directly, but first reduce into a thread-local workspace (implemented by
+    // a thread-number-fold sized tensor), then do a binary reduction on the
     // workspace, and finally store the reduction result to the target variable.
     //
     // Because this pass is performed before `pass/normalize_threads`, and we
