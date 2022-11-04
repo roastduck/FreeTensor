@@ -42,6 +42,16 @@ void FindMemType::visit(const VarDef &op) {
     }
 }
 
+void CompAccessBound::visitStmt(const Stmt &stmt) {
+    if (stmt->id() == filterSubTree_) {
+        filtered_ = true;
+        BaseClass::visitStmt(stmt);
+        filtered_ = false;
+    } else {
+        BaseClass::visitStmt(stmt);
+    }
+}
+
 void CompAccessBound::visit(const VarDef &op) {
     if (op->id() != varDefId_) {
         defs_.insert(op->name_);
@@ -143,7 +153,7 @@ void CompAccessBound::visit(const VarDef &op) {
 
 void CompAccessBound::visit(const Load &op) {
     BaseClass::visit(op);
-    if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_READ) {
+    if (filtered_ && op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_READ) {
         access_.emplace_back(unique_, op->indices_, conds(),
                              defsAtVarDef_.at(op->var_));
     }
@@ -151,7 +161,7 @@ void CompAccessBound::visit(const Load &op) {
 
 void CompAccessBound::visit(const Store &op) {
     BaseClass::visit(op);
-    if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_WRITE) {
+    if (filtered_ && op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_WRITE) {
         access_.emplace_back(unique_, op->indices_, conds(),
                              defsAtVarDef_.at(op->var_));
     }
@@ -159,7 +169,7 @@ void CompAccessBound::visit(const Store &op) {
 
 void CompAccessBound::visit(const ReduceTo &op) {
     BaseClass::visit(op);
-    if (op->var_ == var_) {
+    if (filtered_ && op->var_ == var_) {
         access_.emplace_back(unique_, op->indices_, conds(),
                              defsAtVarDef_.at(op->var_));
     }
@@ -176,12 +186,12 @@ void CompAccessBound::visit(const For &op) {
 }
 
 AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
-                            CompAccessBoundMode mode,
-                            bool includeTrivialBound) {
+                            CompAccessBoundMode mode, bool includeTrivialBound,
+                            const ID &filterSubTree) {
     FindMemType finder(varDefId);
     finder(op);
-    CompAccessBound visitor(varDefId, finder.mtype(), mode,
-                            includeTrivialBound);
+    CompAccessBound visitor(varDefId, finder.mtype(), mode, includeTrivialBound,
+                            filterSubTree);
     visitor(op);
     return visitor.result();
 }

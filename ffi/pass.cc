@@ -63,18 +63,26 @@ void init_ffi_pass(py::module_ &m) {
     m.def("scalar_prop_const",
           static_cast<Stmt (*)(const Stmt &)>(&scalarPropConst), "stmt"_a);
 
-    m.def("sink_var", static_cast<Func (*)(const Func &)>(&sinkVar), "func"_a);
-    m.def("sink_var", static_cast<Stmt (*)(const Stmt &)>(&sinkVar), "stmt"_a);
+    m.def("sink_var",
+          static_cast<Func (*)(const Func &,
+                               const std::optional<std::unordered_set<ID>> &)>(
+              &sinkVar),
+          "func"_a, "to_sink"_a = std::nullopt);
+    m.def("sink_var",
+          static_cast<Stmt (*)(const Stmt &,
+                               const std::optional<std::unordered_set<ID>> &)>(
+              &sinkVar),
+          "stmt"_a, "to_sink"_a = std::nullopt);
 
     m.def("shrink_var", static_cast<Func (*)(const Func &)>(&shrinkVar),
           "func"_a);
     m.def("shrink_var", static_cast<Stmt (*)(const Stmt &)>(&shrinkVar),
           "stmt"_a);
 
-    m.def(
-        "shrink_for",
-        [](const Func &f, const Stmt &s, bool b) { return shrinkFor(f, s, b); },
-        "func"_a, "sub_ast"_a = nullptr, "do_simplify"_a = true);
+    m.def("shrink_for",
+          static_cast<Func (*)(const Func &, const Stmt &, const bool &)>(
+              &shrinkFor),
+          "func"_a, "sub_ast"_a = nullptr, "do_simplify"_a = true);
     m.def("shrink_for",
           static_cast<Stmt (*)(const Stmt &, const Stmt &, bool)>(&shrinkFor),
           "stmt"_a, "sub_ast"_a = nullptr, "do_simplify"_a = true);

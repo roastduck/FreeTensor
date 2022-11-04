@@ -8,6 +8,14 @@
 
 namespace freetensor {
 
+Stmt ShrinkVar::visitStmt(const Stmt &s) {
+    auto ret = Mutator::visitStmt(s);
+    if (auto it = guards_.find(s->id()); it != guards_.end()) {
+        ret = makeIf(it->second, ret);
+    }
+    return ret;
+}
+
 Stmt ShrinkVar::visit(const VarDef &_op) {
     auto isViewOfThis = [&](const Stmt &inner) {
         return inner->nodeType() == ASTNodeType::VarDef &&
@@ -48,21 +56,30 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
 Expr ShrinkVar::visit(const Load &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
-    return modifyAccess(__op.as<LoadNode>());
+    auto op = __op.as<LoadNode>();
+    op = modifyAccess(op);
+    if (guardReads_) {
+        addGuard(_op, op);
+    }
+    return op;
 }
 
 Stmt ShrinkVar::visit(const Store &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     auto op = __op.as<StoreNode>();
-    return addCheck(_op, modifyAccess(op));
+    op = modifyAccess(op);
+    addGuard(_op, op);
+    return op;
 }
 
 Stmt ShrinkVar::visit(const ReduceTo &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
-    return addCheck(_op, modifyAccess(op));
+    op = modifyAccess(op);
+    addGuard(_op, op);
+    return op;
 }
 
 Stmt shrinkVar(const Stmt &_op) {

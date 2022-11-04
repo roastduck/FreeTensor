@@ -121,6 +121,53 @@ def test_parallel_reduction_on_array():
     assert np.array_equal(y_np, y_std)
 
 
+def test_parallel_reduction_on_multi_dim_array():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(64, 64, 64), "int32", "input", "gpu/global"]
+        y: ft.Var[(64,), "int32", "output", "gpu/global"]
+        #! label: L1
+        for i in range(0, 64):
+            #! label: L2
+            for j in range(0, 64):
+                #! label: L3
+                for k in range(0, 64):
+                    y[j] += x[i, j, k]
+
+    s = ft.Schedule(test)
+    s.parallelize("L1", "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=1)
+
+    with ft.VarDef([("x", (64, 64, 64), "int32", "input", "gpu/global"),
+                    ("y", (64,), "int32", "output", "gpu/global")]) as (x, y):
+        with ft.For("i", 0, 64) as i:  # thread
+            with ft.For("j", 0, 64) as j:
+                # INSERT WORKSPACE AT HERE INSIDE j BUT OUTSIDE k
+                with ft.VarDef("workspace", (64, 1), "int32", "cache",
+                               "gpu/shared") as workspace:
+                    workspace[i, 0] = 0
+                    with ft.For("k", 0, 64) as k:
+                        workspace[i, 0] += x[i, j, k]
+                    ft.Any()  # Sync
+                    ft.Any()  # Binary reduction
+                    ft.Any()  # Flush
+    assert ft.pop_ast().match(func.body)
+
+    code = ft.codegen(func, target)
+    assert "atomicAdd" not in str(code)
+    print(debug.with_line_no(code))
+    x_np = np.random.randint(0, 100, (64, 64, 64)).astype("int32")
+    y_np = np.zeros((64,), dtype="int32")
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.sum(np.sum(x_np, axis=-1), axis=0)
+    assert np.array_equal(y_np, y_std)
+
+
 def test_atomic_reduction():
 
     @ft.transform

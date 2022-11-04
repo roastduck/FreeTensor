@@ -13,10 +13,13 @@ namespace freetensor {
 class ShrinkVar : public Mutator {
     std::unordered_map<std::string, std::vector<Expr>> lower_, upper_;
     const std::unordered_map<ID, AccessBound> &newRange_;
+    bool guardReads_;
+    std::unordered_map<ID, Expr> guards_;
 
   public:
-    ShrinkVar(const std::unordered_map<ID, AccessBound> &newRange)
-        : newRange_(newRange) {}
+    ShrinkVar(const std::unordered_map<ID, AccessBound> &newRange,
+              bool guardReads = false)
+        : newRange_(newRange), guardReads_(guardReads) {}
 
   private:
     template <class T> T modifyAccess(const T &op) {
@@ -32,7 +35,7 @@ class ShrinkVar : public Mutator {
         return op;
     }
 
-    template <class T> Stmt addCheck(const T &oldOp, const T &op) {
+    template <class T> void addGuard(const T &oldOp, const T &op) {
         // We add check w.r.t oldOp because it is simplier, which brings less
         // redundancy to pass/simplify
         Expr guard;
@@ -56,10 +59,24 @@ class ShrinkVar : public Mutator {
                 }
             }
         }
-        return guard.isValid() ? makeIf(std::move(guard), op) : op;
+        if (guard.isValid()) {
+            Stmt s;
+            if constexpr (std::is_base_of_v<StmtNode, typename T::Object>) {
+                s = oldOp;
+            } else if constexpr (std::is_base_of_v<ExprNode,
+                                                   typename T::Object>) {
+                s = oldOp->parentStmt();
+            } else {
+                ASSERT(false);
+            }
+            guards_[s->id()] = guards_[s->id()].isValid()
+                                   ? makeLAnd(guards_[s->id()], guard)
+                                   : guard;
+        }
     }
 
   protected:
+    Stmt visitStmt(const Stmt &s) override;
     Stmt visit(const VarDef &op) override;
     Expr visit(const Load &op) override;
     Stmt visit(const Store &op) override;
