@@ -221,7 +221,7 @@ Stmt lowerParallelReduction(const Stmt &_op) {
     // Therefore, we don't have to immediately reduce the values at the
     // `ReduceTo` nodes. We can freely select where to do the reduction after
     // the `ReduceTo` nodes and before the end of the parallel `For` scope.
-    // There is a trade-off: the eralier we do the reduction, ther can be more
+    // There is a trade-off: the earlier we do the reduction, there can be more
     // redundant reductions; the later we do the reduction, the workspace can be
     // larger and takes more shared memory. We use a simple criteria: using
     // `pass/sink_var` and `pass/shrink_var` to make the workspace scope as
