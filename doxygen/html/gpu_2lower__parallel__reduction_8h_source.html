@@ -84,39 +84,109 @@ $(function() {
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">namespace </span>gpu {</div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="keyword">class </span>LowerParallelReduction : <span class="keyword">public</span> SymbolTable&lt;Mutator&gt; {</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="keyword">class </span>InsertWorkspaces : <span class="keyword">public</span> SymbolTable&lt;Mutator&gt; {</div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>    <span class="keyword">typedef</span> SymbolTable&lt;Mutator&gt; BaseClass;</div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    std::vector&lt;For&gt; loopStack_;</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>  <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    std::vector&lt;std::pair&lt;For, int&gt;&gt; reducedBy(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op);</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>  <span class="keyword">protected</span>:</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keyword">using</span> BaseClass::visit;</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>};</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> <a class="code hl_function" href="namespacefreetensor_1_1cpu.html#adafd27952c309e72aa9fa984d2520def">lowerParallelReduction</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op);</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><a class="code hl_function" href="namespacefreetensor.html#a9fc9252c3954dc411dae3a03e6821f6c">DEFINE_PASS_FOR_FUNC</a>(<a class="code hl_function" href="namespacefreetensor_1_1cpu.html#adafd27952c309e72aa9fa984d2520def">lowerParallelReduction</a>)</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>} <span class="comment">// namespace gpu</span></div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    std::unordered_map&lt;ID, std::pair&lt;std::string, Ref&lt;ReductionItem&gt;&gt;&gt;</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>        ws2red_; <span class="comment">// workspace ID -&gt; (loop iter name, reduction info)</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    std::vector&lt;For&gt; loopStack_;</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>  <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="keyword">const</span> <span class="keyword">auto</span> &amp;ws2red()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> ws2red_; }</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>  <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    std::vector&lt;std::pair&lt;For, int&gt;&gt; reducedBy(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op);</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>  <span class="keyword">protected</span>:</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="keyword">using</span> BaseClass::visit;</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>};</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="keyword">class </span>InsertBinaryReduction : <span class="keyword">public</span> SymbolTable&lt;Mutator&gt; {</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keyword">typedef</span> SymbolTable&lt;Mutator&gt; BaseClass;</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="preprocessor">#endif </span><span class="comment">// FT_WITH_CUDA</span></div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_GPU_LOWER_PARALLEL_REDUCTION_H</span></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="keyword">const</span> std::unordered_map&lt;ID, std::pair&lt;std::string, Ref&lt;ReductionItem&gt;&gt;&gt;</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        &amp;ws2red_; <span class="comment">// workspace ID -&gt; (loop iter name, reduction info)</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    std::unordered_map&lt;ID, ID&gt;</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        ws2scope_; <span class="comment">// workspace ID -&gt; scope that actually do the computation,</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>                   <span class="comment">// excluding initialization, binary reduction and flushing</span></div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>  <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    InsertBinaryReduction(</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        <span class="keyword">const</span> std::unordered_map&lt;ID, std::pair&lt;std::string, Ref&lt;ReductionItem&gt;&gt;&gt;</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>            &amp;ws2red)</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        : ws2red_(ws2red) {}</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keyword">const</span> <span class="keyword">auto</span> &amp;ws2scope()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> ws2scope_; }</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>  <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; T visitMemAcc(<span class="keyword">const</span> T &amp;_op) {</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <span class="keyword">auto</span> __op = BaseClass::visit(_op);</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        <a class="code hl_define" href="except_8h.html#a28301f76c53b643912da7c538f74e2c6">ASSERT</a>(__op-&gt;nodeType() == _op-&gt;nodeType());</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        <span class="keyword">auto</span> op = __op.template as&lt;typename T::Object&gt;();</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> it = ws2red_.find(def(op-&gt;var_)-&gt;id()); it != ws2red_.end()) {</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>            <span class="keyword">auto</span> &amp;&amp;l = loop(it-&gt;second.first);</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>            <span class="keyword">auto</span> nth = <a class="code hl_define" href="expr_8h.html#aa83f97be3459d415c2c22fe9a358f3b8">makeSub</a>(<a class="code hl_define" href="expr_8h.html#a8791cc9ae81f9849cd9e7c2715965f30">makeVar</a>(l-&gt;iter_), l-&gt;begin_);</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>            op-&gt;indices_.insert(op-&gt;indices_.begin(), nth);</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>        }</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        <span class="keywordflow">return</span> op;</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    }</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>  <span class="keyword">protected</span>:</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    <span class="keyword">using</span> BaseClass::visit;</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7">Store</a> &amp;op)<span class="keyword"> override </span>{ <span class="keywordflow">return</span> visitMemAcc(op); }</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op)<span class="keyword"> override </span>{ <span class="keywordflow">return</span> visitMemAcc(op); }</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    <a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a3d4f48b01603fa2e1e2733b8bd18f29b">Load</a> &amp;op)<span class="keyword"> override </span>{ <span class="keywordflow">return</span> visitMemAcc(op); }</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>};</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span><span class="keyword">class </span>CorrectInterThreadDependence : <span class="keyword">public</span> SymbolTable&lt;Mutator&gt; {</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="keyword">typedef</span> SymbolTable&lt;Mutator&gt; BaseClass;</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keyword">const</span> std::unordered_map&lt;ID, std::pair&lt;std::string, Ref&lt;ReductionItem&gt;&gt;&gt;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>        &amp;ws2red_; <span class="comment">// workspace ID -&gt; (loop iter name, reduction info)</span></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    std::unordered_map&lt;ID, std::vector&lt;VarDef&gt;&gt; loop2ws_;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>  <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    CorrectInterThreadDependence(</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        <span class="keyword">const</span> std::unordered_map&lt;ID, std::pair&lt;std::string, Ref&lt;ReductionItem&gt;&gt;&gt;</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            &amp;ws2red)</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        : ws2red_(ws2red) {}</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>  <span class="keyword">protected</span>:</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keyword">using</span> BaseClass::visit;</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>};</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> <a class="code hl_function" href="namespacefreetensor_1_1cpu.html#adafd27952c309e72aa9fa984d2520def">lowerParallelReduction</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op);</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span> </div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span><a class="code hl_function" href="namespacefreetensor.html#a9fc9252c3954dc411dae3a03e6821f6c">DEFINE_PASS_FOR_FUNC</a>(<a class="code hl_function" href="namespacefreetensor_1_1cpu.html#adafd27952c309e72aa9fa984d2520def">lowerParallelReduction</a>)</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>} <span class="comment">// namespace gpu</span></div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span> </div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span><span class="preprocessor">#endif </span><span class="comment">// FT_WITH_CUDA</span></div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_GPU_LOWER_PARALLEL_REDUCTION_H</span></div>
+<div class="ttc" id="aexcept_8h_html_a28301f76c53b643912da7c538f74e2c6"><div class="ttname"><a href="except_8h.html#a28301f76c53b643912da7c538f74e2c6">ASSERT</a></div><div class="ttdeci">#define ASSERT(expr)</div><div class="ttdef"><b>Definition:</b> except.h:86</div></div>
+<div class="ttc" id="aexpr_8h_html_a8791cc9ae81f9849cd9e7c2715965f30"><div class="ttname"><a href="expr_8h.html#a8791cc9ae81f9849cd9e7c2715965f30">makeVar</a></div><div class="ttdeci">#define makeVar(...)</div><div class="ttdef"><b>Definition:</b> expr.h:37</div></div>
+<div class="ttc" id="aexpr_8h_html_aa83f97be3459d415c2c22fe9a358f3b8"><div class="ttname"><a href="expr_8h.html#aa83f97be3459d415c2c22fe9a358f3b8">makeSub</a></div><div class="ttdeci">#define makeSub(...)</div><div class="ttdef"><b>Definition:</b> expr.h:169</div></div>
 <div class="ttc" id="afunc_8h_html"><div class="ttname"><a href="func_8h.html">func.h</a></div></div>
 <div class="ttc" id="amutator_8h_html"><div class="ttname"><a href="mutator_8h.html">mutator.h</a></div></div>
-<div class="ttc" id="anamespacefreetensor_1_1cpu_html_adafd27952c309e72aa9fa984d2520def"><div class="ttname"><a href="namespacefreetensor_1_1cpu.html#adafd27952c309e72aa9fa984d2520def">freetensor::cpu::lowerParallelReduction</a></div><div class="ttdeci">Stmt lowerParallelReduction(const Stmt &amp;op)</div><div class="ttdef"><b>Definition:</b> lower_parallel_reduction.cc:168</div></div>
+<div class="ttc" id="anamespacefreetensor_1_1cpu_html_adafd27952c309e72aa9fa984d2520def"><div class="ttname"><a href="namespacefreetensor_1_1cpu.html#adafd27952c309e72aa9fa984d2520def">freetensor::cpu::lowerParallelReduction</a></div><div class="ttdeci">Stmt lowerParallelReduction(const Stmt &amp;op)</div><div class="ttdef"><b>Definition:</b> lower_parallel_reduction.cc:160</div></div>
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
+<div class="ttc" id="anamespacefreetensor_html_a1a1f3d1207fe6a524be60b226df39ee0"><div class="ttname"><a href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">freetensor::VarDef</a></div><div class="ttdeci">Ref&lt; VarDefNode &gt; VarDef</div><div class="ttdef"><b>Definition:</b> stmt.h:97</div></div>
+<div class="ttc" id="anamespacefreetensor_html_a3d4f48b01603fa2e1e2733b8bd18f29b"><div class="ttname"><a href="namespacefreetensor.html#a3d4f48b01603fa2e1e2733b8bd18f29b">freetensor::Load</a></div><div class="ttdeci">Ref&lt; LoadNode &gt; Load</div><div class="ttdef"><b>Definition:</b> expr.h:55</div></div>
+<div class="ttc" id="anamespacefreetensor_html_a3d6ac0eb5f07907688e0e682bba891f7"><div class="ttname"><a href="namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7">freetensor::Store</a></div><div class="ttdeci">Ref&lt; StoreNode &gt; Store</div><div class="ttdef"><b>Definition:</b> stmt.h:129</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a4befcdf08c573ec85080d6e63dabc825"><div class="ttname"><a href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">freetensor::ReduceTo</a></div><div class="ttdeci">Ref&lt; ReduceToNode &gt; ReduceTo</div><div class="ttdef"><b>Definition:</b> stmt.h:221</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a56a793ae2a656931c4a3bd7fe6035b9d"><div class="ttname"><a href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">freetensor::For</a></div><div class="ttdeci">Ref&lt; ForNode &gt; For</div><div class="ttdef"><b>Definition:</b> stmt.h:278</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a8b7e165b3601cc722c7b357347dc6de9"><div class="ttname"><a href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">freetensor::Stmt</a></div><div class="ttdeci">Ref&lt; StmtNode &gt; Stmt</div><div class="ttdef"><b>Definition:</b> ast.h:146</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a9fc9252c3954dc411dae3a03e6821f6c"><div class="ttname"><a href="namespacefreetensor.html#a9fc9252c3954dc411dae3a03e6821f6c">freetensor::DEFINE_PASS_FOR_FUNC</a></div><div class="ttdeci">DEFINE_PASS_FOR_FUNC(makeHeapAlloc)</div></div>
+<div class="ttc" id="anamespacefreetensor_html_acfa6f07a5497b3d187fe112708aa335b"><div class="ttname"><a href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">freetensor::Expr</a></div><div class="ttdeci">Ref&lt; ExprNode &gt; Expr</div><div class="ttdef"><b>Definition:</b> ast.h:179</div></div>
 <div class="ttc" id="asymbol__table_8h_html"><div class="ttname"><a href="symbol__table_8h.html">symbol_table.h</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->

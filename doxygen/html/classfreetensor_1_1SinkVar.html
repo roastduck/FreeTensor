@@ -96,8 +96,8 @@ Collaboration diagram for freetensor::SinkVar:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:af3ed36536d1ae07d4a57496b3ee89d2d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SinkVar.html#af3ed36536d1ae07d4a57496b3ee89d2d">SinkVar</a> (const std::unordered_set&lt; std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;deps, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;analyzedDeps, std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;needDepAnalysis, const <a class="el" href="classfreetensor_1_1Lazy.html">Lazy</a>&lt; <a class="el" href="namespacefreetensor.html#a08c5fd132603c854d45098916c635dfb">LoopVariUniqVarMap</a> &gt; &amp;variantMap)</td></tr>
-<tr class="separator:af3ed36536d1ae07d4a57496b3ee89d2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a36b87351f9d63df60673769d96cd0c36"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SinkVar.html#a36b87351f9d63df60673769d96cd0c36">SinkVar</a> (const std::optional&lt; std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;toSink, const std::unordered_set&lt; std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;deps, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;analyzedDeps, std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;needDepAnalysis, const <a class="el" href="classfreetensor_1_1Lazy.html">Lazy</a>&lt; <a class="el" href="namespacefreetensor.html#a08c5fd132603c854d45098916c635dfb">LoopVariUniqVarMap</a> &gt; &amp;variantMap)</td></tr>
+<tr class="separator:a36b87351f9d63df60673769d96cd0c36"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a99dc8ba6f8b2500f155f1f6524d896b2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SinkVar.html#a99dc8ba6f8b2500f155f1f6524d896b2">isFixPoint</a> () const</td></tr>
 <tr class="separator:a99dc8ba6f8b2500f155f1f6524d896b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1Mutator"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1Mutator')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1Mutator.html">freetensor::Mutator</a></td></tr>
@@ -226,12 +226,9 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:aef5cb3c76c36da35abf1a2ea364684a0 inherit pub_types_classfreetensor_1_1Mutator"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Mutator.html#aef5cb3c76c36da35abf1a2ea364684a0">StmtRetType</a></td></tr>
 <tr class="separator:aef5cb3c76c36da35abf1a2ea364684a0 inherit pub_types_classfreetensor_1_1Mutator"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p >Make the scope of a local variable smaller</p>
-<p >If you don't want a variable to be sinked, please set <a class="el" href="classfreetensor_1_1VarDefNode.html#a1357a236110a6a62afae933a1596532b">VarDefNode::pinned_</a> </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="af3ed36536d1ae07d4a57496b3ee89d2d" name="af3ed36536d1ae07d4a57496b3ee89d2d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af3ed36536d1ae07d4a57496b3ee89d2d">&#9670;&nbsp;</a></span>SinkVar()</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a36b87351f9d63df60673769d96cd0c36" name="a36b87351f9d63df60673769d96cd0c36"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a36b87351f9d63df60673769d96cd0c36">&#9670;&nbsp;</a></span>SinkVar()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -242,6 +239,12 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="memname">freetensor::SinkVar::SinkVar </td>
           <td>(</td>
+          <td class="paramtype">const std::optional&lt; std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>toSink</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">const std::unordered_set&lt; std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;&#160;</td>
           <td class="paramname"><em>deps</em>, </td>
         </tr>

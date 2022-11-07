@@ -105,53 +105,57 @@ $(function() {
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    NormalizeThreads(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;root) : root_(root) {}</div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>  <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> doVisitFor(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op);</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> doVisitStmt(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op);</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>  <span class="keyword">protected</span>:</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a1903ed0ef4fe6b9f2ad7d2e5721bf82f">Var</a> &amp;op) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7">Store</a> &amp;op) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a63af16ba4f85dda894a335d54f80c07d">Eval</a> &amp;op) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>};</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="keyword">class </span>CheckThreadNum : <span class="keyword">public</span> CompTransientBounds&lt;SymbolTable&lt;Mutator&gt;&gt; {</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keyword">typedef</span> CompTransientBounds&lt;SymbolTable&lt;Mutator&gt;&gt; BaseClass;</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> makeParallelScopes(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;body);</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> doVisitFor(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op);</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> doVisitStmt(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op);</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>  <span class="keyword">protected</span>:</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a1903ed0ef4fe6b9f2ad7d2e5721bf82f">Var</a> &amp;op) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7">Store</a> &amp;op) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a63af16ba4f85dda894a335d54f80c07d">Eval</a> &amp;op) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>};</div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    CompUniqueBounds bound_;</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    std::unordered_set&lt;For&gt; openLoopsInKernel_;</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="keywordtype">bool</span> inKernel_ = <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>  <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    CheckThreadNum() : bound_(*this) {}</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="keyword">class </span>CheckThreadNum : <span class="keyword">public</span> CompTransientBounds&lt;SymbolTable&lt;Mutator&gt;&gt; {</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <span class="keyword">typedef</span> CompTransientBounds&lt;SymbolTable&lt;Mutator&gt;&gt; BaseClass;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    CompUniqueBounds bound_;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    std::unordered_set&lt;For&gt; openLoopsInKernel_;</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="keywordtype">bool</span> inKernel_ = <span class="keyword">false</span>;</div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span> </div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>  <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    <span class="keywordtype">bool</span> isLegalLen(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr);</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="keywordtype">bool</span> isLegalLen(<span class="keyword">const</span> std::unordered_set&lt;std::string&gt; &amp;names);</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>  <span class="keyword">protected</span>:</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    <span class="keyword">using</span> BaseClass::visit;</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>};</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span><a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> normalizeThreads(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op);</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span> </div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><a class="code hl_function" href="namespacefreetensor.html#a9fc9252c3954dc411dae3a03e6821f6c">DEFINE_PASS_FOR_FUNC</a>(normalizeThreads)</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>} <span class="comment">// namespace gpu</span></div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>} <span class="comment">// namespace freetensor</span></div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="preprocessor">#endif </span><span class="comment">// FT_WITH_CUDA</span></div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_GPU_NORMALIZE_THREADS_H</span></div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>  <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    CheckThreadNum() : bound_(*this) {}</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <span class="keywordtype">bool</span> isLegalLen(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr);</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    <span class="keywordtype">bool</span> isLegalLen(<span class="keyword">const</span> std::unordered_set&lt;std::string&gt; &amp;names);</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>  <span class="keyword">protected</span>:</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <span class="keyword">using</span> BaseClass::visit;</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> visit(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>};</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span><a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> normalizeThreads(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op);</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><a class="code hl_function" href="namespacefreetensor.html#a9fc9252c3954dc411dae3a03e6821f6c">DEFINE_PASS_FOR_FUNC</a>(normalizeThreads)</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>} <span class="comment">// namespace gpu</span></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="preprocessor">#endif </span><span class="comment">// FT_WITH_CUDA</span></div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_GPU_NORMALIZE_THREADS_H</span></div>
 <div class="ttc" id="acomp__transient__bounds_8h_html"><div class="ttname"><a href="comp__transient__bounds_8h.html">comp_transient_bounds.h</a></div></div>
 <div class="ttc" id="acomp__unique__bounds_8h_html"><div class="ttname"><a href="comp__unique__bounds_8h.html">comp_unique_bounds.h</a></div></div>
 <div class="ttc" id="afunc_8h_html"><div class="ttname"><a href="func_8h.html">func.h</a></div></div>
 <div class="ttc" id="amutator_8h_html"><div class="ttname"><a href="mutator_8h.html">mutator.h</a></div></div>
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a1903ed0ef4fe6b9f2ad7d2e5721bf82f"><div class="ttname"><a href="namespacefreetensor.html#a1903ed0ef4fe6b9f2ad7d2e5721bf82f">freetensor::Var</a></div><div class="ttdeci">Ref&lt; VarNode &gt; Var</div><div class="ttdef"><b>Definition:</b> expr.h:36</div></div>
+<div class="ttc" id="anamespacefreetensor_html_a1a1f3d1207fe6a524be60b226df39ee0"><div class="ttname"><a href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">freetensor::VarDef</a></div><div class="ttdeci">Ref&lt; VarDefNode &gt; VarDef</div><div class="ttdef"><b>Definition:</b> stmt.h:97</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a3d6ac0eb5f07907688e0e682bba891f7"><div class="ttname"><a href="namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7">freetensor::Store</a></div><div class="ttdeci">Ref&lt; StoreNode &gt; Store</div><div class="ttdef"><b>Definition:</b> stmt.h:129</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a4befcdf08c573ec85080d6e63dabc825"><div class="ttname"><a href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">freetensor::ReduceTo</a></div><div class="ttdeci">Ref&lt; ReduceToNode &gt; ReduceTo</div><div class="ttdef"><b>Definition:</b> stmt.h:221</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a56a793ae2a656931c4a3bd7fe6035b9d"><div class="ttname"><a href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">freetensor::For</a></div><div class="ttdeci">Ref&lt; ForNode &gt; For</div><div class="ttdef"><b>Definition:</b> stmt.h:278</div></div>
