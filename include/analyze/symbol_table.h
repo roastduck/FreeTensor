@@ -178,14 +178,39 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
         MAYBE_VOID(step, (*this)(op->step_));
         MAYBE_VOID(len, (*this)(op->len_));
 
+        Ref<ForProperty> property;
+        if constexpr (!std::is_same_v<typename BaseClass::StmtRetType, void>) {
+            property = Ref<ForProperty>::make()
+                           ->withParallel(op->property_->parallel_)
+                           ->withUnroll(op->property_->unroll_)
+                           ->withVectorize(op->property_->vectorize_)
+                           ->withNoDeps(op->property_->noDeps_)
+                           ->withPreferLibs(op->property_->preferLibs_);
+            property->reductions_.reserve(op->property_->reductions_.size());
+            for (auto &&r : op->property_->reductions_) {
+                std::vector<Expr> begins, ends;
+                begins.reserve(r->begins_.size());
+                ends.reserve(r->ends_.size());
+                for (auto &&item : r->begins_) {
+                    begins.emplace_back((*this)(item));
+                }
+                for (auto &&item : r->ends_) {
+                    ends.emplace_back((*this)(item));
+                }
+                property->reductions_.emplace_back(makeReductionItem(
+                    r->op_, r->var_, std::move(begins), std::move(ends)));
+            }
+        }
+
         pushFor(op);
         MAYBE_VOID(body, (*this)(op->body_));
         popFor(op);
 
         if constexpr (!std::is_same_v<typename BaseClass::StmtRetType, void>) {
-            auto ret = makeFor(op->iter_, std::move(begin), std::move(end),
-                               std::move(step), std::move(len), op->property_,
-                               std::move(body), op->metadata(), op->id());
+            auto ret =
+                makeFor(op->iter_, std::move(begin), std::move(end),
+                        std::move(step), std::move(len), std::move(property),
+                        std::move(body), op->metadata(), op->id());
             return COPY_DEBUG_INFO(ret, op);
         }
     }
