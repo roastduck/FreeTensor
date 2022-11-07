@@ -93,16 +93,14 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
 #ifdef FT_WITH_CUDA
     case TargetType::GPU: {
         auto t = target.as<GPUTarget>();
+        // Before gpu_nromalize_threads
+        ast = APPLY("gpu_lower_parallel_reduction", gpu::lowerParallelReduction,
+                    ast);
 
         // TODO: Support dynamic shared memory size, but the size should be
         // determined outside of kernels
         ast = APPLY("gpu_multiplex_buffers", gpu::multiplexBuffers, ast, t);
         ast = APPLY("gpu_simplex_buffers", gpu::simplexBuffers, ast);
-
-        // Before gpu_nromalize_threads, after gpu_multiplex_buffers
-        ast = APPLY("gpu_lower_parallel_reduction", gpu::lowerParallelReduction,
-                    ast);
-
         // FIXME: MemType::GPUGlobal should also be make const, but only
         // inside a kernel
         ast =

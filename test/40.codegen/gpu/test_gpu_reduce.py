@@ -142,13 +142,14 @@ def test_parallel_reduction_on_multi_dim_array():
     with ft.VarDef([("x", (64, 64, 64), "int32", "input", "gpu/global"),
                     ("y", (64,), "int32", "output", "gpu/global")]) as (x, y):
         with ft.For("i", 0, 64) as i:  # thread
-            with ft.For("j", 0, 64) as j:
-                # INSERT WORKSPACE AT HERE INSIDE j BUT OUTSIDE k
-                with ft.VarDef("workspace", (64, 1), "int32", "cache",
-                               "gpu/shared") as workspace:
+            # THE SIZE SHOULD BE 64 INSTEAD OF 64 x 64
+            with ft.VarDef("workspace", (64, 1), "int32", "cache",
+                           "gpu/shared") as workspace:
+                with ft.For("j", 0, 64) as j:
                     workspace[i, 0] = 0
                     with ft.For("k", 0, 64) as k:
                         workspace[i, 0] += x[i, j, k]
+                    # PARALLEL REDUCTION HERE INSIDE j BUT OUTSIDE k
                     ft.Any()  # Sync
                     ft.Any()  # Binary reduction
                     ft.Any()  # Flush

@@ -207,6 +207,30 @@ Stmt InsertBinaryReduction::visit(const VarDef &_op) {
     return op;
 }
 
+Stmt CorrectInterThreadDependence::visit(const VarDef &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
+    auto op = __op.as<VarDefNode>();
+    if (auto it = ws2red_.find(op->id()); it != ws2red_.end()) {
+        loop2ws_[loop(it->second.first)->id()].emplace_back(op);
+        return op->body_;
+    } else {
+        return op;
+    }
+}
+
+Stmt CorrectInterThreadDependence::visit(const For &op) {
+    auto ret = BaseClass::visit(op);
+    if (auto it = loop2ws_.find(op->id()); it != loop2ws_.end()) {
+        for (auto &&ws : it->second) {
+            VarDef vardef = ws;
+            vardef->body_ = ret;
+            ret = vardef;
+        }
+    }
+    return ret;
+}
+
 Stmt lowerParallelReduction(const Stmt &_op) {
     auto op = _op;
 
@@ -254,6 +278,14 @@ Stmt lowerParallelReduction(const Stmt &_op) {
     // 5. Simplify, to flatten singleton loops, and to simplify the expressions
     // from `pass/shrink_var`
     op = simplify(op);
+
+    // 6. As per our definition of inter-thread dependence, a VarDef defined
+    // inside a parallel For is considered thread local to it, while a VarDef
+    // defined outside a parallel For is considered thread by all the threads.
+    // The former will be further lower by pass/gpu/multiplex_buffers. We need
+    // to put workspace back to the original place to meet this definition, but
+    // this time with a shrinked shape
+    op = CorrectInterThreadDependence(insertWorkspaces.ws2red())(op);
 
     return op;
 }

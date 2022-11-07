@@ -70,6 +70,26 @@ class InsertBinaryReduction : public SymbolTable<Mutator> {
     Expr visit(const Load &op) override { return visitMemAcc(op); }
 };
 
+class CorrectInterThreadDependence : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
+    const std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
+        &ws2red_; // workspace ID -> (loop iter name, reduction info)
+
+    std::unordered_map<ID, std::vector<VarDef>> loop2ws_;
+
+  public:
+    CorrectInterThreadDependence(
+        const std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
+            &ws2red)
+        : ws2red_(ws2red) {}
+
+  protected:
+    using BaseClass::visit;
+    Stmt visit(const VarDef &op) override;
+    Stmt visit(const For &op) override;
+};
+
 Stmt lowerParallelReduction(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(lowerParallelReduction)
