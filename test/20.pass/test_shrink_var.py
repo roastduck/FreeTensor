@@ -71,8 +71,8 @@ def test_multiple_bounds():
                     ("y1", (10, 5), "int32", "output", "cpu"),
                     ("y2", (10, 5), "int32", "output", "cpu")]) as (x, y1, y2):
         with ft.For("i", 0, 10) as i:
-            with ft.VarDef("b", (ft.min(i - 1, 4) + 1,), "int32", "cache",
-                           "cpu") as b:
+            with ft.VarDef("b", (ft.max(ft.min(i - 1, 4), 0) + 1,), "int32",
+                           "cache", "cpu") as b:
                 with ft.For("j", 0, ft.any()) as j:
                     b[j] = x[i, j] * 2
                 with ft.For("j", 0, 5) as j:
@@ -81,6 +81,33 @@ def test_multiple_bounds():
                     with ft.If(j < i):
                         y1[i, j] += b[j]
                         y2[i, j] += b[j]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_external_vars_in_bounds():
+    with ft.VarDef([("a", (), "int32", "input", "cpu"),
+                    ("b", (), "int32", "input", "cpu"),
+                    ("x", (100,), "int32", "input", "cpu"),
+                    ("y", (100,), "int32", "output", "cpu")]) as (a, b, x, y):
+        with ft.For("i", a[...], b[...]) as i:
+            with ft.VarDef("t", (100,), "int32", "cache", "cpu") as t:
+                # HERE, a, i <= INDEX OF t <= b, i, WHICH SHOULD BE SIMPLIFIED TO
+                # i <= INDEX OF t <= i
+                t[i] = x[i] + 1
+                y[i] = t[i] * t[i]
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1, skip_passes=['make_heap_alloc'])
+
+    with ft.VarDef([("a", (), "int32", "input", "cpu"),
+                    ("b", (), "int32", "input", "cpu"),
+                    ("x", (100,), "int32", "input", "cpu"),
+                    ("y", (100,), "int32", "output", "cpu")]) as (a, b, x, y):
+        with ft.For("i", a[...], b[...]) as i:
+            # THE LENGTH SHOULD BE 1
+            with ft.VarDef("t", (1,), "int32", "cache", "cpu") as t:
+                ft.Any()
     std = ft.pop_ast()
 
     assert std.match(ast)
