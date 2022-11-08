@@ -127,7 +127,27 @@ void CompAccessBound::visit(const VarDef &op) {
         result_.lower_.emplace_back(l);
         result_.upper_.emplace_back(u);
         if (l.isValid() && u.isValid()) {
-            result_.len_.emplace_back(makeAdd(makeSub(u, l), makeIntConst(1)));
+            auto diff = makeSub(u, l);
+
+            // Suppose `upper = min(a, c)`, `lower = max(b, c)`, and we have no
+            // knowledge about `a` or `b`, and all we know is we have `c` in
+            // both `lower` and `upper`, we can simplify `len` to `1`. However,
+            // directly analyzing the bounds of `upper - lower` only results in
+            // its upper bound `upper - lower <= min(a - b, a - c, c - b, 0)`,
+            // but no knowledge lower bound, so `pass/simplify` cannot do the
+            // simplification. We explicitly mark `upper - lower >= 0` here by
+            // `upper - lower = max(upper - lower, 0)`, to enable simplifying
+            // `upper - lower` to 0.
+            //
+            // Note that this breaks the semantics and makes the length of a
+            // dimension at least 1, instead of 0, and prohibits some "optional"
+            // variables. However, this is actually beneficial, because a
+            // 0-or-1-lengthed variable will end up in the heap (beacuase they
+            // have "dynamic" length, and a 1-lengthed variable, although larger
+            // by 1, will end up in registers
+            diff = makeMax(diff, makeIntConst(0));
+
+            result_.len_.emplace_back(makeAdd(diff, makeIntConst(1)));
         } else {
             result_.len_.emplace_back(nullptr);
         }

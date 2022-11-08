@@ -155,7 +155,7 @@ def test_transform_dynamic_size():
                 s[...] += y[i]
                 m[...] *= y[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['shrink_var'])
 
     with ft.VarDef("n", (), "int32", "input", "cpu") as n:
         with ft.VarDef([("x", (n[...],), "int32", "input", "cpu"),
