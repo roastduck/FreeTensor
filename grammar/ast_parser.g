@@ -603,12 +603,20 @@ intConst returns [Expr node]
       {
         $node = makeIntConst(std::stoll($Integer.text));
       }
+    | '-' Integer
+      {
+        $node = makeIntConst(-std::stoll($Integer.text));
+      }
     ;
 
 floatConst returns [Expr node]
     : Float
       {
         $node = makeFloatConst(std::stod($Float.text));
+      }
+    | '-' Float
+      {
+        $node = makeFloatConst(-std::stod($Float.text));
       }
     ;
 

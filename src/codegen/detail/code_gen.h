@@ -9,7 +9,8 @@ namespace freetensor {
 inline CodeGenStream::CodeGenStream() { os_.iword(OSTREAM_NO_PRETTY) = true; }
 
 template <class Stream>
-CodeGen<Stream>::CodeGen(int indentSize) : indentSize_(indentSize) {
+CodeGen<Stream>::CodeGen(bool compact, int indentSize)
+    : compact_(compact), indentSize_(compact ? 0 : indentSize) {
     pushStream("default");
 }
 

@@ -77,9 +77,10 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
 
   public:
     PrintVisitor(bool printAllId = false, bool pretty = false,
-                 bool dtypeInLoad = false, bool hexFloat = false)
-        : printAllId_(printAllId), pretty_(pretty), dtypeInLoad_(dtypeInLoad),
-          hexFloat_(hexFloat) {}
+                 bool dtypeInLoad = false, bool hexFloat = false,
+                 bool compact = false)
+        : CodeGen(compact), printAllId_(printAllId), pretty_(pretty),
+          dtypeInLoad_(dtypeInLoad), hexFloat_(hexFloat) {}
 
   private:
     void recur(const Expr &op);
@@ -159,7 +160,8 @@ std::string toString(const AST &op);
 std::string toString(const AST &op, bool pretty);
 std::string toString(const AST &op, bool pretty, bool printAllId);
 std::string toString(const AST &op, bool pretty, bool printAllId,
-                     bool dtypeInLoad, bool hexFloat = false);
+                     bool dtypeInLoad, bool hexFloat = false,
+                     bool compact = false);
 /** @} */
 
 /**
@@ -167,7 +169,7 @@ std::string toString(const AST &op, bool pretty, bool printAllId,
  */
 inline std::string dumpAST(const AST &op, bool dtypeInLoad = false,
                            bool hexFloat = true) {
-    return toString(op, false, true, dtypeInLoad, hexFloat);
+    return toString(op, false, true, dtypeInLoad, hexFloat, true);
 }
 
 /**
