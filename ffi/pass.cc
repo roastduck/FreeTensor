@@ -74,10 +74,15 @@ void init_ffi_pass(py::module_ &m) {
               &sinkVar),
           "stmt"_a, "to_sink"_a = std::nullopt);
 
-    m.def("shrink_var", static_cast<Func (*)(const Func &)>(&shrinkVar),
-          "func"_a);
-    m.def("shrink_var", static_cast<Stmt (*)(const Stmt &)>(&shrinkVar),
-          "stmt"_a);
+    m.def("shrink_var",
+          static_cast<Func (*)(const Func &, const bool &, const ID &)>(
+              &shrinkVar),
+          "func"_a, "shrink_shared_tensor"_a = false,
+          "var_def_id"_a = std::nullopt);
+    m.def("shrink_var",
+          static_cast<Stmt (*)(const Stmt &, bool, const ID &)>(&shrinkVar),
+          "stmt"_a, "shrink_shared_tensor"_a = false,
+          "var_def_id"_a = std::nullopt);
 
     m.def("shrink_for",
           static_cast<Func (*)(const Func &, const Stmt &, const bool &)>(

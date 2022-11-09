@@ -8,6 +8,7 @@
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
+#include <pass/z3_simplify.h>
 
 namespace freetensor {
 
@@ -270,14 +271,14 @@ Stmt lowerParallelReduction(const Stmt &_op) {
     // custom bounds only considering the real use of the workspaces
     std::unordered_map<ID, AccessBound> bounds;
     for (auto &&[wsId, scopeId] : insertBinaryReduction.ws2scope()) {
-        bounds[wsId] =
-            compAccessBound(op, wsId, COMP_ACCESS_BOUND_READ, false, scopeId);
+        bounds[wsId] = compAccessBound(op, wsId, COMP_ACCESS_BOUND_READ, false,
+                                       true, scopeId);
     }
     op = ShrinkVar(bounds, true)(op);
 
     // 5. Simplify, to flatten singleton loops, and to simplify the expressions
     // from `pass/shrink_var`
-    op = simplify(op);
+    op = simplify(z3Simplify(op));
 
     // 6. As per our definition of inter-thread dependence, a VarDef defined
     // inside a parallel For is considered thread local to it, while a VarDef

@@ -88,6 +88,7 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
 
     CompAccessBoundMode mode_;
     bool includeTrivialBound_;
+    bool includeLocalBoundForSharedTensor_;
 
     ID filterSubTree_;
     bool filtered_ = false;
@@ -98,9 +99,11 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
     CompAccessBound(const ID &varDefId, MemType mtype,
                     CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL,
                     bool includeTrivialBound = true,
+                    bool includeLocalBoundForSharedTensor = false,
                     const ID &filterSubTree = ID())
         : unique_(*this), varDefId_(varDefId), mtype_(mtype), mode_(mode),
           includeTrivialBound_(includeTrivialBound),
+          includeLocalBoundForSharedTensor_(includeLocalBoundForSharedTensor),
           filterSubTree_(filterSubTree) {
         if (!filterSubTree_.isValid()) {
             filtered_ = true;
@@ -125,15 +128,22 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
  * @param op : AST to be analyzed
  * @param varDefId : ID of the variable to be analyzed
  * @param mode : Choose to analyze read or write or both
- * @param includeTrivialBound : True to including `lower_i = 0` and `upper_i =
+ * @param includeTrivialBound : True to include `lower_i = 0` and `upper_i =
  * len_i - 1` as trivial bounds. False to return nullptr if no non-trivial bound
  * is found
+ * @param includeLocalBoundForSharedTensor : Suppose we are accessing a shared
+ * tensor `t[i]` from multiple threads, where `i` is the thread index. Set this
+ * option to true to include `[i, i]` as a pair of bounds. Set it to false to
+ * exclude it. Including these bounds enables `pass/shrink_var` to shrink the
+ * tensor further, but prohibits further collaborative-fetch schedules (because
+ * the dimension needed for collaborative-fetch will be erased)
  * @param filterSubTree : If set, consider only uses of the variable inside this
  * sub-tree
  */
 AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
                             CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL,
                             bool includeTrivialBound = true,
+                            bool includeLocalBoundForSharedTensor = false,
                             const ID &filterSubTree = ID());
 
 } // namespace freetensor

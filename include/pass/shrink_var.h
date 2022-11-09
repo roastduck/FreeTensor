@@ -89,12 +89,18 @@ class ShrinkVar : public Mutator {
  * If you don't want to shrink some variables, please set VarDefNode::pinned_.
  * I/O variables will not be shrinked
  *
- * Set the `varDefId` parameter to shrink only one variable
+ * @param shrinkSharedTensor : Suppose we are accessing a shared
+ * tensor `t[i]` from multiple threads, where `i` is the thread index. Set this
+ * option to true to shrink it to t[0]. Set it to false to keep it. Shrinking
+ * this type of tensors prohibits further collaborative-fetch schedules (because
+ * the dimension needed for collaborative-fetch will be erased). Thus, this
+ * option should be set to true only after all schedules are done
+ * @param varDefId : if set, shrink only one variable
  *
  * @{
  */
-Stmt shrinkVar(const Stmt &op);
-Stmt shrinkSingleVar(const Stmt &op, const ID &varDefId);
+Stmt shrinkVar(const Stmt &op, bool shrinkSharedTensor = false,
+               const ID &varDefId = ID());
 /** @} */
 
 DEFINE_PASS_FOR_FUNC(shrinkVar)

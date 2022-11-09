@@ -196,7 +196,8 @@ void CompAccessBound::visit(const ReduceTo &op) {
 }
 
 void CompAccessBound::visit(const For &op) {
-    if (isSharedAmong(mtype_, op->property_->parallel_)) {
+    if (!includeLocalBoundForSharedTensor_ &&
+        isSharedAmong(mtype_, op->property_->parallel_)) {
         BaseClass::visit(op);
     } else {
         defs_.insert(op->iter_);
@@ -207,11 +208,12 @@ void CompAccessBound::visit(const For &op) {
 
 AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
                             CompAccessBoundMode mode, bool includeTrivialBound,
+                            bool includeLocalBoundForSharedTensor,
                             const ID &filterSubTree) {
     FindMemType finder(varDefId);
     finder(op);
     CompAccessBound visitor(varDefId, finder.mtype(), mode, includeTrivialBound,
-                            filterSubTree);
+                            includeLocalBoundForSharedTensor, filterSubTree);
     visitor(op);
     return visitor.result();
 }

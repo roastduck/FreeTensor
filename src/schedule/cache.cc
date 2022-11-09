@@ -280,7 +280,7 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
     auto flushStmt = makeFillAndFlush.flushStmt();
 
     ast = simplify(ast);
-    ast = shrinkSingleVar(ast, newDef);
+    ast = shrinkVar(ast, false, newDef);
     ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);
     return {ast,
@@ -309,7 +309,7 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
     auto reduceStmt = makeInitAndReduce.reduceStmt();
 
     ast = simplify(ast);
-    ast = shrinkSingleVar(ast, newDef);
+    ast = shrinkVar(ast, false, newDef);
     ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);
     return {ast,

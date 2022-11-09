@@ -82,7 +82,7 @@ Stmt ShrinkVar::visit(const ReduceTo &_op) {
     return op;
 }
 
-Stmt shrinkVar(const Stmt &_op) {
+Stmt shrinkVar(const Stmt &_op, bool shrinkSharedTensor, const ID &varDefId) {
     auto op = removeDeadVar(_op);
 
     // Algorithm:
@@ -91,26 +91,18 @@ Stmt shrinkVar(const Stmt &_op) {
     // (3) Simplify the new indicies
 
     // (1)
-    std::unordered_map<ID, AccessBound> bounds;
-    for (auto &&[varDefId, name] : allDefs(op, {AccessType::Cache})) {
-        bounds[varDefId] =
-            compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ, false);
+    std::vector<ID> defs;
+    if (varDefId.isValid()) {
+        defs = {varDefId};
+    } else {
+        auto all = allDefs(op, {AccessType::Cache});
+        defs = ranges::to<std::vector>(views::keys(all));
     }
-
-    // (2)
-    op = ShrinkVar(bounds)(op);
-
-    // (3)
-    return simplify(z3Simplify(op));
-}
-
-Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
-    auto op = removeDeadVar(_op);
-
-    // (1)
     std::unordered_map<ID, AccessBound> bounds;
-    bounds[varDefId] =
-        compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ, false);
+    for (auto &&def : defs) {
+        bounds[def] = compAccessBound(op, def, COMP_ACCESS_BOUND_READ, false,
+                                      shrinkSharedTensor);
+    }
 
     // (2)
     op = ShrinkVar(bounds)(op);
