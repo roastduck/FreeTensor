@@ -2106,8 +2106,8 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:aaf9b31c914b9909427896360cbeab8b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a644182d8d7c73570b9b53f6ff676ecef"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a644182d8d7c73570b9b53f6ff676ecef">toString</a> (const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op, bool pretty, bool printAllId)</td></tr>
 <tr class="separator:a644182d8d7c73570b9b53f6ff676ecef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3eed5b927e3f57c56dab339d41f56758"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3eed5b927e3f57c56dab339d41f56758">toString</a> (const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op, bool pretty, bool printAllId, bool dtypeInLoad, bool hexFloat=false)</td></tr>
-<tr class="separator:a3eed5b927e3f57c56dab339d41f56758"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afda2eea3e11f8b98daf36bae5bc8e242"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afda2eea3e11f8b98daf36bae5bc8e242">toString</a> (const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op, bool pretty, bool printAllId, bool dtypeInLoad, bool hexFloat=false, bool compact=false)</td></tr>
+<tr class="separator:afda2eea3e11f8b98daf36bae5bc8e242"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:a818863b387986d5139ff122d5437d7a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a818863b387986d5139ff122d5437d7a0">shrinkVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a818863b387986d5139ff122d5437d7a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -15683,8 +15683,8 @@ template&lt;PBSetRef T, PBSetRef U&gt; </div>
 
 </div>
 </div>
-<a id="a3eed5b927e3f57c56dab339d41f56758" name="a3eed5b927e3f57c56dab339d41f56758"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3eed5b927e3f57c56dab339d41f56758">&#9670;&nbsp;</a></span>toString() <span class="overload">[4/6]</span></h2>
+<a id="afda2eea3e11f8b98daf36bae5bc8e242" name="afda2eea3e11f8b98daf36bae5bc8e242"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afda2eea3e11f8b98daf36bae5bc8e242">&#9670;&nbsp;</a></span>toString() <span class="overload">[4/6]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15717,7 +15717,13 @@ template&lt;PBSetRef T, PBSetRef U&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>hexFloat</em> = <code>false</code>&#160;</td>
+          <td class="paramname"><em>hexFloat</em> = <code>false</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>compact</em> = <code>false</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

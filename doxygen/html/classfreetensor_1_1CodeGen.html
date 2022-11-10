@@ -170,8 +170,8 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a1f8699b56e362d55156983dfb1b20613"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a1f8699b56e362d55156983dfb1b20613"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#a1f8699b56e362d55156983dfb1b20613">printList</a> (T &amp;&amp;list)</td></tr>
 <tr class="separator:a1f8699b56e362d55156983dfb1b20613"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17c9ddd7b2a2090366cc662d1ba5b1c1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#a17c9ddd7b2a2090366cc662d1ba5b1c1">CodeGen</a> (int indentSize=2)</td></tr>
-<tr class="separator:a17c9ddd7b2a2090366cc662d1ba5b1c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5718de6fce9ee0ee2ef4828ef693df07"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#a5718de6fce9ee0ee2ef4828ef693df07">CodeGen</a> (bool compact=false, int indentSize=2)</td></tr>
+<tr class="separator:a5718de6fce9ee0ee2ef4828ef693df07"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade98cbc0f7bc1ec8767e57d11eb2da79"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#ade98cbc0f7bc1ec8767e57d11eb2da79">markDef</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op)</td></tr>
 <tr class="separator:ade98cbc0f7bc1ec8767e57d11eb2da79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af04a3e0a600e5924e2efdfc25d8e329d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#af04a3e0a600e5924e2efdfc25d8e329d">markUse</a> (const std::string &amp;name)</td></tr>
@@ -307,6 +307,8 @@ Protected Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
+<tr class="memitem:a3e4dbe2b5d03be6f966ce4490d5d1c8b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#a3e4dbe2b5d03be6f966ce4490d5d1c8b">compact_</a></td></tr>
+<tr class="separator:a3e4dbe2b5d03be6f966ce4490d5d1c8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a43b566f8d841290810a1fe29de7bb5a8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#a43b566f8d841290810a1fe29de7bb5a8">indentSize_</a></td></tr>
 <tr class="separator:a43b566f8d841290810a1fe29de7bb5a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad0a4a99f229715b4f6ad38f994393ac6"><td class="memItemLeft" align="right" valign="top">std::vector&lt; Stream &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGen.html#ad0a4a99f229715b4f6ad38f994393ac6">streamStack_</a></td></tr>
@@ -325,8 +327,8 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:ac691148816dc27aaa03c2e573cec3988 inherit pub_types_classfreetensor_1_1Visitor"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a17c9ddd7b2a2090366cc662d1ba5b1c1" name="a17c9ddd7b2a2090366cc662d1ba5b1c1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a17c9ddd7b2a2090366cc662d1ba5b1c1">&#9670;&nbsp;</a></span>CodeGen()</h2>
+<a id="a5718de6fce9ee0ee2ef4828ef693df07" name="a5718de6fce9ee0ee2ef4828ef693df07"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5718de6fce9ee0ee2ef4828ef693df07">&#9670;&nbsp;</a></span>CodeGen()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -339,9 +341,19 @@ template&lt;class Stream &gt; </div>
         <tr>
           <td class="memname"><a class="el" href="classfreetensor_1_1CodeGen.html">freetensor::CodeGen</a>&lt; Stream &gt;::CodeGen </td>
           <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>indentSize</em> = <code>2</code></td><td>)</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>compact</em> = <code>false</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>indentSize</em> = <code>2</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -736,6 +748,30 @@ template&lt;class Stream &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
+<a id="a3e4dbe2b5d03be6f966ce4490d5d1c8b" name="a3e4dbe2b5d03be6f966ce4490d5d1c8b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e4dbe2b5d03be6f966ce4490d5d1c8b">&#9670;&nbsp;</a></span>compact_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Stream &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classfreetensor_1_1CodeGen.html">freetensor::CodeGen</a>&lt; Stream &gt;::compact_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a43b566f8d841290810a1fe29de7bb5a8" name="a43b566f8d841290810a1fe29de7bb5a8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a43b566f8d841290810a1fe29de7bb5a8">&#9670;&nbsp;</a></span>indentSize_</h2>
 

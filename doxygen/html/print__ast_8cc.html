@@ -155,6 +155,8 @@ Macros</h2></td></tr>
 <tr class="separator:ab702106cf3b3e96750b6845ded4e0299"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a26cdbb1a00213c810caccf21cd33a631"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="print__ast_8cc.html#a26cdbb1a00213c810caccf21cd33a631">BOLD</a>&#160;&#160;&#160;&quot;\u001b[1m&quot;s</td></tr>
 <tr class="separator:a26cdbb1a00213c810caccf21cd33a631"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ff6e798033f03e74730e99f01936f84"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="print__ast_8cc.html#a5ff6e798033f03e74730e99f01936f84">SPACE</a>&#160;&#160;&#160;(compact_ ? &quot;&quot; : &quot; &quot;)</td></tr>
+<tr class="separator:a5ff6e798033f03e74730e99f01936f84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -167,8 +169,8 @@ Functions</h2></td></tr>
 <tr class="separator:aaf9b31c914b9909427896360cbeab8b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a644182d8d7c73570b9b53f6ff676ecef"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a644182d8d7c73570b9b53f6ff676ecef">freetensor::toString</a> (const AST &amp;op, bool pretty, bool printAllId)</td></tr>
 <tr class="separator:a644182d8d7c73570b9b53f6ff676ecef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3eed5b927e3f57c56dab339d41f56758"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3eed5b927e3f57c56dab339d41f56758">freetensor::toString</a> (const AST &amp;op, bool pretty, bool printAllId, bool dtypeInLoad, bool hexFloat=false)</td></tr>
-<tr class="separator:a3eed5b927e3f57c56dab339d41f56758"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afda2eea3e11f8b98daf36bae5bc8e242"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afda2eea3e11f8b98daf36bae5bc8e242">freetensor::toString</a> (const AST &amp;op, bool pretty, bool printAllId, bool dtypeInLoad, bool hexFloat=false, bool compact=false)</td></tr>
+<tr class="separator:afda2eea3e11f8b98daf36bae5bc8e242"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="a79d10e672abb49ad63eeaa8aaef57c38" name="a79d10e672abb49ad63eeaa8aaef57c38"></a>
@@ -235,6 +237,20 @@ Functions</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">#define RESET&#160;&#160;&#160;&quot;\u001b[0m&quot;s</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5ff6e798033f03e74730e99f01936f84" name="a5ff6e798033f03e74730e99f01936f84"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5ff6e798033f03e74730e99f01936f84">&#9670;&nbsp;</a></span>SPACE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SPACE&#160;&#160;&#160;(compact_ ? &quot;&quot; : &quot; &quot;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
