@@ -19,7 +19,7 @@ template <PBMapRef T> static PBMap dropAllConstraintsNotInvolvingAxes(T &&map) {
     auto n = wrapped.nDims();
     PBSet dropped = isl_set_drop_constraints_not_involving_dims(
         wrapped.move(), isl_dim_set, 0, n);
-    return isl_set_unwrap(dropped.move());
+    return isl_map_drop_unused_params(isl_set_unwrap(dropped.move()));
 }
 
 void FindAllNoDeps::visit(const For &op) {
@@ -81,6 +81,16 @@ FindAccessPoint::normalizeExprs(const std::vector<Expr> &indices,
     return ret;
 }
 
+void FindAccessPoint::visitStmt(const Stmt &stmt) {
+    BaseClass::visitStmt(stmt);
+    for (auto &&child : stmt->children()) {
+        if (subTreeFilteredIn_.count(child)) {
+            subTreeFilteredIn_.insert(stmt);
+            break;
+        }
+    }
+}
+
 void FindAccessPoint::visit(const VarDef &op) {
     allDefs_.emplace_back(op);
     defAxis_[op->name_] =
@@ -104,6 +114,8 @@ void FindAccessPoint::visit(const For &op) {
     (*this)(op->end_);
     (*this)(op->len_);
 
+    auto old = cur_;
+    auto oldLastIsLoad = lastIsLoad_;
     if (!cur_.empty() &&
         cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
         // top is band node
@@ -159,6 +171,13 @@ void FindAccessPoint::visit(const For &op) {
     cur_.pop_back();
     conds_.resize(oldCondsSize);
     replaceIter_.erase(op->iter_);
+
+    if (!subTreeFilteredIn_.count(op->body_)) {
+        // No stepping to make iteration space more compact
+        cur_ = std::move(old);
+        lastIsLoad_ = oldLastIsLoad;
+        ClearUnusedScopes{scope2coord_}(op);
+    }
 }
 
 void FindAccessPoint::visit(const If &op) {
@@ -179,6 +198,10 @@ void FindAccessPoint::visit(const If &op) {
 }
 
 void FindAccessPoint::visit(const Load &op) {
+    BaseClass::visit(op);
+
+    auto old = cur_;
+    auto oldLastIsLoad = lastIsLoad_;
     if (!cur_.empty() &&
         cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
         // top is band node
@@ -189,7 +212,6 @@ void FindAccessPoint::visit(const Load &op) {
     }
     lastIsLoad_ = true;
 
-    BaseClass::visit(op);
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,
            curStmt(),
@@ -200,6 +222,8 @@ void FindAccessPoint::visit(const Load &op) {
            normalizeExprs(op->indices_, curStmt()->id()),
            conds_};
     if (accFilter_ == nullptr || accFilter_(*ap)) {
+        subTreeFilteredIn_.insert(curStmt());
+
         auto &&d = def(op->var_);
         reads_[def(op->var_)->id()].emplace_back(ap);
 
@@ -222,6 +246,10 @@ void FindAccessPoint::visit(const Load &op) {
                 conds_};
             reads_[source->id()].emplace_back(ap);
         }
+    } else {
+        // No stepping to make iteration space more compact
+        cur_ = std::move(old);
+        lastIsLoad_ = oldLastIsLoad;
     }
 }
 
@@ -379,6 +407,10 @@ PBMap AnalyzeDeps::makeIneqBetweenOps(PBCtx &presburger, DepDirection mode,
 
 PBMap AnalyzeDeps::makeConstraintOfSingleLoop(PBCtx &presburger, const ID &loop,
                                               DepDirection mode, int iterDim) {
+    if (!scope2coord_.count(loop)) {
+        return emptyMap(spaceAlloc(presburger, 0, iterDim, iterDim));
+    }
+
     auto &&coord = scope2coord_.at(loop);
     int iterId = coord.size() - 1;
     if (iterId >= iterDim) {
@@ -886,7 +918,8 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBMap ssDepAll = applyRange(std::move(ls2a), psDepAllUnion);
     PBMap ssDep = intersect(ssDepAll, std::move(serialLexGT));
     PBMap ssSelf = intersect(ssDepAll, std::move(serialEQ));
-    PBMap psDep = intersect(applyRange(la2s, std::move(ssDep)), psDepAllUnion);
+    PBMap psDep =
+        coalesce(intersect(applyRange(la2s, std::move(ssDep)), psDepAllUnion));
     PBMap psSelf = intersect(applyRange(std::move(la2s), std::move(ssSelf)),
                              std::move(psDepAllUnion));
     PBMap psNearest = uni(lexmax(std::move(psDep)), std::move(psSelf));
@@ -985,7 +1018,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBMap ssDepAll = applyRange(spDepAllUnion, std::move(ea2s));
     PBMap ssDep = intersect(ssDepAll, std::move(serialLexGT));
     PBMap ssSelf = intersect(ssDepAll, std::move(serialEQ));
-    PBMap spDep = intersect(applyRange(std::move(ssDep), es2a), spDepAllUnion);
+    PBMap spDep =
+        coalesce(intersect(applyRange(std::move(ssDep), es2a), spDepAllUnion));
     PBMap spSelf = intersect(applyRange(std::move(ssSelf), std::move(es2a)),
                              std::move(spDepAllUnion));
     PBMap spNearest =

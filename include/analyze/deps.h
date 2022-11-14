@@ -85,6 +85,21 @@ inline int countBandNodeWidth(const Stmt &op) {
     return visitor.width();
 }
 
+class ClearUnusedScopes : public Visitor {
+    std::unordered_map<ID, std::vector<IterAxis>> &scope2coord_;
+
+  public:
+    ClearUnusedScopes(
+        std::unordered_map<ID, std::vector<IterAxis>> &scope2coord)
+        : scope2coord_(scope2coord) {}
+
+  protected:
+    void visitStmt(const Stmt &stmt) override {
+        Visitor::visitStmt(stmt);
+        scope2coord_.erase(stmt->id());
+    }
+};
+
 typedef std::function<bool(const AccessPoint &)> FindDepsAccFilter;
 typedef std::function<bool(const AccessPoint &later,
                            const AccessPoint &earlier)>
@@ -117,6 +132,9 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     // For negative steps, replace iter with -neg_iter
     std::unordered_map<std::string, Expr> replaceIter_;
     std::unordered_map<StmtOrExprID, Expr> replaceIterLog_;
+
+    std::unordered_set<Stmt> subTreeFilteredIn_; // Set of sub-trees that have
+                                                 // any statement filtered in
 
   private:
     void pushCond(const Expr &cond, const ID &baseStmtId) {
@@ -152,6 +170,8 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     template <class T> void visitStoreLike(const T &op) {
         BaseClass::visit(op);
 
+        auto old = cur_;
+        auto oldLastIsLoad = lastIsLoad_;
         if (!cur_.empty() &&
             cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
             // top is band node
@@ -170,6 +190,8 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                normalizeExprs(op->indices_, op->id()),
                conds_};
         if (accFilter_ == nullptr || accFilter_(*ap)) {
+            subTreeFilteredIn_.insert(op);
+
             auto &&d = def(op->var_);
             writes_[d->id()].emplace_back(ap);
 
@@ -192,10 +214,15 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                        conds_};
                 writes_[source->id()].emplace_back(ap);
             }
+        } else {
+            // No stepping to make iteration space more compact
+            cur_ = std::move(old);
+            lastIsLoad_ = oldLastIsLoad;
         }
     }
 
   protected:
+    void visitStmt(const Stmt &stmt) override;
     void visit(const VarDef &op) override;
     void visit(const StmtSeq &op) override;
     void visit(const For &op) override;
