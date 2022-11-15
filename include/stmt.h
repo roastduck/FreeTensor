@@ -306,6 +306,13 @@ class IfNode : public StmtNode {
     SubTree<StmtNode, NullPolicy::Nullable> elseCase_ = ChildOf{this};
 
     bool isCtrlFlow() const override { return true; }
+    std::vector<Stmt> children() const override {
+        if (elseCase_.isValid()) {
+            return {thenCase_, elseCase_};
+        } else {
+            return {thenCase_};
+        }
+    }
 
     void compHash() override;
 
