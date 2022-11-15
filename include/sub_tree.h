@@ -80,8 +80,22 @@ class ASTPart : public EnableSelf<ASTPart> {
     ASTPart &operator=(ASTPart &&) { return *this; }
     ASTPart &operator=(const ASTPart &) { return *this; }
 
-    void setParent(const Ref<ASTPart> &parent) { parent_ = parent; }
-    void resetParent() { parent_ = nullptr; }
+    bool trySetParent(const Ref<ASTPart> &parent) {
+        lock();
+        if (parent_.isValid()) {
+            unlock();
+            return false;
+        } else {
+            parent_ = parent;
+            unlock();
+            return true;
+        }
+    }
+    void resetParent() {
+        lock();
+        parent_ = nullptr;
+        unlock();
+    }
     Ref<ASTPart> parent() const { return parent_.lock(); }
     bool isSubTree() const { return parent_.isValid(); }
 
@@ -141,7 +155,10 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
 
     void adopt() {
         if (obj_.isValid() && parent_ != nullptr) {
-            obj_->setParent(((EnableSelf<typename T::Self> *)parent_)->self());
+            while (!obj_->trySetParent(
+                ((EnableSelf<typename T::Self> *)parent_)->self())) {
+                obj_ = deepCopy(obj_).template as<T>();
+            }
         }
     }
 
