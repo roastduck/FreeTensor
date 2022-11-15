@@ -2,8 +2,8 @@ var searchData=
 [
   ['tapename_0',['tapeName',['../classfreetensor_1_1AnalyzeVersion.html#ac15b8b5d100616dcc7207fa0e41fba2e',1,'freetensor::AnalyzeVersion']]],
   ['tapenames_1',['tapeNames',['../classfreetensor_1_1OutputIntermediates.html#a37c31fcf5a2df36e0eeeca14328d45c5',1,'freetensor::OutputIntermediates']]],
-  ['target_2',['Target',['../classfreetensor_1_1Target.html#ab4218659d0db70a02239d17d037d3be4',1,'freetensor::Target']]],
-  ['target_3',['target',['../classfreetensor_1_1Device.html#a7bf383e0fa4b52c457dd4278a45e8f73',1,'freetensor::Device']]],
+  ['target_2',['target',['../classfreetensor_1_1Device.html#a7bf383e0fa4b52c457dd4278a45e8f73',1,'freetensor::Device']]],
+  ['target_3',['Target',['../classfreetensor_1_1Target.html#ab4218659d0db70a02239d17d037d3be4',1,'freetensor::Target']]],
   ['tasks_4',['tasks',['../classfreetensor_1_1AnalyzeDeps.html#aa11527c730681f0486e351790797a97f',1,'freetensor::AnalyzeDeps']]],
   ['tensor_5',['tensor',['../classfreetensor_1_1Buffer.html#a9d823b3257c03b33237d3483bada4d5b',1,'freetensor::Buffer::tensor() const'],['../classfreetensor_1_1Buffer.html#a00c8daba5e7927568207a1bbab78b29c',1,'freetensor::Buffer::tensor()']]],
   ['tensorpropconst_6',['tensorPropConst',['../namespacefreetensor.html#a58cd34d781fa36ba0f0998d1f513eaa7',1,'freetensor']]],
@@ -19,7 +19,8 @@ var searchData=
   ['transformedmetadatacontent_16',['TransformedMetadataContent',['../classfreetensor_1_1TransformedMetadataContent.html#af95c5cda014c12a5ecb8246b5a12081f',1,'freetensor::TransformedMetadataContent']]],
   ['transformedselector_17',['TransformedSelector',['../classfreetensor_1_1TransformedSelector.html#a953dcf47c37055e74d746ab7d77f3e26',1,'freetensor::TransformedSelector']]],
   ['transient_18',['transient',['../classfreetensor_1_1CompTransientBounds.html#a10c85930dba5429bede7a862a15f3a94',1,'freetensor::CompTransientBounds::transient()'],['../classfreetensor_1_1CompTransientBoundsInterface.html#a2e0408acc363efef55af6190eb7dd041',1,'freetensor::CompTransientBoundsInterface::transient()']]],
-  ['trytoscalar_19',['tryToScalar',['../classfreetensor_1_1ScalarPropConst.html#a5d0514f118ac51e7d6d951820b51bd46',1,'freetensor::ScalarPropConst']]],
-  ['tuneautoschedule_20',['tuneAutoSchedule',['../classfreetensor_1_1Schedule.html#a0de65b349dc7f8dedb0180b9857ed951',1,'freetensor::Schedule']]],
-  ['type_21',['type',['../classfreetensor_1_1ScheduleLogItemImpl.html#a6a81a4f2a12a34657f31a4c8fa2c7b69',1,'freetensor::ScheduleLogItemImpl::type()'],['../classfreetensor_1_1ScheduleLogItem.html#ae61a39593b6d78b6bcb90301192cb22f',1,'freetensor::ScheduleLogItem::type()'],['../classfreetensor_1_1FrontendVarIdx.html#aed67c1158d163ed167cbfe15ee6bc1d6',1,'freetensor::FrontendVarIdx::type()'],['../classfreetensor_1_1CPUTarget.html#a8aa7ba73189b0a07a52a306d60f68be0',1,'freetensor::CPUTarget::type()'],['../classfreetensor_1_1Target.html#acb04156caded5b74dbb3b3dd1e8f6760',1,'freetensor::Target::type()'],['../classfreetensor_1_1Device.html#a02828d366b6c439cc04a6ae890a30a66',1,'freetensor::Device::type()'],['../classfreetensor_1_1FindDeps.html#a37b3a2a86fe8069af2191edaeca7616a',1,'freetensor::FindDeps::type()']]]
+  ['trysetparent_19',['trySetParent',['../classfreetensor_1_1ASTPart.html#a24be7ff2f298834a17577668672056da',1,'freetensor::ASTPart']]],
+  ['trytoscalar_20',['tryToScalar',['../classfreetensor_1_1ScalarPropConst.html#a5d0514f118ac51e7d6d951820b51bd46',1,'freetensor::ScalarPropConst']]],
+  ['tuneautoschedule_21',['tuneAutoSchedule',['../classfreetensor_1_1Schedule.html#a0de65b349dc7f8dedb0180b9857ed951',1,'freetensor::Schedule']]],
+  ['type_22',['type',['../classfreetensor_1_1ScheduleLogItemImpl.html#a6a81a4f2a12a34657f31a4c8fa2c7b69',1,'freetensor::ScheduleLogItemImpl::type()'],['../classfreetensor_1_1ScheduleLogItem.html#ae61a39593b6d78b6bcb90301192cb22f',1,'freetensor::ScheduleLogItem::type()'],['../classfreetensor_1_1FrontendVarIdx.html#aed67c1158d163ed167cbfe15ee6bc1d6',1,'freetensor::FrontendVarIdx::type()'],['../classfreetensor_1_1CPUTarget.html#a8aa7ba73189b0a07a52a306d60f68be0',1,'freetensor::CPUTarget::type()'],['../classfreetensor_1_1Target.html#acb04156caded5b74dbb3b3dd1e8f6760',1,'freetensor::Target::type()'],['../classfreetensor_1_1Device.html#a02828d366b6c439cc04a6ae890a30a66',1,'freetensor::Device::type()'],['../classfreetensor_1_1FindDeps.html#a37b3a2a86fe8069af2191edaeca7616a',1,'freetensor::FindDeps::type()']]]
 ];
