@@ -111,6 +111,8 @@ typedef std::function<bool(const AccessPoint &later,
 class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     typedef SymbolTable<TrackStmt<Visitor>> BaseClass;
 
+    ID vardef_;
+
     const FindDepsAccFilter &accFilter_;
 
     bool lastIsLoad_ = false;
@@ -120,14 +122,13 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                 // allReads(cond) against allWrites(body) for each If or For
                 // nodes. See pass/simplify. If the condition violates, we may
                 // need to push a null condition according to RelaxMode
-    std::unordered_map<ID, std::vector<Ref<AccessPoint>>> reads_, writes_;
-    std::vector<VarDef> allDefs_;
+    std::vector<Ref<AccessPoint>> reads_, writes_;
 
     // For or StmtSeq -> coordinate in space
     std::unordered_map<ID, std::vector<IterAxis>> scope2coord_;
 
-    // Var name -> axis: Which axis is a local var defined
-    std::unordered_map<std::string, int> defAxis_;
+    // Which axis is a the var defined
+    int defAxis_ = -1;
 
     // For negative steps, replace iter with -neg_iter
     std::unordered_map<std::string, Expr> replaceIter_;
@@ -144,23 +145,14 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     void popCond() { conds_.pop_back(); }
 
   public:
-    FindAccessPoint(const Stmt &root, const FindDepsAccFilter &accFilter);
+    FindAccessPoint(const Stmt &root, const ID &vardef,
+                    const FindDepsAccFilter &accFilter);
 
-    const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads() const {
-        return reads_;
-    }
-    const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &
-    writes() const {
-        return writes_;
-    }
-    const std::vector<VarDef> &allDefs() const { return allDefs_; }
-    const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord() const {
-        return scope2coord_;
-    }
+    const auto &reads() const { return reads_; }
+    const auto &writes() const { return writes_; }
+    const auto &scope2coord() const { return scope2coord_; }
 
-    const std::unordered_map<StmtOrExprID, Expr> replaceIterLog() const {
-        return replaceIterLog_;
-    }
+    const auto &replaceIterLog() const { return replaceIterLog_; }
 
   private:
     Expr normalizeExpr(const Expr &expr, const ID &baseStmtId);
@@ -169,6 +161,24 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
 
     template <class T> void visitStoreLike(const T &op) {
         BaseClass::visit(op);
+
+        bool isThisVarDef = false;
+        VarDef viewOf;
+        if (def(op->var_)->id() == vardef_) {
+            isThisVarDef = true;
+        } else {
+            for (auto source = def(op->var_); source->viewOf_.has_value();) {
+                source = def(*source->viewOf_);
+                if (source->id() == vardef_) {
+                    isThisVarDef = true;
+                    viewOf = source;
+                    break;
+                }
+            }
+        }
+        if (!isThisVarDef) {
+            return;
+        }
 
         auto old = cur_;
         auto oldLastIsLoad = lastIsLoad_;
@@ -180,40 +190,26 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
         }
         lastIsLoad_ = false;
 
+        std::vector<Expr> exprs;
+        VarDef d;
+        if (viewOf.isValid()) {
+            // Simultaneously access of a `VarDef` and the `VarDef` it views is
+            // ALWAYS treated as dependences. Use Intrinsic as "any expression"
+            exprs = std::vector<Expr>(
+                viewOf->buffer_->tensor()->shape().size(),
+                makeIntrinsic("", {}, DataType::Int32, false));
+            d = viewOf;
+        } else {
+            exprs = normalizeExprs(op->indices_, op->id());
+            d = def(op->var_);
+        }
+
         auto ap = Ref<AccessPoint>::make();
-        *ap = {op,
-               curStmt(),
-               def(op->var_),
-               buffer(op->var_),
-               defAxis_.at(op->var_),
-               cur_,
-               normalizeExprs(op->indices_, op->id()),
-               conds_};
+        *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
+               cur_, std::move(exprs), conds_};
         if (accFilter_ == nullptr || accFilter_(*ap)) {
             subTreeFilteredIn_.insert(op);
-
-            auto &&d = def(op->var_);
-            writes_[d->id()].emplace_back(ap);
-
-            // Simultaneously access of a `VarDef` and the `VarDef` it views is
-            // ALWAYS treated as dependences
-            for (auto source = d; source->viewOf_.has_value();) {
-                source = def(*source->viewOf_);
-                auto ap = Ref<AccessPoint>::make();
-                *ap = {op,
-                       curStmt(),
-                       source,
-                       source->buffer_,
-                       defAxis_.at(source->name_),
-                       cur_,
-                       std::vector<Expr>(
-                           source->buffer_->tensor()->shape().size(),
-                           makeIntrinsic(
-                               "", {}, DataType::Int32,
-                               false)), // Use Intrinsic as "any expression"
-                       conds_};
-                writes_[source->id()].emplace_back(ap);
-            }
+            writes_.emplace_back(ap);
         } else {
             // No stepping to make iteration space more compact
             cur_ = std::move(old);
@@ -326,9 +322,8 @@ enum class FindDepsMode : int {
 class AnalyzeDeps {
     friend Dependency;
 
-    std::unordered_map<ID, std::vector<Ref<AccessPoint>>> readsAsEarlier_,
-        readsAsLater_, writesAsEarlier_, writesAsLater_;
-    const std::vector<VarDef> &allDefs_;
+    std::vector<Ref<AccessPoint>> readsAsEarlier_, readsAsLater_,
+        writesAsEarlier_, writesAsLater_;
     const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord_;
     const std::unordered_map<std::string, std::vector<ID>>
         &noDepsLists_; // Var name -> [loop ID]
@@ -350,9 +345,8 @@ class AnalyzeDeps {
 
   public:
     AnalyzeDeps(
-        const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads,
-        const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &writes,
-        const std::vector<VarDef> &allDefs,
+        const std::vector<Ref<AccessPoint>> &reads,
+        const std::vector<Ref<AccessPoint>> &writes,
         const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord,
         const std::unordered_map<std::string, std::vector<ID>> &noDepsLists,
         const Lazy<LoopVariExprMap> &variantExpr,
@@ -362,10 +356,10 @@ class AnalyzeDeps {
         const FindDepsAccFilter &laterFilter, const FindDepsFilter &filter,
         bool ignoreReductionWAW, bool eraseOutsideVarDef,
         bool noProjectOutPrivateAxis)
-        : allDefs_(allDefs), scope2coord_(scope2coord),
-          noDepsLists_(noDepsLists), variantExpr_(variantExpr),
-          direction_(direction), found_(found), earlierFilter_(earlierFilter),
-          laterFilter_(laterFilter), filter_(filter), mode_(mode),
+        : scope2coord_(scope2coord), noDepsLists_(noDepsLists),
+          variantExpr_(variantExpr), direction_(direction), found_(found),
+          earlierFilter_(earlierFilter), laterFilter_(laterFilter),
+          filter_(filter), mode_(mode),
           earlierRelax_(mode_ == FindDepsMode::KillLater ||
                                 mode_ == FindDepsMode::KillBoth
                             ? RelaxMode::Necessary
@@ -377,26 +371,22 @@ class AnalyzeDeps {
           depType_(depType), ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef),
           noProjectOutPrivateAxis_(noProjectOutPrivateAxis) {
-        for (auto &&[id, list] : reads) {
-            readsAsEarlier_[id] =
-                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
-                    return earlierFilter_ == nullptr || earlierFilter_(*acc);
-                });
-            readsAsLater_[id] =
-                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
-                    return laterFilter_ == nullptr || laterFilter_(*acc);
-                });
-        }
-        for (auto &&[id, list] : writes) {
-            writesAsEarlier_[id] =
-                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
-                    return earlierFilter_ == nullptr || earlierFilter_(*acc);
-                });
-            writesAsLater_[id] =
-                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
-                    return laterFilter_ == nullptr || laterFilter_(*acc);
-                });
-        }
+        readsAsEarlier_ =
+            ::freetensor::filter(reads, [&](const Ref<AccessPoint> &acc) {
+                return earlierFilter_ == nullptr || earlierFilter_(*acc);
+            });
+        readsAsLater_ =
+            ::freetensor::filter(reads, [&](const Ref<AccessPoint> &acc) {
+                return laterFilter_ == nullptr || laterFilter_(*acc);
+            });
+        writesAsEarlier_ =
+            ::freetensor::filter(writes, [&](const Ref<AccessPoint> &acc) {
+                return earlierFilter_ == nullptr || earlierFilter_(*acc);
+            });
+        writesAsLater_ =
+            ::freetensor::filter(writes, [&](const Ref<AccessPoint> &acc) {
+                return laterFilter_ == nullptr || laterFilter_(*acc);
+            });
     }
 
     void genTasks();
@@ -544,7 +534,8 @@ class FindDeps {
     FindDepsAccFilter earlierFilter_ = nullptr;
     FindDepsAccFilter laterFilter_ = nullptr;
     FindDepsFilter filter_ = nullptr;
-    std::function<void(const std::unordered_map<ID, std::vector<IterAxis>> &)>
+    std::function<void(const ID &,
+                       const std::unordered_map<ID, std::vector<IterAxis>> &)>
         scope2CoordCallback_ = nullptr;
     bool ignoreReductionWAW_ = true;
     bool eraseOutsideVarDef_ = true;
@@ -730,8 +721,8 @@ class FindDeps {
     }
 
     FindDeps scope2CoordCallback(
-        std::function<
-            void(const std::unordered_map<ID, std::vector<IterAxis>> &)>
+        std::function<void(
+            const ID &, const std::unordered_map<ID, std::vector<IterAxis>> &)>
             callback) {
         FindDeps ret = *this;
         ret.scope2CoordCallback_ = callback;

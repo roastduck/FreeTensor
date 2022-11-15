@@ -219,9 +219,10 @@ std::pair<Stmt, std::vector<ID>> permute(
             return ap.def_->isAncestorOf(loops.front());
         })
         .noProjectOutPrivateAxis(true)
-        .scope2CoordCallback(
-            [&](const std::unordered_map<ID, std::vector<IterAxis>>
-                    &scope2coord) {
+        .scope2CoordCallback([&](const ID &defId,
+                                 const std::unordered_map<
+                                     ID, std::vector<IterAxis>> &scope2coord) {
+            if (iter2permuted.empty() && scope2coord.count(loopsId[0])) {
                 // compute number of backing dimensions, outer than our
                 // outermost loop
                 numBackDims = scope2coord.at(loopsId[0]).size() - 1;
@@ -247,7 +248,8 @@ std::pair<Stmt, std::vector<ID>> permute(
                 // prepare iter -> permuted map string, for later use in `found'
                 iter2permuted =
                     toString(applyRange(reverse(real2iter), permuteMap));
-            })
+            }
+        })
         .filterSubAST(loops.front()->id())(ast, [&](const Dependency &d) {
             // Construct map for iter -> permuted
             auto iter2permutedMap = PBMap(d.presburger_, iter2permuted);
