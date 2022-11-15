@@ -1,5 +1,5 @@
 <map id="freetensor::Visitor" name="freetensor::Visitor">
-<area shape="rect" id="node1" title=" " alt="" coords="5,1506,144,1533"/>
+<area shape="rect" id="node1" title=" " alt="" coords="5,1531,144,1558"/>
 <area shape="rect" id="node2" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="220,365,400,407"/>
 <area shape="rect" id="node14" href="$classfreetensor_1_1TrackStmt.html" title=" " alt="" coords="229,765,391,807"/>
 <area shape="rect" id="node20" href="$classfreetensor_1_1AllDefs.html" title=" " alt="" coords="238,831,382,858"/>
@@ -10,27 +10,28 @@
 <area shape="rect" id="node25" href="$classfreetensor_1_1CheckFuseAccessible.html" title=" " alt="" coords="192,1085,428,1111"/>
 <area shape="rect" id="node26" href="$classfreetensor_1_1CheckLoopOrder.html" title=" " alt="" coords="208,1135,412,1162"/>
 <area shape="rect" id="node27" href="$classfreetensor_1_1CheckSideEffect.html" title=" " alt="" coords="209,1186,411,1213"/>
-<area shape="rect" id="node28" href="$classfreetensor_1_1CompUniqueBounds.html" title=" " alt="" coords="195,1237,425,1263"/>
-<area shape="rect" id="node30" href="$classfreetensor_1_1CountBandNodeWidth.html" title=" " alt="" coords="209,1288,411,1329"/>
-<area shape="rect" id="node31" href="$classfreetensor_1_1CountHeavyOps.html" title=" " alt="" coords="209,1354,411,1381"/>
-<area shape="rect" id="node32" href="$classfreetensor_1_1CountScopeLen.html" title=" " alt="" coords="211,1405,409,1431"/>
-<area shape="rect" id="node33" href="$classfreetensor_1_1FindAllIfs.html" title=" " alt="" coords="231,1455,389,1482"/>
-<area shape="rect" id="node34" href="$classfreetensor_1_1FindAllLoops.html" title=" " alt="" coords="221,1506,399,1533"/>
-<area shape="rect" id="node35" href="$classfreetensor_1_1FindAllNoDeps.html" title=" " alt="" coords="214,1557,406,1583"/>
-<area shape="rect" id="node36" href="$classfreetensor_1_1FindAllParallel.html" title=" " alt="" coords="215,1607,405,1634"/>
-<area shape="rect" id="node37" href="$classfreetensor_1_1FindAllScopes.html" title=" " alt="" coords="217,1658,403,1685"/>
-<area shape="rect" id="node38" href="$classfreetensor_1_1FindAllScopesInside.html" title=" " alt="" coords="217,1709,403,1751"/>
-<area shape="rect" id="node39" href="$classfreetensor_1_1FindHasStore.html" title=" " alt="" coords="219,1775,401,1802"/>
-<area shape="rect" id="node40" href="$classfreetensor_1_1FindInnerMostScope.html" title=" " alt="" coords="215,1827,405,1868"/>
-<area shape="rect" id="node41" href="$classfreetensor_1_1FindMemType.html" title=" " alt="" coords="217,1893,403,1919"/>
-<area shape="rect" id="node42" href="$classfreetensor_1_1FindMultiLevelTiling.html" title=" " alt="" coords="214,1944,406,1985"/>
-<area shape="rect" id="node43" href="$classfreetensor_1_1FindSerialLoopsOverReduce.html" title=" " alt="" coords="211,2009,409,2051"/>
-<area shape="rect" id="node44" href="$classfreetensor_1_1FindStmtByFilter.html" title=" " alt="" coords="207,2075,413,2102"/>
-<area shape="rect" id="node45" href="$classfreetensor_1_1FindStmtById.html" title=" " alt="" coords="218,2126,402,2153"/>
-<area shape="rect" id="node46" href="$classfreetensor_1_1FixedLengthFeature.html" title=" " alt="" coords="198,2177,422,2203"/>
-<area shape="rect" id="node47" href="$classfreetensor_1_1GenPBExpr.html" title=" " alt="" coords="225,2227,395,2254"/>
-<area shape="rect" id="node48" href="$classfreetensor_1_1GradExpr.html" title=" " alt="" coords="231,2278,389,2305"/>
-<area shape="rect" id="node49" href="$classfreetensor_1_1MatchVisitor.html" title=" " alt="" coords="221,2329,399,2355"/>
+<area shape="rect" id="node28" href="$classfreetensor_1_1ClearUnusedScopes.html" title=" " alt="" coords="197,1237,423,1263"/>
+<area shape="rect" id="node29" href="$classfreetensor_1_1CompUniqueBounds.html" title=" " alt="" coords="195,1287,425,1314"/>
+<area shape="rect" id="node30" href="$classfreetensor_1_1CountBandNodeWidth.html" title=" " alt="" coords="209,1339,411,1380"/>
+<area shape="rect" id="node31" href="$classfreetensor_1_1CountHeavyOps.html" title=" " alt="" coords="209,1405,411,1431"/>
+<area shape="rect" id="node32" href="$classfreetensor_1_1CountScopeLen.html" title=" " alt="" coords="211,1455,409,1482"/>
+<area shape="rect" id="node33" href="$classfreetensor_1_1FindAllIfs.html" title=" " alt="" coords="231,1506,389,1533"/>
+<area shape="rect" id="node34" href="$classfreetensor_1_1FindAllLoops.html" title=" " alt="" coords="221,1557,399,1583"/>
+<area shape="rect" id="node35" href="$classfreetensor_1_1FindAllNoDeps.html" title=" " alt="" coords="214,1607,406,1634"/>
+<area shape="rect" id="node36" href="$classfreetensor_1_1FindAllParallel.html" title=" " alt="" coords="215,1658,405,1685"/>
+<area shape="rect" id="node37" href="$classfreetensor_1_1FindAllScopes.html" title=" " alt="" coords="217,1709,403,1735"/>
+<area shape="rect" id="node38" href="$classfreetensor_1_1FindAllScopesInside.html" title=" " alt="" coords="217,1760,403,1801"/>
+<area shape="rect" id="node39" href="$classfreetensor_1_1FindHasStore.html" title=" " alt="" coords="219,1826,401,1853"/>
+<area shape="rect" id="node40" href="$classfreetensor_1_1FindInnerMostScope.html" title=" " alt="" coords="215,1877,405,1919"/>
+<area shape="rect" id="node41" href="$classfreetensor_1_1FindMemType.html" title=" " alt="" coords="217,1943,403,1970"/>
+<area shape="rect" id="node42" href="$classfreetensor_1_1FindMultiLevelTiling.html" title=" " alt="" coords="214,1995,406,2036"/>
+<area shape="rect" id="node43" href="$classfreetensor_1_1FindSerialLoopsOverReduce.html" title=" " alt="" coords="211,2060,409,2101"/>
+<area shape="rect" id="node44" href="$classfreetensor_1_1FindStmtByFilter.html" title=" " alt="" coords="207,2126,413,2153"/>
+<area shape="rect" id="node45" href="$classfreetensor_1_1FindStmtById.html" title=" " alt="" coords="218,2177,402,2203"/>
+<area shape="rect" id="node46" href="$classfreetensor_1_1FixedLengthFeature.html" title=" " alt="" coords="198,2227,422,2254"/>
+<area shape="rect" id="node47" href="$classfreetensor_1_1GenPBExpr.html" title=" " alt="" coords="225,2278,395,2305"/>
+<area shape="rect" id="node48" href="$classfreetensor_1_1GradExpr.html" title=" " alt="" coords="231,2329,389,2355"/>
+<area shape="rect" id="node49" href="$classfreetensor_1_1MatchVisitor.html" title=" " alt="" coords="221,2379,399,2406"/>
 <area shape="rect" id="node3" href="$classfreetensor_1_1CodeGen.html" title=" " alt="" coords="524,5,683,47"/>
 <area shape="rect" id="node4" href="$classfreetensor_1_1CodeGen.html" title=" " alt="" coords="505,71,701,112"/>
 <area shape="rect" id="node5" href="$classfreetensor_1_1CompTransientBounds.html" title=" " alt="" coords="476,136,731,177"/>
@@ -47,5 +48,4 @@
 <area shape="rect" id="node17" href="$classfreetensor_1_1FindLoopVariance.html" title=" " alt="" coords="498,798,709,825"/>
 <area shape="rect" id="node18" href="$classfreetensor_1_1InitExprVari.html" title=" " alt="" coords="517,849,689,875"/>
 <area shape="rect" id="node19" href="$classfreetensor_1_1MarkStores.html" title=" " alt="" coords="518,899,689,926"/>
-<area shape="rect" id="node29" href="$classfreetensor_1_1PBCompBounds.html" title=" " alt="" coords="503,1237,703,1263"/>
 </map>
