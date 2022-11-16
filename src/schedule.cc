@@ -61,12 +61,16 @@ void Schedule::commitTransaction() {
     openTrans_.pop_back();
     if (verbose_ >= 2) {
         auto &&os = logger();
-        os << "Committing schedule(s): ";
         auto logs = asVector(openTrans_.back().logs_, trans.logs_);
-        for (auto &&[i, item] : views::enumerate(logs)) {
-            os << (i > 0 ? ", " : "") << *item;
+        if (!logs.empty()) {
+            os << "Committing schedule(s): ";
+            for (auto &&[i, item] : views::enumerate(logs)) {
+                os << (i > 0 ? ", " : "") << *item;
+            }
+            os << ", resulting in:" << std::endl << trans.ast_ << std::endl;
+        } else {
+            os << "No schedule is committed" << std::endl;
         }
-        os << ", resulting in:" << std::endl << trans.ast_ << std::endl;
     }
     openTrans_.back() = std::move(trans);
 }
