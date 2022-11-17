@@ -26,27 +26,6 @@ static std::string genCUBLASType(DataType dtype) {
     }
 }
 
-bool CodeGenCUDA::isConstOrByValue(const Expr &x) const {
-    return isConstOrByValue(allNames(x));
-}
-
-bool CodeGenCUDA::isConstOrByValue(
-    const std::unordered_set<std::string> &names) const {
-    for (auto &&item : names) {
-        if (hasLoop(item)) {
-            // TODO: We should allow using iterators defined outside
-            // of a kernel
-            return false;
-        }
-        if (hasDef(item)) {
-            if (buffer(item)->mtype() != MemType::ByValue) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
                            const std::string &shapePtr,
                            const std::string &dimPtr) {
@@ -111,6 +90,55 @@ void CodeGenCUDA::exprOr1(const std::unordered_map<ParallelScope, Expr> &dict,
     } else {
         os() << 1;
     }
+}
+
+void CodeGenCUDA::enterKernel(const Stmt &body) {
+    std::string kernel = "kernel" + std::to_string(nKernel_++);
+    pushStream(kernel);
+    sharedStackTop_ = makeIntConst(0);
+    auto oldGlobalStackTop = globalStackTop_;
+    beginBlock();
+    (*this)(body);
+    endBlock();
+    globalStackTop_ = oldGlobalStackTop; // Because we are not reducing
+                                         // globalStackTop_ inside a kernel
+    popStream();
+
+    Stream &stream = poppedStream_.back();
+    const auto &dim = stream.threadDim_;
+    auto sharedSize = stream.sharedSize_;
+
+    makeIndent();
+    os() << "checkCudaError(cudaFuncSetAttribute(" << kernel
+         << ", cudaFuncAttributeMaxDynamicSharedMemorySize, ";
+    (*this)(sharedSize);
+    os() << "));" << std::endl;
+    makeIndent();
+    os() << kernel << "<<<dim3(";
+    exprOr1(dim, blockIdxX);
+    os() << ", ";
+    exprOr1(dim, blockIdxY);
+    os() << ", ";
+    exprOr1(dim, blockIdxZ);
+    os() << "), dim3(";
+    exprOr1(dim, threadIdxX);
+    os() << ", ";
+    exprOr1(dim, threadIdxY);
+    os() << ", ";
+    exprOr1(dim, threadIdxZ);
+    os() << "), ";
+    (*this)(sharedSize);
+    os() << ", __stream>>>(";
+    bool first = true;
+    for (auto &&[name, d] : stream.useDefs_) {
+        os() << (first ? "" : ", ") << mangle(name);
+        first = false;
+    }
+    for (auto &&name : stream.useIters_) {
+        os() << (first ? "" : ", ") << mangle(name);
+        first = false;
+    }
+    os() << ", _params, __glmem);" << std::endl;
 }
 
 void CodeGenCUDA::visitStmt(const Stmt &stmt) {
@@ -419,53 +447,7 @@ void CodeGenCUDA::visit(const For &op) {
         CodeGenC::visit(op);
     } else if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
         if (!inKernel()) {
-            std::string kernel = "kernel" + std::to_string(nKernel_++);
-            pushStream(kernel);
-            sharedStackTop_ = makeIntConst(0);
-            auto oldGlobalStackTop = globalStackTop_;
-            beginBlock();
-            (*this)(op->body_);
-            streamStack_.back().threadDim_[op->property_->parallel_] = op->len_;
-            endBlock();
-            globalStackTop_ =
-                oldGlobalStackTop; // Because we are not reducing
-                                   // globalStackTop_ inside a kernel
-            popStream();
-            Stream &stream = poppedStream_.back();
-            const auto &dim = stream.threadDim_;
-            auto sharedSize = stream.sharedSize_;
-
-            makeIndent();
-            os() << "checkCudaError(cudaFuncSetAttribute(" << kernel
-                 << ", cudaFuncAttributeMaxDynamicSharedMemorySize, ";
-            (*this)(sharedSize);
-            os() << "));" << std::endl;
-            makeIndent();
-            os() << kernel << "<<<dim3(";
-            exprOr1(dim, blockIdxX);
-            os() << ", ";
-            exprOr1(dim, blockIdxY);
-            os() << ", ";
-            exprOr1(dim, blockIdxZ);
-            os() << "), dim3(";
-            exprOr1(dim, threadIdxX);
-            os() << ", ";
-            exprOr1(dim, threadIdxY);
-            os() << ", ";
-            exprOr1(dim, threadIdxZ);
-            os() << "), ";
-            (*this)(sharedSize);
-            os() << ", __stream>>>(";
-            bool first = true;
-            for (auto &&[name, d] : stream.useDefs_) {
-                os() << (first ? "" : ", ") << mangle(name);
-                first = false;
-            }
-            for (auto &&name : stream.useIters_) {
-                os() << (first ? "" : ", ") << mangle(name);
-                first = false;
-            }
-            os() << ", _params, __glmem);" << std::endl;
+            enterKernel(op);
         } else {
             (*this)(op->body_);
             streamStack_.back().threadDim_[op->property_->parallel_] = op->len_;
@@ -502,14 +484,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             Expr size = makeIntConst(sizeOf(tensor->dtype()));
             for (auto &&dim : shape) {
-                if (isConstOrByValue(dim)) {
-                    size = makeMul(size, dim);
-                } else {
-                    throw InvalidProgram(
-                        "Currently dynamic sized gpu/global "
-                        "memory other than \"byvalue\" memory type allocated "
-                        "from inside a kernel is not supported");
-                }
+                size = makeMul(size, dim);
             }
 
             // Align to 128 bytes (TODO: look up cache line size from Target)
@@ -558,8 +533,8 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
         case MemType::GPUShared: {
             if (!inKernel()) {
-                throw InvalidProgram("Allocating a shared buffer outside a "
-                                     "kernel is not allowed");
+                enterKernel(op);
+                return;
             }
 
             // A static shared memory array cannot be larger than 48KB (maybe a
@@ -578,13 +553,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             Expr size = makeIntConst(sizeOf(tensor->dtype()));
             for (auto &&dim : shape) {
-                if (isConstOrByValue(dim)) {
-                    size = makeMul(size, dim);
-                } else {
-                    throw InvalidProgram("Currently dynamic sized gpu/shared "
-                                         "memory other than \"byvalue\" memory "
-                                         "type is not supported");
-                }
+                size = makeMul(size, dim);
             }
 
             streamStack_.back().sharedSize_ =
@@ -603,11 +572,8 @@ void CodeGenCUDA::visit(const VarDef &op) {
         case MemType::GPULocal:
         case MemType::GPUWarp: {
             if (!inKernel()) {
-                throw InvalidProgram(
-                    "Allocating a " +
-                    ::freetensor::toString(op->buffer_->mtype()) +
-                    " buffer outside a "
-                    "kernel is not allowed");
+                enterKernel(op);
+                return;
             }
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor->shape();
