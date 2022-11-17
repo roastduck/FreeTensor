@@ -36,13 +36,12 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     Expr globalSize() const { return globalSize_; }
 
   private:
-    bool isConstOrByValue(const std::unordered_set<std::string> &names) const;
-    bool isConstOrByValue(const Expr &x) const;
-
     bool inKernel() const;
 
     void exprOr1(const std::unordered_map<ParallelScope, Expr> &dict,
                  const ParallelScope &key);
+
+    void enterKernel(const Stmt &body);
 
   protected:
     void genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,

@@ -10,7 +10,6 @@
 #include <pass/gpu/normalize_threads.h>
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/hoist_var_over_stmt_seq.h>
-#include <pass/make_const_shape.h>
 #include <pass/make_heap_alloc.h>
 #include <pass/make_parallel_reduction.h>
 #include <pass/make_reduction.h>
@@ -131,15 +130,6 @@ void init_ffi_pass(py::module_ &m) {
     m.def("make_heap_alloc",
           static_cast<Stmt (*)(const Stmt &)>(&makeHeapAlloc), "stmt"_a);
 
-    m.def("make_const_shape",
-          static_cast<Func (*)(const Func &, const std::vector<MemType> &)>(
-              &makeConstShape),
-          "func"_a, "mtypes"_a);
-    m.def("make_const_shape",
-          static_cast<Stmt (*)(const Stmt &, const std::vector<MemType> &)>(
-              &makeConstShape),
-          "stmt"_a, "mtypes"_a);
-
     m.def("use_builtin_div",
           static_cast<Func (*)(const Func &)>(&useBuiltinDiv), "func"_a);
     m.def("use_builtin_div",
@@ -174,6 +164,13 @@ void init_ffi_pass(py::module_ &m) {
           "func"_a);
     m.def("gpu_normalize_threads",
           static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeThreads),
+          "stmt"_a);
+
+    m.def("gpu_normalize_var_in_kernel",
+          static_cast<Func (*)(const Func &)>(&gpu::normalizeVarInKernel),
+          "func"_a);
+    m.def("gpu_normalize_var_in_kernel",
+          static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeVarInKernel),
           "stmt"_a);
 
     m.def("gpu_make_sync",
