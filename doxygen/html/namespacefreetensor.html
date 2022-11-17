@@ -80,6 +80,8 @@ Namespaces</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespacefreetensor_1_1detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor_1_1detail.html">detail</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespacefreetensor_1_1gpu"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor_1_1gpu.html">gpu</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
@@ -424,8 +426,6 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1LTNode.html">LTNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MakeCacheVar.html">MakeCacheVar</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MakeConstShape.html">MakeConstShape</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MakeFillAndFlush.html">MakeFillAndFlush</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1833,8 +1833,6 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:a347f7684c28340f2c1710b73f1440dfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad011792a62e69506f3d9b178a1e25a56"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad011792a62e69506f3d9b178a1e25a56">hoistVarOverStmtSeq</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::optional&lt; std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;togetherIds=std::nullopt)</td></tr>
 <tr class="separator:ad011792a62e69506f3d9b178a1e25a56"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9813bc231cf4bdd83d0f220024948bea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9813bc231cf4bdd83d0f220024948bea">makeConstShape</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::vector&lt; <a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150">MemType</a> &gt; &amp;mtypes)</td></tr>
-<tr class="separator:a9813bc231cf4bdd83d0f220024948bea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b4c984aecaea6f0e74adc5a0f769204"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8b4c984aecaea6f0e74adc5a0f769204">makeHeapAlloc</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a8b4c984aecaea6f0e74adc5a0f769204"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9fc9252c3954dc411dae3a03e6821f6c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9fc9252c3954dc411dae3a03e6821f6c">DEFINE_PASS_FOR_FUNC</a> (<a class="el" href="namespacefreetensor.html#a8b4c984aecaea6f0e74adc5a0f769204">makeHeapAlloc</a>)</td></tr>
@@ -11244,34 +11242,6 @@ template&lt;class T &gt; </div>
           <td></td>
           <td class="paramtype"><a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150">MemType</a>&#160;</td>
           <td class="paramname"><em>mtype</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a9813bc231cf4bdd83d0f220024948bea" name="a9813bc231cf4bdd83d0f220024948bea"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9813bc231cf4bdd83d0f220024948bea">&#9670;&nbsp;</a></span>makeConstShape()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::makeConstShape </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
-          <td class="paramname"><em>op</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::vector&lt; <a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150">MemType</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>mtypes</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
