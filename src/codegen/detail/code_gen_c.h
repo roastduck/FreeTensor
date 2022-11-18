@@ -61,11 +61,18 @@ void CodeGenC<Stream>::genMdPtrDef(const VarDef &def,
 
     if (buf->tensor()->shape().empty()) {
         // Use reference for scalars
+        // e.g.
+        // ((const int32_t &)*((const int32_t *)(...)))
         this->os() << "((";
         genMdPtrType(def, isConst);
-        this->os() << ")*(";
+        this->os() << ")*((";
+        if (isConst) {
+            this->os() << "const ";
+        }
+        this->os() << gen(buf->tensor()->dtype()) << " *";
+        this->os() << ")(";
         genRawPtr();
-        this->os() << "))";
+        this->os() << ")))";
         return;
     }
 
@@ -131,12 +138,13 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
     auto name = mangle(op->name_);
 
     if (op->viewOf_.has_value()) {
-        // e.g. auto x = mdspan_r<const float, extents<5, 5>>(y.data_handle());
+        // e.g.
+        // auto &&x = mdspan_r<const float, extents<5, 5>>(y.data_handle());
         auto source = op;
         while (source->viewOf_.has_value()) {
             source = this->def(*source->viewOf_);
         }
-        this->os() << "auto " << name << " = ";
+        this->os() << "auto &&" << name << " = ";
         genMdPtrDef(op, mangle(source->name_) + ".data_handle()",
                     source->buffer_->atype() == AccessType::Input);
         this->os() << ";" << std::endl;
@@ -246,8 +254,8 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
 
         default:
             // e.g.
-            // auto x = mdspan_r<const float, extents<5, 5>>(_params[0]);
-            this->os() << "auto " << name << " = ";
+            // auto &&x = mdspan_r<const float, extents<5, 5>>(_params[0]);
+            this->os() << "auto &&" << name << " = ";
             genMdPtrDef(op, rawPtr, op->buffer_->atype() == AccessType::Input);
             this->os() << ";" << std::endl;
         }
@@ -302,13 +310,13 @@ template <class Stream> void CodeGenC<Stream>::visit(const Alloc &op) {
 
 template <class Stream> void CodeGenC<Stream>::visit(const Free &op) {
 
-    // e.g. auto x_ptr = x.data_handle();
+    // e.g. auto &&x_ptr = x.data_handle();
     //      x_opt.drop();
     //      x_opt = std::nullopt;
     //      delete[] x_ptr;
     auto &&name = mangle(op->var_);
     this->makeIndent();
-    this->os() << "auto " << name << "_ptr = " << name << ".data_handle();"
+    this->os() << "auto &&" << name << "_ptr = " << name << ".data_handle();"
                << std::endl;
     this->makeIndent();
     this->os() << name << "_opt.drop();" << std::endl;

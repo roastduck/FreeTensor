@@ -363,13 +363,13 @@ void CodeGenCUDA::visit(const Alloc &op) {
 void CodeGenCUDA::visit(const Free &op) {
     ASSERT(buffer(op->var_)->mtype() == MemType::GPUGlobalHeap);
 
-    // e.g. auto x_ptr = x.data_handle();
+    // e.g. auto &&x_ptr = x.data_handle();
     //      x_opt.drop();
     //      x_opt = std::nullopt;
     //      cudaFree(x_ptr);
     auto &&name = mangle(op->var_);
     makeIndent();
-    os() << "auto " << name << "_ptr = " << name << ".data_handle();"
+    os() << "auto &&" << name << "_ptr = " << name << ".data_handle();"
          << std::endl;
     makeIndent();
     os() << name << "_opt.drop();" << std::endl;
@@ -510,11 +510,11 @@ void CodeGenCUDA::visit(const VarDef &op) {
         switch (op->buffer_->mtype()) {
         case MemType::GPUGlobal: {
 
-            // e.g. auto x = mdspan_r<float, extents<5, 5>>(__glmem + 0);
+            // e.g. auto &&x = mdspan_r<float, extents<5, 5>>(__glmem + 0);
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor->shape();
             makeIndent();
-            os() << "auto " << mangle(op->name_) << " = ";
+            os() << "auto &&" << mangle(op->name_) << " = ";
             genMdPtrDef(op, [this]() {
                 os() << "__glmem + (";
                 (*this)(globalStackTop_);
@@ -579,11 +579,11 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             // A static shared memory array cannot be larger than 48KB (maybe a
             // bug of NVCC), so we allocate shared memory dynamically
-            // auto x = mdspan<float, extents<5, 5>>(__shmem + 0);
+            // auto &&x = mdspan<float, extents<5, 5>>(__shmem + 0);
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor->shape();
             makeIndent();
-            os() << "auto " << mangle(op->name_) << " = ";
+            os() << "auto &&" << mangle(op->name_) << " = ";
             genMdPtrDef(op, [this]() {
                 os() << "__shmem + (";
                 (*this)(sharedStackTop_);
