@@ -310,13 +310,13 @@ template <class Stream> void CodeGenC<Stream>::visit(const Alloc &op) {
 
 template <class Stream> void CodeGenC<Stream>::visit(const Free &op) {
 
-    // e.g. auto &&x_ptr = x.data_handle();
+    // e.g. auto x_ptr = x.data_handle();
     //      x_opt.drop();
     //      x_opt = std::nullopt;
     //      delete[] x_ptr;
     auto &&name = mangle(op->var_);
     this->makeIndent();
-    this->os() << "auto &&" << name << "_ptr = " << name << ".data_handle();"
+    this->os() << "auto " << name << "_ptr = " << name << ".data_handle();"
                << std::endl;
     this->makeIndent();
     this->os() << name << "_opt.drop();" << std::endl;

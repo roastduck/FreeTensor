@@ -363,13 +363,13 @@ void CodeGenCUDA::visit(const Alloc &op) {
 void CodeGenCUDA::visit(const Free &op) {
     ASSERT(buffer(op->var_)->mtype() == MemType::GPUGlobalHeap);
 
-    // e.g. auto &&x_ptr = x.data_handle();
+    // e.g. auto x_ptr = x.data_handle();
     //      x_opt.drop();
     //      x_opt = std::nullopt;
     //      cudaFree(x_ptr);
     auto &&name = mangle(op->var_);
     makeIndent();
-    os() << "auto &&" << name << "_ptr = " << name << ".data_handle();"
+    os() << "auto " << name << "_ptr = " << name << ".data_handle();"
          << std::endl;
     makeIndent();
     os() << name << "_opt.drop();" << std::endl;
