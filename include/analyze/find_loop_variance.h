@@ -57,12 +57,12 @@ class MarkStores : public TrackStmt<Visitor> {
     typedef TrackStmt<Visitor> BaseClass;
 
     const std::string &var_;
-    std::vector<Expr> &condStack_;
+    std::vector<StmtOrExprID> &condStack_;
     LoopVariTransVarMap &varInfo_;
     const LoopVariExprMap &exprInfo_;
 
   public:
-    MarkStores(const std::string &var, std::vector<Expr> &condStack,
+    MarkStores(const std::string &var, std::vector<StmtOrExprID> &condStack,
                LoopVariTransVarMap &varInfo, const LoopVariExprMap &exprInfo)
         : var_(var), condStack_(condStack), varInfo_(varInfo),
           exprInfo_(exprInfo) {
@@ -72,6 +72,7 @@ class MarkStores : public TrackStmt<Visitor> {
   private:
     // to = from meet to
     void meetTo(const Expr &from, const std::string &to);
+    void meetTo(const StmtOrExprID &from, const std::string &to);
 
     template <class T> void visitMemWrite(const T &op) {
         BaseClass::visit(op);
@@ -108,7 +109,7 @@ class FindLoopVariance : public TrackStmt<Visitor> {
     typedef TrackStmt<Visitor> BaseClass;
 
     std::vector<ID> loopStack_;
-    std::vector<Expr> condStack_;
+    std::vector<StmtOrExprID> condStack_;
     std::unordered_map<std::string, For> loops_;
     LoopVariTransVarMap varInfo_;
     LoopVariUniqVarMap uniqVarInfo_;

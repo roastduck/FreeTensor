@@ -738,6 +738,48 @@ def test_multiplex_shared_2():
     assert ft.pop_ast().match(func.body)
 
 
+def test_multiplex_shared_3():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(256,), "int32", "input", "gpu/global"]
+        y: ft.Var[(4, 256), "int32", "output", "gpu/global"]
+        #! label: L0
+        for i in range(0, 4):
+            t = ft.empty((256,), "int32", "gpu/shared")
+            #! label: L1
+            for j in range(0, 256):
+                t[j] = 0
+                if i < 2:
+                    t[j] = x[j] * 2
+            #! label: L2
+            for j in range(0, 256):
+                y[i, j] = t[j] + 1
+
+    s = ft.Schedule(test)
+    s.parallelize("L0", "threadIdx.y")
+    s.parallelize("L1", "threadIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
+
+    @ft.transform
+    def expected(x, y):
+        x: ft.Var[(256,), "int32", "input", "gpu/global"]
+        y: ft.Var[(4, 256), "int32", "output", "gpu/global"]
+        for i in range(0, 4):
+            for j in range(0, 256):
+                t = ft.empty((4, 256), "int32", "gpu/shared")
+                t[i, j] = 0
+                if i < 2:
+                    t[i, j] = x[j] * 2
+                y[i, j] = t[i, j] + 1
+
+    assert expected.body.match(func.body)
+
+
 def test_simplex_local_1():
 
     @ft.transform
