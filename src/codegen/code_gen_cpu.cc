@@ -83,10 +83,10 @@ void CodeGenCPU::visit(const VarDef &op) {
 
         case MemType::CPU: {
             // e.g.
-            // auto x = mdspan_r<float, std::extents<5, 5, 5>>(&__stack[200 +
+            // auto &&x = mdspan_r<float, std::extents<5, 5, 5>>(&__stack[200 +
             // omp_get_thread_num() * _threadStackTop + 100]);
             this->makeIndent();
-            this->os() << "auto " << name << " = ";
+            this->os() << "auto &&" << name << " = ";
             std::string rawPtr;
             if (inParallel_) {
                 rawPtr = "&__stack[" + std::to_string(sharedStackTop_) +
@@ -168,7 +168,7 @@ void CodeGenCPU::visit(const For &op) {
                 usedAsReduction_.insert(def(r->var_));
                 auto var = mangle(r->var_);
                 makeIndent();
-                os() << "auto " << var << "_ptr = toArrPtr(" << var << ");"
+                os() << "auto &&" << var << "_ptr = toArrPtr(" << var << ");"
                      << std::endl;
             }
         }

@@ -26,6 +26,44 @@ static std::string genCUBLASType(DataType dtype) {
     }
 }
 
+void CodeGenCUDA::genMdPtrType(std::ostream &os, const VarDef &def,
+                               bool isConst) {
+    auto &&buf = def->buffer_;
+    if (buf->tensor()->shape().empty() &&
+        (buf->mtype() == MemType::GPUGlobal ||
+         buf->mtype() == MemType::GPUGlobalHeap)) {
+        // Use pointer instead of reference for scalars, because when passing an
+        // argument from host to a kernel, a reference means copy the value from
+        // CPU to GPU, while a pointer means passing the address
+        if (isConst) {
+            os << "const ";
+        }
+        os << gen(buf->tensor()->dtype()) << " *";
+        return;
+    }
+    CodeGenC<CodeGenCUDAStream>::genMdPtrType(os, def, isConst);
+}
+
+void CodeGenCUDA::genMdPtrDef(const VarDef &def,
+                              const std::function<void()> &genRawPtr,
+                              bool isConst) {
+    auto &&buf = def->buffer_;
+    if (buf->tensor()->shape().empty() &&
+        (buf->mtype() == MemType::GPUGlobal ||
+         buf->mtype() == MemType::GPUGlobalHeap)) {
+        // Use pointer instead of reference for scalars, because when passing an
+        // argument from host to a kernel, a reference means copy the value from
+        // CPU to GPU, while a pointer means passing the address
+        this->os() << "((";
+        genMdPtrType(def, isConst);
+        this->os() << ")(";
+        genRawPtr();
+        this->os() << "))";
+        return;
+    }
+    CodeGenC<CodeGenCUDAStream>::genMdPtrDef(def, genRawPtr, isConst);
+}
+
 void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
                            const std::string &shapePtr,
                            const std::string &dimPtr) {
@@ -47,13 +85,11 @@ void CodeGenCUDA::genScalar(const VarDef &def,
                             const std::vector<Expr> &indices) {
     auto &&var = def->name_;
     auto mtype = buffer(var)->mtype();
-    if (indices.empty() && def->buffer_->atype() == AccessType::Cache &&
-        (mtype == MemType::GPUGlobal || mtype == MemType::GPUShared)) {
-        os() << "*" << mangle(var);
-    } else if (!inKernel() &&
-               (mtype == MemType::GPUGlobal || mtype == MemType::GPUShared ||
-                mtype == MemType::GPUWarp || mtype == MemType::GPULocal)) {
-        if (mtype == MemType::GPUGlobal) {
+    if (!inKernel() &&
+        (mtype == MemType::GPUGlobal || mtype == MemType::GPUGlobalHeap ||
+         mtype == MemType::GPUShared || mtype == MemType::GPUWarp ||
+         mtype == MemType::GPULocal)) {
+        if (mtype == MemType::GPUGlobal || mtype == MemType::GPUGlobalHeap) {
             WARNING(
                 "You are accessing gpu/global memory from outside of a kernel. "
                 "This is only for debugging, and it has a low performance");
@@ -65,6 +101,10 @@ void CodeGenCUDA::genScalar(const VarDef &def,
                                  ::freetensor::toString(mtype) +
                                  " from outside of a kernel");
         }
+    } else if (indices.empty() && (mtype == MemType::GPUGlobal ||
+                                   mtype == MemType::GPUGlobalHeap ||
+                                   mtype == MemType::GPUShared)) {
+        os() << "*" << mangle(var);
     } else if (def->buffer_->mtype() == MemType::GPULocal ||
                def->buffer_->mtype() == MemType::GPUWarp) {
         // Likely registers, no wrapping inside a mdspan
@@ -470,11 +510,11 @@ void CodeGenCUDA::visit(const VarDef &op) {
         switch (op->buffer_->mtype()) {
         case MemType::GPUGlobal: {
 
-            // e.g. auto x = mdspan_r<float, extents<5, 5>>(__glmem + 0);
+            // e.g. auto &&x = mdspan_r<float, extents<5, 5>>(__glmem + 0);
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor->shape();
             makeIndent();
-            os() << "auto " << mangle(op->name_) << " = ";
+            os() << "auto &&" << mangle(op->name_) << " = ";
             genMdPtrDef(op, [this]() {
                 os() << "__glmem + (";
                 (*this)(globalStackTop_);
@@ -539,11 +579,11 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             // A static shared memory array cannot be larger than 48KB (maybe a
             // bug of NVCC), so we allocate shared memory dynamically
-            // auto x = mdspan<float, extents<5, 5>>(__shmem + 0);
+            // auto &&x = mdspan<float, extents<5, 5>>(__shmem + 0);
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor->shape();
             makeIndent();
-            os() << "auto " << mangle(op->name_) << " = ";
+            os() << "auto &&" << mangle(op->name_) << " = ";
             genMdPtrDef(op, [this]() {
                 os() << "__shmem + (";
                 (*this)(sharedStackTop_);

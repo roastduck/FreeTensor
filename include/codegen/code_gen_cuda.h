@@ -32,6 +32,11 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
         : CodeGenC(params, returns) {}
 
     using CodeGenC<CodeGenCUDAStream>::genMdPtrType;
+    using CodeGenC<CodeGenCUDAStream>::genMdPtrDef;
+    void genMdPtrType(std::ostream &os, const VarDef &def,
+                      bool isConst = false) override;
+    void genMdPtrDef(const VarDef &def, const std::function<void()> &genRawPtr,
+                     bool isConst = false) override;
 
     Expr globalSize() const { return globalSize_; }
 
