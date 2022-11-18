@@ -36,7 +36,7 @@ var searchData=
   ['manipmetadatawithlocation_33',['manipMetadataWithLocation',['../namespacefreetensor.html#ab29075b5acb462bd9f98afa368fb293e',1,'freetensor']]],
   ['markdef_34',['markDef',['../classfreetensor_1_1CodeGen.html#ade98cbc0f7bc1ec8767e57d11eb2da79',1,'freetensor::CodeGen']]],
   ['markdefiter_35',['markDefIter',['../classfreetensor_1_1CodeGen.html#a1be7fa40699bdc5b9f80b6034c2065e5',1,'freetensor::CodeGen']]],
-  ['markstores_36',['MarkStores',['../classfreetensor_1_1MarkStores.html#aff6d7574becc15adb5cf71af89f29a87',1,'freetensor::MarkStores']]],
+  ['markstores_36',['MarkStores',['../classfreetensor_1_1MarkStores.html#a3feb40c7b06aa9f0d9d4eaecd16fb77c',1,'freetensor::MarkStores']]],
   ['markundef_37',['markUndef',['../classfreetensor_1_1CodeGen.html#a96db2563ff8eb7dfe7ab5eca9fe05479',1,'freetensor::CodeGen']]],
   ['markundefiter_38',['markUndefIter',['../classfreetensor_1_1CodeGen.html#a318a6c96617300d7ab29e62a73384bc6',1,'freetensor::CodeGen']]],
   ['markuse_39',['markUse',['../classfreetensor_1_1CodeGen.html#af04a3e0a600e5924e2efdfc25d8e329d',1,'freetensor::CodeGen']]],
