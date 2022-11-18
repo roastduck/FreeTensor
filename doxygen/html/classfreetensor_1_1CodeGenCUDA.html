@@ -133,6 +133,10 @@ Public Types</h2></td></tr>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:af65f31685c53ff4da12c56c12f45648b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenCUDA.html#af65f31685c53ff4da12c56c12f45648b">CodeGenCUDA</a> (const std::vector&lt; <a class="el" href="structfreetensor_1_1FuncParam.html">FuncParam</a> &gt; &amp;params, const std::vector&lt; <a class="el" href="structfreetensor_1_1FuncRet.html">FuncRet</a> &gt; &amp;returns)</td></tr>
 <tr class="separator:af65f31685c53ff4da12c56c12f45648b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8814b998944fba749f2756b83a3b39e5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenCUDA.html#a8814b998944fba749f2756b83a3b39e5">genMdPtrType</a> (std::ostream &amp;<a class="el" href="classfreetensor_1_1CodeGen.html#a94503013f91715f321f5025411cd2921">os</a>, const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;<a class="el" href="classfreetensor_1_1SymbolTable.html#a822e9e26d00402a13826e2bd1f7d65a2">def</a>, bool isConst=false) override</td></tr>
+<tr class="separator:a8814b998944fba749f2756b83a3b39e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acefb0ebad8c207d70c978a4b036ca1c8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenCUDA.html#acefb0ebad8c207d70c978a4b036ca1c8">genMdPtrDef</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;<a class="el" href="classfreetensor_1_1SymbolTable.html#a822e9e26d00402a13826e2bd1f7d65a2">def</a>, const std::function&lt; void()&gt; &amp;genRawPtr, bool isConst=false) override</td></tr>
+<tr class="separator:acefb0ebad8c207d70c978a4b036ca1c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa27c16876ae95eb1df98986f2234d4a4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenCUDA.html#aa27c16876ae95eb1df98986f2234d4a4">globalSize</a> () const</td></tr>
 <tr class="separator:aa27c16876ae95eb1df98986f2234d4a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1CodeGenC"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1CodeGenC')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1CodeGenC.html">freetensor::CodeGenC&lt; CodeGenCUDAStream &gt;</a></td></tr>
@@ -606,6 +610,94 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Implements <a class="el" href="classfreetensor_1_1CodeGenC.html#a838c7a49e9ebac822dd8292b592c7ef3">freetensor::CodeGenC&lt; CodeGenCUDAStream &gt;</a>.</p>
+
+</div>
+</div>
+<a id="acefb0ebad8c207d70c978a4b036ca1c8" name="acefb0ebad8c207d70c978a4b036ca1c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acefb0ebad8c207d70c978a4b036ca1c8">&#9670;&nbsp;</a></span>genMdPtrDef()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::CodeGenCUDA::genMdPtrDef </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;&#160;</td>
+          <td class="paramname"><em>def</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; void()&gt; &amp;&#160;</td>
+          <td class="paramname"><em>genRawPtr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>isConst</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1CodeGenC.html#a8511ed3fa6fc02442db5255e4590848f">freetensor::CodeGenC&lt; CodeGenCUDAStream &gt;</a>.</p>
+
+</div>
+</div>
+<a id="a8814b998944fba749f2756b83a3b39e5" name="a8814b998944fba749f2756b83a3b39e5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8814b998944fba749f2756b83a3b39e5">&#9670;&nbsp;</a></span>genMdPtrType()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::CodeGenCUDA::genMdPtrType </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;&#160;</td>
+          <td class="paramname"><em>def</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>isConst</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1CodeGenC.html#a38f8a2183ffd416f3fff5836631b7f90">freetensor::CodeGenC&lt; CodeGenCUDAStream &gt;</a>.</p>
 
 </div>
 </div>
