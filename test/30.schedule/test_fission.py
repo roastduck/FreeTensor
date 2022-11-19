@@ -324,6 +324,44 @@ def test_correct_dependency_branch():
     assert expect.body.match(test.body)
 
 
+def test_correct_dependency_branch_with_else():
+
+    @ft.transform(verbose=1)
+    def test(x: ft.Var[(4,), "float32"]):
+        y = ft.empty((4,), "float32")
+        #! label: L
+        for i in range(4):
+            t = ft.empty((), "float32")
+            if x[i] < 2:
+                #! label: S1
+                t[...] = 1
+            else:
+                #! label: S2
+                t[...] = 2
+            #! label: S3
+            y[i] = t[...] * 2
+        return y
+
+    s = ft.Schedule(test, verbose=1)
+    s.fission("L", ft.FissionSide.Before, "S2")
+    test = ft.lower(s.func(), verbose=1, skip_passes=['prop_one_time_use'])
+
+    @ft.transform(verbose=1)
+    def expected(x: ft.Var[(4,), "float32"]):
+        y = ft.empty((4,), "float32")
+        t = ft.empty((4,), "float32")
+        for i in range(4):
+            if x[i] < 2:
+                t[i] = 1
+        for i in range(4):
+            if x[i] >= 2:
+                t[i] = 2
+            y[i] = t[i] * 2
+        return y
+
+    assert expected.body.match(test.body)
+
+
 def test_correct_dependency_loop_step():
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
