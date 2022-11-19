@@ -41,6 +41,13 @@ class CompUniqueBoundsInterface {
     virtual ~CompUniqueBoundsInterface() {}
 
     virtual Ref<UniqueBoundInterface> getBound(const Expr &op) = 0;
+
+    int64_t getIntLower(const Expr &op) { return getBound(op)->lowerInt(); }
+    int64_t getIntUpper(const Expr &op) { return getBound(op)->upperInt(); }
+    std::optional<int64_t> getInt(const Expr &op) {
+        return getBound(op)->getInt();
+    }
+
     virtual bool alwaysLT(const Expr &lhs, const Expr &rhs) = 0;
     virtual bool alwaysLE(const Expr &lhs, const Expr &rhs) = 0;
 
@@ -67,6 +74,14 @@ class CompUniqueBoundsInterface {
  */
 class CompUniqueBounds : public CompUniqueBoundsInterface, public Visitor {
     typedef Visitor BaseClass;
+
+    typedef std::vector<LowerBound> LowerBoundsList;
+    typedef std::vector<UpperBound> UpperBoundsList;
+    typedef std::unordered_map<Expr, LowerBoundsList> LowerBoundsMap;
+    typedef std::unordered_map<Expr, UpperBoundsList> UpperBoundsMap;
+
+    LowerBoundsMap lower_;
+    UpperBoundsMap upper_;
 
   public:
     class UniqueBound : public UniqueBoundInterface {
@@ -96,47 +111,9 @@ class CompUniqueBounds : public CompUniqueBoundsInterface, public Visitor {
         Expr simplestExpr(const std::unordered_map<std::string, int>
                               &orderedScope) const override;
     };
-    typedef std::unordered_map<Expr, UniqueBound> UniqueBoundsMap;
 
-    typedef std::vector<LowerBound> LowerBoundsList;
-    typedef std::vector<UpperBound> UpperBoundsList;
-    typedef std::unordered_map<Expr, LowerBoundsList> LowerBoundsMap;
-    typedef std::unordered_map<Expr, UpperBoundsList> UpperBoundsMap;
-
-  private:
-    LowerBoundsMap lower_;
-    UpperBoundsMap upper_;
-
-  public:
     CompUniqueBounds(const CompTransientBoundsInterface &transients)
         : CompUniqueBoundsInterface(transients) {}
-
-  protected:
-    LowerBoundsList getLower(const Expr &op) {
-        (*this)(op);
-        return lower_.at(op);
-    }
-    UpperBoundsList getUpper(const Expr &op) {
-        (*this)(op);
-        return upper_.at(op);
-    }
-
-  public:
-    int64_t getIntLower(const Expr &op);
-    int64_t getIntUpper(const Expr &op);
-    std::optional<int64_t> getInt(const Expr &op);
-
-    /**
-     * Get all bounds defined by only variables or iterators in `names`
-     * @{
-     */
-    LowerBoundsList
-    getDefinedLower(const Expr &op,
-                    const std::unordered_set<std::string> &names);
-    UpperBoundsList
-    getDefinedUpper(const Expr &op,
-                    const std::unordered_set<std::string> &names);
-    /** @} */
 
     Ref<UniqueBoundInterface> getBound(const Expr &op) override;
 
@@ -155,6 +132,15 @@ class CompUniqueBounds : public CompUniqueBoundsInterface, public Visitor {
     unionBounds(const std::vector<Ref<UniqueBoundInterface>> &bounds) override;
 
   protected:
+    LowerBoundsList getLower(const Expr &op) {
+        (*this)(op);
+        return lower_.at(op);
+    }
+    UpperBoundsList getUpper(const Expr &op) {
+        (*this)(op);
+        return upper_.at(op);
+    }
+
     template <class T> void setLower(const Expr &op, T &&list) {
         lower_[op] = std::forward<T>(list);
     }

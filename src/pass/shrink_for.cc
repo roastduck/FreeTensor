@@ -56,19 +56,10 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
     if (checker.hasSideEffect()) {
         for (auto &&[_var, _names] : views::zip(iterStack_, namesStack_)) {
             auto &&names = _names;
-
             // Trigger recomputing in analyze/comp_unique_bounds
             auto var = deepCopy(_var).as<VarNode>();
-
-            std::vector<Expr> lower, upper;
-            for (auto &&b : bound_.getDefinedLower(var, names)) {
-                lower.emplace_back(b.expr());
-            }
-            for (auto &&b : bound_.getDefinedUpper(var, names)) {
-                upper.emplace_back(b.expr());
-            }
-            newRange_[var].first.emplace_back(std::move(lower));
-            newRange_[var].second.emplace_back(std::move(upper));
+            newRange_[var].emplace_back(
+                bound_.getBound(var)->restrictScope(names));
         }
     }
 
@@ -90,8 +81,7 @@ Stmt ShrinkFor::visit(const For &_op) {
     if (!newRange_.count(var)) {
         return makeStmtSeq({});
     }
-    auto lower = makeMinMax(newRange_.at(var).first);
-    auto upper = makeMaxMin(newRange_.at(var).second);
+    auto [lower, upper] = bound_.unionBounds(newRange_[var]);
 
     if (op->property_->unroll_) {
         // Backends do not support these loops to be of variable lengths

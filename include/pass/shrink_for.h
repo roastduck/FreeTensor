@@ -34,8 +34,8 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
     // See 2.pass/test_shrink_for.py::test_linear_bounds
     PBCompBounds bound_;
 
-    ASTHashMap<Var, std::pair<std::vector<std::vector<Expr>>,
-                              std::vector<std::vector<Expr>>>>
+    ASTHashMap<
+        Var, std::vector<Ref<CompUniqueBoundsInterface::UniqueBoundInterface>>>
         newRange_;
     std::vector<Var> iterStack_;
     std::vector<std::unordered_set<std::string>> namesStack_;

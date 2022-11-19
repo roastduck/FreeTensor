@@ -54,8 +54,9 @@ class MakeParallelReduction : public CompTransientBounds<SymbolTable<Mutator>> {
     struct ReductionItemFactors {
         ReduceOp op_;
         std::string var_;
-        std::vector<std::vector<std::vector<Expr>>> lower_,
-            upper_; // [dim][access][bound]
+        std::vector<
+            std::vector<Ref<CompUniqueBoundsInterface::UniqueBoundInterface>>>
+            bound_; // [dim][access]
     };
 
     CompUniqueBounds unique_;

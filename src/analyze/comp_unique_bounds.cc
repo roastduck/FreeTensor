@@ -173,56 +173,6 @@ void CompUniqueBounds::updUpper(UpperBoundsList &list,
     list.emplace_back(bound);
 }
 
-int64_t CompUniqueBounds::getIntLower(const Expr &op) {
-    int64_t ret = LLONG_MIN;
-    for (auto &&b : getLower(op)) {
-        if (b.lin().isConst()) {
-            auto bias = b.lin().bias_;
-            ret = std::max(ret, ceilDiv(bias.p_, bias.q_));
-        }
-    }
-    return ret;
-}
-
-int64_t CompUniqueBounds::getIntUpper(const Expr &op) {
-    int64_t ret = LLONG_MAX;
-    for (auto &&b : getUpper(op)) {
-        if (b.lin().isConst()) {
-            auto bias = b.lin().bias_;
-            ret = std::min(ret, floorDiv(bias.p_, bias.q_));
-        }
-    }
-    return ret;
-}
-
-std::optional<int64_t> CompUniqueBounds::getInt(const Expr &op) {
-    auto lower = getIntLower(op);
-    auto upper = getIntUpper(op);
-    return lower == upper ? std::make_optional<int64_t>(lower) : std::nullopt;
-}
-
-CompUniqueBounds::LowerBoundsList CompUniqueBounds::getDefinedLower(
-    const Expr &op, const std::unordered_set<std::string> &names) {
-    LowerBoundsList ret;
-    for (auto &&b : getLower(op)) {
-        if (checkAllDefined(names, b.allNames())) {
-            ret.emplace_back(b);
-        }
-    }
-    return ret;
-}
-
-CompUniqueBounds::UpperBoundsList CompUniqueBounds::getDefinedUpper(
-    const Expr &op, const std::unordered_set<std::string> &names) {
-    UpperBoundsList ret;
-    for (auto &&b : getUpper(op)) {
-        if (checkAllDefined(names, b.allNames())) {
-            ret.emplace_back(b);
-        }
-    }
-    return ret;
-}
-
 Ref<CompUniqueBoundsInterface::UniqueBoundInterface>
 CompUniqueBounds::getBound(const Expr &op) {
     auto lower = getLower(op);

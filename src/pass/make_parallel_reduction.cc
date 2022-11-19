@@ -1,3 +1,4 @@
+#include "analyze/comp_unique_bounds.h"
 #include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
 #include <analyze/deps.h>
@@ -66,8 +67,10 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     if (toAlter_.count(op->id())) {
-        std::unordered_map<ID, std::vector<std::vector<Expr>>> lowerMap,
-            upperMap; // loop ID -> [dim][bound]
+        std::unordered_map<
+            ID,
+            std::vector<Ref<CompUniqueBoundsInterface::UniqueBoundInterface>>>
+            boundMap; // loop ID -> [dim]
         for (auto &&loopId : toAlter_.at(op->id())) {
             if (auto &&parallel = paraScopes_.at(loopId);
                 std::holds_alternative<CUDAScope>(parallel) &&
@@ -82,54 +85,34 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                 if (isVariant(variantMap_, {idx, _op}, loopId)) {
                     goto use_atomic;
                 }
-                std::vector<Expr> dimLowers{makeIntConst(0)}, dimUppers{dim};
-                for (auto &&item :
-                     unique_.getDefinedLower(idx, scopeDefined_.at(loopId))) {
-                    dimLowers.emplace_back(item.expr());
-                }
-                for (auto &&item :
-                     unique_.getDefinedUpper(idx, scopeDefined_.at(loopId))) {
-                    dimUppers.emplace_back(item.expr());
-                }
-                lowerMap[loopId].emplace_back(std::move(dimLowers));
-                upperMap[loopId].emplace_back(std::move(dimUppers));
+                boundMap[loopId].emplace_back(
+                    unique_.getBound(idx)->restrictScope(
+                        scopeDefined_.at(loopId)));
             }
         }
         for (auto &&loopId : toAlter_.at(op->id())) {
-            const auto &lowers = lowerMap[loopId]; // [dim][bound]
-            const auto &uppers = upperMap[loopId]; // [dim][bound]
-            for (auto &[redOp, var, allLowers, allUppers] :
-                 forReductions_[loopId]) {
-                // allLowers, allUppers : [dim][access][bound]
+            const auto &bounds = boundMap[loopId]; // [dim]
+            for (auto &[redOp, var, allBounds] : forReductions_[loopId]) {
+                // allBounds : [dim][access]
                 if (redOp == op->op_ && var == op->var_) {
-                    ASSERT(allLowers.size() == lowers.size());
-                    ASSERT(allUppers.size() == uppers.size());
-                    for (auto &&[allLowersItem, lowersItem] :
-                         views::zip(allLowers, lowers)) {
-                        allLowersItem.emplace_back(lowersItem);
-                    }
-                    for (auto &&[allUppersItem, uppersItem] :
-                         views::zip(allUppers, uppers)) {
-                        allUppersItem.emplace_back(uppersItem);
+                    ASSERT(allBounds.size() == bounds.size());
+                    for (auto &&[allBoundsItem, boundItem] :
+                         views::zip(allBounds, bounds)) {
+                        allBoundsItem.emplace_back(boundItem);
                     }
                     goto done;
                 }
             }
             {
-                std::vector<std::vector<std::vector<Expr>>> allLowers(
-                    lowers.size()),
-                    allUppers(uppers.size());
-                for (auto &&[allLowersItem, lowersItem] :
-                     views::zip(allLowers, lowers)) {
-                    allLowersItem.emplace_back(lowersItem);
-                }
-                for (auto &&[allUppersItem, uppersItem] :
-                     views::zip(allUppers, uppers)) {
-                    allUppersItem.emplace_back(uppersItem);
+                std::vector<std::vector<
+                    Ref<CompUniqueBoundsInterface::UniqueBoundInterface>>>
+                    allBounds(bounds.size());
+                for (auto &&[allBoundsItem, boundItem] :
+                     views::zip(allBounds, bounds)) {
+                    allBoundsItem.emplace_back(boundItem);
                 }
                 forReductions_[loopId].emplace_back(ReductionItemFactors{
-                    op->op_, op->var_, std::move(allLowers),
-                    std::move(allUppers)});
+                    op->op_, op->var_, std::move(allBounds)});
             }
         done:;
         }
@@ -201,15 +184,14 @@ Stmt MakeParallelReduction::visit(const For &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     if (forReductions_.count(op->id())) {
-        for (auto &&[redOp, var, allLowers, allUppers] :
-             forReductions_.at(op->id())) {
+        for (auto &&[redOp, var, allBounds] : forReductions_.at(op->id())) {
             std::vector<Expr> begins, ends;
-            for (auto &&dimLowers : allLowers) {
-                begins.emplace_back(makeMinMax(dimLowers));
-            }
-            for (auto &&dimUppers : allUppers) {
+            for (auto &&[dimBounds, dimVarSize] :
+                 views::zip(allBounds, buffer(var)->tensor()->shape())) {
+                auto [l, u] = unique_.unionBounds(dimBounds);
+                begins.emplace_back(makeMax(makeIntConst(0), l));
                 ends.emplace_back(
-                    makeAdd(makeMaxMin(dimUppers), makeIntConst(1)));
+                    makeMin(dimVarSize, makeAdd(u, makeIntConst(1))));
             }
             op->property_->reductions_.emplace_back(makeReductionItem(
                 redOp, var, std::move(begins), std::move(ends)));
