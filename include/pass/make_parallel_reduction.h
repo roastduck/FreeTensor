@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_MAKE_PARLLEL_REDUCTION_H
 #define FREE_TENSOR_MAKE_PARLLEL_REDUCTION_H
 
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -54,12 +55,12 @@ class MakeParallelReduction : public CompTransientBounds<SymbolTable<Mutator>> {
     struct ReductionItemFactors {
         ReduceOp op_;
         std::string var_;
-        std::vector<
-            std::vector<Ref<CompUniqueBoundsInterface::UniqueBoundInterface>>>
+        std::vector<std::vector<Ref<CompUniqueBounds::Bound>>>
             bound_; // [dim][access]
     };
 
-    CompUniqueBounds unique_;
+    std::unique_ptr<CompUniqueBounds> uniqueOwn_;
+    CompUniqueBounds &unique_;
 
     const std::unordered_map<ID, std::unordered_set<ID>>
         &toAlter_; // ReduceTo ID -> Racing For ID
@@ -82,8 +83,9 @@ class MakeParallelReduction : public CompTransientBounds<SymbolTable<Mutator>> {
         const std::unordered_map<ID, std::unordered_set<ID>> &toAlter,
         const std::unordered_map<ID, std::vector<For>> &serialOverRed,
         const LoopVariExprMap &variantMap)
-        : unique_(*this), toAlter_(toAlter), serialOverRed_(serialOverRed),
-          variantMap_(variantMap) {}
+        : uniqueOwn_(std::make_unique<CompUniqueBoundsCombination>(*this)),
+          unique_(*uniqueOwn_), toAlter_(toAlter),
+          serialOverRed_(serialOverRed), variantMap_(variantMap) {}
 
   protected:
     using BaseClass::visit;

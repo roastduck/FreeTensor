@@ -98,7 +98,7 @@ class SimplifyPass : public CompTransientBounds<SymbolTable<ConstFold>> {
 };
 
 class BuiltinSimplify : public SimplifyPass {
-    CompUniqueBounds unique_;
+    CompUniqueBoundsCombination unique_;
 
   public:
     BuiltinSimplify() : SimplifyPass(unique_), unique_(*this) {}

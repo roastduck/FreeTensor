@@ -38,7 +38,7 @@ static int countHeavyOps(const Expr &op) {
 
 } // namespace
 
-int64_t CompUniqueBounds::UniqueBound::lowerInt() const {
+int64_t CompUniqueBoundsCombination::Bound::lowerInt() const {
     int64_t ret = LLONG_MIN;
     for (auto &&b : lowerBounds_) {
         if (b.lin().isConst()) {
@@ -48,7 +48,7 @@ int64_t CompUniqueBounds::UniqueBound::lowerInt() const {
     }
     return ret;
 }
-int64_t CompUniqueBounds::UniqueBound::upperInt() const {
+int64_t CompUniqueBoundsCombination::Bound::upperInt() const {
     int64_t ret = LLONG_MAX;
     for (auto &&b : upperBounds_) {
         if (b.lin().isConst()) {
@@ -58,13 +58,13 @@ int64_t CompUniqueBounds::UniqueBound::upperInt() const {
     }
     return ret;
 }
-std::optional<int64_t> CompUniqueBounds::UniqueBound::getInt() const {
+std::optional<int64_t> CompUniqueBoundsCombination::Bound::getInt() const {
     auto lower = lowerInt();
     auto upper = upperInt();
     return lower == upper ? std::make_optional<int64_t>(lower) : std::nullopt;
 }
 
-Expr CompUniqueBounds::UniqueBound::lowerExpr() const {
+Expr CompUniqueBoundsCombination::Bound::lowerExpr() const {
     Expr result;
     for (LowerBound &b : lowerBounds_) {
         if (result.isValid())
@@ -74,7 +74,7 @@ Expr CompUniqueBounds::UniqueBound::lowerExpr() const {
     }
     return result;
 }
-Expr CompUniqueBounds::UniqueBound::upperExpr() const {
+Expr CompUniqueBoundsCombination::Bound::upperExpr() const {
     Expr result;
     for (UpperBound &b : upperBounds_) {
         if (result.isValid())
@@ -85,17 +85,16 @@ Expr CompUniqueBounds::UniqueBound::upperExpr() const {
     return result;
 }
 
-Ref<CompUniqueBoundsInterface::UniqueBoundInterface>
-CompUniqueBounds::UniqueBound::restrictScope(
+Ref<CompUniqueBounds::Bound> CompUniqueBoundsCombination::Bound::restrictScope(
     const std::unordered_set<std::string> &scope) const {
     auto filter = views::filter([&](auto &b) {
                       return checkAllDefined(scope, b.allNames());
                   }) |
                   ranges::to<std::vector>();
-    return Ref<UniqueBound>::make(filter(lowerBounds_), filter(upperBounds_));
+    return Ref<Bound>::make(filter(lowerBounds_), filter(upperBounds_));
 }
 
-Expr CompUniqueBounds::UniqueBound::simplestExpr(
+Expr CompUniqueBoundsCombination::Bound::simplestExpr(
     const std::unordered_map<std::string, int> &orderedScope) const {
     Expr best = nullptr;
     auto bestScope = -1, bestHeavyOps = -1;
@@ -131,8 +130,8 @@ Expr CompUniqueBounds::UniqueBound::simplestExpr(
     return best;
 }
 
-void CompUniqueBounds::updLower(LowerBoundsList &list,
-                                const LowerBound &bound) const {
+void CompUniqueBoundsCombination::updLower(LowerBoundsList &list,
+                                           const LowerBound &bound) const {
     for (LowerBound &old : list) {
         // The same .expr() does not mean the same bounds
         // E.g. 1 * floor(a / 4) vs. (1/4) * a
@@ -152,8 +151,8 @@ void CompUniqueBounds::updLower(LowerBoundsList &list,
     list.emplace_back(bound);
 }
 
-void CompUniqueBounds::updUpper(UpperBoundsList &list,
-                                const UpperBound &bound) const {
+void CompUniqueBoundsCombination::updUpper(UpperBoundsList &list,
+                                           const UpperBound &bound) const {
     for (UpperBound &old : list) {
         // The same .expr() does not mean the same bounds
         // E.g. 1 * floor(a / 4) vs. (1/4) * a
@@ -173,8 +172,8 @@ void CompUniqueBounds::updUpper(UpperBoundsList &list,
     list.emplace_back(bound);
 }
 
-Ref<CompUniqueBoundsInterface::UniqueBoundInterface>
-CompUniqueBounds::getBound(const Expr &op) {
+Ref<CompUniqueBounds::Bound>
+CompUniqueBoundsCombination::getBound(const Expr &op) {
     auto lower = getLower(op);
     bool selfInLower = false;
     for (auto &&l : lower)
@@ -195,10 +194,10 @@ CompUniqueBounds::getBound(const Expr &op) {
     if (!selfInUpper)
         upper.emplace_back(op);
 
-    return Ref<UniqueBound>::make(std::move(lower), std::move(upper));
+    return Ref<Bound>::make(std::move(lower), std::move(upper));
 }
 
-bool CompUniqueBounds::alwaysLT(const Expr &lhs, const Expr &rhs) {
+bool CompUniqueBoundsCombination::alwaysLT(const Expr &lhs, const Expr &rhs) {
     for (auto &&b1 : getUpper(lhs)) {
         for (auto &&b2 : getLower(rhs)) {
             if (freetensor::alwaysLT(b1, b2)) {
@@ -209,7 +208,7 @@ bool CompUniqueBounds::alwaysLT(const Expr &lhs, const Expr &rhs) {
     return false;
 }
 
-bool CompUniqueBounds::alwaysLE(const Expr &lhs, const Expr &rhs) {
+bool CompUniqueBoundsCombination::alwaysLE(const Expr &lhs, const Expr &rhs) {
     for (auto &&b1 : getUpper(lhs)) {
         for (auto &&b2 : getLower(rhs)) {
             if (freetensor::alwaysLE(b1, b2)) {
@@ -220,11 +219,11 @@ bool CompUniqueBounds::alwaysLE(const Expr &lhs, const Expr &rhs) {
     return false;
 }
 
-std::pair<Expr, Expr> CompUniqueBounds::unionBounds(
-    const std::vector<Ref<UniqueBoundInterface>> &bounds) {
+std::pair<Expr, Expr> CompUniqueBoundsCombination::unionBounds(
+    const std::vector<Ref<CompUniqueBounds::Bound>> &bounds) {
     std::vector<std::vector<Expr>> lowers, uppers;
     for (auto &&rb : bounds) {
-        UniqueBound &b = *rb.as<UniqueBound>().get();
+        Bound &b = *rb.as<Bound>().get();
         std::vector<Expr> lowerTerm, upperTerm;
         for (auto &&l : b.lowerBounds_)
             lowerTerm.emplace_back(l.expr());
@@ -236,7 +235,7 @@ std::pair<Expr, Expr> CompUniqueBounds::unionBounds(
     return {makeMinMax(lowers), makeMaxMin(uppers)};
 }
 
-void CompUniqueBounds::visitExpr(const Expr &op) {
+void CompUniqueBoundsCombination::visitExpr(const Expr &op) {
     if (lower_.count(op) || upper_.count(op)) {
         return;
     }
@@ -271,19 +270,19 @@ void CompUniqueBounds::visitExpr(const Expr &op) {
     }
 }
 
-void CompUniqueBounds::visit(const Var &op) {
+void CompUniqueBoundsCombination::visit(const Var &op) {
     BaseClass::visit(op);
     updLower(lower_[op], LowerBound{op});
     updUpper(upper_[op], UpperBound{op});
 }
 
-void CompUniqueBounds::visit(const Load &op) {
+void CompUniqueBoundsCombination::visit(const Load &op) {
     BaseClass::visit(op);
     updLower(lower_[op], LowerBound{op});
     updUpper(upper_[op], UpperBound{op});
 }
 
-void CompUniqueBounds::visit(const IntConst &op) {
+void CompUniqueBoundsCombination::visit(const IntConst &op) {
     BaseClass::visit(op);
     updLower(lower_[op],
              LowerBound{LinearExpr<Rational<int64_t>>{{}, op->val_}});
@@ -291,7 +290,7 @@ void CompUniqueBounds::visit(const IntConst &op) {
              UpperBound{LinearExpr<Rational<int64_t>>{{}, op->val_}});
 }
 
-void CompUniqueBounds::visitLinear(const Expr &op) {
+void CompUniqueBoundsCombination::visitLinear(const Expr &op) {
     auto &lower = lower_[op];
     auto &upper = upper_[op];
 
@@ -373,22 +372,22 @@ void CompUniqueBounds::visitLinear(const Expr &op) {
     upper = std::move(retUpper);
 }
 
-void CompUniqueBounds::visit(const Add &op) {
+void CompUniqueBoundsCombination::visit(const Add &op) {
     // no need to recurse. getLower or getUpper recurses
     visitLinear(op);
 }
 
-void CompUniqueBounds::visit(const Sub &op) {
+void CompUniqueBoundsCombination::visit(const Sub &op) {
     // no need to recurse. getLower or getUpper recurses
     visitLinear(op);
 }
 
-void CompUniqueBounds::visit(const Mul &op) {
+void CompUniqueBoundsCombination::visit(const Mul &op) {
     // no need to recurse. getLower or getUpper recurses
     visitLinear(op);
 }
 
-void CompUniqueBounds::visit(const Square &op) {
+void CompUniqueBoundsCombination::visit(const Square &op) {
     // no need to recurse. getLower or getUpper recurses
 
     auto &lower = lower_[op];
@@ -399,7 +398,7 @@ void CompUniqueBounds::visit(const Square &op) {
     }
 }
 
-void CompUniqueBounds::visit(const FloorDiv &op) {
+void CompUniqueBoundsCombination::visit(const FloorDiv &op) {
     // no need to recurse. getLower or getUpper recurses
 
     auto &lower = lower_[op];
@@ -423,7 +422,7 @@ void CompUniqueBounds::visit(const FloorDiv &op) {
     }
 }
 
-void CompUniqueBounds::visit(const CeilDiv &op) {
+void CompUniqueBoundsCombination::visit(const CeilDiv &op) {
     // no need to recurse. getLower or getUpper recurses
 
     auto &lower = lower_[op];
@@ -447,7 +446,7 @@ void CompUniqueBounds::visit(const CeilDiv &op) {
     }
 }
 
-void CompUniqueBounds::visit(const Mod &op) {
+void CompUniqueBoundsCombination::visit(const Mod &op) {
     // no need to recurse. getLower or getUpper recurses
     if (auto &&l = getInt(op->lhs_); l.has_value()) {
         if (auto &&r = getInt(op->rhs_); r.has_value()) {
@@ -466,7 +465,7 @@ void CompUniqueBounds::visit(const Mod &op) {
     }
 }
 
-void CompUniqueBounds::visit(const Min &op) {
+void CompUniqueBoundsCombination::visit(const Min &op) {
     // no need to recurse. getLower or getUpper recurses
     auto &lower = lower_[op];
     auto &upper = upper_[op];
@@ -541,7 +540,7 @@ void CompUniqueBounds::visit(const Min &op) {
     }
 }
 
-void CompUniqueBounds::visit(const Max &op) {
+void CompUniqueBoundsCombination::visit(const Max &op) {
     // no need to recurse. getLower or getUpper recurses
     auto &lower = lower_[op];
     auto &upper = upper_[op];
@@ -616,7 +615,7 @@ void CompUniqueBounds::visit(const Max &op) {
     }
 }
 
-void CompUniqueBounds::visit(const IfExpr &op) {
+void CompUniqueBoundsCombination::visit(const IfExpr &op) {
     // no need to recurse. getLower or getUpper recurses
     auto &lower = lower_[op];
     auto &upper = upper_[op];

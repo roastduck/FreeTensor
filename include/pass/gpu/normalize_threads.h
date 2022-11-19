@@ -51,12 +51,15 @@ class NormalizeThreads : public Mutator {
 class CheckThreadNum : public CompTransientBounds<SymbolTable<Mutator>> {
     typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
-    CompUniqueBounds bound_;
+    std::unique_ptr<CompUniqueBounds> boundOwn_;
+    CompUniqueBounds &bound_;
     std::unordered_set<For> openLoopsInKernel_;
     bool inKernel_ = false;
 
   public:
-    CheckThreadNum() : bound_(*this) {}
+    CheckThreadNum()
+        : boundOwn_(std::make_unique<CompUniqueBoundsCombination>(*this)),
+          bound_(*boundOwn_) {}
 
   private:
     /**

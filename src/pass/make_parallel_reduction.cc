@@ -67,9 +67,8 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     if (toAlter_.count(op->id())) {
-        std::unordered_map<
-            ID,
-            std::vector<Ref<CompUniqueBoundsInterface::UniqueBoundInterface>>>
+        std::unordered_map<ID,
+                           std::vector<Ref<CompUniqueBounds::Bound>>>
             boundMap; // loop ID -> [dim]
         for (auto &&loopId : toAlter_.at(op->id())) {
             if (auto &&parallel = paraScopes_.at(loopId);
@@ -104,8 +103,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                 }
             }
             {
-                std::vector<std::vector<
-                    Ref<CompUniqueBoundsInterface::UniqueBoundInterface>>>
+                std::vector<std::vector<Ref<CompUniqueBounds::Bound>>>
                     allBounds(bounds.size());
                 for (auto &&[allBoundsItem, boundItem] :
                      views::zip(allBounds, bounds)) {

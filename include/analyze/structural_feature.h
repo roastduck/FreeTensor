@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_STRUCTURAL_FEATURE_H
 #define FREE_TENSOR_STRUCTURAL_FEATURE_H
 
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -54,13 +55,16 @@ class StructuralFeature : public CompTransientBounds<SymbolTable<Visitor>> {
             loads_, stores_, accesses_;
     };
 
-    CompUniqueBounds bound_;
+    std::unique_ptr<CompUniqueBounds> boundOwn_;
+    CompUniqueBounds &bound_;
 
     std::unordered_map<ID, NodeFeature> features_; // Node ID -> features
     std::unordered_map<AST, NodeInfo> info_;       // AST -> info
 
   public:
-    StructuralFeature() : bound_(*this) {}
+    StructuralFeature()
+        : boundOwn_(std::make_unique<CompUniqueBoundsCombination>(*this)),
+          bound_(*boundOwn_) {}
 
     const std::unordered_map<ID, NodeFeature> &features() const {
         return features_;

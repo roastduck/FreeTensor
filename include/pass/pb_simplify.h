@@ -10,7 +10,7 @@
 
 namespace freetensor {
 
-class PBCompBounds : public CompUniqueBounds {
+class PBCompBounds : public CompUniqueBoundsCombination {
     const CompTransientBoundsInterface &transients_;
     GenPBExpr genPBExpr_;
     PBCtx isl_;
@@ -18,10 +18,10 @@ class PBCompBounds : public CompUniqueBounds {
 
   public:
     PBCompBounds(const CompTransientBoundsInterface &transients)
-        : CompUniqueBounds(transients), transients_(transients) {}
+        : CompUniqueBoundsCombination(transients), transients_(transients) {}
 
   protected:
-    using CompUniqueBounds::visit;
+    using CompUniqueBoundsCombination::visit;
 
     void visitExpr(const Expr &op) override;
 };

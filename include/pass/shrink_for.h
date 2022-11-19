@@ -35,7 +35,7 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
     PBCompBounds bound_;
 
     ASTHashMap<
-        Var, std::vector<Ref<CompUniqueBoundsInterface::UniqueBoundInterface>>>
+        Var, std::vector<Ref<CompUniqueBounds::Bound>>>
         newRange_;
     std::vector<Var> iterStack_;
     std::vector<std::unordered_set<std::string>> namesStack_;

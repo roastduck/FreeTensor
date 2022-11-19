@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_COMP_ACCESS_BOUND_H
 #define FREE_TENSOR_COMP_ACCESS_BOUND_H
 
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -47,8 +48,7 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
   public:
     struct Access {
         std::vector<Expr> indices_, conds_;
-        std::vector<Ref<CompUniqueBoundsInterface::UniqueBoundInterface>>
-            bounds_;
+        std::vector<Ref<CompUniqueBounds::Bound>> bounds_;
 
         Access(CompUniqueBounds &unique, const std::vector<Expr> &indices,
                const std::vector<Expr> &conds,
@@ -70,7 +70,8 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
     };
 
   private:
-    CompUniqueBounds unique_;
+    std::unique_ptr<CompUniqueBounds> uniqueOwn_;
+    CompUniqueBounds &unique_;
 
     // The variable to compute
     ID varDefId_;
@@ -98,7 +99,8 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
                     CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL,
                     bool includeTrivialBound = true,
                     const ID &filterSubTree = ID())
-        : unique_(*this), varDefId_(varDefId), mtype_(mtype), mode_(mode),
+        : uniqueOwn_(std::make_unique<CompUniqueBoundsCombination>(*this)),
+          unique_(*uniqueOwn_), varDefId_(varDefId), mtype_(mtype), mode_(mode),
           includeTrivialBound_(includeTrivialBound),
           filterSubTree_(filterSubTree) {
         if (!filterSubTree_.isValid()) {

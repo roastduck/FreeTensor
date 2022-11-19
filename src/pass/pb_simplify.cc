@@ -11,7 +11,7 @@ static void appendTo(std::vector<T> &target, const std::vector<T> &other) {
 }
 
 void PBCompBounds::visitExpr(const Expr &op) {
-    CompUniqueBounds::visitExpr(op);
+    CompUniqueBoundsCombination::visitExpr(op);
 
     if (visited_.count(op)) {
         return;

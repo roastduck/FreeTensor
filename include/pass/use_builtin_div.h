@@ -5,6 +5,7 @@
 #include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
 #include <func.h>
+#include <memory>
 #include <mutator.h>
 
 namespace freetensor {
@@ -12,10 +13,13 @@ namespace freetensor {
 class UseBuiltinDiv : public CompTransientBounds<SymbolTable<Mutator>> {
     typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
-    CompUniqueBounds bound_;
+    std::unique_ptr<CompUniqueBounds> boundOwn_;
+    CompUniqueBounds &bound_;
 
   public:
-    UseBuiltinDiv() : bound_(*this) {}
+    UseBuiltinDiv()
+        : boundOwn_(std::make_unique<CompUniqueBoundsCombination>(*this)),
+          bound_(*boundOwn_) {}
 
   protected:
     using BaseClass::visit;
