@@ -13,7 +13,7 @@ var searchData=
   ['device_5f_10',['device_',['../structfreetensor_1_1ArrayCopy.html#ad2d9f86b379000ee167a8eb61e282e94',1,'freetensor::ArrayCopy']]],
   ['dim_5f_11',['dim_',['../structfreetensor_1_1CUDAScope.html#ad0f0f52fb5e72e829462f4b71b08e268',1,'freetensor::CUDAScope']]],
   ['dimiterated_12',['dimIterated',['../structfreetensor_1_1ForsWithDataReuse.html#a8dbf87bb1064acd4c2a5f4b28f1ff156',1,'freetensor::ForsWithDataReuse']]],
-  ['dir_5f_13',['dir_',['../structfreetensor_1_1Dependency.html#a98a09afb28a3d63e15ac1b1f63a71441',1,'freetensor::Dependency']]],
+  ['dir_5f_13',['dir_',['../structfreetensor_1_1Dependence.html#a2c4187a6820a3208265977d621d5e2d9',1,'freetensor::Dependence']]],
   ['doschedule_5f_14',['doSchedule_',['../classfreetensor_1_1ScheduleLogItemImpl.html#a8705437c2155eeb9ab22b34032a7e359',1,'freetensor::ScheduleLogItemImpl']]],
   ['dtype_5f_15',['dtype_',['../classfreetensor_1_1ExprNode.html#aa6bdaed3f681ffb34d6f02bd2e62b9e0',1,'freetensor::ExprNode::dtype_()'],['../structfreetensor_1_1FuncRet.html#a2de7dd24f9ba1ad450751a7591f3d8ee',1,'freetensor::FuncRet::dtype_()']]]
 ];

@@ -102,5 +102,5 @@ var searchData=
   ['iter_5f_99',['iter_',['../classfreetensor_1_1ForNode.html#ae7a0ab11858f63e444d7e0dfd2e399bf',1,'freetensor::ForNode::iter_()'],['../structfreetensor_1_1AccessPoint.html#ace563128de58d365ee834cc5028ceb3f',1,'freetensor::AccessPoint::iter_()'],['../structfreetensor_1_1IterAxis.html#aed2eb36b71bdc7e48dbe48d890e39fa7',1,'freetensor::IterAxis::iter_()']]],
   ['iter_5fdep_5fconstants_5f_100',['iter_dep_constants_',['../classfreetensor_1_1ScalarPropConst.html#a9913a60a4547b9ec5801dbea240cd05d',1,'freetensor::ScalarPropConst']]],
   ['iteraxis_101',['IterAxis',['../structfreetensor_1_1IterAxis.html',1,'freetensor::IterAxis'],['../structfreetensor_1_1IterAxis.html#af390e9324c280978ce832b44a65ff79c',1,'freetensor::IterAxis::IterAxis(Expr iter, const ParallelScope &amp;parallel=serialScope)'],['../structfreetensor_1_1IterAxis.html#a3341ae214a87575306588e3e066810a4',1,'freetensor::IterAxis::IterAxis(Expr iter, const ParallelScope &amp;parallel, Expr realIter)']]],
-  ['iterdim_5f_102',['iterDim_',['../structfreetensor_1_1Dependency.html#a86c36d6bbdaf7b948dd650305ae0470e',1,'freetensor::Dependency']]]
+  ['iterdim_5f_102',['iterDim_',['../structfreetensor_1_1Dependence.html#aa04c31fa52b3a59eda0374fb2070464b',1,'freetensor::Dependence']]]
 ];

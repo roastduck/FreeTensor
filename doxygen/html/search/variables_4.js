@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['earlier_5f_0',['earlier_',['../structfreetensor_1_1Dependency.html#ab954f0fbab88aa63d2140373ef660c5d',1,'freetensor::Dependency']]],
-  ['earlieriter2idx_5f_1',['earlierIter2Idx_',['../structfreetensor_1_1Dependency.html#ac72d395cbed3ded3e6efba649d8438bd',1,'freetensor::Dependency']]],
+  ['earlier_5f_0',['earlier_',['../structfreetensor_1_1Dependence.html#af7b12eb81000de06a94538a7abed89a6',1,'freetensor::Dependence']]],
+  ['earlieriter2idx_5f_1',['earlierIter2Idx_',['../structfreetensor_1_1Dependence.html#a5fccd99f0edcb6ab4af76275dd27dc5d',1,'freetensor::Dependence']]],
   ['earlieriters_5f_2',['earlierIters_',['../prop__one__time__use_8cc.html#a111a609b3a7df04c81ccf0bd9535fb11',1,'earlierIters_():&#160;prop_one_time_use.cc'],['../remove__writes_8cc.html#a111a609b3a7df04c81ccf0bd9535fb11',1,'earlierIters_():&#160;remove_writes.cc'],['../tensor__prop__const_8cc.html#a111a609b3a7df04c81ccf0bd9535fb11',1,'earlierIters_():&#160;tensor_prop_const.cc']]],
   ['elsecase_5f_3',['elseCase_',['../classfreetensor_1_1IfExprNode.html#aa710d9825771180de5e121463737ac6b',1,'freetensor::IfExprNode::elseCase_()'],['../classfreetensor_1_1IfNode.html#afde6ae8767bbdfaac317d4d7f2d5533f',1,'freetensor::IfNode::elseCase_()']]],
   ['end_5f_4',['end_',['../classfreetensor_1_1ForNode.html#ae0d267b77e8e44938983f6a757b61b3e',1,'freetensor::ForNode']]],

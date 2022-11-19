@@ -9790,7 +9790,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        InvalidSchedule</span>
-<span class="sd">            if the input is invalid or there are breaking dependencies</span>
+<span class="sd">            if the input is invalid or there are breaking dependences</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">reorder</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">,</span> <span class="n">order</span><span class="p">)))</span>
 
@@ -9872,7 +9872,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        InvalidSchedule</span>
-<span class="sd">            if any dependency cannot be resolved</span>
+<span class="sd">            if any dependence cannot be resolved</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -9917,7 +9917,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        ------</span>
 <span class="sd">        InvalidSchedule</span>
 <span class="sd">            if the two loops are not directly following, the two loops are not of</span>
-<span class="sd">            the same length, or there is any dependency cannot be resolved</span>
+<span class="sd">            the same length, or there is any dependence cannot be resolved</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -9945,7 +9945,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        InvalidSchedule</span>
-<span class="sd">            if the statements are not found or the dependencies cannot be solved</span>
+<span class="sd">            if the statements are not found or the dependences cannot be solved</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">swap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
 
@@ -9982,7 +9982,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        ------</span>
 <span class="sd">        InvalidSchedule</span>
 <span class="sd">            if the loop is not found, the loop length is not a constant, or</span>
-<span class="sd">            the dependencies cannot be solved</span>
+<span class="sd">            the dependences cannot be solved</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">blend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">))</span>
 
@@ -10314,7 +10314,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        InvalidSchedule</span>
-<span class="sd">            if the ID or name is not found, or the dependency requirement is</span>
+<span class="sd">            if the ID or name is not found, or the dependence requirement is</span>
 <span class="sd">            not met</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">))</span>
@@ -10988,7 +10988,7 @@ g(1);
       <td class="field-body">
         <ul class="first simple">
             <li><p><code>InvalidSchedule</code> – if the loop is not found, the loop length is not a constant, or
-the dependencies cannot be solved</p></li>
+the dependences cannot be solved</p></li>
         </ul>
       </td>
     </tr>
@@ -11029,7 +11029,7 @@ the dependencies cannot be solved</p></li>
 <span class="sd">    ------</span>
 <span class="sd">    InvalidSchedule</span>
 <span class="sd">        if the loop is not found, the loop length is not a constant, or</span>
-<span class="sd">        the dependencies cannot be solved</span>
+<span class="sd">        the dependences cannot be solved</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">blend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">))</span>
 </code></pre></div>
@@ -11359,7 +11359,7 @@ look before or after all of them</p></li>
       <th class="field-name">Exceptions:</th>
       <td class="field-body">
         <ul class="first simple">
-            <li><p><code>InvalidSchedule</code> – if any dependency cannot be resolved</p></li>
+            <li><p><code>InvalidSchedule</code> – if any dependence cannot be resolved</p></li>
         </ul>
       </td>
     </tr>
@@ -11411,7 +11411,7 @@ is removed because it has an empty body, it will not be in the returned map</p><
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    InvalidSchedule</span>
-<span class="sd">        if any dependency cannot be resolved</span>
+<span class="sd">        if any dependence cannot be resolved</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -11545,7 +11545,7 @@ are of the same length</p></li>
       <td class="field-body">
         <ul class="first simple">
             <li><p><code>InvalidSchedule</code> – if the two loops are not directly following, the two loops are not of
-the same length, or there is any dependency cannot be resolved</p></li>
+the same length, or there is any dependence cannot be resolved</p></li>
         </ul>
       </td>
     </tr>
@@ -11596,7 +11596,7 @@ the same length, or there is any dependency cannot be resolved</p></li>
 <span class="sd">    ------</span>
 <span class="sd">    InvalidSchedule</span>
 <span class="sd">        if the two loops are not directly following, the two loops are not of</span>
-<span class="sd">        the same length, or there is any dependency cannot be resolved</span>
+<span class="sd">        the same length, or there is any dependence cannot be resolved</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -12382,7 +12382,7 @@ possible</p></li>
       <th class="field-name">Exceptions:</th>
       <td class="field-body">
         <ul class="first simple">
-            <li><p><code>InvalidSchedule</code> – if the input is invalid or there are breaking dependencies</p></li>
+            <li><p><code>InvalidSchedule</code> – if the input is invalid or there are breaking dependences</p></li>
         </ul>
       </td>
     </tr>
@@ -12404,7 +12404,7 @@ possible</p></li>
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    InvalidSchedule</span>
-<span class="sd">        if the input is invalid or there are breaking dependencies</span>
+<span class="sd">        if the input is invalid or there are breaking dependences</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">reorder</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">,</span> <span class="n">order</span><span class="p">)))</span>
 </code></pre></div>
@@ -12797,7 +12797,7 @@ statements, the <code>order</code> list will be flattened</p></li>
       <th class="field-name">Exceptions:</th>
       <td class="field-body">
         <ul class="first simple">
-            <li><p><code>InvalidSchedule</code> – if the statements are not found or the dependencies cannot be solved</p></li>
+            <li><p><code>InvalidSchedule</code> – if the statements are not found or the dependences cannot be solved</p></li>
         </ul>
       </td>
     </tr>
@@ -12820,7 +12820,7 @@ statements, the <code>order</code> list will be flattened</p></li>
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    InvalidSchedule</span>
-<span class="sd">        if the statements are not found or the dependencies cannot be solved</span>
+<span class="sd">        if the statements are not found or the dependences cannot be solved</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">swap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup_list</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
 </code></pre></div>
@@ -13176,7 +13176,7 @@ compiler. The vectorization is a best-effort schedule</p>
       <th class="field-name">Exceptions:</th>
       <td class="field-body">
         <ul class="first simple">
-            <li><p><code>InvalidSchedule</code> – if the ID or name is not found, or the dependency requirement is
+            <li><p><code>InvalidSchedule</code> – if the ID or name is not found, or the dependence requirement is
 not met</p></li>
         </ul>
       </td>
@@ -13201,7 +13201,7 @@ not met</p></li>
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    InvalidSchedule</span>
-<span class="sd">        if the ID or name is not found, or the dependency requirement is</span>
+<span class="sd">        if the ID or name is not found, or the dependence requirement is</span>
 <span class="sd">        not met</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop</span><span class="p">))</span>

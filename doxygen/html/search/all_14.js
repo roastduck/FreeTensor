@@ -41,7 +41,7 @@ var searchData=
   ['selector_2eh_38',['selector.h',['../selector_8h.html',1,'']]],
   ['self_39',['Self',['../classfreetensor_1_1EnableSelf.html#a4df183fb4a9d7b6834614c19fa74fd33',1,'freetensor::EnableSelf']]],
   ['self_40',['self',['../classfreetensor_1_1EnableSelf.html#afe40049370dc7bb63ce3d55d2181d5a6',1,'freetensor::EnableSelf']]],
-  ['self_5f_41',['self_',['../structfreetensor_1_1Dependency.html#a3cc08a572f3593244b312b97bfc604c6',1,'freetensor::Dependency']]],
+  ['self_5f_41',['self_',['../structfreetensor_1_1Dependence.html#ae00c71d9b1b84958c8967843d56c6747',1,'freetensor::Dependence']]],
   ['separate_5ftail_2ecc_42',['separate_tail.cc',['../separate__tail_8cc.html',1,'']]],
   ['separate_5ftail_2eh_43',['separate_tail.h',['../separate__tail_8h.html',1,'']]],
   ['separatetail_44',['SeparateTail',['../classfreetensor_1_1SeparateTail.html',1,'freetensor::SeparateTail'],['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8abd41b498d5a21166c2626a519b452141',1,'freetensor::SeparateTail()']]],

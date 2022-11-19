@@ -4,7 +4,7 @@ var searchData=
   ['labelselector_1',['LabelSelector',['../classfreetensor_1_1LabelSelector.html#a2ddb4d5be261c228bcd70bf0e3ae8715',1,'freetensor::LabelSelector']]],
   ['labelsset_2',['labelsSet',['../classfreetensor_1_1SourceMetadataContent.html#a2ffc487850cfb8e2d904004c059ea32d',1,'freetensor::SourceMetadataContent']]],
   ['lastparallelizedid_3',['lastParallelizedID',['../classfreetensor_1_1ParallelizePart.html#a34785eceab025e520a32da02376d2837',1,'freetensor::ParallelizePart::lastParallelizedID()'],['../classfreetensor_1_1ThreadBindPart.html#a9713b84f5c67ccdd2976eaf7536bf3ac',1,'freetensor::ThreadBindPart::lastParallelizedID()']]],
-  ['later_4',['later',['../structfreetensor_1_1Dependency.html#a30fafea70e8a5043db9f6e4cb0e8a899',1,'freetensor::Dependency']]],
+  ['later_4',['later',['../structfreetensor_1_1Dependence.html#a23464f3295f013291bd7cecfb8ac8707',1,'freetensor::Dependence']]],
   ['lazy_5',['Lazy',['../namespacefreetensor.html#aa17b63e472b2e62270355b9808c79c72',1,'freetensor::Lazy()'],['../classfreetensor_1_1Lazy.html#a739138e5b85a88302ae36630d4ce7550',1,'freetensor::Lazy::Lazy(const Lazy &amp;other)'],['../classfreetensor_1_1Lazy.html#a6ee24c1574f257dbb75e048d3915a1be',1,'freetensor::Lazy::Lazy(F delayedInit)']]],
   ['lca_6',['lca',['../namespacefreetensor.html#a5db63f7bf03f222fe179fba623f3c779',1,'freetensor']]],
   ['lcaast_7',['lcaAST',['../namespacefreetensor.html#a15c977274cf57296c0b2d30c5e4975d5',1,'freetensor']]],

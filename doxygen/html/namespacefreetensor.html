@@ -229,7 +229,7 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DataTypeInfer.html">DataTypeInfer</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1Dependency.html">Dependency</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1Dependence.html">Dependence</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DescendantSelector.html">DescendantSelector</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1196,8 +1196,8 @@ Functions</h2></td></tr>
 <tr class="separator:ad91a290b2ee764917911d477e98ea5b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39594cb6882b2e5cdd90dc00ffedf363"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1FindDepsCallback.html">FindDepsCallback</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a39594cb6882b2e5cdd90dc00ffedf363">unsyncFunc</a> (auto &amp;&amp;f)</td></tr>
 <tr class="separator:a39594cb6882b2e5cdd90dc00ffedf363"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aadd085acc26e7a87b2397c8148d03356"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aadd085acc26e7a87b2397c8148d03356">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="structfreetensor_1_1Dependency.html">Dependency</a> &amp;dep)</td></tr>
-<tr class="separator:aadd085acc26e7a87b2397c8148d03356"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acaf092cf41556bd1c8a3a070e44f01ad"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#acaf092cf41556bd1c8a3a070e44f01ad">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="structfreetensor_1_1Dependence.html">Dependence</a> &amp;dep)</td></tr>
+<tr class="separator:acaf092cf41556bd1c8a3a070e44f01ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0609d2f638605404700c164677044354"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0609d2f638605404700c164677044354">findAllLoops</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a0609d2f638605404700c164677044354"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ed1abdfe67f44c3d6daed38c0c549e0"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4ed1abdfe67f44c3d6daed38c0c549e0">findAllScopes</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
@@ -11587,7 +11587,7 @@ template&lt;class Titers , class Tbegins , class Tends , class Tsteps , class Tl
 </table>
 </div><div class="memdoc">
 <p >Transform things like a = a + b into a += b</p>
-<p >This is to make the dependency analysis more accurate</p>
+<p >This is to make the dependence analysis more accurate</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">types</td><td>: Only transform these types of reductions </td></tr>
@@ -12716,8 +12716,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="aadd085acc26e7a87b2397c8148d03356" name="aadd085acc26e7a87b2397c8148d03356"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aadd085acc26e7a87b2397c8148d03356">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[6/26]</span></h2>
+<a id="acaf092cf41556bd1c8a3a070e44f01ad" name="acaf092cf41556bd1c8a3a070e44f01ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acaf092cf41556bd1c8a3a070e44f01ad">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[6/26]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12731,7 +12731,7 @@ template&lt;class T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="structfreetensor_1_1Dependency.html">Dependency</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="structfreetensor_1_1Dependence.html">Dependence</a> &amp;&#160;</td>
           <td class="paramname"><em>dep</em>&#160;</td>
         </tr>
         <tr>

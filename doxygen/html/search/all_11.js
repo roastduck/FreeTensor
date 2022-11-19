@@ -85,7 +85,7 @@ var searchData=
   ['preferlibs_5f_82',['preferLibs_',['../structfreetensor_1_1ForProperty.html#a74f1f20aae6c5ad274cda8a72c1ad988',1,'freetensor::ForProperty']]],
   ['presburger_2ecc_83',['presburger.cc',['../presburger_8cc.html',1,'']]],
   ['presburger_2eh_84',['presburger.h',['../presburger_8h.html',1,'']]],
-  ['presburger_5f_85',['presburger_',['../structfreetensor_1_1Dependency.html#a6b21e029774b028c8767f1800d71e121',1,'freetensor::Dependency']]],
+  ['presburger_5f_85',['presburger_',['../structfreetensor_1_1Dependence.html#abc27a7c84908c13790d11a7662601d7d',1,'freetensor::Dependence']]],
   ['prettyprint_86',['prettyPrint',['../classfreetensor_1_1Config.html#af2aad629bb22742e408fc3a3a2a8209e',1,'freetensor::Config']]],
   ['previnctrlflow_87',['prevInCtrlFlow',['../classfreetensor_1_1StmtNode.html#a9a3448525181b96dd7f85f47e811e9bd',1,'freetensor::StmtNode']]],
   ['prevstmt_88',['prevStmt',['../classfreetensor_1_1StmtNode.html#a6e37c4725d88fd17957848c8bfecfc69',1,'freetensor::StmtNode']]],

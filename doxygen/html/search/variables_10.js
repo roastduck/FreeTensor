@@ -5,7 +5,7 @@ var searchData=
   ['sample_5fiters_2',['SAMPLE_ITERS',['../namespacefreetensor.html#ad885e66605e01c04f03c239fac3b8431',1,'freetensor']]],
   ['scheduletypenames_3',['scheduleTypeNames',['../namespacefreetensor.html#a99e6be32e2c2c11aca93dfdf2bf9caac',1,'freetensor']]],
   ['scopes_5f_4',['scopes_',['../structfreetensor_1_1LoopInScopes.html#a7c406c9beb250fc7973344796e775986',1,'freetensor::LoopInScopes']]],
-  ['self_5f_5',['self_',['../structfreetensor_1_1Dependency.html#a3cc08a572f3593244b312b97bfc604c6',1,'freetensor::Dependency']]],
+  ['self_5f_5',['self_',['../structfreetensor_1_1Dependence.html#ae00c71d9b1b84958c8967843d56c6747',1,'freetensor::Dependence']]],
   ['serialscope_6',['serialScope',['../namespacefreetensor.html#aa8dc7802e672c0af3efcb5af10d51eca',1,'freetensor']]],
   ['sharedsize_5f_7',['sharedSize_',['../structfreetensor_1_1CodeGenCUDAStream.html#ac018ea68458e5e7047bf965e16fc5e35',1,'freetensor::CodeGenCUDAStream']]],
   ['small_5fitem_5fper_5fblock_8',['SMALL_ITEM_PER_BLOCK',['../namespacefreetensor.html#a105dea86b1e2cc2da1f2663b73764ffc',1,'freetensor']]],

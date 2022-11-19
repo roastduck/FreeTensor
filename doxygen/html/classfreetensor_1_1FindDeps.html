@@ -101,8 +101,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a0f4de4236b2bef548ef92ba07ee57e1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e9c98bf4fa12753dc7fc03fff1f6acf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1FindDeps.html">FindDeps</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html#a2e9c98bf4fa12753dc7fc03fff1f6acf">scope2CoordCallback</a> (std::function&lt; void(const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;, const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::vector&lt; <a class="el" href="structfreetensor_1_1IterAxis.html">IterAxis</a> &gt; &gt; &amp;)&gt; callback)</td></tr>
 <tr class="separator:a2e9c98bf4fa12753dc7fc03fff1f6acf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abf5a71dda35703e2ec550933fc5b0aa6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html#abf5a71dda35703e2ec550933fc5b0aa6">operator()</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::function&lt; void(const <a class="el" href="structfreetensor_1_1Dependency.html">Dependency</a> &amp;)&gt; &amp;found)</td></tr>
-<tr class="separator:abf5a71dda35703e2ec550933fc5b0aa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa56d7fbb33ce63e5ceecb66b6ca2e86"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html#afa56d7fbb33ce63e5ceecb66b6ca2e86">operator()</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::function&lt; void(const <a class="el" href="structfreetensor_1_1Dependence.html">Dependence</a> &amp;)&gt; &amp;found)</td></tr>
+<tr class="separator:afa56d7fbb33ce63e5ceecb66b6ca2e86"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac9474d370890b193671f63f8541d8833"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html#ac9474d370890b193671f63f8541d8833">operator()</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1FindDepsCallback.html">FindDepsCallback</a> &amp;found)</td></tr>
 <tr class="separator:ac9474d370890b193671f63f8541d8833"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2508e6af289012eb9fe994bd7cd52667"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html#a2508e6af289012eb9fe994bd7cd52667">exists</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
@@ -166,7 +166,7 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p >Ignore all dependencies outside the VarDef</p>
+<p >Ignore all dependences outside the VarDef</p>
 <p >Defaults to true </p>
 
 </div>
@@ -220,7 +220,7 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p >Configure an additional callback to select which dependencies to check</p>
+<p >Configure an additional callback to select which dependences to check</p>
 <p >Please use <code>filterAccess</code>, <code>filterEarlier</code> or <code>filterLater</code> if possbile, for better performance</p>
 <p >Defaults to no filter </p>
 
@@ -363,7 +363,7 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p >Ignore WAW dependencies between two ReduceTo nodes. This kind of dependencies are false dependencies if running serially</p>
+<p >Ignore WAW dependences between two ReduceTo nodes. This kind of dependences are false dependences if running serially</p>
 <p >Defaults to true </p>
 
 </div>
@@ -468,8 +468,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="abf5a71dda35703e2ec550933fc5b0aa6" name="abf5a71dda35703e2ec550933fc5b0aa6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abf5a71dda35703e2ec550933fc5b0aa6">&#9670;&nbsp;</a></span>operator()() <span class="overload">[2/2]</span></h2>
+<a id="afa56d7fbb33ce63e5ceecb66b6ca2e86" name="afa56d7fbb33ce63e5ceecb66b6ca2e86"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afa56d7fbb33ce63e5ceecb66b6ca2e86">&#9670;&nbsp;</a></span>operator()() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -486,7 +486,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::function&lt; void(const <a class="el" href="structfreetensor_1_1Dependency.html">Dependency</a> &amp;)&gt; &amp;&#160;</td>
+          <td class="paramtype">const std::function&lt; void(const <a class="el" href="structfreetensor_1_1Dependence.html">Dependence</a> &amp;)&gt; &amp;&#160;</td>
           <td class="paramname"><em>found</em>&#160;</td>
         </tr>
         <tr>

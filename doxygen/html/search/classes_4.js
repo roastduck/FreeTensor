@@ -1,7 +1,7 @@
 var searchData=
 [
   ['datatypeinfer_0',['DataTypeInfer',['../classfreetensor_1_1DataTypeInfer.html',1,'freetensor']]],
-  ['dependency_1',['Dependency',['../structfreetensor_1_1Dependency.html',1,'freetensor']]],
+  ['dependence_1',['Dependence',['../structfreetensor_1_1Dependence.html',1,'freetensor']]],
   ['descendantselector_2',['DescendantSelector',['../classfreetensor_1_1DescendantSelector.html',1,'freetensor']]],
   ['device_3',['Device',['../classfreetensor_1_1Device.html',1,'freetensor']]],
   ['directcallerselector_4',['DirectCallerSelector',['../classfreetensor_1_1DirectCallerSelector.html',1,'freetensor']]],

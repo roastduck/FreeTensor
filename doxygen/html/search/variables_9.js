@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['later2earlieriter_5f_0',['later2EarlierIter_',['../structfreetensor_1_1Dependency.html#a7d78179b7afc2f5bd8c037a33bba34eb',1,'freetensor::Dependency']]],
-  ['later_5f_1',['later_',['../structfreetensor_1_1Dependency.html#a84d56eb26193cef92559641dc29248a4',1,'freetensor::Dependency']]],
-  ['lateriter2idx_5f_2',['laterIter2Idx_',['../structfreetensor_1_1Dependency.html#aeeb8ded9f9df92a8ba259ab8c8ce2df9',1,'freetensor::Dependency']]],
+  ['later2earlieriter_5f_0',['later2EarlierIter_',['../structfreetensor_1_1Dependence.html#a7b77ba2271a6363104862f758886c6be',1,'freetensor::Dependence']]],
+  ['later_5f_1',['later_',['../structfreetensor_1_1Dependence.html#a7e30681ac0350945de0021b2195f6814',1,'freetensor::Dependence']]],
+  ['lateriter2idx_5f_2',['laterIter2Idx_',['../structfreetensor_1_1Dependence.html#a6ff9c218806bc54c1178c91d02180363',1,'freetensor::Dependence']]],
   ['lateriters_5f_3',['laterIters_',['../prop__one__time__use_8cc.html#a5fe237cbe042130079c516c323199d42',1,'laterIters_():&#160;prop_one_time_use.cc'],['../remove__writes_8cc.html#a5fe237cbe042130079c516c323199d42',1,'laterIters_():&#160;remove_writes.cc'],['../tensor__prop__const_8cc.html#a5fe237cbe042130079c516c323199d42',1,'laterIters_():&#160;tensor_prop_const.cc']]],
   ['lda_5f_4',['lda_',['../classfreetensor_1_1MatMulNode.html#a961d6681488337b69653b8d35e824f27',1,'freetensor::MatMulNode']]],
   ['ldb_5f_5',['ldb_',['../classfreetensor_1_1MatMulNode.html#a3581aac76cd5cceb6477c3542ba8c627',1,'freetensor::MatMulNode']]],

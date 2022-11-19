@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['earlier_0',['earlier',['../structfreetensor_1_1Dependency.html#a459fda2043c4ae8be50ced287670304a',1,'freetensor::Dependency']]],
-  ['earlier_5f_1',['earlier_',['../structfreetensor_1_1Dependency.html#ab954f0fbab88aa63d2140373ef660c5d',1,'freetensor::Dependency']]],
-  ['earlieriter2idx_5f_2',['earlierIter2Idx_',['../structfreetensor_1_1Dependency.html#ac72d395cbed3ded3e6efba649d8438bd',1,'freetensor::Dependency']]],
+  ['earlier_0',['earlier',['../structfreetensor_1_1Dependence.html#a8d6fc9209dd792ab1f456ab254b51491',1,'freetensor::Dependence']]],
+  ['earlier_5f_1',['earlier_',['../structfreetensor_1_1Dependence.html#af7b12eb81000de06a94538a7abed89a6',1,'freetensor::Dependence']]],
+  ['earlieriter2idx_5f_2',['earlierIter2Idx_',['../structfreetensor_1_1Dependence.html#a5fccd99f0edcb6ab4af76275dd27dc5d',1,'freetensor::Dependence']]],
   ['earlieriters_5f_3',['earlierIters_',['../prop__one__time__use_8cc.html#a111a609b3a7df04c81ccf0bd9535fb11',1,'earlierIters_():&#160;prop_one_time_use.cc'],['../remove__writes_8cc.html#a111a609b3a7df04c81ccf0bd9535fb11',1,'earlierIters_():&#160;remove_writes.cc'],['../tensor__prop__const_8cc.html#a111a609b3a7df04c81ccf0bd9535fb11',1,'earlierIters_():&#160;tensor_prop_const.cc']]],
   ['eitherleafselector_4',['EitherLeafSelector',['../classfreetensor_1_1EitherLeafSelector.html#a921ca64b1a51dc367496e0543cea1ab6',1,'freetensor::EitherLeafSelector::EitherLeafSelector()'],['../classfreetensor_1_1EitherLeafSelector.html',1,'freetensor::EitherLeafSelector']]],
   ['eitherselector_5',['EitherSelector',['../classfreetensor_1_1EitherSelector.html#af2f6de6744f44e6d632116dac9c351f7',1,'freetensor::EitherSelector::EitherSelector()'],['../classfreetensor_1_1EitherSelector.html',1,'freetensor::EitherSelector']]],
@@ -46,5 +46,5 @@ var searchData=
   ['exprinfo_43',['exprInfo',['../classfreetensor_1_1FindLoopVariance.html#aa01c53d4bcc2a2378245a8e04dbb74a0',1,'freetensor::FindLoopVariance']]],
   ['exprnode_44',['ExprNode',['../classfreetensor_1_1ExprNode.html',1,'freetensor']]],
   ['exprrettype_45',['ExprRetType',['../classfreetensor_1_1Visitor.html#a9d28e45c80d3c0939f64b4dba016e168',1,'freetensor::Visitor::ExprRetType()'],['../classfreetensor_1_1Mutator.html#af1a3d979a56bd49d9a983019df6f8c18',1,'freetensor::Mutator::ExprRetType()']]],
-  ['extracheck_46',['extraCheck',['../structfreetensor_1_1Dependency.html#a98d2c578630cb0df810fc3aa7e6fe95a',1,'freetensor::Dependency']]]
+  ['extracheck_46',['extraCheck',['../structfreetensor_1_1Dependence.html#ac35aaa0008919ea511d2319262396ab0',1,'freetensor::Dependence']]]
 ];

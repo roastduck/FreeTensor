@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['earlier_0',['earlier',['../structfreetensor_1_1Dependency.html#a459fda2043c4ae8be50ced287670304a',1,'freetensor::Dependency']]],
+  ['earlier_0',['earlier',['../structfreetensor_1_1Dependence.html#a8d6fc9209dd792ab1f456ab254b51491',1,'freetensor::Dependence']]],
   ['eitherleafselector_1',['EitherLeafSelector',['../classfreetensor_1_1EitherLeafSelector.html#a921ca64b1a51dc367496e0543cea1ab6',1,'freetensor::EitherLeafSelector']]],
   ['eitherselector_2',['EitherSelector',['../classfreetensor_1_1EitherSelector.html#af2f6de6744f44e6d632116dac9c351f7',1,'freetensor::EitherSelector']]],
   ['emplace_5fback_3',['emplace_back',['../classfreetensor_1_1SubTreeList.html#ae63312b5d3da80cef86acbce6e11a415',1,'freetensor::SubTreeList']]],
@@ -19,5 +19,5 @@ var searchData=
   ['exists_16',['exists',['../classfreetensor_1_1FindDeps.html#a2508e6af289012eb9fe994bd7cd52667',1,'freetensor::FindDeps::exists()'],['../classfreetensor_1_1Z3Simplify.html#a723bb1caea26d9519af537ae06632740',1,'freetensor::Z3Simplify::exists()']]],
   ['expr_17',['expr',['../classfreetensor_1_1StmtOrExprID.html#a49d3d190c3b268552b10ac6b894f81a3',1,'freetensor::StmtOrExprID::expr()'],['../classfreetensor_1_1UpperBound.html#ac6c3ae2e0ccd064bfa8603605a3a5006',1,'freetensor::UpperBound::expr()'],['../classfreetensor_1_1LowerBound.html#a4a87b5029c7960bfb87f865ad37c71fa',1,'freetensor::LowerBound::expr()']]],
   ['exprinfo_18',['exprInfo',['../classfreetensor_1_1FindLoopVariance.html#aa01c53d4bcc2a2378245a8e04dbb74a0',1,'freetensor::FindLoopVariance']]],
-  ['extracheck_19',['extraCheck',['../structfreetensor_1_1Dependency.html#a98d2c578630cb0df810fc3aa7e6fe95a',1,'freetensor::Dependency']]]
+  ['extracheck_19',['extraCheck',['../structfreetensor_1_1Dependence.html#ac35aaa0008919ea511d2319262396ab0',1,'freetensor::Dependence']]]
 ];
