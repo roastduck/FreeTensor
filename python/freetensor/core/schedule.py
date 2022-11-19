@@ -168,7 +168,7 @@ class Schedule(ffi.Schedule):
         Raises
         ------
         InvalidSchedule
-            if the input is invalid or there are breaking dependencies
+            if the input is invalid or there are breaking dependences
         """
         super().reorder(list(map(self._lookup, order)))
 
@@ -250,7 +250,7 @@ class Schedule(ffi.Schedule):
         Raises
         ------
         InvalidSchedule
-            if any dependency cannot be resolved
+            if any dependence cannot be resolved
 
         Returns
         -------
@@ -295,7 +295,7 @@ class Schedule(ffi.Schedule):
         ------
         InvalidSchedule
             if the two loops are not directly following, the two loops are not of
-            the same length, or there is any dependency cannot be resolved
+            the same length, or there is any dependence cannot be resolved
 
         Returns
         -------
@@ -323,7 +323,7 @@ class Schedule(ffi.Schedule):
         Raises
         ------
         InvalidSchedule
-            if the statements are not found or the dependencies cannot be solved
+            if the statements are not found or the dependences cannot be solved
         """
         super().swap(self._lookup_list(order))
 
@@ -360,7 +360,7 @@ class Schedule(ffi.Schedule):
         ------
         InvalidSchedule
             if the loop is not found, the loop length is not a constant, or
-            the dependencies cannot be solved
+            the dependences cannot be solved
         """
         super().blend(self._lookup(loop))
 
@@ -692,7 +692,7 @@ class Schedule(ffi.Schedule):
         Raises
         ------
         InvalidSchedule
-            if the ID or name is not found, or the dependency requirement is
+            if the ID or name is not found, or the dependence requirement is
             not met
         """
         super().vectorize(self._lookup(loop))

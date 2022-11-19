@@ -4,7 +4,7 @@ import pytest
 # For normal cases, see test/codegen
 
 
-def test_unsolvable_dependency():
+def test_unsolvable_dependence():
     with ft.VarDef("y", (5,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", i, i + 2, label="L2") as j:

@@ -210,7 +210,7 @@ def test_different_length():
     assert ast_.match(ast)
 
 
-def test_dependency_unable_resolve():
+def test_dependence_unable_resolve():
     with ft.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),

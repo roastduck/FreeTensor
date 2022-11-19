@@ -32,7 +32,7 @@ struct ForProperty : public ASTPart {
     bool unroll_, vectorize_;
     SubTreeList<ReductionItem> reductions_ = ChildOf{this};
     std::vector<std::string> noDeps_; // vars that are explicitly marked to have
-                                      // no dependencies over this loop
+                                      // no dependences over this loop
     bool preferLibs_; // Aggresively transform to external library calls in
                       // auto-schedule
 

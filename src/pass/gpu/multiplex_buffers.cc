@@ -134,7 +134,7 @@ Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target) {
         .filterAccess([&](const AccessPoint &acc) {
             return affecting.count(acc.def_->id());
         })
-        .eraseOutsideVarDef(false)(op, [&](const Dependency &d) {
+        .eraseOutsideVarDef(false)(op, [&](const Dependence &d) {
             ASSERT(d.dir_.size() == 1);
             if (affecting.count(d.defId()) &&
                 affecting.at(d.defId()).count(d.dir_[0].first.id_)) {

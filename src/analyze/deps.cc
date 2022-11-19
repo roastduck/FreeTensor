@@ -713,13 +713,13 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
             }
         }
         if (noProjectOutPrivateAxis_) {
-            found_(Dependency{item, getVar(later->op_), *later, *earlier,
+            found_(Dependence{item, getVar(later->op_), *later, *earlier,
                               iterDim, res, laterMap, earlierMap, presburger,
                               *this});
         } else {
             // It will be misleading if we pass Presburger maps to users in
             // this case
-            found_(Dependency{item, getVar(later->op_), *later, *earlier,
+            found_(Dependence{item, getVar(later->op_), *later, *earlier,
                               iterDim, PBMap(), PBMap(), PBMap(), presburger,
                               *this});
         }
@@ -1088,7 +1088,7 @@ void AnalyzeDeps::genTasks() {
     }
 }
 
-PBMap Dependency::extraCheck(PBMap dep,
+PBMap Dependence::extraCheck(PBMap dep,
                              const NodeIDOrParallelScope &nodeOrParallel,
                              const DepDirection &dir) const {
     PBMap require;
@@ -1165,7 +1165,7 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
 bool FindDeps::exists(const Stmt &op) {
     struct DepExistsExcept {};
     try {
-        (*this)(op, unsyncFunc([](const Dependency &dep) {
+        (*this)(op, unsyncFunc([](const Dependence &dep) {
                     throw DepExistsExcept();
                 }));
     } catch (const DepExistsExcept &e) {
@@ -1174,9 +1174,9 @@ bool FindDeps::exists(const Stmt &op) {
     return false;
 }
 
-std::ostream &operator<<(std::ostream &_os, const Dependency &dep) {
+std::ostream &operator<<(std::ostream &_os, const Dependence &dep) {
     std::ostringstream os;
-    os << "Dependency ";
+    os << "Dependence ";
     os << (dep.later()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
        << dep.later();
     if (dep.later()->isExpr()) {
