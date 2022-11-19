@@ -422,7 +422,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                 return p.stmt_->ancestorById(l1->id()).isValid();
             })
             .direction(outersSame)(
-                fakeAccessAst, unsyncFunc([&](const Dependency &d) {
+                fakeAccessAst, unsyncFunc([&](const Dependence &d) {
                     // later to earlier map, but projects out unrelated dims
                     auto hMap = d.later2EarlierIter_;
 

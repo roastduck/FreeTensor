@@ -146,7 +146,7 @@ void Schedule::autoParallelize(const Target &target) {
                     // 2. if there are enough threads, make sure blockDim is
                     // not too large If the loop length is constant, we
                     // split it only once, to reduce redundant guards, and
-                    // save time for dependency analysis. If not, we split
+                    // save time for dependence analysis. If not, we split
                     // it twice, and merge once
                     int numSM = ((GPUTarget &)target).multiProcessorCount();
                     int maxThreads = 256; // Can be max thread per block (1024),
@@ -167,7 +167,7 @@ void Schedule::autoParallelize(const Target &target) {
                         }
                     } else {
                         // We don't use the `nparts` mode of `split`,
-                        // because it will hinder dependency analysis.
+                        // because it will hinder dependence analysis.
                         // Instead, we use the `factor` mode and then
                         // reorder. See the doc string of `split` for
                         // details
@@ -183,7 +183,7 @@ void Schedule::autoParallelize(const Target &target) {
                             // one loop. Because the length of `l1b` is not
                             // a constant, a division by this length will be
                             // introduced, which is not supported by ISL and
-                            // may probably lead to false dependencies
+                            // may probably lead to false dependences
                             parallelize(l1, blockIdxY);
                             parallelize(l1b, blockIdxX);
                         } else {

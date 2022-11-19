@@ -28,7 +28,7 @@ class MakeReduction : public Mutator {
 /**
  * Transform things like a = a + b into a += b
  *
- * This is to make the dependency analysis more accurate
+ * This is to make the dependence analysis more accurate
  *
  * @param types : Only transform these types of reductions
  * @param canonicalOnly : True to avoid cyclic reductions like a += a + b

@@ -250,7 +250,7 @@ std::pair<Stmt, std::vector<ID>> permute(
                     toString(applyRange(reverse(real2iter), permuteMap));
             }
         })
-        .filterSubAST(loops.front()->id())(ast, [&](const Dependency &d) {
+        .filterSubAST(loops.front()->id())(ast, [&](const Dependence &d) {
             // Construct map for iter -> permuted
             auto iter2permutedMap = PBMap(d.presburger_, iter2permuted);
             // laterIter -> permuted
@@ -276,7 +276,7 @@ std::pair<Stmt, std::vector<ID>> permute(
             auto violated = intersect(permutedLater2Earlier, lexLE(space));
             if (!violated.empty())
                 throw InvalidSchedule(
-                    "Provided transformation violates dependency");
+                    "Provided transformation violates dependence");
             //! TODO: more diagnostics
         });
 

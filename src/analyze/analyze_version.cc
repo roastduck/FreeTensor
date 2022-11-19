@@ -160,13 +160,13 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
         direction.push_back({{scope, DepDirection::Normal}});
     }
     std::unordered_map<ID, std::unordered_set<ID>> affectingScopes, needTapes;
-    auto found1 = [&](const Dependency &d) {
+    auto found1 = [&](const Dependence &d) {
         ASSERT(d.earlier()->nodeType() != ASTNodeType::Load);
         if (d.later()->nodeType() != ASTNodeType::ReduceTo) {
             needTapes[d.defId()].insert(d.earlier().as<StmtNode>()->id());
         }
     };
-    auto found2 = [&](const Dependency &d) {
+    auto found2 = [&](const Dependence &d) {
         if ((d.earlier()->nodeType() == ASTNodeType::Load &&
              d.later()->nodeType() != ASTNodeType::Load) ||
             (d.later()->nodeType() == ASTNodeType::Load &&

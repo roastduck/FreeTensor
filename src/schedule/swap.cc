@@ -75,7 +75,7 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
                                  [&](const ID &id) { return id == s1->id(); });
         return (old0 < old1) != (new0 < new1);
     };
-    auto found = [&](const Dependency &d) {
+    auto found = [&](const Dependence &d) {
         throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
     FindDeps().filter(filter)(ast, found);

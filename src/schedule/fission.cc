@@ -326,7 +326,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
         return isVariant(variants.second, def, loop);
     };
     std::unordered_map<ID, std::vector<ID>> toAdd;
-    auto found = [&](const Dependency &d) {
+    auto found = [&](const Dependence &d) {
         ASSERT(d.dir_.size() == 1);
         auto &&id = d.dir_[0].first.id_;
         if (!xLoops.count(d.var_) ||

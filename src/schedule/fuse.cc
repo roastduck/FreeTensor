@@ -275,7 +275,7 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     FuseFor mutator(_ast, loop0, loop1, strict);
     auto ast = mutator(_ast);
 
-    auto found = [&](const Dependency &d) {
+    auto found = [&](const Dependence &d) {
         ASSERT(d.dir_.size() == 1);
         throw InvalidSchedule(toString(d) + " cannot be resolved");
     };

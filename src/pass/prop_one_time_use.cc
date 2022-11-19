@@ -67,7 +67,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
     std::unordered_map<AST, std::vector<Stmt>> r2wMay;
     std::unordered_map<Stmt, std::vector<AST>> w2r, w2rMay;
     std::unordered_map<AST, Stmt> stmts;
-    auto foundMust = [&](const Dependency &d) {
+    auto foundMust = [&](const Dependence &d) {
         if (d.later2EarlierIter_.isBijective()) {
             // Check before converting into PBFunc. In prop_one_time_use, we
             // not only need `singleValued`, but also `bijective`, to ensure
@@ -80,7 +80,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
             stmts[d.later()] = d.later_.stmt_;
         }
     };
-    auto foundMay = [&](const Dependency &d) {
+    auto foundMay = [&](const Dependence &d) {
         r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
         w2rMay[d.earlier().as<StmtNode>()].emplace_back(d.later());
     };

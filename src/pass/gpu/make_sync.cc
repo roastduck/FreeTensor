@@ -312,7 +312,7 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
         query.push_back({{loopId, DepDirection::Different}});
     }
     std::vector<CrossThreadDep> deps;
-    auto found = [&](const Dependency &d) {
+    auto found = [&](const Dependence &d) {
         ASSERT(d.dir_.size() == 1);
         auto laterStmt = d.later_.stmt_;
         auto earlierStmt = d.earlier_.stmt_;

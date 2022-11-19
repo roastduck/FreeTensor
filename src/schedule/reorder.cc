@@ -175,7 +175,7 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
     FindDeps()
         .direction(
             notLexLessAfterPermu(checker.outerLoops(), dstLoopAndStmtSeqOrder))
-        .filterSubAST(curOrder.front()->id())(ast, [&](const Dependency &d) {
+        .filterSubAST(curOrder.front()->id())(ast, [&](const Dependence &d) {
             throw InvalidSchedule("Loops are not permutable: " + toString(d) +
                                   " cannot be resolved");
         });

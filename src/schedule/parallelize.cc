@@ -62,7 +62,7 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
         for (auto &&outerLoop : mutator.outerLoops()) {
             findDepsDir.push_back({outerLoop, DepDirection::Same});
         }
-        auto found = [&](const Dependency &d) {
+        auto found = [&](const Dependence &d) {
             throw InvalidSchedule(toString(d) + " cannot be resolved");
         };
         FindDeps().direction({findDepsDir}).filterSubAST(loop)(oldAst, found);
@@ -87,7 +87,7 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
             }
             return false;
         };
-        auto found = [&](const Dependency &d) {
+        auto found = [&](const Dependence &d) {
             ASSERT(d.dir_.size() == 1);
             throw InvalidSchedule(toString(d) + " cannot be resolved");
         };

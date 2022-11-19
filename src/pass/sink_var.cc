@@ -193,7 +193,7 @@ Stmt sinkVar(const Stmt &_op,
                 .filterAccess([&](const AccessPoint &acc) {
                     return needDepAnalysis.count(acc.def_->id());
                 })
-                .ignoreReductionWAW(false)(op, [&](const Dependency &d) {
+                .ignoreReductionWAW(false)(op, [&](const Dependence &d) {
                     ASSERT(d.dir_.size() == 1);
                     deps.emplace(d.defId(), d.dir_[0].first.id_);
                 });

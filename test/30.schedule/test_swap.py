@@ -65,7 +65,7 @@ def test_not_consecutive():
     assert ast_.match(ast)
 
 
-def test_dependency():
+def test_dependence():
     with ft.VarDef([("y1", (4,), "int32", "inout", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 4, label="L1") as i:
