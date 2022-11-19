@@ -9,29 +9,6 @@
 
 namespace freetensor {
 
-class CountHeavyOps : public Visitor {
-    int cnt_ = 0;
-
-  public:
-    int cnt() const { return cnt_; }
-
-  protected:
-    void visitExpr(const Expr &op) {
-        Visitor::visitExpr(op);
-        if (!op->isConst() && op->nodeType() != ASTNodeType::Add &&
-            op->nodeType() != ASTNodeType::Sub &&
-            op->nodeType() != ASTNodeType::Mul) {
-            cnt_++;
-        }
-    }
-};
-
-static int countHeavyOps(const Expr &op) {
-    CountHeavyOps visitor;
-    visitor(op);
-    return visitor.cnt();
-}
-
 static std::vector<Expr> factorize(const Expr &expr) {
     std::vector<Expr> factors;
     std::function<void(const Expr &)> recur = [&](const Expr &expr) {
@@ -110,33 +87,7 @@ Expr SimplifyPass::visitExpr(const Expr &_op) {
         return op;
     }
 
-    Expr best = nullptr;
-    auto bestScope = -1, bestHeavyOps = -1;
-    for (auto &&lower : unique_.getLower(op)) {
-        for (auto &&upper : unique_.getUpper(op)) {
-            // Check upper <= lower ==> equal
-            // Here we use the less precise alwaysLE instead of analyzing bounds
-            // of `upper - lower`, in order to avoid infinite recursion
-            if (freetensor::alwaysLE(upper, lower)) {
-                // We need to choose the simplest one. Otherwise we are always
-                // picking the original expression
-                Expr expr;
-                if (upper.lin().coeff_.size() + (upper.lin().bias_ != 0) >
-                    lower.lin().coeff_.size() + (lower.lin().bias_ != 0)) {
-                    expr = lower.expr();
-                } else {
-                    expr = upper.expr();
-                }
-                auto scope = findInnerMostScope(varScope_, expr);
-                auto heavyOps = countHeavyOps(expr);
-                if (!best.isValid() || scope < bestScope ||
-                    (scope == bestScope && heavyOps < bestHeavyOps)) {
-                    best = expr, bestScope = scope, bestHeavyOps = heavyOps;
-                }
-                break;
-            }
-        }
-    }
+    Expr best = unique_.getBound(op)->simplestExpr(varScope_);
     if (best.isValid() && !HashComparator()(best, op)) {
         return best;
     }

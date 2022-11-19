@@ -6,8 +6,130 @@
 #include <analyze/check_all_defined.h>
 #include <analyze/comp_unique_bounds.h>
 #include <container_utils.h>
+#include <math/bounds.h>
+#include <math/min_max.h>
 
 namespace freetensor {
+
+namespace {
+
+class CountHeavyOps : public Visitor {
+    int cnt_ = 0;
+
+  public:
+    int cnt() const { return cnt_; }
+
+  protected:
+    void visitExpr(const Expr &op) {
+        Visitor::visitExpr(op);
+        if (!op->isConst() && op->nodeType() != ASTNodeType::Add &&
+            op->nodeType() != ASTNodeType::Sub &&
+            op->nodeType() != ASTNodeType::Mul) {
+            cnt_++;
+        }
+    }
+};
+
+static int countHeavyOps(const Expr &op) {
+    CountHeavyOps visitor;
+    visitor(op);
+    return visitor.cnt();
+}
+
+} // namespace
+
+int64_t CompUniqueBounds::UniqueBound::lowerInt() const {
+    int64_t ret = LLONG_MIN;
+    for (auto &&b : lowerBounds_) {
+        if (b.lin().isConst()) {
+            auto bias = b.lin().bias_;
+            ret = std::max(ret, ceilDiv(bias.p_, bias.q_));
+        }
+    }
+    return ret;
+}
+int64_t CompUniqueBounds::UniqueBound::upperInt() const {
+    int64_t ret = LLONG_MAX;
+    for (auto &&b : upperBounds_) {
+        if (b.lin().isConst()) {
+            auto bias = b.lin().bias_;
+            ret = std::min(ret, floorDiv(bias.p_, bias.q_));
+        }
+    }
+    return ret;
+}
+std::optional<int64_t> CompUniqueBounds::UniqueBound::getInt() const {
+    auto lower = lowerInt();
+    auto upper = upperInt();
+    return lower == upper ? std::make_optional<int64_t>(lower) : std::nullopt;
+}
+
+Expr CompUniqueBounds::UniqueBound::lowerExpr() const {
+    Expr result;
+    for (LowerBound &b : lowerBounds_) {
+        if (result.isValid())
+            result = makeMax(result, b.expr());
+        else
+            result = b.expr();
+    }
+    return result;
+}
+Expr CompUniqueBounds::UniqueBound::upperExpr() const {
+    Expr result;
+    for (UpperBound &b : upperBounds_) {
+        if (result.isValid())
+            result = makeMin(result, b.expr());
+        else
+            result = b.expr();
+    }
+    return result;
+}
+
+Ref<CompUniqueBoundsInterface::UniqueBoundInterface>
+CompUniqueBounds::UniqueBound::restrictScope(
+    const std::unordered_set<std::string> &scope) const {
+    auto filter = views::filter([&](auto &b) {
+                      return checkAllDefined(scope, b.allNames());
+                  }) |
+                  ranges::to<std::vector>();
+    return Ref<UniqueBound>::make(filter(lowerBounds_), filter(upperBounds_));
+}
+
+Expr CompUniqueBounds::UniqueBound::simplestExpr(
+    const std::unordered_map<std::string, int> &orderedScope) const {
+    Expr best = nullptr;
+    auto bestScope = -1, bestHeavyOps = -1;
+    for (auto &&lower : lowerBounds_) {
+        for (auto &&upper : upperBounds_) {
+            // Check upper <= lower ==> equal
+            // Here we use the less precise alwaysLE instead of analyzing bounds
+            // of `upper - lower`, in order to avoid infinite recursion
+            if (freetensor::alwaysLE(upper, lower)) {
+                // We need to choose the simplest one. Otherwise we are always
+                // picking the original expression
+                Expr expr;
+                if (upper.lin().coeff_.size() + (upper.lin().bias_ != 0) >
+                    lower.lin().coeff_.size() + (lower.lin().bias_ != 0)) {
+                    expr = lower.expr();
+                } else {
+                    expr = upper.expr();
+                }
+                // firstly choose outermost innermost scope
+                int scope = 0;
+                for (auto &&use : allUses(expr))
+                    scope = std::max(scope, orderedScope.at(use));
+                // secondly choose the one with least heavy operations
+                auto heavyOps = countHeavyOps(expr);
+                if (!best.isValid() || scope < bestScope ||
+                    (scope == bestScope && heavyOps < bestHeavyOps)) {
+                    best = expr, bestScope = scope, bestHeavyOps = heavyOps;
+                }
+                break;
+            }
+        }
+    }
+    return best;
+}
 
 void CompUniqueBounds::updLower(LowerBoundsList &list,
                                 const LowerBound &bound) const {
@@ -101,6 +223,31 @@ CompUniqueBounds::UpperBoundsList CompUniqueBounds::getDefinedUpper(
     return ret;
 }
 
+Ref<CompUniqueBoundsInterface::UniqueBoundInterface>
+CompUniqueBounds::getBound(const Expr &op) {
+    auto lower = getLower(op);
+    bool selfInLower = false;
+    for (auto &&l : lower)
+        if (op == l.expr()) {
+            selfInLower = true;
+            break;
+        }
+    if (!selfInLower)
+        lower.emplace_back(op);
+
+    auto upper = getUpper(op);
+    bool selfInUpper = false;
+    for (auto &&u : upper)
+        if (op == u.expr()) {
+            selfInUpper = true;
+            break;
+        }
+    if (!selfInUpper)
+        upper.emplace_back(op);
+
+    return Ref<UniqueBound>::make(std::move(lower), std::move(upper));
+}
+
 bool CompUniqueBounds::alwaysLT(const Expr &lhs, const Expr &rhs) {
     for (auto &&b1 : getUpper(lhs)) {
         for (auto &&b2 : getLower(rhs)) {
@@ -121,6 +268,22 @@ bool CompUniqueBounds::alwaysLE(const Expr &lhs, const Expr &rhs) {
         }
     }
     return false;
+}
+
+std::pair<Expr, Expr> CompUniqueBounds::unionBounds(
+    const std::vector<Ref<UniqueBoundInterface>> &bounds) {
+    std::vector<std::vector<Expr>> lowers, uppers;
+    for (auto &&rb : bounds) {
+        UniqueBound &b = *rb.as<UniqueBound>().get();
+        std::vector<Expr> lowerTerm, upperTerm;
+        for (auto &&l : b.lowerBounds_)
+            lowerTerm.emplace_back(l.expr());
+        for (auto &&u : b.upperBounds_)
+            upperTerm.emplace_back(u.expr());
+        lowers.emplace_back(std::move(lowerTerm));
+        uppers.emplace_back(std::move(upperTerm));
+    }
+    return {makeMinMax(lowers), makeMaxMin(uppers)};
 }
 
 void CompUniqueBounds::visitExpr(const Expr &op) {

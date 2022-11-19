@@ -47,16 +47,16 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
   public:
     struct Access {
         std::vector<Expr> indices_, conds_;
-        std::vector<std::vector<LowerBound>> lower_;
-        std::vector<std::vector<UpperBound>> upper_;
+        std::vector<Ref<CompUniqueBoundsInterface::UniqueBoundInterface>>
+            bounds_;
 
         Access(CompUniqueBounds &unique, const std::vector<Expr> &indices,
                const std::vector<Expr> &conds,
                const std::unordered_set<std::string> &names)
             : indices_(indices), conds_(conds) {
             for (auto &&idx : indices) {
-                lower_.emplace_back(unique.getDefinedLower(idx, names));
-                upper_.emplace_back(unique.getDefinedUpper(idx, names));
+                bounds_.emplace_back(
+                    unique.getBound(idx)->restrictScope(names));
             }
         }
 
@@ -64,8 +64,7 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
                const std::vector<Expr> &conds)
             : indices_(indices), conds_(conds) {
             for (auto &&idx : indices) {
-                lower_.emplace_back(unique.getLower(idx));
-                upper_.emplace_back(unique.getUpper(idx));
+                bounds_.emplace_back(unique.getBound(idx));
             }
         }
     };

@@ -2,12 +2,51 @@
 #define FREE_TENSOR_COMP_UNIQUE_BOUNDS_H
 
 #include <optional>
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
 
 #include <analyze/comp_transient_bounds.h>
+#include <math/bounds.h>
 #include <visitor.h>
 
 namespace freetensor {
+
+class CompUniqueBoundsInterface {
+  public:
+    class UniqueBoundInterface {
+      public:
+        virtual ~UniqueBoundInterface() {}
+
+        virtual int64_t lowerInt() const = 0;
+        virtual int64_t upperInt() const = 0;
+        virtual std::optional<int64_t> getInt() const = 0;
+
+        virtual Expr lowerExpr() const = 0;
+        virtual Expr upperExpr() const = 0;
+
+        virtual Ref<UniqueBoundInterface>
+        restrictScope(const std::unordered_set<std::string> &scope) const = 0;
+
+        virtual Expr simplestExpr(
+            const std::unordered_map<std::string, int> &orderedScope) const = 0;
+    };
+
+  protected:
+    const CompTransientBoundsInterface &transients_;
+
+  public:
+    CompUniqueBoundsInterface(const CompTransientBoundsInterface &transients)
+        : transients_(transients) {}
+    virtual ~CompUniqueBoundsInterface() {}
+
+    virtual Ref<UniqueBoundInterface> getBound(const Expr &op) = 0;
+    virtual bool alwaysLT(const Expr &lhs, const Expr &rhs) = 0;
+    virtual bool alwaysLE(const Expr &lhs, const Expr &rhs) = 0;
+
+    virtual std::pair<Expr, Expr>
+    unionBounds(const std::vector<Ref<UniqueBoundInterface>> &bounds) = 0;
+};
 
 /**
  * Compute bounds of each UNIQUE INTEGER (sub)expression
@@ -26,25 +65,53 @@ namespace freetensor {
  * This pass is not accurate. Simplifying passes using this analysis may need
  * to run for multiple rounds
  */
-class CompUniqueBounds : public Visitor {
+class CompUniqueBounds : public CompUniqueBoundsInterface, public Visitor {
     typedef Visitor BaseClass;
 
   public:
+    class UniqueBound : public UniqueBoundInterface {
+        // retrieving expr from Lower/UpperBound requires to be mutable. fake it
+        // here.
+        mutable std::vector<LowerBound> lowerBounds_;
+        mutable std::vector<UpperBound> upperBounds_;
+
+        friend class CompUniqueBounds;
+
+      public:
+        UniqueBound(std::vector<LowerBound> lowerBounds,
+                    std::vector<UpperBound> upperBounds)
+            : lowerBounds_(std::move(lowerBounds)),
+              upperBounds_(std::move(upperBounds)) {}
+
+        int64_t lowerInt() const override;
+        int64_t upperInt() const override;
+        std::optional<int64_t> getInt() const override;
+
+        Expr lowerExpr() const override;
+        Expr upperExpr() const override;
+
+        Ref<UniqueBoundInterface> restrictScope(
+            const std::unordered_set<std::string> &scope) const override;
+
+        Expr simplestExpr(const std::unordered_map<std::string, int>
+                              &orderedScope) const override;
+    };
+    typedef std::unordered_map<Expr, UniqueBound> UniqueBoundsMap;
+
     typedef std::vector<LowerBound> LowerBoundsList;
     typedef std::vector<UpperBound> UpperBoundsList;
     typedef std::unordered_map<Expr, LowerBoundsList> LowerBoundsMap;
     typedef std::unordered_map<Expr, UpperBoundsList> UpperBoundsMap;
 
   private:
-    const CompTransientBoundsInterface &transients_;
-
     LowerBoundsMap lower_;
     UpperBoundsMap upper_;
 
   public:
     CompUniqueBounds(const CompTransientBoundsInterface &transients)
-        : transients_(transients) {}
+        : CompUniqueBoundsInterface(transients) {}
 
+  protected:
     LowerBoundsList getLower(const Expr &op) {
         (*this)(op);
         return lower_.at(op);
@@ -54,6 +121,7 @@ class CompUniqueBounds : public Visitor {
         return upper_.at(op);
     }
 
+  public:
     int64_t getIntLower(const Expr &op);
     int64_t getIntUpper(const Expr &op);
     std::optional<int64_t> getInt(const Expr &op);
@@ -70,6 +138,8 @@ class CompUniqueBounds : public Visitor {
                     const std::unordered_set<std::string> &names);
     /** @} */
 
+    Ref<UniqueBoundInterface> getBound(const Expr &op) override;
+
     /**
      * Check wheter `lhs` is always less than `rhs`
      *
@@ -78,8 +148,11 @@ class CompUniqueBounds : public Visitor {
      * For precise comparison, please use `getLower` or `getUpper` on
      * `makeSub(lhs, rhs)`
      */
-    bool alwaysLT(const Expr &lhs, const Expr &rhs);
-    bool alwaysLE(const Expr &lhs, const Expr &rhs);
+    bool alwaysLT(const Expr &lhs, const Expr &rhs) override;
+    bool alwaysLE(const Expr &lhs, const Expr &rhs) override;
+
+    std::pair<Expr, Expr>
+    unionBounds(const std::vector<Ref<UniqueBoundInterface>> &bounds) override;
 
   protected:
     template <class T> void setLower(const Expr &op, T &&list) {

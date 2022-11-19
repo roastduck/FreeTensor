@@ -37,6 +37,12 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
         return op;
     }
 
+    std::unordered_set<std::string> constOrByValueNames;
+    for (auto &&name : names()) {
+        if (isConstOrByValue({name}))
+            constOrByValueNames.insert(name);
+    }
+
     size_t ndim = op->buffer_->tensor()->shape().size();
     for (size_t i = 0; i < ndim; i++) {
         auto &dim = op->buffer_->tensor()->shape()[i];
@@ -44,13 +50,9 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
         if (isConstOrByValue(dim)) {
             continue;
         }
-        Expr result;
-        for (auto b : unique_.getUpper(oldDim)) {
-            if (isConstOrByValue(b.lin().allNames())) {
-                result =
-                    result.isValid() ? makeMin(result, b.expr()) : b.expr();
-            }
-        }
+        Expr result = unique_.getBound(oldDim)
+                          ->restrictScope(constOrByValueNames)
+                          ->upperExpr();
         if (!result.isValid()) {
             throw InvalidProgram("Unable to relax dimension " +
                                  std::to_string(i) + ": " + toString(dim) +
