@@ -3,7 +3,7 @@
 
 namespace freetensor {
 
-void Schedule::autoFissionFuse(const Target &target,
+void Schedule::autoFissionFuse(const Ref<Target> &target,
                                const Ref<RandTrace> &trace) {
     RandCondStack conds;
 

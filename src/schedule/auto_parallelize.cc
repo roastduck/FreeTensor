@@ -3,10 +3,10 @@
 
 namespace freetensor {
 
-void Schedule::autoParallelize(const Target &target) {
+void Schedule::autoParallelize(const Ref<Target> &target) {
 #ifdef FT_WITH_CUDA
     // [GPU only] Try to parallelize loops accessing contiguous items as warps
-    if (target.type() == TargetType::GPU) {
+    if (target->type() == TargetType::GPU) {
         // We try to parallelize the loop with most contiguous access count
         // first. If the counts are equal, we try to parallel the out-most loop
         // with the same count first
@@ -32,7 +32,7 @@ void Schedule::autoParallelize(const Target &target) {
             beginTransaction();
             try {
                 auto [l0, l1] =
-                    split(loop->id(), ((GPUTarget &)target).warpSize());
+                    split(loop->id(), target.as<GPUTarget>()->warpSize());
                 parallelize(l1, threadIdxX);
 
                 try {
@@ -126,7 +126,7 @@ void Schedule::autoParallelize(const Target &target) {
                     }
                 }
 
-                switch (target.type()) {
+                switch (target->type()) {
                 case TargetType::CPU:
                     parallelize(mergedId, OpenMPScope{});
                     break;
@@ -148,13 +148,13 @@ void Schedule::autoParallelize(const Target &target) {
                     // split it only once, to reduce redundant guards, and
                     // save time for dependence analysis. If not, we split
                     // it twice, and merge once
-                    int numSM = ((GPUTarget &)target).multiProcessorCount();
+                    int numSM = target.as<GPUTarget>()->multiProcessorCount();
                     int maxThreads = 256; // Can be max thread per block (1024),
                                           // but our generated kernels are huge,
                                           // so set it lower to reserve for more
                                           // registers. TODO: no magic number
                     if (parentIsWarp || childIsWarp) {
-                        maxThreads /= ((GPUTarget &)target).warpSize();
+                        maxThreads /= target.as<GPUTarget>()->warpSize();
                     }
                     ID l1, l1b, l2;
                     if (auto loopNode = merged.as<ForNode>();

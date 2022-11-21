@@ -3,8 +3,8 @@
 
 namespace freetensor {
 
-void Schedule::autoUnroll(const Target &target) {
-    if (target.type() == TargetType::GPU) {
+void Schedule::autoUnroll(const Ref<Target> &target) {
+    if (target->type() == TargetType::GPU) {
         // Try to unroll loops that accessing local arrays, to help nvcc put
         // these arrays to registers
         for (auto &&[loop, defs] : findIndexingLoops(ast())) {

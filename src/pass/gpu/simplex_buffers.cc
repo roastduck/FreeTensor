@@ -35,8 +35,8 @@ Stmt ApplySimplexOffset::visit(const For &op) {
     }
 }
 
-Stmt simplexBuffers(const Stmt &_op) {
-    FindSimplexOffset visitor;
+Stmt simplexBuffers(const Stmt &_op, const ID &defId) {
+    FindSimplexOffset visitor(defId);
     visitor(_op);
     ApplySimplexOffset mutator(visitor.offsets());
     auto op = mutator(_op);

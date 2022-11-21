@@ -90,7 +90,8 @@ void Schedule::setLogs(const ScheduleLog &logs) {
     openTrans_.back().logs_ = logs;
 }
 
-void Schedule::autoSchedule(const Target &target, const Ref<RandTrace> &trace) {
+void Schedule::autoSchedule(const Ref<Target> &target,
+                            const Ref<RandTrace> &trace) {
     autoUseLib(target);
     autoFissionFuse(target, trace);
     autoReorder(target);
@@ -120,7 +121,7 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
                         trials[i * batchSize + j];
                     auto s = this->fork();
                     trace = Ref<RandTrace>::make();
-                    s.autoSchedule(*device->target(), trace);
+                    s.autoSchedule(device->target(), trace);
                     lowered = lower(s.func(), device->target());
                     code = codeGen(lowered, device->target());
                     drivers[j] = Ref<Driver>::make(lowered, code, device);
