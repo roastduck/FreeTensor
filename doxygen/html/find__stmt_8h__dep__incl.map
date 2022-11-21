@@ -1,18 +1,19 @@
 <map id="include/analyze/find_stmt.h" name="include/analyze/find_stmt.h">
-<area shape="rect" id="node1" title=" " alt="" coords="4729,5,4881,47"/>
+<area shape="rect" id="node1" title=" " alt="" coords="4850,5,5002,47"/>
 <area shape="rect" id="node2" href="$deps_8h.html" title=" " alt="" coords="2345,102,2515,129"/>
 <area shape="rect" id="node5" href="$check__not__modified_8cc.html" title=" " alt="" coords="5,184,172,225"/>
 <area shape="rect" id="node7" href="$merge__no__deps__hint_8cc.html" title=" " alt="" coords="197,184,362,225"/>
 <area shape="rect" id="node8" href="$grad_8cc.html" title=" " alt="" coords="386,191,541,218"/>
 <area shape="rect" id="node19" href="$fission_8cc.html" title=" " alt="" coords="4235,191,4401,218"/>
 <area shape="rect" id="node24" href="$pluto_8cc.html" title=" " alt="" coords="4425,191,4584,218"/>
-<area shape="rect" id="node28" href="$schedule_8h.html" title=" " alt="" coords="4733,102,4876,129"/>
-<area shape="rect" id="node45" href="$split_8cc.html" title=" " alt="" coords="7387,191,7540,218"/>
-<area shape="rect" id="node46" href="$find__stmt_8cc.html" title=" " alt="" coords="4951,102,5130,129"/>
-<area shape="rect" id="node47" href="$src_2codegen_2detail_2code__gen__c_8h.html" title=" " alt="" coords="5154,95,5295,136"/>
-<area shape="rect" id="node48" href="$driver_8cc.html" title=" " alt="" coords="5320,102,5420,129"/>
-<area shape="rect" id="node49" href="$hoist__var__over__stmt__seq_8cc.html" title=" " alt="" coords="5444,95,5587,136"/>
-<area shape="rect" id="node50" href="$shrink__var_8cc.html" title=" " alt="" coords="5611,102,5775,129"/>
+<area shape="rect" id="node28" href="$schedule_8h.html" title=" " alt="" coords="4800,102,4943,129"/>
+<area shape="rect" id="node38" href="$auto__set__mem__type_8cc.html" title=" " alt="" coords="7201,184,7363,225"/>
+<area shape="rect" id="node45" href="$split_8cc.html" title=" " alt="" coords="7388,191,7541,218"/>
+<area shape="rect" id="node46" href="$find__stmt_8cc.html" title=" " alt="" coords="5069,102,5247,129"/>
+<area shape="rect" id="node47" href="$src_2codegen_2detail_2code__gen__c_8h.html" title=" " alt="" coords="5271,95,5413,136"/>
+<area shape="rect" id="node48" href="$driver_8cc.html" title=" " alt="" coords="5437,102,5537,129"/>
+<area shape="rect" id="node49" href="$hoist__var__over__stmt__seq_8cc.html" title=" " alt="" coords="5561,95,5704,136"/>
+<area shape="rect" id="node50" href="$shrink__var_8cc.html" title=" " alt="" coords="5728,102,5892,129"/>
 <area shape="rect" id="node3" href="$all__no__reuse__defs_8cc.html" title=" " alt="" coords="1329,184,1467,225"/>
 <area shape="rect" id="node4" href="$analyze__version_8cc.html" title=" " alt="" coords="1492,184,1643,225"/>
 <area shape="rect" id="node6" href="$deps_8cc.html" title=" " alt="" coords="1667,191,1817,218"/>
@@ -33,20 +34,19 @@
 <area shape="rect" id="node25" href="$reorder_8cc.html" title=" " alt="" coords="3443,191,3614,218"/>
 <area shape="rect" id="node26" href="$swap_8cc.html" title=" " alt="" coords="4052,191,4211,218"/>
 <area shape="rect" id="node27" href="$vectorize_8cc.html" title=" " alt="" coords="4608,191,4793,218"/>
-<area shape="rect" id="node29" href="$auto__schedule_8h.html" title=" " alt="" coords="5264,363,5431,404"/>
-<area shape="rect" id="node30" href="$rule_8h.html" title=" " alt="" coords="5264,273,5431,315"/>
-<area shape="rect" id="node31" href="$sketch_8h.html" title=" " alt="" coords="5315,184,5481,225"/>
-<area shape="rect" id="node32" href="$auto__schedule_2utils_8h.html" title=" " alt="" coords="5557,184,5724,225"/>
-<area shape="rect" id="node33" href="$schedule_8cc.html" title=" " alt="" coords="5525,281,5647,307"/>
-<area shape="rect" id="node34" href="$schedule_2multi__level__tiling_8cc.html" title=" " alt="" coords="5681,273,5822,315"/>
-<area shape="rect" id="node35" href="$except_8cc.html" title=" " alt="" coords="5799,191,5906,218"/>
-<area shape="rect" id="node36" href="$as__matmul_8cc.html" title=" " alt="" coords="5931,191,6129,218"/>
-<area shape="rect" id="node37" href="$auto__parallelize_8cc.html" title=" " alt="" coords="6154,191,6383,218"/>
-<area shape="rect" id="node38" href="$auto__set__mem__type_8cc.html" title=" " alt="" coords="6407,184,6570,225"/>
-<area shape="rect" id="node39" href="$auto__unroll_8cc.html" title=" " alt="" coords="6595,191,6793,218"/>
-<area shape="rect" id="node40" href="$auto__use__lib_8cc.html" title=" " alt="" coords="6817,184,6984,225"/>
-<area shape="rect" id="node41" href="$cache_8cc.html" title=" " alt="" coords="7009,191,7171,218"/>
-<area shape="rect" id="node42" href="$merge_8cc.html" title=" " alt="" coords="7196,191,7363,218"/>
-<area shape="rect" id="node43" href="$move__to_8cc.html" title=" " alt="" coords="4817,191,5000,218"/>
-<area shape="rect" id="node44" href="$separate__tail_8cc.html" title=" " alt="" coords="5024,184,5188,225"/>
+<area shape="rect" id="node29" href="$auto__schedule_8h.html" title=" " alt="" coords="6665,363,6832,404"/>
+<area shape="rect" id="node30" href="$rule_8h.html" title=" " alt="" coords="6665,273,6832,315"/>
+<area shape="rect" id="node31" href="$sketch_8h.html" title=" " alt="" coords="6716,184,6883,225"/>
+<area shape="rect" id="node32" href="$auto__schedule_2utils_8h.html" title=" " alt="" coords="6959,184,7125,225"/>
+<area shape="rect" id="node33" href="$schedule_8cc.html" title=" " alt="" coords="6927,281,7048,307"/>
+<area shape="rect" id="node34" href="$schedule_2multi__level__tiling_8cc.html" title=" " alt="" coords="7082,273,7223,315"/>
+<area shape="rect" id="node35" href="$except_8cc.html" title=" " alt="" coords="4818,191,4925,218"/>
+<area shape="rect" id="node36" href="$as__matmul_8cc.html" title=" " alt="" coords="4949,191,5148,218"/>
+<area shape="rect" id="node37" href="$auto__parallelize_8cc.html" title=" " alt="" coords="5173,191,5402,218"/>
+<area shape="rect" id="node39" href="$auto__unroll_8cc.html" title=" " alt="" coords="5427,191,5625,218"/>
+<area shape="rect" id="node40" href="$auto__use__lib_8cc.html" title=" " alt="" coords="5649,184,5816,225"/>
+<area shape="rect" id="node41" href="$cache_8cc.html" title=" " alt="" coords="5841,191,6003,218"/>
+<area shape="rect" id="node42" href="$merge_8cc.html" title=" " alt="" coords="6028,191,6195,218"/>
+<area shape="rect" id="node43" href="$move__to_8cc.html" title=" " alt="" coords="6219,191,6401,218"/>
+<area shape="rect" id="node44" href="$separate__tail_8cc.html" title=" " alt="" coords="6425,184,6589,225"/>
 </map>

@@ -140,13 +140,13 @@ var searchData=
   ['auto_5fset_5fmem_5ftype_2ecc_137',['auto_set_mem_type.cc',['../auto__set__mem__type_8cc.html',1,'']]],
   ['auto_5funroll_2ecc_138',['auto_unroll.cc',['../auto__unroll_8cc.html',1,'']]],
   ['auto_5fuse_5flib_2ecc_139',['auto_use_lib.cc',['../auto__use__lib_8cc.html',1,'']]],
-  ['autofissionfuse_140',['autoFissionFuse',['../classfreetensor_1_1Schedule.html#a73cd5f1b56e41e37405ddaa5c955bdb8',1,'freetensor::Schedule']]],
-  ['autoparallelize_141',['autoParallelize',['../classfreetensor_1_1Schedule.html#aab49e422d97c96d24081406de659e121',1,'freetensor::Schedule']]],
-  ['autoreorder_142',['autoReorder',['../classfreetensor_1_1Schedule.html#ae867511016657dd663ed4cc8c91e03ed',1,'freetensor::Schedule']]],
-  ['autoschedule_143',['autoSchedule',['../classfreetensor_1_1Schedule.html#ab07b305c56ef33cab76de9e874c295c3',1,'freetensor::Schedule']]],
+  ['autofissionfuse_140',['autoFissionFuse',['../classfreetensor_1_1Schedule.html#a3a7bd97f2a8bfb6b853d959cc7b0636f',1,'freetensor::Schedule']]],
+  ['autoparallelize_141',['autoParallelize',['../classfreetensor_1_1Schedule.html#a36968be3b8f0d74c315c3565c5572ba2',1,'freetensor::Schedule']]],
+  ['autoreorder_142',['autoReorder',['../classfreetensor_1_1Schedule.html#a2d944c1a96e055d5a5491cc086ba70e6',1,'freetensor::Schedule']]],
+  ['autoschedule_143',['autoSchedule',['../classfreetensor_1_1Schedule.html#aa50f7376da162b5975c8e00d41aeaab9',1,'freetensor::Schedule']]],
   ['autoschedule_144',['AutoSchedule',['../classfreetensor_1_1AutoSchedule.html#af63772d26bdd3e696d0e158843a8ec7c',1,'freetensor::AutoSchedule::AutoSchedule()'],['../classfreetensor_1_1AutoSchedule.html',1,'freetensor::AutoSchedule']]],
   ['autoscheduletunetrial_145',['AutoScheduleTuneTrial',['../structfreetensor_1_1AutoScheduleTuneTrial.html',1,'freetensor']]],
-  ['autosetmemtype_146',['autoSetMemType',['../classfreetensor_1_1Schedule.html#aeb4eeb733444a7566604e4f19f657b07',1,'freetensor::Schedule']]],
-  ['autounroll_147',['autoUnroll',['../classfreetensor_1_1Schedule.html#a7f5c6509535b6636e718d7e3fdbc267f',1,'freetensor::Schedule']]],
-  ['autouselib_148',['autoUseLib',['../classfreetensor_1_1Schedule.html#a7f6e8a418824aeaf48e5966d9046e8b4',1,'freetensor::Schedule']]]
+  ['autosetmemtype_146',['autoSetMemType',['../classfreetensor_1_1Schedule.html#a11a336810508f2fd8fd9bb1c761a327d',1,'freetensor::Schedule']]],
+  ['autounroll_147',['autoUnroll',['../classfreetensor_1_1Schedule.html#a38ae1948ed53fbe5378905c90feb0d73',1,'freetensor::Schedule']]],
+  ['autouselib_148',['autoUseLib',['../classfreetensor_1_1Schedule.html#af7018c4446baf1db134a11d112462370',1,'freetensor::Schedule']]]
 ];
