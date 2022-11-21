@@ -71,6 +71,8 @@ class GPUTarget : public Target {
     int warpSize() const { return infoArch_->warpSize; }
 
     int multiProcessorCount() const { return infoArch_->multiProcessorCount; }
+
+    size_t sharedMemPerBlock() const { return infoArch_->sharedMemPerBlock; }
 };
 #endif // FT_WITH_CUDA
 

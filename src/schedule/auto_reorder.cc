@@ -4,7 +4,7 @@
 
 namespace freetensor {
 
-void Schedule::autoReorder(const Target &target) {
+void Schedule::autoReorder(const Ref<Target> &target) {
     auto allLoops = findAllLoops(ast());
     std::vector<FindDepsDir> direction;
     direction.reserve(allLoops.size());

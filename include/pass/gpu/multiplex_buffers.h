@@ -19,11 +19,13 @@ namespace gpu {
 
 class FindParallelLoops : public Visitor {
     Ref<GPUTarget> target_;
+    ID defId_;
     std::vector<For> loops_, stack_;
     std::unordered_map<ID, std::unordered_set<ID>> affecting_;
 
   public:
-    FindParallelLoops(const Ref<GPUTarget> &target) : target_(target) {}
+    FindParallelLoops(const Ref<GPUTarget> &target, const ID &defId = ID())
+        : target_(target), defId_(defId) {}
 
     const std::vector<For> &loops() const { return loops_; }
     const std::unordered_map<ID, std::unordered_set<ID>> &affecting() const {
@@ -79,8 +81,11 @@ class MultiplexMutator : public SymbolTable<Mutator> {
  * enlarged so that each thread or block will access different parts of it
  *
  * E.g. Alter from `shmem[i]` to `shmem[threadIdx.x, i]`
+ *
+ * @param defId : If set, only alter this VarDef
  */
-Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target);
+Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target,
+                      const ID &defId = ID());
 
 DEFINE_PASS_FOR_FUNC(multiplexBuffers)
 

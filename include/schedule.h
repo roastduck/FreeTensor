@@ -735,7 +735,7 @@ class Schedule {
      * @param target : Target architecture
      * @param trace : Random decision tarce
      */
-    void autoSchedule(const Target &target,
+    void autoSchedule(const Ref<Target> &target,
                       const Ref<RandTrace> &trace = nullptr);
 
     /**
@@ -743,14 +743,14 @@ class Schedule {
      *
      * @param target : Target architecture
      */
-    void autoUseLib(const Target &target);
+    void autoUseLib(const Ref<Target> &target);
 
     /**
      * (Experimental) Automaticaly reorder loops in a loop nest
      *
      * @param target : Target architecture
      */
-    void autoReorder(const Target &target);
+    void autoReorder(const Ref<Target> &target);
 
     /**
      * (Experimental) Automatically fuse consecutive loops or vice versa using
@@ -759,7 +759,7 @@ class Schedule {
      * @param target : Target architecture
      * @param trace : Random decision tarce
      */
-    void autoFissionFuse(const Target &target,
+    void autoFissionFuse(const Ref<Target> &target,
                          const Ref<RandTrace> &trace = nullptr);
 
     /**
@@ -767,21 +767,21 @@ class Schedule {
      *
      * @param target : Target architecture
      */
-    void autoParallelize(const Target &target);
+    void autoParallelize(const Ref<Target> &target);
 
     /**
      * (Experimental) Automatically set memory types using some heuristics
      *
      * @param target : Target architecture
      */
-    void autoSetMemType(const Target &target);
+    void autoSetMemType(const Ref<Target> &target);
 
     /**
      * (Experimental) Automatically unroll loops using some heuristics
      *
      * @param target : Target architecture
      */
-    void autoUnroll(const Target &target);
+    void autoUnroll(const Ref<Target> &target);
 
     std::vector<AutoScheduleTuneTrial> tuneAutoSchedule(
         int nBatch, int batchSize, const Ref<Device> &device,

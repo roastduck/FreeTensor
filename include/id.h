@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <iostream>
+#include <optional>
 
 namespace freetensor {
 
@@ -22,6 +23,7 @@ class ID {
 
   public:
     ID() : id_(0) {}
+    ID(std::nullopt_t) : id_(0) {}
 
     static ID make() { return ID(globalIdCnt_++); }
     static ID make(uint64_t id) { return ID(id); }

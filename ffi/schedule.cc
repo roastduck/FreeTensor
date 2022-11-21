@@ -137,14 +137,14 @@ void init_ffi_schedule(py::module_ &m) {
         .def("pluto_permute", &Schedule::plutoPermute, "loop"_a,
              "nest_level"_a = 0, "do_simplify"_a = true)
         .def("auto_schedule",
-             [](Schedule &s, const Target &target) {
+             [](Schedule &s, const Ref<Target> &target) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda
                  return s.autoSchedule(target);
              })
         .def("auto_use_lib", &Schedule::autoUseLib)
         .def("auto_reorder", &Schedule::autoReorder)
         .def("auto_fission_fuse",
-             [](Schedule &s, const Target &target) {
+             [](Schedule &s, const Ref<Target> &target) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda
                  return s.autoFissionFuse(target);
              })

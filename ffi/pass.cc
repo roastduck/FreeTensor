@@ -182,19 +182,23 @@ void init_ffi_pass(py::module_ &m) {
               &gpu::makeSync),
           "stmt"_a, "target"_a);
 
-    m.def("gpu_multiplex_buffers",
-          static_cast<Func (*)(const Func &, const Ref<GPUTarget> &)>(
-              &gpu::multiplexBuffers),
-          "func"_a, "target"_a);
-    m.def("gpu_multiplex_buffers",
-          static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &)>(
-              &gpu::multiplexBuffers),
-          "stmt"_a, "target"_a);
+    m.def(
+        "gpu_multiplex_buffers",
+        static_cast<Func (*)(const Func &, const Ref<GPUTarget> &, const ID &)>(
+            &gpu::multiplexBuffers),
+        "func"_a, "target"_a, "def_id"_a = std::nullopt);
+    m.def(
+        "gpu_multiplex_buffers",
+        static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &, const ID &)>(
+            &gpu::multiplexBuffers),
+        "stmt"_a, "target"_a, "def_id"_a = std::nullopt);
 
     m.def("gpu_simplex_buffers",
-          static_cast<Func (*)(const Func &)>(&gpu::simplexBuffers), "func"_a);
+          static_cast<Func (*)(const Func &, const ID &)>(&gpu::simplexBuffers),
+          "func"_a, "def_id"_a = std::nullopt);
     m.def("gpu_simplex_buffers",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::simplexBuffers), "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const ID &)>(&gpu::simplexBuffers),
+          "stmt"_a, "def_id"_a = std::nullopt);
 
     m.def("gpu_lower_vector",
           static_cast<Func (*)(const Func &)>(&gpu::lowerVector), "func"_a);
