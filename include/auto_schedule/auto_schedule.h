@@ -40,6 +40,14 @@ class AutoSchedule {
     int minBlockSize_{0};
     std::optional<std::unordered_set<std::string>> ruleSet_;
     int verbose_ = 0;
+    std::function<std::pair<std::vector<double>, std::vector<double>>(
+        int rounds, int warmups,
+        const std::tuple<const Ref<Target> &, const Ref<Device> &,
+                         const std::vector<Ref<Array>> &,
+                         const std::unordered_map<std::string, Ref<Array>> &>
+            &att,
+        const std::vector<Func> &funcs)>
+        remoteMeasureSubmit_;
 
   private:
     /**
@@ -51,16 +59,24 @@ class AutoSchedule {
     measure(const std::vector<Ref<Sketch>> &sketches);
 
   public:
-    AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
-                 const Ref<Device> &device,
-                 const std::function<Predicts(const Features &)> &predictFunc,
-                 const std::function<void(const Features &, const Predicts &)>
-                     &updateFunc,
-                 std::string tag = "", int minBlockSize = 0,
-                 std::optional<size_t> randomSeed = std::nullopt,
-                 const std::optional<std::unordered_set<std::string>> &ruleSet =
-                     std::nullopt,
-                 int verbose = 0);
+    AutoSchedule(
+        const Schedule &schedule, const Ref<Target> &target,
+        const Ref<Device> &device,
+        const std::function<Predicts(const Features &)> &predictFunc,
+        const std::function<void(const Features &, const Predicts &)>
+            &updateFunc,
+        std::string tag = "", int minBlockSize = 0,
+        std::optional<size_t> randomSeed = std::nullopt,
+        const std::optional<std::unordered_set<std::string>> &ruleSet =
+            std::nullopt,
+        int verbose = 0,
+        const std::function<std::pair<std::vector<double>, std::vector<double>>(
+            int rounds, int warmups,
+            const std::tuple<
+                const Ref<Target> &, const Ref<Device> &,
+                const std::vector<Ref<Array>> &,
+                const std::unordered_map<std::string, Ref<Array>> &> &att,
+            const std::vector<Func> &funcs)> &remoteMeasureSubmit = {});
 
     void setParams(const std::vector<Ref<Array>> &args,
                    const std::unordered_map<std::string, Ref<Array>> &kws);
@@ -94,6 +110,13 @@ class AutoSchedule {
     Schedule
     testRound(const std::unordered_map<std::string, int> &nthSketch = {});
 };
+
+std::pair<std::vector<double>, std::vector<double>> rpcMeasure(
+    int rounds, int warmups,
+    const std::tuple<const Ref<Target> &, const Ref<Device> &,
+                     const std::vector<Ref<Array>> &,
+                     const std::unordered_map<std::string, Ref<Array>> &> &att,
+    const std::vector<Func> &funcs);
 
 } // namespace freetensor
 
