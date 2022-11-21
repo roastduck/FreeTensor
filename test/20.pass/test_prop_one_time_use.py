@@ -20,6 +20,25 @@ def test_basic():
     assert std.match(ast)
 
 
+def test_preserve_data_type():
+    with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("t", (4,), "int32", "cache", "cpu"),
+                    ("y", (4,), "float32", "output", "cpu")]) as (x, t, y):
+        with ft.For("i", 0, 4) as i:
+            t[i] = x[i] * 2
+            y[i] = t[i] + 1
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("y", (4,), "float32", "output", "cpu")]) as (x, y):
+        with ft.For("i", 0, 4) as i:
+            y[i] = ft.cast(x[i] * 2, "int32") + 1
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_multiple_vars():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("t", (4,), "int32", "cache", "cpu"),
