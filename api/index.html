@@ -3176,6 +3176,21 @@ on <code>VarRef</code> objects generates AST nodes</p>
         <span class="n">top</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span>
         <span class="n">top</span><span class="o">.</span><span class="n">append_stmt</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">as_store</span><span class="p">(</span><span class="n">top</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">(),</span> <span class="n">value</span><span class="p">))</span>
 
+    <span class="k">def</span> <span class="nf">as_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span>
+                <span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+            <span class="c1"># Add explicit cast node, to avoid confusion after propagation</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">as_store</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">as_reduce_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">atomic</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span>
+                <span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+            <span class="c1"># Add explicit cast node, to avoid confusion after propagation</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">as_reduce_to</span><span class="p">(</span><span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span>
+                                                <span class="n">atomic</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">select</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">dim</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">dim</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span>
@@ -3455,6 +3470,67 @@ on <code>VarRef</code> objects generates AST nodes</p>
 
 
 
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.expr.VarRef.as_reduce_to" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">as_reduce_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">atomic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.expr.VarRef.as_reduce_to" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>as_reduce_to(self: freetensor_ffi.FrontendVar, op: freetensor_ffi.ReduceOp, metadata: freetensor_ffi.Metadata, value: freetensor_ffi.Expr, atomic: bool = False) -&gt; freetensor_ffi.Stmt</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">as_reduce_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">atomic</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span>
+            <span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+        <span class="c1"># Add explicit cast node, to avoid confusion after propagation</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">as_reduce_to</span><span class="p">(</span><span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span>
+                                            <span class="n">atomic</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.expr.VarRef.as_store" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">as_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.expr.VarRef.as_store" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>as_store(self: freetensor_ffi.FrontendVar, metadata: freetensor_ffi.Metadata, value: freetensor_ffi.Expr) -&gt; freetensor_ffi.Stmt</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">as_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span>
+            <span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+        <span class="c1"># Add explicit cast node, to avoid confusion after propagation</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">as_store</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
@@ -3979,7 +4055,10 @@ it calls libop.ceildiv</p>
         <span class="k">return</span> <span class="n">var</span><span class="o">.</span><span class="n">dtype</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># TODO: Config default type</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="c1"># NOTE: before int, because bool in Python is a sub-class of int</span>
+            <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DataType</span><span class="p">(</span><span class="s2">&quot;bool&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DataType</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DataType</span><span class="p">(</span><span class="s2">&quot;int32&quot;</span><span class="p">)</span>
