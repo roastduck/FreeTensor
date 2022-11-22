@@ -1,5 +1,17 @@
 import freetensor_ffi as ffi
-from freetensor_ffi import up_cast, neutral_val, is_float, DataType, MemType
+from freetensor_ffi import up_cast, neutral_val, is_float, is_int, is_bool, DataType, MemType
+
+
+def zero_value(dtype):
+    dtype = DataType(dtype)
+    if is_float(dtype):
+        return 0.
+    elif is_int(dtype):
+        return 0
+    elif is_bool(dtype):
+        return False
+    else:
+        assert False, "Unrecognized data type %s" % dtype
 
 
 def min_value(dtype):
