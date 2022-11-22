@@ -20,22 +20,35 @@ void GenPBExpr::visitExpr(const Expr &op) {
         Visitor::visitExpr(op);
         parent_ = oldParent;
 
-        if (!results_.count(op) &&
-            (!noNeedToBeVars_.count(op) || !parent_.isValid())) {
-            auto freeVar = mangle(dumpAST(op, true)) + "__ext__" + varSuffix_;
-
-            // Since the expression is already a free variable, no need to make
-            // other free variables for is sub-expressions
-            vars_[op] = {};
-
-            if (op->dtype() == DataType::Bool) {
-                // Treat the free variable as an integer because ISL does not
-                // support bool variables
-                results_[op] = "(" + freeVar + " > 0)";
-            } else {
-                results_[op] = freeVar;
+        if (!results_.count(op)) {
+            bool noNeedToBeVar = false;
+            if (noNeedToBeVars_.count(op)) {
+                // Our caller explicitly mark this sub-expression as no need to
+                // be a dedicated free variable
+                noNeedToBeVar = true;
             }
-            vars_[op][op] = freeVar;
+            if (!isBool(op->dtype()) && !isInt(op->dtype())) {
+                // Data types like float are certainly no need to be a dedicated
+                // presburger variable
+                noNeedToBeVar = true;
+            }
+            if (!noNeedToBeVar || !parent_.isValid()) {
+                auto freeVar =
+                    mangle(dumpAST(op, true)) + "__ext__" + varSuffix_;
+
+                // Since the expression is already a free variable, no need
+                // to make other free variables for is sub-expressions
+                vars_[op] = {};
+
+                if (op->dtype() == DataType::Bool) {
+                    // Treat the free variable as an integer because ISL
+                    // does not support bool variables
+                    results_[op] = "(" + freeVar + " > 0)";
+                } else {
+                    results_[op] = freeVar;
+                }
+                vars_[op][op] = freeVar;
+            }
         }
     }
 
