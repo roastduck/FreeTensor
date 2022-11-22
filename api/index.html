@@ -18738,7 +18738,7 @@ default Target in config will be used</p></li>
 <span class="sd">        The tensor to fill</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">y</span><span class="p">[()]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">y</span><span class="p">[()]</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">zero_value</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1">#! label: L_elem</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">core</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">0</span><span class="p">)):</span>
