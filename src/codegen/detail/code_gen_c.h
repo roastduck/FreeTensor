@@ -8,6 +8,7 @@
 
 #include <analyze/find_stmt.h>
 #include <codegen/code_gen_c.h>
+#include <config.h>
 #include <serialize/mangle.h>
 
 #include "code_gen.h"
@@ -37,7 +38,9 @@ void CodeGenC<Stream>::genMdPtrType(std::ostream &os, const VarDef &def,
         isRestricted = false;
     }
 
-    os << (isRestricted ? "mdspan_r<" : "mdspan<");
+    os << (Config::debugRuntimeCheck() ? "mdspan_dbg<"
+           : isRestricted              ? "mdspan_r<"
+                                       : "mdspan<");
     if (isConst) {
         os << "const ";
     }
