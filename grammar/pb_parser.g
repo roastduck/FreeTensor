@@ -132,7 +132,11 @@ expr returns [Expr node]
     ;
 
 boolExpr returns [Expr node]
-    : expr0=expr
+    : '(' boolExpr0=boolExpr ')'
+      {
+        $node = $boolExpr0.node;
+      }
+    | expr0=expr
       {
         std::function<Expr(Expr, Expr)> make;
         $node = makeBoolConst(true);
