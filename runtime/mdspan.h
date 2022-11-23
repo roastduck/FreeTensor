@@ -27,27 +27,27 @@ class mdspan_dbg : public stdex::mdspan<ElementType, Extents> {
     typedef stdex::mdspan<ElementType, Extents> BaseClass;
 
     template <size_t DIM, typename FirstIdx, typename... OtherIdx>
-    bool checkDims(FirstIdx &&first, OtherIdx &&...others) const {
+    FUNC_ATTR bool checkDims(FirstIdx &&first, OtherIdx &&...others) const {
         if (first < 0 || first >= (std::decay_t<FirstIdx>)this->extent(DIM)) {
             return false;
         }
         return checkDims<DIM + 1>(std::forward<OtherIdx>(others)...);
     }
-    template <size_t DIM> bool checkDims() const { return true; }
+    template <size_t DIM> FUNC_ATTR bool checkDims() const { return true; }
 
     template <size_t DIM, typename FirstIdx, typename... OtherIdx>
-    void printIndices(FirstIdx &&first, OtherIdx &&...others) const {
+    FUNC_ATTR void printIndices(FirstIdx &&first, OtherIdx &&...others) const {
         std::cerr << (DIM > 0 ? ", " : "") << first;
         printIndices<DIM + 1>(std::forward<OtherIdx>(others)...);
     }
-    template <size_t DIM> void printIndices() const {}
+    template <size_t DIM> FUNC_ATTR void printIndices() const {}
 
     template <size_t DIM, typename FirstIdx, typename... OtherIdx>
-    void printExtents(FirstIdx &&first, OtherIdx &&...others) const {
+    FUNC_ATTR void printExtents(FirstIdx &&first, OtherIdx &&...others) const {
         std::cerr << (DIM > 0 ? ", " : "") << this->extent(DIM);
         printExtents<DIM + 1>(std::forward<OtherIdx>(others)...);
     }
-    template <size_t DIM> void printExtents() const {}
+    template <size_t DIM> FUNC_ATTR void printExtents() const {}
 
   public:
     template <typename... Args>
