@@ -2,6 +2,8 @@
 #define FREE_TENSOR_MDSPAN_H
 
 #include <cstdint>
+#include <cstdlib>
+#include <iostream>
 
 #include "../3rd-party/mdspan/mdspan.hpp"
 
@@ -17,6 +19,67 @@ using stdex::dynamic_extent;
 using stdex::mdspan;
 
 template <size_t... S> using extents = stdex::extents<size_t, S...>;
+
+// mdspan with runtime range check for debugging
+
+template <typename ElementType, typename Extents>
+class mdspan_dbg : public stdex::mdspan<ElementType, Extents> {
+    typedef stdex::mdspan<ElementType, Extents> BaseClass;
+
+    template <size_t DIM, typename FirstIdx, typename... OtherIdx>
+    bool checkDims(FirstIdx &&first, OtherIdx &&...others) const {
+        if (first < 0 || first >= (std::decay_t<FirstIdx>)this->extent(DIM)) {
+            return false;
+        }
+        return checkDims<DIM + 1>(std::forward<OtherIdx>(others)...);
+    }
+    template <size_t DIM> bool checkDims() const { return true; }
+
+    template <size_t DIM, typename FirstIdx, typename... OtherIdx>
+    void printIndices(FirstIdx &&first, OtherIdx &&...others) const {
+        std::cerr << (DIM > 0 ? ", " : "") << first;
+        printIndices<DIM + 1>(std::forward<OtherIdx>(others)...);
+    }
+    template <size_t DIM> void printIndices() const {}
+
+    template <size_t DIM, typename FirstIdx, typename... OtherIdx>
+    void printExtents(FirstIdx &&first, OtherIdx &&...others) const {
+        std::cerr << (DIM > 0 ? ", " : "") << this->extent(DIM);
+        printExtents<DIM + 1>(std::forward<OtherIdx>(others)...);
+    }
+    template <size_t DIM> void printExtents() const {}
+
+  public:
+    template <typename... Args>
+    FUNC_ATTR constexpr mdspan_dbg(Args &&...args)
+        : BaseClass(std::forward<Args>(args)...) {}
+
+    template <typename... Args>
+    FUNC_ATTR constexpr auto &&operator()(Args &&...args) {
+        if (!checkDims<0>(args...)) {
+            std::cerr << "Out of range access on index (";
+            printIndices<0>(args...);
+            std::cerr << "). The range is (";
+            printExtents<0>(args...);
+            std::cerr << ")" << std::endl;
+            exit(-1);
+        }
+        return BaseClass::operator()(std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    FUNC_ATTR constexpr auto &&operator()(Args &&...args) const {
+        if (!checkDims<0>(args...)) {
+            std::cerr << "Out of range access on index (";
+            printIndices<0>(args...);
+            std::cerr << "). The range is (";
+            printExtents<0>(args...);
+            std::cerr << ")" << std::endl;
+            exit(-1);
+        }
+        return BaseClass::operator()(std::forward<Args>(args)...);
+    }
+};
 
 // Use `restrict` pointers in mdspan
 //
