@@ -179,12 +179,9 @@ make -j  # Or use Ninja
 <li><code>FT_PRINT_ALL_ID=ON/OFF</code>. Print (or not) IDs of all statements in an AST.</li>
 <li><code>FT_WERROR=ON/OFF</code>. Treat warnings as errors (or not).</li>
 <li><code>FT_BACKEND_COMPILER_CXX=&lt;path/to/compiler&gt;</code>. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself, and compilers found in the <code>PATH</code> enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.</li>
-<li>
-<p><code>FT_BACKEND_COMPILER_NVCC=&lt;path/to/compiler&gt;</code>. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself, and compilers found in the <code>PATH</code> enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.</p>
-</li>
-<li>
-<p><code>FT_DEBUG_BINARY=ON</code> (for developers). Compile with <code>-g</code> at backend. Do not delete the binary file after loaded.</p>
-</li>
+<li><code>FT_BACKEND_COMPILER_NVCC=&lt;path/to/compiler&gt;</code>. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself, and compilers found in the <code>PATH</code> enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.</li>
+<li><code>FT_DEBUG_RUNTIME_CHECK</code>. Check out-of-bound access at the generated code at runtime. This option is only for debugging, and will introduce significant runtime overhead.</li>
+<li><code>FT_DEBUG_BINARY=ON</code> (for developers). Compile with <code>-g</code> at backend. Do not delete the binary file after loaded.</li>
 </ul>
 <p>This configurations can also set at runtime in <a href="../../api/#freetensor.core.config"><code>ft.config</code></a>.</p>
 <h2 id="run-the-tests">Run the Tests<a class="headerlink" href="#run-the-tests" title="Permanent link">&para;</a></h2>
