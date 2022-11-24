@@ -2,6 +2,7 @@
 #include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
 #include <func.h>
+#include <memory>
 #include <mutator.h>
 
 namespace freetensor {
@@ -11,15 +12,18 @@ namespace gpu {
 class NormalizeVarInKernel : public CompTransientBounds<SymbolTable<Mutator>> {
     typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
-    std::vector<std::string> legalNames_;
+    std::unordered_set<std::string> legalNames_;
 
     std::vector<VarDef> varsToHoist_;
     bool inKernel_ = false;
 
-    CompUniqueBounds unique_;
+    std::unique_ptr<CompUniqueBounds> uniqueOwn_;
+    CompUniqueBounds &unique_;
 
   public:
-    NormalizeVarInKernel() : unique_(*this) {}
+    NormalizeVarInKernel()
+        : uniqueOwn_(std::make_unique<CompUniqueBoundsCombination>(*this)),
+          unique_(*uniqueOwn_) {}
 
   protected:
     using BaseClass::visit;

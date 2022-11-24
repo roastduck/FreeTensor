@@ -13,12 +13,8 @@ Stmt NormalizeVarInKernel::visit(const VarDef &_op) {
         auto op = __op.as<VarDefNode>();
 
         for (auto &dim : op->buffer_->tensor()->shape()) {
-            Expr newDim;
-            for (auto &&b : unique_.getDefinedUpper(
-                     dim, ranges::to<std::unordered_set>(legalNames_))) {
-                newDim = newDim.isValid() ? makeMin(std::move(newDim), b.expr())
-                                          : b.expr();
-            }
+            Expr newDim =
+                unique_.getBound(dim)->restrictScope(legalNames_)->upperExpr();
             if (!newDim.isValid()) {
                 throw InvalidProgram(
                     "The shape of " + toString(op->id()) + " " + op->name_ +
@@ -37,9 +33,9 @@ Stmt NormalizeVarInKernel::visit(const VarDef &_op) {
             return op;
         }
     } else {
-        legalNames_.emplace_back(_op->name_);
+        legalNames_.insert(_op->name_);
         auto ret = BaseClass::visit(_op);
-        legalNames_.pop_back();
+        legalNames_.erase(_op->name_);
         return ret;
     }
 }
@@ -59,9 +55,9 @@ Stmt NormalizeVarInKernel::visit(const For &op) {
         varsToHoist_.clear();
         return ret;
     } else {
-        legalNames_.emplace_back(op->iter_);
+        legalNames_.insert(op->iter_);
         auto ret = BaseClass::visit(op);
-        legalNames_.pop_back();
+        legalNames_.erase(op->iter_);
         return ret;
     }
 }
