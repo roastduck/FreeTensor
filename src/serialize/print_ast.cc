@@ -732,8 +732,10 @@ std::string toString(const AST &op, bool pretty, bool printAllId) {
 }
 
 std::string toString(const AST &op, bool pretty, bool printAllId,
-                     bool dtypeInLoad, bool hexFloat, bool compact) {
-    PrintVisitor visitor(printAllId, pretty, dtypeInLoad, hexFloat, compact);
+                     bool dtypeInLoad, bool hexFloat, bool compact,
+                     bool parenDespitePriority) {
+    PrintVisitor visitor(printAllId, pretty, dtypeInLoad, hexFloat, compact,
+                         parenDespitePriority);
     visitor(op);
     return visitor.toString(
         [](const CodeGenStream &stream) { return stream.os_.str(); });

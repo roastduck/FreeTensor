@@ -10,7 +10,7 @@ namespace freetensor {
 
 class PrintVisitor : public CodeGen<CodeGenStream> {
     bool printAllId_ = false, pretty_ = false, dtypeInLoad_ = false,
-         hexFloat_ = false;
+         hexFloat_ = false, parenDespitePriority_ = false;
     const std::unordered_set<std::string> keywords = {
         "if", "else", "for", "in", "assert", "assume", "func", "true", "false",
     };
@@ -57,10 +57,12 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
                             bool parentheses = true) {
         auto old_priority = precedence_;
         precedence_ = new_priority;
-        if (parentheses && old_priority > precedence_)
+        if (parentheses &&
+            (parenDespitePriority_ || old_priority > precedence_))
             os() << "(";
         inner();
-        if (parentheses && old_priority > precedence_)
+        if (parentheses &&
+            (parenDespitePriority_ || old_priority > precedence_))
             os() << ")";
         precedence_ = old_priority;
     }
@@ -78,9 +80,10 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
   public:
     PrintVisitor(bool printAllId = false, bool pretty = false,
                  bool dtypeInLoad = false, bool hexFloat = false,
-                 bool compact = false)
+                 bool compact = false, bool parenDespitePriority = false)
         : CodeGen(compact), printAllId_(printAllId), pretty_(pretty),
-          dtypeInLoad_(dtypeInLoad), hexFloat_(hexFloat) {}
+          dtypeInLoad_(dtypeInLoad), hexFloat_(hexFloat),
+          parenDespitePriority_(parenDespitePriority) {}
 
   private:
     void recur(const Expr &op);
@@ -161,7 +164,7 @@ std::string toString(const AST &op, bool pretty);
 std::string toString(const AST &op, bool pretty, bool printAllId);
 std::string toString(const AST &op, bool pretty, bool printAllId,
                      bool dtypeInLoad, bool hexFloat = false,
-                     bool compact = false);
+                     bool compact = false, bool parenDespitePriority = false);
 /** @} */
 
 /**
@@ -169,7 +172,7 @@ std::string toString(const AST &op, bool pretty, bool printAllId,
  */
 inline std::string dumpAST(const AST &op, bool dtypeInLoad = false,
                            bool hexFloat = true) {
-    return toString(op, false, true, dtypeInLoad, hexFloat, true);
+    return toString(op, false, true, dtypeInLoad, hexFloat, true, true);
 }
 
 /**
