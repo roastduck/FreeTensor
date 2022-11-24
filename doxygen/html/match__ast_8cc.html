@@ -236,7 +236,8 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">    {                                                                          \</div>
+<b>Value:</b><div class="fragment"><div class="line">    <span class="comment">/* Check isMatched_ because some node visitor will reset it and retry */</span>   \</div>
+<div class="line">    if (isMatched_) {                                                          \</div>
 <div class="line">        auto oldInstance = instance_;                                          \</div>
 <div class="line">        instance_ = rexpr;                                                     \</div>
 <div class="line">        (*this)(lexpr);                                                        \</div>
