@@ -1,11 +1,11 @@
-#include "data_type.h"
 #include <climits>
-#include <isl/aff.h>
 #include <string>
 #include <unordered_map>
 
 #include <analyze/all_uses.h>
 #include <container_utils.h>
+#include <data_type.h>
+#include <expr.h>
 #include <math/parse_pb_expr.h>
 #include <math/presburger.h>
 #include <pass/flatten_stmt_seq.h>
@@ -43,6 +43,9 @@ namespace {
 Expr translateBoundFunc(
     PBCtx &ctx, const PBSet &boundSet,
     const std::unordered_map<std::string, Expr> &demangleMap) {
+
+    if (boundSet.empty())
+        return makeIntConst(LLONG_MAX);
 
     const PBFunc boundFunc(moveDimsParamToInput(
         intersectRange(universeMap(spaceAlloc(ctx, 0, 0, boundSet.nDims())),
