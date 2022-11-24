@@ -21,7 +21,7 @@ Stmt vectorize(const Stmt &_ast, const ID &loop) {
     if (!mutator.done()) {
         throw InvalidSchedule("Loop " + toString(loop) + " not found");
     }
-    auto found = [&](const Dependency &d) {
+    auto found = [&](const Dependence &d) {
         throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
     FindDeps()

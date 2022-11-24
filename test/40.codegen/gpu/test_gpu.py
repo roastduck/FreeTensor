@@ -124,6 +124,52 @@ def test_return_value_and_runtime_allocation():
     assert np.array_equal(y_np, x_np * 2 + 1)
 
 
+def test_scalar():
+
+    @ft.transform
+    def test(x):
+        x: ft.Var[(4,), "int32", "input", "gpu/global"]
+        y1 = ft.empty((), "int32", "gpu/global")
+        y2 = ft.empty((), "int32", "gpu/global")
+        y3 = ft.empty((), "int32", "gpu/global")
+        y4 = ft.empty((), "int32", "gpu/global")
+        #! label: L1
+        for i in range(4):
+            if i == 0:
+                y1[...] = x[i]
+            elif i == 1:
+                y2[...] = x[i]
+            elif i == 2:
+                y3[...] = x[i]
+            else:
+                y4[...] = x[i]
+        z = ft.empty((4,), "int32", "gpu/global")
+        #! label: L2
+        for i in range(4):
+            if i == 0:
+                z[i] = y1[...] + y3[...]
+            elif i == 1:
+                z[i] = y2[...] + y4[...]
+            elif i == 2:
+                z[i] = y1[...] + y2[...]
+            else:
+                z[i] = y3[...] + y4[...]
+        return z
+
+    with device:
+        s = ft.Schedule(test)
+        s.parallelize("L1", "blockIdx.x")
+        s.parallelize("L2", "blockIdx.x")
+        func = ft.lower(s.func(), verbose=1)
+        code = ft.codegen(func, verbose=True)
+        x_np = np.array([1, 2, 3, 4]).astype("int32")
+        x_arr = ft.Array(x_np)
+        z_arr = ft.build_binary(code)(x_arr)
+        z_np = z_arr.numpy()
+
+    assert np.array_equal(z_np, [4, 6, 3, 7])
+
+
 def test_split_by_block_and_bind():
 
     @ft.transform
@@ -692,6 +738,48 @@ def test_multiplex_shared_2():
     assert ft.pop_ast().match(func.body)
 
 
+def test_multiplex_shared_3():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(256,), "int32", "input", "gpu/global"]
+        y: ft.Var[(4, 256), "int32", "output", "gpu/global"]
+        #! label: L0
+        for i in range(0, 4):
+            t = ft.empty((256,), "int32", "gpu/shared")
+            #! label: L1
+            for j in range(0, 256):
+                t[j] = 0
+                if i < 2:
+                    t[j] = x[j] * 2
+            #! label: L2
+            for j in range(0, 256):
+                y[i, j] = t[j] + 1
+
+    s = ft.Schedule(test)
+    s.parallelize("L0", "threadIdx.y")
+    s.parallelize("L1", "threadIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
+
+    @ft.transform
+    def expected(x, y):
+        x: ft.Var[(256,), "int32", "input", "gpu/global"]
+        y: ft.Var[(4, 256), "int32", "output", "gpu/global"]
+        for i in range(0, 4):
+            for j in range(0, 256):
+                t = ft.empty((4, 256), "int32", "gpu/shared")
+                t[i, j] = 0
+                if i < 2:
+                    t[i, j] = x[j] * 2
+                y[i, j] = t[i, j] + 1
+
+    assert expected.body.match(func.body)
+
+
 def test_simplex_local_1():
 
     @ft.transform
@@ -801,7 +889,7 @@ def test_simplex_local_2():
     assert ft.pop_ast().match(func.body)
 
 
-def test_relax_shared_shape_to_constants():
+def test_dynamic_shared_memory_size():
     with ft.VarDef("n", (), "int32", "input", "gpu/global") as n:
         with ft.VarDef([
             ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -829,8 +917,8 @@ def test_relax_shared_shape_to_constants():
         ]) as (x, y):
             with ft.For(".threadIdx.y", 0, 4) as i:
                 with ft.Assert(n <= 256):
-                    with ft.VarDef("t", (4, 256), "int32", "cache",
-                                   "gpu/shared") as t:
+                    with ft.VarDef("t", (4, ft.max(n - 1, 0) + 1), "int32",
+                                   "cache", "gpu/shared") as t:
                         with ft.For("j", 0, n) as j:
                             t[i, j] = x[i, j] * 2
                         with ft.For("j", 0, n) as j:

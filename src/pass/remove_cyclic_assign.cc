@@ -6,7 +6,7 @@ namespace freetensor {
 Stmt removeCyclicAssign(const Stmt &op) {
     std::unordered_map<Stmt, Stmt> later2earlier;
     std::unordered_set<Stmt> redundant;
-    auto foundRAW = [&](const Dependency &d) {
+    auto foundRAW = [&](const Dependence &d) {
         if (d.earlier()->nodeType() == ASTNodeType::Store) {
             if (auto &&laterStmt = d.later_.stmt_;
                 laterStmt->nodeType() == ASTNodeType::Store) {
@@ -29,7 +29,7 @@ Stmt removeCyclicAssign(const Stmt &op) {
         }
         return false;
     };
-    auto foundWAR = [&](const Dependency &d) {
+    auto foundWAR = [&](const Dependence &d) {
         redundant.emplace(d.later_.stmt_);
     };
     // No filter for RAW because we want FindDeps to find the nearest affecting

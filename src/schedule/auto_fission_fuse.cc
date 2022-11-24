@@ -3,7 +3,7 @@
 
 namespace freetensor {
 
-void Schedule::autoFissionFuse(const Target &target,
+void Schedule::autoFissionFuse(const Ref<Target> &target,
                                const Ref<RandTrace> &trace) {
     RandCondStack conds;
 
@@ -114,7 +114,11 @@ void Schedule::autoFissionFuse(const Target &target,
              findAll("<For><-(!<For><-)*#" + toString(root->id()))) {
             auto loop = _loop.as<ForNode>();
             auto loopId = loop->id();
-            if (!last.isValid()) {
+            if (findAll(loopId).empty()) {
+                // Maybe optimized out by the last schedule
+                continue;
+            }
+            if (!last.isValid() || findAll(lastId).empty()) {
                 goto skip;
             }
             if (fissionFrom.count(loopId) && fissionFrom.count(lastId) &&

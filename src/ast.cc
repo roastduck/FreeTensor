@@ -209,19 +209,31 @@ bool StmtNode::isBefore(const Stmt &other) const {
     auto l = self().as<StmtNode>();
     auto r = other;
     auto common = lcaStmt(l, r);
+    if (l == common || r == common) {
+        // There is no before or after relation between a node and its children
+        return false;
+    }
+    while (l->parentStmt() != common) {
+        l = l->parentStmt();
+    }
+    while (r->parentStmt() != common) {
+        r = r->parentStmt();
+    }
     if (common->nodeType() == ASTNodeType::StmtSeq) {
         auto &&seq = common.as<StmtSeqNode>();
-        while (l->parentStmt() != seq) {
-            l = l->parentStmt();
-        }
-        while (r->parentStmt() != seq) {
-            r = r->parentStmt();
-        }
         auto itl = std::find(seq->stmts_.begin(), seq->stmts_.end(), l);
         auto itr = std::find(seq->stmts_.begin(), seq->stmts_.end(), r);
         ASSERT(itl != seq->stmts_.end());
         ASSERT(itr != seq->stmts_.end());
         return itl < itr;
+    } else if (common->nodeType() == ASTNodeType::If) {
+        // We treat the then-case is BEFORE the else-case. Otherwise, user would
+        // have problem specifying the fission point (before or after a
+        // statement) when applying a `fission` schedule.
+        auto &&branch = common.as<IfNode>();
+        if (l == branch->thenCase_ && r == branch->elseCase_) {
+            return true;
+        }
     }
     return false;
 }

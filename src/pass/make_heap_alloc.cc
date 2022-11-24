@@ -72,9 +72,10 @@ Stmt MakeHeapAlloc::visit(const VarDef &_op) {
 
         InsertAlloc insertAlloc(op->name_);
         InsertFree insertFree(op->name_);
-        auto newBody = insertAlloc(insertFree(op->body_));
-        if (insertAlloc.delayed() || insertFree.madeEarly() ||
-            isDynamicSized(op)) {
+        auto newBody = insertAlloc(insertFree(makeStmtSeq({op->body_})));
+        if ((insertAlloc.delayed() || insertFree.madeEarly() ||
+             isDynamicSized(op)) &&
+            !op->buffer_->tensor()->isScalar()) {
             switch (op->buffer_->mtype()) {
             case MemType::CPU:
                 op->buffer_->setMtype(MemType::CPUHeap);
@@ -100,8 +101,9 @@ Stmt MakeHeapAlloc::visit(const VarDef &_op) {
                                  "gpu global memory inside a kernel");
         }
 
-        op->body_ = InsertAlloc(op->name_)(op->body_);
-        op->body_ = InsertFree(op->name_)(op->body_);
+        InsertAlloc insertAlloc(op->name_);
+        InsertFree insertFree(op->name_);
+        op->body_ = insertAlloc(insertFree(makeStmtSeq({op->body_})));
         break;
     }
 

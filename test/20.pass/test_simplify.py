@@ -185,7 +185,7 @@ def test_multiple_mins_2(p):
         with ft.For("i", 0, 10) as i:
             with ft.For("j", 0, 10) as j:
                 with ft.For("k", 0, 10) as k:
-                    y[i, j, k] = ft.max(i + j - k, ft.max(i - k, i + j + -1))
+                    y[i, j, k] = ft.min(i + j - k, ft.min(i - k, i + j + -1))
     ast = ft.pop_ast(verbose=True)
     ast = p(ast)
     print(ast)
@@ -194,7 +194,7 @@ def test_multiple_mins_2(p):
         with ft.For("i", 0, 10) as i:
             with ft.For("j", 0, 10) as j:
                 with ft.For("k", 0, 10) as k:
-                    y[i, j, k] = ft.max(i - k, i + j + -1)
+                    y[i, j, k] = ft.min(i + -1 * k, i + j + -1)
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -234,7 +234,7 @@ def test_multiple_maxes_2(p):
         with ft.For("i", 0, 10) as i:
             with ft.For("j", 0, 10) as j:
                 with ft.For("k", 0, 10) as k:
-                    y[i, j, k] = ft.max(i + j - k, i + j + -1)
+                    y[i, j, k] = ft.max(i + j + -1 * k, i + j + -1)
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -688,12 +688,12 @@ def test_not_reduce_fraction_for_mod(p):
 def test_simplify_not_cmp(p):
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
-        ("y1", (4,), "int32", "output", "cpu"),
-        ("y2", (4,), "int32", "output", "cpu"),
-        ("y3", (4,), "int32", "output", "cpu"),
-        ("y4", (4,), "int32", "output", "cpu"),
-        ("y5", (4,), "int32", "output", "cpu"),
-        ("y6", (4,), "int32", "output", "cpu"),
+        ("y1", (4,), "bool", "output", "cpu"),
+        ("y2", (4,), "bool", "output", "cpu"),
+        ("y3", (4,), "bool", "output", "cpu"),
+        ("y4", (4,), "bool", "output", "cpu"),
+        ("y5", (4,), "bool", "output", "cpu"),
+        ("y6", (4,), "bool", "output", "cpu"),
     ]) as (x, y1, y2, y3, y4, y5, y6):
         with ft.For("i", 0, 4) as i:
             y1[i] = ft.l_not(x[i] < 5)
@@ -708,12 +708,12 @@ def test_simplify_not_cmp(p):
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
-        ("y1", (4,), "int32", "output", "cpu"),
-        ("y2", (4,), "int32", "output", "cpu"),
-        ("y3", (4,), "int32", "output", "cpu"),
-        ("y4", (4,), "int32", "output", "cpu"),
-        ("y5", (4,), "int32", "output", "cpu"),
-        ("y6", (4,), "int32", "output", "cpu"),
+        ("y1", (4,), "bool", "output", "cpu"),
+        ("y2", (4,), "bool", "output", "cpu"),
+        ("y3", (4,), "bool", "output", "cpu"),
+        ("y4", (4,), "bool", "output", "cpu"),
+        ("y5", (4,), "bool", "output", "cpu"),
+        ("y6", (4,), "bool", "output", "cpu"),
     ]) as (x, y1, y2, y3, y4, y5, y6):
         with ft.For("i", 0, 4) as i:
             y1[i] = x[i] >= 5

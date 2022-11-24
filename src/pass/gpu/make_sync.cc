@@ -312,9 +312,25 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
         query.push_back({{loopId, DepDirection::Different}});
     }
     std::vector<CrossThreadDep> deps;
-    auto found = [&](const Dependency &d) {
+    auto found = [&](const Dependence &d) {
         ASSERT(d.dir_.size() == 1);
-        auto commonStmt = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
+        auto laterStmt = d.later_.stmt_;
+        auto earlierStmt = d.earlier_.stmt_;
+        auto commonStmt = lcaStmt(laterStmt, earlierStmt);
+        if (commonStmt == laterStmt || commonStmt == earlierStmt) {
+            // Dependence between a If's condition or a For's range and its
+            // body. We can treat it as the If or For node depending on itself.
+            // E.g.,
+            //
+            // ```
+            // for ... {
+            //   if x { // THIS IF DEPENDS ON ITSELF
+            //     x = 1
+            //   }
+            // }
+            // ```
+            laterStmt = earlierStmt = commonStmt;
+        }
         auto commonLoop = commonStmt;
         while (commonLoop->parent().isValid() &&
                commonLoop->nodeType() != ASTNodeType::For) {
@@ -322,7 +338,7 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
         }
         ASSERT(commonLoop->nodeType() == ASTNodeType::For);
         deps.emplace_back(CrossThreadDep{
-            d.later_.stmt_, d.earlier_.stmt_, commonStmt, commonLoop,
+            laterStmt, earlierStmt, commonStmt, commonLoop,
             loop2thread.at(d.dir_[0].first.id_).inWarp_, false, false});
     };
     FindDeps()

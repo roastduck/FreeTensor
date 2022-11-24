@@ -163,8 +163,9 @@ def test_tune_with_cond():
     with ft.VarDef([("a", (100, 100, 100), "int32", "input", "gpu/global"),
                     ("b", (100, 100, 100), "int32", "inout", "gpu/global"),
                     ("c", (100, 100, 100), "int32", "inout", "gpu/global"),
-                    ("y", (100, 100, 100), "int32", "output", "gpu/global")
-                   ]) as (a, b, c, y):
+                    ("y", (100, 100, 100), "int32", "output", "gpu/global"),
+                    ("z", (100, 100, 100), "int32", "output", "gpu/global")
+                   ]) as (a, b, c, y, z):
         # Fusing L1 and L2 leads to poor parallelization, which is not preferred
         with ft.For("i", 0, 100, label="Li1") as i:
             with ft.For("j", 0, 100, label="Lj1") as j:
@@ -175,26 +176,26 @@ def test_tune_with_cond():
                 with ft.For("k", 0, 100, label="Lk2") as k:
                     c[i, j, k] = c[(i + 1) % 100, j, (k + 1) % 100] + a[i, j, k]
         # Fusing L3 and L4 is favorable to reduce kernel launch count
-        with ft.VarDef("t", (100, 100, 100), "int32", "cache",
-                       "gpu/global") as t:
-            with ft.For("i", 0, 100, label="Li3") as i:
-                with ft.For("j", 0, 100, label="Lj3") as j:
-                    with ft.For("k", 0, 100, label="Lk3") as k:
-                        t[i, j, k] = a[i, j, k] * i
-            with ft.For("i", 0, 100, label="Li4") as i:
-                with ft.For("j", 0, 100, label="Lj4") as j:
-                    with ft.For("k", 0, 100, label="Lk4") as k:
-                        y[i, j, k] = t[i, j, k] * t[i, j, k]
+        with ft.For("i", 0, 100, label="Li3") as i:
+            with ft.For("j", 0, 100, label="Lj3") as j:
+                with ft.For("k", 0, 100, label="Lk3") as k:
+                    y[i, j, k] = a[i, j, k] * i
+        with ft.For("i", 0, 100, label="Li4") as i:
+            with ft.For("j", 0, 100, label="Lj4") as j:
+                with ft.For("k", 0, 100, label="Lk4") as k:
+                    z[i, j, k] = y[i, j, k] * y[i, j, k]
 
-    func = ft.Func("main", ["a", "b", "c", "y"], [], ft.pop_ast(verbose=True))
+    func = ft.Func("main", ["a", "b", "c", "y", "z"], [],
+                   ft.pop_ast(verbose=True))
     s = ft.Schedule(func)
     a = ft.Array(np.random.randint(0, 100, (100, 100, 100)).astype("int32"))
     b = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
     c = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
     y = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
+    z = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
     trials = s.tune_auto_schedule(10,
                                   1,
-                                  ft.GPU(), (a, b, c, y),
+                                  ft.GPU(), (a, b, c, y, z),
                                   to_learn="fuse")
     traces = [
         "{}:\n t={}, stddev={}".format(

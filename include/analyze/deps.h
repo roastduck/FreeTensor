@@ -250,7 +250,7 @@ typedef std::vector<std::pair<NodeIDOrParallelScope, DepDirection>> FindDepsDir;
 
 class AnalyzeDeps;
 
-struct Dependency {
+struct Dependence {
     const FindDepsDir &dir_; /// Direction vector filtering out this dependence
     const std::string &var_;
     const AccessPoint &later_, &earlier_;
@@ -273,13 +273,13 @@ struct Dependency {
 };
 
 class FindDepsCallback {
-    std::function<void(const Dependency &)> f_;
+    std::function<void(const Dependence &)> f_;
     bool synchronized_;
     mutable std::mutex
         mutex_; // mutable to allow const callback object to lock against
 
-    template <std::invocable<const Dependency &> F>
-    requires requires(F f, const Dependency &d) {
+    template <std::invocable<const Dependence &> F>
+    requires requires(F f, const Dependence &d) {
         { f(d) } -> std::same_as<void>;
     }
     explicit FindDepsCallback(F &&f, bool sync) : f_(f), synchronized_(sync) {}
@@ -288,7 +288,7 @@ class FindDepsCallback {
     friend FindDepsCallback unsyncFunc(auto &&f);
 
   public:
-    void operator()(const Dependency &d) const {
+    void operator()(const Dependence &d) const {
         if (synchronized_) {
             std::lock_guard lg(mutex_);
             f_(d);
@@ -308,7 +308,7 @@ const DepType DEP_ALL = DEP_WAW | DEP_WAR | DEP_RAW;
 
 enum class RelaxMode : int { Possible, Necessary };
 enum class FindDepsMode : int {
-    Dep,         // Dependency may happen between `earlier` and `later`
+    Dep,         // Dependence may happen between `earlier` and `later`
     KillEarlier, // At any point in the space of `earlier`, it is dependent by
                  // `later`
     KillLater,   // At any point in the space of `later`, it is depending on
@@ -317,10 +317,10 @@ enum class FindDepsMode : int {
 };
 
 /**
- * Find RAW, WAR and WAW dependencies
+ * Find RAW, WAR and WAW dependences
  */
 class AnalyzeDeps {
-    friend Dependency;
+    friend Dependence;
 
     std::vector<Ref<AccessPoint>> readsAsEarlier_, readsAsLater_,
         writesAsEarlier_, writesAsLater_;
@@ -440,7 +440,7 @@ class AnalyzeDeps {
      *   var def a
      *     a[0] = i
      *     ... = a[0]
-     * There will be no dependencies of a[0] across i
+     * There will be no dependences of a[0] across i
      */
     PBMap makeEraseVarDefConstraint(PBCtx &presburger,
                                     const Ref<AccessPoint> &point, int iterDim);
@@ -468,7 +468,7 @@ class AnalyzeDeps {
                                     int iterDim);
 
     /**
-     * If we are analyzing the dependency between A and B, e.g.
+     * If we are analyzing the dependence between A and B, e.g.
      * for i
      *   for j
      *     A
@@ -492,11 +492,11 @@ class AnalyzeDeps {
     static const std::string &getVar(const AST &op);
 
     /**
-     * Check the dependencies between a later memory access `later` and many
+     * Check the dependences between a later memory access `later` and many
      * earlier memory accesses in `earlierList`, filter them via the `filter_`
      * callback, and report then via the `found_` callback. Earlier memory
      * accesses may overwrite each other, and the overwritten ones will not
-     * result in a dependency. Used for RAW and WAW dependencies
+     * result in a dependence. Used for RAW and WAW dependences
      */
     void
     checkDepLatestEarlier(const Ref<AccessPoint> &later,
@@ -506,11 +506,11 @@ class AnalyzeDeps {
                               const std::vector<Ref<AccessPoint>> &earlierList);
 
     /**
-     * Check the dependencies between many later memory access in `laterList`
+     * Check the dependences between many later memory access in `laterList`
      * and a earlier memory accesses `earlier`, filter them via the `filter_`
      * callback, and report then via the `found_` callback. Later memory
      * accesses may overwrite each other, and the overwritten ones will not
-     * result in a dependency. Used for WAR dependencies
+     * result in a dependence. Used for WAR dependences
      */
     void checkDepEarliestLater(const std::vector<Ref<AccessPoint>> &laterList,
                                const Ref<AccessPoint> &earlier);
@@ -655,7 +655,7 @@ class FindDeps {
     }
 
     /**
-     * Configure an additional callback to select which dependencies to check
+     * Configure an additional callback to select which dependences to check
      *
      * Please use `filterAccess`, `filterEarlier` or `filterLater` if possbile,
      * for better performance
@@ -685,8 +685,8 @@ class FindDeps {
     }
 
     /**
-     * Ignore WAW dependencies between two ReduceTo nodes. This kind of
-     * dependencies are false dependencies if running serially
+     * Ignore WAW dependences between two ReduceTo nodes. This kind of
+     * dependences are false dependences if running serially
      *
      * Defaults to true
      */
@@ -697,7 +697,7 @@ class FindDeps {
     }
 
     /**
-     * Ignore all dependencies outside the VarDef
+     * Ignore all dependences outside the VarDef
      *
      * Defaults to true
      */
@@ -736,7 +736,7 @@ class FindDeps {
      * @param found : callback
      */
     void operator()(const Stmt &op,
-                    const std::function<void(const Dependency &)> &found) {
+                    const std::function<void(const Dependence &)> &found) {
         (*this)(op, syncFunc(found));
     }
 
@@ -759,7 +759,7 @@ class FindDeps {
     bool exists(const Stmt &op);
 };
 
-std::ostream &operator<<(std::ostream &os, const Dependency &dep);
+std::ostream &operator<<(std::ostream &os, const Dependence &dep);
 
 }; // namespace freetensor
 

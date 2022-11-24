@@ -8,6 +8,7 @@
 
 #include <analyze/find_stmt.h>
 #include <codegen/code_gen_c.h>
+#include <config.h>
 #include <serialize/mangle.h>
 
 #include "code_gen.h"
@@ -37,7 +38,9 @@ void CodeGenC<Stream>::genMdPtrType(std::ostream &os, const VarDef &def,
         isRestricted = false;
     }
 
-    os << (isRestricted ? "mdspan_r<" : "mdspan<");
+    os << (Config::debugRuntimeCheck() ? "mdspan_dbg<"
+           : isRestricted              ? "mdspan_r<"
+                                       : "mdspan<");
     if (isConst) {
         os << "const ";
     }
@@ -61,9 +64,18 @@ void CodeGenC<Stream>::genMdPtrDef(const VarDef &def,
 
     if (buf->tensor()->shape().empty()) {
         // Use reference for scalars
+        // e.g.
+        // ((const int32_t &)*((const int32_t *)(...)))
+        this->os() << "((";
         genMdPtrType(def, isConst);
-        this->os() << " = *";
+        this->os() << ")*((";
+        if (isConst) {
+            this->os() << "const ";
+        }
+        this->os() << gen(buf->tensor()->dtype()) << " *";
+        this->os() << ")(";
         genRawPtr();
+        this->os() << ")))";
         return;
     }
 
@@ -129,12 +141,13 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
     auto name = mangle(op->name_);
 
     if (op->viewOf_.has_value()) {
-        // e.g. auto x = mdspan_r<const float, extents<5, 5>>(y.data_handle());
+        // e.g.
+        // auto &&x = mdspan_r<const float, extents<5, 5>>(y.data_handle());
         auto source = op;
         while (source->viewOf_.has_value()) {
             source = this->def(*source->viewOf_);
         }
-        this->os() << "auto " << name << " = ";
+        this->os() << "auto &&" << name << " = ";
         genMdPtrDef(op, mangle(source->name_) + ".data_handle()",
                     source->buffer_->atype() == AccessType::Input);
         this->os() << ";" << std::endl;
@@ -243,24 +256,11 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             break;
 
         default:
-            if (shape.empty()) {
-                // e.g.
-                // const float &x = *((float*)_params[0]);
-                if (op->buffer_->atype() == AccessType::Input) {
-                    this->os() << "const ";
-                }
-                this->os() << gen(tensor->dtype()) << " &";
-                this->os() << name << " ";
-                this->os() << " = *((" << gen(tensor->dtype()) << "*)" << rawPtr
-                           << ");" << std::endl;
-            } else {
-                // e.g.
-                // auto x = mdspan_r<const float, extents<5, 5>>(_params[0]);
-                this->os() << "auto " << name << " = ";
-                genMdPtrDef(op, rawPtr,
-                            op->buffer_->atype() == AccessType::Input);
-                this->os() << ";" << std::endl;
-            }
+            // e.g.
+            // auto &&x = mdspan_r<const float, extents<5, 5>>(_params[0]);
+            this->os() << "auto &&" << name << " = ";
+            genMdPtrDef(op, rawPtr, op->buffer_->atype() == AccessType::Input);
+            this->os() << ";" << std::endl;
         }
     }
 

@@ -23,6 +23,7 @@ class Config {
     static bool
         debugBinary_; /// Compile with `-g` at backend. Do not delete the binary
                       /// file after loaded. Env FT_DEBUG_BINARY
+    static bool debugRuntimeCheck_; /// Enable runtime checks in generated code
     static std::vector<std::filesystem::path>
         backendCompilerCXX_; /// Env and macro FT_BACKEND_COMPILER_CXX.
                              /// Colon-separated paths, searched from left to
@@ -68,6 +69,11 @@ class Config {
 
     static void setDebugBinary(bool flag = true) { debugBinary_ = flag; }
     static bool debugBinary() { return debugBinary_; }
+
+    static void setDebugRuntimeCheck(bool flag = true) {
+        debugRuntimeCheck_ = flag;
+    }
+    static bool debugRuntimeCheck() { return debugRuntimeCheck_; }
 
     /**
      * @brief Set the C++ compiler for CPU backend.

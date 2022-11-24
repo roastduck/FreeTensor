@@ -116,7 +116,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
         return op;
 
     use_atomic:
-        // There will be no cross-thread dependencies except the reduction we
+        // There will be no cross-thread dependences except the reduction we
         // are working on (guranteed by schedule/parallelize). Therefore, We
         // can cache the variable being reduced, so it can be first reduced
         // serially inside a thread, before reduced to the finally target in an
@@ -254,7 +254,7 @@ Stmt makeParallelReduction(const Stmt &_op) {
     }
 
     std::unordered_map<ID, std::unordered_set<ID>> toAlter;
-    auto found = [&](const Dependency &d) {
+    auto found = [&](const Dependence &d) {
         ASSERT(d.dir_.size() >= 1);
         ASSERT(d.dir_.front().first.isNode_);
         auto &&loopId = d.dir_.front().first.id_;

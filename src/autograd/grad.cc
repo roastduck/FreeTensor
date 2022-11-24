@@ -592,7 +592,7 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
         PropagateRequires::propagateUntilConverge(op, _requires, provides));
 
     std::unordered_set<Stmt> notSingleWrite;
-    auto foundWAW = [&](const Dependency &d) {
+    auto foundWAW = [&](const Dependence &d) {
         notSingleWrite.insert(d.earlier().as<StmtNode>());
     };
     FindDeps().type(DEP_WAW).ignoreReductionWAW(false)(op, foundWAW);

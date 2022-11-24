@@ -82,6 +82,21 @@ class VarRef(ffi.FrontendVar):
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_metadata(), value))
 
+    def as_store(self, metadata, value):
+        if (not isinstance(value, ffi.AnyExpr) and ffi.up_cast(
+                dtype(value), self.vardef.dtype) != self.vardef.dtype):
+            # Add explicit cast node, to avoid confusion after propagation
+            value = cast(value, self.vardef.dtype)
+        return super(VarRef, self).as_store(metadata, value)
+
+    def as_reduce_to(self, reduce_op, metadata, value, atomic=False):
+        if (not isinstance(value, ffi.AnyExpr) and ffi.up_cast(
+                dtype(value), self.vardef.dtype) != self.vardef.dtype):
+            # Add explicit cast node, to avoid confusion after propagation
+            value = cast(value, self.vardef.dtype)
+        return super(VarRef, self).as_reduce_to(reduce_op, metadata, value,
+                                                atomic)
+
     def select(self, idx, dim):
         assert isinstance(dim, int)
         assert dim >= 0 and dim < self.ndim
@@ -1126,7 +1141,10 @@ def dtype(var):
         return var.dtype
     else:
         # TODO: Config default type
-        if isinstance(var, float):
+        if isinstance(var, bool):
+            # NOTE: before int, because bool in Python is a sub-class of int
+            return ffi.DataType("bool")
+        elif isinstance(var, float):
             return ffi.DataType("float32")
         elif isinstance(var, int):
             return ffi.DataType("int32")

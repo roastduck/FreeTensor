@@ -241,7 +241,7 @@ Stmt lowerParallelReduction(const Stmt &_op) {
     //
     // Because this pass is performed before `pass/normalize_threads`, and we
     // always check dependences when doing `schedule/paralleized`, there will be
-    // no cross-thread dependencies except the reduction we are working on.
+    // no cross-thread dependences except the reduction we are working on.
     // Therefore, we don't have to immediately reduce the values at the
     // `ReduceTo` nodes. We can freely select where to do the reduction after
     // the `ReduceTo` nodes and before the end of the parallel `For` scope.

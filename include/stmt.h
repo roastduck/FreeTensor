@@ -450,7 +450,7 @@ class MatMulNode : public StmtNode {
     SubTree<ExprNode> batchSize_ = ChildOf{this};
     bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
     SubTree<StmtNode> equivalent_ = ChildOf{
-        this}; // Equivalent loop statements, to help dependency analysis
+        this}; // Equivalent loop statements, to help dependence analysis
     std::vector<Stmt> children() const override { return {equivalent_}; }
     void compHash() override;
     DEFINE_NODE_TRAIT(MatMul);

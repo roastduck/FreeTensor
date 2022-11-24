@@ -226,7 +226,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
 
     // Used to prune
     std::unordered_set<Stmt> selfDependentReduces;
-    auto foundSelfDependent = [&](const Dependency &d) {
+    auto foundSelfDependent = [&](const Dependence &d) {
         selfDependentReduces.insert(d.later().as<StmtNode>());
     };
     FindDeps()
@@ -245,7 +245,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     std::unordered_map<Stmt, std::unordered_set<AST>> usesRAW; // W -> R
     std::unordered_map<Stmt, std::unordered_set<AST>> usesWAR; // W -> R
     std::unordered_map<Stmt, PBSet> kill;
-    auto foundOverwriteStore = [&](const Dependency &d) {
+    auto foundOverwriteStore = [&](const Dependence &d) {
         auto earlier = d.earlier().as<StmtNode>();
         auto later = d.later().as<StmtNode>();
         if (!kill.count(earlier)) {
@@ -258,7 +258,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             ReplaceInfo{});
         suspect.insert(d.def());
     };
-    auto foundOverwriteReduce = [&](const Dependency &d) {
+    auto foundOverwriteReduce = [&](const Dependence &d) {
         if (d.later() != d.earlier() &&
             (!selfDependentReduces.count(d.later().as<StmtNode>()) ||
              sameParent(d.later_.stmt_, d.earlier_.stmt_))) {
@@ -278,7 +278,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             }
         }
     };
-    auto foundUse = [&](const Dependency &d) {
+    auto foundUse = [&](const Dependence &d) {
         if (d.later()->nodeType() != ASTNodeType::Store &&
             d.earlier()->nodeType() != ASTNodeType::Load &&
             d.earlier() != d.later()) {

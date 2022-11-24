@@ -42,11 +42,13 @@ def _binary_op_(op, a, b, out):
 
 
 @core.inline
-def _binary_op(op, a, b):
+def _binary_op(op, a, b, out_dtype=None):
     #! label: out
-    out = core.empty(broadcast_shape(a, b),
-                     core.up_cast(core.dtype(a), core.dtype(b)),
-                     core.same_mtype(core.mtype(a), core.mtype(b)))
+    out = core.empty(
+        broadcast_shape(a, b),
+        out_dtype if out_dtype is not None else core.up_cast(
+            core.dtype(a), core.dtype(b)),
+        core.same_mtype(core.mtype(a), core.mtype(b)))
     #! label: recur
     _binary_op_(op, a, b, out)
     return out
@@ -188,38 +190,55 @@ l_or = _named_partial("l_or",
 
 lt_ = _named_partial("lt_", inplace_binary_doc_template.format("less-than"),
                      _binary_op_, operator.lt)
-lt = _named_partial("lt", out_of_place_binary_doc_template.format("less-than"),
-                    _binary_op, operator.lt)
+lt = _named_partial("lt",
+                    out_of_place_binary_doc_template.format("less-than"),
+                    _binary_op,
+                    operator.lt,
+                    out_dtype="bool")
 
 le_ = _named_partial(
     "le_", inplace_binary_doc_template.format("less-than-or-equal-to"),
     _binary_op_, operator.le)
 le = _named_partial(
-    "le", out_of_place_binary_doc_template.format("less-than-or-equal-to"),
-    _binary_op, operator.le)
+    "le",
+    out_of_place_binary_doc_template.format("less-than-or-equal-to"),
+    _binary_op,
+    operator.le,
+    out_dtype="bool")
 
 gt_ = _named_partial("gt_", inplace_binary_doc_template.format("greater-than"),
                      _binary_op_, operator.gt)
 gt = _named_partial("gt",
                     out_of_place_binary_doc_template.format("greater-than"),
-                    _binary_op, operator.gt)
+                    _binary_op,
+                    operator.gt,
+                    out_dtype="bool")
 
 ge_ = _named_partial(
     "ge_", inplace_binary_doc_template.format("greater-than-or-equal-to"),
     _binary_op_, operator.ge)
 ge = _named_partial(
-    "ge", out_of_place_binary_doc_template.format("greater-than-or-equal-to"),
-    _binary_op, operator.ge)
+    "ge",
+    out_of_place_binary_doc_template.format("greater-than-or-equal-to"),
+    _binary_op,
+    operator.ge,
+    out_dtype="bool")
 
 eq_ = _named_partial("eq_", inplace_binary_doc_template.format("equal"),
                      _binary_op_, operator.eq)
-eq = _named_partial("eq", out_of_place_binary_doc_template.format("equal"),
-                    _binary_op, operator.eq)
+eq = _named_partial("eq",
+                    out_of_place_binary_doc_template.format("equal"),
+                    _binary_op,
+                    operator.eq,
+                    out_dtype="bool")
 
 ne_ = _named_partial("ne_", inplace_binary_doc_template.format("non-equal"),
                      _binary_op_, operator.ne)
-ne = _named_partial("ne", out_of_place_binary_doc_template.format("non-equal"),
-                    _binary_op, operator.ne)
+ne = _named_partial("ne",
+                    out_of_place_binary_doc_template.format("non-equal"),
+                    _binary_op,
+                    operator.ne,
+                    out_dtype="bool")
 
 
 @core.inline
