@@ -47,10 +47,15 @@ Expr translateBoundFunc(
     if (boundSet.empty())
         return makeIntConst(LLONG_MAX);
 
-    const PBFunc boundFunc(moveDimsParamToInput(
-        intersectRange(universeMap(spaceAlloc(ctx, 0, 0, boundSet.nDims())),
-                       boundSet),
-        0, boundSet.nParamDims(), 0));
+    // TODO: clear out those not related params
+    PBSet compactedBoundSet = coalesce(boundSet);
+    int nDims = compactedBoundSet.nDims(),
+        nParamDims = compactedBoundSet.nParamDims();
+    auto compactedBoundMap = moveDimsParamToInput(
+        intersectRange(universeMap(spaceAlloc(ctx, 0, 0, nDims)),
+                       std::move(compactedBoundSet)),
+        0, nParamDims, 0);
+    PBFunc boundFunc(std::move(compactedBoundMap));
 
     ReplaceIter demangler(demangleMap);
 
