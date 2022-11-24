@@ -185,7 +185,7 @@ def test_multiple_mins_2(p):
         with ft.For("i", 0, 10) as i:
             with ft.For("j", 0, 10) as j:
                 with ft.For("k", 0, 10) as k:
-                    y[i, j, k] = ft.max(i + j - k, ft.max(i - k, i + j + -1))
+                    y[i, j, k] = ft.min(i + j - k, ft.min(i - k, i + j + -1))
     ast = ft.pop_ast(verbose=True)
     ast = p(ast)
     print(ast)
@@ -194,7 +194,7 @@ def test_multiple_mins_2(p):
         with ft.For("i", 0, 10) as i:
             with ft.For("j", 0, 10) as j:
                 with ft.For("k", 0, 10) as k:
-                    y[i, j, k] = ft.max(i - k, i + j + -1)
+                    y[i, j, k] = ft.min(i + -1 * k, i + j + -1)
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -234,7 +234,7 @@ def test_multiple_maxes_2(p):
         with ft.For("i", 0, 10) as i:
             with ft.For("j", 0, 10) as j:
                 with ft.For("k", 0, 10) as k:
-                    y[i, j, k] = ft.max(i + j - k, i + j + -1)
+                    y[i, j, k] = ft.max(i + j + -1 * k, i + j + -1)
     std = ft.pop_ast()
 
     assert std.match(ast)
