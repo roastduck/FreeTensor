@@ -87,9 +87,11 @@ Expr SimplifyPass::visitExpr(const Expr &_op) {
         return op;
     }
 
-    Expr best = unique_.getBound(op)->simplestExpr(varScope_);
-    if (best.isValid() && !HashComparator()(best, op)) {
-        return best;
+    if (auto bound = unique_.getBound(op); bound.isValid()) {
+        Expr best = bound->simplestExpr(varScope_);
+        if (best.isValid() && !HashComparator()(best, op)) {
+            return best;
+        }
     }
     return op;
 }

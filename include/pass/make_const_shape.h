@@ -16,7 +16,7 @@ namespace freetensor {
 class MakeConstShape : public CompTransientBounds<SymbolTable<Mutator>> {
     typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
-    PBCompBounds unique_;
+    CompUniqueBoundsPB unique_;
     const std::vector<MemType> &mtypes_;
 
   private:

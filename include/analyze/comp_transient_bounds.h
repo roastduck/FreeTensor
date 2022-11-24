@@ -23,6 +23,7 @@ class CompTransientBoundsInterface {
   public:
     virtual TransientBound transient(const Expr &op) const = 0;
     virtual const std::vector<Expr> &conds() const = 0;
+    virtual const Stmt &currentStmt() const = 0;
 };
 
 /**
@@ -53,6 +54,9 @@ class CompTransientBounds : public BaseClass,
     // Original bounds
     std::vector<Expr> conds_;
 
+    // Currently visited statement
+    Stmt currentStmt_;
+
   public:
     TransientBound transient(const Expr &op) const override {
         if (transients_.count(op)) {
@@ -62,6 +66,8 @@ class CompTransientBounds : public BaseClass,
     }
 
     const std::vector<Expr> &conds() const override { return conds_; }
+
+    const Stmt &currentStmt() const override { return currentStmt_; };
 
   private:
     void applyCond(const Expr &_cond,
@@ -237,6 +243,11 @@ class CompTransientBounds : public BaseClass,
                                   op->metadata(), op->id());
             return COPY_DEBUG_INFO(ret, op);
         }
+    }
+
+    typename BaseClass::StmtRetType visitStmt(const Stmt &op) override {
+        currentStmt_ = op;
+        return BaseClass::visitStmt(op);
     }
 };
 

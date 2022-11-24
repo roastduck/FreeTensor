@@ -1,18 +1,23 @@
 #ifndef FREE_TENSOR_PRESBURGER_H
 #define FREE_TENSOR_PRESBURGER_H
 
+#include <cstddef>
 #include <iostream>
+#include <isl/id_type.h>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
 #include <isl/aff.h>
 #include <isl/ctx.h>
+#include <isl/id.h>
 #include <isl/ilp.h>
 #include <isl/map.h>
 #include <isl/options.h>
 #include <isl/set.h>
 #include <isl/space.h>
+#include <isl/space_type.h>
+#include <isl/val.h>
 
 #include <debug/profile.h>
 #include <except.h>
@@ -104,11 +109,21 @@ class PBMap {
     bool isSingleValued() const { return isl_map_is_single_valued(get()); }
     bool isBijective() const { return isl_map_is_bijective(get()); }
 
-    isl_size nBasic() const { return isl_map_n_basic_map(map_); }
+    isl_size nBasic() const { return isl_map_n_basic_map(get()); }
 
-    isl_size nInDims() const { return isl_map_dim(map_, isl_dim_in); }
-    isl_size nOutDims() const { return isl_map_dim(map_, isl_dim_out); }
-    isl_size nParamDims() const { return isl_map_dim(map_, isl_dim_param); }
+    isl_size nInDims() const { return isl_map_dim(get(), isl_dim_in); }
+    isl_size nOutDims() const { return isl_map_dim(get(), isl_dim_out); }
+    isl_size nParamDims() const { return isl_map_dim(get(), isl_dim_param); }
+
+    const char *nameInDim(unsigned i) const {
+        return isl_map_get_dim_name(get(), isl_dim_in, i);
+    }
+    const char *nameOutDim(unsigned i) const {
+        return isl_map_get_dim_name(get(), isl_dim_out, i);
+    }
+    const char *nameParamDim(unsigned i) const {
+        return isl_map_get_dim_name(get(), isl_dim_param, i);
+    }
 
     friend std::ostream &operator<<(std::ostream &os, const PBMap &map) {
         return os << isl_map_to_str(map.map_);
@@ -151,7 +166,12 @@ class PBVal {
     isl_val *copy() const { return COPY_ISL_PTR(val_, val); }
     isl_val *move() { return MOVE_ISL_PTR(val_); }
 
+    bool isNaN() const { return isl_val_is_nan(get()); }
     bool isRat() const { return isl_val_is_rat(get()); }
+    bool isInt() const { return isl_val_is_int(get()); }
+    bool isInf() const { return isl_val_is_infty(get()); }
+    bool isNegInf() const { return isl_val_is_neginfty(get()); }
+
     int numSi() const { return isl_val_get_num_si(get()); }
     int denSi() const { return isl_val_get_den_si(get()); }
 
@@ -207,9 +227,19 @@ class PBSet {
         return isl_set_is_empty(get());
     }
 
+    bool isSingleValued() const { return isl_set_is_singleton(get()); }
+
     isl_size nBasic() const { return isl_set_n_basic_set(set_); }
 
-    isl_size nDims() const { return isl_set_dim(set_, isl_dim_set); }
+    isl_size nDims() const { return isl_set_dim(get(), isl_dim_set); }
+    isl_size nParamDims() const { return isl_set_dim(get(), isl_dim_param); }
+
+    const char *nameDim(unsigned i) const {
+        return isl_set_get_dim_name(get(), isl_dim_set, i);
+    }
+    const char *nameParamDim(unsigned i) const {
+        return isl_set_get_dim_name(get(), isl_dim_param, i);
+    }
 
     friend std::ostream &operator<<(std::ostream &os, const PBSet &set) {
         return os << isl_set_to_str(set.set_);
@@ -264,14 +294,82 @@ class PBSpace {
     }
 };
 
+class PBSingleFunc {
+    isl_pw_aff *func_ = nullptr;
+
+  public:
+    PBSingleFunc() {}
+    PBSingleFunc(isl_pw_aff *func) : func_(func) {}
+    ~PBSingleFunc() {
+        if (func_ != nullptr) {
+            isl_pw_aff_free(func_);
+        }
+    }
+
+    PBSingleFunc(const PBSingleFunc &other) : func_(other.copy()) {}
+    PBSingleFunc &operator=(const PBSingleFunc &other) {
+        if (func_ != nullptr) {
+            isl_pw_aff_free(func_);
+        }
+        func_ = other.copy();
+        return *this;
+    }
+
+    PBSingleFunc(PBSingleFunc &&other) : func_(other.move()) {}
+    PBSingleFunc &operator=(PBSingleFunc &&other) {
+        if (func_ != nullptr) {
+            isl_pw_aff_free(func_);
+        }
+        func_ = other.move();
+        return *this;
+    }
+
+    bool isValid() const { return func_ != nullptr; }
+
+    isl_pw_aff *get() const { return GET_ISL_PTR(func_); }
+    isl_pw_aff *copy() const { return COPY_ISL_PTR(func_, pw_aff); }
+    isl_pw_aff *move() { return MOVE_ISL_PTR(func_); }
+
+    isl_size nInDims() const { return isl_pw_aff_dim(get(), isl_dim_in); }
+
+    std::vector<std::pair<PBSet, PBSingleFunc>> pieces() const {
+        std::vector<std::pair<PBSet, PBSingleFunc>> result;
+        isl_pw_aff_foreach_piece(
+            get(),
+            [](isl_set *set, isl_aff *piece, void *user) {
+                ((std::vector<std::pair<PBSet, PBSingleFunc>> *)user)
+                    ->emplace_back(PBSet(set),
+                                   PBSingleFunc(isl_pw_aff_from_aff(piece)));
+                return isl_stat_ok;
+            },
+            &result);
+        return result;
+    }
+
+    friend std::ostream &operator<<(std::ostream &os,
+                                    const PBSingleFunc &func) {
+        return os << isl_pw_aff_to_str(func.func_);
+    }
+};
+
 class PBFunc {
     isl_pw_multi_aff *func_ = nullptr;
 
   public:
     PBFunc() {}
     PBFunc(isl_pw_multi_aff *func) : func_(func) {}
+
+    PBFunc(const PBSingleFunc &singleFunc)
+        : func_(isl_pw_multi_aff_from_pw_aff(singleFunc.copy())) {}
+    PBFunc(PBSingleFunc &&singleFunc)
+        : func_(isl_pw_multi_aff_from_pw_aff(singleFunc.move())) {}
+
     PBFunc(const PBMap &map) : func_(isl_pw_multi_aff_from_map(map.copy())) {}
     PBFunc(PBMap &&map) : func_(isl_pw_multi_aff_from_map(map.move())) {}
+
+    PBFunc(const PBSet &set) : func_(isl_pw_multi_aff_from_set(set.copy())) {}
+    PBFunc(PBSet &&set) : func_(isl_pw_multi_aff_from_set(set.move())) {}
+
     ~PBFunc() {
         if (func_ != nullptr) {
             isl_pw_multi_aff_free(func_);
@@ -301,6 +399,30 @@ class PBFunc {
     isl_pw_multi_aff *get() const { return GET_ISL_PTR(func_); }
     isl_pw_multi_aff *copy() const { return COPY_ISL_PTR(func_, pw_multi_aff); }
     isl_pw_multi_aff *move() { return MOVE_ISL_PTR(func_); }
+
+    isl_size nInDims() const { return isl_pw_multi_aff_dim(get(), isl_dim_in); }
+    isl_size nOutDims() const {
+        return isl_pw_multi_aff_dim(get(), isl_dim_out);
+    }
+
+    PBSingleFunc operator[](isl_size i) const {
+        return isl_pw_multi_aff_get_pw_aff(get(), 0);
+    }
+
+    std::vector<std::pair<PBSet, PBFunc>> pieces() const {
+        std::vector<std::pair<PBSet, PBFunc>> result;
+        isl_pw_multi_aff_foreach_piece(
+            get(),
+            [](isl_set *set, isl_multi_aff *piece, void *user) {
+                ((std::vector<std::pair<PBSet, PBFunc>> *)user)
+                    ->emplace_back(
+                        PBSet(set),
+                        PBFunc(isl_pw_multi_aff_from_multi_aff(piece)));
+                return isl_stat_ok;
+            },
+            &result);
+        return result;
+    }
 
     friend std::ostream &operator<<(std::ostream &os, const PBFunc &func) {
         return os << isl_pw_multi_aff_to_str(func.func_);
@@ -368,6 +490,8 @@ template <typename T>
 concept PBSpaceRef = std::same_as<PBSpace, std::decay_t<T>>;
 template <typename T>
 concept PBFuncRef = std::same_as<PBFunc, std::decay_t<T>>;
+template <typename T>
+concept PBSingleFuncRef = std::same_as<PBSingleFunc, std::decay_t<T>>;
 
 template <typename T> auto PBRefTake(std::remove_reference_t<T> &t) {
     return t.copy();
@@ -385,8 +509,29 @@ template <PBMapRef T> PBMap projectOutAllParams(T &&map) {
 }
 
 template <PBSetRef T>
+PBSet projectOutParamById(T &&set, const std::string &name) {
+    isl_ctx *ctx = isl_set_get_ctx(set.get());
+    return isl_set_project_out_param_id(
+        PBRefTake<T>(set), isl_id_alloc(ctx, name.c_str(), nullptr));
+}
+template <PBSetRef T>
+PBSet projectOutParamDims(T &&set, unsigned first, unsigned n) {
+    return isl_set_project_out(PBRefTake<T>(set), isl_dim_param, first, n);
+}
+template <PBSetRef T>
 PBSet projectOutDims(T &&set, unsigned first, unsigned n) {
     return isl_set_project_out(PBRefTake<T>(set), isl_dim_set, first, n);
+}
+
+template <PBMapRef T>
+PBMap projectOutParamById(T &&map, const std::string &name) {
+    isl_ctx *ctx = isl_map_get_ctx(map.get());
+    return isl_map_project_out_param_id(
+        PBRefTake<T>(map), isl_id_alloc(ctx, name.c_str(), nullptr));
+}
+template <PBMapRef T>
+PBMap projectOutParamDims(T &&map, unsigned first, unsigned n) {
+    return isl_map_project_out(PBRefTake<T>(map), isl_dim_param, first, n);
 }
 template <PBMapRef T>
 PBMap projectOutInputDims(T &&map, unsigned first, unsigned n) {
@@ -452,6 +597,43 @@ PBMap moveDimsOutputToInput(T &&map, unsigned first, unsigned n,
                              first, n);
 }
 
+template <PBMapRef T>
+PBMap moveDimsInputToParam(T &&map, unsigned first, unsigned n,
+                           unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_param, target,
+                             isl_dim_in, first, n);
+}
+template <PBMapRef T>
+PBMap moveDimsParamToInput(T &&map, unsigned first, unsigned n,
+                           unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_in, target,
+                             isl_dim_param, first, n);
+}
+
+template <PBMapRef T>
+PBMap moveDimsOutputToParam(T &&map, unsigned first, unsigned n,
+                            unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_param, target,
+                             isl_dim_out, first, n);
+}
+template <PBMapRef T>
+PBMap moveDimsParamToOutput(T &&map, unsigned first, unsigned n,
+                            unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_out, target,
+                             isl_dim_param, first, n);
+}
+
+template <PBSetRef T>
+PBSet moveDimsSetToParam(T &&set, unsigned first, unsigned n, unsigned target) {
+    return isl_set_move_dims(PBRefTake<T>(set), isl_dim_param, target,
+                             isl_dim_set, first, n);
+}
+template <PBSetRef T>
+PBSet moveDimsParamToSet(T &&set, unsigned first, unsigned n, unsigned target) {
+    return isl_set_move_dims(PBRefTake<T>(set), isl_dim_set, target,
+                             isl_dim_param, first, n);
+}
+
 template <PBSetRef T> PBSet complement(T &&set) {
     DEBUG_PROFILE("complement");
     return isl_set_complement(PBRefTake<T>(set));
@@ -501,6 +683,15 @@ template <PBMapRef T, PBSetRef U> PBMap intersectRange(T &&lhs, U &&rhs) {
                           "nBasic=" + std::to_string(lhs.nBasic()) + "," +
                               std::to_string(rhs.nBasic()));
     return isl_map_intersect_range(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
+template <PBSingleFuncRef T, PBSetRef U>
+PBSingleFunc intersectDomain(T &&lhs, U &&rhs) {
+    return isl_pw_aff_intersect_domain(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+template <PBFuncRef T, PBSetRef U> PBFunc intersectDomain(T &&lhs, U &&rhs) {
+    return isl_multi_pw_aff_intersect_domain(PBRefTake<T>(lhs),
+                                             PBRefTake<U>(rhs));
 }
 
 template <PBMapRef T, PBMapRef U> PBMap uni(T &&lhs, U &&rhs) {
@@ -608,6 +799,13 @@ template <PBMapRef T> PBSet range(T &&map) {
     return isl_map_range(PBRefTake<T>(map));
 }
 
+template <PBSingleFuncRef T> PBSet domain(T &&func) {
+    return isl_pw_aff_domain(PBRefTake<T>(func));
+}
+template <PBFuncRef T> PBSet domain(T &&func) {
+    return isl_multi_pw_aff_domain(PBRefTake<T>(func));
+}
+
 template <PBSetRef T> PBSet coalesce(T &&set) {
     DEBUG_PROFILE("coalesce");
     return isl_set_coalesce(PBRefTake<T>(set));
@@ -626,6 +824,10 @@ template <PBSetRef T> PBVal dimMinVal(T &&set, int pos) {
     return isl_set_dim_min_val(PBRefTake<T>(set), pos);
 }
 
+inline PBVal dimFixVal(const PBSet &set, int pos) {
+    return isl_set_plain_get_val_if_fixed(set.get(), isl_dim_set, pos);
+}
+
 template <PBSpaceRef T> PBSpace spaceMapFromSet(T &&space) {
     return isl_space_map_from_set(PBRefTake<T>(space));
 }
@@ -636,6 +838,16 @@ template <PBMapRef T> PBSet flattenMapToSet(T &&map) {
 
 template <PBSetRef T> PBPoint sample(T &&set) {
     return isl_set_sample_point(PBRefTake<T>(set));
+}
+
+template <PBSingleFuncRef T, PBSingleFuncRef U>
+PBSingleFunc min(T &&lhs, U &&rhs) {
+    return isl_pw_aff_min(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
+template <PBSingleFuncRef T, PBSingleFuncRef U>
+PBSingleFunc max(T &&lhs, U &&rhs) {
+    return isl_pw_aff_max(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
 /**
@@ -673,6 +885,14 @@ inline bool operator==(const PBMap &lhs, const PBMap &rhs) {
     DEBUG_PROFILE_VERBOSE("equal", "nBasic=" + std::to_string(lhs.nBasic()) +
                                        "," + std::to_string(rhs.nBasic()));
     return isl_map_is_equal(lhs.get(), rhs.get());
+}
+
+inline bool operator==(const PBSingleFunc &lhs, const PBSingleFunc &rhs) {
+    return isl_pw_aff_is_equal(lhs.get(), rhs.get());
+}
+
+inline bool operator==(const PBFunc &lhs, const PBFunc &rhs) {
+    return isl_pw_multi_aff_is_equal(lhs.get(), rhs.get());
 }
 
 class PBBuildExpr {

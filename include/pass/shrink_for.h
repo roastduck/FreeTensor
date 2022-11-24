@@ -32,7 +32,7 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
     // value of a linear function does not always appear at the minimum/maximum
     // points of its parameters.
     // See 2.pass/test_shrink_for.py::test_linear_bounds
-    PBCompBounds bound_;
+    CompUniqueBoundsPB bound_;
 
     ASTHashMap<
         Var, std::vector<Ref<CompUniqueBounds::Bound>>>

@@ -11,6 +11,7 @@ from freetensor_ffi import tensor_prop_const
 from freetensor_ffi import prop_one_time_use
 from freetensor_ffi import simplify
 from freetensor_ffi import z3_simplify
+from freetensor_ffi import pb_simplify
 from freetensor_ffi import sink_var
 from freetensor_ffi import shrink_var
 from freetensor_ffi import shrink_for
