@@ -1,5 +1,6 @@
+#include <debug/check_conflict_id.h>
 #include <except.h>
-#include <pass/check_conflict_id.h>
+#include <visitor.h>
 
 namespace freetensor {
 

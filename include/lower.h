@@ -5,7 +5,6 @@
 
 #include <config.h>
 #include <driver/target.h>
-#include <pass/check_conflict_id.h>
 #include <pass/cpu/lower_parallel_reduction.h>
 #include <pass/float_simplify.h>
 #include <pass/gpu/lower_parallel_reduction.h>
@@ -52,8 +51,6 @@ template <class T>
 T lower(const T &_ast, const Ref<Target> &_target = nullptr,
         const std::unordered_set<std::string> &skipPasses = {},
         int verbose = 0) {
-
-    checkConflictId(_ast);
 
     auto target = _target.isValid() ? _target : Config::defaultTarget();
 
