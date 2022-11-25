@@ -142,6 +142,11 @@ Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::Bound::restrictScope(
 
 Expr CompUniqueBoundsPB::Bound::simplestExpr(
     const std::unordered_map<std::string, int> &orderedScope) const {
+
+    // first test the original map to be single valued
+    if (!bound_.isSingleValued())
+        return nullptr;
+
     std::vector<std::pair<std::string, int>> axesScopeLevel;
     for (int i = 0; i < bound_.nParamDims(); ++i) {
         auto name = bound_.nameParamDim(i);
@@ -154,13 +159,8 @@ Expr CompUniqueBoundsPB::Bound::simplestExpr(
     std::sort(axesScopeLevel.begin(), axesScopeLevel.end(),
               [](auto &&a, auto &&b) { return a.second > b.second; });
 
-    Expr result;
-    auto restrictedBound = bound_;
-
-    // first test the original map to be single valued
-    if (!restrictedBound.isSingleValued())
-        return result;
     // remove one axis at a time, try until it's not single valued
+    auto restrictedBound = bound_;
     for (auto &&[axis, _] : axesScopeLevel) {
         auto newRestrictedBound =
             projectOutParamById(std::move(restrictedBound), axis);
@@ -168,7 +168,6 @@ Expr CompUniqueBoundsPB::Bound::simplestExpr(
             break;
         restrictedBound = std::move(newRestrictedBound);
     }
-
     return translateBoundFunc(*ctx_, restrictedBound, *demangleMap_);
 }
 

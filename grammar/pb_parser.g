@@ -87,6 +87,14 @@ expr returns [Expr node]
       {
         $node = makeCeilDiv($expr0.node, $expr1.node);
       }
+    | MIN '(' expr0=expr ',' expr1=expr ')'
+      {
+        $node = makeMin($expr0.node, $expr1.node);
+      }
+    | MAX '(' expr0=expr ',' expr1=expr ')'
+      {
+        $node = makeMax($expr0.node, $expr1.node);
+      }
     | intConst expr
       {
         $node = makeMul($intConst.node, $expr.node);
@@ -104,6 +112,10 @@ expr returns [Expr node]
           case 2: $node = makeMod($expr0.node, $expr1.node); break;
         }
       }
+    | '-' expr0=expr
+      {
+        $node = makeSub(makeIntConst(0), $expr0.node);
+      }
     | expr0=expr
       {int ty;} (
         '+' {ty = 1;}
@@ -116,18 +128,6 @@ expr returns [Expr node]
           case 1: $node = makeAdd($expr0.node, $expr1.node); break;
           case 2: $node = makeSub($expr0.node, $expr1.node); break;
         }
-      }
-    | MIN '(' expr0=expr ',' expr1=expr ')'
-      {
-        $node = makeMin($expr0.node, $expr1.node);
-      }
-    | MAX '(' expr0=expr ',' expr1=expr ')'
-      {
-        $node = makeMax($expr0.node, $expr1.node);
-      }
-    | '-' expr0=expr
-      {
-        $node = makeSub(makeIntConst(0), $expr0.node);
       }
     ;
 
