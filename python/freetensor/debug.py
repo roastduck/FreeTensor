@@ -1,6 +1,7 @@
 import itertools
 
 from freetensor_ffi import logger
+from freetensor_ffi import check_conflict_id
 
 
 def with_line_no(s):

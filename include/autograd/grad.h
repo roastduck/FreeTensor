@@ -151,8 +151,20 @@ class GradExpr : public Visitor {
     void visit(const Abs &op) override;
 };
 
-class Grad : public SymbolTable<Mutator> {
-    typedef SymbolTable<Mutator> BaseClass;
+template <class BaseClass> class RenewIDs : public BaseClass {
+  protected:
+    Stmt visitStmt(const Stmt &s) override {
+        auto ret = BaseClass::visitStmt(s);
+        ret->setId();
+        return ret;
+    }
+};
+
+class Grad : public RenewIDs<SymbolTable<Mutator>> {
+    // Because a statement can be both recomputed and computed for gradient, and
+    // we may even recompute a statement several times, all IDs must be renewed,
+    // even for recomputation
+    typedef RenewIDs<SymbolTable<Mutator>> BaseClass;
 
     const std::unordered_set<std::string> &requires_;
     const std::unordered_set<std::string> &provides_;
