@@ -104,20 +104,38 @@ selector returns[Ref<Selector> s]
 	| ChildArrow parent = selector {
         $s = Ref<ChildSelector>::make($parent.s);
     }
+    | ParentArrow chlid = selector {
+        $s = Ref<ParentSelector>::make($child.s);
+    }
 	| <assoc=right> child = selector ChildArrow parent = selector {
         $s = Ref<BothSelector>::make($child.s, Ref<ChildSelector>::make($parent.s));
+    }
+    | <assoc=right> parent = selector ParentArrow child = selector {
+        $s = Ref<BothSelector>::make($parent.s, Ref<ParentSelector>::make($child.s));
     }
 	| DescendantArrow ancestor = selector {
         $s = Ref<DescendantSelector>::make($ancestor.s);
     }
+    | AncestorArrow descendant = selector {
+        $s = Ref<AncestorSelector>::make($descendant.s);
+    }
 	| <assoc=right> descendant = selector DescendantArrow ancestor = selector {
         $s = Ref<BothSelector>::make($descendant.s, Ref<DescendantSelector>::make($ancestor.s));
+    }
+    | <assoc=right> ancestor = selector AncestorArrow descendant = selector {
+        $s = Ref<BothSelector>::make($ancestor.s, Ref<AncestorSelector>::make($descendant.s));
     }
     | ChildArrow LeftParen middle = selector ChildArrow RightParen Star ancestor = selector {
         $s = Ref<DescendantSelector>::make($ancestor.s, $middle.s);
     }
+    | ParentArrow LeftParan middle = selector ParentArrow RightParen Star descendant = selector {
+        $s = Ref<AncestorSelector>::make($descendant.s, $middle.s);
+    }
     | <assoc=right> descendant = selector ChildArrow LeftParen middle = selector ChildArrow RightParen Star ancestor = selector {
         $s = Ref<BothSelector>::make($descendant.s, Ref<DescendantSelector>::make($ancestor.s, $middle.s));
+    }
+    | <assoc=right> ancestor = selector ParentArrow LeftParen middle = selector ParentArrow RightParen Star descendant = selector {
+        $s = Ref<BothSelector>::make($ancestor.s, Ref<AncestorSelector>::make($descendant.s, $middle.s));
     }
 	| <assoc=right> callee = selector DirectCallerArrow caller = leafSelector {
         $s = Ref<BothSelector>::make($callee.s, Ref<DirectCallerSelector>::make($caller.s));
