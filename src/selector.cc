@@ -74,13 +74,19 @@ bool RootNodeSelector::matchImpl(const Stmt &stmt) {
     return !stmt->parentStmt().isValid();
 }
 
-bool NotLeafSelector::matchImpl(const Metadata &md) { return !sub_->match(md); }
+bool LeafNodeSelector::matchImpl(const Stmt &stmt) {
+    return stmt->children().empty();
+}
 
-bool BothLeafSelector::matchImpl(const Metadata &md) {
+bool NotMetadataSelector::matchImpl(const Metadata &md) {
+    return !sub_->match(md);
+}
+
+bool BothMetadataSelector::matchImpl(const Metadata &md) {
     return lhs_->match(md) && rhs_->match(md);
 }
 
-bool EitherLeafSelector::matchImpl(const Metadata &md) {
+bool EitherMetadataSelector::matchImpl(const Metadata &md) {
     return lhs_->match(md) || rhs_->match(md);
 }
 

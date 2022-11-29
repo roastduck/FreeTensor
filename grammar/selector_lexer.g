@@ -23,10 +23,11 @@ ChildArrow: '<-';
 DescendantArrow: '<<-';
 ParentArrow: '->';
 AncestorArrow: '->>';
-RootNode: '-|';
+RootNode: '<-|';
+LeafNode: '->|';
 DirectCallerArrow: '<~';
 CallerArrow: '<<~';
-RootCall: '~|';
+RootCall: '<~|';
 
 Star: '*';
 

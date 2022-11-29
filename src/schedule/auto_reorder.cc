@@ -56,7 +56,7 @@ void Schedule::autoReorder(const Ref<Target> &target) {
             visitNest(subNest.as<ForNode>());
         }
     };
-    for (auto &&subNest : findAll("<For><-(!<For><-)*-|")) {
+    for (auto &&subNest : findAll("<For><-(!<For><-)*<-|")) {
         // Suppose the root node is not <For>. It should be <VarDef>
         visitNest(subNest.as<ForNode>());
     }

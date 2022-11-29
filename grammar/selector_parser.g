@@ -8,9 +8,9 @@ options {
     #include <selector.h>
 }
 
-leafSelector returns[Ref<LeafSelector> s]
-	: LeftParen leafSelector RightParen {
-        $s = $leafSelector.s;
+metadataSelector returns[Ref<MetadataSelector> s]
+	: LeftParen metadataSelector RightParen {
+        $s = $metadataSelector.s;
     }
 	| Label {
         $s = Ref<LabelSelector>::make($Label.text);
@@ -18,49 +18,49 @@ leafSelector returns[Ref<LeafSelector> s]
 	| Id {
         $s = Ref<IDSelector>::make(ID::make(std::stoi($Id.text.substr(1))));
     }
-	| TransformOp LeftBracket leafSelector { std::vector<Ref<LeafSelector>> srcs{$leafSelector.s}; }
+	| TransformOp LeftBracket metadataSelector { std::vector<Ref<MetadataSelector>> srcs{$metadataSelector.s}; }
 		(
-		Comma leafSelector { srcs.push_back($leafSelector.s); }
+		Comma metadataSelector { srcs.push_back($metadataSelector.s); }
 	)* RightBracket {
         $s = Ref<TransformedSelector>::make($TransformOp.text.substr(1), srcs);
     }
     | RootCall {
         $s = Ref<RootCallSelector>::make();
     }
-    | Not sub=leafSelector {
-        $s = Ref<NotLeafSelector>::make($sub.s);
+    | Not sub=metadataSelector {
+        $s = Ref<NotMetadataSelector>::make($sub.s);
     }
-	| s1 = leafSelector And s2 = leafSelector {
-        $s = Ref<BothLeafSelector>::make($s1.s, $s2.s);
+	| s1 = metadataSelector And s2 = metadataSelector {
+        $s = Ref<BothMetadataSelector>::make($s1.s, $s2.s);
     }
-	| s1 = leafSelector Or s2 = leafSelector {
-        $s = Ref<EitherLeafSelector>::make($s1.s, $s2.s);
+	| s1 = metadataSelector Or s2 = metadataSelector {
+        $s = Ref<EitherMetadataSelector>::make($s1.s, $s2.s);
     }
-	| DirectCallerArrow caller = leafSelector {
+	| DirectCallerArrow caller = metadataSelector {
         $s = Ref<DirectCallerSelector>::make($caller.s);
     }
-	| <assoc=right> callee = leafSelector DirectCallerArrow caller = leafSelector {
-        $s = Ref<BothLeafSelector>::make($callee.s, Ref<DirectCallerSelector>::make($caller.s));
+	| <assoc=right> callee = metadataSelector DirectCallerArrow caller = metadataSelector {
+        $s = Ref<BothMetadataSelector>::make($callee.s, Ref<DirectCallerSelector>::make($caller.s));
     }
-	| CallerArrow caller = leafSelector {
+	| CallerArrow caller = metadataSelector {
         $s = Ref<CallerSelector>::make($caller.s);
     }
-	| <assoc=right> callee = leafSelector CallerArrow caller = leafSelector {
-        $s = Ref<BothLeafSelector>::make($callee.s, Ref<CallerSelector>::make($caller.s));
+	| <assoc=right> callee = metadataSelector CallerArrow caller = metadataSelector {
+        $s = Ref<BothMetadataSelector>::make($callee.s, Ref<CallerSelector>::make($caller.s));
     }
-	| DirectCallerArrow LeftParen middle = leafSelector DirectCallerArrow RightParen Star caller = leafSelector {
+	| DirectCallerArrow LeftParen middle = metadataSelector DirectCallerArrow RightParen Star caller = metadataSelector {
         $s = Ref<CallerSelector>::make($caller.s, $middle.s);
     }
-	| <assoc=right> callee = leafSelector DirectCallerArrow LeftParen middle = leafSelector DirectCallerArrow RightParen Star caller = leafSelector {
-        $s = Ref<BothLeafSelector>::make($callee.s, Ref<CallerSelector>::make($caller.s, $middle.s));
+	| <assoc=right> callee = metadataSelector DirectCallerArrow LeftParen middle = metadataSelector DirectCallerArrow RightParen Star caller = metadataSelector {
+        $s = Ref<BothMetadataSelector>::make($callee.s, Ref<CallerSelector>::make($caller.s, $middle.s));
     };
 
 selector returns[Ref<Selector> s]
 	: LeftParen selector RightParen {
         $s = $selector.s;
     }
-	| leafSelector {
-        $s = $leafSelector.s;
+	| metadataSelector {
+        $s = $metadataSelector.s;
     }
 	| NodeTypeAssert {
         $s = Ref<NodeTypeSelector>::make(ASTNodeType::Assert);
@@ -91,6 +91,9 @@ selector returns[Ref<Selector> s]
     }
     | RootNode {
         $s = Ref<RootNodeSelector>::make();
+    }
+    | LeafNode {
+        $s = Ref<LeafNodeSelector>::make();
     }
     | Not sub=selector {
         $s = Ref<NotSelector>::make($sub.s);
@@ -128,7 +131,7 @@ selector returns[Ref<Selector> s]
     | ChildArrow LeftParen middle = selector ChildArrow RightParen Star ancestor = selector {
         $s = Ref<DescendantSelector>::make($ancestor.s, $middle.s);
     }
-    | ParentArrow LeftParan middle = selector ParentArrow RightParen Star descendant = selector {
+    | ParentArrow LeftParen middle = selector ParentArrow RightParen Star descendant = selector {
         $s = Ref<AncestorSelector>::make($descendant.s, $middle.s);
     }
     | <assoc=right> descendant = selector ChildArrow LeftParen middle = selector ChildArrow RightParen Star ancestor = selector {
@@ -137,12 +140,12 @@ selector returns[Ref<Selector> s]
     | <assoc=right> ancestor = selector ParentArrow LeftParen middle = selector ParentArrow RightParen Star descendant = selector {
         $s = Ref<BothSelector>::make($ancestor.s, Ref<AncestorSelector>::make($descendant.s, $middle.s));
     }
-	| <assoc=right> callee = selector DirectCallerArrow caller = leafSelector {
+	| <assoc=right> callee = selector DirectCallerArrow caller = metadataSelector {
         $s = Ref<BothSelector>::make($callee.s, Ref<DirectCallerSelector>::make($caller.s));
     }
-	| <assoc=right> callee = selector CallerArrow caller = leafSelector {
+	| <assoc=right> callee = selector CallerArrow caller = metadataSelector {
         $s = Ref<BothSelector>::make($callee.s, Ref<CallerSelector>::make($caller.s));
     }
-	| <assoc=right> callee = selector DirectCallerArrow LeftParen mid = leafSelector DirectCallerArrow RightParen Star caller = leafSelector {
+	| <assoc=right> callee = selector DirectCallerArrow LeftParen mid = metadataSelector DirectCallerArrow RightParen Star caller = metadataSelector {
         $s = Ref<BothSelector>::make($callee.s, Ref<CallerSelector>::make($caller.s, $mid.s));
     };

@@ -117,7 +117,12 @@ class RootNodeSelector : public Selector {
     bool matchImpl(const Stmt &stmt) override;
 };
 
-class LeafSelector : public Selector {
+class LeafNodeSelector : public Selector {
+  protected:
+    bool matchImpl(const Stmt &stmt) override;
+};
+
+class MetadataSelector : public Selector {
   protected:
     virtual bool matchImpl(const Metadata &md) = 0;
     virtual bool matchImpl(const Stmt &stmt) override {
@@ -131,40 +136,41 @@ class LeafSelector : public Selector {
     }
 };
 
-class NotLeafSelector : public LeafSelector {
-    Ref<LeafSelector> sub_;
+class NotMetadataSelector : public MetadataSelector {
+    Ref<MetadataSelector> sub_;
 
   protected:
     bool matchImpl(const Metadata &md) override;
 
   public:
-    NotLeafSelector(const Ref<LeafSelector> &sub) : sub_(sub) {}
+    NotMetadataSelector(const Ref<MetadataSelector> &sub) : sub_(sub) {}
 };
 
-class BothLeafSelector : public LeafSelector {
-    Ref<LeafSelector> lhs_, rhs_;
+class BothMetadataSelector : public MetadataSelector {
+    Ref<MetadataSelector> lhs_, rhs_;
 
   protected:
     bool matchImpl(const Metadata &md) override;
 
   public:
-    BothLeafSelector(const Ref<LeafSelector> &lhs, const Ref<LeafSelector> &rhs)
+    BothMetadataSelector(const Ref<MetadataSelector> &lhs,
+                         const Ref<MetadataSelector> &rhs)
         : lhs_(lhs), rhs_(rhs) {}
 };
 
-class EitherLeafSelector : public LeafSelector {
-    Ref<LeafSelector> lhs_, rhs_;
+class EitherMetadataSelector : public MetadataSelector {
+    Ref<MetadataSelector> lhs_, rhs_;
 
   protected:
     bool matchImpl(const Metadata &md) override;
 
   public:
-    EitherLeafSelector(const Ref<LeafSelector> &lhs,
-                       const Ref<LeafSelector> &rhs)
+    EitherMetadataSelector(const Ref<MetadataSelector> &lhs,
+                           const Ref<MetadataSelector> &rhs)
         : lhs_(lhs), rhs_(rhs) {}
 };
 
-class IDSelector : public LeafSelector {
+class IDSelector : public MetadataSelector {
     ID id_;
 
   protected:
@@ -175,7 +181,7 @@ class IDSelector : public LeafSelector {
     IDSelector(const ID &id) : id_(id) {}
 };
 
-class LabelSelector : public LeafSelector {
+class LabelSelector : public MetadataSelector {
     std::string label_;
 
   protected:
@@ -185,42 +191,43 @@ class LabelSelector : public LeafSelector {
     LabelSelector(const std::string &label) : label_(label) {}
 };
 
-class TransformedSelector : public LeafSelector {
+class TransformedSelector : public MetadataSelector {
     std::string op_;
-    std::vector<Ref<LeafSelector>> sources_;
+    std::vector<Ref<MetadataSelector>> sources_;
 
   protected:
     bool matchImpl(const Metadata &md) override;
 
   public:
     TransformedSelector(const std::string &op,
-                        const std::vector<Ref<LeafSelector>> sources)
+                        const std::vector<Ref<MetadataSelector>> sources)
         : op_(op), sources_(sources) {}
 };
 
-class DirectCallerSelector : public LeafSelector {
-    Ref<LeafSelector> caller_;
+class DirectCallerSelector : public MetadataSelector {
+    Ref<MetadataSelector> caller_;
 
   protected:
     bool matchImpl(const Metadata &md) override;
 
   public:
-    DirectCallerSelector(const Ref<LeafSelector> &caller) : caller_(caller) {}
+    DirectCallerSelector(const Ref<MetadataSelector> &caller)
+        : caller_(caller) {}
 };
 
-class CallerSelector : public LeafSelector {
-    Ref<LeafSelector> caller_, middle_;
+class CallerSelector : public MetadataSelector {
+    Ref<MetadataSelector> caller_, middle_;
 
   protected:
     bool matchImpl(const Metadata &md) override;
 
   public:
-    CallerSelector(const Ref<LeafSelector> &caller,
-                   const Ref<LeafSelector> &middle = nullptr)
+    CallerSelector(const Ref<MetadataSelector> &caller,
+                   const Ref<MetadataSelector> &middle = nullptr)
         : caller_(caller), middle_(middle) {}
 };
 
-class RootCallSelector : public LeafSelector {
+class RootCallSelector : public MetadataSelector {
   protected:
     bool matchImpl(const Metadata &md) override;
 };
