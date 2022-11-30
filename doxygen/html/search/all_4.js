@@ -12,7 +12,7 @@ var searchData=
   ['cachereduction_9',['cacheReduction',['../classfreetensor_1_1Schedule.html#a6e3c690de5bdcec52d0dbacf9d1b2a2d',1,'freetensor::Schedule']]],
   ['cachewriterule_10',['CacheWriteRule',['../classfreetensor_1_1CacheWriteRule.html#a502d80b758461467875a439815d70b4f',1,'freetensor::CacheWriteRule::CacheWriteRule()'],['../classfreetensor_1_1CacheWriteRule.html',1,'freetensor::CacheWriteRule']]],
   ['caller_11',['caller',['../classfreetensor_1_1SourceMetadataContent.html#a40f9f141cced55bc976885a0dad42dae',1,'freetensor::SourceMetadataContent']]],
-  ['callerselector_12',['CallerSelector',['../classfreetensor_1_1CallerSelector.html#aad0c575ce9b64511f344b51a75787a04',1,'freetensor::CallerSelector::CallerSelector()'],['../classfreetensor_1_1CallerSelector.html',1,'freetensor::CallerSelector']]],
+  ['callerselector_12',['CallerSelector',['../classfreetensor_1_1CallerSelector.html#a326186caec7d6a5d6604a20f487b9af9',1,'freetensor::CallerSelector::CallerSelector()'],['../classfreetensor_1_1CallerSelector.html',1,'freetensor::CallerSelector']]],
   ['cancrossover_13',['canCrossOver',['../structfreetensor_1_1SubSketch.html#ab0f02459819401184856af50f68782c8',1,'freetensor::SubSketch']]],
   ['cast_14',['Cast',['../namespacefreetensor.html#a539a36f725523c1fee5d301a246343bf',1,'freetensor::Cast()'],['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa4cd9f3996d60790cd11c04f842ebc43c',1,'freetensor::Cast()']]],
   ['castnode_15',['CastNode',['../classfreetensor_1_1CastNode.html',1,'freetensor']]],

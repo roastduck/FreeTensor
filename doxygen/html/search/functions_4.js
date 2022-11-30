@@ -20,7 +20,7 @@ var searchData=
   ['device_17',['Device',['../classfreetensor_1_1Device.html#a765a7cafb6b9fe824447300a86eb7a32',1,'freetensor::Device::Device(const TargetType &amp;targetType, int num=0)'],['../classfreetensor_1_1Device.html#a060ad62124ec4c18592d60e4cdce58c1',1,'freetensor::Device::Device(const TargetType &amp;targetType, const std::string &amp;getDeviceByName)'],['../classfreetensor_1_1Device.html#a81d2c8583f0f4c7fc3f2269e1358032c',1,'freetensor::Device::Device(const TargetType &amp;targetType, const std::string &amp;getDeviceByFullName, size_t nth)']]],
   ['dimmaxval_18',['dimMaxVal',['../namespacefreetensor.html#ad7a9f850c3af8a172c0ada2cfe597aec',1,'freetensor']]],
   ['dimminval_19',['dimMinVal',['../namespacefreetensor.html#a78e962c3fc44efd68c8271e9f0614dbf',1,'freetensor']]],
-  ['directcallerselector_20',['DirectCallerSelector',['../classfreetensor_1_1DirectCallerSelector.html#a30c17fcc17fb67cedb9b29317576d25a',1,'freetensor::DirectCallerSelector']]],
+  ['directcallerselector_20',['DirectCallerSelector',['../classfreetensor_1_1DirectCallerSelector.html#ab30c347e4990f26b6ee34730f064902e',1,'freetensor::DirectCallerSelector']]],
   ['direction_21',['direction',['../classfreetensor_1_1FindDeps.html#a6eebfe31e0aa4d2a73b1ce94fde777dc',1,'freetensor::FindDeps']]],
   ['disable_22',['disable',['../classfreetensor_1_1LogCtrl.html#af19ce47ed3ca5ab6ac1298f5232ade6c',1,'freetensor::LogCtrl::disable()'],['../classfreetensor_1_1Logger.html#aa29a2f1aa665baa14f7cab2e406c97e1',1,'freetensor::Logger::disable()']]],
   ['discreteobservation_23',['DiscreteObservation',['../structfreetensor_1_1DiscreteObservation.html#aeb76d5657f2ddcf2f6d714dcf5b5a1bf',1,'freetensor::DiscreteObservation']]],

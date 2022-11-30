@@ -53,7 +53,7 @@ var searchData=
   ['dimmaxval_50',['dimMaxVal',['../namespacefreetensor.html#ad7a9f850c3af8a172c0ada2cfe597aec',1,'freetensor']]],
   ['dimminval_51',['dimMinVal',['../namespacefreetensor.html#a78e962c3fc44efd68c8271e9f0614dbf',1,'freetensor']]],
   ['dir_5f_52',['dir_',['../structfreetensor_1_1Dependence.html#a2c4187a6820a3208265977d621d5e2d9',1,'freetensor::Dependence']]],
-  ['directcallerselector_53',['DirectCallerSelector',['../classfreetensor_1_1DirectCallerSelector.html#a30c17fcc17fb67cedb9b29317576d25a',1,'freetensor::DirectCallerSelector::DirectCallerSelector()'],['../classfreetensor_1_1DirectCallerSelector.html',1,'freetensor::DirectCallerSelector']]],
+  ['directcallerselector_53',['DirectCallerSelector',['../classfreetensor_1_1DirectCallerSelector.html#ab30c347e4990f26b6ee34730f064902e',1,'freetensor::DirectCallerSelector::DirectCallerSelector()'],['../classfreetensor_1_1DirectCallerSelector.html',1,'freetensor::DirectCallerSelector']]],
   ['direction_54',['direction',['../classfreetensor_1_1FindDeps.html#a6eebfe31e0aa4d2a73b1ce94fde777dc',1,'freetensor::FindDeps']]],
   ['disable_55',['disable',['../classfreetensor_1_1Logger.html#aa29a2f1aa665baa14f7cab2e406c97e1',1,'freetensor::Logger::disable()'],['../classfreetensor_1_1LogCtrl.html#af19ce47ed3ca5ab6ac1298f5232ade6c',1,'freetensor::LogCtrl::disable()']]],
   ['discreteobservation_56',['DiscreteObservation',['../structfreetensor_1_1DiscreteObservation.html#aeb76d5657f2ddcf2f6d714dcf5b5a1bf',1,'freetensor::DiscreteObservation::DiscreteObservation()'],['../structfreetensor_1_1DiscreteObservation.html',1,'freetensor::DiscreteObservation']]],

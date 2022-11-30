@@ -25,7 +25,7 @@ var searchData=
   ['ldb_5f_22',['ldb_',['../classfreetensor_1_1MatMulNode.html#a3581aac76cd5cceb6477c3542ba8c627',1,'freetensor::MatMulNode']]],
   ['ldc_5f_23',['ldc_',['../classfreetensor_1_1MatMulNode.html#aa4b808488ab8f05b2ad0d3270d54ed02',1,'freetensor::MatMulNode']]],
   ['le_24',['LE',['../namespacefreetensor.html#ae9f93cc90f42d651b347a5bcf93da34d',1,'freetensor::LE()'],['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915facfe6055d2e0503be378bb63449ec7ba6',1,'freetensor::LE()']]],
-  ['leafselector_25',['LeafSelector',['../classfreetensor_1_1LeafSelector.html',1,'freetensor']]],
+  ['leafnodeselector_25',['LeafNodeSelector',['../classfreetensor_1_1LeafNodeSelector.html',1,'freetensor']]],
   ['len_26',['len',['../classfreetensor_1_1FrontendVarIdx.html#aec5d7361454b78eaa3cc8e6f6f17f88f',1,'freetensor::FrontendVarIdx']]],
   ['len_5f_27',['len_',['../classfreetensor_1_1ForNode.html#a9c92a99896bb16c5491acc057d7d5d32',1,'freetensor::ForNode::len_()'],['../structfreetensor_1_1AccessBound.html#aea7114b9f941bb888c8dc77009db3dc5',1,'freetensor::AccessBound::len_()']]],
   ['length_28',['length',['../structfreetensor_1_1ForInfo.html#a68a0b68c2aa7fa9ad9513f654329c220',1,'freetensor::ForInfo']]],

@@ -68,6 +68,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="classfreetensor_1_1Selector-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">freetensor::Selector Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div></div>
 </div><!--header-->
@@ -79,24 +80,27 @@ Inheritance diagram for freetensor::Selector:</div>
 <div class="dyncontent">
 <div class="center"><img src="classfreetensor_1_1Selector__inherit__graph.png" border="0" usemap="#afreetensor_1_1Selector_inherit__map" alt="Inheritance graph"/></div>
 <map name="afreetensor_1_1Selector_inherit__map" id="afreetensor_1_1Selector_inherit__map">
-<area shape="rect" title=" " alt="" coords="5,199,156,225"/>
-<area shape="rect" href="classfreetensor_1_1BothSelector.html" title=" " alt="" coords="227,21,407,48"/>
-<area shape="rect" href="classfreetensor_1_1ChildSelector.html" title=" " alt="" coords="226,72,409,99"/>
-<area shape="rect" href="classfreetensor_1_1DescendantSelector.html" title=" " alt="" coords="204,123,431,149"/>
-<area shape="rect" href="classfreetensor_1_1EitherSelector.html" title=" " alt="" coords="223,173,411,200"/>
-<area shape="rect" href="classfreetensor_1_1LeafSelector.html" title=" " alt="" coords="228,224,407,251"/>
-<area shape="rect" href="classfreetensor_1_1NodeTypeSelector.html" title=" " alt="" coords="210,275,425,301"/>
-<area shape="rect" href="classfreetensor_1_1NotSelector.html" title=" " alt="" coords="231,325,404,352"/>
-<area shape="rect" href="classfreetensor_1_1RootNodeSelector.html" title=" " alt="" coords="210,376,425,403"/>
-<area shape="rect" href="classfreetensor_1_1BothLeafSelector.html" title=" " alt="" coords="490,5,698,32"/>
-<area shape="rect" href="classfreetensor_1_1CallerSelector.html" title=" " alt="" coords="500,56,688,83"/>
-<area shape="rect" href="classfreetensor_1_1DirectCallerSelector.html" title=" " alt="" coords="507,107,681,149"/>
-<area shape="rect" href="classfreetensor_1_1EitherLeafSelector.html" title=" " alt="" coords="486,173,702,200"/>
-<area shape="rect" href="classfreetensor_1_1IDSelector.html" title=" " alt="" coords="512,224,676,251"/>
-<area shape="rect" href="classfreetensor_1_1LabelSelector.html" title=" " alt="" coords="501,275,687,301"/>
-<area shape="rect" href="classfreetensor_1_1NotLeafSelector.html" title=" " alt="" coords="493,325,695,352"/>
-<area shape="rect" href="classfreetensor_1_1RootCallSelector.html" title=" " alt="" coords="491,376,697,403"/>
-<area shape="rect" href="classfreetensor_1_1TransformedSelector.html" title=" " alt="" coords="479,427,709,453"/>
+<area shape="rect" title=" " alt="" coords="5,259,156,285"/>
+<area shape="rect" href="classfreetensor_1_1AncestorSelector.html" title=" " alt="" coords="214,5,421,32"/>
+<area shape="rect" href="classfreetensor_1_1BothSelector.html" title=" " alt="" coords="227,56,407,83"/>
+<area shape="rect" href="classfreetensor_1_1ChildSelector.html" title=" " alt="" coords="226,107,409,133"/>
+<area shape="rect" href="classfreetensor_1_1DescendantSelector.html" title=" " alt="" coords="204,157,431,184"/>
+<area shape="rect" href="classfreetensor_1_1EitherSelector.html" title=" " alt="" coords="223,208,411,235"/>
+<area shape="rect" href="classfreetensor_1_1LeafNodeSelector.html" title=" " alt="" coords="211,259,423,285"/>
+<area shape="rect" href="classfreetensor_1_1MetadataSelector.html" title=" " alt="" coords="211,309,423,336"/>
+<area shape="rect" href="classfreetensor_1_1NodeTypeSelector.html" title=" " alt="" coords="210,360,425,387"/>
+<area shape="rect" href="classfreetensor_1_1NotSelector.html" title=" " alt="" coords="231,411,404,437"/>
+<area shape="rect" href="classfreetensor_1_1ParentSelector.html" title=" " alt="" coords="222,461,413,488"/>
+<area shape="rect" href="classfreetensor_1_1RootNodeSelector.html" title=" " alt="" coords="210,512,425,539"/>
+<area shape="rect" href="classfreetensor_1_1BothMetadataSelector.html" title=" " alt="" coords="501,61,691,102"/>
+<area shape="rect" href="classfreetensor_1_1CallerSelector.html" title=" " alt="" coords="502,127,690,153"/>
+<area shape="rect" href="classfreetensor_1_1DirectCallerSelector.html" title=" " alt="" coords="509,178,683,219"/>
+<area shape="rect" href="classfreetensor_1_1EitherMetadataSelector.html" title=" " alt="" coords="497,243,695,285"/>
+<area shape="rect" href="classfreetensor_1_1IDSelector.html" title=" " alt="" coords="514,309,678,336"/>
+<area shape="rect" href="classfreetensor_1_1LabelSelector.html" title=" " alt="" coords="503,360,689,387"/>
+<area shape="rect" href="classfreetensor_1_1NotMetadataSelector.html" title=" " alt="" coords="479,411,713,437"/>
+<area shape="rect" href="classfreetensor_1_1RootCallSelector.html" title=" " alt="" coords="493,461,699,488"/>
+<area shape="rect" href="classfreetensor_1_1TransformedSelector.html" title=" " alt="" coords="481,512,711,539"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -104,8 +108,13 @@ Inheritance diagram for freetensor::Selector:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:adad8018bb86e3cd7df3942a9c3ff4bc3"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Selector.html#adad8018bb86e3cd7df3942a9c3ff4bc3">~Selector</a> ()</td></tr>
 <tr class="separator:adad8018bb86e3cd7df3942a9c3ff4bc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a083ea378dc262c86b12b97d5d1db8374"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Selector.html#a083ea378dc262c86b12b97d5d1db8374">match</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;stmt) const =0</td></tr>
-<tr class="separator:a083ea378dc262c86b12b97d5d1db8374"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af3b3b3fa1e11979625b0f4b190e908d2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Selector.html#af3b3b3fa1e11979625b0f4b190e908d2">match</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;stmt)</td></tr>
+<tr class="separator:af3b3b3fa1e11979625b0f4b190e908d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:ad09e2207b26ae705b6b5a7d58bbdba4e"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Selector.html#ad09e2207b26ae705b6b5a7d58bbdba4e">matchImpl</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;stmt)=0</td></tr>
+<tr class="separator:ad09e2207b26ae705b6b5a7d58bbdba4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="adad8018bb86e3cd7df3942a9c3ff4bc3" name="adad8018bb86e3cd7df3942a9c3ff4bc3"></a>
@@ -134,8 +143,8 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a083ea378dc262c86b12b97d5d1db8374" name="a083ea378dc262c86b12b97d5d1db8374"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a083ea378dc262c86b12b97d5d1db8374">&#9670;&nbsp;</a></span>match()</h2>
+<a id="af3b3b3fa1e11979625b0f4b190e908d2" name="af3b3b3fa1e11979625b0f4b190e908d2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af3b3b3fa1e11979625b0f4b190e908d2">&#9670;&nbsp;</a></span>match()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -144,21 +153,47 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual bool freetensor::Selector::match </td>
+          <td class="memname">bool freetensor::Selector::match </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
           <td class="paramname"><em>stmt</em></td><td>)</td>
-          <td> const</td>
+          <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="classfreetensor_1_1NotSelector.html#ac0f3822e3c25d297c5669034c2211960">freetensor::NotSelector</a>, <a class="el" href="classfreetensor_1_1BothSelector.html#ad7c37a7640ce7a66616b18ca879b7b46">freetensor::BothSelector</a>, <a class="el" href="classfreetensor_1_1EitherSelector.html#a9f8d99fda47a01b902ed1165a38f8f5c">freetensor::EitherSelector</a>, <a class="el" href="classfreetensor_1_1NodeTypeSelector.html#a2571b2d117d23bd237af47bbbed36285">freetensor::NodeTypeSelector</a>, <a class="el" href="classfreetensor_1_1ChildSelector.html#a7250454721d844c74090a46c34b4222b">freetensor::ChildSelector</a>, <a class="el" href="classfreetensor_1_1DescendantSelector.html#a510ce9d4ba72ebe2f5cdfbd32f60f91c">freetensor::DescendantSelector</a>, <a class="el" href="classfreetensor_1_1RootNodeSelector.html#ac39af04fba0ef4297afef56fc650e6e0">freetensor::RootNodeSelector</a>, <a class="el" href="classfreetensor_1_1LeafSelector.html#a2b5280d00f4f0cec6688dc5db1eac1ed">freetensor::LeafSelector</a>, and <a class="el" href="classfreetensor_1_1IDSelector.html#a24d0865144cdd375a6d5edfef0c395d4">freetensor::IDSelector</a>.</p>
+</div>
+</div>
+<a id="ad09e2207b26ae705b6b5a7d58bbdba4e" name="ad09e2207b26ae705b6b5a7d58bbdba4e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad09e2207b26ae705b6b5a7d58bbdba4e">&#9670;&nbsp;</a></span>matchImpl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual bool freetensor::Selector::matchImpl </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>stmt</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implemented in <a class="el" href="classfreetensor_1_1NotSelector.html#afaea2a87e15e8d07d879428025be9991">freetensor::NotSelector</a>, <a class="el" href="classfreetensor_1_1BothSelector.html#ad7a94ebaf14fa0a6cc3a36fba18a1fa8">freetensor::BothSelector</a>, <a class="el" href="classfreetensor_1_1EitherSelector.html#a5e43404399ed256160f8eca21b2dfec3">freetensor::EitherSelector</a>, <a class="el" href="classfreetensor_1_1NodeTypeSelector.html#aa9073fa63288dd10b8da7c46c5dddc9d">freetensor::NodeTypeSelector</a>, <a class="el" href="classfreetensor_1_1ChildSelector.html#ae9d967822962faf470e01dc487342ceb">freetensor::ChildSelector</a>, <a class="el" href="classfreetensor_1_1DescendantSelector.html#adf6a3b58f017d71509929339565b0f18">freetensor::DescendantSelector</a>, <a class="el" href="classfreetensor_1_1ParentSelector.html#a901a3e561d02d3f64a28b2d0abe07dcd">freetensor::ParentSelector</a>, <a class="el" href="classfreetensor_1_1AncestorSelector.html#ac157be289d68e3c63c1643417ac2f2a8">freetensor::AncestorSelector</a>, <a class="el" href="classfreetensor_1_1RootNodeSelector.html#a74d1cd7cf9dd27eb3c2c76282d040eb5">freetensor::RootNodeSelector</a>, <a class="el" href="classfreetensor_1_1LeafNodeSelector.html#a6ca6c3622c646ccaea73625213224585">freetensor::LeafNodeSelector</a>, <a class="el" href="classfreetensor_1_1MetadataSelector.html#ab2e2301a54801f59f026f2e8e700ee63">freetensor::MetadataSelector</a>, and <a class="el" href="classfreetensor_1_1IDSelector.html#a2c20c8624fe2f0c4486e0b6daf13a451">freetensor::IDSelector</a>.</p>
 
 </div>
 </div>

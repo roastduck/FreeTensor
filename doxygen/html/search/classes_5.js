@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['eitherleafselector_0',['EitherLeafSelector',['../classfreetensor_1_1EitherLeafSelector.html',1,'freetensor']]],
+  ['eithermetadataselector_0',['EitherMetadataSelector',['../classfreetensor_1_1EitherMetadataSelector.html',1,'freetensor']]],
   ['eitherselector_1',['EitherSelector',['../classfreetensor_1_1EitherSelector.html',1,'freetensor']]],
   ['elementwiseinfo_2',['ElementWiseInfo',['../structfreetensor_1_1ElementWiseInfo.html',1,'freetensor']]],
   ['enableself_3',['EnableSelf',['../classfreetensor_1_1EnableSelf.html',1,'freetensor']]],
