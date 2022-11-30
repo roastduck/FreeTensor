@@ -100,7 +100,7 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
         }
         fissionFrom[thisId] = thisId;
     };
-    for (auto &&loop : findAll("<For><-(!<For><-)*-|")) {
+    for (auto &&loop : findAll("<For><-(!<For><-)*<-|")) {
         // Suppose the root node is not <For>. It should be <VarDef>
         tryFission(loop.as<ForNode>());
     }

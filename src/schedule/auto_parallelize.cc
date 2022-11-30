@@ -218,7 +218,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
             }
         }
     };
-    for (auto &&_root : findAll("<For><-(!<For><-)*-|")) {
+    for (auto &&_root : findAll("<For><-(!<For><-)*<-|")) {
         // Suppose the root node is not <For>. It should be <VarDef>
         auto root = _root.as<ForNode>();
         // If the outer most loop is too short, we try the second outer loops
