@@ -669,11 +669,15 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     // 2.2. reversed coefficients of loop 0 iterations
     //      they are reversed because we want to select outer loops
     //      earlier, preserving the original loop order
+    PBBuildExpr absSum0 = 0;
     for (int i = nestLevel0 - 1; i >= 0; --i) {
         auto abs = builder.newOutput("abs_c0i" + toString(i));
         builder.addConstraint(abs >= c0Iters[i] && abs >= -c0Iters[i]);
         builder.addOutput(c0Iters[i]);
+        absSum0 += abs;
     }
+    //      ... and only one axis should involve (prevent any skewness!)
+    builder.addConstraint(absSum0 == 1);
     // 2.3. coefficients of loop 0 params and constant
     for (int i = 0; i < nParams + 1; ++i) {
         auto abs = builder.newOutput("abs_c0p" + toString(i));
@@ -684,11 +688,14 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     auto delta1 = builder.newOutput("d1");
     auto delta1L = builder.newOutput("d1l");
     // 3.2. reversed coefficients of loop 1 iterations
+    PBBuildExpr absSum1 = 0;
     for (int i = nestLevel1 - 1; i >= 0; --i) {
         auto abs = builder.newOutput("abs_c1i" + toString(i));
         builder.addConstraint(abs >= c1Iters[i] && abs >= -c1Iters[i]);
         builder.addOutput(c1Iters[i]);
+        absSum1 += abs;
     }
+    builder.addConstraint(absSum1 == 1);
     // 3.3. coefficients of loop 1 params and constant
     for (int i = 0; i < nParams + 1; ++i) {
         auto abs = builder.newOutput("abs_c1p" + toString(i));
