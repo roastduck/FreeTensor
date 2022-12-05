@@ -198,4 +198,3 @@ def test_pluto_permute_outer_loop():
     print(kernel)
     assert parallelism == 1
     assert kernel.body.match(kernel_expected.body)
-
