@@ -490,13 +490,6 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     // whether a dependence have been satisfied already
     std::vector<bool> satisfied0, satisfied1, satisfied1to0;
 
-    auto limitLowerBound = [&](PBSet set, int upperBound = 1) {
-        auto ndim = set.nDims();
-        set = lowerBoundDim(std::move(set), ndim - 1, 0);
-        set = upperBoundDim(std::move(set), ndim - 1, upperBound);
-        return set;
-    };
-
     // process dependences inside loop 0
     if (!dep0.empty()) {
         // ti (target iter) and si (source iter) both on loop 0.
@@ -516,8 +509,6 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             [](auto &&ti, auto &&si) { return ti - si; }, ti, si));
         // loop 1 no effect
         builder.addOutputs(views::repeat_n(0, nParams + 1 + nestLevel1));
-        // lower bound
-        builder.addOutput(-1);
         auto legalityMap = builder.build(ctx);
         builder.clearOutputs();
 
@@ -533,20 +524,16 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             [](auto &&ti, auto &&si) { return -(ti - si); }, ti, si));
         // loop 1 no effect
         builder.addOutputs(views::repeat_n(0, nParams + 1 + nestLevel1));
-        // lower bound, no effect
-        builder.addOutput(0);
         auto boundingMap = builder.build(ctx);
 
         coeffSets0.reserve(dep0.size());
         satSets0.reserve(dep0.size());
         satisfied0.resize(dep0.size(), false);
         for (auto &&[i, d] : views::enumerate(dep0)) {
-            auto legalSet = coefficients(apply(d, legalityMap));
-            coeffSets0.push_back(limitLowerBound(
-                intersect(legalSet, coefficients(apply(d, boundingMap)))));
-            auto ndim = legalSet.nDims();
-            satSets0.push_back(projectOutDims(
-                fixDim(std::move(legalSet), ndim - 1, 1), ndim - 1, 1));
+            coeffSets0.push_back(
+                intersect(coefficients(apply(d, legalityMap)),
+                          coefficients(apply(d, boundingMap))));
+            satSets0.push_back(coefficients(apply(d, legalityMap), 1));
         }
     }
 
@@ -571,8 +558,6 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         // loop 1 loops coefficients, difference of iters
         builder.addOutputs(views::zip_with(
             [](auto &&ti, auto &&si) { return ti - si; }, ti, si));
-        // lower bound
-        builder.addOutput(-1);
         auto legalityMap = builder.build(ctx);
         builder.clearOutputs();
 
@@ -588,20 +573,16 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         // loop 1 loops coefficients, negated difference of iters
         builder.addOutputs(views::zip_with(
             [](auto &&ti, auto &&si) { return -(ti - si); }, ti, si));
-        // lower bound, no effect
-        builder.addOutput(0);
         auto boundingMap = builder.build(ctx);
 
         coeffSets1.reserve(dep1.size());
         satSets1.reserve(dep1.size());
         satisfied1.resize(dep1.size(), false);
         for (auto &&[i, d] : views::enumerate(dep1)) {
-            auto legalSet = coefficients(apply(d, legalityMap));
-            coeffSets1.push_back(limitLowerBound(
-                intersect(legalSet, coefficients(apply(d, boundingMap)))));
-            auto ndim = legalSet.nDims();
-            satSets1.push_back(projectOutDims(
-                fixDim(std::move(legalSet), ndim - 1, 1), ndim - 1, 1));
+            coeffSets1.push_back(
+                intersect(coefficients(apply(d, legalityMap)),
+                          coefficients(apply(d, boundingMap))));
+            satSets1.push_back(coefficients(apply(d, legalityMap), 1));
         }
     }
 
@@ -630,8 +611,6 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         builder.addOutputs(p1);
         builder.addOutput(1);
         builder.addOutputs(i1);
-        // lower bound
-        builder.addOutput(-1);
         auto legalityMap = builder.build(ctx);
         builder.clearOutputs();
 
@@ -648,22 +627,16 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         builder.addOutputs(p1 | negate);
         builder.addOutput(-1);
         builder.addOutputs(i1 | negate);
-        // lower bound, no effect
-        builder.addOutput(0);
         auto boundingMap = builder.build(ctx);
 
         coeffSets1to0.reserve(dep1to0.size());
         satSets1to0.reserve(dep1to0.size());
         satisfied1to0.resize(dep1to0.size(), false);
         for (auto &&[i, d] : views::enumerate(dep1to0)) {
-            auto legalSet = coefficients(apply(d, legalityMap));
-            // limit lower bound to 0, we don't want to count 1to0 dependences
-            // for Feautrier
-            coeffSets1to0.push_back(limitLowerBound(
-                intersect(legalSet, coefficients(apply(d, boundingMap))), 0));
-            auto ndim = legalSet.nDims();
-            satSets1to0.push_back(projectOutDims(
-                fixDim(std::move(legalSet), ndim - 1, 1), ndim - 1, 1));
+            coeffSets1to0.push_back(
+                intersect(coefficients(apply(d, legalityMap)),
+                          coefficients(apply(d, boundingMap))));
+            satSets1to0.push_back(coefficients(apply(d, legalityMap), 1));
         }
     }
 
@@ -679,34 +652,11 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     // 3. (nParams + 1 + nestLevel1) loop 1 permuting coefficients
     auto c1Params = builder.newInputs(nParams + 1, "c1p");
     auto c1Iters = builder.newInputs(nestLevel1, "c1i");
-    auto sumLowerBounds = builder.newInput("sumlb");
 
     // optimize targets
-    // 1.1. Feautrier target
-    //
-    //      We try to satisfy as many as possible intra-loop dependences
-    //      when a fully parallelizable loop is not found, while still trying to
-    //      minimize the distance as is in Pluto. Thus, it's composed together
-    //      with Pluto target:
-    //      * if all upper bound coefficients are zero, then lower bounds will
-    //        be zero as well, this is the top-priority for complete
-    //        parallelism;
-    //      * otherwise, try carry as much dependences as possible, following
-    //        Feautrier.
-    //      We don't consider dep1to0 for Feautrier. Making outer loops
-    //      carrying 1->0 dependence is meaningless due to the produced code
-    //      will not run different loop bodies in parallel.
-    PBBuildExpr sumUpperBounds = 0;
-    for (int i = 0; i < nParams + 1; ++i)
-        sumUpperBounds += cBounds[i];
-    auto feautrierTarget = builder.newOutput("ftr");
-    builder.addConstraint(feautrierTarget ==
-                          (dep0.size() + dep1.size() + 1) *
-                                  max(0, min(sumUpperBounds, 1)) -
-                              sumLowerBounds);
-    // 1.2. Pluto+ targets
-    //      for each bounding coefficients except the last one (for constant),
-    //      we need to minimize its absolute value to avoid -inf results
+    // 1. Pluto+ targets
+    //    for each bounding coefficients except the last one (for constant),
+    //    we need to minimize its absolute value to avoid -inf results
     for (int i = 0; i < nParams; ++i) {
         auto abs = builder.newOutput("abs_cb" + toString(i));
         builder.addConstraint(abs >= cBounds[i] && abs >= -cBounds[i]);
@@ -719,11 +669,15 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     // 2.2. reversed coefficients of loop 0 iterations
     //      they are reversed because we want to select outer loops
     //      earlier, preserving the original loop order
+    PBBuildExpr absSum0 = 0;
     for (int i = nestLevel0 - 1; i >= 0; --i) {
         auto abs = builder.newOutput("abs_c0i" + toString(i));
         builder.addConstraint(abs >= c0Iters[i] && abs >= -c0Iters[i]);
         builder.addOutput(c0Iters[i]);
+        absSum0 += abs;
     }
+    //      ... and only one axis should involve (prevent any skewness!)
+    builder.addConstraint(absSum0 == 1);
     // 2.3. coefficients of loop 0 params and constant
     for (int i = 0; i < nParams + 1; ++i) {
         auto abs = builder.newOutput("abs_c0p" + toString(i));
@@ -734,11 +688,14 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     auto delta1 = builder.newOutput("d1");
     auto delta1L = builder.newOutput("d1l");
     // 3.2. reversed coefficients of loop 1 iterations
+    PBBuildExpr absSum1 = 0;
     for (int i = nestLevel1 - 1; i >= 0; --i) {
         auto abs = builder.newOutput("abs_c1i" + toString(i));
         builder.addConstraint(abs >= c1Iters[i] && abs >= -c1Iters[i]);
         builder.addOutput(c1Iters[i]);
+        absSum1 += abs;
     }
+    builder.addConstraint(absSum1 == 1);
     // 3.3. coefficients of loop 1 params and constant
     for (int i = 0; i < nParams + 1; ++i) {
         auto abs = builder.newOutput("abs_c1p" + toString(i));
@@ -769,8 +726,8 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
 
         builder.addOutputs(params);
         builder.addOutput(1);
-        builder.addOutputs(views::repeat_n(0, (nParams + 1) * 2 + nestLevel0 +
-                                                  nestLevel1 + 1));
+        builder.addOutputs(
+            views::repeat_n(0, (nParams + 1) * 2 + nestLevel0 + nestLevel1));
         optimizeMap =
             intersectDomain(std::move(optimizeMap),
                             coefficients(apply(loop0Set, builder.build(ctx))));
@@ -778,18 +735,6 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
 
     PBSetBuilder orthoSetBuilder;
     orthoSetBuilder.addVars(builder.outputs());
-
-    // combine two coeff sets: sum up their lower bound.
-    PBMap problemCombiner;
-    {
-        PBMapBuilder builder;
-        auto others =
-            builder.newInputs((nParams + 1) * 3 + nestLevel0 + nestLevel1, "i");
-        auto lb = builder.newInputs(2, "lb");
-        builder.addOutputs(others);
-        builder.addOutput(lb[0] + lb[1]);
-        problemCombiner = builder.build(ctx);
-    }
 
     std::vector<std::vector<int>> c0ParamValue, c0IterValue;
     std::vector<std::vector<int>> c1ParamValue, c1IterValue;
@@ -806,17 +751,13 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             if (!satisfied) {
                 if (!problem.isValid())
                     problem = coeffSet;
-                else {
-                    auto ndim = problem.nDims();
-                    problem =
-                        apply(intersect(insertDims(std::move(problem), ndim, 1),
-                                        insertDims(coeffSet, ndim - 1, 1)),
-                              problemCombiner);
-                }
+                else
+                    problem = intersect(std::move(problem), coeffSet);
             }
+
         if (!problem.isValid())
-            problem = limitLowerBound(universeSet(spaceSetAlloc(
-                ctx, 0, (nParams + 1) * 3 + nestLevel0 + nestLevel1 + 1)));
+            problem = universeSet(spaceSetAlloc(
+                ctx, 0, (nParams + 1) * 3 + nestLevel0 + nestLevel1));
 
         // construct orthogonal constraints
         auto orthoConstraint = [&](const auto &cIterValue, const auto &cIters,
@@ -847,11 +788,6 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             revOptimizeMap);
         if (solution.empty())
             break;
-
-        // cut the lower bounds out of solution
-        solution =
-            projectOutDims(std::move(solution),
-                           (nParams + 1) * 3 + nestLevel0 + nestLevel1, 1);
 
         // check satisfied and mark; already satisfied dependences won't be
         // included in inner levels
