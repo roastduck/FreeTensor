@@ -404,6 +404,51 @@ def test_nested_loops():
     assert std.match(ast)
 
 
+def test_multi_versions_in_recomp():
+
+    @ft.transform(verbose=1)
+    def func(x, y):
+        x: ft.Var[(1024,), "float32", "input"]
+        y: ft.Var[(1024,), "float32", "output"]
+        for pn in range(256):
+            z = ft.empty((), "float32")
+            z[()] = 1.
+            for fn in range(1024):
+                z[()] = (z[()] + 1) * x[fn]
+            y[pn] = 1. - z
+        return y
+
+    _, bwd, _, _ = ft.grad(func, ["x"], ["y"], set())
+    print(bwd)
+    bwd = ft.lower(bwd, verbose=1, skip_passes=['make_heap_alloc'])
+
+    with ft.VarDef([("x", (1024,), "float32", "input"),
+                    ("dx", (1024,), "float32", "output"),
+                    ("dy", (1024,), "float32", "inout")]) as (x, dx, dy):
+        with ft.For("i", 0, 1024) as i:
+            dx[i] = 0
+        with ft.For("pn", 255, -1, -1) as pn:
+            with ft.VarDef("dz", (), "float32", "cache") as dz:
+                with ft.VarDef("z.recomp", (1024,), "float32",
+                               "cache") as z_recomp:
+                    with ft.VarDef("z", (), "float32", "cache") as z:
+                        z[()] = 1.
+                        with ft.For("fn", 0, 1024) as fn:
+                            z_recomp[fn] = z[()]
+                            z[()] = (z[()] + 1) * x[fn]
+                    dz[()] = -1 * dy[pn]
+                    with ft.For("fn", 1023, -1, -1) as fn:
+                        with ft.VarDef("dz.old", (), "float32",
+                                       "cache") as dz_old:
+                            dz_old[()] = dz[()]
+                            dz[()] = dz_old[()] * x[fn]
+                            dx[fn] += dz_old[()] * (z_recomp[fn] + 1)
+                dz[()] = 0
+
+    std = ft.pop_ast()
+    assert std.match(bwd.body)
+
+
 def test_tape_1():
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),

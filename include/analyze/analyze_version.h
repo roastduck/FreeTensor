@@ -70,10 +70,15 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
  * Assign each memory access an expression that identifies each version of the
  * accessed variable
  *
+ * @param op : The AST to analyze
+ * @param intermediates : Varaibles (VarDef IDs) to analyze
+ * @param localVersionsOnly : If true, analyze local versions inside its VarDef
+ * node. If false, analyze global versions within the whole program
  * @return : (node -> versions, VarDef IDs -> total version counts)
  */
 std::pair<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>>
-analyzeVersion(const Stmt &op, const std::unordered_set<ID> &intermediates);
+analyzeVersion(const Stmt &op, const std::unordered_set<ID> &intermediates,
+               bool localVersionsOnly);
 
 } // namespace freetensor
 

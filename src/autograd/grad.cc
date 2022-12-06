@@ -5,6 +5,7 @@
 #include <analyze/find_stmt.h>
 #include <autograd/grad.h>
 #include <autograd/output_intermediates.h>
+#include <container_utils.h>
 #include <pass/float_simplify.h>
 #include <pass/hoist_return_vars.h>
 #include <pass/hoist_var_over_stmt_seq.h>
@@ -110,12 +111,13 @@ std::unordered_set<ID> PropagateProvides::propagateUntilConverge(
     return propagator.affectedDefs();
 }
 
-Expr ReplaceByTape::replaceForwardValue(const Expr &_equLoad) {
+Expr ReplaceBySaved::replaceForwardValue(const Expr &_equLoad) {
     auto __equLoad = deepCopy(_equLoad);
     ASSERT(__equLoad->nodeType() == ASTNodeType::Load);
     auto equLoad = __equLoad.as<LoadNode>();
-    if (tapeMap_.count(symbolTable_.def(equLoad->var_)->id())) {
-        auto tapeVar = tapeMap_.at(symbolTable_.def(equLoad->var_)->id());
+    if (intermediatesMap_.count(symbolTable_.def(equLoad->var_)->id())) {
+        auto tapeVar =
+            intermediatesMap_.at(symbolTable_.def(equLoad->var_)->id());
         if (tapeVar != equLoad->var_) {
             equLoad->var_ = tapeVar;
             equLoad->indices_.insert(equLoad->indices_.begin(),
@@ -125,19 +127,27 @@ Expr ReplaceByTape::replaceForwardValue(const Expr &_equLoad) {
     return equLoad;
 }
 
-Expr ReplaceByTape::visit(const Load &_op) {
+Expr ReplaceBySaved::visit(const Load &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
-    if (tapeMap_.count(symbolTable_.def(_op->var_)->id())) {
-        auto tapeVar = tapeMap_.at(symbolTable_.def(_op->var_)->id());
-        if (tapeVar != op->var_) {
-            op->var_ = tapeVar;
+    if (intermediatesMap_.count(symbolTable_.def(_op->var_)->id())) {
+        auto savedVar = intermediatesMap_.at(symbolTable_.def(_op->var_)->id());
+        if (savedVar != op->var_) {
+            op->var_ = savedVar;
             op->indices_.insert(op->indices_.begin(),
                                 versions_.at(StmtOrExprID(_op, parent_)));
         }
     }
     return op;
+}
+
+ReplaceBySaved Grad::getReplacer(const Stmt &stmt) const {
+    if (isRecompute_) {
+        return {*this, tapeMap_, versions_, stmt};
+    } else {
+        return {*this, intermediatesMap_, versions_, stmt};
+    }
 }
 
 Stmt Grad::visit(const StmtSeq &op) {
@@ -162,12 +172,12 @@ Stmt Grad::visit(const For &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
-    ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
+    auto replaceBySaved = getReplacer(op);
     if (isRecompute_) {
-        op->begin_ = replaceByTape(op->begin_);
-        op->end_ = replaceByTape(op->end_);
-        op->step_ = replaceByTape(op->step_);
-        op->len_ = replaceByTape(op->len_);
+        op->begin_ = replaceBySaved(op->begin_);
+        op->end_ = replaceBySaved(op->end_);
+        op->step_ = replaceBySaved(op->step_);
+        op->len_ = replaceBySaved(op->len_);
     } else {
         auto noDeps = op->property_->noDeps_;
         for (auto &&fwdVar : op->property_->noDeps_) {
@@ -175,12 +185,12 @@ Stmt Grad::visit(const For &_op) {
                 noDeps.emplace_back(fwdVar + ".grad");
             }
         }
-        auto begin = replaceByTape(
+        auto begin = replaceBySaved(
             makeAdd(op->begin_,
                     makeMul(op->step_, makeSub(op->len_, makeIntConst(1)))));
-        auto end = replaceByTape(makeSub(op->begin_, op->step_));
-        auto step = replaceByTape(makeSub(makeIntConst(0), op->step_));
-        auto len = replaceByTape(op->len_);
+        auto end = replaceBySaved(makeSub(op->begin_, op->step_));
+        auto step = replaceBySaved(makeSub(makeIntConst(0), op->step_));
+        auto len = replaceBySaved(op->len_);
 
         op->property_->noDeps_ = std::move(noDeps);
         op->begin_ = std::move(begin);
@@ -197,8 +207,8 @@ Stmt Grad::visit(const If &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::If);
     auto op = __op.as<IfNode>();
-    ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
-    op->cond_ = replaceByTape(op->cond_);
+    auto replaceBySaved = getReplacer(op);
+    op->cond_ = replaceBySaved(op->cond_);
     if (!isRecompute_) {
         op->metadata() = makeMetadata("grad", op);
         op->setId();
@@ -210,8 +220,8 @@ Stmt Grad::visit(const Assert &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Assert);
     auto op = __op.as<AssertNode>();
-    ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
-    op->cond_ = replaceByTape(op->cond_);
+    auto replaceBySaved = getReplacer(op);
+    op->cond_ = replaceBySaved(op->cond_);
     if (!isRecompute_) {
         op->metadata() = makeMetadata("grad", op);
         op->setId();
@@ -302,8 +312,8 @@ Stmt Grad::visit(const VarDef &_op) {
             ret->buffer_->atype() == AccessType::InOut) {
             ret->buffer_->setAtype(AccessType::Cache);
         }
-        if (tapeMap_.count(op->id())) {
-            auto tapeVar = tapeMap_.at(op->id());
+        if (tapes_.count(op->id()) && intermediatesMap_.count(op->id())) {
+            auto tapeVar = intermediatesMap_.at(op->id());
             if (tapeVar != ret->name_) {
                 ret = makeVarDef(tapeVar, ret->buffer_, std::nullopt, ret,
                                  ret->pinned_, makeMetadata("tape", ret))
@@ -320,6 +330,7 @@ Stmt Grad::visit(const VarDef &_op) {
 
 Stmt Grad::visit(const Store &op) {
     auto &&b = buffer(op->var_);
+    auto replaceBySaved = getReplacer(op);
     if (isRecompute_) {
         // FIXME: What if an intermediate variable is assigned and used multiple
         // times? E.g. a = x; use a; a = y; use a;
@@ -327,21 +338,26 @@ Stmt Grad::visit(const Store &op) {
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
         if (!recomputed && !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
-            return ReplaceByTape(*this, tapeMap_, versions_, op)(op);
+            return replaceBySaved(op);
         } else {
             return makeStmtSeq({});
         }
     } else {
+        // This is the statement used to store all versions of recomputation. No
+        // use in gradients
+        if (saveLocalStmts_.count(op->id())) {
+            return makeStmtSeq({});
+        }
+
         auto newMetadata = makeMetadata("grad", op);
         std::vector<Stmt> stmts;
         if (gradNames_.count(op->var_)) {
             auto &&grad = gradNames_.at(op->var_);
             auto &&indices = op->indices_;
             if (!allReads(op->expr_).count(op->var_)) {
-                ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
                 // Quick path for acyclic assignment
                 GradExpr exprVisitor(
-                    replaceByTape, gradNames_, op->expr_,
+                    replaceBySaved, gradNames_, op->expr_,
                     makeLoad(grad, indices, b->tensor()->dtype()),
                     makeLoad(op->var_, indices, b->tensor()->dtype()));
                 exprVisitor(op->expr_);
@@ -368,9 +384,8 @@ Stmt Grad::visit(const Store &op) {
                 stmts.emplace_back(
                     makeStore(grad, indices, makeIntConst(0), newMetadata));
 
-                ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
                 GradExpr exprVisitor(
-                    replaceByTape, gradNames_, op->expr_,
+                    replaceBySaved, gradNames_, op->expr_,
                     makeLoad(oldGrad, {}, b->tensor()->dtype()),
                     makeLoad(op->var_, indices, b->tensor()->dtype()));
                 exprVisitor(op->expr_);
@@ -393,15 +408,14 @@ Stmt Grad::visit(const Store &op) {
 
 Stmt Grad::visit(const ReduceTo &op) {
     auto &&b = buffer(op->var_);
+    auto replaceBySaved = getReplacer(op);
     if (isRecompute_) {
-        // FIXME: What if an intermediate variable is assigned and used multiple
-        // times? E.g. a = x; use a; a = y; use a;
         bool recomputed =
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
         if (!recomputed && b->atype() == AccessType::Cache &&
             !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
-            return ReplaceByTape(*this, tapeMap_, versions_, op)(op);
+            return replaceBySaved(op);
         } else {
             return makeStmtSeq({});
         }
@@ -413,10 +427,9 @@ Stmt Grad::visit(const ReduceTo &op) {
             auto &&indices = op->indices_;
             if (op->op_ == ReduceOp::Add &&
                 !allReads(op->expr_).count(op->var_)) {
-                ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
                 // Quick path for canonical reduce sum
                 GradExpr exprVisitor(
-                    replaceByTape, gradNames_, op->expr_,
+                    replaceBySaved, gradNames_, op->expr_,
                     makeLoad(grad, indices, b->tensor()->dtype()),
                     makeLoad(op->var_, indices, b->tensor()->dtype()));
                 exprVisitor(op->expr_);
@@ -585,21 +598,44 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     op = undoMakeReduction(op); // Because we need to record loadMap
     op = makeReduction(op, {ReduceOp::Add}, true);
 
-    auto [forward, tapeMap, versions, totLens] = outputIntermediates(op, tapes);
+    // Save all versions of intermediates variables. If the variables are set to
+    // be in tapes, save it in an output tensor globally in the forward pass.
+    // The saved tensor in this case is called tapes. If not, save it in an
+    // temporary (cache) tensor locally in the backward pass during
+    // recomputation
+    auto allIntermediates = allDefs(op, {AccessType::Cache});
+    auto [forward, tapeMap, versionsGlobal, totLensGlobal, _] =
+        outputIntermediates(op, tapes, OutputIntermediatesStage::Forward,
+                            ".tape");
+    auto [backward, intermediatesMapLocal, versionsLocal, totLensLocal,
+          saveLocalStmts] =
+        outputIntermediates(
+            op,
+            diff(ranges::to<std::unordered_set>(allIntermediates | views::keys),
+                 tapes),
+            OutputIntermediatesStage::Backward, ".recomp");
+    auto intermediatesMap = tapeMap;
+    intermediatesMap.merge(std::move(intermediatesMapLocal));
+    auto versions = std::move(versionsGlobal);
+    versions.merge(std::move(versionsLocal));
+    auto totLens = std::move(totLensGlobal);
+    totLens.merge(std::move(totLensLocal));
 
-    auto affectedDefs = intersect(
-        PropagateProvides::propagateUntilConverge(op, _requires, provides),
-        PropagateRequires::propagateUntilConverge(op, _requires, provides));
+    auto affectedDefs = intersect(PropagateProvides::propagateUntilConverge(
+                                      backward, _requires, provides),
+                                  PropagateRequires::propagateUntilConverge(
+                                      backward, _requires, provides));
 
     std::unordered_set<Stmt> notSingleWrite;
     auto foundWAW = [&](const Dependence &d) {
         notSingleWrite.insert(d.earlier().as<StmtNode>());
     };
-    FindDeps().type(DEP_WAW).ignoreReductionWAW(false)(op, foundWAW);
+    FindDeps().type(DEP_WAW).ignoreReductionWAW(false)(backward, foundWAW);
 
-    Grad mutator(_requires, provides, tapes, affectedDefs, tapeMap, versions,
-                 totLens, notSingleWrite);
-    auto backward = mutator(op);
+    Grad mutator(_requires, provides, tapes, affectedDefs, tapeMap,
+                 intermediatesMap, versions, totLens, saveLocalStmts,
+                 notSingleWrite);
+    backward = mutator(backward);
 
     // We do some basic simplifications here, to reduce burden on auto-schedule
     backward = removeDeadVar(backward);
