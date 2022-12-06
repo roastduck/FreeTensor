@@ -75,13 +75,21 @@ void init_ffi_autograd(py::module_ &m) {
         "stmt"_a, "requires"_a, "provides"_a,
         "tape_mode"_a = GradTapeMode::NoReuseOnly, "tape_in_closure"_a = true);
 
+    py::enum_<OutputIntermediatesStage>(m, "OutputIntermediatesStage")
+        .value("Forward", OutputIntermediatesStage::Forward)
+        .value("Backward", OutputIntermediatesStage::Backward);
+
     // std::unordered_map<Load, Expr> cannot be exported to Python
     m.def(
         "output_intermediates",
-        [](const Stmt &op, const std::unordered_set<ID> &intermediates) {
-            return std::get<0>(outputIntermediates(op, intermediates));
+        [](const Stmt &op, const std::unordered_set<ID> &intermediates,
+           OutputIntermediatesStage stage, const std::string &varSuffix) {
+            return std::get<0>(
+                outputIntermediates(op, intermediates, stage, varSuffix));
         },
-        "stmt"_a, "intermediates"_a);
+        "stmt"_a, "intermediates"_a,
+        "stage"_a = OutputIntermediatesStage::Forward,
+        "var_suffix"_a = ".tape");
 }
 
 } // namespace freetensor

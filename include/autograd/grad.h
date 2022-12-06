@@ -80,19 +80,19 @@ class PropagateProvides : public SymbolTable<Visitor> {
     void visit(const VarDef &op) override;
 };
 
-class ReplaceByTape : public Mutator {
+class ReplaceBySaved : public Mutator {
     const SymbolTableInterface &symbolTable_;
-    const std::unordered_map<ID, std::string> &tapeMap_;
+    const std::unordered_map<ID, std::string> &intermediatesMap_;
     const std::unordered_map<StmtOrExprID, Expr> &versions_;
     Stmt parent_;
 
   public:
-    ReplaceByTape(const SymbolTableInterface &symbolTable,
-                  const std::unordered_map<ID, std::string> &tapeMap,
-                  const std::unordered_map<StmtOrExprID, Expr> &versions,
-                  const Stmt &parent)
-        : symbolTable_(symbolTable), tapeMap_(tapeMap), versions_(versions),
-          parent_(parent) {}
+    ReplaceBySaved(const SymbolTableInterface &symbolTable,
+                   const std::unordered_map<ID, std::string> &intermediatesMap,
+                   const std::unordered_map<StmtOrExprID, Expr> &versions,
+                   const Stmt &parent)
+        : symbolTable_(symbolTable), intermediatesMap_(intermediatesMap),
+          versions_(versions), parent_(parent) {}
 
     Expr replaceForwardValue(const Expr &equLoad);
 
@@ -106,11 +106,11 @@ class GradExpr : public Visitor {
     std::unordered_map<Expr, Expr> gradExprs_; // x -> dy/dx
     const Expr &root_;
     Expr equLoad_;
-    ReplaceByTape &replaceByTape_;
+    ReplaceBySaved &replaceByTape_;
     std::vector<Stmt> appends_;
 
   public:
-    GradExpr(ReplaceByTape &replaceByTape,
+    GradExpr(ReplaceBySaved &replaceByTape,
              const std::unordered_map<std::string, std::string> &gradNames,
              const Expr &root, const Expr &grad, const Expr &equLoad)
         : gradNames_(gradNames), root_(root), equLoad_(equLoad),
@@ -170,9 +170,14 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
     const std::unordered_set<std::string> &provides_;
     const std::unordered_set<ID> &tapes_;
     const std::unordered_set<ID> &affectedDefs_;
-    const std::unordered_map<ID, std::string> &tapeMap_;
+    const std::unordered_map<ID, std::string>
+        &tapeMap_; // Saved varaibles in forward stage (tapes)
+    const std::unordered_map<ID, std::string>
+        &intermediatesMap_; // All saved variables, including in forward stage
+                            // (tapes) and backward stage (during recomputation)
     const std::unordered_map<StmtOrExprID, Expr> &versions_;
     const std::unordered_map<ID, Expr> &totLens_;
+    const std::unordered_set<ID> &saveLocalStmts_;
     const std::unordered_set<Stmt> &notSingleWrite_;
 
     std::unordered_map<std::string, std::string> requireGrads_; // var name map
@@ -185,18 +190,33 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
         recomputed_; // var name -> set{stmt}
     bool isRecompute_ = false;
 
+  private:
+    /**
+     * Get an appropriate ReplaceBySvaed Mutator to replace variables by saved
+     * all-version variables
+     *
+     * - For recomputation, we need to replace only by tapes
+     * - For gradient, we need to replace both by tapes and tensors saved during
+     * recomputation
+     */
+    ReplaceBySaved getReplacer(const Stmt &stmt) const;
+
   public:
     Grad(const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
          const std::unordered_set<ID> &tapes,
          const std::unordered_set<ID> &affectedDefs,
          const std::unordered_map<ID, std::string> &tapeMap,
+         const std::unordered_map<ID, std::string> &intermediatesMap,
          const std::unordered_map<StmtOrExprID, Expr> &versions,
          const std::unordered_map<ID, Expr> &totLens,
+         const std::unordered_set<ID> &saveLocalStmts,
          const std::unordered_set<Stmt> &notSingleWrite)
         : requires_(_requires), provides_(provides), tapes_(tapes),
-          affectedDefs_(affectedDefs), tapeMap_(tapeMap), versions_(versions),
-          totLens_(totLens), notSingleWrite_(notSingleWrite) {}
+          affectedDefs_(affectedDefs), tapeMap_(tapeMap),
+          intermediatesMap_(intermediatesMap), versions_(versions),
+          totLens_(totLens), saveLocalStmts_(saveLocalStmts),
+          notSingleWrite_(notSingleWrite) {}
 
     const std::unordered_map<std::string, std::string> &requireGrads() const {
         return requireGrads_;

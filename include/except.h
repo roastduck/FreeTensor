@@ -35,6 +35,11 @@ class InvalidProgram : public Error {
     InvalidProgram(const std::string &msg) : Error(msg) {}
 };
 
+class SymbolNotFound : public Error {
+  public:
+    SymbolNotFound(const std::string &msg) : Error(msg) {}
+};
+
 class AssertAlwaysFalse : public InvalidProgram {
   public:
     AssertAlwaysFalse(const std::string &msg) : InvalidProgram(msg) {}

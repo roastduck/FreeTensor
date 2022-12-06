@@ -43,7 +43,12 @@ class SymbolTableData : public SymbolTableInterface {
     }
 
     const VarDef &def(const std::string &name) const override {
-        return defs_.at(name);
+        if (auto it = defs_.find(name); it != defs_.end()) {
+            return it->second;
+        } else {
+            throw SymbolNotFound("There is no VarDef with name `" + name +
+                                 "` in the current scope");
+        }
     }
 
     Ref<Buffer> buffer(const std::string &name) const override {
@@ -55,7 +60,12 @@ class SymbolTableData : public SymbolTableInterface {
     }
 
     virtual const For &loop(const std::string &name) const override {
-        return loops_.at(name);
+        if (auto it = loops_.find(name); it != loops_.end()) {
+            return it->second;
+        } else {
+            throw SymbolNotFound("There is no For with iterator named `" +
+                                 name + "` in the current scope");
+        }
     }
 
     void pushDef(const VarDef &op) override {
