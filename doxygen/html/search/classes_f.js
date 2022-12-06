@@ -50,7 +50,7 @@ var searchData=
   ['renewids_47',['RenewIDs',['../classfreetensor_1_1RenewIDs.html',1,'freetensor']]],
   ['renewids_3c_20symboltable_3c_20mutator_20_3e_20_3e_48',['RenewIDs&lt; SymbolTable&lt; Mutator &gt; &gt;',['../classfreetensor_1_1RenewIDs.html',1,'freetensor']]],
   ['reorder_49',['Reorder',['../classfreetensor_1_1Reorder.html',1,'freetensor']]],
-  ['replacebytape_50',['ReplaceByTape',['../classfreetensor_1_1ReplaceByTape.html',1,'freetensor']]],
+  ['replacebysaved_50',['ReplaceBySaved',['../classfreetensor_1_1ReplaceBySaved.html',1,'freetensor']]],
   ['replaceiter_51',['ReplaceIter',['../classfreetensor_1_1ReplaceIter.html',1,'freetensor']]],
   ['replaceiterandrecordlog_52',['ReplaceIterAndRecordLog',['../classfreetensor_1_1ReplaceIterAndRecordLog.html',1,'freetensor']]],
   ['replaceuses_53',['ReplaceUses',['../classfreetensor_1_1ReplaceUses.html',1,'freetensor']]],

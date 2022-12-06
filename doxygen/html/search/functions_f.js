@@ -27,8 +27,8 @@ var searchData=
   ['os_24',['os',['../classfreetensor_1_1CodeGen.html#a94503013f91715f321f5025411cd2921',1,'freetensor::CodeGen']]],
   ['outerid_25',['outerId',['../classfreetensor_1_1Splitter.html#a65bd90b482bf79da4b9bdcfce92190ee',1,'freetensor::Splitter']]],
   ['outerloops_26',['outerLoops',['../classfreetensor_1_1Parallelize.html#ab159d3c675ee6026f8e32099e4d42666',1,'freetensor::Parallelize::outerLoops()'],['../classfreetensor_1_1CheckLoopOrder.html#a12fad78ab998ea194250338de0c5a2d8',1,'freetensor::CheckLoopOrder::outerLoops()']]],
-  ['outputintermediates_27',['outputIntermediates',['../namespacefreetensor.html#aad2df74d8c634f0879707d2d8700560d',1,'freetensor']]],
-  ['outputintermediates_28',['OutputIntermediates',['../classfreetensor_1_1OutputIntermediates.html#a7f4ea5b8bf44cebfcbb551dcfcd1f945',1,'freetensor::OutputIntermediates']]],
+  ['outputintermediates_27',['outputIntermediates',['../namespacefreetensor.html#ae54329544c5b0170e9dac46c29ff05cc',1,'freetensor']]],
+  ['outputintermediates_28',['OutputIntermediates',['../classfreetensor_1_1OutputIntermediates.html#a6139793832380ccd110d75f4070226b6',1,'freetensor::OutputIntermediates']]],
   ['outputs_29',['outputs',['../classfreetensor_1_1PBMapBuilder.html#ae96bca7c6d7f7da704d08f4f233b9e45',1,'freetensor::PBMapBuilder']]],
   ['vector_3c_20ref_3c_20u_20_3e_20_3e_30',['vector&lt; Ref&lt; U &gt; &gt;',['../classfreetensor_1_1SubTreeList.html#a296030e42c588b5204a5e9bf82b41839',1,'freetensor::SubTreeList']]]
 ];

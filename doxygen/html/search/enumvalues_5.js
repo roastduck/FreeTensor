@@ -8,8 +8,9 @@ var searchData=
   ['floor_5',['Floor',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915faf3f6d0343d56ce88ce7958170ed05cb3',1,'freetensor']]],
   ['floordiv_6',['FloorDiv',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fabaa422535e7ce48b442cc07089e64e7a',1,'freetensor']]],
   ['for_7',['For',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa39e61d57e9209611edd4f884e9e47c11',1,'freetensor']]],
-  ['free_8',['Free',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fab24ce0cd392a5b0b8dedc66c25213594',1,'freetensor']]],
-  ['front_9',['Front',['../namespacefreetensor.html#a1f683336cea8089de8a4aebaac3568c3a5835bab1ade0060909e31a06af2e2cde',1,'freetensor']]],
-  ['func_10',['Func',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa00d0b4f2d7dcdaaef835b97cf5d1e0df',1,'freetensor']]],
-  ['fuse_11',['Fuse',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8aa7513661ae079a868d2986c7aed2d913',1,'freetensor']]]
+  ['forward_8',['Forward',['../namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8fa67d2f6740a8eaebf4d5c6f79be8da481',1,'freetensor']]],
+  ['free_9',['Free',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fab24ce0cd392a5b0b8dedc66c25213594',1,'freetensor']]],
+  ['front_10',['Front',['../namespacefreetensor.html#a1f683336cea8089de8a4aebaac3568c3a5835bab1ade0060909e31a06af2e2cde',1,'freetensor']]],
+  ['func_11',['Func',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa00d0b4f2d7dcdaaef835b97cf5d1e0df',1,'freetensor']]],
+  ['fuse_12',['Fuse',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8aa7513661ae079a868d2986c7aed2d913',1,'freetensor']]]
 ];

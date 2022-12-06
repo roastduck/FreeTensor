@@ -583,7 +583,7 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Reorder.html">Reorder</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReplaceByTape.html">ReplaceByTape</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReplaceBySaved.html">ReplaceBySaved</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReplaceIter.html">ReplaceIter</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -676,6 +676,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SubTreeList.html">SubTreeList</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Swap.html">Swap</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SymbolNotFound.html">SymbolNotFound</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SymbolTable.html">SymbolTable</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1041,6 +1043,10 @@ Enumerations</h2></td></tr>
 , <a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ae1f4af8d2ac6c06c8f7620e411e561c3">NoReuseOnly</a>
  }</td></tr>
 <tr class="separator:ac5e2e5369afec7af04958c0ed8b42ed4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae311ebcb64a1b27e8fb8ce65bc1ceb8f"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8f">OutputIntermediatesStage</a> : int { <a class="el" href="namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8fa67d2f6740a8eaebf4d5c6f79be8da481">Forward</a>
+, <a class="el" href="namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8fab3263eb38f8903efc271cc7a760da510">Backward</a>
+ }</td></tr>
+<tr class="separator:ae311ebcb64a1b27e8fb8ce65bc1ceb8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a923130db6aad12a2b5d46dfe001c08cb"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cb">AccessType</a> : size_t { <br />
 &#160;&#160;<a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba324118a6721dd6b8a9b9f4e327df2bf5">Input</a> = 0
 , <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba29c2c02a361c9d7028472e5d92cd4a54">Output</a>
@@ -1184,8 +1190,8 @@ Functions</h2></td></tr>
 <tr class="separator:af3cd2c80175823e84d9f3e9555d6be3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af829069b1e3ed28eda73073303915af0"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::pair&lt; <a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; int64_t &gt;, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af829069b1e3ed28eda73073303915af0">linearComp</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr)</td></tr>
 <tr class="separator:af829069b1e3ed28eda73073303915af0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a064af53ab11994f63934022d25f029d6"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a064af53ab11994f63934022d25f029d6">analyzeVersion</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;intermediates)</td></tr>
-<tr class="separator:a064af53ab11994f63934022d25f029d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af9fe4e64d3c38e299b5b8e40514868d5"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af9fe4e64d3c38e299b5b8e40514868d5">analyzeVersion</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;intermediates, bool localVersionsOnly)</td></tr>
+<tr class="separator:af9fe4e64d3c38e299b5b8e40514868d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55735a0fc1a7936615d6a22547c1f616"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a82f6ad361ad8809641d462d42145cd02">DNF</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a55735a0fc1a7936615d6a22547c1f616">asDNF</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr)</td></tr>
 <tr class="separator:a55735a0fc1a7936615d6a22547c1f616"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a198117049fccd348fd7c47af7920b229"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a198117049fccd348fd7c47af7920b229">checkAllDefined</a> (const std::unordered_set&lt; std::string &gt; &amp;defs, const std::unordered_set&lt; std::string &gt; &amp;namesInOp)</td></tr>
@@ -1266,8 +1272,8 @@ requires (std::convertible_to&lt;Srcs, <a class="el" href="namespacefreetensor.h
 <tr class="separator:afc95cd1260f6ce4dd8e56c3cb9083bc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6b1e30d421ca5808b0ac9cf02fb8f26b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Schedule.html#acf8585443368254e352dbe9e6408978a">Schedule::IDMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6b1e30d421ca5808b0ac9cf02fb8f26b">fissionLoops</a> (<a class="el" href="classfreetensor_1_1Schedule.html">Schedule</a> &amp;schedule, const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;loops, <a class="el" href="classfreetensor_1_1ID.html">ID</a> splitter)</td></tr>
 <tr class="separator:a6b1e30d421ca5808b0ac9cf02fb8f26b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad2df74d8c634f0879707d2d8700560d"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aad2df74d8c634f0879707d2d8700560d">outputIntermediates</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;intermediates)</td></tr>
-<tr class="separator:aad2df74d8c634f0879707d2d8700560d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae54329544c5b0170e9dac46c29ff05cc"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae54329544c5b0170e9dac46c29ff05cc">outputIntermediates</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;intermediates, <a class="el" href="namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8f">OutputIntermediatesStage</a> stage=<a class="el" href="namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8fa67d2f6740a8eaebf4d5c6f79be8da481">OutputIntermediatesStage::Forward</a>, const std::string &amp;varSuffix=&quot;.tape&quot;)</td></tr>
+<tr class="separator:ae54329544c5b0170e9dac46c29ff05cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c0f4e93910a9324737e15d1bd575599"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5c0f4e93910a9324737e15d1bd575599">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cb">AccessType</a> atype)</td></tr>
 <tr class="separator:a5c0f4e93910a9324737e15d1bd575599"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1442e05e6cde2ae3cda5aa32c79f3e72"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cb">AccessType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1442e05e6cde2ae3cda5aa32c79f3e72">parseAType</a> (const std::string &amp;_str)</td></tr>
@@ -1308,6 +1314,9 @@ requires (std::convertible_to&lt;Srcs, <a class="el" href="namespacefreetensor.h
 <tr class="memitem:a8d6b319ab67a43924ab50a1a329b3dda"><td class="memTemplParams" colspan="2">template&lt;class T , class Hash , class KeyEqual &gt; </td></tr>
 <tr class="memitem:a8d6b319ab67a43924ab50a1a329b3dda"><td class="memTemplItemLeft" align="right" valign="top">std::unordered_set&lt; T, Hash, KeyEqual &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8d6b319ab67a43924ab50a1a329b3dda">uni</a> (const std::unordered_set&lt; T, Hash, KeyEqual &gt; &amp;lhs, const std::unordered_set&lt; T, Hash, KeyEqual &gt; &amp;rhs)</td></tr>
 <tr class="separator:a8d6b319ab67a43924ab50a1a329b3dda"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2fc3229332ba2873125af0724230236c"><td class="memTemplParams" colspan="2">template&lt;class T , class Hash , class KeyEqual &gt; </td></tr>
+<tr class="memitem:a2fc3229332ba2873125af0724230236c"><td class="memTemplItemLeft" align="right" valign="top">std::unordered_set&lt; T, Hash, KeyEqual &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2fc3229332ba2873125af0724230236c">diff</a> (const std::unordered_set&lt; T, Hash, KeyEqual &gt; &amp;lhs, const std::unordered_set&lt; T, Hash, KeyEqual &gt; &amp;rhs)</td></tr>
+<tr class="separator:a2fc3229332ba2873125af0724230236c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0031db496e4ad1f6e4ae729835ae653"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:ac0031db496e4ad1f6e4ae729835ae653"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac0031db496e4ad1f6e4ae729835ae653">cat</a> (const std::vector&lt; T &gt; &amp;lhs, const std::vector&lt; T &gt; &amp;rhs)</td></tr>
 <tr class="separator:ac0031db496e4ad1f6e4ae729835ae653"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -3852,6 +3861,32 @@ template&lt;class K &gt; </div>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="af95889187755480d15e840d24f445312a493ee14cd89fab9eafecae430e90fd14" name="af95889187755480d15e840d24f445312a493ee14cd89fab9eafecae430e90fd14"></a>NotNull&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="af95889187755480d15e840d24f445312a4caefb06d2949c49591f772166ef6c90" name="af95889187755480d15e840d24f445312a4caefb06d2949c49591f772166ef6c90"></a>Nullable&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<a id="ae311ebcb64a1b27e8fb8ce65bc1ceb8f" name="ae311ebcb64a1b27e8fb8ce65bc1ceb8f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae311ebcb64a1b27e8fb8ce65bc1ceb8f">&#9670;&nbsp;</a></span>OutputIntermediatesStage</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8f">freetensor::OutputIntermediatesStage</a> : int</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ae311ebcb64a1b27e8fb8ce65bc1ceb8fa67d2f6740a8eaebf4d5c6f79be8da481" name="ae311ebcb64a1b27e8fb8ce65bc1ceb8fa67d2f6740a8eaebf4d5c6f79be8da481"></a>Forward&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ae311ebcb64a1b27e8fb8ce65bc1ceb8fab3263eb38f8903efc271cc7a760da510" name="ae311ebcb64a1b27e8fb8ce65bc1ceb8fab3263eb38f8903efc271cc7a760da510"></a>Backward&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -6669,8 +6704,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a064af53ab11994f63934022d25f029d6" name="a064af53ab11994f63934022d25f029d6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a064af53ab11994f63934022d25f029d6">&#9670;&nbsp;</a></span>analyzeVersion()</h2>
+<a id="af9fe4e64d3c38e299b5b8e40514868d5" name="af9fe4e64d3c38e299b5b8e40514868d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af9fe4e64d3c38e299b5b8e40514868d5">&#9670;&nbsp;</a></span>analyzeVersion()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -6685,7 +6720,13 @@ template&lt;class T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>intermediates</em>&#160;</td>
+          <td class="paramname"><em>intermediates</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>localVersionsOnly</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -6695,6 +6736,14 @@ template&lt;class T &gt; </div>
       </table>
 </div><div class="memdoc">
 <p >Assign each memory access an expression that identifies each version of the accessed variable</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">op</td><td>: The AST to analyze </td></tr>
+    <tr><td class="paramname">intermediates</td><td>: Varaibles (VarDef IDs) to analyze </td></tr>
+    <tr><td class="paramname">localVersionsOnly</td><td>: If true, analyze local versions inside its VarDef node. If false, analyze global versions within the whole program </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd>: (node -&gt; versions, VarDef IDs -&gt; total version counts) </dd></dl>
 
 </div>
@@ -7912,6 +7961,36 @@ template&lt;class FromMap , class ToMap &gt; </div>
           <td class="paramtype"><a class="el" href="namespacefreetensor.html#a8b4c984aecaea6f0e74adc5a0f769204">makeHeapAlloc</a>&#160;</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2fc3229332ba2873125af0724230236c" name="a2fc3229332ba2873125af0724230236c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2fc3229332ba2873125af0724230236c">&#9670;&nbsp;</a></span>diff()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T , class Hash , class KeyEqual &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::unordered_set&lt; T, Hash, KeyEqual &gt; freetensor::diff </td>
+          <td>(</td>
+          <td class="paramtype">const std::unordered_set&lt; T, Hash, KeyEqual &gt; &amp;&#160;</td>
+          <td class="paramname"><em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::unordered_set&lt; T, Hash, KeyEqual &gt; &amp;&#160;</td>
+          <td class="paramname"><em>rhs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -13783,14 +13862,14 @@ template&lt;std::ranges::range Container&gt; </div>
 
 </div>
 </div>
-<a id="aad2df74d8c634f0879707d2d8700560d" name="aad2df74d8c634f0879707d2d8700560d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aad2df74d8c634f0879707d2d8700560d">&#9670;&nbsp;</a></span>outputIntermediates()</h2>
+<a id="ae54329544c5b0170e9dac46c29ff05cc" name="ae54329544c5b0170e9dac46c29ff05cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae54329544c5b0170e9dac46c29ff05cc">&#9670;&nbsp;</a></span>outputIntermediates()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::tuple&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; freetensor::outputIntermediates </td>
+          <td class="memname">std::tuple&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; freetensor::outputIntermediates </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
           <td class="paramname"><em>op</em>, </td>
@@ -13799,7 +13878,19 @@ template&lt;std::ranges::range Container&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>intermediates</em>&#160;</td>
+          <td class="paramname"><em>intermediates</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8f">OutputIntermediatesStage</a>&#160;</td>
+          <td class="paramname"><em>stage</em> = <code><a class="el" href="namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8fa67d2f6740a8eaebf4d5c6f79be8da481">OutputIntermediatesStage::Forward</a></code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varSuffix</em> = <code>&quot;.tape&quot;</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -13808,8 +13899,8 @@ template&lt;std::ranges::range Container&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p >Save some specified intermediate (MemType::Cache) variables as outputs in a program</p>
-<p >Old intermediate variables are still preserved, but may be removed using a <code>inline</code> schedule. Rationale: one intermediate (old) element maps to multiple output (new) elements, so it is hard to determine which element to load from, if directly loading from the output variable</p>
+<p >Save all needed versions of some specified intermediate (<a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cbaab0cf104f39708eabd07b8cb67e149ba">AccessType::Cache</a>) variables in a program in larger tensors.</p>
+<p >Old intermediate variables are still preserved, but may be removed using lowering passes or a <code>inline</code> schedule. Rationale: one intermediate (old) element maps to multiple output (new) elements, so it is hard to determine which element to load from, if directly loading from the output variable</p>
 <p >We save the variables both after where it is stored, AND before where it is loaded.</p>
 <p >Saving before loading is necessary because there might be random accesses, e.g.,</p>
 <div class="fragment"><div class="line">a[x] = 1</div>
@@ -13826,8 +13917,8 @@ template&lt;std::ranges::range Container&gt; </div>
 <div class="line">a.tape[1, z] = a[z]</div>
 <div class="line">... = a[z]</div>
 </div><!-- fragment --><p >so that even <code>z != y</code>, we can get the correct Version 1 <code>a[z]</code> in <code>a.tape[1, z]</code>.</p>
-<p >Saving after storing is also necessary because the gradient of y = f(x) may be a function of y, instead of a function of x.</p>
-<p >@params op : The program @params intermediates : VarDef IDs of the intermediate variables </p><dl class="section return"><dt>Returns</dt><dd>: ( The transformed program Mapping from VarDef IDs of intermediate variables to output names Versions of each memory accesses, Total version counts of each VarDef nodes ) </dd></dl>
+<p >Saving after storing is also necessary because the gradient of y = f(x) may better be a function of y, instead of a function of x.</p>
+<p >@params op : The program @params intermediates : VarDef IDs of the intermediate variables @params stage : If transforming the forward pass to save all versions of the intermediates as <code><a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba29c2c02a361c9d7028472e5d92cd4a54">AccessType::Output</a></code> variables (i.e. tapes), set this to <code>Forward</code>. If transforming the backward pass to save all versions of the intermediates but still keeping them as <code><a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cbaab0cf104f39708eabd07b8cb67e149ba">AccessType::Cache</a></code> variables, set this to <code>Backward</code> @params varSuffix : Name suffix to append to the new versioning tensors </p><dl class="section return"><dt>Returns</dt><dd>: ( The transformed program, Mapping from VarDef IDs of intermediate variables to the name of the new saving tensors, Versions of each memory accesses, Total version counts of each VarDef nodes, Set of all newly inserted statements ) </dd></dl>
 
 </div>
 </div>

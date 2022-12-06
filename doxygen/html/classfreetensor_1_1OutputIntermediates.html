@@ -100,10 +100,12 @@ Collaboration diagram for freetensor::OutputIntermediates:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a7f4ea5b8bf44cebfcbb551dcfcd1f945"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1OutputIntermediates.html#a7f4ea5b8bf44cebfcbb551dcfcd1f945">OutputIntermediates</a> (const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;versions, const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;totLens)</td></tr>
-<tr class="separator:a7f4ea5b8bf44cebfcbb551dcfcd1f945"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a37c31fcf5a2df36e0eeeca14328d45c5"><td class="memItemLeft" align="right" valign="top">const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1OutputIntermediates.html#a37c31fcf5a2df36e0eeeca14328d45c5">tapeNames</a> () const</td></tr>
-<tr class="separator:a37c31fcf5a2df36e0eeeca14328d45c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6139793832380ccd110d75f4070226b6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1OutputIntermediates.html#a6139793832380ccd110d75f4070226b6">OutputIntermediates</a> (const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;versions, const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;totLens, <a class="el" href="namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8f">OutputIntermediatesStage</a> stage, const std::string &amp;varSuffix)</td></tr>
+<tr class="separator:a6139793832380ccd110d75f4070226b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9bfccfdab3c2a7494e75d7ffb7530990"><td class="memItemLeft" align="right" valign="top">const auto &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1OutputIntermediates.html#a9bfccfdab3c2a7494e75d7ffb7530990">savedNames</a> () const</td></tr>
+<tr class="separator:a9bfccfdab3c2a7494e75d7ffb7530990"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aced6557228942e089f097eb7d3386def"><td class="memItemLeft" align="right" valign="top">const auto &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1OutputIntermediates.html#aced6557228942e089f097eb7d3386def">insertedStmts</a> () const</td></tr>
+<tr class="separator:aced6557228942e089f097eb7d3386def"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1SymbolTable"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1SymbolTable')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1SymbolTable.html">freetensor::SymbolTable&lt; Mutator &gt;</a></td></tr>
 <tr class="memitem:a21f40bf443a4d90af7bbdfe11fae0c3e inherit pub_methods_classfreetensor_1_1SymbolTable"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SymbolTable.html#a21f40bf443a4d90af7bbdfe11fae0c3e">SymbolTable</a> (T &amp;&amp;...args)</td></tr>
 <tr class="separator:a21f40bf443a4d90af7bbdfe11fae0c3e inherit pub_methods_classfreetensor_1_1SymbolTable"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -289,8 +291,8 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:aef5cb3c76c36da35abf1a2ea364684a0 inherit pub_types_classfreetensor_1_1Mutator"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a7f4ea5b8bf44cebfcbb551dcfcd1f945" name="a7f4ea5b8bf44cebfcbb551dcfcd1f945"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7f4ea5b8bf44cebfcbb551dcfcd1f945">&#9670;&nbsp;</a></span>OutputIntermediates()</h2>
+<a id="a6139793832380ccd110d75f4070226b6" name="a6139793832380ccd110d75f4070226b6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6139793832380ccd110d75f4070226b6">&#9670;&nbsp;</a></span>OutputIntermediates()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -308,7 +310,19 @@ Additional Inherited Members</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>totLens</em>&#160;</td>
+          <td class="paramname"><em>totLens</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8f">OutputIntermediatesStage</a>&#160;</td>
+          <td class="paramname"><em>stage</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varSuffix</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -326,8 +340,8 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a37c31fcf5a2df36e0eeeca14328d45c5" name="a37c31fcf5a2df36e0eeeca14328d45c5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a37c31fcf5a2df36e0eeeca14328d45c5">&#9670;&nbsp;</a></span>tapeNames()</h2>
+<a id="aced6557228942e089f097eb7d3386def" name="aced6557228942e089f097eb7d3386def"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aced6557228942e089f097eb7d3386def">&#9670;&nbsp;</a></span>insertedStmts()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -336,7 +350,32 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt; &amp; freetensor::OutputIntermediates::tapeNames </td>
+          <td class="memname">const auto &amp; freetensor::OutputIntermediates::insertedStmts </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a9bfccfdab3c2a7494e75d7ffb7530990" name="a9bfccfdab3c2a7494e75d7ffb7530990"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9bfccfdab3c2a7494e75d7ffb7530990">&#9670;&nbsp;</a></span>savedNames()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const auto &amp; freetensor::OutputIntermediates::savedNames </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>

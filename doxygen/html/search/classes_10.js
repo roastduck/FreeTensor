@@ -58,11 +58,12 @@ var searchData=
   ['subtreelist_3c_20freetensor_3a_3areductionitem_20_3e_55',['SubTreeList&lt; freetensor::ReductionItem &gt;',['../classfreetensor_1_1SubTreeList.html',1,'freetensor']]],
   ['subtreelist_3c_20freetensor_3a_3astmtnode_20_3e_56',['SubTreeList&lt; freetensor::StmtNode &gt;',['../classfreetensor_1_1SubTreeList.html',1,'freetensor']]],
   ['swap_57',['Swap',['../classfreetensor_1_1Swap.html',1,'freetensor']]],
-  ['symboltable_58',['SymbolTable',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
-  ['symboltable_3c_20constfold_20_3e_59',['SymbolTable&lt; ConstFold &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
-  ['symboltable_3c_20mutator_20_3e_60',['SymbolTable&lt; Mutator &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
-  ['symboltable_3c_20trackstmt_3c_20visitor_20_3e_20_3e_61',['SymbolTable&lt; TrackStmt&lt; Visitor &gt; &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
-  ['symboltable_3c_20visitor_20_3e_62',['SymbolTable&lt; Visitor &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
-  ['symboltabledata_63',['SymbolTableData',['../classfreetensor_1_1SymbolTableData.html',1,'freetensor']]],
-  ['symboltableinterface_64',['SymbolTableInterface',['../classfreetensor_1_1SymbolTableInterface.html',1,'freetensor']]]
+  ['symbolnotfound_58',['SymbolNotFound',['../classfreetensor_1_1SymbolNotFound.html',1,'freetensor']]],
+  ['symboltable_59',['SymbolTable',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
+  ['symboltable_3c_20constfold_20_3e_60',['SymbolTable&lt; ConstFold &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
+  ['symboltable_3c_20mutator_20_3e_61',['SymbolTable&lt; Mutator &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
+  ['symboltable_3c_20trackstmt_3c_20visitor_20_3e_20_3e_62',['SymbolTable&lt; TrackStmt&lt; Visitor &gt; &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
+  ['symboltable_3c_20visitor_20_3e_63',['SymbolTable&lt; Visitor &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
+  ['symboltabledata_64',['SymbolTableData',['../classfreetensor_1_1SymbolTableData.html',1,'freetensor']]],
+  ['symboltableinterface_65',['SymbolTableInterface',['../classfreetensor_1_1SymbolTableInterface.html',1,'freetensor']]]
 ];
