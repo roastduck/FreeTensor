@@ -1,6 +1,7 @@
 #include <analyze/all_uses.h>
 #include <analyze/find_stmt.h>
 #include <container_utils.h>
+#include <pass/rename_var.h>
 #include <schedule/hoist_selected_var.h>
 
 namespace freetensor {
@@ -42,27 +43,35 @@ Stmt HoistSelectedVar::visit(const If &op) {
     if (toHoist_.count(op->thenCase_->id())) {
         ASSERT(op->thenCase_->nodeType() == ASTNodeType::VarDef);
         auto def = op->thenCase_.as<VarDefNode>();
+
+        Stmt body = def->body_;
         auto name = def->name_;
         if (op->elseCase_.isValid() &&
             allUses(op->elseCase_).count(def->name_)) {
             name = getNewName(def->name_, uni(this->names(), allNames(op)));
+            body = renameVar(body, def->name_, name);
         }
+
         // recurse after making node, to maintain symbol table
         auto ret = makeVarDef(name, def->buffer_, def->viewOf_,
-                              makeIf(op->cond_, def->body_, op->elseCase_,
+                              makeIf(op->cond_, std::move(body), op->elseCase_,
                                      op->metadata(), op->id()),
                               def->pinned_, def->metadata(), def->id());
         return (*this)(ret);
     } else if (op->elseCase_.isValid() && toHoist_.count(op->elseCase_->id())) {
         ASSERT(op->elseCase_->nodeType() == ASTNodeType::VarDef);
         auto def = op->elseCase_.as<VarDefNode>();
+
+        Stmt body = def->body_;
         auto name = def->name_;
         if (allUses(op->thenCase_).count(def->name_)) {
             name = getNewName(def->name_, uni(this->names(), allNames(op)));
+            body = renameVar(body, def->name_, name);
         }
+
         // recurse after making node, to maintain symbol table
         auto ret = makeVarDef(name, def->buffer_, def->viewOf_,
-                              makeIf(op->cond_, op->thenCase_, def->body_,
+                              makeIf(op->cond_, op->thenCase_, std::move(body),
                                      op->metadata(), op->id()),
                               def->pinned_, def->metadata(), def->id());
         return (*this)(ret);
@@ -120,18 +129,20 @@ Stmt HoistSelectedVar::visit(const StmtSeq &op) {
                 }
             }
 
+            Stmt body = def->body_;
             auto name = def->name_;
             for (auto &&[j, other] : views::enumerate(op->stmts_)) {
                 if (j != i && allUses(other).count(def->name_)) {
                     name = getNewName(def->name_,
                                       uni(this->names(), allNames(op)));
+                    body = renameVar(body, def->name_, name);
                     break;
                 }
             }
 
             // recurse after making node, to maintain symbol table
             std::vector<Stmt> stmts = op->stmts_;
-            stmts[i] = def->body_;
+            stmts[i] = std::move(body);
             auto ret = makeVarDef(
                 name, def->buffer_, def->viewOf_,
                 makeStmtSeq(std::move(stmts), op->metadata(), op->id()),

@@ -30,6 +30,7 @@ class AllUses : public Visitor {
     const std::unordered_set<std::string> &uses() const { return uses_; }
 
   protected:
+    // TODO: Do we need to check viewOf, reduction, Alloc or Free?
     void visit(const Load &op) override;
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;

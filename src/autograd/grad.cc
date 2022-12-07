@@ -3,6 +3,7 @@
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
+#include <autograd/dedup_tape_names.h>
 #include <autograd/grad.h>
 #include <autograd/output_intermediates.h>
 #include <container_utils.h>
@@ -597,6 +598,11 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     // gradients, but reduce add does not
     op = undoMakeReduction(op); // Because we need to record loadMap
     op = makeReduction(op, {ReduceOp::Add}, true);
+
+    // Since we are outputing all tapes, and output variables can't have same
+    // names, we need to deduplicate the names of variables that needs to be
+    // taped
+    op = dedupTapeNames(op, tapes);
 
     // Save all versions of intermediates variables. If the variables are set to
     // be in tapes, save it in an output tensor globally in the forward pass.
