@@ -20,8 +20,6 @@ class MergeFor : public Mutator {
     bool insideOuter_ = false, insideInner_ = false;
     bool visitedInner_ = false;
 
-    std::vector<VarDef> intermediateDefs_; // from inner to outer
-
   public:
     MergeFor(const Stmt &root, const For oldOuter, const For &oldInner)
         : root_(root), oldOuter_(oldOuter), oldInner_(oldInner),
