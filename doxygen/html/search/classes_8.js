@@ -19,6 +19,7 @@ var searchData=
   ['hashcomparator_16',['HashComparator',['../classfreetensor_1_1HashComparator.html',1,'freetensor']]],
   ['hasher_17',['Hasher',['../classfreetensor_1_1Hasher.html',1,'freetensor']]],
   ['hoistreturnvars_18',['HoistReturnVars',['../classfreetensor_1_1HoistReturnVars.html',1,'freetensor']]],
-  ['hoistvar_19',['HoistVar',['../classfreetensor_1_1HoistVar.html',1,'freetensor']]],
-  ['hoistvaroverstmtseq_20',['HoistVarOverStmtSeq',['../classfreetensor_1_1HoistVarOverStmtSeq.html',1,'freetensor']]]
+  ['hoistselectedvar_19',['HoistSelectedVar',['../classfreetensor_1_1HoistSelectedVar.html',1,'freetensor']]],
+  ['hoistvar_20',['HoistVar',['../classfreetensor_1_1HoistVar.html',1,'freetensor']]],
+  ['hoistvaroverstmtseq_21',['HoistVarOverStmtSeq',['../classfreetensor_1_1HoistVarOverStmtSeq.html',1,'freetensor']]]
 ];

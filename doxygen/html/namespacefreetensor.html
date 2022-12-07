@@ -363,6 +363,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistReturnVars.html">HoistReturnVars</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistSelectedVar.html">HoistSelectedVar</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVar.html">HoistVar</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html">HoistVarOverStmtSeq</a></td></tr>
@@ -2132,6 +2134,11 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:a818863b387986d5139ff122d5437d7a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a929a182f386d992a7487a797475a75c8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a929a182f386d992a7487a797475a75c8">shrinkSingleVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;varDefId)</td></tr>
 <tr class="separator:a929a182f386d992a7487a797475a75c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader"></div></td></tr>
+<tr class="memitem:a41ae05b32fc68791a6fc2db4c52e8343"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a41ae05b32fc68791a6fc2db4c52e8343">hoistSelectedVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::string &amp;selector)</td></tr>
+<tr class="separator:a41ae05b32fc68791a6fc2db4c52e8343"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b3087c55c70d92b6b9e7c452d1db16f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6b3087c55c70d92b6b9e7c452d1db16f">hoistSelectedVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Selector.html">Selector</a> &gt; &amp;selector)</td></tr>
+<tr class="separator:a6b3087c55c70d92b6b9e7c452d1db16f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
@@ -9806,6 +9813,77 @@ template&lt;class T , class Hash , class KeyEqual &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6b3087c55c70d92b6b9e7c452d1db16f" name="a6b3087c55c70d92b6b9e7c452d1db16f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b3087c55c70d92b6b9e7c452d1db16f">&#9670;&nbsp;</a></span>hoistSelectedVar() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::hoistSelectedVar </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Selector.html">Selector</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>selector</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a41ae05b32fc68791a6fc2db4c52e8343" name="a41ae05b32fc68791a6fc2db4c52e8343"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41ae05b32fc68791a6fc2db4c52e8343">&#9670;&nbsp;</a></span>hoistSelectedVar() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::hoistSelectedVar </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>selector</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Hoist all selected VarDef nodes untill they can no longer be selected by the selector</p>
+<p >You only need to describe an area in the selector. No need to limit the node type to be VarDef</p>
+<p >Algorithm: Each time we hoist all selected nodes over its direct parent (so relative position of each VarDef nodes will be kept intact). Repeat until convergance</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">selector</td><td>: Hoist all VarDef nodes in this area </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classfreetensor_1_1InvalidSchedule.html">InvalidSchedule</a></td><td>if the hoisting is impossible </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
