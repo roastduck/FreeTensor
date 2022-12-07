@@ -130,6 +130,7 @@ std::pair<Stmt, ID> merge(const Stmt &_ast, const ID &loop1, const ID &loop2) {
     auto &&curOrder = checker.order();
     auto outer = curOrder[0], inner = curOrder[1];
 
+    // Hoist VarDef nodes between `outer` and `inner` to out of `outer`
     ast = hoistSelectedVar(ast, "<<-#" + toString(outer->id()) + "&->>#" +
                                     toString(inner->id()));
 
