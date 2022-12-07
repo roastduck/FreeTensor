@@ -80,7 +80,8 @@ Inheritance diagram for freetensor::HoistVarOverStmtSeq:</div>
 <div class="dyncontent">
 <div class="center"><img src="classfreetensor_1_1HoistVarOverStmtSeq__inherit__graph.png" border="0" usemap="#afreetensor_1_1HoistVarOverStmtSeq_inherit__map" alt="Inheritance graph"/></div>
 <map name="afreetensor_1_1HoistVarOverStmtSeq_inherit__map" id="afreetensor_1_1HoistVarOverStmtSeq_inherit__map">
-<area shape="rect" title=" " alt="" coords="5,80,188,121"/>
+<area shape="rect" title=" " alt="" coords="5,155,188,196"/>
+<area shape="rect" href="classfreetensor_1_1RenameVar.html" title=" " alt="" coords="11,80,183,107"/>
 <area shape="rect" href="classfreetensor_1_1Mutator.html" title=" " alt="" coords="23,5,171,32"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
@@ -89,8 +90,12 @@ Collaboration diagram for freetensor::HoistVarOverStmtSeq:</div>
 <div class="dyncontent">
 <div class="center"><img src="classfreetensor_1_1HoistVarOverStmtSeq__coll__graph.png" border="0" usemap="#afreetensor_1_1HoistVarOverStmtSeq_coll__map" alt="Collaboration graph"/></div>
 <map name="afreetensor_1_1HoistVarOverStmtSeq_coll__map" id="afreetensor_1_1HoistVarOverStmtSeq_coll__map">
-<area shape="rect" title=" " alt="" coords="5,80,188,121"/>
-<area shape="rect" href="classfreetensor_1_1Mutator.html" title=" " alt="" coords="23,5,171,32"/>
+<area shape="rect" title=" " alt="" coords="9,395,192,436"/>
+<area shape="rect" href="classfreetensor_1_1RenameVar.html" title=" " alt="" coords="15,319,187,345"/>
+<area shape="rect" href="classfreetensor_1_1Mutator.html" title=" " alt="" coords="5,215,153,241"/>
+<area shape="rect" title=" " alt="" coords="178,200,330,256"/>
+<area shape="rect" title=" " alt="" coords="211,96,297,123"/>
+<area shape="rect" title=" " alt="" coords="185,5,323,47"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -100,6 +105,11 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ac9a952597067498d0a3f9989906d985a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae894dd071ff43d4795ecac9c94c2a729"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#ae894dd071ff43d4795ecac9c94c2a729">isFixPoint</a> () const</td></tr>
 <tr class="separator:ae894dd071ff43d4795ecac9c94c2a729"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_classfreetensor_1_1RenameVar"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1RenameVar')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1RenameVar.html">freetensor::RenameVar</a></td></tr>
+<tr class="memitem:a3adac3c3060502624ef688ce747c4307 inherit pub_methods_classfreetensor_1_1RenameVar"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenameVar.html#a3adac3c3060502624ef688ce747c4307">RenameVar</a> ()</td></tr>
+<tr class="separator:a3adac3c3060502624ef688ce747c4307 inherit pub_methods_classfreetensor_1_1RenameVar"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13e9a97819116beeb1d1d2d7ddd18c56 inherit pub_methods_classfreetensor_1_1RenameVar"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenameVar.html#a13e9a97819116beeb1d1d2d7ddd18c56">RenameVar</a> (const std::unordered_map&lt; std::string, std::string &gt; &amp;rename)</td></tr>
+<tr class="separator:a13e9a97819116beeb1d1d2d7ddd18c56 inherit pub_methods_classfreetensor_1_1RenameVar"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1Mutator"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1Mutator')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1Mutator.html">freetensor::Mutator</a></td></tr>
 <tr class="memitem:adcaee6847cdd522223786ddd9eaf2ec4 inherit pub_methods_classfreetensor_1_1Mutator"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Mutator.html#adcaee6847cdd522223786ddd9eaf2ec4">~Mutator</a> ()</td></tr>
 <tr class="separator:adcaee6847cdd522223786ddd9eaf2ec4 inherit pub_methods_classfreetensor_1_1Mutator"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -110,16 +120,36 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:ab4c8aa1624a21a6a5f1ed3845f6f549e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#ab4c8aa1624a21a6a5f1ed3845f6f549e">visit</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op) override</td></tr>
-<tr class="separator:ab4c8aa1624a21a6a5f1ed3845f6f549e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a25ba21822c938d56f6f45ce49f0532af"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#a25ba21822c938d56f6f45ce49f0532af">visit</a> (const <a class="el" href="namespacefreetensor.html#a3d4f48b01603fa2e1e2733b8bd18f29b">Load</a> &amp;op) override</td></tr>
-<tr class="separator:a25ba21822c938d56f6f45ce49f0532af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad24ac90f0124e70ed853b8cf57aa9784"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#ad24ac90f0124e70ed853b8cf57aa9784">visit</a> (const <a class="el" href="namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7">Store</a> &amp;op) override</td></tr>
-<tr class="separator:ad24ac90f0124e70ed853b8cf57aa9784"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4574e7dd64f3051eeb1707ae384e89d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#ae4574e7dd64f3051eeb1707ae384e89d">visit</a> (const <a class="el" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op) override</td></tr>
-<tr class="separator:ae4574e7dd64f3051eeb1707ae384e89d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3abaa4daf02b56e6d31d19c2c3b35d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#ad3abaa4daf02b56e6d31d19c2c3b35d4">visit</a> (const <a class="el" href="namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96">StmtSeq</a> &amp;op) override</td></tr>
 <tr class="separator:ad3abaa4daf02b56e6d31d19c2c3b35d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2107b90a55c7ec71d9fadcd9ea7f67c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#a2107b90a55c7ec71d9fadcd9ea7f67c0">visit</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op) override</td></tr>
+<tr class="separator:a2107b90a55c7ec71d9fadcd9ea7f67c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a799f4ce67bdd3056f4efc6ae03a8f60f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#a799f4ce67bdd3056f4efc6ae03a8f60f">visit</a> (const <a class="el" href="namespacefreetensor.html#a3d4f48b01603fa2e1e2733b8bd18f29b">Load</a> &amp;op) override</td></tr>
+<tr class="separator:a799f4ce67bdd3056f4efc6ae03a8f60f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:accf75b0d01354304f5351a1a77ceae49"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#accf75b0d01354304f5351a1a77ceae49">visit</a> (const <a class="el" href="namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7">Store</a> &amp;op) override</td></tr>
+<tr class="separator:accf75b0d01354304f5351a1a77ceae49"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1823898749715c9adf147bbe42cb3b9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#ae1823898749715c9adf147bbe42cb3b9">visit</a> (const <a class="el" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op) override</td></tr>
+<tr class="separator:ae1823898749715c9adf147bbe42cb3b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae22829efe71852085f253b6b89e8f486"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#ae22829efe71852085f253b6b89e8f486">visit</a> (const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) override</td></tr>
+<tr class="separator:ae22829efe71852085f253b6b89e8f486"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a10fab8fd05c52594d678683782161e8b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#a10fab8fd05c52594d678683782161e8b">visit</a> (const <a class="el" href="namespacefreetensor.html#ae2d9bceb291ddaf1ede4f667608bae3f">Alloc</a> &amp;op) override</td></tr>
+<tr class="separator:a10fab8fd05c52594d678683782161e8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1af343a6657de878cb002d13067878e2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1HoistVarOverStmtSeq.html#a1af343a6657de878cb002d13067878e2">visit</a> (const <a class="el" href="namespacefreetensor.html#a0a2d7af969695e7c216587d7431d921b">Free</a> &amp;op) override</td></tr>
+<tr class="separator:a1af343a6657de878cb002d13067878e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2107b90a55c7ec71d9fadcd9ea7f67c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenameVar.html#a2107b90a55c7ec71d9fadcd9ea7f67c0">visit</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op) override</td></tr>
+<tr class="separator:a2107b90a55c7ec71d9fadcd9ea7f67c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a799f4ce67bdd3056f4efc6ae03a8f60f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenameVar.html#a799f4ce67bdd3056f4efc6ae03a8f60f">visit</a> (const <a class="el" href="namespacefreetensor.html#a3d4f48b01603fa2e1e2733b8bd18f29b">Load</a> &amp;op) override</td></tr>
+<tr class="separator:a799f4ce67bdd3056f4efc6ae03a8f60f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:accf75b0d01354304f5351a1a77ceae49"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenameVar.html#accf75b0d01354304f5351a1a77ceae49">visit</a> (const <a class="el" href="namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7">Store</a> &amp;op) override</td></tr>
+<tr class="separator:accf75b0d01354304f5351a1a77ceae49"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1823898749715c9adf147bbe42cb3b9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenameVar.html#ae1823898749715c9adf147bbe42cb3b9">visit</a> (const <a class="el" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op) override</td></tr>
+<tr class="separator:ae1823898749715c9adf147bbe42cb3b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae22829efe71852085f253b6b89e8f486"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenameVar.html#ae22829efe71852085f253b6b89e8f486">visit</a> (const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) override</td></tr>
+<tr class="separator:ae22829efe71852085f253b6b89e8f486"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a10fab8fd05c52594d678683782161e8b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenameVar.html#a10fab8fd05c52594d678683782161e8b">visit</a> (const <a class="el" href="namespacefreetensor.html#ae2d9bceb291ddaf1ede4f667608bae3f">Alloc</a> &amp;op) override</td></tr>
+<tr class="separator:a10fab8fd05c52594d678683782161e8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1af343a6657de878cb002d13067878e2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenameVar.html#a1af343a6657de878cb002d13067878e2">visit</a> (const <a class="el" href="namespacefreetensor.html#a0a2d7af969695e7c216587d7431d921b">Free</a> &amp;op) override</td></tr>
+<tr class="separator:a1af343a6657de878cb002d13067878e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classfreetensor_1_1Mutator"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classfreetensor_1_1Mutator')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classfreetensor_1_1Mutator.html">freetensor::Mutator</a></td></tr>
 <tr class="memitem:a7d3b751ab7d0aa59ad3ef269ea314135 inherit pro_methods_classfreetensor_1_1Mutator"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Mutator.html#a7d3b751ab7d0aa59ad3ef269ea314135">visitExpr</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;op)</td></tr>
 <tr class="separator:a7d3b751ab7d0aa59ad3ef269ea314135 inherit pro_methods_classfreetensor_1_1Mutator"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -233,6 +263,9 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:af1a3d979a56bd49d9a983019df6f8c18 inherit pub_types_classfreetensor_1_1Mutator"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef5cb3c76c36da35abf1a2ea364684a0 inherit pub_types_classfreetensor_1_1Mutator"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Mutator.html#aef5cb3c76c36da35abf1a2ea364684a0">StmtRetType</a></td></tr>
 <tr class="separator:aef5cb3c76c36da35abf1a2ea364684a0 inherit pub_types_classfreetensor_1_1Mutator"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_attribs_classfreetensor_1_1RenameVar"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classfreetensor_1_1RenameVar')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classfreetensor_1_1RenameVar.html">freetensor::RenameVar</a></td></tr>
+<tr class="memitem:a7482a41a0b1ddda02fb2040f3af64e83 inherit pro_attribs_classfreetensor_1_1RenameVar"><td class="memItemLeft" align="right" valign="top">std::unordered_map&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenameVar.html#a7482a41a0b1ddda02fb2040f3af64e83">rename_</a></td></tr>
+<tr class="separator:a7482a41a0b1ddda02fb2040f3af64e83 inherit pro_attribs_classfreetensor_1_1RenameVar"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ac9a952597067498d0a3f9989906d985a" name="ac9a952597067498d0a3f9989906d985a"></a>
@@ -287,8 +320,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a25ba21822c938d56f6f45ce49f0532af" name="a25ba21822c938d56f6f45ce49f0532af"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a25ba21822c938d56f6f45ce49f0532af">&#9670;&nbsp;</a></span>visit() <span class="overload">[1/5]</span></h2>
+<a id="a10fab8fd05c52594d678683782161e8b" name="a10fab8fd05c52594d678683782161e8b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a10fab8fd05c52594d678683782161e8b">&#9670;&nbsp;</a></span>visit() <span class="overload">[1/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -297,7 +330,91 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> freetensor::HoistVarOverStmtSeq::visit </td>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::RenameVar::visit </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#ae2d9bceb291ddaf1ede4f667608bae3f">Alloc</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1RenameVar.html#a10fab8fd05c52594d678683782161e8b">freetensor::RenameVar</a>.</p>
+
+</div>
+</div>
+<a id="ae22829efe71852085f253b6b89e8f486" name="ae22829efe71852085f253b6b89e8f486"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae22829efe71852085f253b6b89e8f486">&#9670;&nbsp;</a></span>visit() <span class="overload">[2/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::RenameVar::visit </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1RenameVar.html#ae22829efe71852085f253b6b89e8f486">freetensor::RenameVar</a>.</p>
+
+</div>
+</div>
+<a id="a1af343a6657de878cb002d13067878e2" name="a1af343a6657de878cb002d13067878e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1af343a6657de878cb002d13067878e2">&#9670;&nbsp;</a></span>visit() <span class="overload">[3/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::RenameVar::visit </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a0a2d7af969695e7c216587d7431d921b">Free</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1RenameVar.html#a1af343a6657de878cb002d13067878e2">freetensor::RenameVar</a>.</p>
+
+</div>
+</div>
+<a id="a799f4ce67bdd3056f4efc6ae03a8f60f" name="a799f4ce67bdd3056f4efc6ae03a8f60f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a799f4ce67bdd3056f4efc6ae03a8f60f">&#9670;&nbsp;</a></span>visit() <span class="overload">[4/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> freetensor::RenameVar::visit </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a3d4f48b01603fa2e1e2733b8bd18f29b">Load</a> &amp;&#160;</td>
           <td class="paramname"><em>op</em></td><td>)</td>
@@ -311,12 +428,12 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Reimplemented from <a class="el" href="classfreetensor_1_1Mutator.html#ab672125ad2670dc9f4e50238965af43e">freetensor::Mutator</a>.</p>
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1RenameVar.html#a799f4ce67bdd3056f4efc6ae03a8f60f">freetensor::RenameVar</a>.</p>
 
 </div>
 </div>
-<a id="ae4574e7dd64f3051eeb1707ae384e89d" name="ae4574e7dd64f3051eeb1707ae384e89d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae4574e7dd64f3051eeb1707ae384e89d">&#9670;&nbsp;</a></span>visit() <span class="overload">[2/5]</span></h2>
+<a id="ae1823898749715c9adf147bbe42cb3b9" name="ae1823898749715c9adf147bbe42cb3b9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1823898749715c9adf147bbe42cb3b9">&#9670;&nbsp;</a></span>visit() <span class="overload">[5/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -325,7 +442,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::HoistVarOverStmtSeq::visit </td>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::RenameVar::visit </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;&#160;</td>
           <td class="paramname"><em>op</em></td><td>)</td>
@@ -339,12 +456,12 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Reimplemented from <a class="el" href="classfreetensor_1_1Mutator.html#a54177114c7a7bfbf62e045985aec8610">freetensor::Mutator</a>.</p>
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1RenameVar.html#ae1823898749715c9adf147bbe42cb3b9">freetensor::RenameVar</a>.</p>
 
 </div>
 </div>
 <a id="ad3abaa4daf02b56e6d31d19c2c3b35d4" name="ad3abaa4daf02b56e6d31d19c2c3b35d4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad3abaa4daf02b56e6d31d19c2c3b35d4">&#9670;&nbsp;</a></span>visit() <span class="overload">[3/5]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ad3abaa4daf02b56e6d31d19c2c3b35d4">&#9670;&nbsp;</a></span>visit() <span class="overload">[6/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -371,8 +488,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="ad24ac90f0124e70ed853b8cf57aa9784" name="ad24ac90f0124e70ed853b8cf57aa9784"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad24ac90f0124e70ed853b8cf57aa9784">&#9670;&nbsp;</a></span>visit() <span class="overload">[4/5]</span></h2>
+<a id="accf75b0d01354304f5351a1a77ceae49" name="accf75b0d01354304f5351a1a77ceae49"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#accf75b0d01354304f5351a1a77ceae49">&#9670;&nbsp;</a></span>visit() <span class="overload">[7/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -381,7 +498,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::HoistVarOverStmtSeq::visit </td>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::RenameVar::visit </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7">Store</a> &amp;&#160;</td>
           <td class="paramname"><em>op</em></td><td>)</td>
@@ -395,12 +512,12 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Reimplemented from <a class="el" href="classfreetensor_1_1Mutator.html#a1e1a5566099c68697cb944620c3d37c2">freetensor::Mutator</a>.</p>
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1RenameVar.html#accf75b0d01354304f5351a1a77ceae49">freetensor::RenameVar</a>.</p>
 
 </div>
 </div>
-<a id="ab4c8aa1624a21a6a5f1ed3845f6f549e" name="ab4c8aa1624a21a6a5f1ed3845f6f549e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab4c8aa1624a21a6a5f1ed3845f6f549e">&#9670;&nbsp;</a></span>visit() <span class="overload">[5/5]</span></h2>
+<a id="a2107b90a55c7ec71d9fadcd9ea7f67c0" name="a2107b90a55c7ec71d9fadcd9ea7f67c0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2107b90a55c7ec71d9fadcd9ea7f67c0">&#9670;&nbsp;</a></span>visit() <span class="overload">[8/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -409,7 +526,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::HoistVarOverStmtSeq::visit </td>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::RenameVar::visit </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;&#160;</td>
           <td class="paramname"><em>op</em></td><td>)</td>
@@ -423,7 +540,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Reimplemented from <a class="el" href="classfreetensor_1_1Mutator.html#a331e785beb83b1fa19c6fa54a7655248">freetensor::Mutator</a>.</p>
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1RenameVar.html#a2107b90a55c7ec71d9fadcd9ea7f67c0">freetensor::RenameVar</a>.</p>
 
 </div>
 </div>

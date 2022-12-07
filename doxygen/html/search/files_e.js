@@ -17,10 +17,12 @@ var searchData=
   ['remove_5fdead_5fvar_2eh_14',['remove_dead_var.h',['../remove__dead__var_8h.html',1,'']]],
   ['remove_5fwrites_2ecc_15',['remove_writes.cc',['../remove__writes_8cc.html',1,'']]],
   ['remove_5fwrites_2eh_16',['remove_writes.h',['../remove__writes_8h.html',1,'']]],
-  ['reorder_2ecc_17',['reorder.cc',['../reorder_8cc.html',1,'']]],
-  ['reorder_2eh_18',['reorder.h',['../reorder_8h.html',1,'']]],
-  ['replace_5fiter_2eh_19',['replace_iter.h',['../replace__iter_8h.html',1,'']]],
-  ['replace_5fuses_2ecc_20',['replace_uses.cc',['../replace__uses_8cc.html',1,'']]],
-  ['replace_5fuses_2eh_21',['replace_uses.h',['../replace__uses_8h.html',1,'']]],
-  ['rule_2eh_22',['rule.h',['../rule_8h.html',1,'']]]
+  ['rename_5fvar_2ecc_17',['rename_var.cc',['../rename__var_8cc.html',1,'']]],
+  ['rename_5fvar_2eh_18',['rename_var.h',['../rename__var_8h.html',1,'']]],
+  ['reorder_2ecc_19',['reorder.cc',['../reorder_8cc.html',1,'']]],
+  ['reorder_2eh_20',['reorder.h',['../reorder_8h.html',1,'']]],
+  ['replace_5fiter_2eh_21',['replace_iter.h',['../replace__iter_8h.html',1,'']]],
+  ['replace_5fuses_2ecc_22',['replace_uses.cc',['../replace__uses_8cc.html',1,'']]],
+  ['replace_5fuses_2eh_23',['replace_uses.h',['../replace__uses_8h.html',1,'']]],
+  ['rule_2eh_24',['rule.h',['../rule_8h.html',1,'']]]
 ];

@@ -36,8 +36,9 @@ var searchData=
   ['countbandnodewidth_33',['CountBandNodeWidth',['../classfreetensor_1_1CountBandNodeWidth.html',1,'freetensor']]],
   ['countcontigaccessloops_34',['CountContigAccessLoops',['../classfreetensor_1_1CountContigAccessLoops.html',1,'freetensor']]],
   ['countheavyops_35',['CountHeavyOps',['../classfreetensor_1_1CountHeavyOps.html',1,'freetensor']]],
-  ['countscopelen_36',['CountScopeLen',['../classfreetensor_1_1CountScopeLen.html',1,'freetensor']]],
-  ['cputarget_37',['CPUTarget',['../classfreetensor_1_1CPUTarget.html',1,'freetensor']]],
-  ['cudascope_38',['CUDAScope',['../structfreetensor_1_1CUDAScope.html',1,'freetensor']]],
-  ['cudastreamscope_39',['CUDAStreamScope',['../structfreetensor_1_1CUDAStreamScope.html',1,'freetensor']]]
+  ['countnames_36',['CountNames',['../classfreetensor_1_1CountNames.html',1,'freetensor']]],
+  ['countscopelen_37',['CountScopeLen',['../classfreetensor_1_1CountScopeLen.html',1,'freetensor']]],
+  ['cputarget_38',['CPUTarget',['../classfreetensor_1_1CPUTarget.html',1,'freetensor']]],
+  ['cudascope_39',['CUDAScope',['../structfreetensor_1_1CUDAScope.html',1,'freetensor']]],
+  ['cudastreamscope_40',['CUDAStreamScope',['../structfreetensor_1_1CUDAStreamScope.html',1,'freetensor']]]
 ];

@@ -221,6 +221,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CountHeavyOps.html">CountHeavyOps</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CountNames.html">CountNames</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CountScopeLen.html">CountScopeLen</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CPUTarget.html">CPUTarget</a></td></tr>
@@ -230,6 +232,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1CUDAStreamScope.html">CUDAStreamScope</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DataTypeInfer.html">DataTypeInfer</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DedupTapeNames.html">DedupTapeNames</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1Dependence.html">Dependence</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -580,6 +584,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RemoveWrites.html">RemoveWrites</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenameIter.html">RenameIter</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenameVar.html">RenameVar</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RenewIDs.html">RenewIDs</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1274,6 +1280,8 @@ requires (std::convertible_to&lt;Srcs, <a class="el" href="namespacefreetensor.h
 <tr class="separator:afc95cd1260f6ce4dd8e56c3cb9083bc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6b1e30d421ca5808b0ac9cf02fb8f26b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Schedule.html#acf8585443368254e352dbe9e6408978a">Schedule::IDMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6b1e30d421ca5808b0ac9cf02fb8f26b">fissionLoops</a> (<a class="el" href="classfreetensor_1_1Schedule.html">Schedule</a> &amp;schedule, const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;loops, <a class="el" href="classfreetensor_1_1ID.html">ID</a> splitter)</td></tr>
 <tr class="separator:a6b1e30d421ca5808b0ac9cf02fb8f26b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9cbdf62c6a2cda13f872cb84afdec67"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac9cbdf62c6a2cda13f872cb84afdec67">dedupTapeNames</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;tapes)</td></tr>
+<tr class="separator:ac9cbdf62c6a2cda13f872cb84afdec67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae54329544c5b0170e9dac46c29ff05cc"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae54329544c5b0170e9dac46c29ff05cc">outputIntermediates</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;intermediates, <a class="el" href="namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8f">OutputIntermediatesStage</a> stage=<a class="el" href="namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8fa67d2f6740a8eaebf4d5c6f79be8da481">OutputIntermediatesStage::Forward</a>, const std::string &amp;varSuffix=&quot;.tape&quot;)</td></tr>
 <tr class="separator:ae54329544c5b0170e9dac46c29ff05cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c0f4e93910a9324737e15d1bd575599"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5c0f4e93910a9324737e15d1bd575599">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cb">AccessType</a> atype)</td></tr>
@@ -2129,6 +2137,11 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:a644182d8d7c73570b9b53f6ff676ecef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afda2eea3e11f8b98daf36bae5bc8e242"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afda2eea3e11f8b98daf36bae5bc8e242">toString</a> (const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op, bool pretty, bool printAllId, bool dtypeInLoad, bool hexFloat=false, bool compact=false)</td></tr>
 <tr class="separator:afda2eea3e11f8b98daf36bae5bc8e242"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader"></div></td></tr>
+<tr class="memitem:aa660083ab40fd852364e7670a4cd5bbe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa660083ab40fd852364e7670a4cd5bbe">renameVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_map&lt; std::string, std::string &gt; &amp;rename)</td></tr>
+<tr class="separator:aa660083ab40fd852364e7670a4cd5bbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7b90ef3191fb39bc49ed33440e4dd5b0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7b90ef3191fb39bc49ed33440e4dd5b0">renameVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::string &amp;oldName, const std::string &amp;newName)</td></tr>
+<tr class="separator:a7b90ef3191fb39bc49ed33440e4dd5b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:a818863b387986d5139ff122d5437d7a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a818863b387986d5139ff122d5437d7a0">shrinkVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a818863b387986d5139ff122d5437d7a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -7795,6 +7808,35 @@ template&lt;class FromMap , class ToMap &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac9cbdf62c6a2cda13f872cb84afdec67" name="ac9cbdf62c6a2cda13f872cb84afdec67"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac9cbdf62c6a2cda13f872cb84afdec67">&#9670;&nbsp;</a></span>dedupTapeNames()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::dedupTapeNames </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>tapes</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Make all VarDef nodes in <code>tapes</code> having globally unique names </p>
 
 </div>
 </div>
@@ -14769,6 +14811,86 @@ template&lt;PBMapRef T&gt; </div>
 <div class="line">  }</div>
 <div class="line">}</div>
 </div><!-- fragment --> 
+</div>
+</div>
+<a id="a7b90ef3191fb39bc49ed33440e4dd5b0" name="a7b90ef3191fb39bc49ed33440e4dd5b0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7b90ef3191fb39bc49ed33440e4dd5b0">&#9670;&nbsp;</a></span>renameVar() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::renameVar </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>oldName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>newName</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa660083ab40fd852364e7670a4cd5bbe" name="aa660083ab40fd852364e7670a4cd5bbe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa660083ab40fd852364e7670a4cd5bbe">&#9670;&nbsp;</a></span>renameVar() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::renameVar </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::unordered_map&lt; std::string, std::string &gt; &amp;&#160;</td>
+          <td class="paramname"><em>rename</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p >Rename a variable's definition and use sites</p>
+<p >This function can be applied to an AST sub-tree </p>
+
 </div>
 </div>
 <a id="ac95a1c68f35ad6583776c9c563c227d0" name="ac95a1c68f35ad6583776c9c563c227d0"></a>

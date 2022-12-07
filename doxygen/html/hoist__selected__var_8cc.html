@@ -74,62 +74,63 @@ $(function() {
 <div class="textblock"><code>#include &lt;<a class="el" href="all__uses_8h_source.html">analyze/all_uses.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="find__stmt_8h_source.html">analyze/find_stmt.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="container__utils_8h_source.html">container_utils.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="rename__var_8h_source.html">pass/rename_var.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="hoist__selected__var_8h_source.html">schedule/hoist_selected_var.h</a>&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for hoist_selected_var.cc:</div>
 <div class="dyncontent">
 <div class="center"><img src="hoist__selected__var_8cc__incl.png" border="0" usemap="#asrc_2schedule_2hoist__selected__var_8cc" alt=""/></div>
 <map name="asrc_2schedule_2hoist__selected__var_8cc" id="asrc_2schedule_2hoist__selected__var_8cc">
-<area shape="rect" title=" " alt="" coords="1077,5,1216,47"/>
-<area shape="rect" href="all__uses_8h.html" title=" " alt="" coords="1160,95,1303,121"/>
-<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="380,781,510,808"/>
-<area shape="rect" href="find__stmt_8h.html" title=" " alt="" coords="986,95,1136,121"/>
-<area shape="rect" href="hoist__selected__var_8h.html" title=" " alt="" coords="1342,169,1521,211"/>
-<area shape="rect" title=" " alt="" coords="2121,856,2236,883"/>
-<area shape="rect" href="visitor_8h.html" title=" " alt="" coords="1101,177,1176,203"/>
-<area shape="rect" href="debug_8h.html" title=" " alt="" coords="1832,557,1906,584"/>
-<area shape="rect" href="expr_8h.html" title=" " alt="" coords="1163,557,1226,584"/>
-<area shape="rect" href="func_8h.html" title=" " alt="" coords="867,259,930,285"/>
-<area shape="rect" href="stmt_8h.html" title=" " alt="" coords="1109,333,1173,360"/>
-<area shape="rect" title=" " alt="" coords="236,931,294,957"/>
-<area shape="rect" href="ast_8h.html" title=" " alt="" coords="1690,632,1744,659"/>
-<area shape="rect" href="logger_8h.html" title=" " alt="" coords="2111,632,2230,659"/>
-<area shape="rect" title=" " alt="" coords="1980,856,2046,883"/>
-<area shape="rect" title=" " alt="" coords="1666,856,1752,883"/>
-<area shape="rect" title=" " alt="" coords="2044,931,2124,957"/>
-<area shape="rect" href="data__type_8h.html" title=" " alt="" coords="898,707,997,733"/>
-<area shape="rect" href="to__string_8h.html" title=" " alt="" coords="842,781,992,808"/>
-<area shape="rect" href="id_8h.html" title=" " alt="" coords="2082,781,2128,808"/>
-<area shape="rect" href="metadata_8h.html" title=" " alt="" coords="1842,707,1939,733"/>
-<area shape="rect" href="ref_8h.html" title=" " alt="" coords="1601,781,1652,808"/>
-<area shape="rect" href="sub__tree_8h.html" title=" " alt="" coords="1473,707,1564,733"/>
-<area shape="rect" title=" " alt="" coords="761,781,817,808"/>
-<area shape="rect" href="except_8h.html" title=" " alt="" coords="1360,856,1439,883"/>
-<area shape="rect" title=" " alt="" coords="302,856,388,883"/>
-<area shape="rect" title=" " alt="" coords="412,856,478,883"/>
-<area shape="rect" title=" " alt="" coords="502,856,569,883"/>
-<area shape="rect" title=" " alt="" coords="1210,856,1285,883"/>
-<area shape="rect" title=" " alt="" coords="594,856,648,883"/>
-<area shape="rect" title=" " alt="" coords="1062,856,1186,883"/>
-<area shape="rect" title=" " alt="" coords="1463,856,1526,883"/>
-<area shape="rect" title=" " alt="" coords="672,856,820,883"/>
-<area shape="rect" title=" " alt="" coords="845,856,986,883"/>
-<area shape="rect" title=" " alt="" coords="1356,931,1443,957"/>
-<area shape="rect" title=" " alt="" coords="2458,856,2550,883"/>
-<area shape="rect" title=" " alt="" coords="2166,707,2230,733"/>
-<area shape="rect" title=" " alt="" coords="407,333,467,360"/>
-<area shape="rect" href="buffer_8h.html" title=" " alt="" coords="863,408,934,435"/>
-<area shape="rect" href="tensor_8h.html" title=" " alt="" coords="858,483,933,509"/>
-<area shape="rect" href="array_8h.html" title=" " alt="" coords="1315,408,1423,435"/>
-<area shape="rect" title=" " alt="" coords="1336,483,1402,509"/>
-<area shape="rect" href="device_8h.html" title=" " alt="" coords="1486,557,1604,584"/>
-<area shape="rect" href="for__property_8h.html" title=" " alt="" coords="1178,408,1290,435"/>
-<area shape="rect" href="reduce__op_8h.html" title=" " alt="" coords="1109,483,1210,509"/>
-<area shape="rect" href="selector_8h.html" title=" " alt="" coords="1018,259,1104,285"/>
-<area shape="rect" href="symbol__table_8h.html" title=" " alt="" coords="2019,259,2196,285"/>
-<area shape="rect" href="mutator_8h.html" title=" " alt="" coords="1418,259,1504,285"/>
-<area shape="rect" href="maybe__void_8h.html" title=" " alt="" coords="2356,333,2470,360"/>
-<area shape="rect" title=" " alt="" coords="2364,408,2432,435"/>
+<area shape="rect" title=" " alt="" coords="629,5,768,47"/>
+<area shape="rect" href="all__uses_8h.html" title=" " alt="" coords="390,95,533,121"/>
+<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="780,781,911,808"/>
+<area shape="rect" href="find__stmt_8h.html" title=" " alt="" coords="989,95,1139,121"/>
+<area shape="rect" href="rename__var_8h.html" title=" " alt="" coords="626,177,771,203"/>
+<area shape="rect" href="hoist__selected__var_8h.html" title=" " alt="" coords="805,169,984,211"/>
+<area shape="rect" title=" " alt="" coords="5,856,120,883"/>
+<area shape="rect" href="visitor_8h.html" title=" " alt="" coords="1065,177,1140,203"/>
+<area shape="rect" href="debug_8h.html" title=" " alt="" coords="984,557,1059,584"/>
+<area shape="rect" href="expr_8h.html" title=" " alt="" coords="1735,557,1798,584"/>
+<area shape="rect" href="func_8h.html" title=" " alt="" coords="1813,259,1875,285"/>
+<area shape="rect" href="stmt_8h.html" title=" " alt="" coords="1435,333,1499,360"/>
+<area shape="rect" title=" " alt="" coords="2136,931,2195,957"/>
+<area shape="rect" href="ast_8h.html" title=" " alt="" coords="1534,632,1589,659"/>
+<area shape="rect" href="logger_8h.html" title=" " alt="" coords="934,632,1053,659"/>
+<area shape="rect" title=" " alt="" coords="1888,856,1955,883"/>
+<area shape="rect" title=" " alt="" coords="1726,856,1813,883"/>
+<area shape="rect" title=" " alt="" coords="1457,931,1537,957"/>
+<area shape="rect" href="data__type_8h.html" title=" " alt="" coords="1157,707,1256,733"/>
+<area shape="rect" href="to__string_8h.html" title=" " alt="" coords="1041,781,1191,808"/>
+<area shape="rect" href="id_8h.html" title=" " alt="" coords="1574,781,1621,808"/>
+<area shape="rect" href="metadata_8h.html" title=" " alt="" coords="1686,707,1783,733"/>
+<area shape="rect" href="ref_8h.html" title=" " alt="" coords="1448,781,1499,808"/>
+<area shape="rect" href="sub__tree_8h.html" title=" " alt="" coords="2000,707,2091,733"/>
+<area shape="rect" title=" " alt="" coords="1267,781,1323,808"/>
+<area shape="rect" href="except_8h.html" title=" " alt="" coords="1419,856,1498,883"/>
+<area shape="rect" title=" " alt="" coords="1109,856,1195,883"/>
+<area shape="rect" title=" " alt="" coords="511,856,577,883"/>
+<area shape="rect" title=" " alt="" coords="601,856,668,883"/>
+<area shape="rect" title=" " alt="" coords="1320,856,1395,883"/>
+<area shape="rect" title=" " alt="" coords="693,856,747,883"/>
+<area shape="rect" title=" " alt="" coords="145,856,269,883"/>
+<area shape="rect" title=" " alt="" coords="2219,856,2282,883"/>
+<area shape="rect" title=" " alt="" coords="771,856,919,883"/>
+<area shape="rect" title=" " alt="" coords="944,856,1085,883"/>
+<area shape="rect" title=" " alt="" coords="1346,931,1433,957"/>
+<area shape="rect" title=" " alt="" coords="293,856,385,883"/>
+<area shape="rect" title=" " alt="" coords="1863,333,1923,360"/>
+<area shape="rect" href="buffer_8h.html" title=" " alt="" coords="1358,408,1429,435"/>
+<area shape="rect" href="tensor_8h.html" title=" " alt="" coords="1924,483,1999,509"/>
+<area shape="rect" href="array_8h.html" title=" " alt="" coords="2315,408,2423,435"/>
+<area shape="rect" title=" " alt="" coords="2416,483,2483,509"/>
+<area shape="rect" href="device_8h.html" title=" " alt="" coords="2161,557,2279,584"/>
+<area shape="rect" href="for__property_8h.html" title=" " alt="" coords="1721,408,1833,435"/>
+<area shape="rect" href="reduce__op_8h.html" title=" " alt="" coords="1647,483,1748,509"/>
+<area shape="rect" href="selector_8h.html" title=" " alt="" coords="973,259,1059,285"/>
+<area shape="rect" href="mutator_8h.html" title=" " alt="" coords="859,259,944,285"/>
+<area shape="rect" href="symbol__table_8h.html" title=" " alt="" coords="295,259,473,285"/>
+<area shape="rect" href="maybe__void_8h.html" title=" " alt="" coords="412,333,527,360"/>
+<area shape="rect" title=" " alt="" coords="463,408,531,435"/>
 </map>
 </div>
 </div><table class="memberdecls">
