@@ -27,15 +27,6 @@ metadataSelector returns[Ref<MetadataSelector> s]
     | RootCall {
         $s = Ref<RootCallSelector>::make();
     }
-    | Not sub=metadataSelector {
-        $s = Ref<NotMetadataSelector>::make($sub.s);
-    }
-	| s1 = metadataSelector And s2 = metadataSelector {
-        $s = Ref<BothMetadataSelector>::make($s1.s, $s2.s);
-    }
-	| s1 = metadataSelector Or s2 = metadataSelector {
-        $s = Ref<EitherMetadataSelector>::make($s1.s, $s2.s);
-    }
 	| DirectCallerArrow caller = metadataSelector {
         $s = Ref<DirectCallerSelector>::make($caller.s);
     }
@@ -53,6 +44,15 @@ metadataSelector returns[Ref<MetadataSelector> s]
     }
 	| <assoc=right> callee = metadataSelector DirectCallerArrow LeftParen middle = metadataSelector DirectCallerArrow RightParen Star caller = metadataSelector {
         $s = Ref<BothMetadataSelector>::make($callee.s, Ref<CallerSelector>::make($caller.s, $middle.s));
+    }
+    | Not sub=metadataSelector {
+        $s = Ref<NotMetadataSelector>::make($sub.s);
+    }
+	| s1 = metadataSelector And s2 = metadataSelector {
+        $s = Ref<BothMetadataSelector>::make($s1.s, $s2.s);
+    }
+	| s1 = metadataSelector Or s2 = metadataSelector {
+        $s = Ref<EitherMetadataSelector>::make($s1.s, $s2.s);
     };
 
 selector returns[Ref<Selector> s]
@@ -94,15 +94,6 @@ selector returns[Ref<Selector> s]
     }
     | LeafNode {
         $s = Ref<LeafNodeSelector>::make();
-    }
-    | Not sub=selector {
-        $s = Ref<NotSelector>::make($sub.s);
-    }
-	| s1 = selector And s2 = selector {
-        $s = Ref<BothSelector>::make($s1.s, $s2.s);
-    }
-	| s1 = selector Or s2 = selector {
-        $s = Ref<EitherSelector>::make($s1.s, $s2.s);
     }
 	| ChildArrow parent = selector {
         $s = Ref<ChildSelector>::make($parent.s);
@@ -148,4 +139,13 @@ selector returns[Ref<Selector> s]
     }
 	| <assoc=right> callee = selector DirectCallerArrow LeftParen mid = metadataSelector DirectCallerArrow RightParen Star caller = metadataSelector {
         $s = Ref<BothSelector>::make($callee.s, Ref<CallerSelector>::make($caller.s, $mid.s));
+    }
+    | Not sub=selector {
+        $s = Ref<NotSelector>::make($sub.s);
+    }
+	| s1 = selector And s2 = selector {
+        $s = Ref<BothSelector>::make($s1.s, $s2.s);
+    }
+	| s1 = selector Or s2 = selector {
+        $s = Ref<EitherSelector>::make($s1.s, $s2.s);
     };

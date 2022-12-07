@@ -2,10 +2,13 @@
 #include <unordered_map>
 
 #include <analyze/deps.h>
-#include <pass/hoist_var_over_stmt_seq.h>
+#include <container_utils.h>
+#include <pass/flatten_stmt_seq.h>
 #include <pass/sink_var.h>
 #include <schedule.h>
+#include <schedule/hoist_selected_var.h>
 #include <schedule/swap.h>
+#include <selector.h>
 
 namespace freetensor {
 
@@ -39,7 +42,13 @@ Stmt Swap::visit(const StmtSeq &_op) {
 }
 
 Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
-    auto ast = hoistVarOverStmtSeq(_ast, order);
+    auto insides = order | views::transform([](const ID &id) {
+                       return "->>#" + toString(id);
+                   });
+    auto allIn = insides | join("&");
+    auto anyIn = insides | join("|");
+    auto ast = hoistSelectedVar(_ast, "(" + anyIn + ")&!(" + allIn + ")");
+    ast = flattenStmtSeq(ast);
 
     Swap mutator(order);
     ast = mutator(ast);
