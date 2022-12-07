@@ -787,6 +787,46 @@ def test_use_tape_in_cond():
     assert std.match(backward.body)
 
 
+def test_tape_vars_with_the_same_name():
+    with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("y", (4,), "float32", "output", "cpu")]) as (x, y):
+        with ft.For("i", 0, 4) as i:
+            ft.MarkLabel("Vt1")
+            with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
+                t[...] = ft.exp(x[i])
+                y[i] = t[...] * t[...]
+        with ft.For("i", 0, 4) as i:
+            ft.MarkLabel("Vt2")
+            with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
+                t[...] = ft.exp(y[i])
+                y[i] = t[...] * t[...]
+    func = ft.Func("main", ["x", "y"], [], ft.pop_ast())
+    print(func)
+    forward, backward, _, _ = ft.grad_(func, ["x"], ["y"], ["Vt1", "Vt2"])
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+    forward = ft.lower(forward)
+    backward = ft.lower(backward)
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+
+    tape_output = list(
+        filter(lambda v: v.endswith(".tape"),
+               map(lambda ret: ret.name, forward.returns)))
+    tape_input = list(
+        filter(lambda v: v.endswith(".tape"),
+               map(lambda param: param.name, backward.params)))
+    # There should be 2 tapes in different names, and the output and input
+    # tape name should be consistent
+    assert len(tape_output) == 2
+    assert tape_output[0] != tape_output[1]
+    assert sorted(tape_output) == sorted(tape_input)
+
+
 def test_tape_mode_all():
     with ft.VarDef([("x1", (4,), "float32", "input", "cpu"),
                     ("x2", (4,), "float32", "input", "cpu"),
