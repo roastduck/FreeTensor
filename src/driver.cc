@@ -41,7 +41,7 @@ static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
         d = device;
         break;
     default:
-        throw DriverError("A I/O variable cannot have a " + toString(mtype) +
+        throw DriverError("An I/O variable cannot have a " + toString(mtype) +
                           " memory type");
     }
     switch (atype) {

@@ -1,3 +1,4 @@
+import pytest
 import freetensor as ft
 
 
@@ -1001,3 +1002,27 @@ def test_no_deps():
     s = ft.Schedule(backward)
     s.parallelize("$grad{Li}", "openmp")  # No exception here
     print(s.ast())
+
+
+def test_error_input_not_found():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(), "float32", "input", "cpu"]
+        y: ft.Var[(), "float32", "output", "cpu"]
+        y[...] = x[...] * 2
+
+    with pytest.raises(ft.InvalidAutoGrad):
+        ft.grad_(test, ["error"], ["y"], set())
+
+
+def test_error_output_not_found():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(), "float32", "input", "cpu"]
+        y: ft.Var[(), "float32", "output", "cpu"]
+        y[...] = x[...] * 2
+
+    with pytest.raises(ft.InvalidAutoGrad):
+        ft.grad_(test, ["x"], ["error"], set())
