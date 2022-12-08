@@ -9404,17 +9404,17 @@ Defaults to True</p></li>
                 <span class="n">returns</span> <span class="o">=</span> <span class="n">fwd_exe</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">(</span><span class="n">always_return_pack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="n">returns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">torch</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">)</span>
 
-                <span class="c1"># Save states for 1) all inputs, 2) all outputs, and 3) all taped</span>
-                <span class="c1"># tensors. For taped tensors, we need to make them output tensors,</span>
-                <span class="c1"># so PyTorch can recognize them. This is an officially recommanded</span>
-                <span class="c1"># trick at</span>
+                <span class="c1"># Save states for 1) all inputs and 2) all taped tensors (taped</span>
+                <span class="c1"># outputs are also taped tensors). For taped tensors, we need to</span>
+                <span class="c1"># make them output tensors, so PyTorch can recognize them. This is</span>
+                <span class="c1"># an officially recommanded trick at</span>
                 <span class="c1"># https://pytorch.org/tutorials/intermediate/custom_function_double_backward_tutorial.html#saving-intermediate-results</span>
                 <span class="c1"># So, please be aware that only the first part in `returns` are real</span>
                 <span class="c1"># return tensors</span>
                 <span class="n">saved_tensors</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>  <span class="c1"># 1)</span>
                     <span class="n">saved_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">:</span>  <span class="c1"># 2) and 3)</span>
+                <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">:</span>  <span class="c1"># 2) and maybe other junks</span>
                     <span class="n">saved_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
                 <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="o">*</span><span class="n">saved_tensors</span><span class="p">)</span>
 
@@ -9430,10 +9430,11 @@ Defaults to True</p></li>
                 <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
                     <span class="n">internal_kvs</span><span class="p">[</span><span class="n">output_grad_map</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
                 <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">saved</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">saved_tensors</span><span class="p">):</span>
+                    <span class="c1"># NOTE: Now we only support &quot;input&quot; parameters for PyTorch</span>
+                    <span class="c1"># interface (no &quot;inout&quot; or &quot;output&quot;), so we can forward all</span>
+                    <span class="c1"># parameters. If we support &quot;inout&quot; or &quot;output&quot; in the future,</span>
+                    <span class="c1"># we need to filter only &quot;input&quot; parameters here</span>
                     <span class="n">internal_kvs</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span>
-                <span class="k">for</span> <span class="n">ret</span><span class="p">,</span> <span class="n">saved</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">,</span>
-                                      <span class="n">saved_tensors</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">):]):</span>
-                    <span class="n">internal_kvs</span><span class="p">[</span><span class="n">ret</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span>
                 <span class="k">for</span> <span class="n">tape_ret</span><span class="p">,</span> <span class="n">saved</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
                         <span class="n">tape_rets</span><span class="p">,</span>
                         <span class="n">saved_tensors</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">):]):</span>
