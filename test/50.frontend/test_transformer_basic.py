@@ -128,6 +128,18 @@ def test_named_return_values():
     assert z_np[()] == 11
 
 
+def test_redundant_parameter():
+
+    @ft.optimize(verbose=1)
+    def func(x: ft.Var[(), "int32"], y: ft.Var[(), "int32"]):
+        z = ft.empty((), "int32")
+        z[...] = x[...]  # `y` is unused
+        return z
+
+    z_arr = func(np.array(2, dtype="int32"), np.array(3, dtype="int32"))
+    assert z_arr.numpy().item() == 2
+
+
 def test_for():
 
     def test(x, y):

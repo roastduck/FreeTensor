@@ -58,6 +58,29 @@ void PropagateRequires::visit(const VarDef &op) {
 std::unordered_set<ID> PropagateRequires::propagateUntilConverge(
     const Stmt &op, const std::unordered_set<std::string> &_requires,
     const std::unordered_set<std::string> &provides) {
+    for (auto &&name : _requires) {
+        try {
+            findStmt(op, [&](const Stmt &s) {
+                return s->nodeType() == ASTNodeType::VarDef &&
+                       s.as<VarDefNode>()->name_ == name;
+            });
+        } catch (const UnexpectedQueryResult &e) {
+            throw InvalidAutoGrad("Input variable requesting for gradient `" +
+                                  name + "` is not found or duplicated");
+        }
+    }
+    for (auto &&name : provides) {
+        try {
+            findStmt(op, [&](const Stmt &s) {
+                return s->nodeType() == ASTNodeType::VarDef &&
+                       s.as<VarDefNode>()->name_ == name;
+            });
+        } catch (const UnexpectedQueryResult &e) {
+            throw InvalidAutoGrad("Output variable providing gradient `" +
+                                  name + "` is not found or duplicated");
+        }
+    }
+
     PropagateRequires propagator(_requires, provides);
     size_t affectCnt;
     do {
