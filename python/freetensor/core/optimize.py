@@ -222,17 +222,17 @@ def optimize_to_pytorch(
                 returns = fwd_exe.collect_returns(always_return_pack=True)
                 returns = tuple(item.torch() for item in returns)
 
-                # Save states for 1) all inputs, 2) all outputs, and 3) all taped
-                # tensors. For taped tensors, we need to make them output tensors,
-                # so PyTorch can recognize them. This is an officially recommanded
-                # trick at
+                # Save states for 1) all inputs and 2) all taped tensors (taped
+                # outputs are also taped tensors). For taped tensors, we need to
+                # make them output tensors, so PyTorch can recognize them. This is
+                # an officially recommanded trick at
                 # https://pytorch.org/tutorials/intermediate/custom_function_double_backward_tutorial.html#saving-intermediate-results
                 # So, please be aware that only the first part in `returns` are real
                 # return tensors
                 saved_tensors = []
                 for arg in args:  # 1)
                     saved_tensors.append(arg)
-                for ret in returns:  # 2) and 3)
+                for ret in returns:  # 2) and maybe other junks
                     saved_tensors.append(ret)
                 ctx.save_for_backward(*saved_tensors)
 
@@ -248,10 +248,11 @@ def optimize_to_pytorch(
                 for key, value in kvs:
                     internal_kvs[output_grad_map[key]] = value
                 for param, saved in zip(ast.params, saved_tensors):
+                    # NOTE: Now we only support "input" parameters for PyTorch
+                    # interface (no "inout" or "output"), so we can forward all
+                    # parameters. If we support "inout" or "output" in the future,
+                    # we need to filter only "input" parameters here
                     internal_kvs[param.name] = saved
-                for ret, saved in zip(ast.returns,
-                                      saved_tensors[len(ast.params):]):
-                    internal_kvs[ret.name] = saved
                 for tape_ret, saved in zip(
                         tape_rets,
                         saved_tensors[len(ast.params) + len(ast.returns):]):

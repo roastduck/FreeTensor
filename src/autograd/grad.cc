@@ -22,6 +22,70 @@
 
 namespace freetensor {
 
+namespace {
+
+class RemoveTape : public Mutator {
+    std::string name_;
+
+  public:
+    RemoveTape(const std::string &name) : name_(name) {}
+
+  protected:
+    Stmt visit(const VarDef &op) override {
+        return op->name_ == name_ ? (*this)(op->body_) : Mutator::visit(op);
+    }
+
+    Expr visit(const Load &op) override {
+        ASSERT(op->var_ != name_);
+        return Mutator::visit(op);
+    }
+
+    Stmt visit(const Store &op) override {
+        return op->var_ == name_ ? makeStmtSeq({}) : Mutator::visit(op);
+    }
+
+    Stmt visit(const ReduceTo &op) override {
+        return op->var_ == name_ ? makeStmtSeq({}) : Mutator::visit(op);
+    }
+};
+
+/**
+ * Remove all use of a tape
+ */
+inline Stmt removeTape(const Stmt &op, const std::string &name) {
+    return RemoveTape{name}(op);
+}
+
+class UndoOutputTape : public Mutator {
+    std::string name_;
+    AccessType atype_;
+
+  public:
+    UndoOutputTape(const std::string &name, AccessType atype)
+        : name_(name), atype_(atype) {}
+
+  protected:
+    Stmt visit(const VarDef &_op) override {
+        auto __op = Mutator::visit(_op);
+        ASSERT(__op->nodeType() == ASTNodeType::VarDef);
+        auto op = __op.as<VarDefNode>();
+        if (op->name_ == name_) {
+            op->buffer_->setAtype(atype_);
+        }
+        return op;
+    }
+};
+
+/**
+ * Convert a single-versioned tape back to its original AccessType
+ */
+inline Stmt undoOutputTape(const Stmt &op, const std::string &name,
+                           AccessType atype) {
+    return UndoOutputTape{name, atype}(op);
+}
+
+} // Anonymous namespace
+
 void PropagateRequires::visit(const Load &op) {
     if (isFloat(op->dtype()) && curTarget_.isValid() &&
         affectedDefs_.count(def(op->var_)->id())) {
@@ -665,6 +729,40 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
                  intermediatesMap, versions, totLens, saveLocalStmts,
                  notSingleWrite);
     backward = mutator(backward);
+
+    // Some intermediate variables might be taped but turned out to be unneeded
+    // in the final backward program. For example, suppose `t` and `u` are an
+    // intermediate variables, the gradient of `t` and `u` in `y = t + u` depend
+    // only on the gradient of `y`, and is irrelavent to the forward value of
+    // `u` or `t`. The fact of whether the taped value is needed or unneeded
+    // depend on the math function involved, which is revealed only after doing
+    // `Grad`. So, we have to first do `Grad` and then remove unused tapes here
+    auto backwardAllReads = allReads(backward);
+    for (auto it = tapeMap.begin(); it != tapeMap.end();) {
+        auto &&[oriDefId, tapeName] = *it;
+        if (!backwardAllReads.count(tapeName)) {
+            auto possibleOldDefNode = findAllStmt(_op, oriDefId);
+            if (!possibleOldDefNode.empty()) {
+                // This intermediate variable has only one version, which was
+                // output directly, and we need to convert it back to its
+                // original AccessType
+                ASSERT(possibleOldDefNode.size() == 1);
+                auto &&oldDefNode = possibleOldDefNode.front();
+                ASSERT(oldDefNode->nodeType() == ASTNodeType::VarDef);
+                auto oldAType = oldDefNode.as<VarDefNode>()->buffer_->atype();
+                forward = undoOutputTape(forward, tapeName, oldAType);
+            } else {
+                // This intermediate variable has multiple versions, which was
+                // copied to a dedicated tape variable, and we can simply delete
+                // the tape variable
+                forward = removeTape(forward, tapeName);
+            }
+            backward = removeTape(backward, tapeName);
+            it = tapeMap.erase(it);
+        } else {
+            it++;
+        }
+    }
 
     // We do some basic simplifications here, to reduce burden on auto-schedule
     backward = removeDeadVar(backward);

@@ -148,9 +148,8 @@ def test_use_forward_value_when_taped():
         ("d_x", (4,), "float32", "output", "cpu"),
         ("y1", (4,), "float32", "input", "cpu"),
         ("d_y1", (4,), "float32", "inout", "cpu"),
-        ("y2", (4,), "float32", "input", "cpu"),
         ("d_y2", (4,), "float32", "inout", "cpu"),
-    ]) as (x, d_x, y1, d_y1, y2, d_y2):
+    ]) as (x, d_x, y1, d_y1, d_y2):
         with ft.For("i", 3, -1, -1) as i:
             with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
                 d_x[i] = 2 * (d_y1[i] * y1[i] + 2 * (d_y2[i] * t[i]))
@@ -661,9 +660,8 @@ def test_tape_5():
                     ("y.grad", (256,), "float32", "inout", "cpu"),
                     ("u", (256, 256), "float32", "input", "cpu"),
                     ("u.grad", (256, 256), "float32", "output", "cpu"),
-                    ("h.tape", (101, 256), "float32", "input", "cpu"),
-                    ("f.tape", (100, 256), "float32", "input", "cpu")
-                   ]) as (x, x_grad, dy, u, du, h_tape, f_tape):
+                    ("h.tape", (101, 256), "float32", "input", "cpu")
+                   ]) as (x, x_grad, dy, u, du, h_tape):
         with ft.For(".x.grad.i0", 0, 100) as _x_grad_i0:
             with ft.For(".x.grad.i1", 0, 4) as _x_grad_i1:
                 x_grad[_x_grad_i0, _x_grad_i1] = 0
@@ -861,9 +859,8 @@ def test_tape_mode_all():
                     ("d_x2", (4,), "float32", "output", "cpu"),
                     ("x3", (4,), "float32", "input", "cpu"),
                     ("d_x3", (4,), "float32", "output", "cpu"),
-                    ("y", (4,), "float32", "input", "cpu"),
                     ("d_y", (4,), "float32", "inout", "cpu")
-                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y, d_y):
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y):
         with ft.VarDef([("t.tape", (4,), "float32", "input", "cpu"),
                         ("d_t", (4,), "float32", "cache", "cpu")]) as (t, d_t):
             with ft.For("i", 3, -1, -1) as i:
@@ -964,9 +961,8 @@ def test_tape_mode_no_reuse_only():
                     ("d_x2", (4,), "float32", "output", "cpu"),
                     ("x3", (4,), "float32", "input", "cpu"),
                     ("d_x3", (4,), "float32", "output", "cpu"),
-                    ("y", (4,), "float32", "input", "cpu"),
                     ("d_y", (4,), "float32", "inout", "cpu")
-                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y, d_y):
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y):
         with ft.VarDef([("t.tape", (4,), "float32", "input", "cpu"),
                         ("d_t", (4,), "float32", "cache", "cpu")]) as (t, d_t):
             with ft.For("i", 3, -1, -1) as i:
@@ -981,6 +977,49 @@ def test_tape_mode_no_reuse_only():
     std = ft.pop_ast()
 
     assert std.match(backward)
+
+
+def test_no_unused_tape_single_version():
+
+    @ft.transform
+    def test(x: ft.Var[(), "float32", "input"]):
+        t = ft.empty((), "float32")
+        t[...] = x[...] * 2
+        u = ft.empty((), "float32")
+        u[...] = x[...] * 3
+        y = ft.empty((), "float32")
+        # t and u's forward values are actually not needed
+        y[...] = t[...] + u[...]
+        return y
+
+    fwd, bwd, input_grads, output_grads = ft.grad(test, ["x"], [ft.Return()],
+                                                  ft.GradTapeMode.All,
+                                                  verbose=1)
+
+    assert len(fwd.returns) == 1  # `y`. No `u or `v`
+    assert len(bwd.params) == 2  # `x` and `y.grad`. No `u` or `v`
+
+
+def test_no_unused_tape_multiple_versions():
+
+    @ft.transform
+    def test(x: ft.Var[(4,), "float32", "input"]):
+        y = ft.empty((4,), "float32")
+        for i in range(4):
+            t = ft.empty((), "float32")
+            t[...] = x[i] * 2
+            u = ft.empty((), "float32")
+            u[...] = x[i] * 3
+            # t and u's forward values are actually not needed
+            y[i] = t[...] + u[...]
+        return y
+
+    fwd, bwd, input_grads, output_grads = ft.grad(test, ["x"], [ft.Return()],
+                                                  ft.GradTapeMode.All,
+                                                  verbose=1)
+
+    assert len(fwd.returns) == 1  # `y`. No `u or `v`
+    assert len(bwd.params) == 2  # `x` and `y.grad`. No `u` or `v`
 
 
 def test_no_deps():
