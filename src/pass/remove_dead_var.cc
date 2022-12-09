@@ -1,3 +1,4 @@
+#include <pass/flatten_stmt_seq.h>
 #include <pass/remove_dead_var.h>
 
 namespace freetensor {
@@ -46,15 +47,16 @@ Stmt RemoveDeadVar::visit(const VarDef &_op) {
         }
     }
 
-    bool writtenToOutput = op->buffer_->atype() == AccessType::Output;
+    bool writtenToOutput = op->buffer_->atype() == AccessType::Output ||
+                           op->buffer_->atype() == AccessType::InOut;
     for (auto source = op; source->viewOf_.has_value();) {
         source = def(*source->viewOf_);
-        if (source->buffer_->atype() == AccessType::Output) {
+        if (source->buffer_->atype() == AccessType::Output ||
+            source->buffer_->atype() == AccessType::InOut) {
             writtenToOutput = true;
         }
     }
-    if (op->buffer_->atype() == AccessType::Cache && !writtenToOutput &&
-        !uses_.count(op->name_)) {
+    if (!writtenToOutput && !uses_.count(op->name_)) {
         isFixPoint_ = false;
         return RemoveAllWrites(op->name_)(op->body_);
     }
@@ -65,6 +67,11 @@ Stmt RemoveDeadVar::visit(const VarDef &_op) {
 
 Stmt removeDeadVar(const Stmt &_op) {
     auto op = _op;
+
+    // There may be redundant reads in an empty For's range or an empty If's
+    // condition. Remove these empty nodes first with flatten_stmt_seq
+    op = flattenStmtSeq(op);
+
     for (int i = 0;; i++) {
         RemoveDeadVar mutator;
         op = mutator(op);

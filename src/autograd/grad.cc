@@ -737,6 +737,7 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     // `u` or `t`. The fact of whether the taped value is needed or unneeded
     // depend on the math function involved, which is revealed only after doing
     // `Grad`. So, we have to first do `Grad` and then remove unused tapes here
+    backward = removeDeadVar(backward);
     auto backwardAllReads = allReads(backward);
     for (auto it = tapeMap.begin(); it != tapeMap.end();) {
         auto &&[oriDefId, tapeName] = *it;
@@ -765,7 +766,6 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     }
 
     // We do some basic simplifications here, to reduce burden on auto-schedule
-    backward = removeDeadVar(backward);
     backward = propOneTimeUse(backward);
     backward = simplify(backward);
     backward = tensorPropConst(backward);

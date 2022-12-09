@@ -422,16 +422,14 @@ def test_no_inline_defined_inside_a_loop():
 
 def test_def_then_use_then_def_in_the_same_place():
     with ft.VarDef("x", (128, 128, 128), "float64", "inout", "cpu") as x:
-        with ft.VarDef("r", (128, 128, 128), "float64", "input", "cpu") as r:
-            with ft.For("ix_2", 1, 127) as ix:
-                with ft.For("iy_2", 1, 127) as iy:
-                    with ft.For("iz_2", 1, 127) as iz:
-                        ft.MarkLabel('sx')
-                        with ft.VarDef("sx", (), "float64", "cache",
-                                       "cpu") as sx:
-                            sx[()] = x[ix + -1, iy + 1, iz + -1] + x[ix, iy + 1,
-                                                                     iz + -1]
-                            x[ix, iy, iz] = sx[()] / 26.0
+        with ft.For("ix_2", 1, 127) as ix:
+            with ft.For("iy_2", 1, 127) as iy:
+                with ft.For("iz_2", 1, 127) as iz:
+                    ft.MarkLabel('sx')
+                    with ft.VarDef("sx", (), "float64", "cache", "cpu") as sx:
+                        sx[()] = x[ix + -1, iy + 1, iz + -1] + x[ix, iy + 1,
+                                                                 iz + -1]
+                        x[ix, iy, iz] = sx[()] / 26.0
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.inline('sx')
@@ -440,12 +438,11 @@ def test_def_then_use_then_def_in_the_same_place():
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("x", (128, 128, 128), "float64", "inout", "cpu") as x:
-        with ft.VarDef("r", (128, 128, 128), "float64", "input", "cpu") as r:
-            with ft.For("ix_2", 1, 127) as ix:
-                with ft.For("iy_2", 1, 127) as iy:
-                    with ft.For("iz_2", 1, 127) as iz:
-                        x[ix, iy, iz] = (x[ix + -1, iy + 1, iz + -1] +
-                                         x[ix, iy + 1, iz + -1]) / 26.0
+        with ft.For("ix_2", 1, 127) as ix:
+            with ft.For("iy_2", 1, 127) as iy:
+                with ft.For("iz_2", 1, 127) as iz:
+                    x[ix, iy, iz] = (x[ix + -1, iy + 1, iz + -1] +
+                                     x[ix, iy + 1, iz + -1]) / 26.0
     std = ft.pop_ast()
 
     assert std.match(ast)
