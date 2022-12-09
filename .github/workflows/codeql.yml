@@ -26,7 +26,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          ssh-key: ${{ secrets.CI }}
           submodules: true
           fetch-depth: 0
 
