@@ -28,7 +28,7 @@ class mdspan_dbg : public stdex::mdspan<ElementType, Extents> {
 
     template <size_t DIM, typename FirstIdx, typename... OtherIdx>
     FUNC_ATTR bool checkDims(FirstIdx &&first, OtherIdx &&...others) const {
-        if (first < 0 || first >= (std::decay_t<FirstIdx>)this->extent(DIM)) {
+        if (first < 0 || (int64_t)first >= (int64_t)this->extent(DIM)) {
             return false;
         }
         return checkDims<DIM + 1>(std::forward<OtherIdx>(others)...);
