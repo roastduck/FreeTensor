@@ -26,7 +26,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          submodules: recursive
+          ssh-key: ${{ secrets.CI }}
+          submodules: true
+          fetch-depth: 0
 
       - name: Install Packages (cpp)
         if: ${{ matrix.language == 'cpp' }}
