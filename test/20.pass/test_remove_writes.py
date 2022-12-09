@@ -480,8 +480,7 @@ def test_type1_not_kill_later_store():
                        'prop_one_time_use'
                    ])
 
-    with ft.VarDef([("x", (), "int32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 1
     std = ft.pop_ast()
 
