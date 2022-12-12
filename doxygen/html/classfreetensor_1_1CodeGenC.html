@@ -176,10 +176,8 @@ Static Public Member Functions</h2></td></tr>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a838c7a49e9ebac822dd8292b592c7ef3"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenC.html#a838c7a49e9ebac822dd8292b592c7ef3">genAlloc</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt; &amp;tensor, const std::string &amp;rawPtr, const std::string &amp;shapePtr, const std::string &amp;dimPtr)=0</td></tr>
 <tr class="separator:a838c7a49e9ebac822dd8292b592c7ef3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a38f8a2183ffd416f3fff5836631b7f90"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenC.html#a38f8a2183ffd416f3fff5836631b7f90">genMdPtrType</a> (std::ostream &amp;<a class="el" href="classfreetensor_1_1CodeGen.html#a94503013f91715f321f5025411cd2921">os</a>, const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;<a class="el" href="classfreetensor_1_1SymbolTable.html#a822e9e26d00402a13826e2bd1f7d65a2">def</a>, bool isConst=false)</td></tr>
-<tr class="separator:a38f8a2183ffd416f3fff5836631b7f90"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0ea38e1be95078954cc5bfb0c62e324"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenC.html#ae0ea38e1be95078954cc5bfb0c62e324">genMdPtrType</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;<a class="el" href="classfreetensor_1_1SymbolTable.html#a822e9e26d00402a13826e2bd1f7d65a2">def</a>, bool isConst=false)</td></tr>
-<tr class="separator:ae0ea38e1be95078954cc5bfb0c62e324"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a85701d4c9ba3c2a945e24031dc1402cb"><td class="memItemLeft" align="right" valign="top">virtual std::function&lt; std::ostream &amp;(std::ostream &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenC.html#a85701d4c9ba3c2a945e24031dc1402cb">genMdPtrType</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;<a class="el" href="classfreetensor_1_1SymbolTable.html#a822e9e26d00402a13826e2bd1f7d65a2">def</a>, bool isConst=false)</td></tr>
+<tr class="separator:a85701d4c9ba3c2a945e24031dc1402cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8511ed3fa6fc02442db5255e4590848f"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenC.html#a8511ed3fa6fc02442db5255e4590848f">genMdPtrDef</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;<a class="el" href="classfreetensor_1_1SymbolTable.html#a822e9e26d00402a13826e2bd1f7d65a2">def</a>, const std::function&lt; void()&gt; &amp;genRawPtr, bool isConst=false)</td></tr>
 <tr class="separator:a8511ed3fa6fc02442db5255e4590848f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add5a1afc01a7c388ff45aa4a6766419d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenC.html#add5a1afc01a7c388ff45aa4a6766419d">genMdPtrDef</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;<a class="el" href="classfreetensor_1_1SymbolTable.html#a822e9e26d00402a13826e2bd1f7d65a2">def</a>, const std::string &amp;rawPtr, bool isConst=false)</td></tr>
@@ -651,8 +649,8 @@ template&lt;class Stream &gt; </div>
 
 </div>
 </div>
-<a id="ae0ea38e1be95078954cc5bfb0c62e324" name="ae0ea38e1be95078954cc5bfb0c62e324"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae0ea38e1be95078954cc5bfb0c62e324">&#9670;&nbsp;</a></span>genMdPtrType() <span class="overload">[1/2]</span></h2>
+<a id="a85701d4c9ba3c2a945e24031dc1402cb" name="a85701d4c9ba3c2a945e24031dc1402cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a85701d4c9ba3c2a945e24031dc1402cb">&#9670;&nbsp;</a></span>genMdPtrType()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -663,52 +661,8 @@ template&lt;class Stream &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual void <a class="el" href="classfreetensor_1_1CodeGenC.html">freetensor::CodeGenC</a>&lt; Stream &gt;::genMdPtrType </td>
+          <td class="memname">std::function&lt; std::ostream &amp;(std::ostream &amp;)&gt; <a class="el" href="classfreetensor_1_1CodeGenC.html">freetensor::CodeGenC</a>&lt; Stream &gt;::genMdPtrType </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;&#160;</td>
-          <td class="paramname"><em>def</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>isConst</em> = <code>false</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a38f8a2183ffd416f3fff5836631b7f90" name="a38f8a2183ffd416f3fff5836631b7f90"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a38f8a2183ffd416f3fff5836631b7f90">&#9670;&nbsp;</a></span>genMdPtrType() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class Stream &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classfreetensor_1_1CodeGenC.html">freetensor::CodeGenC</a>&lt; Stream &gt;::genMdPtrType </td>
-          <td>(</td>
-          <td class="paramtype">std::ostream &amp;&#160;</td>
-          <td class="paramname"><em>os</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;&#160;</td>
           <td class="paramname"><em>def</em>, </td>
         </tr>
@@ -731,7 +685,7 @@ template&lt;class Stream &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Reimplemented in <a class="el" href="classfreetensor_1_1CodeGenCUDA.html#a8814b998944fba749f2756b83a3b39e5">freetensor::CodeGenCUDA</a>.</p>
+<p>Reimplemented in <a class="el" href="classfreetensor_1_1CodeGenCUDA.html#a0da2c7795e5099fdd3d86fd2c07d40f5">freetensor::CodeGenCUDA</a>.</p>
 
 </div>
 </div>

@@ -29,12 +29,13 @@ var searchData=
   ['split_2eh_26',['split.h',['../split_8h.html',1,'']]],
   ['stmt_2ecc_27',['stmt.cc',['../stmt_8cc.html',1,'']]],
   ['stmt_2eh_28',['stmt.h',['../stmt_8h.html',1,'']]],
-  ['structs_2eh_29',['structs.h',['../structs_8h.html',1,'']]],
-  ['structural_5ffeature_2ecc_30',['structural_feature.cc',['../structural__feature_8cc.html',1,'']]],
-  ['structural_5ffeature_2eh_31',['structural_feature.h',['../structural__feature_8h.html',1,'']]],
-  ['sub_5ftree_2ecc_32',['sub_tree.cc',['../sub__tree_8cc.html',1,'']]],
-  ['sub_5ftree_2eh_33',['sub_tree.h',['../sub__tree_8h.html',1,'']]],
-  ['swap_2ecc_34',['swap.cc',['../swap_8cc.html',1,'']]],
-  ['swap_2eh_35',['swap.h',['../swap_8h.html',1,'']]],
-  ['symbol_5ftable_2eh_36',['symbol_table.h',['../symbol__table_8h.html',1,'']]]
+  ['stream_5futils_2eh_29',['stream_utils.h',['../stream__utils_8h.html',1,'']]],
+  ['structs_2eh_30',['structs.h',['../structs_8h.html',1,'']]],
+  ['structural_5ffeature_2ecc_31',['structural_feature.cc',['../structural__feature_8cc.html',1,'']]],
+  ['structural_5ffeature_2eh_32',['structural_feature.h',['../structural__feature_8h.html',1,'']]],
+  ['sub_5ftree_2ecc_33',['sub_tree.cc',['../sub__tree_8cc.html',1,'']]],
+  ['sub_5ftree_2eh_34',['sub_tree.h',['../sub__tree_8h.html',1,'']]],
+  ['swap_2ecc_35',['swap.cc',['../swap_8cc.html',1,'']]],
+  ['swap_2eh_36',['swap.h',['../swap_8h.html',1,'']]],
+  ['symbol_5ftable_2eh_37',['symbol_table.h',['../symbol__table_8h.html',1,'']]]
 ];

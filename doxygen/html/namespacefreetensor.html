@@ -2009,6 +2009,9 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:a410b08e3991efea437bea8a5301ed9ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4cd5587319c50918b9d491f661cee351"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4cd5587319c50918b9d491f661cee351">dumpArray</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Array.html">Array</a> &gt; &amp;array_)</td></tr>
 <tr class="separator:a4cd5587319c50918b9d491f661cee351"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a740d86d2e1729b43db474578c0f9d396"><td class="memTemplParams" colspan="2">template&lt;typename <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &gt; </td></tr>
+<tr class="memitem:a740d86d2e1729b43db474578c0f9d396"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a740d86d2e1729b43db474578c0f9d396">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func) -&gt; decltype(func(os))</td></tr>
+<tr class="separator:a740d86d2e1729b43db474578c0f9d396"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2c490189ddd347553322eb51f8e945dc"><td class="memTemplParams" colspan="2">template&lt;class T &gt; <br />
 requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; requires !std::convertible_to&lt;T, <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt;<a class="el" href="classfreetensor_1_1ASTNode.html">ASTNode</a>&gt;&gt;; }</td></tr>
 <tr class="memitem:a2c490189ddd347553322eb51f8e945dc"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2c490189ddd347553322eb51f8e945dc">toString</a> (const T &amp;obj)</td></tr>
@@ -2261,8 +2264,14 @@ Variables</h2></td></tr>
 <tr class="separator:a333889667ff86512a4ccae557ff51b2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a99e6be32e2c2c11aca93dfdf2bf9caac"><td class="memItemLeft" align="right" valign="top">constexpr std::array&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a99e6be32e2c2c11aca93dfdf2bf9caac">scheduleTypeNames</a></td></tr>
 <tr class="separator:a99e6be32e2c2c11aca93dfdf2bf9caac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b3a7cce92187945d8acd0a73aceb0d5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2b3a7cce92187945d8acd0a73aceb0d5">OSTREAM_NO_ID_SIGN</a> = std::ostream::xalloc()</td></tr>
+<tr class="separator:a2b3a7cce92187945d8acd0a73aceb0d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a02c1074060848ebcb43b46faa60ec111"><td class="memItemLeft" align="right" valign="top">std::function&lt; std::ostream &amp;(std::ostream &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a02c1074060848ebcb43b46faa60ec111">manipNoIdSign</a> (bool flag)</td></tr>
+<tr class="separator:a02c1074060848ebcb43b46faa60ec111"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac26da81058e71b7672698be0094462c3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac26da81058e71b7672698be0094462c3">OSTREAM_NO_PRETTY</a> = std::ostream::xalloc()</td></tr>
 <tr class="separator:ac26da81058e71b7672698be0094462c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2cc20e7d00796767ae6b32be2ac3700d"><td class="memItemLeft" align="right" valign="top">std::function&lt; std::ostream &amp;(std::ostream &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2cc20e7d00796767ae6b32be2ac3700d">manipNoPrettyAST</a> (bool flag)</td></tr>
+<tr class="separator:a2cc20e7d00796767ae6b32be2ac3700d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Typedef Documentation</h2>
 <a id="aa7f10066d67f03fd2010696fa1bfa70e" name="aa7f10066d67f03fd2010696fa1bfa70e"></a>
@@ -12091,6 +12100,42 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
+<a id="a02c1074060848ebcb43b46faa60ec111" name="a02c1074060848ebcb43b46faa60ec111"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a02c1074060848ebcb43b46faa60ec111">&#9670;&nbsp;</a></span>manipNoIdSign()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::function&lt; std::ostream &amp;(std::ostream &amp;)&gt; freetensor::manipNoIdSign </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>flag</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2cc20e7d00796767ae6b32be2ac3700d" name="a2cc20e7d00796767ae6b32be2ac3700d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2cc20e7d00796767ae6b32be2ac3700d">&#9670;&nbsp;</a></span>manipNoPrettyAST()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::function&lt; std::ostream &amp;(std::ostream &amp;)&gt; freetensor::manipNoPrettyAST </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>flag</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a8a6ae19f9b43a1565df544e305ddf209" name="a8a6ae19f9b43a1565df544e305ddf209"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8a6ae19f9b43a1565df544e305ddf209">&#9670;&nbsp;</a></span>match()</h2>
 
@@ -12780,7 +12825,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a5c0f4e93910a9324737e15d1bd575599" name="a5c0f4e93910a9324737e15d1bd575599"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5c0f4e93910a9324737e15d1bd575599">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[1/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c0f4e93910a9324737e15d1bd575599">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[1/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12816,7 +12861,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="ae091398240e204f37128828d143d8678" name="ae091398240e204f37128828d143d8678"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae091398240e204f37128828d143d8678">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[2/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae091398240e204f37128828d143d8678">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[2/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12844,7 +12889,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a69b12235146ab210071e589e98530649" name="a69b12235146ab210071e589e98530649"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a69b12235146ab210071e589e98530649">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[3/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a69b12235146ab210071e589e98530649">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[3/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12869,12 +12914,12 @@ template&lt;class T &gt; </div>
       </table>
 </div><div class="memdoc">
 <p >Print an AST</p>
-<p ><code>OSTREAM_NO_PRETTY</code> can be set via <code>std::ostream::iword()</code> to disable pretty print for a specific stream </p>
+<p ><code>OSTREAM_NO_PRETTY</code> can be set via <code>manipNoPrettyAST</code> to enable or disable pretty print for a specific stream </p>
 
 </div>
 </div>
 <a id="aad299e88504cc68e98ab17560718072a" name="aad299e88504cc68e98ab17560718072a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aad299e88504cc68e98ab17560718072a">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[4/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aad299e88504cc68e98ab17560718072a">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[4/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12910,7 +12955,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a1b86a8d2db3c5cbb7783684bb8692812" name="a1b86a8d2db3c5cbb7783684bb8692812"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1b86a8d2db3c5cbb7783684bb8692812">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[5/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b86a8d2db3c5cbb7783684bb8692812">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[5/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12946,7 +12991,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="acaf092cf41556bd1c8a3a070e44f01ad" name="acaf092cf41556bd1c8a3a070e44f01ad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acaf092cf41556bd1c8a3a070e44f01ad">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[6/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#acaf092cf41556bd1c8a3a070e44f01ad">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[6/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12974,7 +13019,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a105559d11b03d08588c4044e66568d96" name="a105559d11b03d08588c4044e66568d96"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a105559d11b03d08588c4044e66568d96">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[7/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a105559d11b03d08588c4044e66568d96">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[7/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13002,7 +13047,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a21f23d616d300e56223f18288bb35a9c" name="a21f23d616d300e56223f18288bb35a9c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a21f23d616d300e56223f18288bb35a9c">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[8/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a21f23d616d300e56223f18288bb35a9c">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[8/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13030,7 +13075,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a92b3ea9bbdfd15a531b662c4235746a5" name="a92b3ea9bbdfd15a531b662c4235746a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a92b3ea9bbdfd15a531b662c4235746a5">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[9/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a92b3ea9bbdfd15a531b662c4235746a5">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[9/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13066,7 +13111,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a45c869a6c8afbc975f13ed04abbb8824" name="a45c869a6c8afbc975f13ed04abbb8824"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a45c869a6c8afbc975f13ed04abbb8824">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[10/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a45c869a6c8afbc975f13ed04abbb8824">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[10/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13101,8 +13146,39 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
+<a id="a740d86d2e1729b43db474578c0f9d396" name="a740d86d2e1729b43db474578c0f9d396"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a740d86d2e1729b43db474578c0f9d396">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[11/27]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">auto freetensor::operator&lt;&lt; </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;&#160;</td>
+          <td class="paramname"><em>func</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> -&gt; decltype(func(os)) </td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Tell std::ostream not only to treat the 3 function types in the standard as manipulators, but also arbitrary invocable types </p>
+
+</div>
+</div>
 <a id="a74c9bede2fbfda49f084b7b9178bc970" name="a74c9bede2fbfda49f084b7b9178bc970"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a74c9bede2fbfda49f084b7b9178bc970">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[11/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a74c9bede2fbfda49f084b7b9178bc970">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[12/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13130,7 +13206,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a5d7f8a083d0c7c55da3eeec2d867fce0" name="a5d7f8a083d0c7c55da3eeec2d867fce0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5d7f8a083d0c7c55da3eeec2d867fce0">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[12/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d7f8a083d0c7c55da3eeec2d867fce0">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[13/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13166,7 +13242,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a8da64aa4d9100586983f72d7b94472f8" name="a8da64aa4d9100586983f72d7b94472f8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8da64aa4d9100586983f72d7b94472f8">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[13/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a8da64aa4d9100586983f72d7b94472f8">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[14/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13196,7 +13272,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a72058135cf977f49de104bdd7f6c6a29" name="a72058135cf977f49de104bdd7f6c6a29"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a72058135cf977f49de104bdd7f6c6a29">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[14/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a72058135cf977f49de104bdd7f6c6a29">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[15/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13224,7 +13300,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a114f7b22d112f62b48e7e07cd5dd6b7b" name="a114f7b22d112f62b48e7e07cd5dd6b7b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a114f7b22d112f62b48e7e07cd5dd6b7b">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[15/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a114f7b22d112f62b48e7e07cd5dd6b7b">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[16/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13260,7 +13336,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a1dd9f020873a496a9086f0bc7a2109c6" name="a1dd9f020873a496a9086f0bc7a2109c6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1dd9f020873a496a9086f0bc7a2109c6">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[16/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1dd9f020873a496a9086f0bc7a2109c6">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[17/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13296,7 +13372,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a859a001d13812a82b2c8e464b322f1e2" name="a859a001d13812a82b2c8e464b322f1e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a859a001d13812a82b2c8e464b322f1e2">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[17/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a859a001d13812a82b2c8e464b322f1e2">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[18/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13324,7 +13400,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a74f32bacdd14bdfb33ff5a1441820f91" name="a74f32bacdd14bdfb33ff5a1441820f91"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a74f32bacdd14bdfb33ff5a1441820f91">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[18/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a74f32bacdd14bdfb33ff5a1441820f91">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[19/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13352,7 +13428,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a511fb253559129c0912ce5a1e6f2bc6f" name="a511fb253559129c0912ce5a1e6f2bc6f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a511fb253559129c0912ce5a1e6f2bc6f">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[19/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a511fb253559129c0912ce5a1e6f2bc6f">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[20/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13388,7 +13464,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a609a6b2acbe04e0a551bb0f60e8200c3" name="a609a6b2acbe04e0a551bb0f60e8200c3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a609a6b2acbe04e0a551bb0f60e8200c3">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[20/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a609a6b2acbe04e0a551bb0f60e8200c3">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[21/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13416,7 +13492,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a5d818b0f9d4666227af367e90fb055d6" name="a5d818b0f9d4666227af367e90fb055d6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5d818b0f9d4666227af367e90fb055d6">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[21/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d818b0f9d4666227af367e90fb055d6">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[22/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13448,7 +13524,7 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 </div>
 </div>
 <a id="a27e78f8af26958b3bb99cb6618887bfa" name="a27e78f8af26958b3bb99cb6618887bfa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a27e78f8af26958b3bb99cb6618887bfa">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[22/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a27e78f8af26958b3bb99cb6618887bfa">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[23/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13484,7 +13560,7 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 </div>
 </div>
 <a id="a0671d22d7846591238c019c2fc9785a5" name="a0671d22d7846591238c019c2fc9785a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0671d22d7846591238c019c2fc9785a5">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[23/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0671d22d7846591238c019c2fc9785a5">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[24/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13520,7 +13596,7 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 </div>
 </div>
 <a id="a5bcb73ee76b0e1c0a24e1b3010ef883d" name="a5bcb73ee76b0e1c0a24e1b3010ef883d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5bcb73ee76b0e1c0a24e1b3010ef883d">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[24/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5bcb73ee76b0e1c0a24e1b3010ef883d">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[25/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13556,7 +13632,7 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 </div>
 </div>
 <a id="a1bea8d6925cf272fb06ae26fbb25da60" name="a1bea8d6925cf272fb06ae26fbb25da60"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1bea8d6925cf272fb06ae26fbb25da60">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[25/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1bea8d6925cf272fb06ae26fbb25da60">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[26/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13592,7 +13668,7 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 </div>
 </div>
 <a id="a4fce3fc20d5123cfba4a15c1c79c0d0d" name="a4fce3fc20d5123cfba4a15c1c79c0d0d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4fce3fc20d5123cfba4a15c1c79c0d0d">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[26/26]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fce3fc20d5123cfba4a15c1c79c0d0d">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[27/27]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -17558,6 +17634,23 @@ template&lt;PBMapRef T&gt; </div>
 </div><!-- fragment -->
 </div>
 </div>
+<a id="a2b3a7cce92187945d8acd0a73aceb0d5" name="a2b3a7cce92187945d8acd0a73aceb0d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2b3a7cce92187945d8acd0a73aceb0d5">&#9670;&nbsp;</a></span>OSTREAM_NO_ID_SIGN</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int freetensor::OSTREAM_NO_ID_SIGN = std::ostream::xalloc()</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Control over whether to output a "#" sign before an <a class="el" href="classfreetensor_1_1ID.html">ID</a></p>
+<p >Get or set the option via <code>std::ostream::iword()</code>, or set it via outputting <code>manipNoIdSign</code> to the stream</p>
+<p >Defaults to outputting with "#" </p>
+
+</div>
+</div>
 <a id="ac26da81058e71b7672698be0094462c3" name="ac26da81058e71b7672698be0094462c3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac26da81058e71b7672698be0094462c3">&#9670;&nbsp;</a></span>OSTREAM_NO_PRETTY</h2>
 
@@ -17570,7 +17663,8 @@ template&lt;PBMapRef T&gt; </div>
       </table>
 </div><div class="memdoc">
 <p >Control over whether to allow pretty print in a stream</p>
-<p >This option overrides <code><a class="el" href="classfreetensor_1_1Config.html#af2aad629bb22742e408fc3a3a2a8209e">Config::prettyPrint()</a></code> </p>
+<p >Get or set the option via <code>std::ostream::iword()</code>, or set it via outputting <code>manipNoPrettyAST</code> to the stream</p>
+<p >If set, this option overrides <code><a class="el" href="classfreetensor_1_1Config.html#af2aad629bb22742e408fc3a3a2a8209e">Config::prettyPrint()</a></code> and force no pretty print. Defaults to unset </p>
 
 </div>
 </div>
