@@ -211,10 +211,9 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
                          bool strict) {
     // Hoist all VarDef nodes covering one of the loop but not covering the
     // other loop, to cover both loops
-    auto ast = hoistSelectedVar(_ast, "(->>#" + toString(loop0) + "&!->>#" +
-                                          toString(loop1) + ")|(!->>#" +
-                                          toString(loop0) + "&->>#" +
-                                          toString(loop1) + ")");
+    auto ast = hoistSelectedVar(
+        _ast, "(->>" + toString(loop0) + "&!->>" + toString(loop1) + ")|(!->>" +
+                  toString(loop0) + "&->>" + toString(loop1) + ")");
     ast = flattenStmtSeq(ast);
 
     CheckFuseAccessible(loop0, loop1).check(ast);

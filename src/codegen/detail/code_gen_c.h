@@ -16,44 +16,46 @@
 namespace freetensor {
 
 template <class Stream>
-void CodeGenC<Stream>::genMdPtrType(std::ostream &os, const VarDef &def,
-                                    bool isConst) {
-    auto &&buf = def->buffer_;
+std::function<std::ostream &(std::ostream &)>
+CodeGenC<Stream>::genMdPtrType(const VarDef &def, bool isConst) {
+    return [=, this](std::ostream &os) -> std::ostream & {
+        auto &&buf = def->buffer_;
 
-    if (buf->tensor()->shape().empty()) {
-        // Use reference for scalars
+        if (buf->tensor()->shape().empty()) {
+            // Use reference for scalars
+            if (isConst) {
+                os << "const ";
+            }
+            os << gen(buf->tensor()->dtype()) << " &";
+            return os;
+        }
+
+        bool isRestricted = true;
+        if (def->viewOf_.has_value() ||
+            !findAllStmt(def, [&](const Stmt &inner) {
+                 return inner->nodeType() == ASTNodeType::VarDef &&
+                        inner.as<VarDefNode>()->viewOf_ == def->name_;
+             }).empty()) {
+            isRestricted = false;
+        }
+
+        os << (Config::debugRuntimeCheck() ? "mdspan_dbg<"
+               : isRestricted              ? "mdspan_r<"
+                                           : "mdspan<");
         if (isConst) {
             os << "const ";
         }
-        os << gen(buf->tensor()->dtype()) << " &";
-        return;
-    }
-
-    bool isRestricted = true;
-    if (def->viewOf_.has_value() ||
-        !findAllStmt(def, [&](const Stmt &inner) {
-             return inner->nodeType() == ASTNodeType::VarDef &&
-                    inner.as<VarDefNode>()->viewOf_ == def->name_;
-         }).empty()) {
-        isRestricted = false;
-    }
-
-    os << (Config::debugRuntimeCheck() ? "mdspan_dbg<"
-           : isRestricted              ? "mdspan_r<"
-                                       : "mdspan<");
-    if (isConst) {
-        os << "const ";
-    }
-    os << gen(buf->tensor()->dtype()) << ", extents<";
-    for (auto &&[i, dim] : views::enumerate(buf->tensor()->shape())) {
-        os << (i > 0 ? ", " : "");
-        if (dim->nodeType() == ASTNodeType::IntConst) {
-            os << dim.template as<IntConstNode>()->val_;
-        } else {
-            os << "dynamic_extent";
+        os << gen(buf->tensor()->dtype()) << ", extents<";
+        for (auto &&[i, dim] : views::enumerate(buf->tensor()->shape())) {
+            os << (i > 0 ? ", " : "");
+            if (dim->nodeType() == ASTNodeType::IntConst) {
+                os << dim.template as<IntConstNode>()->val_;
+            } else {
+                os << "dynamic_extent";
+            }
         }
-    }
-    os << ">>";
+        return os << ">>";
+    };
 }
 
 template <class Stream>
@@ -66,21 +68,17 @@ void CodeGenC<Stream>::genMdPtrDef(const VarDef &def,
         // Use reference for scalars
         // e.g.
         // ((const int32_t &)*((const int32_t *)(...)))
-        this->os() << "((";
-        genMdPtrType(def, isConst);
-        this->os() << ")*((";
+        this->os() << "((" << genMdPtrType(def, isConst) << ")*((";
         if (isConst) {
             this->os() << "const ";
         }
-        this->os() << gen(buf->tensor()->dtype()) << " *";
-        this->os() << ")(";
+        this->os() << gen(buf->tensor()->dtype()) << " *)(";
         genRawPtr();
         this->os() << ")))";
         return;
     }
 
-    genMdPtrType(def, isConst);
-    this->os() << "((";
+    this->os() << genMdPtrType(def, isConst) << "((";
     if (isConst) {
         this->os() << "const ";
     }

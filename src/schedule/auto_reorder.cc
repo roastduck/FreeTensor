@@ -33,7 +33,7 @@ void Schedule::autoReorder(const Ref<Target> &target) {
         std::vector<ID> perfectNest = {nest->id()};
         while (true) {
             if (auto inners =
-                    findAll("<For><-(!<For><-)*#" + toString(nest->id()));
+                    findAll("<For><-(!<For><-)*" + toString(nest->id()));
                 inners.size() == 1) {
                 nest = inners.front().as<ForNode>();
                 perfectNest.emplace_back(nest->id());
@@ -52,7 +52,7 @@ void Schedule::autoReorder(const Ref<Target> &target) {
         }
 
         for (auto &&subNest :
-             findAll("<For><-(!<For><-)*#" + toString(nest->id()))) {
+             findAll("<For><-(!<For><-)*" + toString(nest->id()))) {
             visitNest(subNest.as<ForNode>());
         }
     };

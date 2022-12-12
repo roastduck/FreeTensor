@@ -70,9 +70,8 @@ void CodeGenCPU::visit(const VarDef &op) {
             // e.g. UncheckedOpt<mdspan_r<float, std::extents<5, 5>>> x_opt;
             //      auto &x = *x_opt;
             this->makeIndent();
-            this->os() << "UncheckedOpt<";
-            genMdPtrType(op);
-            this->os() << "> " << name << "_opt;" << std::endl;
+            this->os() << "UncheckedOpt<" << genMdPtrType(op) << "> " << name
+                       << "_opt;" << std::endl;
             this->makeIndent();
             this->os() << "auto &" << name << " = *" << name << "_opt;"
                        << std::endl;

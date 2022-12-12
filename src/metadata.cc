@@ -121,10 +121,13 @@ AnonymousMetadataContent::AnonymousMetadataContent(const ID &id) : id_(id) {}
 
 void AnonymousMetadataContent::print(std::ostream &os, bool skipLocation,
                                      int nIndent) const {
-    if (os.iword(metadataPrintId) && id_.isValid())
-        os << Indent(nIndent) << "#" << id_;
-    else
+    if (os.iword(metadataPrintId) && id_.isValid()) {
+        auto oldFlag = os.iword(OSTREAM_NO_ID_SIGN);
+        os << manipNoIdSign(true) << Indent(nIndent) << "#" << id_;
+        os.iword(OSTREAM_NO_ID_SIGN) = oldFlag;
+    } else {
         os << Indent(nIndent) << "#<anon>";
+    }
 }
 
 AnonymousMetadata makeMetadata(const ID &id) {
