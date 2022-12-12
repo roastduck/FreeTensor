@@ -209,14 +209,33 @@ class Driver(ffi.Driver):
                                          verbose)
         self.func = func
 
+        # When we pass numpy or pytorch tensors to `set_args`, they are
+        # converted to `Array` objects by reference. In `Array`'s FFI, we
+        # keep these tensors alive whenever the `Array`'s PYTHON objects
+        # alive. We need to also keep the `Array`'s PYTHON objects here.
+        # Please note that we cannot hold the reference count in `Driver`'s
+        # C++ implementation, where we can only hold the `Array`'s C++
+        # objects alive.
+        self.args_ref_cnt_holder = []
+
     def set_args(self, *args, **kws):
         ''' Set argument for an invocation '''
+
+        # No need to hold reference of the last run any more
+        self.args_ref_cnt_holder = []
+
         args = list(args)
         kws = dict(kws)
         for i in range(len(args)):
             args[i] = array(args[i])
         for key in kws:
             kws[key] = array(kws[key])
+
+        for arg in args:
+            self.args_ref_cnt_holder.append(arg)
+        for key in kws:
+            self.args_ref_cnt_holder.append(kws[key])
+
         super(Driver, self).set_args(args, kws)
 
     def collect_returns(self, always_return_pack: bool = False):
