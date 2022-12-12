@@ -153,6 +153,9 @@ void Driver::buildAndLoad() {
         if (dev_->target()->useNativeArch()) {
             addArgs("-march=native");
         }
+        if (Config::debugRuntimeCheck()) {
+            addArgs("-ftrapv");
+        }
         if (Config::debugBinary()) {
             addArgs("-g");
         }
