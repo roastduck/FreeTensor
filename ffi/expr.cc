@@ -254,8 +254,8 @@ void init_ffi_ast_expr(py::module_ &m) {
             py::is_operator())
         .def_property_readonly(
             "dtype", [](const Expr &op) -> DataType { return op->dtype(); });
-    py::implicitly_convertible<int, ExprNode>();
-    py::implicitly_convertible<float, ExprNode>();
+    py::implicitly_convertible<int64_t, ExprNode>();
+    py::implicitly_convertible<double, ExprNode>();
     py::implicitly_convertible<bool, ExprNode>();
     py::implicitly_convertible<FrontendVar, ExprNode>();
 

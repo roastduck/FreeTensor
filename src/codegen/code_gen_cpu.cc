@@ -248,7 +248,25 @@ void CodeGenCPU::visit(const For &op) {
         }
         return;
     } else if (op->property_->vectorize_) {
+        // TODO: Use an appropriate iterator type for vectorized loops
         os() << "#pragma omp simd" << std::endl;
+        auto iterCnt = mangle(op->iter_ + ".cnt");
+        makeIndent();
+        os() << "for (int64_t " << iterCnt << " = 0; " << iterCnt << " < ";
+        (*this)(op->len_);
+        os() << "; " << iterCnt << "++) ";
+        beginBlock();
+        makeIndent();
+        os() << "int64_t " << mangle(op->iter_) << " = ";
+        (*this)(op->begin_);
+        os() << " + " << iterCnt << " * ";
+        (*this)(op->step_);
+        os() << ";" << std::endl;
+        markDefIter(op);
+        (*this)(op->body_);
+        markUndefIter(op);
+        endBlock();
+        return;
     } else if (op->property_->unroll_) {
         os() << "#pragma GCC unroll " << op->len_ << std::endl;
     }

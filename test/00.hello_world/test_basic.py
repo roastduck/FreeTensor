@@ -171,6 +171,26 @@ def test_reversed_for():
     assert np.array_equal(y_np, y_std)
 
 
+def test_large_iterator_type_in_for():
+    with ft.VarDef("y", (), "int64", "output") as y:
+        y[...] = 0
+        with ft.For("i", 10000000000, 20000000000) as i:
+            with ft.If(i % 2 == 0):
+                y[...] -= i
+            with ft.Else():
+                y[...] += i
+
+    func = ft.lower(ft.Func("main", ["y"], [], ft.pop_ast()), verbose=2)
+    code = ft.codegen(func, verbose=True)
+    y_np = np.array(0, dtype="int64")
+    y_arr = ft.Array(y_np)
+    ft.build_binary(code)(y=y_arr)
+    y_np = y_arr.numpy()
+
+    assert "for (" in code.code
+    assert y_np.item() == 10000000000
+
+
 def test_if():
     with ft.VarDef("y", (4,), "int32", "output") as y:
         with ft.For("i", 0, 4) as i:

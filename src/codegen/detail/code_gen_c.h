@@ -632,37 +632,21 @@ template <class Stream> void CodeGenC<Stream>::visit(const Cast &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const For &op) {
-    if (op->step_->nodeType() == ASTNodeType::IntConst &&
-        op->step_.as<IntConstNode>()->val_ == 1) {
-        this->makeIndent();
-        this->os() << "for (int " << mangle(op->iter_) << " = ";
-        (*this)(op->begin_);
-        this->os() << "; " << mangle(op->iter_) << " < ";
-        (*this)(op->end_);
-        this->os() << "; " << mangle(op->iter_) << "++) ";
-        this->beginBlock();
-        this->markDefIter(op);
-        (*this)(op->body_);
-        this->markUndefIter(op);
-        this->endBlock();
-    } else {
-        auto iterCnt = mangle(op->iter_ + ".cnt");
-        this->makeIndent();
-        this->os() << "for (int " << iterCnt << " = 0; " << iterCnt << " < ";
-        (*this)(op->len_);
-        this->os() << "; " << iterCnt << "++) ";
-        this->beginBlock();
-        this->makeIndent();
-        this->os() << "int " << mangle(op->iter_) << " = ";
-        (*this)(op->begin_);
-        this->os() << " + " << iterCnt << " * ";
-        (*this)(op->step_);
-        this->os() << ";" << std::endl;
-        this->markDefIter(op);
-        (*this)(op->body_);
-        this->markUndefIter(op);
-        this->endBlock();
-    }
+    this->makeIndent();
+    this->os() << "for (auto &&" << mangle(op->iter_) << " : integerRange(";
+    (*this)(op->begin_);
+    this->os() << ", ";
+    (*this)(op->end_);
+    this->os() << ", ";
+    (*this)(op->step_);
+    this->os() << ", ";
+    (*this)(op->len_);
+    this->os() << ")) ";
+    this->beginBlock();
+    this->markDefIter(op);
+    (*this)(op->body_);
+    this->markUndefIter(op);
+    this->endBlock();
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const If &op) {

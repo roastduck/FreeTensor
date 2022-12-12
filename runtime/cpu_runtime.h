@@ -15,6 +15,7 @@
 #endif
 
 #include "cpu_context.h"
+#include "integer_range.h"
 #include "mdspan.h"
 #include "unchecked_opt.h"
 
