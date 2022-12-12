@@ -41,7 +41,7 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
     std::function<void(For nest)> tryFission = [&, this](For nest) {
         // Recurse first
         for (auto &&subNest :
-             findAll("<For><-(!<For><-)*#" + toString(nest->id()))) {
+             findAll("<For><-(!<For><-)*" + toString(nest->id()))) {
             tryFission(subNest.as<ForNode>());
         }
 
@@ -50,7 +50,7 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
         int partCnt = 0;
         std::vector<ID> splitterIds; // Record IDs because we are mutating ast()
         for (auto &&splitter :
-             findAll("(<For>|<Store>|<ReduceTo>|<Eval>)<-(!<For><-)*#" +
+             findAll("(<For>|<Store>|<ReduceTo>|<Eval>)<-(!<For><-)*" +
                      toString(nest->id()))) {
             splitterIds.emplace_back(splitter->id());
         }
@@ -111,7 +111,7 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
         For last;
         ID lastId;
         for (auto &&_loop :
-             findAll("<For><-(!<For><-)*#" + toString(root->id()))) {
+             findAll("<For><-(!<For><-)*" + toString(root->id()))) {
             auto loop = _loop.as<ForNode>();
             auto loopId = loop->id();
             if (findAll(loopId).empty()) {

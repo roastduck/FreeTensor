@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <codegen/code_gen.h>
+#include <serialize/stream_utils.h>
 
 namespace freetensor {
 
@@ -29,11 +30,8 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
                           const std::string &dimPtr) = 0;
 
     // Generate a pointer to an multi-dimensional array
-    virtual void genMdPtrType(std::ostream &os, const VarDef &def,
-                              bool isConst = false);
-    virtual void genMdPtrType(const VarDef &def, bool isConst = false) {
-        genMdPtrType(this->os(), def, isConst);
-    }
+    virtual std::function<std::ostream &(std::ostream &)>
+    genMdPtrType(const VarDef &def, bool isConst = false);
     virtual void genMdPtrDef(const VarDef &def,
                              const std::function<void()> &genRawPtr,
                              bool isConst = false);

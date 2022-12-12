@@ -33,8 +33,8 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
 
     using CodeGenC<CodeGenCUDAStream>::genMdPtrType;
     using CodeGenC<CodeGenCUDAStream>::genMdPtrDef;
-    void genMdPtrType(std::ostream &os, const VarDef &def,
-                      bool isConst = false) override;
+    std::function<std::ostream &(std::ostream &)>
+    genMdPtrType(const VarDef &def, bool isConst = false) override;
     void genMdPtrDef(const VarDef &def, const std::function<void()> &genRawPtr,
                      bool isConst = false) override;
 
