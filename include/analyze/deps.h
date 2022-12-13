@@ -115,7 +115,9 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
 
     const FindDepsAccFilter &accFilter_;
 
-    bool lastIsLoad_ = false;
+    bool lastIsLoad_ =
+        false; // True to indicate the last statement is a Load. If the next
+               // statement is still a Load, they can share the same coordinate
     std::vector<IterAxis> cur_; // Current iteration point in the space
     std::vector<std::pair<Expr, ID>>
         conds_; // FIXME: There may be out-dated conditions, and we must check

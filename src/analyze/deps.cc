@@ -175,6 +175,8 @@ void FindAccessPoint::visit(const For &op) {
     cur_.pop_back();
     conds_.resize(oldCondsSize);
     replaceIter_.erase(op->iter_);
+    lastIsLoad_ = false; // The last Load in the loop and the first Load out of
+                         // the loop shall have different coordinates
 
     if (!subTreeFilteredIn_.count(op->body_)) {
         // No stepping to make iteration space more compact

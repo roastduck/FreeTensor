@@ -29,7 +29,8 @@ Stmt tensorPropConst(const Stmt &_op) {
         // propagating to ReduceTo nodes. E.g.:
         //
         // ```
-        // a = 1  // (1) if (...) {
+        // a = 1  // (1)
+        // if (...) {
         //   a += 1  // (2)
         // }
         // ```
