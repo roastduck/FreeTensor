@@ -451,6 +451,18 @@ PBMap moveDimsOutputToInput(T &&map, unsigned first, unsigned n,
     return isl_map_move_dims(PBRefTake<T>(map), isl_dim_in, target, isl_dim_out,
                              first, n);
 }
+template <PBMapRef T>
+PBMap moveDimsInputToParam(T &&map, unsigned first, unsigned n,
+                           unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_param, target,
+                             isl_dim_in, first, n);
+}
+template <PBMapRef T>
+PBMap moveDimsOutputToParam(T &&map, unsigned first, unsigned n,
+                            unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_param, target,
+                             isl_dim_out, first, n);
+}
 
 template <PBSetRef T> PBSet complement(T &&set) {
     DEBUG_PROFILE("complement");
@@ -720,6 +732,9 @@ class PBBuildExpr {
 
     friend PBBuildExpr ceilDiv(const PBBuildExpr &a, const PBBuildExpr &b) {
         return PBBuildExpr("ceil(" + a.expr_ + " / " + b.expr_ + ")");
+    }
+    friend PBBuildExpr floorDiv(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("floor(" + a.expr_ + " / " + b.expr_ + ")");
     }
 
     friend PBBuildExpr operator%(const PBBuildExpr &a, const PBBuildExpr &b) {
