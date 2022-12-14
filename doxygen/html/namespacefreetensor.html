@@ -1664,6 +1664,12 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:a6449d19c43f08cd504895cf9b324d4b9"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:a6449d19c43f08cd504895cf9b324d4b9"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6449d19c43f08cd504895cf9b324d4b9">moveDimsOutputToInput</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
 <tr class="separator:a6449d19c43f08cd504895cf9b324d4b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0889e914685f3130c3b71061e8c1b239"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a0889e914685f3130c3b71061e8c1b239"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0889e914685f3130c3b71061e8c1b239">moveDimsInputToParam</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
+<tr class="separator:a0889e914685f3130c3b71061e8c1b239"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50f0e146c8ef2898541661b5a713efea"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a50f0e146c8ef2898541661b5a713efea"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a50f0e146c8ef2898541661b5a713efea">moveDimsOutputToParam</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
+<tr class="separator:a50f0e146c8ef2898541661b5a713efea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8625ab55342e821c0620e7621eb824e4"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
 <tr class="memitem:a8625ab55342e821c0620e7621eb824e4"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8625ab55342e821c0620e7621eb824e4">complement</a> (T &amp;&amp;set)</td></tr>
 <tr class="separator:a8625ab55342e821c0620e7621eb824e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -12463,6 +12469,48 @@ template&lt;PBMapRef T&gt; </div>
 
 </div>
 </div>
+<a id="a0889e914685f3130c3b71061e8c1b239" name="a0889e914685f3130c3b71061e8c1b239"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0889e914685f3130c3b71061e8c1b239">&#9670;&nbsp;</a></span>moveDimsInputToParam()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::moveDimsInputToParam </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>map</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>first</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>n</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>target</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a6449d19c43f08cd504895cf9b324d4b9" name="a6449d19c43f08cd504895cf9b324d4b9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6449d19c43f08cd504895cf9b324d4b9">&#9670;&nbsp;</a></span>moveDimsOutputToInput()</h2>
 
@@ -12473,6 +12521,48 @@ template&lt;PBMapRef T&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::moveDimsOutputToInput </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>map</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>first</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>n</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>target</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a50f0e146c8ef2898541661b5a713efea" name="a50f0e146c8ef2898541661b5a713efea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a50f0e146c8ef2898541661b5a713efea">&#9670;&nbsp;</a></span>moveDimsOutputToParam()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::moveDimsOutputToParam </td>
           <td>(</td>
           <td class="paramtype">T &amp;&amp;&#160;</td>
           <td class="paramname"><em>map</em>, </td>

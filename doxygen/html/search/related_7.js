@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['ref_0',['Ref',['../classfreetensor_1_1Ref.html#aed701787ab4897bc9a5cdc70f97c3292',1,'freetensor::Ref::Ref()'],['../classfreetensor_1_1EnableSelf.html#aed701787ab4897bc9a5cdc70f97c3292',1,'freetensor::EnableSelf::Ref()']]]
+  ['pbbuilder_0',['PBBuilder',['../classfreetensor_1_1PBBuildExpr.html#acc0117d0c49d7c289b15cb60a13a0280',1,'freetensor::PBBuildExpr']]]
 ];

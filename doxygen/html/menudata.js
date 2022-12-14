@@ -191,6 +191,7 @@ var menudata={children:[
 {text:"a",url:"functions_rela.html#index_a"},
 {text:"c",url:"functions_rela.html#index_c"},
 {text:"e",url:"functions_rela.html#index_e"},
+{text:"f",url:"functions_rela.html#index_f"},
 {text:"m",url:"functions_rela.html#index_m"},
 {text:"o",url:"functions_rela.html#index_o"},
 {text:"p",url:"functions_rela.html#index_p"},
