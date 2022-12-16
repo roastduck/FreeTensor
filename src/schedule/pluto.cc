@@ -37,6 +37,24 @@ PBBuildExpr nonZeroConstraint(const std::vector<PBBuildExpr> &vars,
     return ret && delta >= 0 && delta <= 1;
 }
 
+PBBuildExpr ctlValConstraint(PBBuildExpr c, PBBuildExpr v, PBBuildExpr ctl,
+                             int varBound = 8) {
+    // rule:
+    // ctl = 0 -> c = 0 and 1 <= v <= varBound
+    // ctl = 1 -> c = v and 1 <= v <= varBound
+    return c - v - varBound * ctl + varBound >= 0 && c - v - ctl + 1 <= 0 &&
+           -c + varBound * ctl >= 0 && -c + ctl <= 0;
+}
+
+PBBuildExpr absConstraint(PBBuildExpr x, PBBuildExpr abs, PBBuildExpr ctl,
+                          int varBound = 8) {
+    // rule:
+    // ctl = 0 -> abs = x and 0 <= x <= varBound
+    // ctl = 1 -> abs = -x and -varBound <= x <= 1
+    return x + abs + 2 * varBound * ctl - 2 * varBound <= 0 && x + abs >= 0 &&
+           x - abs + 2 * varBound * ctl >= 0 && x - abs + 2 * ctl <= 0;
+}
+
 std::vector<std::vector<int>>
 orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
     // sanity check
@@ -667,17 +685,22 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     auto delta0 = builder.newOutput("d0");
     auto delta0L = builder.newOutput("d0l");
     // 2.2. reversed coefficients of loop 0 iterations
-    //      they are reversed because we want to select outer loops
-    //      earlier, preserving the original loop order
-    PBBuildExpr absSum0 = 0;
+    //      they are reversed because we want to select outer loops earlier,
+    //      preserving the original loop order; also, only one axis should
+    //      involve (prevent any skewness!)
+    // the shared abstract value for all loop 0 iter coefficients
+    auto c0IterVal = builder.newOutput("c0i_val");
+    PBBuildExpr sumNnzCtl = 0;
     for (int i = nestLevel0 - 1; i >= 0; --i) {
+        auto nnzCtl = builder.newOutput("nnz_ctl_c0i" + toString(i));
+        auto negCtl = builder.newOutput("neg_ctl_c0i" + toString(i));
         auto abs = builder.newOutput("abs_c0i" + toString(i));
-        builder.addConstraint(abs >= c0Iters[i] && abs >= -c0Iters[i]);
         builder.addOutput(c0Iters[i]);
-        absSum0 += min(abs, 1);
+        builder.addConstraint(ctlValConstraint(abs, c0IterVal, nnzCtl));
+        builder.addConstraint(absConstraint(c0Iters[i], abs, negCtl));
+        sumNnzCtl += nnzCtl;
     }
-    //      ... and only one axis should involve (prevent any skewness!)
-    builder.addConstraint(absSum0 == 1);
+    builder.addConstraint(sumNnzCtl == 1);
     // 2.3. coefficients of loop 0 params and constant
     for (int i = 0; i < nParams + 1; ++i) {
         auto abs = builder.newOutput("abs_c0p" + toString(i));
@@ -688,14 +711,18 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     auto delta1 = builder.newOutput("d1");
     auto delta1L = builder.newOutput("d1l");
     // 3.2. reversed coefficients of loop 1 iterations
-    PBBuildExpr absSum1 = 0;
+    auto c1IterVal = builder.newOutput("c1i_val");
+    sumNnzCtl = 0;
     for (int i = nestLevel1 - 1; i >= 0; --i) {
+        auto nnzCtl = builder.newOutput("nnz_ctl_c1i" + toString(i));
+        auto negCtl = builder.newOutput("neg_ctl_c1i" + toString(i));
         auto abs = builder.newOutput("abs_c1i" + toString(i));
-        builder.addConstraint(abs >= c1Iters[i] && abs >= -c1Iters[i]);
         builder.addOutput(c1Iters[i]);
-        absSum1 += min(abs, 1);
+        builder.addConstraint(ctlValConstraint(abs, c1IterVal, nnzCtl));
+        builder.addConstraint(absConstraint(c1Iters[i], abs, negCtl));
+        sumNnzCtl += nnzCtl;
     }
-    builder.addConstraint(absSum1 == 1);
+    builder.addConstraint(sumNnzCtl == 1);
     // 3.3. coefficients of loop 1 params and constant
     for (int i = 0; i < nParams + 1; ++i) {
         auto abs = builder.newOutput("abs_c1p" + toString(i));
@@ -781,6 +808,11 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         }
         auto orthoSet = orthoSetBuilder.build(ctx);
         orthoSetBuilder.clearConstraints();
+
+        std::cout << "problem = " << problem << std::endl;
+        std::cout << "optimizeMap = " << optimizeMap << std::endl;
+        std::cout << "optimizeProblem = " << apply(problem, optimizeMap)
+                  << std::endl;
 
         // map the coefficients to optimize targets, and perform optimization
         auto solution = apply(
