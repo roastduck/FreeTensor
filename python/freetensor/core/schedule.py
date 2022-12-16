@@ -763,6 +763,7 @@ class Schedule(ffi.Schedule):
                    loop1,
                    nest_level_0=0,
                    nest_level_1=0,
+                   fusable_overlap_threshold=1,
                    do_simplify=True):
         """
         Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable
@@ -783,6 +784,9 @@ class Schedule(ffi.Schedule):
         nest_level_1 : int
             The number of nesting levels of loop 1 to be considered, defaults to maximum
             possible
+        fusableOverlapThreshold : int
+            The minimum overlapping size of two loops to be regarded fusable. Defaults
+            to 1
         do_simplify : bool
             Whether the result is simplified by the way, defaults to true
 
@@ -797,7 +801,8 @@ class Schedule(ffi.Schedule):
             if the loops are not consequent
         """
         return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1),
-                                  nest_level_0, nest_level_1, do_simplify)
+                                  nest_level_0, nest_level_1,
+                                  fusable_overlap_threshold, do_simplify)
 
     def pluto_permute(self, loop, nest_level=0, do_simplify=True):
         """

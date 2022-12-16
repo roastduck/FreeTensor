@@ -319,7 +319,7 @@ struct PlutoFuse : public Mutator {
 
 std::pair<Stmt, std::pair<ID, int>>
 plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
-              int _nestLevel1, bool doSimplify) {
+              int _nestLevel1, int fusableOverlapThreshold, bool doSimplify) {
     bool hoisted = false;
     // try with vardef hoisted only if they are not at the same level
     if (findStmt(ast, loop0Id)->parent() != findStmt(ast, loop1Id)->parent()) {
@@ -674,7 +674,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         auto abs = builder.newOutput("abs_c0i" + toString(i));
         builder.addConstraint(abs >= c0Iters[i] && abs >= -c0Iters[i]);
         builder.addOutput(c0Iters[i]);
-        absSum0 += abs;
+        absSum0 += min(abs, 1);
     }
     //      ... and only one axis should involve (prevent any skewness!)
     builder.addConstraint(absSum0 == 1);
@@ -693,7 +693,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         auto abs = builder.newOutput("abs_c1i" + toString(i));
         builder.addConstraint(abs >= c1Iters[i] && abs >= -c1Iters[i]);
         builder.addOutput(c1Iters[i]);
-        absSum1 += abs;
+        absSum1 += min(abs, 1);
     }
     builder.addConstraint(absSum1 == 1);
     // 3.3. coefficients of loop 1 params and constant
@@ -830,15 +830,17 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             return apply(loopSet, builder.build(ctx));
         };
         auto loop0Range = loopSetToRange(loop0Set, nParams + 1, nestLevel0);
-        PBSet loop1Range = loopSetToRange(
+        auto loop1Range = loopSetToRange(
             loop1Set, (nParams + 1) * 2 + nestLevel0, nestLevel1);
+        auto overlap = fixDim(universeSet(PBSpace(loop1Range)), 0,
+                              fusableOverlapThreshold);
         // if the two loops has no overlap on the result axis, they are not
         // actually fused so we bail out
         if (intersect(
-                // range of values that less than the maximum of loop 0
-                apply(lexmax(loop0Range), lexGT(spaceSetAlloc(ctx, 0, 1))),
-                // ... and from loop 1
-                loop1Range)
+                // range of loop 0
+                loop0Range,
+                // ... and range of loop 1 added with the overlap threshold
+                sum(loop1Range, overlap))
                 // ... don't overlap
                 .empty())
             break;
@@ -861,6 +863,10 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             optimized.begin() + (nParams + 1) * 3 + nestLevel0 + nestLevel1,
         });
     }
+
+    // if nothing fusable, fail fast
+    if (fusedLevel == 0)
+        throw InvalidSchedule("No fusable dimension found by Pluto+.");
 
     ASSERT(c0ParamValue.size() == unsigned(fusedLevel));
     ASSERT(c0IterValue.size() == unsigned(fusedLevel));
@@ -900,7 +906,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     ast = fuser(ast);
     ast = shrinkFor(ast, findStmt(ast, fuser.fusedId_), false);
     if (doSimplify)
-        ast = simplify(ast);
+        ast = pbSimplify(ast);
     if (hoisted)
         ast = sinkVar(ast);
 
@@ -943,12 +949,11 @@ class InjectEmptyLoop : public Mutator {
 
 } // namespace
 
-std::pair<Stmt, std::pair<ID, int>> plutoFuse(const Stmt &ast,
-                                              const ID &loop0Id,
-                                              const ID &loop1Id, int nestLevel0,
-                                              int nestLevel1, bool doSimplify) {
+std::pair<Stmt, std::pair<ID, int>>
+plutoFuse(const Stmt &ast, const ID &loop0Id, const ID &loop1Id, int nestLevel0,
+          int nestLevel1, int fusableOverlapThreshold, bool doSimplify) {
     return plutoFuseImpl(flattenStmtSeq(ast), loop0Id, loop1Id, nestLevel0,
-                         nestLevel1, doSimplify);
+                         nestLevel1, fusableOverlapThreshold, doSimplify);
 }
 
 std::pair<Stmt, std::pair<ID, int>>
@@ -956,16 +961,17 @@ plutoPermute(const Stmt &_ast, const ID &loop, int nestLevel, bool doSimplify) {
     InjectEmptyLoop injecter(loop);
     auto ast = injecter(_ast);
     return plutoFuseImpl(ast, injecter.emptyLoopId(), loop, nestLevel,
-                         nestLevel, doSimplify);
+                         nestLevel, 1, doSimplify);
 }
 
 std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1,
                                        int nestLevel0, int nestLevel1,
+                                       int fusableOverlapThreshold,
                                        bool doSimplify) {
     beginTransaction();
-    auto log =
-        appendLog(MAKE_SCHEDULE_LOG(PlutoFuse, freetensor::plutoFuse, loop0,
-                                    loop1, nestLevel0, nestLevel1, doSimplify));
+    auto log = appendLog(MAKE_SCHEDULE_LOG(
+        PlutoFuse, freetensor::plutoFuse, loop0, loop1, nestLevel0, nestLevel1,
+        fusableOverlapThreshold, doSimplify));
     try {
         auto ret = applyLog(log);
         commitTransaction();
