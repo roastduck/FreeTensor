@@ -809,11 +809,6 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         auto orthoSet = orthoSetBuilder.build(ctx);
         orthoSetBuilder.clearConstraints();
 
-        std::cout << "problem = " << problem << std::endl;
-        std::cout << "optimizeMap = " << optimizeMap << std::endl;
-        std::cout << "optimizeProblem = " << apply(problem, optimizeMap)
-                  << std::endl;
-
         // map the coefficients to optimize targets, and perform optimization
         auto solution = apply(
             lexmin(intersect(std::move(orthoSet), apply(problem, optimizeMap))),
