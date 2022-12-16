@@ -681,64 +681,50 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         builder.addOutput(cBounds[i]);
     }
     builder.addOutput(cBounds[nParams]);
-    // 2.1. binary decision variable for avoiding zeros
-    auto delta0 = builder.newOutput("d0");
-    auto delta0L = builder.newOutput("d0l");
-    // 2.2. reversed coefficients of loop 0 iterations
+    // 2.1. reversed coefficients of loop 0 iterations
     //      they are reversed because we want to select outer loops earlier,
     //      preserving the original loop order; also, only one axis should
     //      involve (prevent any skewness!)
     // the shared abstract value for all loop 0 iter coefficients
     auto c0IterVal = builder.newOutput("c0i_val");
     PBBuildExpr sumNnzCtl = 0;
+    std::vector<PBBuildExpr> nnzCtl0(nestLevel0, PBBuildExpr());
     for (int i = nestLevel0 - 1; i >= 0; --i) {
-        auto nnzCtl = builder.newOutput("nnz_ctl_c0i" + toString(i));
+        nnzCtl0[i] = builder.newOutput("nnz_ctl_c0i" + toString(i));
         auto negCtl = builder.newOutput("neg_ctl_c0i" + toString(i));
         auto abs = builder.newOutput("abs_c0i" + toString(i));
         builder.addOutput(c0Iters[i]);
-        builder.addConstraint(ctlValConstraint(abs, c0IterVal, nnzCtl));
+        builder.addConstraint(ctlValConstraint(abs, c0IterVal, nnzCtl0[i]));
         builder.addConstraint(absConstraint(c0Iters[i], abs, negCtl));
-        sumNnzCtl += nnzCtl;
+        sumNnzCtl += nnzCtl0[i];
     }
     builder.addConstraint(sumNnzCtl == 1);
-    // 2.3. coefficients of loop 0 params and constant
+    // 2.2. coefficients of loop 0 params and constant
     for (int i = 0; i < nParams + 1; ++i) {
         auto abs = builder.newOutput("abs_c0p" + toString(i));
         builder.addConstraint(abs >= c0Params[i] && abs >= -c0Params[i]);
         builder.addOutput(c0Params[i]);
     }
-    // 3.1. binary decision variable for avoiding zeros
-    auto delta1 = builder.newOutput("d1");
-    auto delta1L = builder.newOutput("d1l");
-    // 3.2. reversed coefficients of loop 1 iterations
+    // 3.1. reversed coefficients of loop 1 iterations
     auto c1IterVal = builder.newOutput("c1i_val");
     sumNnzCtl = 0;
+    std::vector<PBBuildExpr> nnzCtl1(nestLevel1, PBBuildExpr());
     for (int i = nestLevel1 - 1; i >= 0; --i) {
-        auto nnzCtl = builder.newOutput("nnz_ctl_c1i" + toString(i));
+        nnzCtl1[i] = builder.newOutput("nnz_ctl_c1i" + toString(i));
         auto negCtl = builder.newOutput("neg_ctl_c1i" + toString(i));
         auto abs = builder.newOutput("abs_c1i" + toString(i));
         builder.addOutput(c1Iters[i]);
-        builder.addConstraint(ctlValConstraint(abs, c1IterVal, nnzCtl));
+        builder.addConstraint(ctlValConstraint(abs, c1IterVal, nnzCtl1[i]));
         builder.addConstraint(absConstraint(c1Iters[i], abs, negCtl));
-        sumNnzCtl += nnzCtl;
+        sumNnzCtl += nnzCtl1[i];
     }
     builder.addConstraint(sumNnzCtl == 1);
-    // 3.3. coefficients of loop 1 params and constant
+    // 3.2. coefficients of loop 1 params and constant
     for (int i = 0; i < nParams + 1; ++i) {
         auto abs = builder.newOutput("abs_c1p" + toString(i));
         builder.addConstraint(abs >= c1Params[i] && abs >= -c1Params[i]);
         builder.addOutput(c1Params[i]);
     }
-
-    // the constraints on one loop
-    builder.addConstraints({
-        nonZeroConstraint(c0Iters, delta0),
-        delta0L >= 0,
-        delta0L <= 1,
-        nonZeroConstraint(c1Iters, delta1),
-        delta1L >= 0,
-        delta1L <= 1,
-    });
 
     auto optimizeMap = builder.build(ctx);
     auto revOptimizeMap = reverse(optimizeMap);
@@ -787,24 +773,22 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                 ctx, 0, (nParams + 1) * 3 + nestLevel0 + nestLevel1));
 
         // construct orthogonal constraints
-        auto orthoConstraint = [&](const auto &cIterValue, const auto &cIters,
-                                   const auto &deltaL) {
-            auto ortho = orthogonalMatrix(cIterValue);
-            std::vector<PBBuildExpr> orthoDots;
-            orthoDots.reserve(ortho.size());
-            for (auto &&o : ortho) {
-                orthoDots.emplace_back(0);
-                ASSERT(o.size() == cIters.size());
-                for (size_t i = 0; i < cIters.size(); ++i)
-                    orthoDots.back() += o[i] * cIters[i];
+        auto orthoConstraint = [&](const auto &cIterValue, const auto &nnzCtl) {
+            PBBuildExpr ret = true;
+            for (auto &&cIterAxis : cIterValue) {
+                for (auto &&[i, val] : views::enumerate(cIterAxis))
+                    if (val != 0) {
+                        ret = ret && nnzCtl[i] == 0;
+                        break;
+                    }
             }
-            return nonZeroConstraint(orthoDots, deltaL);
+            return ret;
         };
         if (fusedLevel > 0) {
             orthoSetBuilder.addConstraint(
-                orthoConstraint(c0IterValue, c0Iters, delta0L));
+                orthoConstraint(c0IterValue, nnzCtl0));
             orthoSetBuilder.addConstraint(
-                orthoConstraint(c1IterValue, c1Iters, delta1L));
+                orthoConstraint(c1IterValue, nnzCtl1));
         }
         auto orthoSet = orthoSetBuilder.build(ctx);
         orthoSetBuilder.clearConstraints();

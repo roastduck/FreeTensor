@@ -715,6 +715,7 @@ class PBBuildExpr {
     friend class PBBuilder;
 
   public:
+    PBBuildExpr() = default;
     PBBuildExpr(const PBBuildExpr &) = default;
     PBBuildExpr(PBBuildExpr &&) = default;
     PBBuildExpr &operator=(const PBBuildExpr &) = default;
