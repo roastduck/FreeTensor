@@ -1712,6 +1712,18 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:a30f47d28e631e07b3df5991bed3f0baa"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T, PBMapRef U&gt; </td></tr>
 <tr class="memitem:a30f47d28e631e07b3df5991bed3f0baa"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a30f47d28e631e07b3df5991bed3f0baa">applyRange</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
 <tr class="separator:a30f47d28e631e07b3df5991bed3f0baa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c9ed402d06313ae47881e5da1a4987c"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T, PBMapRef U&gt; </td></tr>
+<tr class="memitem:a0c9ed402d06313ae47881e5da1a4987c"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0c9ed402d06313ae47881e5da1a4987c">sum</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:a0c9ed402d06313ae47881e5da1a4987c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add4664574b538934f2e9798de5f2d80d"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T, PBSetRef U&gt; </td></tr>
+<tr class="memitem:add4664574b538934f2e9798de5f2d80d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#add4664574b538934f2e9798de5f2d80d">sum</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:add4664574b538934f2e9798de5f2d80d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fc2d057143ed9369b7824fdbdac932d"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a9fc2d057143ed9369b7824fdbdac932d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9fc2d057143ed9369b7824fdbdac932d">neg</a> (T &amp;&amp;lhs)</td></tr>
+<tr class="separator:a9fc2d057143ed9369b7824fdbdac932d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a67ba53dd12442c3dbdf77ce7474657db"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:a67ba53dd12442c3dbdf77ce7474657db"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a67ba53dd12442c3dbdf77ce7474657db">neg</a> (T &amp;&amp;lhs)</td></tr>
+<tr class="separator:a67ba53dd12442c3dbdf77ce7474657db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9d5c219de5dd8f06c21fbb3a8202c46b"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:a9d5c219de5dd8f06c21fbb3a8202c46b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9d5c219de5dd8f06c21fbb3a8202c46b">lexmax</a> (T &amp;&amp;map)</td></tr>
 <tr class="separator:a9d5c219de5dd8f06c21fbb3a8202c46b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1952,8 +1964,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:a3f82a2ccf2f6b44322fb09ae50bf88d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9b570067aa5abf04a28cd49e59b1079a"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9b570067aa5abf04a28cd49e59b1079a">permute</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;loopsId, const std::function&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;(std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;)&gt; &amp;transformFunc)</td></tr>
 <tr class="separator:a9b570067aa5abf04a28cd49e59b1079a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abd381514947e3d93380ac6700652d3c6"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#abd381514947e3d93380ac6700652d3c6">plutoFuse</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop0, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1, int nestLevel0, int nestLevel1, bool doSimplify=true)</td></tr>
-<tr class="separator:abd381514947e3d93380ac6700652d3c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab22463e2fa64c4657d88187bf7a51919"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab22463e2fa64c4657d88187bf7a51919">plutoFuse</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop0, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1, int nestLevel0, int nestLevel1, int fusableOverlapThreshold, bool doSimplify=true)</td></tr>
+<tr class="separator:ab22463e2fa64c4657d88187bf7a51919"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac7a91123e2aed63075666834d4204366"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac7a91123e2aed63075666834d4204366">plutoPermute</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, int nestLevel, bool doSimplify=true)</td></tr>
 <tr class="separator:ac7a91123e2aed63075666834d4204366"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac95a1c68f35ad6583776c9c563c227d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac95a1c68f35ad6583776c9c563c227d0">reorder</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;order)</td></tr>
@@ -12823,6 +12835,46 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
+<a id="a9fc2d057143ed9369b7824fdbdac932d" name="a9fc2d057143ed9369b7824fdbdac932d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9fc2d057143ed9369b7824fdbdac932d">&#9670;&nbsp;</a></span>neg() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::neg </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>lhs</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a67ba53dd12442c3dbdf77ce7474657db" name="a67ba53dd12442c3dbdf77ce7474657db"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a67ba53dd12442c3dbdf77ce7474657db">&#9670;&nbsp;</a></span>neg() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBSetRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> freetensor::neg </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>lhs</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ae1036cce4c80376191e917093111bffe" name="ae1036cce4c80376191e917093111bffe"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae1036cce4c80376191e917093111bffe">&#9670;&nbsp;</a></span>neutralVal()</h2>
 
@@ -14500,8 +14552,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="abd381514947e3d93380ac6700652d3c6" name="abd381514947e3d93380ac6700652d3c6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abd381514947e3d93380ac6700652d3c6">&#9670;&nbsp;</a></span>plutoFuse()</h2>
+<a id="ab22463e2fa64c4657d88187bf7a51919" name="ab22463e2fa64c4657d88187bf7a51919"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab22463e2fa64c4657d88187bf7a51919">&#9670;&nbsp;</a></span>plutoFuse()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14535,6 +14587,12 @@ template&lt;typename T &gt; </div>
           <td></td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>nestLevel1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>fusableOverlapThreshold</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -15943,6 +16001,66 @@ template&lt;PBSetRef T, PBSetRef U&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> freetensor::subtract </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">U &amp;&amp;&#160;</td>
+          <td class="paramname"><em>rhs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0c9ed402d06313ae47881e5da1a4987c" name="a0c9ed402d06313ae47881e5da1a4987c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c9ed402d06313ae47881e5da1a4987c">&#9670;&nbsp;</a></span>sum() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T, PBMapRef U&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::sum </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">U &amp;&amp;&#160;</td>
+          <td class="paramname"><em>rhs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="add4664574b538934f2e9798de5f2d80d" name="add4664574b538934f2e9798de5f2d80d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#add4664574b538934f2e9798de5f2d80d">&#9670;&nbsp;</a></span>sum() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBSetRef T, PBSetRef U&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> freetensor::sum </td>
           <td>(</td>
           <td class="paramtype">T &amp;&amp;&#160;</td>
           <td class="paramname"><em>lhs</em>, </td>

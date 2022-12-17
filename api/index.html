@@ -10503,6 +10503,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
                    <span class="n">loop1</span><span class="p">,</span>
                    <span class="n">nest_level_0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                    <span class="n">nest_level_1</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                   <span class="n">fusable_overlap_threshold</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                    <span class="n">do_simplify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable</span>
@@ -10523,6 +10524,9 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">        nest_level_1 : int</span>
 <span class="sd">            The number of nesting levels of loop 1 to be considered, defaults to maximum</span>
 <span class="sd">            possible</span>
+<span class="sd">        fusableOverlapThreshold : int</span>
+<span class="sd">            The minimum overlapping size of two loops to be regarded fusable. Defaults</span>
+<span class="sd">            to 1</span>
 <span class="sd">        do_simplify : bool</span>
 <span class="sd">            Whether the result is simplified by the way, defaults to true</span>
 
@@ -10537,7 +10541,8 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">            if the loops are not consequent</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop1</span><span class="p">),</span>
-                                  <span class="n">nest_level_0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="p">,</span> <span class="n">do_simplify</span><span class="p">)</span>
+                                  <span class="n">nest_level_0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="p">,</span>
+                                  <span class="n">fusable_overlap_threshold</span><span class="p">,</span> <span class="n">do_simplify</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">pluto_permute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">nest_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">do_simplify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -12261,7 +12266,7 @@ terms returned by <code>transformFunc</code> when called with original iteration
 
 
 <h5 id="freetensor.core.schedule.Schedule.pluto_fuse" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop0</span><span class="p">,</span> <span class="n">loop1</span><span class="p">,</span> <span class="n">nest_level_0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">do_simplify</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop0</span><span class="p">,</span> <span class="n">loop1</span><span class="p">,</span> <span class="n">nest_level_0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">fusable_overlap_threshold</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">do_simplify</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.schedule.Schedule.pluto_fuse" class="headerlink" title="Permanent link">&para;</a></h5>
@@ -12290,6 +12295,8 @@ left inside the fused loops as two statements</p>
 possible</p></li>
             <li><p><strong>nest_level_1</strong> (<code>int</code>) – The number of nesting levels of loop 1 to be considered, defaults to maximum
 possible</p></li>
+            <li><p><strong>fusableOverlapThreshold</strong> (<code>int</code>) – The minimum overlapping size of two loops to be regarded fusable. Defaults
+to 1</p></li>
             <li><p><strong>do_simplify</strong> (<code>bool</code>) – Whether the result is simplified by the way, defaults to true</p></li>
         </ul>
       </td>
@@ -12335,6 +12342,7 @@ possible</p></li>
                <span class="n">loop1</span><span class="p">,</span>
                <span class="n">nest_level_0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                <span class="n">nest_level_1</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+               <span class="n">fusable_overlap_threshold</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                <span class="n">do_simplify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable</span>
@@ -12355,6 +12363,9 @@ possible</p></li>
 <span class="sd">    nest_level_1 : int</span>
 <span class="sd">        The number of nesting levels of loop 1 to be considered, defaults to maximum</span>
 <span class="sd">        possible</span>
+<span class="sd">    fusableOverlapThreshold : int</span>
+<span class="sd">        The minimum overlapping size of two loops to be regarded fusable. Defaults</span>
+<span class="sd">        to 1</span>
 <span class="sd">    do_simplify : bool</span>
 <span class="sd">        Whether the result is simplified by the way, defaults to true</span>
 
@@ -12369,7 +12380,8 @@ possible</p></li>
 <span class="sd">        if the loops are not consequent</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pluto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">loop1</span><span class="p">),</span>
-                              <span class="n">nest_level_0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="p">,</span> <span class="n">do_simplify</span><span class="p">)</span>
+                              <span class="n">nest_level_0</span><span class="p">,</span> <span class="n">nest_level_1</span><span class="p">,</span>
+                              <span class="n">fusable_overlap_threshold</span><span class="p">,</span> <span class="n">do_simplify</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
