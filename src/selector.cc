@@ -153,7 +153,7 @@ Ref<Selector> parseSelector(const std::string &str) {
         antlr4::CommonTokenStream tokens(&lexer);
         selector_parser parser(&tokens);
         parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
-        return parser.selector()->s;
+        return parser.all()->s;
     } catch (const antlr4::ParseCancellationException &e) {
         throw ParserError((std::string) "Parser error: " + e.what());
     }
