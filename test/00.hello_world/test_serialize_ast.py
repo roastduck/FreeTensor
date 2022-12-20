@@ -210,7 +210,7 @@ def test_assert():
     assert ast2.match(ast)
 
 
-def test_id():
+def test_label():
     with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
         ft.MarkLabel("foo")
         x[2, 3] = 2.0
@@ -225,7 +225,7 @@ def test_id():
     assert s.find("foo").type() == ft.ASTNodeType.Store
 
 
-def test_id_of_stmt_seq():
+def test_label_of_stmt_seq():
     with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
         with ft.NamedScope("foo"):
             x[2, 3] = 2.0
@@ -264,21 +264,6 @@ def test_complex_name():
     ast2 = ft.load_ast(txt)
     print(ast2)
     assert ast2.match(ast)
-
-
-def test_complex_id():
-    with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
-        ft.MarkLabel("id!@#$%^&*")
-        x[2, 3] = 2.0
-        x[1, 0] = 3.0
-    ast = ft.pop_ast()
-    txt = ft.dump_ast(ast)
-    print(txt)
-    ast2 = ft.load_ast(txt)
-    print(ast2)
-    assert ast2.match(ast)
-    s = ft.Schedule(ast2)
-    assert s.find("id!@#$%^&*").type() == ft.ASTNodeType.Store
 
 
 def test_var_name_be_same_with_builtin():
