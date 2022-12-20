@@ -10,6 +10,7 @@ from freetensor_ffi import scalar_prop_const
 from freetensor_ffi import tensor_prop_const
 from freetensor_ffi import prop_one_time_use
 from freetensor_ffi import simplify
+from freetensor_ffi import pb_simplify
 from freetensor_ffi import z3_simplify
 from freetensor_ffi import sink_var
 from freetensor_ffi import shrink_var
@@ -20,7 +21,6 @@ from freetensor_ffi import make_parallel_reduction
 from freetensor_ffi import remove_writes
 from freetensor_ffi import remove_dead_var
 from freetensor_ffi import make_heap_alloc
-from freetensor_ffi import make_const_shape
 from freetensor_ffi import use_builtin_div
 from freetensor_ffi import hoist_var_over_stmt_seq
 from freetensor_ffi import flatten_stmt_seq
@@ -32,6 +32,7 @@ if config.with_cuda():
     from freetensor_ffi import gpu_multiplex_buffers
     from freetensor_ffi import gpu_simplex_buffers
     from freetensor_ffi import gpu_normalize_threads
+    from freetensor_ffi import gpu_normalize_var_in_kernel
     from freetensor_ffi import gpu_lower_vector
 
 

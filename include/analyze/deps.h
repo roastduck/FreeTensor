@@ -85,6 +85,21 @@ inline int countBandNodeWidth(const Stmt &op) {
     return visitor.width();
 }
 
+class ClearUnusedScopes : public Visitor {
+    std::unordered_map<ID, std::vector<IterAxis>> &scope2coord_;
+
+  public:
+    ClearUnusedScopes(
+        std::unordered_map<ID, std::vector<IterAxis>> &scope2coord)
+        : scope2coord_(scope2coord) {}
+
+  protected:
+    void visitStmt(const Stmt &stmt) override {
+        Visitor::visitStmt(stmt);
+        scope2coord_.erase(stmt->id());
+    }
+};
+
 typedef std::function<bool(const AccessPoint &)> FindDepsAccFilter;
 typedef std::function<bool(const AccessPoint &later,
                            const AccessPoint &earlier)>
@@ -96,27 +111,33 @@ typedef std::function<bool(const AccessPoint &later,
 class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     typedef SymbolTable<TrackStmt<Visitor>> BaseClass;
 
+    ID vardef_;
+
     const FindDepsAccFilter &accFilter_;
 
-    bool lastIsLoad_ = false;
+    bool lastIsLoad_ =
+        false; // True to indicate the last statement is a Load. If the next
+               // statement is still a Load, they can share the same coordinate
     std::vector<IterAxis> cur_; // Current iteration point in the space
     std::vector<std::pair<Expr, ID>>
         conds_; // FIXME: There may be out-dated conditions, and we must check
                 // allReads(cond) against allWrites(body) for each If or For
                 // nodes. See pass/simplify. If the condition violates, we may
                 // need to push a null condition according to RelaxMode
-    std::unordered_map<ID, std::vector<Ref<AccessPoint>>> reads_, writes_;
-    std::vector<VarDef> allDefs_;
+    std::vector<Ref<AccessPoint>> reads_, writes_;
 
     // For or StmtSeq -> coordinate in space
     std::unordered_map<ID, std::vector<IterAxis>> scope2coord_;
 
-    // Var name -> axis: Which axis is a local var defined
-    std::unordered_map<std::string, int> defAxis_;
+    // Which axis is a the var defined
+    int defAxis_ = -1;
 
     // For negative steps, replace iter with -neg_iter
     std::unordered_map<std::string, Expr> replaceIter_;
     std::unordered_map<StmtOrExprID, Expr> replaceIterLog_;
+
+    std::unordered_set<Stmt> subTreeFilteredIn_; // Set of sub-trees that have
+                                                 // any statement filtered in
 
   private:
     void pushCond(const Expr &cond, const ID &baseStmtId) {
@@ -126,23 +147,14 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     void popCond() { conds_.pop_back(); }
 
   public:
-    FindAccessPoint(const Stmt &root, const FindDepsAccFilter &accFilter);
+    FindAccessPoint(const Stmt &root, const ID &vardef,
+                    const FindDepsAccFilter &accFilter);
 
-    const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads() const {
-        return reads_;
-    }
-    const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &
-    writes() const {
-        return writes_;
-    }
-    const std::vector<VarDef> &allDefs() const { return allDefs_; }
-    const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord() const {
-        return scope2coord_;
-    }
+    const auto &reads() const { return reads_; }
+    const auto &writes() const { return writes_; }
+    const auto &scope2coord() const { return scope2coord_; }
 
-    const std::unordered_map<StmtOrExprID, Expr> replaceIterLog() const {
-        return replaceIterLog_;
-    }
+    const auto &replaceIterLog() const { return replaceIterLog_; }
 
   private:
     Expr normalizeExpr(const Expr &expr, const ID &baseStmtId);
@@ -152,6 +164,26 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     template <class T> void visitStoreLike(const T &op) {
         BaseClass::visit(op);
 
+        bool isThisVarDef = false;
+        VarDef viewOf;
+        if (def(op->var_)->id() == vardef_) {
+            isThisVarDef = true;
+        } else {
+            for (auto source = def(op->var_); source->viewOf_.has_value();) {
+                source = def(*source->viewOf_);
+                if (source->id() == vardef_) {
+                    isThisVarDef = true;
+                    viewOf = source;
+                    break;
+                }
+            }
+        }
+        if (!isThisVarDef) {
+            return;
+        }
+
+        auto old = cur_;
+        auto oldLastIsLoad = lastIsLoad_;
         if (!cur_.empty() &&
             cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
             // top is band node
@@ -160,42 +192,35 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
         }
         lastIsLoad_ = false;
 
-        auto ap = Ref<AccessPoint>::make();
-        *ap = {op,
-               curStmt(),
-               def(op->var_),
-               buffer(op->var_),
-               defAxis_.at(op->var_),
-               cur_,
-               normalizeExprs(op->indices_, op->id()),
-               conds_};
-        if (accFilter_ == nullptr || accFilter_(*ap)) {
-            auto &&d = def(op->var_);
-            writes_[d->id()].emplace_back(ap);
-
+        std::vector<Expr> exprs;
+        VarDef d;
+        if (viewOf.isValid()) {
             // Simultaneously access of a `VarDef` and the `VarDef` it views is
-            // ALWAYS treated as dependences
-            for (auto source = d; source->viewOf_.has_value();) {
-                source = def(*source->viewOf_);
-                auto ap = Ref<AccessPoint>::make();
-                *ap = {op,
-                       curStmt(),
-                       source,
-                       source->buffer_,
-                       defAxis_.at(source->name_),
-                       cur_,
-                       std::vector<Expr>(
-                           source->buffer_->tensor()->shape().size(),
-                           makeIntrinsic(
-                               "", {}, DataType::Int32,
-                               false)), // Use Intrinsic as "any expression"
-                       conds_};
-                writes_[source->id()].emplace_back(ap);
-            }
+            // ALWAYS treated as dependences. Use Intrinsic as "any expression"
+            exprs = std::vector<Expr>(
+                viewOf->buffer_->tensor()->shape().size(),
+                makeIntrinsic("", {}, DataType::Int32, false));
+            d = viewOf;
+        } else {
+            exprs = normalizeExprs(op->indices_, op->id());
+            d = def(op->var_);
+        }
+
+        auto ap = Ref<AccessPoint>::make();
+        *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
+               cur_, std::move(exprs), conds_};
+        if (accFilter_ == nullptr || accFilter_(*ap)) {
+            subTreeFilteredIn_.insert(op);
+            writes_.emplace_back(ap);
+        } else {
+            // No stepping to make iteration space more compact
+            cur_ = std::move(old);
+            lastIsLoad_ = oldLastIsLoad;
         }
     }
 
   protected:
+    void visitStmt(const Stmt &stmt) override;
     void visit(const VarDef &op) override;
     void visit(const StmtSeq &op) override;
     void visit(const For &op) override;
@@ -227,7 +252,7 @@ typedef std::vector<std::pair<NodeIDOrParallelScope, DepDirection>> FindDepsDir;
 
 class AnalyzeDeps;
 
-struct Dependency {
+struct Dependence {
     const FindDepsDir &dir_; /// Direction vector filtering out this dependence
     const std::string &var_;
     const AccessPoint &later_, &earlier_;
@@ -250,13 +275,13 @@ struct Dependency {
 };
 
 class FindDepsCallback {
-    std::function<void(const Dependency &)> f_;
+    std::function<void(const Dependence &)> f_;
     bool synchronized_;
     mutable std::mutex
         mutex_; // mutable to allow const callback object to lock against
 
-    template <std::invocable<const Dependency &> F>
-    requires requires(F f, const Dependency &d) {
+    template <std::invocable<const Dependence &> F>
+    requires requires(F f, const Dependence &d) {
         { f(d) } -> std::same_as<void>;
     }
     explicit FindDepsCallback(F &&f, bool sync) : f_(f), synchronized_(sync) {}
@@ -265,7 +290,7 @@ class FindDepsCallback {
     friend FindDepsCallback unsyncFunc(auto &&f);
 
   public:
-    void operator()(const Dependency &d) const {
+    void operator()(const Dependence &d) const {
         if (synchronized_) {
             std::lock_guard lg(mutex_);
             f_(d);
@@ -285,7 +310,7 @@ const DepType DEP_ALL = DEP_WAW | DEP_WAR | DEP_RAW;
 
 enum class RelaxMode : int { Possible, Necessary };
 enum class FindDepsMode : int {
-    Dep,         // Dependency may happen between `earlier` and `later`
+    Dep,         // Dependence may happen between `earlier` and `later`
     KillEarlier, // At any point in the space of `earlier`, it is dependent by
                  // `later`
     KillLater,   // At any point in the space of `later`, it is depending on
@@ -294,14 +319,13 @@ enum class FindDepsMode : int {
 };
 
 /**
- * Find RAW, WAR and WAW dependencies
+ * Find RAW, WAR and WAW dependences
  */
 class AnalyzeDeps {
-    friend Dependency;
+    friend Dependence;
 
-    std::unordered_map<ID, std::vector<Ref<AccessPoint>>> readsAsEarlier_,
-        readsAsLater_, writesAsEarlier_, writesAsLater_;
-    const std::vector<VarDef> &allDefs_;
+    std::vector<Ref<AccessPoint>> readsAsEarlier_, readsAsLater_,
+        writesAsEarlier_, writesAsLater_;
     const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord_;
     const std::unordered_map<std::string, std::vector<ID>>
         &noDepsLists_; // Var name -> [loop ID]
@@ -323,9 +347,8 @@ class AnalyzeDeps {
 
   public:
     AnalyzeDeps(
-        const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads,
-        const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &writes,
-        const std::vector<VarDef> &allDefs,
+        const std::vector<Ref<AccessPoint>> &reads,
+        const std::vector<Ref<AccessPoint>> &writes,
         const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord,
         const std::unordered_map<std::string, std::vector<ID>> &noDepsLists,
         const Lazy<LoopVariExprMap> &variantExpr,
@@ -335,10 +358,10 @@ class AnalyzeDeps {
         const FindDepsAccFilter &laterFilter, const FindDepsFilter &filter,
         bool ignoreReductionWAW, bool eraseOutsideVarDef,
         bool noProjectOutPrivateAxis)
-        : allDefs_(allDefs), scope2coord_(scope2coord),
-          noDepsLists_(noDepsLists), variantExpr_(variantExpr),
-          direction_(direction), found_(found), earlierFilter_(earlierFilter),
-          laterFilter_(laterFilter), filter_(filter), mode_(mode),
+        : scope2coord_(scope2coord), noDepsLists_(noDepsLists),
+          variantExpr_(variantExpr), direction_(direction), found_(found),
+          earlierFilter_(earlierFilter), laterFilter_(laterFilter),
+          filter_(filter), mode_(mode),
           earlierRelax_(mode_ == FindDepsMode::KillLater ||
                                 mode_ == FindDepsMode::KillBoth
                             ? RelaxMode::Necessary
@@ -350,26 +373,22 @@ class AnalyzeDeps {
           depType_(depType), ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef),
           noProjectOutPrivateAxis_(noProjectOutPrivateAxis) {
-        for (auto &&[id, list] : reads) {
-            readsAsEarlier_[id] =
-                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
-                    return earlierFilter_ == nullptr || earlierFilter_(*acc);
-                });
-            readsAsLater_[id] =
-                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
-                    return laterFilter_ == nullptr || laterFilter_(*acc);
-                });
-        }
-        for (auto &&[id, list] : writes) {
-            writesAsEarlier_[id] =
-                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
-                    return earlierFilter_ == nullptr || earlierFilter_(*acc);
-                });
-            writesAsLater_[id] =
-                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
-                    return laterFilter_ == nullptr || laterFilter_(*acc);
-                });
-        }
+        readsAsEarlier_ =
+            ::freetensor::filter(reads, [&](const Ref<AccessPoint> &acc) {
+                return earlierFilter_ == nullptr || earlierFilter_(*acc);
+            });
+        readsAsLater_ =
+            ::freetensor::filter(reads, [&](const Ref<AccessPoint> &acc) {
+                return laterFilter_ == nullptr || laterFilter_(*acc);
+            });
+        writesAsEarlier_ =
+            ::freetensor::filter(writes, [&](const Ref<AccessPoint> &acc) {
+                return earlierFilter_ == nullptr || earlierFilter_(*acc);
+            });
+        writesAsLater_ =
+            ::freetensor::filter(writes, [&](const Ref<AccessPoint> &acc) {
+                return laterFilter_ == nullptr || laterFilter_(*acc);
+            });
     }
 
     void genTasks();
@@ -391,7 +410,8 @@ class AnalyzeDeps {
   private:
     PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
                      int accDim, RelaxMode relax, const std::string &extSuffix,
-                     GenPBExpr::VarMap &externals);
+                     GenPBExpr::VarMap &externals,
+                     const ASTHashSet<Expr> &noNeedToBeVars);
 
     PBMap makeEqForBothOps(PBCtx &presburger,
                            const std::vector<std::pair<int, int>> &coord,
@@ -422,7 +442,7 @@ class AnalyzeDeps {
      *   var def a
      *     a[0] = i
      *     ... = a[0]
-     * There will be no dependencies of a[0] across i
+     * There will be no dependences of a[0] across i
      */
     PBMap makeEraseVarDefConstraint(PBCtx &presburger,
                                     const Ref<AccessPoint> &point, int iterDim);
@@ -450,7 +470,7 @@ class AnalyzeDeps {
                                     int iterDim);
 
     /**
-     * If we are analyzing the dependency between A and B, e.g.
+     * If we are analyzing the dependence between A and B, e.g.
      * for i
      *   for j
      *     A
@@ -474,11 +494,11 @@ class AnalyzeDeps {
     static const std::string &getVar(const AST &op);
 
     /**
-     * Check the dependencies between a later memory access `later` and many
+     * Check the dependences between a later memory access `later` and many
      * earlier memory accesses in `earlierList`, filter them via the `filter_`
      * callback, and report then via the `found_` callback. Earlier memory
      * accesses may overwrite each other, and the overwritten ones will not
-     * result in a dependency. Used for RAW and WAW dependencies
+     * result in a dependence. Used for RAW and WAW dependences
      */
     void
     checkDepLatestEarlier(const Ref<AccessPoint> &later,
@@ -488,11 +508,11 @@ class AnalyzeDeps {
                               const std::vector<Ref<AccessPoint>> &earlierList);
 
     /**
-     * Check the dependencies between many later memory access in `laterList`
+     * Check the dependences between many later memory access in `laterList`
      * and a earlier memory accesses `earlier`, filter them via the `filter_`
      * callback, and report then via the `found_` callback. Later memory
      * accesses may overwrite each other, and the overwritten ones will not
-     * result in a dependency. Used for WAR dependencies
+     * result in a dependence. Used for WAR dependences
      */
     void checkDepEarliestLater(const std::vector<Ref<AccessPoint>> &laterList,
                                const Ref<AccessPoint> &earlier);
@@ -516,7 +536,8 @@ class FindDeps {
     FindDepsAccFilter earlierFilter_ = nullptr;
     FindDepsAccFilter laterFilter_ = nullptr;
     FindDepsFilter filter_ = nullptr;
-    std::function<void(const std::unordered_map<ID, std::vector<IterAxis>> &)>
+    std::function<void(const ID &,
+                       const std::unordered_map<ID, std::vector<IterAxis>> &)>
         scope2CoordCallback_ = nullptr;
     bool ignoreReductionWAW_ = true;
     bool eraseOutsideVarDef_ = true;
@@ -636,7 +657,7 @@ class FindDeps {
     }
 
     /**
-     * Configure an additional callback to select which dependencies to check
+     * Configure an additional callback to select which dependences to check
      *
      * Please use `filterAccess`, `filterEarlier` or `filterLater` if possbile,
      * for better performance
@@ -666,8 +687,8 @@ class FindDeps {
     }
 
     /**
-     * Ignore WAW dependencies between two ReduceTo nodes. This kind of
-     * dependencies are false dependencies if running serially
+     * Ignore WAW dependences between two ReduceTo nodes. This kind of
+     * dependences are false dependences if running serially
      *
      * Defaults to true
      */
@@ -678,7 +699,7 @@ class FindDeps {
     }
 
     /**
-     * Ignore all dependencies outside the VarDef
+     * Ignore all dependences outside the VarDef
      *
      * Defaults to true
      */
@@ -702,8 +723,8 @@ class FindDeps {
     }
 
     FindDeps scope2CoordCallback(
-        std::function<
-            void(const std::unordered_map<ID, std::vector<IterAxis>> &)>
+        std::function<void(
+            const ID &, const std::unordered_map<ID, std::vector<IterAxis>> &)>
             callback) {
         FindDeps ret = *this;
         ret.scope2CoordCallback_ = callback;
@@ -717,7 +738,7 @@ class FindDeps {
      * @param found : callback
      */
     void operator()(const Stmt &op,
-                    const std::function<void(const Dependency &)> &found) {
+                    const std::function<void(const Dependence &)> &found) {
         (*this)(op, syncFunc(found));
     }
 
@@ -740,7 +761,7 @@ class FindDeps {
     bool exists(const Stmt &op);
 };
 
-std::ostream &operator<<(std::ostream &os, const Dependency &dep);
+std::ostream &operator<<(std::ostream &os, const Dependence &dep);
 
 }; // namespace freetensor
 

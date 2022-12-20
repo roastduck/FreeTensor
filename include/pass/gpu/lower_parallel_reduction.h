@@ -13,10 +13,15 @@ namespace freetensor {
 
 namespace gpu {
 
-class LowerParallelReduction : public SymbolTable<Mutator> {
+class InsertWorkspaces : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
+    std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
+        ws2red_; // workspace ID -> (loop iter name, reduction info)
     std::vector<For> loopStack_;
+
+  public:
+    const auto &ws2red() const { return ws2red_; }
 
   private:
     std::vector<std::pair<For, int>> reducedBy(const ReduceTo &op);
@@ -25,6 +30,64 @@ class LowerParallelReduction : public SymbolTable<Mutator> {
     using BaseClass::visit;
     Stmt visit(const For &op) override;
     Stmt visit(const ReduceTo &op) override;
+};
+
+class InsertBinaryReduction : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
+    const std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
+        &ws2red_; // workspace ID -> (loop iter name, reduction info)
+    std::unordered_map<ID, ID>
+        ws2scope_; // workspace ID -> scope that actually do the computation,
+                   // excluding initialization, binary reduction and flushing
+
+  public:
+    InsertBinaryReduction(
+        const std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
+            &ws2red)
+        : ws2red_(ws2red) {}
+
+    const auto &ws2scope() const { return ws2scope_; }
+
+  private:
+    template <class T> T visitMemAcc(const T &_op) {
+        auto __op = BaseClass::visit(_op);
+        ASSERT(__op->nodeType() == _op->nodeType());
+        auto op = __op.template as<typename T::Object>();
+        if (auto it = ws2red_.find(def(op->var_)->id()); it != ws2red_.end()) {
+            auto &&l = loop(it->second.first);
+            auto nth = makeSub(makeVar(l->iter_), l->begin_);
+            op->indices_.insert(op->indices_.begin(), nth);
+        }
+        return op;
+    }
+
+  protected:
+    using BaseClass::visit;
+    Stmt visit(const VarDef &op) override;
+    Stmt visit(const Store &op) override { return visitMemAcc(op); }
+    Stmt visit(const ReduceTo &op) override { return visitMemAcc(op); }
+    Expr visit(const Load &op) override { return visitMemAcc(op); }
+};
+
+class CorrectInterThreadDependence : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
+    const std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
+        &ws2red_; // workspace ID -> (loop iter name, reduction info)
+
+    std::unordered_map<ID, std::vector<VarDef>> loop2ws_;
+
+  public:
+    CorrectInterThreadDependence(
+        const std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
+            &ws2red)
+        : ws2red_(ws2red) {}
+
+  protected:
+    using BaseClass::visit;
+    Stmt visit(const VarDef &op) override;
+    Stmt visit(const For &op) override;
 };
 
 Stmt lowerParallelReduction(const Stmt &op);

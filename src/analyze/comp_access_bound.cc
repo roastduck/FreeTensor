@@ -42,6 +42,16 @@ void FindMemType::visit(const VarDef &op) {
     }
 }
 
+void CompAccessBound::visitStmt(const Stmt &stmt) {
+    if (stmt->id() == filterSubTree_) {
+        filtered_ = true;
+        BaseClass::visitStmt(stmt);
+        filtered_ = false;
+    } else {
+        BaseClass::visitStmt(stmt);
+    }
+}
+
 void CompAccessBound::visit(const VarDef &op) {
     if (op->id() != varDefId_) {
         defs_.insert(op->name_);
@@ -117,7 +127,27 @@ void CompAccessBound::visit(const VarDef &op) {
         result_.lower_.emplace_back(l);
         result_.upper_.emplace_back(u);
         if (l.isValid() && u.isValid()) {
-            result_.len_.emplace_back(makeAdd(makeSub(u, l), makeIntConst(1)));
+            auto diff = makeSub(u, l);
+
+            // Suppose `upper = min(a, c)`, `lower = max(b, c)`, and we have no
+            // knowledge about `a` or `b`, and all we know is we have `c` in
+            // both `lower` and `upper`, we can simplify `len` to `1`. However,
+            // directly analyzing the bounds of `upper - lower` only results in
+            // its upper bound `upper - lower <= min(a - b, a - c, c - b, 0)`,
+            // but no knowledge lower bound, so `pass/simplify` cannot do the
+            // simplification. We explicitly mark `upper - lower >= 0` here by
+            // `upper - lower = max(upper - lower, 0)`, to enable simplifying
+            // `upper - lower` to 0.
+            //
+            // Note that this breaks the semantics and makes the length of a
+            // dimension at least 1, instead of 0, and prohibits some "optional"
+            // variables. However, this is actually beneficial, because a
+            // 0-or-1-lengthed variable will end up in the heap (beacuase they
+            // have "dynamic" length, and a 1-lengthed variable, although larger
+            // by 1, will end up in registers
+            diff = makeMax(diff, makeIntConst(0));
+
+            result_.len_.emplace_back(makeAdd(diff, makeIntConst(1)));
         } else {
             result_.len_.emplace_back(nullptr);
         }
@@ -143,7 +173,7 @@ void CompAccessBound::visit(const VarDef &op) {
 
 void CompAccessBound::visit(const Load &op) {
     BaseClass::visit(op);
-    if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_READ) {
+    if (filtered_ && op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_READ) {
         access_.emplace_back(unique_, op->indices_, conds(),
                              defsAtVarDef_.at(op->var_));
     }
@@ -151,7 +181,7 @@ void CompAccessBound::visit(const Load &op) {
 
 void CompAccessBound::visit(const Store &op) {
     BaseClass::visit(op);
-    if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_WRITE) {
+    if (filtered_ && op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_WRITE) {
         access_.emplace_back(unique_, op->indices_, conds(),
                              defsAtVarDef_.at(op->var_));
     }
@@ -159,7 +189,7 @@ void CompAccessBound::visit(const Store &op) {
 
 void CompAccessBound::visit(const ReduceTo &op) {
     BaseClass::visit(op);
-    if (op->var_ == var_) {
+    if (filtered_ && op->var_ == var_) {
         access_.emplace_back(unique_, op->indices_, conds(),
                              defsAtVarDef_.at(op->var_));
     }
@@ -176,12 +206,12 @@ void CompAccessBound::visit(const For &op) {
 }
 
 AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
-                            CompAccessBoundMode mode,
-                            bool includeTrivialBound) {
+                            CompAccessBoundMode mode, bool includeTrivialBound,
+                            const ID &filterSubTree) {
     FindMemType finder(varDefId);
     finder(op);
-    CompAccessBound visitor(varDefId, finder.mtype(), mode,
-                            includeTrivialBound);
+    CompAccessBound visitor(varDefId, finder.mtype(), mode, includeTrivialBound,
+                            filterSubTree);
     visitor(op);
     return visitor.result();
 }

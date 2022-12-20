@@ -22,6 +22,10 @@ Stmt SinkVar::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
+    if (toSink_.has_value() && !toSink_->count(op->id())) {
+        return op;
+    }
+
     if (op->buffer_->atype() != AccessType::Cache || op->pinned_) {
         return op;
     }
@@ -162,7 +166,8 @@ Stmt SinkVar::visit(const VarDef &_op) {
     return ret;
 }
 
-Stmt sinkVar(const Stmt &_op) {
+Stmt sinkVar(const Stmt &_op,
+             const std::optional<std::unordered_set<ID>> &toSink) {
     auto op = _op;
 
     auto variantMap = Lazy([op]() { return findLoopVariance(op).second; });
@@ -183,20 +188,23 @@ Stmt sinkVar(const Stmt &_op) {
         }
 
         if (!needDepAnalysis.empty()) {
-            FindDeps().direction(direction).filterAccess(
-                [&](const AccessPoint &acc) {
+            FindDeps()
+                .direction(direction)
+                .filterAccess([&](const AccessPoint &acc) {
                     return needDepAnalysis.count(acc.def_->id());
-                })(op, [&](const Dependency &d) {
-                ASSERT(d.dir_.size() == 1);
-                deps.emplace(d.defId(), d.dir_[0].first.id_);
-            });
+                })
+                .ignoreReductionWAW(false)(op, [&](const Dependence &d) {
+                    ASSERT(d.dir_.size() == 1);
+                    deps.emplace(d.defId(), d.dir_[0].first.id_);
+                });
             for (auto &&vardef : needDepAnalysis) {
                 analyzedDeps.insert(vardef);
             }
             needDepAnalysis.clear();
         }
 
-        SinkVar mutator(deps, analyzedDeps, needDepAnalysis, variantMap);
+        SinkVar mutator(toSink, deps, analyzedDeps, needDepAnalysis,
+                        variantMap);
         op = mutator(op);
         if (mutator.isFixPoint()) {
             break;

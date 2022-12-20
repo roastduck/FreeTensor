@@ -25,6 +25,11 @@ class InvalidSchedule : public Error {
                     const std::string &msg);
 };
 
+class InvalidAutoGrad : public Error {
+  public:
+    InvalidAutoGrad(const std::string &msg) : Error(msg) {}
+};
+
 class DriverError : public Error {
   public:
     DriverError(const std::string &msg) : Error(msg) {}
@@ -33,6 +38,11 @@ class DriverError : public Error {
 class InvalidProgram : public Error {
   public:
     InvalidProgram(const std::string &msg) : Error(msg) {}
+};
+
+class SymbolNotFound : public Error {
+  public:
+    SymbolNotFound(const std::string &msg) : Error(msg) {}
 };
 
 class AssertAlwaysFalse : public InvalidProgram {

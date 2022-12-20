@@ -70,9 +70,8 @@ void CodeGenCPU::visit(const VarDef &op) {
             // e.g. UncheckedOpt<mdspan_r<float, std::extents<5, 5>>> x_opt;
             //      auto &x = *x_opt;
             this->makeIndent();
-            this->os() << "UncheckedOpt<";
-            genMdPtrType(op);
-            this->os() << "> " << name << "_opt;" << std::endl;
+            this->os() << "UncheckedOpt<" << genMdPtrType(op) << "> " << name
+                       << "_opt;" << std::endl;
             this->makeIndent();
             this->os() << "auto &" << name << " = *" << name << "_opt;"
                        << std::endl;
@@ -83,10 +82,10 @@ void CodeGenCPU::visit(const VarDef &op) {
 
         case MemType::CPU: {
             // e.g.
-            // auto x = mdspan_r<float, std::extents<5, 5, 5>>(&__stack[200 +
+            // auto &&x = mdspan_r<float, std::extents<5, 5, 5>>(&__stack[200 +
             // omp_get_thread_num() * _threadStackTop + 100]);
             this->makeIndent();
-            this->os() << "auto " << name << " = ";
+            this->os() << "auto &&" << name << " = ";
             std::string rawPtr;
             if (inParallel_) {
                 rawPtr = "&__stack[" + std::to_string(sharedStackTop_) +
@@ -158,6 +157,9 @@ void CodeGenCPU::visit(const For &op) {
              inner = inner.as<ForNode>()->body_) {
             collapse++;
             collapsed_.insert(inner.as<ForNode>());
+            if (!inner.as<ForNode>()->property_->reductions_.empty())
+                ERROR("Collapsed inner parallel loop should not have reduction "
+                      "items.");
         }
 
         for (auto &&r : op->property_->reductions_) {
@@ -165,7 +167,7 @@ void CodeGenCPU::visit(const For &op) {
                 usedAsReduction_.insert(def(r->var_));
                 auto var = mangle(r->var_);
                 makeIndent();
-                os() << "auto " << var << "_ptr = toArrPtr(" << var << ");"
+                os() << "auto &&" << var << "_ptr = toArrPtr(" << var << ");"
                      << std::endl;
             }
         }

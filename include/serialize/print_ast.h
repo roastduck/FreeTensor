@@ -1,10 +1,12 @@
 #ifndef FREE_TENSOR_PRINT_AST_H
 #define FREE_TENSOR_PRINT_AST_H
 
+#include <functional>
 #include <iostream>
 #include <unordered_set>
 
 #include <codegen/code_gen.h>
+#include <serialize/stream_utils.h>
 
 namespace freetensor {
 
@@ -77,9 +79,12 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
 
   public:
     PrintVisitor(bool printAllId = false, bool pretty = false,
-                 bool dtypeInLoad = false, bool hexFloat = false)
-        : printAllId_(printAllId), pretty_(pretty), dtypeInLoad_(dtypeInLoad),
-          hexFloat_(hexFloat) {}
+                 bool dtypeInLoad = false, bool hexFloat = false,
+                 bool compact = false)
+        : CodeGen(compact), printAllId_(printAllId), pretty_(pretty),
+          dtypeInLoad_(dtypeInLoad), hexFloat_(hexFloat) {
+        os() << manipNoIdSign(true);
+    }
 
   private:
     void recur(const Expr &op);
@@ -90,7 +95,7 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     std::string prettyIterName(const std::string &name);
     std::string prettyVarDefName(const std::string &name);
     std::string prettyFuncName(const std::string &name);
-    std::string prettyId(const ID &id);
+    std::function<std::ostream &(std::ostream &)> prettyId(const ID &id);
     std::string prettyLiteral(const std::string &lit);
     std::string prettyKeyword(const std::string &kw);
 
@@ -159,7 +164,8 @@ std::string toString(const AST &op);
 std::string toString(const AST &op, bool pretty);
 std::string toString(const AST &op, bool pretty, bool printAllId);
 std::string toString(const AST &op, bool pretty, bool printAllId,
-                     bool dtypeInLoad, bool hexFloat = false);
+                     bool dtypeInLoad, bool hexFloat = false,
+                     bool compact = false);
 /** @} */
 
 /**
@@ -167,21 +173,29 @@ std::string toString(const AST &op, bool pretty, bool printAllId,
  */
 inline std::string dumpAST(const AST &op, bool dtypeInLoad = false,
                            bool hexFloat = true) {
-    return toString(op, false, true, dtypeInLoad, hexFloat);
+    return toString(op, false, true, dtypeInLoad, hexFloat, true);
 }
 
 /**
  * Control over whether to allow pretty print in a stream
  *
- * This option overrides `Config::prettyPrint()`
+ * Get or set the option via `std::ostream::iword()`, or set it via outputting
+ * `manipNoPrettyAST` to the stream
+ *
+ * If set, this option overrides `Config::prettyPrint()` and force no pretty
+ * print. Defaults to unset
+ *
+ * @{
  */
 extern int OSTREAM_NO_PRETTY;
+std::function<std::ostream &(std::ostream &)> manipNoPrettyAST(bool flag);
+/** @} */
 
 /**
  * Print an AST
  *
- * `OSTREAM_NO_PRETTY` can be set via `std::ostream::iword()` to disable pretty
- * print for a specific stream
+ * `OSTREAM_NO_PRETTY` can be set via `manipNoPrettyAST` to enable or disable
+ * pretty print for a specific stream
  */
 std::ostream &operator<<(std::ostream &os, const AST &op);
 

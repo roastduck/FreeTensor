@@ -10,12 +10,12 @@
 #include <pass/gpu/normalize_threads.h>
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/hoist_var_over_stmt_seq.h>
-#include <pass/make_const_shape.h>
 #include <pass/make_heap_alloc.h>
 #include <pass/make_parallel_reduction.h>
 #include <pass/make_reduction.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
+#include <pass/pb_simplify.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
@@ -41,6 +41,11 @@ void init_ffi_pass(py::module_ &m) {
     m.def("z3_simplify", static_cast<Stmt (*)(const Stmt &)>(&z3Simplify),
           "stmt"_a);
 
+    m.def("pb_simplify", static_cast<Func (*)(const Func &)>(&pbSimplify),
+          "func"_a);
+    m.def("pb_simplify", static_cast<Stmt (*)(const Stmt &)>(&pbSimplify),
+          "stmt"_a);
+
     m.def("float_simplify", static_cast<Func (*)(const Func &)>(&floatSimplify),
           "func"_a);
     m.def("float_simplify", static_cast<Stmt (*)(const Stmt &)>(&floatSimplify),
@@ -63,18 +68,29 @@ void init_ffi_pass(py::module_ &m) {
     m.def("scalar_prop_const",
           static_cast<Stmt (*)(const Stmt &)>(&scalarPropConst), "stmt"_a);
 
-    m.def("sink_var", static_cast<Func (*)(const Func &)>(&sinkVar), "func"_a);
-    m.def("sink_var", static_cast<Stmt (*)(const Stmt &)>(&sinkVar), "stmt"_a);
+    m.def("sink_var",
+          static_cast<Func (*)(const Func &,
+                               const std::optional<std::unordered_set<ID>> &)>(
+              &sinkVar),
+          "func"_a, "to_sink"_a = std::nullopt);
+    m.def("sink_var",
+          static_cast<Stmt (*)(const Stmt &,
+                               const std::optional<std::unordered_set<ID>> &)>(
+              &sinkVar),
+          "stmt"_a, "to_sink"_a = std::nullopt);
 
     m.def("shrink_var", static_cast<Func (*)(const Func &)>(&shrinkVar),
           "func"_a);
     m.def("shrink_var", static_cast<Stmt (*)(const Stmt &)>(&shrinkVar),
           "stmt"_a);
 
-    m.def("shrink_for", static_cast<Func (*)(const Func &)>(&shrinkFor),
-          "func"_a);
-    m.def("shrink_for", static_cast<Stmt (*)(const Stmt &)>(&shrinkFor),
-          "stmt"_a);
+    m.def("shrink_for",
+          static_cast<Func (*)(const Func &, const Stmt &, const bool &)>(
+              &shrinkFor),
+          "func"_a, "sub_ast"_a = nullptr, "do_simplify"_a = true);
+    m.def("shrink_for",
+          static_cast<Stmt (*)(const Stmt &, const Stmt &, bool)>(&shrinkFor),
+          "stmt"_a, "sub_ast"_a = nullptr, "do_simplify"_a = true);
 
     m.def("merge_and_hoist_if",
           static_cast<Func (*)(const Func &)>(&mergeAndHoistIf), "func"_a);
@@ -120,15 +136,6 @@ void init_ffi_pass(py::module_ &m) {
     m.def("make_heap_alloc",
           static_cast<Stmt (*)(const Stmt &)>(&makeHeapAlloc), "stmt"_a);
 
-    m.def("make_const_shape",
-          static_cast<Func (*)(const Func &, const std::vector<MemType> &)>(
-              &makeConstShape),
-          "func"_a, "mtypes"_a);
-    m.def("make_const_shape",
-          static_cast<Stmt (*)(const Stmt &, const std::vector<MemType> &)>(
-              &makeConstShape),
-          "stmt"_a, "mtypes"_a);
-
     m.def("use_builtin_div",
           static_cast<Func (*)(const Func &)>(&useBuiltinDiv), "func"_a);
     m.def("use_builtin_div",
@@ -165,6 +172,13 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeThreads),
           "stmt"_a);
 
+    m.def("gpu_normalize_var_in_kernel",
+          static_cast<Func (*)(const Func &)>(&gpu::normalizeVarInKernel),
+          "func"_a);
+    m.def("gpu_normalize_var_in_kernel",
+          static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeVarInKernel),
+          "stmt"_a);
+
     m.def("gpu_make_sync",
           static_cast<Func (*)(const Func &, const Ref<GPUTarget> &)>(
               &gpu::makeSync),
@@ -174,19 +188,23 @@ void init_ffi_pass(py::module_ &m) {
               &gpu::makeSync),
           "stmt"_a, "target"_a);
 
-    m.def("gpu_multiplex_buffers",
-          static_cast<Func (*)(const Func &, const Ref<GPUTarget> &)>(
-              &gpu::multiplexBuffers),
-          "func"_a, "target"_a);
-    m.def("gpu_multiplex_buffers",
-          static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &)>(
-              &gpu::multiplexBuffers),
-          "stmt"_a, "target"_a);
+    m.def(
+        "gpu_multiplex_buffers",
+        static_cast<Func (*)(const Func &, const Ref<GPUTarget> &, const ID &)>(
+            &gpu::multiplexBuffers),
+        "func"_a, "target"_a, "def_id"_a = std::nullopt);
+    m.def(
+        "gpu_multiplex_buffers",
+        static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &, const ID &)>(
+            &gpu::multiplexBuffers),
+        "stmt"_a, "target"_a, "def_id"_a = std::nullopt);
 
     m.def("gpu_simplex_buffers",
-          static_cast<Func (*)(const Func &)>(&gpu::simplexBuffers), "func"_a);
+          static_cast<Func (*)(const Func &, const ID &)>(&gpu::simplexBuffers),
+          "func"_a, "def_id"_a = std::nullopt);
     m.def("gpu_simplex_buffers",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::simplexBuffers), "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const ID &)>(&gpu::simplexBuffers),
+          "stmt"_a, "def_id"_a = std::nullopt);
 
     m.def("gpu_lower_vector",
           static_cast<Func (*)(const Func &)>(&gpu::lowerVector), "func"_a);

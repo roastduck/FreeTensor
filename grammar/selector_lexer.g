@@ -21,10 +21,13 @@ NodeTypeEval: '<Eval>';
 
 ChildArrow: '<-';
 DescendantArrow: '<<-';
-RootNode: '-|';
+ParentArrow: '->';
+AncestorArrow: '->>';
+RootNode: '<-|';
+LeafNode: '->|';
 DirectCallerArrow: '<~';
 CallerArrow: '<<~';
-RootCall: '~|';
+RootCall: '<~|';
 
 Star: '*';
 

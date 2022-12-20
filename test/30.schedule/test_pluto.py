@@ -18,9 +18,9 @@ def test_pluto_fuse():
     print(kernel)
     s = ft.Schedule(kernel)
     _, parallelism = s.pluto_fuse("L0", "L1")
-    assert parallelism == 1
     kernel = s.func()
     print(kernel)
+    assert parallelism == 1
 
 
 def test_pluto_fuse_2():
@@ -93,6 +93,35 @@ def test_pluto_fuse_imbalanced_nest():
     kernel = s.func()
     print(kernel)
     assert parallelism == 0
+    assert kernel.body.match(kernel_expected.body)
+
+
+def test_pluto_fuse_modulo():
+
+    @ft.transform
+    def kernel(x: ft.Var[(256,), "float32", "inout"],
+               xc: ft.Var[(128,), "float32", "output"]):
+        #! label: L0
+        for i in range(1, 256):
+            x[i] += x[i - 1]
+        #! label: L1
+        for i in range(128):
+            xc[i] = x[i * 2 + 1]
+
+    @ft.transform
+    def kernel_expected(x: ft.Var[(256,), "float32", "inout"],
+                        xc: ft.Var[(128,), "float32", "output"]):
+        #! label: L0
+        for i in range(1, 256):
+            x[i] += x[i + -1]
+            if (1 + i) % 2 == 0:
+                xc[(i + -1) // 2] = x[i]
+
+    print(kernel)
+    s = ft.Schedule(kernel)
+    s.pluto_fuse("L0", "L1")
+    kernel = s.func()
+    print(kernel)
     assert kernel.body.match(kernel_expected.body)
 
 

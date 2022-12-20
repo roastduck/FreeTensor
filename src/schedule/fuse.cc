@@ -4,6 +4,7 @@
 #include <analyze/deps.h>
 #include <analyze/merge_no_deps_hint.h>
 #include <hash.h>
+#include <pass/flatten_stmt_seq.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
 #include <pass/shrink_var.h>
@@ -12,6 +13,7 @@
 #include <pass/tensor_prop_const.h>
 #include <schedule.h>
 #include <schedule/fuse.h>
+#include <schedule/hoist_selected_var.h>
 
 namespace freetensor {
 
@@ -26,12 +28,7 @@ LoopInScopes findLoopInScopes(const Stmt &stmt, const ID &id,
         }
         return LoopInScopes{stmt.as<ForNode>(), {}};
     }
-    if (stmt->nodeType() == ASTNodeType::VarDef) {
-        auto ret =
-            findLoopInScopes(stmt.as<VarDefNode>()->body_, id, direction);
-        ret.scopes_.emplace_back(stmt);
-        return ret;
-    } else if (stmt->nodeType() == ASTNodeType::If) {
+    if (stmt->nodeType() == ASTNodeType::If) {
         if (auto branch = stmt.as<IfNode>(); !branch->elseCase_.isValid()) {
             auto ret = findLoopInScopes(branch->thenCase_, id, direction);
             // Currently we don't support StmtSeq-in-If cases (TODO)
@@ -51,18 +48,6 @@ LoopInScopes findLoopInScopes(const Stmt &stmt, const ID &id,
                          [](const Stmt &s) {
                              return s->nodeType() == ASTNodeType::StmtSeq;
                          }) == ret.scopes_.end()) {
-            ret.scopes_.emplace_back(stmt);
-            return ret;
-        }
-    } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
-        auto stmtSeq = stmt.as<StmtSeqNode>();
-        if (!stmtSeq->stmts_.empty()) {
-            LoopInScopes ret;
-            if (direction == FindLoopInScopesDirection::Front) {
-                ret = findLoopInScopes(stmtSeq->stmts_.front(), id, direction);
-            } else {
-                ret = findLoopInScopes(stmtSeq->stmts_.back(), id, direction);
-            }
             ret.scopes_.emplace_back(stmt);
             return ret;
         }
@@ -170,38 +155,6 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                         std::move(seq), makeMetadata("fuse", loop0, loop1));
             fused_ = fused->id();
 
-            // From inner to outer
-            for (auto &&stmt : loop1InScopes.scopes_) {
-                if (stmt->nodeType() == ASTNodeType::VarDef) {
-                    auto def = stmt.as<VarDefNode>();
-                    fused = makeVarDef(def->name_, std::move(def->buffer_),
-                                       def->viewOf_, fused, def->pinned_,
-                                       def->metadata(), def->id());
-                } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
-                    auto seq = stmt.as<StmtSeqNode>();
-                    std::vector<Stmt> stmts = {fused};
-                    stmts.insert(stmts.end(), seq->stmts_.begin() + 1,
-                                 seq->stmts_.end());
-                    fused = makeStmtSeq(std::move(stmts), seq->metadata(),
-                                        seq->id());
-                }
-            }
-            for (auto &&stmt : loop0InScopes.scopes_) {
-                if (stmt->nodeType() == ASTNodeType::VarDef) {
-                    auto def = stmt.as<VarDefNode>();
-                    fused = makeVarDef(def->name_, std::move(def->buffer_),
-                                       def->viewOf_, fused, def->pinned_,
-                                       def->metadata(), def->id());
-                } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
-                    auto seq = stmt.as<StmtSeqNode>();
-                    std::vector<Stmt> stmts(seq->stmts_.begin(),
-                                            seq->stmts_.end() - 1);
-                    stmts.emplace_back(fused);
-                    fused = makeStmtSeq(std::move(stmts), seq->metadata(),
-                                        seq->id());
-                }
-            }
-
             if (strict_) {
                 if (!HashComparator()(loop0->end_, loop1->end_)) {
                     throw InvalidSchedule(
@@ -252,30 +205,23 @@ void CheckFuseAccessible::check(const Stmt &ast) {
     if (!loop0().loop_.isValid()) {
         throw InvalidSchedule("Loops not found in a StmtSeq");
     }
-
-    for (auto &&stmt : loop1().scopes_) {
-        if (stmt->nodeType() == ASTNodeType::VarDef) {
-            for (auto &&shape :
-                 stmt.as<VarDefNode>()->buffer_->tensor()->shape()) {
-                if (!checkNotModified(ast, shape, CheckNotModifiedSide::Before,
-                                      id0_, CheckNotModifiedSide::Before,
-                                      id1_)) {
-                    throw InvalidSchedule("The shape of Vars in loop1 "
-                                          "shouldn't be changed in loop0");
-                }
-            }
-        }
-    }
 }
 
 std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
                          bool strict) {
-    CheckFuseAccessible(loop0, loop1).check(_ast);
+    // Hoist all VarDef nodes covering one of the loop but not covering the
+    // other loop, to cover both loops
+    auto ast = hoistSelectedVar(
+        _ast, "(->>" + toString(loop0) + "&!->>" + toString(loop1) + ")|(!->>" +
+                  toString(loop0) + "&->>" + toString(loop1) + ")");
+    ast = flattenStmtSeq(ast);
 
-    FuseFor mutator(_ast, loop0, loop1, strict);
-    auto ast = mutator(_ast);
+    CheckFuseAccessible(loop0, loop1).check(ast);
 
-    auto found = [&](const Dependency &d) {
+    FuseFor mutator(ast, loop0, loop1, strict);
+    ast = mutator(ast);
+
+    auto found = [&](const Dependence &d) {
         ASSERT(d.dir_.size() == 1);
         throw InvalidSchedule(toString(d) + " cannot be resolved");
     };

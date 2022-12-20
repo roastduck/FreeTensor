@@ -4,9 +4,9 @@
 
 namespace freetensor {
 
-void Schedule::autoUseLib(const Target &target) {
+void Schedule::autoUseLib(const Ref<Target> &target) {
     // Try to implement each top-level loops with lib calls
-    for (auto &&_loop : findAll("<For><-(!<For><-)*-|")) {
+    for (auto &&_loop : findAll("<For><-(!<For><-)*<-|")) {
         // Suppose the root node is not <For>. It should be <VarDef>
         auto loop = _loop.as<ForNode>();
         try {

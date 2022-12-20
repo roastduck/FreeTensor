@@ -13,7 +13,7 @@ def zeros_(y):
         The tensor to fill
     '''
     if core.ndim(y) == 0:
-        y[()] = 0
+        y[()] = core.zero_value(y.dtype)
     else:
         #! label: L_elem
         for i in range(core.shape(y, 0)):

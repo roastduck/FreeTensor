@@ -3,10 +3,10 @@
 
 namespace freetensor {
 
-void Schedule::autoParallelize(const Target &target) {
+void Schedule::autoParallelize(const Ref<Target> &target) {
 #ifdef FT_WITH_CUDA
     // [GPU only] Try to parallelize loops accessing contiguous items as warps
-    if (target.type() == TargetType::GPU) {
+    if (target->type() == TargetType::GPU) {
         // We try to parallelize the loop with most contiguous access count
         // first. If the counts are equal, we try to parallel the out-most loop
         // with the same count first
@@ -32,7 +32,7 @@ void Schedule::autoParallelize(const Target &target) {
             beginTransaction();
             try {
                 auto [l0, l1] =
-                    split(loop->id(), ((GPUTarget &)target).warpSize());
+                    split(loop->id(), target.as<GPUTarget>()->warpSize());
                 parallelize(l1, threadIdxX);
 
                 try {
@@ -68,7 +68,7 @@ void Schedule::autoParallelize(const Target &target) {
         bool parentIsWarp = false;
         while (root->property_->parallel_ != serialScope) {
             if (auto inners =
-                    findAll("<For><-(!<For><-)*#" + toString(root->id()));
+                    findAll("<For><-(!<For><-)*" + toString(root->id()));
                 inners.size() == 1) {
                 root = inners.front().as<ForNode>();
                 parentIsWarp = true;
@@ -96,7 +96,7 @@ void Schedule::autoParallelize(const Target &target) {
                     mergedId.isValid() ? merge(mergedId, loopId) : loopId;
                 maxMergeLevel++;
                 if (auto inners =
-                        findAll("<For><-(!<For><-)*#" + toString(loopId));
+                        findAll("<For><-(!<For><-)*" + toString(loopId));
                     inners.size() == 1) {
                     loop = inners.front().as<ForNode>();
                 } else {
@@ -121,12 +121,12 @@ void Schedule::autoParallelize(const Target &target) {
                     mergedId =
                         mergedId.isValid() ? merge(mergedId, loopId) : loopId;
                     if (i + 1 < mergeLevel) {
-                        loop = find("<For><-(!<For><-)*#" + toString(loopId))
+                        loop = find("<For><-(!<For><-)*" + toString(loopId))
                                    .as<ForNode>();
                     }
                 }
 
-                switch (target.type()) {
+                switch (target->type()) {
                 case TargetType::CPU:
                     parallelize(mergedId, OpenMPScope{});
                     break;
@@ -146,15 +146,15 @@ void Schedule::autoParallelize(const Target &target) {
                     // 2. if there are enough threads, make sure blockDim is
                     // not too large If the loop length is constant, we
                     // split it only once, to reduce redundant guards, and
-                    // save time for dependency analysis. If not, we split
+                    // save time for dependence analysis. If not, we split
                     // it twice, and merge once
-                    int numSM = ((GPUTarget &)target).multiProcessorCount();
+                    int numSM = target.as<GPUTarget>()->multiProcessorCount();
                     int maxThreads = 256; // Can be max thread per block (1024),
                                           // but our generated kernels are huge,
                                           // so set it lower to reserve for more
                                           // registers. TODO: no magic number
                     if (parentIsWarp || childIsWarp) {
-                        maxThreads /= ((GPUTarget &)target).warpSize();
+                        maxThreads /= target.as<GPUTarget>()->warpSize();
                     }
                     ID l1, l1b, l2;
                     if (auto loopNode = merged.as<ForNode>();
@@ -167,7 +167,7 @@ void Schedule::autoParallelize(const Target &target) {
                         }
                     } else {
                         // We don't use the `nparts` mode of `split`,
-                        // because it will hinder dependency analysis.
+                        // because it will hinder dependence analysis.
                         // Instead, we use the `factor` mode and then
                         // reorder. See the doc string of `split` for
                         // details
@@ -183,7 +183,7 @@ void Schedule::autoParallelize(const Target &target) {
                             // one loop. Because the length of `l1b` is not
                             // a constant, a division by this length will be
                             // introduced, which is not supported by ISL and
-                            // may probably lead to false dependencies
+                            // may probably lead to false dependences
                             parallelize(l1, blockIdxY);
                             parallelize(l1b, blockIdxX);
                         } else {
@@ -213,18 +213,18 @@ void Schedule::autoParallelize(const Target &target) {
 
         if (!done) {
             for (auto &&subLoop :
-                 findAll("<For><-(!<For><-)*#" + toString(root->id()))) {
+                 findAll("<For><-(!<For><-)*" + toString(root->id()))) {
                 autoParallelizeOuter(subLoop.as<ForNode>());
             }
         }
     };
-    for (auto &&_root : findAll("<For><-(!<For><-)*-|")) {
+    for (auto &&_root : findAll("<For><-(!<For><-)*<-|")) {
         // Suppose the root node is not <For>. It should be <VarDef>
         auto root = _root.as<ForNode>();
         // If the outer most loop is too short, we try the second outer loops
         // instead
         if (auto &&inners =
-                findAll("<For><-(!<For><-)*#" + toString(root->id()));
+                findAll("<For><-(!<For><-)*" + toString(root->id()));
             inners.size() > 1 &&
             root->len_->nodeType() == ASTNodeType::IntConst &&
             root->len_.as<IntConstNode>()->val_ < 32) {

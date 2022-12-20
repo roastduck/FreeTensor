@@ -12,8 +12,8 @@
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/multiplex_buffers.h>
 #include <pass/gpu/normalize_threads.h>
+#include <pass/gpu/normalize_var_in_kernel.h>
 #include <pass/gpu/simplex_buffers.h>
-#include <pass/make_const_shape.h>
 #include <pass/make_heap_alloc.h>
 #include <pass/make_parallel_reduction.h>
 #include <pass/merge_and_hoist_if.h>
@@ -87,27 +87,20 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
     ast = APPLY("make_parallel_reduction", makeParallelReduction, ast);
     ast = APPLY("shrink_for", shrinkFor,
                 ast); // After remove_writes and make_parallel_reduction
-    ast = APPLY("make_heap_alloc", makeHeapAlloc, ast);
 
     switch (target->type()) {
 #ifdef FT_WITH_CUDA
     case TargetType::GPU: {
         auto t = target.as<GPUTarget>();
-        // Before gpu_nromalize_threads
         ast = APPLY("gpu_lower_parallel_reduction", gpu::lowerParallelReduction,
-                    ast);
-
-        // TODO: Support dynamic shared memory size, but the size should be
-        // determined outside of kernels
+                    ast); // Before gpu_nromalize_threads
         ast = APPLY("gpu_multiplex_buffers", gpu::multiplexBuffers, ast, t);
         ast = APPLY("gpu_simplex_buffers", gpu::simplexBuffers, ast);
-        // FIXME: MemType::GPUGlobal should also be make const, but only
-        // inside a kernel
-        ast =
-            APPLY("make_const_shape", makeConstShape, ast,
-                  std::vector<MemType>{MemType::GPUShared, MemType::GPULocal});
         ast = APPLY("gpu_normalize_threads", gpu::normalizeThreads,
                     ast); // After gpu_multiplex_buffers
+        ast = APPLY("gpu_normalize_var_in_kernel", gpu::normalizeVarInKernel,
+                    ast);
+        ast = APPLY("make_heap_alloc", makeHeapAlloc, ast);
         ast = APPLY("gpu_make_sync", gpu::makeSync, ast,
                     t); // After gpu_normalize_threads
         ast = APPLY("gpu_lower_vector", gpu::lowerVector, ast);
@@ -119,6 +112,7 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
     case TargetType::CPU:
         ast = APPLY("cpu_lower_parallel_reduction", cpu::lowerParallelReduction,
                     ast);
+        ast = APPLY("make_heap_alloc", makeHeapAlloc, ast);
         ast = APPLY("use_builtin_div", useBuiltinDiv, ast);
         break;
 

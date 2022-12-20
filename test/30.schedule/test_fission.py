@@ -220,7 +220,7 @@ def test_buffer_no_hoist():
     assert std.match(ast)
 
 
-def test_correct_dependency_after():
+def test_correct_dependence_after():
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -255,7 +255,7 @@ def test_correct_dependency_after():
     assert std.match(ast)
 
 
-def test_correct_dependency_before():
+def test_correct_dependence_before():
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -290,7 +290,7 @@ def test_correct_dependency_before():
     assert std.match(ast)
 
 
-def test_correct_dependency_branch():
+def test_correct_dependence_branch():
 
     @ft.transform(verbose=1)
     def test(x: ft.Var[(3,), "float32"]):
@@ -324,7 +324,45 @@ def test_correct_dependency_branch():
     assert expect.body.match(test.body)
 
 
-def test_correct_dependency_loop_step():
+def test_correct_dependence_branch_with_else():
+
+    @ft.transform(verbose=1)
+    def test(x: ft.Var[(4,), "float32"]):
+        y = ft.empty((4,), "float32")
+        #! label: L
+        for i in range(4):
+            t = ft.empty((), "float32")
+            if x[i] < 2:
+                #! label: S1
+                t[...] = 1
+            else:
+                #! label: S2
+                t[...] = 2
+            #! label: S3
+            y[i] = t[...] * 2
+        return y
+
+    s = ft.Schedule(test, verbose=1)
+    s.fission("L", ft.FissionSide.Before, "S2")
+    test = ft.lower(s.func(), verbose=1, skip_passes=['prop_one_time_use'])
+
+    @ft.transform(verbose=1)
+    def expected(x: ft.Var[(4,), "float32"]):
+        y = ft.empty((4,), "float32")
+        t = ft.empty((4,), "float32")
+        for i in range(4):
+            if x[i] < 2:
+                t[i] = 1
+        for i in range(4):
+            if x[i] >= 2:
+                t[i] = 2
+            y[i] = t[i] * 2
+        return y
+
+    assert expected.body.match(test.body)
+
+
+def test_correct_dependence_loop_step():
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -359,7 +397,7 @@ def test_correct_dependency_loop_step():
     assert std.match(ast)
 
 
-def test_correct_dependency_multi_loop_1():
+def test_correct_dependence_multi_loop_1():
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -395,7 +433,7 @@ def test_correct_dependency_multi_loop_1():
     assert std.match(ast)
 
 
-def test_correct_dependency_multi_loop_2():
+def test_correct_dependence_multi_loop_2():
     with ft.VarDef([("a", (4, 4), "float32", "input", "cpu"),
                     ("b", (4,), "float32", "input", "cpu"),
                     ("d_y", (4,), "float32", "inout", "cpu"),
@@ -441,7 +479,7 @@ def test_correct_dependency_multi_loop_2():
     assert std.match(ast)
 
 
-def test_correct_dependency_real_dep():
+def test_correct_dependence_real_dep():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -470,7 +508,7 @@ def test_correct_dependency_real_dep():
     assert std.match(ast)
 
 
-def test_correct_dependency_unable_resolve():
+def test_correct_dependence_unable_resolve():
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -490,7 +528,7 @@ def test_correct_dependency_unable_resolve():
     assert ast_.match(ast)
 
 
-def test_correct_dependency_no_need_to_modify_no_dep():
+def test_correct_dependence_no_need_to_modify_no_dep():
     with ft.VarDef([
         ("x0", (4, 4), "int32", "input", "cpu"),
         ("x1", (4, 4), "int32", "input", "cpu"),
@@ -527,7 +565,7 @@ def test_correct_dependency_no_need_to_modify_no_dep():
     assert std.match(ast)
 
 
-def test_correct_dependency_no_need_to_modify_broadcast():
+def test_correct_dependence_no_need_to_modify_broadcast():
     with ft.VarDef([
         ("x0", (4,), "int32", "input", "cpu"),
         ("x1", (4, 4), "int32", "input", "cpu"),
@@ -563,7 +601,7 @@ def test_correct_dependency_no_need_to_modify_broadcast():
     assert std.match(ast)
 
 
-def test_correct_dependency_overwritten_store():
+def test_correct_dependence_overwritten_store():
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -577,7 +615,7 @@ def test_correct_dependency_overwritten_store():
                     with ft.If(j > 1):
                         b[0] += x0[i, j] + x1[i, j]  # (2)
                     y[i, j] = b[0] * b[0]  # (3)
-    # Explanation: (3)->(1) is a real dependency, while (3)->(2) is not.
+    # Explanation: (3)->(1) is a real dependence, while (3)->(2) is not.
     # We cannot determine b is loop-invarient just becase b[0] = 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)

@@ -23,12 +23,15 @@ struct SimplexOffset {
 class FindSimplexOffset : public SymbolTable<Visitor> {
     typedef SymbolTable<Visitor> BaseClass;
 
+    ID defId_;
     std::unordered_map<ID, std::vector<Ref<SimplexOffset>>>
         offsets_; // def ID -> [offset for each index]
     std::unordered_map<std::string, ParallelScope> var2para_;
     AnalyzeLinear analyzeLinear_;
 
   public:
+    FindSimplexOffset(const ID &defId = ID()) : defId_(defId) {}
+
     const std::unordered_map<ID, std::vector<Ref<SimplexOffset>>> &
     offsets() const {
         return offsets_;
@@ -63,6 +66,10 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
         }
 
         auto &&defId = def(op->var_)->id();
+        if (defId_.isValid() && defId_ != defId) {
+            return;
+        }
+
         std::vector<Ref<SimplexOffset>> thisOffsets;
         for (auto &&idx : op->indices_) {
             Ref<SimplexOffset> offset;
@@ -148,8 +155,10 @@ class ApplySimplexOffset : public SymbolTable<Mutator> {
  * different data
  *
  * E.g. Alter from `local[threadIdx.x, i]` to `local[i]`
+ *
+ * @param defId : If set, only alter this VarDef
  */
-Stmt simplexBuffers(const Stmt &op);
+Stmt simplexBuffers(const Stmt &op, const ID &defId = ID());
 
 DEFINE_PASS_FOR_FUNC(simplexBuffers)
 

@@ -29,7 +29,8 @@ Stmt tensorPropConst(const Stmt &_op) {
         // propagating to ReduceTo nodes. E.g.:
         //
         // ```
-        // a = 1  // (1) if (...) {
+        // a = 1  // (1)
+        // if (...) {
         //   a += 1  // (2)
         // }
         // ```
@@ -38,7 +39,7 @@ Stmt tensorPropConst(const Stmt &_op) {
         // pass/remove_writes can not, because statement (1) cannot be removed
         std::unordered_map<AST, std::vector<std::pair<Stmt, ReplaceInfo>>> r2w;
         std::unordered_map<AST, std::vector<Stmt>> r2wMay;
-        auto foundMust = [&](const Dependency &d) {
+        auto foundMust = [&](const Dependence &d) {
             auto &&expr = d.earlier().as<StoreNode>()->expr_;
             auto &&iters = allIters(expr);
             auto common = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
@@ -66,7 +67,7 @@ Stmt tensorPropConst(const Stmt &_op) {
                                 toString(PBFunc(d.later2EarlierIter_))});
             }
         };
-        auto foundMay = [&](const Dependency &d) {
+        auto foundMay = [&](const Dependence &d) {
             r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
         };
         FindDeps()

@@ -32,7 +32,8 @@ void MatchVisitor::clearName(const std::string &thisName) {
     }
 
 #define TRY_RECURSE(lexpr, rexpr)                                              \
-    {                                                                          \
+    /* Check isMatched_ because some node visitor will reset it and retry */   \
+    if (isMatched_) {                                                          \
         auto oldInstance = instance_;                                          \
         instance_ = rexpr;                                                     \
         (*this)(lexpr);                                                        \

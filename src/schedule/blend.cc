@@ -177,7 +177,7 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
         direction.push_back(
             {{loop, DepDirection::Normal}, {item, DepDirection::Inv}});
     }
-    auto found = [&](const Dependency &d) {
+    auto found = [&](const Dependence &d) {
         ASSERT(d.dir_.size() == 2);
         throw InvalidSchedule(toString(d) + " cannot be resolved");
     };

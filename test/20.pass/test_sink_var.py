@@ -110,6 +110,29 @@ def test_sink_for_invariant():
     assert std.match(ast)
 
 
+def test_no_sink_reduction():
+    with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
+        with ft.VarDef("b", (), "int32", "cache", "cpu") as b:
+            with ft.For("i", 0, 32) as i:
+                with ft.If(i % 4 == 0):
+                    b[()] = 0
+                b[()] += 1
+                y[i] = b[()] * 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1, skip_passes=['use_builtin_div'])
+
+    with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
+        with ft.VarDef("b", (), "int32", "cache", "cpu") as b:
+            with ft.For("i", 0, 32) as i:
+                with ft.If(i % 4 == 0):
+                    b[()] = 0
+                b[()] += 1
+                y[i] = b[()] * 2
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_sink_if():
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),

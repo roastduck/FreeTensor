@@ -5,11 +5,12 @@
 
 namespace freetensor {
 
-std::pair<Stmt, std::pair<ID, int>> plutoFuse(const Stmt &ast, const ID &loop0,
-                                              const ID &loop1, int nestLevel0,
-                                              int nestLevel1);
+std::pair<Stmt, std::pair<ID, int>>
+plutoFuse(const Stmt &ast, const ID &loop0, const ID &loop1, int nestLevel0,
+          int nestLevel1, int fusableOverlapThreshold, bool doSimplify = true);
 std::pair<Stmt, std::pair<ID, int>> plutoPermute(const Stmt &ast,
-                                                 const ID &loop, int nestLevel);
+                                                 const ID &loop, int nestLevel,
+                                                 bool doSimplify = true);
 
 } // namespace freetensor
 

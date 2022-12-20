@@ -61,12 +61,16 @@ void Schedule::commitTransaction() {
     openTrans_.pop_back();
     if (verbose_ >= 2) {
         auto &&os = logger();
-        os << "Committing schedule(s): ";
         auto logs = asVector(openTrans_.back().logs_, trans.logs_);
-        for (auto &&[i, item] : views::enumerate(logs)) {
-            os << (i > 0 ? ", " : "") << *item;
+        if (!logs.empty()) {
+            os << "Committing schedule(s): ";
+            for (auto &&[i, item] : views::enumerate(logs)) {
+                os << (i > 0 ? ", " : "") << *item;
+            }
+            os << ", resulting in:" << std::endl << trans.ast_ << std::endl;
+        } else {
+            os << "No schedule is committed" << std::endl;
         }
-        os << ", resulting in:" << std::endl << trans.ast_ << std::endl;
     }
     openTrans_.back() = std::move(trans);
 }
@@ -86,7 +90,8 @@ void Schedule::setLogs(const ScheduleLog &logs) {
     openTrans_.back().logs_ = logs;
 }
 
-void Schedule::autoSchedule(const Target &target, const Ref<RandTrace> &trace) {
+void Schedule::autoSchedule(const Ref<Target> &target,
+                            const Ref<RandTrace> &trace) {
     autoUseLib(target);
     autoFissionFuse(target, trace);
     autoReorder(target);
@@ -116,7 +121,7 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
                         trials[i * batchSize + j];
                     auto s = this->fork();
                     trace = Ref<RandTrace>::make();
-                    s.autoSchedule(*device->target(), trace);
+                    s.autoSchedule(device->target(), trace);
                     lowered = lower(s.func(), device->target());
                     code = codeGen(lowered, device->target());
                     drivers[j] = Ref<Driver>::make(lowered, code, device);

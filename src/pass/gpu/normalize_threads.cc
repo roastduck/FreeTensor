@@ -23,6 +23,41 @@ Expr NormalizeThreads::visit(const Var &_op) {
     return op;
 }
 
+Stmt NormalizeThreads::makeParallelScopes(const Stmt &body) {
+    auto zero = makeIntConst(0);
+    auto one = makeIntConst(1);
+    auto inf = makeIntConst(INT_MAX);
+    Stmt ret = body;
+    ret = makeFor(".threadIdx.x", zero, inf, one, inf,
+                  Ref<ForProperty>::make()
+                      ->withParallel(threadIdxX)
+                      ->withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxX])),
+                  std::move(ret));
+    ret = makeFor(".threadIdx.y", zero, inf, one, inf,
+                  Ref<ForProperty>::make()
+                      ->withParallel(threadIdxY)
+                      ->withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxY])),
+                  std::move(ret));
+    ret = makeFor(".threadIdx.z", zero, inf, one, inf,
+                  Ref<ForProperty>::make()
+                      ->withParallel(threadIdxZ)
+                      ->withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxZ])),
+                  std::move(ret));
+    ret = makeFor(".blockIdx.x", zero, inf, one, inf,
+                  Ref<ForProperty>::make()->withParallel(blockIdxX)->withNoDeps(
+                      mergeNoDepsHint(root_, loops_[blockIdxX])),
+                  std::move(ret));
+    ret = makeFor(".blockIdx.y", zero, inf, one, inf,
+                  Ref<ForProperty>::make()->withParallel(blockIdxY)->withNoDeps(
+                      mergeNoDepsHint(root_, loops_[blockIdxY])),
+                  std::move(ret));
+    ret = makeFor(".blockIdx.z", zero, inf, one, inf,
+                  Ref<ForProperty>::make()->withParallel(blockIdxZ)->withNoDeps(
+                      mergeNoDepsHint(root_, loops_[blockIdxZ])),
+                  std::move(ret));
+    return ret;
+}
+
 Stmt NormalizeThreads::doVisitStmt(const Stmt &_op) {
     Stmt op = _op;
     if (!inKernel_) {
@@ -73,45 +108,28 @@ Stmt NormalizeThreads::visit(const For &op) {
         inKernel_ = true;
         auto ret = doVisitFor(op);
         inKernel_ = false;
-        auto zero = makeIntConst(0);
-        auto one = makeIntConst(1);
-        auto inf = makeIntConst(INT_MAX);
-        ret = makeFor(
-            ".threadIdx.x", zero, inf, one, inf,
-            Ref<ForProperty>::make()
-                ->withParallel(threadIdxX)
-                ->withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxX])),
-            ret);
-        ret = makeFor(
-            ".threadIdx.y", zero, inf, one, inf,
-            Ref<ForProperty>::make()
-                ->withParallel(threadIdxY)
-                ->withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxY])),
-            ret);
-        ret = makeFor(
-            ".threadIdx.z", zero, inf, one, inf,
-            Ref<ForProperty>::make()
-                ->withParallel(threadIdxZ)
-                ->withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxZ])),
-            ret);
-        ret = makeFor(
-            ".blockIdx.x", zero, inf, one, inf,
-            Ref<ForProperty>::make()->withParallel(blockIdxX)->withNoDeps(
-                mergeNoDepsHint(root_, loops_[blockIdxX])),
-            ret);
-        ret = makeFor(
-            ".blockIdx.y", zero, inf, one, inf,
-            Ref<ForProperty>::make()->withParallel(blockIdxY)->withNoDeps(
-                mergeNoDepsHint(root_, loops_[blockIdxY])),
-            ret);
-        ret = makeFor(
-            ".blockIdx.z", zero, inf, one, inf,
-            Ref<ForProperty>::make()->withParallel(blockIdxZ)->withNoDeps(
-                mergeNoDepsHint(root_, loops_[blockIdxZ])),
-            ret);
-        return ret;
+        return makeParallelScopes(ret);
     } else {
         return doVisitFor(op);
+    }
+}
+
+Stmt NormalizeThreads::visit(const VarDef &op) {
+    if (!inKernel_) {
+        switch (op->buffer_->mtype()) {
+        case MemType::GPULocal:
+        case MemType::GPUWarp:
+        case MemType::GPUShared: {
+            inKernel_ = true;
+            auto ret = Mutator::visit(op);
+            inKernel_ = false;
+            return makeParallelScopes(ret);
+        }
+        default:
+            return Mutator::visit(op);
+        }
+    } else {
+        return Mutator::visit(op);
     }
 }
 

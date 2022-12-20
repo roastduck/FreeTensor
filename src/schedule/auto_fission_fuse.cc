@@ -3,7 +3,7 @@
 
 namespace freetensor {
 
-void Schedule::autoFissionFuse(const Target &target,
+void Schedule::autoFissionFuse(const Ref<Target> &target,
                                const Ref<RandTrace> &trace) {
     RandCondStack conds;
 
@@ -41,7 +41,7 @@ void Schedule::autoFissionFuse(const Target &target,
     std::function<void(For nest)> tryFission = [&, this](For nest) {
         // Recurse first
         for (auto &&subNest :
-             findAll("<For><-(!<For><-)*#" + toString(nest->id()))) {
+             findAll("<For><-(!<For><-)*" + toString(nest->id()))) {
             tryFission(subNest.as<ForNode>());
         }
 
@@ -50,7 +50,7 @@ void Schedule::autoFissionFuse(const Target &target,
         int partCnt = 0;
         std::vector<ID> splitterIds; // Record IDs because we are mutating ast()
         for (auto &&splitter :
-             findAll("(<For>|<Store>|<ReduceTo>|<Eval>)<-(!<For><-)*#" +
+             findAll("(<For>|<Store>|<ReduceTo>|<Eval>)<-(!<For><-)*" +
                      toString(nest->id()))) {
             splitterIds.emplace_back(splitter->id());
         }
@@ -100,7 +100,7 @@ void Schedule::autoFissionFuse(const Target &target,
         }
         fissionFrom[thisId] = thisId;
     };
-    for (auto &&loop : findAll("<For><-(!<For><-)*-|")) {
+    for (auto &&loop : findAll("<For><-(!<For><-)*<-|")) {
         // Suppose the root node is not <For>. It should be <VarDef>
         tryFission(loop.as<ForNode>());
     }
@@ -111,10 +111,14 @@ void Schedule::autoFissionFuse(const Target &target,
         For last;
         ID lastId;
         for (auto &&_loop :
-             findAll("<For><-(!<For><-)*#" + toString(root->id()))) {
+             findAll("<For><-(!<For><-)*" + toString(root->id()))) {
             auto loop = _loop.as<ForNode>();
             auto loopId = loop->id();
-            if (!last.isValid()) {
+            if (findAll(loopId).empty()) {
+                // Maybe optimized out by the last schedule
+                continue;
+            }
+            if (!last.isValid() || findAll(lastId).empty()) {
                 goto skip;
             }
             if (fissionFrom.count(loopId) && fissionFrom.count(lastId) &&

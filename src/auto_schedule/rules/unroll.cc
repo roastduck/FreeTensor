@@ -33,7 +33,7 @@ void UnrollPart::apply(Schedule &schedule, SubSketch &subSketch) {
     std::function<int(const For &)> visitNest = [&](const For &loop) {
         int sz = 0;
         for (auto &&subNest :
-             schedule.findAll("<For><-(!<For><-)*#" + toString(loop->id()))) {
+             schedule.findAll("<For><-(!<For><-)*" + toString(loop->id()))) {
             sz += visitNest(subNest.as<ForNode>());
         }
         if (sz == 0) {
@@ -49,7 +49,7 @@ void UnrollPart::apply(Schedule &schedule, SubSketch &subSketch) {
         return sz;
     };
     for (auto &&loop :
-         schedule.findAll("<For><-(!<For><-)*#" + toString(root->id()))) {
+         schedule.findAll("<For><-(!<For><-)*" + toString(root->id()))) {
         visitNest(loop.as<ForNode>());
     }
 }

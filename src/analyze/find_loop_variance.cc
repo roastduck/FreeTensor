@@ -54,12 +54,16 @@ void MarkStores::meetTo(const Expr &from, const std::string &to) {
     ::freetensor::meetTo(exprInfo_, {from, curStmt()}, varInfo_, to);
 }
 
+void MarkStores::meetTo(const StmtOrExprID &from, const std::string &to) {
+    ::freetensor::meetTo(exprInfo_, from, varInfo_, to);
+}
+
 void MarkStores::visit(const For &op) {
     (*this)(op->begin_);
     (*this)(op->end_);
     (*this)(op->len_);
 
-    condStack_.emplace_back(op->len_); // May make a ReduceTo variant
+    condStack_.emplace_back(op->len_, op); // May make a ReduceTo variant
     (*this)(op->body_);
     condStack_.pop_back();
 }
@@ -67,7 +71,7 @@ void MarkStores::visit(const For &op) {
 void MarkStores::visit(const If &op) {
     (*this)(op->cond_);
 
-    condStack_.emplace_back(op->cond_);
+    condStack_.emplace_back(op->cond_, op);
     (*this)(op->thenCase_);
     if (op->elseCase_.isValid()) {
         (*this)(op->elseCase_);
@@ -103,7 +107,7 @@ void FindLoopVariance::visit(const For &op) {
     (*this)(op->len_);
 
     loopStack_.emplace_back(op->id());
-    condStack_.emplace_back(op->len_); // May make a ReduceTo variant
+    condStack_.emplace_back(op->len_, op); // May make a ReduceTo variant
     loops_[op->iter_] = op;
 
     (*this)(op->body_);
@@ -116,7 +120,7 @@ void FindLoopVariance::visit(const For &op) {
 void FindLoopVariance::visit(const If &op) {
     (*this)(op->cond_);
 
-    condStack_.emplace_back(op->cond_);
+    condStack_.emplace_back(op->cond_, op);
     (*this)(op->thenCase_);
     if (op->elseCase_.isValid()) {
         (*this)(op->elseCase_);

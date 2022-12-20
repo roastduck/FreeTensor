@@ -26,25 +26,41 @@ static std::string genCUBLASType(DataType dtype) {
     }
 }
 
-bool CodeGenCUDA::isConstOrByValue(const Expr &x) const {
-    return isConstOrByValue(allNames(x));
+std::function<std::ostream &(std::ostream &)>
+CodeGenCUDA::genMdPtrType(const VarDef &def, bool isConst) {
+    auto &&buf = def->buffer_;
+    if (buf->tensor()->shape().empty() &&
+        (buf->mtype() == MemType::GPUGlobal ||
+         buf->mtype() == MemType::GPUGlobalHeap)) {
+        // Use pointer instead of reference for scalars, because when passing an
+        // argument from host to a kernel, a reference means copy the value from
+        // CPU to GPU, while a pointer means passing the address
+        return [=](std::ostream &os) -> std::ostream & {
+            if (isConst) {
+                os << "const ";
+            }
+            return os << gen(buf->tensor()->dtype()) << " *";
+        };
+    }
+    return CodeGenC<CodeGenCUDAStream>::genMdPtrType(def, isConst);
 }
 
-bool CodeGenCUDA::isConstOrByValue(
-    const std::unordered_set<std::string> &names) const {
-    for (auto &&item : names) {
-        if (hasLoop(item)) {
-            // TODO: We should allow using iterators defined outside
-            // of a kernel
-            return false;
-        }
-        if (hasDef(item)) {
-            if (buffer(item)->mtype() != MemType::ByValue) {
-                return false;
-            }
-        }
+void CodeGenCUDA::genMdPtrDef(const VarDef &def,
+                              const std::function<void()> &genRawPtr,
+                              bool isConst) {
+    auto &&buf = def->buffer_;
+    if (buf->tensor()->shape().empty() &&
+        (buf->mtype() == MemType::GPUGlobal ||
+         buf->mtype() == MemType::GPUGlobalHeap)) {
+        // Use pointer instead of reference for scalars, because when passing an
+        // argument from host to a kernel, a reference means copy the value from
+        // CPU to GPU, while a pointer means passing the address
+        this->os() << "((" << genMdPtrType(def, isConst) << ")(";
+        genRawPtr();
+        this->os() << "))";
+        return;
     }
-    return true;
+    CodeGenC<CodeGenCUDAStream>::genMdPtrDef(def, genRawPtr, isConst);
 }
 
 void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
@@ -68,13 +84,11 @@ void CodeGenCUDA::genScalar(const VarDef &def,
                             const std::vector<Expr> &indices) {
     auto &&var = def->name_;
     auto mtype = buffer(var)->mtype();
-    if (indices.empty() && def->buffer_->atype() == AccessType::Cache &&
-        (mtype == MemType::GPUGlobal || mtype == MemType::GPUShared)) {
-        os() << "*" << mangle(var);
-    } else if (!inKernel() &&
-               (mtype == MemType::GPUGlobal || mtype == MemType::GPUShared ||
-                mtype == MemType::GPUWarp || mtype == MemType::GPULocal)) {
-        if (mtype == MemType::GPUGlobal) {
+    if (!inKernel() &&
+        (mtype == MemType::GPUGlobal || mtype == MemType::GPUGlobalHeap ||
+         mtype == MemType::GPUShared || mtype == MemType::GPUWarp ||
+         mtype == MemType::GPULocal)) {
+        if (mtype == MemType::GPUGlobal || mtype == MemType::GPUGlobalHeap) {
             WARNING(
                 "You are accessing gpu/global memory from outside of a kernel. "
                 "This is only for debugging, and it has a low performance");
@@ -86,6 +100,10 @@ void CodeGenCUDA::genScalar(const VarDef &def,
                                  ::freetensor::toString(mtype) +
                                  " from outside of a kernel");
         }
+    } else if (indices.empty() && (mtype == MemType::GPUGlobal ||
+                                   mtype == MemType::GPUGlobalHeap ||
+                                   mtype == MemType::GPUShared)) {
+        os() << "*" << mangle(var);
     } else if (def->buffer_->mtype() == MemType::GPULocal ||
                def->buffer_->mtype() == MemType::GPUWarp) {
         // Likely registers, no wrapping inside a mdspan
@@ -111,6 +129,55 @@ void CodeGenCUDA::exprOr1(const std::unordered_map<ParallelScope, Expr> &dict,
     } else {
         os() << 1;
     }
+}
+
+void CodeGenCUDA::enterKernel(const Stmt &body) {
+    std::string kernel = "kernel" + std::to_string(nKernel_++);
+    pushStream(kernel);
+    sharedStackTop_ = makeIntConst(0);
+    auto oldGlobalStackTop = globalStackTop_;
+    beginBlock();
+    (*this)(body);
+    endBlock();
+    globalStackTop_ = oldGlobalStackTop; // Because we are not reducing
+                                         // globalStackTop_ inside a kernel
+    popStream();
+
+    Stream &stream = poppedStream_.back();
+    const auto &dim = stream.threadDim_;
+    auto sharedSize = stream.sharedSize_;
+
+    makeIndent();
+    os() << "checkCudaError(cudaFuncSetAttribute(" << kernel
+         << ", cudaFuncAttributeMaxDynamicSharedMemorySize, ";
+    (*this)(sharedSize);
+    os() << "));" << std::endl;
+    makeIndent();
+    os() << kernel << "<<<dim3(";
+    exprOr1(dim, blockIdxX);
+    os() << ", ";
+    exprOr1(dim, blockIdxY);
+    os() << ", ";
+    exprOr1(dim, blockIdxZ);
+    os() << "), dim3(";
+    exprOr1(dim, threadIdxX);
+    os() << ", ";
+    exprOr1(dim, threadIdxY);
+    os() << ", ";
+    exprOr1(dim, threadIdxZ);
+    os() << "), ";
+    (*this)(sharedSize);
+    os() << ", __stream>>>(";
+    bool first = true;
+    for (auto &&[name, d] : stream.useDefs_) {
+        os() << (first ? "" : ", ") << mangle(name);
+        first = false;
+    }
+    for (auto &&name : stream.useIters_) {
+        os() << (first ? "" : ", ") << mangle(name);
+        first = false;
+    }
+    os() << ", _params, __glmem);" << std::endl;
 }
 
 void CodeGenCUDA::visitStmt(const Stmt &stmt) {
@@ -419,53 +486,7 @@ void CodeGenCUDA::visit(const For &op) {
         CodeGenC::visit(op);
     } else if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
         if (!inKernel()) {
-            std::string kernel = "kernel" + std::to_string(nKernel_++);
-            pushStream(kernel);
-            sharedStackTop_ = makeIntConst(0);
-            auto oldGlobalStackTop = globalStackTop_;
-            beginBlock();
-            (*this)(op->body_);
-            streamStack_.back().threadDim_[op->property_->parallel_] = op->len_;
-            endBlock();
-            globalStackTop_ =
-                oldGlobalStackTop; // Because we are not reducing
-                                   // globalStackTop_ inside a kernel
-            popStream();
-            Stream &stream = poppedStream_.back();
-            const auto &dim = stream.threadDim_;
-            auto sharedSize = stream.sharedSize_;
-
-            makeIndent();
-            os() << "checkCudaError(cudaFuncSetAttribute(" << kernel
-                 << ", cudaFuncAttributeMaxDynamicSharedMemorySize, ";
-            (*this)(sharedSize);
-            os() << "));" << std::endl;
-            makeIndent();
-            os() << kernel << "<<<dim3(";
-            exprOr1(dim, blockIdxX);
-            os() << ", ";
-            exprOr1(dim, blockIdxY);
-            os() << ", ";
-            exprOr1(dim, blockIdxZ);
-            os() << "), dim3(";
-            exprOr1(dim, threadIdxX);
-            os() << ", ";
-            exprOr1(dim, threadIdxY);
-            os() << ", ";
-            exprOr1(dim, threadIdxZ);
-            os() << "), ";
-            (*this)(sharedSize);
-            os() << ", __stream>>>(";
-            bool first = true;
-            for (auto &&[name, d] : stream.useDefs_) {
-                os() << (first ? "" : ", ") << mangle(name);
-                first = false;
-            }
-            for (auto &&name : stream.useIters_) {
-                os() << (first ? "" : ", ") << mangle(name);
-                first = false;
-            }
-            os() << ", _params, __glmem);" << std::endl;
+            enterKernel(op);
         } else {
             (*this)(op->body_);
             streamStack_.back().threadDim_[op->property_->parallel_] = op->len_;
@@ -488,11 +509,11 @@ void CodeGenCUDA::visit(const VarDef &op) {
         switch (op->buffer_->mtype()) {
         case MemType::GPUGlobal: {
 
-            // e.g. auto x = mdspan_r<float, extents<5, 5>>(__glmem + 0);
+            // e.g. auto &&x = mdspan_r<float, extents<5, 5>>(__glmem + 0);
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor->shape();
             makeIndent();
-            os() << "auto " << mangle(op->name_) << " = ";
+            os() << "auto &&" << mangle(op->name_) << " = ";
             genMdPtrDef(op, [this]() {
                 os() << "__glmem + (";
                 (*this)(globalStackTop_);
@@ -502,14 +523,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             Expr size = makeIntConst(sizeOf(tensor->dtype()));
             for (auto &&dim : shape) {
-                if (isConstOrByValue(dim)) {
-                    size = makeMul(size, dim);
-                } else {
-                    throw InvalidProgram(
-                        "Currently dynamic sized gpu/global "
-                        "memory other than \"byvalue\" memory type allocated "
-                        "from inside a kernel is not supported");
-                }
+                size = makeMul(size, dim);
             }
 
             // Align to 128 bytes (TODO: look up cache line size from Target)
@@ -542,9 +556,8 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 //      auto &x = *x_opt;
                 auto &&name = mangle(op->name_);
                 makeIndent();
-                os() << "UncheckedOpt<";
-                genMdPtrType(op);
-                os() << "> " << name << "_opt;" << std::endl;
+                os() << "UncheckedOpt<" << genMdPtrType(op) << "> " << name
+                     << "_opt;" << std::endl;
                 makeIndent();
                 os() << "auto &" << name << " = *" << name << "_opt;"
                      << std::endl;
@@ -558,17 +571,17 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
         case MemType::GPUShared: {
             if (!inKernel()) {
-                throw InvalidProgram("Allocating a shared buffer outside a "
-                                     "kernel is not allowed");
+                enterKernel(op);
+                return;
             }
 
             // A static shared memory array cannot be larger than 48KB (maybe a
             // bug of NVCC), so we allocate shared memory dynamically
-            // auto x = mdspan<float, extents<5, 5>>(__shmem + 0);
+            // auto &&x = mdspan<float, extents<5, 5>>(__shmem + 0);
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor->shape();
             makeIndent();
-            os() << "auto " << mangle(op->name_) << " = ";
+            os() << "auto &&" << mangle(op->name_) << " = ";
             genMdPtrDef(op, [this]() {
                 os() << "__shmem + (";
                 (*this)(sharedStackTop_);
@@ -578,13 +591,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             Expr size = makeIntConst(sizeOf(tensor->dtype()));
             for (auto &&dim : shape) {
-                if (isConstOrByValue(dim)) {
-                    size = makeMul(size, dim);
-                } else {
-                    throw InvalidProgram("Currently dynamic sized gpu/shared "
-                                         "memory other than \"byvalue\" memory "
-                                         "type is not supported");
-                }
+                size = makeMul(size, dim);
             }
 
             streamStack_.back().sharedSize_ =
@@ -603,11 +610,8 @@ void CodeGenCUDA::visit(const VarDef &op) {
         case MemType::GPULocal:
         case MemType::GPUWarp: {
             if (!inKernel()) {
-                throw InvalidProgram(
-                    "Allocating a " +
-                    ::freetensor::toString(op->buffer_->mtype()) +
-                    " buffer outside a "
-                    "kernel is not allowed");
+                enterKernel(op);
+                return;
             }
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor->shape();
@@ -820,9 +824,9 @@ extern "C" {
 
                 default:
                     // e.g. mdspan<float, extents<5, 5>> x
-                    visitor.genMdPtrType(os, d,
-                                         buffer->atype() == AccessType::Input);
-                    os << " " << mangle(name);
+                    os << visitor.genMdPtrType(d, buffer->atype() ==
+                                                      AccessType::Input)
+                       << " " << mangle(name);
                 }
                 first = false;
             }

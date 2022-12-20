@@ -2,10 +2,13 @@
 #include <unordered_map>
 
 #include <analyze/deps.h>
-#include <pass/hoist_var_over_stmt_seq.h>
+#include <container_utils.h>
+#include <pass/flatten_stmt_seq.h>
 #include <pass/sink_var.h>
 #include <schedule.h>
+#include <schedule/hoist_selected_var.h>
 #include <schedule/swap.h>
+#include <selector.h>
 
 namespace freetensor {
 
@@ -39,7 +42,15 @@ Stmt Swap::visit(const StmtSeq &_op) {
 }
 
 Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
-    auto ast = hoistVarOverStmtSeq(_ast, order);
+    // Hoist all VarDef nodes covering any of the statement but not covering
+    // some other statements, to cover all statements
+    auto insides = order | views::transform([](const ID &id) {
+                       return "->>" + toString(id);
+                   });
+    auto allIn = insides | join("&");
+    auto anyIn = insides | join("|");
+    auto ast = hoistSelectedVar(_ast, "(" + anyIn + ")&!(" + allIn + ")");
+    ast = flattenStmtSeq(ast);
 
     Swap mutator(order);
     ast = mutator(ast);
@@ -75,7 +86,7 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
                                  [&](const ID &id) { return id == s1->id(); });
         return (old0 < old1) != (new0 < new1);
     };
-    auto found = [&](const Dependency &d) {
+    auto found = [&](const Dependence &d) {
         throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
     FindDeps().filter(filter)(ast, found);

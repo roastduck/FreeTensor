@@ -3,6 +3,7 @@
 #include <config.h>
 #include <container_utils.h>
 #include <serialize/print_ast.h>
+#include <serialize/stream_utils.h>
 
 #include "../codegen/detail/code_gen.h"
 
@@ -15,6 +16,8 @@ using namespace std::string_literals;
 #define UNDERLINE "\u001b[4m"s
 #define RESET "\u001b[0m"s
 #define BOLD "\u001b[1m"s
+
+#define SPACE (compact_ ? "" : " ")
 
 std::string PrintVisitor::prettyIterName(const std::string &name) {
     auto escaped = escape(name);
@@ -40,11 +43,15 @@ std::string PrintVisitor::prettyFuncName(const std::string &name) {
         return escaped;
 }
 
-std::string PrintVisitor::prettyId(const ID &id) {
-    if (pretty_)
-        return CYAN + freetensor::toString(id) + RESET;
-    else
-        return freetensor::toString(id);
+std::function<std::ostream &(std::ostream &)>
+PrintVisitor::prettyId(const ID &id) {
+    return [&](std::ostream &os) -> std::ostream & {
+        if (pretty_) {
+            return os << CYAN << id << RESET;
+        } else {
+            return os << id;
+        }
+    };
 }
 
 std::string PrintVisitor::prettyLiteral(const std::string &lit) {
@@ -203,7 +210,7 @@ void PrintVisitor::visit(const Store &op) {
     makeIndent();
     os() << prettyVarDefName(op->var_) << "[";
     printList(op->indices_);
-    os() << "] = ";
+    os() << "]" << SPACE << "=" << SPACE;
     recur(op->expr_);
     os() << std::endl;
 }
@@ -225,7 +232,7 @@ void PrintVisitor::visit(const Load &op) {
     printList(op->indices_);
     os() << "]";
     if (dtypeInLoad_) {
-        os() << " : " << ::freetensor::toString(op->loadType_);
+        os() << SPACE << ":" << SPACE << ::freetensor::toString(op->loadType_);
     }
 }
 
@@ -237,7 +244,7 @@ void PrintVisitor::visit(const ReduceTo &op) {
     makeIndent();
     os() << prettyVarDefName(op->var_) << "[";
     printList(op->indices_);
-    os() << "] ";
+    os() << "]" << SPACE;
     switch (op->op_) {
     case ReduceOp::Add:
         os() << "+=";
@@ -263,7 +270,7 @@ void PrintVisitor::visit(const ReduceTo &op) {
     default:
         ASSERT(false);
     }
-    os() << " ";
+    os() << SPACE;
     recur(op->expr_);
     os() << std::endl;
 }
@@ -289,7 +296,7 @@ void PrintVisitor::visit(const BoolConst &op) {
 void PrintVisitor::visit(const Add &op) {
     precedence_enclose(Precedence::ADD, [&] {
         recur(op->lhs_);
-        os() << " + ";
+        os() << SPACE << "+" << SPACE;
         precedence_enclose(Precedence::ADD_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -297,7 +304,7 @@ void PrintVisitor::visit(const Add &op) {
 void PrintVisitor::visit(const Sub &op) {
     precedence_enclose(Precedence::ADD, [&] {
         recur(op->lhs_);
-        os() << " - ";
+        os() << SPACE << "-" << SPACE;
         precedence_enclose(Precedence::ADD_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -305,7 +312,7 @@ void PrintVisitor::visit(const Sub &op) {
 void PrintVisitor::visit(const Mul &op) {
     precedence_enclose(Precedence::MUL, [&] {
         recur(op->lhs_);
-        os() << " * ";
+        os() << SPACE << "*" << SPACE;
         precedence_enclose(Precedence::MUL_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -313,7 +320,7 @@ void PrintVisitor::visit(const Mul &op) {
 void PrintVisitor::visit(const RealDiv &op) {
     precedence_enclose(Precedence::MUL, [&] {
         recur(op->lhs_);
-        os() << " / ";
+        os() << SPACE << "/" << SPACE;
         precedence_enclose(Precedence::MUL_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -324,7 +331,7 @@ void PrintVisitor::visit(const FloorDiv &op) {
         [&] {
             os() << "@!floor(";
             recur(op->lhs_);
-            os() << " / ";
+            os() << SPACE << "/" << SPACE;
             recur(op->rhs_);
             os() << ")";
         },
@@ -337,7 +344,7 @@ void PrintVisitor::visit(const CeilDiv &op) {
         [&] {
             os() << "@!ceil(";
             recur(op->lhs_);
-            os() << " / ";
+            os() << SPACE << "/" << SPACE;
             recur(op->rhs_);
             os() << ")";
         },
@@ -350,7 +357,7 @@ void PrintVisitor::visit(const RoundTowards0Div &op) {
         [&] {
             os() << "@!towards0(";
             recur(op->lhs_);
-            os() << " / ";
+            os() << SPACE << "/" << SPACE;
             recur(op->rhs_);
             os() << ")";
         },
@@ -360,7 +367,7 @@ void PrintVisitor::visit(const RoundTowards0Div &op) {
 void PrintVisitor::visit(const Mod &op) {
     precedence_enclose(Precedence::MUL, [&] {
         recur(op->lhs_);
-        os() << " % ";
+        os() << SPACE << "%" << SPACE;
         precedence_enclose(Precedence::MUL_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -368,7 +375,7 @@ void PrintVisitor::visit(const Mod &op) {
 void PrintVisitor::visit(const Remainder &op) {
     precedence_enclose(Precedence::MUL, [&] {
         recur(op->lhs_);
-        os() << " %% ";
+        os() << SPACE << "%%" << SPACE;
         precedence_enclose(Precedence::MUL_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -377,7 +384,7 @@ void PrintVisitor::visit(const Min &op) {
     precedence_new([&] {
         os() << "@!min(";
         recur(op->lhs_);
-        os() << ", ";
+        os() << "," << SPACE;
         recur(op->rhs_);
         os() << ")";
     });
@@ -387,7 +394,7 @@ void PrintVisitor::visit(const Max &op) {
     precedence_new([&] {
         os() << "@!max(";
         recur(op->lhs_);
-        os() << ", ";
+        os() << "," << SPACE;
         recur(op->rhs_);
         os() << ")";
     });
@@ -396,7 +403,7 @@ void PrintVisitor::visit(const Max &op) {
 void PrintVisitor::visit(const LT &op) {
     precedence_enclose(Precedence::COMP, [&] {
         recur(op->lhs_);
-        os() << " < ";
+        os() << SPACE << "<" << SPACE;
         precedence_enclose(Precedence::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -404,7 +411,7 @@ void PrintVisitor::visit(const LT &op) {
 void PrintVisitor::visit(const LE &op) {
     precedence_enclose(Precedence::COMP, [&] {
         recur(op->lhs_);
-        os() << " <= ";
+        os() << SPACE << "<=" << SPACE;
         precedence_enclose(Precedence::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -412,7 +419,7 @@ void PrintVisitor::visit(const LE &op) {
 void PrintVisitor::visit(const GT &op) {
     precedence_enclose(Precedence::COMP, [&] {
         recur(op->lhs_);
-        os() << " > ";
+        os() << SPACE << ">" << SPACE;
         precedence_enclose(Precedence::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -420,7 +427,7 @@ void PrintVisitor::visit(const GT &op) {
 void PrintVisitor::visit(const GE &op) {
     precedence_enclose(Precedence::COMP, [&] {
         recur(op->lhs_);
-        os() << " >= ";
+        os() << SPACE << ">=" << SPACE;
         precedence_enclose(Precedence::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -428,7 +435,7 @@ void PrintVisitor::visit(const GE &op) {
 void PrintVisitor::visit(const EQ &op) {
     precedence_enclose(Precedence::COMP, [&] {
         recur(op->lhs_);
-        os() << " == ";
+        os() << SPACE << "==" << SPACE;
         precedence_enclose(Precedence::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -436,7 +443,7 @@ void PrintVisitor::visit(const EQ &op) {
 void PrintVisitor::visit(const NE &op) {
     precedence_enclose(Precedence::COMP, [&] {
         recur(op->lhs_);
-        os() << " != ";
+        os() << SPACE << "!=" << SPACE;
         precedence_enclose(Precedence::COMP_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -444,7 +451,7 @@ void PrintVisitor::visit(const NE &op) {
 void PrintVisitor::visit(const LAnd &op) {
     precedence_enclose(Precedence::LAND, [&] {
         recur(op->lhs_);
-        os() << " && ";
+        os() << SPACE << "&&" << SPACE;
         precedence_enclose(Precedence::LAND_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -452,7 +459,7 @@ void PrintVisitor::visit(const LAnd &op) {
 void PrintVisitor::visit(const LOr &op) {
     precedence_enclose(Precedence::LOR, [&] {
         recur(op->lhs_);
-        os() << " || ";
+        os() << SPACE << "||" << SPACE;
         precedence_enclose(Precedence::LOR_RHS, [&] { recur(op->rhs_); });
     });
 }
@@ -529,9 +536,9 @@ void PrintVisitor::visit(const Ceil &op) {
 void PrintVisitor::visit(const IfExpr &op) {
     precedence_enclose(Precedence::TRINARY, [&] {
         recur(op->cond_);
-        os() << " ? ";
+        os() << SPACE << "?" << SPACE;
         recur(op->thenCase_);
-        os() << " : ";
+        os() << SPACE << ":" << SPACE;
         recur(op->elseCase_);
     });
 }
@@ -662,11 +669,11 @@ void PrintVisitor::visit(const Intrinsic &op) {
     os() << "@!intrinsic(\"" << op->format_ << "\" -> "
          << ::freetensor::toString(op->retType_);
     for (auto &&param : op->params_) {
-        os() << ", ";
+        os() << "," << SPACE;
         recur(param);
     }
     if (op->hasSideEffect_) {
-        os() << ", @!side_effect";
+        os() << "," << SPACE << "@!side_effect";
     }
     os() << ")";
 }
@@ -730,14 +737,20 @@ std::string toString(const AST &op, bool pretty, bool printAllId) {
 }
 
 std::string toString(const AST &op, bool pretty, bool printAllId,
-                     bool dtypeInLoad, bool hexFloat) {
-    PrintVisitor visitor(printAllId, pretty, dtypeInLoad, hexFloat);
+                     bool dtypeInLoad, bool hexFloat, bool compact) {
+    PrintVisitor visitor(printAllId, pretty, dtypeInLoad, hexFloat, compact);
     visitor(op);
     return visitor.toString(
         [](const CodeGenStream &stream) { return stream.os_.str(); });
 }
 
 int OSTREAM_NO_PRETTY = std::ostream::xalloc();
+std::function<std::ostream &(std::ostream &)> manipNoPrettyAST(bool flag) {
+    return [flag](std::ostream &os) -> std::ostream & {
+        os.iword(OSTREAM_NO_PRETTY) = flag;
+        return os;
+    };
+}
 
 std::ostream &operator<<(std::ostream &os, const AST &op) {
     if (os.iword(OSTREAM_NO_PRETTY)) {

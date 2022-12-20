@@ -18,7 +18,15 @@ void CheckSideEffect::visit(const Intrinsic &op) {
 }
 
 Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
+    if (stmt == subAST_)
+        inSubAST_ = true;
+    if (subAST_.isValid() && !(inSubAST_ || subASTAncestors_.contains(stmt)))
+        return deepCopy(stmt);
+
     auto ret = BaseClass::visitStmt(stmt);
+
+    if (stmt == subAST_)
+        inSubAST_ = false;
 
     CheckSideEffect checker;
     switch (stmt->nodeType()) {
@@ -115,10 +123,27 @@ Stmt ShrinkFor::visit(const For &_op) {
     return op;
 }
 
-Stmt shrinkFor(const Stmt &_op) {
-    auto op = simplify(_op); // Const prop + eliminate empty loops
-    op = ShrinkFor()(op);
-    return simplify(op);
+void ShrinkFor::setSubAST(const Stmt &subAST) {
+    subAST_ = subAST;
+    for (Stmt s = subAST->parentStmt(); s.isValid(); s = s->parentStmt())
+        subASTAncestors_.insert(s);
+}
+
+Stmt shrinkFor(const Stmt &_op, const Stmt &subAST, bool doSimplify) {
+    auto op = _op;
+
+    if (doSimplify) // Const prop + eliminate empty loops
+        op = simplify(op);
+
+    ShrinkFor shrinker;
+    if (subAST.isValid())
+        shrinker.setSubAST(subAST);
+    op = shrinker(op);
+
+    if (doSimplify)
+        op = simplify(op);
+
+    return op;
 }
 
 } // namespace freetensor

@@ -44,16 +44,14 @@ def test_multiple_choices_no_remove():
 
 
 def test_multiple_choices_no_remove_2():
-    with ft.VarDef([("x", (), "int32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 0
         with ft.For("i", 0, 5) as i:
             y[()] += i
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
 
-    with ft.VarDef([("x", (), "int32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 0
         with ft.For("i", 0, 5) as i:
             y[()] += i
@@ -248,8 +246,7 @@ def test_loop_local_multiple_choices_no_remove():
 
 
 def test_loop_local_multiple_choices_no_remove_2():
-    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
-                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = 0
             with ft.For("j", 0, 5) as j:
@@ -257,8 +254,7 @@ def test_loop_local_multiple_choices_no_remove_2():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
 
-    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
-                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = 0
             with ft.For("j", 0, 5) as j:

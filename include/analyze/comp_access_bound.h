@@ -89,19 +89,29 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
     CompAccessBoundMode mode_;
     bool includeTrivialBound_;
 
+    ID filterSubTree_;
+    bool filtered_ = false;
+
     AccessBound result_;
 
   public:
     CompAccessBound(const ID &varDefId, MemType mtype,
                     CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL,
-                    bool includeTrivialBound = true)
+                    bool includeTrivialBound = true,
+                    const ID &filterSubTree = ID())
         : unique_(*this), varDefId_(varDefId), mtype_(mtype), mode_(mode),
-          includeTrivialBound_(includeTrivialBound) {}
+          includeTrivialBound_(includeTrivialBound),
+          filterSubTree_(filterSubTree) {
+        if (!filterSubTree_.isValid()) {
+            filtered_ = true;
+        }
+    }
 
     const AccessBound &result() const { return result_; }
 
   protected:
     using BaseClass::visit;
+    void visitStmt(const Stmt &stmt) override;
     void visit(const VarDef &op) override;
     void visit(const Load &op) override;
     void visit(const Store &op) override;
@@ -118,10 +128,13 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
  * @param includeTrivialBound : True to including `lower_i = 0` and `upper_i =
  * len_i - 1` as trivial bounds. False to return nullptr if no non-trivial bound
  * is found
+ * @param filterSubTree : If set, consider only uses of the variable inside this
+ * sub-tree
  */
 AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
                             CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL,
-                            bool includeTrivialBound = true);
+                            bool includeTrivialBound = true,
+                            const ID &filterSubTree = ID());
 
 } // namespace freetensor
 

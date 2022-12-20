@@ -480,8 +480,7 @@ def test_type1_not_kill_later_store():
                        'prop_one_time_use'
                    ])
 
-    with ft.VarDef([("x", (), "int32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 1
     std = ft.pop_ast()
 
@@ -705,7 +704,7 @@ def test_cross_var_def():
     assert std.match(ast)
 
 
-def test_same_parent_but_dep_and_circular_dependency_on_init():
+def test_same_parent_but_dep_and_circular_dependence_on_init():
     with ft.VarDef([("f", (10,), "float32", "output", "cpu"),
                     ("u", (10,), "float32", "cache", "cpu")]) as (f, u):
         with ft.For("l", 0, 10) as l:
@@ -736,7 +735,7 @@ def test_same_parent_but_dep_and_circular_dependency_on_init():
     assert std.match(ast)
 
 
-def test_circular_dependency_in_parallel():
+def test_circular_dependence_in_parallel():
     with ft.VarDef([("a", (256,), "float32", "inout", "cpu"),
                     ("b", (256,), "float32", "cache", "cpu"),
                     ("c", (256,), "float32", "cache", "cpu")]) as (a, b, c):

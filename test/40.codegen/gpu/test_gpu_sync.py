@@ -298,6 +298,41 @@ def test_syncthreads_at_outer_loop_and_outer_branch():
     assert ft.pop_ast().match(func.body)
 
 
+def test_syncthreads_between_cond_and_body_of_a_branch():
+    # Already normalized AST:
+    ast = ft.load_ast('''
+@!parallel : @threadIdx.y
+for `.threadIdx.y` in 0 : 8 : 1 : 8 {
+  @!parallel : @threadIdx.x
+  for `.threadIdx.x` in 0 : 32 : 1 : 32 {
+    @inout @gpu/global x: float32[8] @!pinned {
+      for i in 0 : 5856 : 1 : 5856 {
+        if x[`.threadIdx.y`] > 0 {
+          if `.threadIdx.x` == 0 {
+            x[`.threadIdx.y`] = 1
+          }
+        }
+      }
+    }
+  }
+}
+    ''')
+    print(ast)
+
+    ast = ft.gpu_make_sync(ast, target)
+    print(ast)
+
+    with ft.For("ty", 0, 8) as ty:
+        with ft.For("tx", 0, 32) as tx:
+            with ft.VarDef("x", (8,), "float32", "inout", "gpu/global") as x:
+                with ft.For("i", 0, 5856) as i:
+                    with ft.If(x[ty] > 0):
+                        with ft.If(tx == 0):
+                            x[ty] = 1
+                    ft.Eval(ft.intrinsic("__syncwarp()", has_side_effect=True))
+    assert ft.pop_ast().match(ast)
+
+
 def test_syncthreads_split_branch():
 
     @ft.transform

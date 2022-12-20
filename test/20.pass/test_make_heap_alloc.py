@@ -15,7 +15,10 @@ def test_cpu_heap():
         x[()] = y[0, 1] + y[1, 0] + 1
         o[()] = x[()] + 1
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=["prop_one_time_use"])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   target=ft.CPU().target(),
+                   skip_passes=["prop_one_time_use"])
 
     with ft.VarDef([("x", (), "int32", "cache", "cpu"),
                     ("i", (), "int32", "input", "cpu"),
@@ -51,7 +54,10 @@ def test_gpu_global_heap():
             x[()] = y[0] + y[1] + 1
             o[()] = x[()] + 1
         ast = ft.pop_ast(verbose=True)
-        ast = ft.lower(ast, verbose=1, skip_passes=["prop_one_time_use"])
+        ast = ft.lower(ast,
+                       verbose=1,
+                       target=ft.GPU(0).target(),
+                       skip_passes=["prop_one_time_use"])
 
         with ft.VarDef([("x", (), "int32", "cache", "gpu/global"),
                         ("i", (), "int32", "input", "gpu/global"),
@@ -85,7 +91,10 @@ def test_transform_to_cpu_heap():
         x[()] = y[0, 1] + y[1, 0] + 1
         o[()] = x[()] + 1
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=["prop_one_time_use"])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   target=ft.CPU().target(),
+                   skip_passes=["prop_one_time_use"])
 
     with ft.VarDef([("x", (), "int32", "cache", "cpu"),
                     ("i", (), "int32", "input", "cpu"),
@@ -121,7 +130,10 @@ def test_transform_to_gpu_global_heap():
             x[()] = y[0] + y[1] + 1
             o[()] = x[()] + 1
         ast = ft.pop_ast(verbose=True)
-        ast = ft.lower(ast, verbose=1, skip_passes=["prop_one_time_use"])
+        ast = ft.lower(ast,
+                       verbose=1,
+                       target=ft.GPU(0).target(),
+                       skip_passes=["prop_one_time_use"])
 
         with ft.VarDef([("x", (), "int32", "cache", "gpu/global"),
                         ("i", (), "int32", "input", "gpu/global"),
@@ -155,7 +167,10 @@ def test_transform_dynamic_size():
                 s[...] += y[i]
                 m[...] *= y[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast,
+                   verbose=1,
+                   target=ft.CPU().target(),
+                   skip_passes=['shrink_var'])
 
     with ft.VarDef("n", (), "int32", "input", "cpu") as n:
         with ft.VarDef([("x", (n[...],), "int32", "input", "cpu"),
@@ -170,6 +185,42 @@ def test_transform_dynamic_size():
                 with ft.For("i", 0, n[...]) as i:
                     s[...] += y[i]
                     m[...] *= y[i]
+                ft.Free(y)
+    std = ft.pop_ast()
+    assert std.match(ast)
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_transform_dynamic_size_caused_by_thread_dim():
+    with ft.VarDef([("x", (4,), "int32", "input", "gpu/global"),
+                    ("s", (16,), "int32", "output", "gpu/global"),
+                    ("m", (16,), "int32", "output", "gpu/global")]) as (x, s,
+                                                                        m):
+        with ft.For("i", 1, 4, label="Li") as i:
+            with ft.For("j", 0, i, label="Lj") as j:
+                with ft.VarDef("y", (), "int32", "cache", "gpu/global") as y:
+                    y[...] = x[j] * i
+                    s[i * 4 + j] = y[...] * 2
+                    m[i * 4 + j] = y[...] * 3
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.parallelize("Lj", "threadIdx.x")
+    ast = ft.lower(s.ast(),
+                   verbose=1,
+                   target=ft.GPU(0).target(),
+                   skip_passes=['shrink_var'])
+
+    with ft.VarDef([("x", (4,), "int32", "input", "gpu/global"),
+                    ("s", (16,), "int32", "output", "gpu/global"),
+                    ("m", (16,), "int32", "output", "gpu/global")]) as (x, s,
+                                                                        m):
+        with ft.For("i", 1, 4) as i:
+            with ft.VarDef("y", (i,), "int32", "cache", "gpu/global/heap") as y:
+                ft.Alloc(y)
+                with ft.For("j", 0, i) as j:
+                    y[j] = x[j] * i
+                    s[i * 4 + j] = y[j] * 2
+                    m[i * 4 + j] = y[j] * 3
                 ft.Free(y)
     std = ft.pop_ast()
     assert std.match(ast)

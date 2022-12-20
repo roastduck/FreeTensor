@@ -67,7 +67,7 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         return true; // early exit: impossible to be written
     }
 
-    // First insert temporarily Eval node to the AST, then perform dependency
+    // First insert temporarily Eval node to the AST, then perform dependence
     // analysis
 
     InsertTmpEval inserter(s0Expr, s1Expr, s0Side, s0, s1Side, s1);
@@ -107,7 +107,7 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
     // write -> serialized PBSet
     std::unordered_map<Stmt, std::string> writesWAR;
     std::mutex m;
-    auto foundWAR = [&](const Dependency &dep) {
+    auto foundWAR = [&](const Dependence &dep) {
         // Serialize WAR map because it is from a random PBCtx
         auto strWAR =
             toString(apply(domain(dep.later2EarlierIter_), dep.laterIter2Idx_));
@@ -127,7 +127,7 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         })
         .noProjectOutPrivateAxis(true)(tmpOp, unsyncFunc(foundWAR));
 
-    auto foundRAW = [&](const Dependency &dep) {
+    auto foundRAW = [&](const Dependence &dep) {
         // re-construct WAR map from stored string in current PBCtx
         auto w0 = PBSet(dep.presburger_, writesWAR[dep.earlier_.stmt_]);
         auto w1 = apply(range(dep.later2EarlierIter_), dep.earlierIter2Idx_);

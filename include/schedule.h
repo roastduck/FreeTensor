@@ -272,7 +272,7 @@ class Schedule {
      *
      * @param order : Vector of loop IDs. The requested order of the loops
      * @throw InvalidSchedule if the input is invalid or there are breaking
-     * dependencies
+     * dependences
      */
     void reorder(const std::vector<ID> &order);
 
@@ -306,7 +306,7 @@ class Schedule {
      * bijective
      * @throw InvalidSchedule if the loops are not perfectly nested, or the
      * permutation is not bijective, or the permutation breaks certain
-     * dependency
+     * dependence
      * @return : the list of IDs of permuted loops
      */
     std::vector<ID>
@@ -337,7 +337,7 @@ class Schedule {
      * @param suffix1 : The suffix in the `op` of metadata of result part 1. If
      * empty, the fissioned part 1 preserves original ID and metadata. Cannot be
      * empty together with `suffix0`.
-     * @throw InvalidSchedule if any dependency cannot be resolved
+     * @throw InvalidSchedule if any dependence cannot be resolved
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
      * loop}). If a loop is removed because it has an empty body, it will not be
      * in the returned map
@@ -364,7 +364,7 @@ class Schedule {
      * @param strict : If true, throw an error if unable to determine whether
      * the two loops are of the same length
      * @throw InvalidSchedule if the two loops are not directly following, the
-     * two loops are not of the same length, or there is any dependency cannot
+     * two loops are not of the same length, or there is any dependence cannot
      * be resolved
      * @return : ID of the result loop
      * @{
@@ -380,7 +380,7 @@ class Schedule {
      *
      * @param order : list of IDs of the statements
      * @throw InvalidSchedule if the statements are not found or the
-     * dependencies cannot be solved
+     * dependences cannot be solved
      */
     void swap(const std::vector<ID> &order);
 
@@ -409,7 +409,7 @@ class Schedule {
      *
      * @param loop : ID of the loop being transformed
      * @throw InvalidSchedule if the loop is not found, the loop length is not a
-     * constant, or the dependencies cannot be solved
+     * constant, or the dependences cannot be solved
      */
     void blend(const ID &loop);
 
@@ -636,7 +636,7 @@ class Schedule {
      * compiler. The vectorization is a best-effort schedule
      *
      * @param loop : ID of the loop
-     * @throw InvalidSchedule if the ID or name is not found, or the dependency
+     * @throw InvalidSchedule if the ID or name is not found, or the dependence
      * requirement is not met
      */
     void vectorize(const ID &loop);
@@ -705,11 +705,17 @@ class Schedule {
      * considered, defaults to maximum possible
      * @param nestLevel1 : The number of nesting levels of loop 1 to be
      * considered, defaults to maximum possible
+     * @param fusableOverlapThreshold : The minimum overlapping size of two
+     * loops to be regarded fusable. Defaults to 1
+     * @param doSimplify : Whether the result is simplified by the way, defaults
+     * to true
      * @return std::pair<ID, int> : The ID of fused loop and level of
      * parallelizable loops
      */
     std::pair<ID, int> plutoFuse(const ID &loop0, const ID &loop1,
-                                 int nestLevel0 = 0, int nestLevel1 = 0);
+                                 int nestLevel0 = 0, int nestLevel1 = 0,
+                                 int fusableOverlapThreshold = 1,
+                                 bool doSimplify = true);
 
     /**
      * Use Pluto+ algorithm to permute a single loop, with as most
@@ -718,10 +724,13 @@ class Schedule {
      * @param loop : The loop to permute
      * @param nestLevel0 : The number of nesting levels to be considered,
      * defaults to maximum possible
+     * @param doSimplify : Whether the result is simplified by the way, defaults
+     * to true
      * @return std::pair<ID, int> : The ID of permuted loop and level of
      * parallelizable loops
      */
-    std::pair<ID, int> plutoPermute(const ID &loop, int nestLevel = 0);
+    std::pair<ID, int> plutoPermute(const ID &loop, int nestLevel = 0,
+                                    bool doSimplify = true);
 
     /**
      * (Experimental) Automatic scheduling using some heuristics
@@ -729,7 +738,7 @@ class Schedule {
      * @param target : Target architecture
      * @param trace : Random decision tarce
      */
-    void autoSchedule(const Target &target,
+    void autoSchedule(const Ref<Target> &target,
                       const Ref<RandTrace> &trace = nullptr);
 
     /**
@@ -737,14 +746,14 @@ class Schedule {
      *
      * @param target : Target architecture
      */
-    void autoUseLib(const Target &target);
+    void autoUseLib(const Ref<Target> &target);
 
     /**
      * (Experimental) Automaticaly reorder loops in a loop nest
      *
      * @param target : Target architecture
      */
-    void autoReorder(const Target &target);
+    void autoReorder(const Ref<Target> &target);
 
     /**
      * (Experimental) Automatically fuse consecutive loops or vice versa using
@@ -753,7 +762,7 @@ class Schedule {
      * @param target : Target architecture
      * @param trace : Random decision tarce
      */
-    void autoFissionFuse(const Target &target,
+    void autoFissionFuse(const Ref<Target> &target,
                          const Ref<RandTrace> &trace = nullptr);
 
     /**
@@ -761,21 +770,21 @@ class Schedule {
      *
      * @param target : Target architecture
      */
-    void autoParallelize(const Target &target);
+    void autoParallelize(const Ref<Target> &target);
 
     /**
      * (Experimental) Automatically set memory types using some heuristics
      *
      * @param target : Target architecture
      */
-    void autoSetMemType(const Target &target);
+    void autoSetMemType(const Ref<Target> &target);
 
     /**
      * (Experimental) Automatically unroll loops using some heuristics
      *
      * @param target : Target architecture
      */
-    void autoUnroll(const Target &target);
+    void autoUnroll(const Ref<Target> &target);
 
     std::vector<AutoScheduleTuneTrial> tuneAutoSchedule(
         int nBatch, int batchSize, const Ref<Device> &device,

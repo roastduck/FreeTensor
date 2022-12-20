@@ -43,6 +43,7 @@ Stmt HoistReturnVars::visit(const For &op) {
                              std::move(ret), def->pinned_, def->metadata(),
                              def->id());
         }
+        toHoist_.clear();
         return ret;
     } else {
         return Mutator::visit(op);

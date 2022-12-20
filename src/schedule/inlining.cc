@@ -69,7 +69,7 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
 
     std::unordered_map<Load, Expr> replace;
     std::mutex m;
-    auto found = [&](const Dependency &dep) {
+    auto found = [&](const Dependence &dep) {
         {
             std::lock_guard l(m);
             if (replace.count(dep.later().as<LoadNode>())) {

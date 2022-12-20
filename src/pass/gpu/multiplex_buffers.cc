@@ -21,6 +21,9 @@ void FindParallelLoops::visit(const For &op) {
 
 void FindParallelLoops::visit(const VarDef &op) {
     Visitor::visit(op);
+    if (defId_.isValid() && op->id() != defId_) {
+        return;
+    }
     if (op->buffer_->mtype() == MemType::GPUGlobal) {
         for (auto &&outer : stack_) {
             affecting_[op->id()].insert(outer->id());
@@ -99,8 +102,9 @@ Stmt MultiplexMutator::visit(const ReduceTo &_op) {
     return alterAccess(op);
 }
 
-Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target) {
-    FindParallelLoops finder(target);
+Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target,
+                      const ID &defId) {
+    FindParallelLoops finder(target, defId);
     finder(op);
 
     std::unordered_map<ID, std::unordered_set<ID>> affecting,
@@ -134,7 +138,7 @@ Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target) {
         .filterAccess([&](const AccessPoint &acc) {
             return affecting.count(acc.def_->id());
         })
-        .eraseOutsideVarDef(false)(op, [&](const Dependency &d) {
+        .eraseOutsideVarDef(false)(op, [&](const Dependence &d) {
             ASSERT(d.dir_.size() == 1);
             if (affecting.count(d.defId()) &&
                 affecting.at(d.defId()).count(d.dir_[0].first.id_)) {

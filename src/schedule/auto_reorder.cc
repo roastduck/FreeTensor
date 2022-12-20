@@ -4,7 +4,7 @@
 
 namespace freetensor {
 
-void Schedule::autoReorder(const Target &target) {
+void Schedule::autoReorder(const Ref<Target> &target) {
     auto allLoops = findAllLoops(ast());
     std::vector<FindDepsDir> direction;
     direction.reserve(allLoops.size());
@@ -17,7 +17,7 @@ void Schedule::autoReorder(const Target &target) {
     // 2 = Others
     std::unordered_map<ID, int> depLevel;
     FindDeps().direction(direction).ignoreReductionWAW(false)(
-        ast(), [&](const Dependency &d) {
+        ast(), [&](const Dependence &d) {
             ASSERT(d.dir_.size() == 1);
             auto &level = depLevel[d.dir_[0].first.id_];
             if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
@@ -33,7 +33,7 @@ void Schedule::autoReorder(const Target &target) {
         std::vector<ID> perfectNest = {nest->id()};
         while (true) {
             if (auto inners =
-                    findAll("<For><-(!<For><-)*#" + toString(nest->id()));
+                    findAll("<For><-(!<For><-)*" + toString(nest->id()));
                 inners.size() == 1) {
                 nest = inners.front().as<ForNode>();
                 perfectNest.emplace_back(nest->id());
@@ -52,11 +52,11 @@ void Schedule::autoReorder(const Target &target) {
         }
 
         for (auto &&subNest :
-             findAll("<For><-(!<For><-)*#" + toString(nest->id()))) {
+             findAll("<For><-(!<For><-)*" + toString(nest->id()))) {
             visitNest(subNest.as<ForNode>());
         }
     };
-    for (auto &&subNest : findAll("<For><-(!<For><-)*-|")) {
+    for (auto &&subNest : findAll("<For><-(!<For><-)*<-|")) {
         // Suppose the root node is not <For>. It should be <VarDef>
         visitNest(subNest.as<ForNode>());
     }

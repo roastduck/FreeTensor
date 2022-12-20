@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <sstream>
 
+#include <analyze/all_defs.h>
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <container_utils.h>
@@ -13,6 +14,14 @@
 #include <serialize/print_ast.h>
 
 namespace freetensor {
+
+template <PBMapRef T> static PBMap dropAllConstraintsNotInvolvingAxes(T &&map) {
+    PBSet wrapped = isl_map_wrap(PBRefTake<T>(map));
+    auto n = wrapped.nDims();
+    PBSet dropped = isl_set_drop_constraints_not_involving_dims(
+        wrapped.move(), isl_dim_set, 0, n);
+    return isl_map_drop_unused_params(isl_set_unwrap(dropped.move()));
+}
 
 void FindAllNoDeps::visit(const For &op) {
     Visitor::visit(op);
@@ -49,9 +58,9 @@ void CountBandNodeWidth::visit(const ReduceTo &op) {
     lastIsLoad_ = false;
 }
 
-FindAccessPoint::FindAccessPoint(const Stmt &root,
+FindAccessPoint::FindAccessPoint(const Stmt &root, const ID &vardef,
                                  const FindDepsAccFilter &accFilter)
-    : accFilter_(accFilter) {
+    : vardef_(vardef), accFilter_(accFilter) {
     if (int width = countBandNodeWidth(root); width > 1) {
         cur_.emplace_back(makeIntConst(-1));
     }
@@ -73,14 +82,27 @@ FindAccessPoint::normalizeExprs(const std::vector<Expr> &indices,
     return ret;
 }
 
+void FindAccessPoint::visitStmt(const Stmt &stmt) {
+    BaseClass::visitStmt(stmt);
+    for (auto &&child : stmt->children()) {
+        if (subTreeFilteredIn_.count(child)) {
+            subTreeFilteredIn_.insert(stmt);
+            break;
+        }
+    }
+}
+
 void FindAccessPoint::visit(const VarDef &op) {
-    allDefs_.emplace_back(op);
-    defAxis_[op->name_] =
-        !cur_.empty() && cur_.back().iter_->nodeType() == ASTNodeType::IntConst
-            ? cur_.size() - 1
-            : cur_.size();
-    BaseClass::visit(op);
-    defAxis_.erase(op->name_);
+    if (op->id() == vardef_) {
+        defAxis_ = !cur_.empty() && cur_.back().iter_->nodeType() ==
+                                        ASTNodeType::IntConst
+                       ? cur_.size() - 1
+                       : cur_.size();
+        BaseClass::visit(op);
+        defAxis_ = -1;
+    } else {
+        BaseClass::visit(op);
+    }
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
@@ -96,6 +118,8 @@ void FindAccessPoint::visit(const For &op) {
     (*this)(op->end_);
     (*this)(op->len_);
 
+    auto old = cur_;
+    auto oldLastIsLoad = lastIsLoad_;
     if (!cur_.empty() &&
         cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
         // top is band node
@@ -151,6 +175,15 @@ void FindAccessPoint::visit(const For &op) {
     cur_.pop_back();
     conds_.resize(oldCondsSize);
     replaceIter_.erase(op->iter_);
+    lastIsLoad_ = false; // The last Load in the loop and the first Load out of
+                         // the loop shall have different coordinates
+
+    if (!subTreeFilteredIn_.count(op->body_)) {
+        // No stepping to make iteration space more compact
+        cur_ = std::move(old);
+        lastIsLoad_ = oldLastIsLoad;
+        ClearUnusedScopes{scope2coord_}(op);
+    }
 }
 
 void FindAccessPoint::visit(const If &op) {
@@ -171,6 +204,28 @@ void FindAccessPoint::visit(const If &op) {
 }
 
 void FindAccessPoint::visit(const Load &op) {
+    BaseClass::visit(op);
+
+    bool isThisVarDef = false;
+    VarDef viewOf;
+    if (def(op->var_)->id() == vardef_) {
+        isThisVarDef = true;
+    } else {
+        for (auto source = def(op->var_); source->viewOf_.has_value();) {
+            source = def(*source->viewOf_);
+            if (source->id() == vardef_) {
+                isThisVarDef = true;
+                viewOf = source;
+                break;
+            }
+        }
+    }
+    if (!isThisVarDef) {
+        return;
+    }
+
+    auto old = cur_;
+    auto oldLastIsLoad = lastIsLoad_;
     if (!cur_.empty() &&
         cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
         // top is band node
@@ -181,39 +236,30 @@ void FindAccessPoint::visit(const Load &op) {
     }
     lastIsLoad_ = true;
 
-    BaseClass::visit(op);
-    auto ap = Ref<AccessPoint>::make();
-    *ap = {op,
-           curStmt(),
-           def(op->var_),
-           buffer(op->var_),
-           defAxis_.at(op->var_),
-           cur_,
-           normalizeExprs(op->indices_, curStmt()->id()),
-           conds_};
-    if (accFilter_ == nullptr || accFilter_(*ap)) {
-        auto &&d = def(op->var_);
-        reads_[def(op->var_)->id()].emplace_back(ap);
-
+    std::vector<Expr> exprs;
+    VarDef d;
+    if (viewOf.isValid()) {
         // Simultaneously access of a `VarDef` and the `VarDef` it views is
-        // ALWAYS treated as dependences
-        for (auto source = d; source->viewOf_.has_value();) {
-            source = def(*source->viewOf_);
-            auto ap = Ref<AccessPoint>::make();
-            *ap = {
-                op,
-                curStmt(),
-                source,
-                source->buffer_,
-                defAxis_.at(source->name_),
-                cur_,
-                std::vector<Expr>(
-                    source->buffer_->tensor()->shape().size(),
-                    makeIntrinsic("", {}, DataType::Int32,
-                                  false)), // Use Intrinsic as "any expression"
-                conds_};
-            reads_[source->id()].emplace_back(ap);
-        }
+        // ALWAYS treated as dependences. Use Intrinsic as "any expression"
+        exprs =
+            std::vector<Expr>(viewOf->buffer_->tensor()->shape().size(),
+                              makeIntrinsic("", {}, DataType::Int32, false));
+        d = viewOf;
+    } else {
+        exprs = normalizeExprs(op->indices_, curStmt()->id());
+        d = def(op->var_);
+    }
+
+    auto ap = Ref<AccessPoint>::make();
+    *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
+           cur_, std::move(exprs), conds_};
+    if (accFilter_ == nullptr || accFilter_(*ap)) {
+        subTreeFilteredIn_.insert(curStmt());
+        reads_.emplace_back(ap);
+    } else {
+        // No stepping to make iteration space more compact
+        cur_ = std::move(old);
+        lastIsLoad_ = oldLastIsLoad;
     }
 }
 
@@ -297,8 +343,9 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
 PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
                               int iterDim, int accDim, RelaxMode relax,
                               const std::string &extSuffix,
-                              GenPBExpr::VarMap &externals) {
-    GenPBExpr genPBExpr(extSuffix);
+                              GenPBExpr::VarMap &externals,
+                              const ASTHashSet<Expr> &noNeedToBeVars) {
+    GenPBExpr genPBExpr(extSuffix, noNeedToBeVars);
     auto ret = makeIterList(p.iter_, iterDim) + " -> " +
                makeAccList(genPBExpr, p.access_, relax, externals);
     if (auto str = makeCond(genPBExpr, p.conds_, relax, externals,
@@ -370,6 +417,10 @@ PBMap AnalyzeDeps::makeIneqBetweenOps(PBCtx &presburger, DepDirection mode,
 
 PBMap AnalyzeDeps::makeConstraintOfSingleLoop(PBCtx &presburger, const ID &loop,
                                               DepDirection mode, int iterDim) {
+    if (!scope2coord_.count(loop)) {
+        return emptyMap(spaceAlloc(presburger, 0, iterDim, iterDim));
+    }
+
     auto &&coord = scope2coord_.at(loop);
     int iterId = coord.size() - 1;
     if (iterId >= iterDim) {
@@ -664,18 +715,87 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
             }
         }
         if (noProjectOutPrivateAxis_) {
-            found_(Dependency{item, getVar(later->op_), *later, *earlier,
+            found_(Dependence{item, getVar(later->op_), *later, *earlier,
                               iterDim, res, laterMap, earlierMap, presburger,
                               *this});
         } else {
             // It will be misleading if we pass Presburger maps to users in
             // this case
-            found_(Dependency{item, getVar(later->op_), *later, *earlier,
+            found_(Dependence{item, getVar(later->op_), *later, *earlier,
                               iterDim, PBMap(), PBMap(), PBMap(), presburger,
                               *this});
         }
     fail:;
     }
+}
+
+static ASTHashSet<Expr>
+getNoNeedToBeVars(const std::vector<Ref<AccessPoint>> accesses) {
+    // If an external variables is always used inside a fixed expression, we can
+    // represent the whole expression as an external variable, to reduce the
+    // number of external varaibles. E.g., consider a range of a loop variable
+    // is `0 <= i < n[] * m[]`, if `n[]` and `m[]` are always used as `n[] *
+    // m[]`, we can simply represent the range as `0 <= i < x`, where `x` equals
+    // to `n[] * m[]`. We sum the occurence of each (sub-)expression, to check
+    // for this case
+
+    auto checkAllExprs = [&](auto &&callback) {
+        for (auto &&acc : accesses) {
+            for (auto &&axis : acc->iter_) {
+                callback(axis.iter_);
+            }
+            for (auto &&idx : acc->access_) {
+                callback(idx);
+            }
+            for (auto &&[cond, _] : acc->conds_) {
+                callback(cond);
+            }
+        }
+    };
+
+    ASTHashMap<Expr, int> useCnt;
+    ASTHashSet<Expr> noNeedToBeVars;
+
+    class SumUseCnt : public Visitor {
+        ASTHashMap<Expr, int> &useCnt_;
+
+      public:
+        SumUseCnt(ASTHashMap<Expr, int> &useCnt) : useCnt_(useCnt) {}
+
+      protected:
+        void visitExpr(const Expr &expr) {
+            Visitor::visitExpr(expr);
+            useCnt_[expr]++;
+        }
+    };
+    checkAllExprs(SumUseCnt(useCnt));
+
+    class CheckNoNeedToBeVars : public Visitor {
+        const ASTHashMap<Expr, int> &useCnt_;
+        ASTHashSet<Expr> &noNeedToBeVars_;
+
+      public:
+        CheckNoNeedToBeVars(const ASTHashMap<Expr, int> &useCnt,
+                            ASTHashSet<Expr> &noNeedToBeVars)
+            : useCnt_(useCnt), noNeedToBeVars_(noNeedToBeVars) {}
+
+      protected:
+        void visitExpr(const Expr &expr) {
+            Visitor::visitExpr(expr);
+            for (auto &&child : expr->children()) {
+                if (child->nodeType() == ASTNodeType::Var ||
+                    useCnt_.at(child) > useCnt_.at(expr)) {
+                    return;
+                }
+            }
+            for (auto &&child : expr->children()) {
+                noNeedToBeVars_.insert(child);
+            }
+        }
+    };
+    checkAllExprs(CheckNoNeedToBeVars(useCnt, noNeedToBeVars));
+
+    return noNeedToBeVars;
 }
 
 void AnalyzeDeps::checkDepLatestEarlier(
@@ -734,6 +854,8 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         ASSERT((int)earlier->access_.size() == accDim);
     }
 
+    auto noNeedToBeVars = getNoNeedToBeVars(cat({later}, earlierList));
+
     PBMap allEQ = identity(spaceAlloc(presburger, 0, iterDim, iterDim));
     PBMap eraseVarDefConstraint =
         makeEraseVarDefConstraint(presburger, later, iterDim);
@@ -741,8 +863,9 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         makeNoDepsConstraint(presburger, later->def_->name_, iterDim);
 
     GenPBExpr::VarMap laterExternals;
-    PBMap laterMap = makeAccMap(presburger, *later, iterDim, accDim,
-                                laterRelax_, "later", laterExternals);
+    PBMap laterMap =
+        makeAccMap(presburger, *later, iterDim, accDim, laterRelax_, "later",
+                   laterExternals, noNeedToBeVars);
     if (laterMap.empty()) {
         return;
     }
@@ -756,9 +879,9 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     for (auto &&[i, earlier, earlierMap, earlierExternals] :
          views::zip(views::ints(0, ranges::unreachable), earlierList,
                     earlierMapList, earlierExternalsList)) {
-        earlierMap =
-            makeAccMap(presburger, *earlier, iterDim, accDim, earlierRelax_,
-                       "earlier" + std::to_string(i), earlierExternals);
+        earlierMap = makeAccMap(presburger, *earlier, iterDim, accDim,
+                                earlierRelax_, "earlier" + std::to_string(i),
+                                earlierExternals, noNeedToBeVars);
     }
     projectOutPrivateAxis(presburger, later, earlierList, earlierMapList,
                           iterDim);
@@ -781,8 +904,17 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
                                presburger, later, earlier, laterExternals,
                                earlierExternals, iterDim));
         depAll = coalesce(std::move(depAll));
-
         PBMap psDepAll = applyRange(depAll, std::move(ea2s));
+
+        // There may be some unused constraints of external variables in
+        // `psDepAll`. Suppose an external variable is named `x`, it can be
+        // `x_earlier0 = x_later`. This may seem trivial in `psDepAll`, because
+        // it is an empty set when the constraint is not met. However, when all
+        // `psDepAll` are unioned to be `psDelAllUnion`, this constrains become
+        // non-trivial (when the constraint is not met, there may be a non-empty
+        // map) and lead to redundant computation. We drop these contraint here
+        psDepAll = dropAllConstraintsNotInvolvingAxes(std::move(psDepAll));
+
         psDepAllUnion = psDepAllUnion.isValid()
                             ? uni(std::move(psDepAllUnion), std::move(psDepAll))
                             : std::move(psDepAll);
@@ -796,7 +928,8 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBMap ssDepAll = applyRange(std::move(ls2a), psDepAllUnion);
     PBMap ssDep = intersect(ssDepAll, std::move(serialLexGT));
     PBMap ssSelf = intersect(ssDepAll, std::move(serialEQ));
-    PBMap psDep = intersect(applyRange(la2s, std::move(ssDep)), psDepAllUnion);
+    PBMap psDep =
+        coalesce(intersect(applyRange(la2s, std::move(ssDep)), psDepAllUnion));
     PBMap psSelf = intersect(applyRange(std::move(la2s), std::move(ssSelf)),
                              std::move(psDepAllUnion));
     PBMap psNearest = uni(lexmax(std::move(psDep)), std::move(psSelf));
@@ -823,6 +956,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         ASSERT((int)later->access_.size() == accDim);
     }
 
+    auto noNeedToBeVars = getNoNeedToBeVars(cat(laterList, {earlier}));
+
     PBMap allEQ = identity(spaceAlloc(presburger, 0, iterDim, iterDim));
     PBMap eraseVarDefConstraint =
         makeEraseVarDefConstraint(presburger, earlier, iterDim);
@@ -830,8 +965,9 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         makeNoDepsConstraint(presburger, earlier->def_->name_, iterDim);
 
     GenPBExpr::VarMap earlierExternals;
-    PBMap earlierMap = makeAccMap(presburger, *earlier, iterDim, accDim,
-                                  earlierRelax_, "earlier", earlierExternals);
+    PBMap earlierMap =
+        makeAccMap(presburger, *earlier, iterDim, accDim, earlierRelax_,
+                   "earlier", earlierExternals, noNeedToBeVars);
     if (earlierMap.empty()) {
         return;
     }
@@ -845,7 +981,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
          views::zip(views::ints(0, ranges::unreachable), laterList,
                     laterMapList, laterExternalsList)) {
         laterMap = makeAccMap(presburger, *later, iterDim, accDim, laterRelax_,
-                              "later" + std::to_string(i), laterExternals);
+                              "later" + std::to_string(i), laterExternals,
+                              noNeedToBeVars);
     }
     projectOutPrivateAxis(presburger, earlier, laterList, laterMapList,
                           iterDim);
@@ -867,8 +1004,17 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
                                presburger, later, earlier, laterExternals,
                                earlierExternals, iterDim));
         depAll = coalesce(std::move(depAll));
-
         PBMap spDepAll = applyDomain(depAll, std::move(la2s));
+
+        // There may be some unused constraints of external variables in
+        // `spDepAll`. Suppose an external variable is named `x`, it can be
+        // `x_earlier = x_later0`. This may seem trivial in `spDepAll`, because
+        // it is an empty set when the constraint is not met. However, when all
+        // `spDepAll` are unioned to be `spDelAllUnion`, this constrains become
+        // non-trivial (when the constraint is not met, there may be a non-empty
+        // map) and lead to redundant computation. We drop these contraint here
+        spDepAll = dropAllConstraintsNotInvolvingAxes(std::move(spDepAll));
+
         spDepAllUnion = spDepAllUnion.isValid()
                             ? uni(std::move(spDepAllUnion), std::move(spDepAll))
                             : std::move(spDepAll);
@@ -882,7 +1028,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBMap ssDepAll = applyRange(spDepAllUnion, std::move(ea2s));
     PBMap ssDep = intersect(ssDepAll, std::move(serialLexGT));
     PBMap ssSelf = intersect(ssDepAll, std::move(serialEQ));
-    PBMap spDep = intersect(applyRange(std::move(ssDep), es2a), spDepAllUnion);
+    PBMap spDep =
+        coalesce(intersect(applyRange(std::move(ssDep), es2a), spDepAllUnion));
     PBMap spSelf = intersect(applyRange(std::move(ssSelf), std::move(es2a)),
                              std::move(spDepAllUnion));
     PBMap spNearest =
@@ -901,70 +1048,49 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
 }
 
 void AnalyzeDeps::genTasks() {
-    for (auto &&def : allDefs_) {
-        // Store / ReduceTo -> Load : RAW
+    // Store / ReduceTo -> Load : RAW
+    if (depType_ & DEP_RAW) {
+        for (auto &&read : readsAsLater_) {
+            checkDepLatestEarlier(read, writesAsEarlier_);
+        }
+    }
+
+    // Load -> Store / ReduceTo : WAR
+    if (depType_ & DEP_WAR) {
+        for (auto &&read : readsAsEarlier_) {
+            checkDepEarliestLater(writesAsLater_, read);
+        }
+    }
+
+    // Store    -> Store    : WAW
+    // ReduceTo -> Store    : WAW, WAR
+    // Store    -> ReduceTo : WAW, RAW
+    // ReduceTo -> ReduceTo : WAW, RAW, WAR
+    if (depType_ & DEP_WAW) {
+        // Every Store checks its immediate predecessor, so we
+        // do not have to check its follower
+        for (auto &&write : writesAsLater_) {
+            checkDepLatestEarlier(write, writesAsEarlier_);
+        }
+    } else {
         if (depType_ & DEP_RAW) {
-            if (writesAsEarlier_.count(def->id())) {
-                auto &&allWrites = writesAsEarlier_.at(def->id());
-                if (readsAsLater_.count(def->id())) {
-                    for (auto &&read : readsAsLater_.at(def->id())) {
-                        checkDepLatestEarlier(read, allWrites);
-                    }
+            for (auto &&write : writesAsLater_) {
+                if (write->op_->nodeType() == ASTNodeType::ReduceTo) {
+                    checkDepLatestEarlier(write, writesAsEarlier_);
                 }
             }
         }
-
-        // Load -> Store / ReduceTo : WAR
         if (depType_ & DEP_WAR) {
-            if (writesAsLater_.count(def->id())) {
-                auto &&allWrites = writesAsLater_.at(def->id());
-                if (readsAsEarlier_.count(def->id())) {
-                    for (auto &&read : readsAsEarlier_.at(def->id())) {
-                        checkDepEarliestLater(allWrites, read);
-                    }
-                }
-            }
-        }
-
-        // Store    -> Store    : WAW
-        // ReduceTo -> Store    : WAW, WAR
-        // Store    -> ReduceTo : WAW, RAW
-        // ReduceTo -> ReduceTo : WAW, RAW, WAR
-        if (writesAsLater_.count(def->id())) {
-            auto &&allWritesAsLater = writesAsLater_.at(def->id());
-            if (writesAsEarlier_.count(def->id())) {
-                auto &&allWritesAsEarlier = writesAsEarlier_.at(def->id());
-                if (depType_ & DEP_WAW) {
-                    // Every Store checks its immediate predecessor, so we
-                    // do not have to check its follower
-                    for (auto &&write : allWritesAsLater) {
-                        checkDepLatestEarlier(write, allWritesAsEarlier);
-                    }
-                } else {
-                    if (depType_ & DEP_RAW) {
-                        for (auto &&write : allWritesAsLater) {
-                            if (write->op_->nodeType() ==
-                                ASTNodeType::ReduceTo) {
-                                checkDepLatestEarlier(write,
-                                                      allWritesAsEarlier);
-                            }
-                        }
-                    }
-                    if (depType_ & DEP_WAR) {
-                        for (auto &&write : allWritesAsEarlier) {
-                            if (write->op_->nodeType() ==
-                                ASTNodeType::ReduceTo) {
-                                checkDepEarliestLater(allWritesAsLater, write);
-                            }
-                        }
-                    }
+            for (auto &&write : writesAsEarlier_) {
+                if (write->op_->nodeType() == ASTNodeType::ReduceTo) {
+                    checkDepEarliestLater(writesAsLater_, write);
                 }
             }
         }
     }
 }
 
-PBMap Dependency::extraCheck(PBMap dep,
+PBMap Dependence::extraCheck(PBMap dep,
                              const NodeIDOrParallelScope &nodeOrParallel,
                              const DepDirection &dir) const {
     PBMap require;
@@ -989,39 +1115,59 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
         noProjectOutPrivateAxis_ = true;
     }
 
-    FindAccessPoint accFinder(op, accFilter_);
-    accFinder(op);
-    if (scope2CoordCallback_)
-        scope2CoordCallback_(accFinder.scope2coord());
-
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
 
+    auto defs = allDefs(op);
+    std::vector<FindAccessPoint> finders;
+    finders.reserve(defs.size());
+    for (auto &&[defId, name] : defs) {
+        // Number the iteration space coordinates variable by variable, in order
+        // to make the space more compact, so can be better coalesced
+        finders.emplace_back(op, defId, accFilter_);
+        auto &accFinder = finders.back();
+        accFinder(op);
+
+        if (scope2CoordCallback_) {
+            scope2CoordCallback_(defId, accFinder.scope2coord());
+        }
+    }
+
     auto variantExpr = Lazy([&]() {
         auto variantExpr = findLoopVariance(op).first;
-        for (auto &&[from, to] : accFinder.replaceIterLog()) {
-            if (auto it = variantExpr.find(from); it != variantExpr.end()) {
-                variantExpr[{to, from.stmtId()}] = it->second;
+        for (auto &&accFinder : finders) {
+            for (auto &&[from, to] : accFinder.replaceIterLog()) {
+                if (auto it = variantExpr.find(from); it != variantExpr.end()) {
+                    variantExpr[{to, from.stmtId()}] = it->second;
+                }
             }
         }
         return variantExpr;
     });
 
-    AnalyzeDeps analyzer(
-        accFinder.reads(), accFinder.writes(), accFinder.allDefs(),
-        accFinder.scope2coord(), noDepsFinder.results(), variantExpr,
-        direction_, found, mode_, type_, earlierFilter_, laterFilter_, filter_,
-        ignoreReductionWAW_, eraseOutsideVarDef_, noProjectOutPrivateAxis_);
-    analyzer.genTasks();
+    std::vector<std::function<void()>> tasks;
+    std::vector<AnalyzeDeps> analyzers;
+    analyzers.reserve(defs.size());
+    for (auto &&accFinder : finders) {
+        analyzers.emplace_back(
+            accFinder.reads(), accFinder.writes(), accFinder.scope2coord(),
+            noDepsFinder.results(), variantExpr, direction_, found, mode_,
+            type_, earlierFilter_, laterFilter_, filter_, ignoreReductionWAW_,
+            eraseOutsideVarDef_, noProjectOutPrivateAxis_);
+        auto &analyzer = analyzers.back();
+        analyzer.genTasks();
+        for (auto &&task : analyzer.tasks()) {
+            tasks.emplace_back(task);
+        }
+    }
     exceptSafeParallelFor<size_t>(
-        0, analyzer.tasks().size(), 1, [&](size_t i) { analyzer.tasks()[i](); },
-        omp_sched_dynamic);
+        0, tasks.size(), 1, [&](size_t i) { tasks[i](); }, omp_sched_dynamic);
 }
 
 bool FindDeps::exists(const Stmt &op) {
     struct DepExistsExcept {};
     try {
-        (*this)(op, unsyncFunc([](const Dependency &dep) {
+        (*this)(op, unsyncFunc([](const Dependence &dep) {
                     throw DepExistsExcept();
                 }));
     } catch (const DepExistsExcept &e) {
@@ -1030,9 +1176,9 @@ bool FindDeps::exists(const Stmt &op) {
     return false;
 }
 
-std::ostream &operator<<(std::ostream &_os, const Dependency &dep) {
+std::ostream &operator<<(std::ostream &_os, const Dependence &dep) {
     std::ostringstream os;
-    os << "Dependency ";
+    os << "Dependence ";
     os << (dep.later()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
        << dep.later();
     if (dep.later()->isExpr()) {

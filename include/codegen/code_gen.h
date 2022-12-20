@@ -26,6 +26,7 @@ struct CodeGenStream {
 
 template <class Stream> class CodeGen : public SymbolTable<Visitor> {
   protected:
+    bool compact_;
     int indentSize_;
     std::vector<Stream> streamStack_, poppedStream_;
 
@@ -36,12 +37,14 @@ template <class Stream> class CodeGen : public SymbolTable<Visitor> {
 
     template <class T> void printList(T &&list) {
         for (auto &&[i, item] : views::enumerate(list)) {
-            os() << (i > 0 ? ", " : "");
+            if (i > 0) {
+                os() << (compact_ ? "," : ", ");
+            }
             (*this)(item);
         }
     }
 
-    CodeGen(int indentSize = 2);
+    CodeGen(bool compact = false, int indentSize = 2);
 
     void markDef(const VarDef &op);
     void markUse(const std::string &name);

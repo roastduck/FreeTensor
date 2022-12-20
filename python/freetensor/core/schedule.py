@@ -168,7 +168,7 @@ class Schedule(ffi.Schedule):
         Raises
         ------
         InvalidSchedule
-            if the input is invalid or there are breaking dependencies
+            if the input is invalid or there are breaking dependences
         """
         super().reorder(list(map(self._lookup, order)))
 
@@ -250,7 +250,7 @@ class Schedule(ffi.Schedule):
         Raises
         ------
         InvalidSchedule
-            if any dependency cannot be resolved
+            if any dependence cannot be resolved
 
         Returns
         -------
@@ -295,7 +295,7 @@ class Schedule(ffi.Schedule):
         ------
         InvalidSchedule
             if the two loops are not directly following, the two loops are not of
-            the same length, or there is any dependency cannot be resolved
+            the same length, or there is any dependence cannot be resolved
 
         Returns
         -------
@@ -323,7 +323,7 @@ class Schedule(ffi.Schedule):
         Raises
         ------
         InvalidSchedule
-            if the statements are not found or the dependencies cannot be solved
+            if the statements are not found or the dependences cannot be solved
         """
         super().swap(self._lookup_list(order))
 
@@ -360,7 +360,7 @@ class Schedule(ffi.Schedule):
         ------
         InvalidSchedule
             if the loop is not found, the loop length is not a constant, or
-            the dependencies cannot be solved
+            the dependences cannot be solved
         """
         super().blend(self._lookup(loop))
 
@@ -692,7 +692,7 @@ class Schedule(ffi.Schedule):
         Raises
         ------
         InvalidSchedule
-            if the ID or name is not found, or the dependency requirement is
+            if the ID or name is not found, or the dependence requirement is
             not met
         """
         super().vectorize(self._lookup(loop))
@@ -758,7 +758,13 @@ class Schedule(ffi.Schedule):
         """
         super().as_matmul(self._lookup(loop))
 
-    def pluto_fuse(self, loop0, loop1, nest_level_0=0, nest_level_1=0):
+    def pluto_fuse(self,
+                   loop0,
+                   loop1,
+                   nest_level_0=0,
+                   nest_level_1=0,
+                   fusable_overlap_threshold=1,
+                   do_simplify=True):
         """
         Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable
         loops as possible at outermost levels.
@@ -778,6 +784,11 @@ class Schedule(ffi.Schedule):
         nest_level_1 : int
             The number of nesting levels of loop 1 to be considered, defaults to maximum
             possible
+        fusableOverlapThreshold : int
+            The minimum overlapping size of two loops to be regarded fusable. Defaults
+            to 1
+        do_simplify : bool
+            Whether the result is simplified by the way, defaults to true
 
         Returns
         -------
@@ -790,9 +801,10 @@ class Schedule(ffi.Schedule):
             if the loops are not consequent
         """
         return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1),
-                                  nest_level_0, nest_level_1)
+                                  nest_level_0, nest_level_1,
+                                  fusable_overlap_threshold, do_simplify)
 
-    def pluto_permute(self, loop, nest_level=0):
+    def pluto_permute(self, loop, nest_level=0, do_simplify=True):
         """
         Use Pluto+ algorithm to permute a single loop, with as most parallelizable loops
         as possible at outermost levels.
@@ -803,6 +815,8 @@ class Schedule(ffi.Schedule):
             The loop to permute
         nest_level : int
             The number of nesting levels to be considered, defaults to maximum possible
+        do_simplify : bool
+            Whether the result is simplified by the way, defaults to true
 
         Returns
         -------
@@ -810,7 +824,8 @@ class Schedule(ffi.Schedule):
             The ID of permuted loop and level of parallelizable loops
 
         """
-        return super().pluto_permute(self._lookup(loop), nest_level)
+        return super().pluto_permute(self._lookup(loop), nest_level,
+                                     do_simplify)
 
     def auto_schedule(self, target):
         """

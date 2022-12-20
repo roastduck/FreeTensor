@@ -152,7 +152,8 @@ void AnalyzeVersion::visit(const StmtSeq &op) {
 }
 
 std::pair<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>>
-analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
+analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
+               bool localVersionsOnly) {
     auto op = flattenStmtSeq(_op);
 
     std::vector<FindDepsDir> direction;
@@ -160,13 +161,13 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
         direction.push_back({{scope, DepDirection::Normal}});
     }
     std::unordered_map<ID, std::unordered_set<ID>> affectingScopes, needTapes;
-    auto found1 = [&](const Dependency &d) {
+    auto found1 = [&](const Dependence &d) {
         ASSERT(d.earlier()->nodeType() != ASTNodeType::Load);
         if (d.later()->nodeType() != ASTNodeType::ReduceTo) {
             needTapes[d.defId()].insert(d.earlier().as<StmtNode>()->id());
         }
     };
-    auto found2 = [&](const Dependency &d) {
+    auto found2 = [&](const Dependence &d) {
         if ((d.earlier()->nodeType() == ASTNodeType::Load &&
              d.later()->nodeType() != ASTNodeType::Load) ||
             (d.later()->nodeType() == ASTNodeType::Load &&
@@ -180,7 +181,7 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
         .filterAccess([&](const AccessPoint &acc) {
             return intermediates.count(acc.def_->id());
         })
-        .eraseOutsideVarDef(false)(op, found1);
+        .eraseOutsideVarDef(localVersionsOnly)(op, found1);
     FindDeps()
         .direction(direction)
         .type(DEP_RAW | DEP_WAR)
@@ -192,7 +193,7 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
                        .count(earlier.stmt_->id()) ||
                    needTapes.at(earlier.def_->id()).count(later.stmt_->id());
         })
-        .eraseOutsideVarDef(false)(op, found2);
+        .eraseOutsideVarDef(localVersionsOnly)(op, found2);
 
     std::unordered_map<StmtOrExprID, Expr> versions;
     std::unordered_map<ID, Expr> totLens;

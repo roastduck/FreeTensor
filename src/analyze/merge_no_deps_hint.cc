@@ -35,7 +35,7 @@ std::vector<std::string> mergeNoDepsHint(const Stmt &ast,
                               loop->property_->noDeps_.end(),
                               item) == loop->property_->noDeps_.end()) {
                     bool noDep = true;
-                    auto found = [&](const Dependency &d) { noDep = false; };
+                    auto found = [&](const Dependence &d) { noDep = false; };
                     FindDeps()
                         .direction({{{loop->id(), DepDirection::Different}}})
                         .filterAccess([&](const AccessPoint &acc) {

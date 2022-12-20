@@ -69,7 +69,7 @@ std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &_ast, const ID &id,
         throw InvalidSchedule("Loop not found");
     }
 
-    // 1. try to remove divisions, or it will hinder the dependency analysis
+    // 1. try to remove divisions, or it will hinder the dependence analysis
     // 2. remove 1-lengthed loop
     ast = simplify(ast);
 

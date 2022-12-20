@@ -282,7 +282,7 @@ def test_inner_for_fuse_different_begin():
     assert std.match(ast)
 
 
-def test_unsolvable_dependency():
+def test_unsolvable_dependence():
     with ft.VarDef([("y1", (), "int32", "inout", "cpu"),
                     ("y2", (), "int32", "inout", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 2, label="L1") as i:

@@ -32,17 +32,21 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
         : CodeGenC(params, returns) {}
 
     using CodeGenC<CodeGenCUDAStream>::genMdPtrType;
+    using CodeGenC<CodeGenCUDAStream>::genMdPtrDef;
+    std::function<std::ostream &(std::ostream &)>
+    genMdPtrType(const VarDef &def, bool isConst = false) override;
+    void genMdPtrDef(const VarDef &def, const std::function<void()> &genRawPtr,
+                     bool isConst = false) override;
 
     Expr globalSize() const { return globalSize_; }
 
   private:
-    bool isConstOrByValue(const std::unordered_set<std::string> &names) const;
-    bool isConstOrByValue(const Expr &x) const;
-
     bool inKernel() const;
 
     void exprOr1(const std::unordered_map<ParallelScope, Expr> &dict,
                  const ParallelScope &key);
+
+    void enterKernel(const Stmt &body);
 
   protected:
     void genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
