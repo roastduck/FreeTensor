@@ -1,6 +1,7 @@
 #include <sstream>
 
 #include <container_utils.h>
+#include <hash.h>
 #include <metadata.h>
 
 namespace freetensor {
@@ -82,6 +83,34 @@ void TransformedMetadataContent::print(std::ostream &os, bool printLocation,
     os << Indent(nIndent) << "}";
 }
 
+size_t TransformedMetadataContent::hash() const {
+    size_t h = std::hash<int>{}((int)getType());
+    h = hashCombine(h, std::hash<std::string>{}(op_));
+    for (auto &&item : sources_) {
+        h = hashCombine(h, item->hash());
+    }
+    return h;
+}
+
+bool TransformedMetadataContent::sameAs(const MetadataContent &_other) const {
+    if (getType() != _other.getType()) {
+        return false;
+    }
+    auto &other = (const TransformedMetadataContent &)_other;
+    if (op_ != other.op_) {
+        return false;
+    }
+    if (sources_.size() != other.sources_.size()) {
+        return false;
+    }
+    for (auto &&[l, r] : views::zip(sources_, other.sources_)) {
+        if (*l != *r) {
+            return false;
+        }
+    }
+    return true;
+}
+
 TransformedMetadata makeMetadata(const std::string &op,
                                  const std::vector<Metadata> &sources) {
     return Ref<TransformedMetadataContent>::make(op, sources);
@@ -92,7 +121,9 @@ SourceMetadataContent::SourceMetadataContent(
     const std::optional<std::pair<std::string, int>> &location,
     const Metadata &callerMetadata)
     : labels_(labels), labelsSet_(labels.begin(), labels.end()),
-      location_(location), callerMetadata_(callerMetadata) {}
+      location_(location), callerMetadata_(callerMetadata) {
+    std::sort(labels_.begin(), labels_.end());
+}
 
 void SourceMetadataContent::print(std::ostream &os, bool printLocation,
                                   int nIndent) const {
@@ -108,6 +139,42 @@ void SourceMetadataContent::print(std::ostream &os, bool printLocation,
         os << " <~ " << nl;
         callerMetadata_->print(os, printLocation, nIndent);
     }
+}
+
+size_t SourceMetadataContent::hash() const {
+    size_t h = std::hash<int>{}((int)getType());
+    for (auto &&item : labels_) {
+        h = hashCombine(h, std::hash<std::string>{}(item));
+    }
+    if (location_.has_value()) {
+        h = hashCombine(h, std::hash<std::string>{}(location_->first));
+        h = hashCombine(h, std::hash<int>{}(location_->second));
+    }
+    if (callerMetadata_.isValid()) {
+        h = hashCombine(h, callerMetadata_->hash());
+    }
+    return h;
+}
+
+bool SourceMetadataContent::sameAs(const MetadataContent &_other) const {
+    if (getType() != _other.getType()) {
+        return false;
+    }
+    auto &other = (const SourceMetadataContent &)_other;
+    if (labels_ != other.labels_) {
+        return false;
+    }
+    if (location_ != other.location_) {
+        return false;
+    }
+    if (callerMetadata_.isValid() != other.callerMetadata_.isValid()) {
+        return false;
+    }
+    if (callerMetadata_.isValid() && other.callerMetadata_.isValid() &&
+        *callerMetadata_ != *other.callerMetadata_) {
+        return false;
+    }
+    return true;
 }
 
 SourceMetadata
@@ -128,6 +195,23 @@ void AnonymousMetadataContent::print(std::ostream &os, bool skipLocation,
     } else {
         os << Indent(nIndent) << "#<anon>";
     }
+}
+
+size_t AnonymousMetadataContent::hash() const {
+    size_t h = std::hash<int>{}((int)getType());
+    h = hashCombine(h, std::hash<ID>{}(id_));
+    return h;
+}
+
+bool AnonymousMetadataContent::sameAs(const MetadataContent &_other) const {
+    if (getType() != _other.getType()) {
+        return false;
+    }
+    auto &other = (const AnonymousMetadataContent &)_other;
+    if (id_ != other.id_) {
+        return false;
+    }
+    return true;
 }
 
 AnonymousMetadata makeMetadata(const ID &id) {

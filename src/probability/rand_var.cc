@@ -4,19 +4,24 @@
 namespace freetensor {
 
 std::ostream &operator<<(std::ostream &os, const DiscreteRandVar &var) {
-    os << "P(" << var.name_;
-    if (!var.conds_.empty()) {
-        os << " | " << var.conds_.asVector();
+    os << "P(" << *var.cond_ << " | " << var.name_ << ") ~ Bernoulli({";
+    for (auto &&[i, p, q] : views::zip(views::ints(0, ranges::unreachable),
+                                       var.obs_, *var.totCnt_)) {
+        os << (i > 0 ? ", " : "") << p << "/" << q;
     }
-    os << ") ~ Bernoulli(p ~ Dir({" << var.obs_ << "} + 1))";
-    return os;
+    return os << "})";
 }
 
 std::ostream &operator<<(std::ostream &os, const DiscreteObservation &obs) {
-    os << "(" << *obs.varSnapshot_ << ") = " << obs.value_;
-    if (!obs.message_.empty()) {
-        os << " /* " << obs.message_ << " */";
+    os << "Considering the following:" << std::endl;
+    for (auto &&var : obs.varsSnapshot_) {
+        os << "  " << *var << std::endl;
     }
+    os << "Decision ";
+    if (!obs.message_.empty()) {
+        os << "of \"" << obs.message_ << "\" ";
+    }
+    os << "is " << obs.value_;
     return os;
 }
 

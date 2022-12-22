@@ -96,11 +96,15 @@ def test_tune_fuse():
         with ft.For("i", 0, 100, label="Li1") as i:
             with ft.For("j", 0, 100, label="Lj1") as j:
                 with ft.For("k", 0, 100, label="Lk1") as k:
-                    b[i, j, k] = b[i, (j + 1) % 100, (k + 1) % 100] + a[i, j, k]
+                    b[i, j,
+                      k] = b[i,
+                             (j + 1) % 100, k] + b[i, j,
+                                                   (k + 1) % 100] + a[i, j, k]
         with ft.For("i", 0, 100, label="Li2") as i:
             with ft.For("j", 0, 100, label="Lj2") as j:
                 with ft.For("k", 0, 100, label="Lk2") as k:
-                    c[i, j, k] = c[(i + 1) % 100, j, (k + 1) % 100] + a[i, j, k]
+                    c[i, j, k] = c[(i + 1) % 100, j,
+                                   k] + c[i, j, (k + 1) % 100] + a[i, j, k]
 
     func = ft.Func("main", ["a", "b", "c"], [], ft.pop_ast(verbose=True))
     s = ft.Schedule(func)
@@ -126,6 +130,13 @@ def test_tune_fuse():
 
 def test_tune_fission():
     # The reverse schedule of `test_tune_fuse`
+
+    # NOTE: To pass this test, the OpenMP parallel version must run faster than
+    # the serial version. However, this is not always true for unknown reasons.
+    # Known configurations to pass this test are: GCC 10.2.1's OpenMP with
+    # OMP_PROC_BIND=true, GCC 12.1.0's OpenMP with OMP_PROC_BIND=false, or
+    # LLVM 14.0.1's OpenMP with OMP_PROC_BIND=false. (FIXME)
+
     with ft.VarDef([("a", (100, 100, 100), "int32", "input", "cpu"),
                     ("b", (100, 100, 100), "int32", "inout", "cpu"),
                     ("c", (100, 100, 100), "int32", "inout", "cpu")]) as (a, b,
@@ -133,8 +144,12 @@ def test_tune_fission():
         with ft.For("i", 0, 100, label="Li") as i:
             with ft.For("j", 0, 100, label="Lj") as j:
                 with ft.For("k", 0, 100, label="Lk") as k:
-                    b[i, j, k] = b[i, (j + 1) % 100, (k + 1) % 100] + a[i, j, k]
-                    c[i, j, k] = c[(i + 1) % 100, j, (k + 1) % 100] + a[i, j, k]
+                    b[i, j,
+                      k] = b[i,
+                             (j + 1) % 100, k] + b[i, j,
+                                                   (k + 1) % 100] + a[i, j, k]
+                    c[i, j, k] = c[(i + 1) % 100, j,
+                                   k] + c[i, j, (k + 1) % 100] + a[i, j, k]
 
     func = ft.Func("main", ["a", "b", "c"], [], ft.pop_ast(verbose=True))
     s = ft.Schedule(func)
@@ -160,39 +175,43 @@ def test_tune_fission():
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_tune_with_cond():
     # Fuse loops that can parallelize. Don't fuse loops that can't
-    with ft.VarDef([("a", (100, 100, 100), "int32", "input", "gpu/global"),
-                    ("b", (100, 100, 100), "int32", "inout", "gpu/global"),
-                    ("c", (100, 100, 100), "int32", "inout", "gpu/global"),
-                    ("y", (100, 100, 100), "int32", "output", "gpu/global"),
-                    ("z", (100, 100, 100), "int32", "output", "gpu/global")
+    with ft.VarDef([("a", (100, 100, 10), "int32", "input", "gpu/global"),
+                    ("b", (100, 100, 10), "int32", "inout", "gpu/global"),
+                    ("c", (100, 100, 10), "int32", "inout", "gpu/global"),
+                    ("y", (100, 100, 10), "int32", "output", "gpu/global"),
+                    ("z", (100, 100, 10), "int32", "output", "gpu/global")
                    ]) as (a, b, c, y, z):
         # Fusing L1 and L2 leads to poor parallelization, which is not preferred
         with ft.For("i", 0, 100, label="Li1") as i:
             with ft.For("j", 0, 100, label="Lj1") as j:
-                with ft.For("k", 0, 100, label="Lk1") as k:
-                    b[i, j, k] = b[i, (j + 1) % 100, (k + 1) % 100] + a[i, j, k]
+                with ft.For("k", 0, 10, label="Lk1") as k:
+                    b[i, j,
+                      k] = b[i, (j + 1) % 100, k] + b[i, j,
+                                                      (k + 1) % 10] + a[i, j, k]
         with ft.For("i", 0, 100, label="Li2") as i:
             with ft.For("j", 0, 100, label="Lj2") as j:
-                with ft.For("k", 0, 100, label="Lk2") as k:
-                    c[i, j, k] = c[(i + 1) % 100, j, (k + 1) % 100] + a[i, j, k]
+                with ft.For("k", 0, 10, label="Lk2") as k:
+                    c[i, j,
+                      k] = c[(i + 1) % 100, j, k] + c[i, j,
+                                                      (k + 1) % 10] + a[i, j, k]
         # Fusing L3 and L4 is favorable to reduce kernel launch count
         with ft.For("i", 0, 100, label="Li3") as i:
             with ft.For("j", 0, 100, label="Lj3") as j:
-                with ft.For("k", 0, 100, label="Lk3") as k:
+                with ft.For("k", 0, 10, label="Lk3") as k:
                     y[i, j, k] = a[i, j, k] * i
         with ft.For("i", 0, 100, label="Li4") as i:
             with ft.For("j", 0, 100, label="Lj4") as j:
-                with ft.For("k", 0, 100, label="Lk4") as k:
+                with ft.For("k", 0, 10, label="Lk4") as k:
                     z[i, j, k] = y[i, j, k] * y[i, j, k]
 
     func = ft.Func("main", ["a", "b", "c", "y", "z"], [],
                    ft.pop_ast(verbose=True))
     s = ft.Schedule(func)
-    a = ft.Array(np.random.randint(0, 100, (100, 100, 100)).astype("int32"))
-    b = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
-    c = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
-    y = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
-    z = ft.Array(np.zeros((100, 100, 100), dtype="int32"))
+    a = ft.Array(np.random.randint(0, 100, (100, 100, 10)).astype("int32"))
+    b = ft.Array(np.zeros((100, 100, 10), dtype="int32"))
+    c = ft.Array(np.zeros((100, 100, 10), dtype="int32"))
+    y = ft.Array(np.zeros((100, 100, 10), dtype="int32"))
+    z = ft.Array(np.zeros((100, 100, 10), dtype="int32"))
     trials = s.tune_auto_schedule(10,
                                   1,
                                   ft.GPU(), (a, b, c, y, z),
