@@ -559,9 +559,13 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PtrInvocable.html">PtrInvocable</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1RandCond.html">RandCond</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCond.html">RandCond</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCondCRTP.html">RandCondCRTP</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCondGuard.html">RandCondGuard</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCondInterface.html">RandCondInterface</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCtx.html">RandCtx</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -895,6 +899,10 @@ Typedefs</h2></td></tr>
 <tr class="separator:a2c312d0f9e2ef2b2914156bc32fa6c7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a7899400090777d4ec968aa9913c379"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> = <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1MetadataContent.html">MetadataContent</a> &gt;</td></tr>
 <tr class="separator:a3a7899400090777d4ec968aa9913c379"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4bfcb56d6f09b24b0d2a193be3e95b3"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af4bfcb56d6f09b24b0d2a193be3e95b3">MetadataHasher</a> = <a class="el" href="classfreetensor_1_1PtrInvocable.html">PtrInvocable</a>&lt; std::hash&lt; <a class="el" href="classfreetensor_1_1MetadataContent.html">MetadataContent</a> &gt; &gt;</td></tr>
+<tr class="separator:af4bfcb56d6f09b24b0d2a193be3e95b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e8ba10d6d83a346430cd33ba137d646"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7e8ba10d6d83a346430cd33ba137d646">MetadataComparator</a> = <a class="el" href="classfreetensor_1_1PtrInvocable.html">PtrInvocable</a>&lt; std::equal_to&lt; <a class="el" href="classfreetensor_1_1MetadataContent.html">MetadataContent</a> &gt; &gt;</td></tr>
+<tr class="separator:a7e8ba10d6d83a346430cd33ba137d646"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adbadd8076d0f53e36d3181a435c72c2f"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adbadd8076d0f53e36d3181a435c72c2f">TransformedMetadata</a> = <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1TransformedMetadataContent.html">TransformedMetadataContent</a> &gt;</td></tr>
 <tr class="separator:adbadd8076d0f53e36d3181a435c72c2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0f9ab033e626ddc942016dcf0e01a957"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0f9ab033e626ddc942016dcf0e01a957">SourceMetadata</a> = <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1SourceMetadataContent.html">SourceMetadataContent</a> &gt;</td></tr>
@@ -903,8 +911,8 @@ Typedefs</h2></td></tr>
 <tr class="separator:aebfe1f129efc2ca728abfa43a83f5b07"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6d19bf2262d0cd0af3903283c9722088"><td class="memItemLeft" align="right" valign="top">typedef std::variant&lt; <a class="el" href="structfreetensor_1_1SerialScope.html">SerialScope</a>, <a class="el" href="structfreetensor_1_1OpenMPScope.html">OpenMPScope</a>, <a class="el" href="structfreetensor_1_1CUDAStreamScope.html">CUDAStreamScope</a>, <a class="el" href="structfreetensor_1_1CUDAScope.html">CUDAScope</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6d19bf2262d0cd0af3903283c9722088">ParallelScope</a></td></tr>
 <tr class="separator:a6d19bf2262d0cd0af3903283c9722088"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ba6af26083f73ba32d699c459bc4969"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1SharedLinkedList.html">SharedLinkedList</a>&lt; <a class="el" href="structfreetensor_1_1RandCond.html">RandCond</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0ba6af26083f73ba32d699c459bc4969">RandCondStack</a></td></tr>
-<tr class="separator:a0ba6af26083f73ba32d699c459bc4969"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae339a7359cfe842d6d9e38f8f0867294"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1SharedLinkedList.html">SharedLinkedList</a>&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1RandCondInterface.html">RandCondInterface</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae339a7359cfe842d6d9e38f8f0867294">RandCondStack</a></td></tr>
+<tr class="separator:ae339a7359cfe842d6d9e38f8f0867294"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a277b0ec64110585443507028957648ba"><td class="memItemLeft" align="right" valign="top">typedef const <a class="el" href="structfreetensor_1_1ProgramPositionHelper.html">ProgramPositionHelper</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a277b0ec64110585443507028957648ba">ProgramPosition</a></td></tr>
 <tr class="separator:a277b0ec64110585443507028957648ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a30f671564d68303583094f074bd5b6e8"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; <a class="el" href="structfreetensor_1_1DiscreteObservation.html">DiscreteObservation</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a></td></tr>
@@ -3038,6 +3046,34 @@ template&lt;class K &gt; </div>
 
 </div>
 </div>
+<a id="a7e8ba10d6d83a346430cd33ba137d646" name="a7e8ba10d6d83a346430cd33ba137d646"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e8ba10d6d83a346430cd33ba137d646">&#9670;&nbsp;</a></span>MetadataComparator</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacefreetensor.html#a7e8ba10d6d83a346430cd33ba137d646">freetensor::MetadataComparator</a> = typedef <a class="el" href="classfreetensor_1_1PtrInvocable.html">PtrInvocable</a>&lt;std::equal_to&lt;<a class="el" href="classfreetensor_1_1MetadataContent.html">MetadataContent</a>&gt; &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af4bfcb56d6f09b24b0d2a193be3e95b3" name="af4bfcb56d6f09b24b0d2a193be3e95b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af4bfcb56d6f09b24b0d2a193be3e95b3">&#9670;&nbsp;</a></span>MetadataHasher</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacefreetensor.html#af4bfcb56d6f09b24b0d2a193be3e95b3">freetensor::MetadataHasher</a> = typedef <a class="el" href="classfreetensor_1_1PtrInvocable.html">PtrInvocable</a>&lt;std::hash&lt;<a class="el" href="classfreetensor_1_1MetadataContent.html">MetadataContent</a>&gt; &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a93f4549d4546bcd21f440331a3cb0734" name="a93f4549d4546bcd21f440331a3cb0734"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a93f4549d4546bcd21f440331a3cb0734">&#9670;&nbsp;</a></span>Min</h2>
 
@@ -3165,14 +3201,14 @@ template&lt;class K &gt; </div>
 
 </div>
 </div>
-<a id="a0ba6af26083f73ba32d699c459bc4969" name="a0ba6af26083f73ba32d699c459bc4969"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0ba6af26083f73ba32d699c459bc4969">&#9670;&nbsp;</a></span>RandCondStack</h2>
+<a id="ae339a7359cfe842d6d9e38f8f0867294" name="ae339a7359cfe842d6d9e38f8f0867294"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae339a7359cfe842d6d9e38f8f0867294">&#9670;&nbsp;</a></span>RandCondStack</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef <a class="el" href="classfreetensor_1_1SharedLinkedList.html">SharedLinkedList</a>&lt;<a class="el" href="structfreetensor_1_1RandCond.html">RandCond</a>&gt; <a class="el" href="namespacefreetensor.html#a0ba6af26083f73ba32d699c459bc4969">freetensor::RandCondStack</a></td>
+          <td class="memname">typedef <a class="el" href="classfreetensor_1_1SharedLinkedList.html">SharedLinkedList</a>&lt;<a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt;<a class="el" href="classfreetensor_1_1RandCondInterface.html">RandCondInterface</a>&gt; &gt; <a class="el" href="namespacefreetensor.html#ae339a7359cfe842d6d9e38f8f0867294">freetensor::RandCondStack</a></td>
         </tr>
       </table>
 </div><div class="memdoc">

@@ -10,7 +10,8 @@ var searchData=
   ['tiles_5f_7',['tiles_',['../classfreetensor_1_1MultiLevelTilingPart.html#a70dd0eb10d3e54795fa31d0b0d2bc317',1,'freetensor::MultiLevelTilingPart']]],
   ['time_5f_8',['time_',['../structfreetensor_1_1AutoScheduleTuneTrial.html#aef06a3b1b63dd5d0a8d14abbeb033f92',1,'freetensor::AutoScheduleTuneTrial']]],
   ['tolearn_5f_9',['toLearn_',['../classfreetensor_1_1RandCtxImpl.html#a34a694bf5c009f27b8630849b0f318b8',1,'freetensor::RandCtxImpl']]],
-  ['trace_5f_10',['trace_',['../structfreetensor_1_1AutoScheduleTuneTrial.html#a911fdb624e1d7c8dadec5f445abd4a20',1,'freetensor::AutoScheduleTuneTrial']]],
-  ['traces_5f_11',['traces_',['../classfreetensor_1_1RandCtxImpl.html#ae17006673357530a1fe0a976e8770a29',1,'freetensor::RandCtxImpl']]],
-  ['type_5f_12',['type_',['../structfreetensor_1_1ParallelInfo.html#a7c7fd34bbce45bd7d3bf57f3b8ad9ec3',1,'freetensor::ParallelInfo']]]
+  ['totcnt_5f_10',['totCnt_',['../classfreetensor_1_1RandCtxImpl.html#ae0ca99d9a7f9f838514df66ec1938cc0',1,'freetensor::RandCtxImpl::totCnt_()'],['../structfreetensor_1_1DiscreteObservation.html#acfd68b35c25390e52fcb6c9e3e86cd2e',1,'freetensor::DiscreteObservation::totCnt_()']]],
+  ['trace_5f_11',['trace_',['../structfreetensor_1_1AutoScheduleTuneTrial.html#a911fdb624e1d7c8dadec5f445abd4a20',1,'freetensor::AutoScheduleTuneTrial']]],
+  ['traces_5f_12',['traces_',['../classfreetensor_1_1RandCtxImpl.html#ae17006673357530a1fe0a976e8770a29',1,'freetensor::RandCtxImpl']]],
+  ['type_5f_13',['type_',['../structfreetensor_1_1ParallelInfo.html#a7c7fd34bbce45bd7d3bf57f3b8ad9ec3',1,'freetensor::ParallelInfo']]]
 ];

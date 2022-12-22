@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.3"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>FreeTensor: freetensor::RandCondGuard Class Reference</title>
+<title>FreeTensor: freetensor::RandCondGuard&lt; T, Hasher, Comparator &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -69,7 +69,7 @@ $(function() {
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classfreetensor_1_1RandCondGuard-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">freetensor::RandCondGuard Class Reference</div></div>
+  <div class="headertitle"><div class="title">freetensor::RandCondGuard&lt; T, Hasher, Comparator &gt; Class Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -77,27 +77,30 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:add1fbbe3b9cb1653e85e9ec60810bf86"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCondGuard.html#add1fbbe3b9cb1653e85e9ec60810bf86">RandCondGuard</a> (<a class="el" href="namespacefreetensor.html#a0ba6af26083f73ba32d699c459bc4969">RandCondStack</a> &amp;stack, const std::string &amp;name, int value)</td></tr>
-<tr class="separator:add1fbbe3b9cb1653e85e9ec60810bf86"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a83c3182476ced697c95b297890ae68a5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCondGuard.html#a83c3182476ced697c95b297890ae68a5">~RandCondGuard</a> ()</td></tr>
-<tr class="separator:a83c3182476ced697c95b297890ae68a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0cf701f91627b0f26f20781a2a84939a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCondGuard.html#a0cf701f91627b0f26f20781a2a84939a">RandCondGuard</a> (<a class="el" href="namespacefreetensor.html#ae339a7359cfe842d6d9e38f8f0867294">RandCondStack</a> &amp;stack, const std::string &amp;name, const T &amp;value)</td></tr>
+<tr class="separator:a0cf701f91627b0f26f20781a2a84939a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5af09bd00be14cc4c3f18003322afa93"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1RandCondGuard.html#a5af09bd00be14cc4c3f18003322afa93">~RandCondGuard</a> ()</td></tr>
+<tr class="separator:a5af09bd00be14cc4c3f18003322afa93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p >RAII guard to add a <a class="el" href="structfreetensor_1_1RandCond.html">RandCond</a> to a RandCondStack </p>
+<div class="textblock"><div class="compoundTemplParams">template&lt;class T, class <a class="el" href="classfreetensor_1_1Hasher.html">Hasher</a> = std::hash&lt;T&gt;, class Comparator = std::equal_to&lt;T&gt;&gt;<br />
+class freetensor::RandCondGuard&lt; T, Hasher, Comparator &gt;</div><p >RAII guard to add a <a class="el" href="classfreetensor_1_1RandCond.html">RandCond</a> to a RandCondStack </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="add1fbbe3b9cb1653e85e9ec60810bf86" name="add1fbbe3b9cb1653e85e9ec60810bf86"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#add1fbbe3b9cb1653e85e9ec60810bf86">&#9670;&nbsp;</a></span>RandCondGuard()</h2>
+<a id="a0cf701f91627b0f26f20781a2a84939a" name="a0cf701f91627b0f26f20781a2a84939a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0cf701f91627b0f26f20781a2a84939a">&#9670;&nbsp;</a></span>RandCondGuard()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;class T , class <a class="el" href="classfreetensor_1_1Hasher.html">Hasher</a>  = std::hash&lt;T&gt;, class Comparator  = std::equal_to&lt;T&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">freetensor::RandCondGuard::RandCondGuard </td>
+          <td class="memname"><a class="el" href="classfreetensor_1_1RandCondGuard.html">freetensor::RandCondGuard</a>&lt; T, <a class="el" href="classfreetensor_1_1Hasher.html">Hasher</a>, Comparator &gt;::RandCondGuard </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#a0ba6af26083f73ba32d699c459bc4969">RandCondStack</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ae339a7359cfe842d6d9e38f8f0867294">RandCondStack</a> &amp;&#160;</td>
           <td class="paramname"><em>stack</em>, </td>
         </tr>
         <tr>
@@ -109,7 +112,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&#160;</td>
+          <td class="paramtype">const T &amp;&#160;</td>
           <td class="paramname"><em>value</em>&#160;</td>
         </tr>
         <tr>
@@ -127,17 +130,19 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a83c3182476ced697c95b297890ae68a5" name="a83c3182476ced697c95b297890ae68a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a83c3182476ced697c95b297890ae68a5">&#9670;&nbsp;</a></span>~RandCondGuard()</h2>
+<a id="a5af09bd00be14cc4c3f18003322afa93" name="a5af09bd00be14cc4c3f18003322afa93"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5af09bd00be14cc4c3f18003322afa93">&#9670;&nbsp;</a></span>~RandCondGuard()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;class T , class <a class="el" href="classfreetensor_1_1Hasher.html">Hasher</a>  = std::hash&lt;T&gt;, class Comparator  = std::equal_to&lt;T&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">freetensor::RandCondGuard::~RandCondGuard </td>
+          <td class="memname"><a class="el" href="classfreetensor_1_1RandCondGuard.html">freetensor::RandCondGuard</a>&lt; T, <a class="el" href="classfreetensor_1_1Hasher.html">Hasher</a>, Comparator &gt;::~<a class="el" href="classfreetensor_1_1RandCondGuard.html">RandCondGuard</a> </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>

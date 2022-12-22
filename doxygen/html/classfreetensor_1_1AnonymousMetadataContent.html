@@ -105,6 +105,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aeae726a435ac98467430915db58c11cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29d87a30cab9657d6eadf56798c0e740"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1AnonymousMetadataContent.html#a29d87a30cab9657d6eadf56798c0e740">print</a> (std::ostream &amp;os, bool skipLocation, int nIndent) const override</td></tr>
 <tr class="separator:a29d87a30cab9657d6eadf56798c0e740"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3009f88260464364d8b14c3d64aaba7"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1AnonymousMetadataContent.html#aa3009f88260464364d8b14c3d64aaba7">hash</a> () const override</td></tr>
+<tr class="separator:aa3009f88260464364d8b14c3d64aaba7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29567b602756a55fae186971b7da34ef"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1AnonymousMetadataContent.html#a29567b602756a55fae186971b7da34ef">sameAs</a> (const <a class="el" href="classfreetensor_1_1MetadataContent.html">MetadataContent</a> &amp;other) const override</td></tr>
+<tr class="separator:a29567b602756a55fae186971b7da34ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7861869e96eb7ec133dc0386ed7ffa73"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1ID.html">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1AnonymousMetadataContent.html#a7861869e96eb7ec133dc0386ed7ffa73">id</a> () const</td></tr>
 <tr class="separator:a7861869e96eb7ec133dc0386ed7ffa73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1MetadataContent"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1MetadataContent')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1MetadataContent.html">freetensor::MetadataContent</a></td></tr>
@@ -116,6 +120,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ad94ab1ddab3ce67cd962f2881b0c7220 inherit pub_methods_classfreetensor_1_1MetadataContent"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac5702f005ee1be791ae150b739f6817e inherit pub_methods_classfreetensor_1_1MetadataContent"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MetadataContent.html#ac5702f005ee1be791ae150b739f6817e">print</a> (std::ostream &amp;os, bool skipLocation, int nIndent) const =0</td></tr>
 <tr class="separator:ac5702f005ee1be791ae150b739f6817e inherit pub_methods_classfreetensor_1_1MetadataContent"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aacbc86489ceda1e1c5cfa41fba5209d4 inherit pub_methods_classfreetensor_1_1MetadataContent"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MetadataContent.html#aacbc86489ceda1e1c5cfa41fba5209d4">hash</a> () const =0</td></tr>
+<tr class="separator:aacbc86489ceda1e1c5cfa41fba5209d4 inherit pub_methods_classfreetensor_1_1MetadataContent"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d9de58b18c60a3e07d83b534de87bb0 inherit pub_methods_classfreetensor_1_1MetadataContent"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MetadataContent.html#a6d9de58b18c60a3e07d83b534de87bb0">sameAs</a> (const <a class="el" href="classfreetensor_1_1MetadataContent.html">MetadataContent</a> &amp;other) const =0</td></tr>
+<tr class="separator:a6d9de58b18c60a3e07d83b534de87bb0 inherit pub_methods_classfreetensor_1_1MetadataContent"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a14c1b208b1455f1e2bbfa45f87c0669b" name="a14c1b208b1455f1e2bbfa45f87c0669b"></a>
@@ -186,6 +194,33 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Implements <a class="el" href="classfreetensor_1_1MetadataContent.html#aa06068ad01a43c08841a0a28c83e17df">freetensor::MetadataContent</a>.</p>
+
+</div>
+</div>
+<a id="aa3009f88260464364d8b14c3d64aaba7" name="aa3009f88260464364d8b14c3d64aaba7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa3009f88260464364d8b14c3d64aaba7">&#9670;&nbsp;</a></span>hash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t freetensor::AnonymousMetadataContent::hash </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="classfreetensor_1_1MetadataContent.html#aacbc86489ceda1e1c5cfa41fba5209d4">freetensor::MetadataContent</a>.</p>
 
 </div>
 </div>
@@ -282,6 +317,34 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Implements <a class="el" href="classfreetensor_1_1MetadataContent.html#ad94ab1ddab3ce67cd962f2881b0c7220">freetensor::MetadataContent</a>.</p>
+
+</div>
+</div>
+<a id="a29567b602756a55fae186971b7da34ef" name="a29567b602756a55fae186971b7da34ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a29567b602756a55fae186971b7da34ef">&#9670;&nbsp;</a></span>sameAs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::AnonymousMetadataContent::sameAs </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1MetadataContent.html">MetadataContent</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="classfreetensor_1_1MetadataContent.html#a6d9de58b18c60a3e07d83b534de87bb0">freetensor::MetadataContent</a>.</p>
 
 </div>
 </div>

@@ -78,15 +78,12 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a0239c3ef04335812d0a3af9085104030"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DiscreteRandVar.html#a0239c3ef04335812d0a3af9085104030">DiscreteRandVar</a> (const std::string &amp;<a class="el" href="classfreetensor_1_1DiscreteRandVar.html#ae547e15fce9e40c46fd5601b133a8028">name</a>, const <a class="el" href="namespacefreetensor.html#a0ba6af26083f73ba32d699c459bc4969">RandCondStack</a> &amp;conds, const std::vector&lt; int &gt; &amp;initObs)</td></tr>
-<tr class="separator:a0239c3ef04335812d0a3af9085104030"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45239be64c0906ab92b7abe7ad012d59"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DiscreteRandVar.html#a45239be64c0906ab92b7abe7ad012d59">DiscreteRandVar</a> (const std::string &amp;<a class="el" href="classfreetensor_1_1DiscreteRandVar.html#ae547e15fce9e40c46fd5601b133a8028">name</a>, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1RandCondInterface.html">RandCondInterface</a> &gt; &amp;cond, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; std::vector&lt; int &gt; &gt; totCnt, const std::vector&lt; int &gt; &amp;initObs)</td></tr>
+<tr class="separator:a45239be64c0906ab92b7abe7ad012d59"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f7915a24304333cd06354be0a08e019"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DiscreteRandVar.html#a8f7915a24304333cd06354be0a08e019">observe</a> (int value, int cnt=1)</td></tr>
 <tr class="separator:a8f7915a24304333cd06354be0a08e019"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a813086b3d0acbe3689bc5b0c6e13c0fc"><td class="memTemplParams" colspan="2">template&lt;std::uniform_random_bit_generator RNG&gt; </td></tr>
-<tr class="memitem:a813086b3d0acbe3689bc5b0c6e13c0fc"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DiscreteRandVar.html#a813086b3d0acbe3689bc5b0c6e13c0fc">sample</a> (RNG &amp;rng) const</td></tr>
-<tr class="separator:a813086b3d0acbe3689bc5b0c6e13c0fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abb73ba681bf834c334910a8f1f0740eb"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DiscreteRandVar.html#abb73ba681bf834c334910a8f1f0740eb">mostLikely</a> () const</td></tr>
-<tr class="separator:abb73ba681bf834c334910a8f1f0740eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8574322c4c47e9e2809c011a3af01b1"><td class="memItemLeft" align="right" valign="top">std::vector&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DiscreteRandVar.html#ad8574322c4c47e9e2809c011a3af01b1">prob</a> () const</td></tr>
+<tr class="separator:ad8574322c4c47e9e2809c011a3af01b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98240e5d856e950933372752584fc610"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1DiscreteRandVar.html">DiscreteRandVar</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DiscreteRandVar.html#a98240e5d856e950933372752584fc610">clone</a> () const</td></tr>
 <tr class="separator:a98240e5d856e950933372752584fc610"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae547e15fce9e40c46fd5601b133a8028"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DiscreteRandVar.html#ae547e15fce9e40c46fd5601b133a8028">name</a> () const</td></tr>
@@ -99,11 +96,11 @@ Friends</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Discrete random variable, can be any integer in <code>[0, n)</code></p>
-<p >A random variable that can be sampled (infered) and observed (learnt) using Bayesian statistics</p>
-<p >The more observations is observed for a value, the value will have a higher probability of being sampled. Specifically, when sampled, the distribution follows a Categorical (or Bernoulli for n=2) distribution, where the probability of the i-th value is <code>P(X=i) = p_i</code>. <code>p_i</code> itself is another random variables follows Dirichlet (or Beta for n=2) distribution <code>p_i ~ Dir(alpha)</code>, where <code>alpha</code> is the observations + 1 </p>
+<p >A random variable that can be sampled (infered) and observed (learnt) using Naive Bayes</p>
+<p >In Naive Bayes, the probability of an event <code>C</code> given conditions <code>F_i</code>, can be calculated by <code>p(C) \Prod_i P(F_i | C)</code> (<a href="https://en.wikipedia.org/wiki/Naive_Bayes_classifier">https://en.wikipedia.org/wiki/Naive_Bayes_classifier</a>). Here a <code><a class="el" href="classfreetensor_1_1DiscreteRandVar.html">DiscreteRandVar</a></code> records <code>P(F_i | C)</code> for each <code>C</code> as <code>prob</code>. When picking the most likely <code>C</code>, one only need to multiply the <code>obsVec</code> vectors from each <code>F_i</code>, and pick a <code>C</code> with highest value </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a0239c3ef04335812d0a3af9085104030" name="a0239c3ef04335812d0a3af9085104030"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0239c3ef04335812d0a3af9085104030">&#9670;&nbsp;</a></span>DiscreteRandVar()</h2>
+<a id="a45239be64c0906ab92b7abe7ad012d59" name="a45239be64c0906ab92b7abe7ad012d59"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45239be64c0906ab92b7abe7ad012d59">&#9670;&nbsp;</a></span>DiscreteRandVar()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -120,8 +117,14 @@ Friends</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a0ba6af26083f73ba32d699c459bc4969">RandCondStack</a> &amp;&#160;</td>
-          <td class="paramname"><em>conds</em>, </td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1RandCondInterface.html">RandCondInterface</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>cond</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; std::vector&lt; int &gt; &gt;&#160;</td>
+          <td class="paramname"><em>totCnt</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -168,31 +171,6 @@ Friends</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <p >Clone as an indenpenden variable </p>
-
-</div>
-</div>
-<a id="abb73ba681bf834c334910a8f1f0740eb" name="abb73ba681bf834c334910a8f1f0740eb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abb73ba681bf834c334910a8f1f0740eb">&#9670;&nbsp;</a></span>mostLikely()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">int freetensor::DiscreteRandVar::mostLikely </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
 
 </div>
 </div>
@@ -257,22 +235,19 @@ Friends</h2></td></tr>
 
 </div>
 </div>
-<a id="a813086b3d0acbe3689bc5b0c6e13c0fc" name="a813086b3d0acbe3689bc5b0c6e13c0fc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a813086b3d0acbe3689bc5b0c6e13c0fc">&#9670;&nbsp;</a></span>sample()</h2>
+<a id="ad8574322c4c47e9e2809c011a3af01b1" name="ad8574322c4c47e9e2809c011a3af01b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad8574322c4c47e9e2809c011a3af01b1">&#9670;&nbsp;</a></span>prob()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;std::uniform_random_bit_generator RNG&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">int freetensor::DiscreteRandVar::sample </td>
+          <td class="memname">std::vector&lt; double &gt; freetensor::DiscreteRandVar::prob </td>
           <td>(</td>
-          <td class="paramtype">RNG &amp;&#160;</td>
-          <td class="paramname"><em>rng</em></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
