@@ -130,6 +130,12 @@ def test_tune_fuse():
 
 def test_tune_fission():
     # The reverse schedule of `test_tune_fuse`
+
+    # NOTE: To pass this test, the OpenMP parallel version must run faster than
+    # the serial version. However, this is not always true for unknown reasons.
+    # Known configurations to pass this test are: GNU's OpenMP with
+    # OMP_PROC_BIND=true, or LLVM's OpenMP with OMP_PROC_BIND=false. (FIXME)
+
     with ft.VarDef([("a", (100, 100, 100), "int32", "input", "cpu"),
                     ("b", (100, 100, 100), "int32", "inout", "cpu"),
                     ("c", (100, 100, 100), "int32", "inout", "cpu")]) as (a, b,
