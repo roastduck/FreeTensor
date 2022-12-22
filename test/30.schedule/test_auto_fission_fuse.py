@@ -133,8 +133,9 @@ def test_tune_fission():
 
     # NOTE: To pass this test, the OpenMP parallel version must run faster than
     # the serial version. However, this is not always true for unknown reasons.
-    # Known configurations to pass this test are: GNU's OpenMP with
-    # OMP_PROC_BIND=true, or LLVM's OpenMP with OMP_PROC_BIND=false. (FIXME)
+    # Known configurations to pass this test are: GCC 10.2.1's OpenMP with
+    # OMP_PROC_BIND=true, GCC 12.1.0's OpenMP with OMP_PROC_BIND=false, or
+    # LLVM 14.0.1's OpenMP with OMP_PROC_BIND=false. (FIXME)
 
     with ft.VarDef([("a", (100, 100, 100), "int32", "input", "cpu"),
                     ("b", (100, 100, 100), "int32", "inout", "cpu"),

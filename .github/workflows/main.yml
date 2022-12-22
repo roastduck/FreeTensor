@@ -63,5 +63,4 @@ jobs:
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@12.1.0
           source /home/rd/venv-freetensor-20221219/bin/activate
-          # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
-          OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p cpu pytest --color=yes test
+          PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p cpu pytest --color=yes test
