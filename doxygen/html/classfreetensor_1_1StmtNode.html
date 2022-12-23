@@ -128,6 +128,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a306f07ba20a0f3ce3d60e1b0245db92c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2c6daf55e07b61c6ab7f3ce0c5bd9dfc"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1StmtNode.html">StmtNode</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1StmtNode.html#a2c6daf55e07b61c6ab7f3ce0c5bd9dfc">children</a> () const</td></tr>
 <tr class="separator:a2c6daf55e07b61c6ab7f3ce0c5bd9dfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0641a70cd514d8fcd69a35631a4c2c2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1StmtNode.html">StmtNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1StmtNode.html#af0641a70cd514d8fcd69a35631a4c2c2">prevStmtInDFSOrder</a> () const</td></tr>
+<tr class="separator:af0641a70cd514d8fcd69a35631a4c2c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a37b88e7a6ddf9e33d1f788b30d291091"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1StmtNode.html">StmtNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1StmtNode.html#a37b88e7a6ddf9e33d1f788b30d291091">nextStmtInDFSOrder</a> () const</td></tr>
+<tr class="separator:a37b88e7a6ddf9e33d1f788b30d291091"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a01af6d3b64c6837630ea14b96ea7e2d5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1StmtNode.html">StmtNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1StmtNode.html#a01af6d3b64c6837630ea14b96ea7e2d5">ancestorById</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;lookup) const</td></tr>
 <tr class="separator:a01af6d3b64c6837630ea14b96ea7e2d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8db3dba5d9d765b78fb8d8aa1aae656f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1StmtNode.html#a8db3dba5d9d765b78fb8d8aa1aae656f">isAncestorOf</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;other) const</td></tr>
@@ -319,6 +323,7 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p >Check whether this node is an ancestoer of <code>other</code> </p>
 
 </div>
 </div>
@@ -337,6 +342,7 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p >Check whether this node is before <code>other</code> in DFS order </p>
 
 </div>
 </div>
@@ -479,6 +485,23 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a37b88e7a6ddf9e33d1f788b30d291091" name="a37b88e7a6ddf9e33d1f788b30d291091"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a37b88e7a6ddf9e33d1f788b30d291091">&#9670;&nbsp;</a></span>nextStmtInDFSOrder()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::StmtNode::nextStmtInDFSOrder </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ae438ffc3ab494ac016005b225b500a0a" name="ae438ffc3ab494ac016005b225b500a0a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae438ffc3ab494ac016005b225b500a0a">&#9670;&nbsp;</a></span>parentCtrlFlow()</h2>
 
@@ -511,7 +534,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p >Parent, next or previous statement </p>
+<p >Parent, next or previous statement</p>
+<p >NOTE: For an If node, the "then" case is considered before the "else" case </p>
 
 </div>
 </div>
@@ -564,6 +588,24 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="af0641a70cd514d8fcd69a35631a4c2c2" name="af0641a70cd514d8fcd69a35631a4c2c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af0641a70cd514d8fcd69a35631a4c2c2">&#9670;&nbsp;</a></span>prevStmtInDFSOrder()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::StmtNode::prevStmtInDFSOrder </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Previous or next statement in DFS order </p>
 
 </div>
 </div>

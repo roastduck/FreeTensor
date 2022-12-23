@@ -1,23 +1,27 @@
 <map id="freetensor::Selector" name="freetensor::Selector">
-<area shape="rect" id="node1" title=" " alt="" coords="5,259,156,285"/>
-<area shape="rect" id="node2" href="$classfreetensor_1_1AncestorSelector.html" title=" " alt="" coords="214,5,421,32"/>
-<area shape="rect" id="node3" href="$classfreetensor_1_1BothSelector.html" title=" " alt="" coords="227,56,407,83"/>
-<area shape="rect" id="node4" href="$classfreetensor_1_1ChildSelector.html" title=" " alt="" coords="226,107,409,133"/>
-<area shape="rect" id="node5" href="$classfreetensor_1_1DescendantSelector.html" title=" " alt="" coords="204,157,431,184"/>
-<area shape="rect" id="node6" href="$classfreetensor_1_1EitherSelector.html" title=" " alt="" coords="223,208,411,235"/>
-<area shape="rect" id="node7" href="$classfreetensor_1_1LeafNodeSelector.html" title=" " alt="" coords="211,259,423,285"/>
-<area shape="rect" id="node8" href="$classfreetensor_1_1MetadataSelector.html" title=" " alt="" coords="211,309,423,336"/>
-<area shape="rect" id="node18" href="$classfreetensor_1_1NodeTypeSelector.html" title=" " alt="" coords="210,360,425,387"/>
-<area shape="rect" id="node19" href="$classfreetensor_1_1NotSelector.html" title=" " alt="" coords="231,411,404,437"/>
-<area shape="rect" id="node20" href="$classfreetensor_1_1ParentSelector.html" title=" " alt="" coords="222,461,413,488"/>
-<area shape="rect" id="node21" href="$classfreetensor_1_1RootNodeSelector.html" title=" " alt="" coords="210,512,425,539"/>
-<area shape="rect" id="node9" href="$classfreetensor_1_1BothMetadataSelector.html" title=" " alt="" coords="501,61,691,102"/>
-<area shape="rect" id="node10" href="$classfreetensor_1_1CallerSelector.html" title=" " alt="" coords="502,127,690,153"/>
-<area shape="rect" id="node11" href="$classfreetensor_1_1DirectCallerSelector.html" title=" " alt="" coords="509,178,683,219"/>
-<area shape="rect" id="node12" href="$classfreetensor_1_1EitherMetadataSelector.html" title=" " alt="" coords="497,243,695,285"/>
-<area shape="rect" id="node13" href="$classfreetensor_1_1IDSelector.html" title=" " alt="" coords="514,309,678,336"/>
-<area shape="rect" id="node14" href="$classfreetensor_1_1LabelSelector.html" title=" " alt="" coords="503,360,689,387"/>
-<area shape="rect" id="node15" href="$classfreetensor_1_1NotMetadataSelector.html" title=" " alt="" coords="479,411,713,437"/>
-<area shape="rect" id="node16" href="$classfreetensor_1_1RootCallSelector.html" title=" " alt="" coords="493,461,699,488"/>
-<area shape="rect" id="node17" href="$classfreetensor_1_1TransformedSelector.html" title=" " alt="" coords="481,512,711,539"/>
+<area shape="rect" id="node1" title=" " alt="" coords="5,368,156,395"/>
+<area shape="rect" id="node2" href="$classfreetensor_1_1AfterSelector.html" title=" " alt="" coords="227,5,408,32"/>
+<area shape="rect" id="node3" href="$classfreetensor_1_1AncestorSelector.html" title=" " alt="" coords="214,56,421,83"/>
+<area shape="rect" id="node4" href="$classfreetensor_1_1BeforeSelector.html" title=" " alt="" coords="221,107,414,133"/>
+<area shape="rect" id="node5" href="$classfreetensor_1_1BothSelector.html" title=" " alt="" coords="227,157,407,184"/>
+<area shape="rect" id="node6" href="$classfreetensor_1_1ChildSelector.html" title=" " alt="" coords="226,208,409,235"/>
+<area shape="rect" id="node7" href="$classfreetensor_1_1DescendantSelector.html" title=" " alt="" coords="204,259,431,285"/>
+<area shape="rect" id="node8" href="$classfreetensor_1_1DirectAfterSelector.html" title=" " alt="" coords="207,309,427,336"/>
+<area shape="rect" id="node9" href="$classfreetensor_1_1DirectBeforeSelector.html" title=" " alt="" coords="228,361,407,402"/>
+<area shape="rect" id="node10" href="$classfreetensor_1_1EitherSelector.html" title=" " alt="" coords="223,427,411,453"/>
+<area shape="rect" id="node11" href="$classfreetensor_1_1LeafNodeSelector.html" title=" " alt="" coords="211,477,423,504"/>
+<area shape="rect" id="node12" href="$classfreetensor_1_1MetadataSelector.html" title=" " alt="" coords="211,528,423,555"/>
+<area shape="rect" id="node22" href="$classfreetensor_1_1NodeTypeSelector.html" title=" " alt="" coords="210,579,425,605"/>
+<area shape="rect" id="node23" href="$classfreetensor_1_1NotSelector.html" title=" " alt="" coords="231,629,404,656"/>
+<area shape="rect" id="node24" href="$classfreetensor_1_1ParentSelector.html" title=" " alt="" coords="222,680,413,707"/>
+<area shape="rect" id="node25" href="$classfreetensor_1_1RootNodeSelector.html" title=" " alt="" coords="210,731,425,757"/>
+<area shape="rect" id="node13" href="$classfreetensor_1_1BothMetadataSelector.html" title=" " alt="" coords="501,279,691,321"/>
+<area shape="rect" id="node14" href="$classfreetensor_1_1CallerSelector.html" title=" " alt="" coords="502,345,690,372"/>
+<area shape="rect" id="node15" href="$classfreetensor_1_1DirectCallerSelector.html" title=" " alt="" coords="509,397,683,438"/>
+<area shape="rect" id="node16" href="$classfreetensor_1_1EitherMetadataSelector.html" title=" " alt="" coords="497,462,695,503"/>
+<area shape="rect" id="node17" href="$classfreetensor_1_1IDSelector.html" title=" " alt="" coords="514,528,678,555"/>
+<area shape="rect" id="node18" href="$classfreetensor_1_1LabelSelector.html" title=" " alt="" coords="503,579,689,605"/>
+<area shape="rect" id="node19" href="$classfreetensor_1_1NotMetadataSelector.html" title=" " alt="" coords="479,629,713,656"/>
+<area shape="rect" id="node20" href="$classfreetensor_1_1RootCallSelector.html" title=" " alt="" coords="493,680,699,707"/>
+<area shape="rect" id="node21" href="$classfreetensor_1_1TransformedSelector.html" title=" " alt="" coords="481,731,711,757"/>
 </map>
