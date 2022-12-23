@@ -147,6 +147,90 @@ def test_select_ancestor_with_middle():
     assert sorted_ids(results) == sorted_ids(results_by_label)
 
 
+def test_select_direct_before():
+    with ft.VarDef("x", (), "int32", "inout", "cpu") as x:
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S1")
+            x[...] += 1
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S2")
+            x[...] += 1
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S3")
+            x[...] += 1
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S4")
+            x[...] += 1
+    ast = ft.pop_ast(verbose=True)
+
+    results = ft.find_all_stmt(ast, "<ReduceTo><:S3")
+    results_by_label = ft.find_all_stmt(ast, "S2")
+    assert sorted_ids(results) == sorted_ids(results_by_label)
+
+
+def test_select_before():
+    with ft.VarDef("x", (), "int32", "inout", "cpu") as x:
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S1")
+            x[...] += 1
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S2")
+            x[...] += 1
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S3")
+            x[...] += 1
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S4")
+            x[...] += 1
+    ast = ft.pop_ast(verbose=True)
+
+    results = ft.find_all_stmt(ast, "<ReduceTo><<:S3")
+    results_by_label = ft.find_all_stmt(ast, "S1|S2")
+    assert sorted_ids(results) == sorted_ids(results_by_label)
+
+
+def test_select_direct_after():
+    with ft.VarDef("x", (), "int32", "inout", "cpu") as x:
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S1")
+            x[...] += 1
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S2")
+            x[...] += 1
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S3")
+            x[...] += 1
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S4")
+            x[...] += 1
+    ast = ft.pop_ast(verbose=True)
+
+    results = ft.find_all_stmt(ast, "<ReduceTo>:>S2")
+    results_by_label = ft.find_all_stmt(ast, "S3")
+    assert sorted_ids(results) == sorted_ids(results_by_label)
+
+
+def test_select_after():
+    with ft.VarDef("x", (), "int32", "inout", "cpu") as x:
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S1")
+            x[...] += 1
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S2")
+            x[...] += 1
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S3")
+            x[...] += 1
+        with ft.If(x[...] < 0):
+            ft.MarkLabel("S4")
+            x[...] += 1
+    ast = ft.pop_ast(verbose=True)
+
+    results = ft.find_all_stmt(ast, "<ReduceTo>:>>S2")
+    results_by_label = ft.find_all_stmt(ast, "S3|S4")
+    assert sorted_ids(results) == sorted_ids(results_by_label)
+
+
 def test_select_callee_1():
 
     @ft.inline

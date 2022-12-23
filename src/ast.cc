@@ -188,6 +188,52 @@ Stmt StmtNode::nextInCtrlFlow() const {
     return ret;
 }
 
+Stmt StmtNode::prevStmtInDFSOrder() const {
+    auto node = self().as<StmtNode>();
+    while (true) {
+        if (auto &&p = node->prevStmt(); p.isValid()) {
+            node = p;
+            break;
+        }
+        if (auto &&p = node->parentStmt(); p.isValid()) {
+            node = p;
+        } else {
+            return nullptr;
+        }
+    }
+    while (true) {
+        if (auto &&ch = node->children(); !ch.empty()) {
+            node = ch.back();
+        } else {
+            break;
+        }
+    }
+    return node;
+}
+
+Stmt StmtNode::nextStmtInDFSOrder() const {
+    auto node = self().as<StmtNode>();
+    while (true) {
+        if (auto &&p = node->nextStmt(); p.isValid()) {
+            node = p;
+            break;
+        }
+        if (auto &&p = node->parentStmt(); p.isValid()) {
+            node = p;
+        } else {
+            return nullptr;
+        }
+    }
+    while (true) {
+        if (auto &&ch = node->children(); !ch.empty()) {
+            node = ch.front();
+        } else {
+            break;
+        }
+    }
+    return node;
+}
+
 Stmt StmtNode::ancestorById(const ID &lookup) const {
     for (auto p = self().as<StmtNode>(); p.isValid(); p = p->parentStmt()) {
         if (p->id() == lookup) {

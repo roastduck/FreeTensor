@@ -112,6 +112,47 @@ class AncestorSelector : public Selector {
         : descendant_(descendant), middle_(middle) {}
 };
 
+class DirectBeforeSelector : public Selector {
+    Ref<Selector> following_;
+
+  protected:
+    bool matchImpl(const Stmt &stmt) override;
+
+  public:
+    DirectBeforeSelector(const Ref<Selector> &following)
+        : following_(following) {}
+};
+
+class BeforeSelector : public Selector {
+    Ref<Selector> following_;
+
+  protected:
+    bool matchImpl(const Stmt &stmt) override;
+
+  public:
+    BeforeSelector(const Ref<Selector> &following) : following_(following) {}
+};
+
+class DirectAfterSelector : public Selector {
+    Ref<Selector> leading_;
+
+  protected:
+    bool matchImpl(const Stmt &stmt) override;
+
+  public:
+    DirectAfterSelector(const Ref<Selector> &leading) : leading_(leading) {}
+};
+
+class AfterSelector : public Selector {
+    Ref<Selector> leading_;
+
+  protected:
+    bool matchImpl(const Stmt &stmt) override;
+
+  public:
+    AfterSelector(const Ref<Selector> &leading) : leading_(leading) {}
+};
+
 class RootNodeSelector : public Selector {
   protected:
     bool matchImpl(const Stmt &stmt) override;
