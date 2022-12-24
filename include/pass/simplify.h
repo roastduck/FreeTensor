@@ -117,7 +117,7 @@ template <class Simplifier> Stmt simplifyImpl(const Stmt &_op) {
 
     for (int i = 0;; i++) {
         auto newOp = annotateConds(op);
-        newOp = Simplifier()(op);
+        newOp = Simplifier()(newOp);
         newOp = flattenStmtSeq(newOp);
         if (HashComparator()(newOp, op) || i > 100) {
             if (i > 100) {
