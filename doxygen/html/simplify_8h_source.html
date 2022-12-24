@@ -175,8 +175,8 @@ $(function() {
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    <span class="keyword">auto</span> op = _op;</div>
 <div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
 <div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0;; i++) {</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>        op = <a class="code hl_function" href="namespacefreetensor.html#a7986350ea15f34bf963d6f20e4c3da94">annotateConds</a>(op);</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        <span class="keyword">auto</span> newOp = Simplifier()(op);</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>        <span class="keyword">auto</span> newOp = <a class="code hl_function" href="namespacefreetensor.html#a7986350ea15f34bf963d6f20e4c3da94">annotateConds</a>(op);</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        newOp = Simplifier()(newOp);</div>
 <div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>        newOp = <a class="code hl_function" href="namespacefreetensor.html#a156e19e665706a8efc4411e1808431cc">flattenStmtSeq</a>(newOp);</div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        <span class="keywordflow">if</span> (<a class="code hl_class" href="classfreetensor_1_1HashComparator.html">HashComparator</a>()(newOp, op) || i &gt; 100) {</div>
 <div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>            <span class="keywordflow">if</span> (i &gt; 100) {</div>
