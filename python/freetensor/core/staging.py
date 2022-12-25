@@ -14,6 +14,8 @@ import sourceinspect as ins
 from typing import Callable, Dict, List, Sequence, Optional, Any, TypeVar, Union
 from dataclasses import dataclass
 
+from . import config
+
 import freetensor_ffi as ffi
 
 assert sys.version_info >= (3,
@@ -563,12 +565,15 @@ class StagingOverload:
             import astor
             source = astor.to_source(tree)
 
-            from pygments import highlight
-            from pygments.lexers import PythonLexer
-            from pygments.formatters import TerminalFormatter
-            print(highlight(source, PythonLexer(),
-                            TerminalFormatter(bg='dark', linenos=True)),
-                  file=sys.stderr)
+            if config.pretty_print():
+                from pygments import highlight
+                from pygments.lexers import PythonLexer
+                from pygments.formatters import TerminalFormatter
+                print(highlight(source, PythonLexer(),
+                                TerminalFormatter(bg='dark', linenos=True)),
+                      file=sys.stderr)
+            else:
+                print(source)
 
             tree = source  # make debug info match dumped source
 

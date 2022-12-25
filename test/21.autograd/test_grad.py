@@ -768,6 +768,41 @@ def test_use_tape_in_cond():
     assert std.match(backward.body)
 
 
+def test_use_a_taped_var_to_recompute_another_var():
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("w", (), "float32", "output", "cpu")]) as (x, w):
+        with ft.VarDef("z", (), "float32", "cache", "cpu") as z:
+            z[...] = 0
+            with ft.If(x[...] > 0):
+                ft.MarkLabel("V_y")
+                with ft.VarDef("y", (), "float32", "cache", "cpu") as y:
+                    y[...] = x[...] * x[...]
+                    z[...] = y[...] * y[...]
+            w[...] = z[...] * z[...]
+    func = ft.Func("main", ["x", "y"], [], ft.pop_ast())
+    print(func)
+    forward, backward, _, _ = ft.grad_(func, ["x"], ["w"], ["V_y"])
+    print("Backward:")
+    print(backward)
+    backward = ft.lower(backward)
+    print("Backward:")
+    print(backward)
+
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("x.grad", (), "float32", "output", "cpu"),
+                    ("w.grad", (), "float32", "inout", "cpu")]) as (x, dx, dw):
+        with ft.VarDef("y", (), "float32", "input", "cpu") as y:
+            dx[...] = 0
+            with ft.VarDef("z", (), "float32", "cache", "cpu") as z:
+                z[...] = 0
+                with ft.If(x[...] > 0):
+                    z[...] = ft.square(y[...])
+                    dx[...] = 2 * (4 * y[...] * dw[...] * z[...] * x[...])
+    std = ft.pop_ast()
+
+    assert std.match(backward.body)
+
+
 def test_tape_vars_with_the_same_name():
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("y", (4,), "float32", "output", "cpu")]) as (x, y):
@@ -842,14 +877,15 @@ def test_tape_mode_all():
         ("d_y", (4,), "float32", "inout", "cpu"),
     ]) as (d_x1, d_x2, d_x3, d_y):
         with ft.VarDef([("t.tape", (4,), "float32", "input", "cpu"),
-                        ("d_t", (4,), "float32", "cache", "cpu")]) as (t, d_t):
+                        ("u.tape", (4,), "float32", "input", "cpu"),
+                        ("d_t", (4,), "float32", "cache", "cpu")]) as (t, u,
+                                                                       d_t):
             with ft.For("i", 3, -1, -1) as i:
-                with ft.VarDef("u.tape", (4,), "float32", "input", "cpu") as u:
-                    with ft.VarDef("d_u", (), "float32", "cache", "cpu") as d_u:
-                        d_u[()] = d_y[i] * t[i]
-                        d_t[i] = d_y[i] * u[i]
-                        d_x2[i] = d_u[()]
-                        d_x3[i] = d_u[()]
+                with ft.VarDef("d_u", (), "float32", "cache", "cpu") as d_u:
+                    d_u[()] = d_y[i] * t[i]
+                    d_t[i] = d_y[i] * u[i]
+                    d_x2[i] = d_u[()]
+                    d_x3[i] = d_u[()]
             with ft.For("i", 3, -1, -1) as i:
                 d_x1[i] = d_t[i]
                 d_x2[i] += d_t[i]

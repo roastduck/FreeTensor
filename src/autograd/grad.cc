@@ -5,6 +5,7 @@
 #include <analyze/find_stmt.h>
 #include <autograd/dedup_tape_names.h>
 #include <autograd/grad.h>
+#include <autograd/merge_tape_input.h>
 #include <autograd/output_intermediates.h>
 #include <container_utils.h>
 #include <pass/float_simplify.h>
@@ -334,11 +335,8 @@ Stmt Grad::visit(const VarDef &_op) {
     gradNames_.erase(op->name_);
     recomputed_.erase(op->name_);
 
-    if (isRecompute_) {
-        return op;
-    } else {
-        VarDef ret = op;
-
+    VarDef ret = op;
+    if (!isRecompute_) {
         if (affectedDefs_.count(_op->id())) {
             if (requires_.count(op->name_)) {
                 requireGrads_[op->name_] = gradName;
@@ -400,20 +398,21 @@ Stmt Grad::visit(const VarDef &_op) {
             ret->buffer_->atype() == AccessType::InOut) {
             ret->buffer_->setAtype(AccessType::Cache);
         }
-        if (tapes_.count(op->id()) && intermediatesMap_.count(op->id())) {
-            auto tapeVar = intermediatesMap_.at(op->id());
-            if (tapeVar != ret->name_) {
-                ret = makeVarDef(tapeVar, ret->buffer_, std::nullopt, ret,
-                                 ret->pinned_, makeMetadata("tape", ret))
-                          .as<VarDefNode>();
-                auto &shape = ret->buffer_->tensor()->shape();
-                shape.insert(shape.begin(), totLens_.at(op->id()));
-            }
-            ret.as<VarDefNode>()->buffer_->setAtype(AccessType::Input);
-        }
-
-        return ret;
     }
+
+    if (tapes_.count(op->id()) && intermediatesMap_.count(op->id())) {
+        auto tapeVar = intermediatesMap_.at(op->id());
+        if (tapeVar != ret->name_) {
+            ret = makeVarDef(tapeVar, ret->buffer_, std::nullopt, ret,
+                             ret->pinned_, makeMetadata("tape", ret))
+                      .as<VarDefNode>();
+            auto &shape = ret->buffer_->tensor()->shape();
+            shape.insert(shape.begin(), totLens_.at(op->id()));
+        }
+        ret.as<VarDefNode>()->buffer_->setAtype(AccessType::Input);
+    }
+
+    return ret;
 }
 
 Stmt Grad::visit(const Store &op) {
@@ -729,6 +728,10 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
                  intermediatesMap, versions, totLens, saveLocalStmts,
                  notSingleWrite);
     backward = mutator(backward);
+
+    // A backward program may re-input the same taped variable multiple times.
+    // We need to merge these "input" VarDef nodes as one
+    backward = mergeTapeInput(backward);
 
     // Some intermediate variables might be taped but turned out to be unneeded
     // in the final backward program. For example, suppose `t` and `u` are an
