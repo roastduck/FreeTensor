@@ -1,4 +1,4 @@
-#include <analyze/analyze_version.h>
+#include <autograd/analyze_version.h>
 #include <autograd/output_intermediates.h>
 
 namespace freetensor {

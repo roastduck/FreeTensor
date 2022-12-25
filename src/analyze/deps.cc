@@ -1,9 +1,9 @@
 #include <algorithm>
 #include <sstream>
 
-#include <analyze/all_defs.h>
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <except.h>
 #include <mutator.h>
@@ -1118,18 +1118,19 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
 
-    auto defs = allDefs(op);
+    auto defs = findAllStmt(
+        op, [](const Stmt &s) { return s->nodeType() == ASTNodeType::VarDef; });
     std::vector<FindAccessPoint> finders;
     finders.reserve(defs.size());
-    for (auto &&[defId, name] : defs) {
+    for (auto &&def : defs) {
         // Number the iteration space coordinates variable by variable, in order
         // to make the space more compact, so can be better coalesced
-        finders.emplace_back(op, defId, accFilter_);
+        finders.emplace_back(op, def->id(), accFilter_);
         auto &accFinder = finders.back();
         accFinder(op);
 
         if (scope2CoordCallback_) {
-            scope2CoordCallback_(defId, accFinder.scope2coord());
+            scope2CoordCallback_(def->id(), accFinder.scope2coord());
         }
     }
 
