@@ -1,6 +1,6 @@
 #include <analyze/all_defs.h>
-#include <analyze/all_no_reuse_defs.h>
 #include <analyze/deps.h>
+#include <autograd/all_no_reuse_defs.h>
 #include <pass/make_reduction.h>
 
 namespace freetensor {

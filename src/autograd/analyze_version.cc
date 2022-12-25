@@ -1,7 +1,7 @@
 #include <analyze/all_uses.h>
-#include <analyze/analyze_version.h>
 #include <analyze/deps.h>
 #include <analyze/find_all_loops.h>
+#include <autograd/analyze_version.h>
 #include <pass/flatten_stmt_seq.h>
 
 namespace freetensor {
