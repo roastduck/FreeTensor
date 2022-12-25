@@ -78,7 +78,7 @@ class UndoOutputTape : public Mutator {
 };
 
 /**
- * Convert a single-versioned tape back to its original AccessType
+ * Convert a trivial tape back to its original AccessType
  */
 inline Stmt undoOutputTape(const Stmt &op, const std::string &name,
                            AccessType atype) {
@@ -419,8 +419,6 @@ Stmt Grad::visit(const Store &op) {
     auto &&b = buffer(op->var_);
     auto replaceBySaved = getReplacer(op);
     if (isRecompute_) {
-        // FIXME: What if an intermediate variable is assigned and used multiple
-        // times? E.g. a = x; use a; a = y; use a;
         bool recomputed =
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
         if (!recomputed && !taped_.count(op->var_)) {

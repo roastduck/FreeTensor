@@ -843,6 +843,43 @@ def test_tape_vars_with_the_same_name():
     assert sorted(tape_output) == sorted(tape_input)
 
 
+def test_single_version_tape():
+    # Although b is only read once, but it is then overwritten, we still
+    # need a tape
+
+    @ft.transform(verbose=1)
+    def func(a: ft.Var[(10,), "float32"]):
+        #! label: V_b
+        b = ft.empty((10,), "float32")
+        for i in range(10):
+            b[i] = a[i] * a[i]
+        c = ft.empty((10,), "float32")
+        for i in range(10):
+            c[i] = b[i] * b[i]
+            b[i] += 1  # HERE!!
+        return b, c
+
+    _, bwd, _, _ = ft.grad(func, ["a"], ["b", "c"], set(["V_b"]))
+    print(bwd)
+    bwd = ft.lower(bwd, verbose=1)
+
+    @ft.transform
+    def expected(a, d_a, b_tape, d_c):
+        a: ft.Var[(10,), "float32", "input"]
+        d_a: ft.Var[(10,), "float32", "output"]
+        b_tape: ft.Var[(1, 10), "float32", "input"]
+        d_b: ft.Var[(10,), "float32", "inout"]
+        d_c: ft.Var[(10,), "float32", "inout"]
+        for i in range(9, -1, -1):
+            # HERE WE STILL NEED A TAPE
+            d_b[i] += 2 * d_c[i] * b_tape[0, i]
+        for i in range(9, -1, -1):
+            d_a[i] = 2 * a[i] * d_b[i]
+            d_b[i] = 0
+
+    assert expected.body.match(bwd.body)
+
+
 def test_tape_mode_all():
     with ft.VarDef([("x1", (4,), "float32", "input", "cpu"),
                     ("x2", (4,), "float32", "input", "cpu"),
@@ -994,7 +1031,7 @@ def test_tape_mode_no_reuse_only():
     assert std.match(backward)
 
 
-def test_no_unused_tape_single_version():
+def test_no_unused_trival_tape():
 
     @ft.transform
     def test(x: ft.Var[(), "float32", "input"]):
@@ -1015,7 +1052,7 @@ def test_no_unused_tape_single_version():
     assert len(bwd.params) == 2  # `x` and `y.grad`. No `u` or `v`
 
 
-def test_no_unused_tape_multiple_versions():
+def test_no_unused_non_trivial_tape():
 
     @ft.transform
     def test(x: ft.Var[(4,), "float32", "input"]):

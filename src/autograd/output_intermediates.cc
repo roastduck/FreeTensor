@@ -16,11 +16,6 @@ static MemType toGlobalMemType(MemType mtype) {
     }
 }
 
-bool OutputIntermediates::isSingleVersion(const ID &defId) const {
-    return totLens_.at(defId)->nodeType() == ASTNodeType::IntConst &&
-           totLens_.at(defId).as<IntConstNode>()->val_ == 1;
-}
-
 std::string OutputIntermediates::savingName(const std::string &oldName) const {
     return oldName + varSuffix_;
 }
@@ -39,7 +34,7 @@ Stmt OutputIntermediates::visitStmt(const Stmt &stmt) {
 Expr OutputIntermediates::visit(const Load &op) {
     auto ret = BaseClass::visit(op);
     auto id = StmtOrExprID(op, curStmt_);
-    if (versions_.count(id) && !isSingleVersion(def(op->var_)->id())) {
+    if (versions_.count(id) && !trivials_.count(def(op->var_)->id())) {
         std::vector<Expr> newIndices(1, versions_.at(id));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
@@ -53,7 +48,7 @@ Expr OutputIntermediates::visit(const Load &op) {
 
 Stmt OutputIntermediates::visit(const Store &op) {
     auto oldStore = BaseClass::visit(op);
-    if (versions_.count(op->id()) && !isSingleVersion(def(op->var_)->id())) {
+    if (versions_.count(op->id()) && !trivials_.count(def(op->var_)->id())) {
         std::vector<Expr> newIndices(1, versions_.at(op->id()));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
@@ -70,7 +65,7 @@ Stmt OutputIntermediates::visit(const Store &op) {
 
 Stmt OutputIntermediates::visit(const ReduceTo &op) {
     auto oldReduce = BaseClass::visit(op);
-    if (versions_.count(op->id()) && !isSingleVersion(def(op->var_)->id())) {
+    if (versions_.count(op->id()) && !trivials_.count(def(op->var_)->id())) {
         std::vector<Expr> newIndices(1, versions_.at(op->id()));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
@@ -93,7 +88,7 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
             ASSERT(false);
         }
         // FIXME: What if the scopeLen_ is a loop-variant temporary?
-        if (isSingleVersion(_op->id())) {
+        if (trivials_.count(_op->id())) {
             // No need to create a new VarDef
             auto __op = BaseClass::visit(_op);
             ASSERT(__op->nodeType() == ASTNodeType::VarDef);
@@ -139,9 +134,9 @@ std::tuple<Stmt, std::unordered_map<ID, std::string>,
 outputIntermediates(const Stmt &op, const std::unordered_set<ID> &intermediates,
                     OutputIntermediatesStage stage,
                     const std::string &varSuffix) {
-    auto [versions, totLens] = analyzeVersion(
+    auto [versions, totLens, trivials] = analyzeVersion(
         op, intermediates, stage == OutputIntermediatesStage::Backward);
-    OutputIntermediates mutator(versions, totLens, stage, varSuffix);
+    OutputIntermediates mutator(versions, totLens, trivials, stage, varSuffix);
     auto ret = mutator(op);
     return {ret, mutator.savedNames(), versions, totLens,
             mutator.insertedStmts()};

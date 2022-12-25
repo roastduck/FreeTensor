@@ -70,13 +70,30 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
  * Assign each memory access an expression that identifies each version of the
  * accessed variable
  *
+ * Versions are guaranteed to distinguish READ sites that may reads different
+ * values. Versions of WRITE sites are assigned to be consistent to the READ
+ * sites. This also means the following:
+ *
+ * - Multiple READ sites may have the same version
+ * - There can be multiple WRITE sites even there is only one version
+ *
+ * Some variables are TRIVIAL and there is no need to distinguish their
+ * versions. This function also outputs information of tribial variables. A
+ * variable is considered trivial if:
+ *
+ * - There is only one version, AND
+ * - The value of the only version is not overwritten till the end of the
+ * variable's lifetime
+ *
  * @param op : The AST to analyze
  * @param intermediates : Varaibles (VarDef IDs) to analyze
  * @param localVersionsOnly : If true, analyze local versions inside its VarDef
  * node. If false, analyze global versions within the whole program
- * @return : (node -> versions, VarDef IDs -> total version counts)
+ * @return : (node -> versions, VarDef IDs -> total version counts, trivial
+ * VarDef IDs)
  */
-std::pair<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>>
+std::tuple<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
+           std::unordered_set<ID>>
 analyzeVersion(const Stmt &op, const std::unordered_set<ID> &intermediates,
                bool localVersionsOnly);
 
