@@ -13,6 +13,9 @@ std::function<std::ostream &(std::ostream &)> manipNoIdSign(bool flag) {
 }
 
 std::ostream &operator<<(std::ostream &os, const ID &id) {
+    if (!id.isValid()) {
+        return os << "#None";
+    }
     if (!os.iword(OSTREAM_NO_ID_SIGN)) {
         os << '#';
     }

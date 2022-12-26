@@ -7,6 +7,7 @@
 #include <unordered_set>
 
 #include <analyze/symbol_table.h>
+#include <container_utils.h>
 #include <mutator.h>
 
 namespace freetensor {
@@ -16,52 +17,10 @@ inline std::ostream &operator<<(std::ostream &os, FissionSide side) {
     return os << (side == FissionSide::Before ? "before" : "after");
 }
 
-class HoistVar : public Mutator {
-    ID loop_;
-    ID before_, after_;
-    std::unordered_set<std::string> part0Vars_, part1Vars_;
-    std::vector<VarDef> defStack_;
-    std::vector<ID> innerLoops_;
-
-    // var name -> loop id: which loops will a var cross during hoisting?
-    std::unordered_map<std::string, std::vector<ID>> xLoops_;
-
-    bool inside_ = false, isAfter_ = false;
-
-  public:
-    HoistVar(const ID &loop, const ID &before, const ID &after)
-        : loop_(loop), before_(before), after_(after) {}
-
-    bool found() const { return isAfter_; }
-
-    const std::vector<ID> &innerLoops() const { return innerLoops_; }
-
-    const std::unordered_map<std::string, std::vector<ID>> &xLoops() const {
-        return xLoops_;
-    }
-
-  private:
-    template <class T> void recordAccess(const T &op) {
-        if (inside_) {
-            (isAfter_ ? part1Vars_ : part0Vars_).insert(op->var_);
-        }
-    }
-
-  protected:
-    Stmt visitStmt(const Stmt &op) override;
-    Stmt visit(const For &op) override;
-    Stmt visit(const VarDef &op) override;
-    Stmt visit(const If &op) override;
-    Stmt visit(const Assert &op) override;
-    Stmt visit(const Store &op) override;
-    Expr visit(const Load &op) override;
-    Stmt visit(const ReduceTo &op) override;
-};
-
 class AddDimToVar : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
-    // VarDef ID -> for ID
+    // VarDef ID -> [for ID], from outer to inner
     std::unordered_map<ID, std::vector<ID>> toAdd_;
     // for ID -> For
     std::unordered_map<ID, For> forMap_;
@@ -73,7 +32,7 @@ class AddDimToVar : public SymbolTable<Mutator> {
   private:
     template <class T> T doAdd(T op) {
         if (toAdd_.count(def(op->var_)->id())) {
-            for (auto &&loop : toAdd_.at(def(op->var_)->id())) {
+            for (auto &&loop : views::reverse(toAdd_.at(def(op->var_)->id()))) {
                 op->indices_.insert(
                     op->indices_.begin(),
                     makeFloorDiv(makeSub(makeVar(forMap_.at(loop)->iter_),
