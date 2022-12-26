@@ -16,6 +16,7 @@ class OutputIntermediates : public SymbolTable<Mutator> {
 
     const std::unordered_map<StmtOrExprID, Expr> &versions_;
     const std::unordered_map<ID, Expr> &totLens_;
+    const std::unordered_set<ID> &trivials_;
     OutputIntermediatesStage stage_;
     std::string varSuffix_;
 
@@ -27,17 +28,16 @@ class OutputIntermediates : public SymbolTable<Mutator> {
   public:
     OutputIntermediates(const std::unordered_map<StmtOrExprID, Expr> &versions,
                         const std::unordered_map<ID, Expr> &totLens,
+                        const std::unordered_set<ID> &trivials,
                         OutputIntermediatesStage stage,
                         const std::string &varSuffix)
-        : versions_(versions), totLens_(totLens), stage_(stage),
-          varSuffix_(varSuffix) {}
+        : versions_(versions), totLens_(totLens), trivials_(trivials),
+          stage_(stage), varSuffix_(varSuffix) {}
 
     const auto &savedNames() const { return savedNames_; }
     const auto &insertedStmts() const { return insertedStmts_; }
 
   private:
-    bool isSingleVersion(const ID &defId) const;
-
     std::string savingName(const std::string &oldName) const;
 
   protected:

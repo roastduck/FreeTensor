@@ -151,7 +151,8 @@ void AnalyzeVersion::visit(const StmtSeq &op) {
     offset_ = oldOffset;
 }
 
-std::pair<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>>
+std::tuple<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
+           std::unordered_set<ID>>
 analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
                bool localVersionsOnly) {
     auto op = flattenStmtSeq(_op);
@@ -209,7 +210,21 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
                                 versions);
         analyzer(op);
     }
-    return std::make_pair(versions, totLens);
+
+    std::unordered_set<ID> trivials = intermediates;
+    FindDeps()
+        .type(DEP_WAW)
+        .filterAccess([&](const AccessPoint &acc) {
+            return needTapes.count(acc.def_->id());
+        })
+        .filterEarlier([&](const AccessPoint &earlier) {
+            return needTapes.at(earlier.def_->id())
+                .count(earlier.op_.as<StmtNode>()->id());
+        })
+        .eraseOutsideVarDef(localVersionsOnly)(
+            op, [&](const Dependence &dep) { trivials.erase(dep.defId()); });
+
+    return {versions, totLens, trivials};
 }
 
 } // namespace freetensor
