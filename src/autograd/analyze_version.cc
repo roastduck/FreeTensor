@@ -1,6 +1,6 @@
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
-#include <analyze/find_all_loops.h>
+#include <analyze/find_stmt.h>
 #include <autograd/analyze_version.h>
 #include <pass/flatten_stmt_seq.h>
 
@@ -158,8 +158,8 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
     auto op = flattenStmtSeq(_op);
 
     std::vector<FindDepsDir> direction;
-    for (auto &&scope : findAllLoops(op)) {
-        direction.push_back({{scope, DepDirection::Normal}});
+    for (auto &&scope : findAllStmt(op, "<For>")) {
+        direction.push_back({{scope->id(), DepDirection::Normal}});
     }
     std::unordered_map<ID, std::unordered_set<ID>> affectingScopes, needTapes;
     auto found1 = [&](const Dependence &d) {

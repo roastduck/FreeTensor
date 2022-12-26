@@ -1,6 +1,6 @@
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
-#include <analyze/find_all_loops.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <pass/sink_var.h>
 
@@ -172,11 +172,11 @@ Stmt sinkVar(const Stmt &_op,
 
     auto variantMap = Lazy([op]() { return findLoopVariance(op).second; });
 
-    auto allLoops = findAllLoops(op);
+    auto allLoops = findAllStmt(op, "<For>");
     std::vector<FindDepsDir> direction;
     direction.reserve(allLoops.size());
     for (auto &&loop : allLoops) {
-        direction.push_back({{loop, DepDirection::Normal}});
+        direction.push_back({{loop->id(), DepDirection::Normal}});
     }
 
     std::unordered_set<ID> needDepAnalysis, analyzedDeps;

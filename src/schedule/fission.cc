@@ -4,129 +4,9 @@
 #include <pass/merge_and_hoist_if.h>
 #include <schedule.h>
 #include <schedule/fission.h>
+#include <schedule/hoist_selected_var.h>
 
 namespace freetensor {
-
-Stmt HoistVar::visitStmt(const Stmt &op) {
-    isAfter_ |= op->id() == before_;
-    auto ret = Mutator::visitStmt(op);
-    isAfter_ |= op->id() == after_;
-    return ret;
-}
-
-Stmt HoistVar::visit(const For &op) {
-    if (op->id() != loop_) {
-        if (!inside_) {
-            return Mutator::visit(op);
-        } else {
-            // If the For is an ancestor of the splitter, it own expressions are
-            // considered both "before" and "after", so visit them twice, both
-            // before and after visiting its body
-            (*this)(op->begin_), (*this)(op->end_), (*this)(op->step_);
-            auto ret = Mutator::visit(op);
-            (*this)(op->begin_), (*this)(op->end_), (*this)(op->step_);
-
-            for (auto &&def : defStack_) {
-                xLoops_[def->name_].emplace_back(op->id());
-            }
-            innerLoops_.emplace_back(op->id());
-            return ret;
-        }
-    } else {
-        inside_ = true, isAfter_ = false;
-
-        // If the For is an ancestor of the splitter, it own expressions are
-        // considered both "before" and "after", so visit them twice, both
-        // before and after visiting its body
-        (*this)(op->begin_), (*this)(op->end_), (*this)(op->step_);
-        auto ret = Mutator::visit(op);
-        (*this)(op->begin_), (*this)(op->end_), (*this)(op->step_);
-
-        inside_ = false;
-        for (auto &&def : defStack_) {
-            xLoops_[def->name_].emplace_back(op->id());
-        }
-        innerLoops_.emplace_back(op->id());
-        for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
-            ret = makeVarDef(std::move((*i)->name_), std::move(((*i)->buffer_)),
-                             std::move((*i)->viewOf_), ret, (*i)->pinned_,
-                             (*i)->metadata(), (*i)->id());
-        }
-        return ret;
-    }
-}
-
-Stmt HoistVar::visit(const VarDef &_op) {
-    if (!inside_) {
-        return Mutator::visit(_op);
-    } else {
-        part0Vars_.erase(_op->name_);
-        part1Vars_.erase(_op->name_);
-
-        // If the VarDef is an ancestor of the splitter, it own expressions are
-        // considered both "before" and "after", so visit them twice, both
-        // before and after visiting its body
-        for (auto &&dim : _op->buffer_->tensor()->shape()) {
-            (*this)(dim);
-        }
-        auto __op = Mutator::visit(_op);
-        ASSERT(__op->nodeType() == ASTNodeType::VarDef);
-        auto op = __op.as<VarDefNode>();
-        for (auto &&dim : op->buffer_->tensor()->shape()) {
-            (*this)(dim);
-        }
-
-        if (part0Vars_.count(op->name_) && part1Vars_.count(op->name_)) {
-            defStack_.emplace_back(op);
-            return op->body_;
-        } else {
-            return op;
-        }
-    }
-}
-
-Stmt HoistVar::visit(const If &op) {
-    if (!inside_) {
-        return Mutator::visit(op);
-    } else {
-        // If the If is an ancestor of the splitter, it own expressions are
-        // considered both "before" and "after", so visit them twice, both
-        // before and after visiting its body
-        (*this)(op->cond_);
-        auto ret = Mutator::visit(op);
-        (*this)(op->cond_);
-        return ret;
-    }
-}
-
-Stmt HoistVar::visit(const Assert &op) {
-    if (!inside_) {
-        return Mutator::visit(op);
-    } else {
-        // If the Assert is an ancestor of the splitter, it own expressions are
-        // considered both "before" and "after", so visit them twice, both
-        // before and after visiting its body
-        (*this)(op->cond_);
-        auto ret = Mutator::visit(op);
-        (*this)(op->cond_);
-        return ret;
-    }
-}
-
-Stmt HoistVar::visit(const Store &op) {
-    recordAccess(op);
-    return Mutator::visit(op);
-}
-
-Expr HoistVar::visit(const Load &op) {
-    recordAccess(op);
-    return Mutator::visit(op);
-}
-
-Stmt HoistVar::visit(const ReduceTo &op) {
-    recordAccess(op);
-    return Mutator::visit(op);
-}
 
 Stmt AddDimToVar::visit(const For &op) {
     forMap_[op->id()] = op;
@@ -141,7 +21,7 @@ Stmt AddDimToVar::visit(const VarDef &_op) {
     if (toAdd_.count(op->id())) {
         op->buffer_ = deepCopy(op->buffer_);
         auto &shape = op->buffer_->tensor()->shape();
-        for (auto &&loop : toAdd_.at(op->id())) {
+        for (auto &&loop : views::reverse(toAdd_.at(op->id()))) {
             shape.insert(shape.begin(), forMap_.at(loop)->len_);
         }
     }
@@ -303,81 +183,101 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
         throw InvalidSchedule(
             "Cannot preserve ID and Metadata for both first and second parts");
 
-    auto before = side == FissionSide::Before ? splitter : ID{};
-    auto after = side == FissionSide::After ? splitter : ID{};
-    HoistVar hoist(loop, before, after);
-    FissionFor mutator(loop, before, after, suffix0, suffix1);
-
-    auto ast = hoist(_ast);
-    if (!hoist.found()) {
+    Stmt splitterNode;
+    try {
+        splitterNode = findStmt(_ast, splitter);
+    } catch (const UnexpectedQueryResult &e) {
         throw InvalidSchedule("Split point " + toString(splitter) +
                               " not found inside " + toString(loop));
     }
-    auto &&xLoops = hoist.xLoops();
-
-    auto variants = findLoopVariance(ast);
-
-    // var name -> loop id
-    std::vector<FindDepsDir> disjunct;
-    for (const ID &inner : hoist.innerLoops()) {
-        disjunct.push_back({{inner, DepDirection::Normal}});
+    ID leftOfSplitter, rightOfSplitter;
+    if (side == FissionSide::Before) {
+        rightOfSplitter = splitter;
+        if (auto node = splitterNode->prevStmtInDFSOrder();
+            node.isValid() && node->ancestorById(loop).isValid()) {
+            leftOfSplitter = node->id();
+        }
+    } else {
+        leftOfSplitter = splitter;
+        if (auto node = splitterNode->nextStmtInDFSOrder();
+            node.isValid() && node->ancestorById(loop).isValid()) {
+            rightOfSplitter = node->id();
+        }
     }
-    auto isRealWrite = [&](const ID &loop, const VarDef &def) -> bool {
-        return isVariant(variants.second, def, loop);
-    };
-    std::unordered_map<ID, std::vector<ID>> toAdd;
-    auto found = [&](const Dependence &d) {
-        ASSERT(d.dir_.size() == 1);
-        auto &&id = d.dir_[0].first.id_;
-        if (!xLoops.count(d.var_) ||
-            std::find(xLoops.at(d.var_).begin(), xLoops.at(d.var_).end(), id) ==
-                xLoops.at(d.var_).end()) {
-            throw InvalidSchedule(toString(d) + " cannot be resolved");
-        }
-        if (!isRealWrite(id, d.def()) &&
-            d.earlier()->nodeType() == ASTNodeType::Load) {
-            return;
-        }
-        if (!isRealWrite(id, d.def()) &&
-            d.later()->nodeType() == ASTNodeType::Load) {
-            return;
-        }
-        if (std::find(toAdd[d.defId()].begin(), toAdd[d.defId()].end(), id) ==
-            toAdd[d.defId()].end()) {
-            toAdd[d.defId()].emplace_back(id);
-        }
-    };
-    auto beforeStmt = before.isValid() ? findStmt(ast, before) : nullptr;
-    auto afterStmt = after.isValid() ? findStmt(ast, after) : nullptr;
-    FindDeps()
-        .direction(disjunct)
-        .filterSubAST(loop)
-        .filterEarlier([&](const AccessPoint &earlier) {
-            // Reverse dependence: earlier at the second fissioned part
-            if (beforeStmt.isValid()) {
-                return earlier.stmt_->isAncestorOf(beforeStmt) ||
-                       !earlier.stmt_->isBefore(beforeStmt);
-            } else {
-                ASSERT(afterStmt.isValid());
-                return earlier.stmt_->isAncestorOf(afterStmt) ||
-                       afterStmt->isBefore(earlier.stmt_);
-            }
-        })
-        .filterLater([&](const AccessPoint &later) {
-            // Reverse dependence: later at the first fissioned part
-            if (beforeStmt.isValid()) {
-                return later.stmt_->isAncestorOf(beforeStmt) ||
-                       later.stmt_->isBefore(beforeStmt);
-            } else {
-                ASSERT(afterStmt.isValid());
-                return later.stmt_->isAncestorOf(afterStmt) ||
-                       !afterStmt->isBefore(later.stmt_);
-            }
-        })(ast, found);
 
-    AddDimToVar adder(toAdd);
-    ast = adder(ast);
+    Stmt ast = _ast;
+    if (leftOfSplitter.isValid() && rightOfSplitter.isValid()) {
+        // Non-trivial fission
 
+        // Select everything in `loop` but crossing `splitter`
+        std::string selectCrossing = "<<-" + toString(loop) + "&->>" +
+                                     toString(leftOfSplitter) + "&->>" +
+                                     toString(rightOfSplitter);
+        std::vector<ID> affectedLoops = {loop}; // From outer to inner
+        for (auto &&subloop : findAllStmt(ast, "<For>&" + selectCrossing)) {
+            affectedLoops.emplace_back(subloop->id());
+        }
+        ast = hoistSelectedVar(ast, selectCrossing);
+
+        auto variants = findLoopVariance(ast);
+
+        // var name -> loop id
+        std::vector<FindDepsDir> disjunct;
+        for (auto &&inner : affectedLoops) {
+            disjunct.push_back({{inner, DepDirection::Normal}});
+        }
+        auto isRealWrite = [&](const ID &loop, const VarDef &def) -> bool {
+            return isVariant(variants.second, def, loop);
+        };
+        std::unordered_map<ID, std::vector<ID>> toAdd;
+        auto found = [&](const Dependence &d) {
+            ASSERT(d.dir_.size() == 1);
+            auto &&id = d.dir_[0].first.id_;
+            if (!findStmt(_ast, d.defId())->ancestorById(id).isValid()) {
+                // The variable is NOT a local variable inside the loop being
+                // fissioned, which means the value of the variable may be
+                // passed in to the first iteration, or passed out from the last
+                // iteration. Solving this type of conflict by adding dimensions
+                // is non-trivial. (TODO: We can support this in the future in
+                // the way like `firstprivate` and `lastprivate` in OpenMP)
+                throw InvalidSchedule(toString(d) + " cannot be resolved");
+            }
+            if (!isRealWrite(id, d.def()) &&
+                d.earlier()->nodeType() == ASTNodeType::Load) {
+                return;
+            }
+            if (!isRealWrite(id, d.def()) &&
+                d.later()->nodeType() == ASTNodeType::Load) {
+                return;
+            }
+            if (std::find(toAdd[d.defId()].begin(), toAdd[d.defId()].end(),
+                          id) == toAdd[d.defId()].end()) {
+                toAdd[d.defId()].emplace_back(id);
+            }
+        };
+        auto leftOfSplitterStmt = findStmt(ast, leftOfSplitter);
+        auto rightOfSplitterStmt = findStmt(ast, rightOfSplitter);
+        FindDeps()
+            .direction(disjunct)
+            .filterSubAST(loop)
+            .filterEarlier([&](const AccessPoint &earlier) {
+                // Reverse dependence: earlier at the second fissioned part
+                return earlier.stmt_->isAncestorOf(leftOfSplitterStmt) ||
+                       leftOfSplitterStmt->isBefore(earlier.stmt_);
+            })
+            .filterLater([&](const AccessPoint &later) {
+                // Reverse dependence: later at the first fissioned part
+                return later.stmt_->isAncestorOf(rightOfSplitterStmt) ||
+                       later.stmt_->isBefore(rightOfSplitterStmt);
+            })(ast, found);
+
+        AddDimToVar adder(toAdd);
+        ast = adder(ast);
+    }
+
+    auto before = side == FissionSide::Before ? splitter : ID{};
+    auto after = side == FissionSide::After ? splitter : ID{};
+    FissionFor mutator(loop, before, after, suffix0, suffix1);
     ast = mutator(ast);
     ast = mergeAndHoistIf(ast);
 
