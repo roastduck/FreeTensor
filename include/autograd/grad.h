@@ -171,8 +171,6 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
     const std::unordered_set<ID> &tapes_;
     const std::unordered_set<ID> &affectedDefs_;
     const std::unordered_map<ID, std::string>
-        &tapeMap_; // Saved varaibles in forward stage (tapes)
-    const std::unordered_map<ID, std::string>
         &intermediatesMap_; // All saved variables, including in forward stage
                             // (tapes) and backward stage (during recomputation)
     const std::unordered_map<StmtOrExprID, Expr> &versions_;
@@ -206,17 +204,15 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
          const std::unordered_set<std::string> &provides,
          const std::unordered_set<ID> &tapes,
          const std::unordered_set<ID> &affectedDefs,
-         const std::unordered_map<ID, std::string> &tapeMap,
          const std::unordered_map<ID, std::string> &intermediatesMap,
          const std::unordered_map<StmtOrExprID, Expr> &versions,
          const std::unordered_map<ID, Expr> &totLens,
          const std::unordered_set<ID> &saveLocalStmts,
          const std::unordered_set<Stmt> &notSingleWrite)
         : requires_(_requires), provides_(provides), tapes_(tapes),
-          affectedDefs_(affectedDefs), tapeMap_(tapeMap),
-          intermediatesMap_(intermediatesMap), versions_(versions),
-          totLens_(totLens), saveLocalStmts_(saveLocalStmts),
-          notSingleWrite_(notSingleWrite) {}
+          affectedDefs_(affectedDefs), intermediatesMap_(intermediatesMap),
+          versions_(versions), totLens_(totLens),
+          saveLocalStmts_(saveLocalStmts), notSingleWrite_(notSingleWrite) {}
 
     const std::unordered_map<std::string, std::string> &requireGrads() const {
         return requireGrads_;

@@ -204,11 +204,12 @@ Expr ReplaceBySaved::replaceForwardValue(const Expr &_equLoad) {
     auto __equLoad = deepCopy(_equLoad);
     ASSERT(__equLoad->nodeType() == ASTNodeType::Load);
     auto equLoad = __equLoad.as<LoadNode>();
-    if (intermediatesMap_.count(symbolTable_.def(equLoad->var_)->id())) {
-        auto tapeVar =
+    if (intermediatesMap_.count(symbolTable_.def(equLoad->var_)->id()) &&
+        versions_.count(parent_->id())) {
+        auto savedVar =
             intermediatesMap_.at(symbolTable_.def(equLoad->var_)->id());
-        if (tapeVar != equLoad->var_) {
-            equLoad->var_ = tapeVar;
+        if (savedVar != equLoad->var_) {
+            equLoad->var_ = savedVar;
             equLoad->indices_.insert(equLoad->indices_.begin(),
                                      versions_.at(parent_->id()));
         }
@@ -220,7 +221,8 @@ Expr ReplaceBySaved::visit(const Load &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
-    if (intermediatesMap_.count(symbolTable_.def(_op->var_)->id())) {
+    if (intermediatesMap_.count(symbolTable_.def(_op->var_)->id()) &&
+        versions_.count(StmtOrExprID(_op, parent_))) {
         auto savedVar = intermediatesMap_.at(symbolTable_.def(_op->var_)->id());
         if (savedVar != op->var_) {
             op->var_ = savedVar;
@@ -232,11 +234,7 @@ Expr ReplaceBySaved::visit(const Load &_op) {
 }
 
 ReplaceBySaved Grad::getReplacer(const Stmt &stmt) const {
-    if (isRecompute_) {
-        return {*this, tapeMap_, versions_, stmt};
-    } else {
-        return {*this, intermediatesMap_, versions_, stmt};
-    }
+    return {*this, intermediatesMap_, versions_, stmt};
 }
 
 Stmt Grad::visit(const StmtSeq &op) {
@@ -722,9 +720,8 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     };
     FindDeps().type(DEP_WAW).ignoreReductionWAW(false)(backward, foundWAW);
 
-    Grad mutator(_requires, provides, tapes, affectedDefs, tapeMap,
-                 intermediatesMap, versions, totLens, saveLocalStmts,
-                 notSingleWrite);
+    Grad mutator(_requires, provides, tapes, affectedDefs, intermediatesMap,
+                 versions, totLens, saveLocalStmts, notSingleWrite);
     backward = mutator(backward);
 
     // A backward program may re-input the same taped variable multiple times.

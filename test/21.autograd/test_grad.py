@@ -426,7 +426,7 @@ def test_multi_versions_in_recomp():
                         z[()] = 1.
                         with ft.For("fn", 0, 1024) as fn:
                             z_recomp[fn] = z[()]
-                            z[()] = (z[()] + 1) * x[fn]
+                            z[()] = (z_recomp[fn] + 1) * x[fn]
                     dz[()] = -1 * dy[pn]
                     with ft.For("fn", 1023, -1, -1) as fn:
                         with ft.VarDef("dz.old", (), "float32",
@@ -801,6 +801,56 @@ def test_use_a_taped_var_to_recompute_another_var():
     std = ft.pop_ast()
 
     assert std.match(backward.body)
+
+
+def test_recompute_using_another_recomputed_var():
+
+    @ft.transform(verbose=1)
+    def func(a: ft.Var[(10,), "float32"]):
+        b = ft.empty((10,), "float32")
+        for i in range(10):
+            b[i] = a[i] * a[i]
+        c = ft.empty((10,), "float32")
+        for i in range(10):
+            t = ft.empty((), "float32")
+            # t MUST BE RECOMPUTED USING THE OLD b BEFORE b IS UPDATED
+            t[...] = b[i] * b[i]
+            c[i] = t[...] * t[...]
+            b[i] += 1  # HERE
+        d = ft.empty((10,), "float32")
+        for i in range(10):
+            d[i] = c[i] * c[i] * b[i]
+        return d
+
+    _, bwd, _, _ = ft.grad(func, ["a"], ["d"], set())
+    print(bwd)
+    bwd = ft.lower(bwd, verbose=1)
+
+    with ft.VarDef([("a", (10,), "float32", "input", "cpu"),
+                    ("a.grad", (10,), "float32", "output", "cpu"),
+                    ("d.grad", (10,), "float32", "inout", "cpu")]) as (a, da,
+                                                                       dd):
+        with ft.VarDef("b", (10,), "float32", "cache", "cpu") as b:
+            with ft.For("i", 0, 10) as i:
+                b[i] = ft.square(a[i])
+            with ft.VarDef("b.recomp", (1, 10), "float32", "cache",
+                           "cpu") as b_recomp:
+                with ft.VarDef("c", (10,), "float32", "cache", "cpu") as c:
+                    with ft.For("i_1", 0, 10) as i:
+                        b_recomp[0, i] = b[i]
+                        c[i] = ft.square(ft.square(b_recomp[0, i]))
+                        b[i] += 1
+                    with ft.For("i", 9, -1, -1) as i:
+                        gradient_of_bi_in_di = dd[i] * ft.square(c[i])
+                        # USE NEW b HERE
+                        gradient_of_ci_in_di = 2 * dd[i] * b[i] * c[i]
+                        # USE OLD b_recomp HERE
+                        dt = (4 * ft.square(b_recomp[0, i]) *
+                              gradient_of_ci_in_di * b_recomp[0, i])
+                        da[i] = 2 * (gradient_of_bi_in_di + dt) * a[i]
+    std = ft.pop_ast()
+
+    assert std.match(bwd.body)
 
 
 def test_tape_vars_with_the_same_name():
