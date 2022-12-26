@@ -54,7 +54,7 @@ var searchData=
   ['gpulocal_51',['GPULocal',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a91aa2e690cf9f0e666c332e671630a5b',1,'freetensor']]],
   ['gpushared_52',['GPUShared',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150ae70f90d745f5615e5bccbf337fcf74b7',1,'freetensor']]],
   ['gpuwarp_53',['GPUWarp',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a6d5c584f79367147f85b676a9bc55b13',1,'freetensor']]],
-  ['grad_54',['Grad',['../classfreetensor_1_1Grad.html',1,'freetensor::Grad'],['../classfreetensor_1_1Grad.html#aa48b4901c2bf875e9995fbc9b333aedf',1,'freetensor::Grad::Grad()']]],
+  ['grad_54',['Grad',['../classfreetensor_1_1Grad.html',1,'freetensor::Grad'],['../classfreetensor_1_1Grad.html#adf95effb45559d2e6a8988e70f1c49b4',1,'freetensor::Grad::Grad()']]],
   ['grad_2ecc_55',['grad.cc',['../grad_8cc.html',1,'']]],
   ['grad_2eh_56',['grad.h',['../grad_8h.html',1,'']]],
   ['gradbody_57',['gradBody',['../namespacefreetensor.html#a6a2ff2695fb4af33d2fc8380696fd7bc',1,'freetensor::gradBody(const Stmt &amp;op, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; ID &gt; &amp;tapes)'],['../namespacefreetensor.html#a8c805abf928e276c9daaf4414403651c',1,'freetensor::gradBody(const Stmt &amp;op, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, GradTapeMode tapeMode=GradTapeMode::NoReuseOnly)']]],

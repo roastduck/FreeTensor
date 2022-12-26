@@ -1296,8 +1296,8 @@ requires (std::convertible_to&lt;Srcs, <a class="el" href="namespacefreetensor.h
 <tr class="separator:a6b1e30d421ca5808b0ac9cf02fb8f26b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9f2080c755dea4be8de7b7cddf31da80"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9f2080c755dea4be8de7b7cddf31da80">allNoReuseDefs</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cb">AccessType</a> &gt; &amp;atypes)</td></tr>
 <tr class="separator:a9f2080c755dea4be8de7b7cddf31da80"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af9fe4e64d3c38e299b5b8e40514868d5"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af9fe4e64d3c38e299b5b8e40514868d5">analyzeVersion</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;intermediates, bool localVersionsOnly)</td></tr>
-<tr class="separator:af9fe4e64d3c38e299b5b8e40514868d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79a5a1488373cf34e6dd90a0dbd8f233"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a79a5a1488373cf34e6dd90a0dbd8f233">analyzeVersion</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;intermediates, bool localVersionsOnly)</td></tr>
+<tr class="separator:a79a5a1488373cf34e6dd90a0dbd8f233"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac9cbdf62c6a2cda13f872cb84afdec67"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac9cbdf62c6a2cda13f872cb84afdec67">dedupTapeNames</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;tapes)</td></tr>
 <tr class="separator:ac9cbdf62c6a2cda13f872cb84afdec67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe6caf1e25f83642a836f82dd566a769"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afe6caf1e25f83642a836f82dd566a769">mergeTapeInput</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
@@ -6807,14 +6807,14 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="af9fe4e64d3c38e299b5b8e40514868d5" name="af9fe4e64d3c38e299b5b8e40514868d5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af9fe4e64d3c38e299b5b8e40514868d5">&#9670;&nbsp;</a></span>analyzeVersion()</h2>
+<a id="a79a5a1488373cf34e6dd90a0dbd8f233" name="a79a5a1488373cf34e6dd90a0dbd8f233"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a79a5a1488373cf34e6dd90a0dbd8f233">&#9670;&nbsp;</a></span>analyzeVersion()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt; std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; freetensor::analyzeVersion </td>
+          <td class="memname">std::tuple&lt; std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; freetensor::analyzeVersion </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
           <td class="paramname"><em>op</em>, </td>
@@ -6839,6 +6839,16 @@ template&lt;class T &gt; </div>
       </table>
 </div><div class="memdoc">
 <p >Assign each memory access an expression that identifies each version of the accessed variable</p>
+<p >Versions are guaranteed to distinguish READ sites that may reads different values. Versions of WRITE sites are assigned to be consistent to the READ sites. This also means the following:</p>
+<ul>
+<li>Multiple READ sites may have the same version</li>
+<li>There can be multiple WRITE sites even there is only one version</li>
+</ul>
+<p >Some variables are TRIVIAL and there is no need to distinguish their versions. This function also outputs information of tribial variables. A variable is considered trivial if:</p>
+<ul>
+<li>There is only one version, AND</li>
+<li>The value of the only version is not overwritten till the end of the variable's lifetime</li>
+</ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">op</td><td>: The AST to analyze </td></tr>
@@ -6847,7 +6857,7 @@ template&lt;class T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>: (node -&gt; versions, VarDef IDs -&gt; total version counts) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>: (node -&gt; versions, VarDef IDs -&gt; total version counts, trivial VarDef IDs) </dd></dl>
 
 </div>
 </div>
