@@ -21,6 +21,5 @@ var searchData=
   ['hasher_18',['Hasher',['../classfreetensor_1_1Hasher.html',1,'freetensor']]],
   ['hoistreturnvars_19',['HoistReturnVars',['../classfreetensor_1_1HoistReturnVars.html',1,'freetensor']]],
   ['hoistselectedvar_20',['HoistSelectedVar',['../classfreetensor_1_1HoistSelectedVar.html',1,'freetensor']]],
-  ['hoistvar_21',['HoistVar',['../classfreetensor_1_1HoistVar.html',1,'freetensor']]],
-  ['hoistvaroverstmtseq_22',['HoistVarOverStmtSeq',['../classfreetensor_1_1HoistVarOverStmtSeq.html',1,'freetensor']]]
+  ['hoistvaroverstmtseq_21',['HoistVarOverStmtSeq',['../classfreetensor_1_1HoistVarOverStmtSeq.html',1,'freetensor']]]
 ];

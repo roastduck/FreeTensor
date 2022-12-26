@@ -1,7 +1,0 @@
-<map id="include/analyze/find_all_loops.h" name="include/analyze/find_all_loops.h">
-<area shape="rect" id="node1" title=" " alt="" coords="269,5,421,47"/>
-<area shape="rect" id="node2" href="$find__all__loops_8cc.html" title=" " alt="" coords="5,95,152,136"/>
-<area shape="rect" id="node3" href="$analyze__version_8cc.html" title=" " alt="" coords="177,95,335,136"/>
-<area shape="rect" id="node4" href="$sink__var_8cc.html" title=" " alt="" coords="359,102,510,129"/>
-<area shape="rect" id="node5" href="$auto__reorder_8cc.html" title=" " alt="" coords="534,102,741,129"/>
-</map>
