@@ -58,10 +58,9 @@ var searchData=
   ['reorder_55',['Reorder',['../classfreetensor_1_1Reorder.html',1,'freetensor']]],
   ['replacebysaved_56',['ReplaceBySaved',['../classfreetensor_1_1ReplaceBySaved.html',1,'freetensor']]],
   ['replaceiter_57',['ReplaceIter',['../classfreetensor_1_1ReplaceIter.html',1,'freetensor']]],
-  ['replaceiterandrecordlog_58',['ReplaceIterAndRecordLog',['../classfreetensor_1_1ReplaceIterAndRecordLog.html',1,'freetensor']]],
-  ['replaceuses_59',['ReplaceUses',['../classfreetensor_1_1ReplaceUses.html',1,'freetensor']]],
-  ['rootcallselector_60',['RootCallSelector',['../classfreetensor_1_1RootCallSelector.html',1,'freetensor']]],
-  ['rootnodeselector_61',['RootNodeSelector',['../classfreetensor_1_1RootNodeSelector.html',1,'freetensor']]],
-  ['roundtowards0divnode_62',['RoundTowards0DivNode',['../classfreetensor_1_1RoundTowards0DivNode.html',1,'freetensor']]],
-  ['rule_63',['Rule',['../classfreetensor_1_1Rule.html',1,'freetensor']]]
+  ['replaceuses_58',['ReplaceUses',['../classfreetensor_1_1ReplaceUses.html',1,'freetensor']]],
+  ['rootcallselector_59',['RootCallSelector',['../classfreetensor_1_1RootCallSelector.html',1,'freetensor']]],
+  ['rootnodeselector_60',['RootNodeSelector',['../classfreetensor_1_1RootNodeSelector.html',1,'freetensor']]],
+  ['roundtowards0divnode_61',['RoundTowards0DivNode',['../classfreetensor_1_1RoundTowards0DivNode.html',1,'freetensor']]],
+  ['rule_62',['Rule',['../classfreetensor_1_1Rule.html',1,'freetensor']]]
 ];
