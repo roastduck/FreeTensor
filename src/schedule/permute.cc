@@ -215,7 +215,7 @@ std::pair<Stmt, std::vector<ID>> permute(
 
     FindDeps()
         .direction({dir.begin(), dir.end()})
-        .filterAccess([&](const AccessPoint &ap) {
+        .filterAccess([&](const auto &ap) {
             return ap.def_->isAncestorOf(loops.front());
         })
         .noProjectOutPrivateAxis(true)

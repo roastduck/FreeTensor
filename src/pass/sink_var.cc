@@ -190,7 +190,7 @@ Stmt sinkVar(const Stmt &_op,
         if (!needDepAnalysis.empty()) {
             FindDeps()
                 .direction(direction)
-                .filterAccess([&](const AccessPoint &acc) {
+                .filterAccess([&](const auto &acc) {
                     return needDepAnalysis.count(acc.def_->id());
                 })
                 .ignoreReductionWAW(false)(op, [&](const Dependence &d) {

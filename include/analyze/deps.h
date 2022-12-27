@@ -32,6 +32,13 @@ struct IterAxis {
         : iter_(iter), parallel_(parallel), negStep_(negStep) {}
 };
 
+struct Access {
+    AST op_;
+    Stmt stmt_;
+    VarDef def_;
+    Ref<Buffer> buffer_;
+};
+
 struct AccessPoint {
     AST op_;
     Stmt stmt_;
@@ -78,7 +85,8 @@ class ClearUnusedScopes : public Visitor {
     }
 };
 
-typedef std::function<bool(const AccessPoint &)> FindDepsAccFilter;
+typedef std::function<bool(const Access &)> FindDepsAccFilter;
+typedef std::function<bool(const AccessPoint &)> FindDepsAccPtFilter;
 typedef std::function<bool(const AccessPoint &later,
                            const AccessPoint &earlier)>
     FindDepsFilter;
@@ -197,7 +205,8 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
                cur_, std::move(exprs), conds_};
-        if (accFilter_ == nullptr || accFilter_(*ap)) {
+        if (accFilter_ == nullptr ||
+            accFilter_(Access{op, curStmt(), d, d->buffer_})) {
             subTreeFilteredIn_.insert(op);
             writes_.emplace_back(ap);
         } else {
@@ -325,7 +334,7 @@ class AnalyzeDeps {
 
     const std::vector<FindDepsDir> &direction_;
     const FindDepsCallback &found_;
-    const FindDepsAccFilter &earlierFilter_, &laterFilter_;
+    const FindDepsAccPtFilter &earlierFilter_, &laterFilter_;
     const FindDepsFilter &filter_;
 
     const FindDepsMode mode_;
@@ -346,8 +355,8 @@ class AnalyzeDeps {
         const Lazy<LoopVariExprMap> &variantExpr,
         const std::vector<FindDepsDir> &direction,
         const FindDepsCallback &found, FindDepsMode mode, DepType depType,
-        const FindDepsAccFilter &earlierFilter,
-        const FindDepsAccFilter &laterFilter, const FindDepsFilter &filter,
+        const FindDepsAccPtFilter &earlierFilter,
+        const FindDepsAccPtFilter &laterFilter, const FindDepsFilter &filter,
         bool ignoreReductionWAW, bool eraseOutsideVarDef,
         bool noProjectOutPrivateAxis)
         : scope2coord_(scope2coord), noDepsLists_(noDepsLists),
@@ -526,8 +535,8 @@ class FindDeps {
     DepType type_ = DEP_ALL;
     std::vector<FindDepsDir> direction_ = {{}};
     FindDepsAccFilter accFilter_ = nullptr;
-    FindDepsAccFilter earlierFilter_ = nullptr;
-    FindDepsAccFilter laterFilter_ = nullptr;
+    FindDepsAccPtFilter earlierFilter_ = nullptr;
+    FindDepsAccPtFilter laterFilter_ = nullptr;
     FindDepsFilter filter_ = nullptr;
     std::function<void(const ID &,
                        const std::unordered_map<ID, std::vector<IterAxis>> &)>
@@ -605,7 +614,7 @@ class FindDeps {
         ret.accFilter_ =
             ret.accFilter_ == nullptr
                 ? f
-                : [f0 = ret.accFilter_, f1 = f](const AccessPoint &acc) {
+                : [f0 = ret.accFilter_, f1 = f](const Access &acc) {
                       return f0(acc) && f1(acc);
                   };
         return ret;
@@ -619,7 +628,7 @@ class FindDeps {
      *
      * Defaults to no filter
      */
-    FindDeps filterEarlier(const FindDepsAccFilter &f) {
+    FindDeps filterEarlier(const FindDepsAccPtFilter &f) {
         FindDeps ret = *this;
         ret.earlierFilter_ =
             ret.earlierFilter_ == nullptr
@@ -638,7 +647,7 @@ class FindDeps {
      *
      * Defaults to no filter
      */
-    FindDeps filterLater(const FindDepsAccFilter &f) {
+    FindDeps filterLater(const FindDepsAccPtFilter &f) {
         FindDeps ret = *this;
         ret.laterFilter_ =
             ret.laterFilter_ == nullptr
@@ -674,7 +683,7 @@ class FindDeps {
      * Help function to analyze a sub-AST only
      */
     FindDeps filterSubAST(const ID &subAST) {
-        return filterAccess([subAST](const AccessPoint &acc) {
+        return filterAccess([subAST](const Access &acc) {
             return acc.stmt_->ancestorById(subAST).isValid();
         });
     }

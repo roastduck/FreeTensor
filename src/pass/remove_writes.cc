@@ -305,10 +305,10 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
 
     FindDeps()
         .type(DEP_WAW)
-        .filterAccess([&](const AccessPoint &acc) {
+        .filterAccess([&](const auto &acc) {
             return !singleDefId.isValid() || acc.def_->id() == singleDefId;
         })
-        .filterLater([&](const AccessPoint &later) {
+        .filterLater([&](const auto &later) {
             return later.op_->nodeType() == ASTNodeType::Store;
         })
         .ignoreReductionWAW(false)
@@ -316,18 +316,17 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     FindDeps()
         .mode(FindDepsMode::KillLater)
         .type(DEP_WAW)
-        .filterAccess([&](const AccessPoint &acc) {
+        .filterAccess([&](const auto &acc) {
             return !singleDefId.isValid() || acc.def_->id() == singleDefId;
         })
-        .filterLater([&](const AccessPoint &later) {
+        .filterLater([&](const auto &later) {
             return later.op_->nodeType() == ASTNodeType::ReduceTo;
         })
         .ignoreReductionWAW(false)
         .noProjectOutPrivateAxis(true)(op, foundOverwriteReduce);
     FindDeps()
-        .filterAccess([&](const AccessPoint &access) {
-            return suspect.count(access.def_);
-        })
+        .filterAccess(
+            [&](const auto &access) { return suspect.count(access.def_); })
         .ignoreReductionWAW(false)(op, foundUse);
 
     std::unordered_set<Stmt> redundant;

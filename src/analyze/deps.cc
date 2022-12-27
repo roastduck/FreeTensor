@@ -268,7 +268,8 @@ void FindAccessPoint::visit(const Load &op) {
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
            cur_, std::move(exprs), conds_};
-    if (accFilter_ == nullptr || accFilter_(*ap)) {
+    if (accFilter_ == nullptr ||
+        accFilter_(Access{op, curStmt(), d, d->buffer_})) {
         subTreeFilteredIn_.insert(curStmt());
         reads_.emplace_back(ap);
     } else {
