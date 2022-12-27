@@ -81,6 +81,7 @@ void FindAccessPoint::removeTrivialScopeFromScopes(
     for (auto it = begin; it != end; it++) {
         if (auto jt = scope2coord_.find(*it); jt != scope2coord_.end()) {
             auto &coord = jt->second;
+            ASSERT(dim < (int)coord.size());
             coord.erase(coord.begin() + dim);
         }
     }
@@ -101,8 +102,8 @@ void FindAccessPoint::visit(const VarDef &op) {
 
 void FindAccessPoint::visit(const StmtSeq &op) {
     scope2coord_[op->id()] = cur_;
-    allScopes_.emplace_back(op->id());
     BaseClass::visit(op);
+    allScopes_.emplace_back(op->id());
 }
 
 void FindAccessPoint::visit(const For &op) {
@@ -152,7 +153,6 @@ void FindAccessPoint::visit(const For &op) {
 
     // Push For scope
     scope2coord_[op->id()] = cur_;
-    allScopes_.emplace_back(op->id());
 
     // Push potential StmtSeq scope
     cur_.emplace_back(makeIntConst(-1));
@@ -179,6 +179,7 @@ void FindAccessPoint::visit(const For &op) {
     // Pop For scope
     cur_.pop_back();
     conds_.resize(oldCondsSize);
+    allScopes_.emplace_back(op->id());
 
     lastIsLoad_ = false; // The last Load in the loop and the first Load out of
                          // the loop shall have different coordinates
