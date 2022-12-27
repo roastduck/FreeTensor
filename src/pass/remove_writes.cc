@@ -424,16 +424,16 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                     for (auto &&[newIter, arg] :
                          views::zip(repInfo.laterIters_, args)) {
                         islVarToNewIter[arg] =
-                            newIter.realIter_ == newIter.iter_
+                            !newIter.negStep_
                                 ? newIter.iter_
-                                : makeMul(makeIntConst(-1), newIter.realIter_);
+                                : makeMul(makeIntConst(-1), newIter.iter_);
                     }
                     for (auto &&[oldIter, value] :
                          views::zip(repInfo.earlierIters_, values)) {
-                        if (oldIter.realIter_->nodeType() == ASTNodeType::Var) {
-                            oldIterToNewIter[oldIter.realIter_.as<VarNode>()
+                        if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
+                            oldIterToNewIter[oldIter.iter_.as<VarNode>()
                                                  ->name_] =
-                                oldIter.realIter_ == oldIter.iter_
+                                !oldIter.negStep_
                                     ? ReplaceIter(islVarToNewIter)(value)
                                     : makeMul(
                                           makeIntConst(-1),

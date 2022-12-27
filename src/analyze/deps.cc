@@ -9,7 +9,6 @@
 #include <mutator.h>
 #include <omp_utils.h>
 #include <pass/const_fold.h>
-#include <pass/replace_iter.h>
 #include <serialize/mangle.h>
 #include <serialize/print_ast.h>
 
@@ -64,22 +63,6 @@ FindAccessPoint::FindAccessPoint(const Stmt &root, const ID &vardef,
     if (int width = countBandNodeWidth(root); width > 1) {
         cur_.emplace_back(makeIntConst(-1));
     }
-}
-
-Expr FindAccessPoint::normalizeExpr(const Expr &expr, const ID &baseStmtId) {
-    return ReplaceIterAndRecordLog(replaceIter_, replaceIterLog_,
-                                   baseStmtId)(expr);
-}
-
-std::vector<Expr>
-FindAccessPoint::normalizeExprs(const std::vector<Expr> &indices,
-                                const ID &baseStmtId) {
-    std::vector<Expr> ret;
-    ret.reserve(indices.size());
-    for (auto &&expr : indices) {
-        ret.emplace_back(normalizeExpr(expr, baseStmtId));
-    }
-    return ret;
 }
 
 void FindAccessPoint::visitStmt(const Stmt &stmt) {
@@ -145,16 +128,13 @@ void FindAccessPoint::visit(const For &op) {
             pushCond(makeEQ(iter, op->begin_), op->id());
             cur_.emplace_back(iter, op->property_->parallel_);
         } else {
-            auto negIter = makeVar(op->iter_ + ".neg");
-            auto newIter = makeMul(makeIntConst(-1), negIter);
-            pushCond(makeLAnd(makeLAnd(makeLE(newIter, op->begin_),
-                                       makeGT(newIter, op->end_)),
-                              makeEQ(makeMod(makeSub(newIter, op->begin_),
-                                             op->step_),
-                                     makeIntConst(0))),
-                     op->id());
-            cur_.emplace_back(negIter, op->property_->parallel_, iter);
-            replaceIter_[op->iter_] = newIter;
+            pushCond(
+                makeLAnd(
+                    makeLAnd(makeLE(iter, op->begin_), makeGT(iter, op->end_)),
+                    makeEQ(makeMod(makeSub(iter, op->begin_), op->step_),
+                           makeIntConst(0))),
+                op->id());
+            cur_.emplace_back(iter, op->property_->parallel_, true);
         }
     } else {
         ERROR("Currently loops with an unknown sign of step is not supported "
@@ -174,7 +154,6 @@ void FindAccessPoint::visit(const For &op) {
     }
     cur_.pop_back();
     conds_.resize(oldCondsSize);
-    replaceIter_.erase(op->iter_);
     lastIsLoad_ = false; // The last Load in the loop and the first Load out of
                          // the loop shall have different coordinates
 
@@ -246,7 +225,7 @@ void FindAccessPoint::visit(const Load &op) {
                               makeIntrinsic("", {}, DataType::Int32, false));
         d = viewOf;
     } else {
-        exprs = normalizeExprs(op->indices_, curStmt()->id());
+        exprs = op->indices_;
         d = def(op->var_);
     }
 
@@ -283,6 +262,24 @@ std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
         }
     }
     return "[" + ret + "]";
+}
+
+std::string AnalyzeDeps::makeNegIterMap(const std::vector<IterAxis> &list,
+                                        int n) {
+    std::string lhs, rhs;
+    for (int i = 0; i < n; i++) {
+        if (i < (int)list.size() && list[i].negStep_) {
+            rhs += "-";
+        }
+        auto name = "i" + std::to_string(i);
+        lhs += name;
+        rhs += name;
+        if (i < n - 1) {
+            lhs += ", ";
+            rhs += ", ";
+        }
+    }
+    return "{[" + lhs + "] -> [" + rhs + "]}";
 }
 
 std::string AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
@@ -363,7 +360,10 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
         ext = "[" + ext + "] -> ";
     }
     ret = ext + "{" + ret + "}";
-    return PBMap(presburger, ret);
+    auto unordered = PBMap(presburger, ret);
+    auto negIterMap = PBMap(presburger, makeNegIterMap(p.iter_, iterDim));
+    auto ordered = applyDomain(std::move(unordered), std::move(negIterMap));
+    return ordered;
 }
 
 std::string AnalyzeDeps::makeNdList(const std::string &name, int n) {
@@ -1134,17 +1134,7 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
         }
     }
 
-    auto variantExpr = Lazy([&]() {
-        auto variantExpr = findLoopVariance(op).first;
-        for (auto &&accFinder : finders) {
-            for (auto &&[from, to] : accFinder.replaceIterLog()) {
-                if (auto it = variantExpr.find(from); it != variantExpr.end()) {
-                    variantExpr[{to, from.stmtId()}] = it->second;
-                }
-            }
-        }
-        return variantExpr;
-    });
+    auto variantExpr = LAZY(findLoopVariance(op).first);
 
     std::vector<std::function<void()>> tasks;
     std::vector<AnalyzeDeps> analyzers;
