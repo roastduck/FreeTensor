@@ -190,13 +190,11 @@ This graph shows which files directly or indirectly include this file:</div>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1IterAxis.html">freetensor::IterAxis</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1Access.html">freetensor::Access</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1AccessPoint.html">freetensor::AccessPoint</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAllNoDeps.html">freetensor::FindAllNoDeps</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CountBandNodeWidth.html">freetensor::CountBandNodeWidth</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ClearUnusedScopes.html">freetensor::ClearUnusedScopes</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAccessPoint.html">freetensor::FindAccessPoint</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -218,8 +216,10 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a1cd8bdc9df92a36defdd27eb986bb04f"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; bool(const AccessPoint &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1cd8bdc9df92a36defdd27eb986bb04f">freetensor::FindDepsAccFilter</a></td></tr>
-<tr class="separator:a1cd8bdc9df92a36defdd27eb986bb04f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2c82a9617948f6319ce313ad535400a"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; bool(const Access &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab2c82a9617948f6319ce313ad535400a">freetensor::FindDepsAccFilter</a></td></tr>
+<tr class="separator:ab2c82a9617948f6319ce313ad535400a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44a09a1d142676417c54b0f1a3b4d2c5"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; bool(const AccessPoint &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a44a09a1d142676417c54b0f1a3b4d2c5">freetensor::FindDepsAccPtFilter</a></td></tr>
+<tr class="separator:a44a09a1d142676417c54b0f1a3b4d2c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0d9af8d1c64e4f7de3f4a47978a0d48d"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; bool(const AccessPoint &amp;later, const AccessPoint &amp;earlier)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0d9af8d1c64e4f7de3f4a47978a0d48d">freetensor::FindDepsFilter</a></td></tr>
 <tr class="separator:a0d9af8d1c64e4f7de3f4a47978a0d48d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a660e9e5785610a20b03501993142b2d6"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; NodeIDOrParallelScope, DepDirection &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a660e9e5785610a20b03501993142b2d6">freetensor::FindDepsDir</a></td></tr>
@@ -248,8 +248,6 @@ Enumerations</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a73d1e1e83aedfa00128a25d37494807b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a73d1e1e83aedfa00128a25d37494807b">freetensor::countBandNodeWidth</a> (const Stmt &amp;op)</td></tr>
-<tr class="separator:a73d1e1e83aedfa00128a25d37494807b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad91a290b2ee764917911d477e98ea5b1"><td class="memItemLeft" align="right" valign="top">FindDepsCallback&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad91a290b2ee764917911d477e98ea5b1">freetensor::syncFunc</a> (auto &amp;&amp;f)</td></tr>
 <tr class="separator:ad91a290b2ee764917911d477e98ea5b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39594cb6882b2e5cdd90dc00ffedf363"><td class="memItemLeft" align="right" valign="top">FindDepsCallback&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a39594cb6882b2e5cdd90dc00ffedf363">freetensor::unsyncFunc</a> (auto &amp;&amp;f)</td></tr>

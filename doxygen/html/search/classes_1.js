@@ -1,7 +1,7 @@
 var searchData=
 [
   ['absnode_0',['AbsNode',['../classfreetensor_1_1AbsNode.html',1,'freetensor']]],
-  ['access_1',['Access',['../structfreetensor_1_1CompAccessBound_1_1Access.html',1,'freetensor::CompAccessBound']]],
+  ['access_1',['Access',['../structfreetensor_1_1Access.html',1,'freetensor::Access'],['../structfreetensor_1_1CompAccessBound_1_1Access.html',1,'freetensor::CompAccessBound::Access']]],
   ['accessbound_2',['AccessBound',['../structfreetensor_1_1AccessBound.html',1,'freetensor']]],
   ['accesspoint_3',['AccessPoint',['../structfreetensor_1_1AccessPoint.html',1,'freetensor']]],
   ['adddimtovar_4',['AddDimToVar',['../classfreetensor_1_1AddDimToVar.html',1,'freetensor']]],

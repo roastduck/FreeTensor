@@ -102,8 +102,10 @@ Collaboration diagram for freetensor::FindAccessPoint:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:afe26ce3e0f4dcb32240077306fd087fd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAccessPoint.html#afe26ce3e0f4dcb32240077306fd087fd">FindAccessPoint</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;root, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;vardef, const <a class="el" href="namespacefreetensor.html#a1cd8bdc9df92a36defdd27eb986bb04f">FindDepsAccFilter</a> &amp;accFilter)</td></tr>
-<tr class="separator:afe26ce3e0f4dcb32240077306fd087fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1e4734af1fbe93de739b075f7315631"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAccessPoint.html#ad1e4734af1fbe93de739b075f7315631">FindAccessPoint</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;vardef, const <a class="el" href="namespacefreetensor.html#ab2c82a9617948f6319ce313ad535400a">FindDepsAccFilter</a> &amp;accFilter)</td></tr>
+<tr class="separator:ad1e4734af1fbe93de739b075f7315631"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51ec17917dc510723d9a323cf1b1b392"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAccessPoint.html#a51ec17917dc510723d9a323cf1b1b392">doFind</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;root)</td></tr>
+<tr class="separator:a51ec17917dc510723d9a323cf1b1b392"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec61cb1eef44518591834784ba8ca826"><td class="memItemLeft" align="right" valign="top">const auto &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAccessPoint.html#aec61cb1eef44518591834784ba8ca826">reads</a> () const</td></tr>
 <tr class="separator:aec61cb1eef44518591834784ba8ca826"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acdc4c73e8052103a1578167a87b8e278"><td class="memItemLeft" align="right" valign="top">const auto &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAccessPoint.html#acdc4c73e8052103a1578167a87b8e278">writes</a> () const</td></tr>
@@ -163,8 +165,6 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:ab7cc19bff18b2e2cabbe96105975a248"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAccessPoint.html#ab7cc19bff18b2e2cabbe96105975a248">visitStmt</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;stmt) override</td></tr>
-<tr class="separator:ab7cc19bff18b2e2cabbe96105975a248"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a09ad155333a3c3852bafe054129a7993"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAccessPoint.html#a09ad155333a3c3852bafe054129a7993">visit</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op) override</td></tr>
 <tr class="separator:a09ad155333a3c3852bafe054129a7993"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae895d38ae37be4fd4c8ffd7543f61766"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAccessPoint.html#ae895d38ae37be4fd4c8ffd7543f61766">visit</a> (const <a class="el" href="namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96">StmtSeq</a> &amp;op) override</td></tr>
@@ -314,8 +314,8 @@ Additional Inherited Members</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Find read and write points </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="afe26ce3e0f4dcb32240077306fd087fd" name="afe26ce3e0f4dcb32240077306fd087fd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afe26ce3e0f4dcb32240077306fd087fd">&#9670;&nbsp;</a></span>FindAccessPoint()</h2>
+<a id="ad1e4734af1fbe93de739b075f7315631" name="ad1e4734af1fbe93de739b075f7315631"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad1e4734af1fbe93de739b075f7315631">&#9670;&nbsp;</a></span>FindAccessPoint()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -323,19 +323,13 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="memname">freetensor::FindAccessPoint::FindAccessPoint </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
-          <td class="paramname"><em>root</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
           <td class="paramname"><em>vardef</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a1cd8bdc9df92a36defdd27eb986bb04f">FindDepsAccFilter</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#ab2c82a9617948f6319ce313ad535400a">FindDepsAccFilter</a> &amp;&#160;</td>
           <td class="paramname"><em>accFilter</em>&#160;</td>
         </tr>
         <tr>
@@ -349,6 +343,24 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a51ec17917dc510723d9a323cf1b1b392" name="a51ec17917dc510723d9a323cf1b1b392"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a51ec17917dc510723d9a323cf1b1b392">&#9670;&nbsp;</a></span>doFind()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::FindAccessPoint::doFind </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>root</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="aec61cb1eef44518591834784ba8ca826" name="aec61cb1eef44518591834784ba8ca826"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aec61cb1eef44518591834784ba8ca826">&#9670;&nbsp;</a></span>reads()</h2>
 
@@ -620,34 +632,6 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Reimplemented from <a class="el" href="classfreetensor_1_1Visitor.html#a08c6fdfe40b91bcaa1d6b5154eec5423">freetensor::Visitor</a>.</p>
-
-</div>
-</div>
-<a id="ab7cc19bff18b2e2cabbe96105975a248" name="ab7cc19bff18b2e2cabbe96105975a248"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab7cc19bff18b2e2cabbe96105975a248">&#9670;&nbsp;</a></span>visitStmt()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void freetensor::FindAccessPoint::visitStmt </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
-          <td class="paramname"><em>stmt</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Reimplemented from <a class="el" href="classfreetensor_1_1Visitor.html#af00f4ae23c8f76f8cd12597e988a988f">freetensor::Visitor</a>.</p>
 
 </div>
 </div>

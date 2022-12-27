@@ -2,7 +2,7 @@ var searchData=
 [
   ['data_5f_0',['data_',['../unionfreetensor_1_1SmallItem.html#ac0286701ad3d8a35a75cc3386fb93e04',1,'freetensor::SmallItem']]],
   ['datatypenames_1',['dataTypeNames',['../namespacefreetensor.html#a720331dd49d78544621d24d3a602193e',1,'freetensor']]],
-  ['def_5f_2',['def_',['../structfreetensor_1_1AccessPoint.html#ad8e8565aec405d576e4a10a575f56098',1,'freetensor::AccessPoint']]],
+  ['def_5f_2',['def_',['../structfreetensor_1_1Access.html#ad8d826bbc649121280aad8e06ba6d6b2',1,'freetensor::Access::def_()'],['../structfreetensor_1_1AccessPoint.html#ad8e8565aec405d576e4a10a575f56098',1,'freetensor::AccessPoint::def_()']]],
   ['defaxis_5f_3',['defAxis_',['../structfreetensor_1_1AccessPoint.html#adea1735e0b312418a82c3593b4555312',1,'freetensor::AccessPoint']]],
   ['dep_5fall_4',['DEP_ALL',['../namespacefreetensor.html#aa1ce31459ce14415bd7726376d64e06d',1,'freetensor']]],
   ['dep_5fraw_5',['DEP_RAW',['../namespacefreetensor.html#a722d5e27dd3aaf5e2f767c9b7398dbf3',1,'freetensor']]],
