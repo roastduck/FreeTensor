@@ -63,26 +63,6 @@ class FindAllNoDeps : public Visitor {
     void visit(const For &op) override;
 };
 
-class CountBandNodeWidth : public Visitor {
-    int width_ = 0;
-    bool lastIsLoad_ = false;
-
-  public:
-    int width() const { return width_; }
-
-  protected:
-    void visit(const Load &op) override;
-    void visit(const For &op) override;
-    void visit(const Store &op) override;
-    void visit(const ReduceTo &op) override;
-};
-
-inline int countBandNodeWidth(const Stmt &op) {
-    CountBandNodeWidth visitor;
-    visitor(op);
-    return visitor.width();
-}
-
 class ClearUnusedScopes : public Visitor {
     std::unordered_map<ID, std::vector<IterAxis>> &scope2coord_;
 
@@ -124,8 +104,10 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                 // need to push a null condition according to RelaxMode
     std::vector<Ref<AccessPoint>> reads_, writes_;
 
-    // For or StmtSeq -> coordinate in space
+    // For or StmtSeq -> coordinate in iteration space
     std::unordered_map<ID, std::vector<IterAxis>> scope2coord_;
+
+    std::vector<ID> allScopes_;
 
     // Which axis is a the var defined
     int defAxis_ = -1;
@@ -134,15 +116,33 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                                                  // any statement filtered in
 
   private:
+    // Please use `doFind` instead
+    using BaseClass::operator();
+
     void pushCond(const Expr &cond, const ID &baseStmtId) {
         conds_.emplace_back(cond, baseStmtId);
     }
 
     void popCond() { conds_.pop_back(); }
 
+    /**
+     * Check and remove trivial (1-lengthed) scope of StmtSeq
+     *
+     * @{
+     */
+    bool checkTrivialScope(std::vector<Ref<AccessPoint>>::iterator begin,
+                           std::vector<Ref<AccessPoint>>::iterator end);
+    void removeTrivialScopeFromAccesses(
+        std::vector<Ref<AccessPoint>>::iterator begin,
+        std::vector<Ref<AccessPoint>>::iterator end);
+    void removeTrivialScopeFromScopes(std::vector<ID>::iterator begin,
+                                      std::vector<ID>::iterator end);
+    /** @} */
+
   public:
-    FindAccessPoint(const Stmt &root, const ID &vardef,
-                    const FindDepsAccFilter &accFilter);
+    FindAccessPoint(const ID &vardef, const FindDepsAccFilter &accFilter);
+
+    void doFind(const Stmt &root);
 
     const auto &reads() const { return reads_; }
     const auto &writes() const { return writes_; }

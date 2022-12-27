@@ -29,39 +29,60 @@ void FindAllNoDeps::visit(const For &op) {
     }
 }
 
-void CountBandNodeWidth::visit(const Load &op) {
-    // No recursion
-    if (!lastIsLoad_) {
-        width_++;
-        lastIsLoad_ = true;
+FindAccessPoint::FindAccessPoint(const ID &vardef,
+                                 const FindDepsAccFilter &accFilter)
+    : vardef_(vardef), accFilter_(accFilter) {}
+
+void FindAccessPoint::doFind(const Stmt &root) {
+    // Push potential StmtSeq scope
+    cur_.emplace_back(makeIntConst(-1));
+
+    (*this)(root);
+
+    // Pop potential StmtSeq scope
+    if (checkTrivialScope(reads_.begin(), reads_.end()) &&
+        checkTrivialScope(writes_.begin(), writes_.end())) {
+        removeTrivialScopeFromAccesses(reads_.begin(), reads_.end());
+        removeTrivialScopeFromAccesses(writes_.begin(), writes_.end());
+        removeTrivialScopeFromScopes(allScopes_.begin(), allScopes_.end());
+    }
+    cur_.pop_back();
+}
+
+bool FindAccessPoint::checkTrivialScope(
+    std::vector<Ref<AccessPoint>>::iterator begin,
+    std::vector<Ref<AccessPoint>>::iterator end) {
+    int dim = (int)cur_.size() - 1;
+    for (auto it = begin; it != end; it++) {
+        auto &&coord = (*it)->iter_.at(dim).iter_;
+        ASSERT(coord->nodeType() == ASTNodeType::IntConst);
+        if (coord.as<IntConstNode>()->val_ > 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void FindAccessPoint::removeTrivialScopeFromAccesses(
+    std::vector<Ref<AccessPoint>>::iterator begin,
+    std::vector<Ref<AccessPoint>>::iterator end) {
+    int dim = (int)cur_.size() - 1;
+    for (auto it = begin; it != end; it++) {
+        (*it)->iter_.erase((*it)->iter_.begin() + dim);
+        if ((*it)->defAxis_ > dim) {
+            (*it)->defAxis_--;
+        }
     }
 }
 
-void CountBandNodeWidth::visit(const For &op) {
-    (*this)(op->begin_);
-    (*this)(op->end_);
-    (*this)(op->len_);
-    width_++;
-    lastIsLoad_ = false;
-}
-
-void CountBandNodeWidth::visit(const Store &op) {
-    Visitor::visit(op);
-    width_++;
-    lastIsLoad_ = false;
-}
-
-void CountBandNodeWidth::visit(const ReduceTo &op) {
-    Visitor::visit(op);
-    width_++;
-    lastIsLoad_ = false;
-}
-
-FindAccessPoint::FindAccessPoint(const Stmt &root, const ID &vardef,
-                                 const FindDepsAccFilter &accFilter)
-    : vardef_(vardef), accFilter_(accFilter) {
-    if (int width = countBandNodeWidth(root); width > 1) {
-        cur_.emplace_back(makeIntConst(-1));
+void FindAccessPoint::removeTrivialScopeFromScopes(
+    std::vector<ID>::iterator begin, std::vector<ID>::iterator end) {
+    int dim = (int)cur_.size() - 1;
+    for (auto it = begin; it != end; it++) {
+        if (auto jt = scope2coord_.find(*it); jt != scope2coord_.end()) {
+            auto &coord = jt->second;
+            coord.erase(coord.begin() + dim);
+        }
     }
 }
 
@@ -89,10 +110,8 @@ void FindAccessPoint::visit(const VarDef &op) {
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
-    if (!cur_.empty() &&
-        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
-        scope2coord_[op->id()] = cur_;
-    }
+    scope2coord_[op->id()] = cur_;
+    allScopes_.emplace_back(op->id());
     BaseClass::visit(op);
 }
 
@@ -140,20 +159,37 @@ void FindAccessPoint::visit(const For &op) {
         ERROR("Currently loops with an unknown sign of step is not supported "
               "in analyze/deps");
     }
+
+    // Push For scope
     scope2coord_[op->id()] = cur_;
-    if (int width = countBandNodeWidth(op->body_); width > 1) {
-        cur_.emplace_back(makeIntConst(-1));
-        pushFor(op);
-        (*this)(op->body_);
-        popFor(op);
-        cur_.pop_back();
-    } else {
-        pushFor(op);
-        (*this)(op->body_);
-        popFor(op);
+    allScopes_.emplace_back(op->id());
+
+    // Push potential StmtSeq scope
+    cur_.emplace_back(makeIntConst(-1));
+    auto oldReadsSize = reads_.size();
+    auto oldWritesSize = writes_.size();
+    auto oldAllScopesSize = allScopes_.size();
+
+    pushFor(op);
+    (*this)(op->body_);
+    popFor(op);
+
+    // Pop potential StmtSeq scope
+    auto oldReadsEnd = reads_.begin() + oldReadsSize;
+    auto oldWritesEnd = writes_.begin() + oldWritesSize;
+    auto oldAllScopesEnd = allScopes_.begin() + oldAllScopesSize;
+    if (checkTrivialScope(oldReadsEnd, reads_.end()) &&
+        checkTrivialScope(oldWritesEnd, writes_.end())) {
+        removeTrivialScopeFromAccesses(oldReadsEnd, reads_.end());
+        removeTrivialScopeFromAccesses(oldWritesEnd, writes_.end());
+        removeTrivialScopeFromScopes(oldAllScopesEnd, allScopes_.end());
     }
     cur_.pop_back();
+
+    // Pop For scope
+    cur_.pop_back();
     conds_.resize(oldCondsSize);
+
     lastIsLoad_ = false; // The last Load in the loop and the first Load out of
                          // the loop shall have different coordinates
 
@@ -1125,9 +1161,9 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
     for (auto &&def : defs) {
         // Number the iteration space coordinates variable by variable, in order
         // to make the space more compact, so can be better coalesced
-        finders.emplace_back(op, def->id(), accFilter_);
+        finders.emplace_back(def->id(), accFilter_);
         auto &accFinder = finders.back();
-        accFinder(op);
+        accFinder.doFind(op);
 
         if (scope2CoordCallback_) {
             scope2CoordCallback_(def->id(), accFinder.scope2coord());
