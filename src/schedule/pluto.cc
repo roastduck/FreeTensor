@@ -414,32 +414,27 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         std::unordered_set<std::string> deps;
         std::mutex m;
 
-        auto extractFromFakeAccess = [&](const AccessPoint &p) {
-            if (handleFakeAccess) {
-                if (p.stmt_->ancestorById(loop0Id).isValid()) {
-                    loop0Set = extractLoopSet(ctx, p);
-                    std::tie(outerAxes, loop0Axes) =
-                        extractVarAxes(p.iter_, loop0);
-                } else {
-                    ASSERT(p.stmt_->ancestorById(loop1Id).isValid());
-                    loop1Set = extractLoopSet(ctx, p);
-                    loop1Axes = extractVarAxes(p.iter_, loop1).second;
-                }
-            }
-        };
-
         FindDeps()
             .noProjectOutPrivateAxis(true)
             .filterEarlier([&](const AccessPoint &p) {
                 if (p.def_->name_ == FAKE_ACCESS_VAR) {
-                    extractFromFakeAccess(p);
+                    if (handleFakeAccess) {
+                        if (p.stmt_->ancestorById(loop0Id).isValid()) {
+                            loop0Set = extractLoopSet(ctx, p);
+                            std::tie(outerAxes, loop0Axes) =
+                                extractVarAxes(p.iter_, loop0);
+                        } else {
+                            ASSERT(p.stmt_->ancestorById(loop1Id).isValid());
+                            loop1Set = extractLoopSet(ctx, p);
+                            loop1Axes = extractVarAxes(p.iter_, loop1).second;
+                        }
+                    }
                     return false;
                 }
                 return p.stmt_->ancestorById(l0->id()).isValid();
             })
             .filterLater([&](const AccessPoint &p) {
                 if (p.def_->name_ == FAKE_ACCESS_VAR) {
-                    extractFromFakeAccess(p);
                     return false;
                 }
                 return p.stmt_->ancestorById(l1->id()).isValid();
