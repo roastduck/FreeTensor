@@ -179,16 +179,15 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
     };
     FindDeps()
         .type(DEP_RAW)
-        .filterAccess([&](const AccessPoint &acc) {
+        .filterAccess([&](const auto &acc) {
             return intermediates.count(acc.def_->id());
         })
         .eraseOutsideVarDef(localVersionsOnly)(op, found1);
     FindDeps()
         .direction(direction)
         .type(DEP_RAW | DEP_WAR)
-        .filterAccess([&](const AccessPoint &acc) {
-            return needTapes.count(acc.def_->id());
-        })
+        .filterAccess(
+            [&](const auto &acc) { return needTapes.count(acc.def_->id()); })
         .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
             return needTapes.at(earlier.def_->id())
                        .count(earlier.stmt_->id()) ||
@@ -214,12 +213,11 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
     std::unordered_set<ID> trivials = intermediates;
     FindDeps()
         .type(DEP_WAW)
-        .filterAccess([&](const AccessPoint &acc) {
-            return needTapes.count(acc.def_->id());
-        })
-        .filterEarlier([&](const AccessPoint &earlier) {
+        .filterAccess(
+            [&](const auto &acc) { return needTapes.count(acc.def_->id()); })
+        .filterEarlier([&](const auto &earlier) {
             return needTapes.at(earlier.def_->id())
-                .count(earlier.op_.as<StmtNode>()->id());
+                .count(earlier.op_.template as<StmtNode>()->id());
         })
         .eraseOutsideVarDef(localVersionsOnly)(
             op, [&](const Dependence &dep) { trivials.erase(dep.defId()); });

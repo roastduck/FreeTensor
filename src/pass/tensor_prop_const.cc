@@ -73,14 +73,14 @@ Stmt tensorPropConst(const Stmt &_op) {
         FindDeps()
             .mode(FindDepsMode::KillLater)
             .type(DEP_RAW)
-            .filterAccess([&](const AccessPoint &acc) {
+            .filterAccess([&](const auto &acc) {
                 return !acc.buffer_->tensor()->isScalar();
             })
-            .filterEarlier([&](const AccessPoint &earlier) {
+            .filterEarlier([&](const auto &earlier) {
                 if (earlier.op_->nodeType() != ASTNodeType::Store) {
                     return false;
                 }
-                auto &&expr = earlier.op_.as<StoreNode>()->expr_;
+                auto &&expr = earlier.op_.template as<StoreNode>()->expr_;
                 if (!allReads(expr).empty()) {
                     // Expressions should contain only constants and iterating
                     // vars

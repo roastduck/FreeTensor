@@ -64,7 +64,7 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
                 FindDeps()
                     .direction({{{thisId, DepDirection::Different}}})
                     .filterSubAST(thisId)
-                    .filterAccess([&](const AccessPoint &ap) {
+                    .filterAccess([&](const auto &ap) {
                         return ap.stmt_->isBefore(splitter);
                     })
                     .exists(ast());
@@ -72,7 +72,7 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
                 FindDeps()
                     .direction({{{thisId, DepDirection::Different}}})
                     .filterSubAST(thisId)
-                    .filterAccess([&](const AccessPoint &ap) {
+                    .filterAccess([&](const auto &ap) {
                         return !ap.stmt_->isBefore(splitter);
                     })
                     .exists(ast());

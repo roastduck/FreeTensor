@@ -343,7 +343,7 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
     };
     FindDeps()
         .direction(query)
-        .filterAccess([](const AccessPoint &acc) {
+        .filterAccess([](const auto &acc) {
             return acc.buffer_->mtype() == MemType::GPUGlobal ||
                    acc.buffer_->mtype() == MemType::GPUShared;
         })

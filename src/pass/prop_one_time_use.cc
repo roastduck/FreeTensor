@@ -87,13 +87,13 @@ Stmt propOneTimeUse(const Stmt &_op) {
     FindDeps()
         .mode(FindDepsMode::KillLater)
         .type(DEP_RAW)
-        .filterAccess([&](const AccessPoint &acc) {
+        .filterAccess([&](const auto &acc) {
             return acc.def_->buffer_->atype() == AccessType::Cache;
         })
-        .filterEarlier([&](const AccessPoint &earlier) {
+        .filterEarlier([&](const auto &earlier) {
             return earlier.op_->nodeType() == ASTNodeType::Store;
         })
-        .filterLater([&](const AccessPoint &later) {
+        .filterLater([&](const auto &later) {
             // pass/remove_write will deal with it (TODO: Really? What if we
             // want to do interleaved prop_one_time_use and remove_write?)
             return later.op_->nodeType() != ASTNodeType::ReduceTo;

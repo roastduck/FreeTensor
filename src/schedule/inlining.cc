@@ -166,9 +166,8 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
     FindDeps()
         .mode(FindDepsMode::KillLater)
         .type(DEP_RAW)
-        .filterAccess(
-            [&](const AccessPoint &acc) { return acc.def_->id() == def; })
-        .filterLater([&](const AccessPoint &later) {
+        .filterAccess([&](const auto &acc) { return acc.def_->id() == def; })
+        .filterLater([&](const auto &later) {
             return later.op_->nodeType() == ASTNodeType::Load;
         })
         .noProjectOutPrivateAxis(true)(ast, unsyncFunc(found));

@@ -413,9 +413,10 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                        bool handleFakeAccess = false) mutable {
         std::unordered_set<std::string> deps;
         std::mutex m;
+
         FindDeps()
             .noProjectOutPrivateAxis(true)
-            .filterAccess([&](const AccessPoint &p) {
+            .filterEarlier([&](const AccessPoint &p) {
                 if (p.def_->name_ == FAKE_ACCESS_VAR) {
                     if (handleFakeAccess) {
                         if (p.stmt_->ancestorById(loop0Id).isValid()) {
@@ -430,12 +431,12 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                     }
                     return false;
                 }
-                return true;
-            })
-            .filterEarlier([&](const AccessPoint &p) {
                 return p.stmt_->ancestorById(l0->id()).isValid();
             })
             .filterLater([&](const AccessPoint &p) {
+                if (p.def_->name_ == FAKE_ACCESS_VAR) {
+                    return false;
+                }
                 return p.stmt_->ancestorById(l1->id()).isValid();
             })
             .direction(outersSame)(
