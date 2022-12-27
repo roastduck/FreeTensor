@@ -30,45 +30,6 @@ class ReplaceIter : public Mutator {
     }
 };
 
-class ReplaceIterAndRecordLog : public Mutator {
-    std::unordered_map<std::string, Expr> replace_;
-    std::unordered_map<StmtOrExprID, Expr> &replacedLog_;
-    ID baseStmtId_;
-
-  public:
-    ReplaceIterAndRecordLog(
-        const std::unordered_map<std::string, Expr> &replace,
-        std::unordered_map<StmtOrExprID, Expr> &replacedLog,
-        const ID &baseStmtId)
-        : replace_(replace), replacedLog_(replacedLog),
-          baseStmtId_(baseStmtId) {}
-
-  protected:
-    Stmt visitStmt(const Stmt &stmt) override {
-        ID old = baseStmtId_;
-        baseStmtId_ = stmt->id();
-        auto ret = Mutator::visitStmt(stmt);
-        baseStmtId_ = old;
-        return ret;
-    }
-
-    Expr visitExpr(const Expr &expr) override {
-        auto newExpr = Mutator::visitExpr(expr);
-        if (!HashComparator{}(expr, newExpr)) {
-            replacedLog_[{expr, baseStmtId_}] = newExpr;
-        }
-        return newExpr;
-    }
-
-    Expr visit(const Var &op) override {
-        if (auto it = replace_.find(op->name_); it != replace_.end()) {
-            return it->second;
-        } else {
-            return op;
-        }
-    }
-};
-
 } // namespace freetensor
 
 #endif // FREE_TENSOR_REPLACE_ITER_H

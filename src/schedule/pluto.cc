@@ -148,7 +148,7 @@ PBSet extractLoopSet(const PBCtx &ctx, const AccessPoint &p) {
 
     // project out constant dims
     for (int64_t i = p.iter_.size() - 1; i >= 0; --i)
-        if (p.iter_[i].realIter_->nodeType() != ASTNodeType::Var)
+        if (p.iter_[i].iter_->nodeType() != ASTNodeType::Var)
             loopSet = projectOutDims(std::move(loopSet), i, 1);
 
     return loopSet;
@@ -159,8 +159,8 @@ extractVarAxes(const std::vector<IterAxis> &axes, const For &targetLoop) {
     bool inLoop = false;
     std::vector<IterAxis> outer, inner;
     for (auto &&axis : axes)
-        if (axis.realIter_->nodeType() == ASTNodeType::Var) {
-            if (axis.realIter_.as<VarNode>()->name_ == targetLoop->iter_)
+        if (axis.iter_->nodeType() == ASTNodeType::Var) {
+            if (axis.iter_.as<VarNode>()->name_ == targetLoop->iter_)
                 inLoop = true;
             (inLoop ? inner : outer).emplace_back(axis);
         }
@@ -175,8 +175,8 @@ std::pair<int, std::vector<int>> findIterFromAP(const AccessPoint &ap,
     int n = ap.iter_.size();
     outerDims.reserve(n);
     for (int i = 0; i < n; ++i)
-        if (ap.iter_[i].realIter_->nodeType() == ASTNodeType::Var) {
-            if (ap.iter_[i].realIter_.as<VarNode>()->name_ == var)
+        if (ap.iter_[i].iter_->nodeType() == ASTNodeType::Var) {
+            if (ap.iter_[i].iter_.as<VarNode>()->name_ == var)
                 return std::pair{i, std::move(outerDims)};
             else
                 outerDims.push_back(i);
@@ -238,8 +238,7 @@ struct PermuteInfo {
         vars_.reserve(nestLevel);
         for (int i = 0; i < nestLevel; ++i) {
             auto rawIter = renamer(func.values_[i]);
-            if (oldLoopAxes[i].iter_ !=
-                oldLoopAxes[i].realIter_) // negative step
+            if (oldLoopAxes[i].negStep_)
                 vars_.push_back(makeSub(makeIntConst(0), rawIter));
             else
                 vars_.push_back(rawIter);

@@ -25,13 +25,11 @@ namespace freetensor {
 struct IterAxis {
     Expr iter_;
     ParallelScope parallel_;
-    Expr realIter_; // The original iterating Var, no matter step is positive or
-                    // negative
+    bool negStep_;
 
-    IterAxis(Expr iter, const ParallelScope &parallel, Expr realIter)
-        : iter_(iter), parallel_(parallel), realIter_(realIter) {}
-    IterAxis(Expr iter, const ParallelScope &parallel = serialScope)
-        : IterAxis(iter, parallel, iter) {}
+    IterAxis(Expr iter, const ParallelScope &parallel = serialScope,
+             bool negStep = false)
+        : iter_(iter), parallel_(parallel), negStep_(negStep) {}
 };
 
 struct AccessPoint {
@@ -132,16 +130,12 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     // Which axis is a the var defined
     int defAxis_ = -1;
 
-    // For negative steps, replace iter with -neg_iter
-    std::unordered_map<std::string, Expr> replaceIter_;
-    std::unordered_map<StmtOrExprID, Expr> replaceIterLog_;
-
     std::unordered_set<Stmt> subTreeFilteredIn_; // Set of sub-trees that have
                                                  // any statement filtered in
 
   private:
     void pushCond(const Expr &cond, const ID &baseStmtId) {
-        conds_.emplace_back(normalizeExpr(cond, baseStmtId), baseStmtId);
+        conds_.emplace_back(cond, baseStmtId);
     }
 
     void popCond() { conds_.pop_back(); }
@@ -154,13 +148,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     const auto &writes() const { return writes_; }
     const auto &scope2coord() const { return scope2coord_; }
 
-    const auto &replaceIterLog() const { return replaceIterLog_; }
-
   private:
-    Expr normalizeExpr(const Expr &expr, const ID &baseStmtId);
-    std::vector<Expr> normalizeExprs(const std::vector<Expr> &expr,
-                                     const ID &baseStmtId);
-
     template <class T> void visitStoreLike(const T &op) {
         BaseClass::visit(op);
 
@@ -202,7 +190,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                 makeIntrinsic("", {}, DataType::Int32, false));
             d = viewOf;
         } else {
-            exprs = normalizeExprs(op->indices_, op->id());
+            exprs = op->indices_;
             d = def(op->var_);
         }
 
@@ -257,6 +245,10 @@ struct Dependence {
     const std::string &var_;
     const AccessPoint &later_, &earlier_;
     int iterDim_;
+
+    // Some raw presburger objects. Note that the iteration space follows
+    // temporal order, and an iterator `i` becomes `-i` when the loop traverses
+    // reversedly
     PBMap later2EarlierIter_;
     PBMap laterIter2Idx_, earlierIter2Idx_;
     PBCtx &presburger_;
@@ -397,6 +389,7 @@ class AnalyzeDeps {
 
   public:
     static std::string makeIterList(const std::vector<IterAxis> &list, int n);
+    static std::string makeNegIterMap(const std::vector<IterAxis> &list, int n);
     static std::string makeNdList(const std::string &name, int n);
     static std::string makeAccList(GenPBExpr &genPBExpr,
                                    const std::vector<Expr> &list,
