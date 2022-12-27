@@ -86,16 +86,6 @@ void FindAccessPoint::removeTrivialScopeFromScopes(
     }
 }
 
-void FindAccessPoint::visitStmt(const Stmt &stmt) {
-    BaseClass::visitStmt(stmt);
-    for (auto &&child : stmt->children()) {
-        if (subTreeFilteredIn_.count(child)) {
-            subTreeFilteredIn_.insert(stmt);
-            break;
-        }
-    }
-}
-
 void FindAccessPoint::visit(const VarDef &op) {
     if (op->id() == vardef_) {
         defAxis_ = !cur_.empty() && cur_.back().iter_->nodeType() ==
@@ -193,11 +183,11 @@ void FindAccessPoint::visit(const For &op) {
     lastIsLoad_ = false; // The last Load in the loop and the first Load out of
                          // the loop shall have different coordinates
 
-    if (!subTreeFilteredIn_.count(op->body_)) {
+    if (oldReadsEnd == reads_.end() && oldWritesEnd == writes_.end()) {
         // No stepping to make iteration space more compact
         cur_ = std::move(old);
         lastIsLoad_ = oldLastIsLoad;
-        ClearUnusedScopes{scope2coord_}(op);
+        scope2coord_.erase(op->id());
     }
 }
 
@@ -239,18 +229,6 @@ void FindAccessPoint::visit(const Load &op) {
         return;
     }
 
-    auto old = cur_;
-    auto oldLastIsLoad = lastIsLoad_;
-    if (!cur_.empty() &&
-        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
-        // top is band node
-        if (!lastIsLoad_) {
-            cur_.back().iter_ =
-                makeIntConst(cur_.back().iter_.as<IntConstNode>()->val_ + 1);
-        }
-    }
-    lastIsLoad_ = true;
-
     std::vector<Expr> exprs;
     VarDef d;
     if (viewOf.isValid()) {
@@ -265,17 +243,22 @@ void FindAccessPoint::visit(const Load &op) {
         d = def(op->var_);
     }
 
-    auto ap = Ref<AccessPoint>::make();
-    *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
-           cur_, std::move(exprs), conds_};
     if (accFilter_ == nullptr ||
         accFilter_(Access{op, curStmt(), d, d->buffer_})) {
-        subTreeFilteredIn_.insert(curStmt());
+        if (!cur_.empty() &&
+            cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+            // top is band node
+            if (!lastIsLoad_) {
+                cur_.back().iter_ = makeIntConst(
+                    cur_.back().iter_.as<IntConstNode>()->val_ + 1);
+            }
+        }
+        lastIsLoad_ = true;
+
+        auto ap = Ref<AccessPoint>::make();
+        *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
+               cur_, std::move(exprs), conds_};
         reads_.emplace_back(ap);
-    } else {
-        // No stepping to make iteration space more compact
-        cur_ = std::move(old);
-        lastIsLoad_ = oldLastIsLoad;
     }
 }
 

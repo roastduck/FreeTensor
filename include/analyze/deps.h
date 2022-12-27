@@ -70,21 +70,6 @@ class FindAllNoDeps : public Visitor {
     void visit(const For &op) override;
 };
 
-class ClearUnusedScopes : public Visitor {
-    std::unordered_map<ID, std::vector<IterAxis>> &scope2coord_;
-
-  public:
-    ClearUnusedScopes(
-        std::unordered_map<ID, std::vector<IterAxis>> &scope2coord)
-        : scope2coord_(scope2coord) {}
-
-  protected:
-    void visitStmt(const Stmt &stmt) override {
-        Visitor::visitStmt(stmt);
-        scope2coord_.erase(stmt->id());
-    }
-};
-
 typedef std::function<bool(const Access &)> FindDepsAccFilter;
 typedef std::function<bool(const AccessPoint &)> FindDepsAccPtFilter;
 typedef std::function<bool(const AccessPoint &later,
@@ -119,9 +104,6 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
 
     // Which axis is a the var defined
     int defAxis_ = -1;
-
-    std::unordered_set<Stmt> subTreeFilteredIn_; // Set of sub-trees that have
-                                                 // any statement filtered in
 
   private:
     // Please use `doFind` instead
@@ -178,16 +160,6 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
             return;
         }
 
-        auto old = cur_;
-        auto oldLastIsLoad = lastIsLoad_;
-        if (!cur_.empty() &&
-            cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
-            // top is band node
-            cur_.back().iter_ =
-                makeIntConst(cur_.back().iter_.as<IntConstNode>()->val_ + 1);
-        }
-        lastIsLoad_ = false;
-
         std::vector<Expr> exprs;
         VarDef d;
         if (viewOf.isValid()) {
@@ -202,22 +174,24 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
             d = def(op->var_);
         }
 
-        auto ap = Ref<AccessPoint>::make();
-        *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
-               cur_, std::move(exprs), conds_};
         if (accFilter_ == nullptr ||
             accFilter_(Access{op, curStmt(), d, d->buffer_})) {
-            subTreeFilteredIn_.insert(op);
+            if (!cur_.empty() &&
+                cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+                // top is band node
+                cur_.back().iter_ = makeIntConst(
+                    cur_.back().iter_.as<IntConstNode>()->val_ + 1);
+            }
+            lastIsLoad_ = false;
+
+            auto ap = Ref<AccessPoint>::make();
+            *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
+                   cur_, std::move(exprs), conds_};
             writes_.emplace_back(ap);
-        } else {
-            // No stepping to make iteration space more compact
-            cur_ = std::move(old);
-            lastIsLoad_ = oldLastIsLoad;
         }
     }
 
   protected:
-    void visitStmt(const Stmt &stmt) override;
     void visit(const VarDef &op) override;
     void visit(const StmtSeq &op) override;
     void visit(const For &op) override;
