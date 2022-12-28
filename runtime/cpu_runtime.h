@@ -21,19 +21,20 @@
 #define restrict __restrict__
 #define __ByValArray std::array
 
-template <class T>
-requires std::integral<T> T floorDiv(T a, T b) {
-    T res = a / b, rem = a % b;
+inline auto floorDiv(std::integral auto a, std::integral auto b) {
+    auto res = a / b;
+    auto rem = a % b;
     return res - (rem != 0 && ((rem < 0) != (b < 0)));
 }
-template <class T>
-requires std::integral<T> T ceilDiv(T a, T b) {
-    T res = a / b, rem = a % b;
+
+inline auto ceilDiv(std::integral auto a, std::integral auto b) {
+    auto res = a / b;
+    auto rem = a % b;
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
-template <class T>
-requires std::integral<T> T runtime_mod(T a, T b) {
-    T m = a % b;
+
+inline auto mod(std::integral auto a, std::integral auto b) {
+    auto m = a % b;
     if (m < 0) {
         // m += (b < 0) ? -b : b; // avoid this form: it is UB when b == INT_MIN
         m = (b < 0) ? m - b : m + b;
