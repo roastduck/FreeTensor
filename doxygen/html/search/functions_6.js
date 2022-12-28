@@ -41,7 +41,7 @@ var searchData=
   ['flattenmaptoset_38',['flattenMapToSet',['../namespacefreetensor.html#a6ca3df7897873f9c126e1616bd03adc3',1,'freetensor']]],
   ['flattenstmtseq_39',['flattenStmtSeq',['../namespacefreetensor.html#a156e19e665706a8efc4411e1808431cc',1,'freetensor']]],
   ['floatsimplify_40',['floatSimplify',['../namespacefreetensor.html#abc76b2ea62da573002dd8493a2592e5d',1,'freetensor']]],
-  ['floordiv_41',['floorDiv',['../namespacefreetensor.html#aa5dca1f14c48560798ccf392831dc20f',1,'freetensor::floorDiv(const UpperBound &amp;b, int k)'],['../namespacefreetensor.html#ae16b27f3cc7baee79efa4cf437524739',1,'freetensor::floorDiv(const LowerBound &amp;b, int k)'],['../namespacefreetensor.html#a20719c1ca3d9afe2a55cc3ad772ae87d',1,'freetensor::floorDiv(T a, T b)']]],
+  ['floordiv_41',['floorDiv',['../namespacefreetensor.html#aa5dca1f14c48560798ccf392831dc20f',1,'freetensor::floorDiv(const UpperBound &amp;b, int k)'],['../namespacefreetensor.html#ae16b27f3cc7baee79efa4cf437524739',1,'freetensor::floorDiv(const LowerBound &amp;b, int k)'],['../namespacefreetensor.html#a381c2ef5ef0c31e157f09522cc6d436b',1,'freetensor::floorDiv(std::integral auto a, std::integral auto b)']]],
   ['flushstmt_42',['flushStmt',['../classfreetensor_1_1MakeFillAndFlush.html#a81a6d83ed2aec15b1d3a6312d215981a',1,'freetensor::MakeFillAndFlush']]],
   ['fork_43',['fork',['../classfreetensor_1_1Schedule.html#ad29861fd233c49e64fa0df3ef76b9ff0',1,'freetensor::Schedule']]],
   ['forproperty_44',['ForProperty',['../structfreetensor_1_1ForProperty.html#a19a5f62dd2539304c38ad97c185c0305',1,'freetensor::ForProperty']]],

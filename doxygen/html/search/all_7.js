@@ -124,7 +124,7 @@ var searchData=
   ['floordiv_121',['FloorDiv',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fabaa422535e7ce48b442cc07089e64e7a',1,'freetensor']]],
   ['floordiv_122',['floorDiv',['../classfreetensor_1_1PBBuildExpr.html#a5690d2cc51ca7175e8a64c8a3d700f29',1,'freetensor::PBBuildExpr']]],
   ['floordiv_123',['FloorDiv',['../namespacefreetensor.html#a71c3acc86346abec2d5aae295f516f53',1,'freetensor']]],
-  ['floordiv_124',['floorDiv',['../namespacefreetensor.html#aa5dca1f14c48560798ccf392831dc20f',1,'freetensor::floorDiv(const UpperBound &amp;b, int k)'],['../namespacefreetensor.html#ae16b27f3cc7baee79efa4cf437524739',1,'freetensor::floorDiv(const LowerBound &amp;b, int k)'],['../namespacefreetensor.html#a20719c1ca3d9afe2a55cc3ad772ae87d',1,'freetensor::floorDiv(T a, T b)']]],
+  ['floordiv_124',['floorDiv',['../namespacefreetensor.html#aa5dca1f14c48560798ccf392831dc20f',1,'freetensor::floorDiv(const UpperBound &amp;b, int k)'],['../namespacefreetensor.html#ae16b27f3cc7baee79efa4cf437524739',1,'freetensor::floorDiv(const LowerBound &amp;b, int k)'],['../namespacefreetensor.html#a381c2ef5ef0c31e157f09522cc6d436b',1,'freetensor::floorDiv(std::integral auto a, std::integral auto b)']]],
   ['floordivnode_125',['FloorDivNode',['../classfreetensor_1_1FloorDivNode.html',1,'freetensor']]],
   ['floornode_126',['FloorNode',['../classfreetensor_1_1FloorNode.html',1,'freetensor']]],
   ['flushstmt_127',['flushStmt',['../classfreetensor_1_1MakeFillAndFlush.html#a81a6d83ed2aec15b1d3a6312d215981a',1,'freetensor::MakeFillAndFlush']]],
