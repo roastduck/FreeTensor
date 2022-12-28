@@ -1139,18 +1139,20 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
 
+    // Number the iteration space coordinates variable by variable, in order to
+    // make the space more compact, so can be better coalesced
     auto defs = findAllStmt(
         op, [](const Stmt &s) { return s->nodeType() == ASTNodeType::VarDef; });
     std::vector<FindAccessPoint> finders;
     finders.reserve(defs.size());
     for (auto &&def : defs) {
-        // Number the iteration space coordinates variable by variable, in order
-        // to make the space more compact, so can be better coalesced
         finders.emplace_back(def->id(), accFilter_);
-        auto &accFinder = finders.back();
-        accFinder.doFind(op);
-
-        if (scope2CoordCallback_) {
+    }
+    exceptSafeParallelFor<size_t>(
+        0, finders.size(), 1, [&](size_t i) { finders[i].doFind(op); },
+        omp_sched_dynamic);
+    if (scope2CoordCallback_) {
+        for (auto &&[def, accFinder] : views::zip(defs, finders)) {
             scope2CoordCallback_(def->id(), accFinder.scope2coord());
         }
     }

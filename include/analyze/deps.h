@@ -18,6 +18,7 @@
 #include <math/gen_pb_expr.h>
 #include <math/presburger.h>
 #include <serialize/to_string.h>
+#include <sync_func.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -70,7 +71,7 @@ class FindAllNoDeps : public Visitor {
     void visit(const For &op) override;
 };
 
-typedef std::function<bool(const Access &)> FindDepsAccFilter;
+typedef SyncFunc<bool(const Access &)> FindDepsAccFilter;
 typedef std::function<bool(const AccessPoint &)> FindDepsAccPtFilter;
 typedef std::function<bool(const AccessPoint &later,
                            const AccessPoint &earlier)>
@@ -249,33 +250,7 @@ struct Dependence {
                      const DepDirection &dir) const;
 };
 
-class FindDepsCallback {
-    std::function<void(const Dependence &)> f_;
-    bool synchronized_;
-    mutable std::mutex
-        mutex_; // mutable to allow const callback object to lock against
-
-    template <std::invocable<const Dependence &> F>
-    requires requires(F f, const Dependence &d) {
-        { f(d) } -> std::same_as<void>;
-    }
-    explicit FindDepsCallback(F &&f, bool sync) : f_(f), synchronized_(sync) {}
-
-    friend FindDepsCallback syncFunc(auto &&f);
-    friend FindDepsCallback unsyncFunc(auto &&f);
-
-  public:
-    void operator()(const Dependence &d) const {
-        if (synchronized_) {
-            std::lock_guard lg(mutex_);
-            f_(d);
-        } else {
-            f_(d);
-        }
-    }
-};
-FindDepsCallback syncFunc(auto &&f) { return FindDepsCallback(f, true); }
-FindDepsCallback unsyncFunc(auto &&f) { return FindDepsCallback(f, false); }
+typedef SyncFunc<void(const Dependence &)> FindDepsCallback;
 
 typedef int DepType;
 const DepType DEP_WAW = 0x1;
@@ -582,17 +557,26 @@ class FindDeps {
      * `filter` for performance
      *
      * Defaults to no filter
+     *
+     * Pass a normal function to be called sequentially, or pass a `SyncFunc`
+     * object to deciede whether to be called in parallel
+     *
+     * @{
      */
+    FindDeps filterAccess(const std::function<bool(const Access &)> &f) {
+        return filterAccess(syncFunc(f));
+    }
     FindDeps filterAccess(const FindDepsAccFilter &f) {
         FindDeps ret = *this;
         ret.accFilter_ =
             ret.accFilter_ == nullptr
                 ? f
-                : [f0 = ret.accFilter_, f1 = f](const Access &acc) {
+                : unsyncFunc([f0 = ret.accFilter_, f1 = f](const Access &acc) {
                       return f0(acc) && f1(acc);
-                  };
+                  });
         return ret;
     }
+    /** @} */
 
     /**
      * Configure an additional callback to select the dependent (earlier) access
