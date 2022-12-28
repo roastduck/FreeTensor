@@ -43,7 +43,7 @@ void CodeGenCPU::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
 void CodeGenCPU::genScalar(const VarDef &def,
                            const std::vector<Expr> &indices) {
     if (usedAsReduction_.count(def)) {
-        this->os() << mangle(def->name_) + "_ptr";
+        this->os() << mangle(def->name_) + "_arrptr";
         for (auto &&index : indices) {
             this->os() << "[";
             (*this)(index);
@@ -167,7 +167,7 @@ void CodeGenCPU::visit(const For &op) {
                 usedAsReduction_.insert(def(r->var_));
                 auto var = mangle(r->var_);
                 makeIndent();
-                os() << "auto &&" << var << "_ptr = toArrPtr(" << var << ");"
+                os() << "auto &&" << var << "_arrptr = toArrPtr(" << var << ");"
                      << std::endl;
             }
         }
@@ -218,7 +218,7 @@ void CodeGenCPU::visit(const For &op) {
                 }
                 first = false;
                 if (!buffer(r->var_)->tensor()->shape().empty()) {
-                    os() << mangle(r->var_) << "_ptr";
+                    os() << mangle(r->var_) << "_arrptr";
                     for (auto &&[b, e] : views::zip(r->begins_, r->ends_)) {
                         os() << "[";
                         (*this)(b);
