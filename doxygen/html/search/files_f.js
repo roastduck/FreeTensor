@@ -37,5 +37,6 @@ var searchData=
   ['sub_5ftree_2eh_34',['sub_tree.h',['../sub__tree_8h.html',1,'']]],
   ['swap_2ecc_35',['swap.cc',['../swap_8cc.html',1,'']]],
   ['swap_2eh_36',['swap.h',['../swap_8h.html',1,'']]],
-  ['symbol_5ftable_2eh_37',['symbol_table.h',['../symbol__table_8h.html',1,'']]]
+  ['symbol_5ftable_2eh_37',['symbol_table.h',['../symbol__table_8h.html',1,'']]],
+  ['sync_5ffunc_2eh_38',['sync_func.h',['../sync__func_8h.html',1,'']]]
 ];

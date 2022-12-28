@@ -289,8 +289,6 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDeps.html">FindDeps</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindDepsCallback.html">FindDepsCallback</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindHasStore.html">FindHasStore</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindIndexingLoops.html">FindIndexingLoops</a></td></tr>
@@ -697,6 +695,10 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SymbolTableInterface.html">SymbolTableInterface</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SyncFunc.html">SyncFunc</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SyncFunc_3_01R_07Params_8_8_8_08_4.html">SyncFunc&lt; R(Params...)&gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1TanhNode.html">TanhNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Target.html">Target</a></td></tr>
@@ -777,14 +779,16 @@ Typedefs</h2></td></tr>
 <tr class="separator:a82f6ad361ad8809641d462d42145cd02"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9e284fd405355b28a657d4091ed1d807"><td class="memItemLeft" align="right" valign="top">typedef int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9e284fd405355b28a657d4091ed1d807">CompAccessBoundMode</a></td></tr>
 <tr class="separator:a9e284fd405355b28a657d4091ed1d807"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab2c82a9617948f6319ce313ad535400a"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; bool(const <a class="el" href="structfreetensor_1_1Access.html">Access</a> &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab2c82a9617948f6319ce313ad535400a">FindDepsAccFilter</a></td></tr>
-<tr class="separator:ab2c82a9617948f6319ce313ad535400a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab47bf19accee917c67d71a84a2173fa3"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1SyncFunc.html">SyncFunc</a>&lt; bool(const <a class="el" href="structfreetensor_1_1Access.html">Access</a> &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab47bf19accee917c67d71a84a2173fa3">FindDepsAccFilter</a></td></tr>
+<tr class="separator:ab47bf19accee917c67d71a84a2173fa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a44a09a1d142676417c54b0f1a3b4d2c5"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; bool(const <a class="el" href="structfreetensor_1_1AccessPoint.html">AccessPoint</a> &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a44a09a1d142676417c54b0f1a3b4d2c5">FindDepsAccPtFilter</a></td></tr>
 <tr class="separator:a44a09a1d142676417c54b0f1a3b4d2c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0d9af8d1c64e4f7de3f4a47978a0d48d"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; bool(const <a class="el" href="structfreetensor_1_1AccessPoint.html">AccessPoint</a> &amp;later, const <a class="el" href="structfreetensor_1_1AccessPoint.html">AccessPoint</a> &amp;earlier)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0d9af8d1c64e4f7de3f4a47978a0d48d">FindDepsFilter</a></td></tr>
 <tr class="separator:a0d9af8d1c64e4f7de3f4a47978a0d48d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a660e9e5785610a20b03501993142b2d6"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; <a class="el" href="structfreetensor_1_1NodeIDOrParallelScope.html">NodeIDOrParallelScope</a>, <a class="el" href="namespacefreetensor.html#a814262c5e3a8f58a762fdf9c4c0670ad">DepDirection</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a660e9e5785610a20b03501993142b2d6">FindDepsDir</a></td></tr>
 <tr class="separator:a660e9e5785610a20b03501993142b2d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b83cd493296b8d19f20cba2325b0c03"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1SyncFunc.html">SyncFunc</a>&lt; void(const <a class="el" href="structfreetensor_1_1Dependence.html">Dependence</a> &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4b83cd493296b8d19f20cba2325b0c03">FindDepsCallback</a></td></tr>
+<tr class="separator:a4b83cd493296b8d19f20cba2325b0c03"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1533555abd55c944984c274ffa629c70"><td class="memItemLeft" align="right" valign="top">typedef int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1533555abd55c944984c274ffa629c70">DepType</a></td></tr>
 <tr class="separator:a1533555abd55c944984c274ffa629c70"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a370ade5be645f87853c1e456ac2b6b6a"><td class="memItemLeft" align="right" valign="top">typedef std::unordered_map&lt; std::string, std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a370ade5be645f87853c1e456ac2b6b6a">LoopVariTransVarMap</a></td></tr>
@@ -1218,10 +1222,6 @@ Functions</h2></td></tr>
 <tr class="separator:a09de3eb0e651ead68d9e8e678d373c55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7a5051cc5c9c18d6e8e19df1dd43982f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1AccessBound.html">AccessBound</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7a5051cc5c9c18d6e8e19df1dd43982f">compAccessBound</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;varDefId, <a class="el" href="namespacefreetensor.html#a9e284fd405355b28a657d4091ed1d807">CompAccessBoundMode</a> mode=<a class="el" href="namespacefreetensor.html#a6f442490d4a40dc3598afcdb831d11bd">COMP_ACCESS_BOUND_ALL</a>, bool includeTrivialBound=true, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;filterSubTree=<a class="el" href="classfreetensor_1_1ID.html">ID</a>())</td></tr>
 <tr class="separator:a7a5051cc5c9c18d6e8e19df1dd43982f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad91a290b2ee764917911d477e98ea5b1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1FindDepsCallback.html">FindDepsCallback</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad91a290b2ee764917911d477e98ea5b1">syncFunc</a> (auto &amp;&amp;f)</td></tr>
-<tr class="separator:ad91a290b2ee764917911d477e98ea5b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39594cb6882b2e5cdd90dc00ffedf363"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1FindDepsCallback.html">FindDepsCallback</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a39594cb6882b2e5cdd90dc00ffedf363">unsyncFunc</a> (auto &amp;&amp;f)</td></tr>
-<tr class="separator:a39594cb6882b2e5cdd90dc00ffedf363"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acaf092cf41556bd1c8a3a070e44f01ad"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#acaf092cf41556bd1c8a3a070e44f01ad">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="structfreetensor_1_1Dependence.html">Dependence</a> &amp;dep)</td></tr>
 <tr class="separator:acaf092cf41556bd1c8a3a070e44f01ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b4c918ffe693363ccd3e25c43806217"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1ElementWiseInfo.html">ElementWiseInfo</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0b4c918ffe693363ccd3e25c43806217">findSingleElementWiseConsumer</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;root, const <a class="el" href="structfreetensor_1_1ForsWithDataReuse.html">ForsWithDataReuse</a> &amp;fors)</td></tr>
@@ -2086,6 +2086,12 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:a2eb88661303a37a5f45f6416df67d592"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5db63f7bf03f222fe179fba623f3c779"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ASTPart.html">ASTPart</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5db63f7bf03f222fe179fba623f3c779">lca</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ASTPart.html">ASTPart</a> &gt; &amp;lhs, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ASTPart.html">ASTPart</a> &gt; &amp;rhs)</td></tr>
 <tr class="separator:a5db63f7bf03f222fe179fba623f3c779"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01e232999c014add028b1d022a9224d3"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a01e232999c014add028b1d022a9224d3"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1detail_1_1TaggedSyncFunc.html">detail::TaggedSyncFunc</a>&lt; std::remove_reference_t&lt; T &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a01e232999c014add028b1d022a9224d3">syncFunc</a> (T &amp;&amp;f)</td></tr>
+<tr class="separator:a01e232999c014add028b1d022a9224d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae461622394bf74c290fc507095ca87f5"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:ae461622394bf74c290fc507095ca87f5"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1detail_1_1TaggedUnsyncFunc.html">detail::TaggedUnsyncFunc</a>&lt; std::remove_reference_t&lt; T &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae461622394bf74c290fc507095ca87f5">unsyncFunc</a> (T &amp;&amp;f)</td></tr>
+<tr class="separator:ae461622394bf74c290fc507095ca87f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af853220261a87eb04e6152827848206c"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:af853220261a87eb04e6152827848206c"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af853220261a87eb04e6152827848206c">makeTensor</a> (T &amp;&amp;shape, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> dtype)</td></tr>
 <tr class="separator:af853220261a87eb04e6152827848206c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2650,14 +2656,14 @@ template&lt;class K &gt; </div>
 
 </div>
 </div>
-<a id="ab2c82a9617948f6319ce313ad535400a" name="ab2c82a9617948f6319ce313ad535400a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab2c82a9617948f6319ce313ad535400a">&#9670;&nbsp;</a></span>FindDepsAccFilter</h2>
+<a id="ab47bf19accee917c67d71a84a2173fa3" name="ab47bf19accee917c67d71a84a2173fa3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab47bf19accee917c67d71a84a2173fa3">&#9670;&nbsp;</a></span>FindDepsAccFilter</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef std::function&lt;bool(const <a class="el" href="structfreetensor_1_1Access.html">Access</a> &amp;)&gt; <a class="el" href="namespacefreetensor.html#ab2c82a9617948f6319ce313ad535400a">freetensor::FindDepsAccFilter</a></td>
+          <td class="memname">typedef <a class="el" href="classfreetensor_1_1SyncFunc.html">SyncFunc</a>&lt;bool(const <a class="el" href="structfreetensor_1_1Access.html">Access</a> &amp;)&gt; <a class="el" href="namespacefreetensor.html#ab47bf19accee917c67d71a84a2173fa3">freetensor::FindDepsAccFilter</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -2672,6 +2678,20 @@ template&lt;class K &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">typedef std::function&lt;bool(const <a class="el" href="structfreetensor_1_1AccessPoint.html">AccessPoint</a> &amp;)&gt; <a class="el" href="namespacefreetensor.html#a44a09a1d142676417c54b0f1a3b4d2c5">freetensor::FindDepsAccPtFilter</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4b83cd493296b8d19f20cba2325b0c03" name="a4b83cd493296b8d19f20cba2325b0c03"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4b83cd493296b8d19f20cba2325b0c03">&#9670;&nbsp;</a></span>FindDepsCallback</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="classfreetensor_1_1SyncFunc.html">SyncFunc</a>&lt;void(const <a class="el" href="structfreetensor_1_1Dependence.html">Dependence</a> &amp;)&gt; <a class="el" href="namespacefreetensor.html#a4b83cd493296b8d19f20cba2325b0c03">freetensor::FindDepsCallback</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -16128,21 +16148,24 @@ template&lt;PBSetRef T, PBSetRef U&gt; </div>
 
 </div>
 </div>
-<a id="ad91a290b2ee764917911d477e98ea5b1" name="ad91a290b2ee764917911d477e98ea5b1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad91a290b2ee764917911d477e98ea5b1">&#9670;&nbsp;</a></span>syncFunc()</h2>
+<a id="a01e232999c014add028b1d022a9224d3" name="a01e232999c014add028b1d022a9224d3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a01e232999c014add028b1d022a9224d3">&#9670;&nbsp;</a></span>syncFunc()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classfreetensor_1_1FindDepsCallback.html">FindDepsCallback</a> freetensor::syncFunc </td>
+          <td class="memname"><a class="el" href="structfreetensor_1_1detail_1_1TaggedSyncFunc.html">detail::TaggedSyncFunc</a>&lt; std::remove_reference_t&lt; T &gt; &gt; freetensor::syncFunc </td>
           <td>(</td>
-          <td class="paramtype">auto &amp;&amp;&#160;</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
           <td class="paramname"><em>f</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
+<p >Wrap a function to automatically lock itself when called </p>
 
 </div>
 </div>
@@ -16650,21 +16673,24 @@ template&lt;PBSpaceRef T&gt; </div>
 
 </div>
 </div>
-<a id="a39594cb6882b2e5cdd90dc00ffedf363" name="a39594cb6882b2e5cdd90dc00ffedf363"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a39594cb6882b2e5cdd90dc00ffedf363">&#9670;&nbsp;</a></span>unsyncFunc()</h2>
+<a id="ae461622394bf74c290fc507095ca87f5" name="ae461622394bf74c290fc507095ca87f5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae461622394bf74c290fc507095ca87f5">&#9670;&nbsp;</a></span>unsyncFunc()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classfreetensor_1_1FindDepsCallback.html">FindDepsCallback</a> freetensor::unsyncFunc </td>
+          <td class="memname"><a class="el" href="structfreetensor_1_1detail_1_1TaggedUnsyncFunc.html">detail::TaggedUnsyncFunc</a>&lt; std::remove_reference_t&lt; T &gt; &gt; freetensor::unsyncFunc </td>
           <td>(</td>
-          <td class="paramtype">auto &amp;&amp;&#160;</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
           <td class="paramname"><em>f</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
+<p >Make explicit that a function is not locked when called concurrently </p>
 
 </div>
 </div>

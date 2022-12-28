@@ -64,5 +64,8 @@ var searchData=
   ['symboltable_3c_20trackstmt_3c_20visitor_20_3e_20_3e_61',['SymbolTable&lt; TrackStmt&lt; Visitor &gt; &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
   ['symboltable_3c_20visitor_20_3e_62',['SymbolTable&lt; Visitor &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
   ['symboltabledata_63',['SymbolTableData',['../classfreetensor_1_1SymbolTableData.html',1,'freetensor']]],
-  ['symboltableinterface_64',['SymbolTableInterface',['../classfreetensor_1_1SymbolTableInterface.html',1,'freetensor']]]
+  ['symboltableinterface_64',['SymbolTableInterface',['../classfreetensor_1_1SymbolTableInterface.html',1,'freetensor']]],
+  ['syncfunc_65',['SyncFunc',['../classfreetensor_1_1SyncFunc.html',1,'freetensor']]],
+  ['syncfunc_3c_20bool_28const_20access_20_26_29_3e_66',['SyncFunc&lt; bool(const Access &amp;)&gt;',['../classfreetensor_1_1SyncFunc.html',1,'freetensor']]],
+  ['syncfunc_3c_20r_28params_2e_2e_2e_29_3e_67',['SyncFunc&lt; R(Params...)&gt;',['../classfreetensor_1_1SyncFunc_3_01R_07Params_8_8_8_08_4.html',1,'freetensor']]]
 ];
