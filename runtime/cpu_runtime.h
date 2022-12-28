@@ -33,7 +33,7 @@ inline auto ceilDiv(std::integral auto a, std::integral auto b) {
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
 
-inline auto mod(std::integral auto a, std::integral auto b) {
+inline auto runtime_mod(std::integral auto a, std::integral auto b) {
     auto m = a % b;
     if (m < 0) {
         // m += (b < 0) ? -b : b; // avoid this form: it is UB when b == INT_MIN
