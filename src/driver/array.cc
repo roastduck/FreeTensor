@@ -16,10 +16,42 @@ static uint8_t *allocOn(size_t size, const Ref<Device> &device) {
     case TargetType::CPU:
         ptr = new uint8_t[size];
         break;
+
 #ifdef FT_WITH_CUDA
     case TargetType::GPU:
-        checkCudaError(cudaMalloc(&ptr, size));
+        if (!Config::debugCUDAWithUM()) {
+            // Allocate traditional device memory. The performance is optimized
+            // for well-scheduled computation, but debugging access from CPU to
+            // GPU buffers is prohibitively slow
+
+            checkCudaError(cudaSetDevice(device->num()));
+            checkCudaError(cudaMalloc(&ptr, size));
+        } else {
+            // We allocate on CUDA's Unified Memory (UM), which features
+            // automatically inter-device data transfer. Although we do explicit
+            // memory copies here in `Array`, UM is helpful for debugging. As
+            // long as explicitly copied, UM enjoys the same performance as
+            // traditional device memory in kernel, but allocations and memory
+            // copies may take longer time
+
+            WARNING("Allocating on CUDA's Unified Memory. May negatively "
+                    "affect allocation and memory copy performance");
+
+            // Allocate a UM buffer
+            checkCudaError(cudaMallocManaged(&ptr, size));
+
+            // Set the buffer to prefer the selected device, so `cudaMemcpy`
+            // with a `cudaMemcpyDefault` direction will treat it as a
+            // traditional device memory
+            checkCudaError(cudaMemAdvise(
+                ptr, size, cudaMemAdviseSetPreferredLocation, device->num()));
+
+            // `cudaMemset` is required, to actually move the buffer to the
+            // device just set
+            checkCudaError(cudaMemset(ptr, 0, size));
+        }
         break;
+
 #endif // FT_WITH_CUDA
     default:
         ASSERT(false);

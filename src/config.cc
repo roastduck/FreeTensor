@@ -83,6 +83,7 @@ bool Config::printAllId_ = false;
 bool Config::werror_ = false;
 bool Config::debugBinary_ = false;
 bool Config::debugRuntimeCheck_ = false;
+bool Config::debugCUDAWithUM_ = false;
 std::vector<fs::path> Config::backendCompilerCXX_;
 std::vector<fs::path> Config::backendCompilerNVCC_;
 Ref<Target> Config::defaultTarget_;
@@ -134,6 +135,9 @@ void Config::init() {
     }
     if (auto flag = getBoolEnv("FT_DEBUG_RUNTIME_CHECK"); flag.has_value()) {
         Config::setDebugRuntimeCheck(*flag);
+    }
+    if (auto flag = getBoolEnv("FT_DEBUG_CUDA_WITH_UM"); flag.has_value()) {
+        Config::setDebugCUDAWithUM(*flag);
     }
     if (auto path = getStrEnv("FT_BACKEND_COMPILER_CXX"); path.has_value()) {
         Config::setBackendCompilerCXX(makePaths(*path));
