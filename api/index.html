@@ -107,6 +107,8 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.debug_binary">debug_binary()</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.debug_cuda_with_um">debug_cuda_with_um()</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.default_device">default_device()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.default_target">default_target()</a>
@@ -120,6 +122,8 @@
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_backend_compiler_nvcc">set_backend_compiler_nvcc()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_debug_binary">set_debug_binary()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_debug_cuda_with_um">set_debug_cuda_with_um()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_default_device">set_default_device()</a>
     </li>
@@ -1713,6 +1717,33 @@ returned, which can be used as a decorator</p></li>
 
 
 
+<h4 id="freetensor.core.config.debug_cuda_with_um" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">debug_cuda_with_um</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.config.debug_cuda_with_um" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>debug_cuda_with_um() -&gt; bool</p>
+<p>Check if debugging with Unified Memory enabled</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
 <h4 id="freetensor.core.config.default_device" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">default_device</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
 
@@ -1885,6 +1916,33 @@ returned, which can be used as a decorator</p></li>
 
       <p>set_debug_binary(flag: bool = True) -&gt; None</p>
 <p>Compile with <code>-g</code> at backend. Do not delete the binary file after loaded</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.set_debug_cuda_with_um" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">set_debug_cuda_with_um</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.config.set_debug_cuda_with_um" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>set_debug_cuda_with_um(arg0: bool) -&gt; None</p>
+<p>Allocate CUDA buffers on Unified Memory, for faster (debugging) access of GPU <code>Array</code> from CPU, but with slower <code>Array</code> allocations. No performance effect on normal in-kernel computations</p>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/config.py</code></summary>
