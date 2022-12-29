@@ -30,7 +30,17 @@
 inline void *cudaNew(size_t size) {
     void *ptr = nullptr;
     if (size > 0) {
+#ifndef FT_DEBUG_CUDA_WITH_UM
         checkCudaError(cudaMalloc(&ptr, size));
+#else
+        // Please refer to src/driver/array.cc:allocOn for details
+        int device;
+        checkCudaError(cudaGetDevice(&device));
+        checkCudaError(cudaMallocManaged(&ptr, size));
+        checkCudaError(cudaMemAdvise(
+            ptr, size, cudaMemAdviseSetPreferredLocation, device));
+        checkCudaError(cudaMemset(ptr, 0, size));
+#endif // FT_DEBUG_CUDA_WITH_UM
     }
     return ptr;
 }
@@ -61,6 +71,24 @@ class GPUScalarBase {};
 template <class T> class GPUScalar : public GPUScalarBase {
     T *ptr_;
 
+  private:
+    bool isUnifiedMemory() const {
+        // Check memory location at run time. Even if we have
+        // FT_DEBUG_CUDA_USE_UM, the pointer is not guaranteed to be pointing at
+        // UM. It can be a memory view from external inputs
+        cudaPointerAttributes attr;
+        checkCudaError(cudaPointerGetAttributes(&attr, ptr_));
+        switch (attr.type) {
+        case cudaMemoryTypeDevice:
+            return false;
+        case cudaMemoryTypeManaged:
+            return true;
+        default:
+            fprintf(stderr, "Unexpcted memory location\n");
+            exit(-1);
+        }
+    }
+
   public:
     typedef T ScalarType;
 
@@ -73,13 +101,23 @@ template <class T> class GPUScalar : public GPUScalarBase {
     explicit GPUScalar(const T &ref) : ptr_(const_cast<T *>(&ref)) {}
 
     operator T() const {
-        T ret;
-        checkCudaError(cudaMemcpy(&ret, ptr_, sizeof(T), cudaMemcpyDefault));
-        return ret;
+        if (isUnifiedMemory()) {
+            return *ptr_;
+        } else {
+            T ret;
+            checkCudaError(
+                cudaMemcpy(&ret, ptr_, sizeof(T), cudaMemcpyDefault));
+            return ret;
+        }
     }
 
     GPUScalar &operator=(const T &other) {
-        checkCudaError(cudaMemcpy(ptr_, &other, sizeof(T), cudaMemcpyDefault));
+        if (isUnifiedMemory()) {
+            *ptr_ = other;
+        } else {
+            checkCudaError(
+                cudaMemcpy(ptr_, &other, sizeof(T), cudaMemcpyDefault));
+        }
         return *this;
     }
 

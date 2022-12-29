@@ -35,6 +35,9 @@ werror = _import_func(ffi.werror)
 set_debug_binary = _import_func(ffi.set_debug_binary)
 debug_binary = _import_func(ffi.debug_binary)
 
+set_debug_cuda_with_um = _import_func(ffi.set_debug_cuda_with_um)
+debug_cuda_with_um = _import_func(ffi.debug_cuda_with_um)
+
 set_backend_compiler_cxx = _import_func(ffi.set_backend_compiler_cxx)
 backend_compiler_cxx = _import_func(ffi.backend_compiler_cxx)
 

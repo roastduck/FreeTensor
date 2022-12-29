@@ -178,6 +178,9 @@ void Driver::buildAndLoad() {
         if (Config::debugBinary()) {
             addArgs("-g");
         }
+        if (Config::debugCUDAWithUM()) {
+            addArgs("-DFT_DEBUG_CUDA_WITH_UM");
+        }
         break;
     }
 #endif // FT_WITH_CUDA

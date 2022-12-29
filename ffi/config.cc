@@ -32,6 +32,13 @@ void init_ffi_config(py::module_ &m) {
     m.def("debug_binary", Config::debugBinary,
           "Check if compiling binary in debug mode");
     m.def(
+        "set_debug_cuda_with_um", Config::setDebugCUDAWithUM,
+        "Allocate CUDA buffers on Unified Memory, for faster (debugging) "
+        "access of GPU `Array` from CPU, but with slower `Array` allocations. "
+        "No performance effect on normal in-kernel computations");
+    m.def("debug_cuda_with_um", Config::debugCUDAWithUM,
+          "Check if debugging with Unified Memory enabled");
+    m.def(
         "set_backend_compiler_cxx",
         [](const std::vector<std::string> &paths) {
             auto pathsFs =
