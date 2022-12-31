@@ -9,11 +9,21 @@ from . import config
 from .codegen import NativeCode
 
 
-def array(data):
+def array(data, dont_drop_borrow: bool = False):
     '''
     Factory function for Array
 
     It converts more data format to Array
+
+    Parameters
+    ----------
+    data : Numpy Array, PyTorch Tensor, or another FreeTensor Array
+        Data to be copied to or borrowed by the new Array object
+    dont_drop_borrow : bool
+        If true, report an error if we have to drop a borrwed data. This flag can
+        be set to true when the Array is cunstructed IMPLICITLY from a user object
+        by borrowing from it, where users may expect they are acutually manipulating
+        the their user object, instead of this Array
     '''
 
     if type(data) is Array:
@@ -28,20 +38,20 @@ def array(data):
     if type(data) is np.ndarray:
         if not data.flags['C_CONTIGUOUS']:
             data = data.copy(order='C')
-        return Array(data)
+        return Array(data, dont_drop_borrow)
 
     if data.__class__.__module__ == 'torch':
         import torch
         if type(data) is torch.Tensor:
             if not config.with_pytorch():
-                raise ffi.DriverError(
+                raise ffi.InvalidIO(
                     "FreeTensor should be built with WITH_PYTORCH to accept a PyTorch tensor"
                 )
             if not data.is_contiguous():
                 data = data.contiguous()
-            return Array(data)
+            return Array(data, dont_drop_borrow)
 
-    raise ffi.DriverError(f"Unsupported data type {type(data)} for Array")
+    raise ffi.InvalidIO(f"Unsupported data type {type(data)} for Array")
 
 
 _old_target_device_stack = []
@@ -227,9 +237,9 @@ class Driver(ffi.Driver):
         args = list(args)
         kws = dict(kws)
         for i in range(len(args)):
-            args[i] = array(args[i])
+            args[i] = array(args[i], True)
         for key in kws:
-            kws[key] = array(kws[key])
+            kws[key] = array(kws[key], True)
 
         for arg in args:
             self.args_ref_cnt_holder.append(arg)

@@ -83,13 +83,15 @@ static torch::ScalarType dtypeToPyTorch(DataType dtype) {
 
 void init_ffi_array(py::module_ &m) {
 #define SHARE_FROM_NUMPY(nativeType, dtype)                                    \
-    py::init([](py::array_t<nativeType, py::array::c_style> &np) {             \
+    py::init([](py::array_t<nativeType, py::array::c_style> &np,               \
+                bool dontDropBorrow) {                                         \
         std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());         \
         return Array::borrowFromRaw((void *)np.unchecked().data(), shape,      \
-                                    dtype,                                     \
-                                    Ref<Device>::make(TargetType::CPU));       \
+                                    dtype, Ref<Device>::make(TargetType::CPU), \
+                                    dontDropBorrow);                           \
     }),                                                                        \
         "data"_a.noconvert(),                                                  \
+        "dont_drop_borrow"_a = false,                                          \
         py::keep_alive<1, 2>() /* Keep `np` alive whenever `self` alives */
 
 #define SHARE_TO_NUMPY(nativeType, dtype)                                      \
@@ -139,21 +141,21 @@ void init_ffi_array(py::module_ &m) {
         });
 #ifdef FT_WITH_PYTORCH
     pyArray.def(
-        py::init([](const torch::Tensor &tensor) {
+        py::init([](const torch::Tensor &tensor, bool dontDropBorrow) {
             if (tensor.is_contiguous()) {
                 std::vector<size_t> shape(tensor.sizes().begin(),
                                           tensor.sizes().end());
                 return Array::borrowFromRaw(
                     tensor.data_ptr(), shape,
                     dtypeFromPyTorch(tensor.scalar_type()),
-                    deviceFromPyTorch(tensor.device()));
+                    deviceFromPyTorch(tensor.device()), dontDropBorrow);
             } else {
                 throw DriverError(
                     "Plese use freetensor.array factory function, instead of "
                     "freetensor.Array, for strided PyTorch tensors");
             }
         }),
-        "data"_a.noconvert(),
+        "data"_a.noconvert(), "dont_drop_borrow"_a = false,
         py::keep_alive<1,
                        2>() /* Keep `tensor` alive whenever `self` alives */);
 #endif // FT_WITH_PYTORCH

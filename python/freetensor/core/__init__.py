@@ -1,8 +1,9 @@
 import os
 from freetensor_ffi import (AccessType, MemType, DataType, ASTNodeType,
                             TargetType, InvalidSchedule, InvalidAutoGrad,
-                            InvalidProgram, DriverError, SymbolNotFound,
-                            AssertAlwaysFalse, ParserError, VarSplitMode)
+                            InvalidProgram, DriverError, InvalidIO,
+                            SymbolNotFound, AssertAlwaysFalse, ParserError,
+                            VarSplitMode)
 
 from .context import pop_ast
 from .expr import *
