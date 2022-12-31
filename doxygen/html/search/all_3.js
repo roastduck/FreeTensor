@@ -40,7 +40,7 @@ var searchData=
   ['boolconst_37',['BoolConst',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fac2d25ec18fb4f10042019b14fdabea7e',1,'freetensor::BoolConst()'],['../namespacefreetensor.html#a116d945c5ad31a71a95d6c4b7748f6bd',1,'freetensor::BoolConst()']]],
   ['boolconstnode_38',['BoolConstNode',['../classfreetensor_1_1BoolConstNode.html',1,'freetensor']]],
   ['borrowed_5f_39',['borrowed_',['../structfreetensor_1_1ArrayCopy.html#a3792efc579514cc7d153f69c9ef7c2d7',1,'freetensor::ArrayCopy']]],
-  ['borrowfromraw_40',['borrowFromRaw',['../classfreetensor_1_1Array.html#a66a9d8884b80bb399e419f46c0473676',1,'freetensor::Array']]],
+  ['borrowfromraw_40',['borrowFromRaw',['../classfreetensor_1_1Array.html#ac40f8b5c37307ccdc0b4563ccb29a5e2',1,'freetensor::Array']]],
   ['bothmetadataselector_41',['BothMetadataSelector',['../classfreetensor_1_1BothMetadataSelector.html#a99da12486c1c94a996ff5e05b946cf0f',1,'freetensor::BothMetadataSelector::BothMetadataSelector()'],['../classfreetensor_1_1BothMetadataSelector.html',1,'freetensor::BothMetadataSelector']]],
   ['bothselector_42',['BothSelector',['../classfreetensor_1_1BothSelector.html#a01972ca9267d475cbf441de67b3bd4ee',1,'freetensor::BothSelector::BothSelector()'],['../classfreetensor_1_1BothSelector.html',1,'freetensor::BothSelector']]],
   ['bounds_2ecc_43',['bounds.cc',['../bounds_8cc.html',1,'']]],

@@ -2486,9 +2486,9 @@ Driver            (<span title="freetensor_ffi.Driver">Driver</span>)
         <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
         <span class="n">kws</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kws</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)):</span>
-            <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="kc">True</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kws</span><span class="p">:</span>
-            <span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+            <span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="kc">True</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">args_ref_cnt_holder</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
@@ -2762,9 +2762,9 @@ ReturnValuesPack</p>
     <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
     <span class="n">kws</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kws</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)):</span>
-        <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="kc">True</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kws</span><span class="p">:</span>
-        <span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+        <span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="kc">True</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">args_ref_cnt_holder</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
@@ -2986,7 +2986,7 @@ OrderedDict unpacks to keys rather than values</p>
 
 
 <h4 id="freetensor.core.driver.array" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dont_drop_borrow</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.driver.array" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -2996,13 +2996,43 @@ OrderedDict unpacks to keys rather than values</p>
       <p>Factory function for Array</p>
 <p>It converts more data format to Array</p>
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>data</strong> (<code>Numpy Array, PyTorch Tensor, or another FreeTensor Array</code>) – Data to be copied to or borrowed by the new Array object</p></li>
+            <li><p><strong>dont_drop_borrow</strong> (<code>bool</code>) – If true, report an error if we have to drop a borrwed data. This flag can
+be set to true when the Array is cunstructed IMPLICITLY from a user object
+by borrowing from it, where users may expect they are acutually manipulating
+the their user object, instead of this Array</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/driver.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">array</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dont_drop_borrow</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Factory function for Array</span>
 
 <span class="sd">    It converts more data format to Array</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : Numpy Array, PyTorch Tensor, or another FreeTensor Array</span>
+<span class="sd">        Data to be copied to or borrowed by the new Array object</span>
+<span class="sd">    dont_drop_borrow : bool</span>
+<span class="sd">        If true, report an error if we have to drop a borrwed data. This flag can</span>
+<span class="sd">        be set to true when the Array is cunstructed IMPLICITLY from a user object</span>
+<span class="sd">        by borrowing from it, where users may expect they are acutually manipulating</span>
+<span class="sd">        the their user object, instead of this Array</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Array</span><span class="p">:</span>
@@ -3017,20 +3047,20 @@ OrderedDict unpacks to keys rather than values</p>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">flags</span><span class="p">[</span><span class="s1">&#39;C_CONTIGUOUS&#39;</span><span class="p">]:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">Array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dont_drop_borrow</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="s1">&#39;torch&#39;</span><span class="p">:</span>
         <span class="kn">import</span> <span class="nn">torch</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">is</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">with_pytorch</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DriverError</span><span class="p">(</span>
+                <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidIO</span><span class="p">(</span>
                     <span class="s2">&quot;FreeTensor should be built with WITH_PYTORCH to accept a PyTorch tensor&quot;</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">is_contiguous</span><span class="p">():</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
-            <span class="k">return</span> <span class="n">Array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">Array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dont_drop_borrow</span><span class="p">)</span>
 
-    <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DriverError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> for Array&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidIO</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> for Array&quot;</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
