@@ -1,6 +1,8 @@
 #ifndef FREE_TENSOR_DEVICE_H
 #define FREE_TENSOR_DEVICE_H
 
+#include <iostream>
+
 #include <driver/target.h>
 #include <ref.h>
 
@@ -36,6 +38,10 @@ class Device {
 
     friend bool operator==(const Device &lhs, const Device &rhs) {
         return isSameTarget(lhs.target_, rhs.target_) && lhs.num_ == rhs.num_;
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const Device &device) {
+        return os << device.target_ << ':' << device.num_;
     }
 };
 

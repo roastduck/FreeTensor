@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_TARGET_H
 #define FREE_TENSOR_TARGET_H
 
+#include <iostream>
 #include <string>
 
 #ifdef FT_WITH_CUDA
@@ -77,6 +78,10 @@ class GPUTarget : public Target {
 #endif // FT_WITH_CUDA
 
 bool isSameTarget(const Ref<Target> &lhs, const Ref<Target> &rhs);
+
+inline std::ostream &operator<<(std::ostream &os, const Ref<Target> &target) {
+    return os << target->toString();
+}
 
 } // namespace freetensor
 
