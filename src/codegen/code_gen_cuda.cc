@@ -71,13 +71,14 @@ void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
     os() << shapePtr << " = " << ndim << " > 0 ? (size_t*)malloc((" << dimPtr
          << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
     makeIndent();
-    os() << "checkCudaError(cudaMalloc(&" << rawPtr << ", ";
+    // cudaNew is defined in gpu_runtime.h
+    os() << rawPtr << " = cudaNew(";
     for (auto &&[i, dim] : views::enumerate(tensor->shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
         os() << ") * ";
     }
-    os() << "sizeof(" << gen(tensor->dtype()) << ")));" << std::endl;
+    os() << "sizeof(" << gen(tensor->dtype()) << "));" << std::endl;
 }
 
 void CodeGenCUDA::genScalar(const VarDef &def,
