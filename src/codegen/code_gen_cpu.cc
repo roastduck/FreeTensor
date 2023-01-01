@@ -82,17 +82,17 @@ void CodeGenCPU::visit(const VarDef &op) {
 
         case MemType::CPU: {
             // e.g.
-            // auto &&x = mdspan_r<float, std::extents<5, 5, 5>>(&__stack[200 +
-            // omp_get_thread_num() * _threadStackTop + 100]);
+            // auto &&x = mdspan_r<float, std::extents<5, 5,
+            // 5>>(&__threadStack[0]);
             this->makeIndent();
             this->os() << "auto &&" << name << " = ";
             std::string rawPtr;
             if (inParallel_) {
-                rawPtr = "&__stack[" + std::to_string(sharedStackTop_) +
-                         " + omp_get_thread_num() * _threadStackSize + " +
+                rawPtr = "&__threadStack[omp_get_thread_num()][" +
                          std::to_string(threadStackTop_) + "]";
             } else {
-                rawPtr = "&__stack[" + std::to_string(sharedStackTop_) + "]";
+                rawPtr =
+                    "&__sharedStack[" + std::to_string(sharedStackTop_) + "]";
             }
             this->genMdPtrDef(op, rawPtr);
             this->os() << ";" << std::endl;
@@ -342,17 +342,30 @@ extern "C" {
 )~~~";
 
     auto body = visitor.toString([&](const CodeGenStream &stream) {
-        std::string s =
-            "void run(void **_params, void **_returns, size_t **_retShapes, "
-            "size_t *_retDims, CPUContext_t _ctx) {\n";
-        s += "  size_t _sharedStackSize = " +
-             std::to_string(visitor.sharedStackSize()) + ";\n";
-        s += "  size_t _threadStackSize = " +
-             std::to_string(visitor.threadStackSize()) + ";\n";
-        s += "  auto __stack = new uint8_t[_sharedStackSize + "
-             "omp_get_max_threads() * _threadStackSize];\n";
+        std::string s;
+        s += "static uint8_t *__sharedStack;\n";
+        s += "static uint8_t **__threadStack;\n";
+        s += "__attribute__((constructor)) static void initStack() {\n";
+        s += "  __sharedStack = new uint8_t[" +
+             std::to_string(visitor.sharedStackSize()) + "];\n";
+        s += "  #pragma omp parallel\n";
+        s += "  {\n";
+        s += "    #pragma omp master\n";
+        s += "    __threadStack = new uint8_t *[omp_get_num_threads()];\n";
+        s += "    #pragma omp barrier\n";
+        s += "    __threadStack[omp_get_thread_num()] = new uint8_t[" +
+             std::to_string(visitor.threadStackSize()) + "];\n";
+        s += "  }\n";
+        s += "}\n";
+        s += "__attribute__((destructor)) static void deinitStack() {\n";
+        s += "  delete[] __sharedStack;\n";
+        s += "  #pragma omp parallel\n";
+        s += "  delete[] __threadStack[omp_get_thread_num()];\n";
+        s += "  delete[] __threadStack;\n";
+        s += "}\n";
+        s += "void run(void **_params, void **_returns, size_t **_retShapes, "
+             "size_t *_retDims, CPUContext_t _ctx) {\n";
         s += stream.os_.str();
-        s += "  delete[] __stack;\n";
         s += "}";
         return s;
     });
