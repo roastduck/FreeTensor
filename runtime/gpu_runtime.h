@@ -111,6 +111,8 @@ template <class T> class GPUScalar : public GPUScalarBase {
         }
     }
 
+    GPUScalar &operator=(const GPUScalar &other) { return *this = (T)other; }
+    GPUScalar &operator=(GPUScalar &&other) { return *this = (T)other; }
     GPUScalar &operator=(const T &other) {
         if (isUnifiedMemory()) {
             *ptr_ = other;
