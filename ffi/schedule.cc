@@ -30,6 +30,10 @@ void init_ffi_schedule(py::module_ &m) {
         .def_readonly("time", &AutoScheduleTuneTrial::time_)
         .def_readonly("stddev", &AutoScheduleTuneTrial::stddev_);
 
+    py::class_<ScheduleLogItem, Ref<ScheduleLogItem>>(m, "ScheduleLogItem")
+        .def("__str__", &ScheduleLogItem::toPrettyString)
+        .def_property_readonly("result_ast", &ScheduleLogItem::resultAST);
+
     py::class_<Schedule>(m, "Schedule")
         .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
         .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
@@ -42,24 +46,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)
         .def("logs",
-             [](const Schedule &s) {
-                 auto &&log = s.logs().asVector();
-                 std::vector<std::string> ret;
-                 ret.reserve(log.size());
-                 for (auto &&item : log) {
-                     ret.emplace_back(toString(*item));
-                 }
-                 return ret;
-             })
-        .def("pretty_logs",
-             [](const Schedule &s) {
-                 auto &&log = s.logs().asVector();
-                 std::vector<std::string> ret;
-                 ret.reserve(log.size());
-                 for (auto &&item : log) {
-                     ret.emplace_back(item->toPrettyString());
-                 }
-                 return ret;
+             [](const Schedule &s) -> std::vector<Ref<ScheduleLogItem>> {
+                 return s.logs().asVector();
              })
         .def("find",
              static_cast<Stmt (Schedule::*)(const ID &) const>(&Schedule::find))

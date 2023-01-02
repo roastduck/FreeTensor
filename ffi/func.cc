@@ -19,6 +19,11 @@ void init_ffi_ast_func(py::module_ &m) {
 
     m.attr("Func")
         .cast<py::class_<FuncNode, Func>>()
+        .def(py::init(
+                 static_cast<Func (*)(
+                     const std::string &, const std::vector<FuncParam> &,
+                     const std::vector<FuncRet> &, const Stmt &)>(&_makeFunc)),
+             "name"_a, "params"_a, "returns"_a, "body"_a)
         .def(
             py::init(
                 [](const std::string &name,

@@ -13,8 +13,9 @@ def test_move_loop_with_dependence_inside():
     s = ft.Schedule(ast)
     s.auto_reorder(ft.CPU())
     print(s.ast())
-    print(s.pretty_logs())
-    assert s.pretty_logs() == ["reorder(Lj, Li)"]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == ["reorder(Lj, Li)"]
 
 
 def test_true_dep_is_more_important_than_reduction():
@@ -30,5 +31,6 @@ def test_true_dep_is_more_important_than_reduction():
     s = ft.Schedule(ast)
     s.auto_reorder(ft.CPU())
     print(s.ast())
-    print(s.pretty_logs())
-    assert s.pretty_logs() == ["reorder(Lj, Li)"]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == ["reorder(Lj, Li)"]

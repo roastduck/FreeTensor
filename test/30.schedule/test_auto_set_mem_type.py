@@ -22,8 +22,9 @@ def test_gpu_basic():
     s.parallelize('Lj2', 'threadIdx.x')
     s.auto_set_mem_type(ft.GPU())
     print(s.ast())
-    print(s.logs())
-    assert s.pretty_logs()[2:] == ["set_mem_type(V_t, gpu/shared)"]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs[2:] == ["set_mem_type(V_t, gpu/shared)"]
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
@@ -46,8 +47,9 @@ def test_gpu_local_across_loops():
     s.parallelize('Lj2', 'threadIdx.x')
     s.auto_set_mem_type(ft.GPU())
     print(s.ast())
-    print(s.logs())
-    assert s.pretty_logs()[3:] == ["set_mem_type(V_t, gpu/local)"]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs[3:] == ["set_mem_type(V_t, gpu/local)"]
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
@@ -81,6 +83,7 @@ def test_gpu_no_too_large_shared():
     s.parallelize('Lj2', 'threadIdx.x')
     s.auto_set_mem_type(ft.GPU())
     print(s.ast())
-    print(s.logs())
-    assert sorted(s.pretty_logs()[2:]) == sorted(
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert sorted(logs[2:]) == sorted(
         ["set_mem_type(V_u, gpu/shared)", "set_mem_type(V_v, gpu/shared)"])
