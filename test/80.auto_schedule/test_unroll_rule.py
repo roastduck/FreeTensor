@@ -90,7 +90,7 @@ def test_unroll():
         'unroll($split.1{L4}, false)', 'unroll($split.1{L7}, false)',
         'unroll(#43, false)'
     ]
-    sch_log = sch.pretty_logs()
+    sch_log = list(map(str, sch.logs()))
     print(sch_log)
     assert len(sch_log) == len(std_log)
     for l, r in zip(sch_log, std_log):

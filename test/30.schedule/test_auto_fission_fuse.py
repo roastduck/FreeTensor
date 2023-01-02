@@ -17,8 +17,9 @@ def test_basic():
     s = ft.Schedule(ast)
     s.auto_fission_fuse(ft.CPU())
     print(s.ast())
-    print(s.pretty_logs())
-    assert s.pretty_logs() == ["fuse(L1, L2, true)"]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == ["fuse(L1, L2, true)"]
 
 
 def test_nested():
@@ -37,8 +38,9 @@ def test_nested():
     s = ft.Schedule(ast)
     s.auto_fission_fuse(ft.CPU())
     print(s.ast())
-    print(s.pretty_logs())
-    assert s.pretty_logs() == ["fuse(L1, L3, true)", "fuse(L2, L4, true)"]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == ["fuse(L1, L3, true)", "fuse(L2, L4, true)"]
 
 
 def test_stmt_in_between_1():
@@ -59,8 +61,9 @@ def test_stmt_in_between_1():
     s = ft.Schedule(ast)
     s.auto_fission_fuse(ft.CPU())
     print(s.ast())
-    print(s.pretty_logs())
-    assert s.pretty_logs() == ["swap(S2, L1)", "fuse(L1, L2, true)"]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == ["swap(S2, L1)", "fuse(L1, L2, true)"]
 
 
 def test_stmt_in_between_2():
@@ -82,8 +85,9 @@ def test_stmt_in_between_2():
     s = ft.Schedule(ast)
     s.auto_fission_fuse(ft.CPU())
     print(s.ast())
-    print(s.pretty_logs())
-    assert s.pretty_logs() == ["swap(L2, S1)", "fuse(L1, L2, true)"]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == ["swap(L2, S1)", "fuse(L1, L2, true)"]
 
 
 def test_tune_fuse():
@@ -122,9 +126,10 @@ def test_tune_fuse():
 
     s.auto_schedule(ft.CPU())
     print(s.func())
-    print(s.pretty_logs())
+    logs = list(map(str, s.logs()))
+    print(logs)
 
-    for log in s.pretty_logs():
+    for log in logs:
         assert "fuse" not in log
 
 
@@ -167,9 +172,10 @@ def test_tune_fission():
 
     s.auto_schedule(ft.CPU())
     print(s.func())
-    print(s.pretty_logs())
+    logs = list(map(str, s.logs()))
+    print(logs)
 
-    assert "fission" in ", ".join(s.pretty_logs())
+    assert "fission" in ", ".join(logs)
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
@@ -226,7 +232,8 @@ def test_tune_with_cond():
 
     s.auto_schedule(ft.GPU())
     print(s.func())
-    print(s.pretty_logs())
+    logs = list(map(str, s.logs()))
+    print(logs)
 
-    assert "fuse(Li1, Li2, true)" not in s.pretty_logs()
-    assert "fuse(Li3, Li4, true)" in s.pretty_logs()
+    assert "fuse(Li1, Li2, true)" not in logs
+    assert "fuse(Li3, Li4, true)" in logs
