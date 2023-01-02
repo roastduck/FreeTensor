@@ -343,25 +343,29 @@ extern "C" {
 
     auto body = visitor.toString([&](const CodeGenStream &stream) {
         std::string s;
-        s += "static uint8_t *__sharedStack;\n";
-        s += "static uint8_t **__threadStack;\n";
+        s += "static uint8_t *__sharedStack = nullptr;\n";
+        s += "static uint8_t **__threadStack = nullptr;\n";
         s += "__attribute__((constructor)) static void initStack() {\n";
-        s += "  __sharedStack = new uint8_t[" +
-             std::to_string(visitor.sharedStackSize()) + "];\n";
-        s += "  #pragma omp parallel\n";
-        s += "  {\n";
-        s += "    #pragma omp master\n";
-        s += "    __threadStack = new uint8_t *[omp_get_num_threads()];\n";
-        s += "    #pragma omp barrier\n";
-        s += "    __threadStack[omp_get_thread_num()] = new uint8_t[" +
-             std::to_string(visitor.threadStackSize()) + "];\n";
-        s += "  }\n";
+        if (visitor.sharedStackSize() > 0) {
+            s += "  __sharedStack = new uint8_t[" +
+                 std::to_string(visitor.sharedStackSize()) + "];\n";
+        }
+        if (visitor.threadStackSize() > 0) {
+            s += "  __threadStack = new uint8_t *[omp_get_max_threads()];\n";
+            s += "  #pragma omp parallel\n";
+            s += "  __threadStack[omp_get_thread_num()] = new uint8_t[" +
+                 std::to_string(visitor.threadStackSize()) + "];\n";
+        }
         s += "}\n";
         s += "__attribute__((destructor)) static void deinitStack() {\n";
-        s += "  delete[] __sharedStack;\n";
-        s += "  #pragma omp parallel\n";
-        s += "  delete[] __threadStack[omp_get_thread_num()];\n";
-        s += "  delete[] __threadStack;\n";
+        if (visitor.sharedStackSize() > 0) {
+            s += "  delete[] __sharedStack;\n";
+        }
+        if (visitor.threadStackSize() > 0) {
+            s += "  #pragma omp parallel\n";
+            s += "  delete[] __threadStack[omp_get_thread_num()];\n";
+            s += "  delete[] __threadStack;\n";
+        }
         s += "}\n";
         s += "void run(void **_params, void **_returns, size_t **_retShapes, "
              "size_t *_retDims, CPUContext_t _ctx) {\n";
