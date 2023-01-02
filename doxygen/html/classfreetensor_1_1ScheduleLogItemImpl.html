@@ -114,6 +114,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a180c919b4d8dd78c0eb3064848ea5d17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f6442640e404a4d8857b12f8e4efced"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html#a39a0a57db5b10d33615ea1f7a9fec29a">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html#a7f6442640e404a4d8857b12f8e4efced">getResult</a> () const</td></tr>
 <tr class="separator:a7f6442640e404a4d8857b12f8e4efced"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a171b32244df890b786bf3b86fa2fbac9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html#a171b32244df890b786bf3b86fa2fbac9">resultAST</a> () const override final</td></tr>
+<tr class="separator:a171b32244df890b786bf3b86fa2fbac9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1ScheduleLogItem"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1ScheduleLogItem')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1ScheduleLogItem.html">freetensor::ScheduleLogItem</a></td></tr>
 <tr class="memitem:abb6edd7672013007b9e71d5ef5ffbbcc inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItem.html#abb6edd7672013007b9e71d5ef5ffbbcc">~ScheduleLogItem</a> ()</td></tr>
 <tr class="separator:abb6edd7672013007b9e71d5ef5ffbbcc inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -129,6 +131,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a9ca417bfc1f8b7bd3d4a2a12c70b6d06 inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad736faa94f6f331d71b670f5997820c7 inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItem.html#ad736faa94f6f331d71b670f5997820c7">run</a> ()=0</td></tr>
 <tr class="separator:ad736faa94f6f331d71b670f5997820c7 inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a725dbe0417c9c3ab853d267ffd5370b6 inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ScheduleLogItem.html#a725dbe0417c9c3ab853d267ffd5370b6">resultAST</a> () const =0</td></tr>
+<tr class="separator:a725dbe0417c9c3ab853d267ffd5370b6 inherit pub_methods_classfreetensor_1_1ScheduleLogItem"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-types" name="pro-types"></a>
 Protected Types</h2></td></tr>
@@ -152,7 +156,8 @@ Protected Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8">ScheduleType</a> TYPE, class _Invocable, class _Params, class _Result&gt;<br />
-class freetensor::ScheduleLogItemImpl&lt; TYPE, _Invocable, _Params, _Result &gt;</div><p >Template of a specialized <code><a class="el" href="classfreetensor_1_1ScheduleLogItem.html">ScheduleLogItem</a></code> of a particular type of schedule </p>
+class freetensor::ScheduleLogItemImpl&lt; TYPE, _Invocable, _Params, _Result &gt;</div><p >Template of a specialized <code><a class="el" href="classfreetensor_1_1ScheduleLogItem.html">ScheduleLogItem</a></code> of a particular type of schedule</p>
+<p >Assuming return type (<code>_Result</code>) from each schedule function is either an AST, or a tuple whose first item is an AST </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="ab025e0f19406f5481fb90e98e5f61d95" name="ab025e0f19406f5481fb90e98e5f61d95"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab025e0f19406f5481fb90e98e5f61d95">&#9670;&nbsp;</a></span>Invocable</h2>
@@ -350,6 +355,35 @@ template&lt;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe
 </div><div class="memdoc">
 
 <p>Implements <a class="el" href="classfreetensor_1_1ScheduleLogItem.html#a87d36d865f10eafd12dc7550ad82e7f2">freetensor::ScheduleLogItem</a>.</p>
+
+</div>
+</div>
+<a id="a171b32244df890b786bf3b86fa2fbac9" name="a171b32244df890b786bf3b86fa2fbac9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a171b32244df890b786bf3b86fa2fbac9">&#9670;&nbsp;</a></span>resultAST()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8">ScheduleType</a> TYPE, class _Invocable , class _Params , class _Result &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> <a class="el" href="classfreetensor_1_1ScheduleLogItemImpl.html">freetensor::ScheduleLogItemImpl</a>&lt; TYPE, _Invocable, _Params, _Result &gt;::resultAST </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">final</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="classfreetensor_1_1ScheduleLogItem.html#a725dbe0417c9c3ab853d267ffd5370b6">freetensor::ScheduleLogItem</a>.</p>
 
 </div>
 </div>
