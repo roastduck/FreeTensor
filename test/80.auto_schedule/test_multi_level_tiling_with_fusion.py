@@ -68,7 +68,7 @@ def test_fusion():
         'fuse($split.1{$split.0{$split.0{L5}}}, $split.1{$split.0{L7}}, false)',
         'cache(*, y, cpu)'
     ]
-    sch_log = sch.pretty_logs()
+    sch_log = list(map(str, sch.logs()))
     print(sch_log)
     assert std_log[:-1] == sch_log[:-1]
     assert sch_log[-1].startswith('cache(') and sch_log[-1].endswith(

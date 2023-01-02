@@ -68,6 +68,6 @@ def test_cache_write():
         'merge($split.0{$split.0{L4}}, $split.0{$split.0{L5}})',
         'parallelize($merge{$split.0{$split.0{L4}}, $split.0{$split.0{L5}}}, openmp)'
     ]
-    sch_log = sch.pretty_logs()
+    sch_log = list(map(str, sch.logs()))
     print(sch_log)
     assert sch_log == std_log
