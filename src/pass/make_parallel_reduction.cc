@@ -221,22 +221,36 @@ Stmt MakeAtomicReduction::visit(const ReduceTo &_op) {
             }
         }
         if (loopToCache.isValid()) {
-            std::vector<Expr> newShape, newTargetIndices;
-            op->var_ += ".atomic_cache." + toString(op->id());
-            op->indices_ = {};
+            std::vector<Expr> newShape, newTargetIndices, newCacheIndices;
             for (auto &&[preserve, idx, dim] :
                  views::zip(preserveDim, _op->indices_,
                             buffer(_op->var_)->tensor()->shape())) {
                 if (preserve) {
-                    op->indices_.emplace_back(idx);
+                    newCacheIndices.emplace_back(idx);
                     newShape.emplace_back(dim);
                     newTargetIndices.emplace_back(nullptr);
                 } else {
                     newTargetIndices.emplace_back(idx);
                 }
             }
+            // Try to reuse existing cache array with the same size and the same
+            // target indices
+            for (auto &&existing : cacheAtomic_[loopToCache]) {
+                if (ranges::equal(existing.newShape, newShape,
+                                  HashComparator{}) &&
+                    ranges::equal(existing.newTargetIndices, newTargetIndices,
+                                  HashComparator{})) {
+                    op->var_ +=
+                        ".atomic_cache." + toString(existing.oldNode_->id());
+                    op->indices_ = std::move(newCacheIndices);
+                    goto done;
+                }
+            }
             cacheAtomic_[loopToCache].emplace_back(_op, newShape,
                                                    newTargetIndices);
+            op->var_ += ".atomic_cache." + toString(op->id());
+            op->indices_ = std::move(newCacheIndices);
+        done:;
         } else {
             op->atomic_ = true;
         }

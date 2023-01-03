@@ -103,11 +103,13 @@ class MakeAtomicReduction : public SymbolTable<Mutator> {
         &serialOverRed_; // ReduceTo ID -> [For], from inner to outer
     const LoopVariExprMap &variantMap_;
 
-    std::unordered_map<
-        ID,
-        std::vector<std::tuple<ReduceTo, std::vector<Expr>, std::vector<Expr>>>>
-        cacheAtomic_; // loop ID -> [(old ReduceTo node, new shape, new
-                      // indices)]
+    struct AtomicCacheInfo {
+        ReduceTo oldNode_;
+        std::vector<Expr> newShape, newTargetIndices;
+    };
+    std::unordered_map<ID,
+                       std::vector<AtomicCacheInfo>>
+        cacheAtomic_; // loop ID -> [AtomicCacheInfo]
 
   public:
     MakeAtomicReduction(
