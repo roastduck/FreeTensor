@@ -236,18 +236,17 @@ Stmt MakeAtomicReduction::visit(const ReduceTo &_op) {
             // Try to reuse existing cache array with the same size and the same
             // target indices
             for (auto &&existing : cacheAtomic_[loopToCache]) {
-                if (ranges::equal(existing.newShape, newShape,
-                                  HashComparator{}) &&
-                    ranges::equal(existing.newTargetIndices, newTargetIndices,
-                                  HashComparator{})) {
+                if (existing.oldNode_->var_ == _op->var_ &&
+                    existing.preserveDim_ == preserveDim) {
                     op->var_ +=
                         ".atomic_cache." + toString(existing.oldNode_->id());
                     op->indices_ = std::move(newCacheIndices);
                     goto done;
                 }
             }
-            cacheAtomic_[loopToCache].emplace_back(_op, newShape,
-                                                   newTargetIndices);
+            cacheAtomic_[loopToCache].emplace_back(
+                _op /* use the old name here */, newShape, newTargetIndices,
+                preserveDim);
             op->var_ += ".atomic_cache." + toString(op->id());
             op->indices_ = std::move(newCacheIndices);
         done:;
@@ -265,7 +264,7 @@ Stmt MakeAtomicReduction::visit(const For &_op) {
 
     if (cacheAtomic_.count(op->id())) {
         Stmt ret = op;
-        for (auto &&[reduce, newShape, targetIndices] :
+        for (auto &&[reduce, newShape, targetIndices, _] :
              cacheAtomic_.at(op->id())) {
             auto cacheName =
                 reduce->var_ + ".atomic_cache." + toString(reduce->id());

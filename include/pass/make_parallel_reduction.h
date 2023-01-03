@@ -105,7 +105,8 @@ class MakeAtomicReduction : public SymbolTable<Mutator> {
 
     struct AtomicCacheInfo {
         ReduceTo oldNode_;
-        std::vector<Expr> newShape, newTargetIndices;
+        std::vector<Expr> newShape_, newTargetIndices_;
+        std::vector<bool> preserveDim_;
     };
     std::unordered_map<ID,
                        std::vector<AtomicCacheInfo>>
