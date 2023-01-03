@@ -185,25 +185,41 @@ Stmt MakeAtomicReduction::visit(const ReduceTo &_op) {
                         // tensor
         std::vector<bool> preserveDim(op->indices_.size(), false);
         if (serialOverRed_.count(op->id())) {
+            // Cache at out of the outer-most serial fully reduction loop
             for (auto &&loop : serialOverRed_.at(op->id())) {
-                bool noPreserve = true;
-                for (auto &&[idx, preserve] :
-                     views::zip(_op->indices_, preserveDim)) {
+                bool isReductionLoop = true;
+                for (auto &&idx : _op->indices_) {
                     if (isVariant(variantMap_, {idx, op}, loop->id())) {
                         if (isDenseOver(idx, loop->iter_)) {
-                            preserve = true;
-                            noPreserve = false;
+                            // is spatial loop
+                            isReductionLoop = false;
                         } else {
-                            goto found_loop_to_cache;
+                            // is randomly reduction loop
+                            goto stop;
                         }
                     }
                 }
-                if (noPreserve) {
+                if (isReductionLoop) {
                     loopToCache = loop->id();
                 }
             }
+        stop:
+            if (loopToCache.isValid()) {
+                for (auto &&loop : serialOverRed_.at(op->id())) {
+                    for (auto &&[idx, preserve] :
+                         views::zip(_op->indices_, preserveDim)) {
+                        if (isVariant(variantMap_, {idx, op}, loop->id()) &&
+                            isDenseOver(idx, loop->iter_)) {
+                            // is spatial loop
+                            preserve = true;
+                        }
+                    }
+                    if (loop->id() == loopToCache) {
+                        break;
+                    }
+                }
+            }
         }
-    found_loop_to_cache:
         if (loopToCache.isValid()) {
             std::vector<Expr> newShape, newTargetIndices;
             op->var_ += ".atomic_cache." + toString(op->id());
