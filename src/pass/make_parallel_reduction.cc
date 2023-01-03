@@ -61,7 +61,7 @@ void FindSerialLoopsOverReduce::visit(const ReduceTo &op) {
     }
 }
 
-Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
+Stmt MakeLoopCarriedReduction::visit(const ReduceTo &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
@@ -72,15 +72,16 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             if (auto &&parallel = paraScopes_.at(loopId);
                 std::holds_alternative<CUDAScope>(parallel) &&
                 std::get<CUDAScope>(parallel).level_ == CUDAScope::Block) {
-                // Race-free reduction among thread blocks are impossible
-                goto use_atomic;
+                // Race-free reduction among thread blocks are impossible. Use
+                // atomic
+                return op;
             }
             for (auto &&[i, idx, dim] :
                  views::zip(views::ints(0, ranges::unreachable), _op->indices_,
                             buffer(_op->var_)->tensor()->shape())) {
-                // use _op because isVariant needs it
-                if (isVariant(variantMap_, {idx, _op}, loopId)) {
-                    goto use_atomic;
+                if (isVariant(variantMap_, {idx, op}, loopId)) {
+                    // Use atomic
+                    return op;
                 }
                 std::vector<Expr> dimLowers{makeIntConst(0)}, dimUppers{dim};
                 for (auto &&item :
@@ -133,64 +134,13 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             }
         done:;
         }
+        toAlter_.erase(op->id());
         return op;
-
-    use_atomic:
-        // There will be no cross-thread dependences except the reduction we
-        // are working on (guranteed by schedule/parallelize). Therefore, We
-        // can cache the variable being reduced, so it can be first reduced
-        // serially inside a thread, before reduced to the finally target in an
-        // atomic operation. We will cache over some serial inner loops, if
-        // reduction is invariant to this loop, or if the loop densly iterates
-        // over the reduction
-        ID loopToCache;
-        std::vector<bool> preserveDim(op->indices_.size(), false);
-        if (serialOverRed_.count(op->id())) {
-            for (auto &&loop : serialOverRed_.at(op->id())) {
-                bool noPreserve = true;
-                for (auto &&[idx, preserve] :
-                     views::zip(_op->indices_, preserveDim)) {
-                    // use _op because isVariant needs it
-                    if (isVariant(variantMap_, {idx, _op}, loop->id())) {
-                        if (isDenseOver(idx, loop->iter_)) {
-                            preserve = true;
-                            noPreserve = false;
-                        } else {
-                            goto found_loop_to_cache;
-                        }
-                    }
-                }
-                if (noPreserve) {
-                    loopToCache = loop->id();
-                }
-            }
-        }
-    found_loop_to_cache:
-        if (loopToCache.isValid()) {
-            std::vector<Expr> newShape, newTargetIndices;
-            op->var_ += ".atomic_cache." + toString(op->id());
-            op->indices_ = {};
-            for (auto &&[preserve, idx, dim] :
-                 views::zip(preserveDim, _op->indices_,
-                            buffer(_op->var_)->tensor()->shape())) {
-                if (preserve) {
-                    op->indices_.emplace_back(idx);
-                    newShape.emplace_back(dim);
-                    newTargetIndices.emplace_back(nullptr);
-                } else {
-                    newTargetIndices.emplace_back(idx);
-                }
-            }
-            cacheAtomic_[loopToCache].emplace_back(_op, newShape,
-                                                   newTargetIndices);
-        } else {
-            op->atomic_ = true;
-        }
     }
     return op;
 }
 
-Stmt MakeParallelReduction::visit(const For &_op) {
+Stmt MakeLoopCarriedReduction::visit(const For &_op) {
     ASSERT(!paraScopes_.count(_op->id()));
     paraScopes_[_op->id()] = _op->property_->parallel_;
     scopeDefined_[_op->id()] = names();
@@ -216,9 +166,105 @@ Stmt MakeParallelReduction::visit(const For &_op) {
         }
     }
 
+    return op;
+}
+
+Stmt MakeAtomicReduction::visit(const ReduceTo &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
+    auto op = __op.as<ReduceToNode>();
+    if (toAlter_.count(op->id())) {
+        // There will be no cross-thread dependences except the reduction we
+        // are working on (guranteed by schedule/parallelize). Therefore, We
+        // can cache the variable being reduced, so it can be first reduced
+        // serially inside a thread, before reduced to the finally target in an
+        // atomic operation. We will cache over some serial inner loops, if
+        // reduction is invariant to this loop, or if the loop densly iterates
+        // over the reduction
+        ID loopToCache; // Scope to flush locally accumulated result to target
+                        // tensor
+        std::vector<bool> preserveDim(op->indices_.size(), false);
+        if (serialOverRed_.count(op->id())) {
+            // Cache at out of the outer-most serial fully reduction loop
+            for (auto &&loop : serialOverRed_.at(op->id())) {
+                bool isReductionLoop = true;
+                for (auto &&idx : _op->indices_) {
+                    if (isVariant(variantMap_, {idx, op}, loop->id())) {
+                        if (isDenseOver(idx, loop->iter_)) {
+                            // is spatial loop
+                            isReductionLoop = false;
+                        } else {
+                            // is randomly reduction loop
+                            goto stop;
+                        }
+                    }
+                }
+                if (isReductionLoop) {
+                    loopToCache = loop->id();
+                }
+            }
+        stop:
+            if (loopToCache.isValid()) {
+                for (auto &&loop : serialOverRed_.at(op->id())) {
+                    for (auto &&[idx, preserve] :
+                         views::zip(_op->indices_, preserveDim)) {
+                        if (isVariant(variantMap_, {idx, op}, loop->id()) &&
+                            isDenseOver(idx, loop->iter_)) {
+                            // is spatial loop
+                            preserve = true;
+                        }
+                    }
+                    if (loop->id() == loopToCache) {
+                        break;
+                    }
+                }
+            }
+        }
+        if (loopToCache.isValid()) {
+            std::vector<Expr> newShape, newTargetIndices, newCacheIndices;
+            for (auto &&[preserve, idx, dim] :
+                 views::zip(preserveDim, _op->indices_,
+                            buffer(_op->var_)->tensor()->shape())) {
+                if (preserve) {
+                    newCacheIndices.emplace_back(idx);
+                    newShape.emplace_back(dim);
+                    newTargetIndices.emplace_back(nullptr);
+                } else {
+                    newTargetIndices.emplace_back(idx);
+                }
+            }
+            // Try to reuse existing cache array with the same size and the same
+            // target indices
+            for (auto &&existing : cacheAtomic_[loopToCache]) {
+                if (existing.oldNode_->var_ == _op->var_ &&
+                    existing.preserveDim_ == preserveDim) {
+                    op->var_ +=
+                        ".atomic_cache." + toString(existing.oldNode_->id());
+                    op->indices_ = std::move(newCacheIndices);
+                    goto done;
+                }
+            }
+            cacheAtomic_[loopToCache].emplace_back(
+                _op /* use the old name here */, newShape, newTargetIndices,
+                preserveDim);
+            op->var_ += ".atomic_cache." + toString(op->id());
+            op->indices_ = std::move(newCacheIndices);
+        done:;
+        } else {
+            op->atomic_ = true;
+        }
+    }
+    return op;
+}
+
+Stmt MakeAtomicReduction::visit(const For &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.as<ForNode>();
+
     if (cacheAtomic_.count(op->id())) {
         Stmt ret = op;
-        for (auto &&[reduce, newShape, targetIndices] :
+        for (auto &&[reduce, newShape, targetIndices, _] :
              cacheAtomic_.at(op->id())) {
             auto cacheName =
                 reduce->var_ + ".atomic_cache." + toString(reduce->id());
@@ -304,8 +350,9 @@ Stmt makeParallelReduction(const Stmt &_op) {
 
     auto [variantExprMap, variantVarMap] = findLoopVariance(op);
 
-    op = MakeParallelReduction(toAlter, serialFinder.results(),
-                               variantExprMap)(op);
+    op = MakeLoopCarriedReduction(toAlter, variantExprMap)(op);
+    op = MakeAtomicReduction(toAlter, serialFinder.results(),
+                             variantExprMap)(op);
     op = simplify(op);
     return op;
 }

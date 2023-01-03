@@ -48,7 +48,14 @@ class FindSerialLoopsOverReduce : public Visitor {
     void visit(const ReduceTo &op) override;
 };
 
-class MakeParallelReduction : public CompTransientBounds<SymbolTable<Mutator>> {
+/**
+ * Lower supported parallel reductions to loop-carried reductions, which will be
+ * further lowered to specific algorithms like binary reduction or local
+ * accumulation in target-specific passes. Non-supported parallel reductions are
+ * left for the following `MakeAtomicReduction`.
+ */
+class MakeLoopCarriedReduction
+    : public CompTransientBounds<SymbolTable<Mutator>> {
     typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
     struct ReductionItemFactors {
@@ -60,28 +67,57 @@ class MakeParallelReduction : public CompTransientBounds<SymbolTable<Mutator>> {
 
     CompUniqueBounds unique_;
 
-    const std::unordered_map<ID, std::unordered_set<ID>>
-        &toAlter_; // ReduceTo ID -> Racing For ID
-    const std::unordered_map<ID, std::vector<For>>
-        &serialOverRed_; // ReduceTo ID -> [For], from inner to outer
+    std::unordered_map<ID, std::unordered_set<ID>>
+        &toAlter_; // ReduceTo ID -> Racing For ID. Supported reductions will be
+                   // deleted from this map, and the left ones will be passed to
+                   // `MakeAtomicReduction`
     const LoopVariExprMap &variantMap_;
 
     std::unordered_map<ID, ParallelScope> paraScopes_; // For Id -> parallel
     std::unordered_map<ID, std::vector<ReductionItemFactors>> forReductions_;
     std::unordered_map<ID, std::unordered_set<std::string>>
         scopeDefined_; // For ID -> definitions at that scope
-    std::unordered_map<
-        ID,
-        std::vector<std::tuple<ReduceTo, std::vector<Expr>, std::vector<Expr>>>>
-        cacheAtomic_; // loop ID -> [(old ReduceTo node, new shape, new
-                      // indices)]
 
   public:
-    MakeParallelReduction(
+    MakeLoopCarriedReduction(
+        std::unordered_map<ID, std::unordered_set<ID>> &toAlter,
+        const LoopVariExprMap &variantMap)
+        : unique_(*this), toAlter_(toAlter), variantMap_(variantMap) {}
+
+  protected:
+    using BaseClass::visit;
+    Stmt visit(const ReduceTo &op) override;
+    Stmt visit(const For &op) override;
+};
+
+/**
+ * Lower parallel reductions left by `MakeLoopCarriedReduction` to atomic
+ * reductions
+ */
+class MakeAtomicReduction : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
+    const std::unordered_map<ID, std::unordered_set<ID>>
+        &toAlter_; // ReduceTo ID -> Racing For ID
+    const std::unordered_map<ID, std::vector<For>>
+        &serialOverRed_; // ReduceTo ID -> [For], from inner to outer
+    const LoopVariExprMap &variantMap_;
+
+    struct AtomicCacheInfo {
+        ReduceTo oldNode_;
+        std::vector<Expr> newShape_, newTargetIndices_;
+        std::vector<bool> preserveDim_;
+    };
+    std::unordered_map<ID,
+                       std::vector<AtomicCacheInfo>>
+        cacheAtomic_; // loop ID -> [AtomicCacheInfo]
+
+  public:
+    MakeAtomicReduction(
         const std::unordered_map<ID, std::unordered_set<ID>> &toAlter,
         const std::unordered_map<ID, std::vector<For>> &serialOverRed,
         const LoopVariExprMap &variantMap)
-        : unique_(*this), toAlter_(toAlter), serialOverRed_(serialOverRed),
+        : toAlter_(toAlter), serialOverRed_(serialOverRed),
           variantMap_(variantMap) {}
 
   protected:

@@ -343,8 +343,12 @@ extern "C" {
 
     auto body = visitor.toString([&](const CodeGenStream &stream) {
         std::string s;
-        s += "static uint8_t *__sharedStack = nullptr;\n";
-        s += "static uint8_t **__threadStack = nullptr;\n";
+        if (visitor.sharedStackSize() > 0) {
+            s += "static uint8_t *__sharedStack = nullptr;\n";
+        }
+        if (visitor.threadStackSize() > 0) {
+            s += "static uint8_t **__threadStack = nullptr;\n";
+        }
         s += "__attribute__((constructor)) static void initStack() {\n";
         if (visitor.sharedStackSize() > 0) {
             s += "  __sharedStack = new uint8_t[" +
