@@ -6,7 +6,7 @@
 <area shape="rect" id="node14" href="$classfreetensor_1_1CompTransientBounds.html" title=" " alt="" coords="289,322,484,363"/>
 <area shape="rect" id="node3" href="$classfreetensor_1_1CompAccessBound.html" title=" " alt="" coords="573,5,795,32"/>
 <area shape="rect" id="node4" href="$classfreetensor_1_1StructuralFeature.html" title=" " alt="" coords="579,56,789,83"/>
-<area shape="rect" id="node6" href="$classfreetensor_1_1MakeParallelReduction.html" title=" " alt="" coords="594,107,774,149"/>
+<area shape="rect" id="node6" href="$classfreetensor_1_1MakeLoopCarriedReduction.html" title=" " alt="" coords="579,107,789,149"/>
 <area shape="rect" id="node7" href="$classfreetensor_1_1ShrinkFor.html" title=" " alt="" coords="605,173,763,200"/>
 <area shape="rect" id="node8" href="$classfreetensor_1_1UseBuiltinDiv.html" title=" " alt="" coords="591,224,777,251"/>
 <area shape="rect" id="node9" href="$classfreetensor_1_1gpu_1_1NormalizeVarInKernel.html" title=" " alt="" coords="586,275,782,317"/>
