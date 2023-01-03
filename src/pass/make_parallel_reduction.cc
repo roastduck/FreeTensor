@@ -61,7 +61,7 @@ void FindSerialLoopsOverReduce::visit(const ReduceTo &op) {
     }
 }
 
-Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
+Stmt MakeLoopCarriedReduction::visit(const ReduceTo &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
@@ -72,15 +72,16 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             if (auto &&parallel = paraScopes_.at(loopId);
                 std::holds_alternative<CUDAScope>(parallel) &&
                 std::get<CUDAScope>(parallel).level_ == CUDAScope::Block) {
-                // Race-free reduction among thread blocks are impossible
-                goto use_atomic;
+                // Race-free reduction among thread blocks are impossible. Use
+                // atomic
+                return op;
             }
             for (auto &&[i, idx, dim] :
                  views::zip(views::ints(0, ranges::unreachable), _op->indices_,
                             buffer(_op->var_)->tensor()->shape())) {
-                // use _op because isVariant needs it
-                if (isVariant(variantMap_, {idx, _op}, loopId)) {
-                    goto use_atomic;
+                if (isVariant(variantMap_, {idx, op}, loopId)) {
+                    // Use atomic
+                    return op;
                 }
                 std::vector<Expr> dimLowers{makeIntConst(0)}, dimUppers{dim};
                 for (auto &&item :
@@ -133,9 +134,46 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             }
         done:;
         }
+        toAlter_.erase(op->id());
         return op;
+    }
+    return op;
+}
 
-    use_atomic:
+Stmt MakeLoopCarriedReduction::visit(const For &_op) {
+    ASSERT(!paraScopes_.count(_op->id()));
+    paraScopes_[_op->id()] = _op->property_->parallel_;
+    scopeDefined_[_op->id()] = names();
+    auto __op = BaseClass::visit(_op);
+    scopeDefined_.erase(_op->id());
+    paraScopes_.erase(_op->id());
+
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.as<ForNode>();
+    if (forReductions_.count(op->id())) {
+        for (auto &&[redOp, var, allLowers, allUppers] :
+             forReductions_.at(op->id())) {
+            std::vector<Expr> begins, ends;
+            for (auto &&dimLowers : allLowers) {
+                begins.emplace_back(makeMinMax(dimLowers));
+            }
+            for (auto &&dimUppers : allUppers) {
+                ends.emplace_back(
+                    makeAdd(makeMaxMin(dimUppers), makeIntConst(1)));
+            }
+            op->property_->reductions_.emplace_back(makeReductionItem(
+                redOp, var, std::move(begins), std::move(ends)));
+        }
+    }
+
+    return op;
+}
+
+Stmt MakeAtomicReduction::visit(const ReduceTo &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
+    auto op = __op.as<ReduceToNode>();
+    if (toAlter_.count(op->id())) {
         // There will be no cross-thread dependences except the reduction we
         // are working on (guranteed by schedule/parallelize). Therefore, We
         // can cache the variable being reduced, so it can be first reduced
@@ -143,15 +181,15 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
         // atomic operation. We will cache over some serial inner loops, if
         // reduction is invariant to this loop, or if the loop densly iterates
         // over the reduction
-        ID loopToCache;
+        ID loopToCache; // Scope to flush locally accumulated result to target
+                        // tensor
         std::vector<bool> preserveDim(op->indices_.size(), false);
         if (serialOverRed_.count(op->id())) {
             for (auto &&loop : serialOverRed_.at(op->id())) {
                 bool noPreserve = true;
                 for (auto &&[idx, preserve] :
                      views::zip(_op->indices_, preserveDim)) {
-                    // use _op because isVariant needs it
-                    if (isVariant(variantMap_, {idx, _op}, loop->id())) {
+                    if (isVariant(variantMap_, {idx, op}, loop->id())) {
                         if (isDenseOver(idx, loop->iter_)) {
                             preserve = true;
                             noPreserve = false;
@@ -190,31 +228,10 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
     return op;
 }
 
-Stmt MakeParallelReduction::visit(const For &_op) {
-    ASSERT(!paraScopes_.count(_op->id()));
-    paraScopes_[_op->id()] = _op->property_->parallel_;
-    scopeDefined_[_op->id()] = names();
+Stmt MakeAtomicReduction::visit(const For &_op) {
     auto __op = BaseClass::visit(_op);
-    scopeDefined_.erase(_op->id());
-    paraScopes_.erase(_op->id());
-
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
-    if (forReductions_.count(op->id())) {
-        for (auto &&[redOp, var, allLowers, allUppers] :
-             forReductions_.at(op->id())) {
-            std::vector<Expr> begins, ends;
-            for (auto &&dimLowers : allLowers) {
-                begins.emplace_back(makeMinMax(dimLowers));
-            }
-            for (auto &&dimUppers : allUppers) {
-                ends.emplace_back(
-                    makeAdd(makeMaxMin(dimUppers), makeIntConst(1)));
-            }
-            op->property_->reductions_.emplace_back(makeReductionItem(
-                redOp, var, std::move(begins), std::move(ends)));
-        }
-    }
 
     if (cacheAtomic_.count(op->id())) {
         Stmt ret = op;
@@ -304,8 +321,9 @@ Stmt makeParallelReduction(const Stmt &_op) {
 
     auto [variantExprMap, variantVarMap] = findLoopVariance(op);
 
-    op = MakeParallelReduction(toAlter, serialFinder.results(),
-                               variantExprMap)(op);
+    op = MakeLoopCarriedReduction(toAlter, variantExprMap)(op);
+    op = MakeAtomicReduction(toAlter, serialFinder.results(),
+                             variantExprMap)(op);
     op = simplify(op);
     return op;
 }
