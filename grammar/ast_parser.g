@@ -254,7 +254,7 @@ storeOrReduceTo returns [Stmt node]
         }
       | reduceOp expr
         {
-            $node = makeReduceTo($var.name, $indices.exprs, $reduceOp.op, $expr.node, true);
+            $node = makeReduceTo($var.name, $indices.exprs, $reduceOp.op, $expr.node, false);
         }
       )
     ;
