@@ -27,9 +27,9 @@ class Config {
     static bool
         debugCUDAWithUM_; /// Allocate CUDA buffers on Unified Memory, for
                           /// faster (debugging) access of GPU `Array` from CPU,
-                          /// but with slower `Array` allocations. No
-                          /// performance effect on normal in-kernel
-                          /// computations. Env FT_DEBUG_CUDA_WITH_UM
+                          /// but with slower `Array` allocations and more
+                          /// synchronizations. No performance effect on normal
+                          /// in-kernel computations. Env FT_DEBUG_CUDA_WITH_UM
     static std::vector<std::filesystem::path>
         backendCompilerCXX_; /// Env and macro FT_BACKEND_COMPILER_CXX.
                              /// Colon-separated paths, searched from left to

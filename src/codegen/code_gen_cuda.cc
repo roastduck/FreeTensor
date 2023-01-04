@@ -1,5 +1,6 @@
 #include <analyze/all_uses.h>
 #include <codegen/code_gen_cuda.h>
+#include <config.h>
 #include <container_utils.h>
 #include <except.h>
 #include <math/utils.h>
@@ -179,6 +180,16 @@ void CodeGenCUDA::enterKernel(const Stmt &body) {
         first = false;
     }
     os() << ", _params, __glmem);" << std::endl;
+
+    // While run time error inside a kernel can be checked in future
+    // synchronizations, invalid kernel launches has to be checked here
+    makeIndent();
+    os() << "checkCudaError(cudaGetLastError());" << std::endl;
+
+    if (Config::debugCUDAWithUM()) {
+        makeIndent();
+        os() << "checkCudaError(cudaStreamSynchronize(__stream));" << std::endl;
+    }
 }
 
 void CodeGenCUDA::visitStmt(const Stmt &stmt) {
