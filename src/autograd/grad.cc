@@ -534,9 +534,13 @@ Stmt Grad::visit(const ReduceTo &op) {
 void GradExpr::visit(const Load &op) {
     Visitor::visit(op);
     if (gradExprs_.count(op) && gradNames_.count(op->var_)) {
-        appends_.push_back(makeReduceTo(gradNames_.at(op->var_), op->indices_,
-                                        ReduceOp::Add, gradExprs_.at(op),
-                                        false));
+        appends_.push_back(makeReduceTo(
+            gradNames_.at(op->var_),
+            ranges::to<std::vector>(op->indices_ |
+                                    views::transform([this](const auto &idx) {
+                                        return useForwardVal(idx);
+                                    })),
+            ReduceOp::Add, gradExprs_.at(op), false));
     }
 }
 
