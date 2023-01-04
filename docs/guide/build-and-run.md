@@ -75,7 +75,7 @@ There are serveral global configurations can be set via environment variables:
 - `FT_BACKEND_COMPILER_NVCC=<path/to/compiler>`. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself, and compilers found in the `PATH` enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.
 - `FT_DEBUG_RUNTIME_CHECK`. Check out-of-bound access and integer overflow at the generated code at runtime. This option is only for debugging, and will introduce significant runtime overhead. Currently the checker cannot print the error site, please also enable `FT_DEBUG_BINARY` and then use GDB to locate the error site.
 - `FT_DEBUG_BINARY=ON` (for developers). Compile with `-g` at backend. Do not delete the binary file after loaded.
-- `FT_DEBUG_CUDA_WITH_UM`. Allocate CUDA buffers on Unified Memory, for faster (debugging) access of GPU `Array` from CPU, but with slower `Array` allocations. No performance effect on normal in-kernel computations.
+- `FT_DEBUG_CUDA_WITH_UM`. Allocate CUDA buffers on Unified Memory, for faster (debugging) access of GPU `Array` from CPU, but with slower `Array` allocations and more synchronizations. No performance effect on normal in-kernel computations.
 
 This configurations can also set at runtime in [`ft.config`](../../api/#freetensor.core.config).
 
