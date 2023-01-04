@@ -768,6 +768,49 @@ def test_use_tape_in_cond():
     assert std.match(backward.body)
 
 
+def test_use_tape_in_index():
+
+    @ft.transform(verbose=1)
+    def test(w, x, y):
+        w: ft.Var[(3,), "float32"]
+        x: ft.Var[(25,), "float32"]
+        y: ft.Var[(3,), "float32", "output"]
+        for i in range(3):
+            #! label: V
+            w_x = ft.empty((), "int32")
+            w_x[()] = w[i] * 5
+            y[i] = x[w_x]
+        return y
+
+    forward, backward, _, _ = ft.grad_(test,
+                                       set(["x"]),
+                                       set(["y"]),
+                                       tapes=["V"],
+                                       verbose=2)
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+    forward = ft.lower(forward)
+    backward = ft.lower(backward)
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+
+    @ft.transform
+    def expected(w, x, w_x_tape, dx, dy):
+        dx: ft.Var[(25,), "float32", "output"]
+        dy: ft.Var[(3,), "float32", "inout"]
+        for k in range(25):
+            dx[k] = 0
+        for i in range(2, -1, -1):
+            w_x_tape: ft.Var[(3,), "int32", "input"]
+            dx[w_x_tape[i]] += dy[i]
+
+    assert expected.body.match(backward.body)
+
+
 def test_use_a_taped_var_to_recompute_another_var():
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("w", (), "float32", "output", "cpu")]) as (x, w):
