@@ -69,11 +69,29 @@ class GPUTarget : public Target {
         return std::make_pair(infoArch_->major, infoArch_->minor);
     }
 
+    int totalGlobalMem() const { return infoArch_->totalGlobalMem; }
+
     int warpSize() const { return infoArch_->warpSize; }
 
     int multiProcessorCount() const { return infoArch_->multiProcessorCount; }
 
     size_t sharedMemPerBlock() const { return infoArch_->sharedMemPerBlock; }
+
+    int regsPerBlock() const { return infoArch_->regsPerBlock; }
+
+    int maxThreadsPerMultiProcessor() const {
+        return infoArch_->maxThreadsPerMultiProcessor;
+    }
+
+    auto maxLocalMemorySizePerThread() const {
+        // CUDA allocate local memory in a MAX-thread-count-sized buffer
+        // https://forums.developer.nvidia.com/t/out-of-memory-when-allocating-local-memory/238615
+        // https://forums.developer.nvidia.com/t/what-is-the-maximum-cuda-stack-frame-size-per-kerenl/31449
+        return std::min<int64_t>(512 * 1024,
+                                 (int64_t)totalGlobalMem() /
+                                     ((int64_t)multiProcessorCount() *
+                                      maxThreadsPerMultiProcessor()));
+    }
 };
 #endif // FT_WITH_CUDA
 

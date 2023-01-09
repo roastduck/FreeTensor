@@ -103,11 +103,13 @@ void init_ffi_pass(py::module_ &m) {
           "stmt"_a);
 
     m.def("make_parallel_reduction",
-          static_cast<Func (*)(const Func &)>(&makeParallelReduction),
-          "func"_a);
+          static_cast<Func (*)(const Func &, const Ref<Target> &)>(
+              &makeParallelReduction),
+          "func"_a, "target"_a);
     m.def("make_parallel_reduction",
-          static_cast<Stmt (*)(const Stmt &)>(&makeParallelReduction),
-          "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const Ref<Target> &)>(
+              &makeParallelReduction),
+          "stmt"_a, "target"_a);
 
     m.def("tensor_prop_const",
           static_cast<Func (*)(const Func &)>(&tensorPropConst), "func"_a);

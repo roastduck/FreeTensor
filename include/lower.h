@@ -84,7 +84,7 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
                 ast); // After remove_writes
     ast = APPLY("remove_dead_var", removeDeadVar,
                 ast); // After remove_writes and prop_const
-    ast = APPLY("make_parallel_reduction", makeParallelReduction, ast);
+    ast = APPLY("make_parallel_reduction", makeParallelReduction, ast, target);
     ast = APPLY("shrink_for", shrinkFor,
                 ast); // After remove_writes and make_parallel_reduction
 
