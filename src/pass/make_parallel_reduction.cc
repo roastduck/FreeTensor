@@ -179,11 +179,14 @@ bool MakeAtomicReduction::canResideInGPULocal(DataType dtype,
         return false;
     }
 
-    int64_t size = 1;
+    // GPU registers are 32-bit
+    int64_t sizeIn32Bit = 1;
+    int64_t sizeInBytes = 1;
     for (auto &&dim : shape) {
         if (dim->nodeType() == ASTNodeType::IntConst) {
-            // GPU registers are 32-bit
-            size *= dim.as<IntConstNode>()->val_ * ceilDiv(sizeOf(dtype), 4);
+            sizeIn32Bit *=
+                dim.as<IntConstNode>()->val_ * ceilDiv(sizeOf(dtype), 4);
+            sizeInBytes *= dim.as<IntConstNode>()->val_ * sizeOf(dtype);
         } else {
             // Case 2: Dynamic shape
             return false;
@@ -197,12 +200,12 @@ bool MakeAtomicReduction::canResideInGPULocal(DataType dtype,
         auto gpu = target_.as<GPUTarget>();
 
         // Case 1a: Shape larger than register count
-        if (size * gpuThreadDim_ > gpu->regsPerBlock()) {
+        if (sizeIn32Bit * gpuThreadDim_ > gpu->regsPerBlock()) {
             return false;
         }
 
         // Case 1b: Shape cannot be held in local memory
-        if (size > gpu->maxLocalMemorySizePerThread()) {
+        if (sizeInBytes > gpu->maxLocalMemorySizePerThread()) {
             return false;
         }
 
