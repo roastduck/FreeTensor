@@ -303,7 +303,9 @@ Stmt MakeAtomicReduction::visit(const ReduceTo &_op) {
             // target indices
             for (auto &existing : cacheAtomic_[loopToCache]) {
                 if (existing.oldNode_->var_ == _op->var_ &&
-                    existing.preserveDim_ == preserveDim) {
+                    existing.preserveDim_ == preserveDim &&
+                    ranges::equal(existing.newTargetIndices_, newTargetIndices,
+                                  HashComparator{})) {
                     op->var_ +=
                         ".atomic_cache." + toString(existing.oldNode_->id());
                     op->indices_ = std::move(newCacheIndices);
