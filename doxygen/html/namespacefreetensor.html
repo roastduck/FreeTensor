@@ -737,6 +737,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1UpperBound.html">UpperBound</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1UseAtomicInfo.html">UseAtomicInfo</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1UseBuiltinDiv.html">UseBuiltinDiv</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1VarDefNode.html">VarDefNode</a></td></tr>
@@ -1895,8 +1897,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:a577b96f4267f9cde2337206783dd9596"><td class="memTemplParams" colspan="2">template&lt;class Titers , class Tbegins , class Tends , class Tsteps , class Tlens , class Tproperties , class Tbody &gt; </td></tr>
 <tr class="memitem:a577b96f4267f9cde2337206783dd9596"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a577b96f4267f9cde2337206783dd9596">makeNestedLoops</a> (Titers &amp;&amp;iters, Tbegins &amp;&amp;begins, Tends &amp;&amp;ends, Tsteps &amp;&amp;steps, Tlens &amp;&amp;lens, Tproperties &amp;&amp;properties, Tbody &amp;&amp;body)</td></tr>
 <tr class="separator:a577b96f4267f9cde2337206783dd9596"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae51db0d4b1a98d564aeb1a91ebc7c8ea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae51db0d4b1a98d564aeb1a91ebc7c8ea">makeParallelReduction</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
-<tr class="separator:ae51db0d4b1a98d564aeb1a91ebc7c8ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aecd05ad0c2126df794b32b0b6ad318d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aecd05ad0c2126df794b32b0b6ad318d9">makeParallelReduction</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
+<tr class="separator:aecd05ad0c2126df794b32b0b6ad318d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae192617cc40a0494ea06d6d6207750cc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae192617cc40a0494ea06d6d6207750cc">makeReduction</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3">ReduceOp</a> &gt; &amp;types, bool canonicalOnly=false)</td></tr>
 <tr class="separator:ae192617cc40a0494ea06d6d6207750cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a836a3aab78966abb89cb3e09e39f1242"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a836a3aab78966abb89cb3e09e39f1242">makeReduction</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
@@ -11797,8 +11799,8 @@ template&lt;class Titers , class Tbegins , class Tends , class Tsteps , class Tl
 
 </div>
 </div>
-<a id="ae51db0d4b1a98d564aeb1a91ebc7c8ea" name="ae51db0d4b1a98d564aeb1a91ebc7c8ea"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae51db0d4b1a98d564aeb1a91ebc7c8ea">&#9670;&nbsp;</a></span>makeParallelReduction()</h2>
+<a id="aecd05ad0c2126df794b32b0b6ad318d9" name="aecd05ad0c2126df794b32b0b6ad318d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aecd05ad0c2126df794b32b0b6ad318d9">&#9670;&nbsp;</a></span>makeParallelReduction()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -11807,13 +11809,29 @@ template&lt;class Titers , class Tbegins , class Tends , class Tsteps , class Tl
           <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::makeParallelReduction </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
-          <td class="paramname"><em>op</em></td><td>)</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>target</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 <p >Find all racing ReduceTo nodes, and implement them in a parallel way</p>
-<p >If all ReduceTo nodes in a parallel for all reduce into a loop-invariant possition, we will use a race-free implementation. Otherwise, we will use atomic operations. </p>
+<p >If all ReduceTo nodes in a parallel for all reduce into a loop-invariant possition, we will use a race-free implementation. Otherwise, we will use atomic operations.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">target</td><td>: <a class="el" href="classfreetensor_1_1Target.html">Target</a> information. Can be null for target-agnostic debugging </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

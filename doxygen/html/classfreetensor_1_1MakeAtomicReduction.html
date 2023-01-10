@@ -101,8 +101,8 @@ Collaboration diagram for freetensor::MakeAtomicReduction:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a072e034734220d5aee041862a2fff0a7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MakeAtomicReduction.html#a072e034734220d5aee041862a2fff0a7">MakeAtomicReduction</a> (const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;toAlter, const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::vector&lt; <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &gt; &gt; &amp;serialOverRed, const <a class="el" href="namespacefreetensor.html#a2158112a82b5397919cff3bd1291f0d3">LoopVariExprMap</a> &amp;variantMap)</td></tr>
-<tr class="separator:a072e034734220d5aee041862a2fff0a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed582e182e83931eb5848ec1ebf418f5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MakeAtomicReduction.html#aed582e182e83931eb5848ec1ebf418f5">MakeAtomicReduction</a> (const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="structfreetensor_1_1UseAtomicInfo.html">UseAtomicInfo</a> &gt; &amp;toUseAtomic, const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::vector&lt; <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &gt; &gt; &amp;serialOverRed, const <a class="el" href="namespacefreetensor.html#a2158112a82b5397919cff3bd1291f0d3">LoopVariExprMap</a> &amp;variantMap, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
+<tr class="separator:aed582e182e83931eb5848ec1ebf418f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1SymbolTable"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1SymbolTable')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1SymbolTable.html">freetensor::SymbolTable&lt; Mutator &gt;</a></td></tr>
 <tr class="memitem:a21f40bf443a4d90af7bbdfe11fae0c3e inherit pub_methods_classfreetensor_1_1SymbolTable"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SymbolTable.html#a21f40bf443a4d90af7bbdfe11fae0c3e">SymbolTable</a> (T &amp;&amp;...args)</td></tr>
 <tr class="separator:a21f40bf443a4d90af7bbdfe11fae0c3e inherit pub_methods_classfreetensor_1_1SymbolTable"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -284,8 +284,8 @@ Additional Inherited Members</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Lower parallel reductions left by <code><a class="el" href="classfreetensor_1_1MakeLoopCarriedReduction.html">MakeLoopCarriedReduction</a></code> to atomic reductions </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a072e034734220d5aee041862a2fff0a7" name="a072e034734220d5aee041862a2fff0a7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a072e034734220d5aee041862a2fff0a7">&#9670;&nbsp;</a></span>MakeAtomicReduction()</h2>
+<a id="aed582e182e83931eb5848ec1ebf418f5" name="aed582e182e83931eb5848ec1ebf418f5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aed582e182e83931eb5848ec1ebf418f5">&#9670;&nbsp;</a></span>MakeAtomicReduction()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -296,8 +296,8 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="memname">freetensor::MakeAtomicReduction::MakeAtomicReduction </td>
           <td>(</td>
-          <td class="paramtype">const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>toAlter</em>, </td>
+          <td class="paramtype">const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="structfreetensor_1_1UseAtomicInfo.html">UseAtomicInfo</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>toUseAtomic</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -309,7 +309,13 @@ Additional Inherited Members</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a2158112a82b5397919cff3bd1291f0d3">LoopVariExprMap</a> &amp;&#160;</td>
-          <td class="paramname"><em>variantMap</em>&#160;</td>
+          <td class="paramname"><em>variantMap</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>target</em>&#160;</td>
         </tr>
         <tr>
           <td></td>

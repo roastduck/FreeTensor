@@ -9,7 +9,8 @@ var searchData=
   ['initstmt_6',['initStmt',['../structfreetensor_1_1ForsWithDataReuse.html#a1dc109e3431174e0fcb9c99f5063d7ae',1,'freetensor::ForsWithDataReuse']]],
   ['isinfer_5f_7',['isInfer_',['../classfreetensor_1_1RandCtxImpl.html#a828a86527dc9840642d05eac14f5dd84',1,'freetensor::RandCtxImpl']]],
   ['isnode_5f_8',['isNode_',['../structfreetensor_1_1NodeIDOrParallelScope.html#a91180360905949408f590f5995bf0782',1,'freetensor::NodeIDOrParallelScope']]],
-  ['iter_5f_9',['iter_',['../structfreetensor_1_1IterAxis.html#aed2eb36b71bdc7e48dbe48d890e39fa7',1,'freetensor::IterAxis::iter_()'],['../structfreetensor_1_1AccessPoint.html#ace563128de58d365ee834cc5028ceb3f',1,'freetensor::AccessPoint::iter_()'],['../classfreetensor_1_1ForNode.html#ae7a0ab11858f63e444d7e0dfd2e399bf',1,'freetensor::ForNode::iter_()']]],
-  ['iter_5fdep_5fconstants_5f_10',['iter_dep_constants_',['../classfreetensor_1_1ScalarPropConst.html#a9913a60a4547b9ec5801dbea240cd05d',1,'freetensor::ScalarPropConst']]],
-  ['iterdim_5f_11',['iterDim_',['../structfreetensor_1_1Dependence.html#aa04c31fa52b3a59eda0374fb2070464b',1,'freetensor::Dependence']]]
+  ['israndomaccess_5f_9',['isRandomAccess_',['../structfreetensor_1_1UseAtomicInfo.html#a4da7b69d4ad6dc4d977f96eeda724c3e',1,'freetensor::UseAtomicInfo']]],
+  ['iter_5f_10',['iter_',['../structfreetensor_1_1IterAxis.html#aed2eb36b71bdc7e48dbe48d890e39fa7',1,'freetensor::IterAxis::iter_()'],['../structfreetensor_1_1AccessPoint.html#ace563128de58d365ee834cc5028ceb3f',1,'freetensor::AccessPoint::iter_()'],['../classfreetensor_1_1ForNode.html#ae7a0ab11858f63e444d7e0dfd2e399bf',1,'freetensor::ForNode::iter_()']]],
+  ['iter_5fdep_5fconstants_5f_11',['iter_dep_constants_',['../classfreetensor_1_1ScalarPropConst.html#a9913a60a4547b9ec5801dbea240cd05d',1,'freetensor::ScalarPropConst']]],
+  ['iterdim_5f_12',['iterDim_',['../structfreetensor_1_1Dependence.html#aa04c31fa52b3a59eda0374fb2070464b',1,'freetensor::Dependence']]]
 ];
