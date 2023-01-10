@@ -72,15 +72,21 @@ $(function() {
 <a href="check__conflict__id_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef FREE_TENSOR_CHECK_CONFLICT_ID_H</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define FREE_TENSOR_CHECK_CONFLICT_ID_H</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;<a class="code" href="stmt_8h.html">stmt.h</a>&gt;</span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacefreetensor.html">freetensor</a> {</div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="keywordtype">void</span> <a class="code hl_function" href="namespacefreetensor.html#a755ace7d1dbfe7bcdbc74cb08e78b9a4">checkConflictId</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast);</div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span>} <span class="comment">// namespace freetensor</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;<a class="code" href="func_8h.html">func.h</a>&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;<a class="code" href="stmt_8h.html">stmt.h</a>&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacefreetensor.html">freetensor</a> {</div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="keywordtype">void</span> <a class="code hl_function" href="namespacefreetensor.html#a755ace7d1dbfe7bcdbc74cb08e78b9a4">checkConflictId</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast);</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno"><a class="line" href="namespacefreetensor.html#a02ee00e59ac2e177a1ef948e3ef64dae">   11</a></span><span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code hl_function" href="namespacefreetensor.html#a755ace7d1dbfe7bcdbc74cb08e78b9a4">checkConflictId</a>(<span class="keyword">const</span> <a class="code hl_class" href="classfreetensor_1_1Ref.html">Func</a> &amp;func) { <a class="code hl_function" href="namespacefreetensor.html#a755ace7d1dbfe7bcdbc74cb08e78b9a4">checkConflictId</a>(func-&gt;<a class="code hl_variable" href="classfreetensor_1_1FuncNode.html#af36645de2d3a208d0731cd272a9495c7">body_</a>); }</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#endif</span></div>
+<div class="ttc" id="aclassfreetensor_1_1FuncNode_html_af36645de2d3a208d0731cd272a9495c7"><div class="ttname"><a href="classfreetensor_1_1FuncNode.html#af36645de2d3a208d0731cd272a9495c7">freetensor::FuncNode::body_</a></div><div class="ttdeci">SubTree&lt; StmtNode &gt; body_</div><div class="ttdef"><b>Definition:</b> func.h:48</div></div>
+<div class="ttc" id="aclassfreetensor_1_1Ref_html"><div class="ttname"><a href="classfreetensor_1_1Ref.html">freetensor::Ref&lt; FuncNode &gt;</a></div></div>
+<div class="ttc" id="afunc_8h_html"><div class="ttname"><a href="func_8h.html">func.h</a></div></div>
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a755ace7d1dbfe7bcdbc74cb08e78b9a4"><div class="ttname"><a href="namespacefreetensor.html#a755ace7d1dbfe7bcdbc74cb08e78b9a4">freetensor::checkConflictId</a></div><div class="ttdeci">void checkConflictId(const Stmt &amp;ast)</div><div class="ttdef"><b>Definition:</b> check_conflict_id.cc:29</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a8b7e165b3601cc722c7b357347dc6de9"><div class="ttname"><a href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">freetensor::Stmt</a></div><div class="ttdeci">Ref&lt; StmtNode &gt; Stmt</div><div class="ttdef"><b>Definition:</b> ast.h:146</div></div>
