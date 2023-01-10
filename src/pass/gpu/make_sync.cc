@@ -51,10 +51,7 @@ void FindAllThreads::visit(const For &op) {
 
 Stmt CopyParts::visitStmt(const Stmt &op) {
     auto ret = Mutator::visitStmt(op);
-    if (ret->nodeType() == ASTNodeType::Store ||
-        ret->nodeType() == ASTNodeType::ReduceTo ||
-        ret->nodeType() == ASTNodeType::Eval) {
-        // leaf node
+    if (ret->children().empty()) { // leaf node
         if (std::find_if(splitters_.begin(), splitters_.end(),
                          [&](const Stmt &item) {
                              return item->id() == ret->id();
@@ -280,17 +277,21 @@ Stmt MakeSync::visit(const If &_op) {
                                  toString(op->cond_) + " is being modified");
         }
 
-        Stmt thenBody = op->thenCase_;
+        Stmt thenBody;
         if (branchSplittersThen_.count(op->id())) {
             CopyParts thenCopier(op->cond_, branchSplittersThen_.at(op->id()));
-            thenBody = thenCopier(thenBody);
+            thenBody = thenCopier(op->thenCase_);
+        } else {
+            thenBody = makeIf(op->cond_, op->thenCase_);
         }
         if (op->elseCase_.isValid()) {
-            Stmt elseBody = op->elseCase_;
+            Stmt elseBody;
             if (branchSplittersElse_.count(op->id())) {
                 CopyParts elseCopier(makeLNot(op->cond_),
                                      branchSplittersElse_.at(op->id()));
-                elseBody = elseCopier(elseBody);
+                elseBody = elseCopier(op->elseCase_);
+            } else {
+                elseBody = makeIf(makeLNot(op->cond_), op->elseCase_);
             }
             return makeStmtSeq({thenBody, elseBody});
         } else {
