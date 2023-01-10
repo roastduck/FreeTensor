@@ -2,6 +2,7 @@
 
 #include <analyze/all_uses.h>
 #include <analyze/check_all_defined.h>
+#include <container_utils.h>
 #include <hash.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/merge_and_hoist_if.h>
@@ -86,12 +87,7 @@ Stmt MergeAndHoistIf::visit(const For &_op) {
         auto branch = op->body_.as<IfNode>();
         if (!branch->elseCase_.isValid() &&
             checkAllDefined(names(), branch->cond_)) {
-            auto writes = allWrites(branch);
-            auto reads = allReads(branch->cond_);
-            if (std::none_of(reads.begin(), reads.end(),
-                             [&writes](const std::string &var) -> bool {
-                                 return writes.count(var);
-                             })) {
+            if (!hasIntersect(allReads(branch->cond_), allWrites(branch))) {
                 isFixPoint_ = false;
                 return makeIf(branch->cond_,
                               makeFor(op->iter_, op->begin_, op->end_,
