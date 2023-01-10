@@ -137,6 +137,11 @@ class MakeSync : public Mutator {
      * Splitting an `If` is only needed when adding a `__syncthreads`, rather
      * than a `__syncwarp`, becasue the latter is simply a memory flush, not an
      * actual synchronization
+     *
+     * @param stmtInTree : Statement that we are inserting a synchronization
+     * BESIDE. Must be in a tree with ancestors all the way to the root
+     * @param sync : The new synchronization to insert
+     * @param needSync : True if `__syncwarp`, false if `__syncthreads`
      */
     void markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync,
                               bool needSyncWarp);
