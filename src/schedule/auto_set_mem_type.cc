@@ -83,7 +83,13 @@ SizeOnEachLevel estimateSizeOnEachLevel(Schedule &s, const ID &defId,
         ast = gpu::simplexBuffers(ast, defId);
         ast = gpu::normalizeThreads(ast);
         ast = constFold(ast); // for lengths
-        auto _newVarDef = findStmt(ast, defId);
+        Stmt _newVarDef;
+        try {
+            _newVarDef = findStmt(ast, defId);
+        } catch (const UnexpectedQueryResult &e) {
+            // Maybe a trivial VarDef that can be optimized out
+            return ret;
+        }
         ASSERT(_newVarDef->nodeType() == ASTNodeType::VarDef);
         auto newVarDef = _newVarDef.as<VarDefNode>();
 
