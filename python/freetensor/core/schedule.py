@@ -467,11 +467,20 @@ class Schedule(ffi.Schedule):
             ID of the VarDef statement of the specific variable
         mtype : MemType
             Where the variable should be stored
+        rejectIndirectAccess : bool
+            Registers usually do not support indirect access. If a variable is
+            accessed indirectly, setting it to use registers is meaningless even
+            successful. If this parameter is set to true, throw an exception if
+            the variable being set is accessed indirectly. Specifically, two types
+            of access are considered indirect: 1) The index is a load from another
+            variable, or 2) The index is a loop iterator and the loop has a
+            dynamic length (which can not be unrolled by a backend compiler). By
+            default, this parameter is determined automatically by `mtype`.
 
         Raises
         ------
         InvalidSchedule
-            if the variable is not found
+            if the variable is not found, or if rejecting an indirect access
         """
         super().set_mem_type(self._lookup(vardef), MemType(mtype))
 
