@@ -24,7 +24,7 @@ def test_gpu_basic():
     print(s.ast())
     logs = list(map(str, s.logs()))
     print(logs)
-    assert logs[2:] == ["set_mem_type(V_t, gpu/shared)"]
+    assert logs[2:] == ["set_mem_type(V_t, gpu/shared, false)"]
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
@@ -64,7 +64,7 @@ def test_gpu_no_too_large_local():
     print(s.ast())
     logs = list(map(str, s.logs()))
     print(logs)
-    assert logs[3:] == ["set_mem_type(V_t, gpu/local)"]
+    assert logs[3:] == ["set_mem_type(V_t, gpu/local, true)"]
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
@@ -100,5 +100,7 @@ def test_gpu_no_too_large_shared():
     print(s.ast())
     logs = list(map(str, s.logs()))
     print(logs)
-    assert sorted(logs[2:]) == sorted(
-        ["set_mem_type(V_u, gpu/shared)", "set_mem_type(V_v, gpu/shared)"])
+    assert sorted(logs[2:]) == sorted([
+        "set_mem_type(V_u, gpu/shared, false)",
+        "set_mem_type(V_v, gpu/shared, false)"
+    ])

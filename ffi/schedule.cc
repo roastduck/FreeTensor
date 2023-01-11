@@ -107,7 +107,14 @@ void init_ffi_schedule(py::module_ &m) {
         .def("cache", &Schedule::cache, "stmt"_a, "var"_a, "mtype"_a)
         .def("cache_reduction", &Schedule::cacheReduction, "stmt"_a, "var"_a,
              "mtype"_a)
-        .def("set_mem_type", &Schedule::setMemType, "vardef"_a, "mtype"_a)
+        .def("set_mem_type",
+             static_cast<void (Schedule::*)(const ID &, MemType)>(
+                 &Schedule::setMemType),
+             "vardef"_a, "mtype"_a)
+        .def("set_mem_type",
+             static_cast<void (Schedule::*)(const ID &, MemType, bool)>(
+                 &Schedule::setMemType),
+             "vardef"_a, "mtype"_a, "reject_indirect_access"_a)
         .def("var_split", &Schedule::varSplit, "vardef"_a, "dim"_a, "mode"_a,
              "factor"_a = -1, "nparts"_a = -1)
         .def("var_merge", &Schedule::varMerge, "vardef"_a, "dim"_a)
