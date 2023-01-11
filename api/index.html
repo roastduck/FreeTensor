@@ -10295,11 +10295,20 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 <span class="sd">            ID of the VarDef statement of the specific variable</span>
 <span class="sd">        mtype : MemType</span>
 <span class="sd">            Where the variable should be stored</span>
+<span class="sd">        rejectIndirectAccess : bool</span>
+<span class="sd">            Registers usually do not support indirect access. If a variable is</span>
+<span class="sd">            accessed indirectly, setting it to use registers is meaningless even</span>
+<span class="sd">            successful. If this parameter is set to true, throw an exception if</span>
+<span class="sd">            the variable being set is accessed indirectly. Specifically, two types</span>
+<span class="sd">            of access are considered indirect: 1) The index is a load from another</span>
+<span class="sd">            variable, or 2) The index is a loop iterator and the loop has a</span>
+<span class="sd">            dynamic length (which can not be unrolled by a backend compiler). By</span>
+<span class="sd">            default, this parameter is determined automatically by `mtype`.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        InvalidSchedule</span>
-<span class="sd">            if the variable is not found</span>
+<span class="sd">            if the variable is not found, or if rejecting an indirect access</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_mem_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">vardef</span><span class="p">),</span> <span class="n">MemType</span><span class="p">(</span><span class="n">mtype</span><span class="p">))</span>
 
@@ -12770,6 +12779,14 @@ Set this parameter to true to stop duplicating VarDef nodes.</p></li>
         <ul class="first simple">
             <li><p><strong>vardef</strong> (<code>str, ID or Stmt</code>) – ID of the VarDef statement of the specific variable</p></li>
             <li><p><strong>mtype</strong> (<code>MemType</code>) – Where the variable should be stored</p></li>
+            <li><p><strong>rejectIndirectAccess</strong> (<code>bool</code>) – Registers usually do not support indirect access. If a variable is
+accessed indirectly, setting it to use registers is meaningless even
+successful. If this parameter is set to true, throw an exception if
+the variable being set is accessed indirectly. Specifically, two types
+of access are considered indirect: 1) The index is a load from another
+variable, or 2) The index is a loop iterator and the loop has a
+dynamic length (which can not be unrolled by a backend compiler). By
+default, this parameter is determined automatically by <code>mtype</code>.</p></li>
         </ul>
       </td>
     </tr>
@@ -12785,7 +12802,7 @@ Set this parameter to true to stop duplicating VarDef nodes.</p></li>
       <th class="field-name">Exceptions:</th>
       <td class="field-body">
         <ul class="first simple">
-            <li><p><code>InvalidSchedule</code> – if the variable is not found</p></li>
+            <li><p><code>InvalidSchedule</code> – if the variable is not found, or if rejecting an indirect access</p></li>
         </ul>
       </td>
     </tr>
@@ -12803,11 +12820,20 @@ Set this parameter to true to stop duplicating VarDef nodes.</p></li>
 <span class="sd">        ID of the VarDef statement of the specific variable</span>
 <span class="sd">    mtype : MemType</span>
 <span class="sd">        Where the variable should be stored</span>
+<span class="sd">    rejectIndirectAccess : bool</span>
+<span class="sd">        Registers usually do not support indirect access. If a variable is</span>
+<span class="sd">        accessed indirectly, setting it to use registers is meaningless even</span>
+<span class="sd">        successful. If this parameter is set to true, throw an exception if</span>
+<span class="sd">        the variable being set is accessed indirectly. Specifically, two types</span>
+<span class="sd">        of access are considered indirect: 1) The index is a load from another</span>
+<span class="sd">        variable, or 2) The index is a loop iterator and the loop has a</span>
+<span class="sd">        dynamic length (which can not be unrolled by a backend compiler). By</span>
+<span class="sd">        default, this parameter is determined automatically by `mtype`.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    InvalidSchedule</span>
-<span class="sd">        if the variable is not found</span>
+<span class="sd">        if the variable is not found, or if rejecting an indirect access</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_mem_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">vardef</span><span class="p">),</span> <span class="n">MemType</span><span class="p">(</span><span class="n">mtype</span><span class="p">))</span>
 </code></pre></div>

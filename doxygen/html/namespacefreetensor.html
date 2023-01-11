@@ -713,6 +713,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ThreadBindRule.html">ThreadBindRule</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ThrowIndirectAccess.html">ThrowIndirectAccess</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1TrackStmt.html">TrackStmt</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1TransformedMetadataContent.html">TransformedMetadataContent</a></td></tr>
@@ -1997,8 +1999,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:a511fb253559129c0912ce5a1e6f2bc6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9825cc301c464583694c31cdc38f73fd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9825cc301c464583694c31cdc38f73fd">separateTail</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, bool noDuplicateVarDefs)</td></tr>
 <tr class="separator:a9825cc301c464583694c31cdc38f73fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17a489f15292740896af67c1056cd4fa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a17a489f15292740896af67c1056cd4fa">setMemType</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def, <a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150">MemType</a> mtype)</td></tr>
-<tr class="separator:a17a489f15292740896af67c1056cd4fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3aad303d3aeb9cf3fac7c9e34cec6b36"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3aad303d3aeb9cf3fac7c9e34cec6b36">setMemType</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def, <a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150">MemType</a> mtype, bool rejectIndirectAccess)</td></tr>
+<tr class="separator:a3aad303d3aeb9cf3fac7c9e34cec6b36"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8e6dfdd096f67a0f2b286601c342885"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af8e6dfdd096f67a0f2b286601c342885">split</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id, int factor, int nparts, int shift=0)</td></tr>
 <tr class="separator:af8e6dfdd096f67a0f2b286601c342885"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a95590ae1fa3aca0790ca34b5dde1a105"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a95590ae1fa3aca0790ca34b5dde1a105">swap</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;order)</td></tr>
@@ -15406,8 +15408,8 @@ template&lt;PBSetRef T&gt; </div>
 
 </div>
 </div>
-<a id="a17a489f15292740896af67c1056cd4fa" name="a17a489f15292740896af67c1056cd4fa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a17a489f15292740896af67c1056cd4fa">&#9670;&nbsp;</a></span>setMemType()</h2>
+<a id="a3aad303d3aeb9cf3fac7c9e34cec6b36" name="a3aad303d3aeb9cf3fac7c9e34cec6b36"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3aad303d3aeb9cf3fac7c9e34cec6b36">&#9670;&nbsp;</a></span>setMemType()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15428,7 +15430,13 @@ template&lt;PBSetRef T&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150">MemType</a>&#160;</td>
-          <td class="paramname"><em>mtype</em>&#160;</td>
+          <td class="paramname"><em>mtype</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>rejectIndirectAccess</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
