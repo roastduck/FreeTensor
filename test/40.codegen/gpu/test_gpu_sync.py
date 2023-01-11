@@ -919,3 +919,27 @@ def test_use_syncthreads_for_non_aligned_warps():
 
                             e[i, j, k, i1] = t[k, i1]
     assert ft.pop_ast().match(ast)
+
+
+def test_no_sync_between_atomic_reductions():
+
+    @ft.transform
+    def test(x, idx1, idx2, y):
+        x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        idx1: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        idx2: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(100,), "int32", "output", "gpu/global"]
+        #! label: L0
+        for i in range(0, 4):
+            #! label: L1
+            for j in range(0, 256):
+                y[idx1[i, j]] += x[i, j]
+                y[idx2[i, j]] += x[i, j]
+
+    s = ft.Schedule(test)
+    s.parallelize("L0", "threadIdx.y")
+    s.parallelize("L1", "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+
+    assert "__syncthreads" not in code.code
