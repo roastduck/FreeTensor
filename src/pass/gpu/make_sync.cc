@@ -357,6 +357,15 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
                 // Crossing kernels, skipping
                 return false;
             }
+
+            // No need to sync between two atomic reductions
+            if (later.op_->nodeType() == ASTNodeType::ReduceTo &&
+                earlier.op_->nodeType() == ASTNodeType::ReduceTo &&
+                later.op_.as<ReduceToNode>()->atomic_ &&
+                earlier.op_.as<ReduceToNode>()->atomic_) {
+                return false;
+            }
+
             return later.op_ != earlier.op_;
         })
         .ignoreReductionWAW(false)
