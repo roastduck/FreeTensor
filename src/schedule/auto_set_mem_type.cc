@@ -8,7 +8,6 @@
 #include <math/utils.h>
 #include <pass/const_fold.h>
 #include <pass/gpu/multiplex_buffers.h>
-#include <pass/gpu/normalize_threads.h>
 #include <pass/gpu/simplex_buffers.h>
 #include <schedule.h>
 
@@ -68,8 +67,7 @@ inline std::strong_ordering operator<=>(const SizeOnEachLevel &lhs,
  * variable to GPUShared first, dry-run the two passes to get the actual size,
  * and then reset the schedule.
  *
- * pass/gpu/normalize_threads is also required because idle threads are also
- * holding registers.
+ * Resources used by parallel reduction is not considered for now.
  */
 SizeOnEachLevel estimateSizeOnEachLevel(Schedule &s, const ID &defId,
                                         MemType mtype,
@@ -81,7 +79,10 @@ SizeOnEachLevel estimateSizeOnEachLevel(Schedule &s, const ID &defId,
         auto ast = s.ast();
         ast = gpu::multiplexBuffers(ast, target, defId);
         ast = gpu::simplexBuffers(ast, defId);
-        ast = gpu::normalizeThreads(ast);
+        // No normalizeThreads here because it is too slow. If only a master
+        // thread is using gpu/local while other threads is not, we may
+        // under-estimate the size, since idle threads are also holding
+        // registers. We ignore this case for now.
         ast = constFold(ast); // for lengths
         Stmt _newVarDef;
         try {
