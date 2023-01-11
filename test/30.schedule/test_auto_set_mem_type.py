@@ -28,17 +28,32 @@ def test_gpu_basic():
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
-def test_gpu_local_across_loops():
+def test_gpu_no_too_large_local():
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
-                    ("y", (1000, 1000), "int32", "output", "gpu/global")
-                   ]) as (x, y):
+                    ("y", (1000, 1000), "int32", "output", "gpu/global"),
+                    ("z", (1000,), "int32", "output", "gpu/global")]) as (x, y,
+                                                                          z):
         with ft.For("i", 0, 1000, label="Li") as i:
             ft.MarkLabel("V_t")
             with ft.VarDef("t", (1000,), "int32", "cache", "gpu/global") as t:
-                with ft.For("j", 0, 1000, label="Lj1") as j:
+                # 1000 * sizeof(int32) per 1000 threads = 4B per threads, ok
+                with ft.For("j", 0, 1000, label="Lj1") as j:  # thread
                     t[j] = x[i, j] + 1
-                with ft.For("j", 0, 1000, label="Lj2") as j:
+                with ft.For("j", 0, 1000, label="Lj2") as j:  # thread
                     y[i, j] = t[j] * 2
+
+                z[i] = 0
+                ft.MarkLabel("V_u")
+                with ft.VarDef("u", (1000, 1000), "int32", "cache",
+                               "gpu/global") as u:
+                    # 1000 * 1000 * sizeof(int32) per 1 thread = 4MB per thread,
+                    # too large
+                    with ft.For("k", 0, 1000, label="Lk") as k:  # serial
+                        with ft.For("p", 0, 1000, label="Lk") as p:  # serial
+                            u[k, p] = x[i, k] * p
+                    with ft.For("k", 0, 1000, label="Lk") as k:  # serial
+                        with ft.For("p", 0, 1000, label="Lk") as p:  # serial
+                            z[i] += u[k, p] * u[k, p]
 
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
