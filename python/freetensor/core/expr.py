@@ -1114,6 +1114,11 @@ def any():
 
 
 def load_at_version(tape_name: str, *indices):
+    '''
+    Create an LoadAtVersion node (only for custom gradient)
+
+    This node is only used for custom gradient. See `UserGradForPrevStmt`.
+    '''
     return ffi.makeLoadAtVersion(tape_name, indices)
 
 

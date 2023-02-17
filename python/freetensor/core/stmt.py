@@ -417,12 +417,38 @@ def Any():
 
 
 def MarkVersion(tape_name: str, var: VarRef):
+    '''
+    Create an MarkVersion node (only for custom gradient)
+
+    This node is only used for custom gradient. See `UserGradForPrevStmt`.
+    '''
     top = ctx_stack.top()
     top.append_stmt(ffi.makeMarkVersion(tape_name, var.name,
                                         top.get_metadata()))
 
 
 class UserGradForPrevStmt:
+    '''
+    Define a custom gradient for the immediately previous statement
+
+    Follow the following steps to define custom gradient:
+
+    1. Add some `mark_version` statements in the program. `mark_version('y0', y)` marks the specific
+    versions of variable `y` **at the program position of the statement** and **at all iterations**
+    as `'y0'`.
+    2. Add a `UserGradForPrevStmt` scope **directly after** the statement (or statement scope) you
+    want to provide custom gradient for. `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef`
+    `dx` and `dy` as gradient variables to be used inside the scope.
+    3. In order to use the value from the forward pass in the backward pass, do not access the forward
+    variables directly in the scope. Instead, use `load_at_version` expressions.
+    `load_at_version('y0', i, j)` loads from `y[i, j]` **at the specific version marked by
+    `mark_version('y0', y)`**, saved from **the same iteration in the forward pass**. In other words,
+    after AD, the position of `mark_version` and the dynamic loop iterator together makes up the actual
+    version number for the tape.
+    4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An `ID` to `Stmt` map will be
+    returned together with the AST, which you need to pass as `grad`'s `user_bwds` argument. This map
+    records the forward-to-backward relation of the nodes.
+    '''
 
     def __init__(self, *ori_vars: Sequence[VarRef]):
         self.ori_vars = ori_vars
