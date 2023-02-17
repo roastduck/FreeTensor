@@ -202,4 +202,10 @@ DataType DataTypeInfer::infer(const CastNode &op) { return op.destType_; }
 
 DataType DataTypeInfer::infer(const IntrinsicNode &op) { return op.retType_; }
 
+DataType DataTypeInfer::infer(const LoadAtVersionNode &op) {
+    // `LoadAtVersion` is not involved in lowering, just return `Custom` for
+    // convenience (no need to add a `dtype` field in `LoadAtVersion` node
+    return DataType::Custom;
+}
+
 } // namespace freetensor

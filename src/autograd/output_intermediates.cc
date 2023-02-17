@@ -130,16 +130,17 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
 
 std::tuple<Stmt, std::unordered_map<ID, std::string>,
            std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
-           std::unordered_set<ID>>
+           std::unordered_set<ID>,
+           std::unordered_map<std::string, std::pair<std::string, Expr>>>
 outputIntermediates(const Stmt &op, const std::unordered_set<ID> &intermediates,
                     OutputIntermediatesStage stage,
                     const std::string &varSuffix) {
-    auto [versions, totLens, trivials] = analyzeVersion(
+    auto [versions, totLens, trivials, userVersions] = analyzeVersion(
         op, intermediates, stage == OutputIntermediatesStage::Backward);
     OutputIntermediates mutator(versions, totLens, trivials, stage, varSuffix);
     auto ret = mutator(op);
-    return {ret, mutator.savedNames(), versions, totLens,
-            mutator.insertedStmts()};
+    return {ret,     mutator.savedNames(),    versions,
+            totLens, mutator.insertedStmts(), userVersions};
 }
 
 } // namespace freetensor

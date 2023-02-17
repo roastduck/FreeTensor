@@ -118,6 +118,7 @@ class ContextStack:
 
     def reset(self):
         self.stack = [Context()]
+        self.user_grads = {}
 
     def top(self) -> Context:
         return self.stack[-1]
@@ -151,3 +152,14 @@ def pop_ast(verbose: bool = False):
         print(ret, file=sys.stderr)
         print(file=sys.stderr)
     return ret
+
+
+def pop_ast_and_user_grads(verbose: bool = False):
+    ast = ctx_stack.pop().make_stmt()
+    user_grads = ctx_stack.user_grads
+    ctx_stack.reset()
+    if verbose:
+        print("The popped AST is:", file=sys.stderr)
+        print(ret, file=sys.stderr)
+        print(file=sys.stderr)
+    return ast, user_grads

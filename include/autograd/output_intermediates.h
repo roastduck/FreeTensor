@@ -104,12 +104,15 @@ class OutputIntermediates : public SymbolTable<Mutator> {
  * saving tensors,
  *  Versions of each memory accesses, Total version counts of each
  * VarDef nodes,
- *  Set of all newly inserted statements
+ *  Set of all newly inserted statements,
+ *  Mapping from tape_name to var name and explicit user versions marked via
+ * mark_version
  * )
  */
 std::tuple<Stmt, std::unordered_map<ID, std::string>,
            std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
-           std::unordered_set<ID>>
+           std::unordered_set<ID>,
+           std::unordered_map<std::string, std::pair<std::string, Expr>>>
 outputIntermediates(
     const Stmt &op, const std::unordered_set<ID> &intermediates,
     OutputIntermediatesStage stage = OutputIntermediatesStage::Forward,

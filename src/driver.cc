@@ -168,7 +168,7 @@ void Driver::buildAndLoad() {
             addArgs("-I" + (std::string)path);
         }
         addArgs("-std=c++17", "-shared", "-Xcompiler", "-fPIC,-Wall,-O3",
-                "--use_fast_math",
+                //"--use_fast_math",
                 "--expt-relaxed-constexpr" /* required by mdspan */);
         addArgs("-o", so, cpp);
         addArgs("-lcublas");

@@ -1113,6 +1113,10 @@ def any():
     return ffi.makeAnyExpr()
 
 
+def load_at_version(tape_name: str, *indices):
+    return ffi.makeLoadAtVersion(tape_name, indices)
+
+
 def ndim(var):
     ''' Get the number of dimensions of a variable '''
     if isinstance(var, VarRef):

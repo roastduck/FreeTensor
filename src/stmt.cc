@@ -16,5 +16,6 @@ void AssertNode::compHash() { hash_ = Hasher::compHash(*this); }
 void AssumeNode::compHash() { hash_ = Hasher::compHash(*this); }
 void EvalNode::compHash() { hash_ = Hasher::compHash(*this); }
 void MatMulNode::compHash() { hash_ = Hasher::compHash(*this); }
+void MarkVersionNode::compHash() { hash_ = Hasher::compHash(*this); }
 
 } // namespace freetensor

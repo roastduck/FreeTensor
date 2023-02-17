@@ -416,6 +416,50 @@ def Any():
     ctx_stack.top().append_stmt(ffi.makeAny())
 
 
+def MarkVersion(tape_name: str, var: VarRef):
+    top = ctx_stack.top()
+    top.append_stmt(ffi.makeMarkVersion(tape_name, var.name,
+                                        top.get_metadata()))
+
+
+class UserGradForPrevStmt:
+
+    def __init__(self, *ori_vars: Sequence[VarRef]):
+        self.ori_vars = ori_vars
+        self.body = None
+        self.grad_defs = []
+
+    def __enter__(self):
+        # Make `VarDef` scopes for the gradients
+        grad_vars = []
+        for ori_var in self.ori_vars:
+            grad_def = VarDef(ori_var.name + ".grad", ori_var.full_shape,
+                              ori_var.dtype, "cache")
+            grad_vars.append(grad_def.__enter__())
+            self.grad_defs.append(grad_def)
+
+        # Make a context, which is used for popping out the body we need
+        ctx_stack.push()
+
+        return grad_vars
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Pop out the body we need
+        self.body = ctx_stack.pop().make_stmt()
+
+        # Although we are discarding the gradient `VarDef` scopes, we still need to close
+        # them, to restore ctx_stack. After that, we pop out the `VarDef` statement
+        for grad_def in reversed(self.grad_defs):
+            grad_def.__exit__(exc_type, exc_value, traceback)
+        if exc_value is not None:
+            # Do not generate an AST node
+            return False  # Do not suppress the exception
+        ctx_stack.top().stmt_seq.pop()
+
+        # Record the body to context
+        ctx_stack.user_grads[ctx_stack.top().stmt_seq[-1].id] = self.body
+
+
 class Func(ffi.Func):
 
     def __init__(self,

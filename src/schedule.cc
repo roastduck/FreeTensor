@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include <auto_schedule/utils.h>
+#include <autograd/clear_mark_version.h>
 #include <codegen/code_gen.h>
 #include <container_utils.h>
 #include <driver.h>
@@ -47,7 +48,8 @@ Schedule::Schedule(const Stmt &ast, int verbose)
     : verbose_(verbose), memoized_(Ref<MemoizedSchedules>::make()),
       rng_(Ref<OpenMPRandomEngine>::make(0)) /* TODO: set seed */,
       randCtx_(Ref<RandCtx<OpenMPRandomEngine>>::make(*rng_)) {
-    openTrans_.emplace_back(quickOptimizations(ast), ScheduleLog());
+    openTrans_.emplace_back(quickOptimizations(clearMarkVersion(ast)),
+                            ScheduleLog());
 }
 
 void Schedule::beginTransaction() { openTrans_.emplace_back(ast(), logs()); }

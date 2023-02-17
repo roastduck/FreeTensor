@@ -491,6 +491,26 @@ inline Stmt _makeMatMul(const Expr &a, const Expr &b, const Expr &c,
     return s;
 }
 
+class MarkVersionNode : public StmtNode {
+  public:
+    std::string tapeName_, var_;
+    void compHash() override;
+    DEFINE_NODE_TRAIT(MarkVersion);
+};
+typedef Ref<MarkVersionNode> MarkVersion;
+#define makeMarkVersion(...) makeNode(MarkVersion, __VA_ARGS__)
+inline Stmt _makeMarkVersion(const std::string &tapeName,
+                             const std::string &var,
+                             const Metadata &metadata = nullptr,
+                             const ID &id = {}) {
+    MarkVersion s = MarkVersion::make();
+    s->metadata() = metadata;
+    s->setId(id);
+    s->tapeName_ = tapeName;
+    s->var_ = var;
+    return s;
+}
+
 } // namespace freetensor
 
 #endif // FREE_TENSOR_STMT_H

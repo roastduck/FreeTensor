@@ -5,10 +5,11 @@ from freetensor_ffi import (AccessType, MemType, DataType, ASTNodeType,
                             SymbolNotFound, AssertAlwaysFalse, ParserError,
                             VarSplitMode)
 
-from .context import pop_ast
+from .context import pop_ast, pop_ast_and_user_grads
 from .expr import *
 from .stmt import (VarDef, For, If, Else, Alloc, Free, Assert, MarkLabel,
-                   NamedScope, Invoke, Eval, Any, Func)
+                   NamedScope, Invoke, Eval, Any, Func, MarkVersion,
+                   UserGradForPrevStmt)
 from .analyze import *
 from .autograd import *
 from .passes import *
