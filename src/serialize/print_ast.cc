@@ -724,6 +724,19 @@ void PrintVisitor::visit(const MatMul &op) {
     endBlock();
 }
 
+void PrintVisitor::visit(const MarkVersion &op) {
+    makeIndent();
+    os() << "@!mark_version(" << escape(op->tapeName_) << "," << SPACE
+         << escape(op->var_) << ")" << std::endl;
+}
+
+void PrintVisitor::visit(const LoadAtVersion &op) {
+    os() << "@!load_at_version(" << escape(op->tapeName_) << "," << SPACE
+         << "[";
+    printList(op->indices_);
+    os() << "])";
+}
+
 std::string toString(const AST &op) {
     return toString(op, Config::prettyPrint());
 }
