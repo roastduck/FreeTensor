@@ -86,6 +86,10 @@ enum class ASTNodeType : int {
     IfExpr,
     Cast,
     Intrinsic,
+
+    // For custom gradient only
+    MarkVersion,
+    LoadAtVersion,
 };
 
 std::ostream &operator<<(std::ostream &os, ASTNodeType type);

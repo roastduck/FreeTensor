@@ -93,6 +93,15 @@ void AnalyzeVersion::visit(const Load &op) {
     }
 }
 
+void AnalyzeVersion::visit(const MarkVersion &op) {
+    BaseClass::visit(op);
+    if (op->var_ == var_) {
+        auto v = makeSub(offset_, makeIntConst(1));
+        versions_[op->id()] = v;
+        userVersions_[op->tapeName_] = {op->var_, v};
+    }
+}
+
 void AnalyzeVersion::visit(const Store &op) {
     BaseClass::visit(op);
     if (op->var_ == var_ && needTapes_.count(op->id())) {
@@ -151,8 +160,16 @@ void AnalyzeVersion::visit(const StmtSeq &op) {
     offset_ = oldOffset;
 }
 
+void SetUserVersionsForInputs::visit(const MarkVersion &op) {
+    BaseClass::visit(op);
+    if (buffer(op->var_)->atype() == AccessType::Input) {
+        userVersions_[op->tapeName_] = {op->var_, nullptr};
+    }
+}
+
 std::tuple<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
-           std::unordered_set<ID>>
+           std::unordered_set<ID>,
+           std::unordered_map<std::string, std::pair<std::string, Expr>>>
 analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
                bool localVersionsOnly) {
     auto op = flattenStmtSeq(_op);
@@ -196,6 +213,7 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
         .eraseOutsideVarDef(localVersionsOnly)(op, found2);
 
     std::unordered_map<StmtOrExprID, Expr> versions;
+    std::unordered_map<std::string, std::pair<std::string, Expr>> userVersions;
     std::unordered_map<ID, Expr> totLens;
     for (auto &&defId : intermediates) {
         auto &&scopes = affectingScopes[defId];
@@ -206,7 +224,7 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
         auto totLen = totLens[defId] =
             scopeLen.count(op) ? scopeLen.at(op) : makeIntConst(1);
         AnalyzeVersion analyzer(defId, scopes, needTape, scopeLen, totLen,
-                                versions);
+                                versions, userVersions);
         analyzer(op);
     }
 
@@ -222,7 +240,9 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
         .eraseOutsideVarDef(localVersionsOnly)(
             op, [&](const Dependence &dep) { trivials.erase(dep.defId()); });
 
-    return {versions, totLens, trivials};
+    SetUserVersionsForInputs{userVersions}(op);
+
+    return {versions, totLens, trivials, userVersions};
 }
 
 } // namespace freetensor

@@ -1,4 +1,4 @@
-from typing import Optional, Set, Union, Sequence
+from typing import Optional, Set, Union, Sequence, Mapping
 import sys
 
 import freetensor_ffi as ffi
@@ -62,14 +62,15 @@ class ArgRetDict:
 def grad_body(stmt: ffi.Stmt,
               requires: Sequence[Union[str, Return]],
               provides: Sequence[Union[str, Return]],
-              tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly):
+              tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+              user_grads: Mapping[ffi.ID, ffi.Stmt] = {}):
     ''' `grad` or `grad_` on a function body (for internal tests only) '''
 
     req = set(requires)
     prov = set(provides)
     if type(tapes) is not GradTapeMode:
         tapes = {find_stmt(stmt, t).id for t in tapes}
-    return ffi.grad_body(stmt, req, prov, tapes)
+    return ffi.grad_body(stmt, req, prov, tapes, user_grads)
 
 
 def _grad_func(impl,
@@ -78,6 +79,7 @@ def _grad_func(impl,
                provides: Sequence[Union[str, Return]],
                tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
                tape_in_closure: bool = True,
+               user_grads: Mapping[ffi.ID, ffi.Stmt] = {},
                verbose: Optional[int] = None):
 
     if not issubclass(type(func), ffi.AST):
@@ -91,7 +93,8 @@ def _grad_func(impl,
             prov.add(p)
     if type(tapes) is not GradTapeMode:
         tapes = {find_stmt(func, t).id for t in tapes}
-    fwd, bwd, req_map, prov_map = impl(func, req, prov, tapes, tape_in_closure)
+    fwd, bwd, req_map, prov_map = impl(func, req, prov, tapes, tape_in_closure,
+                                       user_grads)
     if verbose is not None and verbose >= 1:
         print("Forward pass from AD:", file=sys.stderr)
         print(fwd, file=sys.stderr)
@@ -105,6 +108,7 @@ def grad_(func: ffi.Func,
           provides: Sequence[Union[str, Return]],
           tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
           tape_in_closure: bool = True,
+          user_grads: Mapping[ffi.ID, ffi.Stmt] = {},
           verbose: Optional[int] = None):
     '''
     Reverse mode automatic differentiation
@@ -156,6 +160,7 @@ def grad_(func: ffi.Func,
                       provides,
                       tapes,
                       tape_in_closure,
+                      user_grads,
                       verbose=verbose)
 
 
@@ -164,6 +169,7 @@ def grad(func: ffi.Func,
          provides: Sequence[Union[str, Return]],
          tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
          tape_in_closure: bool = True,
+         user_grads: Mapping[ffi.ID, ffi.Stmt] = {},
          verbose: Optional[int] = None):
     '''
     Reverse mode automatic differentiation
@@ -215,6 +221,7 @@ def grad(func: ffi.Func,
                       provides,
                       tapes,
                       tape_in_closure,
+                      user_grads,
                       verbose=verbose)
 
 

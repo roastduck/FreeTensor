@@ -41,6 +41,7 @@ class Hasher {
     static size_t compHash(const AssumeNode &op);
     static size_t compHash(const EvalNode &op);
     static size_t compHash(const MatMulNode &op);
+    static size_t compHash(const MarkVersionNode &op);
 
     // expr
     static size_t compHash(const CommutativeBinaryExprNode &op);
@@ -55,6 +56,7 @@ class Hasher {
     static size_t compHash(const IfExprNode &op);
     static size_t compHash(const CastNode &op);
     static size_t compHash(const IntrinsicNode &op);
+    static size_t compHash(const LoadAtVersionNode &op);
 
     size_t operator()(const Ref<ASTPart> &op) const {
         return op.isValid() ? op->hash() : P;
@@ -77,6 +79,7 @@ class HashComparator {
     bool compare(const Assume &lhs, const Assume &rhs) const;
     bool compare(const Eval &lhs, const Eval &rhs) const;
     bool compare(const MatMul &lhs, const MatMul &rhs) const;
+    bool compare(const MarkVersion &lhs, const MarkVersion &rhs) const;
 
     // expr
     bool compare(const CommutativeBinaryExpr &lhs,
@@ -92,6 +95,7 @@ class HashComparator {
     bool compare(const IfExpr &lhs, const IfExpr &rhs) const;
     bool compare(const Cast &lhs, const Cast &rhs) const;
     bool compare(const Intrinsic &lhs, const Intrinsic &rhs) const;
+    bool compare(const LoadAtVersion &lhs, const LoadAtVersion &rhs) const;
 
   public:
     bool operator()(const Ref<Tensor> &lhs, const Ref<Tensor> &rhs) const;

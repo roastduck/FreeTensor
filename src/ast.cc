@@ -62,6 +62,8 @@ std::ostream &operator<<(std::ostream &os, ASTNodeType type) {
         DISPATCH(Cast);
         DISPATCH(Intrinsic);
         DISPATCH(AnyExpr);
+        DISPATCH(MarkVersion);
+        DISPATCH(LoadAtVersion);
     default:
         ERROR("Unexpected AST node type");
     }
