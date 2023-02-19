@@ -76,6 +76,7 @@ $(function() {
 <code>#include &lt;<a class="el" href="deps_8h_source.html">analyze/deps.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="find__stmt_8h_source.html">analyze/find_stmt.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="all__no__reuse__defs_8h_source.html">autograd/all_no_reuse_defs.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="clear__mark__version_8h_source.html">autograd/clear_mark_version.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="dedup__tape__names_8h_source.html">autograd/dedup_tape_names.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="grad_8h_source.html">autograd/grad.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="merge__tape__input_8h_source.html">autograd/merge_tape_input.h</a>&gt;</code><br />
@@ -93,61 +94,62 @@ $(function() {
 <code>#include &lt;<a class="el" href="simplify_8h_source.html">pass/simplify.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="tensor__prop__const_8h_source.html">pass/tensor_prop_const.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="undo__make__reduction_8h_source.html">pass/undo_make_reduction.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="hoist__selected__var_8h_source.html">schedule/hoist_selected_var.h</a>&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for grad.cc:</div>
 <div class="dyncontent">
 <div class="center"><img src="grad_8cc__incl.png" border="0" usemap="#asrc_2autograd_2grad_8cc" alt=""/></div>
 <map name="asrc_2autograd_2grad_8cc" id="asrc_2autograd_2grad_8cc">
-<area shape="rect" title=" " alt="" coords="2955,5,3109,32"/>
-<area shape="rect" href="all__defs_8h.html" title=" " alt="" coords="3095,169,3235,196"/>
-<area shape="rect" href="find__stmt_8h.html" title=" " alt="" coords="1649,251,1799,278"/>
-<area shape="rect" href="all__uses_8h.html" title=" " alt="" coords="2566,251,2709,278"/>
-<area shape="rect" href="deps_8h.html" title=" " alt="" coords="1164,169,1284,196"/>
-<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="411,341,541,367"/>
-<area shape="rect" href="all__no__reuse__defs_8h.html" title=" " alt="" coords="4078,333,4245,375"/>
-<area shape="rect" href="dedup__tape__names_8h.html" title=" " alt="" coords="2331,244,2491,285"/>
-<area shape="rect" href="grad_8h.html" title=" " alt="" coords="3948,251,4073,278"/>
-<area shape="rect" href="merge__tape__input_8h.html" title=" " alt="" coords="4353,244,4516,285"/>
-<area shape="rect" href="output__intermediates_8h.html" title=" " alt="" coords="4541,251,4777,278"/>
-<area shape="rect" href="float__simplify_8h.html" title=" " alt="" coords="2929,251,3084,278"/>
-<area shape="rect" href="hoist__return__vars_8h.html" title=" " alt="" coords="4148,251,4329,278"/>
-<area shape="rect" href="hoist__var__over__stmt__seq_8h.html" title=" " alt="" coords="2155,244,2307,285"/>
-<area shape="rect" href="make__nested__loops_8h.html" title=" " alt="" coords="429,251,627,278"/>
-<area shape="rect" href="make__reduction_8h.html" title=" " alt="" coords="2733,251,2905,278"/>
-<area shape="rect" href="prop__one__time__use_8h.html" title=" " alt="" coords="2541,80,2694,121"/>
-<area shape="rect" href="remove__cyclic__assign_8h.html" title=" " alt="" coords="3383,80,3534,121"/>
-<area shape="rect" href="remove__writes_8h.html" title=" " alt="" coords="3532,169,3697,196"/>
-<area shape="rect" href="remove__dead__var_8h.html" title=" " alt="" coords="3108,251,3292,278"/>
-<area shape="rect" href="simplify_8h.html" title=" " alt="" coords="3703,251,3822,278"/>
-<area shape="rect" href="tensor__prop__const_8h.html" title=" " alt="" coords="1852,87,2039,114"/>
-<area shape="rect" href="undo__make__reduction_8h.html" title=" " alt="" coords="3367,251,3577,278"/>
-<area shape="rect" title=" " alt="" coords="3019,423,3133,449"/>
-<area shape="rect" href="func_8h.html" title=" " alt="" coords="2550,423,2613,449"/>
-<area shape="rect" href="selector_8h.html" title=" " alt="" coords="1557,423,1643,449"/>
-<area shape="rect" href="visitor_8h.html" title=" " alt="" coords="2315,341,2389,367"/>
-<area shape="rect" title=" " alt="" coords="1141,572,1200,599"/>
-<area shape="rect" title=" " alt="" coords="2771,497,2895,524"/>
-<area shape="rect" title=" " alt="" coords="1367,572,1430,599"/>
-<area shape="rect" href="stmt_8h.html" title=" " alt="" coords="1699,497,1763,524"/>
-<area shape="rect" title=" " alt="" coords="991,341,1078,367"/>
-<area shape="rect" title=" " alt="" coords="852,423,932,449"/>
-<area shape="rect" title=" " alt="" coords="903,341,967,367"/>
-<area shape="rect" href="find__loop__variance_8h.html" title=" " alt="" coords="1363,251,1573,278"/>
-<area shape="rect" href="track__stmt_8h.html" title=" " alt="" coords="1319,341,1478,367"/>
-<area shape="rect" href="symbol__table_8h.html" title=" " alt="" coords="3521,341,3698,367"/>
-<area shape="rect" href="lazy_8h.html" title=" " alt="" coords="904,251,963,278"/>
-<area shape="rect" href="gen__pb__expr_8h.html" title=" " alt="" coords="1875,251,2029,278"/>
-<area shape="rect" href="presburger_8h.html" title=" " alt="" coords="1103,341,1244,367"/>
-<area shape="rect" href="to__string_8h.html" title=" " alt="" coords="957,423,1107,449"/>
-<area shape="rect" href="sync__func_8h.html" title=" " alt="" coords="987,251,1085,278"/>
-<area shape="rect" title=" " alt="" coords="5,423,91,449"/>
-<area shape="rect" title=" " alt="" coords="217,423,282,449"/>
-<area shape="rect" title=" " alt="" coords="307,423,373,449"/>
-<area shape="rect" title=" " alt="" coords="867,497,941,524"/>
-<area shape="rect" title=" " alt="" coords="398,423,453,449"/>
-<area shape="rect" title=" " alt="" coords="477,423,625,449"/>
-<area shape="rect" href="hash_8h.html" title=" " alt="" coords="2801,341,2866,367"/>
-<area shape="rect" href="mutator_8h.html" title=" " alt="" coords="3259,341,3344,367"/>
+<area shape="rect" title=" " alt="" coords="2513,5,2667,32"/>
+<area shape="rect" href="all__defs_8h.html" title=" " alt="" coords="2349,169,2489,196"/>
+<area shape="rect" href="find__stmt_8h.html" title=" " alt="" coords="549,251,700,278"/>
+<area shape="rect" href="all__uses_8h.html" title=" " alt="" coords="1829,251,1972,278"/>
+<area shape="rect" href="deps_8h.html" title=" " alt="" coords="934,169,1054,196"/>
+<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="191,341,322,367"/>
+<area shape="rect" href="all__no__reuse__defs_8h.html" title=" " alt="" coords="1320,333,1487,375"/>
+<area shape="rect" href="clear__mark__version_8h.html" title=" " alt="" coords="2374,244,2531,285"/>
+<area shape="rect" href="dedup__tape__names_8h.html" title=" " alt="" coords="2190,244,2350,285"/>
+<area shape="rect" href="grad_8h.html" title=" " alt="" coords="3093,251,3218,278"/>
+<area shape="rect" href="merge__tape__input_8h.html" title=" " alt="" coords="4165,244,4327,285"/>
+<area shape="rect" href="output__intermediates_8h.html" title=" " alt="" coords="4352,251,4588,278"/>
+<area shape="rect" href="float__simplify_8h.html" title=" " alt="" coords="3727,251,3882,278"/>
+<area shape="rect" href="hoist__return__vars_8h.html" title=" " alt="" coords="3138,341,3319,367"/>
+<area shape="rect" href="hoist__var__over__stmt__seq_8h.html" title=" " alt="" coords="2005,333,2157,375"/>
+<area shape="rect" href="make__nested__loops_8h.html" title=" " alt="" coords="23,251,221,278"/>
+<area shape="rect" href="make__reduction_8h.html" title=" " alt="" coords="2840,341,3012,367"/>
+<area shape="rect" href="prop__one__time__use_8h.html" title=" " alt="" coords="2611,80,2764,121"/>
+<area shape="rect" href="remove__cyclic__assign_8h.html" title=" " alt="" coords="2992,80,3143,121"/>
+<area shape="rect" href="remove__writes_8h.html" title=" " alt="" coords="2973,169,3138,196"/>
+<area shape="rect" href="remove__dead__var_8h.html" title=" " alt="" coords="3906,251,4090,278"/>
+<area shape="rect" href="simplify_8h.html" title=" " alt="" coords="1996,251,2115,278"/>
+<area shape="rect" href="tensor__prop__const_8h.html" title=" " alt="" coords="2399,87,2586,114"/>
+<area shape="rect" href="undo__make__reduction_8h.html" title=" " alt="" coords="3391,251,3602,278"/>
+<area shape="rect" href="hoist__selected__var_8h.html" title=" " alt="" coords="2839,244,3018,285"/>
+<area shape="rect" title=" " alt="" coords="2593,423,2707,449"/>
+<area shape="rect" href="func_8h.html" title=" " alt="" coords="2377,423,2440,449"/>
+<area shape="rect" href="selector_8h.html" title=" " alt="" coords="1218,423,1303,449"/>
+<area shape="rect" href="visitor_8h.html" title=" " alt="" coords="1663,341,1738,367"/>
+<area shape="rect" title=" " alt="" coords="777,572,835,599"/>
+<area shape="rect" title=" " alt="" coords="2019,497,2143,524"/>
+<area shape="rect" title=" " alt="" coords="1032,572,1095,599"/>
+<area shape="rect" href="stmt_8h.html" title=" " alt="" coords="1359,497,1423,524"/>
+<area shape="rect" title=" " alt="" coords="853,341,940,367"/>
+<area shape="rect" title=" " alt="" coords="475,423,555,449"/>
+<area shape="rect" title=" " alt="" coords="765,341,829,367"/>
+<area shape="rect" href="find__loop__variance_8h.html" title=" " alt="" coords="1183,251,1394,278"/>
+<area shape="rect" href="track__stmt_8h.html" title=" " alt="" coords="984,423,1143,449"/>
+<area shape="rect" href="symbol__table_8h.html" title=" " alt="" coords="3699,341,3876,367"/>
+<area shape="rect" href="lazy_8h.html" title=" " alt="" coords="898,251,957,278"/>
+<area shape="rect" href="gen__pb__expr_8h.html" title=" " alt="" coords="1549,251,1703,278"/>
+<area shape="rect" href="presburger_8h.html" title=" " alt="" coords="498,341,639,367"/>
+<area shape="rect" href="to__string_8h.html" title=" " alt="" coords="580,423,731,449"/>
+<area shape="rect" href="sync__func_8h.html" title=" " alt="" coords="775,251,874,278"/>
+<area shape="rect" title=" " alt="" coords="214,423,299,449"/>
+<area shape="rect" title=" " alt="" coords="33,423,99,449"/>
+<area shape="rect" title=" " alt="" coords="123,423,190,449"/>
+<area shape="rect" href="hash_8h.html" title=" " alt="" coords="1864,341,1929,367"/>
+<area shape="rect" href="mutator_8h.html" title=" " alt="" coords="3441,423,3526,449"/>
+<area shape="rect" href="flatten__stmt__seq_8h.html" title=" " alt="" coords="2384,341,2561,367"/>
 </map>
 </div>
 </div><table class="memberdecls">
@@ -159,19 +161,19 @@ Namespaces</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
-<tr class="memitem:a6a2ff2695fb4af33d2fc8380696fd7bc"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Stmt, Stmt, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; ID, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6a2ff2695fb4af33d2fc8380696fd7bc">freetensor::gradBody</a> (const Stmt &amp;op, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; ID &gt; &amp;tapes)</td></tr>
-<tr class="separator:a6a2ff2695fb4af33d2fc8380696fd7bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a35707f3337bf188e494d943b598ce900"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a35707f3337bf188e494d943b598ce900">freetensor::gradFuncInplace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; ID &gt; &amp;tapes, bool tapeInClosure=true)</td></tr>
-<tr class="separator:a35707f3337bf188e494d943b598ce900"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6719eecc82ed0b1ec70f67efb2d4eef1"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6719eecc82ed0b1ec70f67efb2d4eef1">freetensor::gradFuncOutOfPlace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; ID &gt; &amp;tapes, bool tapeInClosure=true)</td></tr>
-<tr class="separator:a6719eecc82ed0b1ec70f67efb2d4eef1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e5abb9edd8965a411abdb3ba34a5c11"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Stmt, Stmt, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; ID, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4e5abb9edd8965a411abdb3ba34a5c11">freetensor::gradBody</a> (const Stmt &amp;op, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; ID &gt; &amp;tapes, const std::unordered_map&lt; ID, Stmt &gt; &amp;userBwds={})</td></tr>
+<tr class="separator:a4e5abb9edd8965a411abdb3ba34a5c11"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b565ffe176aad4116533d37722ef19f"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0b565ffe176aad4116533d37722ef19f">freetensor::gradFuncInplace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; ID &gt; &amp;tapes, bool tapeInClosure=true, const std::unordered_map&lt; ID, Stmt &gt; &amp;userBwds={})</td></tr>
+<tr class="separator:a0b565ffe176aad4116533d37722ef19f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed9ca82780cdd96540db921dd0712e2f"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aed9ca82780cdd96540db921dd0712e2f">freetensor::gradFuncOutOfPlace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; ID &gt; &amp;tapes, bool tapeInClosure=true, const std::unordered_map&lt; ID, Stmt &gt; &amp;userBwds={})</td></tr>
+<tr class="separator:aed9ca82780cdd96540db921dd0712e2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
-<tr class="memitem:a8c805abf928e276c9daaf4414403651c"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Stmt, Stmt, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; ID, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8c805abf928e276c9daaf4414403651c">freetensor::gradBody</a> (const Stmt &amp;op, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, GradTapeMode tapeMode=GradTapeMode::NoReuseOnly)</td></tr>
-<tr class="separator:a8c805abf928e276c9daaf4414403651c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1c4a4d45bcdc9dda3ad7a1a9ffdc15ea"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1c4a4d45bcdc9dda3ad7a1a9ffdc15ea">freetensor::gradFuncInplace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, GradTapeMode tapeMode=GradTapeMode::NoReuseOnly, bool tapeInClosure=true)</td></tr>
-<tr class="separator:a1c4a4d45bcdc9dda3ad7a1a9ffdc15ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a53a0840e6b1d7e82bcc8a9ae1cb83fa9"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a53a0840e6b1d7e82bcc8a9ae1cb83fa9">freetensor::gradFuncOutOfPlace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, GradTapeMode tapeMode=GradTapeMode::NoReuseOnly, bool tapeInClosure=true)</td></tr>
-<tr class="separator:a53a0840e6b1d7e82bcc8a9ae1cb83fa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5dfe473fce4dbb368b20b396f117ccb3"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Stmt, Stmt, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; ID, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5dfe473fce4dbb368b20b396f117ccb3">freetensor::gradBody</a> (const Stmt &amp;op, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, GradTapeMode tapeMode=GradTapeMode::NoReuseOnly, const std::unordered_map&lt; ID, Stmt &gt; &amp;userBwds={})</td></tr>
+<tr class="separator:a5dfe473fce4dbb368b20b396f117ccb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae391179b06fa04cc84719c5c2118c91c"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae391179b06fa04cc84719c5c2118c91c">freetensor::gradFuncInplace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, GradTapeMode tapeMode=GradTapeMode::NoReuseOnly, bool tapeInClosure=true, const std::unordered_map&lt; ID, Stmt &gt; &amp;userBwds={})</td></tr>
+<tr class="separator:ae391179b06fa04cc84719c5c2118c91c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4a8043e301ddd5f2e087a8c33b0cec21"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4a8043e301ddd5f2e087a8c33b0cec21">freetensor::gradFuncOutOfPlace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, GradTapeMode tapeMode=GradTapeMode::NoReuseOnly, bool tapeInClosure=true, const std::unordered_map&lt; ID, Stmt &gt; &amp;userBwds={})</td></tr>
+<tr class="separator:a4a8043e301ddd5f2e087a8c33b0cec21"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 <!-- start footer part -->

@@ -266,6 +266,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1IntrinsicNode.html">freetensor::IntrinsicNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1LoadAtVersionNode.html">freetensor::LoadAtVersionNode</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
@@ -348,6 +350,8 @@ Macros</h2></td></tr>
 <tr class="separator:aa9785b9a3f20689b0471b4bce359c842"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1c4d28d65fbb5c1b59f72c77f6d2a222"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="expr_8h.html#a1c4d28d65fbb5c1b59f72c77f6d2a222">makeIntrinsic</a>(...)&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(Intrinsic, __VA_ARGS__)</td></tr>
 <tr class="separator:a1c4d28d65fbb5c1b59f72c77f6d2a222"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:accba4c588144cad50579b48ce763a3b0"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="expr_8h.html#accba4c588144cad50579b48ce763a3b0">makeLoadAtVersion</a>(...)&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(LoadAtVersion, __VA_ARGS__)</td></tr>
+<tr class="separator:accba4c588144cad50579b48ce763a3b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -435,6 +439,8 @@ Typedefs</h2></td></tr>
 <tr class="separator:a539a36f725523c1fee5d301a246343bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e8e00871b5e68f996b300f974e2d9d5"><td class="memItemLeft" align="right" valign="top">typedef Ref&lt; IntrinsicNode &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8e8e00871b5e68f996b300f974e2d9d5">freetensor::Intrinsic</a></td></tr>
 <tr class="separator:a8e8e00871b5e68f996b300f974e2d9d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e301f263abe440f3f2cb3831501720f"><td class="memItemLeft" align="right" valign="top">typedef Ref&lt; LoadAtVersionNode &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8e301f263abe440f3f2cb3831501720f">freetensor::LoadAtVersion</a></td></tr>
+<tr class="separator:a8e301f263abe440f3f2cb3831501720f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -548,6 +554,11 @@ Functions</h2></td></tr>
 <tr class="separator:aeab414574c46fb9454a8c4ac8af90505"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adccde89c00ca28d7b1143c162c9ede9f"><td class="memItemLeft" align="right" valign="top">Expr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adccde89c00ca28d7b1143c162c9ede9f">freetensor::_makeIntrinsic</a> (const std::string &amp;format, std::initializer_list&lt; Expr &gt; params, DataType retType, bool hasSideEffect)</td></tr>
 <tr class="separator:adccde89c00ca28d7b1143c162c9ede9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff9ad782d965b02df872f30cb7e95468"><td class="memTemplParams" colspan="2">template&lt;class Tindices &gt; </td></tr>
+<tr class="memitem:aff9ad782d965b02df872f30cb7e95468"><td class="memTemplItemLeft" align="right" valign="top">Expr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aff9ad782d965b02df872f30cb7e95468">freetensor::_makeLoadAtVersion</a> (const std::string &amp;tapeName, Tindices &amp;&amp;indices)</td></tr>
+<tr class="separator:aff9ad782d965b02df872f30cb7e95468"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bfd637b1316bb90fbf4d0883b68f42f"><td class="memItemLeft" align="right" valign="top">Expr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8bfd637b1316bb90fbf4d0883b68f42f">freetensor::_makeLoadAtVersion</a> (const std::string &amp;tapeName, const std::vector&lt; Expr &gt; &amp;indices)</td></tr>
+<tr class="separator:a8bfd637b1316bb90fbf4d0883b68f42f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace201425065db8792c1a17a7cae7e384"><td class="memTemplParams" colspan="2">template&lt;class T , class U &gt; </td></tr>
 <tr class="memitem:ace201425065db8792c1a17a7cae7e384"><td class="memTemplItemLeft" align="right" valign="top">Expr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ace201425065db8792c1a17a7cae7e384">freetensor::makeBinary</a> (ASTNodeType nodeType, T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
 <tr class="separator:ace201425065db8792c1a17a7cae7e384"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -928,6 +939,24 @@ Functions</h2></td></tr>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>...</em></td><td>)</td>
           <td>&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(Load, __VA_ARGS__)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="accba4c588144cad50579b48ce763a3b0" name="accba4c588144cad50579b48ce763a3b0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#accba4c588144cad50579b48ce763a3b0">&#9670;&nbsp;</a></span>makeLoadAtVersion</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define makeLoadAtVersion</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em></td><td>)</td>
+          <td>&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(LoadAtVersion, __VA_ARGS__)</td>
         </tr>
       </table>
 </div><div class="memdoc">

@@ -209,6 +209,8 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.le">le()</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.load_at_version">load_at_version()</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.lt">lt()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.max">max()</a>
@@ -343,11 +345,15 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.NamedScope">NamedScope</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.UserGradForPrevStmt">UserGradForPrevStmt</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.Any">Any()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.Eval">Eval()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.MarkLabel">MarkLabel()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.MarkVersion">MarkVersion()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.VarDef">VarDef()</a>
     </li>
@@ -1176,7 +1182,7 @@ Return        </code>
 
 
 <h4 id="freetensor.core.autograd.grad" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="p">{},</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.autograd.grad" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -1248,6 +1254,7 @@ explicit I/O parameters. Default to True</p></li>
          <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
          <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
          <span class="n">tape_in_closure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+         <span class="n">user_grads</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">ID</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
          <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Reverse mode automatic differentiation</span>
@@ -1299,6 +1306,7 @@ explicit I/O parameters. Default to True</p></li>
                       <span class="n">provides</span><span class="p">,</span>
                       <span class="n">tapes</span><span class="p">,</span>
                       <span class="n">tape_in_closure</span><span class="p">,</span>
+                      <span class="n">user_grads</span><span class="p">,</span>
                       <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
 </code></pre></div>
         </details>
@@ -1313,7 +1321,7 @@ explicit I/O parameters. Default to True</p></li>
 
 
 <h4 id="freetensor.core.autograd.grad_" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="p">{},</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.autograd.grad_" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -1385,6 +1393,7 @@ explicit I/O parameters. Default to True</p></li>
           <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
           <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
           <span class="n">tape_in_closure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+          <span class="n">user_grads</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">ID</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
           <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Reverse mode automatic differentiation</span>
@@ -1436,6 +1445,7 @@ explicit I/O parameters. Default to True</p></li>
                       <span class="n">provides</span><span class="p">,</span>
                       <span class="n">tapes</span><span class="p">,</span>
                       <span class="n">tape_in_closure</span><span class="p">,</span>
+                      <span class="n">user_grads</span><span class="p">,</span>
                       <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
 </code></pre></div>
         </details>
@@ -1450,7 +1460,7 @@ explicit I/O parameters. Default to True</p></li>
 
 
 <h4 id="freetensor.core.autograd.grad_body" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad_body</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">grad_body</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="p">{})</span></code>
 
 
 <a href="#freetensor.core.autograd.grad_body" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -1464,14 +1474,15 @@ explicit I/O parameters. Default to True</p></li>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">grad_body</span><span class="p">(</span><span class="n">stmt</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">,</span>
               <span class="n">requires</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
               <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
-              <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">):</span>
+              <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
+              <span class="n">user_grads</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">ID</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}):</span>
     <span class="sd">&#39;&#39;&#39; `grad` or `grad_` on a function body (for internal tests only) &#39;&#39;&#39;</span>
 
     <span class="n">req</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">requires</span><span class="p">)</span>
     <span class="n">prov</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">provides</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">tapes</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">GradTapeMode</span><span class="p">:</span>
         <span class="n">tapes</span> <span class="o">=</span> <span class="p">{</span><span class="n">find_stmt</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tapes</span><span class="p">}</span>
-    <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">grad_body</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="n">prov</span><span class="p">,</span> <span class="n">tapes</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">grad_body</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="n">prov</span><span class="p">,</span> <span class="n">tapes</span><span class="p">,</span> <span class="n">user_grads</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -2277,6 +2288,7 @@ End users are encouraged to use <code>transformer</code>, instead of this module
     </div>
 
   </div>
+
 
 
 
@@ -5162,6 +5174,38 @@ it calls libop.le</p>
 <span class="sd">        The comparison</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">lhs</span> <span class="o">&lt;=</span> <span class="n">rhs</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.expr.load_at_version" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">load_at_version</span><span class="p">(</span><span class="n">tape_name</span><span class="p">,</span> <span class="o">*</span><span class="n">indices</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.expr.load_at_version" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Create an LoadAtVersion node (only for custom gradient)</p>
+<p>This node is only used for custom gradient. See <code>UserGradForPrevStmt</code>.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">load_at_version</span><span class="p">(</span><span class="n">tape_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">indices</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create an LoadAtVersion node (only for custom gradient)</span>
+
+<span class="sd">    This node is only used for custom gradient. See `UserGradForPrevStmt`.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">makeLoadAtVersion</span><span class="p">(</span><span class="n">tape_name</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -18226,6 +18270,127 @@ NamedScope        </code>
 
 
 
+  <div class="doc doc-object doc-class">
+
+
+
+<h4 id="freetensor.core.stmt.UserGradForPrevStmt" class="doc doc-heading">
+        <code>
+UserGradForPrevStmt        </code>
+
+
+
+<a href="#freetensor.core.stmt.UserGradForPrevStmt" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Define a custom gradient for the immediately previous statement</p>
+<p>Follow the following steps to define custom gradient:</p>
+<ol>
+<li>Add some <code>mark_version</code> statements in the program. <code>mark_version('y0', y)</code> marks the specific
+versions of variable <code>y</code> <strong>at the program position of the statement</strong> and <strong>at all iterations</strong>
+as <code>'y0'</code>.</li>
+<li>Add a <code>UserGradForPrevStmt</code> scope <strong>directly after</strong> the statement (or statement scope) you
+want to provide custom gradient for. <code>with UserGradForPrevStmt(x, y) as (dx, dy)</code> provides <code>VarRef</code>
+<code>dx</code> and <code>dy</code> as gradient variables to be used inside the scope.</li>
+<li>In order to use the value from the forward pass in the backward pass, do not access the forward
+variables directly in the scope. Instead, use <code>load_at_version</code> expressions.
+<code>load_at_version('y0', i, j)</code> loads from <code>y[i, j]</code> <strong>at the specific version marked by
+<code>mark_version('y0', y)</code></strong>, saved from <strong>the same iteration in the forward pass</strong>. In other words,
+after AD, the position of <code>mark_version</code> and the dynamic loop iterator together makes up the actual
+version number for the tape.</li>
+<li>Build the AST with <code>pop_ast_and_user_grads</code> instead of <code>pop_ast</code>. An <code>ID</code> to <code>Stmt</code> map will be
+returned together with the AST, which you need to pass as <code>grad</code>'s <code>user_bwds</code> argument. This map
+records the forward-to-backward relation of the nodes.</li>
+</ol>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/stmt.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">UserGradForPrevStmt</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Define a custom gradient for the immediately previous statement</span>
+
+<span class="sd">    Follow the following steps to define custom gradient:</span>
+
+<span class="sd">    1. Add some `mark_version` statements in the program. `mark_version(&#39;y0&#39;, y)` marks the specific</span>
+<span class="sd">    versions of variable `y` **at the program position of the statement** and **at all iterations**</span>
+<span class="sd">    as `&#39;y0&#39;`.</span>
+<span class="sd">    2. Add a `UserGradForPrevStmt` scope **directly after** the statement (or statement scope) you</span>
+<span class="sd">    want to provide custom gradient for. `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef`</span>
+<span class="sd">    `dx` and `dy` as gradient variables to be used inside the scope.</span>
+<span class="sd">    3. In order to use the value from the forward pass in the backward pass, do not access the forward</span>
+<span class="sd">    variables directly in the scope. Instead, use `load_at_version` expressions.</span>
+<span class="sd">    `load_at_version(&#39;y0&#39;, i, j)` loads from `y[i, j]` **at the specific version marked by</span>
+<span class="sd">    `mark_version(&#39;y0&#39;, y)`**, saved from **the same iteration in the forward pass**. In other words,</span>
+<span class="sd">    after AD, the position of `mark_version` and the dynamic loop iterator together makes up the actual</span>
+<span class="sd">    version number for the tape.</span>
+<span class="sd">    4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An `ID` to `Stmt` map will be</span>
+<span class="sd">    returned together with the AST, which you need to pass as `grad`&#39;s `user_bwds` argument. This map</span>
+<span class="sd">    records the forward-to-backward relation of the nodes.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ori_vars</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">VarRef</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ori_vars</span> <span class="o">=</span> <span class="n">ori_vars</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grad_defs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Make `VarDef` scopes for the gradients</span>
+        <span class="n">grad_vars</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ori_var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ori_vars</span><span class="p">:</span>
+            <span class="n">grad_def</span> <span class="o">=</span> <span class="n">VarDef</span><span class="p">(</span><span class="n">ori_var</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.grad&quot;</span><span class="p">,</span> <span class="n">ori_var</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span>
+                              <span class="n">ori_var</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">&quot;cache&quot;</span><span class="p">)</span>
+            <span class="n">grad_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grad_def</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grad_defs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grad_def</span><span class="p">)</span>
+
+        <span class="c1"># Make a context, which is used for popping out the body we need</span>
+        <span class="n">ctx_stack</span><span class="o">.</span><span class="n">push</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">grad_vars</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="c1"># Pop out the body we need</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="o">.</span><span class="n">make_stmt</span><span class="p">()</span>
+
+        <span class="c1"># Although we are discarding the gradient `VarDef` scopes, we still need to close</span>
+        <span class="c1"># them, to restore ctx_stack. After that, we pop out the `VarDef` statement</span>
+        <span class="k">for</span> <span class="n">grad_def</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grad_defs</span><span class="p">):</span>
+            <span class="n">grad_def</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">exc_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Do not generate an AST node</span>
+            <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># Do not suppress the exception</span>
+        <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span><span class="o">.</span><span class="n">stmt_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="c1"># Record the body to context</span>
+        <span class="n">ctx_stack</span><span class="o">.</span><span class="n">user_grads</span><span class="p">[</span><span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span><span class="o">.</span><span class="n">stmt_seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
 
 
   <div class="doc doc-object doc-function">
@@ -18318,6 +18483,40 @@ NamedScope        </code>
 <span class="sd">    This scope is internally used by `transformer` and tests</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span><span class="o">.</span><span class="n">add_label</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.stmt.MarkVersion" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">MarkVersion</span><span class="p">(</span><span class="n">tape_name</span><span class="p">,</span> <span class="n">var</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.stmt.MarkVersion" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Create an MarkVersion node (only for custom gradient)</p>
+<p>This node is only used for custom gradient. See <code>UserGradForPrevStmt</code>.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/stmt.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">MarkVersion</span><span class="p">(</span><span class="n">tape_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">VarRef</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create an MarkVersion node (only for custom gradient)</span>
+
+<span class="sd">    This node is only used for custom gradient. See `UserGradForPrevStmt`.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span>
+    <span class="n">top</span><span class="o">.</span><span class="n">append_stmt</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">makeMarkVersion</span><span class="p">(</span><span class="n">tape_name</span><span class="p">,</span> <span class="n">var</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                        <span class="n">top</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">()))</span>
 </code></pre></div>
         </details>
     </div>
