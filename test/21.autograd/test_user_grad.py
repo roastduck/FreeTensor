@@ -165,8 +165,8 @@ def test_mark_from_multiple_versions():
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("dx", (4,), "float32", "output", "cpu"),
                     ("dy", (4,), "float32", "inout", "cpu")]) as (x, dx, dy):
-        with ft.For("i", 3, -1, -1) as i:
-            with ft.VarDef("t", (4,), "float32", "input", "cpu") as t:
+        with ft.VarDef("t", (4,), "float32", "input", "cpu") as t:
+            with ft.For("i", 3, -1, -1) as i:
                 dx[i] = 2 * (dy[i] * ft.intrinsic(
                     "cosf(%)", t[i], ret_type="float32") * x[i])
     std = ft.pop_ast()

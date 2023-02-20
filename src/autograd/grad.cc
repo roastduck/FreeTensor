@@ -263,7 +263,7 @@ ReplaceBySaved Grad::getReplacer(const Stmt &stmt) const {
     return {*this, intermediatesMap_, versions_, stmt};
 }
 
-Stmt Grad::visitStmt(const Stmt &s) {
+Stmt Grad::doVisitStmt(const Stmt &s) {
     if (isRecompute_) {
         return BaseClass::visitStmt(s);
     } else {
@@ -290,20 +290,51 @@ Stmt Grad::visitStmt(const Stmt &s) {
                 return (*this)(hoisted);
             }
 
-            // 3. Recompute inside the sub-tree
-            isRecompute_ = true;
-            Stmt recomp = (*this)(s);
-            isRecompute_ = false;
-
-            // 4. Plug in the user-defined backward
+            // 3. Plug in the user-defined backward
             ReplaceLoadAtVersion replacer{*this, intermediatesMap_,
                                           userVersions_};
-            bwdBody = replacer(bwdBody);
-
-            return makeStmtSeq({recomp, bwdBody});
+            return replacer(bwdBody);
         } else { // Automatic backward
             return BaseClass::visitStmt(s);
         }
+    }
+}
+
+Stmt Grad::visitStmt(const Stmt &s) {
+    // Trigger recomputation here. We only trigger for the first-level scope
+    // of the program, and inside each `VarDef` nest:
+    //
+    // // TOP LEVEL RECOMPUTE
+    // StmtSeq {
+    //   StmtSeq {
+    //     VarDef {
+    //       VarDef {
+    //         // RECOMPUTE
+    //         StmtSeq {
+    //           StmtSeq {
+    //             ...
+    // }}}}}}
+    //
+    // In other words, we don't need to recompute in inner non-`VarDef` scopes,
+    // because things are already recomputed. We don't need to recompute inside
+    // a `VarDef` node either if its only body is another `VarDef` node, because
+    // everything we have recomputed will be dropped after we exit the
+    // sub-`VarDef` scope.
+
+    if (isRecompute_) { // Already recomputing
+        return doVisitStmt(s);
+    } else {
+        if (s->nodeType() != ASTNodeType::VarDef) {
+            if (auto &&p = s->parentStmt();
+                !p.isValid() || p->nodeType() == ASTNodeType::VarDef) {
+                isRecompute_ = true;
+                auto recomp = doVisitStmt(s);
+                isRecompute_ = false;
+                auto grad = doVisitStmt(s);
+                return makeStmtSeq({recomp, grad});
+            }
+        }
+        return doVisitStmt(s);
     }
 }
 
@@ -312,14 +343,9 @@ Stmt Grad::visit(const StmtSeq &op) {
         return BaseClass::visit(op);
     } else {
         std::vector<Stmt> stmts;
-        stmts.reserve(op->stmts_.size() * 2);
-        isRecompute_ = true;
-        for (auto &&stmt : op->stmts_) {
+        stmts.reserve(op->stmts_.size());
+        for (auto &&stmt : views::reverse(op->stmts_)) {
             stmts.emplace_back((*this)(stmt));
-        }
-        isRecompute_ = false;
-        for (auto it = op->stmts_.rbegin(); it != op->stmts_.rend(); it++) {
-            stmts.emplace_back((*this)(*it));
         }
         return makeStmtSeq(std::move(stmts), makeMetadata("grad", op));
     }
