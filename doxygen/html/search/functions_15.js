@@ -1,11 +1,11 @@
 var searchData=
 [
   ['varinfo_0',['varInfo',['../classfreetensor_1_1FindLoopVariance.html#ae6091af06d3484c6524d81b93de7813c',1,'freetensor::FindLoopVariance']]],
-  ['varmerge_1',['varMerge',['../classfreetensor_1_1Schedule.html#a4afd2c54b5c306cea3ef02276278a638',1,'freetensor::Schedule']]],
-  ['varmerge_2',['VarMerge',['../classfreetensor_1_1VarMerge.html#a887c85602c5001b9e0d41bd090af7fe9',1,'freetensor::VarMerge']]],
-  ['varmerge_3',['varMerge',['../namespacefreetensor.html#abca0c7890ba9f6c2759ec78a7aee7ce4',1,'freetensor']]],
+  ['varmerge_1',['VarMerge',['../classfreetensor_1_1VarMerge.html#a887c85602c5001b9e0d41bd090af7fe9',1,'freetensor::VarMerge']]],
+  ['varmerge_2',['varMerge',['../classfreetensor_1_1Schedule.html#a4afd2c54b5c306cea3ef02276278a638',1,'freetensor::Schedule::varMerge()'],['../namespacefreetensor.html#abca0c7890ba9f6c2759ec78a7aee7ce4',1,'freetensor::varMerge()']]],
+  ['varreorder_3',['varReorder',['../classfreetensor_1_1Schedule.html#a0527473deeef7e00524a5aa1887c974b',1,'freetensor::Schedule']]],
   ['varreorder_4',['VarReorder',['../classfreetensor_1_1VarReorder.html#a1e9ac7700b9356408c96a6244f17302a',1,'freetensor::VarReorder']]],
-  ['varreorder_5',['varReorder',['../classfreetensor_1_1Schedule.html#a0527473deeef7e00524a5aa1887c974b',1,'freetensor::Schedule::varReorder()'],['../namespacefreetensor.html#ae0daebab755627261041dd65164e2aad',1,'freetensor::varReorder()']]],
+  ['varreorder_5',['varReorder',['../namespacefreetensor.html#ae0daebab755627261041dd65164e2aad',1,'freetensor']]],
   ['vars_6',['vars',['../classfreetensor_1_1PBSetBuilder.html#abf5c4dff2f664d6030c1430814d4360d',1,'freetensor::PBSetBuilder']]],
   ['varsplit_7',['VarSplit',['../classfreetensor_1_1VarSplit.html#afeeee49c31cddd9c5858687f87d0d88d',1,'freetensor::VarSplit']]],
   ['varsplit_8',['varSplit',['../classfreetensor_1_1Schedule.html#a83689544088377af6145346f8046b9ee',1,'freetensor::Schedule::varSplit()'],['../namespacefreetensor.html#ac1667b97261f7bf160f3fbbbba5df5fd',1,'freetensor::varSplit()']]],
