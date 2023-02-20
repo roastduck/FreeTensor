@@ -27,7 +27,8 @@ Stmt MergeTapeInput::visitStmt(const Stmt &s) {
                 }
             }
             ret = makeVarDef(newNode->name_, newNode->buffer_, newNode->viewOf_,
-                             std::move(ret), newNode->pinned_);
+                             std::move(ret), newNode->pinned_,
+                             newNode->metadata());
         }
     }
     return ret;

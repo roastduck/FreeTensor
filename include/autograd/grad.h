@@ -221,6 +221,8 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
      */
     ReplaceBySaved getReplacer(const Stmt &stmt) const;
 
+    Stmt doVisitStmt(const Stmt &s);
+
   public:
     Grad(const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
