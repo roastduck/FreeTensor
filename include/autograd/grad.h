@@ -12,6 +12,14 @@
 
 namespace freetensor {
 
+struct UserBwd {
+    ID oriBegin_, oriEnd_; /// Range of statements in the original program
+    Stmt bwdBody_;         /// Backward statement (can be a scope)
+
+    UserBwd(const ID &oriBegin, const ID &oriEnd, const Stmt &bwdBody)
+        : oriBegin_(oriBegin), oriEnd_(oriEnd), bwdBody_(bwdBody) {}
+};
+
 /**
  * Determine what variables we need to compute gradient for (propagete from
  * inputs to outputs)
@@ -198,7 +206,7 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
     const std::unordered_map<ID, Expr> &totLens_;
     const std::unordered_set<ID> &saveLocalStmts_;
     const std::unordered_set<Stmt> &notSingleWrite_;
-    std::unordered_map<ID, Stmt> userBwds_; // mutable
+    const std::vector<UserBwd> &userBwds_;
 
     std::unordered_map<std::string, std::string> requireGrads_; // var name map
     std::unordered_map<std::string, std::string> provideGrads_; // var name map
@@ -209,6 +217,9 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
     std::unordered_map<std::string, std::unordered_set<Stmt>>
         recomputed_; // var name -> set{stmt}
     bool isRecompute_ = false;
+
+    std::optional<UserBwd> userBwdOpen_;
+    ID userBwdInsertPos_;
 
   private:
     /**
@@ -235,7 +246,7 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
          const std::unordered_map<ID, Expr> &totLens,
          const std::unordered_set<ID> &saveLocalStmts,
          const std::unordered_set<Stmt> &notSingleWrite,
-         const std::unordered_map<ID, Stmt> &userBwds)
+         const std::vector<UserBwd> &userBwds)
         : requires_(_requires), provides_(provides), tapes_(tapes),
           affectedDefs_(affectedDefs), intermediatesMap_(intermediatesMap),
           versions_(versions), userVersions_(userVersions), totLens_(totLens),
@@ -274,9 +285,9 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
  * to pass taped tensors from the forward function to the backward function in
  * implicit I/O parameters, i.e. in closure. False to pass these tensors as
  * explicit I/O parameters. Default to true
- * @param userBwds : For custom gradients. For each `ID`-`Stmt` pair in this
- * map, make the `Stmt` to be the backward of the statement specified by the
- * `ID`
+ * @param userBwds : For custom gradients. Each `UserBwd` item in the list
+ * specifies a statement range in the original program, which should be replaced
+ * by a backward statement
  * @return : (
  *  Forward AST
  *  Backward AST,
@@ -294,7 +305,7 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
 gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
          const std::unordered_set<ID> &tapes,
-         const std::unordered_map<ID, Stmt> &userBwds = {});
+         const std::vector<UserBwd> &userBwds = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
@@ -302,7 +313,7 @@ gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
                 const std::unordered_set<ID> &tapes, bool tapeInClosure = true,
-                const std::unordered_map<ID, Stmt> &userBwds = {});
+                const std::vector<UserBwd> &userBwds = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
@@ -311,7 +322,7 @@ gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &provides,
                    const std::unordered_set<ID> &tapes,
                    bool tapeInClosure = true,
-                   const std::unordered_map<ID, Stmt> &userBwds = {});
+                   const std::vector<UserBwd> &userBwds = {});
 /** @} */
 
 enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
@@ -332,9 +343,9 @@ enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
  * to pass taped tensors from the forward function to the backward function in
  * implicit I/O parameters, i.e. in closure. False to pass these tensors as
  * explicit I/O parameters. Default to true
- * @param userBwds : For custom gradients. For each `ID`-`Stmt` pair in this
- * map, make the `Stmt` to be the backward of the statement specified by the
- * `ID`
+ * @param userBwds : For custom gradients. Each `UserBwd` item in the list
+ * specifies a statement range in the original program, which should be replaced
+ * by a backward statement
  * @return : (
  *  Forward AST
  *  Backward AST,
@@ -352,7 +363,7 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
 gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
          GradTapeMode tapeMode = GradTapeMode::NoReuseOnly,
-         const std::unordered_map<ID, Stmt> &userBwds = {});
+         const std::vector<UserBwd> &userBwds = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
@@ -361,7 +372,7 @@ gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &provides,
                 GradTapeMode tapeMode = GradTapeMode::NoReuseOnly,
                 bool tapeInClosure = true,
-                const std::unordered_map<ID, Stmt> &userBwds = {});
+                const std::vector<UserBwd> &userBwds = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
@@ -370,7 +381,7 @@ gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &provides,
                    GradTapeMode tapeMode = GradTapeMode::NoReuseOnly,
                    bool tapeInClosure = true,
-                   const std::unordered_map<ID, Stmt> &userBwds = {});
+                   const std::vector<UserBwd> &userBwds = {});
 /** @} */
 
 } // namespace freetensor

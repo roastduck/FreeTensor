@@ -15,7 +15,7 @@ from typing import Sequence, Mapping, Tuple, Any, Optional
 import freetensor_ffi as ffi
 
 from . import config
-from .context import ctx_stack
+from .context import ctx_stack, get_last_stmt_id
 from .expr import VarRef
 
 open_vardefs = {}
@@ -427,33 +427,50 @@ def MarkVersion(tape_name: str, var: VarRef):
                                         top.get_metadata()))
 
 
-class UserGradForPrevStmt:
+class UserGrad:
     '''
-    Define a custom gradient for the immediately previous statement
+    Define a custom gradient
 
     Follow the following steps to define custom gradient:
 
     1. Add some `mark_version` statements in the program. `mark_version('y0', y)` marks the specific
     versions of variable `y` **at the program position of the statement** and **at all iterations**
     as `'y0'`.
-    2. Add a `UserGradForPrevStmt` scope **directly after** the statement (or statement scope) you
-    want to provide custom gradient for. `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef`
-    `dx` and `dy` as gradient variables to be used inside the scope.
+    2. Add a `UserGrad` scope.
+    2.1. `UserGrad` receives parameters `begin_id` and `end_id`, which means the gradient is for the
+    code ranging from the statement with the ID `begin_id` to the statement with the ID `end_id`. The
+    range is inclusive. `begin_id` and `end_id` default to the statement immediately preceding the
+    scope, so ignoring both parameter means setting gradient for the previous statement of the scope,
+    and ignoring `end_id` means setting gradient for the range from `begin_id` to previous statement
+    of the scope. The ID can be get by calling `get_last_stmt_id`.
+    2.2. Other parameters of `UserGrad` sets the mapping from original variables to gradient variables.
+    `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef` `dx` and `dy` as gradient variables
+    to be used inside the scope.
     3. In order to use the value from the forward pass in the backward pass, do not access the forward
     variables directly in the scope. Instead, use `load_at_version` expressions.
     `load_at_version('y0', i, j)` loads from `y[i, j]` **at the specific version marked by
     `mark_version('y0', y)`**, saved from **the same iteration in the forward pass**. In other words,
     after AD, the position of `mark_version` and the dynamic loop iterator together makes up the actual
     version number for the tape.
-    4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An `ID` to `Stmt` map will be
-    returned together with the AST, which you need to pass as `grad`'s `user_bwds` argument. This map
-    records the forward-to-backward relation of the nodes.
+    4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An extra list will be returned
+    together with the AST, which you need to pass as `grad`'s `user_bwds` argument. This list records
+    the forward-to-backward relation of the nodes.
     '''
 
-    def __init__(self, *ori_vars: Sequence[VarRef]):
+    def __init__(self, *ori_vars: Sequence[VarRef], **kvs):
         self.ori_vars = ori_vars
         self.body = None
         self.grad_defs = []
+        if 'begin_id' in kvs:
+            self.begin_id = kvs['begin_id']
+            del kvs['begin_id']
+        else:
+            self.begin_id = get_last_stmt_id()
+        if 'end_id' in kvs:
+            self.end_id = kvs['end_id']
+            del kvs['end_id']
+        else:
+            self.end_id = get_last_stmt_id()
 
     def __enter__(self):
         # Make `VarDef` scopes for the gradients
@@ -483,7 +500,8 @@ class UserGradForPrevStmt:
         ctx_stack.top().stmt_seq.pop()
 
         # Record the body to context
-        ctx_stack.user_grads[ctx_stack.top().stmt_seq[-1].id] = self.body
+        ctx_stack.user_grads.append(
+            ffi.UserBwd(self.begin_id, self.end_id, self.body))
 
 
 class Func(ffi.Func):

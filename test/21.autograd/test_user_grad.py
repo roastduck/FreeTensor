@@ -9,7 +9,7 @@ def test_basic():
             t[...] = x[...] * x[...]
             ft.MarkVersion("t0", t)
             y[...] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
-            with ft.UserGradForPrevStmt(t, y) as (dt, dy):
+            with ft.UserGrad(t, y) as (dt, dy):
                 dt[...] = dy[...] * ft.intrinsic(
                     "cosf(%)", ft.load_at_version("t0"), ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
@@ -37,7 +37,7 @@ def test_marked_version_is_recomputed():
             t[...] = x[...] * x[...]
             ft.MarkVersion("t0", t)
             y[...] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
-            with ft.UserGradForPrevStmt(t, y) as (dt, dy):
+            with ft.UserGrad(t, y) as (dt, dy):
                 dt[...] = dy[...] * ft.intrinsic(
                     "cosf(%)", ft.load_at_version("t0"), ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
@@ -61,7 +61,7 @@ def test_mark_version_on_input():
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
         ft.MarkVersion("x0", x)
         y[...] = ft.intrinsic("sinf(%)", x[...], ret_type="float32")
-        with ft.UserGradForPrevStmt(x, y) as (dx, dy):
+        with ft.UserGrad(x, y) as (dx, dy):
             dx[...] = dy[...] * ft.intrinsic(
                 "cosf(%)", ft.load_at_version("x0"), ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
@@ -92,7 +92,7 @@ def test_user_grad_on_scope():
                 ft.MarkVersion("sin0", sin)
                 ft.MarkVersion("cos0", cos)
                 y[...] = sin[...] * sin[...] - cos[...] * cos[...]
-        with ft.UserGradForPrevStmt(x, y) as (dx, dy):
+        with ft.UserGrad(x, y) as (dx, dy):
             dx[...] = 4 * dy[...] * ft.load_at_version(
                 'cos0') * ft.load_at_version('sin0')
     ast, user_grads = ft.pop_ast_and_user_grads()
@@ -113,6 +113,43 @@ def test_user_grad_on_scope():
     assert std.match(ast)
 
 
+def test_user_grad_on_range_crossing_def():
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("z", (), "float32", "output", "cpu")]) as (x, z):
+        # (sin^2 x - cos^2 x)' = 4 * cos x * sin x
+        ft.MarkLabel('Vsin')
+        with ft.VarDef("sin", (), "float32", "cache", "cpu") as sin:
+            sin[...] = ft.intrinsic("sinf(%)", x[...], ret_type="float32")
+            begin_id = ft.get_last_stmt_id()
+            ft.MarkLabel('Vcos')
+            with ft.VarDef("cos", (), "float32", "cache", "cpu") as cos:
+                cos[...] = ft.intrinsic("cosf(%)", x[...], ret_type="float32")
+                ft.MarkVersion("sin0", sin)
+                ft.MarkVersion("cos0", cos)
+                with ft.VarDef("y", (), "float32", "cache", "cpu") as y:
+                    y[...] = sin[...] * sin[...] - cos[...] * cos[...]
+                    with ft.UserGrad(x, y, begin_id=begin_id) as (dx, dy):
+                        dx[...] = 4 * dy[...] * ft.load_at_version(
+                            'cos0') * ft.load_at_version('sin0')
+                    z[...] = 2 * y[...]
+    ast, user_grads = ft.pop_ast_and_user_grads()
+
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["z"], {'Vsin', 'Vcos'},
+                                   user_grads)
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("dx", (), "float32", "output", "cpu"),
+                    ("dz", (), "float32", "inout", "cpu"),
+                    ("sin", (), "float32", "input", "cpu"),
+                    ("cos", (), "float32", "input", "cpu")]) as (dx, dz, sin,
+                                                                 cos):
+        dx[...] = 4 * (2 * dz[...]) * cos[...] * sin[...]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_user_grad_on_scope_with_load_at_version_recomputed():
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
@@ -124,7 +161,7 @@ def test_user_grad_on_scope_with_load_at_version_recomputed():
                 ft.MarkVersion("sin0", sin)
                 ft.MarkVersion("cos0", cos)
                 y[...] = sin[...] * sin[...] - cos[...] * cos[...]
-        with ft.UserGradForPrevStmt(x, y) as (dx, dy):
+        with ft.UserGrad(x, y) as (dx, dy):
             dx[...] = 4 * dy[...] * ft.load_at_version(
                 'cos0') * ft.load_at_version('sin0')
     ast, user_grads = ft.pop_ast_and_user_grads()
@@ -153,7 +190,7 @@ def test_mark_from_multiple_versions():
                 t[...] = x[i] * x[i]
                 ft.MarkVersion("t0", t)
                 y[i] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
-                with ft.UserGradForPrevStmt(t, y) as (dt, dy):
+                with ft.UserGrad(t, y) as (dt, dy):
                     dt[...] = dy[i] * ft.intrinsic(
                         "cosf(%)", ft.load_at_version("t0"), ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()

@@ -118,7 +118,7 @@ class ContextStack:
 
     def reset(self):
         self.stack = [Context()]
-        self.user_grads = {}
+        self.user_grads = []
 
     def top(self) -> Context:
         return self.stack[-1]
@@ -155,6 +155,11 @@ def pop_ast(verbose: bool = False):
 
 
 def pop_ast_and_user_grads(verbose: bool = False):
+    """
+    Get AST and reset context. Return an extra list for custom gradients
+
+    Set `UserGrad` for details
+    """
     ast = ctx_stack.pop().make_stmt()
     user_grads = ctx_stack.user_grads
     ctx_stack.reset()
@@ -163,3 +168,11 @@ def pop_ast_and_user_grads(verbose: bool = False):
         print(ret, file=sys.stderr)
         print(file=sys.stderr)
     return ast, user_grads
+
+
+def get_last_stmt_id():
+    '''
+    Can be used inside the staged code, to get the ID of the immediately preceding
+    statement
+    '''
+    return ctx_stack.top().stmt_seq[-1].id

@@ -7,6 +7,12 @@ namespace freetensor {
 using namespace pybind11::literals;
 
 void init_ffi_autograd(py::module_ &m) {
+    py::class_<UserBwd>(m, "UserBwd")
+        .def(py::init<const ID &, const ID &, const Stmt &>())
+        .def_readonly("ori_begin", &UserBwd::oriBegin_)
+        .def_readonly("ori_end", &UserBwd::oriEnd_)
+        .def_readonly("bwd_body", &UserBwd::bwdBody_);
+
     py::enum_<GradTapeMode>(m, "GradTapeMode")
         .value("All", GradTapeMode::All)
         .value("Nothing", GradTapeMode::Nothing)
@@ -20,10 +26,10 @@ void init_ffi_autograd(py::module_ &m) {
                        std::unordered_map<ID, std::string>> (*)(
                 const Stmt &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &,
-                const std::unordered_set<ID> &,
-                const std::unordered_map<ID, Stmt> &)>(&gradBody),
+                const std::unordered_set<ID> &, const std::vector<UserBwd> &)>(
+            &gradBody),
         "func"_a, "requires"_a, "provides"_a, "tapes"_a,
-        "user_bwds"_a = std::unordered_map<ID, Stmt>{});
+        "user_bwds"_a = std::vector<UserBwd>{});
     m.def(
         "grad_",
         static_cast<
@@ -32,10 +38,9 @@ void init_ffi_autograd(py::module_ &m) {
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &,
                 const std::unordered_set<ID> &, bool,
-                const std::unordered_map<ID, Stmt> &)>(&gradFuncInplace),
+                const std::vector<UserBwd> &)>(&gradFuncInplace),
         "stmt"_a, "requires"_a, "provides"_a, "tapes"_a,
-        "tape_in_closure"_a = true,
-        "user_bwds"_a = std::unordered_map<ID, Stmt>{});
+        "tape_in_closure"_a = true, "user_bwds"_a = std::vector<UserBwd>{});
     m.def(
         "grad",
         static_cast<
@@ -44,10 +49,9 @@ void init_ffi_autograd(py::module_ &m) {
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &,
                 const std::unordered_set<ID> &, bool,
-                const std::unordered_map<ID, Stmt> &)>(&gradFuncOutOfPlace),
+                const std::vector<UserBwd> &)>(&gradFuncOutOfPlace),
         "stmt"_a, "requires"_a, "provides"_a, "tapes"_a,
-        "tape_in_closure"_a = true,
-        "user_bwds"_a = std::unordered_map<ID, Stmt>{});
+        "tape_in_closure"_a = true, "user_bwds"_a = std::vector<UserBwd>{});
 
     m.def(
         "grad_body",
@@ -57,10 +61,10 @@ void init_ffi_autograd(py::module_ &m) {
                        std::unordered_map<ID, std::string>> (*)(
                 const Stmt &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode,
-                const std::unordered_map<ID, Stmt> &)>(&gradBody),
+                const std::vector<UserBwd> &)>(&gradBody),
         "func"_a, "requires"_a, "provides"_a,
         "tape_mode"_a = GradTapeMode::NoReuseOnly,
-        "user_bwds"_a = std::unordered_map<ID, Stmt>{});
+        "user_bwds"_a = std::vector<UserBwd>{});
     m.def(
         "grad_",
         static_cast<
@@ -68,10 +72,10 @@ void init_ffi_autograd(py::module_ &m) {
                        std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode, bool,
-                const std::unordered_map<ID, Stmt> &)>(&gradFuncInplace),
+                const std::vector<UserBwd> &)>(&gradFuncInplace),
         "stmt"_a, "requires"_a, "provides"_a,
         "tape_mode"_a = GradTapeMode::NoReuseOnly, "tape_in_closure"_a = true,
-        "user_bwds"_a = std::unordered_map<ID, Stmt>{});
+        "user_bwds"_a = std::vector<UserBwd>{});
     m.def(
         "grad",
         static_cast<
@@ -79,10 +83,10 @@ void init_ffi_autograd(py::module_ &m) {
                        std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode, bool,
-                const std::unordered_map<ID, Stmt> &)>(&gradFuncOutOfPlace),
+                const std::vector<UserBwd> &)>(&gradFuncOutOfPlace),
         "stmt"_a, "requires"_a, "provides"_a,
         "tape_mode"_a = GradTapeMode::NoReuseOnly, "tape_in_closure"_a = true,
-        "user_bwds"_a = std::unordered_map<ID, Stmt>{});
+        "user_bwds"_a = std::vector<UserBwd>{});
 
     py::enum_<OutputIntermediatesStage>(m, "OutputIntermediatesStage")
         .value("Forward", OutputIntermediatesStage::Forward)
