@@ -14,7 +14,10 @@ import freetensor_ffi as ffi
 
 class Context:
 
-    def __init__(self, caller_metadata: Optional[ffi.Metadata] = None):
+    def __init__(self,
+                 parent_context_stack,
+                 caller_metadata: Optional[ffi.Metadata] = None):
+        self.parent_context_stack = parent_context_stack
         self.stmt_seq = []
 
         self.next_labels = []
@@ -24,9 +27,6 @@ class Context:
         self.last_if = None  # To handle else case
         self.next_no_deps = []
         self.next_prefer_libs = False
-
-        # fn(ffi.Stmt) invoked for the next `append_stmt`
-        self.next_append_stmt_callbacks = []
 
     def get_metadata(self, labels=None):
         if labels is None:
@@ -50,19 +50,19 @@ class Context:
         self.next_no_deps = []
         self.next_prefer_libs = False
 
-        for callback in self.next_append_stmt_callbacks:
+        for callback in self.parent_context_stack.next_append_stmt_callbacks:
             callback(stmt)
-        self.next_append_stmt_callbacks = []
+        self.parent_context_stack.next_append_stmt_callbacks = []
 
     def append_if_then_stmt(self, cond, body: ffi.Stmt):
         next_metadata = self.get_metadata()
         last_if = (next_metadata, cond, body,
-                   list(self.next_append_stmt_callbacks))
+                   list(self.parent_context_stack.next_append_stmt_callbacks))
         self.append_stmt(ffi.makeIf(cond, body, next_metadata))
         self.last_if = last_if
 
     def append_if_else_stmt(self, elseCase: ffi.Stmt):
-        metadata, cond, thenCase, self.next_append_stmt_callbacks = self.last_if
+        metadata, cond, thenCase, self.parent_context_stack.next_append_stmt_callbacks = self.last_if
         self.stmt_seq.pop()
         self.append_stmt(ffi.makeIf(cond, thenCase, elseCase, metadata))
 
@@ -119,21 +119,6 @@ class Context:
         else:
             return ffi.makeStmtSeq(self.stmt_seq, metadata or None)
 
-    def get_last_stmt_id(self):
-        '''
-        Can be used inside the staged code, to get the ID of the immediately preceding statement
-        '''
-        return self.stmt_seq[-1].id
-
-    def add_next_append_stmt_callback(self, callback: Callable[[ffi.Stmt],
-                                                               None]):
-        '''
-        Add a callback to be called with the next statement to be appended. It will be called with
-        only the next statement. But for `If` statement, it can be called twice, one without "else"
-        branch, and then maybe one more with "else" branch
-        '''
-        self.next_append_stmt_callbacks.append(callback)
-
 
 class ContextStack:
 
@@ -141,14 +126,17 @@ class ContextStack:
         self.reset()
 
     def reset(self):
-        self.stack = [Context()]
+        self.stack = [Context(self)]
         self.user_grads = []
+
+        # fn(ffi.Stmt) invoked for the next `append_stmt`
+        self.next_append_stmt_callbacks = []
 
     def top(self) -> Context:
         return self.stack[-1]
 
     def push(self):
-        self.stack.append(Context(self.top().caller_metadata))
+        self.stack.append(Context(self, self.top().caller_metadata))
 
     def pop(self):
         return self.stack.pop()
@@ -158,6 +146,24 @@ class ContextStack:
 
     def set_stack(self, stack: List[Context]):
         self.stack = stack
+
+    def get_last_stmt_id(self):
+        '''
+        Can be used inside the staged code, to get the ID of the immediately preceding statement
+        '''
+        for ctx in reversed(self.stack):
+            if len(ctx.stmt_seq) > 0:
+                return ctx.stmt_seq[-1].id
+        raise ft.InvalidProgram("There is no statement yet")
+
+    def add_next_append_stmt_callback(self, callback: Callable[[ffi.Stmt],
+                                                               None]):
+        '''
+        Add a callback to be called with the next statement to be appended. It will be called with
+        only the next statement. But for `If` statement, it can be called twice, one without "else"
+        branch, and then maybe one more with "else" branch
+        '''
+        self.next_append_stmt_callbacks.append(callback)
 
 
 ctx_stack = ContextStack()
@@ -201,7 +207,7 @@ class StmtRange:
     Usage:
 
     ```
-    with StmtRange() as rcd:
+    with StmtRange() as rng:
         # Some statements
     ```
 
@@ -209,12 +215,12 @@ class StmtRange:
     `__enter__` and `__exit__`. E.g.,
 
     ```
-    rcd = StmtRange()
-    rcd.__enter__()
+    rng = StmtRange()
+    rng.__enter__()
     # Some statements
     with VarDef(...)  # Some scopes
         # Some other statements
-        rcd.__exit__(None, None, None)
+        rng.__exit__(None, None, None)
 
     ```
     '''
@@ -228,11 +234,11 @@ class StmtRange:
         def callback(stmt):
             self.begin_id = stmt.id
 
-        ctx_stack.top().add_next_append_stmt_callback(callback)
+        ctx_stack.add_next_append_stmt_callback(callback)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.end_id = ctx_stack.top().get_last_stmt_id()
+        self.end_id = ctx_stack.get_last_stmt_id()
 
     def make(self):
         if self.begin_id is None:

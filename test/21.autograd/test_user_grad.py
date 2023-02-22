@@ -119,8 +119,8 @@ def test_user_grad_on_range_crossing_def():
         # (sin^2 x - cos^2 x)' = 4 * cos x * sin x
         ft.MarkLabel('Vsin')
         with ft.VarDef("sin", (), "float32", "cache", "cpu") as sin:
-            rcd = ft.StmtRange()
-            rcd.__enter__()
+            rng = ft.StmtRange()
+            rng.__enter__()
             sin[...] = ft.intrinsic("sinf(%)", x[...], ret_type="float32")
             ft.MarkLabel('Vcos')
             with ft.VarDef("cos", (), "float32", "cache", "cpu") as cos:
@@ -129,8 +129,8 @@ def test_user_grad_on_range_crossing_def():
                 ft.MarkVersion("cos0", cos)
                 with ft.VarDef("y", (), "float32", "cache", "cpu") as y:
                     y[...] = sin[...] * sin[...] - cos[...] * cos[...]
-                    rcd.__exit__(None, None, None)
-                    with ft.UserGrad(x, y, stmt_range=rcd) as (dx, dy):
+                    rng.__exit__(None, None, None)
+                    with ft.UserGrad(x, y, stmt_range=rng) as (dx, dy):
                         dx[...] = 4 * dy[...] * ft.load_at_version(
                             'cos0') * ft.load_at_version('sin0')
                     z[...] = 2 * y[...]

@@ -474,7 +474,7 @@ class UserGrad:
                     "`stmt_range` should be a `StmtRange` for `UserGrad`")
             del kvs['stmt_range']
         else:
-            self.begin_id = self.end_id = ctx_stack.top().get_last_stmt_id()
+            self.begin_id = self.end_id = ctx_stack.get_last_stmt_id()
         for key in kvs:
             raise TypeError(f"Unrecognized parameter `{key}` of `UserGrad`")
 
@@ -518,12 +518,14 @@ class Func(ffi.Func):
                  returns,
                  body,
                  closure={},
-                 custom_callback=None):
+                 custom_callback=None,
+                 user_grads=[]):
         super().__init__(
             name, params,
             list(map(lambda x: (x[0], ffi.DataType(x[1])), returns)), body,
             closure)
         self.custom_callback = custom_callback
+        self.user_grads = user_grads
 
         # Mimic a Python function
         self.__name__ = name
