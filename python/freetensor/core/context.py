@@ -7,7 +7,7 @@ End users are encouraged to use `transformer`, instead of this module.
 '''
 
 import sys
-from typing import List, Sequence, Optional
+from typing import List, Sequence, Optional, Callable
 
 import freetensor_ffi as ffi
 
@@ -24,6 +24,9 @@ class Context:
         self.last_if = None  # To handle else case
         self.next_no_deps = []
         self.next_prefer_libs = False
+
+        # fn(ffi.Stmt) invoked for the next `append_stmt`
+        self.next_append_stmt_callbacks = []
 
     def get_metadata(self, labels=None):
         if labels is None:
@@ -47,13 +50,19 @@ class Context:
         self.next_no_deps = []
         self.next_prefer_libs = False
 
+        for callback in self.next_append_stmt_callbacks:
+            callback(stmt)
+        self.next_append_stmt_callbacks = []
+
     def append_if_then_stmt(self, cond, body: ffi.Stmt):
         next_metadata = self.get_metadata()
+        last_if = (next_metadata, cond, body,
+                   list(self.next_append_stmt_callbacks))
         self.append_stmt(ffi.makeIf(cond, body, next_metadata))
-        self.last_if = (next_metadata, cond, body)
+        self.last_if = last_if
 
     def append_if_else_stmt(self, elseCase: ffi.Stmt):
-        metadata, cond, thenCase = self.last_if
+        metadata, cond, thenCase, self.next_append_stmt_callbacks = self.last_if
         self.stmt_seq.pop()
         self.append_stmt(ffi.makeIf(cond, thenCase, elseCase, metadata))
 
@@ -109,6 +118,21 @@ class Context:
             return self.stmt_seq[0]
         else:
             return ffi.makeStmtSeq(self.stmt_seq, metadata or None)
+
+    def get_last_stmt_id(self):
+        '''
+        Can be used inside the staged code, to get the ID of the immediately preceding statement
+        '''
+        return self.stmt_seq[-1].id
+
+    def add_next_append_stmt_callback(self, callback: Callable[[ffi.Stmt],
+                                                               None]):
+        '''
+        Add a callback to be called with the next statement to be appended. It will be called with
+        only the next statement. But for `If` statement, it can be called twice, one without "else"
+        branch, and then maybe one more with "else" branch
+        '''
+        self.next_append_stmt_callbacks.append(callback)
 
 
 class ContextStack:
@@ -170,9 +194,49 @@ def pop_ast_and_user_grads(verbose: bool = False):
     return ast, user_grads
 
 
-def get_last_stmt_id():
+class StmtRange:
     '''
-    Can be used inside the staged code, to get the ID of the immediately preceding
-    statement
+    Record a range of statement in a program, can be used for custom gradient
+
+    Usage:
+
+    ```
+    with StmtRange() as rcd:
+        # Some statements
+    ```
+
+    `StmtRange` can be used interleaved with AST scopes. In these cases, you can directly call
+    `__enter__` and `__exit__`. E.g.,
+
+    ```
+    rcd = StmtRange()
+    rcd.__enter__()
+    # Some statements
+    with VarDef(...)  # Some scopes
+        # Some other statements
+        rcd.__exit__(None, None, None)
+
+    ```
     '''
-    return ctx_stack.top().stmt_seq[-1].id
+
+    def __init__(self):
+        self.begin_id = None
+        self.end_id = None
+
+    def __enter__(self):
+
+        def callback(stmt):
+            self.begin_id = stmt.id
+
+        ctx_stack.top().add_next_append_stmt_callback(callback)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.end_id = ctx_stack.top().get_last_stmt_id()
+
+    def make(self):
+        if self.begin_id is None:
+            raise ffi.InvalidProgram("StmtRange is not properly entered")
+        if self.end_id is None:
+            raise ffi.InvalidProgram("StmtRange is not properly exited")
+        return self.begin_id, self.end_id

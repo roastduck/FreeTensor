@@ -5,7 +5,7 @@ from freetensor_ffi import (AccessType, MemType, DataType, ASTNodeType,
                             SymbolNotFound, AssertAlwaysFalse, ParserError,
                             VarSplitMode)
 
-from .context import pop_ast, pop_ast_and_user_grads, get_last_stmt_id
+from .context import pop_ast, pop_ast_and_user_grads, StmtRange
 from .expr import *
 from .stmt import (VarDef, For, If, Else, Alloc, Free, Assert, MarkLabel,
                    NamedScope, Invoke, Eval, Any, Func, MarkVersion, UserGrad)

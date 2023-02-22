@@ -13,8 +13,11 @@
 namespace freetensor {
 
 struct UserBwd {
-    ID oriBegin_, oriEnd_; /// Range of statements in the original program
-    Stmt bwdBody_;         /// Backward statement (can be a scope)
+    /// Range of statements in the original program, inclusive
+    ID oriBegin_, oriEnd_;
+
+    /// Backward statement (can be a scope)
+    Stmt bwdBody_;
 
     UserBwd(const ID &oriBegin, const ID &oriEnd, const Stmt &bwdBody)
         : oriBegin_(oriBegin), oriEnd_(oriEnd), bwdBody_(bwdBody) {}

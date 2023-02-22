@@ -15,7 +15,7 @@ from typing import Sequence, Mapping, Tuple, Any, Optional
 import freetensor_ffi as ffi
 
 from . import config
-from .context import ctx_stack, get_last_stmt_id
+from .context import ctx_stack, StmtRange
 from .expr import VarRef
 
 open_vardefs = {}
@@ -437,12 +437,9 @@ class UserGrad:
     versions of variable `y` **at the program position of the statement** and **at all iterations**
     as `'y0'`.
     2. Add a `UserGrad` scope.
-    2.1. `UserGrad` receives parameters `begin_id` and `end_id`, which means the gradient is for the
-    code ranging from the statement with the ID `begin_id` to the statement with the ID `end_id`. The
-    range is inclusive. `begin_id` and `end_id` default to the statement immediately preceding the
-    scope, so ignoring both parameter means setting gradient for the previous statement of the scope,
-    and ignoring `end_id` means setting gradient for the range from `begin_id` to previous statement
-    of the scope. The ID can be get by calling `get_last_stmt_id`.
+    2.1. `UserGrad` optionally receives parameter `stmt_range`, recorded by the `StmtRange` helper class,
+    which means the gradient is for the code specified in the range. Ignoring the parameter means setting
+    gradient for the previous statement of the scope.
     2.2. Other parameters of `UserGrad` sets the mapping from original variables to gradient variables.
     `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef` `dx` and `dy` as gradient variables
     to be used inside the scope.
@@ -455,22 +452,31 @@ class UserGrad:
     4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An extra list will be returned
     together with the AST, which you need to pass as `grad`'s `user_bwds` argument. This list records
     the forward-to-backward relation of the nodes.
+
+    Parameters
+    ----------
+    stmt_range: Optional[StmtRange]
+        The range in the original program that we are setting custom gradient for
+    args: Sequence[VarRef]
+        (Positional variadic) Mapping from original variables to gradient variables
     '''
 
-    def __init__(self, *ori_vars: Sequence[VarRef], **kvs):
-        self.ori_vars = ori_vars
+    def __init__(self, *args: Sequence[VarRef], **kvs):
+        self.ori_vars = args
         self.body = None
         self.grad_defs = []
-        if 'begin_id' in kvs:
-            self.begin_id = kvs['begin_id']
-            del kvs['begin_id']
+        if 'stmt_range' in kvs:
+            stmt_range = kvs['stmt_range']
+            if isinstance(stmt_range, StmtRange):
+                self.begin_id, self.end_id = stmt_range.make()
+            else:
+                raise TypeError(
+                    "`stmt_range` should be a `StmtRange` for `UserGrad`")
+            del kvs['stmt_range']
         else:
-            self.begin_id = get_last_stmt_id()
-        if 'end_id' in kvs:
-            self.end_id = kvs['end_id']
-            del kvs['end_id']
-        else:
-            self.end_id = get_last_stmt_id()
+            self.begin_id = self.end_id = ctx_stack.top().get_last_stmt_id()
+        for key in kvs:
+            raise TypeError(f"Unrecognized parameter `{key}` of `UserGrad`")
 
     def __enter__(self):
         # Make `VarDef` scopes for the gradients
