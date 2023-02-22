@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 import freetensor_ffi as ffi
 
-from .context import pop_ast
+from .context import pop_ast_and_user_grads
 from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
                    if_then_else, shape)
 from .stmt import (_VarDef, NamedScope, VarRef, For, If, Else, MarkLabel,
@@ -500,7 +500,7 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
         raise _overload.error('Exception occurred in staging') from e
     finally:
         # Despite whether the exception is raised, we need to clean up the ctx_stack
-        staged_ast = pop_ast()
+        staged_ast, user_grads = pop_ast_and_user_grads()
 
     staged = None
 
@@ -527,7 +527,8 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
                   returns,
                   staged_ast,
                   closure,
-                  custom_callback=prepare_inlined_invoke)
+                  custom_callback=prepare_inlined_invoke,
+                  user_grads=user_grads)
 
     if verbose >= 1:
         print("The transformed AST is:", file=sys.stderr)

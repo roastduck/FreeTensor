@@ -211,3 +211,42 @@ def test_mark_from_multiple_versions():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_frontend():
+
+    @ft.transform(verbose=2)
+    def func(x: ft.Var[(4,), "float32"]):
+        # (sin^2 x - cos^2 x)' = 4 * cos x * sin x
+        with ft.StmtRange() as rng:
+            sin = ft.unary_op(
+                lambda item: ft.intrinsic("sinf(%)", item, ret_type="float32"),
+                x)
+            cos = ft.unary_op(
+                lambda item: ft.intrinsic("cosf(%)", item, ret_type="float32"),
+                x)
+            ft.MarkVersion("sin0", sin)
+            ft.MarkVersion("cos0", cos)
+            y = sin * sin - cos * cos
+        with ft.UserGrad(x, y, stmt_range=rng) as (dx, dy):
+            for i in range(4):
+                dx[i] = 4 * dy[i] * ft.load_at_version(
+                    'cos0', i) * ft.load_at_version('sin0', i)
+        z = y * 2
+        return z
+
+    _, bwd, _, _ = ft.grad(func, ["x"], [ft.Return()], ft.GradTapeMode.All,
+                           True, func.user_grads)
+    print(bwd)
+    bwd = ft.lower(bwd, verbose=1)
+
+    with ft.VarDef([("dx", (4,), "float32", "output", "cpu"),
+                    ("sin", (4,), "float32", "input", "cpu"),
+                    ("cos", (4,), "float32", "input", "cpu"),
+                    ("dz", (4,), "float32", "inout", "cpu")]) as (dx, sin, cos,
+                                                                  dz):
+        with ft.For("i", 0, 4) as i:
+            dx[i] = 4 * (2 * dz[i]) * cos[i] * sin[i]
+    std = ft.pop_ast()
+
+    assert std.match(bwd.body)
