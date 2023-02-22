@@ -15,7 +15,7 @@ from typing import Sequence, Mapping, Tuple, Any, Optional
 import freetensor_ffi as ffi
 
 from . import config
-from .context import ctx_stack
+from .context import ctx_stack, StmtRange
 from .expr import VarRef
 
 open_vardefs = {}
@@ -427,33 +427,56 @@ def MarkVersion(tape_name: str, var: VarRef):
                                         top.get_metadata()))
 
 
-class UserGradForPrevStmt:
+class UserGrad:
     '''
-    Define a custom gradient for the immediately previous statement
+    Define a custom gradient
 
     Follow the following steps to define custom gradient:
 
     1. Add some `mark_version` statements in the program. `mark_version('y0', y)` marks the specific
     versions of variable `y` **at the program position of the statement** and **at all iterations**
     as `'y0'`.
-    2. Add a `UserGradForPrevStmt` scope **directly after** the statement (or statement scope) you
-    want to provide custom gradient for. `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef`
-    `dx` and `dy` as gradient variables to be used inside the scope.
+    2. Add a `UserGrad` scope.
+    2.1. `UserGrad` optionally receives parameter `stmt_range`, recorded by the `StmtRange` helper class,
+    which means the gradient is for the code specified in the range. Ignoring the parameter means setting
+    gradient for the previous statement of the scope.
+    2.2. Other parameters of `UserGrad` sets the mapping from original variables to gradient variables.
+    `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef` `dx` and `dy` as gradient variables
+    to be used inside the scope.
     3. In order to use the value from the forward pass in the backward pass, do not access the forward
     variables directly in the scope. Instead, use `load_at_version` expressions.
     `load_at_version('y0', i, j)` loads from `y[i, j]` **at the specific version marked by
     `mark_version('y0', y)`**, saved from **the same iteration in the forward pass**. In other words,
     after AD, the position of `mark_version` and the dynamic loop iterator together makes up the actual
     version number for the tape.
-    4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An `ID` to `Stmt` map will be
-    returned together with the AST, which you need to pass as `grad`'s `user_bwds` argument. This map
-    records the forward-to-backward relation of the nodes.
+    4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An extra list will be returned
+    together with the AST, which you need to pass as `grad`'s `user_bwds` argument. This list records
+    the forward-to-backward relation of the nodes.
+
+    Parameters
+    ----------
+    stmt_range: Optional[StmtRange]
+        The range in the original program that we are setting custom gradient for
+    args: Sequence[VarRef]
+        (Positional variadic) Mapping from original variables to gradient variables
     '''
 
-    def __init__(self, *ori_vars: Sequence[VarRef]):
-        self.ori_vars = ori_vars
+    def __init__(self, *args: Sequence[VarRef], **kvs):
+        self.ori_vars = args
         self.body = None
         self.grad_defs = []
+        if 'stmt_range' in kvs:
+            stmt_range = kvs['stmt_range']
+            if isinstance(stmt_range, StmtRange):
+                self.begin_id, self.end_id = stmt_range.make()
+            else:
+                raise TypeError(
+                    "`stmt_range` should be a `StmtRange` for `UserGrad`")
+            del kvs['stmt_range']
+        else:
+            self.begin_id = self.end_id = ctx_stack.get_last_stmt_id()
+        for key in kvs:
+            raise TypeError(f"Unrecognized parameter `{key}` of `UserGrad`")
 
     def __enter__(self):
         # Make `VarDef` scopes for the gradients
@@ -483,7 +506,8 @@ class UserGradForPrevStmt:
         ctx_stack.top().stmt_seq.pop()
 
         # Record the body to context
-        ctx_stack.user_grads[ctx_stack.top().stmt_seq[-1].id] = self.body
+        ctx_stack.user_grads.append(
+            ffi.UserBwd(self.begin_id, self.end_id, self.body))
 
 
 class Func(ffi.Func):
@@ -494,12 +518,14 @@ class Func(ffi.Func):
                  returns,
                  body,
                  closure={},
-                 custom_callback=None):
+                 custom_callback=None,
+                 user_grads=[]):
         super().__init__(
             name, params,
             list(map(lambda x: (x[0], ffi.DataType(x[1])), returns)), body,
             closure)
         self.custom_callback = custom_callback
+        self.user_grads = user_grads
 
         # Mimic a Python function
         self.__name__ = name

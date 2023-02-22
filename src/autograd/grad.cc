@@ -267,9 +267,23 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
     if (isRecompute_) {
         return BaseClass::visitStmt(s);
     } else {
-        if (auto it = userBwds_.find(s->id());
-            it != userBwds_.end()) { // User's backward
-            Stmt bwdBody = it->second;
+        // Check for users' backward
+        if (!userBwdOpen_.has_value()) {
+            for (auto &&item : userBwds_) {
+                auto &&[oriBegin, oriEnd, bwdBody] = item;
+                if (oriBegin == s->id()) {
+                    userBwdOpen_ = item;
+                    userBwdInsertPos_ = oriBegin;
+                    break;
+                }
+            }
+        }
+
+        // Insert users' backward
+        Stmt ret;
+        if (userBwdInsertPos_ == s->id()) {
+            ASSERT(userBwdOpen_.has_value());
+            auto &&[_1, _2, bwdBody] = *userBwdOpen_;
 
             // 1. Hoist `VarDef`s so `LoadAtVersion` can acutally load from
             // something. Specifically, hoist `VarDef` nodes in this subtree
@@ -285,18 +299,26 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
                 sub = sub.as<VarDefNode>()->body_;
             }
             if (sub != hoisted) {
-                userBwds_[sub->id()] = bwdBody;
-                userBwds_.erase(it);
+                userBwdInsertPos_ = sub->id();
                 return (*this)(hoisted);
             }
 
             // 3. Plug in the user-defined backward
             ReplaceLoadAtVersion replacer{*this, intermediatesMap_,
                                           userVersions_};
-            return replacer(bwdBody);
-        } else { // Automatic backward
-            return BaseClass::visitStmt(s);
+            ret = replacer(bwdBody);
+        } else {
+            ret = BaseClass::visitStmt(s);
         }
+
+        // Check for the end of users' backward
+        if (userBwdOpen_.has_value() && userBwdOpen_->oriEnd_ == s->id()) {
+            userBwdOpen_ = std::nullopt;
+            userBwdInsertPos_ = ID();
+        }
+
+        // Automatic backward
+        return ret;
     }
 }
 
@@ -769,7 +791,7 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
 gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
          const std::unordered_set<ID> &tapes,
-         const std::unordered_map<ID, Stmt> &userBwds) {
+         const std::vector<UserBwd> &userBwds) {
 
     // expand the scope of each local variable, to avoid unnecessary recomputing
     auto op = hoistVarOverStmtSeq(_op);
@@ -889,7 +911,7 @@ static std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
              const std::unordered_set<std::string> &provides,
              const std::unordered_set<ID> &tapes, bool tapeInClosure,
-             const std::unordered_map<ID, Stmt> &userBwds) {
+             const std::vector<UserBwd> &userBwds) {
     auto [forward, backward, requireGrads, provideGrads, tapeMap] =
         gradBody(func->body_, _requires, provides, tapes, userBwds);
 
@@ -987,7 +1009,7 @@ gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
                 const std::unordered_set<ID> &tapes, bool tapeInClosure,
-                const std::unordered_map<ID, Stmt> &userBwds) {
+                const std::vector<UserBwd> &userBwds) {
     return gradFuncImpl<true>(func, _requires, provides, tapes, tapeInClosure,
                               userBwds);
 }
@@ -998,7 +1020,7 @@ gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
                    const std::unordered_set<ID> &tapes, bool tapeInClosure,
-                   const std::unordered_map<ID, Stmt> &userBwds) {
+                   const std::vector<UserBwd> &userBwds) {
     return gradFuncImpl<false>(func, _requires, provides, tapes, tapeInClosure,
                                userBwds);
 }
@@ -1034,7 +1056,7 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
 gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides, GradTapeMode tapeMode,
-         const std::unordered_map<ID, Stmt> &userBwds) {
+         const std::vector<UserBwd> &userBwds) {
     return gradBody(op, _requires, provides, findTapeDefs(op, tapeMode),
                     userBwds);
 }
@@ -1045,7 +1067,7 @@ gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
                 GradTapeMode tapeMode, bool tapeInClosure,
-                const std::unordered_map<ID, Stmt> &userBwds) {
+                const std::vector<UserBwd> &userBwds) {
     return gradFuncInplace(func, _requires, provides,
                            findTapeDefs(func->body_, tapeMode), tapeInClosure,
                            userBwds);
@@ -1057,7 +1079,7 @@ gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
                    GradTapeMode tapeMode, bool tapeInClosure,
-                   const std::unordered_map<ID, Stmt> &userBwds) {
+                   const std::vector<UserBwd> &userBwds) {
     return gradFuncOutOfPlace(func, _requires, provides,
                               findTapeDefs(func->body_, tapeMode),
                               tapeInClosure, userBwds);

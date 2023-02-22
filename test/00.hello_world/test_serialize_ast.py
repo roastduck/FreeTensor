@@ -359,7 +359,7 @@ def test_custom_grad():
             ft.MarkVersion("t0", t)
             ft.MarkLabel("S0")
             y[...] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
-            with ft.UserGradForPrevStmt(t, y) as (dt, dy):
+            with ft.UserGrad(t, y) as (dt, dy):
                 dt[...] = dy[...] * ft.intrinsic(
                     "cosf(%)", ft.load_at_version("t0"), ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
@@ -371,13 +371,13 @@ def test_custom_grad():
     print(ast2)
     assert ast2.match(ast)
 
-    for _, user_grad in user_grads.items():
-        print(user_grad)
-        txt = ft.dump_ast(user_grad, dtype_in_load=True)
+    for user_grad in user_grads:
+        print(user_grad.bwd_body)
+        txt = ft.dump_ast(user_grad.bwd_body, dtype_in_load=True)
         print(txt)
         user_grad2 = ft.load_ast(txt)
         print(user_grad2)
-        assert user_grad2.match(user_grad)
+        assert user_grad2.match(user_grad.bwd_body)
 
 
 def test_fission_metadata():
