@@ -147,7 +147,13 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.context">context</a>
         <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.context.ContextStack">ContextStack</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.context.StmtRange">StmtRange</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.context.pop_ast">pop_ast()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.context.pop_ast_and_user_grads">pop_ast_and_user_grads()</a>
     </li>
         </ul>
     </li>
@@ -345,7 +351,7 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.NamedScope">NamedScope</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.UserGradForPrevStmt">UserGradForPrevStmt</a>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.UserGrad">UserGrad</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.Any">Any()</a>
     </li>
@@ -1182,7 +1188,7 @@ Return        </code>
 
 
 <h4 id="freetensor.core.autograd.grad" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="p">{},</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="p">[],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.autograd.grad" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -1221,6 +1227,8 @@ we do not have to store each version of them in their history</p></li>
             <li><p><strong>tape_in_closure</strong> (<code>bool</code>) – True to pass taped tensors from the forward function to the backward function in
 implicit I/O parameters, i.e. in closure. False to pass these tensors as
 explicit I/O parameters. Default to True</p></li>
+            <li><p><strong>user_grads</strong> (<code>Sequence[freetensor_ffi.UserBwd]</code>) – For custom gradient. See <code>UserGrad</code> for details</p></li>
+            <li><p><strong>verbose</strong> (<code>Optional[int]</code>) – Verbosity level</p></li>
         </ul>
       </td>
     </tr>
@@ -1254,7 +1262,7 @@ explicit I/O parameters. Default to True</p></li>
          <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
          <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
          <span class="n">tape_in_closure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-         <span class="n">user_grads</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">ID</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+         <span class="n">user_grads</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">UserBwd</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
          <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Reverse mode automatic differentiation</span>
@@ -1288,6 +1296,10 @@ explicit I/O parameters. Default to True</p></li>
 <span class="sd">        True to pass taped tensors from the forward function to the backward function in</span>
 <span class="sd">        implicit I/O parameters, i.e. in closure. False to pass these tensors as</span>
 <span class="sd">        explicit I/O parameters. Default to True</span>
+<span class="sd">    user_grads: List[ffi.UserBwd]</span>
+<span class="sd">        For custom gradient. See `UserGrad` for details</span>
+<span class="sd">    verbose: int</span>
+<span class="sd">        Verbosity level</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1321,7 +1333,7 @@ explicit I/O parameters. Default to True</p></li>
 
 
 <h4 id="freetensor.core.autograd.grad_" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="p">{},</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="p">[],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.autograd.grad_" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -1360,6 +1372,8 @@ we do not have to store each version of them in their history</p></li>
             <li><p><strong>tape_in_closure</strong> (<code>bool</code>) – True to pass taped tensors from the forward function to the backward function in
 implicit I/O parameters, i.e. in closure. False to pass these tensors as
 explicit I/O parameters. Default to True</p></li>
+            <li><p><strong>user_grads</strong> (<code>Sequence[freetensor_ffi.UserBwd]</code>) – For custom gradient. See <code>UserGrad</code> for details</p></li>
+            <li><p><strong>verbose</strong> (<code>Optional[int]</code>) – Verbosity level</p></li>
         </ul>
       </td>
     </tr>
@@ -1393,7 +1407,7 @@ explicit I/O parameters. Default to True</p></li>
           <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
           <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
           <span class="n">tape_in_closure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-          <span class="n">user_grads</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">ID</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+          <span class="n">user_grads</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">UserBwd</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
           <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Reverse mode automatic differentiation</span>
@@ -1427,6 +1441,10 @@ explicit I/O parameters. Default to True</p></li>
 <span class="sd">        True to pass taped tensors from the forward function to the backward function in</span>
 <span class="sd">        implicit I/O parameters, i.e. in closure. False to pass these tensors as</span>
 <span class="sd">        explicit I/O parameters. Default to True</span>
+<span class="sd">    user_grads: List[ffi.UserBwd]</span>
+<span class="sd">        For custom gradient. See `UserGrad` for details</span>
+<span class="sd">    verbose: int</span>
+<span class="sd">        Verbosity level</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1460,7 +1478,7 @@ explicit I/O parameters. Default to True</p></li>
 
 
 <h4 id="freetensor.core.autograd.grad_body" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad_body</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="p">{})</span></code>
+<code class="highlight language-python"><span class="n">grad_body</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="p">[])</span></code>
 
 
 <a href="#freetensor.core.autograd.grad_body" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -1475,7 +1493,7 @@ explicit I/O parameters. Default to True</p></li>
               <span class="n">requires</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
               <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
               <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
-              <span class="n">user_grads</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">ID</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}):</span>
+              <span class="n">user_grads</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">UserBwd</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]):</span>
     <span class="sd">&#39;&#39;&#39; `grad` or `grad_` on a function body (for internal tests only) &#39;&#39;&#39;</span>
 
     <span class="n">req</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">requires</span><span class="p">)</span>
@@ -2251,6 +2269,271 @@ End users are encouraged to use <code>transformer</code>, instead of this module
 
 
 
+  <div class="doc doc-object doc-class">
+
+
+
+<h4 id="freetensor.core.context.ContextStack" class="doc doc-heading">
+        <code>
+ContextStack        </code>
+
+
+
+<a href="#freetensor.core.context.ContextStack" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/context.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">ContextStack</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">Context</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_grads</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># fn(ffi.Stmt) invoked for the next `append_stmt`</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">next_append_stmt_callbacks</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">top</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">push</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">()</span><span class="o">.</span><span class="n">caller_metadata</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_stack</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Context</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span>
+
+    <span class="k">def</span> <span class="nf">set_stack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Context</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stack</span> <span class="o">=</span> <span class="n">stack</span>
+
+    <span class="k">def</span> <span class="nf">get_last_stmt_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Can be used inside the staged code, to get the ID of the immediately preceding statement</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">ctx</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">stmt_seq</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ctx</span><span class="o">.</span><span class="n">stmt_seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">raise</span> <span class="n">ft</span><span class="o">.</span><span class="n">InvalidProgram</span><span class="p">(</span><span class="s2">&quot;There is no statement yet&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">add_next_append_stmt_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">],</span>
+                                                               <span class="kc">None</span><span class="p">]):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Add a callback to be called with the next statement to be appended. It will be called with</span>
+<span class="sd">        only the next statement. But for `If` statement, it can be called twice, one without &quot;else&quot;</span>
+<span class="sd">        branch, and then maybe one more with &quot;else&quot; branch</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">next_append_stmt_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.context.ContextStack.add_next_append_stmt_callback" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">add_next_append_stmt_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.context.ContextStack.add_next_append_stmt_callback" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Add a callback to be called with the next statement to be appended. It will be called with</p>
+<p>only the next statement. But for <code>If</code> statement, it can be called twice, one without "else"
+branch, and then maybe one more with "else" branch</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/context.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">add_next_append_stmt_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">],</span>
+                                                           <span class="kc">None</span><span class="p">]):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Add a callback to be called with the next statement to be appended. It will be called with</span>
+<span class="sd">    only the next statement. But for `If` statement, it can be called twice, one without &quot;else&quot;</span>
+<span class="sd">    branch, and then maybe one more with &quot;else&quot; branch</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">next_append_stmt_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.context.ContextStack.get_last_stmt_id" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_last_stmt_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.context.ContextStack.get_last_stmt_id" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Can be used inside the staged code, to get the ID of the immediately preceding statement</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/context.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_last_stmt_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Can be used inside the staged code, to get the ID of the immediately preceding statement</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">ctx</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">stmt_seq</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ctx</span><span class="o">.</span><span class="n">stmt_seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+    <span class="k">raise</span> <span class="n">ft</span><span class="o">.</span><span class="n">InvalidProgram</span><span class="p">(</span><span class="s2">&quot;There is no statement yet&quot;</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h4 id="freetensor.core.context.StmtRange" class="doc doc-heading">
+        <code>
+StmtRange        </code>
+
+
+
+<a href="#freetensor.core.context.StmtRange" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Record a range of statement in a program, can be used for custom gradient</p>
+<p>Usage:</p>
+<pre><code>with StmtRange() as rng:
+    # Some statements
+</code></pre>
+<p><code>StmtRange</code> can be used interleaved with AST scopes. In these cases, you can directly call
+<code>__enter__</code> and <code>__exit__</code>. E.g.,</p>
+<pre><code>rng = StmtRange()
+rng.__enter__()
+# Some statements
+with VarDef(...)  # Some scopes
+    # Some other statements
+    rng.__exit__(None, None, None)
+
+</code></pre>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/context.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">StmtRange</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Record a range of statement in a program, can be used for custom gradient</span>
+
+<span class="sd">    Usage:</span>
+
+<span class="sd">    ```</span>
+<span class="sd">    with StmtRange() as rng:</span>
+<span class="sd">        # Some statements</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    `StmtRange` can be used interleaved with AST scopes. In these cases, you can directly call</span>
+<span class="sd">    `__enter__` and `__exit__`. E.g.,</span>
+
+<span class="sd">    ```</span>
+<span class="sd">    rng = StmtRange()</span>
+<span class="sd">    rng.__enter__()</span>
+<span class="sd">    # Some statements</span>
+<span class="sd">    with VarDef(...)  # Some scopes</span>
+<span class="sd">        # Some other statements</span>
+<span class="sd">        rng.__exit__(None, None, None)</span>
+
+<span class="sd">    ```</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">stmt</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="n">id</span>
+
+        <span class="n">ctx_stack</span><span class="o">.</span><span class="n">add_next_append_stmt_callback</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">get_last_stmt_id</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">make</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidProgram</span><span class="p">(</span><span class="s2">&quot;StmtRange is not properly entered&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidProgram</span><span class="p">(</span><span class="s2">&quot;StmtRange is not properly exited&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
 
 
   <div class="doc doc-object doc-function">
@@ -2289,6 +2572,44 @@ End users are encouraged to use <code>transformer</code>, instead of this module
 
   </div>
 
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.context.pop_ast_and_user_grads" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">pop_ast_and_user_grads</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.context.pop_ast_and_user_grads" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Get AST and reset context. Return an extra list for custom gradients</p>
+<p>Set <code>UserGrad</code> for details</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/context.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">pop_ast_and_user_grads</span><span class="p">(</span><span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get AST and reset context. Return an extra list for custom gradients</span>
+
+<span class="sd">    Set `UserGrad` for details</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ast</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="o">.</span><span class="n">make_stmt</span><span class="p">()</span>
+    <span class="n">user_grads</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">user_grads</span>
+    <span class="n">ctx_stack</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The popped AST is:&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ast</span><span class="p">,</span> <span class="n">user_grads</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
@@ -18274,65 +18595,109 @@ NamedScope        </code>
 
 
 
-<h4 id="freetensor.core.stmt.UserGradForPrevStmt" class="doc doc-heading">
+<h4 id="freetensor.core.stmt.UserGrad" class="doc doc-heading">
         <code>
-UserGradForPrevStmt        </code>
+UserGrad        </code>
 
 
 
-<a href="#freetensor.core.stmt.UserGradForPrevStmt" class="headerlink" title="Permanent link">&para;</a></h4>
+<a href="#freetensor.core.stmt.UserGrad" class="headerlink" title="Permanent link">&para;</a></h4>
 
     <div class="doc doc-contents ">
 
-      <p>Define a custom gradient for the immediately previous statement</p>
+      <p>Define a custom gradient</p>
 <p>Follow the following steps to define custom gradient:</p>
 <ol>
 <li>Add some <code>mark_version</code> statements in the program. <code>mark_version('y0', y)</code> marks the specific
 versions of variable <code>y</code> <strong>at the program position of the statement</strong> and <strong>at all iterations</strong>
 as <code>'y0'</code>.</li>
-<li>Add a <code>UserGradForPrevStmt</code> scope <strong>directly after</strong> the statement (or statement scope) you
-want to provide custom gradient for. <code>with UserGradForPrevStmt(x, y) as (dx, dy)</code> provides <code>VarRef</code>
-<code>dx</code> and <code>dy</code> as gradient variables to be used inside the scope.</li>
+<li>Add a <code>UserGrad</code> scope.
+2.1. <code>UserGrad</code> optionally receives parameter <code>stmt_range</code>, recorded by the <code>StmtRange</code> helper class,
+which means the gradient is for the code specified in the range. Ignoring the parameter means setting
+gradient for the previous statement of the scope.
+2.2. Other parameters of <code>UserGrad</code> sets the mapping from original variables to gradient variables.
+<code>with UserGradForPrevStmt(x, y) as (dx, dy)</code> provides <code>VarRef</code> <code>dx</code> and <code>dy</code> as gradient variables
+to be used inside the scope.</li>
 <li>In order to use the value from the forward pass in the backward pass, do not access the forward
 variables directly in the scope. Instead, use <code>load_at_version</code> expressions.
 <code>load_at_version('y0', i, j)</code> loads from <code>y[i, j]</code> <strong>at the specific version marked by
 <code>mark_version('y0', y)</code></strong>, saved from <strong>the same iteration in the forward pass</strong>. In other words,
 after AD, the position of <code>mark_version</code> and the dynamic loop iterator together makes up the actual
 version number for the tape.</li>
-<li>Build the AST with <code>pop_ast_and_user_grads</code> instead of <code>pop_ast</code>. An <code>ID</code> to <code>Stmt</code> map will be
-returned together with the AST, which you need to pass as <code>grad</code>'s <code>user_bwds</code> argument. This map
-records the forward-to-backward relation of the nodes.</li>
+<li>Build the AST with <code>pop_ast_and_user_grads</code> instead of <code>pop_ast</code>. An extra list will be returned
+together with the AST, which you need to pass as <code>grad</code>'s <code>user_bwds</code> argument. This list records
+the forward-to-backward relation of the nodes.</li>
 </ol>
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>stmt_range</strong> (<code>Optional[StmtRange]</code>) – The range in the original program that we are setting custom gradient for</p></li>
+            <li><p><strong>args</strong> (<code>Sequence[freetensor.core.expr.VarRef]</code>) – (Positional variadic) Mapping from original variables to gradient variables</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/stmt.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">UserGradForPrevStmt</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">UserGrad</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Define a custom gradient for the immediately previous statement</span>
+<span class="sd">    Define a custom gradient</span>
 
 <span class="sd">    Follow the following steps to define custom gradient:</span>
 
 <span class="sd">    1. Add some `mark_version` statements in the program. `mark_version(&#39;y0&#39;, y)` marks the specific</span>
 <span class="sd">    versions of variable `y` **at the program position of the statement** and **at all iterations**</span>
 <span class="sd">    as `&#39;y0&#39;`.</span>
-<span class="sd">    2. Add a `UserGradForPrevStmt` scope **directly after** the statement (or statement scope) you</span>
-<span class="sd">    want to provide custom gradient for. `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef`</span>
-<span class="sd">    `dx` and `dy` as gradient variables to be used inside the scope.</span>
+<span class="sd">    2. Add a `UserGrad` scope.</span>
+<span class="sd">    2.1. `UserGrad` optionally receives parameter `stmt_range`, recorded by the `StmtRange` helper class,</span>
+<span class="sd">    which means the gradient is for the code specified in the range. Ignoring the parameter means setting</span>
+<span class="sd">    gradient for the previous statement of the scope.</span>
+<span class="sd">    2.2. Other parameters of `UserGrad` sets the mapping from original variables to gradient variables.</span>
+<span class="sd">    `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef` `dx` and `dy` as gradient variables</span>
+<span class="sd">    to be used inside the scope.</span>
 <span class="sd">    3. In order to use the value from the forward pass in the backward pass, do not access the forward</span>
 <span class="sd">    variables directly in the scope. Instead, use `load_at_version` expressions.</span>
 <span class="sd">    `load_at_version(&#39;y0&#39;, i, j)` loads from `y[i, j]` **at the specific version marked by</span>
 <span class="sd">    `mark_version(&#39;y0&#39;, y)`**, saved from **the same iteration in the forward pass**. In other words,</span>
 <span class="sd">    after AD, the position of `mark_version` and the dynamic loop iterator together makes up the actual</span>
 <span class="sd">    version number for the tape.</span>
-<span class="sd">    4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An `ID` to `Stmt` map will be</span>
-<span class="sd">    returned together with the AST, which you need to pass as `grad`&#39;s `user_bwds` argument. This map</span>
-<span class="sd">    records the forward-to-backward relation of the nodes.</span>
+<span class="sd">    4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An extra list will be returned</span>
+<span class="sd">    together with the AST, which you need to pass as `grad`&#39;s `user_bwds` argument. This list records</span>
+<span class="sd">    the forward-to-backward relation of the nodes.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    stmt_range: Optional[StmtRange]</span>
+<span class="sd">        The range in the original program that we are setting custom gradient for</span>
+<span class="sd">    args: Sequence[VarRef]</span>
+<span class="sd">        (Positional variadic) Mapping from original variables to gradient variables</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ori_vars</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">VarRef</span><span class="p">]):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ori_vars</span> <span class="o">=</span> <span class="n">ori_vars</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">VarRef</span><span class="p">],</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ori_vars</span> <span class="o">=</span> <span class="n">args</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">grad_defs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="s1">&#39;stmt_range&#39;</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
+            <span class="n">stmt_range</span> <span class="o">=</span> <span class="n">kvs</span><span class="p">[</span><span class="s1">&#39;stmt_range&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt_range</span><span class="p">,</span> <span class="n">StmtRange</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span> <span class="o">=</span> <span class="n">stmt_range</span><span class="o">.</span><span class="n">make</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;`stmt_range` should be a `StmtRange` for `UserGrad`&quot;</span><span class="p">)</span>
+            <span class="k">del</span> <span class="n">kvs</span><span class="p">[</span><span class="s1">&#39;stmt_range&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">get_last_stmt_id</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unrecognized parameter `</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">` of `UserGrad`&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Make `VarDef` scopes for the gradients</span>
@@ -18362,7 +18727,8 @@ records the forward-to-backward relation of the nodes.</li>
         <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span><span class="o">.</span><span class="n">stmt_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
         <span class="c1"># Record the body to context</span>
-        <span class="n">ctx_stack</span><span class="o">.</span><span class="n">user_grads</span><span class="p">[</span><span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span><span class="o">.</span><span class="n">stmt_seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span>
+        <span class="n">ctx_stack</span><span class="o">.</span><span class="n">user_grads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ffi</span><span class="o">.</span><span class="n">UserBwd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">))</span>
 </code></pre></div>
         </details>
 

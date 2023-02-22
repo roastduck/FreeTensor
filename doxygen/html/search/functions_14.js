@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['undomakereduction_0',['undoMakeReduction',['../namespacefreetensor.html#a05409d02d9aa7bb8deead7ccc3ab87cc',1,'freetensor::undoMakeReduction(const ReduceTo &amp;op, DataType dtype)'],['../namespacefreetensor.html#a1ade08be2c8f7ad463f0d6996b4b3668',1,'freetensor::undoMakeReduction(const Stmt &amp;op)']]],
+  ['undomakereduction_0',['undoMakeReduction',['../namespacefreetensor.html#a1ade08be2c8f7ad463f0d6996b4b3668',1,'freetensor::undoMakeReduction(const Stmt &amp;op)'],['../namespacefreetensor.html#a05409d02d9aa7bb8deead7ccc3ab87cc',1,'freetensor::undoMakeReduction(const ReduceTo &amp;op, DataType dtype)']]],
   ['unexpectedqueryresult_1',['UnexpectedQueryResult',['../classfreetensor_1_1UnexpectedQueryResult.html#aaff867c8c5690c5f7b9c50ef96ddb712',1,'freetensor::UnexpectedQueryResult']]],
-  ['uni_2',['uni',['../namespacefreetensor.html#aab4cba4162c6d44c1fd6f1081b2e9f6d',1,'freetensor::uni(const std::vector&lt; T &gt; &amp;lhs, const std::vector&lt; T &gt; &amp;rhs)'],['../namespacefreetensor.html#a8d6b319ab67a43924ab50a1a329b3dda',1,'freetensor::uni(const std::unordered_set&lt; T, Hash, KeyEqual &gt; &amp;lhs, const std::unordered_set&lt; T, Hash, KeyEqual &gt; &amp;rhs)'],['../namespacefreetensor.html#aa1a8f39c90fd721add82a2d0e3228432',1,'freetensor::uni(T &amp;&amp;lhs, U &amp;&amp;rhs)'],['../namespacefreetensor.html#a75898e8c0508a4c906b37a14f626d1e5',1,'freetensor::uni(T &amp;&amp;lhs, U &amp;&amp;rhs)']]],
+  ['uni_2',['uni',['../namespacefreetensor.html#a75898e8c0508a4c906b37a14f626d1e5',1,'freetensor::uni(T &amp;&amp;lhs, U &amp;&amp;rhs)'],['../namespacefreetensor.html#aa1a8f39c90fd721add82a2d0e3228432',1,'freetensor::uni(T &amp;&amp;lhs, U &amp;&amp;rhs)'],['../namespacefreetensor.html#a8d6b319ab67a43924ab50a1a329b3dda',1,'freetensor::uni(const std::unordered_set&lt; T, Hash, KeyEqual &gt; &amp;lhs, const std::unordered_set&lt; T, Hash, KeyEqual &gt; &amp;rhs)'],['../namespacefreetensor.html#aab4cba4162c6d44c1fd6f1081b2e9f6d',1,'freetensor::uni(const std::vector&lt; T &gt; &amp;lhs, const std::vector&lt; T &gt; &amp;rhs)']]],
   ['universemap_3',['universeMap',['../namespacefreetensor.html#ac5af415d2a157c0c5e24eab1690a64c3',1,'freetensor']]],
   ['universeset_4',['universeSet',['../namespacefreetensor.html#aa394ecdffe03ce0ce15292b868c291b8',1,'freetensor']]],
   ['unknowncnt_5',['unknownCnt',['../classfreetensor_1_1FindLoopVariance.html#adcc22ad0e5cdcd3b3b033d37946f5638',1,'freetensor::FindLoopVariance']]],
@@ -24,5 +24,6 @@ var searchData=
   ['usebuiltindiv_21',['UseBuiltinDiv',['../classfreetensor_1_1UseBuiltinDiv.html#a74633855d3143a469c5618cb12ebfd85',1,'freetensor::UseBuiltinDiv']]],
   ['usedcnt_22',['usedCnt',['../classfreetensor_1_1CountNames.html#afad8f61b1acc507f0a14a8771bf3d6e8',1,'freetensor::CountNames']]],
   ['usenativearch_23',['useNativeArch',['../classfreetensor_1_1CPUTarget.html#ac52a20371e64021a721432db24228aa6',1,'freetensor::CPUTarget::useNativeArch()'],['../classfreetensor_1_1Target.html#a94430881a13dba49deed1f5a8d9f677e',1,'freetensor::Target::useNativeArch()']]],
-  ['uses_24',['uses',['../classfreetensor_1_1AllUses.html#a6f2622151ea97b652b0c579e728e67e9',1,'freetensor::AllUses']]]
+  ['userbwd_24',['UserBwd',['../structfreetensor_1_1UserBwd.html#a943f58c9a2f5db46d54d9a8dd0e2fe76',1,'freetensor::UserBwd']]],
+  ['uses_25',['uses',['../classfreetensor_1_1AllUses.html#a6f2622151ea97b652b0c579e728e67e9',1,'freetensor::AllUses']]]
 ];
