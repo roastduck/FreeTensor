@@ -225,13 +225,13 @@ def test_frontend():
             cos = ft.unary_op(
                 lambda item: ft.intrinsic("cosf(%)", item, ret_type="float32"),
                 x)
-            ft.MarkVersion("sin0", sin)
-            ft.MarkVersion("cos0", cos)
+            sin0 = ft.mark_version(sin)
+            cos0 = ft.mark_version(cos)
             y = sin * sin - cos * cos
         with ft.UserGrad(x, y, stmt_range=rng) as (dx, dy):
             for i in range(4):
                 dx[i] = 4 * dy[i] * ft.load_at_version(
-                    'cos0', i) * ft.load_at_version('sin0', i)
+                    cos0, i) * ft.load_at_version(sin0, i)
         z = y * 2
         return z
 
@@ -247,6 +247,54 @@ def test_frontend():
                                                                   dz):
         with ft.For("i", 0, 4) as i:
             dx[i] = 4 * (2 * dz[i]) * cos[i] * sin[i]
+    std = ft.pop_ast()
+
+    assert std.match(bwd.body)
+
+
+def test_same_mark_version_name_in_different_call_site():
+
+    @ft.inline
+    def callee(x):
+        # (sin^2 x - cos^2 x)' = 4 * cos x * sin x
+        with ft.StmtRange() as rng:
+            sin = ft.unary_op(
+                lambda item: ft.intrinsic("sinf(%)", item, ret_type="float32"),
+                x)
+            cos = ft.unary_op(
+                lambda item: ft.intrinsic("cosf(%)", item, ret_type="float32"),
+                x)
+            sin0 = ft.mark_version(sin)
+            cos0 = ft.mark_version(cos)
+            y = sin * sin - cos * cos
+        with ft.UserGrad(x, y, stmt_range=rng) as (dx, dy):
+            for i in range(4):
+                dx[i] = 4 * dy[i] * ft.load_at_version(
+                    cos0, i) * ft.load_at_version(sin0, i)
+        return y
+
+    @ft.transform(verbose=2)
+    def func(x1: ft.Var[(4,), "float32"], x2: ft.Var[(4,), "float32"]):
+        return callee(x1) + callee(x2)
+
+    print(func.user_grads)
+    _, bwd, _, _ = ft.grad(func, ["x1", "x2"], [ft.Return()],
+                           ft.GradTapeMode.All, True, func.user_grads)
+    print(bwd)
+    bwd = ft.lower(bwd, verbose=1)
+
+    with ft.VarDef([("dx1", (4,), "float32", "output", "cpu"),
+                    ("dx2", (4,), "float32", "output", "cpu"),
+                    ("sin1", (4,), "float32", "input", "cpu"),
+                    ("cos1", (4,), "float32", "input", "cpu"),
+                    ("sin2", (4,), "float32", "input", "cpu"),
+                    ("cos2", (4,), "float32", "input", "cpu"),
+                    ("dz", (4,), "float32", "inout", "cpu")
+                   ]) as (dx1, dx2, sin1, cos1, sin2, cos2, dz):
+        with ft.For("i", 0, 4) as i:
+            dx2[i] = 4 * dz[i] * cos2[i] * sin2[i]
+        with ft.For("i", 0, 4) as i:
+            dx1[i] = 4 * dz[i] * cos1[i] * sin1[i]
     std = ft.pop_ast()
 
     assert std.match(bwd.body)

@@ -11,7 +11,19 @@ void init_ffi_autograd(py::module_ &m) {
         .def(py::init<const ID &, const ID &, const Stmt &>())
         .def_readonly("ori_begin", &UserBwd::oriBegin_)
         .def_readonly("ori_end", &UserBwd::oriEnd_)
-        .def_readonly("bwd_body", &UserBwd::bwdBody_);
+        .def_readonly("bwd_body", &UserBwd::bwdBody_)
+        .def("__str__",
+             [](const UserBwd &userBwd) {
+                 return "Backward of statements from " +
+                        toString(userBwd.oriBegin_) + " to " +
+                        toString(userBwd.oriEnd_) + " is " +
+                        toString(userBwd.bwdBody_);
+             })
+        .def("__repr__", [](const UserBwd &userBwd) {
+            return "<UserBwd " + toString(userBwd.oriBegin_) + " " +
+                   toString(userBwd.oriEnd_) + " " +
+                   toString(userBwd.bwdBody_) + ">";
+        });
 
     py::enum_<GradTapeMode>(m, "GradTapeMode")
         .value("All", GradTapeMode::All)

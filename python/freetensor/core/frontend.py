@@ -16,7 +16,7 @@ from .context import pop_ast_and_user_grads
 from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
                    if_then_else, shape)
 from .stmt import (_VarDef, NamedScope, VarRef, For, If, Else, MarkLabel,
-                   ctx_stack, Func, Assert, Invoke)
+                   ctx_stack, Func, Assert, Invoke, MarkVersion)
 
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
                       StagedIterable, StagingError, StagingOverload,
@@ -376,6 +376,28 @@ class Var(StagedTypeAnnotation):
     def annotate(self, name: str) -> VarRef:
         return _overload.register_vardef(name, self.shape, self.dtype,
                                          self.atype, self.mtype)
+
+
+@dataclass
+class VersionMarker(StagedAssignable):
+    var_name: str
+    assigned: bool = False
+
+    def assign(self, tape_name: str) -> VarRef:
+        '''Customized assign behavior. Creates a MarkVersion with its full name.'''
+        if not self.assigned:
+            self.assigned = True
+            full_tape_name = _overload.fullname(tape_name)
+            MarkVersion(full_tape_name, self.var_name)
+            return full_tape_name
+        else:
+            raise _overload.error(
+                "Marking version in an `a = b = c`-like multi-assignment is not"
+                " supported")
+
+
+def mark_version(var_name):
+    return VersionMarker(var_name)
 
 
 class dynamic_range(StagedIterable):

@@ -444,11 +444,11 @@ class UserGrad:
     `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef` `dx` and `dy` as gradient variables
     to be used inside the scope.
     3. In order to use the value from the forward pass in the backward pass, do not access the forward
-    variables directly in the scope. Instead, use `load_at_version` expressions.
-    `load_at_version('y0', i, j)` loads from `y[i, j]` **at the specific version marked by
-    `mark_version('y0', y)`**, saved from **the same iteration in the forward pass**. In other words,
-    after AD, the position of `mark_version` and the dynamic loop iterator together makes up the actual
-    version number for the tape.
+    variables directly in the scope. Instead, use `load_at_version` expressions. `load_at_version(y0, i, j)`
+    loads from `y[i, j]` **at the specific version marked by `y0 = mark_version(y)`**, saved from **the same
+    iteration in the forward pass**. (If directly writing staged code, it is `MarkVersion('y0', y)`). In
+    other words, after AD, the position of `mark_version` and the dynamic loop iterator together makes up
+    the actual version number for the tape.
     4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An extra list will be returned
     together with the AST, which you need to pass as `grad`'s `user_bwds` argument. This list records
     the forward-to-backward relation of the nodes.

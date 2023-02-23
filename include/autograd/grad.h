@@ -209,7 +209,7 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
     const std::unordered_map<ID, Expr> &totLens_;
     const std::unordered_set<ID> &saveLocalStmts_;
     const std::unordered_set<Stmt> &notSingleWrite_;
-    const std::vector<UserBwd> &userBwds_;
+    std::vector<UserBwd> userBwds_; // mutable
 
     std::unordered_map<std::string, std::string> requireGrads_; // var name map
     std::unordered_map<std::string, std::string> provideGrads_; // var name map

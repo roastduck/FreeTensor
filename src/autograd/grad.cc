@@ -267,15 +267,21 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
     if (isRecompute_) {
         return BaseClass::visitStmt(s);
     } else {
-        // Check for users' backward
-        if (!userBwdOpen_.has_value()) {
-            for (auto &&item : userBwds_) {
-                auto &&[oriBegin, oriEnd, bwdBody] = item;
-                if (oriBegin == s->id()) {
-                    userBwdOpen_ = item;
-                    userBwdInsertPos_ = oriBegin;
-                    break;
-                }
+        // Check for users' backward. Try insert the users' backward at the last
+        // statement in the range (which we will meet first, because we are
+        // traversing reversedly). If it is a VarDef, we will then skip it and
+        // try inner statements
+        if (auto it = std::find_if(
+                userBwds_.begin(), userBwds_.end(),
+                [&](auto &&item) { return item.oriEnd_ == s->id(); });
+            it != userBwds_.end()) {
+            if (!userBwdOpen_.has_value()) {
+                userBwdOpen_ = *it;
+                userBwdInsertPos_ = it->oriEnd_;
+                userBwds_.erase(it);
+            } else {
+                throw InvalidAutoGrad(
+                    "Ranges of different custom gradients should not overlap");
             }
         }
 
@@ -307,14 +313,20 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
             ReplaceLoadAtVersion replacer{*this, intermediatesMap_,
                                           userVersions_};
             ret = replacer(bwdBody);
+            userBwdInsertPos_ = ID(); // Mark the insertion is done
         } else {
             ret = BaseClass::visitStmt(s);
         }
 
-        // Check for the end of users' backward
-        if (userBwdOpen_.has_value() && userBwdOpen_->oriEnd_ == s->id()) {
+        // Check for the end (actually the beginning, because we are traversing
+        // reversedly) of users' backward
+        if (userBwdOpen_.has_value() && userBwdOpen_->oriBegin_ == s->id()) {
+            if (userBwdInsertPos_.isValid()) {
+                ERROR("Failed to insert custom backward for statements " +
+                      toString(userBwdOpen_->oriBegin_) + " to " +
+                      toString(userBwdOpen_->oriEnd_));
+            }
             userBwdOpen_ = std::nullopt;
-            userBwdInsertPos_ = ID();
         }
 
         // Automatic backward
