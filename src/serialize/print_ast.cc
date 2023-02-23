@@ -734,7 +734,7 @@ void PrintVisitor::visit(const LoadAtVersion &op) {
     os() << "@!load_at_version(" << escape(op->tapeName_) << "," << SPACE
          << "[";
     printList(op->indices_);
-    os() << "])";
+    os() << "]," << SPACE << ::freetensor::toString(op->loadType_) << ")";
 }
 
 std::string toString(const AST &op) {

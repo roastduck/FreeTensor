@@ -609,6 +609,7 @@ class LoadAtVersionNode : public ExprNode {
   public:
     std::string tapeName_;
     SubTreeList<ExprNode> indices_ = ChildOf{this};
+    DataType loadType_;
     void compHash() override;
     void inferDType() override;
     std::vector<Expr> children() const override { return indices_; }
@@ -617,18 +618,21 @@ class LoadAtVersionNode : public ExprNode {
 typedef Ref<LoadAtVersionNode> LoadAtVersion;
 #define makeLoadAtVersion(...) makeNode(LoadAtVersion, __VA_ARGS__)
 template <class Tindices>
-inline Expr _makeLoadAtVersion(const std::string &tapeName,
-                               Tindices &&indices) {
+inline Expr _makeLoadAtVersion(const std::string &tapeName, Tindices &&indices,
+                               const DataType loadType) {
     LoadAtVersion l = LoadAtVersion::make();
     l->tapeName_ = tapeName;
     l->indices_ = std::forward<Tindices>(indices);
+    l->loadType_ = loadType;
     return l;
 }
 inline Expr _makeLoadAtVersion(const std::string &tapeName,
-                               const std::vector<Expr> &indices) {
+                               const std::vector<Expr> &indices,
+                               const DataType loadType) {
     LoadAtVersion l = LoadAtVersion::make();
     l->tapeName_ = tapeName;
     l->indices_ = indices;
+    l->loadType_ = loadType;
     return l;
 }
 

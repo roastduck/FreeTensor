@@ -16,7 +16,7 @@ import freetensor_ffi as ffi
 
 from . import config
 from .context import ctx_stack, StmtRange
-from .expr import VarRef
+from .expr import VarRef, VarRefFromVarDef
 
 open_vardefs = {}
 
@@ -106,7 +106,8 @@ class _VarDef:
             raise ffi.InvalidProgram("Nested VarDefs with the same name `" +
                                      self.name + "` is not allowed")
         open_vardefs[self.name] = self
-        return VarRef(self.name, self, self.shape, self.dtype, self.mtype)
+        return VarRefFromVarDef(self.name, self, self.shape, self.dtype,
+                                self.mtype)
 
     def __exit__(self, exc_type, exc_value, traceback):
         del open_vardefs[self.name]

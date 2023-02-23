@@ -14,7 +14,7 @@ import freetensor_ffi as ffi
 
 from .context import pop_ast_and_user_grads
 from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
-                   if_then_else, shape)
+                   if_then_else, shape, VarVersionRef)
 from .stmt import (_VarDef, NamedScope, VarRef, For, If, Else, MarkLabel,
                    ctx_stack, Func, Assert, Invoke, MarkVersion)
 
@@ -380,7 +380,7 @@ class Var(StagedTypeAnnotation):
 
 @dataclass
 class VersionMarker(StagedAssignable):
-    var_name: str
+    var: VarRef
     assigned: bool = False
 
     def assign(self, tape_name: str) -> VarRef:
@@ -388,16 +388,18 @@ class VersionMarker(StagedAssignable):
         if not self.assigned:
             self.assigned = True
             full_tape_name = _overload.fullname(tape_name)
-            MarkVersion(full_tape_name, self.var_name)
-            return full_tape_name
+            MarkVersion(full_tape_name, self.var)
+            return VarVersionRef(full_tape_name, self.var.full_shape,
+                                 self.var.dtype, self.var.mtype,
+                                 self.var.indices)
         else:
             raise _overload.error(
                 "Marking version in an `a = b = c`-like multi-assignment is not"
                 " supported")
 
 
-def mark_version(var_name):
-    return VersionMarker(var_name)
+def mark_version(var: VarRef):
+    return VersionMarker(var)
 
 
 class dynamic_range(StagedIterable):

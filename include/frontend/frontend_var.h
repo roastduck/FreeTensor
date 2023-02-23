@@ -88,13 +88,15 @@ class FrontendVar {
     DataType dtype_;
     MemType mtype_;
     std::vector<FrontendVarIdx> indices_;
+    bool isLoadAtVersion_;
 
   public:
     FrontendVar(const std::string &name, const std::vector<Expr> &fullShape,
                 DataType dtype, MemType mtype,
-                const std::vector<FrontendVarIdx> &indices)
+                const std::vector<FrontendVarIdx> &indices,
+                bool isLoadAtVersion = false)
         : name_(name), fullShape_(fullShape), dtype_(dtype), mtype_(mtype),
-          indices_(indices) {}
+          indices_(indices), isLoadAtVersion_(isLoadAtVersion) {}
 
     const std::string &name() const { return name_; }
 

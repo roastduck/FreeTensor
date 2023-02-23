@@ -111,6 +111,7 @@ void MatchVisitor::visit(const Load &op) {
     for (auto &&[oIdx, iIdx] : views::zip(op->indices_, instance->indices_)) {
         RECURSE(oIdx, iIdx);
     }
+    CHECK(op->loadType_ == instance->loadType_);
 }
 
 void MatchVisitor::visit(const ReduceTo &op) {
@@ -530,6 +531,7 @@ void MatchVisitor::visit(const LoadAtVersion &op) {
     for (auto &&[oIdx, iIdx] : views::zip(op->indices_, instance->indices_)) {
         RECURSE(oIdx, iIdx);
     }
+    CHECK(op->loadType_ == instance->loadType_);
 }
 
 bool match(const Stmt &_pattern, const Stmt &_instance) {

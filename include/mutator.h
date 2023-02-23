@@ -368,7 +368,8 @@ class Mutator {
             indices.emplace_back((*this)(index));
         }
         return COPY_DEBUG_INFO(
-            makeLoadAtVersion(op->tapeName_, std::move(indices)), op);
+            makeLoadAtVersion(op->tapeName_, std::move(indices), op->loadType_),
+            op);
     }
 };
 

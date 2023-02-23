@@ -541,9 +541,9 @@ expr returns [Expr node]
       {
         $node = makeIntrinsic(slice($String.text, 1, -1), std::move(params), $dtype.type, hasSideEffect);
       }
-    | LOAD_AT_VERSION '(' tapeName=var COMMA indices ')'
+    | LOAD_AT_VERSION '(' tapeName=var COMMA indices COMMA dtype ')'
       {
-        $node = makeLoadAtVersion($tapeName.name, $indices.exprs);
+        $node = makeLoadAtVersion($tapeName.name, $indices.exprs, $dtype.type);
       }
     ;
 
