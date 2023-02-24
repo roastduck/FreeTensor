@@ -20,7 +20,7 @@ from .config import *
 from .serialize import *
 
 from .frontend import (transform, inline, empty, var, capture_var, Var,
-                       dynamic_range, static_range, mark_version, UserGrad)
+                       dynamic_range, static_range, push_for_backward, UserGrad)
 from .staging import (StagingError, StagedAssignable, StagedIterable,
                       StagedPredicate, StagedTypeAnnotation)
 

@@ -7,12 +7,12 @@ def test_basic():
         ft.MarkLabel('Vt')
         with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
             t[...] = x[...] * x[...]
-            ft.MarkVersion("t0", t)
+            ft.MarkVersion("t_now", t)
             y[...] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
             with ft.UserGradStaged(t, y) as (dt, dy):
                 dt[...] = dy[...] * ft.intrinsic("cosf(%)",
                                                  ft.load_at_version(
-                                                     "t0", "float32"),
+                                                     "t_now", "float32"),
                                                  ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
 
@@ -37,12 +37,12 @@ def test_marked_version_is_recomputed():
         ft.MarkLabel('Vt')
         with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
             t[...] = x[...] * x[...]
-            ft.MarkVersion("t0", t)
+            ft.MarkVersion("t_now", t)
             y[...] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
             with ft.UserGradStaged(t, y) as (dt, dy):
                 dt[...] = dy[...] * ft.intrinsic("cosf(%)",
                                                  ft.load_at_version(
-                                                     "t0", "float32"),
+                                                     "t_now", "float32"),
                                                  ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
 
@@ -63,12 +63,12 @@ def test_marked_version_is_recomputed():
 def test_mark_version_on_input():
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
-        ft.MarkVersion("x0", x)
+        ft.MarkVersion("x_now", x)
         y[...] = ft.intrinsic("sinf(%)", x[...], ret_type="float32")
         with ft.UserGradStaged(x, y) as (dx, dy):
             dx[...] = dy[...] * ft.intrinsic("cosf(%)",
                                              ft.load_at_version(
-                                                 "x0", "float32"),
+                                                 "x_now", "float32"),
                                              ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
 
@@ -95,12 +95,13 @@ def test_user_grad_on_scope():
             with ft.VarDef("cos", (), "float32", "cache", "cpu") as cos:
                 sin[...] = ft.intrinsic("sinf(%)", x[...], ret_type="float32")
                 cos[...] = ft.intrinsic("cosf(%)", x[...], ret_type="float32")
-                ft.MarkVersion("sin0", sin)
-                ft.MarkVersion("cos0", cos)
+                ft.MarkVersion("sin_now", sin)
+                ft.MarkVersion("cos_now", cos)
                 y[...] = sin[...] * sin[...] - cos[...] * cos[...]
         with ft.UserGradStaged(x, y) as (dx, dy):
             dx[...] = 4 * dy[...] * ft.load_at_version(
-                'cos0', 'float32') * ft.load_at_version('sin0', 'float32')
+                'cos_now', 'float32') * ft.load_at_version(
+                    'sin_now', 'float32')
     ast, user_grads = ft.pop_ast_and_user_grads()
 
     _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], {'Vsin', 'Vcos'},
@@ -131,15 +132,15 @@ def test_user_grad_on_range_crossing_def():
             ft.MarkLabel('Vcos')
             with ft.VarDef("cos", (), "float32", "cache", "cpu") as cos:
                 cos[...] = ft.intrinsic("cosf(%)", x[...], ret_type="float32")
-                ft.MarkVersion("sin0", sin)
-                ft.MarkVersion("cos0", cos)
+                ft.MarkVersion("sin_now", sin)
+                ft.MarkVersion("cos_now", cos)
                 with ft.VarDef("y", (), "float32", "cache", "cpu") as y:
                     y[...] = sin[...] * sin[...] - cos[...] * cos[...]
                     rng.__exit__(None, None, None)
                     with ft.UserGradStaged(x, y, stmt_range=rng) as (dx, dy):
                         dx[...] = 4 * dy[...] * ft.load_at_version(
-                            'cos0', 'float32') * ft.load_at_version(
-                                'sin0', 'float32')
+                            'cos_now', 'float32') * ft.load_at_version(
+                                'sin_now', 'float32')
                     z[...] = 2 * y[...]
     ast, user_grads = ft.pop_ast_and_user_grads()
 
@@ -167,12 +168,13 @@ def test_user_grad_on_scope_with_load_at_version_recomputed():
             with ft.VarDef("cos", (), "float32", "cache", "cpu") as cos:
                 sin[...] = ft.intrinsic("sinf(%)", x[...], ret_type="float32")
                 cos[...] = ft.intrinsic("cosf(%)", x[...], ret_type="float32")
-                ft.MarkVersion("sin0", sin)
-                ft.MarkVersion("cos0", cos)
+                ft.MarkVersion("sin_now", sin)
+                ft.MarkVersion("cos_now", cos)
                 y[...] = sin[...] * sin[...] - cos[...] * cos[...]
         with ft.UserGradStaged(x, y) as (dx, dy):
             dx[...] = 4 * dy[...] * ft.load_at_version(
-                'cos0', 'float32') * ft.load_at_version('sin0', 'float32')
+                'cos_now', 'float32') * ft.load_at_version(
+                    'sin_now', 'float32')
     ast, user_grads = ft.pop_ast_and_user_grads()
 
     _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set(), user_grads)
@@ -197,12 +199,12 @@ def test_mark_from_multiple_versions():
             ft.MarkLabel('Vt')
             with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
                 t[...] = x[i] * x[i]
-                ft.MarkVersion("t0", t)
+                ft.MarkVersion("t_now", t)
                 y[i] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
                 with ft.UserGradStaged(t, y) as (dt, dy):
                     dt[...] = dy[i] * ft.intrinsic("cosf(%)",
                                                    ft.load_at_version(
-                                                       "t0", "float32"),
+                                                       "t_now", "float32"),
                                                    ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
 
@@ -234,11 +236,11 @@ def test_frontend():
             cos = ft.unary_op(
                 lambda item: ft.intrinsic("cosf(%)", item, ret_type="float32"),
                 x)
-            sin0 = ft.mark_version(sin)
-            cos0 = ft.mark_version(cos)
+            sin_now = ft.push_for_backward(sin)
+            cos_now = ft.push_for_backward(cos)
             y = sin * sin - cos * cos
         with ft.UserGrad(x, y, stmt_range=rng) as (dx, dy):
-            dx[...] = 4 * dy * cos0 * sin0
+            dx[...] = 4 * dy * cos_now * sin_now
         z = y * 2
         return z
 
@@ -271,11 +273,11 @@ def test_same_mark_version_name_in_different_call_site():
             cos = ft.unary_op(
                 lambda item: ft.intrinsic("cosf(%)", item, ret_type="float32"),
                 x)
-            sin0 = ft.mark_version(sin)
-            cos0 = ft.mark_version(cos)
+            sin_now = ft.push_for_backward(sin)
+            cos_now = ft.push_for_backward(cos)
             y = sin * sin - cos * cos
         with ft.UserGrad(x, y, stmt_range=rng) as (dx, dy):
-            dx[...] = 4 * dy * cos0 * sin0
+            dx[...] = 4 * dy * cos_now * sin_now
         return y
 
     @ft.transform(verbose=2)

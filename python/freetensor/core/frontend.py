@@ -398,7 +398,24 @@ class VersionMarker(StagedAssignable):
                 " supported")
 
 
-def mark_version(var: VarRef):
+def push_for_backward(var: VarRef):
+    '''
+    Push the current value from the forward pass to be used at the backward pass
+
+    This function is for custom gradients. See `UserGrad` for details on how to provide custom
+    gradients.
+
+    You may imagine there is a virtual stack for each variable. Each time you call `x_handle =
+    push_for_backward(x)` in the forward pass, the value of `x` **at the current iteration**
+    will be "pushed" to the virtual stack. You can access `x_handle` at the backward pass. Each
+    time you access `x_handle`, you will "pop" the stack and get the value of `x` **pushed at
+    the same iteration**. Since the "stack" is virtual, you do NOT need to "pop" the same count
+    as "push"es: the version numbering is fully automatic. Besides, there may not be a real
+    stack at runtime: it can be compiled to any data structure.
+
+    This function will be staged to `mark_version` statement in the IR.
+    '''
+
     return VersionMarker(var)
 
 
