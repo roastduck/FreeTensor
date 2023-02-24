@@ -9,7 +9,7 @@ def test_basic():
             t[...] = x[...] * x[...]
             ft.MarkVersion("t0", t)
             y[...] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
-            with ft.UserGrad(t, y) as (dt, dy):
+            with ft.UserGradStaged(t, y) as (dt, dy):
                 dt[...] = dy[...] * ft.intrinsic("cosf(%)",
                                                  ft.load_at_version(
                                                      "t0", "float32"),
@@ -39,7 +39,7 @@ def test_marked_version_is_recomputed():
             t[...] = x[...] * x[...]
             ft.MarkVersion("t0", t)
             y[...] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
-            with ft.UserGrad(t, y) as (dt, dy):
+            with ft.UserGradStaged(t, y) as (dt, dy):
                 dt[...] = dy[...] * ft.intrinsic("cosf(%)",
                                                  ft.load_at_version(
                                                      "t0", "float32"),
@@ -65,7 +65,7 @@ def test_mark_version_on_input():
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
         ft.MarkVersion("x0", x)
         y[...] = ft.intrinsic("sinf(%)", x[...], ret_type="float32")
-        with ft.UserGrad(x, y) as (dx, dy):
+        with ft.UserGradStaged(x, y) as (dx, dy):
             dx[...] = dy[...] * ft.intrinsic("cosf(%)",
                                              ft.load_at_version(
                                                  "x0", "float32"),
@@ -98,7 +98,7 @@ def test_user_grad_on_scope():
                 ft.MarkVersion("sin0", sin)
                 ft.MarkVersion("cos0", cos)
                 y[...] = sin[...] * sin[...] - cos[...] * cos[...]
-        with ft.UserGrad(x, y) as (dx, dy):
+        with ft.UserGradStaged(x, y) as (dx, dy):
             dx[...] = 4 * dy[...] * ft.load_at_version(
                 'cos0', 'float32') * ft.load_at_version('sin0', 'float32')
     ast, user_grads = ft.pop_ast_and_user_grads()
@@ -136,7 +136,7 @@ def test_user_grad_on_range_crossing_def():
                 with ft.VarDef("y", (), "float32", "cache", "cpu") as y:
                     y[...] = sin[...] * sin[...] - cos[...] * cos[...]
                     rng.__exit__(None, None, None)
-                    with ft.UserGrad(x, y, stmt_range=rng) as (dx, dy):
+                    with ft.UserGradStaged(x, y, stmt_range=rng) as (dx, dy):
                         dx[...] = 4 * dy[...] * ft.load_at_version(
                             'cos0', 'float32') * ft.load_at_version(
                                 'sin0', 'float32')
@@ -170,7 +170,7 @@ def test_user_grad_on_scope_with_load_at_version_recomputed():
                 ft.MarkVersion("sin0", sin)
                 ft.MarkVersion("cos0", cos)
                 y[...] = sin[...] * sin[...] - cos[...] * cos[...]
-        with ft.UserGrad(x, y) as (dx, dy):
+        with ft.UserGradStaged(x, y) as (dx, dy):
             dx[...] = 4 * dy[...] * ft.load_at_version(
                 'cos0', 'float32') * ft.load_at_version('sin0', 'float32')
     ast, user_grads = ft.pop_ast_and_user_grads()
@@ -199,7 +199,7 @@ def test_mark_from_multiple_versions():
                 t[...] = x[i] * x[i]
                 ft.MarkVersion("t0", t)
                 y[i] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
-                with ft.UserGrad(t, y) as (dt, dy):
+                with ft.UserGradStaged(t, y) as (dt, dy):
                     dt[...] = dy[i] * ft.intrinsic("cosf(%)",
                                                    ft.load_at_version(
                                                        "t0", "float32"),
@@ -238,8 +238,7 @@ def test_frontend():
             cos0 = ft.mark_version(cos)
             y = sin * sin - cos * cos
         with ft.UserGrad(x, y, stmt_range=rng) as (dx, dy):
-            for i in range(4):
-                dx[i] = 4 * dy[i] * cos0[i] * sin0[i]
+            dx[...] = 4 * dy * cos0 * sin0
         z = y * 2
         return z
 
@@ -276,8 +275,7 @@ def test_same_mark_version_name_in_different_call_site():
             cos0 = ft.mark_version(cos)
             y = sin * sin - cos * cos
         with ft.UserGrad(x, y, stmt_range=rng) as (dx, dy):
-            for i in range(4):
-                dx[i] = 4 * dy[i] * cos0[i] * sin0[i]
+            dx[...] = 4 * dy * cos0 * sin0
         return y
 
     @ft.transform(verbose=2)

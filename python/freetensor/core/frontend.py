@@ -16,7 +16,7 @@ from .context import pop_ast_and_user_grads
 from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
                    if_then_else, shape, VarVersionRef)
 from .stmt import (_VarDef, NamedScope, VarRef, For, If, Else, MarkLabel,
-                   ctx_stack, Func, Assert, Invoke, MarkVersion)
+                   ctx_stack, Func, Assert, Invoke, MarkVersion, UserGradStaged)
 
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
                       StagedIterable, StagingError, StagingOverload,
@@ -400,6 +400,56 @@ class VersionMarker(StagedAssignable):
 
 def mark_version(var: VarRef):
     return VersionMarker(var)
+
+
+class UserGrad(UserGradStaged):
+    '''
+    Define a custom gradient
+
+    Follow the following steps to define custom gradient:
+
+    1. Add some `mark_version` statements in the program. `mark_version('y0', y)` marks the specific
+    versions of variable `y` **at the program position of the statement** and **at all iterations**
+    as `'y0'`.
+    2. Add a `UserGrad` scope.
+    2.1. `UserGrad` optionally receives parameter `stmt_range`, recorded by the `StmtRange` helper class,
+    which means the gradient is for the code specified in the range. Ignoring the parameter means setting
+    gradient for the previous statement of the scope.
+    2.2. Other parameters of `UserGrad` sets the mapping from original variables to gradient variables.
+    `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef` `dx` and `dy` as gradient variables
+    to be used inside the scope.
+    3. In order to use the value from the forward pass in the backward pass, do not access the forward
+    variables directly in the scope. Instead, use `load_at_version` expressions. `load_at_version(y0, i, j)`
+    loads from `y[i, j]` **at the specific version marked by `y0 = mark_version(y)`**, saved from **the same
+    iteration in the forward pass**. (If directly writing staged code, it is `MarkVersion('y0', y)`). In
+    other words, after AD, the position of `mark_version` and the dynamic loop iterator together makes up
+    the actual version number for the tape.
+    4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An extra list will be returned
+    together with the AST, which you need to pass as `grad`'s `user_bwds` argument. This list records
+    the forward-to-backward relation of the nodes.
+
+    If you are directly writing staged code, use `UserGradStaged` instead.
+
+    Parameters
+    ----------
+    stmt_range: Optional[StmtRange]
+        The range in the original program that we are setting custom gradient for
+    args: Sequence[VarRef]
+        (Positional variadic) Mapping from original variables to gradient variables
+    '''
+
+    def __init__(self, *args: Sequence[VarRef], **kvs):
+        super(UserGrad, self).__init__(*args, **kvs)
+        self.lifetime_scope = LifetimeScope()
+
+    def __enter__(self):
+        ret = super(UserGrad, self).__enter__()
+        self.lifetime_scope.__enter__()
+        return ret
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.lifetime_scope.__exit__(exc_type, exc_value, traceback)
+        return super(UserGrad, self).__exit__(exc_type, exc_value, traceback)
 
 
 class dynamic_range(StagedIterable):
