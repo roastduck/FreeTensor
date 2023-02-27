@@ -272,13 +272,13 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
         // traversing reversedly). If it is a VarDef, we will then skip it and
         // try inner statements
         if (auto it = std::find_if(
-                userBwds_.begin(), userBwds_.end(),
+                userGrads_.begin(), userGrads_.end(),
                 [&](auto &&item) { return item.oriEnd_ == s->id(); });
-            it != userBwds_.end()) {
-            if (!userBwdOpen_.has_value()) {
-                userBwdOpen_ = *it;
-                userBwdInsertPos_ = it->oriEnd_;
-                userBwds_.erase(it);
+            it != userGrads_.end()) {
+            if (!userGradOpen_.has_value()) {
+                userGradOpen_ = *it;
+                userGradInsertPos_ = it->oriEnd_;
+                userGrads_.erase(it);
             } else {
                 throw InvalidAutoGrad(
                     "Ranges of different custom gradients should not overlap");
@@ -287,9 +287,9 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
 
         // Insert users' backward
         Stmt ret;
-        if (userBwdInsertPos_ == s->id()) {
-            ASSERT(userBwdOpen_.has_value());
-            auto &&[_1, _2, bwdBody] = *userBwdOpen_;
+        if (userGradInsertPos_ == s->id()) {
+            ASSERT(userGradOpen_.has_value());
+            auto &&[_1, _2, bwdBody] = *userGradOpen_;
 
             // 1. Hoist `VarDef`s so `LoadAtVersion` can acutally load from
             // something. Specifically, hoist `VarDef` nodes in this subtree
@@ -305,7 +305,7 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
                 sub = sub.as<VarDefNode>()->body_;
             }
             if (sub != hoisted) {
-                userBwdInsertPos_ = sub->id();
+                userGradInsertPos_ = sub->id();
                 return (*this)(hoisted);
             }
 
@@ -313,20 +313,20 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
             ReplaceLoadAtVersion replacer{*this, intermediatesMap_,
                                           userVersions_};
             ret = replacer(bwdBody);
-            userBwdInsertPos_ = ID(); // Mark the insertion is done
+            userGradInsertPos_ = ID(); // Mark the insertion is done
         } else {
             ret = BaseClass::visitStmt(s);
         }
 
         // Check for the end (actually the beginning, because we are traversing
         // reversedly) of users' backward
-        if (userBwdOpen_.has_value() && userBwdOpen_->oriBegin_ == s->id()) {
-            if (userBwdInsertPos_.isValid()) {
+        if (userGradOpen_.has_value() && userGradOpen_->oriBegin_ == s->id()) {
+            if (userGradInsertPos_.isValid()) {
                 ERROR("Failed to insert custom backward for statements " +
-                      toString(userBwdOpen_->oriBegin_) + " to " +
-                      toString(userBwdOpen_->oriEnd_));
+                      toString(userGradOpen_->oriBegin_) + " to " +
+                      toString(userGradOpen_->oriEnd_));
             }
-            userBwdOpen_ = std::nullopt;
+            userGradOpen_ = std::nullopt;
         }
 
         // Automatic backward
@@ -803,7 +803,7 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
 gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
          const std::unordered_set<ID> &tapes,
-         const std::vector<UserBwd> &userBwds) {
+         const std::vector<RangeToUserGrad> &userGrads) {
 
     // expand the scope of each local variable, to avoid unnecessary recomputing
     auto op = hoistVarOverStmtSeq(_op);
@@ -860,7 +860,7 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
 
     Grad mutator(_requires, provides, tapes, affectedDefs, intermediatesMap,
                  versions, userVersions, totLens, saveLocalStmts,
-                 notSingleWrite, userBwds);
+                 notSingleWrite, userGrads);
     backward = mutator(backward);
 
     // A backward program may re-input the same taped variable multiple times.
@@ -923,9 +923,9 @@ static std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
              const std::unordered_set<std::string> &provides,
              const std::unordered_set<ID> &tapes, bool tapeInClosure,
-             const std::vector<UserBwd> &userBwds) {
+             const std::vector<RangeToUserGrad> &userGrads) {
     auto [forward, backward, requireGrads, provideGrads, tapeMap] =
-        gradBody(func->body_, _requires, provides, tapes, userBwds);
+        gradBody(func->body_, _requires, provides, tapes, userGrads);
 
     std::vector<FuncParam> forwardParams, backwardParams;
     std::vector<FuncRet> backwardRets;
@@ -1021,9 +1021,9 @@ gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
                 const std::unordered_set<ID> &tapes, bool tapeInClosure,
-                const std::vector<UserBwd> &userBwds) {
+                const std::vector<RangeToUserGrad> &userGrads) {
     return gradFuncImpl<true>(func, _requires, provides, tapes, tapeInClosure,
-                              userBwds);
+                              userGrads);
 }
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -1032,9 +1032,9 @@ gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
                    const std::unordered_set<ID> &tapes, bool tapeInClosure,
-                   const std::vector<UserBwd> &userBwds) {
+                   const std::vector<RangeToUserGrad> &userGrads) {
     return gradFuncImpl<false>(func, _requires, provides, tapes, tapeInClosure,
-                               userBwds);
+                               userGrads);
 }
 
 static std::vector<ID> _findTapeDefs(const Stmt &op, GradTapeMode mode) {
@@ -1068,9 +1068,9 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
 gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides, GradTapeMode tapeMode,
-         const std::vector<UserBwd> &userBwds) {
+         const std::vector<RangeToUserGrad> &userGrads) {
     return gradBody(op, _requires, provides, findTapeDefs(op, tapeMode),
-                    userBwds);
+                    userGrads);
 }
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -1079,10 +1079,10 @@ gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
                 GradTapeMode tapeMode, bool tapeInClosure,
-                const std::vector<UserBwd> &userBwds) {
+                const std::vector<RangeToUserGrad> &userGrads) {
     return gradFuncInplace(func, _requires, provides,
                            findTapeDefs(func->body_, tapeMode), tapeInClosure,
-                           userBwds);
+                           userGrads);
 }
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -1091,10 +1091,10 @@ gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
                    GradTapeMode tapeMode, bool tapeInClosure,
-                   const std::vector<UserBwd> &userBwds) {
+                   const std::vector<RangeToUserGrad> &userGrads) {
     return gradFuncOutOfPlace(func, _requires, provides,
                               findTapeDefs(func->body_, tapeMode),
-                              tapeInClosure, userBwds);
+                              tapeInClosure, userGrads);
 }
 
 } // namespace freetensor

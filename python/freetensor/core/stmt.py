@@ -479,7 +479,7 @@ class UserGradStaged:
 
         # Record the body to context
         ctx_stack.user_grads.append(
-            ffi.UserBwd(self.begin_id, self.end_id, self.body))
+            ffi.RangeToUserGrad(self.begin_id, self.end_id, self.body))
 
 
 class Func(ffi.Func):

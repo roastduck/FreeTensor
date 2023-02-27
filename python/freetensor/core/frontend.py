@@ -442,7 +442,7 @@ class UserGrad(UserGradStaged):
     other words, after AD, the position of `mark_version` and the dynamic loop iterator together makes up
     the actual version number for the tape.
     4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An extra list will be returned
-    together with the AST, which you need to pass as `grad`'s `user_bwds` argument. This list records
+    together with the AST, which you need to pass as `grad`'s `user_grads` argument. This list records
     the forward-to-backward relation of the nodes.
 
     If you are directly writing staged code, use `UserGradStaged` instead.
