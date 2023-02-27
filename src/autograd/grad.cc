@@ -285,36 +285,48 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
             }
         }
 
-        // Insert users' backward
         Stmt ret;
-        if (userGradInsertPos_ == s->id()) {
-            ASSERT(userGradOpen_.has_value());
-            auto &&[_1, _2, bwdBody] = *userGradOpen_;
+        // We are in the custom backward range. Use users' backward only. No
+        // automatic backward
+        if (userGradOpen_.has_value()) {
+            // Insert users' backward
+            if (userGradInsertPos_ == s->id()) {
+                ASSERT(userGradOpen_.has_value());
+                auto &&[_1, _2, bwdBody] = *userGradOpen_;
 
-            // 1. Hoist `VarDef`s so `LoadAtVersion` can acutally load from
-            // something. Specifically, hoist `VarDef` nodes in this subtree
-            // which have non-`VarDef` parents, (TODO: We currently hoist all
-            // `VarDef`s, but we only need to hoist those used by
-            // `LoadAtVersion`s)
-            Stmt hoisted = hoistSelectedVar(s, "<-!<VarDef>");
+                // 1. Hoist `VarDef`s so `LoadAtVersion` can acutally load from
+                // something. Specifically, hoist `VarDef` nodes in this subtree
+                // which have non-`VarDef` parents, (TODO: We currently hoist
+                // all `VarDef`s, but we only need to hoist those used by
+                // `LoadAtVersion`s)
+                Stmt hoisted = hoistSelectedVar(s, "<-!<VarDef>");
 
-            // 2. We need `visit(VarDef)` to handle all the hoisted `VarDef`
-            // nodes, so we skip them
-            Stmt sub = hoisted;
-            while (sub->nodeType() == ASTNodeType::VarDef) {
-                sub = sub.as<VarDefNode>()->body_;
+                // 2. We need `visit(VarDef)` to handle all the hoisted `VarDef`
+                // nodes, so we skip them
+                Stmt sub = hoisted;
+                while (sub->nodeType() == ASTNodeType::VarDef) {
+                    sub = sub.as<VarDefNode>()->body_;
+                }
+                if (sub != hoisted) {
+                    userGradInsertPos_ = sub->id();
+                    ret = (*this)(hoisted);
+                } else {
+
+                    // 3. Plug in the user-defined backward
+                    ReplaceLoadAtVersion replacer{*this, intermediatesMap_,
+                                                  userVersions_};
+                    ret = replacer(bwdBody);
+                    userGradInsertPos_ = ID(); // Mark the insertion is done
+                }
+            } else { // In the range of custom backward, but not at the position
+                     // to insert
+                if (!s->children().empty()) { // Enter scopes as usual
+                    ret = BaseClass::visitStmt(s);
+                } else { // Ignore automatic backward for leaf nodes
+                    ret = makeStmtSeq({});
+                }
             }
-            if (sub != hoisted) {
-                userGradInsertPos_ = sub->id();
-                return (*this)(hoisted);
-            }
-
-            // 3. Plug in the user-defined backward
-            ReplaceLoadAtVersion replacer{*this, intermediatesMap_,
-                                          userVersions_};
-            ret = replacer(bwdBody);
-            userGradInsertPos_ = ID(); // Mark the insertion is done
-        } else {
+        } else { // Automatic backward
             ret = BaseClass::visitStmt(s);
         }
 
@@ -329,7 +341,6 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
             userGradOpen_ = std::nullopt;
         }
 
-        // Automatic backward
         return ret;
     }
 }

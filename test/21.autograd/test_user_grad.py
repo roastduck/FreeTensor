@@ -1,4 +1,6 @@
 import freetensor as ft
+import torch
+import pytest
 
 
 def test_basic():
@@ -305,3 +307,37 @@ def test_same_mark_version_name_in_different_call_site():
     std = ft.pop_ast()
 
     assert std.match(bwd.body)
+
+
+@pytest.mark.skipif(not ft.with_pytorch(), reason="requires PyTorch")
+def test_custom_grad_of_libop_call():
+    n = 4
+
+    def test(x: ft.Var[(n,), "float32"]):
+        with ft.StmtRange() as rng:
+            y = ft.libop.softmax(x)
+            y_now = ft.push_for_backward(y)
+        with ft.UserGrad(x, y, stmt_range=rng) as (dzdx, dzdy):
+            for i in range(n):
+                dzdx[i] = dzdy[i] * y_now[i]
+                for j in range(n):
+                    dzdx[i] -= dzdy[j] * y_now[i] * y_now[j]
+        return y
+
+    fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
+    fwd = ft.optimize(fwd)
+    bwd = ft.optimize(bwd, verbose=1)
+
+    # Check forward result
+    x = torch.rand(n, dtype=torch.float32)
+    x.requires_grad = True
+    y_ft = fwd(x).torch()
+    y_torch = torch.softmax(x, axis=-1)
+    assert torch.all(torch.isclose(y_ft, y_torch))
+
+    # Check backward result
+    y_torch.grad = dzdy = torch.rand(n, dtype=torch.float32)
+    dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+    y_torch.backward(y_torch.grad)
+    dzdx_torch = x.grad
+    assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))

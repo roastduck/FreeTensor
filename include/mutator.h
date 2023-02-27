@@ -358,7 +358,9 @@ class Mutator {
     }
 
     virtual Stmt visit(const MarkVersion &op) {
-        return COPY_DEBUG_INFO(makeMarkVersion(op->tapeName_, op->var_), op);
+        return COPY_DEBUG_INFO(
+            makeMarkVersion(op->tapeName_, op->var_, op->metadata(), op->id()),
+            op);
     }
 
     virtual Expr visit(const LoadAtVersion &op) {
