@@ -39,13 +39,13 @@ class VarRef(ffi.FrontendVar):
 
     def __init__(self,
                  name: str,
-                 vardef,
                  full_shape: Sequence,
                  dtype: ffi.DataType,
                  mtype: ffi.MemType,
-                 indices: Sequence = []):
-        super(VarRef, self).__init__(name, full_shape, dtype, mtype, indices)
-        self.vardef = vardef
+                 indices: Sequence = [],
+                 is_load_at_version: bool = False):
+        super(VarRef, self).__init__(name, full_shape, dtype, mtype, indices,
+                                     is_load_at_version)
 
         from .stmt import find_borrowed_vardefs
         self.borrowed_vardefs = find_borrowed_vardefs(indices)
@@ -57,43 +57,36 @@ class VarRef(ffi.FrontendVar):
             item.reclaim()
 
     def __getitem__(self, key):
-        return VarRef(self.name, self.vardef, self.full_shape, self.dtype,
-                      self.mtype, self.chain_indices(self._parse_key(key)))
+        return self.__class__(self.name, self.full_shape, self.dtype,
+                              self.mtype,
+                              self.chain_indices(self._parse_key(key)))
 
     def __setitem__(self, key, value):
-        var = VarRef(self.name, self.vardef, self.full_shape, self.dtype,
-                     self.mtype, self.chain_indices(self._parse_key(key)))
+        var = self.__class__(self.name, self.full_shape, self.dtype, self.mtype,
+                             self.chain_indices(self._parse_key(key)))
         if var.ndim > 0:
             if value is AlreadyMadeReduceTo:
                 return
             from .. import libop
             libop.assign(var, value)
             return
-        if var.vardef.atype == ffi.AccessType("input"):
-            raise ffi.InvalidProgram("Cannot modify an \"input\" tensor `" +
-                                     self.name + "`")
-        if var.vardef.borrower_cnt > 0:
-            raise ffi.InvalidProgram(
-                "Cannot modify tensor `" + self.name +
-                "` becuase it has been borrowed in another tensor's shape, "
-                "a tensor slice, or a range of a loop")
-        if value is AlreadyMadeReduceTo:  # Following the checks above
+        if value is AlreadyMadeReduceTo:
             return
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_metadata(), value))
 
     def as_store(self, metadata, value):
-        if (not isinstance(value, ffi.AnyExpr) and ffi.up_cast(
-                dtype(value), self.vardef.dtype) != self.vardef.dtype):
+        if (not isinstance(value, ffi.AnyExpr) and
+                ffi.up_cast(dtype(value), self.dtype) != self.dtype):
             # Add explicit cast node, to avoid confusion after propagation
-            value = cast(value, self.vardef.dtype)
+            value = cast(value, self.dtype)
         return super(VarRef, self).as_store(metadata, value)
 
     def as_reduce_to(self, reduce_op, metadata, value, atomic=False):
-        if (not isinstance(value, ffi.AnyExpr) and ffi.up_cast(
-                dtype(value), self.vardef.dtype) != self.vardef.dtype):
+        if (not isinstance(value, ffi.AnyExpr) and
+                ffi.up_cast(dtype(value), self.dtype) != self.dtype):
             # Add explicit cast node, to avoid confusion after propagation
-            value = cast(value, self.vardef.dtype)
+            value = cast(value, self.dtype)
         return super(VarRef, self).as_reduce_to(reduce_op, metadata, value,
                                                 atomic)
 
@@ -328,8 +321,73 @@ class VarRef(ffi.FrontendVar):
         return libop.matmul(other, self)
 
 
+class VarRefFromVarDef(VarRef):
+    '''
+    VarRef with extra checks
+    '''
+
+    def __init__(self,
+                 name: str,
+                 vardef,
+                 full_shape: Sequence,
+                 dtype: ffi.DataType,
+                 mtype: ffi.MemType,
+                 indices: Sequence = []):
+        super(VarRefFromVarDef, self).__init__(name, full_shape, dtype, mtype,
+                                               indices)
+        self.vardef = vardef
+
+    def __getitem__(self, key):
+        return VarRefFromVarDef(self.name, self.vardef, self.full_shape,
+                                self.dtype, self.mtype,
+                                self.chain_indices(self._parse_key(key)))
+
+    def __setitem__(self, key, value):
+        var = VarRefFromVarDef(self.name, self.vardef, self.full_shape,
+                               self.dtype, self.mtype,
+                               self.chain_indices(self._parse_key(key)))
+        if var.ndim > 0:
+            if value is AlreadyMadeReduceTo:
+                return
+            from .. import libop
+            libop.assign(var, value)
+            return
+        if var.vardef.atype == ffi.AccessType("input"):
+            raise ffi.InvalidProgram("Cannot modify an \"input\" tensor `" +
+                                     self.name + "`")
+        if var.vardef.borrower_cnt > 0:
+            raise ffi.InvalidProgram(
+                "Cannot modify tensor `" + self.name +
+                "` becuase it has been borrowed in another tensor's shape, "
+                "a tensor slice, or a range of a loop")
+        if value is AlreadyMadeReduceTo:  # Following the checks above
+            return
+        top = ctx_stack.top()
+        top.append_stmt(var.as_store(top.get_metadata(), value))
+
+
+class VarVersionRef(VarRef):
+    '''
+    Special VarRef used for custom gradient, generated from `mark_version`
+    '''
+
+    def __init__(self,
+                 name: str,
+                 full_shape: Sequence,
+                 dtype: ffi.DataType,
+                 mtype: ffi.MemType,
+                 indices: Sequence = []):
+        for dim in full_shape:
+            if not isinstance(dim, int) and not isinstance(dim, ffi.IntConst):
+                raise ffi.InvalidAutoGrad(
+                    "`mark_version` on dynamic-shaped variables is not supported"
+                    " yet")
+        super(VarVersionRef, self).__init__(name, full_shape, dtype, mtype,
+                                            indices, True)
+
+
 def _istensor(x):
-    return type(x) is VarRef and x.ndim > 0
+    return isinstance(x, VarRef) and x.ndim > 0
 
 
 ######################################
@@ -1113,13 +1171,13 @@ def any():
     return ffi.makeAnyExpr()
 
 
-def load_at_version(tape_name: str, *indices):
+def load_at_version(tape_name: str, dtype, *indices):
     '''
     Create an LoadAtVersion node (only for custom gradient)
 
     This node is only used for custom gradient. See `UserGradForPrevStmt`.
     '''
-    return ffi.makeLoadAtVersion(tape_name, indices)
+    return ffi.makeLoadAtVersion(tape_name, indices, ffi.DataType(dtype))
 
 
 def ndim(var):

@@ -358,7 +358,9 @@ class Mutator {
     }
 
     virtual Stmt visit(const MarkVersion &op) {
-        return COPY_DEBUG_INFO(makeMarkVersion(op->tapeName_, op->var_), op);
+        return COPY_DEBUG_INFO(
+            makeMarkVersion(op->tapeName_, op->var_, op->metadata(), op->id()),
+            op);
     }
 
     virtual Expr visit(const LoadAtVersion &op) {
@@ -368,7 +370,8 @@ class Mutator {
             indices.emplace_back((*this)(index));
         }
         return COPY_DEBUG_INFO(
-            makeLoadAtVersion(op->tapeName_, std::move(indices)), op);
+            makeLoadAtVersion(op->tapeName_, std::move(indices), op->loadType_),
+            op);
     }
 };
 

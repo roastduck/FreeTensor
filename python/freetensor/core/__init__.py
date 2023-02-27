@@ -8,7 +8,8 @@ from freetensor_ffi import (AccessType, MemType, DataType, ASTNodeType,
 from .context import pop_ast, pop_ast_and_user_grads, StmtRange
 from .expr import *
 from .stmt import (VarDef, For, If, Else, Alloc, Free, Assert, MarkLabel,
-                   NamedScope, Invoke, Eval, Any, Func, MarkVersion, UserGrad)
+                   NamedScope, Invoke, Eval, Any, Func, MarkVersion,
+                   UserGradStaged)
 from .analyze import *
 from .autograd import *
 from .passes import *
@@ -19,7 +20,7 @@ from .config import *
 from .serialize import *
 
 from .frontend import (transform, inline, empty, var, capture_var, Var,
-                       dynamic_range, static_range)
+                       dynamic_range, static_range, push_for_backward, UserGrad)
 from .staging import (StagingError, StagedAssignable, StagedIterable,
                       StagedPredicate, StagedTypeAnnotation)
 

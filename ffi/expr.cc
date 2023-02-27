@@ -328,9 +328,9 @@ void init_ffi_ast_expr(py::module_ &m) {
           "fmt"_a, "params"_a, "retType"_a = DataType::Void,
           "hasSideEffect"_a = false);
     m.def("makeLoadAtVersion",
-          static_cast<Expr (*)(const std::string &, const std::vector<Expr> &)>(
-              &_makeLoadAtVersion),
-          "tape_name"_a, "indices"_a);
+          static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,
+                               DataType)>(&_makeLoadAtVersion),
+          "tape_name"_a, "indices"_a, "load_type"_a);
 }
 
 } // namespace freetensor
