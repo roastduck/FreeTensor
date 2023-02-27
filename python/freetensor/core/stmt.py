@@ -315,7 +315,7 @@ def MarkLabel(label: str):
 
 class NamedScope:
     '''
-    Scope used to create an StmtSeq node with an explicit ID
+    Scope used to create an StmtSeq node with an explicit labels
 
     E.g.:
 
@@ -440,13 +440,13 @@ class UserGradStaged:
         if 'stmt_range' in kvs:
             stmt_range = kvs['stmt_range']
             if isinstance(stmt_range, StmtRange):
-                self.begin_id, self.end_id = stmt_range.make()
+                self.ori_stmts = stmt_range.make()
             else:
                 raise TypeError(
                     "`stmt_range` should be a `StmtRange` for `UserGrad`")
             del kvs['stmt_range']
         else:
-            self.begin_id = self.end_id = ctx_stack.get_last_stmt_id()
+            self.ori_stmts = {ctx_stack.get_last_stmt_id()}
         for key in kvs:
             raise TypeError(f"Unrecognized parameter `{key}` of `UserGrad`")
 
@@ -479,7 +479,7 @@ class UserGradStaged:
 
         # Record the body to context
         ctx_stack.user_grads.append(
-            ffi.RangeToUserGrad(self.begin_id, self.end_id, self.body))
+            ffi.StmtSetToUserGrad(self.ori_stmts, self.body))
 
 
 class Func(ffi.Func):

@@ -50,19 +50,16 @@ class Context:
         self.next_no_deps = []
         self.next_prefer_libs = False
 
-        for callback in self.parent_context_stack.next_append_stmt_callbacks:
+        for callback in self.parent_context_stack.append_stmt_callbacks:
             callback(stmt)
-        self.parent_context_stack.next_append_stmt_callbacks = []
 
     def append_if_then_stmt(self, cond, body: ffi.Stmt):
         next_metadata = self.get_metadata()
-        last_if = (next_metadata, cond, body,
-                   list(self.parent_context_stack.next_append_stmt_callbacks))
         self.append_stmt(ffi.makeIf(cond, body, next_metadata))
-        self.last_if = last_if
+        self.last_if = (next_metadata, cond, body)
 
     def append_if_else_stmt(self, elseCase: ffi.Stmt):
-        metadata, cond, thenCase, self.parent_context_stack.next_append_stmt_callbacks = self.last_if
+        metadata, cond, thenCase = self.last_if
         self.stmt_seq.pop()
         self.append_stmt(ffi.makeIf(cond, thenCase, elseCase, metadata))
 
@@ -129,8 +126,8 @@ class ContextStack:
         self.stack = [Context(self)]
         self.user_grads = []
 
-        # fn(ffi.Stmt) invoked for the next `append_stmt`
-        self.next_append_stmt_callbacks = []
+        # [fn(ffi.Stmt)], invoked for every `append_stmt`
+        self.append_stmt_callbacks = []
 
     def top(self) -> Context:
         return self.stack[-1]
@@ -156,14 +153,15 @@ class ContextStack:
                 return ctx.stmt_seq[-1].id
         raise ft.InvalidProgram("There is no statement yet")
 
-    def add_next_append_stmt_callback(self, callback: Callable[[ffi.Stmt],
-                                                               None]):
+    def push_append_stmt_callback(self, callback: Callable[[ffi.Stmt], None]):
         '''
-        Add a callback to be called with the next statement to be appended. It will be called with
-        only the next statement. But for `If` statement, it can be called twice, one without "else"
-        branch, and then maybe one more with "else" branch
+        Add a callback to be called with all next statements to be appended. For `If` statement, it
+        can be called twice, one without "else" branch, and then maybe one more with "else" branch
         '''
-        self.next_append_stmt_callbacks.append(callback)
+        self.append_stmt_callbacks.append(callback)
+
+    def pop_append_stmt_callback(self):
+        self.append_stmt_callbacks.pop()
 
 
 ctx_stack = ContextStack()
@@ -202,7 +200,7 @@ def pop_ast_and_user_grads(verbose: bool = False):
 
 class StmtRange:
     '''
-    Record a range of statement in a program, can be used for custom gradient
+    Record a set of statement in a program, can be used for custom gradient
 
     Usage:
 
@@ -226,23 +224,26 @@ class StmtRange:
     '''
 
     def __init__(self):
-        self.begin_id = None
-        self.end_id = None
+        self.ids = set()
+        self.entered = False
+        self.exited = False
 
     def __enter__(self):
 
         def callback(stmt):
-            self.begin_id = stmt.id
+            self.ids.add(stmt.id)
 
-        ctx_stack.add_next_append_stmt_callback(callback)
+        ctx_stack.push_append_stmt_callback(callback)
+        self.entered = True
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.end_id = ctx_stack.get_last_stmt_id()
+        ctx_stack.pop_append_stmt_callback()
+        self.exited = True
 
     def make(self):
-        if self.begin_id is None:
+        if not self.entered:
             raise ffi.InvalidProgram("StmtRange is not properly entered")
-        if self.end_id is None:
+        if not self.exited:
             raise ffi.InvalidProgram("StmtRange is not properly exited")
-        return self.begin_id, self.end_id
+        return self.ids

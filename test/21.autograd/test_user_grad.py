@@ -263,6 +263,52 @@ def test_frontend():
     assert std.match(bwd.body)
 
 
+def test_stmt_range_robustness():
+    # If we call StmtRange on some volatile statements, it must still work
+
+    @ft.transform(verbose=2)
+    def func(x: ft.Var[(4,), "float32"]):
+        # (sin^2 x - cos^2 x)' = 4 * cos x * sin x
+        with ft.StmtRange() as rng:
+            # Useless statement that will be removed soon
+            with ft.NamedScope():
+                pass
+
+            sin = ft.unary_op(
+                lambda item: ft.intrinsic("sinf(%)", item, ret_type="float32"),
+                x)
+            cos = ft.unary_op(
+                lambda item: ft.intrinsic("cosf(%)", item, ret_type="float32"),
+                x)
+            sin_now = ft.push_for_backward(sin)
+            cos_now = ft.push_for_backward(cos)
+            y = sin * sin - cos * cos
+
+            # Useless statement that will be removed soon
+            with ft.NamedScope():
+                pass
+        with ft.UserGrad(x, y, stmt_range=rng) as (dx, dy):
+            dx[...] = 4 * dy * cos_now * sin_now
+        z = y * 2
+        return z
+
+    _, bwd, _, _ = ft.grad(func, ["x"], [ft.Return()], ft.GradTapeMode.All,
+                           True, func.user_grads)
+    print(bwd)
+    bwd = ft.lower(bwd, verbose=1)
+
+    with ft.VarDef([("dx", (4,), "float32", "output", "cpu"),
+                    ("sin", (4,), "float32", "input", "cpu"),
+                    ("cos", (4,), "float32", "input", "cpu"),
+                    ("dz", (4,), "float32", "inout", "cpu")]) as (dx, sin, cos,
+                                                                  dz):
+        with ft.For("i", 0, 4) as i:
+            dx[i] = 4 * (2 * dz[i]) * cos[i] * sin[i]
+    std = ft.pop_ast()
+
+    assert std.match(bwd.body)
+
+
 def test_same_mark_version_name_in_different_call_site():
 
     @ft.inline

@@ -5,23 +5,13 @@
 #include <unordered_set>
 
 #include <analyze/symbol_table.h>
+#include <autograd/user_grad.h>
 #include <func.h>
 #include <hash.h>
 #include <mutator.h>
 #include <visitor.h>
 
 namespace freetensor {
-
-struct RangeToUserGrad {
-    /// Range of statements in the original program, inclusive
-    ID oriBegin_, oriEnd_;
-
-    /// Backward statement (can be a scope)
-    Stmt bwdBody_;
-
-    RangeToUserGrad(const ID &oriBegin, const ID &oriEnd, const Stmt &bwdBody)
-        : oriBegin_(oriBegin), oriEnd_(oriEnd), bwdBody_(bwdBody) {}
-};
 
 /**
  * Determine what variables we need to compute gradient for (propagete from
@@ -179,6 +169,7 @@ class GradExpr : public Visitor {
     void visit(const Sigmoid &op) override;
     void visit(const Tanh &op) override;
     void visit(const Abs &op) override;
+    void visit(const Intrinsic &op) override;
 };
 
 template <class BaseClass> class RenewIDs : public BaseClass {
@@ -288,7 +279,7 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
  * to pass taped tensors from the forward function to the backward function in
  * implicit I/O parameters, i.e. in closure. False to pass these tensors as
  * explicit I/O parameters. Default to true
- * @param userGrads : For custom gradients. Each `RangeToUserGrad` item in the
+ * @param userGrads : For custom gradients. Each `StmtSetToUserGrad` item in the
  * list specifies a statement range in the original program, which should be
  * replaced by a backward statement
  * @return : (
@@ -308,7 +299,7 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
 gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
          const std::unordered_set<ID> &tapes,
-         const std::vector<RangeToUserGrad> &userGrads = {});
+         const std::vector<StmtSetToUserGrad> &userGrads = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
@@ -316,7 +307,7 @@ gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
                 const std::unordered_set<ID> &tapes, bool tapeInClosure = true,
-                const std::vector<RangeToUserGrad> &userGrads = {});
+                const std::vector<StmtSetToUserGrad> &userGrads = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
@@ -325,7 +316,7 @@ gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &provides,
                    const std::unordered_set<ID> &tapes,
                    bool tapeInClosure = true,
-                   const std::vector<RangeToUserGrad> &userGrads = {});
+                   const std::vector<StmtSetToUserGrad> &userGrads = {});
 /** @} */
 
 enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
@@ -346,7 +337,7 @@ enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
  * to pass taped tensors from the forward function to the backward function in
  * implicit I/O parameters, i.e. in closure. False to pass these tensors as
  * explicit I/O parameters. Default to true
- * @param userGrads : For custom gradients. Each `RangeToUserGrad` item in the
+ * @param userGrads : For custom gradients. Each `StmtSetToUserGrad` item in the
  * list specifies a statement range in the original program, which should be
  * replaced by a backward statement
  * @return : (
@@ -366,7 +357,7 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
 gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
          GradTapeMode tapeMode = GradTapeMode::NoReuseOnly,
-         const std::vector<RangeToUserGrad> &userGrads = {});
+         const std::vector<StmtSetToUserGrad> &userGrads = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
@@ -375,7 +366,7 @@ gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &provides,
                 GradTapeMode tapeMode = GradTapeMode::NoReuseOnly,
                 bool tapeInClosure = true,
-                const std::vector<RangeToUserGrad> &userGrads = {});
+                const std::vector<StmtSetToUserGrad> &userGrads = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
@@ -384,7 +375,7 @@ gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &provides,
                    GradTapeMode tapeMode = GradTapeMode::NoReuseOnly,
                    bool tapeInClosure = true,
-                   const std::vector<RangeToUserGrad> &userGrads = {});
+                   const std::vector<StmtSetToUserGrad> &userGrads = {});
 /** @} */
 
 } // namespace freetensor
