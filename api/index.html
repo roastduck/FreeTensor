@@ -177,6 +177,10 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.VarRef">VarRef</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.VarRefFromVarDef">VarRefFromVarDef</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.VarVersionRef">VarVersionRef</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.abs">abs()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.add">add()</a>
@@ -261,9 +265,13 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.PredefinedVarCreator">PredefinedVarCreator</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.UserGrad">UserGrad</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.Var">Var</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.VarCreator">VarCreator</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.VersionMarker">VersionMarker</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.dynamic_range">dynamic_range</a>
     </li>
@@ -272,6 +280,8 @@
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.empty">empty()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.inline">inline()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.push_for_backward">push_for_backward()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.transform">transform()</a>
     </li>
@@ -351,7 +361,7 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.NamedScope">NamedScope</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.UserGrad">UserGrad</a>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.UserGradStaged">UserGradStaged</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.Any">Any()</a>
     </li>
@@ -412,6 +422,10 @@
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.add">add()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.add_">add_()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.binary_op">binary_op()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.binary_op_">binary_op_()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.ceil">ceil()</a>
     </li>
@@ -524,6 +538,10 @@
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.truediv">truediv()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.truediv_">truediv_()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.unary_op">unary_op()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.unary_op_">unary_op_()</a>
     </li>
         </ul>
     </li>
@@ -1188,7 +1206,7 @@ Return        </code>
 
 
 <h4 id="freetensor.core.autograd.grad" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="p">[],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.autograd.grad" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -1227,7 +1245,9 @@ we do not have to store each version of them in their history</p></li>
             <li><p><strong>tape_in_closure</strong> (<code>bool</code>) – True to pass taped tensors from the forward function to the backward function in
 implicit I/O parameters, i.e. in closure. False to pass these tensors as
 explicit I/O parameters. Default to True</p></li>
-            <li><p><strong>user_grads</strong> (<code>Sequence[freetensor_ffi.UserBwd]</code>) – For custom gradient. See <code>UserGrad</code> for details</p></li>
+            <li><p><strong>user_grads</strong> (<code>Optional[Sequence[freetensor_ffi.StmtSetToUserGrad]]</code>) – For custom gradient. You do not have to explicitly set this parameter unless you
+are manipulating <code>func</code> by yourself (not getting it from the Python frontend). See
+<code>UserGrad</code> for details</p></li>
             <li><p><strong>verbose</strong> (<code>Optional[int]</code>) – Verbosity level</p></li>
         </ul>
       </td>
@@ -1262,7 +1282,7 @@ explicit I/O parameters. Default to True</p></li>
          <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
          <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
          <span class="n">tape_in_closure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-         <span class="n">user_grads</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">UserBwd</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+         <span class="n">user_grads</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">StmtSetToUserGrad</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
          <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Reverse mode automatic differentiation</span>
@@ -1296,8 +1316,10 @@ explicit I/O parameters. Default to True</p></li>
 <span class="sd">        True to pass taped tensors from the forward function to the backward function in</span>
 <span class="sd">        implicit I/O parameters, i.e. in closure. False to pass these tensors as</span>
 <span class="sd">        explicit I/O parameters. Default to True</span>
-<span class="sd">    user_grads: List[ffi.UserBwd]</span>
-<span class="sd">        For custom gradient. See `UserGrad` for details</span>
+<span class="sd">    user_grads: List[ffi.StmtSetToUserGrad]</span>
+<span class="sd">        For custom gradient. You do not have to explicitly set this parameter unless you</span>
+<span class="sd">        are manipulating `func` by yourself (not getting it from the Python frontend). See</span>
+<span class="sd">        `UserGrad` for details</span>
 <span class="sd">    verbose: int</span>
 <span class="sd">        Verbosity level</span>
 
@@ -1333,7 +1355,7 @@ explicit I/O parameters. Default to True</p></li>
 
 
 <h4 id="freetensor.core.autograd.grad_" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="p">[],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.autograd.grad_" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -1372,7 +1394,9 @@ we do not have to store each version of them in their history</p></li>
             <li><p><strong>tape_in_closure</strong> (<code>bool</code>) – True to pass taped tensors from the forward function to the backward function in
 implicit I/O parameters, i.e. in closure. False to pass these tensors as
 explicit I/O parameters. Default to True</p></li>
-            <li><p><strong>user_grads</strong> (<code>Sequence[freetensor_ffi.UserBwd]</code>) – For custom gradient. See <code>UserGrad</code> for details</p></li>
+            <li><p><strong>user_grads</strong> (<code>Optional[Sequence[freetensor_ffi.StmtSetToUserGrad]]</code>) – For custom gradient. You do not have to explicitly set this parameter unless you
+are manipulating <code>func</code> by yourself (not getting it from the Python frontend). See
+<code>UserGrad</code> for details</p></li>
             <li><p><strong>verbose</strong> (<code>Optional[int]</code>) – Verbosity level</p></li>
         </ul>
       </td>
@@ -1407,7 +1431,7 @@ explicit I/O parameters. Default to True</p></li>
           <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
           <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
           <span class="n">tape_in_closure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-          <span class="n">user_grads</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">UserBwd</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+          <span class="n">user_grads</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">StmtSetToUserGrad</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
           <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Reverse mode automatic differentiation</span>
@@ -1441,8 +1465,10 @@ explicit I/O parameters. Default to True</p></li>
 <span class="sd">        True to pass taped tensors from the forward function to the backward function in</span>
 <span class="sd">        implicit I/O parameters, i.e. in closure. False to pass these tensors as</span>
 <span class="sd">        explicit I/O parameters. Default to True</span>
-<span class="sd">    user_grads: List[ffi.UserBwd]</span>
-<span class="sd">        For custom gradient. See `UserGrad` for details</span>
+<span class="sd">    user_grads: List[ffi.StmtSetToUserGrad]</span>
+<span class="sd">        For custom gradient. You do not have to explicitly set this parameter unless you</span>
+<span class="sd">        are manipulating `func` by yourself (not getting it from the Python frontend). See</span>
+<span class="sd">        `UserGrad` for details</span>
 <span class="sd">    verbose: int</span>
 <span class="sd">        Verbosity level</span>
 
@@ -1493,7 +1519,7 @@ explicit I/O parameters. Default to True</p></li>
               <span class="n">requires</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
               <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
               <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
-              <span class="n">user_grads</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">UserBwd</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]):</span>
+              <span class="n">user_grads</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">StmtSetToUserGrad</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]):</span>
     <span class="sd">&#39;&#39;&#39; `grad` or `grad_` on a function body (for internal tests only) &#39;&#39;&#39;</span>
 
     <span class="n">req</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">requires</span><span class="p">)</span>
@@ -2295,8 +2321,8 @@ ContextStack        </code>
         <span class="bp">self</span><span class="o">.</span><span class="n">stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">Context</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">user_grads</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="c1"># fn(ffi.Stmt) invoked for the next `append_stmt`</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">next_append_stmt_callbacks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># [fn(ffi.Stmt)], invoked for every `append_stmt`</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append_stmt_callbacks</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span> <span class="nf">top</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -2322,14 +2348,15 @@ ContextStack        </code>
                 <span class="k">return</span> <span class="n">ctx</span><span class="o">.</span><span class="n">stmt_seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
         <span class="k">raise</span> <span class="n">ft</span><span class="o">.</span><span class="n">InvalidProgram</span><span class="p">(</span><span class="s2">&quot;There is no statement yet&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">add_next_append_stmt_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">],</span>
-                                                               <span class="kc">None</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="nf">push_append_stmt_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">],</span> <span class="kc">None</span><span class="p">]):</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Add a callback to be called with the next statement to be appended. It will be called with</span>
-<span class="sd">        only the next statement. But for `If` statement, it can be called twice, one without &quot;else&quot;</span>
-<span class="sd">        branch, and then maybe one more with &quot;else&quot; branch</span>
+<span class="sd">        Add a callback to be called with all next statements to be appended. For `If` statement, it</span>
+<span class="sd">        can be called twice, one without &quot;else&quot; branch, and then maybe one more with &quot;else&quot; branch</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">next_append_stmt_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append_stmt_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">pop_append_stmt_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append_stmt_callbacks</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 </code></pre></div>
         </details>
 
@@ -2343,40 +2370,6 @@ ContextStack        </code>
 
 
 
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h5 id="freetensor.core.context.ContextStack.add_next_append_stmt_callback" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">add_next_append_stmt_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span></code>
-
-
-<a href="#freetensor.core.context.ContextStack.add_next_append_stmt_callback" class="headerlink" title="Permanent link">&para;</a></h5>
-
-    <div class="doc doc-contents ">
-
-      <p>Add a callback to be called with the next statement to be appended. It will be called with</p>
-<p>only the next statement. But for <code>If</code> statement, it can be called twice, one without "else"
-branch, and then maybe one more with "else" branch</p>
-
-        <details class="quote">
-          <summary>Source code in <code>freetensor/core/context.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">add_next_append_stmt_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">],</span>
-                                                           <span class="kc">None</span><span class="p">]):</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Add a callback to be called with the next statement to be appended. It will be called with</span>
-<span class="sd">    only the next statement. But for `If` statement, it can be called twice, one without &quot;else&quot;</span>
-<span class="sd">    branch, and then maybe one more with &quot;else&quot; branch</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">next_append_stmt_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
 
 
 
@@ -2416,6 +2409,38 @@ branch, and then maybe one more with "else" branch</p>
 
 
 
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.context.ContextStack.push_append_stmt_callback" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">push_append_stmt_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.context.ContextStack.push_append_stmt_callback" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Add a callback to be called with all next statements to be appended. For <code>If</code> statement, it</p>
+<p>can be called twice, one without "else" branch, and then maybe one more with "else" branch</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/context.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">push_append_stmt_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">],</span> <span class="kc">None</span><span class="p">]):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Add a callback to be called with all next statements to be appended. For `If` statement, it</span>
+<span class="sd">    can be called twice, one without &quot;else&quot; branch, and then maybe one more with &quot;else&quot; branch</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">append_stmt_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
 
 
 
@@ -2442,7 +2467,7 @@ StmtRange        </code>
 
     <div class="doc doc-contents ">
 
-      <p>Record a range of statement in a program, can be used for custom gradient</p>
+      <p>Record a set of statement in a program, can be used for custom gradient</p>
 <p>Usage:</p>
 <pre><code>with StmtRange() as rng:
     # Some statements
@@ -2462,7 +2487,7 @@ with VarDef(...)  # Some scopes
           <summary>Source code in <code>freetensor/core/context.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">StmtRange</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Record a range of statement in a program, can be used for custom gradient</span>
+<span class="sd">    Record a set of statement in a program, can be used for custom gradient</span>
 
 <span class="sd">    Usage:</span>
 
@@ -2486,26 +2511,29 @@ with VarDef(...)  # Some scopes
 <span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entered</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exited</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 
         <span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">stmt</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="n">id</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
 
-        <span class="n">ctx_stack</span><span class="o">.</span><span class="n">add_next_append_stmt_callback</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+        <span class="n">ctx_stack</span><span class="o">.</span><span class="n">push_append_stmt_callback</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entered</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">get_last_stmt_id</span><span class="p">()</span>
+        <span class="n">ctx_stack</span><span class="o">.</span><span class="n">pop_append_stmt_callback</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exited</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">make</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">entered</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidProgram</span><span class="p">(</span><span class="s2">&quot;StmtRange is not properly entered&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exited</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidProgram</span><span class="p">(</span><span class="s2">&quot;StmtRange is not properly exited&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ids</span>
 </code></pre></div>
         </details>
 
@@ -3592,13 +3620,13 @@ on <code>VarRef</code> objects generates AST nodes</p>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-                 <span class="n">vardef</span><span class="p">,</span>
                  <span class="n">full_shape</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span>
                  <span class="n">dtype</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DataType</span><span class="p">,</span>
                  <span class="n">mtype</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">MemType</span><span class="p">,</span>
-                 <span class="n">indices</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">=</span> <span class="p">[]):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">full_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">mtype</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span> <span class="o">=</span> <span class="n">vardef</span>
+                 <span class="n">indices</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">=</span> <span class="p">[],</span>
+                 <span class="n">is_load_at_version</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">full_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">mtype</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span>
+                                     <span class="n">is_load_at_version</span><span class="p">)</span>
 
         <span class="kn">from</span> <span class="nn">.stmt</span> <span class="kn">import</span> <span class="n">find_borrowed_vardefs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">borrowed_vardefs</span> <span class="o">=</span> <span class="n">find_borrowed_vardefs</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
@@ -3610,43 +3638,36 @@ on <code>VarRef</code> objects generates AST nodes</p>
             <span class="n">item</span><span class="o">.</span><span class="n">reclaim</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">VarRef</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                      <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chain_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse_key</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">chain_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse_key</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
 
     <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="n">var</span> <span class="o">=</span> <span class="n">VarRef</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                     <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chain_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse_key</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">,</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">chain_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse_key</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
         <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">AlreadyMadeReduceTo</span><span class="p">:</span>
                 <span class="k">return</span>
             <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
             <span class="n">libop</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
             <span class="k">return</span>
-        <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">atype</span> <span class="o">==</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AccessType</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidProgram</span><span class="p">(</span><span class="s2">&quot;Cannot modify an </span><span class="se">\&quot;</span><span class="s2">input</span><span class="se">\&quot;</span><span class="s2"> tensor `&quot;</span> <span class="o">+</span>
-                                     <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;`&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">borrower_cnt</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidProgram</span><span class="p">(</span>
-                <span class="s2">&quot;Cannot modify tensor `&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span>
-                <span class="s2">&quot;` becuase it has been borrowed in another tensor&#39;s shape, &quot;</span>
-                <span class="s2">&quot;a tensor slice, or a range of a loop&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">AlreadyMadeReduceTo</span><span class="p">:</span>  <span class="c1"># Following the checks above</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">AlreadyMadeReduceTo</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">top</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span>
         <span class="n">top</span><span class="o">.</span><span class="n">append_stmt</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">as_store</span><span class="p">(</span><span class="n">top</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">(),</span> <span class="n">value</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">as_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span>
-                <span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span><span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
             <span class="c1"># Add explicit cast node, to avoid confusion after propagation</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">as_store</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">as_reduce_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">atomic</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span>
-                <span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span><span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
             <span class="c1"># Add explicit cast node, to avoid confusion after propagation</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">as_reduce_to</span><span class="p">(</span><span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span>
                                                 <span class="n">atomic</span><span class="p">)</span>
 
@@ -3949,10 +3970,10 @@ on <code>VarRef</code> objects generates AST nodes</p>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/expr.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">as_reduce_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">atomic</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span>
-            <span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span><span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
         <span class="c1"># Add explicit cast node, to avoid confusion after propagation</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">as_reduce_to</span><span class="p">(</span><span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span>
                                             <span class="n">atomic</span><span class="p">)</span>
 </code></pre></div>
@@ -3980,10 +4001,10 @@ on <code>VarRef</code> objects generates AST nodes</p>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/expr.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">as_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span>
-            <span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span><span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
         <span class="c1"># Add explicit cast node, to avoid confusion after propagation</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">as_store</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 </code></pre></div>
         </details>
@@ -4009,6 +4030,479 @@ on <code>VarRef</code> objects generates AST nodes</p>
 
 
 <a href="#freetensor.core.expr.VarRef.shape" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Return lengths of all dimensions or the length of one dimension</p>
+<p><code>.shape()</code> -&gt; list of lengths of all dimensions</p>
+<p><code>.shape(dim)</code> -&gt; length of dimension <code>dim</code>, where <code>dim</code> can be <code>int</code>
+or <code>Expr</code></p>
+<p>All lengths can be <code>Expr</code> (if the length is dynamically decided) or
+<code>int</code> (if statically decided)</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return lengths of all dimensions or the length of one dimension</span>
+
+<span class="sd">    `.shape()` -&gt; list of lengths of all dimensions</span>
+
+<span class="sd">    `.shape(dim)` -&gt; length of dimension `dim`, where `dim` can be `int`</span>
+<span class="sd">    or `Expr`</span>
+
+<span class="sd">    All lengths can be `Expr` (if the length is dynamically decided) or</span>
+<span class="sd">    `int` (if statically decided)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">intOrExpr</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">val</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">IntConst</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span>
+    <span class="k">if</span> <span class="n">dim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">intOrExpr</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">()]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">intOrExpr</span><span class="p">(</span><span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h4 id="freetensor.core.expr.VarRefFromVarDef" class="doc doc-heading">
+        <code>
+VarRefFromVarDef            (<a class="autorefs autorefs-internal" title="freetensor.core.expr.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a>)
+        </code>
+
+
+
+<a href="#freetensor.core.expr.VarRefFromVarDef" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>VarRef with extra checks</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">VarRefFromVarDef</span><span class="p">(</span><span class="n">VarRef</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    VarRef with extra checks</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">vardef</span><span class="p">,</span>
+                 <span class="n">full_shape</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span>
+                 <span class="n">dtype</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DataType</span><span class="p">,</span>
+                 <span class="n">mtype</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">MemType</span><span class="p">,</span>
+                 <span class="n">indices</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">=</span> <span class="p">[]):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">VarRefFromVarDef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">full_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">mtype</span><span class="p">,</span>
+                                               <span class="n">indices</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span> <span class="o">=</span> <span class="n">vardef</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">VarRefFromVarDef</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">chain_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse_key</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">VarRefFromVarDef</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vardef</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">,</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">chain_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse_key</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">AlreadyMadeReduceTo</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
+            <span class="n">libop</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">atype</span> <span class="o">==</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AccessType</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidProgram</span><span class="p">(</span><span class="s2">&quot;Cannot modify an </span><span class="se">\&quot;</span><span class="s2">input</span><span class="se">\&quot;</span><span class="s2"> tensor `&quot;</span> <span class="o">+</span>
+                                     <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;`&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">borrower_cnt</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidProgram</span><span class="p">(</span>
+                <span class="s2">&quot;Cannot modify tensor `&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span>
+                <span class="s2">&quot;` becuase it has been borrowed in another tensor&#39;s shape, &quot;</span>
+                <span class="s2">&quot;a tensor slice, or a range of a loop&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">AlreadyMadeReduceTo</span><span class="p">:</span>  <span class="c1"># Following the checks above</span>
+            <span class="k">return</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span>
+        <span class="n">top</span><span class="o">.</span><span class="n">append_stmt</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">as_store</span><span class="p">(</span><span class="n">top</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">(),</span> <span class="n">value</span><span class="p">))</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.expr.VarRefFromVarDef.as_reduce_to" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">as_reduce_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">atomic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-inherited"><code>inherited</code></small>
+  </span>
+
+<a href="#freetensor.core.expr.VarRefFromVarDef.as_reduce_to" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>as_reduce_to(self: freetensor_ffi.FrontendVar, op: freetensor_ffi.ReduceOp, metadata: freetensor_ffi.Metadata, value: freetensor_ffi.Expr, atomic: bool = False) -&gt; freetensor_ffi.Stmt</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">as_reduce_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">atomic</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span><span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+        <span class="c1"># Add explicit cast node, to avoid confusion after propagation</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">as_reduce_to</span><span class="p">(</span><span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span>
+                                            <span class="n">atomic</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.expr.VarRefFromVarDef.as_store" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">as_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-inherited"><code>inherited</code></small>
+  </span>
+
+<a href="#freetensor.core.expr.VarRefFromVarDef.as_store" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>as_store(self: freetensor_ffi.FrontendVar, metadata: freetensor_ffi.Metadata, value: freetensor_ffi.Expr) -&gt; freetensor_ffi.Stmt</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">as_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span><span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+        <span class="c1"># Add explicit cast node, to avoid confusion after propagation</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">as_store</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.expr.VarRefFromVarDef.shape" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-inherited"><code>inherited</code></small>
+  </span>
+
+<a href="#freetensor.core.expr.VarRefFromVarDef.shape" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Return lengths of all dimensions or the length of one dimension</p>
+<p><code>.shape()</code> -&gt; list of lengths of all dimensions</p>
+<p><code>.shape(dim)</code> -&gt; length of dimension <code>dim</code>, where <code>dim</code> can be <code>int</code>
+or <code>Expr</code></p>
+<p>All lengths can be <code>Expr</code> (if the length is dynamically decided) or
+<code>int</code> (if statically decided)</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return lengths of all dimensions or the length of one dimension</span>
+
+<span class="sd">    `.shape()` -&gt; list of lengths of all dimensions</span>
+
+<span class="sd">    `.shape(dim)` -&gt; length of dimension `dim`, where `dim` can be `int`</span>
+<span class="sd">    or `Expr`</span>
+
+<span class="sd">    All lengths can be `Expr` (if the length is dynamically decided) or</span>
+<span class="sd">    `int` (if statically decided)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">intOrExpr</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">val</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">IntConst</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span>
+    <span class="k">if</span> <span class="n">dim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">intOrExpr</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">()]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">intOrExpr</span><span class="p">(</span><span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h4 id="freetensor.core.expr.VarVersionRef" class="doc doc-heading">
+        <code>
+VarVersionRef            (<a class="autorefs autorefs-internal" title="freetensor.core.expr.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a>)
+        </code>
+
+
+
+<a href="#freetensor.core.expr.VarVersionRef" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Special VarRef used for custom gradient, generated from <code>mark_version</code></p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">VarVersionRef</span><span class="p">(</span><span class="n">VarRef</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Special VarRef used for custom gradient, generated from `mark_version`</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">full_shape</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span>
+                 <span class="n">dtype</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DataType</span><span class="p">,</span>
+                 <span class="n">mtype</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">MemType</span><span class="p">,</span>
+                 <span class="n">indices</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">=</span> <span class="p">[]):</span>
+        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">full_shape</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">IntConst</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidAutoGrad</span><span class="p">(</span>
+                    <span class="s2">&quot;`mark_version` on dynamic-shaped variables is not supported&quot;</span>
+                    <span class="s2">&quot; yet&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">VarVersionRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">full_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">mtype</span><span class="p">,</span>
+                                            <span class="n">indices</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.expr.VarVersionRef.as_reduce_to" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">as_reduce_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">atomic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-inherited"><code>inherited</code></small>
+  </span>
+
+<a href="#freetensor.core.expr.VarVersionRef.as_reduce_to" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>as_reduce_to(self: freetensor_ffi.FrontendVar, op: freetensor_ffi.ReduceOp, metadata: freetensor_ffi.Metadata, value: freetensor_ffi.Expr, atomic: bool = False) -&gt; freetensor_ffi.Stmt</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">as_reduce_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">atomic</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span><span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+        <span class="c1"># Add explicit cast node, to avoid confusion after propagation</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">as_reduce_to</span><span class="p">(</span><span class="n">reduce_op</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span>
+                                            <span class="n">atomic</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.expr.VarVersionRef.as_store" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">as_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-inherited"><code>inherited</code></small>
+  </span>
+
+<a href="#freetensor.core.expr.VarVersionRef.as_store" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>as_store(self: freetensor_ffi.FrontendVar, metadata: freetensor_ffi.Metadata, value: freetensor_ffi.Expr) -&gt; freetensor_ffi.Stmt</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">as_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AnyExpr</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="n">ffi</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span><span class="n">dtype</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+        <span class="c1"># Add explicit cast node, to avoid confusion after propagation</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">as_store</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.expr.VarVersionRef.shape" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-inherited"><code>inherited</code></small>
+  </span>
+
+<a href="#freetensor.core.expr.VarVersionRef.shape" class="headerlink" title="Permanent link">&para;</a></h5>
 
     <div class="doc doc-contents ">
 
@@ -5508,7 +6002,7 @@ it calls libop.le</p>
 
 
 <h4 id="freetensor.core.expr.load_at_version" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">load_at_version</span><span class="p">(</span><span class="n">tape_name</span><span class="p">,</span> <span class="o">*</span><span class="n">indices</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">load_at_version</span><span class="p">(</span><span class="n">tape_name</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="o">*</span><span class="n">indices</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.expr.load_at_version" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -5520,13 +6014,13 @@ it calls libop.le</p>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/expr.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">load_at_version</span><span class="p">(</span><span class="n">tape_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">indices</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">load_at_version</span><span class="p">(</span><span class="n">tape_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="o">*</span><span class="n">indices</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Create an LoadAtVersion node (only for custom gradient)</span>
 
 <span class="sd">    This node is only used for custom gradient. See `UserGradForPrevStmt`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">makeLoadAtVersion</span><span class="p">(</span><span class="n">tape_name</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">makeLoadAtVersion</span><span class="p">(</span><span class="n">tape_name</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DataType</span><span class="p">(</span><span class="n">dtype</span><span class="p">))</span>
 </code></pre></div>
         </details>
     </div>
@@ -8204,6 +8698,141 @@ even via super()).</p>
 
 
 
+<h4 id="freetensor.core.frontend.UserGrad" class="doc doc-heading">
+        <code>
+UserGrad            (<a class="autorefs autorefs-internal" title="freetensor.core.stmt.UserGradStaged" href="#freetensor.core.stmt.UserGradStaged">UserGradStaged</a>)
+        </code>
+
+
+
+<a href="#freetensor.core.frontend.UserGrad" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Define a custom gradient</p>
+<p>Follow the following steps to define custom gradient:</p>
+<ol>
+<li>Add some <code>mark_version</code> statements in the program. <code>mark_version('y0', y)</code> marks the specific
+versions of variable <code>y</code> <strong>at the program position of the statement</strong> and <strong>at all iterations</strong>
+as <code>'y0'</code>.</li>
+<li>Add a <code>UserGrad</code> scope.
+2.1. <code>UserGrad</code> optionally receives parameter <code>stmt_range</code>, recorded by the <code>StmtRange</code> helper class,
+which means the gradient is for the code specified in the range. Ignoring the parameter means setting
+gradient for the previous statement of the scope.
+2.2. Other parameters of <code>UserGrad</code> sets the mapping from original variables to gradient variables.
+<code>with UserGradForPrevStmt(x, y) as (dx, dy)</code> provides <code>VarRef</code> <code>dx</code> and <code>dy</code> as gradient variables
+to be used inside the scope.</li>
+<li>In order to use the value from the forward pass in the backward pass, do not access the forward
+variables directly in the scope. Instead, use <code>load_at_version</code> expressions. <code>load_at_version(y0, i, j)</code>
+loads from <code>y[i, j]</code> <strong>at the specific version marked by <code>y0 = mark_version(y)</code></strong>, saved from <strong>the same
+iteration in the forward pass</strong>. (If directly writing staged code, it is <code>MarkVersion('y0', y)</code>). In
+other words, after AD, the position of <code>mark_version</code> and the dynamic loop iterator together makes up
+the actual version number for the tape.</li>
+<li>Build the AST with <code>pop_ast_and_user_grads</code> instead of <code>pop_ast</code>. An extra list will be returned
+together with the AST, which you need to pass as <code>grad</code>'s <code>user_grads</code> argument. This list records
+the forward-to-backward relation of the nodes.</li>
+</ol>
+<p>If you are directly writing staged code, use <code>UserGradStaged</code> instead.</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>stmt_range</strong> (<code>Optional[StmtRange]</code>) – The range in the original program that we are setting custom gradient for</p></li>
+            <li><p><strong>args</strong> (<code>Sequence[freetensor.core.expr.VarRef]</code>) – (Positional variadic) Mapping from original variables to gradient variables</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">UserGrad</span><span class="p">(</span><span class="n">UserGradStaged</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Define a custom gradient</span>
+
+<span class="sd">    Follow the following steps to define custom gradient:</span>
+
+<span class="sd">    1. Add some `mark_version` statements in the program. `mark_version(&#39;y0&#39;, y)` marks the specific</span>
+<span class="sd">    versions of variable `y` **at the program position of the statement** and **at all iterations**</span>
+<span class="sd">    as `&#39;y0&#39;`.</span>
+<span class="sd">    2. Add a `UserGrad` scope.</span>
+<span class="sd">    2.1. `UserGrad` optionally receives parameter `stmt_range`, recorded by the `StmtRange` helper class,</span>
+<span class="sd">    which means the gradient is for the code specified in the range. Ignoring the parameter means setting</span>
+<span class="sd">    gradient for the previous statement of the scope.</span>
+<span class="sd">    2.2. Other parameters of `UserGrad` sets the mapping from original variables to gradient variables.</span>
+<span class="sd">    `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef` `dx` and `dy` as gradient variables</span>
+<span class="sd">    to be used inside the scope.</span>
+<span class="sd">    3. In order to use the value from the forward pass in the backward pass, do not access the forward</span>
+<span class="sd">    variables directly in the scope. Instead, use `load_at_version` expressions. `load_at_version(y0, i, j)`</span>
+<span class="sd">    loads from `y[i, j]` **at the specific version marked by `y0 = mark_version(y)`**, saved from **the same</span>
+<span class="sd">    iteration in the forward pass**. (If directly writing staged code, it is `MarkVersion(&#39;y0&#39;, y)`). In</span>
+<span class="sd">    other words, after AD, the position of `mark_version` and the dynamic loop iterator together makes up</span>
+<span class="sd">    the actual version number for the tape.</span>
+<span class="sd">    4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An extra list will be returned</span>
+<span class="sd">    together with the AST, which you need to pass as `grad`&#39;s `user_grads` argument. This list records</span>
+<span class="sd">    the forward-to-backward relation of the nodes.</span>
+
+<span class="sd">    If you are directly writing staged code, use `UserGradStaged` instead.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    stmt_range: Optional[StmtRange]</span>
+<span class="sd">        The range in the original program that we are setting custom gradient for</span>
+<span class="sd">    args: Sequence[VarRef]</span>
+<span class="sd">        (Positional variadic) Mapping from original variables to gradient variables</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">VarRef</span><span class="p">],</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">UserGrad</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lifetime_scope</span> <span class="o">=</span> <span class="n">LifetimeScope</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">UserGrad</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lifetime_scope</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">ret</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lifetime_scope</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">UserGrad</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h4 id="freetensor.core.frontend.Var" class="doc doc-heading">
         <code>
 Var            (<a class="autorefs autorefs-internal" title="freetensor.core.staging.StagedTypeAnnotation" href="#freetensor.core.staging.StagedTypeAnnotation">StagedTypeAnnotation</a>)
@@ -9002,6 +9631,345 @@ even via super()).</p>
 
 
 
+<h4 id="freetensor.core.frontend.VersionMarker" class="doc doc-heading">
+        <code>
+VersionMarker            (<a class="autorefs autorefs-internal" title="freetensor.core.staging.StagedAssignable" href="#freetensor.core.staging.StagedAssignable">StagedAssignable</a>)
+        </code>
+
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#freetensor.core.frontend.VersionMarker" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>VersionMarker(var: freetensor.core.expr.VarRef, assigned: bool = False)</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">VersionMarker</span><span class="p">(</span><span class="n">StagedAssignable</span><span class="p">):</span>
+    <span class="n">var</span><span class="p">:</span> <span class="n">VarRef</span>
+    <span class="n">assigned</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tape_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VarRef</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;Customized assign behavior. Creates a MarkVersion with its full name.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">full_tape_name</span> <span class="o">=</span> <span class="n">_overload</span><span class="o">.</span><span class="n">fullname</span><span class="p">(</span><span class="n">tape_name</span><span class="p">)</span>
+            <span class="n">MarkVersion</span><span class="p">(</span><span class="n">full_tape_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">VarVersionRef</span><span class="p">(</span><span class="n">full_tape_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span>
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">mtype</span><span class="p">,</span>
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;Marking version in an `a = b = c`-like multi-assignment is not&quot;</span>
+                <span class="s2">&quot; supported&quot;</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h5 id="freetensor.core.frontend.VersionMarker.__class__" class="doc doc-heading">
+        <code>
+__class__            (<span title="type">type</span>)
+        </code>
+
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-inherited"><code>inherited</code></small>
+  </span>
+
+<a href="#freetensor.core.frontend.VersionMarker.__class__" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Metaclass for defining Abstract Base Classes (ABCs).</p>
+<p>Use this metaclass to create an ABC.  An ABC can be subclassed
+directly, and then acts as a mix-in class.  You can also register
+unrelated concrete classes (even built-in classes) and unrelated
+ABCs as 'virtual subclasses' -- these and their descendants will
+be considered subclasses of the registering ABC by the built-in
+issubclass() function, but the registering ABC won't show up in
+their MRO (Method Resolution Order) nor will method
+implementations defined by the registering ABC be callable (not
+even via super()).</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">ABCMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metaclass for defining Abstract Base Classes (ABCs).</span>
+
+<span class="sd">    Use this metaclass to create an ABC.  An ABC can be subclassed</span>
+<span class="sd">    directly, and then acts as a mix-in class.  You can also register</span>
+<span class="sd">    unrelated concrete classes (even built-in classes) and unrelated</span>
+<span class="sd">    ABCs as &#39;virtual subclasses&#39; -- these and their descendants will</span>
+<span class="sd">    be considered subclasses of the registering ABC by the built-in</span>
+<span class="sd">    issubclass() function, but the registering ABC won&#39;t show up in</span>
+<span class="sd">    their MRO (Method Resolution Order) nor will method</span>
+<span class="sd">    implementations defined by the registering ABC be callable (not</span>
+<span class="sd">    even via super()).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">_abc_init</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span>
+
+    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Register a virtual subclass of an ABC.</span>
+
+<span class="sd">        Returns the subclass, to allow usage as a class decorator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_abc_register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override for isinstance(instance, cls).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_abc_instancecheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override for issubclass(subclass, cls).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_abc_subclasscheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_dump_registry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Debug helper to print the ABC registry.&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Class: </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Inv. counter: </span><span class="si">{</span><span class="n">get_cache_token</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">_abc_registry</span><span class="p">,</span> <span class="n">_abc_cache</span><span class="p">,</span> <span class="n">_abc_negative_cache</span><span class="p">,</span>
+         <span class="n">_abc_negative_cache_version</span><span class="p">)</span> <span class="o">=</span> <span class="n">_get_dump</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_abc_registry: </span><span class="si">{</span><span class="n">_abc_registry</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_abc_cache: </span><span class="si">{</span><span class="n">_abc_cache</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_abc_negative_cache: </span><span class="si">{</span><span class="n">_abc_negative_cache</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_abc_negative_cache_version: </span><span class="si">{</span><span class="n">_abc_negative_cache_version</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span>
+              <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_abc_registry_clear</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Clear the registry (for debugging or testing).&quot;&quot;&quot;</span>
+        <span class="n">_reset_registry</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_abc_caches_clear</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Clear the caches (for debugging or testing).&quot;&quot;&quot;</span>
+        <span class="n">_reset_caches</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h6 id="freetensor.core.frontend.VersionMarker.__class__.__instancecheck__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+<a href="#freetensor.core.frontend.VersionMarker.__class__.__instancecheck__" class="headerlink" title="Permanent link">&para;</a></h6>
+
+    <div class="doc doc-contents ">
+
+      <p>Override for isinstance(instance, cls).</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Override for isinstance(instance, cls).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_abc_instancecheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h6 id="freetensor.core.frontend.VersionMarker.__class__.__new__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+<a href="#freetensor.core.frontend.VersionMarker.__class__.__new__" class="headerlink" title="Permanent link">&para;</a></h6>
+
+    <div class="doc doc-contents ">
+
+      <p>Create and return a new object.  See help(type) for accurate signature.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="bp">cls</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">_abc_init</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">cls</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h6 id="freetensor.core.frontend.VersionMarker.__class__.__subclasscheck__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+<a href="#freetensor.core.frontend.VersionMarker.__class__.__subclasscheck__" class="headerlink" title="Permanent link">&para;</a></h6>
+
+    <div class="doc doc-contents ">
+
+      <p>Override for issubclass(subclass, cls).</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Override for issubclass(subclass, cls).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_abc_subclasscheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h6 id="freetensor.core.frontend.VersionMarker.__class__.register" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.frontend.VersionMarker.__class__.register" class="headerlink" title="Permanent link">&para;</a></h6>
+
+    <div class="doc doc-contents ">
+
+      <p>Register a virtual subclass of an ABC.</p>
+<p>Returns the subclass, to allow usage as a class decorator.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Register a virtual subclass of an ABC.</span>
+
+<span class="sd">    Returns the subclass, to allow usage as a class decorator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_abc_register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.frontend.VersionMarker.assign" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tape_name</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.frontend.VersionMarker.assign" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Customized assign behavior. Creates a MarkVersion with its full name.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tape_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VarRef</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Customized assign behavior. Creates a MarkVersion with its full name.&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">full_tape_name</span> <span class="o">=</span> <span class="n">_overload</span><span class="o">.</span><span class="n">fullname</span><span class="p">(</span><span class="n">tape_name</span><span class="p">)</span>
+        <span class="n">MarkVersion</span><span class="p">(</span><span class="n">full_tape_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">VarVersionRef</span><span class="p">(</span><span class="n">full_tape_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">mtype</span><span class="p">,</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">&quot;Marking version in an `a = b = c`-like multi-assignment is not&quot;</span>
+            <span class="s2">&quot; supported&quot;</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h4 id="freetensor.core.frontend.dynamic_range" class="doc doc-heading">
         <code>
 dynamic_range            (<span title="freetensor.core.staging.StagedIterable">StagedIterable</span>)
@@ -9328,6 +10296,59 @@ Defaults to True</p></li>
 
 
 
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.frontend.push_for_backward" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">push_for_backward</span><span class="p">(</span><span class="n">var</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.frontend.push_for_backward" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Push the current value from the forward pass to be used at the backward pass</p>
+<p>This function is for custom gradients. See <code>UserGrad</code> for details on how to provide custom
+gradients.</p>
+<p>You may imagine there is a virtual stack for each variable. Each time you call <code>x_handle =
+push_for_backward(x)</code> in the forward pass, the value of <code>x</code> <strong>at the current iteration</strong>
+will be "pushed" to the virtual stack. You can access <code>x_handle</code> at the backward pass. Each
+time you access <code>x_handle</code>, you will "pop" the stack and get the value of <code>x</code> <strong>pushed at
+the same iteration</strong>. Since the "stack" is virtual, you do NOT need to "pop" the same count
+as "push"es: the version numbering is fully automatic. Besides, there may not be a real
+stack at runtime: it can be compiled to any data structure.</p>
+<p>This function will be staged to <code>mark_version</code> statement in the IR.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">push_for_backward</span><span class="p">(</span><span class="n">var</span><span class="p">:</span> <span class="n">VarRef</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Push the current value from the forward pass to be used at the backward pass</span>
+
+<span class="sd">    This function is for custom gradients. See `UserGrad` for details on how to provide custom</span>
+<span class="sd">    gradients.</span>
+
+<span class="sd">    You may imagine there is a virtual stack for each variable. Each time you call `x_handle =</span>
+<span class="sd">    push_for_backward(x)` in the forward pass, the value of `x` **at the current iteration**</span>
+<span class="sd">    will be &quot;pushed&quot; to the virtual stack. You can access `x_handle` at the backward pass. Each</span>
+<span class="sd">    time you access `x_handle`, you will &quot;pop&quot; the stack and get the value of `x` **pushed at</span>
+<span class="sd">    the same iteration**. Since the &quot;stack&quot; is virtual, you do NOT need to &quot;pop&quot; the same count</span>
+<span class="sd">    as &quot;push&quot;es: the version numbering is fully automatic. Besides, there may not be a real</span>
+<span class="sd">    stack at runtime: it can be compiled to any data structure.</span>
+
+<span class="sd">    This function will be staged to `mark_version` statement in the IR.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">return</span> <span class="n">VersionMarker</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
 
   <div class="doc doc-object doc-function">
 
@@ -9441,7 +10462,7 @@ Python code that is used for transforming</p></li>
         <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Exception occurred in staging&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="c1"># Despite whether the exception is raised, we need to clean up the ctx_stack</span>
-        <span class="n">staged_ast</span> <span class="o">=</span> <span class="n">pop_ast</span><span class="p">()</span>
+        <span class="n">staged_ast</span><span class="p">,</span> <span class="n">user_grads</span> <span class="o">=</span> <span class="n">pop_ast_and_user_grads</span><span class="p">()</span>
 
     <span class="n">staged</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -9468,7 +10489,8 @@ Python code that is used for transforming</p></li>
                   <span class="n">returns</span><span class="p">,</span>
                   <span class="n">staged_ast</span><span class="p">,</span>
                   <span class="n">closure</span><span class="p">,</span>
-                  <span class="n">custom_callback</span><span class="o">=</span><span class="n">prepare_inlined_invoke</span><span class="p">)</span>
+                  <span class="n">custom_callback</span><span class="o">=</span><span class="n">prepare_inlined_invoke</span><span class="p">,</span>
+                  <span class="n">user_grads</span><span class="o">=</span><span class="n">user_grads</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The transformed AST is:&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
@@ -17420,6 +18442,22 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
 
     <span class="k">def</span> <span class="nf">visit_Continue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Continue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">ast</span><span class="o">.</span><span class="n">Expr</span><span class="p">(</span><span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">continue_stmt</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">visit_With</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">With</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+
+        <span class="k">def</span> <span class="nf">recursive_get_names</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nonlocals</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Tuple</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">List</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">target</span><span class="o">.</span><span class="n">elts</span><span class="p">:</span>
+                    <span class="n">recursive_get_names</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="kc">False</span>
+
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">items</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">optional_vars</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">recursive_get_names</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">optional_vars</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
 </code></pre></div>
         </details>
 
@@ -17935,6 +18973,7 @@ while_stmt(lambda: pred, while_body)
     </div>
 
   </div>
+
 
 
 
@@ -18526,7 +19565,7 @@ NamedScope        </code>
 
     <div class="doc doc-contents ">
 
-      <p>Scope used to create an StmtSeq node with an explicit ID</p>
+      <p>Scope used to create an StmtSeq node with an explicit labels</p>
 <p>E.g.:</p>
 <pre><code>with NamedScope():
     ... # body
@@ -18537,7 +19576,7 @@ NamedScope        </code>
           <summary>Source code in <code>freetensor/core/stmt.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">NamedScope</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Scope used to create an StmtSeq node with an explicit ID</span>
+<span class="sd">    Scope used to create an StmtSeq node with an explicit labels</span>
 
 <span class="sd">    E.g.:</span>
 
@@ -18595,91 +19634,23 @@ NamedScope        </code>
 
 
 
-<h4 id="freetensor.core.stmt.UserGrad" class="doc doc-heading">
+<h4 id="freetensor.core.stmt.UserGradStaged" class="doc doc-heading">
         <code>
-UserGrad        </code>
+UserGradStaged        </code>
 
 
 
-<a href="#freetensor.core.stmt.UserGrad" class="headerlink" title="Permanent link">&para;</a></h4>
+<a href="#freetensor.core.stmt.UserGradStaged" class="headerlink" title="Permanent link">&para;</a></h4>
 
     <div class="doc doc-contents ">
 
-      <p>Define a custom gradient</p>
-<p>Follow the following steps to define custom gradient:</p>
-<ol>
-<li>Add some <code>mark_version</code> statements in the program. <code>mark_version('y0', y)</code> marks the specific
-versions of variable <code>y</code> <strong>at the program position of the statement</strong> and <strong>at all iterations</strong>
-as <code>'y0'</code>.</li>
-<li>Add a <code>UserGrad</code> scope.
-2.1. <code>UserGrad</code> optionally receives parameter <code>stmt_range</code>, recorded by the <code>StmtRange</code> helper class,
-which means the gradient is for the code specified in the range. Ignoring the parameter means setting
-gradient for the previous statement of the scope.
-2.2. Other parameters of <code>UserGrad</code> sets the mapping from original variables to gradient variables.
-<code>with UserGradForPrevStmt(x, y) as (dx, dy)</code> provides <code>VarRef</code> <code>dx</code> and <code>dy</code> as gradient variables
-to be used inside the scope.</li>
-<li>In order to use the value from the forward pass in the backward pass, do not access the forward
-variables directly in the scope. Instead, use <code>load_at_version</code> expressions.
-<code>load_at_version('y0', i, j)</code> loads from <code>y[i, j]</code> <strong>at the specific version marked by
-<code>mark_version('y0', y)</code></strong>, saved from <strong>the same iteration in the forward pass</strong>. In other words,
-after AD, the position of <code>mark_version</code> and the dynamic loop iterator together makes up the actual
-version number for the tape.</li>
-<li>Build the AST with <code>pop_ast_and_user_grads</code> instead of <code>pop_ast</code>. An extra list will be returned
-together with the AST, which you need to pass as <code>grad</code>'s <code>user_bwds</code> argument. This list records
-the forward-to-backward relation of the nodes.</li>
-</ol>
+      <p>Internal staged implementation of <code>UserGrad</code></p>
 
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li><p><strong>stmt_range</strong> (<code>Optional[StmtRange]</code>) – The range in the original program that we are setting custom gradient for</p></li>
-            <li><p><strong>args</strong> (<code>Sequence[freetensor.core.expr.VarRef]</code>) – (Positional variadic) Mapping from original variables to gradient variables</p></li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/stmt.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">UserGrad</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">UserGradStaged</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Define a custom gradient</span>
-
-<span class="sd">    Follow the following steps to define custom gradient:</span>
-
-<span class="sd">    1. Add some `mark_version` statements in the program. `mark_version(&#39;y0&#39;, y)` marks the specific</span>
-<span class="sd">    versions of variable `y` **at the program position of the statement** and **at all iterations**</span>
-<span class="sd">    as `&#39;y0&#39;`.</span>
-<span class="sd">    2. Add a `UserGrad` scope.</span>
-<span class="sd">    2.1. `UserGrad` optionally receives parameter `stmt_range`, recorded by the `StmtRange` helper class,</span>
-<span class="sd">    which means the gradient is for the code specified in the range. Ignoring the parameter means setting</span>
-<span class="sd">    gradient for the previous statement of the scope.</span>
-<span class="sd">    2.2. Other parameters of `UserGrad` sets the mapping from original variables to gradient variables.</span>
-<span class="sd">    `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef` `dx` and `dy` as gradient variables</span>
-<span class="sd">    to be used inside the scope.</span>
-<span class="sd">    3. In order to use the value from the forward pass in the backward pass, do not access the forward</span>
-<span class="sd">    variables directly in the scope. Instead, use `load_at_version` expressions.</span>
-<span class="sd">    `load_at_version(&#39;y0&#39;, i, j)` loads from `y[i, j]` **at the specific version marked by</span>
-<span class="sd">    `mark_version(&#39;y0&#39;, y)`**, saved from **the same iteration in the forward pass**. In other words,</span>
-<span class="sd">    after AD, the position of `mark_version` and the dynamic loop iterator together makes up the actual</span>
-<span class="sd">    version number for the tape.</span>
-<span class="sd">    4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An extra list will be returned</span>
-<span class="sd">    together with the AST, which you need to pass as `grad`&#39;s `user_bwds` argument. This list records</span>
-<span class="sd">    the forward-to-backward relation of the nodes.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    stmt_range: Optional[StmtRange]</span>
-<span class="sd">        The range in the original program that we are setting custom gradient for</span>
-<span class="sd">    args: Sequence[VarRef]</span>
-<span class="sd">        (Positional variadic) Mapping from original variables to gradient variables</span>
+<span class="sd">    Internal staged implementation of `UserGrad`</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">VarRef</span><span class="p">],</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
@@ -18689,13 +19660,13 @@ the forward-to-backward relation of the nodes.</li>
         <span class="k">if</span> <span class="s1">&#39;stmt_range&#39;</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
             <span class="n">stmt_range</span> <span class="o">=</span> <span class="n">kvs</span><span class="p">[</span><span class="s1">&#39;stmt_range&#39;</span><span class="p">]</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt_range</span><span class="p">,</span> <span class="n">StmtRange</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span> <span class="o">=</span> <span class="n">stmt_range</span><span class="o">.</span><span class="n">make</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ori_stmts</span> <span class="o">=</span> <span class="n">stmt_range</span><span class="o">.</span><span class="n">make</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                     <span class="s2">&quot;`stmt_range` should be a `StmtRange` for `UserGrad`&quot;</span><span class="p">)</span>
             <span class="k">del</span> <span class="n">kvs</span><span class="p">[</span><span class="s1">&#39;stmt_range&#39;</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">get_last_stmt_id</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ori_stmts</span> <span class="o">=</span> <span class="p">{</span><span class="n">ctx_stack</span><span class="o">.</span><span class="n">get_last_stmt_id</span><span class="p">()}</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unrecognized parameter `</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">` of `UserGrad`&quot;</span><span class="p">)</span>
 
@@ -18728,7 +19699,7 @@ the forward-to-backward relation of the nodes.</li>
 
         <span class="c1"># Record the body to context</span>
         <span class="n">ctx_stack</span><span class="o">.</span><span class="n">user_grads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">ffi</span><span class="o">.</span><span class="n">UserBwd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">begin_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">))</span>
+            <span class="n">ffi</span><span class="o">.</span><span class="n">StmtSetToUserGrad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ori_stmts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">))</span>
 </code></pre></div>
         </details>
 
@@ -18870,7 +19841,7 @@ the forward-to-backward relation of the nodes.</li>
     <div class="doc doc-contents ">
 
       <p>Create an MarkVersion node (only for custom gradient)</p>
-<p>This node is only used for custom gradient. See <code>UserGradForPrevStmt</code>.</p>
+<p>This node is only used for custom gradient. See <code>UserGrad</code>.</p>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/stmt.py</code></summary>
@@ -18878,7 +19849,7 @@ the forward-to-backward relation of the nodes.</li>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Create an MarkVersion node (only for custom gradient)</span>
 
-<span class="sd">    This node is only used for custom gradient. See `UserGradForPrevStmt`.</span>
+<span class="sd">    This node is only used for custom gradient. See `UserGrad`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">top</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span>
     <span class="n">top</span><span class="o">.</span><span class="n">append_stmt</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">makeMarkVersion</span><span class="p">(</span><span class="n">tape_name</span><span class="p">,</span> <span class="n">var</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -19989,6 +20960,171 @@ default Target in config will be used</p></li>
           <summary>Source code in <code>freetensor/libop/element_wise.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kvs</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">,</span> <span class="o">**</span><span class="n">_kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.libop.element_wise.binary_op" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">binary_op</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">out_dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.libop.element_wise.binary_op" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>(Broadcasted) any element-wise operation on two tensors and return the result</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>op</strong> (<code>Callable</code>) – The operation applied to each item</p></li>
+            <li><p><strong>a</strong> (<code>VarRef</code>) – Left-hand-side operand</p></li>
+            <li><p><strong>b</strong> (<code>VarRef</code>) – Right-hand-side operand</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+        <ul class="first simple">
+          <li><p><code>VarRef</code> – The result tensor</p></li>
+        </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/libop/element_wise.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@core</span><span class="o">.</span><span class="n">inline</span>
+<span class="k">def</span> <span class="nf">binary_op</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">out_dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    (Broadcasted) any element-wise operation on two tensors and return the result</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    op : Callable</span>
+<span class="sd">        The operation applied to each item</span>
+<span class="sd">    a : VarRef</span>
+<span class="sd">        Left-hand-side operand</span>
+<span class="sd">    b : VarRef</span>
+<span class="sd">        Right-hand-side operand</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    VarRef</span>
+<span class="sd">        The result tensor</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1">#! label: out</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+        <span class="n">broadcast_shape</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span>
+        <span class="n">out_dtype</span> <span class="k">if</span> <span class="n">out_dtype</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">core</span><span class="o">.</span><span class="n">up_cast</span><span class="p">(</span>
+            <span class="n">core</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">core</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">b</span><span class="p">)),</span>
+        <span class="n">core</span><span class="o">.</span><span class="n">same_mtype</span><span class="p">(</span><span class="n">core</span><span class="o">.</span><span class="n">mtype</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">core</span><span class="o">.</span><span class="n">mtype</span><span class="p">(</span><span class="n">b</span><span class="p">)))</span>
+    <span class="c1">#! label: recur</span>
+    <span class="n">binary_op_</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.libop.element_wise.binary_op_" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">binary_op_</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.libop.element_wise.binary_op_" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>(Broadcasted) any element-wise operation on two tensors. The result is written to another tensor</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>op</strong> (<code>Callable</code>) – The operation applied to each item</p></li>
+            <li><p><strong>a</strong> (<code>VarRef</code>) – Left-hand-side operand</p></li>
+            <li><p><strong>b</strong> (<code>VarRef</code>) – Right-hand-side operand</p></li>
+            <li><p><strong>out</strong> (<code>VarRef</code>) – The result tensor</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/libop/element_wise.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@core</span><span class="o">.</span><span class="n">inline</span>
+<span class="k">def</span> <span class="nf">binary_op_</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    (Broadcasted) any element-wise operation on two tensors. The result is written to another tensor</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    op : Callable</span>
+<span class="sd">        The operation applied to each item</span>
+<span class="sd">    a : VarRef</span>
+<span class="sd">        Left-hand-side operand</span>
+<span class="sd">    b : VarRef</span>
+<span class="sd">        Right-hand-side operand</span>
+<span class="sd">    out : VarRef</span>
+<span class="sd">        The result tensor</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">out</span><span class="p">[()]</span> <span class="o">=</span> <span class="n">op</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1">#! label: L_elem</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">out</span><span class="p">):</span>
+                <span class="k">assert</span> <span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="c1">#! label: recur</span>
+                <span class="n">binary_op_</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">out</span><span class="p">):</span>
+                <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="c1">#! label: recur</span>
+                <span class="n">binary_op_</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">b</span><span class="p">,</span> <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+                <span class="k">assert</span> <span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+                <span class="c1">#! label: recur</span>
+                <span class="n">binary_op_</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)],</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)],</span> <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
 </code></pre></div>
         </details>
     </div>
@@ -22853,6 +23989,151 @@ default Target in config will be used</p></li>
           <summary>Source code in <code>freetensor/libop/element_wise.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kvs</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">,</span> <span class="o">**</span><span class="n">_kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.libop.element_wise.unary_op" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">unary_op</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.libop.element_wise.unary_op" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Any element-wise operation on a tensor and return the result</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>op</strong> (<code>Callable</code>) – The operation applied to each item</p></li>
+            <li><p><strong>x</strong> (<code>VarRef</code>) – The input tensor</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+        <ul class="first simple">
+          <li><p><code>VarRef</code> – The result tensor</p></li>
+        </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/libop/element_wise.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@core</span><span class="o">.</span><span class="n">inline</span>
+<span class="k">def</span> <span class="nf">unary_op</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Any element-wise operation on a tensor and return the result</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    op : Callable</span>
+<span class="sd">        The operation applied to each item</span>
+<span class="sd">    x : VarRef</span>
+<span class="sd">        The input tensor</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    VarRef</span>
+<span class="sd">        The result tensor</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1">#! label: y</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">copy_shape</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">core</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">core</span><span class="o">.</span><span class="n">mtype</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="c1">#! label: recur</span>
+    <span class="n">unary_op_</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.libop.element_wise.unary_op_" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">unary_op_</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.libop.element_wise.unary_op_" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Any element-wise operation on a tensor. The result is written to another tensor</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>op</strong> (<code>Callable</code>) – The operation applied to each item</p></li>
+            <li><p><strong>x</strong> (<code>VarRef</code>) – The input tensor</p></li>
+            <li><p><strong>out</strong> (<code>VarRef</code>) – The result tensor</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/libop/element_wise.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@core</span><span class="o">.</span><span class="n">inline</span>
+<span class="k">def</span> <span class="nf">unary_op_</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Any element-wise operation on a tensor. The result is written to another tensor</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    op : Callable</span>
+<span class="sd">        The operation applied to each item</span>
+<span class="sd">    x : VarRef</span>
+<span class="sd">        The input tensor</span>
+<span class="sd">    out : VarRef</span>
+<span class="sd">        The result tensor</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">core</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">y</span><span class="p">[()]</span> <span class="o">=</span> <span class="n">op</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1">#! label: L_elem</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+            <span class="c1">#! label: recur</span>
+            <span class="n">unary_op_</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
 </code></pre></div>
         </details>
     </div>

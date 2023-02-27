@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.3"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>FreeTensor: freetensor::UserBwd Struct Reference</title>
+<title>FreeTensor: freetensor::RangeToUserGrad Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -62,25 +62,25 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="namespacefreetensor.html">freetensor</a></li><li class="navelem"><a class="el" href="structfreetensor_1_1UserBwd.html">UserBwd</a></li>  </ul>
+<li class="navelem"><a class="el" href="namespacefreetensor.html">freetensor</a></li><li class="navelem"><a class="el" href="structfreetensor_1_1RangeToUserGrad.html">RangeToUserGrad</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="structfreetensor_1_1UserBwd-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">freetensor::UserBwd Struct Reference</div></div>
+<a href="structfreetensor_1_1RangeToUserGrad-members.html">List of all members</a>  </div>
+  <div class="headertitle"><div class="title">freetensor::RangeToUserGrad Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="grad_8h_source.html">grad.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="user__grad_8h_source.html">user_grad.h</a>&gt;</code></p>
 <div class="dynheader">
-Collaboration diagram for freetensor::UserBwd:</div>
+Collaboration diagram for freetensor::RangeToUserGrad:</div>
 <div class="dyncontent">
-<div class="center"><img src="structfreetensor_1_1UserBwd__coll__graph.png" border="0" usemap="#afreetensor_1_1UserBwd_coll__map" alt="Collaboration graph"/></div>
-<map name="afreetensor_1_1UserBwd_coll__map" id="afreetensor_1_1UserBwd_coll__map">
-<area shape="rect" title=" " alt="" coords="77,109,231,136"/>
+<div class="center"><img src="structfreetensor_1_1RangeToUserGrad__coll__graph.png" border="0" usemap="#afreetensor_1_1RangeToUserGrad_coll__map" alt="Collaboration graph"/></div>
+<map name="afreetensor_1_1RangeToUserGrad_coll__map" id="afreetensor_1_1RangeToUserGrad_coll__map">
+<area shape="rect" title=" " alt="" coords="47,109,261,136"/>
 <area shape="rect" href="classfreetensor_1_1ID.html" title=" " alt="" coords="5,5,116,32"/>
 <area shape="rect" href="classfreetensor_1_1Ref.html" title=" " alt="" coords="140,5,355,32"/>
 </map>
@@ -88,23 +88,23 @@ Collaboration diagram for freetensor::UserBwd:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a943f58c9a2f5db46d54d9a8dd0e2fe76"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1UserBwd.html#a943f58c9a2f5db46d54d9a8dd0e2fe76">UserBwd</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;oriBegin, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;oriEnd, const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;bwdBody)</td></tr>
-<tr class="separator:a943f58c9a2f5db46d54d9a8dd0e2fe76"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32e8967711ffbc29794d797607b4b6e9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1RangeToUserGrad.html#a32e8967711ffbc29794d797607b4b6e9">RangeToUserGrad</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;oriBegin, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;oriEnd, const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;bwdBody)</td></tr>
+<tr class="separator:a32e8967711ffbc29794d797607b4b6e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a42467eddb312cca9bb7118b30ba76464"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1ID.html">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1UserBwd.html#a42467eddb312cca9bb7118b30ba76464">oriBegin_</a></td></tr>
-<tr class="memdesc:a42467eddb312cca9bb7118b30ba76464"><td class="mdescLeft">&#160;</td><td class="mdescRight">Range of statements in the original program, inclusive.  <a href="structfreetensor_1_1UserBwd.html#a42467eddb312cca9bb7118b30ba76464">More...</a><br /></td></tr>
-<tr class="separator:a42467eddb312cca9bb7118b30ba76464"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac5ccc7546cd2055cf5fc70684341fce6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1ID.html">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1UserBwd.html#ac5ccc7546cd2055cf5fc70684341fce6">oriEnd_</a></td></tr>
-<tr class="separator:ac5ccc7546cd2055cf5fc70684341fce6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe619ec820216d6803763bfcf2558714"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1UserBwd.html#abe619ec820216d6803763bfcf2558714">bwdBody_</a></td></tr>
-<tr class="memdesc:abe619ec820216d6803763bfcf2558714"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backward statement (can be a scope)  <a href="structfreetensor_1_1UserBwd.html#abe619ec820216d6803763bfcf2558714">More...</a><br /></td></tr>
-<tr class="separator:abe619ec820216d6803763bfcf2558714"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49a008c1dc4fe0c65ee869004f22182b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1ID.html">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1RangeToUserGrad.html#a49a008c1dc4fe0c65ee869004f22182b">oriBegin_</a></td></tr>
+<tr class="memdesc:a49a008c1dc4fe0c65ee869004f22182b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Range of statements in the original program, inclusive.  <a href="structfreetensor_1_1RangeToUserGrad.html#a49a008c1dc4fe0c65ee869004f22182b">More...</a><br /></td></tr>
+<tr class="separator:a49a008c1dc4fe0c65ee869004f22182b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae13ee7bba884f70bd5753e520e9f63b7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1ID.html">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1RangeToUserGrad.html#ae13ee7bba884f70bd5753e520e9f63b7">oriEnd_</a></td></tr>
+<tr class="separator:ae13ee7bba884f70bd5753e520e9f63b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab78dd6f2cfeb7cd2e94731e005eef714"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1RangeToUserGrad.html#ab78dd6f2cfeb7cd2e94731e005eef714">bwdBody_</a></td></tr>
+<tr class="memdesc:ab78dd6f2cfeb7cd2e94731e005eef714"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backward statement (can be a scope)  <a href="structfreetensor_1_1RangeToUserGrad.html#ab78dd6f2cfeb7cd2e94731e005eef714">More...</a><br /></td></tr>
+<tr class="separator:ab78dd6f2cfeb7cd2e94731e005eef714"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a943f58c9a2f5db46d54d9a8dd0e2fe76" name="a943f58c9a2f5db46d54d9a8dd0e2fe76"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a943f58c9a2f5db46d54d9a8dd0e2fe76">&#9670;&nbsp;</a></span>UserBwd()</h2>
+<a id="a32e8967711ffbc29794d797607b4b6e9" name="a32e8967711ffbc29794d797607b4b6e9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a32e8967711ffbc29794d797607b4b6e9">&#9670;&nbsp;</a></span>RangeToUserGrad()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -113,7 +113,7 @@ Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">freetensor::UserBwd::UserBwd </td>
+          <td class="memname">freetensor::RangeToUserGrad::RangeToUserGrad </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
           <td class="paramname"><em>oriBegin</em>, </td>
@@ -146,14 +146,14 @@ Public Attributes</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="abe619ec820216d6803763bfcf2558714" name="abe619ec820216d6803763bfcf2558714"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abe619ec820216d6803763bfcf2558714">&#9670;&nbsp;</a></span>bwdBody_</h2>
+<a id="ab78dd6f2cfeb7cd2e94731e005eef714" name="ab78dd6f2cfeb7cd2e94731e005eef714"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab78dd6f2cfeb7cd2e94731e005eef714">&#9670;&nbsp;</a></span>bwdBody_</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::UserBwd::bwdBody_</td>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::RangeToUserGrad::bwdBody_</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -162,14 +162,14 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a42467eddb312cca9bb7118b30ba76464" name="a42467eddb312cca9bb7118b30ba76464"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a42467eddb312cca9bb7118b30ba76464">&#9670;&nbsp;</a></span>oriBegin_</h2>
+<a id="a49a008c1dc4fe0c65ee869004f22182b" name="a49a008c1dc4fe0c65ee869004f22182b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a49a008c1dc4fe0c65ee869004f22182b">&#9670;&nbsp;</a></span>oriBegin_</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classfreetensor_1_1ID.html">ID</a> freetensor::UserBwd::oriBegin_</td>
+          <td class="memname"><a class="el" href="classfreetensor_1_1ID.html">ID</a> freetensor::RangeToUserGrad::oriBegin_</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -178,14 +178,14 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ac5ccc7546cd2055cf5fc70684341fce6" name="ac5ccc7546cd2055cf5fc70684341fce6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac5ccc7546cd2055cf5fc70684341fce6">&#9670;&nbsp;</a></span>oriEnd_</h2>
+<a id="ae13ee7bba884f70bd5753e520e9f63b7" name="ae13ee7bba884f70bd5753e520e9f63b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae13ee7bba884f70bd5753e520e9f63b7">&#9670;&nbsp;</a></span>oriEnd_</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classfreetensor_1_1ID.html">ID</a> freetensor::UserBwd::oriEnd_</td>
+          <td class="memname"><a class="el" href="classfreetensor_1_1ID.html">ID</a> freetensor::RangeToUserGrad::oriEnd_</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -193,7 +193,7 @@ Public Attributes</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
-<li>include/autograd/<a class="el" href="grad_8h_source.html">grad.h</a></li>
+<li>include/autograd/<a class="el" href="user__grad_8h_source.html">user_grad.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
