@@ -325,6 +325,11 @@ def test_custom_grad_of_libop_call():
         return y
 
     fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
+
+    # Check we have really inserted our custom grad
+    print(bwd)
+    assert len(ft.find_all_stmt(bwd, "<For><<-<For>")) > 0
+
     fwd = ft.optimize(fwd)
     bwd = ft.optimize(bwd, verbose=1)
 
