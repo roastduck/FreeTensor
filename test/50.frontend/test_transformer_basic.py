@@ -549,3 +549,19 @@ def test_attribute_assign():
         return attr
 
     assert test.body.match(test_expected.body)
+
+
+def test_not_captured_annotation():
+    ft_alter = ft
+
+    @ft.transform()
+    def test(x: ft_alter.Var[(4,), "float32"]):
+        y = x + 1
+        return y
+
+    @ft.transform()
+    def test_expected(x: ft.Var[(4,), "float32"]):
+        y = x + 1
+        return y
+
+    assert test.body.match(test_expected.body)
