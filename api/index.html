@@ -321,6 +321,8 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.ContinueException">ContinueException</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.ReplaceAnnotations">ReplaceAnnotations</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.ReturnException">ReturnException</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.StagedAssignable">StagedAssignable</a>
@@ -15115,6 +15117,145 @@ ContinueException            (<span title="Exception">Exception</span>)
 
 
 
+<h4 id="freetensor.core.staging.ReplaceAnnotations" class="doc doc-heading">
+        <code>
+ReplaceAnnotations            (<span title="ast.NodeTransformer">NodeTransformer</span>)
+        </code>
+
+
+
+<a href="#freetensor.core.staging.ReplaceAnnotations" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/staging.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">ReplaceAnnotations</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">NodeTransformer</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">annotated</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">annotated</span> <span class="o">=</span> <span class="n">annotated</span>
+
+    <span class="k">def</span> <span class="nf">visit_arg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">arg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">arg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotated</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ast</span><span class="o">.</span><span class="n">arg</span><span class="p">(</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">arg</span><span class="p">,</span>
+                <span class="n">ast</span><span class="o">.</span><span class="n">Subscript</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="s1">&#39;__staging_annotations__&#39;</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">()),</span>
+                              <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">arg</span><span class="p">),</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">()))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">node</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.staging.ReplaceAnnotations.generic_visit" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">generic_visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-inherited"><code>inherited</code></small>
+  </span>
+
+<a href="#freetensor.core.staging.ReplaceAnnotations.generic_visit" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Called if no explicit visitor function exists for a node.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/staging.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">generic_visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">old_value</span> <span class="ow">in</span> <span class="n">iter_fields</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">old_value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">new_values</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">old_value</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">AST</span><span class="p">):</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">AST</span><span class="p">):</span>
+                        <span class="n">new_values</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                <span class="n">new_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">old_value</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">new_values</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">old_value</span><span class="p">,</span> <span class="n">AST</span><span class="p">):</span>
+            <span class="n">new_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">old_value</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">new_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">delattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">new_node</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">node</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.staging.ReplaceAnnotations.visit" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-inherited"><code>inherited</code></small>
+  </span>
+
+<a href="#freetensor.core.staging.ReplaceAnnotations.visit" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Visit a node.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/staging.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Visit a node.&quot;&quot;&quot;</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;visit_&#39;</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="n">visitor</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">visitor</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h4 id="freetensor.core.staging.ReturnException" class="doc doc-heading">
         <code>
 ReturnException            (<span title="Exception">Exception</span>)
@@ -17150,6 +17291,11 @@ StagingOverload        </code>
             <span class="n">lineno</span> <span class="o">-=</span> <span class="mi">1</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="c1"># Replace the annotations with __staging_annotations__</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">)</span>
+        <span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">ReplaceAnnotations</span><span class="p">(</span>
+            <span class="n">func</span><span class="o">.</span><span class="vm">__annotations__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
         <span class="n">tree</span> <span class="o">=</span> <span class="n">Transformer</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">lineno</span><span class="p">)</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
 
         <span class="c1"># Instead of passing the `func_local` directly to `exec`, we instead wrap the</span>
@@ -17179,12 +17325,12 @@ StagingOverload        </code>
         <span class="c1"># The `LocalsDictWrapper` is a helper class to reduce code generation complexity.</span>
 
         <span class="n">WRAPPER_NAME</span> <span class="o">=</span> <span class="s1">&#39;__freetensor_staging_wrapper__&#39;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">)</span>
 
         <span class="c1"># Modify function body.</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">func_locals</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="p">([</span>
+            <span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="p">([</span>
                 <span class="c1"># Declare them as nonlocals to assign to outer scope.</span>
                 <span class="n">ast</span><span class="o">.</span><span class="n">Nonlocal</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">func_locals</span><span class="o">.</span><span class="n">keys</span><span class="p">())),</span>
             <span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
@@ -17196,7 +17342,7 @@ StagingOverload        </code>
                 <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">func_locals</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
             <span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
                 <span class="c1"># Use a try-finally to ensure closure write back.</span>
-                <span class="n">ast</span><span class="o">.</span><span class="n">Try</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">body</span><span class="p">,</span>
+                <span class="n">ast</span><span class="o">.</span><span class="n">Try</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">body</span><span class="p">,</span>
                         <span class="n">handlers</span><span class="o">=</span><span class="p">[],</span>
                         <span class="n">orelse</span><span class="o">=</span><span class="p">[],</span>
                         <span class="n">finalbody</span><span class="o">=</span><span class="p">[</span>
@@ -17216,7 +17362,8 @@ StagingOverload        </code>
                                        <span class="n">ast</span><span class="o">.</span><span class="n">arg</span><span class="p">(</span><span class="s1">&#39;__freetensor_extra_locals__&#39;</span><span class="p">,</span>
                                                <span class="kc">None</span><span class="p">),</span>
                                        <span class="n">ast</span><span class="o">.</span><span class="n">arg</span><span class="p">(</span><span class="s1">&#39;__freetensor_local_cells__&#39;</span><span class="p">,</span>
-                                               <span class="kc">None</span><span class="p">)</span>
+                                               <span class="kc">None</span><span class="p">),</span>
+                                       <span class="n">ast</span><span class="o">.</span><span class="n">arg</span><span class="p">(</span><span class="s1">&#39;__staging_annotations__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
                                    <span class="p">],</span>
                                    <span class="n">vararg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                                    <span class="n">kwonlyargs</span><span class="o">=</span><span class="p">[],</span>
@@ -17266,7 +17413,8 @@ StagingOverload        </code>
         <span class="n">f_wrapper</span> <span class="o">=</span> <span class="n">empty_locals</span><span class="p">[</span><span class="n">WRAPPER_NAME</span><span class="p">]</span>
         <span class="c1"># Pass the closure to the wrapper and retrieve the staging function with</span>
         <span class="c1"># correct captured variables.</span>
-        <span class="n">f_staging</span> <span class="o">=</span> <span class="n">f_wrapper</span><span class="p">(</span><span class="n">extra_locals</span><span class="p">,</span> <span class="n">LocalsDictWrapper</span><span class="p">(</span><span class="n">func_locals</span><span class="p">))</span>
+        <span class="n">f_staging</span> <span class="o">=</span> <span class="n">f_wrapper</span><span class="p">(</span><span class="n">extra_locals</span><span class="p">,</span> <span class="n">LocalsDictWrapper</span><span class="p">(</span><span class="n">func_locals</span><span class="p">),</span>
+                              <span class="n">func</span><span class="o">.</span><span class="vm">__annotations__</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">f_staging</span>
 </code></pre></div>
@@ -18338,20 +18486,35 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
                 <span class="n">call_helper</span><span class="p">(</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">functiondef_decorator</span><span class="p">,</span>
                             <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">))</span>
             <span class="p">]</span>
+
+            <span class="n">annotations_dict_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;__staging_annotations__</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">__&#39;</span>
             <span class="c1"># Handle the type annotations</span>
             <span class="n">node</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">stmt</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">posonlyargs</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span>
                 <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span> <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">handleType_AnnAssign</span><span class="p">(</span>
-                    <span class="n">ast</span><span class="o">.</span><span class="n">AnnAssign</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">arg</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Store</span><span class="p">()),</span>
-                                  <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+                    <span class="n">ast</span><span class="o">.</span><span class="n">AnnAssign</span><span class="p">(</span>
+                        <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">arg</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Store</span><span class="p">()),</span>
+                        <span class="n">ast</span><span class="o">.</span><span class="n">Subscript</span><span class="p">(</span>
+                            <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">annotations_dict_name</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">()),</span>
+                            <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">arg</span><span class="p">),</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">()),</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
             <span class="p">]</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span>
 
-            <span class="c1"># Cleanup annotations; we don&#39;t need them anymore</span>
+            <span class="n">annotations_dict</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="c1"># Cleanup annotations; we don&#39;t need them any more</span>
             <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="p">[</span>
                     <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">vararg</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">kwarg</span>
             <span class="p">]</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">posonlyargs</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">arg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">arg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">annotations_dict</span><span class="p">[</span><span class="n">arg</span><span class="o">.</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span>
                     <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="c1"># Write the annotations_dict</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">annotations_dict_name</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Store</span><span class="p">())],</span>
+                    <span class="n">ast</span><span class="o">.</span><span class="n">Dict</span><span class="p">([</span><span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">annotations_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()],</span>
+                             <span class="nb">list</span><span class="p">(</span><span class="n">annotations_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))),</span> <span class="n">node</span>
+            <span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">curr_func</span> <span class="o">=</span> <span class="n">prev_func</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nonlocals</span> <span class="o">=</span> <span class="n">prev_nonlocals</span>
