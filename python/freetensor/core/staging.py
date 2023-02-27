@@ -1090,7 +1090,7 @@ class Transformer(ast.NodeTransformer):
 
     def visit_Continue(self, node: ast.Continue) -> Any:
         return ast.Expr(call_helper(StagingOverload.continue_stmt))
-      
+
     def visit_With(self, node: ast.With) -> Any:
 
         def recursive_get_names(target):
