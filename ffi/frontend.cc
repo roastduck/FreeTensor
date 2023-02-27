@@ -20,7 +20,7 @@ void init_ffi_frontend(py::module_ &m) {
 
     py::class_<FrontendVar, Ref<FrontendVar>>(m, "FrontendVar")
         .def(py::init<const std::string &, const std::vector<Expr> &, DataType,
-                      MemType, const std::vector<FrontendVarIdx> &>())
+                      MemType, const std::vector<FrontendVarIdx> &, bool>())
         .def_property_readonly("name", &FrontendVar::name)
         .def_property_readonly("full_shape", &FrontendVar::fullShape)
         .def_property_readonly("indices", &FrontendVar::indices)

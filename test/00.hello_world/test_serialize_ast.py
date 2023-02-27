@@ -360,8 +360,10 @@ def test_custom_grad():
             ft.MarkLabel("S0")
             y[...] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
             with ft.UserGrad(t, y) as (dt, dy):
-                dt[...] = dy[...] * ft.intrinsic(
-                    "cosf(%)", ft.load_at_version("t0"), ret_type="float32")
+                dt[...] = dy[...] * ft.intrinsic("cosf(%)",
+                                                 ft.load_at_version(
+                                                     "t0", "float32"),
+                                                 ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
 
     print(ast)

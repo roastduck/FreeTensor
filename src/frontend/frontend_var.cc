@@ -72,7 +72,11 @@ Expr FrontendVar::asLoad() const {
         ASSERT(idx.type() == FrontendVarIdxType::Single);
         indices.emplace_back(idx.single());
     }
-    return makeLoad(name_, std::move(indices), dtype_);
+    if (!isLoadAtVersion_) {
+        return makeLoad(name_, std::move(indices), dtype_);
+    } else {
+        return _makeLoadAtVersion(name_, std::move(indices), dtype_);
+    }
 }
 
 Stmt FrontendVar::asStore(const Metadata &metadata, const Expr &value) const {
@@ -81,6 +85,11 @@ Stmt FrontendVar::asStore(const Metadata &metadata, const Expr &value) const {
             name_ + " is of a " + std::to_string(fullShape_.size()) +
             "-D shape, but " + std::to_string((int)fullShape_.size() - ndim()) +
             "-D indices are given");
+    }
+    if (isLoadAtVersion_) {
+        throw InvalidAutoGrad(
+            "Unable to assign to a forward variable (a `mark_version` "
+            "variable) from a `UserGrad` scope");
     }
     std::vector<Expr> indices;
     indices.reserve(indices_.size());

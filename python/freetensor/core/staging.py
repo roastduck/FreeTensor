@@ -1068,3 +1068,19 @@ class Transformer(ast.NodeTransformer):
 
     def visit_Continue(self, node: ast.Continue) -> Any:
         return ast.Expr(call_helper(StagingOverload.continue_stmt))
+
+    def visit_With(self, node: ast.With) -> Any:
+
+        def recursive_get_names(target):
+            if isinstance(target, ast.Name):
+                self.nonlocals[-1].append(target.id)
+            elif isinstance(target, ast.Tuple) or isinstance(target, ast.List):
+                for t in target.elts:
+                    recursive_get_names(t)
+            else:
+                assert False
+
+        for item in node.items:
+            if item.optional_vars is not None:
+                recursive_get_names(item.optional_vars)
+        return self.generic_visit(node)

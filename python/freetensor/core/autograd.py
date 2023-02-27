@@ -63,7 +63,7 @@ def grad_body(stmt: ffi.Stmt,
               requires: Sequence[Union[str, Return]],
               provides: Sequence[Union[str, Return]],
               tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
-              user_grads: Sequence[ffi.UserBwd] = []):
+              user_grads: Sequence[ffi.StmtSetToUserGrad] = []):
     ''' `grad` or `grad_` on a function body (for internal tests only) '''
 
     req = set(requires)
@@ -79,11 +79,16 @@ def _grad_func(impl,
                provides: Sequence[Union[str, Return]],
                tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
                tape_in_closure: bool = True,
-               user_grads: Sequence[ffi.UserBwd] = [],
+               user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
                verbose: Optional[int] = None):
 
     if not issubclass(type(func), ffi.AST):
         func = transform(func, verbose=verbose)
+    if user_grads is None:
+        if func.user_grads is not None:
+            user_grads = func.user_grads
+        else:
+            user_grads = []
     req = set(requires)
     prov = set([])
     for p in provides:
@@ -108,7 +113,7 @@ def grad_(func: ffi.Func,
           provides: Sequence[Union[str, Return]],
           tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
           tape_in_closure: bool = True,
-          user_grads: Sequence[ffi.UserBwd] = [],
+          user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
           verbose: Optional[int] = None):
     '''
     Reverse mode automatic differentiation
@@ -142,8 +147,10 @@ def grad_(func: ffi.Func,
         True to pass taped tensors from the forward function to the backward function in
         implicit I/O parameters, i.e. in closure. False to pass these tensors as
         explicit I/O parameters. Default to True
-    user_grads: List[ffi.UserBwd]
-        For custom gradient. See `UserGrad` for details
+    user_grads: List[ffi.StmtSetToUserGrad]
+        For custom gradient. You do not have to explicitly set this parameter unless you
+        are manipulating `func` by yourself (not getting it from the Python frontend). See
+        `UserGrad` for details
     verbose: int
         Verbosity level
 
@@ -173,7 +180,7 @@ def grad(func: ffi.Func,
          provides: Sequence[Union[str, Return]],
          tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
          tape_in_closure: bool = True,
-         user_grads: Sequence[ffi.UserBwd] = [],
+         user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
          verbose: Optional[int] = None):
     '''
     Reverse mode automatic differentiation
@@ -207,8 +214,10 @@ def grad(func: ffi.Func,
         True to pass taped tensors from the forward function to the backward function in
         implicit I/O parameters, i.e. in closure. False to pass these tensors as
         explicit I/O parameters. Default to True
-    user_grads: List[ffi.UserBwd]
-        For custom gradient. See `UserGrad` for details
+    user_grads: List[ffi.StmtSetToUserGrad]
+        For custom gradient. You do not have to explicitly set this parameter unless you
+        are manipulating `func` by yourself (not getting it from the Python frontend). See
+        `UserGrad` for details
     verbose: int
         Verbosity level
 
