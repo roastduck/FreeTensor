@@ -11,7 +11,7 @@ import functools
 import inspect
 import traceback
 import sourceinspect as ins
-from typing import Callable, Dict, List, Sequence, Optional, Any, TypeVar, Union
+from typing import Callable, Dict, List, Sequence, Optional, Any, Set
 from dataclasses import dataclass
 
 from . import config
@@ -468,6 +468,12 @@ class StagingOverload:
             lineno -= 1
         else:
             tree = ast.parse(src)
+        # Replace the annotations with __staging_annotations__
+        print(tree)
+        assert isinstance(tree, ast.Module) and len(
+            tree.body) == 1 and isinstance(tree.body[0], ast.FunctionDef)
+        tree.body[0].args = ReplaceAnnotations(
+            func.__annotations__.keys()).visit(tree.body[0].args)
         tree = Transformer(file, lineno).visit(tree)
 
         # Instead of passing the `func_local` directly to `exec`, we instead wrap the
@@ -534,7 +540,8 @@ class StagingOverload:
                                        ast.arg('__freetensor_extra_locals__',
                                                None),
                                        ast.arg('__freetensor_local_cells__',
-                                               None)
+                                               None),
+                                       ast.arg('__staging_annotations__', None),
                                    ],
                                    vararg=None,
                                    kwonlyargs=[],
@@ -584,7 +591,8 @@ class StagingOverload:
         f_wrapper = empty_locals[WRAPPER_NAME]
         # Pass the closure to the wrapper and retrieve the staging function with
         # correct captured variables.
-        f_staging = f_wrapper(extra_locals, LocalsDictWrapper(func_locals))
+        f_staging = f_wrapper(extra_locals, LocalsDictWrapper(func_locals),
+                              func.__annotations__)
 
         return f_staging
 
@@ -1068,3 +1076,18 @@ class Transformer(ast.NodeTransformer):
 
     def visit_Continue(self, node: ast.Continue) -> Any:
         return ast.Expr(call_helper(StagingOverload.continue_stmt))
+
+
+class ReplaceAnnotations(ast.NodeTransformer):
+
+    def __init__(self, annotated: Set[str]):
+        self.annotated = annotated
+
+    def visit_arg(self, node: ast.arg) -> Any:
+        if node.arg in self.annotated:
+            return ast.arg(
+                node.arg,
+                ast.Subscript(ast.Name('__staging_annotations__', ast.Load()),
+                              ast.Constant(node.arg), ast.Load()))
+        else:
+            return node
