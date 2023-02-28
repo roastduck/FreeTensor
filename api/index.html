@@ -69,570 +69,6 @@
               <ul class="current">
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">Python API</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#freetensor">freetensor</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#freetensor.core">core</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.auto_schedule">auto_schedule</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.auto_schedule.AutoSchedule">AutoSchedule</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.autograd">autograd</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.autograd.ArgRetDict">ArgRetDict</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.autograd.Return">Return</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.autograd.grad">grad()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.autograd.grad_">grad_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.autograd.grad_body">grad_body()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.codegen">codegen</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.codegen.codegen">codegen()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.config">config</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.backend_compiler_cxx">backend_compiler_cxx()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.backend_compiler_nvcc">backend_compiler_nvcc()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.debug_binary">debug_binary()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.debug_cuda_with_um">debug_cuda_with_um()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.default_device">default_device()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.default_target">default_target()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.pretty_print">pretty_print()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.print_all_id">print_all_id()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_backend_compiler_cxx">set_backend_compiler_cxx()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_backend_compiler_nvcc">set_backend_compiler_nvcc()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_debug_binary">set_debug_binary()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_debug_cuda_with_um">set_debug_cuda_with_um()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_default_device">set_default_device()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_default_target">set_default_target()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_pretty_print">set_pretty_print()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_print_all_id">set_print_all_id()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_werror">set_werror()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.werror">werror()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.with_cuda">with_cuda()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.with_mkl">with_mkl()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.with_pytorch">with_pytorch()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.context">context</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.context.ContextStack">ContextStack</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.context.StmtRange">StmtRange</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.context.pop_ast">pop_ast()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.context.pop_ast_and_user_grads">pop_ast_and_user_grads()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.driver">driver</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.Device">Device</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.Driver">Driver</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.ReturnValuesPack">ReturnValuesPack</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.array">array()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.build_binary">build_binary()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.expr">expr</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.AlreadyMadeReduceTo">AlreadyMadeReduceTo</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.VarRef">VarRef</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.VarRefFromVarDef">VarRefFromVarDef</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.VarVersionRef">VarVersionRef</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.abs">abs()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.add">add()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.any">any()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.cast">cast()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.ceil">ceil()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.ceildiv">ceildiv()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.dtype">dtype()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.eq">eq()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.exp">exp()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.floor">floor()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.floordiv">floordiv()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.ge">ge()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.gt">gt()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.if_then_else">if_then_else()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.intrinsic">intrinsic()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.l_and">l_and()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.l_not">l_not()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.l_or">l_or()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.le">le()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.load_at_version">load_at_version()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.lt">lt()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.max">max()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.min">min()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.mod">mod()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.mtype">mtype()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.mul">mul()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.ndim">ndim()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.ne">ne()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.remainder">remainder()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.round_towards_0_div">round_towards_0_div()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.shape">shape()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.sigmoid">sigmoid()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.sqrt">sqrt()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.square">square()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.sub">sub()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.tanh">tanh()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.expr.truediv">truediv()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.frontend">frontend</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.FreeTensorOverload">FreeTensorOverload</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.LifetimeScope">LifetimeScope</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.PredefinedVarCreator">PredefinedVarCreator</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.UserGrad">UserGrad</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.Var">Var</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.VarCreator">VarCreator</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.VersionMarker">VersionMarker</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.dynamic_range">dynamic_range</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.capture_var">capture_var()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.empty">empty()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.inline">inline()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.push_for_backward">push_for_backward()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.transform">transform()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.frontend.var">var()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.optimize">optimize</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.optimize.optimize">optimize()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.optimize.optimize_to_pytorch">optimize_to_pytorch()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.passes">passes</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.passes.lower">lower()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.schedule">schedule</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.schedule.IDMap">IDMap</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.schedule.Schedule">Schedule</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.schedule.schedule">schedule()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.staging">staging</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.AllowShortcutScope">AllowShortcutScope</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.BreakException">BreakException</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.ContinueException">ContinueException</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.ReplaceAnnotations">ReplaceAnnotations</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.ReturnException">ReturnException</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.StagedAssignable">StagedAssignable</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.StagedPredicate">StagedPredicate</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.StagedTypeAnnotation">StagedTypeAnnotation</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.StagedTypeAnnotationMeta">StagedTypeAnnotationMeta</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.StagedUnpackAssignable">StagedUnpackAssignable</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.StagingError">StagingError</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.StagingOverload">StagingOverload</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.TransformError">TransformError</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.Transformer">Transformer</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.call_helper">call_helper()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.staging.function_helper">function_helper()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.stmt">stmt</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.Assert">Assert</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.Else">Else</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.For">For</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.If">If</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.Invoke">Invoke</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.NamedScope">NamedScope</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.UserGradStaged">UserGradStaged</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.Any">Any()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.Eval">Eval()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.MarkLabel">MarkLabel()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.MarkVersion">MarkVersion()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.stmt.VarDef">VarDef()</a>
-    </li>
-        </ul>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#freetensor.libop">libop</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.libop.assign">assign</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.assign.add_to">add_to()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.assign.assign">assign()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.assign.floordiv_to">floordiv_to()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.assign.mod_to">mod_to()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.assign.mul_to">mul_to()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.assign.sub_to">sub_to()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.assign.truediv_to">truediv_to()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.libop.constant">constant</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.constant.zeros">zeros()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.constant.zeros_">zeros_()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.libop.conv">conv</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.conv.conv">conv()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.conv.conv_">conv_()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.libop.element_wise">element_wise</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.abs">abs()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.abs_">abs_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.add">add()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.add_">add_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.binary_op">binary_op()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.binary_op_">binary_op_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.ceil">ceil()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.ceil_">ceil_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.ceildiv">ceildiv()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.ceildiv_">ceildiv_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.eq">eq()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.eq_">eq_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.exp">exp()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.exp_">exp_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.floor">floor()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.floor_">floor_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.floordiv">floordiv()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.floordiv_">floordiv_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.ge">ge()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.ge_">ge_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.gt">gt()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.gt_">gt_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.l_and">l_and()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.l_and_">l_and_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.l_not">l_not()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.l_not_">l_not_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.l_or">l_or()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.l_or_">l_or_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.le">le()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.le_">le_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.lt">lt()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.lt_">lt_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.max">max()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.max_">max_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.min">min()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.min_">min_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.mod">mod()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.mod_">mod_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.mul">mul()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.mul_">mul_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.ne">ne()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.ne_">ne_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.neg">neg()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.neg_">neg_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.relu">relu()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.relu_">relu_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.remainder">remainder()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.remainder_">remainder_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.round_towards_0_div">round_towards_0_div()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.round_towards_0_div_">round_towards_0_div_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.sigmoid">sigmoid()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.sigmoid_">sigmoid_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.sqrt">sqrt()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.sqrt_">sqrt_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.square">square()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.square_">square_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.sub">sub()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.sub_">sub_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.tanh">tanh()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.tanh_">tanh_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.truediv">truediv()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.truediv_">truediv_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.unary_op">unary_op()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.element_wise.unary_op_">unary_op_()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.libop.matmul">matmul</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.matmul.einsum">einsum()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.matmul.einsum_">einsum_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.matmul.gemm">gemm()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.matmul.gemm_">gemm_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.matmul.matmul">matmul()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.matmul.matmul_">matmul_()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.libop.pooling">pooling</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.pooling.global_avg_pool">global_avg_pool()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.pooling.global_avg_pool_">global_avg_pool_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.pooling.max_pool">max_pool()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.pooling.max_pool_">max_pool_()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.libop.reduction">reduction</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reduction.all">all()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reduction.all_">all_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reduction.any">any()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reduction.any_">any_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reduction.reduce_max">reduce_max()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reduction.reduce_max_">reduce_max_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reduction.reduce_min">reduce_min()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reduction.reduce_min_">reduce_min_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reduction.reduce_prod">reduce_prod()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reduction.reduce_prod_">reduce_prod_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reduction.reduce_sum">reduce_sum()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reduction.reduce_sum_">reduce_sum_()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.libop.reshape">reshape</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.expand">expand()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.expand_">expand_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.flatten">flatten()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.flatten_">flatten_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.reshape">reshape()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.reshape_">reshape_()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.unsqueeze">unsqueeze()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.reshape.unsqueeze_">unsqueeze_()</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#freetensor.libop.softmax">softmax</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.softmax.softmax">softmax()</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#freetensor.libop.softmax.softmax_">softmax_()</a>
-    </li>
-        </ul>
-    </li>
-        </ul>
-    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../doxygen/html/">Internal C++ Interface</a>
@@ -12934,8 +12370,8 @@ cache variable, ID of the VarDef node of the cache variable)</p></li>
 <p>To split loop into two nested loops, use <code>split</code> instead</p>
 <p>Statements inside the original loop will be distributed to one or both
 (happening if they are scope statements) loops. If a statement is
-originally labeled "S", it can be selected by "$fission.0{S}" (from the
-first loop) or "$fission.1{S}" (from the second loop) after fission. If
+originally labeled "S", it can be selected by "<span class="arithmatex">\(fission.0{S}" (from the
+first loop) or "\)</span>fission.1{S}" (from the second loop) after fission. If
 one of the resulting loop has an empty body, it will be removed</p>
 
 <table class="field-list">
@@ -14268,7 +13704,7 @@ polyhedral analysis, which may hinder some following schedules. If
 possible, plese use the first mode, and then reorder the inner and outer
 loops</p>
 <p>Suppose the original loop is labeled "L", the split two loops can be
-selected by "$split.0{L}" (the outer loop) and "$split.1{L}" (the inner
+selected by "<span class="arithmatex">\(split.0{L}" (the outer loop) and "\)</span>split.1{L}" (the inner
 loop). If one of the resulting loop is proved to have only a single
 iteration, it will be removed</p>
 
@@ -19838,7 +19274,7 @@ UserGradStaged        </code>
         <span class="n">grad_vars</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">ori_var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ori_vars</span><span class="p">:</span>
             <span class="n">grad_def</span> <span class="o">=</span> <span class="n">VarDef</span><span class="p">(</span><span class="n">ori_var</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.grad&quot;</span><span class="p">,</span> <span class="n">ori_var</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span>
-                              <span class="n">ori_var</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">&quot;cache&quot;</span><span class="p">)</span>
+                              <span class="n">ori_var</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">&quot;cache&quot;</span><span class="p">,</span> <span class="n">ori_var</span><span class="o">.</span><span class="n">mtype</span><span class="p">)</span>
             <span class="n">grad_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grad_def</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">())</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">grad_defs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grad_def</span><span class="p">)</span>
 
@@ -26738,16 +26174,8 @@ count from the last dimension</p></li>
 <span class="sd">    VarRef :</span>
 <span class="sd">        The result tensor</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="c1">#! label: max</span>
-    <span class="n">maxval</span> <span class="o">=</span> <span class="n">reduce_max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="n">axis</span><span class="p">],</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1">#! label: sub</span>
-    <span class="n">corrected</span> <span class="o">=</span> <span class="n">sub</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">maxval</span><span class="p">)</span>
-    <span class="c1">#! label: exp</span>
-    <span class="n">exponent</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">corrected</span><span class="p">)</span>
-    <span class="c1">#! label: sum</span>
-    <span class="n">summation</span> <span class="o">=</span> <span class="n">reduce_sum</span><span class="p">(</span><span class="n">exponent</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="n">axis</span><span class="p">],</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1">#! label: div</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">truediv</span><span class="p">(</span><span class="n">exponent</span><span class="p">,</span> <span class="n">summation</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">mtype</span><span class="p">)</span>
+    <span class="n">softmax_</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span>
 </code></pre></div>
         </details>
@@ -26807,16 +26235,27 @@ count from the last dimension</p></li>
 <span class="sd">        Axis that the softmax is performed along. Negative axis means</span>
 <span class="sd">        count from the last dimension</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="c1">#! label: max</span>
-    <span class="n">maxval</span> <span class="o">=</span> <span class="n">reduce_max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="n">axis</span><span class="p">],</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1">#! label: sub</span>
-    <span class="n">corrected</span> <span class="o">=</span> <span class="n">sub</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">maxval</span><span class="p">)</span>
-    <span class="c1">#! label: exp</span>
-    <span class="n">exponent</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">corrected</span><span class="p">)</span>
-    <span class="c1">#! label: sum</span>
-    <span class="n">summation</span> <span class="o">=</span> <span class="n">reduce_sum</span><span class="p">(</span><span class="n">exponent</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="n">axis</span><span class="p">],</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1">#! label: div</span>
-    <span class="n">truediv_</span><span class="p">(</span><span class="n">exponent</span><span class="p">,</span> <span class="n">summation</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">core</span><span class="o">.</span><span class="n">StmtRange</span><span class="p">()</span> <span class="k">as</span> <span class="n">rng</span><span class="p">:</span>
+        <span class="c1">#! label: max</span>
+        <span class="n">maxval</span> <span class="o">=</span> <span class="n">reduce_max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="n">axis</span><span class="p">],</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1">#! label: sub</span>
+        <span class="n">corrected</span> <span class="o">=</span> <span class="n">sub</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">maxval</span><span class="p">)</span>
+        <span class="c1">#! label: exp</span>
+        <span class="n">exponent</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">corrected</span><span class="p">)</span>
+        <span class="c1">#! label: sum</span>
+        <span class="n">summation</span> <span class="o">=</span> <span class="n">reduce_sum</span><span class="p">(</span><span class="n">exponent</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="n">axis</span><span class="p">],</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1">#! label: div</span>
+        <span class="n">truediv_</span><span class="p">(</span><span class="n">exponent</span><span class="p">,</span> <span class="n">summation</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+        <span class="n">exponent_handle</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">push_for_backward</span><span class="p">(</span><span class="n">exponent</span><span class="p">)</span>
+        <span class="n">summation_handle</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">push_for_backward</span><span class="p">(</span><span class="n">summation</span><span class="p">)</span>
+        <span class="n">y_handle</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">push_for_backward</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">core</span><span class="o">.</span><span class="n">UserGrad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">stmt_range</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span> <span class="k">as</span> <span class="p">(</span><span class="n">d_x</span><span class="p">,</span> <span class="n">d_y</span><span class="p">):</span>
+        <span class="n">d_summation</span> <span class="o">=</span> <span class="o">-</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">d_y</span> <span class="o">*</span> <span class="n">y_handle</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="n">axis</span>
+                                                       <span class="p">])</span> <span class="o">/</span> <span class="n">summation_handle</span>
+        <span class="n">d_exponent</span> <span class="o">=</span> <span class="n">d_y</span> <span class="o">/</span> <span class="n">summation_handle</span> <span class="o">+</span> <span class="n">d_summation</span>
+        <span class="n">d_x</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">+=</span> <span class="n">d_exponent</span> <span class="o">*</span> <span class="n">exponent_handle</span>
 </code></pre></div>
         </details>
     </div>
@@ -26890,6 +26329,9 @@ count from the last dimension</p></li>
     <script>var base_url = '..';</script>
     <script src="../js/theme_extra.js" defer></script>
     <script src="../js/theme.js" defer></script>
+      <script src="../javascripts/mathjax.js" defer></script>
+      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
       <script src="../search/main.js" defer></script>
     <script defer>
         window.onload = function () {

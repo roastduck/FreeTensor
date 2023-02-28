@@ -64,8 +64,6 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">Automatic Differentiation</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#reverse-mode-ad">Reverse-Mode AD</a>
-    </li>
     </ul>
                   </li>
               </ul>
@@ -110,6 +108,17 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="automatic-differentiation">Automatic Differentiation<a class="headerlink" href="#automatic-differentiation" title="Permanent link">&para;</a></h1>
+<div class="toc">
+<ul>
+<li><a href="#reverse-mode-ad">Reverse-Mode AD</a></li>
+<li><a href="#providing-your-custom-gradients">Providing Your Custom Gradients</a><ul>
+<li><a href="#why-or-when-do-we-need-custom-gradients">Why or When do We Need Custom Gradients</a></li>
+<li><a href="#how-to-write-custom-gradients-in-freetensor">How to Write Custom Gradients in FreeTensor</a></li>
+<li><a href="#additional-descriptions-on-push_for_backward">Additional Descriptions on push_for_backward</a></li>
+</ul>
+</li>
+</ul>
+</div>
 <p>Automatic Differentiation (AD) transforms a program to another program that computes the original one's derivative or gradient. FreeTensor supports Reverse-Mode AD, and there is a plan to support Forward-Mode AD in the future.</p>
 <h2 id="reverse-mode-ad">Reverse-Mode AD<a class="headerlink" href="#reverse-mode-ad" title="Permanent link">&para;</a></h2>
 <p>Suppose there is a program <code>x -&gt; y -&gt; z -&gt; w</code> that computes an output <code>w</code> from intermediate variables <code>z</code> and <code>y</code>, and an input variable <code>x</code>. Reverse-Mode AD generates a gradient program <code>dw/dw=1 -&gt; dw/dz -&gt; dw/dy -&gt; dw/dx</code> that computes <code>dw/dx</code> by Chain Rule. <code>y</code>, <code>z</code> and <code>w</code> may be saved in a "tape" when evaluation the original program, to be reused in the gradient one.</p>
@@ -145,6 +154,168 @@ print(dzdb.numpy())
 <p>After that, you call <code>ft.optimize</code> to optimize and compile the program just as in previous examples, but for both <code>fwd</code> and <code>bwd</code> this time.</p>
 <p>Finally, you execute <code>fwd</code> and <code>bwd</code>. The parameters and return values of <code>bwd</code> are the gradients of <code>a</code>, <code>b</code> and <code>y</code>, which have their own names. To set and get these parameters and return values, you look up for them in two dictionaries <code>input_grads</code> and <code>output_grads</code> returned from <code>ft.grad</code> (in type <a href="../../api/#freetensor.core.autograd.ArgRetDict"><code>ft.ArgRetDict</code></a>. <code>input_grads</code> and <code>output_grads</code> accept either a name of a parameter, or a special <a href="../../api/#freetensor.core.autograd.Return"><code>ft.Return</code></a> to specify a return value. When invoking <code>bwd</code>, parameters can be set via keyword arguments, and return values can be collect via a bracket (from a special type <a href="../../api/#freetensor.core.driver.ReturnValuesPack"><code>ft.ReturnValuesPack</code></a>).</p>
 <p>Intermediate variables are not always have to be saved to the "tape" from the forward function. If a variable is need in the backward function but not saved, it will be re-computed, which is sometimes even faster than saving it due to better locality. By default, FreeTensor uses heuristics to determine which variable to save. To get better performance, you may want to control which intermediate variables should be saved by setting an optional <code>tapes</code> parameter in <code>ft.grad</code>. <code>tapes</code> can either be a different mode, or a explicit list of AST node IDs of all <code>VarDef</code> nodes of the variables you want to save.</p>
+<h2 id="providing-your-custom-gradients">Providing Your Custom Gradients<a class="headerlink" href="#providing-your-custom-gradients" title="Permanent link">&para;</a></h2>
+<h3 id="why-or-when-do-we-need-custom-gradients">Why or When do We Need Custom Gradients<a class="headerlink" href="#why-or-when-do-we-need-custom-gradients" title="Permanent link">&para;</a></h3>
+<p>Sometimes neither reverse-mode or forward-mode AD produces the most elegant form of gradients. FreeTensor allows you to provide your own gradients for part of the program.</p>
+<p>Take softmax as an example: The <span class="arithmatex">\(\mathbf{y} = softmax(\mathbf{x})\)</span> function is <strong>mathematically defined</strong> by the following steps:</p>
+<div class="arithmatex">\[\begin{align}
+e_i &amp;= \mathrm{e}^{x_i} \label{eq:softmax-1} \\
+s &amp;= \sum_i{e_i} \label{eq:softmax-2} \\
+y_i &amp;= \frac{e_i}{s} \label{eq:softmax-3}
+\end{align}\]</div>
+<p>Suppose the final output of the program (the loss) is <span class="arithmatex">\(z\)</span>. If using reverse-mode AD, the gradient of the input: <span class="arithmatex">\(\frac{\partial z}{\partial x}\)</span> can be computed by the following steps:</p>
+<div class="arithmatex">\[\begin{align}
+\frac{\partial z}{\partial s} &amp;= -\sum_i{\frac{\partial z}{\partial y_i} \frac{y_i}{s}} \label{eq:softmax-grad-1} \\
+\frac{\partial z}{\partial e_i} &amp;= \frac{\partial z}{\partial y_i} \frac{1}{s} + \frac{\partial z}{\partial s} \label{eq:softmax-grad-2} \\
+\frac{\partial z}{\partial x_i} &amp;= \frac{\partial z}{\partial e_i} e_i \label{eq:softmax-grad-3}
+\end{align}\]</div>
+<p>However, usually we can NOT compute softmax by Equation <span class="arithmatex">\(\eqref{eq:softmax-1}\eqref{eq:softmax-2}\eqref{eq:softmax-3}\)</span> for numerical stability issues. Pratically, we <strong>compute</strong> softmax with additional normalization on <span class="arithmatex">\(\mathbf{x}\)</span>:</p>
+<div class="arithmatex">\[\begin{align}
+m &amp;= \max_i{x_i} \label{eq:softmax-norm-1} \\
+e_i &amp;= \mathrm{e}^{x_i - m} \label{eq:softmax-norm-2} \\
+s &amp;= \sum_i{e_i} \label{eq:softmax-norm-3} \\
+y_i &amp;= \frac{e_i}{s} \label{eq:softmax-norm-4}
+\end{align}\]</div>
+<p>If we directly apply reverse-mode AD on Equation <span class="arithmatex">\(\eqref{eq:softmax-norm-1}\eqref{eq:softmax-norm-2}\eqref{eq:softmax-norm-3}\eqref{eq:softmax-norm-4}\)</span>, the backward program will be like:</p>
+<div class="arithmatex">\[\begin{align}
+\frac{\partial z}{\partial s} &amp;= -\sum_i{\frac{\partial z}{\partial y_i} \frac{y_i}{s}} \\
+\frac{\partial z}{\partial e_i} &amp;= \frac{\partial z}{\partial y_i} \frac{1}{s} + \frac{\partial z}{\partial s} \\
+\frac{\partial z}{\partial m} &amp;= -\sum_i{\frac{\partial z}{\partial e_i}e_i} \\
+\frac{\partial z}{\partial x_i} &amp;= \frac{\partial z}{\partial e_i} e_i + \begin{cases}\frac{\partial z}{\partial m}, &amp;i = \arg\max_j{x_j} \\ 0, &amp;i \neq \arg\max_j{x_j}\end{cases}
+\end{align}\]</div>
+<p>You may have found that there is an extra <span class="arithmatex">\(\frac{\partial z}{\partial m}\)</span> involved. Apparently, the gradient should be the same no matter if we do the normalization. This is because <span class="arithmatex">\(\frac{\partial z}{\partial m}\)</span> actually always equals to <span class="arithmatex">\(0\)</span>. FreeTensor can not dig out this mathematical property, so the computation on <span class="arithmatex">\(\frac{\partial z}{\partial m}\)</span> will remain and will be wasted.</p>
+<h3 id="how-to-write-custom-gradients-in-freetensor">How to Write Custom Gradients in FreeTensor<a class="headerlink" href="#how-to-write-custom-gradients-in-freetensor" title="Permanent link">&para;</a></h3>
+<p>The following examples will demonstrate how to provide your own custom gradients, to override the default AD behaviour. <strong>Please note that this is only for demonstration. If you are just going to use softmax, call it from <a href="../../api/#freetensor.libop.softmax"><code>libop.softmax</code></a>, which has already implemented the following code.</strong></p>
+<p>First we show a softmax implementation with full AD:</p>
+<pre><code class="language-python">import freetensor as ft
+import torch
+
+n = 4
+
+def test(x: ft.Var[(n,), &quot;float32&quot;]):
+    # Automatically decide gradients for this statement
+    m = ft.reduce_max(x, axes=[-1])
+    e = ft.exp(x - m)
+    s = ft.reduce_sum(e, axes=[-1])
+    y = e / s
+    return y
+
+fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
+fwd = ft.optimize(fwd)
+bwd = ft.optimize(bwd)  # Set verbose=1 to see the code
+
+# Check forward result
+x = torch.rand(n, dtype=torch.float32)
+x.requires_grad = True
+y_ft = fwd(x).torch()
+y_torch = torch.softmax(x, axis=-1)
+assert torch.all(torch.isclose(y_ft, y_torch))
+
+# Check backward result
+y_torch.grad = dzdy = torch.rand(n, dtype=torch.float32)
+dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+y_torch.backward(y_torch.grad)
+dzdx_torch = x.grad
+assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))
+</code></pre>
+<p>Then, we add our own gradient to it:</p>
+<pre><code class="language-python">import freetensor as ft
+import torch
+
+n = 4
+
+def test(x: ft.Var[(n,), &quot;float32&quot;]):
+    # Mark the range that you want to provide graident for, with `StmtRange`
+    with ft.StmtRange() as rng:
+        m = ft.reduce_max(x, axes=[-1])
+        e = ft.exp(x - m)
+        s = ft.reduce_sum(e, axes=[-1])
+        y = e / s
+
+        # Call `push_for_backward` so we can use forward values in backward
+        e_now = ft.push_for_backward(e)
+        s_now = ft.push_for_backward(s)
+        y_now = ft.push_for_backward(y)
+    # Define gradient in `UserGrad`
+    with ft.UserGrad(x, y, stmt_range=rng) as (dzdx, dzdy):
+        # Retrieve forward value from `y_now`, NOT `y`
+        dzds = -ft.reduce_sum(dzdy * y_now, axes=[-1]) / s_now
+        dzde = dzdy / s_now + dzds
+        dzdx[...] += dzde * e_now  # Use `+=` here
+    return y
+
+fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
+fwd = ft.optimize(fwd)
+bwd = ft.optimize(bwd)  # Set verbose=1 to see the code
+
+# Check forward result
+x = torch.rand(n, dtype=torch.float32)
+x.requires_grad = True
+y_ft = fwd(x).torch()
+y_torch = torch.softmax(x, axis=-1)
+assert torch.all(torch.isclose(y_ft, y_torch))
+
+# Check backward result
+y_torch.grad = dzdy = torch.rand(n, dtype=torch.float32)
+dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+y_torch.backward(y_torch.grad)
+dzdx_torch = x.grad
+assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))
+</code></pre>
+<p>First, <strong>we mark the range of code that we want to provide gradient for, with <code>ft.StmtRange</code>,</strong> as a name <code>rng</code>. In the range, we write the code to compute <code>softmax</code> as usual. Additionaly, for the values that we want to reuse in the gradient, <strong>we call <code>ft.push_for_backward</code> to save it.</strong> <code>push_for_backward</code> returns a handle that you can use as a usual tensor in the gradient code. If your <code>StmtRange</code> is inside an outer loop, the handle will always reflect the correct iteration (see the next example). Besides, <code>push_for_backward</code> does not mean the value will be physically saved in tape: it only means the value will be logically reused in the backward, no matter by saving or by recomputing. <code>push_for_backward</code> is orthogonal with the <code>tapes</code> parameter in <code>ft.grad</code>.</p>
+<p>Next, <strong>we define our custom gradient with a <code>ft.UserGrad</code> scope.</strong> The scopes receives a special parameter <code>stmt_range</code>, which should be set to the <code>StmtRange</code> we have just defined. Beside <code>stmt_range</code>, <code>UserGrand</code> receives an arbitrary number of parameters, in this case, <code>x</code> and <code>y</code>, and returns the same number of variables, <code>dzdx</code> and <code>dzdy</code>, so we have the mapping between each variable and its gradient. What we are going to do is update <code>dzdx</code> from <code>dzdy</code>.</p>
+<p>We define our gradient code in the <code>UserGrad</code> code of Equation <span class="arithmatex">\(\eqref{eq:softmax-grad-1}\eqref{eq:softmax-grad-2}\eqref{eq:softmax-grad-3}\)</span>. We want to use the forward value <code>y</code>, <code>s</code> and <code>e</code>. But <strong>do NOT directly use its name, use the <code>push_for_backward</code> handler <code>y_now</code>, <code>s_now</code> and <code>e_now</code> instead.</strong> Finally, plase note that <strong>we update <code>dzdx</code> with <code>+=</code> instead of <code>=</code>,</strong> because we may be only computing a partial derivative: there may be other functions of <code>x</code> other than <code>y</code>.</p>
+<p>And it is all done.</p>
+<h3 id="additional-descriptions-on-push_for_backward">Additional Descriptions on <code>push_for_backward</code><a class="headerlink" href="#additional-descriptions-on-push_for_backward" title="Permanent link">&para;</a></h3>
+<p>We have mentioned <code>push_for_backward</code> will automatically handle multiple versions of a variable. If you are familiar with PyTorch, you may have found the name is similar to PyTorch's <code>save_for_backward</code>. Here, versioning is the major difference: <code>ft.push_for_backward</code> can be called multiple times on a variable, to save multiple version (or snapshot of it), while the variable can keep changing.</p>
+<p>Here is an additional example: a softmax written in a loop form, where we receives a 2-d input, and apply softmax on the second dimension. Again, this is only for demonstration, and there are multiple ways to implement a softmax.</p>
+<pre><code class="language-python">import freetensor as ft
+import torch
+
+n = 4
+
+def test(x: ft.Var[(n, n), &quot;float32&quot;]):
+    y = ft.empty((n, n), &quot;float32&quot;)
+    for i in range(n):
+        # Mark the range that you want to provide graident for, with `StmtRange`
+        with ft.StmtRange() as rng:
+            # `m`, `e` and `s` are local to `i`
+            m = ft.reduce_max(x[i], axes=[-1])
+            e = ft.exp(x[i] - m)
+            s = ft.reduce_sum(e, axes=[-1])
+            y[i] = e / s
+
+            # Call `push_for_backward` so we can use forward values in backward
+            e_now = ft.push_for_backward(e)
+            s_now = ft.push_for_backward(s)
+            y_now = ft.push_for_backward(y)
+        # Define gradient in `UserGrad`
+        with ft.UserGrad(x, y, stmt_range=rng) as (dzdx, dzdy):
+            # Retrieve forward value from `y_now`, NOT `y`
+            dzds = -ft.reduce_sum(dzdy[i] * y_now[i], axes=[-1]) / s_now
+            dzde = dzdy[i] / s_now + dzds
+            dzdx[i] += dzde * e_now  # Use `+=` here
+    return y
+
+fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
+fwd = ft.optimize(fwd)
+bwd = ft.optimize(bwd)  # Set verbose=1 to see the code
+
+# Check forward result
+x = torch.rand(n, n, dtype=torch.float32)
+x.requires_grad = True
+y_ft = fwd(x).torch()
+y_torch = torch.softmax(x, axis=-1)
+assert torch.all(torch.isclose(y_ft, y_torch))
+
+# Check backward result
+y_torch.grad = dzdy = torch.rand(n, n, dtype=torch.float32)
+dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+y_torch.backward(y_torch.grad)
+dzdx_torch = x.grad
+assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))
+</code></pre>
+<p>Here our gradient scope is inside a loop, where <code>m</code>, <code>e</code> and <code>s</code> are local to the loop iteration. When we load the value from their <code>push_for_backward</code> handlers, we get the version of value at the exact iteration we need.</p>
               
             </div>
           </div><footer>
@@ -183,6 +354,9 @@ print(dzdb.numpy())
     <script>var base_url = '../..';</script>
     <script src="../../js/theme_extra.js" defer></script>
     <script src="../../js/theme.js" defer></script>
+      <script src="../../javascripts/mathjax.js" defer></script>
+      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
       <script src="../../search/main.js" defer></script>
     <script defer>
         window.onload = function () {

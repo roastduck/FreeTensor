@@ -11,3 +11,19 @@ div.doc-contents:not(.first) {
 div.wy-side-nav-search {
   background-color: #e4f4ff;
 }
+
+/* Background color of Table of Contents of each page */
+div.toc {
+  width: 60%;
+  background-color: #f8f8f8;
+  border-style: solid;
+  border-color: #e1e4e5;
+  border-width: 1px;
+  padding-top: 12px;
+  padding-left: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+}
+div.toc ul {
+  margin: 0px !important;
+}

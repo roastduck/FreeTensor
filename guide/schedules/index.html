@@ -60,14 +60,6 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">Optimize a Program with Schedules</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#example-parallel-vector-addition">Example: Parallel Vector addition</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#combining-multiple-schdules">Combining Multiple Schdules</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#specify-what-to-schedule-by-selectors">Specify What to Schedule by Selectors</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#auto-scheduling-experimental">Auto Scheduling (Experimental)</a>
-    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../gpu/">Running on a GPU</a>
@@ -116,6 +108,14 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="optimize-a-program-with-schedules">Optimize a Program with Schedules<a class="headerlink" href="#optimize-a-program-with-schedules" title="Permanent link">&para;</a></h1>
+<div class="toc">
+<ul>
+<li><a href="#example-parallel-vector-addition">Example: Parallel Vector addition</a></li>
+<li><a href="#combining-multiple-schdules">Combining Multiple Schdules</a></li>
+<li><a href="#specify-what-to-schedule-by-selectors">Specify What to Schedule by Selectors</a></li>
+<li><a href="#auto-scheduling-experimental">Auto Scheduling (Experimental)</a></li>
+</ul>
+</div>
 <p>Oftentimes, only compiling your programs to native code is not enough, and you need further optimizations. This can be done by applying "schedules" (explicit program transformations) to you program.</p>
 <h2 id="example-parallel-vector-addition">Example: Parallel Vector addition<a class="headerlink" href="#example-parallel-vector-addition" title="Permanent link">&para;</a></h2>
 <pre><code class="language-python">import freetensor as ft
@@ -227,6 +227,9 @@ print(y)
     <script>var base_url = '../..';</script>
     <script src="../../js/theme_extra.js" defer></script>
     <script src="../../js/theme.js" defer></script>
+      <script src="../../javascripts/mathjax.js" defer></script>
+      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
       <script src="../../search/main.js" defer></script>
     <script defer>
         window.onload = function () {

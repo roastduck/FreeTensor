@@ -62,10 +62,6 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">Running on a GPU</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#example-vector-addition-on-a-gpu">Example: Vector addition on a GPU</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#mtypebyvalue-for-dynamic-tensor-shapes">mtype="byvalue" for Dynamic Tensor Shapes</a>
-    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ad/">Automatic Differentiation</a>
@@ -112,6 +108,12 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="running-on-a-gpu">Running on a GPU<a class="headerlink" href="#running-on-a-gpu" title="Permanent link">&para;</a></h1>
+<div class="toc">
+<ul>
+<li><a href="#example-vector-addition-on-a-gpu">Example: Vector addition on a GPU</a></li>
+<li><a href="#mtypebyvalue-for-dynamic-tensor-shapes">mtype="byvalue" for Dynamic Tensor Shapes</a></li>
+</ul>
+</div>
 <h2 id="example-vector-addition-on-a-gpu">Example: Vector addition on a GPU<a class="headerlink" href="#example-vector-addition-on-a-gpu" title="Permanent link">&para;</a></h2>
 <p>If FreeTensor is built with a CUDA backend, you can compile your program to a GPU. We still take a vector addition as an example:</p>
 <pre><code class="language-python">import freetensor as ft
@@ -219,6 +221,9 @@ with ft.GPU(0):
     <script>var base_url = '../..';</script>
     <script src="../../js/theme_extra.js" defer></script>
     <script src="../../js/theme.js" defer></script>
+      <script src="../../javascripts/mathjax.js" defer></script>
+      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
       <script src="../../search/main.js" defer></script>
     <script defer>
         window.onload = function () {
