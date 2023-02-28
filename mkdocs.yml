@@ -16,10 +16,18 @@ plugins:
             - python/
             # We cannot watch build/. Reload mkdocs manually after rebuilding
 
+extra_javascript:
+    # The followings are required by MathJax
+    - javascripts/mathjax.js
+    - https://polyfill.io/v3/polyfill.min.js?features=es6
+    - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
 markdown_extensions:
     - admonition
     - toc:
         permalink: true
+    - pymdownx.arithmatex:
+        generic: true  # Required by MathJax
 
 nav:
     - 'FreeTensor':

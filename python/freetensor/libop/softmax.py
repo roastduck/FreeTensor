@@ -38,7 +38,7 @@ def softmax_(x, y, axis: int = -1):
         d_summation = -reduce_sum(d_y * y_handle, axes=[axis
                                                        ]) / summation_handle
         d_exponent = d_y / summation_handle + d_summation
-        d_x[...] = d_exponent * exponent_handle
+        d_x[...] += d_exponent * exponent_handle
 
 
 @core.inline
