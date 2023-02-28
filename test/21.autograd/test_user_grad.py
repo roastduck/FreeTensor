@@ -87,6 +87,63 @@ def test_mark_version_on_input():
     assert std.match(ast)
 
 
+def test_use_reduce_sum_for_partial_derivative():
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu"),
+                    ("z", (), "float32", "output", "cpu")]) as (x, y, z):
+        ft.MarkVersion("x_now", x)
+        y[...] = ft.intrinsic("sinf(%)", x[...], ret_type="float32")
+        with ft.UserGradStaged(x, y) as (dx, dy):
+            # Use `+=` here, because we also have `z`
+            dx[...] += dy[...] * ft.intrinsic("cosf(%)",
+                                              ft.load_at_version(
+                                                  "x_now", "float32"),
+                                              ret_type="float32")
+        z[...] = x[...] * 2
+    ast, user_grads = ft.pop_ast_and_user_grads()
+
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y", "z"], set(), user_grads)
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("dx", (), "float32", "output", "cpu"),
+                    ("dy", (), "float32", "inout", "cpu"),
+                    ("dz", (), "float32", "inout", "cpu")]) as (x, dx, dy, dz):
+        dx[...] = 2 * dz[...] + dy[...] * ft.intrinsic(
+            "cosf(%)", x[...], ret_type="float32")
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_use_reduce_sum_for_non_partial_derivative():
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        ft.MarkVersion("x_now", x)
+        y[...] = ft.intrinsic("sinf(%)", x[...], ret_type="float32")
+        with ft.UserGradStaged(x, y) as (dx, dy):
+            # Although `y` is the only function of `x`, we should still allow using
+            # `+=` here
+            dx[...] += dy[...] * ft.intrinsic("cosf(%)",
+                                              ft.load_at_version(
+                                                  "x_now", "float32"),
+                                              ret_type="float32")
+    ast, user_grads = ft.pop_ast_and_user_grads()
+
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set(), user_grads)
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("dx", (), "float32", "output", "cpu"),
+                    ("dy", (), "float32", "inout", "cpu")]) as (x, dx, dy):
+        dx[...] = dy[...] * ft.intrinsic("cosf(%)", x[...], ret_type="float32")
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_user_grad_on_scope():
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
@@ -353,42 +410,3 @@ def test_same_mark_version_name_in_different_call_site():
     std = ft.pop_ast()
 
     assert std.match(bwd.body)
-
-
-@pytest.mark.skipif(not ft.with_pytorch(), reason="requires PyTorch")
-def test_custom_grad_of_libop_call():
-    n = 4
-
-    def test(x: ft.Var[(n,), "float32"]):
-        with ft.StmtRange() as rng:
-            y = ft.libop.softmax(x)
-            y_now = ft.push_for_backward(y)
-        with ft.UserGrad(x, y, stmt_range=rng) as (dzdx, dzdy):
-            for i in range(n):
-                dzdx[i] = dzdy[i] * y_now[i]
-                for j in range(n):
-                    dzdx[i] -= dzdy[j] * y_now[i] * y_now[j]
-        return y
-
-    fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
-
-    # Check we have really inserted our custom grad
-    print(bwd)
-    assert len(ft.find_all_stmt(bwd, "<For><<-<For>")) > 0
-
-    fwd = ft.optimize(fwd)
-    bwd = ft.optimize(bwd, verbose=1)
-
-    # Check forward result
-    x = torch.rand(n, dtype=torch.float32)
-    x.requires_grad = True
-    y_ft = fwd(x).torch()
-    y_torch = torch.softmax(x, axis=-1)
-    assert torch.all(torch.isclose(y_ft, y_torch))
-
-    # Check backward result
-    y_torch.grad = dzdy = torch.rand(n, dtype=torch.float32)
-    dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
-    y_torch.backward(y_torch.grad)
-    dzdx_torch = x.grad
-    assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))

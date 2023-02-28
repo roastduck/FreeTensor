@@ -1,5 +1,7 @@
 # Optimize a Program with Schedules
 
+[TOC]
+
 Oftentimes, only compiling your programs to native code is not enough, and you need further optimizations. This can be done by applying "schedules" (explicit program transformations) to you program.
 
 ## Example: Parallel Vector addition

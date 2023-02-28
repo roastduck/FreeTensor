@@ -1,5 +1,7 @@
 # Running on a GPU
 
+[TOC]
+
 ## Example: Vector addition on a GPU
 
 If FreeTensor is built with a CUDA backend, you can compile your program to a GPU. We still take a vector addition as an example:

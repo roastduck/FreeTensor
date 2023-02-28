@@ -133,7 +133,8 @@ class _VarsDef:
     This scope is internally used by `transformer` and tests
     '''
 
-    def __init__(self, defs: Tuple[str, Any, ffi.DataType, ffi.AccessType]):
+    def __init__(self, defs: Tuple[str, Any, ffi.DataType, ffi.AccessType,
+                                   ffi.MemType]):
         self.defs = [VarDef(*d) for d in defs]
 
     def __enter__(self):
@@ -455,7 +456,7 @@ class UserGradStaged:
         grad_vars = []
         for ori_var in self.ori_vars:
             grad_def = VarDef(ori_var.name + ".grad", ori_var.full_shape,
-                              ori_var.dtype, "cache")
+                              ori_var.dtype, "cache", ori_var.mtype)
             grad_vars.append(grad_def.__enter__())
             self.grad_defs.append(grad_def)
 

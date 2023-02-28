@@ -245,6 +245,141 @@ def test_grad():
 
 
 @pytest.mark.skipif(not freetensor.with_pytorch(), reason="requires PyTorch")
+def test_auto_grad_of_softmax():
+    # Used docs/guide/ad.md
+
+    import freetensor as ft
+    import torch
+
+    n = 4
+
+    def test(x: ft.Var[(n,), "float32"]):
+        # Automatically decide gradients for this statement
+        m = ft.reduce_max(x, axes=[-1])
+        e = ft.exp(x - m)
+        s = ft.reduce_sum(e, axes=[-1])
+        y = e / s
+        return y
+
+    fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
+    fwd = ft.optimize(fwd)
+    bwd = ft.optimize(bwd)  # Set verbose=1 to see the code
+
+    # Check forward result
+    x = torch.rand(n, dtype=torch.float32)
+    x.requires_grad = True
+    y_ft = fwd(x).torch()
+    y_torch = torch.softmax(x, axis=-1)
+    assert torch.all(torch.isclose(y_ft, y_torch))
+
+    # Check backward result
+    y_torch.grad = dzdy = torch.rand(n, dtype=torch.float32)
+    dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+    y_torch.backward(y_torch.grad)
+    dzdx_torch = x.grad
+    assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))
+
+
+@pytest.mark.skipif(not freetensor.with_pytorch(), reason="requires PyTorch")
+def test_custom_grad_of_softmax():
+    # Used docs/guide/ad.md
+
+    import freetensor as ft
+    import torch
+
+    n = 4
+
+    def test(x: ft.Var[(n,), "float32"]):
+        # Mark the range that you want to provide graident for, with `StmtRange`
+        with ft.StmtRange() as rng:
+            m = ft.reduce_max(x, axes=[-1])
+            e = ft.exp(x - m)
+            s = ft.reduce_sum(e, axes=[-1])
+            y = e / s
+
+            # Call `push_for_backward` so we can use forward values in backward
+            e_now = ft.push_for_backward(e)
+            s_now = ft.push_for_backward(s)
+            y_now = ft.push_for_backward(y)
+        # Define gradient in `UserGrad`
+        with ft.UserGrad(x, y, stmt_range=rng) as (dzdx, dzdy):
+            # Retrieve forward value from `y_now`, NOT `y`
+            dzds = -ft.reduce_sum(dzdy * y_now, axes=[-1]) / s_now
+            dzde = dzdy / s_now + dzds
+            dzdx[...] += dzde * e_now  # Use `+=` here
+        return y
+
+    fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
+    fwd = ft.optimize(fwd)
+    bwd = ft.optimize(bwd)  # Set verbose=1 to see the code
+
+    # Check forward result
+    x = torch.rand(n, dtype=torch.float32)
+    x.requires_grad = True
+    y_ft = fwd(x).torch()
+    y_torch = torch.softmax(x, axis=-1)
+    assert torch.all(torch.isclose(y_ft, y_torch))
+
+    # Check backward result
+    y_torch.grad = dzdy = torch.rand(n, dtype=torch.float32)
+    dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+    y_torch.backward(y_torch.grad)
+    dzdx_torch = x.grad
+    assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))
+
+
+@pytest.mark.skipif(not freetensor.with_pytorch(), reason="requires PyTorch")
+def test_custom_grad_of_softmax_loop_form():
+    # Used docs/guide/ad.md
+
+    import freetensor as ft
+    import torch
+
+    n = 4
+
+    def test(x: ft.Var[(n, n), "float32"]):
+        y = ft.empty((n, n), "float32")
+        for i in range(n):
+            # Mark the range that you want to provide graident for, with `StmtRange`
+            with ft.StmtRange() as rng:
+                # `m`, `e` and `s` are local to `i`
+                m = ft.reduce_max(x[i], axes=[-1])
+                e = ft.exp(x[i] - m)
+                s = ft.reduce_sum(e, axes=[-1])
+                y[i] = e / s
+
+                # Call `push_for_backward` so we can use forward values in backward
+                e_now = ft.push_for_backward(e)
+                s_now = ft.push_for_backward(s)
+                y_now = ft.push_for_backward(y)
+            # Define gradient in `UserGrad`
+            with ft.UserGrad(x, y, stmt_range=rng) as (dzdx, dzdy):
+                # Retrieve forward value from `y_now`, NOT `y`
+                dzds = -ft.reduce_sum(dzdy[i] * y_now[i], axes=[-1]) / s_now
+                dzde = dzdy[i] / s_now + dzds
+                dzdx[i] += dzde * e_now  # Use `+=` here
+        return y
+
+    fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
+    fwd = ft.optimize(fwd)
+    bwd = ft.optimize(bwd)  # Set verbose=1 to see the code
+
+    # Check forward result
+    x = torch.rand(n, n, dtype=torch.float32)
+    x.requires_grad = True
+    y_ft = fwd(x).torch()
+    y_torch = torch.softmax(x, axis=-1)
+    assert torch.all(torch.isclose(y_ft, y_torch))
+
+    # Check backward result
+    y_torch.grad = dzdy = torch.rand(n, n, dtype=torch.float32)
+    dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+    y_torch.backward(y_torch.grad)
+    dzdx_torch = x.grad
+    assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))
+
+
+@pytest.mark.skipif(not freetensor.with_pytorch(), reason="requires PyTorch")
 def test_vector_add_pytorch_io():
     # Used in docs/guide/first-program.md
 
