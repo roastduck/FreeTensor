@@ -1,5 +1,7 @@
 # Automatic Differentiation
 
+[TOC]
+
 Automatic Differentiation (AD) transforms a program to another program that computes the original one's derivative or gradient. FreeTensor supports Reverse-Mode AD, and there is a plan to support Forward-Mode AD in the future.
 
 ## Reverse-Mode AD

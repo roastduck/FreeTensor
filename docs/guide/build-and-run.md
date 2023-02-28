@@ -1,5 +1,7 @@
 # Build and Run
 
+[TOC]
+
 ## Dependencies
 
 - Linux
