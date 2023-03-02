@@ -356,6 +356,23 @@ class Mutator {
                        (*this)(op->equivalent_), op->metadata(), op->id()),
             op);
     }
+
+    virtual Stmt visit(const MarkVersion &op) {
+        return COPY_DEBUG_INFO(
+            makeMarkVersion(op->tapeName_, op->var_, op->metadata(), op->id()),
+            op);
+    }
+
+    virtual Expr visit(const LoadAtVersion &op) {
+        std::vector<Expr> indices;
+        indices.reserve(op->indices_.size());
+        for (auto &&index : op->indices_) {
+            indices.emplace_back((*this)(index));
+        }
+        return COPY_DEBUG_INFO(
+            makeLoadAtVersion(op->tapeName_, std::move(indices), op->loadType_),
+            op);
+    }
 };
 
 } // namespace freetensor

@@ -3,6 +3,7 @@
 #include <config.h>
 #include <container_utils.h>
 #include <serialize/print_ast.h>
+#include <serialize/stream_utils.h>
 
 #include "../codegen/detail/code_gen.h"
 
@@ -42,11 +43,15 @@ std::string PrintVisitor::prettyFuncName(const std::string &name) {
         return escaped;
 }
 
-std::string PrintVisitor::prettyId(const ID &id) {
-    if (pretty_)
-        return CYAN + freetensor::toString(id) + RESET;
-    else
-        return freetensor::toString(id);
+std::function<std::ostream &(std::ostream &)>
+PrintVisitor::prettyId(const ID &id) {
+    return [&](std::ostream &os) -> std::ostream & {
+        if (pretty_) {
+            return os << CYAN << id << RESET;
+        } else {
+            return os << id;
+        }
+    };
 }
 
 std::string PrintVisitor::prettyLiteral(const std::string &lit) {
@@ -719,6 +724,19 @@ void PrintVisitor::visit(const MatMul &op) {
     endBlock();
 }
 
+void PrintVisitor::visit(const MarkVersion &op) {
+    makeIndent();
+    os() << "@!mark_version(" << escape(op->tapeName_) << "," << SPACE
+         << escape(op->var_) << ")" << std::endl;
+}
+
+void PrintVisitor::visit(const LoadAtVersion &op) {
+    os() << "@!load_at_version(" << escape(op->tapeName_) << "," << SPACE
+         << "[";
+    printList(op->indices_);
+    os() << "]," << SPACE << ::freetensor::toString(op->loadType_) << ")";
+}
+
 std::string toString(const AST &op) {
     return toString(op, Config::prettyPrint());
 }
@@ -740,6 +758,12 @@ std::string toString(const AST &op, bool pretty, bool printAllId,
 }
 
 int OSTREAM_NO_PRETTY = std::ostream::xalloc();
+std::function<std::ostream &(std::ostream &)> manipNoPrettyAST(bool flag) {
+    return [flag](std::ostream &os) -> std::ostream & {
+        os.iword(OSTREAM_NO_PRETTY) = flag;
+        return os;
+    };
+}
 
 std::ostream &operator<<(std::ostream &os, const AST &op) {
     if (os.iword(OSTREAM_NO_PRETTY)) {

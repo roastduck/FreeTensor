@@ -7,14 +7,17 @@ End users are encouraged to use `transformer`, instead of this module.
 '''
 
 import sys
-from typing import List, Sequence, Optional
+from typing import List, Sequence, Optional, Callable
 
 import freetensor_ffi as ffi
 
 
 class Context:
 
-    def __init__(self, caller_metadata: Optional[ffi.Metadata] = None):
+    def __init__(self,
+                 parent_context_stack,
+                 caller_metadata: Optional[ffi.Metadata] = None):
+        self.parent_context_stack = parent_context_stack
         self.stmt_seq = []
 
         self.next_labels = []
@@ -46,6 +49,9 @@ class Context:
         self.last_if = None
         self.next_no_deps = []
         self.next_prefer_libs = False
+
+        for callback in self.parent_context_stack.append_stmt_callbacks:
+            callback(stmt)
 
     def append_if_then_stmt(self, cond, body: ffi.Stmt):
         next_metadata = self.get_metadata()
@@ -117,13 +123,17 @@ class ContextStack:
         self.reset()
 
     def reset(self):
-        self.stack = [Context()]
+        self.stack = [Context(self)]
+        self.user_grads = []
+
+        # [fn(ffi.Stmt)], invoked for every `append_stmt`
+        self.append_stmt_callbacks = []
 
     def top(self) -> Context:
         return self.stack[-1]
 
     def push(self):
-        self.stack.append(Context(self.top().caller_metadata))
+        self.stack.append(Context(self, self.top().caller_metadata))
 
     def pop(self):
         return self.stack.pop()
@@ -133,6 +143,25 @@ class ContextStack:
 
     def set_stack(self, stack: List[Context]):
         self.stack = stack
+
+    def get_last_stmt_id(self):
+        '''
+        Can be used inside the staged code, to get the ID of the immediately preceding statement
+        '''
+        for ctx in reversed(self.stack):
+            if len(ctx.stmt_seq) > 0:
+                return ctx.stmt_seq[-1].id
+        raise ft.InvalidProgram("There is no statement yet")
+
+    def push_append_stmt_callback(self, callback: Callable[[ffi.Stmt], None]):
+        '''
+        Add a callback to be called with all next statements to be appended. For `If` statement, it
+        can be called twice, one without "else" branch, and then maybe one more with "else" branch
+        '''
+        self.append_stmt_callbacks.append(callback)
+
+    def pop_append_stmt_callback(self):
+        self.append_stmt_callbacks.pop()
 
 
 ctx_stack = ContextStack()
@@ -151,3 +180,70 @@ def pop_ast(verbose: bool = False):
         print(ret, file=sys.stderr)
         print(file=sys.stderr)
     return ret
+
+
+def pop_ast_and_user_grads(verbose: bool = False):
+    """
+    Get AST and reset context. Return an extra list for custom gradients
+
+    Set `UserGrad` for details
+    """
+    ast = ctx_stack.pop().make_stmt()
+    user_grads = ctx_stack.user_grads
+    ctx_stack.reset()
+    if verbose:
+        print("The popped AST is:", file=sys.stderr)
+        print(ret, file=sys.stderr)
+        print(file=sys.stderr)
+    return ast, user_grads
+
+
+class StmtRange:
+    '''
+    Record a set of statement in a program, can be used for custom gradient
+
+    Usage:
+
+    ```
+    with StmtRange() as rng:
+        # Some statements
+    ```
+
+    `StmtRange` can be used interleaved with AST scopes. In these cases, you can directly call
+    `__enter__` and `__exit__`. E.g.,
+
+    ```
+    rng = StmtRange()
+    rng.__enter__()
+    # Some statements
+    with VarDef(...)  # Some scopes
+        # Some other statements
+        rng.__exit__(None, None, None)
+
+    ```
+    '''
+
+    def __init__(self):
+        self.ids = set()
+        self.entered = False
+        self.exited = False
+
+    def __enter__(self):
+
+        def callback(stmt):
+            self.ids.add(stmt.id)
+
+        ctx_stack.push_append_stmt_callback(callback)
+        self.entered = True
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        ctx_stack.pop_append_stmt_callback()
+        self.exited = True
+
+    def make(self):
+        if not self.entered:
+            raise ffi.InvalidProgram("StmtRange is not properly entered")
+        if not self.exited:
+            raise ffi.InvalidProgram("StmtRange is not properly exited")
+        return self.ids

@@ -487,9 +487,23 @@ class Schedule {
      *
      * @param def : ID of the VarDef statement of the specific variable
      * @param mtype : Where the variable should be stored
-     * @throw InvalidSchedule if the variable is not found
+     * @param rejectIndirectAccess : Registers usually do not support indirect
+     * access. If a variable is accessed indirectly, setting it to use registers
+     * is meaningless even successful. If this parameter is set to true, throw
+     * an exception if the variable being set is accessed indirectly.
+     * Specifically, two types of access are considered indirect: 1) The index
+     * is a load from another variable, or 2) The index is a loop iterator and
+     * the loop has a dynamic length (which can not be unrolled by a backend
+     * compiler). By default, this parameter is determined automatically by
+     * `mtype`.
+     * @throw InvalidSchedule if the variable is not found, or if rejecting an
+     * indirect access
+     *
+     * @{
      */
     void setMemType(const ID &def, MemType mtype);
+    void setMemType(const ID &def, MemType mtype, bool rejectIndirectAccess);
+    /** @} */
 
     /**
      * Split a dimension of a variable into two
@@ -705,6 +719,8 @@ class Schedule {
      * considered, defaults to maximum possible
      * @param nestLevel1 : The number of nesting levels of loop 1 to be
      * considered, defaults to maximum possible
+     * @param fusableOverlapThreshold : The minimum overlapping size of two
+     * loops to be regarded fusable. Defaults to 1
      * @param doSimplify : Whether the result is simplified by the way, defaults
      * to true
      * @return std::pair<ID, int> : The ID of fused loop and level of
@@ -712,6 +728,7 @@ class Schedule {
      */
     std::pair<ID, int> plutoFuse(const ID &loop0, const ID &loop1,
                                  int nestLevel0 = 0, int nestLevel1 = 0,
+                                 int fusableOverlapThreshold = 1,
                                  bool doSimplify = true);
 
     /**

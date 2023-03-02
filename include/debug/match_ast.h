@@ -80,6 +80,8 @@ class MatchVisitor : public Visitor {
     void visit(const Intrinsic &op) override;
     void visit(const Eval &op) override;
     void visit(const MatMul &op) override;
+    void visit(const MarkVersion &op) override;
+    void visit(const LoadAtVersion &op) override;
 };
 
 } // namespace freetensor

@@ -87,13 +87,13 @@ Stmt propOneTimeUse(const Stmt &_op) {
     FindDeps()
         .mode(FindDepsMode::KillLater)
         .type(DEP_RAW)
-        .filterAccess([&](const AccessPoint &acc) {
+        .filterAccess([&](const auto &acc) {
             return acc.def_->buffer_->atype() == AccessType::Cache;
         })
-        .filterEarlier([&](const AccessPoint &earlier) {
+        .filterEarlier([&](const auto &earlier) {
             return earlier.op_->nodeType() == ASTNodeType::Store;
         })
-        .filterLater([&](const AccessPoint &later) {
+        .filterLater([&](const auto &later) {
             // pass/remove_write will deal with it (TODO: Really? What if we
             // want to do interleaved prop_one_time_use and remove_write?)
             return later.op_->nodeType() != ASTNodeType::ReduceTo;
@@ -155,16 +155,15 @@ Stmt propOneTimeUse(const Stmt &_op) {
                 for (auto &&[newIter, arg] :
                      views::zip(repInfo.laterIters_, args)) {
                     islVarToNewIter[arg] =
-                        newIter.realIter_ == newIter.iter_
+                        !newIter.negStep_
                             ? newIter.iter_
-                            : makeMul(makeIntConst(-1), newIter.realIter_);
+                            : makeMul(makeIntConst(-1), newIter.iter_);
                 }
                 for (auto &&[oldIter, value] :
                      views::zip(repInfo.earlierIters_, values)) {
-                    if (oldIter.realIter_->nodeType() == ASTNodeType::Var) {
-                        oldIterToNewIter[oldIter.realIter_.as<VarNode>()
-                                             ->name_] =
-                            oldIter.realIter_ == oldIter.iter_
+                    if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
+                        oldIterToNewIter[oldIter.iter_.as<VarNode>()->name_] =
+                            !oldIter.negStep_
                                 ? ReplaceIter(islVarToNewIter)(value)
                                 : makeMul(makeIntConst(-1),
                                           ReplaceIter(islVarToNewIter)(value));

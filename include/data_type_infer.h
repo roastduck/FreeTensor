@@ -48,6 +48,7 @@ class DataTypeInfer {
     static DataType infer(const IfExprNode &op);
     static DataType infer(const CastNode &op);
     static DataType infer(const IntrinsicNode &op);
+    static DataType infer(const LoadAtVersionNode &op);
 };
 
 } // namespace freetensor

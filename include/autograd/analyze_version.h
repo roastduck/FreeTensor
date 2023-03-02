@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/symbol_table.h>
 #include <analyze/track_stmt.h>
 #include <visitor.h>
 
@@ -43,6 +44,8 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
     const std::unordered_map<Stmt, Expr> &scopeLen_;
     Expr totLen_;
     std::unordered_map<StmtOrExprID, Expr> &versions_;
+    std::unordered_map<std::string, std::pair<std::string, Expr>>
+        &userVersions_;
     std::string tapeName_;
     Expr offset_ = makeIntConst(0);
 
@@ -51,14 +54,18 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
                    const std::unordered_set<ID> &needTapes,
                    const std::unordered_map<Stmt, Expr> &scopeLen,
                    const Expr &totLen,
-                   std::unordered_map<StmtOrExprID, Expr> &versions)
+                   std::unordered_map<StmtOrExprID, Expr> &versions,
+                   std::unordered_map<std::string, std::pair<std::string, Expr>>
+                       &userVersions)
         : def_(def), affectingScopes_(affectingScopes), needTapes_(needTapes),
-          scopeLen_(scopeLen), totLen_(totLen), versions_(versions) {}
+          scopeLen_(scopeLen), totLen_(totLen), versions_(versions),
+          userVersions_(userVersions) {}
 
     const std::string &tapeName() const { return tapeName_; }
 
   protected:
     void visit(const Load &op) override;
+    void visit(const MarkVersion &op) override;
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const VarDef &op) override;
@@ -67,16 +74,56 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
 };
 
 /**
+ * Special for input variables. We won't call `AnalyzeVersion` on input
+ * variables, but we still need them in `userVersions_`, so we assign them here
+ */
+class SetUserVersionsForInputs : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
+
+    std::unordered_map<std::string, std::pair<std::string, Expr>>
+        &userVersions_;
+
+  public:
+    SetUserVersionsForInputs(
+        std::unordered_map<std::string, std::pair<std::string, Expr>>
+            &userVersions)
+        : userVersions_(userVersions) {}
+
+  protected:
+    using BaseClass::visit;
+    void visit(const MarkVersion &op) override;
+};
+
+/**
  * Assign each memory access an expression that identifies each version of the
  * accessed variable
+ *
+ * Versions are guaranteed to distinguish READ sites that may reads different
+ * values. Versions of WRITE sites are assigned to be consistent to the READ
+ * sites. This also means the following:
+ *
+ * - Multiple READ sites may have the same version
+ * - There can be multiple WRITE sites even there is only one version
+ *
+ * Some variables are TRIVIAL and there is no need to distinguish their
+ * versions. This function also outputs information of tribial variables. A
+ * variable is considered trivial if:
+ *
+ * - There is only one version, AND
+ * - The value of the only version is not overwritten till the end of the
+ * variable's lifetime
  *
  * @param op : The AST to analyze
  * @param intermediates : Varaibles (VarDef IDs) to analyze
  * @param localVersionsOnly : If true, analyze local versions inside its VarDef
  * node. If false, analyze global versions within the whole program
- * @return : (node -> versions, VarDef IDs -> total version counts)
+ * @return : (node -> versions, VarDef IDs -> total version counts, trivial
+ * VarDef IDs, tape_name -> var name, explicit user versions marked via
+ * mark_version)
  */
-std::pair<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>>
+std::tuple<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
+           std::unordered_set<ID>,
+           std::unordered_map<std::string, std::pair<std::string, Expr>>>
 analyzeVersion(const Stmt &op, const std::unordered_set<ID> &intermediates,
                bool localVersionsOnly);
 

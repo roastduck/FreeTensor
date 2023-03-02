@@ -51,10 +51,7 @@ void FindAllThreads::visit(const For &op) {
 
 Stmt CopyParts::visitStmt(const Stmt &op) {
     auto ret = Mutator::visitStmt(op);
-    if (ret->nodeType() == ASTNodeType::Store ||
-        ret->nodeType() == ASTNodeType::ReduceTo ||
-        ret->nodeType() == ASTNodeType::Eval) {
-        // leaf node
+    if (ret->children().empty()) { // leaf node
         if (std::find_if(splitters_.begin(), splitters_.end(),
                          [&](const Stmt &item) {
                              return item->id() == ret->id();
@@ -145,8 +142,8 @@ void MakeSync::markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync,
     if (needSyncWarp) {
         return;
     }
-    bool inElseCase = false;
-    for (auto ctx = stmtInTree; ctx.isValid(); ctx = ctx->parentStmt()) {
+    for (Stmt ctx = stmtInTree->parentStmt(), childOfCtx = stmtInTree;
+         ctx.isValid(); childOfCtx = ctx, ctx = ctx->parentStmt()) {
         if (ctx->nodeType() == ASTNodeType::If) {
             auto branch = ctx.as<IfNode>();
             bool needSplitBranch = false;
@@ -157,14 +154,14 @@ void MakeSync::markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync,
                 }
             }
             if (needSplitBranch) {
-                (inElseCase ? branchSplittersElse_
-                            : branchSplittersThen_)[ctx->id()]
-                    .emplace_back(sync);
+                if (childOfCtx == branch->thenCase_) {
+                    branchSplittersThen_[ctx->id()].emplace_back(sync);
+                } else {
+                    ASSERT(childOfCtx == branch->elseCase_);
+                    branchSplittersElse_[ctx->id()].emplace_back(sync);
+                }
             }
         }
-        inElseCase = ctx->parentStmt().isValid() &&
-                     ctx->parentStmt()->nodeType() == ASTNodeType::If &&
-                     ctx->parentStmt().as<IfNode>()->elseCase_ == ctx;
     }
 }
 
@@ -201,7 +198,7 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
         }
         if (!whereToInsert.isValid()) {
             ret = makeStmtSeq({sync, ret});
-            markSyncForSplitting(op->parentStmt(), sync, needSyncWarp);
+            markSyncForSplitting(op, sync, needSyncWarp);
         } else {
             syncBeforeFor_[whereToInsert->id()] = sync;
         }
@@ -245,7 +242,7 @@ Stmt MakeSync::visit(const For &_op) {
                 makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
         }
         op->body_ = makeStmtSeq({op->body_, sync});
-        markSyncForSplitting(_op, sync, needSyncWarp);
+        markSyncForSplitting(_op->body_, sync, needSyncWarp);
         for (CrossThreadDep &dep : deps_) {
             if (dep.visiting_) {
                 if (needSyncThreads) {
@@ -259,7 +256,7 @@ Stmt MakeSync::visit(const For &_op) {
     }
     if (syncBeforeFor_.count(op->id())) {
         auto &&sync = syncBeforeFor_.at(op->id());
-        markSyncForSplitting(_op, sync, needSyncWarp);
+        markSyncForSplitting(_op->body_, sync, needSyncWarp);
         return makeStmtSeq({sync, op});
     }
     return op;
@@ -280,17 +277,21 @@ Stmt MakeSync::visit(const If &_op) {
                                  toString(op->cond_) + " is being modified");
         }
 
-        Stmt thenBody = op->thenCase_;
+        Stmt thenBody;
         if (branchSplittersThen_.count(op->id())) {
             CopyParts thenCopier(op->cond_, branchSplittersThen_.at(op->id()));
-            thenBody = thenCopier(thenBody);
+            thenBody = thenCopier(op->thenCase_);
+        } else {
+            thenBody = makeIf(op->cond_, op->thenCase_);
         }
         if (op->elseCase_.isValid()) {
-            Stmt elseBody = op->elseCase_;
+            Stmt elseBody;
             if (branchSplittersElse_.count(op->id())) {
                 CopyParts elseCopier(makeLNot(op->cond_),
                                      branchSplittersElse_.at(op->id()));
-                elseBody = elseCopier(elseBody);
+                elseBody = elseCopier(op->elseCase_);
+            } else {
+                elseBody = makeIf(makeLNot(op->cond_), op->elseCase_);
             }
             return makeStmtSeq({thenBody, elseBody});
         } else {
@@ -343,7 +344,7 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
     };
     FindDeps()
         .direction(query)
-        .filterAccess([](const AccessPoint &acc) {
+        .filterAccess([](const auto &acc) {
             return acc.buffer_->mtype() == MemType::GPUGlobal ||
                    acc.buffer_->mtype() == MemType::GPUShared;
         })
@@ -356,6 +357,15 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
                 // Crossing kernels, skipping
                 return false;
             }
+
+            // No need to sync between two atomic reductions
+            if (later.op_->nodeType() == ASTNodeType::ReduceTo &&
+                earlier.op_->nodeType() == ASTNodeType::ReduceTo &&
+                later.op_.as<ReduceToNode>()->atomic_ &&
+                earlier.op_.as<ReduceToNode>()->atomic_) {
+                return false;
+            }
+
             return later.op_ != earlier.op_;
         })
         .ignoreReductionWAW(false)

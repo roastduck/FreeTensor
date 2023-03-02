@@ -223,6 +223,7 @@ class PBSpace {
     PBSpace() {}
     PBSpace(isl_space *space) : space_(space) {}
     PBSpace(const PBSet &set) : space_(isl_set_get_space(set.get())) {}
+    PBSpace(const PBMap &map) : space_(isl_map_get_space(map.get())) {}
     ~PBSpace() {
         if (space_ != nullptr) {
             isl_space_free(space_);
@@ -451,6 +452,18 @@ PBMap moveDimsOutputToInput(T &&map, unsigned first, unsigned n,
     return isl_map_move_dims(PBRefTake<T>(map), isl_dim_in, target, isl_dim_out,
                              first, n);
 }
+template <PBMapRef T>
+PBMap moveDimsInputToParam(T &&map, unsigned first, unsigned n,
+                           unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_param, target,
+                             isl_dim_in, first, n);
+}
+template <PBMapRef T>
+PBMap moveDimsOutputToParam(T &&map, unsigned first, unsigned n,
+                            unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_param, target,
+                             isl_dim_out, first, n);
+}
 
 template <PBSetRef T> PBSet complement(T &&set) {
     DEBUG_PROFILE("complement");
@@ -528,6 +541,24 @@ template <PBMapRef T, PBMapRef U> PBMap applyDomain(T &&lhs, U &&rhs) {
 template <PBMapRef T, PBMapRef U> PBMap applyRange(T &&lhs, U &&rhs) {
     DEBUG_PROFILE("applyRange");
     return isl_map_apply_range(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
+template <PBMapRef T, PBMapRef U> PBMap sum(T &&lhs, U &&rhs) {
+    DEBUG_PROFILE("sum");
+    return isl_map_sum(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+template <PBSetRef T, PBSetRef U> PBSet sum(T &&lhs, U &&rhs) {
+    DEBUG_PROFILE("sum");
+    return isl_set_sum(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
+template <PBMapRef T> PBMap neg(T &&lhs) {
+    DEBUG_PROFILE("neg");
+    return isl_map_neg(PBRefTake<T>(lhs));
+}
+template <PBSetRef T> PBSet neg(T &&lhs) {
+    DEBUG_PROFILE("neg");
+    return isl_set_neg(PBRefTake<T>(lhs));
 }
 
 template <PBMapRef T> PBMap lexmax(T &&map) {
@@ -652,6 +683,9 @@ template <PBSetRef T> PBPoint sample(T &&set) {
  * @return PBSet set of valid coefficients for the input set
  */
 template <PBSetRef T> PBSet coefficients(T &&set, int64_t c = 0) {
+    if (isl_set_involves_locals(set.get()))
+        throw InvalidSchedule("Local variables are not permitted in computing "
+                              "dual coefficients.");
     auto coefficientsMap = isl_map_from_basic_map(
         isl_basic_set_unwrap(isl_set_coefficients(PBRefTake<T>(set))));
     auto ctx = isl_map_get_ctx(coefficientsMap);
@@ -681,6 +715,7 @@ class PBBuildExpr {
     friend class PBBuilder;
 
   public:
+    PBBuildExpr() = default;
     PBBuildExpr(const PBBuildExpr &) = default;
     PBBuildExpr(PBBuildExpr &&) = default;
     PBBuildExpr &operator=(const PBBuildExpr &) = default;
@@ -720,6 +755,9 @@ class PBBuildExpr {
 
     friend PBBuildExpr ceilDiv(const PBBuildExpr &a, const PBBuildExpr &b) {
         return PBBuildExpr("ceil(" + a.expr_ + " / " + b.expr_ + ")");
+    }
+    friend PBBuildExpr floorDiv(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("floor(" + a.expr_ + " / " + b.expr_ + ")");
     }
 
     friend PBBuildExpr operator%(const PBBuildExpr &a, const PBBuildExpr &b) {

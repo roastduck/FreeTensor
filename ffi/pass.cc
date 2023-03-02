@@ -15,6 +15,7 @@
 #include <pass/make_reduction.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
+#include <pass/pb_simplify.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
@@ -38,6 +39,11 @@ void init_ffi_pass(py::module_ &m) {
     m.def("z3_simplify", static_cast<Func (*)(const Func &)>(&z3Simplify),
           "func"_a);
     m.def("z3_simplify", static_cast<Stmt (*)(const Stmt &)>(&z3Simplify),
+          "stmt"_a);
+
+    m.def("pb_simplify", static_cast<Func (*)(const Func &)>(&pbSimplify),
+          "func"_a);
+    m.def("pb_simplify", static_cast<Stmt (*)(const Stmt &)>(&pbSimplify),
           "stmt"_a);
 
     m.def("float_simplify", static_cast<Func (*)(const Func &)>(&floatSimplify),
@@ -97,11 +103,13 @@ void init_ffi_pass(py::module_ &m) {
           "stmt"_a);
 
     m.def("make_parallel_reduction",
-          static_cast<Func (*)(const Func &)>(&makeParallelReduction),
-          "func"_a);
+          static_cast<Func (*)(const Func &, const Ref<Target> &)>(
+              &makeParallelReduction),
+          "func"_a, "target"_a);
     m.def("make_parallel_reduction",
-          static_cast<Stmt (*)(const Stmt &)>(&makeParallelReduction),
-          "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const Ref<Target> &)>(
+              &makeParallelReduction),
+          "stmt"_a, "target"_a);
 
     m.def("tensor_prop_const",
           static_cast<Func (*)(const Func &)>(&tensorPropConst), "func"_a);

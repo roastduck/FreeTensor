@@ -263,6 +263,14 @@ class Visitor {
         (*this)(op->batchSize_);
         (*this)(op->equivalent_);
     }
+
+    virtual void visit(const MarkVersion &op) {}
+
+    virtual void visit(const LoadAtVersion &op) {
+        for (auto &&idx : op->indices_) {
+            (*this)(idx);
+        }
+    }
 };
 
 } // namespace freetensor

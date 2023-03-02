@@ -30,7 +30,17 @@
 inline void *cudaNew(size_t size) {
     void *ptr = nullptr;
     if (size > 0) {
+#ifndef FT_DEBUG_CUDA_WITH_UM
         checkCudaError(cudaMalloc(&ptr, size));
+#else
+        // Please refer to src/driver/array.cc:allocOn for details
+        int device;
+        checkCudaError(cudaGetDevice(&device));
+        checkCudaError(cudaMallocManaged(&ptr, size));
+        checkCudaError(cudaMemAdvise(
+            ptr, size, cudaMemAdviseSetPreferredLocation, device));
+        checkCudaError(cudaMemset(ptr, 0, size));
+#endif // FT_DEBUG_CUDA_WITH_UM
     }
     return ptr;
 }
@@ -41,11 +51,47 @@ template <class T, size_t n> struct __ByValArray {
     __host__ __device__ T &operator[](size_t i) { return data[i]; }
 };
 
-// Access a scalar on GPU, only for debugging
-template <class T> class GPUScalar {
+/**
+ * Base class for `GPUScalar`. Used for type traits only
+ */
+class GPUScalarBase {};
+
+/**
+ * Access a scalar on GPU, only for debugging
+ *
+ * For any scalar type `T`, `GPUScalar<T>` represents such a scalar store in GPU
+ * memory. Reading from a `GPUScalar<T>` or performing any arithmetic operation
+ * on a `GPUScalar<T>` invokes a single-scalar `cudaMemcpy` and returns a `T`.
+ * Writing into a `GPUScalar<T>` also invokes a single-scalar `cudaMemcpy`.
+ *
+ * NOTE: Since arithmetic operations on `GPUScalar<T>` returns `T`, generic math
+ * functions like `abs` defined below should return `auto` (instead of returning
+ * the same type with its arguments)
+ */
+template <class T> class GPUScalar : public GPUScalarBase {
     T *ptr_;
 
+  private:
+    bool isUnifiedMemory() const {
+        // Check memory location at run time. Even if we have
+        // FT_DEBUG_CUDA_USE_UM, the pointer is not guaranteed to be pointing at
+        // UM. It can be a memory view from external inputs
+        cudaPointerAttributes attr;
+        checkCudaError(cudaPointerGetAttributes(&attr, ptr_));
+        switch (attr.type) {
+        case cudaMemoryTypeDevice:
+            return false;
+        case cudaMemoryTypeManaged:
+            return true;
+        default:
+            fprintf(stderr, "Unexpcted memory location\n");
+            exit(-1);
+        }
+    }
+
   public:
+    typedef T ScalarType;
+
     explicit GPUScalar(T *ptr) : ptr_(ptr) {}
     explicit GPUScalar(T &ref) : ptr_(&ref) {}
 
@@ -55,13 +101,25 @@ template <class T> class GPUScalar {
     explicit GPUScalar(const T &ref) : ptr_(const_cast<T *>(&ref)) {}
 
     operator T() const {
-        T ret;
-        checkCudaError(cudaMemcpy(&ret, ptr_, sizeof(T), cudaMemcpyDefault));
-        return ret;
+        if (isUnifiedMemory()) {
+            return *ptr_;
+        } else {
+            T ret;
+            checkCudaError(
+                cudaMemcpy(&ret, ptr_, sizeof(T), cudaMemcpyDefault));
+            return ret;
+        }
     }
 
+    GPUScalar &operator=(const GPUScalar &other) { return *this = (T)other; }
+    GPUScalar &operator=(GPUScalar &&other) { return *this = (T)other; }
     GPUScalar &operator=(const T &other) {
-        checkCudaError(cudaMemcpy(ptr_, &other, sizeof(T), cudaMemcpyDefault));
+        if (isUnifiedMemory()) {
+            *ptr_ = other;
+        } else {
+            checkCudaError(
+                cudaMemcpy(ptr_, &other, sizeof(T), cudaMemcpyDefault));
+        }
         return *this;
     }
 
@@ -92,20 +150,47 @@ template <class T> GPUScalar<T> gpuScalar(const T &ref) {
     return GPUScalar<T>(ref);
 }
 
-// NVCC does not support C++20
-template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
-__host__ __device__ T floorDiv(T a, T b) {
-    T res = a / b, rem = a % b;
+// TODO: Update to C++20 concepts after CUDA 12 lands
+
+// TODO: When C++20 is ready, replace the following with:
+//
+// template <typename T>
+// concept IsIntegralAnywhere = std::is_integral_v<T> ||
+//     (std::is_base_of_v<GPUScalarBase, T>
+//          &&std::is_integral_v<typename T::ScalarType>);
+template <typename T, typename = void>
+constexpr bool IsIntegralAnywhere = false;
+template <typename T>
+constexpr bool IsIntegralAnywhere<T, std::enable_if_t<std::is_integral_v<T>>> =
+    true;
+template <typename T>
+constexpr bool IsIntegralAnywhere<
+    T, std::enable_if_t<std::is_base_of_v<GPUScalarBase, T> &&
+                        std::is_integral_v<typename T::ScalarType>>> = true;
+
+template <class T, class U,
+          typename std::enable_if_t<IsIntegralAnywhere<T> &&
+                                    IsIntegralAnywhere<U>> * = nullptr>
+__host__ __device__ auto floorDiv(T a, U b) {
+    auto res = a / b;
+    auto rem = a % b;
     return res - (rem != 0 && ((rem < 0) != (b < 0)));
 }
-template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
-__host__ __device__ T ceilDiv(T a, T b) {
-    T res = a / b, rem = a % b;
+
+template <class T, class U,
+          typename std::enable_if_t<IsIntegralAnywhere<T> &&
+                                    IsIntegralAnywhere<U>> * = nullptr>
+__host__ __device__ auto ceilDiv(T a, U b) {
+    auto res = a / b;
+    auto rem = a % b;
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
-template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
-__host__ __device__ T runtime_mod(T a, T b) {
-    T m = a % b;
+
+template <class T, class U,
+          typename std::enable_if_t<IsIntegralAnywhere<T> &&
+                                    IsIntegralAnywhere<U>> * = nullptr>
+__host__ __device__ auto runtime_mod(T a, U b) {
+    auto m = a % b;
     if (m < 0) {
         // m += (b < 0) ? -b : b; // avoid this form: it is UB when b == INT_MIN
         m = (b < 0) ? m - b : m + b;
@@ -127,9 +212,11 @@ inline __host__ __device__ double runtime_exp(double x) { return exp(x); }
 inline __host__ __device__ float runtime_tanh(float x) { return tanhf(x); }
 inline __host__ __device__ double runtime_tanh(double x) { return tanh(x); }
 
-template <class T> __host__ __device__ T runtime_square(T x) { return x * x; }
+template <class T> __host__ __device__ auto runtime_square(T x) {
+    return x * x;
+}
 
-template <class T> __host__ __device__ T runtime_sigmoid(T x) {
+template <class T> __host__ __device__ auto runtime_sigmoid(T x) {
     return 1.0 / (1.0 + runtime_exp(-x));
 }
 

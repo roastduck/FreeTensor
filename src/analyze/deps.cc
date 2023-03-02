@@ -1,15 +1,14 @@
 #include <algorithm>
 #include <sstream>
 
-#include <analyze/all_defs.h>
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <except.h>
 #include <mutator.h>
 #include <omp_utils.h>
 #include <pass/const_fold.h>
-#include <pass/replace_iter.h>
 #include <serialize/mangle.h>
 #include <serialize/print_ast.h>
 
@@ -30,64 +29,60 @@ void FindAllNoDeps::visit(const For &op) {
     }
 }
 
-void CountBandNodeWidth::visit(const Load &op) {
-    // No recursion
-    if (!lastIsLoad_) {
-        width_++;
-        lastIsLoad_ = true;
-    }
-}
-
-void CountBandNodeWidth::visit(const For &op) {
-    (*this)(op->begin_);
-    (*this)(op->end_);
-    (*this)(op->len_);
-    width_++;
-    lastIsLoad_ = false;
-}
-
-void CountBandNodeWidth::visit(const Store &op) {
-    Visitor::visit(op);
-    width_++;
-    lastIsLoad_ = false;
-}
-
-void CountBandNodeWidth::visit(const ReduceTo &op) {
-    Visitor::visit(op);
-    width_++;
-    lastIsLoad_ = false;
-}
-
-FindAccessPoint::FindAccessPoint(const Stmt &root, const ID &vardef,
+FindAccessPoint::FindAccessPoint(const ID &vardef,
                                  const FindDepsAccFilter &accFilter)
-    : vardef_(vardef), accFilter_(accFilter) {
-    if (int width = countBandNodeWidth(root); width > 1) {
-        cur_.emplace_back(makeIntConst(-1));
+    : vardef_(vardef), accFilter_(accFilter) {}
+
+void FindAccessPoint::doFind(const Stmt &root) {
+    // Push potential StmtSeq scope
+    cur_.emplace_back(makeIntConst(-1));
+
+    (*this)(root);
+
+    // Pop potential StmtSeq scope
+    if (checkTrivialScope(reads_.begin(), reads_.end()) &&
+        checkTrivialScope(writes_.begin(), writes_.end())) {
+        removeTrivialScopeFromAccesses(reads_.begin(), reads_.end());
+        removeTrivialScopeFromAccesses(writes_.begin(), writes_.end());
+        removeTrivialScopeFromScopes(allScopes_.begin(), allScopes_.end());
+    }
+    cur_.pop_back();
+}
+
+bool FindAccessPoint::checkTrivialScope(
+    std::vector<Ref<AccessPoint>>::iterator begin,
+    std::vector<Ref<AccessPoint>>::iterator end) {
+    int dim = (int)cur_.size() - 1;
+    for (auto it = begin; it != end; it++) {
+        auto &&coord = (*it)->iter_.at(dim).iter_;
+        ASSERT(coord->nodeType() == ASTNodeType::IntConst);
+        if (coord.as<IntConstNode>()->val_ > 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void FindAccessPoint::removeTrivialScopeFromAccesses(
+    std::vector<Ref<AccessPoint>>::iterator begin,
+    std::vector<Ref<AccessPoint>>::iterator end) {
+    int dim = (int)cur_.size() - 1;
+    for (auto it = begin; it != end; it++) {
+        (*it)->iter_.erase((*it)->iter_.begin() + dim);
+        if ((*it)->defAxis_ > dim) {
+            (*it)->defAxis_--;
+        }
     }
 }
 
-Expr FindAccessPoint::normalizeExpr(const Expr &expr, const ID &baseStmtId) {
-    return ReplaceIterAndRecordLog(replaceIter_, replaceIterLog_,
-                                   baseStmtId)(expr);
-}
-
-std::vector<Expr>
-FindAccessPoint::normalizeExprs(const std::vector<Expr> &indices,
-                                const ID &baseStmtId) {
-    std::vector<Expr> ret;
-    ret.reserve(indices.size());
-    for (auto &&expr : indices) {
-        ret.emplace_back(normalizeExpr(expr, baseStmtId));
-    }
-    return ret;
-}
-
-void FindAccessPoint::visitStmt(const Stmt &stmt) {
-    BaseClass::visitStmt(stmt);
-    for (auto &&child : stmt->children()) {
-        if (subTreeFilteredIn_.count(child)) {
-            subTreeFilteredIn_.insert(stmt);
-            break;
+void FindAccessPoint::removeTrivialScopeFromScopes(
+    std::vector<ID>::iterator begin, std::vector<ID>::iterator end) {
+    int dim = (int)cur_.size() - 1;
+    for (auto it = begin; it != end; it++) {
+        if (auto jt = scope2coord_.find(*it); jt != scope2coord_.end()) {
+            auto &coord = jt->second;
+            ASSERT(dim < (int)coord.size());
+            coord.erase(coord.begin() + dim);
         }
     }
 }
@@ -106,11 +101,9 @@ void FindAccessPoint::visit(const VarDef &op) {
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
-    if (!cur_.empty() &&
-        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
-        scope2coord_[op->id()] = cur_;
-    }
+    scope2coord_[op->id()] = cur_;
     BaseClass::visit(op);
+    allScopes_.emplace_back(op->id());
 }
 
 void FindAccessPoint::visit(const For &op) {
@@ -145,42 +138,57 @@ void FindAccessPoint::visit(const For &op) {
             pushCond(makeEQ(iter, op->begin_), op->id());
             cur_.emplace_back(iter, op->property_->parallel_);
         } else {
-            auto negIter = makeVar(op->iter_ + ".neg");
-            auto newIter = makeMul(makeIntConst(-1), negIter);
-            pushCond(makeLAnd(makeLAnd(makeLE(newIter, op->begin_),
-                                       makeGT(newIter, op->end_)),
-                              makeEQ(makeMod(makeSub(newIter, op->begin_),
-                                             op->step_),
-                                     makeIntConst(0))),
-                     op->id());
-            cur_.emplace_back(negIter, op->property_->parallel_, iter);
-            replaceIter_[op->iter_] = newIter;
+            pushCond(
+                makeLAnd(
+                    makeLAnd(makeLE(iter, op->begin_), makeGT(iter, op->end_)),
+                    makeEQ(makeMod(makeSub(iter, op->begin_), op->step_),
+                           makeIntConst(0))),
+                op->id());
+            cur_.emplace_back(iter, op->property_->parallel_, true);
         }
     } else {
         ERROR("Currently loops with an unknown sign of step is not supported "
               "in analyze/deps");
     }
+
+    // Push For scope
     scope2coord_[op->id()] = cur_;
-    if (int width = countBandNodeWidth(op->body_); width > 1) {
-        cur_.emplace_back(makeIntConst(-1));
-        pushFor(op);
-        (*this)(op->body_);
-        popFor(op);
-        cur_.pop_back();
-    } else {
-        pushFor(op);
-        (*this)(op->body_);
-        popFor(op);
+
+    // Push potential StmtSeq scope
+    cur_.emplace_back(makeIntConst(-1));
+    auto oldReadsSize = reads_.size();
+    auto oldWritesSize = writes_.size();
+    auto oldAllScopesSize = allScopes_.size();
+
+    pushFor(op);
+    (*this)(op->body_);
+    popFor(op);
+
+    // Pop potential StmtSeq scope
+    auto oldReadsEnd = reads_.begin() + oldReadsSize;
+    auto oldWritesEnd = writes_.begin() + oldWritesSize;
+    auto oldAllScopesEnd = allScopes_.begin() + oldAllScopesSize;
+    if (checkTrivialScope(oldReadsEnd, reads_.end()) &&
+        checkTrivialScope(oldWritesEnd, writes_.end())) {
+        removeTrivialScopeFromAccesses(oldReadsEnd, reads_.end());
+        removeTrivialScopeFromAccesses(oldWritesEnd, writes_.end());
+        removeTrivialScopeFromScopes(oldAllScopesEnd, allScopes_.end());
     }
     cur_.pop_back();
-    conds_.resize(oldCondsSize);
-    replaceIter_.erase(op->iter_);
 
-    if (!subTreeFilteredIn_.count(op->body_)) {
+    // Pop For scope
+    cur_.pop_back();
+    conds_.resize(oldCondsSize);
+    allScopes_.emplace_back(op->id());
+
+    lastIsLoad_ = false; // The last Load in the loop and the first Load out of
+                         // the loop shall have different coordinates
+
+    if (oldReadsEnd == reads_.end() && oldWritesEnd == writes_.end()) {
         // No stepping to make iteration space more compact
         cur_ = std::move(old);
         lastIsLoad_ = oldLastIsLoad;
-        ClearUnusedScopes{scope2coord_}(op);
+        scope2coord_.erase(op->id());
     }
 }
 
@@ -222,18 +230,6 @@ void FindAccessPoint::visit(const Load &op) {
         return;
     }
 
-    auto old = cur_;
-    auto oldLastIsLoad = lastIsLoad_;
-    if (!cur_.empty() &&
-        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
-        // top is band node
-        if (!lastIsLoad_) {
-            cur_.back().iter_ =
-                makeIntConst(cur_.back().iter_.as<IntConstNode>()->val_ + 1);
-        }
-    }
-    lastIsLoad_ = true;
-
     std::vector<Expr> exprs;
     VarDef d;
     if (viewOf.isValid()) {
@@ -244,20 +240,26 @@ void FindAccessPoint::visit(const Load &op) {
                               makeIntrinsic("", {}, DataType::Int32, false));
         d = viewOf;
     } else {
-        exprs = normalizeExprs(op->indices_, curStmt()->id());
+        exprs = op->indices_;
         d = def(op->var_);
     }
 
-    auto ap = Ref<AccessPoint>::make();
-    *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
-           cur_, std::move(exprs), conds_};
-    if (accFilter_ == nullptr || accFilter_(*ap)) {
-        subTreeFilteredIn_.insert(curStmt());
+    if (accFilter_ == nullptr ||
+        accFilter_(Access{op, curStmt(), d, d->buffer_})) {
+        if (!cur_.empty() &&
+            cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+            // top is band node
+            if (!lastIsLoad_) {
+                cur_.back().iter_ = makeIntConst(
+                    cur_.back().iter_.as<IntConstNode>()->val_ + 1);
+            }
+        }
+        lastIsLoad_ = true;
+
+        auto ap = Ref<AccessPoint>::make();
+        *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
+               cur_, std::move(exprs), conds_};
         reads_.emplace_back(ap);
-    } else {
-        // No stepping to make iteration space more compact
-        cur_ = std::move(old);
-        lastIsLoad_ = oldLastIsLoad;
     }
 }
 
@@ -281,6 +283,24 @@ std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
         }
     }
     return "[" + ret + "]";
+}
+
+std::string AnalyzeDeps::makeNegIterMap(const std::vector<IterAxis> &list,
+                                        int n) {
+    std::string lhs, rhs;
+    for (int i = 0; i < n; i++) {
+        if (i < (int)list.size() && list[i].negStep_) {
+            rhs += "-";
+        }
+        auto name = "i" + std::to_string(i);
+        lhs += name;
+        rhs += name;
+        if (i < n - 1) {
+            lhs += ", ";
+            rhs += ", ";
+        }
+    }
+    return "{[" + lhs + "] -> [" + rhs + "]}";
 }
 
 std::string AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
@@ -361,7 +381,10 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
         ext = "[" + ext + "] -> ";
     }
     ret = ext + "{" + ret + "}";
-    return PBMap(presburger, ret);
+    auto unordered = PBMap(presburger, ret);
+    auto negIterMap = PBMap(presburger, makeNegIterMap(p.iter_, iterDim));
+    auto ordered = applyDomain(std::move(unordered), std::move(negIterMap));
+    return ordered;
 }
 
 std::string AnalyzeDeps::makeNdList(const std::string &name, int n) {
@@ -1116,32 +1139,25 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
 
-    auto defs = allDefs(op);
+    // Number the iteration space coordinates variable by variable, in order to
+    // make the space more compact, so can be better coalesced
+    auto defs = findAllStmt(
+        op, [](const Stmt &s) { return s->nodeType() == ASTNodeType::VarDef; });
     std::vector<FindAccessPoint> finders;
     finders.reserve(defs.size());
-    for (auto &&[defId, name] : defs) {
-        // Number the iteration space coordinates variable by variable, in order
-        // to make the space more compact, so can be better coalesced
-        finders.emplace_back(op, defId, accFilter_);
-        auto &accFinder = finders.back();
-        accFinder(op);
-
-        if (scope2CoordCallback_) {
-            scope2CoordCallback_(defId, accFinder.scope2coord());
+    for (auto &&def : defs) {
+        finders.emplace_back(def->id(), accFilter_);
+    }
+    exceptSafeParallelFor<size_t>(
+        0, finders.size(), 1, [&](size_t i) { finders[i].doFind(op); },
+        omp_sched_dynamic);
+    if (scope2CoordCallback_) {
+        for (auto &&[def, accFinder] : views::zip(defs, finders)) {
+            scope2CoordCallback_(def->id(), accFinder.scope2coord());
         }
     }
 
-    auto variantExpr = Lazy([&]() {
-        auto variantExpr = findLoopVariance(op).first;
-        for (auto &&accFinder : finders) {
-            for (auto &&[from, to] : accFinder.replaceIterLog()) {
-                if (auto it = variantExpr.find(from); it != variantExpr.end()) {
-                    variantExpr[{to, from.stmtId()}] = it->second;
-                }
-            }
-        }
-        return variantExpr;
-    });
+    auto variantExpr = LAZY(findLoopVariance(op).first);
 
     std::vector<std::function<void()>> tasks;
     std::vector<AnalyzeDeps> analyzers;

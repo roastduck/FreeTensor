@@ -37,6 +37,24 @@ PBBuildExpr nonZeroConstraint(const std::vector<PBBuildExpr> &vars,
     return ret && delta >= 0 && delta <= 1;
 }
 
+PBBuildExpr ctlValConstraint(PBBuildExpr c, PBBuildExpr v, PBBuildExpr ctl,
+                             int varBound = 8) {
+    // rule:
+    // ctl = 0 -> c = 0 and 1 <= v <= varBound
+    // ctl = 1 -> c = v and 1 <= v <= varBound
+    return c - v - varBound * ctl + varBound >= 0 && c - v - ctl + 1 <= 0 &&
+           -c + varBound * ctl >= 0 && -c + ctl <= 0;
+}
+
+PBBuildExpr absConstraint(PBBuildExpr x, PBBuildExpr abs, PBBuildExpr ctl,
+                          int varBound = 8) {
+    // rule:
+    // ctl = 0 -> abs = x and 0 <= x <= varBound
+    // ctl = 1 -> abs = -x and -varBound <= x <= 1
+    return x + abs + 2 * varBound * ctl - 2 * varBound <= 0 && x + abs >= 0 &&
+           x - abs + 2 * varBound * ctl >= 0 && x - abs + 2 * ctl <= 0;
+}
+
 std::vector<std::vector<int>>
 orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
     // sanity check
@@ -130,7 +148,7 @@ PBSet extractLoopSet(const PBCtx &ctx, const AccessPoint &p) {
 
     // project out constant dims
     for (int64_t i = p.iter_.size() - 1; i >= 0; --i)
-        if (p.iter_[i].realIter_->nodeType() != ASTNodeType::Var)
+        if (p.iter_[i].iter_->nodeType() != ASTNodeType::Var)
             loopSet = projectOutDims(std::move(loopSet), i, 1);
 
     return loopSet;
@@ -141,8 +159,8 @@ extractVarAxes(const std::vector<IterAxis> &axes, const For &targetLoop) {
     bool inLoop = false;
     std::vector<IterAxis> outer, inner;
     for (auto &&axis : axes)
-        if (axis.realIter_->nodeType() == ASTNodeType::Var) {
-            if (axis.realIter_.as<VarNode>()->name_ == targetLoop->iter_)
+        if (axis.iter_->nodeType() == ASTNodeType::Var) {
+            if (axis.iter_.as<VarNode>()->name_ == targetLoop->iter_)
                 inLoop = true;
             (inLoop ? inner : outer).emplace_back(axis);
         }
@@ -157,8 +175,8 @@ std::pair<int, std::vector<int>> findIterFromAP(const AccessPoint &ap,
     int n = ap.iter_.size();
     outerDims.reserve(n);
     for (int i = 0; i < n; ++i)
-        if (ap.iter_[i].realIter_->nodeType() == ASTNodeType::Var) {
-            if (ap.iter_[i].realIter_.as<VarNode>()->name_ == var)
+        if (ap.iter_[i].iter_->nodeType() == ASTNodeType::Var) {
+            if (ap.iter_[i].iter_.as<VarNode>()->name_ == var)
                 return std::pair{i, std::move(outerDims)};
             else
                 outerDims.push_back(i);
@@ -220,8 +238,7 @@ struct PermuteInfo {
         vars_.reserve(nestLevel);
         for (int i = 0; i < nestLevel; ++i) {
             auto rawIter = renamer(func.values_[i]);
-            if (oldLoopAxes[i].iter_ !=
-                oldLoopAxes[i].realIter_) // negative step
+            if (oldLoopAxes[i].negStep_)
                 vars_.push_back(makeSub(makeIntConst(0), rawIter));
             else
                 vars_.push_back(rawIter);
@@ -319,7 +336,7 @@ struct PlutoFuse : public Mutator {
 
 std::pair<Stmt, std::pair<ID, int>>
 plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
-              int _nestLevel1, bool doSimplify) {
+              int _nestLevel1, int fusableOverlapThreshold, bool doSimplify) {
     bool hoisted = false;
     // try with vardef hoisted only if they are not at the same level
     if (findStmt(ast, loop0Id)->parent() != findStmt(ast, loop1Id)->parent()) {
@@ -396,9 +413,10 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                        bool handleFakeAccess = false) mutable {
         std::unordered_set<std::string> deps;
         std::mutex m;
+
         FindDeps()
             .noProjectOutPrivateAxis(true)
-            .filterAccess([&](const AccessPoint &p) {
+            .filterEarlier([&](const AccessPoint &p) {
                 if (p.def_->name_ == FAKE_ACCESS_VAR) {
                     if (handleFakeAccess) {
                         if (p.stmt_->ancestorById(loop0Id).isValid()) {
@@ -413,12 +431,12 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                     }
                     return false;
                 }
-                return true;
-            })
-            .filterEarlier([&](const AccessPoint &p) {
                 return p.stmt_->ancestorById(l0->id()).isValid();
             })
             .filterLater([&](const AccessPoint &p) {
+                if (p.def_->name_ == FAKE_ACCESS_VAR) {
+                    return false;
+                }
                 return p.stmt_->ancestorById(l1->id()).isValid();
             })
             .direction(outersSame)(
@@ -663,55 +681,50 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         builder.addOutput(cBounds[i]);
     }
     builder.addOutput(cBounds[nParams]);
-    // 2.1. binary decision variable for avoiding zeros
-    auto delta0 = builder.newOutput("d0");
-    auto delta0L = builder.newOutput("d0l");
-    // 2.2. reversed coefficients of loop 0 iterations
-    //      they are reversed because we want to select outer loops
-    //      earlier, preserving the original loop order
-    PBBuildExpr absSum0 = 0;
+    // 2.1. reversed coefficients of loop 0 iterations
+    //      they are reversed because we want to select outer loops earlier,
+    //      preserving the original loop order; also, only one axis should
+    //      involve (prevent any skewness!)
+    // the shared abstract value for all loop 0 iter coefficients
+    auto c0IterVal = builder.newOutput("c0i_val");
+    PBBuildExpr sumNnzCtl = 0;
+    std::vector<PBBuildExpr> nnzCtl0(nestLevel0, PBBuildExpr());
     for (int i = nestLevel0 - 1; i >= 0; --i) {
+        nnzCtl0[i] = builder.newOutput("nnz_ctl_c0i" + toString(i));
+        auto negCtl = builder.newOutput("neg_ctl_c0i" + toString(i));
         auto abs = builder.newOutput("abs_c0i" + toString(i));
-        builder.addConstraint(abs >= c0Iters[i] && abs >= -c0Iters[i]);
         builder.addOutput(c0Iters[i]);
-        absSum0 += abs;
+        builder.addConstraint(ctlValConstraint(abs, c0IterVal, nnzCtl0[i]));
+        builder.addConstraint(absConstraint(c0Iters[i], abs, negCtl));
+        sumNnzCtl += nnzCtl0[i];
     }
-    //      ... and only one axis should involve (prevent any skewness!)
-    builder.addConstraint(absSum0 == 1);
-    // 2.3. coefficients of loop 0 params and constant
+    builder.addConstraint(sumNnzCtl == 1);
+    // 2.2. coefficients of loop 0 params and constant
     for (int i = 0; i < nParams + 1; ++i) {
         auto abs = builder.newOutput("abs_c0p" + toString(i));
         builder.addConstraint(abs >= c0Params[i] && abs >= -c0Params[i]);
         builder.addOutput(c0Params[i]);
     }
-    // 3.1. binary decision variable for avoiding zeros
-    auto delta1 = builder.newOutput("d1");
-    auto delta1L = builder.newOutput("d1l");
-    // 3.2. reversed coefficients of loop 1 iterations
-    PBBuildExpr absSum1 = 0;
+    // 3.1. reversed coefficients of loop 1 iterations
+    auto c1IterVal = builder.newOutput("c1i_val");
+    sumNnzCtl = 0;
+    std::vector<PBBuildExpr> nnzCtl1(nestLevel1, PBBuildExpr());
     for (int i = nestLevel1 - 1; i >= 0; --i) {
+        nnzCtl1[i] = builder.newOutput("nnz_ctl_c1i" + toString(i));
+        auto negCtl = builder.newOutput("neg_ctl_c1i" + toString(i));
         auto abs = builder.newOutput("abs_c1i" + toString(i));
-        builder.addConstraint(abs >= c1Iters[i] && abs >= -c1Iters[i]);
         builder.addOutput(c1Iters[i]);
-        absSum1 += abs;
+        builder.addConstraint(ctlValConstraint(abs, c1IterVal, nnzCtl1[i]));
+        builder.addConstraint(absConstraint(c1Iters[i], abs, negCtl));
+        sumNnzCtl += nnzCtl1[i];
     }
-    builder.addConstraint(absSum1 == 1);
-    // 3.3. coefficients of loop 1 params and constant
+    builder.addConstraint(sumNnzCtl == 1);
+    // 3.2. coefficients of loop 1 params and constant
     for (int i = 0; i < nParams + 1; ++i) {
         auto abs = builder.newOutput("abs_c1p" + toString(i));
         builder.addConstraint(abs >= c1Params[i] && abs >= -c1Params[i]);
         builder.addOutput(c1Params[i]);
     }
-
-    // the constraints on one loop
-    builder.addConstraints({
-        nonZeroConstraint(c0Iters, delta0),
-        delta0L >= 0,
-        delta0L <= 1,
-        nonZeroConstraint(c1Iters, delta1),
-        delta1L >= 0,
-        delta1L <= 1,
-    });
 
     auto optimizeMap = builder.build(ctx);
     auto revOptimizeMap = reverse(optimizeMap);
@@ -760,24 +773,22 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                 ctx, 0, (nParams + 1) * 3 + nestLevel0 + nestLevel1));
 
         // construct orthogonal constraints
-        auto orthoConstraint = [&](const auto &cIterValue, const auto &cIters,
-                                   const auto &deltaL) {
-            auto ortho = orthogonalMatrix(cIterValue);
-            std::vector<PBBuildExpr> orthoDots;
-            orthoDots.reserve(ortho.size());
-            for (auto &&o : ortho) {
-                orthoDots.emplace_back(0);
-                ASSERT(o.size() == cIters.size());
-                for (size_t i = 0; i < cIters.size(); ++i)
-                    orthoDots.back() += o[i] * cIters[i];
+        auto orthoConstraint = [&](const auto &cIterValue, const auto &nnzCtl) {
+            PBBuildExpr ret = true;
+            for (auto &&cIterAxis : cIterValue) {
+                for (auto &&[i, val] : views::enumerate(cIterAxis))
+                    if (val != 0) {
+                        ret = ret && nnzCtl[i] == 0;
+                        break;
+                    }
             }
-            return nonZeroConstraint(orthoDots, deltaL);
+            return ret;
         };
         if (fusedLevel > 0) {
             orthoSetBuilder.addConstraint(
-                orthoConstraint(c0IterValue, c0Iters, delta0L));
+                orthoConstraint(c0IterValue, nnzCtl0));
             orthoSetBuilder.addConstraint(
-                orthoConstraint(c1IterValue, c1Iters, delta1L));
+                orthoConstraint(c1IterValue, nnzCtl1));
         }
         auto orthoSet = orthoSetBuilder.build(ctx);
         orthoSetBuilder.clearConstraints();
@@ -830,15 +841,17 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             return apply(loopSet, builder.build(ctx));
         };
         auto loop0Range = loopSetToRange(loop0Set, nParams + 1, nestLevel0);
-        PBSet loop1Range = loopSetToRange(
+        auto loop1Range = loopSetToRange(
             loop1Set, (nParams + 1) * 2 + nestLevel0, nestLevel1);
+        auto overlap = fixDim(universeSet(PBSpace(loop1Range)), 0,
+                              fusableOverlapThreshold);
         // if the two loops has no overlap on the result axis, they are not
         // actually fused so we bail out
         if (intersect(
-                // range of values that less than the maximum of loop 0
-                apply(lexmax(loop0Range), lexGT(spaceSetAlloc(ctx, 0, 1))),
-                // ... and from loop 1
-                loop1Range)
+                // range of loop 0
+                loop0Range,
+                // ... and range of loop 1 added with the overlap threshold
+                sum(loop1Range, overlap))
                 // ... don't overlap
                 .empty())
             break;
@@ -861,6 +874,10 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             optimized.begin() + (nParams + 1) * 3 + nestLevel0 + nestLevel1,
         });
     }
+
+    // if nothing fusable, fail fast
+    if (fusedLevel == 0)
+        throw InvalidSchedule("No fusable dimension found by Pluto+.");
 
     ASSERT(c0ParamValue.size() == unsigned(fusedLevel));
     ASSERT(c0IterValue.size() == unsigned(fusedLevel));
@@ -900,7 +917,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     ast = fuser(ast);
     ast = shrinkFor(ast, findStmt(ast, fuser.fusedId_), false);
     if (doSimplify)
-        ast = simplify(ast);
+        ast = pbSimplify(ast);
     if (hoisted)
         ast = sinkVar(ast);
 
@@ -943,12 +960,11 @@ class InjectEmptyLoop : public Mutator {
 
 } // namespace
 
-std::pair<Stmt, std::pair<ID, int>> plutoFuse(const Stmt &ast,
-                                              const ID &loop0Id,
-                                              const ID &loop1Id, int nestLevel0,
-                                              int nestLevel1, bool doSimplify) {
+std::pair<Stmt, std::pair<ID, int>>
+plutoFuse(const Stmt &ast, const ID &loop0Id, const ID &loop1Id, int nestLevel0,
+          int nestLevel1, int fusableOverlapThreshold, bool doSimplify) {
     return plutoFuseImpl(flattenStmtSeq(ast), loop0Id, loop1Id, nestLevel0,
-                         nestLevel1, doSimplify);
+                         nestLevel1, fusableOverlapThreshold, doSimplify);
 }
 
 std::pair<Stmt, std::pair<ID, int>>
@@ -956,16 +972,17 @@ plutoPermute(const Stmt &_ast, const ID &loop, int nestLevel, bool doSimplify) {
     InjectEmptyLoop injecter(loop);
     auto ast = injecter(_ast);
     return plutoFuseImpl(ast, injecter.emptyLoopId(), loop, nestLevel,
-                         nestLevel, doSimplify);
+                         nestLevel, 1, doSimplify);
 }
 
 std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1,
                                        int nestLevel0, int nestLevel1,
+                                       int fusableOverlapThreshold,
                                        bool doSimplify) {
     beginTransaction();
-    auto log =
-        appendLog(MAKE_SCHEDULE_LOG(PlutoFuse, freetensor::plutoFuse, loop0,
-                                    loop1, nestLevel0, nestLevel1, doSimplify));
+    auto log = appendLog(MAKE_SCHEDULE_LOG(
+        PlutoFuse, freetensor::plutoFuse, loop0, loop1, nestLevel0, nestLevel1,
+        fusableOverlapThreshold, doSimplify));
     try {
         auto ret = applyLog(log);
         commitTransaction();

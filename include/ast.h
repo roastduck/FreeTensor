@@ -86,6 +86,10 @@ enum class ASTNodeType : int {
     IfExpr,
     Cast,
     Intrinsic,
+
+    // For custom gradient only
+    MarkVersion,
+    LoadAtVersion,
 };
 
 std::ostream &operator<<(std::ostream &os, ASTNodeType type);
@@ -237,6 +241,9 @@ class StmtNode : public ASTNode {
     /**
      * Parent, next or previous statement
      *
+     * NOTE: For an If node, the "then" case is considered before the "else"
+     * case
+     *
      * @{
      */
     Ref<StmtNode> parentStmt() const;
@@ -258,11 +265,24 @@ class StmtNode : public ASTNode {
     /** @} */
 
     /**
+     * Previous or next statement in DFS order
+     */
+    Ref<StmtNode> prevStmtInDFSOrder() const;
+    Ref<StmtNode> nextStmtInDFSOrder() const;
+
+    /**
      * Find an ancestor by ID. `this` itself is also considered
      */
     Ref<StmtNode> ancestorById(const ID &lookup) const;
 
+    /**
+     * Check whether this node is an ancestoer of `other`
+     */
     bool isAncestorOf(const Stmt &other) const;
+
+    /**
+     * Check whether this node is before `other` in DFS order
+     */
     bool isBefore(const Stmt &other) const;
 
     DEFINE_NODE_ACCESS(Stmt);

@@ -29,7 +29,8 @@ Stmt tensorPropConst(const Stmt &_op) {
         // propagating to ReduceTo nodes. E.g.:
         //
         // ```
-        // a = 1  // (1) if (...) {
+        // a = 1  // (1)
+        // if (...) {
         //   a += 1  // (2)
         // }
         // ```
@@ -72,14 +73,14 @@ Stmt tensorPropConst(const Stmt &_op) {
         FindDeps()
             .mode(FindDepsMode::KillLater)
             .type(DEP_RAW)
-            .filterAccess([&](const AccessPoint &acc) {
+            .filterAccess([&](const auto &acc) {
                 return !acc.buffer_->tensor()->isScalar();
             })
-            .filterEarlier([&](const AccessPoint &earlier) {
+            .filterEarlier([&](const auto &earlier) {
                 if (earlier.op_->nodeType() != ASTNodeType::Store) {
                     return false;
                 }
-                auto &&expr = earlier.op_.as<StoreNode>()->expr_;
+                auto &&expr = earlier.op_.template as<StoreNode>()->expr_;
                 if (!allReads(expr).empty()) {
                     // Expressions should contain only constants and iterating
                     // vars
@@ -120,16 +121,16 @@ Stmt tensorPropConst(const Stmt &_op) {
                     for (auto &&[newIter, arg] :
                          views::zip(repInfo.laterIters_, args)) {
                         islVarToNewIter[arg] =
-                            newIter.realIter_ == newIter.iter_
+                            !newIter.negStep_
                                 ? newIter.iter_
-                                : makeMul(makeIntConst(-1), newIter.realIter_);
+                                : makeMul(makeIntConst(-1), newIter.iter_);
                     }
                     for (auto &&[oldIter, value] :
                          views::zip(repInfo.earlierIters_, values)) {
-                        if (oldIter.realIter_->nodeType() == ASTNodeType::Var) {
-                            oldIterToNewIter[oldIter.realIter_.as<VarNode>()
+                        if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
+                            oldIterToNewIter[oldIter.iter_.as<VarNode>()
                                                  ->name_] =
-                                oldIter.realIter_ == oldIter.iter_
+                                !oldIter.negStep_
                                     ? ReplaceIter(islVarToNewIter)(value)
                                     : makeMul(
                                           makeIntConst(-1),

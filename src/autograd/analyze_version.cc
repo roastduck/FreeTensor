@@ -1,7 +1,7 @@
 #include <analyze/all_uses.h>
-#include <analyze/analyze_version.h>
 #include <analyze/deps.h>
-#include <analyze/find_all_loops.h>
+#include <analyze/find_stmt.h>
+#include <autograd/analyze_version.h>
 #include <pass/flatten_stmt_seq.h>
 
 namespace freetensor {
@@ -93,6 +93,15 @@ void AnalyzeVersion::visit(const Load &op) {
     }
 }
 
+void AnalyzeVersion::visit(const MarkVersion &op) {
+    BaseClass::visit(op);
+    if (op->var_ == var_) {
+        auto v = makeSub(offset_, makeIntConst(1));
+        versions_[op->id()] = v;
+        userVersions_[op->tapeName_] = {op->var_, v};
+    }
+}
+
 void AnalyzeVersion::visit(const Store &op) {
     BaseClass::visit(op);
     if (op->var_ == var_ && needTapes_.count(op->id())) {
@@ -151,14 +160,23 @@ void AnalyzeVersion::visit(const StmtSeq &op) {
     offset_ = oldOffset;
 }
 
-std::pair<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>>
+void SetUserVersionsForInputs::visit(const MarkVersion &op) {
+    BaseClass::visit(op);
+    if (buffer(op->var_)->atype() == AccessType::Input) {
+        userVersions_[op->tapeName_] = {op->var_, nullptr};
+    }
+}
+
+std::tuple<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
+           std::unordered_set<ID>,
+           std::unordered_map<std::string, std::pair<std::string, Expr>>>
 analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
                bool localVersionsOnly) {
     auto op = flattenStmtSeq(_op);
 
     std::vector<FindDepsDir> direction;
-    for (auto &&scope : findAllLoops(op)) {
-        direction.push_back({{scope, DepDirection::Normal}});
+    for (auto &&scope : findAllStmt(op, "<For>")) {
+        direction.push_back({{scope->id(), DepDirection::Normal}});
     }
     std::unordered_map<ID, std::unordered_set<ID>> affectingScopes, needTapes;
     auto found1 = [&](const Dependence &d) {
@@ -178,16 +196,15 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
     };
     FindDeps()
         .type(DEP_RAW)
-        .filterAccess([&](const AccessPoint &acc) {
+        .filterAccess([&](const auto &acc) {
             return intermediates.count(acc.def_->id());
         })
         .eraseOutsideVarDef(localVersionsOnly)(op, found1);
     FindDeps()
         .direction(direction)
         .type(DEP_RAW | DEP_WAR)
-        .filterAccess([&](const AccessPoint &acc) {
-            return needTapes.count(acc.def_->id());
-        })
+        .filterAccess(
+            [&](const auto &acc) { return needTapes.count(acc.def_->id()); })
         .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
             return needTapes.at(earlier.def_->id())
                        .count(earlier.stmt_->id()) ||
@@ -196,6 +213,7 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
         .eraseOutsideVarDef(localVersionsOnly)(op, found2);
 
     std::unordered_map<StmtOrExprID, Expr> versions;
+    std::unordered_map<std::string, std::pair<std::string, Expr>> userVersions;
     std::unordered_map<ID, Expr> totLens;
     for (auto &&defId : intermediates) {
         auto &&scopes = affectingScopes[defId];
@@ -206,10 +224,25 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
         auto totLen = totLens[defId] =
             scopeLen.count(op) ? scopeLen.at(op) : makeIntConst(1);
         AnalyzeVersion analyzer(defId, scopes, needTape, scopeLen, totLen,
-                                versions);
+                                versions, userVersions);
         analyzer(op);
     }
-    return std::make_pair(versions, totLens);
+
+    std::unordered_set<ID> trivials = intermediates;
+    FindDeps()
+        .type(DEP_WAW)
+        .filterAccess(
+            [&](const auto &acc) { return needTapes.count(acc.def_->id()); })
+        .filterEarlier([&](const auto &earlier) {
+            return needTapes.at(earlier.def_->id())
+                .count(earlier.op_.template as<StmtNode>()->id());
+        })
+        .eraseOutsideVarDef(localVersionsOnly)(
+            op, [&](const Dependence &dep) { trivials.erase(dep.defId()); });
+
+    SetUserVersionsForInputs{userVersions}(op);
+
+    return {versions, totLens, trivials, userVersions};
 }
 
 } // namespace freetensor

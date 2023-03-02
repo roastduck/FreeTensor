@@ -153,6 +153,9 @@ void Driver::buildAndLoad() {
         if (dev_->target()->useNativeArch()) {
             addArgs("-march=native");
         }
+        if (Config::debugRuntimeCheck()) {
+            addArgs("-ftrapv");
+        }
         if (Config::debugBinary()) {
             addArgs("-g");
         }
@@ -165,7 +168,7 @@ void Driver::buildAndLoad() {
             addArgs("-I" + (std::string)path);
         }
         addArgs("-std=c++17", "-shared", "-Xcompiler", "-fPIC,-Wall,-O3",
-                "--use_fast_math",
+                //"--use_fast_math",
                 "--expt-relaxed-constexpr" /* required by mdspan */);
         addArgs("-o", so, cpp);
         addArgs("-lcublas");
@@ -174,6 +177,9 @@ void Driver::buildAndLoad() {
                 "sm_" + std::to_string(cc.first) + std::to_string(cc.second));
         if (Config::debugBinary()) {
             addArgs("-g");
+        }
+        if (Config::debugCUDAWithUM()) {
+            addArgs("-DFT_DEBUG_CUDA_WITH_UM");
         }
         break;
     }

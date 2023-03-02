@@ -3,6 +3,7 @@
 
 #include <unordered_set>
 
+#include <autograd/clear_mark_version.h>
 #include <config.h>
 #include <driver/target.h>
 #include <pass/cpu/lower_parallel_reduction.h>
@@ -68,6 +69,7 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
                            : maybePrint(name, pass(__VA_ARGS__))
 
     T ast = _ast;
+    ast = clearMarkVersion(ast);
     ast = APPLY("scalar_prop_const", scalarPropConst, ast);
     ast = APPLY("remove_dead_var", removeDeadVar, ast);
     ast = APPLY("prop_one_time_use", propOneTimeUse, ast);
@@ -84,7 +86,7 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
                 ast); // After remove_writes
     ast = APPLY("remove_dead_var", removeDeadVar,
                 ast); // After remove_writes and prop_const
-    ast = APPLY("make_parallel_reduction", makeParallelReduction, ast);
+    ast = APPLY("make_parallel_reduction", makeParallelReduction, ast, target);
     ast = APPLY("shrink_for", shrinkFor,
                 ast); // After remove_writes and make_parallel_reduction
 

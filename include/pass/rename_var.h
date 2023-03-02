@@ -24,6 +24,7 @@ class RenameVar : public Mutator {
     Stmt visit(const For &op) override;
     Stmt visit(const Alloc &op) override;
     Stmt visit(const Free &op) override;
+    Stmt visit(const MarkVersion &op) override;
 };
 
 /**

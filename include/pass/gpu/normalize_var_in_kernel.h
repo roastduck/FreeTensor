@@ -1,3 +1,6 @@
+#include <unordered_map>
+#include <unordered_set>
+
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
@@ -14,6 +17,8 @@ class NormalizeVarInKernel : public CompTransientBounds<SymbolTable<Mutator>> {
     std::vector<std::string> legalNames_;
 
     std::vector<VarDef> varsToHoist_;
+    std::unordered_set<std::string> usedNamesInKernel_;
+    std::unordered_map<std::string, int> nameCntInKernel_;
     bool inKernel_ = false;
 
     CompUniqueBounds unique_;

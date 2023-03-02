@@ -43,7 +43,7 @@ void CodeGenCPU::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
 void CodeGenCPU::genScalar(const VarDef &def,
                            const std::vector<Expr> &indices) {
     if (usedAsReduction_.count(def)) {
-        this->os() << mangle(def->name_) + "_ptr";
+        this->os() << mangle(def->name_) + "_arrptr";
         for (auto &&index : indices) {
             this->os() << "[";
             (*this)(index);
@@ -70,9 +70,8 @@ void CodeGenCPU::visit(const VarDef &op) {
             // e.g. UncheckedOpt<mdspan_r<float, std::extents<5, 5>>> x_opt;
             //      auto &x = *x_opt;
             this->makeIndent();
-            this->os() << "UncheckedOpt<";
-            genMdPtrType(op);
-            this->os() << "> " << name << "_opt;" << std::endl;
+            this->os() << "UncheckedOpt<" << genMdPtrType(op) << "> " << name
+                       << "_opt;" << std::endl;
             this->makeIndent();
             this->os() << "auto &" << name << " = *" << name << "_opt;"
                        << std::endl;
@@ -83,17 +82,17 @@ void CodeGenCPU::visit(const VarDef &op) {
 
         case MemType::CPU: {
             // e.g.
-            // auto &&x = mdspan_r<float, std::extents<5, 5, 5>>(&__stack[200 +
-            // omp_get_thread_num() * _threadStackTop + 100]);
+            // auto &&x = mdspan_r<float, std::extents<5, 5,
+            // 5>>(&__threadStack[0]);
             this->makeIndent();
             this->os() << "auto &&" << name << " = ";
             std::string rawPtr;
             if (inParallel_) {
-                rawPtr = "&__stack[" + std::to_string(sharedStackTop_) +
-                         " + omp_get_thread_num() * _threadStackSize + " +
+                rawPtr = "&__threadStack[omp_get_thread_num()][" +
                          std::to_string(threadStackTop_) + "]";
             } else {
-                rawPtr = "&__stack[" + std::to_string(sharedStackTop_) + "]";
+                rawPtr =
+                    "&__sharedStack[" + std::to_string(sharedStackTop_) + "]";
             }
             this->genMdPtrDef(op, rawPtr);
             this->os() << ";" << std::endl;
@@ -168,7 +167,7 @@ void CodeGenCPU::visit(const For &op) {
                 usedAsReduction_.insert(def(r->var_));
                 auto var = mangle(r->var_);
                 makeIndent();
-                os() << "auto &&" << var << "_ptr = toArrPtr(" << var << ");"
+                os() << "auto &&" << var << "_arrptr = toArrPtr(" << var << ");"
                      << std::endl;
             }
         }
@@ -219,7 +218,7 @@ void CodeGenCPU::visit(const For &op) {
                 }
                 first = false;
                 if (!buffer(r->var_)->tensor()->shape().empty()) {
-                    os() << mangle(r->var_) << "_ptr";
+                    os() << mangle(r->var_) << "_arrptr";
                     for (auto &&[b, e] : views::zip(r->begins_, r->ends_)) {
                         os() << "[";
                         (*this)(b);
@@ -343,17 +342,38 @@ extern "C" {
 )~~~";
 
     auto body = visitor.toString([&](const CodeGenStream &stream) {
-        std::string s =
-            "void run(void **_params, void **_returns, size_t **_retShapes, "
-            "size_t *_retDims, CPUContext_t _ctx) {\n";
-        s += "  size_t _sharedStackSize = " +
-             std::to_string(visitor.sharedStackSize()) + ";\n";
-        s += "  size_t _threadStackSize = " +
-             std::to_string(visitor.threadStackSize()) + ";\n";
-        s += "  auto __stack = new uint8_t[_sharedStackSize + "
-             "omp_get_max_threads() * _threadStackSize];\n";
+        std::string s;
+        if (visitor.sharedStackSize() > 0) {
+            s += "static uint8_t *__sharedStack = nullptr;\n";
+        }
+        if (visitor.threadStackSize() > 0) {
+            s += "static uint8_t **__threadStack = nullptr;\n";
+        }
+        s += "__attribute__((constructor)) static void initStack() {\n";
+        if (visitor.sharedStackSize() > 0) {
+            s += "  __sharedStack = new uint8_t[" +
+                 std::to_string(visitor.sharedStackSize()) + "];\n";
+        }
+        if (visitor.threadStackSize() > 0) {
+            s += "  __threadStack = new uint8_t *[omp_get_max_threads()];\n";
+            s += "  #pragma omp parallel\n";
+            s += "  __threadStack[omp_get_thread_num()] = new uint8_t[" +
+                 std::to_string(visitor.threadStackSize()) + "];\n";
+        }
+        s += "}\n";
+        s += "__attribute__((destructor)) static void deinitStack() {\n";
+        if (visitor.sharedStackSize() > 0) {
+            s += "  delete[] __sharedStack;\n";
+        }
+        if (visitor.threadStackSize() > 0) {
+            s += "  #pragma omp parallel\n";
+            s += "  delete[] __threadStack[omp_get_thread_num()];\n";
+            s += "  delete[] __threadStack;\n";
+        }
+        s += "}\n";
+        s += "void run(void **_params, void **_returns, size_t **_retShapes, "
+             "size_t *_retDims, CPUContext_t _ctx) {\n";
         s += stream.os_.str();
-        s += "  delete[] __stack;\n";
         s += "}";
         return s;
     });

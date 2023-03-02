@@ -215,41 +215,28 @@ std::pair<Stmt, std::vector<ID>> permute(
 
     FindDeps()
         .direction({dir.begin(), dir.end()})
-        .filterAccess([&](const AccessPoint &ap) {
+        .filterAccess([&](const auto &ap) {
             return ap.def_->isAncestorOf(loops.front());
         })
         .noProjectOutPrivateAxis(true)
-        .scope2CoordCallback([&](const ID &defId,
-                                 const std::unordered_map<
-                                     ID, std::vector<IterAxis>> &scope2coord) {
-            if (iter2permuted.empty() && scope2coord.count(loopsId[0])) {
-                // compute number of backing dimensions, outer than our
-                // outermost loop
-                numBackDims = scope2coord.at(loopsId[0]).size() - 1;
-                // sanity check: innermost should have exactly num. loops more
-                // axes
-                auto innerMostAxes = scope2coord.at(loopsId.back());
-                ASSERT(numBackDims + loops.size() == innerMostAxes.size());
+        .scope2CoordCallback(
+            [&](const ID &defId,
+                const std::unordered_map<ID, std::vector<IterAxis>>
+                    &scope2coord) {
+                if (iter2permuted.empty() && scope2coord.count(loopsId[0])) {
+                    // compute number of backing dimensions, outer than our
+                    // outermost loop
+                    numBackDims = scope2coord.at(loopsId[0]).size() - 1;
+                    // sanity check: innermost should have exactly num. loops
+                    // more axes
+                    auto innerMostAxes = scope2coord.at(loopsId.back());
+                    ASSERT(numBackDims + loops.size() == innerMostAxes.size());
 
-                // generate PB expr for realIter -> iter transformation
-                GenPBExpr genPBExpr;
-                std::ostringstream ossRaw, ossIter;
-                for (size_t i = numBackDims; i < innerMostAxes.size(); i++) {
-                    if (i > numBackDims) {
-                        ossRaw << ", ";
-                        ossIter << ", ";
-                    }
-                    ossRaw << genPBExpr.gen(innerMostAxes[i].realIter_).first;
-                    ossIter << genPBExpr.gen(innerMostAxes[i].iter_).first;
+                    // prepare iter -> permuted map string, for later use in
+                    // `found'
+                    iter2permuted = toString(permuteMap);
                 }
-                // use anonymous output variables in ISL
-                PBMap real2iter(pbCtx, "{[" + ossRaw.str() + "] -> [" +
-                                           ossIter.str() + "]}");
-                // prepare iter -> permuted map string, for later use in `found'
-                iter2permuted =
-                    toString(applyRange(reverse(real2iter), permuteMap));
-            }
-        })
+            })
         .filterSubAST(loops.front()->id())(ast, [&](const Dependence &d) {
             // Construct map for iter -> permuted
             auto iter2permutedMap = PBMap(d.presburger_, iter2permuted);

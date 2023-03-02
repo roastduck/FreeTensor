@@ -110,6 +110,9 @@ void init_ffi_ast_stmt(py::module_ &m) {
         .def_property_readonly(
             "expr", [](const Eval &op) -> Expr { return op->expr_; });
     py::class_<AnyNode, Any> pyAny(m, "Any", pyStmt);
+    py::class_<MarkVersionNode, MarkVersion>(m, "MarkVersion", pyStmt)
+        .def_readonly("tape_name", &MarkVersionNode::tapeName_)
+        .def_readonly("var", &MarkVersionNode::var_);
 
     // makers
     m.def("makeAny", &_makeAny);
@@ -168,6 +171,11 @@ void init_ffi_ast_stmt(py::module_ &m) {
           static_cast<Stmt (*)(const Expr &, const Metadata &, const ID &)>(
               &_makeEval),
           "expr"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
+    m.def(
+        "makeMarkVersion",
+        static_cast<Stmt (*)(const std::string &, const std::string &,
+                             const Metadata &, const ID &)>(&_makeMarkVersion),
+        "tape_name"_a, "var"_a, "metadata"_a, py::arg_v("id", ID(), "ID()"));
 }
 
 } // namespace freetensor

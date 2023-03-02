@@ -97,16 +97,16 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                     for (auto &&[newIter, arg] :
                          views::zip(dep.later_.iter_, args)) {
                         islVarToNewIter[arg] =
-                            newIter.realIter_ == newIter.iter_
+                            !newIter.negStep_
                                 ? newIter.iter_
-                                : makeMul(makeIntConst(-1), newIter.realIter_);
+                                : makeMul(makeIntConst(-1), newIter.iter_);
                     }
                     for (auto &&[oldIter, value] :
                          views::zip(dep.earlier_.iter_, values)) {
-                        if (oldIter.realIter_->nodeType() == ASTNodeType::Var) {
-                            oldIterToNewIter[oldIter.realIter_.as<VarNode>()
+                        if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
+                            oldIterToNewIter[oldIter.iter_.as<VarNode>()
                                                  ->name_] =
-                                oldIter.realIter_ == oldIter.iter_
+                                !oldIter.negStep_
                                     ? ReplaceIter(islVarToNewIter)(value)
                                     : makeMul(
                                           makeIntConst(-1),
@@ -166,9 +166,8 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
     FindDeps()
         .mode(FindDepsMode::KillLater)
         .type(DEP_RAW)
-        .filterAccess(
-            [&](const AccessPoint &acc) { return acc.def_->id() == def; })
-        .filterLater([&](const AccessPoint &later) {
+        .filterAccess([&](const auto &acc) { return acc.def_->id() == def; })
+        .filterLater([&](const auto &later) {
             return later.op_->nodeType() == ASTNodeType::Load;
         })
         .noProjectOutPrivateAxis(true)(ast, unsyncFunc(found));

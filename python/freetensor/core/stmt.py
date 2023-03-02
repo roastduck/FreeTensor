@@ -15,8 +15,8 @@ from typing import Sequence, Mapping, Tuple, Any, Optional
 import freetensor_ffi as ffi
 
 from . import config
-from .context import ctx_stack
-from .expr import VarRef
+from .context import ctx_stack, StmtRange
+from .expr import VarRef, VarRefFromVarDef
 
 open_vardefs = {}
 
@@ -106,7 +106,8 @@ class _VarDef:
             raise ffi.InvalidProgram("Nested VarDefs with the same name `" +
                                      self.name + "` is not allowed")
         open_vardefs[self.name] = self
-        return VarRef(self.name, self, self.shape, self.dtype, self.mtype)
+        return VarRefFromVarDef(self.name, self, self.shape, self.dtype,
+                                self.mtype)
 
     def __exit__(self, exc_type, exc_value, traceback):
         del open_vardefs[self.name]
@@ -132,7 +133,8 @@ class _VarsDef:
     This scope is internally used by `transformer` and tests
     '''
 
-    def __init__(self, defs: Tuple[str, Any, ffi.DataType, ffi.AccessType]):
+    def __init__(self, defs: Tuple[str, Any, ffi.DataType, ffi.AccessType,
+                                   ffi.MemType]):
         self.defs = [VarDef(*d) for d in defs]
 
     def __enter__(self):
@@ -314,7 +316,7 @@ def MarkLabel(label: str):
 
 class NamedScope:
     '''
-    Scope used to create an StmtSeq node with an explicit ID
+    Scope used to create an StmtSeq node with an explicit labels
 
     E.g.:
 
@@ -416,6 +418,71 @@ def Any():
     ctx_stack.top().append_stmt(ffi.makeAny())
 
 
+def MarkVersion(tape_name: str, var: VarRef):
+    '''
+    Create an MarkVersion node (only for custom gradient)
+
+    This node is only used for custom gradient. See `UserGrad`.
+    '''
+    top = ctx_stack.top()
+    top.append_stmt(ffi.makeMarkVersion(tape_name, var.name,
+                                        top.get_metadata()))
+
+
+class UserGradStaged:
+    '''
+    Internal staged implementation of `UserGrad`
+    '''
+
+    def __init__(self, *args: Sequence[VarRef], **kvs):
+        self.ori_vars = args
+        self.body = None
+        self.grad_defs = []
+        if 'stmt_range' in kvs:
+            stmt_range = kvs['stmt_range']
+            if isinstance(stmt_range, StmtRange):
+                self.ori_stmts = stmt_range.make()
+            else:
+                raise TypeError(
+                    "`stmt_range` should be a `StmtRange` for `UserGrad`")
+            del kvs['stmt_range']
+        else:
+            self.ori_stmts = {ctx_stack.get_last_stmt_id()}
+        for key in kvs:
+            raise TypeError(f"Unrecognized parameter `{key}` of `UserGrad`")
+
+    def __enter__(self):
+        # Make `VarDef` scopes for the gradients
+        grad_vars = []
+        for ori_var in self.ori_vars:
+            grad_def = VarDef(ori_var.name + ".grad", ori_var.full_shape,
+                              ori_var.dtype, "cache", ori_var.mtype)
+            grad_vars.append(grad_def.__enter__())
+            self.grad_defs.append(grad_def)
+
+        # Make a context, which is used for popping out the body we need
+        ctx_stack.push()
+
+        return grad_vars
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Pop out the body we need
+        self.body = ctx_stack.pop().make_stmt()
+
+        # Although we are discarding the gradient `VarDef` scopes, we still need to close
+        # them, to restore ctx_stack. After that, we pop out the `VarDef` statement
+        for grad_def in reversed(self.grad_defs):
+            grad_def.__exit__(exc_type, exc_value, traceback)
+        if exc_value is not None:
+            # Do not generate an AST node
+            return False  # Do not suppress the exception
+        ctx_stack.top().stmt_seq.pop()
+
+        # Record the body to context
+        ctx_stack.user_grads.append(
+            ffi.StmtSetToUserGrad(self.ori_stmts, self.body))
+
+
 class Func(ffi.Func):
 
     def __init__(self,
@@ -424,12 +491,14 @@ class Func(ffi.Func):
                  returns,
                  body,
                  closure={},
-                 custom_callback=None):
+                 custom_callback=None,
+                 user_grads=[]):
         super().__init__(
             name, params,
             list(map(lambda x: (x[0], ffi.DataType(x[1])), returns)), body,
             closure)
         self.custom_callback = custom_callback
+        self.user_grads = user_grads
 
         # Mimic a Python function
         self.__name__ = name

@@ -135,9 +135,8 @@ Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target,
     }
     FindDeps()
         .direction(direction)
-        .filterAccess([&](const AccessPoint &acc) {
-            return affecting.count(acc.def_->id());
-        })
+        .filterAccess(
+            [&](const auto &acc) { return affecting.count(acc.def_->id()); })
         .eraseOutsideVarDef(false)(op, [&](const Dependence &d) {
             ASSERT(d.dir_.size() == 1);
             if (affecting.count(d.defId()) &&

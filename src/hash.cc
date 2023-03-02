@@ -154,6 +154,13 @@ size_t Hasher::compHash(const MatMulNode &op) {
     return (h * K3 + B3) % P;
 }
 
+size_t Hasher::compHash(const MarkVersionNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + std::hash<std::string>()(op.tapeName_)) * K2 + B2) % P;
+    h = ((h + std::hash<std::string>()(op.var_)) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
 size_t Hasher::compHash(const CommutativeBinaryExprNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     h += op.lhs_->hash() + op.rhs_->hash();
@@ -234,6 +241,15 @@ size_t Hasher::compHash(const IntrinsicNode &op) {
     }
     h = ((h + std::hash<int>()(int(op.retType_))) * K2 + B2) % P;
     h = ((h + std::hash<bool>()(op.hasSideEffect_)) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const LoadAtVersionNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + std::hash<std::string>()(op.tapeName_)) * K2 + B2) % P;
+    for (auto &&index : op.indices_) {
+        h = ((h + index->hash()) * K2 + B2) % P;
+    }
     return (h * K3 + B3) % P;
 }
 
@@ -479,6 +495,33 @@ bool HashComparator::compare(const Intrinsic &lhs, const Intrinsic &rhs) const {
     return true;
 }
 
+bool HashComparator::compare(const MarkVersion &lhs,
+                             const MarkVersion &rhs) const {
+    if (lhs->tapeName_ != rhs->tapeName_) {
+        return false;
+    }
+    if (lhs->var_ != rhs->var_) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::compare(const LoadAtVersion &lhs,
+                             const LoadAtVersion &rhs) const {
+    if (lhs->tapeName_ != rhs->tapeName_) {
+        return false;
+    }
+    if (lhs->indices_.size() != rhs->indices_.size()) {
+        return false;
+    }
+    for (auto &&[l, r] : views::zip(lhs->indices_, rhs->indices_)) {
+        if (!(*this)(l, r)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool HashComparator::operator()(const Ref<Tensor> &lhs,
                                 const Ref<Tensor> &rhs) const {
     if (lhs->shape().size() != rhs->shape().size()) {
@@ -627,6 +670,8 @@ bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
         DISPATCH(IfExpr);
         DISPATCH(Cast);
         DISPATCH(Intrinsic);
+        DISPATCH(MarkVersion);
+        DISPATCH(LoadAtVersion);
 
     default:
         ERROR("Unexpected Expr node type: " + toString(lhs->nodeType()));

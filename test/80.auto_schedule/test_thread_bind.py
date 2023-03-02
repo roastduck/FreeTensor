@@ -93,7 +93,7 @@ def test_thread_bind():
         'blend($merge{$fuse{$split.1{$split.0{$split.0{L4}}}, $split.1{$split.0{$split.0{L6}}}}, $fuse{$split.1{$split.0{$split.0{L5}}}, $split.1{$split.0{$split.0{L7}}}}})',
         'parallelize($merge{$fuse{$split.1{$split.0{L4}}, $split.1{$split.0{L6}}}, $fuse{$split.1{$split.0{L5}}, $split.1{$split.0{L7}}}}, threadIdx.x)'
     ]
-    sch_log = sch.pretty_logs()
+    sch_log = list(map(str, sch.logs()))
     print(sch_log)
     assert len(sch_log) == len(std_log)
     for l, r in zip(sch_log, std_log):

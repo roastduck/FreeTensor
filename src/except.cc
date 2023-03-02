@@ -45,7 +45,7 @@ void reportWarning(const std::string &msg) {
         std::cerr << msg << std::endl;
     }
     if (cnt == 2) {
-        std::cerr << "[INFO] Further identical warnings will be supressed"
+        std::cerr << "[INFO] Further identical warnings will be suppressed"
                   << std::endl;
     }
 }

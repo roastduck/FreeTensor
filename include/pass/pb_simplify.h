@@ -35,6 +35,8 @@ class PBSimplify : public SimplifyPass {
 
 Stmt pbSimplify(const Stmt &op);
 
+DEFINE_PASS_FOR_FUNC(pbSimplify)
+
 } // namespace freetensor
 
 #endif // FREE_TENSOR_PB_SIMPLIFY_H

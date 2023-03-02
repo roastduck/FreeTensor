@@ -35,6 +35,11 @@ class DriverError : public Error {
     DriverError(const std::string &msg) : Error(msg) {}
 };
 
+class InvalidIO : public Error {
+  public:
+    InvalidIO(const std::string &msg) : Error(msg) {}
+};
+
 class InvalidProgram : public Error {
   public:
     InvalidProgram(const std::string &msg) : Error(msg) {}

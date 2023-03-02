@@ -111,6 +111,7 @@ void MatchVisitor::visit(const Load &op) {
     for (auto &&[oIdx, iIdx] : views::zip(op->indices_, instance->indices_)) {
         RECURSE(oIdx, iIdx);
     }
+    CHECK(op->loadType_ == instance->loadType_);
 }
 
 void MatchVisitor::visit(const ReduceTo &op) {
@@ -514,6 +515,23 @@ void MatchVisitor::visit(const MatMul &op) {
     CHECK(op->bIsRowMajor_ == instance->bIsRowMajor_);
     CHECK(op->cIsRowMajor_ == instance->cIsRowMajor_);
     RECURSE(op->equivalent_, instance->equivalent_);
+}
+
+void MatchVisitor::visit(const MarkVersion &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::MarkVersion);
+    auto instance = instance_.as<MarkVersionNode>();
+    CHECK(op->tapeName_ == instance->tapeName_);
+    CHECK(op->var_ == instance->var_);
+}
+
+void MatchVisitor::visit(const LoadAtVersion &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::LoadAtVersion);
+    auto instance = instance_.as<LoadAtVersionNode>();
+    CHECK(matchName(op->tapeName_, instance->tapeName_));
+    for (auto &&[oIdx, iIdx] : views::zip(op->indices_, instance->indices_)) {
+        RECURSE(oIdx, iIdx);
+    }
+    CHECK(op->loadType_ == instance->loadType_);
 }
 
 bool match(const Stmt &_pattern, const Stmt &_instance) {

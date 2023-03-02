@@ -79,4 +79,14 @@ Stmt RenameVar::visit(const Free &_op) {
     return op;
 }
 
+Stmt RenameVar::visit(const MarkVersion &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::MarkVersion);
+    auto op = __op.as<MarkVersionNode>();
+    if (auto it = rename_.find(op->var_); it != rename_.end()) {
+        op->var_ = it->second;
+    }
+    return op;
+}
+
 } // namespace freetensor

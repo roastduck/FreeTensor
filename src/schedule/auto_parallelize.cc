@@ -68,7 +68,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
         bool parentIsWarp = false;
         while (root->property_->parallel_ != serialScope) {
             if (auto inners =
-                    findAll("<For><-(!<For><-)*#" + toString(root->id()));
+                    findAll("<For><-(!<For><-)*" + toString(root->id()));
                 inners.size() == 1) {
                 root = inners.front().as<ForNode>();
                 parentIsWarp = true;
@@ -96,7 +96,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                     mergedId.isValid() ? merge(mergedId, loopId) : loopId;
                 maxMergeLevel++;
                 if (auto inners =
-                        findAll("<For><-(!<For><-)*#" + toString(loopId));
+                        findAll("<For><-(!<For><-)*" + toString(loopId));
                     inners.size() == 1) {
                     loop = inners.front().as<ForNode>();
                 } else {
@@ -121,7 +121,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                     mergedId =
                         mergedId.isValid() ? merge(mergedId, loopId) : loopId;
                     if (i + 1 < mergeLevel) {
-                        loop = find("<For><-(!<For><-)*#" + toString(loopId))
+                        loop = find("<For><-(!<For><-)*" + toString(loopId))
                                    .as<ForNode>();
                     }
                 }
@@ -213,7 +213,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
 
         if (!done) {
             for (auto &&subLoop :
-                 findAll("<For><-(!<For><-)*#" + toString(root->id()))) {
+                 findAll("<For><-(!<For><-)*" + toString(root->id()))) {
                 autoParallelizeOuter(subLoop.as<ForNode>());
             }
         }
@@ -224,7 +224,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
         // If the outer most loop is too short, we try the second outer loops
         // instead
         if (auto &&inners =
-                findAll("<For><-(!<For><-)*#" + toString(root->id()));
+                findAll("<For><-(!<For><-)*" + toString(root->id()));
             inners.size() > 1 &&
             root->len_->nodeType() == ASTNodeType::IntConst &&
             root->len_.as<IntConstNode>()->val_ < 32) {

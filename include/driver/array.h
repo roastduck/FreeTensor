@@ -33,17 +33,20 @@ struct ArrayCopy {
  *
  * When an `Array` is requried for write-only, an `ArrayCopy` will be allocated
  * without initialization on a specific device, if there isn't one, and copies
- * on other devices will be dropped
+ * on other devices will be dropped. Writing to a lending user object at a
+ * different device is not supported.
  *
  * When an `Array` is requried for read-write, an `ArrayCopy` will be copied to
  * a specific device, if there isn't one, and copies on other devices will be
- * dropped
+ * dropped. Writing to a lending user object at a different device is not
+ * supported.
  */
 class Array {
     std::vector<ArrayCopy> ptrs_;
     size_t size_ = 0, nElem_ = 0;
     std::vector<size_t> shape_;
     DataType dtype_;
+    bool dontDropBorrow_;
 
   private:
     /**
@@ -51,10 +54,14 @@ class Array {
      *
      * @param shape : Length of each dimensions of the array
      * @param dtype : Data type of the array
-     * @param preferDevice : Store the data at this device by default. If
-     * omitted, use the default one in Config
+     * @param dontDropBorrow : If true, report an error if we have to drop a
+     * borrwed ArrayCopy. This flag can be set to true when the Array is
+     * cunstructed IMPLICITLY from a user object by borrowing from it, where
+     * users may expect they are acutually manipulating their user object,
+     * instead of this Array
      */
-    Array(const std::vector<size_t> &shape, DataType dtype);
+    Array(const std::vector<size_t> &shape, DataType dtype,
+          bool dontDropBorrow = false);
 
   public:
     /**
@@ -70,7 +77,8 @@ class Array {
      * with PyBind11
      */
     static Array borrowFromRaw(void *ptr, const std::vector<size_t> &shape,
-                               DataType dtype, const Ref<Device> &device);
+                               DataType dtype, const Ref<Device> &device,
+                               bool dontDropBorrow);
 
     ~Array();
 

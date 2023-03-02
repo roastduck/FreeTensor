@@ -202,4 +202,8 @@ DataType DataTypeInfer::infer(const CastNode &op) { return op.destType_; }
 
 DataType DataTypeInfer::infer(const IntrinsicNode &op) { return op.retType_; }
 
+DataType DataTypeInfer::infer(const LoadAtVersionNode &op) {
+    return op.loadType_;
+}
+
 } // namespace freetensor

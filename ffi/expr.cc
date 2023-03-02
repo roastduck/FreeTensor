@@ -161,6 +161,12 @@ void init_ffi_ast_expr(py::module_ &m) {
         });
     py::class_<IntrinsicNode, Intrinsic> pyIntrinsic(m, "Intrinsic", pyExpr);
     py::class_<AnyExprNode, AnyExpr> pyAnyExpr(m, "AnyExpr", pyExpr);
+    py::class_<LoadAtVersionNode, LoadAtVersion>(m, "LoadAtVersion", pyExpr)
+        .def_readonly("tape_name", &LoadAtVersionNode::tapeName_)
+        .def_property_readonly(
+            "indices", [](const LoadAtVersion &op) -> std::vector<Expr> {
+                return op->indices_;
+            });
 
     // NOTE: ORDER of the constructor matters!
     pyExpr.def(py::init([](const Expr &expr) { return deepCopy(expr); }))
@@ -321,6 +327,10 @@ void init_ffi_ast_expr(py::module_ &m) {
                                DataType, bool)>(&_makeIntrinsic),
           "fmt"_a, "params"_a, "retType"_a = DataType::Void,
           "hasSideEffect"_a = false);
+    m.def("makeLoadAtVersion",
+          static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,
+                               DataType)>(&_makeLoadAtVersion),
+          "tape_name"_a, "indices"_a, "load_type"_a);
 }
 
 } // namespace freetensor

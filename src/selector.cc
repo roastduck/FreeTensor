@@ -70,6 +70,40 @@ bool AncestorSelector::matchImpl(const Stmt &stmt) {
     return false;
 }
 
+bool DirectBeforeSelector::matchImpl(const Stmt &stmt) {
+    if (auto &&next = stmt->nextStmtInDFSOrder(); next.isValid()) {
+        return following_->match(next);
+    }
+    return false;
+}
+
+bool BeforeSelector::matchImpl(const Stmt &stmt) {
+    for (auto next = stmt->nextStmtInDFSOrder(); next.isValid();
+         next = next->nextStmtInDFSOrder()) {
+        if (following_->match(next)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DirectAfterSelector::matchImpl(const Stmt &stmt) {
+    if (auto &&prev = stmt->prevStmtInDFSOrder(); prev.isValid()) {
+        return leading_->match(prev);
+    }
+    return false;
+}
+
+bool AfterSelector::matchImpl(const Stmt &stmt) {
+    for (auto prev = stmt->prevStmtInDFSOrder(); prev.isValid();
+         prev = prev->prevStmtInDFSOrder()) {
+        if (leading_->match(prev)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool RootNodeSelector::matchImpl(const Stmt &stmt) {
     return !stmt->parentStmt().isValid();
 }
@@ -153,7 +187,7 @@ Ref<Selector> parseSelector(const std::string &str) {
         antlr4::CommonTokenStream tokens(&lexer);
         selector_parser parser(&tokens);
         parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
-        return parser.selector()->s;
+        return parser.all()->s;
     } catch (const antlr4::ParseCancellationException &e) {
         throw ParserError((std::string) "Parser error: " + e.what());
     }

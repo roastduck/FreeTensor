@@ -18,16 +18,27 @@ def softmax_(x, y, axis: int = -1):
         Axis that the softmax is performed along. Negative axis means
         count from the last dimension
     '''
-    #! label: max
-    maxval = reduce_max(x, axes=[axis], keepdims=True)
-    #! label: sub
-    corrected = sub(x, maxval)
-    #! label: exp
-    exponent = exp(corrected)
-    #! label: sum
-    summation = reduce_sum(exponent, axes=[axis], keepdims=True)
-    #! label: div
-    truediv_(exponent, summation, y)
+    with core.StmtRange() as rng:
+        #! label: max
+        maxval = reduce_max(x, axes=[axis], keepdims=True)
+        #! label: sub
+        corrected = sub(x, maxval)
+        #! label: exp
+        exponent = exp(corrected)
+        #! label: sum
+        summation = reduce_sum(exponent, axes=[axis], keepdims=True)
+        #! label: div
+        truediv_(exponent, summation, y)
+
+        exponent_handle = core.push_for_backward(exponent)
+        summation_handle = core.push_for_backward(summation)
+        y_handle = core.push_for_backward(y)
+
+    with core.UserGrad(x, y, stmt_range=rng) as (d_x, d_y):
+        d_summation = -reduce_sum(d_y * y_handle, axes=[axis
+                                                       ]) / summation_handle
+        d_exponent = d_y / summation_handle + d_summation
+        d_x[...] += d_exponent * exponent_handle
 
 
 @core.inline
@@ -48,14 +59,6 @@ def softmax(x, axis=-1):
     VarRef :
         The result tensor
     '''
-    #! label: max
-    maxval = reduce_max(x, axes=[axis], keepdims=True)
-    #! label: sub
-    corrected = sub(x, maxval)
-    #! label: exp
-    exponent = exp(corrected)
-    #! label: sum
-    summation = reduce_sum(exponent, axes=[axis], keepdims=True)
-    #! label: div
-    out = truediv(exponent, summation)
+    out = core.empty(x.shape(), x.dtype, x.mtype)
+    softmax_(x, out, axis)
     return out

@@ -18,6 +18,7 @@ void BoolConstNode::compHash() { hash_ = Hasher::compHash(*this); }
 void IfExprNode::compHash() { hash_ = Hasher::compHash(*this); }
 void CastNode::compHash() { hash_ = Hasher::compHash(*this); }
 void IntrinsicNode::compHash() { hash_ = Hasher::compHash(*this); }
+void LoadAtVersionNode::compHash() { hash_ = Hasher::compHash(*this); }
 
 void VarNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void LoadNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
@@ -57,5 +58,6 @@ void CeilNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void IfExprNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void CastNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void IntrinsicNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
+void LoadAtVersionNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 
 } // namespace freetensor

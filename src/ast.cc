@@ -62,6 +62,8 @@ std::ostream &operator<<(std::ostream &os, ASTNodeType type) {
         DISPATCH(Cast);
         DISPATCH(Intrinsic);
         DISPATCH(AnyExpr);
+        DISPATCH(MarkVersion);
+        DISPATCH(LoadAtVersion);
     default:
         ERROR("Unexpected AST node type");
     }
@@ -114,12 +116,11 @@ Ref<StmtNode> StmtNode::parentStmtByFilter(
 }
 
 Stmt StmtNode::prevStmt() const {
-    if (auto p = parentStmt();
-        p.isValid() && p->nodeType() == ASTNodeType::StmtSeq) {
-        auto &&seq = p.as<StmtSeqNode>();
-        auto it = std::find(seq->stmts_.begin(), seq->stmts_.end(), self());
-        ASSERT(it != seq->stmts_.end());
-        if (it > seq->stmts_.begin()) {
+    if (auto p = parentStmt(); p.isValid()) {
+        auto &&children = p->children();
+        auto it = std::find(children.begin(), children.end(), self());
+        ASSERT(it != children.end());
+        if (it > children.begin()) {
             return *(it - 1);
         }
     }
@@ -127,12 +128,11 @@ Stmt StmtNode::prevStmt() const {
 }
 
 Stmt StmtNode::nextStmt() const {
-    if (auto p = parentStmt();
-        p.isValid() && p->nodeType() == ASTNodeType::StmtSeq) {
-        auto &&seq = p.as<StmtSeqNode>();
-        auto it = std::find(seq->stmts_.begin(), seq->stmts_.end(), self());
-        ASSERT(it != seq->stmts_.end());
-        if (it < seq->stmts_.end() - 1) {
+    if (auto p = parentStmt(); p.isValid()) {
+        auto &&children = p->children();
+        auto it = std::find(children.begin(), children.end(), self());
+        ASSERT(it != children.end());
+        if (it < children.end() - 1) {
             return *(it + 1);
         }
     }
@@ -186,6 +186,52 @@ Stmt StmtNode::nextInCtrlFlow() const {
         }
     }
     return ret;
+}
+
+Stmt StmtNode::prevStmtInDFSOrder() const {
+    auto node = self().as<StmtNode>();
+    while (true) {
+        if (auto &&p = node->prevStmt(); p.isValid()) {
+            node = p;
+            break;
+        }
+        if (auto &&p = node->parentStmt(); p.isValid()) {
+            node = p;
+        } else {
+            return nullptr;
+        }
+    }
+    while (true) {
+        if (auto &&ch = node->children(); !ch.empty()) {
+            node = ch.back();
+        } else {
+            break;
+        }
+    }
+    return node;
+}
+
+Stmt StmtNode::nextStmtInDFSOrder() const {
+    auto node = self().as<StmtNode>();
+    while (true) {
+        if (auto &&p = node->nextStmt(); p.isValid()) {
+            node = p;
+            break;
+        }
+        if (auto &&p = node->parentStmt(); p.isValid()) {
+            node = p;
+        } else {
+            return nullptr;
+        }
+    }
+    while (true) {
+        if (auto &&ch = node->children(); !ch.empty()) {
+            node = ch.front();
+        } else {
+            break;
+        }
+    }
+    return node;
 }
 
 Stmt StmtNode::ancestorById(const ID &lookup) const {

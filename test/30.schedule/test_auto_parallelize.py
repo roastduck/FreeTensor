@@ -12,10 +12,9 @@ def test_cpu_basic():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
-    print(s.logs())
-    assert s.pretty_logs() == [
-        "merge(Li, Lj)", "parallelize($merge{Li, Lj}, openmp)"
-    ]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == ["merge(Li, Lj)", "parallelize($merge{Li, Lj}, openmp)"]
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
@@ -34,8 +33,9 @@ def test_gpu_basic_static_small():
     s = ft.Schedule(ast)
     s.auto_parallelize(device)
     print(s.ast())
-    print(s.logs())
-    assert s.pretty_logs() == [
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == [
         "merge(Li, Lj)", f"split($merge{{Li, Lj}}, -1, {num_sm}, 0)",
         "parallelize($split.0{$merge{Li, Lj}}, blockIdx.x)",
         "parallelize($split.1{$merge{Li, Lj}}, threadIdx.x)"
@@ -55,8 +55,9 @@ def test_gpu_basic_static_large():
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.GPU())
     print(s.ast())
-    print(s.logs())
-    assert s.pretty_logs() == [
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == [
         "merge(Li, Lj)", "split($merge{Li, Lj}, 256, -1, 0)",
         "parallelize($split.0{$merge{Li, Lj}}, blockIdx.x)",
         "parallelize($split.1{$merge{Li, Lj}}, threadIdx.x)"
@@ -81,8 +82,9 @@ def test_gpu_basic_dynamic():
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.GPU())
     print(s.ast())
-    print(s.logs())
-    assert s.pretty_logs() == [
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == [
         "merge(Li, Lj)", f"split($merge{{Li, Lj}}, {num_sm}, -1, 0)",
         "reorder($split.1{$merge{Li, Lj}}, $split.0{$merge{Li, Lj}})",
         "split($split.0{$merge{Li, Lj}}, 256, -1, 0)",
@@ -103,8 +105,9 @@ def test_non_parallelizable():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
-    print(s.logs())
-    assert s.pretty_logs() == ["parallelize(Li, openmp)"]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == ["parallelize(Li, openmp)"]
 
 
 def test_reduction_better_not_parallelized():
@@ -119,8 +122,9 @@ def test_reduction_better_not_parallelized():
     print(ast)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
-    print(s.logs())
-    assert s.pretty_logs() == ["parallelize(Li, openmp)"]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == ["parallelize(Li, openmp)"]
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
@@ -137,8 +141,9 @@ def test_gpu_warp_static():
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.GPU())
     print(s.ast())
-    print(s.logs())
-    assert s.pretty_logs() == [
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == [
         "split(Lk, 32, -1, 0)", "parallelize($split.1{Lk}, threadIdx.x)",
         "reorder($split.1{Lk}, $split.0{Lk})", "split(Li, 8, -1, 0)",
         "parallelize($split.0{Li}, blockIdx.x)",
@@ -165,8 +170,9 @@ def test_gpu_warp_dynamic():
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.GPU())
     print(s.ast())
-    print(s.logs())
-    assert s.pretty_logs() == [
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == [
         "split(Lk, 32, -1, 0)", "parallelize($split.1{Lk}, threadIdx.x)",
         "reorder($split.1{Lk}, $split.0{Lk})", f"split(Li, {num_sm}, -1, 0)",
         "reorder($split.1{Li}, $split.0{Li})", "split($split.0{Li}, 8, -1, 0)",
@@ -190,10 +196,9 @@ def test_outer_loop_too_short():
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
     print(s.ast())
-    print(s.logs())
-    assert s.pretty_logs() == [
-        "parallelize(Lj1, openmp)", "parallelize(Lj2, openmp)"
-    ]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == ["parallelize(Lj1, openmp)", "parallelize(Lj2, openmp)"]
 
 
 def test_outer_loop_not_parallelizable():
@@ -212,7 +217,6 @@ def test_outer_loop_not_parallelizable():
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
     print(s.ast())
-    print(s.logs())
-    assert s.pretty_logs() == [
-        "parallelize(Li0, openmp)", "parallelize(Li1, openmp)"
-    ]
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == ["parallelize(Li0, openmp)", "parallelize(Li1, openmp)"]

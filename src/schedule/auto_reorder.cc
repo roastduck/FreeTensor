@@ -1,15 +1,14 @@
 #include <analyze/deps.h>
-#include <analyze/find_all_loops.h>
 #include <schedule.h>
 
 namespace freetensor {
 
 void Schedule::autoReorder(const Ref<Target> &target) {
-    auto allLoops = findAllLoops(ast());
+    auto allLoops = findAll("<For>");
     std::vector<FindDepsDir> direction;
     direction.reserve(allLoops.size());
     for (auto &&loop : allLoops) {
-        direction.push_back({{loop, DepDirection::Normal}});
+        direction.push_back({{loop->id(), DepDirection::Normal}});
     }
 
     // 0 = No dep
@@ -33,7 +32,7 @@ void Schedule::autoReorder(const Ref<Target> &target) {
         std::vector<ID> perfectNest = {nest->id()};
         while (true) {
             if (auto inners =
-                    findAll("<For><-(!<For><-)*#" + toString(nest->id()));
+                    findAll("<For><-(!<For><-)*" + toString(nest->id()));
                 inners.size() == 1) {
                 nest = inners.front().as<ForNode>();
                 perfectNest.emplace_back(nest->id());
@@ -48,11 +47,15 @@ void Schedule::autoReorder(const Ref<Target> &target) {
                              return depLevel[lhs] < depLevel[rhs];
                          });
         if (sorted != perfectNest) {
-            reorder(sorted);
+            try {
+                reorder(sorted);
+            } catch (const InvalidSchedule &e) {
+                // ignore
+            }
         }
 
         for (auto &&subNest :
-             findAll("<For><-(!<For><-)*#" + toString(nest->id()))) {
+             findAll("<For><-(!<For><-)*" + toString(nest->id()))) {
             visitNest(subNest.as<ForNode>());
         }
     };

@@ -622,6 +622,57 @@ def test_syncthreads_split_branch_with_else():
     assert ft.pop_ast().match(func.body)
 
 
+def test_syncthreads_split_branch_but_not_else():
+
+    @ft.transform
+    def test(x, y, z):
+        x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        z: ft.Var[(4,), "int32", "inout", "gpu/global"]
+        #! label: L0
+        for i in range(0, 4):
+            t = ft.empty((2,), "int32", "gpu/shared")
+            if i < 2:
+                # Sync in then case
+                #! label: L1
+                for j in range(0, 256):
+                    t[j % 2] += x[i, j]  # Atomic reduction
+                z[i] = z[i] + 1
+                y[i] = t[0]
+            else:
+                # No sync in else case
+                z[i] = z[i] + 2
+
+    s = ft.Schedule(test)
+    s.parallelize("L0", "threadIdx.y")
+    s.parallelize("L1", "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=1)
+
+    with ft.VarDef([
+        ("x", (4, 256), "int32", "input", "gpu/global"),
+        ("y", (4,), "int32", "output", "gpu/global"),
+        ("z", (4,), "int32", "inout", "gpu/global"),
+    ]) as (x, y, z):
+        with ft.For(".threadIdx.y", 0, 4) as i:
+            with ft.For(".threadIdx.x", 0, 256) as j:
+                with ft.VarDef("t", (4, 2), "int32", "cache",
+                               "gpu/shared") as t:
+                    with ft.If(i < 2):
+                        ft.Any()
+                        with ft.If(j == 0):
+                            ft.Any()  # z[i]
+                    ft.Eval(
+                        ft.intrinsic("__syncthreads()",
+                                     has_side_effect=True))  # Here outside If
+                    with ft.If(i < 2):
+                        with ft.If(j == 0):
+                            ft.Any()  # y[i]
+                with ft.If(i >= 2):
+                    with ft.If(j == 0):
+                        ft.Any()  # z[i]
+    assert ft.pop_ast().match(func.body)
+
+
 def test_syncthreads_split_branch_and_vardef():
 
     @ft.transform
@@ -868,3 +919,27 @@ def test_use_syncthreads_for_non_aligned_warps():
 
                             e[i, j, k, i1] = t[k, i1]
     assert ft.pop_ast().match(ast)
+
+
+def test_no_sync_between_atomic_reductions():
+
+    @ft.transform
+    def test(x, idx1, idx2, y):
+        x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        idx1: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        idx2: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(100,), "int32", "output", "gpu/global"]
+        #! label: L0
+        for i in range(0, 4):
+            #! label: L1
+            for j in range(0, 256):
+                y[idx1[i, j]] += x[i, j]
+                y[idx2[i, j]] += x[i, j]
+
+    s = ft.Schedule(test)
+    s.parallelize("L0", "threadIdx.y")
+    s.parallelize("L1", "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+
+    assert "__syncthreads" not in code.code

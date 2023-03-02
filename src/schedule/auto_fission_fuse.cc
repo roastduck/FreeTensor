@@ -26,6 +26,7 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
     auto decisionId = PROGRAM_POSITION;
     auto decisionName = "fuse";
     auto depDiffCondName = "defDiff";
+    auto metadataCondName = "metadata";
 
     // Record which loop is fission from which loop, so we don't fuse them back
     // to one
@@ -41,7 +42,7 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
     std::function<void(For nest)> tryFission = [&, this](For nest) {
         // Recurse first
         for (auto &&subNest :
-             findAll("<For><-(!<For><-)*#" + toString(nest->id()))) {
+             findAll("<For><-(!<For><-)*" + toString(nest->id()))) {
             tryFission(subNest.as<ForNode>());
         }
 
@@ -50,7 +51,7 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
         int partCnt = 0;
         std::vector<ID> splitterIds; // Record IDs because we are mutating ast()
         for (auto &&splitter :
-             findAll("(<For>|<Store>|<ReduceTo>|<Eval>)<-(!<For><-)*#" +
+             findAll("(<For>|<Store>|<ReduceTo>|<Eval>)<-(!<For><-)*" +
                      toString(nest->id()))) {
             splitterIds.emplace_back(splitter->id());
         }
@@ -63,7 +64,7 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
                 FindDeps()
                     .direction({{{thisId, DepDirection::Different}}})
                     .filterSubAST(thisId)
-                    .filterAccess([&](const AccessPoint &ap) {
+                    .filterAccess([&](const auto &ap) {
                         return ap.stmt_->isBefore(splitter);
                     })
                     .exists(ast());
@@ -71,18 +72,21 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
                 FindDeps()
                     .direction({{{thisId, DepDirection::Different}}})
                     .filterSubAST(thisId)
-                    .filterAccess([&](const AccessPoint &ap) {
+                    .filterAccess([&](const auto &ap) {
                         return !ap.stmt_->isBefore(splitter);
                     })
                     .exists(ast());
             bool depDiff = frontHasDep != backHasDep;
             {
-                RandCondGuard _(conds, depDiffCondName, depDiff);
-                if (!randCtx_->decide(decisionId, decisionName, conds,
-                                      {depDiff ? 1 : 0, depDiff ? 0 : 1}, trace,
-                                      "not fission " + toString(thisId) +
-                                          " before " +
-                                          toString(splitter->id()) + "?")) {
+                RandCondGuard<bool> _1(conds, depDiffCondName, depDiff);
+                RandCondGuard<Metadata, MetadataHasher, MetadataComparator> _2(
+                    conds, metadataCondName,
+                    makeMetadata("fission", nest, splitter));
+                if (!randCtx_->decide(
+                        decisionId, decisionName, conds,
+                        {depDiff ? 0.5 : 0.25, depDiff ? 0.25 : 0.5}, trace,
+                        "not fission " + toString(thisId) + " before " +
+                            toString(splitter->id()) + "?")) {
                     beginTransaction();
                     try {
                         auto newId =
@@ -111,7 +115,7 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
         For last;
         ID lastId;
         for (auto &&_loop :
-             findAll("<For><-(!<For><-)*#" + toString(root->id()))) {
+             findAll("<For><-(!<For><-)*" + toString(root->id()))) {
             auto loop = _loop.as<ForNode>();
             auto loopId = loop->id();
             if (findAll(loopId).empty()) {
@@ -138,12 +142,15 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
                         .exists(ast());
                 bool depDiff = thisHasDep != lastHasDep;
                 {
-                    RandCondGuard _(conds, depDiffCondName, depDiff);
-                    if (randCtx_->decide(decisionId, decisionName, conds,
-                                         {depDiff ? 1 : 0, depDiff ? 0 : 1},
-                                         trace,
-                                         "fuse " + toString(lastId) + " and " +
-                                             toString(loopId) + "?")) {
+                    RandCondGuard<bool> _1(conds, depDiffCondName, depDiff);
+                    RandCondGuard<Metadata, MetadataHasher, MetadataComparator>
+                        _2(conds, metadataCondName,
+                           makeMetadata("fuse", last, loop));
+                    if (randCtx_->decide(
+                            decisionId, decisionName, conds,
+                            {depDiff ? 0.5 : 0.25, depDiff ? 0.25 : 0.5}, trace,
+                            "fuse " + toString(lastId) + " and " +
+                                toString(loopId) + "?")) {
                         beginTransaction();
                         try {
                             try {

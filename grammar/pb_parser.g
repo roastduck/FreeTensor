@@ -13,7 +13,7 @@ options {
 }
 
 func returns [PBFuncAST ast]
-    : (extList=varList '->')? '{' simpleFunc
+    : (extList=varList '->')? '{' (simpleFunc
       {
         $ast = {$simpleFunc.ast};
       }
@@ -21,7 +21,7 @@ func returns [PBFuncAST ast]
       {
         $ast.emplace_back($simpleFunc.ast);
       }
-        )* '}'
+        )*)? '}'
     ;
 
 simpleFunc returns [SimplePBFuncAST ast]
@@ -104,6 +104,10 @@ expr returns [Expr node]
           case 2: $node = makeMod($expr0.node, $expr1.node); break;
         }
       }
+    | '-' expr0=expr
+      {
+        $node = makeSub(makeIntConst(0), $expr0.node);
+      }
     | expr0=expr
       {int ty;} (
         '+' {ty = 1;}
@@ -125,14 +129,14 @@ expr returns [Expr node]
       {
         $node = makeMax($expr0.node, $expr1.node);
       }
-    | '-' expr0=expr
-      {
-        $node = makeSub(makeIntConst(0), $expr0.node);
-      }
     ;
 
 boolExpr returns [Expr node]
-    : expr0=expr
+    : '(' boolExpr ')'
+      {
+        $node = $boolExpr.node;
+      }
+    | expr0=expr
       {
         std::function<Expr(Expr, Expr)> make;
         $node = makeBoolConst(true);

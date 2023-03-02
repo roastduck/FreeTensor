@@ -1,5 +1,7 @@
 # Your First Program with FreeTenor
 
+[TOC]
+
 In this page, we introduce some basic concepts of FreeTensor.
 
 ## Example: Vector addition

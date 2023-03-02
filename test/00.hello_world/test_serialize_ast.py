@@ -210,7 +210,7 @@ def test_assert():
     assert ast2.match(ast)
 
 
-def test_id():
+def test_label():
     with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
         ft.MarkLabel("foo")
         x[2, 3] = 2.0
@@ -225,7 +225,7 @@ def test_id():
     assert s.find("foo").type() == ft.ASTNodeType.Store
 
 
-def test_id_of_stmt_seq():
+def test_label_of_stmt_seq():
     with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
         with ft.NamedScope("foo"):
             x[2, 3] = 2.0
@@ -264,21 +264,6 @@ def test_complex_name():
     ast2 = ft.load_ast(txt)
     print(ast2)
     assert ast2.match(ast)
-
-
-def test_complex_id():
-    with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
-        ft.MarkLabel("id!@#$%^&*")
-        x[2, 3] = 2.0
-        x[1, 0] = 3.0
-    ast = ft.pop_ast()
-    txt = ft.dump_ast(ast)
-    print(txt)
-    ast2 = ft.load_ast(txt)
-    print(ast2)
-    assert ast2.match(ast)
-    s = ft.Schedule(ast2)
-    assert s.find("id!@#$%^&*").type() == ft.ASTNodeType.Store
 
 
 def test_var_name_be_same_with_builtin():
@@ -363,6 +348,38 @@ def test_view():
     ast2 = ft.load_ast(txt)
     print(ast2)
     assert ast2.match(ast)
+
+
+def test_custom_grad():
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        ft.MarkLabel('Vt')
+        with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
+            t[...] = x[...] * x[...]
+            ft.MarkVersion("t0", t)
+            ft.MarkLabel("S0")
+            y[...] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
+            with ft.UserGrad(t, y) as (dt, dy):
+                dt[...] = dy[...] * ft.intrinsic("cosf(%)",
+                                                 ft.load_at_version(
+                                                     "t0", "float32"),
+                                                 ret_type="float32")
+    ast, user_grads = ft.pop_ast_and_user_grads()
+
+    print(ast)
+    txt = ft.dump_ast(ast)
+    print(txt)
+    ast2 = ft.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+    for user_grad in user_grads:
+        print(user_grad.bwd_body)
+        txt = ft.dump_ast(user_grad.bwd_body, dtype_in_load=True)
+        print(txt)
+        user_grad2 = ft.load_ast(txt)
+        print(user_grad2)
+        assert user_grad2.match(user_grad.bwd_body)
 
 
 def test_fission_metadata():

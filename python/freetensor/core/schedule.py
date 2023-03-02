@@ -467,11 +467,20 @@ class Schedule(ffi.Schedule):
             ID of the VarDef statement of the specific variable
         mtype : MemType
             Where the variable should be stored
+        rejectIndirectAccess : bool
+            Registers usually do not support indirect access. If a variable is
+            accessed indirectly, setting it to use registers is meaningless even
+            successful. If this parameter is set to true, throw an exception if
+            the variable being set is accessed indirectly. Specifically, two types
+            of access are considered indirect: 1) The index is a load from another
+            variable, or 2) The index is a loop iterator and the loop has a
+            dynamic length (which can not be unrolled by a backend compiler). By
+            default, this parameter is determined automatically by `mtype`.
 
         Raises
         ------
         InvalidSchedule
-            if the variable is not found
+            if the variable is not found, or if rejecting an indirect access
         """
         super().set_mem_type(self._lookup(vardef), MemType(mtype))
 
@@ -763,6 +772,7 @@ class Schedule(ffi.Schedule):
                    loop1,
                    nest_level_0=0,
                    nest_level_1=0,
+                   fusable_overlap_threshold=1,
                    do_simplify=True):
         """
         Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable
@@ -783,6 +793,9 @@ class Schedule(ffi.Schedule):
         nest_level_1 : int
             The number of nesting levels of loop 1 to be considered, defaults to maximum
             possible
+        fusableOverlapThreshold : int
+            The minimum overlapping size of two loops to be regarded fusable. Defaults
+            to 1
         do_simplify : bool
             Whether the result is simplified by the way, defaults to true
 
@@ -797,7 +810,8 @@ class Schedule(ffi.Schedule):
             if the loops are not consequent
         """
         return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1),
-                                  nest_level_0, nest_level_1, do_simplify)
+                                  nest_level_0, nest_level_1,
+                                  fusable_overlap_threshold, do_simplify)
 
     def pluto_permute(self, loop, nest_level=0, do_simplify=True):
         """

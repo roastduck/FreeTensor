@@ -45,7 +45,7 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
     // Hoist all VarDef nodes covering any of the statement but not covering
     // some other statements, to cover all statements
     auto insides = order | views::transform([](const ID &id) {
-                       return "->>#" + toString(id);
+                       return "->>" + toString(id);
                    });
     auto allIn = insides | join("&");
     auto anyIn = insides | join("|");

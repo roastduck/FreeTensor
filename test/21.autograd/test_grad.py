@@ -146,8 +146,8 @@ def test_use_forward_value_when_taped():
         ("d_y1", (4,), "float32", "inout", "cpu"),
         ("d_y2", (4,), "float32", "inout", "cpu"),
     ]) as (d_x, y1, d_y1, d_y2):
-        with ft.For("i", 3, -1, -1) as i:
-            with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
+        with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
+            with ft.For("i", 3, -1, -1) as i:
                 d_x[i] = 2 * (d_y1[i] * y1[i] + 2 * (d_y2[i] * t[i]))
     std = ft.pop_ast()
 
@@ -176,8 +176,8 @@ def test_use_taped_forward_value():
         ("d_y1", (4,), "float32", "inout", "cpu"),
         ("d_y2", (4,), "float32", "inout", "cpu"),
     ]) as (d_x, d_y1, d_y2):
-        with ft.For("i", 3, -1, -1) as i:
-            with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
+        with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
+            with ft.For("i", 3, -1, -1) as i:
                 d_x[i] = ((d_y2[i] * 3) + (d_y1[i] * 2)) * t[i]
     std = ft.pop_ast()
 
@@ -395,6 +395,26 @@ def test_nested_loops():
     assert std.match(ast)
 
 
+def test_recomp_single_stmt():
+    with ft.VarDef([
+        ("x", (), "float32", "input", "cpu"),
+        ("y", (), "float32", "output", "cpu"),
+    ]) as (x, y):
+        y[...] = ft.exp(x[...])
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set())
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("d_x", (), "float32", "output", "cpu"),
+                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, d_y):
+        d_x[()] = d_y[()] * ft.exp(x[()])
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_multi_versions_in_recomp():
 
     @ft.transform(verbose=1)
@@ -426,7 +446,7 @@ def test_multi_versions_in_recomp():
                         z[()] = 1.
                         with ft.For("fn", 0, 1024) as fn:
                             z_recomp[fn] = z[()]
-                            z[()] = (z[()] + 1) * x[fn]
+                            z[()] = (z_recomp[fn] + 1) * x[fn]
                     dz[()] = -1 * dy[pn]
                     with ft.For("fn", 1023, -1, -1) as fn:
                         with ft.VarDef("dz.old", (), "float32",
@@ -512,8 +532,8 @@ def test_tape_2():
                     ("d_x3", (4,), "float32", "output", "cpu"),
                     ("d_y", (4,), "float32", "inout", "cpu")
                    ]) as (d_x1, d_x2, x3, d_x3, d_y):
-        with ft.For("i", 3, -1, -1) as i:
-            with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
+        with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
+            with ft.For("i", 3, -1, -1) as i:
                 with ft.VarDef("d_t", (), "float32", "cache", "cpu") as d_t:
                     d_t[()] = d_y[i] * x3[i]
                     d_x3[i] = d_y[i] * t[i]
@@ -555,8 +575,8 @@ def test_tape_3():
 
     with ft.VarDef([("d_x2", (4, 5, 6), "float32", "output", "cpu"),
                     ("d_y", (4, 6), "float32", "inout", "cpu")]) as (d_x2, d_y):
-        with ft.For("i", 3, -1, -1, label="Li") as i:
-            with ft.VarDef("t", (4, 6), "float32", "input", "cpu") as t:
+        with ft.VarDef("t", (4, 6), "float32", "input", "cpu") as t:
+            with ft.For("i", 3, -1, -1, label="Li") as i:
                 with ft.For("k", 5, -1, -1, label="Lk2"):
                     with ft.For("j", 4, -1, -1, label="Lj") as j:
                         d_x2[i, j, k] = d_y[i, k] * t[i, k]
@@ -750,22 +770,149 @@ def test_use_tape_in_cond():
                     ("d_x3", (4,), "float32", "output", "cpu"),
                     ("d_y", (4,), "float32", "inout", "cpu")
                    ]) as (d_x1, d_x2, x3, d_x3, d_y):
-        with ft.For("i0", 0, 4) as i:
-            d_x3[i] = 0
-        with ft.For("i", 3, -1, -1) as i:
-            with ft.VarDef([("t.tape", (4,), "float32", "input", "cpu"),
-                            ("d_t", (), "float32", "cache", "cpu")]) as (t,
-                                                                         d_t):
-                with ft.If(t[i] >= 0):
-                    d_t[()] = d_y[i] * x3[i]
-                    d_x3[i] = d_y[i] * t[i]
-                with ft.Else():
-                    d_t[()] = d_y[i]
-                d_x1[i] = d_t[()]
-                d_x2[i] = d_t[()]
+        with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
+            with ft.For("i0", 0, 4) as i:
+                d_x3[i] = 0
+            with ft.For("i", 3, -1, -1) as i:
+                with ft.VarDef("d_t", (), "float32", "cache", "cpu") as d_t:
+                    with ft.If(t[i] >= 0):
+                        d_t[()] = d_y[i] * x3[i]
+                        d_x3[i] = d_y[i] * t[i]
+                    with ft.Else():
+                        d_t[()] = d_y[i]
+                    d_x1[i] = d_t[()]
+                    d_x2[i] = d_t[()]
     std = ft.pop_ast()
 
     assert std.match(backward.body)
+
+
+def test_use_tape_in_index():
+
+    @ft.transform(verbose=1)
+    def test(w, x, y):
+        w: ft.Var[(3,), "float32"]
+        x: ft.Var[(25,), "float32"]
+        y: ft.Var[(3,), "float32", "output"]
+        for i in range(3):
+            #! label: V
+            w_x = ft.empty((), "int32")
+            w_x[()] = w[i] * 5
+            y[i] = x[w_x]
+        return y
+
+    forward, backward, _, _ = ft.grad_(test,
+                                       set(["x"]),
+                                       set(["y"]),
+                                       tapes=["V"],
+                                       verbose=2)
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+    forward = ft.lower(forward)
+    backward = ft.lower(backward)
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+
+    @ft.transform
+    def expected(w, x, w_x_tape, dx, dy):
+        dx: ft.Var[(25,), "float32", "output"]
+        dy: ft.Var[(3,), "float32", "inout"]
+        w_x_tape: ft.Var[(3,), "int32", "input"]
+        for k in range(25):
+            dx[k] = 0
+        for i in range(2, -1, -1):
+            dx[w_x_tape[i]] += dy[i]
+
+    assert expected.body.match(backward.body)
+
+
+def test_use_a_taped_var_to_recompute_another_var():
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("w", (), "float32", "output", "cpu")]) as (x, w):
+        with ft.VarDef("z", (), "float32", "cache", "cpu") as z:
+            z[...] = 0
+            with ft.If(x[...] > 0):
+                ft.MarkLabel("V_y")
+                with ft.VarDef("y", (), "float32", "cache", "cpu") as y:
+                    y[...] = x[...] * x[...]
+                    z[...] = y[...] * y[...]
+            w[...] = z[...] * z[...]
+    func = ft.Func("main", ["x", "y"], [], ft.pop_ast())
+    print(func)
+    forward, backward, _, _ = ft.grad_(func, ["x"], ["w"], ["V_y"])
+    print("Backward:")
+    print(backward)
+    backward = ft.lower(backward)
+    print("Backward:")
+    print(backward)
+
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("x.grad", (), "float32", "output", "cpu"),
+                    ("w.grad", (), "float32", "inout", "cpu")]) as (x, dx, dw):
+        with ft.VarDef("y", (), "float32", "input", "cpu") as y:
+            dx[...] = 0
+            with ft.VarDef("z", (), "float32", "cache", "cpu") as z:
+                z[...] = 0
+                with ft.If(x[...] > 0):
+                    z[...] = ft.square(y[...])
+                    dx[...] = 2 * (4 * y[...] * dw[...] * z[...] * x[...])
+    std = ft.pop_ast()
+
+    assert std.match(backward.body)
+
+
+def test_recompute_using_another_recomputed_var():
+
+    @ft.transform(verbose=1)
+    def func(a: ft.Var[(10,), "float32"]):
+        b = ft.empty((10,), "float32")
+        for i in range(10):
+            b[i] = a[i] * a[i]
+        c = ft.empty((10,), "float32")
+        for i in range(10):
+            t = ft.empty((), "float32")
+            # t MUST BE RECOMPUTED USING THE OLD b BEFORE b IS UPDATED
+            t[...] = b[i] * b[i]
+            c[i] = t[...] * t[...]
+            b[i] += 1  # HERE
+        d = ft.empty((10,), "float32")
+        for i in range(10):
+            d[i] = c[i] * c[i] * b[i]
+        return d
+
+    _, bwd, _, _ = ft.grad(func, ["a"], ["d"], set())
+    print(bwd)
+    bwd = ft.lower(bwd, verbose=1)
+
+    with ft.VarDef([("a", (10,), "float32", "input", "cpu"),
+                    ("a.grad", (10,), "float32", "output", "cpu"),
+                    ("d.grad", (10,), "float32", "inout", "cpu")]) as (a, da,
+                                                                       dd):
+        with ft.VarDef("b", (10,), "float32", "cache", "cpu") as b:
+            with ft.For("i", 0, 10) as i:
+                b[i] = ft.square(a[i])
+            with ft.VarDef("b.recomp", (1, 10), "float32", "cache",
+                           "cpu") as b_recomp:
+                with ft.VarDef("c", (10,), "float32", "cache", "cpu") as c:
+                    with ft.For("i_1", 0, 10) as i:
+                        b_recomp[0, i] = b[i]
+                        c[i] = ft.square(ft.square(b_recomp[0, i]))
+                        b[i] += 1
+                    with ft.For("i", 9, -1, -1) as i:
+                        gradient_of_bi_in_di = dd[i] * ft.square(c[i])
+                        # USE NEW b HERE
+                        gradient_of_ci_in_di = 2 * dd[i] * b[i] * c[i]
+                        # USE OLD b_recomp HERE
+                        dt = (4 * ft.square(b_recomp[0, i]) *
+                              gradient_of_ci_in_di * b_recomp[0, i])
+                        da[i] = 2 * (gradient_of_bi_in_di + dt) * a[i]
+    std = ft.pop_ast()
+
+    assert std.match(bwd.body)
 
 
 def test_tape_vars_with_the_same_name():
@@ -808,6 +955,43 @@ def test_tape_vars_with_the_same_name():
     assert sorted(tape_output) == sorted(tape_input)
 
 
+def test_single_version_tape():
+    # Although b is only read once, but it is then overwritten, we still
+    # need a tape
+
+    @ft.transform(verbose=1)
+    def func(a: ft.Var[(10,), "float32"]):
+        #! label: V_b
+        b = ft.empty((10,), "float32")
+        for i in range(10):
+            b[i] = a[i] * a[i]
+        c = ft.empty((10,), "float32")
+        for i in range(10):
+            c[i] = b[i] * b[i]
+            b[i] += 1  # HERE!!
+        return b, c
+
+    _, bwd, _, _ = ft.grad(func, ["a"], ["b", "c"], set(["V_b"]))
+    print(bwd)
+    bwd = ft.lower(bwd, verbose=1)
+
+    @ft.transform
+    def expected(a, d_a, b_tape, d_c):
+        a: ft.Var[(10,), "float32", "input"]
+        d_a: ft.Var[(10,), "float32", "output"]
+        b_tape: ft.Var[(1, 10), "float32", "input"]
+        d_b: ft.Var[(10,), "float32", "inout"]
+        d_c: ft.Var[(10,), "float32", "inout"]
+        for i in range(9, -1, -1):
+            # HERE WE STILL NEED A TAPE
+            d_b[i] += 2 * d_c[i] * b_tape[0, i]
+        for i in range(9, -1, -1):
+            d_a[i] = 2 * a[i] * d_b[i]
+            d_b[i] = 0
+
+    assert expected.body.match(bwd.body)
+
+
 def test_tape_mode_all():
     with ft.VarDef([("x1", (4,), "float32", "input", "cpu"),
                     ("x2", (4,), "float32", "input", "cpu"),
@@ -842,14 +1026,15 @@ def test_tape_mode_all():
         ("d_y", (4,), "float32", "inout", "cpu"),
     ]) as (d_x1, d_x2, d_x3, d_y):
         with ft.VarDef([("t.tape", (4,), "float32", "input", "cpu"),
-                        ("d_t", (4,), "float32", "cache", "cpu")]) as (t, d_t):
+                        ("u.tape", (4,), "float32", "input", "cpu"),
+                        ("d_t", (4,), "float32", "cache", "cpu")]) as (t, u,
+                                                                       d_t):
             with ft.For("i", 3, -1, -1) as i:
-                with ft.VarDef("u.tape", (4,), "float32", "input", "cpu") as u:
-                    with ft.VarDef("d_u", (), "float32", "cache", "cpu") as d_u:
-                        d_u[()] = d_y[i] * t[i]
-                        d_t[i] = d_y[i] * u[i]
-                        d_x2[i] = d_u[()]
-                        d_x3[i] = d_u[()]
+                with ft.VarDef("d_u", (), "float32", "cache", "cpu") as d_u:
+                    d_u[()] = d_y[i] * t[i]
+                    d_t[i] = d_y[i] * u[i]
+                    d_x2[i] = d_u[()]
+                    d_x3[i] = d_u[()]
             with ft.For("i", 3, -1, -1) as i:
                 d_x1[i] = d_t[i]
                 d_x2[i] += d_t[i]
@@ -958,7 +1143,7 @@ def test_tape_mode_no_reuse_only():
     assert std.match(backward)
 
 
-def test_no_unused_tape_single_version():
+def test_no_unused_trival_tape():
 
     @ft.transform
     def test(x: ft.Var[(), "float32", "input"]):
@@ -979,7 +1164,7 @@ def test_no_unused_tape_single_version():
     assert len(bwd.params) == 2  # `x` and `y.grad`. No `u` or `v`
 
 
-def test_no_unused_tape_multiple_versions():
+def test_no_unused_non_trivial_tape():
 
     @ft.transform
     def test(x: ft.Var[(4,), "float32", "input"]):

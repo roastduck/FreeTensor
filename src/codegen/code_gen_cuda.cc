@@ -1,5 +1,6 @@
 #include <analyze/all_uses.h>
 #include <codegen/code_gen_cuda.h>
+#include <config.h>
 #include <container_utils.h>
 #include <except.h>
 #include <math/utils.h>
@@ -26,8 +27,8 @@ static std::string genCUBLASType(DataType dtype) {
     }
 }
 
-void CodeGenCUDA::genMdPtrType(std::ostream &os, const VarDef &def,
-                               bool isConst) {
+std::function<std::ostream &(std::ostream &)>
+CodeGenCUDA::genMdPtrType(const VarDef &def, bool isConst) {
     auto &&buf = def->buffer_;
     if (buf->tensor()->shape().empty() &&
         (buf->mtype() == MemType::GPUGlobal ||
@@ -35,13 +36,14 @@ void CodeGenCUDA::genMdPtrType(std::ostream &os, const VarDef &def,
         // Use pointer instead of reference for scalars, because when passing an
         // argument from host to a kernel, a reference means copy the value from
         // CPU to GPU, while a pointer means passing the address
-        if (isConst) {
-            os << "const ";
-        }
-        os << gen(buf->tensor()->dtype()) << " *";
-        return;
+        return [=](std::ostream &os) -> std::ostream & {
+            if (isConst) {
+                os << "const ";
+            }
+            return os << gen(buf->tensor()->dtype()) << " *";
+        };
     }
-    CodeGenC<CodeGenCUDAStream>::genMdPtrType(os, def, isConst);
+    return CodeGenC<CodeGenCUDAStream>::genMdPtrType(def, isConst);
 }
 
 void CodeGenCUDA::genMdPtrDef(const VarDef &def,
@@ -54,9 +56,7 @@ void CodeGenCUDA::genMdPtrDef(const VarDef &def,
         // Use pointer instead of reference for scalars, because when passing an
         // argument from host to a kernel, a reference means copy the value from
         // CPU to GPU, while a pointer means passing the address
-        this->os() << "((";
-        genMdPtrType(def, isConst);
-        this->os() << ")(";
+        this->os() << "((" << genMdPtrType(def, isConst) << ")(";
         genRawPtr();
         this->os() << "))";
         return;
@@ -72,13 +72,14 @@ void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
     os() << shapePtr << " = " << ndim << " > 0 ? (size_t*)malloc((" << dimPtr
          << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
     makeIndent();
-    os() << "checkCudaError(cudaMalloc(&" << rawPtr << ", ";
+    // cudaNew is defined in gpu_runtime.h
+    os() << rawPtr << " = cudaNew(";
     for (auto &&[i, dim] : views::enumerate(tensor->shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
         os() << ") * ";
     }
-    os() << "sizeof(" << gen(tensor->dtype()) << ")));" << std::endl;
+    os() << "sizeof(" << gen(tensor->dtype()) << "));" << std::endl;
 }
 
 void CodeGenCUDA::genScalar(const VarDef &def,
@@ -179,6 +180,16 @@ void CodeGenCUDA::enterKernel(const Stmt &body) {
         first = false;
     }
     os() << ", _params, __glmem);" << std::endl;
+
+    // While run time error inside a kernel can be checked in future
+    // synchronizations, invalid kernel launches has to be checked here
+    makeIndent();
+    os() << "checkCudaError(cudaGetLastError());" << std::endl;
+
+    if (Config::debugCUDAWithUM()) {
+        makeIndent();
+        os() << "checkCudaError(cudaStreamSynchronize(__stream));" << std::endl;
+    }
 }
 
 void CodeGenCUDA::visitStmt(const Stmt &stmt) {
@@ -557,9 +568,8 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 //      auto &x = *x_opt;
                 auto &&name = mangle(op->name_);
                 makeIndent();
-                os() << "UncheckedOpt<";
-                genMdPtrType(op);
-                os() << "> " << name << "_opt;" << std::endl;
+                os() << "UncheckedOpt<" << genMdPtrType(op) << "> " << name
+                     << "_opt;" << std::endl;
                 makeIndent();
                 os() << "auto &" << name << " = *" << name << "_opt;"
                      << std::endl;
@@ -826,9 +836,9 @@ extern "C" {
 
                 default:
                     // e.g. mdspan<float, extents<5, 5>> x
-                    visitor.genMdPtrType(os, d,
-                                         buffer->atype() == AccessType::Input);
-                    os << " " << mangle(name);
+                    os << visitor.genMdPtrType(d, buffer->atype() ==
+                                                      AccessType::Input)
+                       << " " << mangle(name);
                 }
                 first = false;
             }

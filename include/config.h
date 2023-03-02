@@ -24,6 +24,12 @@ class Config {
         debugBinary_; /// Compile with `-g` at backend. Do not delete the binary
                       /// file after loaded. Env FT_DEBUG_BINARY
     static bool debugRuntimeCheck_; /// Enable runtime checks in generated code
+    static bool
+        debugCUDAWithUM_; /// Allocate CUDA buffers on Unified Memory, for
+                          /// faster (debugging) access of GPU `Array` from CPU,
+                          /// but with slower `Array` allocations and more
+                          /// synchronizations. No performance effect on normal
+                          /// in-kernel computations. Env FT_DEBUG_CUDA_WITH_UM
     static std::vector<std::filesystem::path>
         backendCompilerCXX_; /// Env and macro FT_BACKEND_COMPILER_CXX.
                              /// Colon-separated paths, searched from left to
@@ -34,8 +40,8 @@ class Config {
                               /// right
 
     static Ref<Target>
-        defaultTarget_; /// Used for lower and codegen when
-                        /// target is omitted. Initialized to CPUTarget
+        defaultTarget_; /// Used for lower and codegen when target is omitted.
+                        /// Initialized to CPUTarget
     static Ref<Device> defaultDevice_; /// Used to create Driver when device is
                                        /// omitted. Initialized to a CPU Device
     static std::vector<std::filesystem::path>
@@ -74,6 +80,11 @@ class Config {
         debugRuntimeCheck_ = flag;
     }
     static bool debugRuntimeCheck() { return debugRuntimeCheck_; }
+
+    static void setDebugCUDAWithUM(bool flag = true) {
+        debugCUDAWithUM_ = flag;
+    }
+    static bool debugCUDAWithUM() { return debugCUDAWithUM_; }
 
     /**
      * @brief Set the C++ compiler for CPU backend.

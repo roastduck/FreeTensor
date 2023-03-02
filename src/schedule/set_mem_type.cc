@@ -10,25 +10,26 @@ Stmt SetMemType::visit(const VarDef &_op) {
     auto op = __op.as<VarDefNode>();
     if (op->id() == def_) {
         op->buffer_->setMtype(mtype_);
-        found_ = true;
     }
     return op;
 }
 
-Stmt setMemType(const Stmt &_ast, const ID &def, MemType mtype) {
+Stmt setMemType(const Stmt &_ast, const ID &def, MemType mtype,
+                bool rejectIndirectAccess) {
+    if (rejectIndirectAccess) {
+        ThrowIndirectAccess{def}(_ast);
+    }
     SetMemType mutator(def, mtype);
     auto ast = mutator(_ast);
-    if (!mutator.found()) {
-        throw InvalidSchedule(toString(def) + " not found");
-    }
     checkVarCrossParallel(ast, def, mtype);
     return ast;
 }
 
-void Schedule::setMemType(const ID &def, MemType mtype) {
+void Schedule::setMemType(const ID &def, MemType mtype,
+                          bool rejectIndirectAccess) {
     beginTransaction();
-    auto log = appendLog(
-        MAKE_SCHEDULE_LOG(SetMemType, freetensor::setMemType, def, mtype));
+    auto log = appendLog(MAKE_SCHEDULE_LOG(SetMemType, freetensor::setMemType,
+                                           def, mtype, rejectIndirectAccess));
     try {
         applyLog(log);
         commitTransaction();
@@ -36,6 +37,19 @@ void Schedule::setMemType(const ID &def, MemType mtype) {
         abortTransaction();
         throw InvalidSchedule(log, ast(), e.what());
     }
+}
+
+void Schedule::setMemType(const ID &def, MemType mtype) {
+    bool rejectIndirectAccess;
+    switch (mtype) {
+    case MemType::GPULocal:
+    case MemType::GPUWarp:
+        rejectIndirectAccess = true;
+        break;
+    default:
+        rejectIndirectAccess = false;
+    }
+    setMemType(def, mtype, rejectIndirectAccess);
 }
 
 } // namespace freetensor

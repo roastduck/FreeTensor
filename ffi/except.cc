@@ -9,6 +9,7 @@ void init_ffi_except(py::module_ &m) {
     py::register_exception<InvalidAutoGrad>(m, "InvalidAutoGrad");
     py::register_exception<InvalidProgram>(m, "InvalidProgram");
     py::register_exception<DriverError>(m, "DriverError");
+    py::register_exception<InvalidIO>(m, "InvalidIO");
     py::register_exception<SymbolNotFound>(m, "SymbolNotFound");
     py::register_exception<AssertAlwaysFalse>(m, "AssertAlwaysFalse");
     py::register_exception<ParserError>(m, "ParserError");

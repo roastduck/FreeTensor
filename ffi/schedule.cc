@@ -30,6 +30,10 @@ void init_ffi_schedule(py::module_ &m) {
         .def_readonly("time", &AutoScheduleTuneTrial::time_)
         .def_readonly("stddev", &AutoScheduleTuneTrial::stddev_);
 
+    py::class_<ScheduleLogItem, Ref<ScheduleLogItem>>(m, "ScheduleLogItem")
+        .def("__str__", &ScheduleLogItem::toPrettyString)
+        .def_property_readonly("result_ast", &ScheduleLogItem::resultAST);
+
     py::class_<Schedule>(m, "Schedule")
         .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
         .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
@@ -42,24 +46,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)
         .def("logs",
-             [](const Schedule &s) {
-                 auto &&log = s.logs().asVector();
-                 std::vector<std::string> ret;
-                 ret.reserve(log.size());
-                 for (auto &&item : log) {
-                     ret.emplace_back(toString(*item));
-                 }
-                 return ret;
-             })
-        .def("pretty_logs",
-             [](const Schedule &s) {
-                 auto &&log = s.logs().asVector();
-                 std::vector<std::string> ret;
-                 ret.reserve(log.size());
-                 for (auto &&item : log) {
-                     ret.emplace_back(item->toPrettyString());
-                 }
-                 return ret;
+             [](const Schedule &s) -> std::vector<Ref<ScheduleLogItem>> {
+                 return s.logs().asVector();
              })
         .def("find",
              static_cast<Stmt (Schedule::*)(const ID &) const>(&Schedule::find))
@@ -119,7 +107,14 @@ void init_ffi_schedule(py::module_ &m) {
         .def("cache", &Schedule::cache, "stmt"_a, "var"_a, "mtype"_a)
         .def("cache_reduction", &Schedule::cacheReduction, "stmt"_a, "var"_a,
              "mtype"_a)
-        .def("set_mem_type", &Schedule::setMemType, "vardef"_a, "mtype"_a)
+        .def("set_mem_type",
+             static_cast<void (Schedule::*)(const ID &, MemType)>(
+                 &Schedule::setMemType),
+             "vardef"_a, "mtype"_a)
+        .def("set_mem_type",
+             static_cast<void (Schedule::*)(const ID &, MemType, bool)>(
+                 &Schedule::setMemType),
+             "vardef"_a, "mtype"_a, "reject_indirect_access"_a)
         .def("var_split", &Schedule::varSplit, "vardef"_a, "dim"_a, "mode"_a,
              "factor"_a = -1, "nparts"_a = -1)
         .def("var_merge", &Schedule::varMerge, "vardef"_a, "dim"_a)
@@ -133,7 +128,8 @@ void init_ffi_schedule(py::module_ &m) {
              "noDuplicateVarDefs"_a = false)
         .def("as_matmul", &Schedule::asMatMul)
         .def("pluto_fuse", &Schedule::plutoFuse, "loop0"_a, "loop1"_a,
-             "nest_level_0"_a = 0, "nest_level_1"_a = 0, "do_simplify"_a = true)
+             "nest_level_0"_a = 0, "nest_level_1"_a = 0,
+             "fusable_overlap_threshold"_a = 1, "do_simplify"_a = true)
         .def("pluto_permute", &Schedule::plutoPermute, "loop"_a,
              "nest_level"_a = 0, "do_simplify"_a = true)
         .def("auto_schedule",
