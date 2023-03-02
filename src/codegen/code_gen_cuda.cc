@@ -409,7 +409,7 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
     };
     auto genExpr = [&]() { (*this)(op->expr_); };
 
-    if (op->atomic_) {
+    if (op->sync_) {
         switch (op->op_) {
         case ReduceOp::Add:
             os() << "atomicAdd(&", genAddr(), os() << ", ", genExpr();

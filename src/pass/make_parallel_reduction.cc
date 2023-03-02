@@ -55,25 +55,25 @@ Stmt MakeLoopCarriedReduction::visit(const ReduceTo &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     if (toAlter_.count(op->id())) {
-        // 1. Check whether we have to use atomic reduction
+        // 1. Check whether we have to use synced reduction
         for (auto &&loopId : toAlter_.at(op->id())) {
             for (auto &&[i, idx] : views::zip(
                      views::ints(0, ranges::unreachable), _op->indices_)) {
                 if (isVariant(variantMap_, {idx, op}, loopId)) {
-                    // Use atomic
-                    toUseAtomic_[op->id()] = UseAtomicInfo{true};
+                    // Use sync
+                    toUseSync_[op->id()] = UseSyncInfo{true};
                     return op;
                 }
             }
         }
         for (auto &&loopId : toAlter_.at(op->id())) {
-            // After the random access check, to make `toUseAtomic_` correct
+            // After the random access check, to make `toUseSync_` correct
             if (auto &&parallel = paraScopes_.at(loopId);
                 std::holds_alternative<CUDAScope>(parallel) &&
                 std::get<CUDAScope>(parallel).level_ == CUDAScope::Block) {
                 // Race-free reduction among thread blocks are impossible. Use
-                // atomic
-                toUseAtomic_[op->id()] = UseAtomicInfo{false};
+                // sync
+                toUseSync_[op->id()] = UseSyncInfo{false};
                 return op;
             }
         }
@@ -170,9 +170,9 @@ Stmt MakeLoopCarriedReduction::visit(const For &_op) {
     return op;
 }
 
-bool MakeAtomicReduction::canResideInGPULocal(DataType dtype,
-                                              const std::vector<Expr> &shape,
-                                              bool isRandomAccess) const {
+bool MakeSyncReduction::canResideInGPULocal(DataType dtype,
+                                            const std::vector<Expr> &shape,
+                                            bool isRandomAccess) const {
 #ifdef FT_WITH_CUDA
     if (isRandomAccess) {
         // Case 3: Random access
@@ -216,9 +216,9 @@ bool MakeAtomicReduction::canResideInGPULocal(DataType dtype,
 #endif
 }
 
-MemType MakeAtomicReduction::localMType(MemType mtype, DataType dtype,
-                                        const std::vector<Expr> &shape,
-                                        bool isRandomAccess) const {
+MemType MakeSyncReduction::localMType(MemType mtype, DataType dtype,
+                                      const std::vector<Expr> &shape,
+                                      bool isRandomAccess) const {
     switch (mtype) {
     case MemType::CPU:
         return MemType::CPU;
@@ -233,20 +233,20 @@ MemType MakeAtomicReduction::localMType(MemType mtype, DataType dtype,
     }
 }
 
-Stmt MakeAtomicReduction::visit(const ReduceTo &_op) {
+Stmt MakeSyncReduction::visit(const ReduceTo &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
-    if (auto it = toUseAtomic_.find(op->id()); it != toUseAtomic_.end()) {
+    if (auto it = toUseSync_.find(op->id()); it != toUseSync_.end()) {
         auto isRandomAccess = it->second.isRandomAccess_;
 
         // There will be no cross-thread dependences except the reduction we
         // are working on (guranteed by schedule/parallelize). Therefore, We
         // can cache the variable being reduced, so it can be first reduced
-        // serially inside a thread, before reduced to the finally target in an
-        // atomic operation. We will cache over some serial inner loops, if
-        // reduction is invariant to this loop, or if the loop densly iterates
-        // over the reduction
+        // serially inside a thread, before reduced to the finally target in a
+        // synchronized operation. We will cache over some serial inner loops,
+        // if reduction is invariant to this loop, or if the loop densly
+        // iterates over the reduction
         ID loopToCache; // Scope to flush locally accumulated result to target
                         // tensor
         std::vector<bool> preserveDim(op->indices_.size(), false);
@@ -301,32 +301,32 @@ Stmt MakeAtomicReduction::visit(const ReduceTo &_op) {
             }
             // Try to reuse existing cache array with the same size and the same
             // target indices
-            for (auto &existing : cacheAtomic_[loopToCache]) {
+            for (auto &existing : cacheSync_[loopToCache]) {
                 if (existing.oldNode_->var_ == _op->var_ &&
                     existing.preserveDim_ == preserveDim &&
                     ranges::equal(existing.newTargetIndices_, newTargetIndices,
                                   HashComparator{})) {
                     op->var_ +=
-                        ".atomic_cache." + toString(existing.oldNode_->id());
+                        ".sync_cache." + toString(existing.oldNode_->id());
                     op->indices_ = std::move(newCacheIndices);
                     existing.isRandomAccess_ |= isRandomAccess;
                     goto done;
                 }
             }
-            cacheAtomic_[loopToCache].emplace_back(
+            cacheSync_[loopToCache].emplace_back(
                 _op /* use the old name here */, newShape, newTargetIndices,
                 isRandomAccess, preserveDim);
-            op->var_ += ".atomic_cache." + toString(op->id());
+            op->var_ += ".sync_cache." + toString(op->id());
             op->indices_ = std::move(newCacheIndices);
         done:;
         } else {
-            op->atomic_ = true;
+            op->sync_ = true;
         }
     }
     return op;
 }
 
-Stmt MakeAtomicReduction::visit(const For &_op) {
+Stmt MakeSyncReduction::visit(const For &_op) {
     auto oldGpuThreadDim = gpuThreadDim_;
     if (std::holds_alternative<CUDAScope>(_op->property_->parallel_) &&
         std::get<CUDAScope>(_op->property_->parallel_).level_ ==
@@ -339,12 +339,12 @@ Stmt MakeAtomicReduction::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     gpuThreadDim_ = oldGpuThreadDim;
 
-    if (cacheAtomic_.count(op->id())) {
+    if (cacheSync_.count(op->id())) {
         Stmt ret = op;
         for (auto &&[reduce, newShape, targetIndices, isRandomAccess, _] :
-             cacheAtomic_.at(op->id())) {
+             cacheSync_.at(op->id())) {
             auto cacheName =
-                reduce->var_ + ".atomic_cache." + toString(reduce->id());
+                reduce->var_ + ".sync_cache." + toString(reduce->id());
             auto dtype = buffer(reduce->var_)->tensor()->dtype();
             std::vector<Expr> cacheIndices;
             for (size_t i = 0, j = 0, n = newShape.size(); i < n; i++) {
@@ -408,7 +408,8 @@ Stmt makeParallelReduction(const Stmt &_op, const Ref<Target> &target) {
             std::holds_alternative<CUDAScope>(parallel) &&
             std::get<CUDAScope>(parallel).level_ == CUDAScope::Thread &&
             d.later() != d.earlier()) {
-            // No need to use atomic because we can sync
+            // Use `__syncthreads` inserted by `pass/gpu/make_sync`, instead of
+            // synchronizing individual `ReduceTo`s
             return;
         }
         toAlter[d.later().as<ReduceToNode>()->id()].insert(loopId);
@@ -431,9 +432,8 @@ Stmt makeParallelReduction(const Stmt &_op, const Ref<Target> &target) {
 
     MakeLoopCarriedReduction makeLoopCarriedReduction(toAlter, variantExprMap);
     op = makeLoopCarriedReduction(op);
-    op =
-        MakeAtomicReduction(makeLoopCarriedReduction.toUseAtomic(),
-                            serialFinder.results(), variantExprMap, target)(op);
+    op = MakeSyncReduction(makeLoopCarriedReduction.toUseSync(),
+                           serialFinder.results(), variantExprMap, target)(op);
     op = simplify(op);
     return op;
 }

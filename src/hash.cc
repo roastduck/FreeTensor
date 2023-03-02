@@ -102,7 +102,7 @@ size_t Hasher::compHash(const ReduceToNode &op) {
     }
     h = ((h + std::hash<int>()((int)op.op_)) * K2 + B2) % P;
     h = ((h + op.expr_->hash()) * K2 + B2) % P;
-    h = ((h + std::hash<bool>()((int)op.atomic_)) * K2 + B2) % P;
+    h = ((h + std::hash<bool>()((int)op.sync_)) * K2 + B2) % P;
     return (h * K3 + B3) % P;
 }
 
@@ -338,7 +338,7 @@ bool HashComparator::compare(const ReduceTo &lhs, const ReduceTo &rhs) const {
     if (!(*this)(lhs->expr_, rhs->expr_)) {
         return false;
     }
-    if (lhs->atomic_ != rhs->atomic_) {
+    if (lhs->sync_ != rhs->sync_) {
         return false;
     }
     return true;

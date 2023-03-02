@@ -237,9 +237,9 @@ void PrintVisitor::visit(const Load &op) {
 }
 
 void PrintVisitor::visit(const ReduceTo &op) {
-    if (op->atomic_) {
+    if (op->sync_) {
         makeIndent();
-        os() << "@!atomic" << std::endl;
+        os() << "@!sync" << std::endl;
     }
     makeIndent();
     os() << prettyVarDefName(op->var_) << "[";

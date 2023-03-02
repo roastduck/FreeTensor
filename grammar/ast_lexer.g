@@ -21,7 +21,7 @@ ALLOC:      '@!alloc';
 FREE:       '@!free';
 
 // ReduceTo
-ATOMIC:     '@!atomic';
+SYNC:       '@!sync';
 PLUSEQ:     '+=';
 SUBEQ:      '-=';
 STAREQ:     '*=';

@@ -223,6 +223,36 @@ def test_atomic_reduction():
     assert np.array_equal(y_np, y_std)
 
 
+def test_synced_reduce_max():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(4, 64), "int32", "input", "cpu"]
+        y: ft.Var[(4, 2), "int32", "inout", "cpu"]
+        #! label: L1
+        for i in range(0, 4):
+            #! label: L2
+            for j in range(0, 64):
+                y[i, j % 2] = ft.max(y[i, j % 2], x[i, j])
+
+    s = ft.Schedule(test)
+    s.parallelize("L2", "openmp")
+    func = ft.lower(s.func(), target, verbose=1)
+
+    code = ft.codegen(func, target, verbose=True)
+    assert "#pragma omp atomic" not in str(code)
+    assert "#pragma omp critical" in str(code)
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
+    y_np = np.zeros((4, 2), dtype="int32")
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.max(x_np.reshape((4, 32, 2)), axis=1)
+    assert np.array_equal(y_np, y_std)
+
+
 def test_atomic_reduction_2_stmts_on_1_var():
 
     @ft.transform
