@@ -437,8 +437,6 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1LTNode.html">LTNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MakeAtomicReduction.html">MakeAtomicReduction</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MakeCacheVar.html">MakeCacheVar</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MakeFillAndFlush.html">MakeFillAndFlush</a></td></tr>
@@ -452,6 +450,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MakeLoopCarriedReduction.html">MakeLoopCarriedReduction</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MakeReduction.html">MakeReduction</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MakeSyncReduction.html">MakeSyncReduction</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MarkStores.html">MarkStores</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -753,9 +753,9 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1UpperBound.html">UpperBound</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1UseAtomicInfo.html">UseAtomicInfo</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1UseBuiltinDiv.html">UseBuiltinDiv</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1UseSyncInfo.html">UseSyncInfo</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1VarDefNode.html">VarDefNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2096,12 +2096,12 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:a461b1e829c43b14a4265dcfad4107f41"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad7215b48c69e332794ea2aa490ae521f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad7215b48c69e332794ea2aa490ae521f">_makeFree</a> (const std::string &amp;var, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={})</td></tr>
 <tr class="separator:ad7215b48c69e332794ea2aa490ae521f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aea4b93cf486ff11ef5826bfb9bd9817c"><td class="memTemplParams" colspan="2">template&lt;class Tindices , class Texpr &gt; </td></tr>
-<tr class="memitem:aea4b93cf486ff11ef5826bfb9bd9817c"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aea4b93cf486ff11ef5826bfb9bd9817c">_makeReduceTo</a> (const std::string &amp;var, Tindices &amp;&amp;indices, <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3">ReduceOp</a> op, Texpr &amp;&amp;expr, bool atomic, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={})</td></tr>
-<tr class="separator:aea4b93cf486ff11ef5826bfb9bd9817c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2b18a936242a4144a1bcc061657590b8"><td class="memTemplParams" colspan="2">template&lt;class Texpr &gt; </td></tr>
-<tr class="memitem:a2b18a936242a4144a1bcc061657590b8"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2b18a936242a4144a1bcc061657590b8">_makeReduceTo</a> (const std::string &amp;var, const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;indices, <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3">ReduceOp</a> op, Texpr &amp;&amp;expr, bool atomic, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={})</td></tr>
-<tr class="separator:a2b18a936242a4144a1bcc061657590b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5938828db5fdf28d33c4772a830829fd"><td class="memTemplParams" colspan="2">template&lt;class Tindices , class Texpr &gt; </td></tr>
+<tr class="memitem:a5938828db5fdf28d33c4772a830829fd"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5938828db5fdf28d33c4772a830829fd">_makeReduceTo</a> (const std::string &amp;var, Tindices &amp;&amp;indices, <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3">ReduceOp</a> op, Texpr &amp;&amp;expr, bool sync, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={})</td></tr>
+<tr class="separator:a5938828db5fdf28d33c4772a830829fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aedf5d64274f114a354738239c046dde0"><td class="memTemplParams" colspan="2">template&lt;class Texpr &gt; </td></tr>
+<tr class="memitem:aedf5d64274f114a354738239c046dde0"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aedf5d64274f114a354738239c046dde0">_makeReduceTo</a> (const std::string &amp;var, const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;indices, <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3">ReduceOp</a> op, Texpr &amp;&amp;expr, bool sync, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={})</td></tr>
+<tr class="separator:aedf5d64274f114a354738239c046dde0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9c7ab42d65e023997287230ad973cbe7"><td class="memTemplParams" colspan="2">template&lt;class Tbegin , class Tend , class Tstep , class Tlen , class Tbody , class Tproperty &gt; </td></tr>
 <tr class="memitem:a9c7ab42d65e023997287230ad973cbe7"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9c7ab42d65e023997287230ad973cbe7">_makeFor</a> (const std::string &amp;iter, Tbegin &amp;&amp;begin, Tend &amp;&amp;end, Tstep &amp;&amp;step, Tlen &amp;&amp;len, Tproperty &amp;&amp;property, Tbody &amp;&amp;body, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={})</td></tr>
 <tr class="separator:a9c7ab42d65e023997287230ad973cbe7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -5990,8 +5990,8 @@ template&lt;class T , class U &gt; </div>
 
 </div>
 </div>
-<a id="a2b18a936242a4144a1bcc061657590b8" name="a2b18a936242a4144a1bcc061657590b8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2b18a936242a4144a1bcc061657590b8">&#9670;&nbsp;</a></span>_makeReduceTo() <span class="overload">[1/2]</span></h2>
+<a id="aedf5d64274f114a354738239c046dde0" name="aedf5d64274f114a354738239c046dde0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aedf5d64274f114a354738239c046dde0">&#9670;&nbsp;</a></span>_makeReduceTo() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -6026,7 +6026,7 @@ template&lt;class Texpr &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>atomic</em>, </td>
+          <td class="paramname"><em>sync</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -6050,8 +6050,8 @@ template&lt;class Texpr &gt; </div>
 
 </div>
 </div>
-<a id="aea4b93cf486ff11ef5826bfb9bd9817c" name="aea4b93cf486ff11ef5826bfb9bd9817c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aea4b93cf486ff11ef5826bfb9bd9817c">&#9670;&nbsp;</a></span>_makeReduceTo() <span class="overload">[2/2]</span></h2>
+<a id="a5938828db5fdf28d33c4772a830829fd" name="a5938828db5fdf28d33c4772a830829fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5938828db5fdf28d33c4772a830829fd">&#9670;&nbsp;</a></span>_makeReduceTo() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -6086,7 +6086,7 @@ template&lt;class Tindices , class Texpr &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>atomic</em>, </td>
+          <td class="paramname"><em>sync</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -12143,7 +12143,7 @@ template&lt;class Titers , class Tbegins , class Tends , class Tsteps , class Tl
       </table>
 </div><div class="memdoc">
 <p >Find all racing ReduceTo nodes, and implement them in a parallel way</p>
-<p >If all ReduceTo nodes in a parallel for all reduce into a loop-invariant possition, we will use a race-free implementation. Otherwise, we will use atomic operations.</p>
+<p >If all ReduceTo nodes in a parallel for all reduce into a loop-invariant possition, we will use a race-free implementation. Otherwise, we will use synchronized (including atomic) operations.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">target</td><td>: <a class="el" href="classfreetensor_1_1Target.html">Target</a> information. Can be null for target-agnostic debugging </td></tr>

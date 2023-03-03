@@ -89,7 +89,7 @@ var searchData=
   ['ismatched_86',['isMatched',['../classfreetensor_1_1MatchVisitor.html#ad0a7cbf81593f5a409888d0082acf3d0',1,'freetensor::MatchVisitor']]],
   ['isnode_5f_87',['isNode_',['../structfreetensor_1_1NodeIDOrParallelScope.html#a91180360905949408f590f5995bf0782',1,'freetensor::NodeIDOrParallelScope']]],
   ['isnumber_88',['isNumber',['../namespacefreetensor.html#acad6f03a87bc0f2f4361f693c0c2a036',1,'freetensor']]],
-  ['israndomaccess_5f_89',['isRandomAccess_',['../structfreetensor_1_1UseAtomicInfo.html#a4da7b69d4ad6dc4d977f96eeda724c3e',1,'freetensor::UseAtomicInfo']]],
+  ['israndomaccess_5f_89',['isRandomAccess_',['../structfreetensor_1_1UseSyncInfo.html#a95feb4229d02e1ba86dbe5e8185b037c',1,'freetensor::UseSyncInfo']]],
   ['israt_90',['isRat',['../classfreetensor_1_1PBVal.html#ac5ec94088283eea2fdbc9466146a3763',1,'freetensor::PBVal']]],
   ['issametarget_91',['isSameTarget',['../namespacefreetensor.html#a8536201d32cf173c3ba1e8a8abcede52',1,'freetensor']]],
   ['isscalar_92',['isScalar',['../classfreetensor_1_1Tensor.html#aa9aaf35d57e065a0ce807c0e52bcd876',1,'freetensor::Tensor']]],

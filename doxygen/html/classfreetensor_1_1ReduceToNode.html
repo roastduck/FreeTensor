@@ -209,8 +209,8 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a96417db2314feb513540c37a233faacc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac599b952b4955dfd201d17f962cb81c4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1SubTree.html">SubTree</a>&lt; <a class="el" href="classfreetensor_1_1ExprNode.html">ExprNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReduceToNode.html#ac599b952b4955dfd201d17f962cb81c4">expr_</a> = <a class="el" href="structfreetensor_1_1ChildOf.html">ChildOf</a>{this}</td></tr>
 <tr class="separator:ac599b952b4955dfd201d17f962cb81c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afd59e27f8d5bf1020b3fbc9ab0820bb7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReduceToNode.html#afd59e27f8d5bf1020b3fbc9ab0820bb7">atomic_</a></td></tr>
-<tr class="separator:afd59e27f8d5bf1020b3fbc9ab0820bb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4623c6e0b332069d8a98981056cb31b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReduceToNode.html#af4623c6e0b332069d8a98981056cb31b">sync_</a></td></tr>
+<tr class="separator:af4623c6e0b332069d8a98981056cb31b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -259,26 +259,13 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p >If true, can safely reduce from multiple threads to one location. Prefer atomic over other synchronizations </p>
 
 <p>Implements <a class="el" href="classfreetensor_1_1ASTPart.html#a73f6aa052b61db02ca16ce109960b1cc">freetensor::ASTPart</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="afd59e27f8d5bf1020b3fbc9ab0820bb7" name="afd59e27f8d5bf1020b3fbc9ab0820bb7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afd59e27f8d5bf1020b3fbc9ab0820bb7">&#9670;&nbsp;</a></span>atomic_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool freetensor::ReduceToNode::atomic_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="ac599b952b4955dfd201d17f962cb81c4" name="ac599b952b4955dfd201d17f962cb81c4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac599b952b4955dfd201d17f962cb81c4">&#9670;&nbsp;</a></span>expr_</h2>
 
@@ -315,6 +302,20 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3">ReduceOp</a> freetensor::ReduceToNode::op_</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af4623c6e0b332069d8a98981056cb31b" name="af4623c6e0b332069d8a98981056cb31b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af4623c6e0b332069d8a98981056cb31b">&#9670;&nbsp;</a></span>sync_</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::ReduceToNode::sync_</td>
         </tr>
       </table>
 </div><div class="memdoc">

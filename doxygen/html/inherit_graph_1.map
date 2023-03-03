@@ -64,9 +64,9 @@
 <area shape="rect" id="node23" href="$classfreetensor_1_1AddDimToVar.html" title=" " alt="" coords="819,825,1003,852"/>
 <area shape="rect" id="node24" href="$classfreetensor_1_1AsMatMul.html" title=" " alt="" coords="829,876,992,903"/>
 <area shape="rect" id="node25" href="$classfreetensor_1_1HoistSelectedVar.html" title=" " alt="" coords="807,337,1015,364"/>
-<area shape="rect" id="node26" href="$classfreetensor_1_1MakeAtomicReduction.html" title=" " alt="" coords="789,119,1032,145"/>
-<area shape="rect" id="node27" href="$classfreetensor_1_1MakeFillAndFlush.html" title=" " alt="" coords="805,591,1016,617"/>
-<area shape="rect" id="node28" href="$classfreetensor_1_1MakeInitAndReduce.html" title=" " alt="" coords="797,169,1024,196"/>
+<area shape="rect" id="node26" href="$classfreetensor_1_1MakeFillAndFlush.html" title=" " alt="" coords="805,119,1016,145"/>
+<area shape="rect" id="node27" href="$classfreetensor_1_1MakeInitAndReduce.html" title=" " alt="" coords="797,591,1024,617"/>
+<area shape="rect" id="node28" href="$classfreetensor_1_1MakeSyncReduction.html" title=" " alt="" coords="797,169,1025,196"/>
 <area shape="rect" id="node29" href="$classfreetensor_1_1MergeAndHoistIf.html" title=" " alt="" coords="807,287,1014,313"/>
 <area shape="rect" id="node30" href="$classfreetensor_1_1MergeTapeInput.html" title=" " alt="" coords="810,388,1011,415"/>
 <area shape="rect" id="node31" href="$classfreetensor_1_1OutputIntermediates.html" title=" " alt="" coords="795,439,1027,465"/>
