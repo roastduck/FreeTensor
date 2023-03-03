@@ -246,7 +246,7 @@ reduceOp returns [ReduceOp op]
     ;
 
 storeOrReduceTo returns [Stmt node]
-    : ATOMIC var indices reduceOp expr
+    : SYNC var indices reduceOp expr
       {
         $node = makeReduceTo($var.name, $indices.exprs, $reduceOp.op, $expr.node, true);
       }

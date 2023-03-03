@@ -104,7 +104,7 @@ Stmt InsertWorkspaces::visit(const ReduceTo &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
 
-    if (op->atomic_) {
+    if (op->sync_) {
         return op;
     }
 
