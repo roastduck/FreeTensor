@@ -323,6 +323,33 @@ def test_reduce_sum_quick_path():
     assert std.match(ast)
 
 
+def test_reduce_min_quick_path():
+    with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = float("inf")
+        with ft.For("i", 0, 4) as i:
+            y[()] = ft.min(y[()], x[i])
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ft.GradTapeMode.All)
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("d_x", (4,), "float32", "output", "cpu"),
+                    ("y", (), "float32", "input", "cpu"),
+                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, y,
+                                                                 d_y):
+        # We can deduce `d_x` from only the final `y`, instead of every 4 versions
+        # of `y`
+        with ft.For("i", 3, -1, -1) as i:
+            d_x[i] = ft.if_then_else(x[i] == y, d_y[()], 0)
+            d_y[()] = ft.if_then_else(x[i] == y, 0, d_y[()])
+        d_y[()] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_no_use_forward_value_in_reduce_sum_quick_path():
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):

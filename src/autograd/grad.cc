@@ -644,25 +644,60 @@ Stmt Grad::visit(const ReduceTo &op) {
             return makeStmtSeq({});
         }
     } else {
+        // Quick path for reduce sum/min/max. Other reductions have been
+        // converted back to Store
         auto newMetadata = makeMetadata("grad", op);
-        std::vector<Stmt> stmts;
         if (gradNames_.count(op->var_)) {
             auto &&grad = gradNames_.at(op->var_);
             auto &&indices = op->indices_;
-            if (op->op_ == ReduceOp::Add &&
-                !allReads(op->expr_).count(op->var_)) {
-                // Quick path for canonical reduce sum
-                GradExpr exprVisitor(
-                    replaceBySaved, gradNames_, op->expr_,
-                    makeLoad(grad, indices, b->tensor()->dtype()));
-                exprVisitor(op->expr_);
-
+            ASSERT(!allReads(op->expr_).count(
+                op->var_)); // Canonical reductions only, see
+                            // pass/make_reduction
+            GradExpr exprVisitor(replaceBySaved, gradNames_, op->expr_,
+                                 makeLoad(grad, indices, b->tensor()->dtype()));
+            exprVisitor(op->expr_);
+            switch (op->op_) {
+            case ReduceOp::Add: {
+                std::vector<Stmt> stmts;
                 for (auto &&stmt : exprVisitor.appends()) {
                     stmt->metadata() = newMetadata;
                     stmts.emplace_back(stmt);
                 }
                 return makeStmtSeq(std::move(stmts));
-            } else {
+            }
+
+            case ReduceOp::Min:
+            case ReduceOp::Max: {
+                std::vector<Stmt> stmts;
+                for (auto &&stmt : exprVisitor.appends()) {
+                    ASSERT(stmt->nodeType() == ASTNodeType::ReduceTo);
+                    auto &&oldReduceGrad = stmt.as<ReduceToNode>();
+                    ASSERT(oldReduceGrad->op_ == ReduceOp::Add);
+                    auto xi = replaceBySaved(op->expr_);
+                    auto y = replaceBySaved(
+                        makeLoad(op->var_, indices, b->tensor()->dtype()));
+                    // dz/dx[i] += x[i] == y ? dz/dy : 0
+                    auto dxi = makeReduceTo(
+                        oldReduceGrad->var_, oldReduceGrad->indices_,
+                        ReduceOp::Add,
+                        makeIfExpr(makeEQ(xi, y), oldReduceGrad->expr_,
+                                   makeIntConst(0)),
+                        false, oldReduceGrad->metadata());
+                    // dz/dy = x[i] == y ? 0 : dz/dy (Reset dz/dy to 0 after
+                    // use)
+                    auto dy =
+                        makeStore(grad, indices,
+                                  makeIfExpr(makeEQ(xi, y), makeIntConst(0),
+                                             makeLoad(grad, indices,
+                                                      b->tensor()->dtype())));
+                    auto newStmt = makeStmtSeq({dxi, dy});
+                    newStmt->metadata() = newMetadata;
+                    stmts.emplace_back(newStmt);
+                }
+                return makeStmtSeq(std::move(stmts));
+            }
+
+            default:
                 ASSERT(false);
             }
         } else {
@@ -826,10 +861,10 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     // Simplify before grad. E.g. grad of x^2 is much simpler than x * x
     op = floatSimplify(op);
 
-    // Reduce min and reduce max may need the intermediate value for
-    // gradients, but reduce add does not
+    // Reduce mul may need the intermediate value for gradients, but reduce
+    // add/min/max does not
     op = undoMakeReduction(op); // Because we need to record loadMap
-    op = makeReduction(op, {ReduceOp::Add}, true);
+    op = makeReduction(op, {ReduceOp::Add, ReduceOp::Min, ReduceOp::Max}, true);
 
     // Since we are outputing all tapes, and output variables can't have same
     // names, we need to deduplicate the names of variables that needs to be
