@@ -323,6 +323,27 @@ def test_reduce_sum_quick_path():
     assert std.match(ast)
 
 
+def test_reduce_sub_quick_path():
+    with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = 0
+        with ft.For("i", 0, 4) as i:
+            y[()] -= x[i]
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set())
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("d_x", (4,), "float32", "output", "cpu"),
+                    ("d_y", (), "float32", "inout", "cpu")]) as (d_x, d_y):
+        with ft.For("i", 3, -1, -1) as i:
+            d_x[i] = -1 * d_y[()]
+        d_y[()] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_reduce_min_quick_path():
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
