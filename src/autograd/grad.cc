@@ -654,8 +654,7 @@ Stmt Grad::visit(const ReduceTo &op) {
                 // Quick path for canonical reduce sum
                 GradExpr exprVisitor(
                     replaceBySaved, gradNames_, op->expr_,
-                    makeLoad(grad, indices, b->tensor()->dtype()),
-                    makeLoad(op->var_, indices, b->tensor()->dtype()));
+                    makeLoad(grad, indices, b->tensor()->dtype()));
                 exprVisitor(op->expr_);
 
                 for (auto &&stmt : exprVisitor.appends()) {
