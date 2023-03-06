@@ -132,7 +132,7 @@ class GradExpr : public Visitor {
   public:
     GradExpr(ReplaceBySaved &replaceByTape,
              const std::unordered_map<std::string, std::string> &gradNames,
-             const Expr &root, const Expr &grad, const Expr &equLoad)
+             const Expr &root, const Expr &grad, const Expr &equLoad = nullptr)
         : gradNames_(gradNames), root_(root), equLoad_(equLoad),
           replaceByTape_(replaceByTape) {
         gradExprs_[root] = grad;
@@ -142,7 +142,8 @@ class GradExpr : public Visitor {
 
   private:
     Expr replaceByLoadY(const Expr &op) {
-        return HashComparator()(op, root_) ? equLoad_ : op;
+        return equLoad_.isValid() && HashComparator()(op, root_) ? equLoad_
+                                                                 : op;
     }
 
     Expr useForwardVal(const Expr &_op) {

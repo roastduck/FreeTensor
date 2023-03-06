@@ -305,6 +305,7 @@ def test_assign_quick_path():
 def test_reduce_sum_quick_path():
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = 0
         with ft.For("i", 0, 4) as i:
             y[()] += x[i]
     ast = ft.pop_ast(verbose=True)
@@ -316,6 +317,32 @@ def test_reduce_sum_quick_path():
                     ("d_y", (), "float32", "inout", "cpu")]) as (d_x, d_y):
         with ft.For("i", 3, -1, -1) as i:
             d_x[i] = d_y[()]
+        d_y[()] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_no_use_forward_value_in_reduce_sum_quick_path():
+    with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = 0
+        with ft.For("i", 0, 4) as i:
+            # We are doing `y += exp(x[i])`, instead of `y = exp(x[i])` here, so
+            # don't make `d_x[i] = ? * dy`, because we have nothing equals to `?`.
+            # Make `d_x[i] = exp(x[i]) * dy` instead.
+            y[()] += ft.exp(x[i])
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set())
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("d_x", (4,), "float32", "output", "cpu"),
+                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, d_y):
+        with ft.For("i", 3, -1, -1) as i:
+            d_x[i] = d_y[()] * ft.exp(x[i])
+        d_y[()] = 0
     std = ft.pop_ast()
 
     assert std.match(ast)
