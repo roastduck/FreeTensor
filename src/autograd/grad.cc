@@ -653,11 +653,26 @@ Stmt Grad::visit(const ReduceTo &op) {
             ASSERT(!allReads(op->expr_).count(
                 op->var_)); // Canonical reductions only, see
                             // pass/make_reduction
-            GradExpr exprVisitor(replaceBySaved, gradNames_, op->expr_,
-                                 makeLoad(grad, indices, b->tensor()->dtype()));
-            exprVisitor(op->expr_);
             switch (op->op_) {
             case ReduceOp::Add: {
+                GradExpr exprVisitor(
+                    replaceBySaved, gradNames_, op->expr_,
+                    makeLoad(grad, indices, b->tensor()->dtype()));
+                exprVisitor(op->expr_);
+                std::vector<Stmt> stmts;
+                for (auto &&stmt : exprVisitor.appends()) {
+                    stmt->metadata() = newMetadata;
+                    stmts.emplace_back(stmt);
+                }
+                return makeStmtSeq(std::move(stmts));
+            }
+
+            case ReduceOp::Sub: {
+                GradExpr exprVisitor(
+                    replaceBySaved, gradNames_, op->expr_,
+                    makeMul(makeIntConst(-1),
+                            makeLoad(grad, indices, b->tensor()->dtype())));
+                exprVisitor(op->expr_);
                 std::vector<Stmt> stmts;
                 for (auto &&stmt : exprVisitor.appends()) {
                     stmt->metadata() = newMetadata;
@@ -668,6 +683,10 @@ Stmt Grad::visit(const ReduceTo &op) {
 
             case ReduceOp::Min:
             case ReduceOp::Max: {
+                GradExpr exprVisitor(
+                    replaceBySaved, gradNames_, op->expr_,
+                    makeLoad(grad, indices, b->tensor()->dtype()));
+                exprVisitor(op->expr_);
                 std::vector<Stmt> stmts;
                 for (auto &&stmt : exprVisitor.appends()) {
                     ASSERT(stmt->nodeType() == ASTNodeType::ReduceTo);
@@ -698,6 +717,13 @@ Stmt Grad::visit(const ReduceTo &op) {
             }
 
             default:
+                // 1. ReduceOp::LAnd and ReduceOp::LOr should not be operating
+                // floating point operands
+                // 2. For ReduceOp::Mul, theoratically it is better to compute
+                // AD for `y *= x[i]` by `dz/dx += dz/dy * y / x[i]`, but how
+                // should we update `dz/dy` for each statement? For example,
+                // what if we have two statement like `y *= x1[i]; y *= x2[i]`?
+                // (TODO)
                 ASSERT(false);
             }
         } else {
@@ -862,9 +888,10 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     op = floatSimplify(op);
 
     // Reduce mul may need the intermediate value for gradients, but reduce
-    // add/min/max does not
+    // add/sub/min/max does not
     op = undoMakeReduction(op); // Because we need to record loadMap
-    op = makeReduction(op, {ReduceOp::Add, ReduceOp::Min, ReduceOp::Max}, true);
+    op = makeReduction(
+        op, {ReduceOp::Add, ReduceOp::Sub, ReduceOp::Min, ReduceOp::Max}, true);
 
     // Since we are outputing all tapes, and output variables can't have same
     // names, we need to deduplicate the names of variables that needs to be
