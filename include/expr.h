@@ -454,6 +454,18 @@ template <class T> Expr _makeExp(T &&expr) {
     return e;
 }
 
+class LnNode : public UnaryExprNode {
+    void inferDType() override;
+    DEFINE_NODE_TRAIT(Ln);
+};
+typedef Ref<LnNode> Ln;
+#define makeLn(...) makeNode(Ln, __VA_ARGS__)
+template <class T> Expr _makeLn(T &&expr) {
+    Ln e = Ln::make();
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
 class SquareNode : public UnaryExprNode {
     void inferDType() override;
     DEFINE_NODE_TRAIT(Square);

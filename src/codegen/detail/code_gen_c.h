@@ -577,6 +577,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const Exp &op) {
     this->os() << ")";
 }
 
+template <class Stream> void CodeGenC<Stream>::visit(const Ln &op) {
+    this->os() << "log(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const Square &op) {
     this->os() << "runtime_square(";
     (*this)(op->expr_);

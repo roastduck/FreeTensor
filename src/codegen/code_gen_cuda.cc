@@ -283,6 +283,12 @@ void CodeGenCUDA::visit(const Exp &op) {
     os() << ")";
 }
 
+void CodeGenCUDA::visit(const Ln &op) {
+    os() << "runtime_log("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
 void CodeGenCUDA::visit(const Tanh &op) {
     os() << "runtime_tanh("; // Defined in runtime/gpu_runtime.h
     (*this)(op->expr_);

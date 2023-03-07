@@ -237,6 +237,10 @@ class Mutator {
         return COPY_DEBUG_INFO(makeExp((*this)(op->expr_)), op);
     }
 
+    virtual Expr visit(const Ln &op) {
+        return COPY_DEBUG_INFO(makeLn((*this)(op->expr_)), op);
+    }
+
     virtual Expr visit(const Square &op) {
         return COPY_DEBUG_INFO(makeSquare((*this)(op->expr_)), op);
     }

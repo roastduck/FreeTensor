@@ -75,6 +75,7 @@ enum class ASTNodeType : int {
     LNot,
     Sqrt,
     Exp,
+    Ln,
     Square,
     Sigmoid,
     Tanh,
@@ -304,8 +305,8 @@ Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs);
  * @param sourceStmts variadic parameters that accept the source Stmts.
  */
 template <typename... Srcs>
-requires(std::convertible_to<Srcs, Stmt> &&...) auto makeMetadata(
-    const std::string &op, Srcs &&...sourceStmts) {
+    requires(std::convertible_to<Srcs, Stmt> && ...)
+auto makeMetadata(const std::string &op, Srcs &&...sourceStmts) {
     auto metadataFrom = [](const Stmt &s) -> Metadata {
         if (s->metadata().isValid())
             return s->metadata();

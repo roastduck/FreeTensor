@@ -166,6 +166,7 @@ class GradExpr : public Visitor {
     void visit(const IfExpr &op) override;
     void visit(const Sqrt &op) override;
     void visit(const Exp &op) override;
+    void visit(const Ln &op) override;
     void visit(const Square &op) override;
     void visit(const Sigmoid &op) override;
     void visit(const Tanh &op) override;

@@ -9,6 +9,21 @@ namespace freetensor {
                              toString(op.self().as<ASTNode>()));               \
     }
 
+/**
+ * The return type of a math function defined in Real Domain like `exp` or
+ * `tanh`, when we pass `dtype` as input data type
+ */
+static DataType mathFuncFrom(DataType dtype) {
+    if (isFloat(dtype)) {
+        return dtype;
+    } else {
+        // C++ returns double for int argument. What if for other backends? For
+        // some functions, we have even not defined them for integer types in
+        // CodeGen or runtime. Should we require a data type from user? (TODO)
+        return DataType::Float64;
+    }
+}
+
 DataType DataTypeInfer::infer(const VarNode &op) {
     // TODO: Able to configure this to other types
     return DataType::Int32;
@@ -155,12 +170,17 @@ DataType DataTypeInfer::infer(const LNotNode &op) {
 
 DataType DataTypeInfer::infer(const SqrtNode &op) {
     CHK_TYPE(isNumber, op.expr_->dtype(), op);
-    return op.expr_->dtype();
+    return mathFuncFrom(op.expr_->dtype());
 }
 
 DataType DataTypeInfer::infer(const ExpNode &op) {
     CHK_TYPE(isNumber, op.expr_->dtype(), op);
-    return op.expr_->dtype();
+    return mathFuncFrom(op.expr_->dtype());
+}
+
+DataType DataTypeInfer::infer(const LnNode &op) {
+    CHK_TYPE(isNumber, op.expr_->dtype(), op);
+    return mathFuncFrom(op.expr_->dtype());
 }
 
 DataType DataTypeInfer::infer(const SquareNode &op) {
@@ -170,12 +190,12 @@ DataType DataTypeInfer::infer(const SquareNode &op) {
 
 DataType DataTypeInfer::infer(const SigmoidNode &op) {
     CHK_TYPE(isNumber, op.expr_->dtype(), op);
-    return op.expr_->dtype();
+    return mathFuncFrom(op.expr_->dtype());
 }
 
 DataType DataTypeInfer::infer(const TanhNode &op) {
     CHK_TYPE(isNumber, op.expr_->dtype(), op);
-    return op.expr_->dtype();
+    return mathFuncFrom(op.expr_->dtype());
 }
 
 DataType DataTypeInfer::infer(const AbsNode &op) {

@@ -52,6 +52,7 @@ void init_ffi_ast(py::module_ &m) {
         .value("LNot", ASTNodeType::LNot)
         .value("Sqrt", ASTNodeType::Sqrt)
         .value("Exp", ASTNodeType::Exp)
+        .value("Ln", ASTNodeType::Ln)
         .value("Square", ASTNodeType::Square)
         .value("Sigmoid", ASTNodeType::Sigmoid)
         .value("Tanh", ASTNodeType::Tanh)
@@ -183,6 +184,7 @@ template <> struct polymorphic_type_hook<freetensor::ASTNode> {
             DISPATCH(LNot);
             DISPATCH(Sqrt);
             DISPATCH(Exp);
+            DISPATCH(Ln);
             DISPATCH(Square);
             DISPATCH(Sigmoid);
             DISPATCH(Tanh);
@@ -270,6 +272,7 @@ template <> struct polymorphic_type_hook<freetensor::ExprNode> {
             DISPATCH(LNot);
             DISPATCH(Sqrt);
             DISPATCH(Exp);
+            DISPATCH(Ln);
             DISPATCH(Square);
             DISPATCH(Sigmoid);
             DISPATCH(Tanh);
