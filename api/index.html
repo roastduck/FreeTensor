@@ -5439,6 +5439,87 @@ it calls libop.le</p>
 
 
 
+<h4 id="freetensor.core.expr.ln" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">ln</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.expr.ln" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Natural logarithm</p>
+<p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
+it calls libop.ln</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>expr</strong> (<code>VarRef or Number</code>) – The operand</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+        <ul class="first simple">
+          <li><p><code>VarRef or Number</code> – The exponent</p></li>
+        </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/expr.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">ln</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Natural logarithm</span>
+
+<span class="sd">    For scalar operands, it emit an expression node in AST. For non-scalar operands,</span>
+<span class="sd">    it calls libop.ln</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    expr : VarRef or Number</span>
+<span class="sd">        The operand</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    VarRef or Number</span>
+<span class="sd">        The exponent</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">_istensor</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
+        <span class="k">return</span> <span class="n">libop</span><span class="o">.</span><span class="n">ln</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>  <span class="c1"># Defaults to ln without the base</span>
+    <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">makeLn</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
 <h4 id="freetensor.core.expr.load_at_version" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">load_at_version</span><span class="p">(</span><span class="n">tape_name</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="o">*</span><span class="n">indices</span><span class="p">)</span></code>
 
@@ -21942,6 +22023,107 @@ default Target in config will be used</p></li>
         <ul class="first simple">
             <li><p><strong>a</strong> (<code>VarRef</code>) – Left-hand-side operand</p></li>
             <li><p><strong>b</strong> (<code>VarRef</code>) – Right-hand-side operand</p></li>
+            <li><p><strong>out</strong> (<code>VarRef</code>) – The result tensor</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/libop/element_wise.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">,</span> <span class="o">**</span><span class="n">_kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.libop.element_wise.ln" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">ln</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kvs</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.libop.element_wise.ln" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Element-wise natrual logarithm of a tensor and return the result</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>x</strong> (<code>VarRef</code>) – The input tensor</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+        <ul class="first simple">
+          <li><p><code>VarRef</code> – The result tensor</p></li>
+        </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/libop/element_wise.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">,</span> <span class="o">**</span><span class="n">_kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.libop.element_wise.ln_" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">ln_</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kvs</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.libop.element_wise.ln_" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Element-wise natrual logarithm of a tensor. The result is written to another tensor</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>x</strong> (<code>VarRef</code>) – The input tensor</p></li>
             <li><p><strong>out</strong> (<code>VarRef</code>) – The result tensor</p></li>
         </ul>
       </td>

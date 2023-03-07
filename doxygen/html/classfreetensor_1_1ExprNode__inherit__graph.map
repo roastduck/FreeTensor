@@ -8,8 +8,8 @@
 <area shape="rect" id="node35" href="$classfreetensor_1_1IntrinsicNode.html" title=" " alt="" coords="1094,849,1277,876"/>
 <area shape="rect" id="node36" href="$classfreetensor_1_1LoadAtVersionNode.html" title=" " alt="" coords="1073,900,1297,927"/>
 <area shape="rect" id="node37" href="$classfreetensor_1_1LoadNode.html" title=" " alt="" coords="1104,951,1267,977"/>
-<area shape="rect" id="node38" href="$classfreetensor_1_1UnaryExprNode.html" title=" " alt="" coords="1086,1001,1285,1028"/>
-<area shape="rect" id="node48" href="$classfreetensor_1_1VarNode.html" title=" " alt="" coords="1109,1052,1261,1079"/>
+<area shape="rect" id="node38" href="$classfreetensor_1_1UnaryExprNode.html" title=" " alt="" coords="1086,1027,1285,1053"/>
+<area shape="rect" id="node49" href="$classfreetensor_1_1VarNode.html" title=" " alt="" coords="1109,1077,1261,1104"/>
 <area shape="rect" id="node2" href="$classfreetensor_1_1ASTNode.html" title=" " alt="" coords="661,824,817,851"/>
 <area shape="rect" id="node3" href="$classfreetensor_1_1ASTPart.html" title=" " alt="" coords="467,824,613,851"/>
 <area shape="rect" id="node4" href="$classfreetensor_1_1EnableSelf.html" title=" " alt="" coords="252,817,419,858"/>
@@ -43,8 +43,9 @@
 <area shape="rect" id="node41" href="$classfreetensor_1_1ExpNode.html" title=" " alt="" coords="1382,951,1537,977"/>
 <area shape="rect" id="node42" href="$classfreetensor_1_1FloorNode.html" title=" " alt="" coords="1377,1001,1541,1028"/>
 <area shape="rect" id="node43" href="$classfreetensor_1_1LNotNode.html" title=" " alt="" coords="1379,1052,1540,1079"/>
-<area shape="rect" id="node44" href="$classfreetensor_1_1SigmoidNode.html" title=" " alt="" coords="1367,1103,1551,1129"/>
-<area shape="rect" id="node45" href="$classfreetensor_1_1SqrtNode.html" title=" " alt="" coords="1381,1153,1538,1180"/>
-<area shape="rect" id="node46" href="$classfreetensor_1_1SquareNode.html" title=" " alt="" coords="1371,1204,1547,1231"/>
-<area shape="rect" id="node47" href="$classfreetensor_1_1TanhNode.html" title=" " alt="" coords="1379,1255,1540,1281"/>
+<area shape="rect" id="node44" href="$classfreetensor_1_1LnNode.html" title=" " alt="" coords="1386,1103,1533,1129"/>
+<area shape="rect" id="node45" href="$classfreetensor_1_1SigmoidNode.html" title=" " alt="" coords="1367,1153,1551,1180"/>
+<area shape="rect" id="node46" href="$classfreetensor_1_1SqrtNode.html" title=" " alt="" coords="1381,1204,1538,1231"/>
+<area shape="rect" id="node47" href="$classfreetensor_1_1SquareNode.html" title=" " alt="" coords="1371,1255,1547,1281"/>
+<area shape="rect" id="node48" href="$classfreetensor_1_1TanhNode.html" title=" " alt="" coords="1379,1305,1540,1332"/>
 </map>
