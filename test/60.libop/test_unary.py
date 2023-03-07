@@ -9,6 +9,7 @@ import freetensor as ft
 @pytest.mark.parametrize('libop_func, torch_func, require_positive', [
     (ft.abs_, torch.abs, False),
     (ft.exp_, torch.exp, False),
+    (ft.ln_, torch.log, True),
     (ft.sigmoid_, torch.sigmoid, False),
     (ft.sqrt_, torch.sqrt, True),
     (ft.square_, torch.square, False),
@@ -28,7 +29,7 @@ def test_static_shape(libop_func, torch_func, require_positive):
         libop_func(x, y)
 
     if require_positive:
-        x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
+        x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 + 0.001
     else:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
     x_arr = ft.Array(x_torch.numpy())
@@ -43,6 +44,7 @@ def test_static_shape(libop_func, torch_func, require_positive):
 @pytest.mark.parametrize('libop_func, torch_func, require_positive', [
     (ft.abs, torch.abs, False),
     (ft.exp, torch.exp, False),
+    (ft.ln, torch.log, True),
     (ft.sigmoid, torch.sigmoid, False),
     (ft.sqrt, torch.sqrt, True),
     (ft.square, torch.square, False),
@@ -77,6 +79,7 @@ def test_out_of_place(libop_func, torch_func, require_positive):
 @pytest.mark.parametrize('libop_func, torch_func, require_positive', [
     (ft.abs_, torch.abs, False),
     (ft.exp_, torch.exp, False),
+    (ft.ln_, torch.log, True),
     (ft.sigmoid_, torch.sigmoid, False),
     (ft.sqrt_, torch.sqrt, True),
     (ft.square_, torch.square, False),
@@ -128,6 +131,7 @@ def test_inplace_grad_of_inplace_func(libop_func, torch_func, require_positive):
 @pytest.mark.parametrize('libop_func, torch_func, require_positive', [
     (ft.abs, torch.abs, False),
     (ft.exp, torch.exp, False),
+    (ft.ln, torch.log, True),
     (ft.sigmoid, torch.sigmoid, False),
     (ft.sqrt, torch.sqrt, True),
     (ft.square, torch.square, False),
@@ -177,6 +181,7 @@ def test_inplace_grad_of_out_of_place_func(libop_func, torch_func,
 @pytest.mark.parametrize('libop_func, torch_func, require_positive', [
     (ft.abs, torch.abs, False),
     (ft.exp, torch.exp, False),
+    (ft.ln, torch.log, True),
     (ft.sigmoid, torch.sigmoid, False),
     (ft.sqrt, torch.sqrt, True),
     (ft.square, torch.square, False),

@@ -970,6 +970,31 @@ def exp(expr):
     return ffi.makeExp(expr)
 
 
+def ln(expr):
+    '''
+    Natural logarithm
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.ln
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The exponent
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.ln(expr)
+    if isinstance(expr, Number):
+        return math.log(expr)  # Defaults to ln without the base
+    return ffi.makeLn(expr)
+
+
 def square(expr):
     '''
     Square

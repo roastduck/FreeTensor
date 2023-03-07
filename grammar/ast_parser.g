@@ -424,6 +424,10 @@ expr returns [Expr node]
       {
         $node = makeExp($expr.node);
       }
+    | LN '(' expr ')'
+      {
+        $node = makeLn($expr.node);
+      }
     | ABS '(' expr ')'
       {
         $node = makeAbs($expr.node);

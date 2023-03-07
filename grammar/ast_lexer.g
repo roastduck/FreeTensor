@@ -53,6 +53,7 @@ MAX:        '@!max';
 MIN:        '@!min';
 SQRT:       '@!sqrt';
 EXP:        '@!exp';
+LN:         '@!ln';
 SQUARE:     '@!square';
 ABS:        '@!abs';
 SIGMOID:    '@!sigmoid';

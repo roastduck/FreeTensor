@@ -393,6 +393,13 @@ exp = _named_partial("exp",
                      out_of_place_unary_doc_template.format("natrual exponent"),
                      unary_op, lambda x: core.exp(x))
 
+ln_ = _named_partial("ln_",
+                     inplace_unary_doc_template.format("natrual logarithm"),
+                     unary_op_, lambda x: core.ln(x))
+ln = _named_partial("ln",
+                    out_of_place_unary_doc_template.format("natrual logarithm"),
+                    unary_op, lambda x: core.ln(x))
+
 sigmoid_ = _named_partial("sigmoid_",
                           inplace_unary_doc_template.format("sigmoid"),
                           unary_op_, lambda x: core.sigmoid(x))

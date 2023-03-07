@@ -184,6 +184,8 @@ class Visitor {
 
     virtual void visit(const Exp &op) { (*this)(op->expr_); }
 
+    virtual void visit(const Ln &op) { (*this)(op->expr_); }
+
     virtual void visit(const Square &op) { (*this)(op->expr_); }
 
     virtual void visit(const Sigmoid &op) { (*this)(op->expr_); }

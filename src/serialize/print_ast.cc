@@ -485,6 +485,14 @@ void PrintVisitor::visit(const Exp &op) {
     });
 }
 
+void PrintVisitor::visit(const Ln &op) {
+    precedence_new([&] {
+        os() << "@!ln(";
+        recur(op->expr_);
+        os() << ")";
+    });
+}
+
 void PrintVisitor::visit(const Square &op) {
     precedence_new([&] {
         os() << "@!square(";

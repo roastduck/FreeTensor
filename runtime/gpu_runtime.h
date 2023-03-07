@@ -186,6 +186,13 @@ __host__ __device__ auto ceilDiv(T a, U b) {
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
 
+// Below are overloading of math functions. Although CUDA claims "many"
+// functions are already overloaded in
+// https://docs.nvidia.com/cuda/cuda-math-api/group__CUDA__MATH.html, but it
+// seems they never gave a full list of functions that we can safely use
+// (without implicitly converting to double). So we overload them explicitly
+// here
+
 template <class T, class U,
           typename std::enable_if_t<IsIntegralAnywhere<T> &&
                                     IsIntegralAnywhere<U>> * = nullptr>
@@ -208,6 +215,9 @@ inline __host__ __device__ double runtime_sqrt(double x) { return sqrt(x); }
 
 inline __host__ __device__ float runtime_exp(float x) { return expf(x); }
 inline __host__ __device__ double runtime_exp(double x) { return exp(x); }
+
+inline __host__ __device__ float runtime_log(float x) { return logf(x); }
+inline __host__ __device__ double runtime_log(double x) { return log(x); }
 
 inline __host__ __device__ float runtime_tanh(float x) { return tanhf(x); }
 inline __host__ __device__ double runtime_tanh(double x) { return tanh(x); }

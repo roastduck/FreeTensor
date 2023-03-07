@@ -80,6 +80,7 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
     virtual void visit(const LNot &op) override;
     virtual void visit(const Sqrt &op) override;
     virtual void visit(const Exp &op) override;
+    virtual void visit(const Ln &op) override;
     virtual void visit(const Square &op) override;
     virtual void visit(const Sigmoid &op) override;
     virtual void visit(const Tanh &op) override;
