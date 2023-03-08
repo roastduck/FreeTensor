@@ -13,7 +13,7 @@
 namespace freetensor {
 
 static std::string genCUBLASType(DataType dtype) {
-    switch (dtype) {
+    switch (dtype.base()) {
     case DataType::Float64:
         return "CUDA_R_64F";
     case DataType::Float32:

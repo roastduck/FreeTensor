@@ -24,7 +24,7 @@ Expr makeCeilLog2(const Expr &_x) {
                       (unsigned long long)(x.as<IntConstNode>()->val_ - 1))) +
             1);
     }
-    switch (x->dtype()) {
+    switch (x->dtype().base()) {
     case DataType::Int32:
         // Similar to __builtin_clz, defined in gpu_runtime.h
         return makeIntrinsic("((31 - clz((unsigned int)((%) - 1))) + 1)", {x},

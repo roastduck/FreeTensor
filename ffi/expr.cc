@@ -329,7 +329,7 @@ void init_ffi_ast_expr(py::module_ &m) {
     m.def("makeIntrinsic",
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,
                                DataType, bool)>(&_makeIntrinsic),
-          "fmt"_a, "params"_a, "retType"_a = DataType::Void,
+          "fmt"_a, "params"_a, "retType"_a = DataType{DataType::Void},
           "hasSideEffect"_a = false);
     m.def("makeLoadAtVersion",
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,

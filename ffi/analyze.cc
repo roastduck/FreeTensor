@@ -11,7 +11,16 @@ using namespace pybind11::literals;
 
 void init_ffi_analyze(py::module_ &m) {
     py::class_<NodeFeature>(m, "NodeFeature")
-        .def_readonly("op_cnt", &NodeFeature::opCnt_)
+        .def_property_readonly(
+            "op_cnt",
+            [](const NodeFeature &feat) {
+                return ranges::to<std::unordered_map<DataType, int64_t>>(
+                    feat.opCnt_ |
+                    views::transform(
+                        [](auto &&kv) -> std::pair<DataType, int64_t> {
+                            return {kv.first, kv.second};
+                        }));
+            })
         .def_readonly("load_cnt", &NodeFeature::loadCnt_)
         .def_readonly("store_cnt", &NodeFeature::storeCnt_)
         .def_readonly("access_cnt", &NodeFeature::accessCnt_)

@@ -825,7 +825,6 @@ void GradExpr::visit(const Sqrt &op) {
 }
 
 void GradExpr::visit(const Exp &op) {
-    // TODO: Cancel Exp against Ln
     if (gradExprs_.count(op)) {
         gradExprs_[op->expr_] = makeMul(gradExprs_.at(op), useForwardVal(op));
     }

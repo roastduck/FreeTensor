@@ -6,7 +6,7 @@
 namespace freetensor {
 
 Expr neutralVal(DataType dtype, ReduceOp op) {
-    switch (dtype) {
+    switch (dtype.base()) {
     case DataType::Float64:
     case DataType::Float32:
         switch (op) {

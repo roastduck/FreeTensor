@@ -114,7 +114,7 @@ class ConstFold : public Mutator {
      */
     static Const castType(DataType type, const Const &val) {
         return dispatch(val, [type](auto v) {
-            switch (type) {
+            switch (type.base()) {
             case DataType::Int32:
             case DataType::Int64:
                 return wrap(int64_t(v));
