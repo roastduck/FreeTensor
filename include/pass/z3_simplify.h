@@ -36,8 +36,23 @@ class Z3Simplify : public Mutator {
     z3::context ctx_;
     z3::solver solver_;
 
+    /**
+     * Z3 expressions related to a Expr node
+     *
+     * All z3::expr is surrounded by std::optional, because there is no
+     * z3::expr::expr()
+     */
+    struct ExprInfo {
+        /// Z3 expression that expresses the node itself
+        std::optional<z3::expr> self_;
+
+        /// Conditions related to the node. These conditions together with
+        /// conditions in the solver stack make up all conditions
+        std::vector<std::optional<z3::expr>> conds_;
+    };
+
     // We use std::optional because there is no z3::expr::expr()
-    std::unordered_map<Expr, std::optional<z3::expr>> z3Exprs_;
+    std::unordered_map<Expr, ExprInfo> z3Exprs_;
 
   public:
     Z3Simplify() : solver_(ctx_) {}
@@ -45,9 +60,11 @@ class Z3Simplify : public Mutator {
   protected:
     int getVarId(const Expr &op);
 
-    void put(const Expr &key, const z3::expr &expr);
+    void put(const Expr &key, const z3::expr &expr,
+             const std::vector<std::optional<z3::expr>> &conds = {});
     bool exists(const Expr &key);
     const z3::expr &get(const Expr &key);
+    const std::vector<std::optional<z3::expr>> &conds(const Expr &key);
 
     void push(const Expr &op);
     void pop();
@@ -58,6 +75,7 @@ class Z3Simplify : public Mutator {
 
     Expr visit(const Var &op) override;
     Expr visit(const Load &op) override;
+    // TODO: Cast can also be treated as Load
     Expr visit(const IntConst &op) override;
     Expr visit(const BoolConst &op) override;
     Expr visit(const Add &op) override;
