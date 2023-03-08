@@ -207,15 +207,15 @@ class Driver(ffi.Driver):
         verbose : bool (Optional)
             True to print extra infomation
         '''
-        src = str(src)
+        self.src = str(src)
         if device is None:
             device = config.default_device()
         if verbose is None:
             verbose = False
         if host_device is None:
-            super(Driver, self).__init__(func, src, device, verbose)
+            super(Driver, self).__init__(func, self.src, device, verbose)
         else:
-            super(Driver, self).__init__(func, src, device, host_device,
+            super(Driver, self).__init__(func, self.src, device, host_device,
                                          verbose)
         self.func = func
 
@@ -227,6 +227,10 @@ class Driver(ffi.Driver):
         # C++ implementation, where we can only hold the `Array`'s C++
         # objects alive.
         self.args_ref_cnt_holder = []
+
+    def native_code(self):
+        ''' Get native code compiled by backend compiler '''
+        return self.src
 
     def set_args(self, *args, **kws):
         ''' Set argument for an invocation '''

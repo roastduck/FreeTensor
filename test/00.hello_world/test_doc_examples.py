@@ -440,3 +440,74 @@ def test_vector_add_pytorch_function_integration():
         torch.isclose(a.grad, torch.tensor([2, 3, 4, 5], dtype=torch.float32)))
     assert torch.all(
         torch.isclose(b.grad, torch.tensor([1, 2, 3, 4], dtype=torch.float32)))
+
+
+def test_sign_hint():
+    # Used in docs/guide/hint.md
+
+    import freetensor as ft
+
+    print("Without hint")
+
+    @ft.optimize(verbose=1)  # `verbose=1` prints the code
+    def test_no_hint(n: ft.Var[(), "int32"], m: ft.Var[(), "int32"]):
+        y = ft.empty((n, m), "int32")
+        for i in range(n * m):
+            y[i // m, i % m] = i
+        return y
+
+    # You will find `runtime_mod` in the code, which involves additional branching
+    assert "runtime_mod" in test_no_hint.native_code()
+    assert "%" not in test_no_hint.native_code()
+
+    print("With hint")
+
+    @ft.optimize(verbose=1)  # `verbose=1` prints the code
+    def test_hint(n: ft.Var[(), "int32"], m: ft.Var[(), "int32>=0"]):
+        y = ft.empty((n, m), "int32")
+        for i in range(n * m):
+            y[i // m, i % m] = i
+        return y
+
+    # You will find native C++ `%` in the code, which compiles directly to mod
+    # instructions
+    assert "runtime_mod" not in test_hint.native_code()
+    assert "%" in test_hint.native_code()
+
+
+def test_assert_hint():
+    # Used in docs/guide/hint.md
+
+    import freetensor as ft
+    import re
+
+    def sch(s):
+        outer, inner = s.split('Li', 32)
+        s.parallelize(outer, 'openmp')
+
+    @ft.optimize(schedule_callback=sch, verbose=1)
+    def test_no_hint(n: ft.Var[(), "int32"], a, b):
+        a: ft.Var[(n,), "int32"]
+        b: ft.Var[(n,), "int32"]
+        y = ft.empty((n,), "int32")
+        #! label: Li
+        for i in range(n):
+            y[i] = a[i] + b[i]
+        return y
+
+    # You will not find a 32-length loop
+    assert not re.search(r".* = 0; .* < 32; .*\+\+", test_no_hint.native_code())
+
+    @ft.optimize(schedule_callback=sch, verbose=1)
+    def test_hint(n: ft.Var[(), "int32"], a, b):
+        a: ft.Var[(n,), "int32"]
+        b: ft.Var[(n,), "int32"]
+        y = ft.empty((n,), "int32")
+        assert n % 32 == 0
+        #! label: Li
+        for i in range(n):
+            y[i] = a[i] + b[i]
+        return y
+
+    # You will find a 32-length loop
+    assert re.search(r".* = 0; .* < 32; .*\+\+", test_hint.native_code())

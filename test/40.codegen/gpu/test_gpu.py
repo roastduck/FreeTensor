@@ -1,5 +1,3 @@
-import re
-
 import freetensor as ft
 from freetensor import debug
 import pytest
