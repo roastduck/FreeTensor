@@ -449,3 +449,15 @@ def test_anonymous_call_site():
     f2 = ft.load_ast(txt)
     print(f2)
     assert f2.body.match(f.body)
+
+
+def test_dtype_with_sign():
+    with ft.VarDef([("x", (), "float32>=0", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = ft.abs(x[()])
+    ast = ft.pop_ast()
+    txt = ft.dump_ast(ast)
+    print(txt)
+    ast2 = ft.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)

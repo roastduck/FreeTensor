@@ -98,6 +98,7 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     std::function<std::ostream &(std::ostream &)> prettyId(const ID &id);
     std::string prettyLiteral(const std::string &lit);
     std::string prettyKeyword(const std::string &kw);
+    std::string prettyDType(const DataType &dtype);
 
   protected:
     void visitStmt(const Stmt &op) override;
