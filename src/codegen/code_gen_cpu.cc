@@ -11,7 +11,7 @@ namespace freetensor {
 #ifdef FT_WITH_MKL
 
 static char genMKLTypeMark(DataType dtype) {
-    switch (dtype) {
+    switch (dtype.base()) {
     case DataType::Float64:
         return 'd';
     case DataType::Float32:
