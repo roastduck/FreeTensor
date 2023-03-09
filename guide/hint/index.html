@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Optimize a Program with Hints - FreeTensor</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../../extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Optimize a Program with Hints";
+        var mkdocs_page_input_path = "guide/hint.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../..">
+          <img src="../../resource/logo-light.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">FreeTensor</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://github.com/roastduck/FreeTensor">GitHub</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../">Get Started</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../build-and-run/">Build and Run</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../first-program/">Your First Program with FreeTenor</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../schedules/">Optimize a Program with Schedules</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Optimize a Program with Hints</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../gpu/">Running on a GPU</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ad/">Automatic Differentiation</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/">Python API</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../doxygen/html/">Internal C++ Interface</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">About</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../about/contrib/">Contributing</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../about/pub/">Publication</a>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://github.com/roastduck/FreeTensor/blob/master/LICENSE">License</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FreeTensor</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>User Guide &raquo;</li>
+      <li>Optimize a Program with Hints</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="optimize-a-program-with-hints">Optimize a Program with Hints<a class="headerlink" href="#optimize-a-program-with-hints" title="Permanent link">&para;</a></h1>
+<div class="toc">
+<ul>
+<li><a href="#types-with-sign-information">Types with Sign Information</a></li>
+<li><a href="#provide-information-by-assertions">Provide Information by Assertions</a></li>
+</ul>
+</div>
+<p>Expressions and statements in a program do not always provide enough mathematical information for the compiler. Since the compiler must ensure safety for all possible cases, optimizations might be missed. In FreeTensor, you may provide additional information in some ways to guide the compiler, in other words, guide FreeTensor.</p>
+<h2 id="types-with-sign-information">Types with Sign Information<a class="headerlink" href="#types-with-sign-information" title="Permanent link">&para;</a></h2>
+<p>Suppose you are filling a <code>n</code> by <code>m</code> matrix from <code>0</code> to <code>n * m - 1</code> in row-major order, you may loop from <code>0</code> to <code>n * m - 1</code> with a single loop, and the iterator <code>i</code> by <code>m</code> to find each element in the <code>i // m</code>-th row and <code>i % m</code>-th column:</p>
+<pre><code class="language-python">y = ft.empty((n, m), &quot;int32&quot;)
+for i in range(n * m):
+    y[i // m, i % m] = i
+</code></pre>
+<p>Definitely there are other solutions, for example using two loops, but we are going to use the single-loop program to show a common but unobvious performance pitfall: Integer division in Python (including in FreeTensor) rounds to negative infinity, but integer division in most target instructions and target languages like C++ or CUDA rounds to 0. There is only a difference when dividend is negative, but compiling a general Python division to target architectures has to involve an extra branch to check it. In our example, <code>n</code> and <code>m</code> refer to the shape of a matrix, so it cannot be negative. If we can hint FreeTensor, we can avoid the redundant branch.</p>
+<p>FreeTensor supports adding a suffix to the data type string to show the sign of a number. Simply changing <code>"int32"</code> to <code>"int32&gt;=0"</code> will make a difference. All supported suffices are <code>"&gt;0"</code>, <code>&gt;=0</code>, <code>&lt;0</code>, <code>&lt;=0</code>, <code>!=0</code> and <code>==0</code>. A complete example is below:</p>
+<pre><code class="language-python">import freetensor as ft
+
+print(&quot;Without hint&quot;)
+
+@ft.optimize(verbose=1)  # `verbose=1` prints the code
+def test_no_hint(n: ft.Var[(), &quot;int32&quot;], m: ft.Var[(), &quot;int32&quot;]):
+    y = ft.empty((n, m), &quot;int32&quot;)
+    for i in range(n * m):
+        y[i // m, i % m] = i
+    return y
+
+# You will find `runtime_mod` in the code, which involves additional branching
+assert &quot;runtime_mod&quot; in test_no_hint.native_code()
+assert &quot;%&quot; not in test_no_hint.native_code()
+
+print(&quot;With hint&quot;)
+
+@ft.optimize(verbose=1)  # `verbose=1` prints the code
+def test_hint(n: ft.Var[(), &quot;int32&quot;], m: ft.Var[(), &quot;int32&gt;=0&quot;]):
+    y = ft.empty((n, m), &quot;int32&quot;)
+    for i in range(n * m):
+        y[i // m, i % m] = i
+    return y
+
+# You will find native C++ `%` in the code, which compiles directly to mod
+# instructions
+assert &quot;runtime_mod&quot; not in test_hint.native_code()
+assert &quot;%&quot; in test_hint.native_code()
+</code></pre>
+<p>The sign hint also works for other optimizations. One example is <code>ft.sqrt(x * x)</code> can be automatically optimized to <code>x</code> if <code>x</code> is non-negative. Another example is <code>ft.min(a, b)</code> can be automatically optimized to <code>a</code> if <code>a</code> is negative while <code>b</code> is positive.</p>
+<h2 id="provide-information-by-assertions">Provide Information by Assertions<a class="headerlink" href="#provide-information-by-assertions" title="Permanent link">&para;</a></h2>
+<p>Another way to hint FreeTensor is to add some <code>assert</code> statements in the program. In this way, you can add some more precise hints, which reveals mathematical properties among specifc elements, instead of the whole tensor. Here is an example of adding two <code>n</code>-length vectors, and the program is <a href="../schedules">scheduled</a> to execute in parallel.</p>
+<pre><code class="language-python">def sch(s):
+    outer, inner = s.split('Li', 32)
+    s.parallelize(outer, 'openmp')
+
+@ft.optimize(schedule_callback=sch, verbose=1)
+def test(n: ft.Var[(), &quot;int32&quot;], a, b):
+    a: ft.Var[(n,), &quot;int32&quot;]
+    b: ft.Var[(n,), &quot;int32&quot;]
+    y = ft.empty((n,), &quot;int32&quot;)
+    #! label: Li
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+</code></pre>
+<p>The algorithm is simple: we use (at most) <code>n // 32</code> threads, each computing 32 elements. However, if you look the code, you will find the length of the serial loop is not as simple as 32. Instead, it is a complex expression that results in 31 or 32. This is because <code>n</code> is not always divisible by <code>32</code>.</p>
+<p>Suppose in our case, <code>n</code> is really divisible by 32, we can add an <code>assert</code> statement to hint FreeTensor: <code>assert n % 32 == 0</code>, and the serial loop will have a neat length 32. A complete example is below:</p>
+<pre><code class="language-python">import freetensor as ft
+import re
+
+def sch(s):
+    outer, inner = s.split('Li', 32)
+    s.parallelize(outer, 'openmp')
+
+@ft.optimize(schedule_callback=sch, verbose=1)
+def test_no_hint(n: ft.Var[(), &quot;int32&quot;], a, b):
+    a: ft.Var[(n,), &quot;int32&quot;]
+    b: ft.Var[(n,), &quot;int32&quot;]
+    y = ft.empty((n,), &quot;int32&quot;)
+    #! label: Li
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+# You will not find a 32-length loop
+assert not re.search(r&quot;.* = 0; .* &lt; 32; .*\+\+&quot;, test_no_hint.native_code())
+
+@ft.optimize(schedule_callback=sch, verbose=1)
+def test_hint(n: ft.Var[(), &quot;int32&quot;], a, b):
+    a: ft.Var[(n,), &quot;int32&quot;]
+    b: ft.Var[(n,), &quot;int32&quot;]
+    y = ft.empty((n,), &quot;int32&quot;)
+    assert n % 32 == 0
+    #! label: Li
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+# You will find a 32-length loop
+assert re.search(r&quot;.* = 0; .* &lt; 32; .*\+\+&quot;, test_hint.native_code())
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../schedules/" class="btn btn-neutral float-left" title="Optimize a Program with Schedules"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../gpu/" class="btn btn-neutral float-right" title="Running on a GPU">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../schedules/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../gpu/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../javascripts/mathjax.js" defer></script>
+      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

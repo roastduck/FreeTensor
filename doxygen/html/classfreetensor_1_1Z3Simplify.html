@@ -67,6 +67,7 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="classfreetensor_1_1Z3Simplify-members.html">List of all members</a>  </div>
@@ -112,12 +113,14 @@ Public Member Functions</h2></td></tr>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:aee88484abb8e1ced538b07e43f31af13"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3Simplify.html#aee88484abb8e1ced538b07e43f31af13">getVarId</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;op)</td></tr>
 <tr class="separator:aee88484abb8e1ced538b07e43f31af13"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a71fc874b2cb5df9ee120f69256bac56a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3Simplify.html#a71fc874b2cb5df9ee120f69256bac56a">put</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;key, const z3::expr &amp;expr)</td></tr>
-<tr class="separator:a71fc874b2cb5df9ee120f69256bac56a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71ac8e4f55fb5bde6d7496366e8756a0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3Simplify.html#a71ac8e4f55fb5bde6d7496366e8756a0">put</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;key, const z3::expr &amp;expr, const std::vector&lt; std::optional&lt; z3::expr &gt; &gt; &amp;<a class="el" href="classfreetensor_1_1Z3Simplify.html#a4e8117a17b7c01946e04572cdadf3eb1">conds</a>={})</td></tr>
+<tr class="separator:a71ac8e4f55fb5bde6d7496366e8756a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a723bb1caea26d9519af537ae06632740"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3Simplify.html#a723bb1caea26d9519af537ae06632740">exists</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;key)</td></tr>
 <tr class="separator:a723bb1caea26d9519af537ae06632740"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f59e6c700273394864777ce11f939e5"><td class="memItemLeft" align="right" valign="top">const z3::expr &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3Simplify.html#a2f59e6c700273394864777ce11f939e5">get</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;key)</td></tr>
 <tr class="separator:a2f59e6c700273394864777ce11f939e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e8117a17b7c01946e04572cdadf3eb1"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::optional&lt; z3::expr &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3Simplify.html#a4e8117a17b7c01946e04572cdadf3eb1">conds</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;key)</td></tr>
+<tr class="separator:a4e8117a17b7c01946e04572cdadf3eb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f787855ed8ab9959f30daac46b979c9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3Simplify.html#a8f787855ed8ab9959f30daac46b979c9">push</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;op)</td></tr>
 <tr class="separator:a8f787855ed8ab9959f30daac46b979c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29cd97dd96ac7f14ff4eff3dd0a76e1e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3Simplify.html#a29cd97dd96ac7f14ff4eff3dd0a76e1e">pop</a> ()</td></tr>
@@ -437,6 +440,32 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a4e8117a17b7c01946e04572cdadf3eb1" name="a4e8117a17b7c01946e04572cdadf3eb1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4e8117a17b7c01946e04572cdadf3eb1">&#9670;&nbsp;</a></span>conds()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt; std::optional&lt; z3::expr &gt; &gt; &amp; freetensor::Z3Simplify::conds </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;&#160;</td>
+          <td class="paramname"><em>key</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a723bb1caea26d9519af537ae06632740" name="a723bb1caea26d9519af537ae06632740"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a723bb1caea26d9519af537ae06632740">&#9670;&nbsp;</a></span>exists()</h2>
 
@@ -592,8 +621,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a71fc874b2cb5df9ee120f69256bac56a" name="a71fc874b2cb5df9ee120f69256bac56a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a71fc874b2cb5df9ee120f69256bac56a">&#9670;&nbsp;</a></span>put()</h2>
+<a id="a71ac8e4f55fb5bde6d7496366e8756a0" name="a71ac8e4f55fb5bde6d7496366e8756a0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a71ac8e4f55fb5bde6d7496366e8756a0">&#9670;&nbsp;</a></span>put()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -611,7 +640,13 @@ Additional Inherited Members</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const z3::expr &amp;&#160;</td>
-          <td class="paramname"><em>expr</em>&#160;</td>
+          <td class="paramname"><em>expr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; std::optional&lt; z3::expr &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>conds</em> = <code>{}</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

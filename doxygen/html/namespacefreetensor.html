@@ -233,6 +233,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1CUDAStreamScope.html">CUDAStreamScope</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DataTypeInfer.html">DataTypeInfer</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DedupTapeNames.html">DedupTapeNames</a></td></tr>
@@ -1128,21 +1130,34 @@ Enumerations</h2></td></tr>
 <br />
  }</td></tr>
 <tr class="separator:af577e754b8b16f492893f80ae9d2b150"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab5873118bfa035eef8cd380601a482e4"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> : size_t { <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4a81ceb48a978444906d80119200aa358d">Void</a> = 0
-, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4a166495adc0d0f53bee6baecc577f5204">Float32</a>
-, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4ad2b556d8a8f5c8ac323f51a4b82e79a0">Float64</a>
-, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4ac06129f6e6e15c09328365e553f1dc31">Int32</a>
+<tr class="memitem:af346f9de09dc96bd110e29ff9af378c3"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a> : size_t { <br />
+&#160;&#160;<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a81ceb48a978444906d80119200aa358d">Void</a> = 0
+, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a166495adc0d0f53bee6baecc577f5204">Float32</a>
+, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3ad2b556d8a8f5c8ac323f51a4b82e79a0">Float64</a>
+, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3ac06129f6e6e15c09328365e553f1dc31">Int32</a>
 , <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4afbde23b11d7e59af7828e81144c8b487">Int64</a>
-, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4ac26f15e86e3de4c398a8273272aba034">Bool</a>
-, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4a90589c47f06eb971d548591f23c285af">Custom</a>
-, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4a86e30d8e0831512671e7ed103ad7c457">NumTypes</a>
+&#160;&#160;<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3afbde23b11d7e59af7828e81144c8b487">Int64</a>
+, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3ac26f15e86e3de4c398a8273272aba034">Bool</a>
+, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a90589c47f06eb971d548591f23c285af">Custom</a>
+, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a86e30d8e0831512671e7ed103ad7c457">NumTypes</a>
 , <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4a4bbb8f967da6d1a610596d7257179c2b">Invalid</a>
+&#160;&#160;<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a4bbb8f967da6d1a610596d7257179c2b">Invalid</a>
 <br />
  }</td></tr>
-<tr class="separator:ab5873118bfa035eef8cd380601a482e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:af346f9de09dc96bd110e29ff9af378c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c42d47b27414b977b47ce5f3c6329ca"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a> : size_t { <br />
+&#160;&#160;<a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caaed36a1ef76a59ee3f15180e0441188ad">Any</a> = 0
+, <a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa905671fc6f1987c2bcf55fb535e9691f">GT0</a>
+, <a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caaa1f727bf1b98f657c9955ebda8aa7e5a">GE0</a>
+, <a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa9e8dd82b41fb01dbee4b84dd651562ea">LT0</a>
+, <br />
+&#160;&#160;<a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa7a3a08587b3e0e8a043081877f439c74">LE0</a>
+, <a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa842d20047783c162789decd96e8efcd7">NE0</a>
+, <a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caad6e5acbf223e5afb4d5b52d11d6c9d09">EQ0</a>
+, <a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa86e30d8e0831512671e7ed103ad7c457">NumTypes</a>
+<br />
+ }</td></tr>
+<tr class="separator:a0c42d47b27414b977b47ce5f3c6329ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a000c2c313211c04f40116e7f8117d66b"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a000c2c313211c04f40116e7f8117d66b">TargetType</a> : int { <a class="el" href="namespacefreetensor.html#a000c2c313211c04f40116e7f8117d66ba2b55387dd066c5bac646ac61543d152d">CPU</a>
 , <a class="el" href="namespacefreetensor.html#a000c2c313211c04f40116e7f8117d66ba52f9ec21735243ad9917cda3ca077d32">GPU</a>
  }</td></tr>
@@ -1398,22 +1413,62 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 <tr class="memitem:a4d763c3eeb93059567b20cfce12a2919"><td class="memTemplParams" colspan="2">template&lt;std::ranges::range Container&gt; </td></tr>
 <tr class="memitem:a4d763c3eeb93059567b20cfce12a2919"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4d763c3eeb93059567b20cfce12a2919">operator|</a> (const Container &amp;c, const <a class="el" href="structfreetensor_1_1__Join.html">_Join</a> &amp;joiner)</td></tr>
 <tr class="separator:a4d763c3eeb93059567b20cfce12a2919"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a27e78f8af26958b3bb99cb6618887bfa"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a27e78f8af26958b3bb99cb6618887bfa">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> dtype)</td></tr>
-<tr class="separator:a27e78f8af26958b3bb99cb6618887bfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad79b4b517a22affb229c0950f35e9cce"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad79b4b517a22affb229c0950f35e9cce">parseDType</a> (const std::string &amp;_str)</td></tr>
-<tr class="separator:ad79b4b517a22affb229c0950f35e9cce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae50b4200b841e89fa1546c1f9a8acd5a"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae50b4200b841e89fa1546c1f9a8acd5a">sizeOf</a> (<a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> dtype)</td></tr>
-<tr class="separator:ae50b4200b841e89fa1546c1f9a8acd5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a687f8ae5e3388923261124689b1f3dd2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a687f8ae5e3388923261124689b1f3dd2">isInt</a> (<a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> dtype)</td></tr>
-<tr class="separator:a687f8ae5e3388923261124689b1f3dd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4e3af2c90b426af7405f617251cd637a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4e3af2c90b426af7405f617251cd637a">isFloat</a> (<a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> dtype)</td></tr>
-<tr class="separator:a4e3af2c90b426af7405f617251cd637a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acad6f03a87bc0f2f4361f693c0c2a036"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#acad6f03a87bc0f2f4361f693c0c2a036">isNumber</a> (<a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> dtype)</td></tr>
-<tr class="separator:acad6f03a87bc0f2f4361f693c0c2a036"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aba77cae9dd52f4502ac3e6cf4611656e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aba77cae9dd52f4502ac3e6cf4611656e">isBool</a> (<a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> dtype)</td></tr>
-<tr class="separator:aba77cae9dd52f4502ac3e6cf4611656e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae3e7d62718efb88e4851a4ebacc0e437"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae3e7d62718efb88e4851a4ebacc0e437">upCast</a> (<a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> lhs, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> rhs)</td></tr>
-<tr class="separator:ae3e7d62718efb88e4851a4ebacc0e437"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17c4e04eec6d47a13148d7f4c82519a1"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a17c4e04eec6d47a13148d7f4c82519a1">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a> dtype)</td></tr>
+<tr class="separator:a17c4e04eec6d47a13148d7f4c82519a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a74054e8e625fe8ac6d9fa360fd58649c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a74054e8e625fe8ac6d9fa360fd58649c">parseBaseDataType</a> (const std::string &amp;_str)</td></tr>
+<tr class="separator:a74054e8e625fe8ac6d9fa360fd58649c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c5f10cee22ce0a7332c8e0d7c4dea4f"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0c5f10cee22ce0a7332c8e0d7c4dea4f">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a> dtype)</td></tr>
+<tr class="separator:a0c5f10cee22ce0a7332c8e0d7c4dea4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21db5d357165ebec2460a7c8cfbcfcdc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a21db5d357165ebec2460a7c8cfbcfcdc">parseSignDataType</a> (const std::string &amp;str)</td></tr>
+<tr class="separator:a21db5d357165ebec2460a7c8cfbcfcdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78aba5d40f6ded8ce4f0bf3672d0a987"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a78aba5d40f6ded8ce4f0bf3672d0a987">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;dtype)</td></tr>
+<tr class="separator:a78aba5d40f6ded8ce4f0bf3672d0a987"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8a28a4e220a2890aada017b15285b02"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad8a28a4e220a2890aada017b15285b02">parseDType</a> (const std::string &amp;str)</td></tr>
+<tr class="separator:ad8a28a4e220a2890aada017b15285b02"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7ab87f14948ccb37b08ac716a52cc59"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af7ab87f14948ccb37b08ac716a52cc59">sizeOf</a> (<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a> dtype)</td></tr>
+<tr class="separator:af7ab87f14948ccb37b08ac716a52cc59"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a5a61628cc53077d43848df39d8b9f5"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2a5a61628cc53077d43848df39d8b9f5">sizeOf</a> (const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;dtype)</td></tr>
+<tr class="separator:a2a5a61628cc53077d43848df39d8b9f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af2f2efa1da76863fda701adac568cc92"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af2f2efa1da76863fda701adac568cc92">isInt</a> (<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a> dtype)</td></tr>
+<tr class="separator:af2f2efa1da76863fda701adac568cc92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d58371e816b81ffccdc0f401827d7b1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6d58371e816b81ffccdc0f401827d7b1">isInt</a> (const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;dtype)</td></tr>
+<tr class="separator:a6d58371e816b81ffccdc0f401827d7b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aadda5ddae296c222cbe6dcc927972992"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aadda5ddae296c222cbe6dcc927972992">isFloat</a> (<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a> dtype)</td></tr>
+<tr class="separator:aadda5ddae296c222cbe6dcc927972992"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09d419e7d518b0bd52e606d3e015b917"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a09d419e7d518b0bd52e606d3e015b917">isFloat</a> (const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;dtype)</td></tr>
+<tr class="separator:a09d419e7d518b0bd52e606d3e015b917"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af5bd1199f689eb7d1971db51f7c197ca"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af5bd1199f689eb7d1971db51f7c197ca">isNumber</a> (<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a> dtype)</td></tr>
+<tr class="separator:af5bd1199f689eb7d1971db51f7c197ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1e0b21817d4eed5cf13aff611b404ce9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1e0b21817d4eed5cf13aff611b404ce9">isNumber</a> (const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;dtype)</td></tr>
+<tr class="separator:a1e0b21817d4eed5cf13aff611b404ce9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2af7ac0f4fdcca1dd338dc926b54964"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa2af7ac0f4fdcca1dd338dc926b54964">isBool</a> (<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a> dtype)</td></tr>
+<tr class="separator:aa2af7ac0f4fdcca1dd338dc926b54964"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac4108ba8ab50a65690afe7f73fd6accc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac4108ba8ab50a65690afe7f73fd6accc">isBool</a> (const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;dtype)</td></tr>
+<tr class="separator:ac4108ba8ab50a65690afe7f73fd6accc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0489c28ab050c1382e4f9b8c47952d56"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0489c28ab050c1382e4f9b8c47952d56">isGT0</a> (<a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a> dtype)</td></tr>
+<tr class="separator:a0489c28ab050c1382e4f9b8c47952d56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a087c3c171288ab1104ee0a477938c833"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a087c3c171288ab1104ee0a477938c833">isGT0</a> (const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;dtype)</td></tr>
+<tr class="separator:a087c3c171288ab1104ee0a477938c833"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a705af81d91ddbfd7dbd6b67cfb0129c9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a705af81d91ddbfd7dbd6b67cfb0129c9">isGE0</a> (<a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a> dtype)</td></tr>
+<tr class="separator:a705af81d91ddbfd7dbd6b67cfb0129c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6df473af57117ed1dd5612d44975516f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6df473af57117ed1dd5612d44975516f">isGE0</a> (const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;dtype)</td></tr>
+<tr class="separator:a6df473af57117ed1dd5612d44975516f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0142387f5db6773082789c7fdb8f4874"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0142387f5db6773082789c7fdb8f4874">isLT0</a> (<a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a> dtype)</td></tr>
+<tr class="separator:a0142387f5db6773082789c7fdb8f4874"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3bbcc20b324abbcf747c1b23ecc33bda"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3bbcc20b324abbcf747c1b23ecc33bda">isLT0</a> (const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;dtype)</td></tr>
+<tr class="separator:a3bbcc20b324abbcf747c1b23ecc33bda"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7281afc679a4088c1d6dc13599c20d98"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7281afc679a4088c1d6dc13599c20d98">isLE0</a> (<a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a> dtype)</td></tr>
+<tr class="separator:a7281afc679a4088c1d6dc13599c20d98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac55254b4445fd905ca9bf78121a7bb95"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac55254b4445fd905ca9bf78121a7bb95">isLE0</a> (const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;dtype)</td></tr>
+<tr class="separator:ac55254b4445fd905ca9bf78121a7bb95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0f4659d5186af1159cba883b8649c3d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad0f4659d5186af1159cba883b8649c3d">isNE0</a> (<a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a> dtype)</td></tr>
+<tr class="separator:ad0f4659d5186af1159cba883b8649c3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5eda36f15a23f85a126da10b81dd3fb3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5eda36f15a23f85a126da10b81dd3fb3">isNE0</a> (const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;dtype)</td></tr>
+<tr class="separator:a5eda36f15a23f85a126da10b81dd3fb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac25770e9037860482bddbd0e2189b7b7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac25770e9037860482bddbd0e2189b7b7">upCast</a> (<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a> lhs, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a> rhs)</td></tr>
+<tr class="separator:ac25770e9037860482bddbd0e2189b7b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a67a6d1e29ff7402b98fee080e2474b3f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a67a6d1e29ff7402b98fee080e2474b3f">upCast</a> (const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;lhs, const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;rhs)</td></tr>
+<tr class="separator:a67a6d1e29ff7402b98fee080e2474b3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a69b12235146ab210071e589e98530649"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a69b12235146ab210071e589e98530649">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op)</td></tr>
 <tr class="separator:a69b12235146ab210071e589e98530649"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a6ae19f9b43a1565df544e305ddf209"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8a6ae19f9b43a1565df544e305ddf209">match</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;pattern, const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;instance)</td></tr>
@@ -1435,9 +1490,9 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 <tr class="memitem:a97aa155dcc7c5e89d937d23c6e74691a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a97aa155dcc7c5e89d937d23c6e74691a">_makeVar</a> (const std::string &amp;name)</td></tr>
 <tr class="separator:a97aa155dcc7c5e89d937d23c6e74691a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b5f0efdbbf91ee29552bee2df0285b6"><td class="memTemplParams" colspan="2">template&lt;class Tindices &gt; </td></tr>
-<tr class="memitem:a2b5f0efdbbf91ee29552bee2df0285b6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2b5f0efdbbf91ee29552bee2df0285b6">_makeLoad</a> (const std::string &amp;var, Tindices &amp;&amp;indices, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> loadType)</td></tr>
+<tr class="memitem:a2b5f0efdbbf91ee29552bee2df0285b6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2b5f0efdbbf91ee29552bee2df0285b6">_makeLoad</a> (const std::string &amp;var, Tindices &amp;&amp;indices, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> loadType)</td></tr>
 <tr class="separator:a2b5f0efdbbf91ee29552bee2df0285b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3ad23853f630caebfa7ed5a229df4a95"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3ad23853f630caebfa7ed5a229df4a95">_makeLoad</a> (const std::string &amp;var, const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;indices, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> loadType)</td></tr>
+<tr class="memitem:a3ad23853f630caebfa7ed5a229df4a95"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3ad23853f630caebfa7ed5a229df4a95">_makeLoad</a> (const std::string &amp;var, const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;indices, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> loadType)</td></tr>
 <tr class="separator:a3ad23853f630caebfa7ed5a229df4a95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78c59571ec9976cd7ea5b4b4d923656d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a78c59571ec9976cd7ea5b4b4d923656d">_makeIntConst</a> (int64_t val)</td></tr>
 <tr class="separator:a78c59571ec9976cd7ea5b4b4d923656d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1536,17 +1591,17 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 <tr class="memitem:ab9c246eb519ce366805552948eb89f2b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab9c246eb519ce366805552948eb89f2b">_makeIfExpr</a> (T &amp;&amp;cond, U &amp;&amp;thenCase, V &amp;&amp;elseCase)</td></tr>
 <tr class="separator:ab9c246eb519ce366805552948eb89f2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af95fc1906eada1fb1d442824e2c433b6"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:af95fc1906eada1fb1d442824e2c433b6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af95fc1906eada1fb1d442824e2c433b6">_makeCast</a> (T &amp;&amp;expr, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> destType)</td></tr>
+<tr class="memitem:af95fc1906eada1fb1d442824e2c433b6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af95fc1906eada1fb1d442824e2c433b6">_makeCast</a> (T &amp;&amp;expr, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> destType)</td></tr>
 <tr class="separator:af95fc1906eada1fb1d442824e2c433b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeab414574c46fb9454a8c4ac8af90505"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:aeab414574c46fb9454a8c4ac8af90505"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aeab414574c46fb9454a8c4ac8af90505">_makeIntrinsic</a> (const std::string &amp;format, T &amp;&amp;params, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> retType, bool hasSideEffect)</td></tr>
+<tr class="memitem:aeab414574c46fb9454a8c4ac8af90505"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aeab414574c46fb9454a8c4ac8af90505">_makeIntrinsic</a> (const std::string &amp;format, T &amp;&amp;params, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> retType, bool hasSideEffect)</td></tr>
 <tr class="separator:aeab414574c46fb9454a8c4ac8af90505"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adccde89c00ca28d7b1143c162c9ede9f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adccde89c00ca28d7b1143c162c9ede9f">_makeIntrinsic</a> (const std::string &amp;format, std::initializer_list&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; params, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> retType, bool hasSideEffect)</td></tr>
+<tr class="memitem:adccde89c00ca28d7b1143c162c9ede9f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adccde89c00ca28d7b1143c162c9ede9f">_makeIntrinsic</a> (const std::string &amp;format, std::initializer_list&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; params, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> retType, bool hasSideEffect)</td></tr>
 <tr class="separator:adccde89c00ca28d7b1143c162c9ede9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a13f5b077c5808c5f43d9acd0307fcbe2"><td class="memTemplParams" colspan="2">template&lt;class Tindices &gt; </td></tr>
-<tr class="memitem:a13f5b077c5808c5f43d9acd0307fcbe2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a13f5b077c5808c5f43d9acd0307fcbe2">_makeLoadAtVersion</a> (const std::string &amp;tapeName, Tindices &amp;&amp;indices, const <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> loadType)</td></tr>
+<tr class="memitem:a13f5b077c5808c5f43d9acd0307fcbe2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a13f5b077c5808c5f43d9acd0307fcbe2">_makeLoadAtVersion</a> (const std::string &amp;tapeName, Tindices &amp;&amp;indices, const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> loadType)</td></tr>
 <tr class="separator:a13f5b077c5808c5f43d9acd0307fcbe2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a05adeb079d2493b4e63c3f7cf5f22167"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a05adeb079d2493b4e63c3f7cf5f22167">_makeLoadAtVersion</a> (const std::string &amp;tapeName, const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;indices, const <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> loadType)</td></tr>
+<tr class="memitem:a05adeb079d2493b4e63c3f7cf5f22167"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a05adeb079d2493b4e63c3f7cf5f22167">_makeLoadAtVersion</a> (const std::string &amp;tapeName, const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;indices, const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> loadType)</td></tr>
 <tr class="separator:a05adeb079d2493b4e63c3f7cf5f22167"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace201425065db8792c1a17a7cae7e384"><td class="memTemplParams" colspan="2">template&lt;class T , class U &gt; </td></tr>
 <tr class="memitem:ace201425065db8792c1a17a7cae7e384"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ace201425065db8792c1a17a7cae7e384">makeBinary</a> (<a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> nodeType, T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
@@ -1976,7 +2031,7 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:aefb0e8913603872bf5a6fd93cb742260"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58cd34d781fa36ba0f0998d1f513eaa7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a58cd34d781fa36ba0f0998d1f513eaa7">tensorPropConst</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a58cd34d781fa36ba0f0998d1f513eaa7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a05409d02d9aa7bb8deead7ccc3ab87cc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a05409d02d9aa7bb8deead7ccc3ab87cc">undoMakeReduction</a> (const <a class="el" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> dtype)</td></tr>
+<tr class="memitem:a05409d02d9aa7bb8deead7ccc3ab87cc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a05409d02d9aa7bb8deead7ccc3ab87cc">undoMakeReduction</a> (const <a class="el" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> dtype)</td></tr>
 <tr class="separator:a05409d02d9aa7bb8deead7ccc3ab87cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1ade08be2c8f7ad463f0d6996b4b3668"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1ade08be2c8f7ad463f0d6996b4b3668">undoMakeReduction</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a1ade08be2c8f7ad463f0d6996b4b3668"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1984,7 +2039,7 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:a1d7e8385e1c871b2c861b2f70a041196"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4dc24d31542f15ddfec5a97a3dfb6661"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4dc24d31542f15ddfec5a97a3dfb6661">z3Simplify</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a4dc24d31542f15ddfec5a97a3dfb6661"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae1036cce4c80376191e917093111bffe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae1036cce4c80376191e917093111bffe">neutralVal</a> (<a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> dtype, <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3">ReduceOp</a> op)</td></tr>
+<tr class="memitem:ae1036cce4c80376191e917093111bffe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae1036cce4c80376191e917093111bffe">neutralVal</a> (<a class="el" href="classfreetensor_1_1DataType.html">DataType</a> dtype, <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3">ReduceOp</a> op)</td></tr>
 <tr class="separator:ae1036cce4c80376191e917093111bffe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa8c0717fd776fb2cbea7663ab14f745d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa8c0717fd776fb2cbea7663ab14f745d">asMatMul</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
 <tr class="separator:aa8c0717fd776fb2cbea7663ab14f745d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2141,9 +2196,9 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="memitem:ae461622394bf74c290fc507095ca87f5"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1detail_1_1TaggedUnsyncFunc.html">detail::TaggedUnsyncFunc</a>&lt; std::remove_reference_t&lt; T &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae461622394bf74c290fc507095ca87f5">unsyncFunc</a> (T &amp;&amp;f)</td></tr>
 <tr class="separator:ae461622394bf74c290fc507095ca87f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af853220261a87eb04e6152827848206c"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:af853220261a87eb04e6152827848206c"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af853220261a87eb04e6152827848206c">makeTensor</a> (T &amp;&amp;shape, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> dtype)</td></tr>
+<tr class="memitem:af853220261a87eb04e6152827848206c"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af853220261a87eb04e6152827848206c">makeTensor</a> (T &amp;&amp;shape, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> dtype)</td></tr>
 <tr class="separator:af853220261a87eb04e6152827848206c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a67c9e15cd811e9f2c9ac1f8717b177c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a67c9e15cd811e9f2c9ac1f8717b177c9">makeTensor</a> (std::initializer_list&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; shape, <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> dtype)</td></tr>
+<tr class="memitem:a67c9e15cd811e9f2c9ac1f8717b177c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a67c9e15cd811e9f2c9ac1f8717b177c9">makeTensor</a> (std::initializer_list&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; shape, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> dtype)</td></tr>
 <tr class="separator:a67c9e15cd811e9f2c9ac1f8717b177c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a386180ba6a8ac3e4cccbf7edeb1b8e5b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a386180ba6a8ac3e4cccbf7edeb1b8e5b">deepCopy</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt; &amp;t)</td></tr>
 <tr class="separator:a386180ba6a8ac3e4cccbf7edeb1b8e5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2322,8 +2377,10 @@ Variables</h2></td></tr>
 <tr class="separator:a1aa6a148d037368e978b8aba08427a4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8654dac6cb62afd5d396af9064c8822f"><td class="memItemLeft" align="right" valign="top">constexpr std::array&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8654dac6cb62afd5d396af9064c8822f">memTypeNames</a></td></tr>
 <tr class="separator:a8654dac6cb62afd5d396af9064c8822f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a720331dd49d78544621d24d3a602193e"><td class="memItemLeft" align="right" valign="top">constexpr std::array&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a720331dd49d78544621d24d3a602193e">dataTypeNames</a></td></tr>
-<tr class="separator:a720331dd49d78544621d24d3a602193e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5439bc4d8ca09a1205b517dbbae378c"><td class="memItemLeft" align="right" valign="top">constexpr std::array&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab5439bc4d8ca09a1205b517dbbae378c">baseDataTypeNames</a></td></tr>
+<tr class="separator:ab5439bc4d8ca09a1205b517dbbae378c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a880e7567fe59c435e0713e24389ea51a"><td class="memItemLeft" align="right" valign="top">constexpr std::array&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a880e7567fe59c435e0713e24389ea51a">signDataTypeNames</a></td></tr>
+<tr class="separator:a880e7567fe59c435e0713e24389ea51a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa8dc7802e672c0af3efcb5af10d51eca"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="namespacefreetensor.html#a6d19bf2262d0cd0af3903283c9722088">ParallelScope</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa8dc7802e672c0af3efcb5af10d51eca">serialScope</a> = <a class="el" href="structfreetensor_1_1SerialScope.html">SerialScope</a>{}</td></tr>
 <tr class="separator:aa8dc7802e672c0af3efcb5af10d51eca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad77ddc8fee2d9f924d5534dfba1d61c5"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="namespacefreetensor.html#a6d19bf2262d0cd0af3903283c9722088">ParallelScope</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad77ddc8fee2d9f924d5534dfba1d61c5">threadIdxX</a> = <a class="el" href="structfreetensor_1_1CUDAScope.html">CUDAScope</a>{<a class="el" href="structfreetensor_1_1CUDAScope.html#a8ccc70e8b1080d6717251c1665cec212a4f4c8b2c0d078293b88a2c2badd756b5">CUDAScope::Thread</a>, <a class="el" href="structfreetensor_1_1CUDAScope.html#af5d03efcc0e7512ffae6a29485a54d72a50a3449bb425d6ee7f87ec51d626e5ba">CUDAScope::X</a>}</td></tr>
@@ -3723,6 +3780,39 @@ template&lt;class K &gt; </div>
 
 </div>
 </div>
+<a id="af346f9de09dc96bd110e29ff9af378c3" name="af346f9de09dc96bd110e29ff9af378c3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af346f9de09dc96bd110e29ff9af378c3">&#9670;&nbsp;</a></span>BaseDataType</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">freetensor::BaseDataType</a> : size_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3a81ceb48a978444906d80119200aa358d" name="af346f9de09dc96bd110e29ff9af378c3a81ceb48a978444906d80119200aa358d"></a>Void&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3a166495adc0d0f53bee6baecc577f5204" name="af346f9de09dc96bd110e29ff9af378c3a166495adc0d0f53bee6baecc577f5204"></a>Float32&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3ad2b556d8a8f5c8ac323f51a4b82e79a0" name="af346f9de09dc96bd110e29ff9af378c3ad2b556d8a8f5c8ac323f51a4b82e79a0"></a>Float64&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3ac06129f6e6e15c09328365e553f1dc31" name="af346f9de09dc96bd110e29ff9af378c3ac06129f6e6e15c09328365e553f1dc31"></a>Int32&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3afbde23b11d7e59af7828e81144c8b487" name="af346f9de09dc96bd110e29ff9af378c3afbde23b11d7e59af7828e81144c8b487"></a>Int64&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3ac26f15e86e3de4c398a8273272aba034" name="af346f9de09dc96bd110e29ff9af378c3ac26f15e86e3de4c398a8273272aba034"></a>Bool&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3a90589c47f06eb971d548591f23c285af" name="af346f9de09dc96bd110e29ff9af378c3a90589c47f06eb971d548591f23c285af"></a>Custom&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3a86e30d8e0831512671e7ed103ad7c457" name="af346f9de09dc96bd110e29ff9af378c3a86e30d8e0831512671e7ed103ad7c457"></a>NumTypes&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3a4bbb8f967da6d1a610596d7257179c2b" name="af346f9de09dc96bd110e29ff9af378c3a4bbb8f967da6d1a610596d7257179c2b"></a>Invalid&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
 <a id="ac8b64d5eec8847ce588a725772a49ffb" name="ac8b64d5eec8847ce588a725772a49ffb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac8b64d5eec8847ce588a725772a49ffb">&#9670;&nbsp;</a></span>CheckNotModifiedSide</h2>
 
@@ -3745,39 +3835,6 @@ template&lt;class K &gt; </div>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ac8b64d5eec8847ce588a725772a49ffba9060587edeb01a63e3d3edc959678d1e" name="ac8b64d5eec8847ce588a725772a49ffba9060587edeb01a63e3d3edc959678d1e"></a>Before&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ac8b64d5eec8847ce588a725772a49ffba7bfcadb5535fe8aad5032762b7bfe159" name="ac8b64d5eec8847ce588a725772a49ffba7bfcadb5535fe8aad5032762b7bfe159"></a>After&#160;</td><td class="fielddoc"></td></tr>
-</table>
-
-</div>
-</div>
-<a id="ab5873118bfa035eef8cd380601a482e4" name="ab5873118bfa035eef8cd380601a482e4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab5873118bfa035eef8cd380601a482e4">&#9670;&nbsp;</a></span>DataType</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">enum class <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">freetensor::DataType</a> : size_t</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ab5873118bfa035eef8cd380601a482e4a81ceb48a978444906d80119200aa358d" name="ab5873118bfa035eef8cd380601a482e4a81ceb48a978444906d80119200aa358d"></a>Void&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab5873118bfa035eef8cd380601a482e4a166495adc0d0f53bee6baecc577f5204" name="ab5873118bfa035eef8cd380601a482e4a166495adc0d0f53bee6baecc577f5204"></a>Float32&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab5873118bfa035eef8cd380601a482e4ad2b556d8a8f5c8ac323f51a4b82e79a0" name="ab5873118bfa035eef8cd380601a482e4ad2b556d8a8f5c8ac323f51a4b82e79a0"></a>Float64&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab5873118bfa035eef8cd380601a482e4ac06129f6e6e15c09328365e553f1dc31" name="ab5873118bfa035eef8cd380601a482e4ac06129f6e6e15c09328365e553f1dc31"></a>Int32&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab5873118bfa035eef8cd380601a482e4afbde23b11d7e59af7828e81144c8b487" name="ab5873118bfa035eef8cd380601a482e4afbde23b11d7e59af7828e81144c8b487"></a>Int64&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab5873118bfa035eef8cd380601a482e4ac26f15e86e3de4c398a8273272aba034" name="ab5873118bfa035eef8cd380601a482e4ac26f15e86e3de4c398a8273272aba034"></a>Bool&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab5873118bfa035eef8cd380601a482e4a90589c47f06eb971d548591f23c285af" name="ab5873118bfa035eef8cd380601a482e4a90589c47f06eb971d548591f23c285af"></a>Custom&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab5873118bfa035eef8cd380601a482e4a86e30d8e0831512671e7ed103ad7c457" name="ab5873118bfa035eef8cd380601a482e4a86e30d8e0831512671e7ed103ad7c457"></a>NumTypes&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab5873118bfa035eef8cd380601a482e4a4bbb8f967da6d1a610596d7257179c2b" name="ab5873118bfa035eef8cd380601a482e4a4bbb8f967da6d1a610596d7257179c2b"></a>Invalid&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -4233,6 +4290,38 @@ template&lt;class K &gt; </div>
 
 </div>
 </div>
+<a id="a0c42d47b27414b977b47ce5f3c6329ca" name="a0c42d47b27414b977b47ce5f3c6329ca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c42d47b27414b977b47ce5f3c6329ca">&#9670;&nbsp;</a></span>SignDataType</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">freetensor::SignDataType</a> : size_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a0c42d47b27414b977b47ce5f3c6329caaed36a1ef76a59ee3f15180e0441188ad" name="a0c42d47b27414b977b47ce5f3c6329caaed36a1ef76a59ee3f15180e0441188ad"></a>Any&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a0c42d47b27414b977b47ce5f3c6329caa905671fc6f1987c2bcf55fb535e9691f" name="a0c42d47b27414b977b47ce5f3c6329caa905671fc6f1987c2bcf55fb535e9691f"></a>GT0&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a0c42d47b27414b977b47ce5f3c6329caaa1f727bf1b98f657c9955ebda8aa7e5a" name="a0c42d47b27414b977b47ce5f3c6329caaa1f727bf1b98f657c9955ebda8aa7e5a"></a>GE0&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a0c42d47b27414b977b47ce5f3c6329caa9e8dd82b41fb01dbee4b84dd651562ea" name="a0c42d47b27414b977b47ce5f3c6329caa9e8dd82b41fb01dbee4b84dd651562ea"></a>LT0&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a0c42d47b27414b977b47ce5f3c6329caa7a3a08587b3e0e8a043081877f439c74" name="a0c42d47b27414b977b47ce5f3c6329caa7a3a08587b3e0e8a043081877f439c74"></a>LE0&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a0c42d47b27414b977b47ce5f3c6329caa842d20047783c162789decd96e8efcd7" name="a0c42d47b27414b977b47ce5f3c6329caa842d20047783c162789decd96e8efcd7"></a>NE0&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a0c42d47b27414b977b47ce5f3c6329caad6e5acbf223e5afb4d5b52d11d6c9d09" name="a0c42d47b27414b977b47ce5f3c6329caad6e5acbf223e5afb4d5b52d11d6c9d09"></a>EQ0&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a0c42d47b27414b977b47ce5f3c6329caa86e30d8e0831512671e7ed103ad7c457" name="a0c42d47b27414b977b47ce5f3c6329caa86e30d8e0831512671e7ed103ad7c457"></a>NumTypes&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
 <a id="a576ff05b03be0c005e273255a841860f" name="a576ff05b03be0c005e273255a841860f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a576ff05b03be0c005e273255a841860f">&#9670;&nbsp;</a></span>SketchPartType</h2>
 
@@ -4606,7 +4695,7 @@ template&lt;class T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td>
           <td class="paramname"><em>destType</em>&#160;</td>
         </tr>
         <tr>
@@ -5265,7 +5354,7 @@ template&lt;class T , class U , class V &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td>
           <td class="paramname"><em>retType</em>, </td>
         </tr>
         <tr>
@@ -5312,7 +5401,7 @@ template&lt;class T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td>
           <td class="paramname"><em>retType</em>, </td>
         </tr>
         <tr>
@@ -5455,7 +5544,7 @@ template&lt;class T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td>
           <td class="paramname"><em>loadType</em>&#160;</td>
         </tr>
         <tr>
@@ -5496,7 +5585,7 @@ template&lt;class Tindices &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td>
           <td class="paramname"><em>loadType</em>&#160;</td>
         </tr>
         <tr>
@@ -5533,7 +5622,7 @@ template&lt;class Tindices &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td>
           <td class="paramname"><em>loadType</em>&#160;</td>
         </tr>
         <tr>
@@ -5577,7 +5666,7 @@ template&lt;class Tindices &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td>
           <td class="paramname"><em>loadType</em>&#160;</td>
         </tr>
         <tr>
@@ -10803,8 +10892,8 @@ template&lt;PBMapRef T, PBSetRef U&gt; </div>
 
 </div>
 </div>
-<a id="aba77cae9dd52f4502ac3e6cf4611656e" name="aba77cae9dd52f4502ac3e6cf4611656e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aba77cae9dd52f4502ac3e6cf4611656e">&#9670;&nbsp;</a></span>isBool()</h2>
+<a id="aa2af7ac0f4fdcca1dd338dc926b54964" name="aa2af7ac0f4fdcca1dd338dc926b54964"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa2af7ac0f4fdcca1dd338dc926b54964">&#9670;&nbsp;</a></span>isBool() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -10815,7 +10904,7 @@ template&lt;PBMapRef T, PBSetRef U&gt; </div>
         <tr>
           <td class="memname">bool freetensor::isBool </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a>&#160;</td>
           <td class="paramname"><em>dtype</em></td><td>)</td>
           <td></td>
         </tr>
@@ -10829,8 +10918,52 @@ template&lt;PBMapRef T, PBSetRef U&gt; </div>
 
 </div>
 </div>
-<a id="a4e3af2c90b426af7405f617251cd637a" name="a4e3af2c90b426af7405f617251cd637a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4e3af2c90b426af7405f617251cd637a">&#9670;&nbsp;</a></span>isFloat()</h2>
+<a id="ac4108ba8ab50a65690afe7f73fd6accc" name="ac4108ba8ab50a65690afe7f73fd6accc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac4108ba8ab50a65690afe7f73fd6accc">&#9670;&nbsp;</a></span>isBool() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isBool </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aadda5ddae296c222cbe6dcc927972992" name="aadda5ddae296c222cbe6dcc927972992"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aadda5ddae296c222cbe6dcc927972992">&#9670;&nbsp;</a></span>isFloat() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isFloat </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a>&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a09d419e7d518b0bd52e606d3e015b917" name="a09d419e7d518b0bd52e606d3e015b917"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09d419e7d518b0bd52e606d3e015b917">&#9670;&nbsp;</a></span>isFloat() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -10841,7 +10974,7 @@ template&lt;PBMapRef T, PBSetRef U&gt; </div>
         <tr>
           <td class="memname">bool freetensor::isFloat </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
           <td class="paramname"><em>dtype</em></td><td>)</td>
           <td></td>
         </tr>
@@ -10855,8 +10988,130 @@ template&lt;PBMapRef T, PBSetRef U&gt; </div>
 
 </div>
 </div>
-<a id="a687f8ae5e3388923261124689b1f3dd2" name="a687f8ae5e3388923261124689b1f3dd2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a687f8ae5e3388923261124689b1f3dd2">&#9670;&nbsp;</a></span>isInt()</h2>
+<a id="a6df473af57117ed1dd5612d44975516f" name="a6df473af57117ed1dd5612d44975516f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6df473af57117ed1dd5612d44975516f">&#9670;&nbsp;</a></span>isGE0() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isGE0 </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a705af81d91ddbfd7dbd6b67cfb0129c9" name="a705af81d91ddbfd7dbd6b67cfb0129c9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a705af81d91ddbfd7dbd6b67cfb0129c9">&#9670;&nbsp;</a></span>isGE0() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isGE0 </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a>&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a087c3c171288ab1104ee0a477938c833" name="a087c3c171288ab1104ee0a477938c833"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a087c3c171288ab1104ee0a477938c833">&#9670;&nbsp;</a></span>isGT0() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isGT0 </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0489c28ab050c1382e4f9b8c47952d56" name="a0489c28ab050c1382e4f9b8c47952d56"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0489c28ab050c1382e4f9b8c47952d56">&#9670;&nbsp;</a></span>isGT0() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isGT0 </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a>&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af2f2efa1da76863fda701adac568cc92" name="af2f2efa1da76863fda701adac568cc92"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af2f2efa1da76863fda701adac568cc92">&#9670;&nbsp;</a></span>isInt() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isInt </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a>&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6d58371e816b81ffccdc0f401827d7b1" name="a6d58371e816b81ffccdc0f401827d7b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6d58371e816b81ffccdc0f401827d7b1">&#9670;&nbsp;</a></span>isInt() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -10867,7 +11122,7 @@ template&lt;PBMapRef T, PBSetRef U&gt; </div>
         <tr>
           <td class="memname">bool freetensor::isInt </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
           <td class="paramname"><em>dtype</em></td><td>)</td>
           <td></td>
         </tr>
@@ -10881,8 +11136,164 @@ template&lt;PBMapRef T, PBSetRef U&gt; </div>
 
 </div>
 </div>
-<a id="acad6f03a87bc0f2f4361f693c0c2a036" name="acad6f03a87bc0f2f4361f693c0c2a036"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acad6f03a87bc0f2f4361f693c0c2a036">&#9670;&nbsp;</a></span>isNumber()</h2>
+<a id="ac55254b4445fd905ca9bf78121a7bb95" name="ac55254b4445fd905ca9bf78121a7bb95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac55254b4445fd905ca9bf78121a7bb95">&#9670;&nbsp;</a></span>isLE0() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isLE0 </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7281afc679a4088c1d6dc13599c20d98" name="a7281afc679a4088c1d6dc13599c20d98"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7281afc679a4088c1d6dc13599c20d98">&#9670;&nbsp;</a></span>isLE0() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isLE0 </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a>&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3bbcc20b324abbcf747c1b23ecc33bda" name="a3bbcc20b324abbcf747c1b23ecc33bda"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3bbcc20b324abbcf747c1b23ecc33bda">&#9670;&nbsp;</a></span>isLT0() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isLT0 </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0142387f5db6773082789c7fdb8f4874" name="a0142387f5db6773082789c7fdb8f4874"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0142387f5db6773082789c7fdb8f4874">&#9670;&nbsp;</a></span>isLT0() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isLT0 </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a>&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5eda36f15a23f85a126da10b81dd3fb3" name="a5eda36f15a23f85a126da10b81dd3fb3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5eda36f15a23f85a126da10b81dd3fb3">&#9670;&nbsp;</a></span>isNE0() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isNE0 </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad0f4659d5186af1159cba883b8649c3d" name="ad0f4659d5186af1159cba883b8649c3d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0f4659d5186af1159cba883b8649c3d">&#9670;&nbsp;</a></span>isNE0() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isNE0 </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a>&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af5bd1199f689eb7d1971db51f7c197ca" name="af5bd1199f689eb7d1971db51f7c197ca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af5bd1199f689eb7d1971db51f7c197ca">&#9670;&nbsp;</a></span>isNumber() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -10893,7 +11304,33 @@ template&lt;PBMapRef T, PBSetRef U&gt; </div>
         <tr>
           <td class="memname">bool freetensor::isNumber </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a>&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1e0b21817d4eed5cf13aff611b404ce9" name="a1e0b21817d4eed5cf13aff611b404ce9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1e0b21817d4eed5cf13aff611b404ce9">&#9670;&nbsp;</a></span>isNumber() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isNumber </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
           <td class="paramname"><em>dtype</em></td><td>)</td>
           <td></td>
         </tr>
@@ -12333,7 +12770,7 @@ template&lt;class Tbegins , class Tends &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td>
           <td class="paramname"><em>dtype</em>&#160;</td>
         </tr>
         <tr>
@@ -12368,7 +12805,7 @@ template&lt;class T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td>
           <td class="paramname"><em>dtype</em>&#160;</td>
         </tr>
         <tr>
@@ -13328,7 +13765,7 @@ template&lt;PBSetRef T&gt; </div>
         <tr>
           <td class="memname"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> freetensor::neutralVal </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td>
           <td class="paramname"><em>dtype</em>, </td>
         </tr>
         <tr>
@@ -13411,7 +13848,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a5c0f4e93910a9324737e15d1bd575599" name="a5c0f4e93910a9324737e15d1bd575599"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5c0f4e93910a9324737e15d1bd575599">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[1/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c0f4e93910a9324737e15d1bd575599">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[1/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13447,7 +13884,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="ae091398240e204f37128828d143d8678" name="ae091398240e204f37128828d143d8678"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae091398240e204f37128828d143d8678">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[2/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae091398240e204f37128828d143d8678">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[2/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13474,8 +13911,44 @@ template&lt;PBSetRef T&gt; </div>
 
 </div>
 </div>
+<a id="a17c4e04eec6d47a13148d7f4c82519a1" name="a17c4e04eec6d47a13148d7f4c82519a1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17c4e04eec6d47a13148d7f4c82519a1">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[3/30]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::ostream &amp; freetensor::operator&lt;&lt; </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a>&#160;</td>
+          <td class="paramname"><em>dtype</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a69b12235146ab210071e589e98530649" name="a69b12235146ab210071e589e98530649"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a69b12235146ab210071e589e98530649">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[3/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a69b12235146ab210071e589e98530649">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[4/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13505,7 +13978,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="aad299e88504cc68e98ab17560718072a" name="aad299e88504cc68e98ab17560718072a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aad299e88504cc68e98ab17560718072a">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[4/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aad299e88504cc68e98ab17560718072a">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[5/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13541,7 +14014,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a1b86a8d2db3c5cbb7783684bb8692812" name="a1b86a8d2db3c5cbb7783684bb8692812"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1b86a8d2db3c5cbb7783684bb8692812">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[5/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b86a8d2db3c5cbb7783684bb8692812">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[6/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13576,8 +14049,44 @@ template&lt;PBSetRef T&gt; </div>
 
 </div>
 </div>
+<a id="a78aba5d40f6ded8ce4f0bf3672d0a987" name="a78aba5d40f6ded8ce4f0bf3672d0a987"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78aba5d40f6ded8ce4f0bf3672d0a987">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[7/30]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::ostream &amp; freetensor::operator&lt;&lt; </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
+          <td class="paramname"><em>dtype</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="acaf092cf41556bd1c8a3a070e44f01ad" name="acaf092cf41556bd1c8a3a070e44f01ad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acaf092cf41556bd1c8a3a070e44f01ad">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[6/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#acaf092cf41556bd1c8a3a070e44f01ad">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[8/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13605,7 +14114,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a105559d11b03d08588c4044e66568d96" name="a105559d11b03d08588c4044e66568d96"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a105559d11b03d08588c4044e66568d96">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[7/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a105559d11b03d08588c4044e66568d96">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[9/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13633,7 +14142,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a21f23d616d300e56223f18288bb35a9c" name="a21f23d616d300e56223f18288bb35a9c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a21f23d616d300e56223f18288bb35a9c">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[8/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a21f23d616d300e56223f18288bb35a9c">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[10/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13661,7 +14170,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a92b3ea9bbdfd15a531b662c4235746a5" name="a92b3ea9bbdfd15a531b662c4235746a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a92b3ea9bbdfd15a531b662c4235746a5">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[9/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a92b3ea9bbdfd15a531b662c4235746a5">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[11/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13697,7 +14206,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a45c869a6c8afbc975f13ed04abbb8824" name="a45c869a6c8afbc975f13ed04abbb8824"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a45c869a6c8afbc975f13ed04abbb8824">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[10/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a45c869a6c8afbc975f13ed04abbb8824">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[12/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13733,7 +14242,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a740d86d2e1729b43db474578c0f9d396" name="a740d86d2e1729b43db474578c0f9d396"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a740d86d2e1729b43db474578c0f9d396">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[11/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a740d86d2e1729b43db474578c0f9d396">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[13/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13764,7 +14273,7 @@ template&lt;typename <a class="el" href="namespacefreetensor.html#ab9c83946ad65f
 </div>
 </div>
 <a id="a74c9bede2fbfda49f084b7b9178bc970" name="a74c9bede2fbfda49f084b7b9178bc970"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a74c9bede2fbfda49f084b7b9178bc970">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[12/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a74c9bede2fbfda49f084b7b9178bc970">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[14/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13792,7 +14301,7 @@ template&lt;typename <a class="el" href="namespacefreetensor.html#ab9c83946ad65f
 </div>
 </div>
 <a id="a5d7f8a083d0c7c55da3eeec2d867fce0" name="a5d7f8a083d0c7c55da3eeec2d867fce0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5d7f8a083d0c7c55da3eeec2d867fce0">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[13/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d7f8a083d0c7c55da3eeec2d867fce0">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[15/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13828,7 +14337,7 @@ template&lt;typename <a class="el" href="namespacefreetensor.html#ab9c83946ad65f
 </div>
 </div>
 <a id="a8da64aa4d9100586983f72d7b94472f8" name="a8da64aa4d9100586983f72d7b94472f8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8da64aa4d9100586983f72d7b94472f8">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[14/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a8da64aa4d9100586983f72d7b94472f8">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[16/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13858,7 +14367,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a72058135cf977f49de104bdd7f6c6a29" name="a72058135cf977f49de104bdd7f6c6a29"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a72058135cf977f49de104bdd7f6c6a29">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[15/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a72058135cf977f49de104bdd7f6c6a29">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[17/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13886,7 +14395,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a114f7b22d112f62b48e7e07cd5dd6b7b" name="a114f7b22d112f62b48e7e07cd5dd6b7b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a114f7b22d112f62b48e7e07cd5dd6b7b">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[16/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a114f7b22d112f62b48e7e07cd5dd6b7b">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[18/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13922,7 +14431,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a1dd9f020873a496a9086f0bc7a2109c6" name="a1dd9f020873a496a9086f0bc7a2109c6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1dd9f020873a496a9086f0bc7a2109c6">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[17/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1dd9f020873a496a9086f0bc7a2109c6">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[19/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13958,7 +14467,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a859a001d13812a82b2c8e464b322f1e2" name="a859a001d13812a82b2c8e464b322f1e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a859a001d13812a82b2c8e464b322f1e2">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[18/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a859a001d13812a82b2c8e464b322f1e2">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[20/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -13986,7 +14495,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a74f32bacdd14bdfb33ff5a1441820f91" name="a74f32bacdd14bdfb33ff5a1441820f91"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a74f32bacdd14bdfb33ff5a1441820f91">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[19/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a74f32bacdd14bdfb33ff5a1441820f91">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[21/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14014,7 +14523,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="aa15c76aa912ecddad749982a79d85225" name="aa15c76aa912ecddad749982a79d85225"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa15c76aa912ecddad749982a79d85225">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[20/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aa15c76aa912ecddad749982a79d85225">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[22/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14050,7 +14559,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a511fb253559129c0912ce5a1e6f2bc6f" name="a511fb253559129c0912ce5a1e6f2bc6f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a511fb253559129c0912ce5a1e6f2bc6f">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[21/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a511fb253559129c0912ce5a1e6f2bc6f">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[23/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14086,7 +14595,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a609a6b2acbe04e0a551bb0f60e8200c3" name="a609a6b2acbe04e0a551bb0f60e8200c3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a609a6b2acbe04e0a551bb0f60e8200c3">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[22/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a609a6b2acbe04e0a551bb0f60e8200c3">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[24/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14114,7 +14623,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a5d818b0f9d4666227af367e90fb055d6" name="a5d818b0f9d4666227af367e90fb055d6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5d818b0f9d4666227af367e90fb055d6">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[23/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d818b0f9d4666227af367e90fb055d6">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[25/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14145,44 +14654,8 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 
 </div>
 </div>
-<a id="a27e78f8af26958b3bb99cb6618887bfa" name="a27e78f8af26958b3bb99cb6618887bfa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a27e78f8af26958b3bb99cb6618887bfa">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[24/28]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::ostream &amp; freetensor::operator&lt;&lt; </td>
-          <td>(</td>
-          <td class="paramtype">std::ostream &amp;&#160;</td>
-          <td class="paramname"><em>os</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
-          <td class="paramname"><em>dtype</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a0671d22d7846591238c019c2fc9785a5" name="a0671d22d7846591238c019c2fc9785a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0671d22d7846591238c019c2fc9785a5">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[25/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0671d22d7846591238c019c2fc9785a5">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[26/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14218,7 +14691,7 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 </div>
 </div>
 <a id="a5bcb73ee76b0e1c0a24e1b3010ef883d" name="a5bcb73ee76b0e1c0a24e1b3010ef883d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5bcb73ee76b0e1c0a24e1b3010ef883d">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[26/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5bcb73ee76b0e1c0a24e1b3010ef883d">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[27/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14254,7 +14727,7 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 </div>
 </div>
 <a id="a1bea8d6925cf272fb06ae26fbb25da60" name="a1bea8d6925cf272fb06ae26fbb25da60"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1bea8d6925cf272fb06ae26fbb25da60">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[27/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1bea8d6925cf272fb06ae26fbb25da60">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[28/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14289,8 +14762,44 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 
 </div>
 </div>
+<a id="a0c5f10cee22ce0a7332c8e0d7c4dea4f" name="a0c5f10cee22ce0a7332c8e0d7c4dea4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c5f10cee22ce0a7332c8e0d7c4dea4f">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[29/30]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::ostream &amp; freetensor::operator&lt;&lt; </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a>&#160;</td>
+          <td class="paramname"><em>dtype</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a4fce3fc20d5123cfba4a15c1c79c0d0d" name="a4fce3fc20d5123cfba4a15c1c79c0d0d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4fce3fc20d5123cfba4a15c1c79c0d0d">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[28/28]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fce3fc20d5123cfba4a15c1c79c0d0d">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[30/30]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14802,8 +15311,8 @@ template&lt;std::ranges::range Container&gt; </div>
 
 </div>
 </div>
-<a id="ad79b4b517a22affb229c0950f35e9cce" name="ad79b4b517a22affb229c0950f35e9cce"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad79b4b517a22affb229c0950f35e9cce">&#9670;&nbsp;</a></span>parseDType()</h2>
+<a id="a74054e8e625fe8ac6d9fa360fd58649c" name="a74054e8e625fe8ac6d9fa360fd58649c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a74054e8e625fe8ac6d9fa360fd58649c">&#9670;&nbsp;</a></span>parseBaseDataType()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14812,10 +15321,36 @@ template&lt;std::ranges::range Container&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> freetensor::parseDType </td>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a> freetensor::parseBaseDataType </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>_str</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad8a28a4e220a2890aada017b15285b02" name="ad8a28a4e220a2890aada017b15285b02"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad8a28a4e220a2890aada017b15285b02">&#9670;&nbsp;</a></span>parseDType()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a> freetensor::parseDType </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>str</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -14913,6 +15448,32 @@ template&lt;std::ranges::range Container&gt; </div>
           <td></td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a21db5d357165ebec2460a7c8cfbcfcdc" name="a21db5d357165ebec2460a7c8cfbcfcdc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a21db5d357165ebec2460a7c8cfbcfcdc">&#9670;&nbsp;</a></span>parseSignDataType()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329ca">SignDataType</a> freetensor::parseSignDataType </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>str</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>
@@ -15966,8 +16527,26 @@ template&lt;class Simplifier &gt; </div>
 
 </div>
 </div>
-<a id="ae50b4200b841e89fa1546c1f9a8acd5a" name="ae50b4200b841e89fa1546c1f9a8acd5a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae50b4200b841e89fa1546c1f9a8acd5a">&#9670;&nbsp;</a></span>sizeOf()</h2>
+<a id="af7ab87f14948ccb37b08ac716a52cc59" name="af7ab87f14948ccb37b08ac716a52cc59"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af7ab87f14948ccb37b08ac716a52cc59">&#9670;&nbsp;</a></span>sizeOf() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t freetensor::sizeOf </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a>&#160;</td>
+          <td class="paramname"><em>dtype</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2a5a61628cc53077d43848df39d8b9f5" name="a2a5a61628cc53077d43848df39d8b9f5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a5a61628cc53077d43848df39d8b9f5">&#9670;&nbsp;</a></span>sizeOf() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15978,7 +16557,7 @@ template&lt;class Simplifier &gt; </div>
         <tr>
           <td class="memname">size_t freetensor::sizeOf </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
           <td class="paramname"><em>dtype</em></td><td>)</td>
           <td></td>
         </tr>
@@ -16865,7 +17444,7 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td>
           <td class="paramname"><em>dtype</em>&#160;</td>
         </tr>
         <tr>
@@ -17141,8 +17720,36 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="ae3e7d62718efb88e4851a4ebacc0e437" name="ae3e7d62718efb88e4851a4ebacc0e437"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae3e7d62718efb88e4851a4ebacc0e437">&#9670;&nbsp;</a></span>upCast()</h2>
+<a id="ac25770e9037860482bddbd0e2189b7b7" name="ac25770e9037860482bddbd0e2189b7b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac25770e9037860482bddbd0e2189b7b7">&#9670;&nbsp;</a></span>upCast() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a> freetensor::upCast </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a>&#160;</td>
+          <td class="paramname"><em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a>&#160;</td>
+          <td class="paramname"><em>rhs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a67a6d1e29ff7402b98fee080e2474b3f" name="a67a6d1e29ff7402b98fee080e2474b3f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a67a6d1e29ff7402b98fee080e2474b3f">&#9670;&nbsp;</a></span>upCast() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -17151,15 +17758,15 @@ template&lt;class T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a> freetensor::upCast </td>
+          <td class="memname"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a> freetensor::upCast </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
           <td class="paramname"><em>lhs</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4">DataType</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> &amp;&#160;</td>
           <td class="paramname"><em>rhs</em>&#160;</td>
         </tr>
         <tr>
@@ -17499,6 +18106,31 @@ template&lt;PBMapRef T&gt; </div>
 </div><!-- fragment -->
 </div>
 </div>
+<a id="ab5439bc4d8ca09a1205b517dbbae378c" name="ab5439bc4d8ca09a1205b517dbbae378c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab5439bc4d8ca09a1205b517dbbae378c">&#9670;&nbsp;</a></span>baseDataTypeNames</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr std::array freetensor::baseDataTypeNames</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= {</div>
+<div class="line">    <span class="stringliteral">&quot;void&quot;</span>, <span class="stringliteral">&quot;float32&quot;</span>, <span class="stringliteral">&quot;float64&quot;</span>, <span class="stringliteral">&quot;int32&quot;</span>, <span class="stringliteral">&quot;int64&quot;</span>, <span class="stringliteral">&quot;bool&quot;</span>, <span class="stringliteral">&quot;custom&quot;</span>,</div>
+<div class="line">}</div>
+</div><!-- fragment -->
+</div>
+</div>
 <a id="aa2d563bb172ff2cb034b36c9ffe96af6" name="aa2d563bb172ff2cb034b36c9ffe96af6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa2d563bb172ff2cb034b36c9ffe96af6">&#9670;&nbsp;</a></span>blockIdxX</h2>
 
@@ -17609,31 +18241,6 @@ template&lt;PBMapRef T&gt; </div>
       </table>
 </div><div class="memdoc">
 
-</div>
-</div>
-<a id="a720331dd49d78544621d24d3a602193e" name="a720331dd49d78544621d24d3a602193e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a720331dd49d78544621d24d3a602193e">&#9670;&nbsp;</a></span>dataTypeNames</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">constexpr std::array freetensor::dataTypeNames</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= {</div>
-<div class="line">    <span class="stringliteral">&quot;void&quot;</span>, <span class="stringliteral">&quot;float32&quot;</span>, <span class="stringliteral">&quot;float64&quot;</span>, <span class="stringliteral">&quot;int32&quot;</span>, <span class="stringliteral">&quot;int64&quot;</span>, <span class="stringliteral">&quot;bool&quot;</span>, <span class="stringliteral">&quot;custom&quot;</span>,</div>
-<div class="line">}</div>
-</div><!-- fragment -->
 </div>
 </div>
 <a id="aa1ce31459ce14415bd7726376d64e06d" name="aa1ce31459ce14415bd7726376d64e06d"></a>
@@ -18488,6 +19095,31 @@ template&lt;PBMapRef T&gt; </div>
 </table>
 </div><div class="memdoc">
 
+</div>
+</div>
+<a id="a880e7567fe59c435e0713e24389ea51a" name="a880e7567fe59c435e0713e24389ea51a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a880e7567fe59c435e0713e24389ea51a">&#9670;&nbsp;</a></span>signDataTypeNames</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr std::array freetensor::signDataTypeNames</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= {</div>
+<div class="line">    <span class="stringliteral">&quot;&quot;</span>, <span class="stringliteral">&quot;&gt;0&quot;</span>, <span class="stringliteral">&quot;&gt;=0&quot;</span>, <span class="stringliteral">&quot;&lt;0&quot;</span>, <span class="stringliteral">&quot;&lt;=0&quot;</span>, <span class="stringliteral">&quot;!=0&quot;</span>, <span class="stringliteral">&quot;==0&quot;</span>,</div>
+<div class="line">}</div>
+</div><!-- fragment -->
 </div>
 </div>
 <a id="a105dea86b1e2cc2da1f2663b73764ffc" name="a105dea86b1e2cc2da1f2663b73764ffc"></a>

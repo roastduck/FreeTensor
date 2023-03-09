@@ -7,5 +7,5 @@ var searchData=
   ['ceildiv_4',['CeilDiv',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa30c212eb3184a5ed41f01a25c8124e8a',1,'freetensor']]],
   ['cpu_5',['CPU',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a2b55387dd066c5bac646ac61543d152d',1,'freetensor::CPU()'],['../namespacefreetensor.html#a000c2c313211c04f40116e7f8117d66ba2b55387dd066c5bac646ac61543d152d',1,'freetensor::CPU()']]],
   ['cpuheap_6',['CPUHeap',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a7245cc5f5bb9ad69fd022fb9bfb75436',1,'freetensor']]],
-  ['custom_7',['Custom',['../namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4a90589c47f06eb971d548591f23c285af',1,'freetensor']]]
+  ['custom_7',['Custom',['../namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a90589c47f06eb971d548591f23c285af',1,'freetensor']]]
 ];

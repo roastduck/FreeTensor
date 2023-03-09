@@ -27,10 +27,12 @@ var searchData=
   ['feat_5fsamp_5fgpu_5fshared_5fstore_5farea_24',['FEAT_SAMP_GPU_SHARED_STORE_AREA',['../namespacefreetensor.html#aea2feaae25a2d4ee5a6d354c6e5cc5a6',1,'freetensor']]],
   ['feat_5fsamp_5fgpu_5fshared_5fstore_5fcnt_25',['FEAT_SAMP_GPU_SHARED_STORE_CNT',['../namespacefreetensor.html#af533c92009710c70413f7852664b5dee',1,'freetensor']]],
   ['feat_5fsamp_5fint32_5fops_26',['FEAT_SAMP_INT32_OPS',['../namespacefreetensor.html#ac5d2b1904be11709b09236f4d62734d3',1,'freetensor']]],
-  ['format_5f_27',['format_',['../classfreetensor_1_1IntrinsicNode.html#a46ca08a5198126dd51140b8eb7814211',1,'freetensor::IntrinsicNode']]],
-  ['fors_28',['fors',['../structfreetensor_1_1ElementWiseInfo.html#a99c6938a054e3e0efc0e1fafdc900840',1,'freetensor::ElementWiseInfo']]],
-  ['frontspacelooptimes_5f_29',['frontSpaceLoopTimes_',['../classfreetensor_1_1MultiLevelTilingPart.html#a396506b3dd5f600a2c9c18e7eb4e1ebe',1,'freetensor::MultiLevelTilingPart']]],
-  ['funcstr_5f_30',['funcStr_',['../prop__one__time__use_8cc.html#a99be30d469cc586e90851672dc410c08',1,'funcStr_():&#160;prop_one_time_use.cc'],['../remove__writes_8cc.html#a99be30d469cc586e90851672dc410c08',1,'funcStr_():&#160;remove_writes.cc'],['../tensor__prop__const_8cc.html#a99be30d469cc586e90851672dc410c08',1,'funcStr_():&#160;tensor_prop_const.cc']]],
-  ['fusedid_5f_31',['fusedId_',['../pluto_8cc.html#afe84782242293194b76ba5f0517bf2ff',1,'pluto.cc']]],
-  ['fusedloopsvar_5f_32',['fusedLoopsVar_',['../pluto_8cc.html#a0339342c95deaef39a7a6d1f85e7d330',1,'pluto.cc']]]
+  ['float32_27',['Float32',['../classfreetensor_1_1DataType.html#a17c04d048fc80c4cc1660efe87398a8e',1,'freetensor::DataType']]],
+  ['float64_28',['Float64',['../classfreetensor_1_1DataType.html#ad6edd2f8ee1f11fe288807a6b142e638',1,'freetensor::DataType']]],
+  ['format_5f_29',['format_',['../classfreetensor_1_1IntrinsicNode.html#a46ca08a5198126dd51140b8eb7814211',1,'freetensor::IntrinsicNode']]],
+  ['fors_30',['fors',['../structfreetensor_1_1ElementWiseInfo.html#a99c6938a054e3e0efc0e1fafdc900840',1,'freetensor::ElementWiseInfo']]],
+  ['frontspacelooptimes_5f_31',['frontSpaceLoopTimes_',['../classfreetensor_1_1MultiLevelTilingPart.html#a396506b3dd5f600a2c9c18e7eb4e1ebe',1,'freetensor::MultiLevelTilingPart']]],
+  ['funcstr_5f_32',['funcStr_',['../prop__one__time__use_8cc.html#a99be30d469cc586e90851672dc410c08',1,'funcStr_():&#160;prop_one_time_use.cc'],['../remove__writes_8cc.html#a99be30d469cc586e90851672dc410c08',1,'funcStr_():&#160;remove_writes.cc'],['../tensor__prop__const_8cc.html#a99be30d469cc586e90851672dc410c08',1,'funcStr_():&#160;tensor_prop_const.cc']]],
+  ['fusedid_5f_33',['fusedId_',['../pluto_8cc.html#afe84782242293194b76ba5f0517bf2ff',1,'pluto.cc']]],
+  ['fusedloopsvar_5f_34',['fusedLoopsVar_',['../pluto_8cc.html#a0339342c95deaef39a7a6d1f85e7d330',1,'pluto.cc']]]
 ];

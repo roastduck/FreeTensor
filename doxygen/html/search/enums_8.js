@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['outputintermediatesstage_0',['OutputIntermediatesStage',['../namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8f',1,'freetensor']]]
+  ['nullpolicy_0',['NullPolicy',['../namespacefreetensor.html#af95889187755480d15e840d24f445312',1,'freetensor']]]
 ];

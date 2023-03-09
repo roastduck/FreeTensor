@@ -60,6 +60,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../guide/schedules/">Optimize a Program with Schedules</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../guide/hint/">Optimize a Program with Hints</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../guide/gpu/">Running on a GPU</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../guide/ad/">Automatic Differentiation</a>
@@ -2255,15 +2257,15 @@ Driver            (<span title="freetensor_ffi.Driver">Driver</span>)
 <span class="sd">        verbose : bool (Optional)</span>
 <span class="sd">            True to print extra infomation</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">src</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">src</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">device</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_device</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">host_device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">host_device</span><span class="p">,</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">host_device</span><span class="p">,</span>
                                          <span class="n">verbose</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
 
@@ -2275,6 +2277,10 @@ Driver            (<span title="freetensor_ffi.Driver">Driver</span>)
         <span class="c1"># C++ implementation, where we can only hold the `Array`&#39;s C++</span>
         <span class="c1"># objects alive.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">args_ref_cnt_holder</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">native_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Get native code compiled by backend compiler &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">src</span>
 
     <span class="k">def</span> <span class="nf">set_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39; Set argument for an invocation &#39;&#39;&#39;</span>
@@ -2459,15 +2465,15 @@ in config</p></li>
 <span class="sd">    verbose : bool (Optional)</span>
 <span class="sd">        True to print extra infomation</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">src</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">src</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">device</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_device</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">if</span> <span class="n">host_device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">host_device</span><span class="p">,</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">host_device</span><span class="p">,</span>
                                      <span class="n">verbose</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
 
@@ -2528,6 +2534,33 @@ ReturnValuesPack</p>
                 <span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                 <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">is_in_closure</span> <span class="ow">or</span> <span class="n">r</span><span class="o">.</span><span class="n">return_closure</span><span class="p">,</span>
                        <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">returns</span><span class="p">)),</span> <span class="n">values</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.driver.Driver.native_code" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">native_code</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.driver.Driver.native_code" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Get native code compiled by backend compiler</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/driver.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">native_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Get native code compiled by backend compiler &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">src</span>
 </code></pre></div>
         </details>
     </div>

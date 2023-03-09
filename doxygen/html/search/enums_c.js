@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['varsplitmode_0',['VarSplitMode',['../namespacefreetensor.html#aa84a1eedb0880915c25c6ba5a2aa4db5',1,'freetensor']]]
+  ['targettype_0',['TargetType',['../namespacefreetensor.html#a000c2c313211c04f40116e7f8117d66b',1,'freetensor']]]
 ];

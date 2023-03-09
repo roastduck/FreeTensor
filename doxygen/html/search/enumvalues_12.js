@@ -7,5 +7,5 @@ var searchData=
   ['varreorder_4',['VarReorder',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a915c13322a4b5e6989549f4cac8c8b63',1,'freetensor']]],
   ['varsplit_5',['VarSplit',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a5b8bc2766491271c74eca4c6a02a02e0',1,'freetensor']]],
   ['vectorize_6',['Vectorize',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8ab8c3ff4276089f60a1f1820acc67bf60',1,'freetensor']]],
-  ['void_7',['Void',['../namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4a81ceb48a978444906d80119200aa358d',1,'freetensor']]]
+  ['void_7',['Void',['../namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a81ceb48a978444906d80119200aa358d',1,'freetensor']]]
 ];

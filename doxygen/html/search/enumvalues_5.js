@@ -2,8 +2,8 @@ var searchData=
 [
   ['fission_0',['Fission',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a8ad61c516d68a74deb9d3c753e98a82b',1,'freetensor']]],
   ['fixedsize_1',['FixedSize',['../namespacefreetensor.html#aa84a1eedb0880915c25c6ba5a2aa4db5aa9b1970346765908c755772abfc1b75b',1,'freetensor']]],
-  ['float32_2',['Float32',['../namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4a166495adc0d0f53bee6baecc577f5204',1,'freetensor']]],
-  ['float64_3',['Float64',['../namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4ad2b556d8a8f5c8ac323f51a4b82e79a0',1,'freetensor']]],
+  ['float32_2',['Float32',['../namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a166495adc0d0f53bee6baecc577f5204',1,'freetensor']]],
+  ['float64_3',['Float64',['../namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3ad2b556d8a8f5c8ac323f51a4b82e79a0',1,'freetensor']]],
   ['floatconst_4',['FloatConst',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915facfa016448e9977b80321fb885cb1d080',1,'freetensor']]],
   ['floor_5',['Floor',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915faf3f6d0343d56ce88ce7958170ed05cb3',1,'freetensor']]],
   ['floordiv_6',['FloorDiv',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fabaa422535e7ce48b442cc07089e64e7a',1,'freetensor']]],
