@@ -68,6 +68,10 @@ std::string PrintVisitor::prettyKeyword(const std::string &kw) {
         return kw;
 }
 
+std::string PrintVisitor::prettyDType(const DataType &dtype) {
+    return escape(freetensor::toString(dtype));
+}
+
 void PrintVisitor::recur(const Expr &op) {
     if (op.isValid()) {
         (*this)(op);
@@ -146,7 +150,7 @@ void PrintVisitor::visit(const Func &op) {
         for (auto &&[i, ret] : views::enumerate(op->returns_)) {
             auto &&[name, dtype, closure, returnClosure] = ret;
             os() << (i > 0 ? ", " : "") << prettyVarDefName(name) << ": "
-                 << ::freetensor::toString(dtype);
+                 << prettyDType(dtype);
             if (closure.isValid()) {
                 os() << " @!closure /* " << closure.get() << " */";
             }
@@ -187,7 +191,7 @@ void PrintVisitor::visit(const VarDef &op) {
          << ::freetensor::toString(op->buffer_->mtype()) << " "
          << prettyVarDefName(op->name_) << ": ";
     auto &&tensor = op->buffer_->tensor();
-    os() << ::freetensor::toString(tensor->dtype()) << "[";
+    os() << prettyDType(tensor->dtype()) << "[";
     printList(tensor->shape());
     os() << "] ";
     if (op->viewOf_.has_value()) {
@@ -232,7 +236,7 @@ void PrintVisitor::visit(const Load &op) {
     printList(op->indices_);
     os() << "]";
     if (dtypeInLoad_) {
-        os() << SPACE << ":" << SPACE << ::freetensor::toString(op->loadType_);
+        os() << SPACE << ":" << SPACE << prettyDType(op->loadType_);
     }
 }
 
@@ -675,7 +679,7 @@ void PrintVisitor::visit(const Assume &op) {
 
 void PrintVisitor::visit(const Intrinsic &op) {
     os() << "@!intrinsic(\"" << op->format_ << "\" -> "
-         << ::freetensor::toString(op->retType_);
+         << prettyDType(op->retType_);
     for (auto &&param : op->params_) {
         os() << "," << SPACE;
         recur(param);
@@ -742,7 +746,7 @@ void PrintVisitor::visit(const LoadAtVersion &op) {
     os() << "@!load_at_version(" << escape(op->tapeName_) << "," << SPACE
          << "[";
     printList(op->indices_);
-    os() << "]," << SPACE << ::freetensor::toString(op->loadType_) << ")";
+    os() << "]," << SPACE << prettyDType(op->loadType_) << ")";
 }
 
 std::string toString(const AST &op) {

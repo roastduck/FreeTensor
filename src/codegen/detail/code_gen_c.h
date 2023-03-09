@@ -714,7 +714,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Eval &op) {
 }
 
 template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
-    switch (dtype) {
+    switch (dtype.base()) {
     case DataType::Float64:
         return "double";
     case DataType::Float32:

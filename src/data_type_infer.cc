@@ -13,7 +13,7 @@ namespace freetensor {
  * The return type of a math function defined in Real Domain like `exp` or
  * `tanh`, when we pass `dtype` as input data type
  */
-static DataType mathFuncFrom(DataType dtype) {
+static BaseDataType mathFuncFrom(BaseDataType dtype) {
     if (isFloat(dtype)) {
         return dtype;
     } else {
@@ -22,6 +22,9 @@ static DataType mathFuncFrom(DataType dtype) {
         // CodeGen or runtime. Should we require a data type from user? (TODO)
         return DataType::Float64;
     }
+}
+static DataType mathFuncFrom(const DataType &dtype) {
+    return mathFuncFrom(dtype.base());
 }
 
 DataType DataTypeInfer::infer(const VarNode &op) {
@@ -33,12 +36,30 @@ DataType DataTypeInfer::infer(const LoadNode &op) { return op.loadType_; }
 
 DataType DataTypeInfer::infer(const IntConstNode &op) {
     // TODO: Able to configure this to other types
-    return DataType::Int32;
+    BaseDataType base = BaseDataType::Int32;
+    SignDataType sign = SignDataType::Any;
+    if (op.val_ > 0) {
+        sign = SignDataType::GT0;
+    } else if (op.val_ == 0) {
+        sign = SignDataType::EQ0;
+    } else if (op.val_ < 0) {
+        sign = SignDataType::LT0;
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const FloatConstNode &op) {
     // TODO: Able to configure this to other types
-    return DataType::Float32;
+    BaseDataType base = BaseDataType::Float32;
+    SignDataType sign = SignDataType::Any;
+    if (op.val_ > 0) {
+        sign = SignDataType::GT0;
+    } else if (op.val_ == 0) {
+        sign = SignDataType::EQ0;
+    } else if (op.val_ < 0) {
+        sign = SignDataType::LT0;
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const BoolConstNode &op) {
@@ -48,26 +69,99 @@ DataType DataTypeInfer::infer(const BoolConstNode &op) {
 DataType DataTypeInfer::infer(const AddNode &op) {
     CHK_TYPE(isNumber, op.lhs_->dtype(), op);
     CHK_TYPE(isNumber, op.rhs_->dtype(), op);
-    return upCast(op.lhs_->dtype(), op.rhs_->dtype());
+    BaseDataType base =
+        upCast(op.lhs_->dtype().base(), op.rhs_->dtype().base());
+    SignDataType sign = SignDataType::Any;
+    if (isLE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        if (isLT0(op.lhs_->dtype()) || isLT0(op.rhs_->dtype())) {
+            sign = SignDataType::LT0;
+        } else {
+            sign = SignDataType::LE0;
+        }
+    } else if (isGE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        if (isGT0(op.lhs_->dtype()) || isGT0(op.rhs_->dtype())) {
+            sign = SignDataType::GT0;
+        } else {
+            sign = SignDataType::GE0;
+        }
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const SubNode &op) {
     CHK_TYPE(isNumber, op.lhs_->dtype(), op);
     CHK_TYPE(isNumber, op.rhs_->dtype(), op);
-    return upCast(op.lhs_->dtype(), op.rhs_->dtype());
+    BaseDataType base =
+        upCast(op.lhs_->dtype().base(), op.rhs_->dtype().base());
+    SignDataType sign = SignDataType::Any;
+    if (isLE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        if (isLT0(op.lhs_->dtype()) || isGT0(op.rhs_->dtype())) {
+            sign = SignDataType::LT0;
+        } else {
+            sign = SignDataType::LE0;
+        }
+    } else if (isGE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        if (isGT0(op.lhs_->dtype()) || isLT0(op.rhs_->dtype())) {
+            sign = SignDataType::GT0;
+        } else {
+            sign = SignDataType::GE0;
+        }
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const MulNode &op) {
     CHK_TYPE(isNumber, op.lhs_->dtype(), op);
     CHK_TYPE(isNumber, op.rhs_->dtype(), op);
-    return upCast(op.lhs_->dtype(), op.rhs_->dtype());
+    BaseDataType base =
+        upCast(op.lhs_->dtype().base(), op.rhs_->dtype().base());
+    SignDataType sign = SignDataType::Any;
+    if (isGE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    } else if (isGE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    } else if (isLE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    } else if (isLE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    }
+    if (isNE0(op.lhs_->dtype()) && isNE0(op.rhs_->dtype())) {
+        if (isLE0(sign)) {
+            sign = SignDataType::LT0;
+        } else if (isGE0(sign)) {
+            sign = SignDataType::GT0;
+        } else {
+            sign = SignDataType::NE0;
+        }
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const RealDivNode &op) {
     CHK_TYPE(isNumber, op.lhs_->dtype(), op);
     CHK_TYPE(isNumber, op.rhs_->dtype(), op);
-    return DataType::Float32;
-    // TODO: Able to configure this to other types
+    auto base =
+        mathFuncFrom(upCast(op.lhs_->dtype().base(), op.rhs_->dtype().base()));
+    SignDataType sign = SignDataType::Any;
+    if (isGE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    } else if (isGE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    } else if (isLE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    } else if (isLE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    }
+    if (isNE0(op.lhs_->dtype())) {
+        if (isLE0(sign)) {
+            sign = SignDataType::LT0;
+        } else if (isGE0(sign)) {
+            sign = SignDataType::GT0;
+        } else {
+            sign = SignDataType::NE0;
+        }
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const FloorDivNode &op) {
@@ -106,13 +200,37 @@ DataType DataTypeInfer::infer(const RemainderNode &op) {
 DataType DataTypeInfer::infer(const MinNode &op) {
     CHK_TYPE(isNumber, op.lhs_->dtype(), op);
     CHK_TYPE(isNumber, op.rhs_->dtype(), op);
-    return upCast(op.lhs_->dtype(), op.rhs_->dtype());
+    BaseDataType base =
+        upCast(op.lhs_->dtype().base(), op.rhs_->dtype().base());
+    SignDataType sign = SignDataType::Any;
+    if (isGT0(op.lhs_->dtype()) && isGT0(op.rhs_->dtype())) {
+        sign = SignDataType::GT0;
+    } else if (isGE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    } else if (isLE0(op.lhs_->dtype()) || isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    } else if (isLT0(op.lhs_->dtype()) || isLT0(op.rhs_->dtype())) {
+        sign = SignDataType::LT0;
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const MaxNode &op) {
     CHK_TYPE(isNumber, op.lhs_->dtype(), op);
     CHK_TYPE(isNumber, op.rhs_->dtype(), op);
-    return upCast(op.lhs_->dtype(), op.rhs_->dtype());
+    BaseDataType base =
+        upCast(op.lhs_->dtype().base(), op.rhs_->dtype().base());
+    SignDataType sign = SignDataType::Any;
+    if (isLT0(op.lhs_->dtype()) && isLT0(op.rhs_->dtype())) {
+        sign = SignDataType::LT0;
+    } else if (isLE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    } else if (isGE0(op.lhs_->dtype()) || isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    } else if (isGT0(op.lhs_->dtype()) || isGT0(op.rhs_->dtype())) {
+        sign = SignDataType::GT0;
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const LTNode &op) {
@@ -170,12 +288,19 @@ DataType DataTypeInfer::infer(const LNotNode &op) {
 
 DataType DataTypeInfer::infer(const SqrtNode &op) {
     CHK_TYPE(isNumber, op.expr_->dtype(), op);
-    return mathFuncFrom(op.expr_->dtype());
+    BaseDataType base = mathFuncFrom(op.expr_->dtype().base());
+    SignDataType sign = SignDataType::GE0;
+    if (isNE0(op.expr_->dtype())) {
+        sign = SignDataType::GT0;
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const ExpNode &op) {
     CHK_TYPE(isNumber, op.expr_->dtype(), op);
-    return mathFuncFrom(op.expr_->dtype());
+    BaseDataType base = mathFuncFrom(op.expr_->dtype().base());
+    SignDataType sign = SignDataType::GT0;
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const LnNode &op) {
@@ -185,7 +310,12 @@ DataType DataTypeInfer::infer(const LnNode &op) {
 
 DataType DataTypeInfer::infer(const SquareNode &op) {
     CHK_TYPE(isNumber, op.expr_->dtype(), op);
-    return op.expr_->dtype();
+    BaseDataType base = mathFuncFrom(op.expr_->dtype().base());
+    SignDataType sign = SignDataType::GE0;
+    if (isNE0(op.expr_->dtype())) {
+        sign = SignDataType::GT0;
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const SigmoidNode &op) {
@@ -200,7 +330,12 @@ DataType DataTypeInfer::infer(const TanhNode &op) {
 
 DataType DataTypeInfer::infer(const AbsNode &op) {
     CHK_TYPE(isNumber, op.expr_->dtype(), op);
-    return op.expr_->dtype();
+    BaseDataType base = mathFuncFrom(op.expr_->dtype().base());
+    SignDataType sign = SignDataType::GE0;
+    if (isNE0(op.expr_->dtype())) {
+        sign = SignDataType::GT0;
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const FloorNode &op) {

@@ -98,3 +98,18 @@ def test_simplify_redundant_abs():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_type_hint_from_user():
+    with ft.VarDef([("x", (), "float32>=0", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = ft.abs(x[()])
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "float32>=0", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = x[()]
+    std = ft.pop_ast()
+
+    assert std.match(ast)

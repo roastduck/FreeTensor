@@ -68,8 +68,8 @@ std::pair<std::string, std::string> dumpArray(const Ref<Array> &array_) {
 
     ASSERT(addr);
 
-    std::string ret_meta = "ARR " + std::to_string((size_t)array->dtype()) +
-                           " " + std::to_string(array->shape().size()) + " ";
+    std::string ret_meta = "ARR " + toString(array->dtype()) + " " +
+                           std::to_string(array->shape().size()) + " ";
 
     for (const size_t &siz : array->shape()) {
         ret_meta += std::to_string(siz) + " ";

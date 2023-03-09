@@ -64,7 +64,7 @@ static DataType dtypeFromPyTorch(torch::ScalarType t) {
 }
 
 static torch::ScalarType dtypeToPyTorch(DataType dtype) {
-    switch (dtype) {
+    switch (dtype.base()) {
     case DataType::Int32:
         return torch::ScalarType::Int;
     case DataType::Int64:
@@ -162,7 +162,7 @@ void init_ffi_array(py::module_ &m) {
     pyArray.def(
         "numpy",
         [](Array &arr) -> py::object {
-            switch (arr.dtype()) {
+            switch (arr.dtype().base()) {
                 SHARE_TO_NUMPY(double, DataType::Float64)
                 SHARE_TO_NUMPY(float, DataType::Float32)
                 SHARE_TO_NUMPY(int64_t, DataType::Int64)

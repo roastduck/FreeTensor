@@ -23,7 +23,7 @@ std::string LowerVector::vecType(DataType dtype) const {
     // https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#vector-types
     // TODO: Vectors of bool should be bitvectors
     std::string ret;
-    switch (dtype) {
+    switch (dtype.base()) {
     case DataType::Float64:
         ret = "double";
         break;

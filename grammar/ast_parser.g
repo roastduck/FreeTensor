@@ -46,9 +46,9 @@ atype returns [AccessType type]
     ;
 
 dtype returns [DataType type]
-    : SimpleVar
+    : var
       {
-        $type = parseDType($SimpleVar.text);
+        $type = parseDType($var.name);
       }
     ;
 

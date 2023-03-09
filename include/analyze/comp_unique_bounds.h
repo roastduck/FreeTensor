@@ -89,8 +89,15 @@ class CompUniqueBounds : public Visitor {
         upper_[op] = std::forward<T>(list);
     }
 
+    /**
+     * Insert a new bound to a list of bounds. But if the new bound is a trivial
+     * deduction of existing bounds in the list, it will not be inserted
+     *
+     * @{
+     */
     void updLower(LowerBoundsList &list, const LowerBound &bound) const;
     void updUpper(UpperBoundsList &list, const UpperBound &bound) const;
+    /** @} */
 
   private:
     /**
@@ -106,6 +113,7 @@ class CompUniqueBounds : public Visitor {
 
     void visit(const Var &op) override;
     void visit(const Load &op) override;
+    // TODO: Cast can also be treated as Load
     void visit(const IntConst &op) override;
     void visit(const Add &op) override;
     void visit(const Sub &op) override;
