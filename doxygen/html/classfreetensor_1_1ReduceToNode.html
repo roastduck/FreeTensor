@@ -259,7 +259,6 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p >If true, can safely reduce from multiple threads to one location. Prefer atomic over other synchronizations </p>
 
 <p>Implements <a class="el" href="classfreetensor_1_1ASTPart.html#a73f6aa052b61db02ca16ce109960b1cc">freetensor::ASTPart</a>.</p>
 
@@ -319,6 +318,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p >If true, can safely reduce from multiple threads to one location. Prefer atomic over other synchronizations</p>
+<p >NOTE: Synchronizations only have to be done among <code>ReduceTo</code> nodes. No need to synchronize between a <code>ReduceTo</code> and a <code>Load</code>, or a <code>ReduceTo</code> and a <code>Store</code>, since our schedules prohibits simultaneous <code>ReduceTo</code> and <code>Load</code>, or <code>ReduceTo</code> and <code>Store</code>. </p>
 
 </div>
 </div>
