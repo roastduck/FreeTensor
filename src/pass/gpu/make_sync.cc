@@ -359,10 +359,21 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
             }
 
             // Already synchronized for specific `ReduceTo` node (for example by
-            // using atomic). No need for additional `__syncthreads`. NOTE: We
-            // prefer `__syncthreads` over synchronizing individual `ReduceTo`
-            // nodes: We check in `pass/make_parallel_reduction`, if we are able
-            // to use `__syncthreads` here, we won't set `sync_` there.
+            // using atomic). No need for additional `__syncthreads`.
+            //
+            // NOTE 1: We prefer `__syncthreads` over synchronizing individual
+            // `ReduceTo` nodes: We check in `pass/make_parallel_reduction`, if
+            // we are able to use `__syncthreads` here, we won't set `sync_`
+            // there.
+            //
+            // NOTE 2: Our schedules prohibits simultaneous `Load` and
+            // `ReduceTo`, or simultaneous `Store` and `ReduceTo`, so
+            // synchronizations for `ReduceTo` nodes may only synchronize among
+            // `ReduceTo` nodes, not between `ReduceTo` and `Store`, or between
+            // `ReduceTo` and `Load`. But after `pass/normalize_threads`,
+            // everything can happen simultaneously (and that's why we need this
+            // `pass/make_sync`). Thus we can only ignore the synchronization
+            // only if BOTH `earlier` and `later` are `ReduceTo`.
             if (later.op_->nodeType() == ASTNodeType::ReduceTo &&
                 earlier.op_->nodeType() == ASTNodeType::ReduceTo &&
                 later.op_.as<ReduceToNode>()->sync_ &&
