@@ -241,7 +241,7 @@ def test_synced_reduce_max():
 
     code = ft.codegen(func, target, verbose=True)
     assert "#pragma omp atomic" not in str(code)
-    assert "#pragma omp critical" in str(code)
+    assert "atomic_update" in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 2), dtype="int32")
     x_arr = ft.Array(x_np)

@@ -214,8 +214,16 @@ class ReduceToNode : public StmtNode {
     SubTreeList<ExprNode> indices_ = ChildOf{this};
     ReduceOp op_;
     SubTree<ExprNode> expr_ = ChildOf{this};
-    bool sync_; /// If true, can safely reduce from multiple threads to one
-                /// location. Prefer atomic over other synchronizations
+
+    /// If true, can safely reduce from multiple threads to one location. Prefer
+    /// atomic over other synchronizations
+    ///
+    /// NOTE: Synchronizations only have to be done among `ReduceTo` nodes. No
+    /// need to synchronize between a `ReduceTo` and a `Load`, or a `ReduceTo`
+    /// and a `Store`, since our schedules prohibits simultaneous `ReduceTo` and
+    /// `Load`, or `ReduceTo` and `Store`.
+    bool sync_;
+
     void compHash() override;
     DEFINE_NODE_TRAIT(ReduceTo)
 };

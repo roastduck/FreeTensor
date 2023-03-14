@@ -50,7 +50,7 @@ void CodeGenCPU::genScalar(const VarDef &def,
             this->os() << "]";
         }
     } else {
-        CodeGenC<CodeGenStream>::genScalar(def, indices);
+        BaseClass::genScalar(def, indices);
     }
 }
 
@@ -60,7 +60,7 @@ void CodeGenCPU::visit(const VarDef &op) {
 
     if (op->buffer_->atype() != AccessType::Cache || op->viewOf_.has_value() ||
         shape.empty()) {
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
 
     } else {
         auto name = mangle(op->name_);
@@ -132,7 +132,7 @@ void CodeGenCPU::visit(const VarDef &op) {
         }
 
         default:
-            CodeGenC::visit(op);
+            BaseClass::visit(op);
             break;
         }
     }
@@ -148,18 +148,35 @@ void CodeGenCPU::visit(const ReduceTo &op) {
         case ReduceOp::LOr:
             // Supported by `omp atomic`
             os() << "#pragma omp atomic" << std::endl;
-            CodeGenC::visit(op);
+            BaseClass::visit(op);
             break;
-        default:
-            // Not supported by `omp atomic`, use `omp critical`
-            os() << "#pragma omp critical" << std::endl;
+
+        // The followings are not supported by `omp atomic`, do atomic CAS by
+        // ourselves. `atomic_update` is defined in `runtime/cpu_runtime.h`
+        case ReduceOp::Min:
             makeIndent();
-            beginBlock();
-            CodeGenC::visit(op);
-            endBlock();
+            os() << "atomic_update(";
+            genScalar(op);
+            // User names are prefixed by an `_`, so we are safe with `x` here
+            os() << ", [&](auto &&x) { return std::min(x, ";
+            (*this)(op->expr_);
+            os() << "); });" << std::endl;
+            break;
+        case ReduceOp::Max:
+            makeIndent();
+            os() << "atomic_update(";
+            genScalar(op);
+            // User names are prefixed by an `_`, so we are safe with `x` here
+            os() << ", [&](auto &&x) { return std::max(x, ";
+            (*this)(op->expr_);
+            os() << "); });" << std::endl;
+            break;
+
+        default:
+            ASSERT(false);
         }
     } else {
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
     }
 }
 
@@ -255,7 +272,7 @@ void CodeGenCPU::visit(const For &op) {
         os() << std::endl;
         bool oldInParallel = inParallel_;
         inParallel_ = true;
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
         inParallel_ = oldInParallel;
         for (auto &&r : op->property_->reductions_) {
             if (!buffer(r->var_)->tensor()->shape().empty()) {
@@ -268,7 +285,7 @@ void CodeGenCPU::visit(const For &op) {
     } else if (op->property_->unroll_) {
         os() << "#pragma GCC unroll " << op->len_ << std::endl;
     }
-    CodeGenC::visit(op);
+    BaseClass::visit(op);
 }
 
 void CodeGenCPU::visit(const MatMul &op) {
