@@ -18,39 +18,77 @@ bool MakeReduction::isSameElem(const Store &s, const Load &l) {
     return true;
 }
 
-Stmt MakeReduction::doMake(Store op, ReduceOp reduceOp) {
-    if (types_.count(reduceOp)) {
-        auto expr = op->expr_.as<BinaryExprNode>();
+Stmt MakeReduction::doMake(Store op, ASTNodeType binOp, ReduceOp reduceOp,
+                           std::optional<ASTNodeType> invBinOp,
+                           std::optional<ReduceOp> invReduceOp) {
+    auto expr = op->expr_.as<BinaryExprNode>();
 
-        std::vector<Expr> items;
-        std::function<void(const Expr &)> recur = [&](const Expr &sub) {
-            if (sub->nodeType() == expr->nodeType()) {
-                recur(sub.as<BinaryExprNode>()->lhs_);
-                recur(sub.as<BinaryExprNode>()->rhs_);
+    std::vector<Expr> items, invItems;
+    std::function<void(const Expr &, std::vector<Expr> &, std::vector<Expr> &)>
+        recur = [&](const Expr &sub, std::vector<Expr> &items,
+                    std::vector<Expr> &invItems) {
+            if (sub->nodeType() == binOp) {
+                recur(sub.as<BinaryExprNode>()->lhs_, items, invItems);
+                recur(sub.as<BinaryExprNode>()->rhs_, items, invItems);
+            } else if (sub->nodeType() == invBinOp) {
+                recur(sub.as<BinaryExprNode>()->lhs_, items, invItems);
+                recur(sub.as<BinaryExprNode>()->rhs_, invItems, items);
             } else {
                 items.emplace_back(sub);
             }
         };
-        recur(expr);
+    recur(expr, items, invItems);
 
-        for (auto &&[i, item] : views::enumerate(items)) {
-            if (item->nodeType() == ASTNodeType::Load &&
-                isSameElem(op, item.as<LoadNode>())) {
-                Expr others;
-                for (auto &&[j, other] : views::enumerate(items)) {
-                    if (i != j) {
-                        if (canonicalOnly_ && allReads(other).count(op->var_)) {
-                            goto fail;
-                        }
-                        others = others.isValid() ? makeBinary(expr->nodeType(),
-                                                               others, other)
-                                                  : other;
+    for (auto &&[i, item] : views::enumerate(items)) {
+        if (item->nodeType() == ASTNodeType::Load &&
+            isSameElem(op, item.as<LoadNode>())) {
+            Expr others, invOthers;
+            for (auto &&[j, other] : views::enumerate(items)) {
+                if (i != j) {
+                    if (canonicalOnly_ && allReads(other).count(op->var_)) {
+                        goto fail;
+                    }
+                    others = others.isValid() ? makeBinary(binOp, others, other)
+                                              : other;
+                }
+            }
+            for (auto &&other : invItems) {
+                if (canonicalOnly_ && allReads(other).count(op->var_)) {
+                    goto fail;
+                }
+                invOthers = invOthers.isValid()
+                                ? makeBinary(binOp, invOthers, other)
+                                : other;
+            }
+            if (others.isValid()) {
+                if (invOthers.isValid()) { // a += b - c
+                    ASSERT(invBinOp.has_value());
+                    if (types_.count(reduceOp)) {
+                        return makeReduceTo(
+                            op->var_, op->indices_, reduceOp,
+                            makeBinary(*invBinOp, others, invOthers), false,
+                            op->metadata(), op->id());
+                    }
+                } else { // a += b
+                    if (types_.count(reduceOp)) {
+                        return makeReduceTo(op->var_, op->indices_, reduceOp,
+                                            others, false, op->metadata(),
+                                            op->id());
                     }
                 }
-                return makeReduceTo(op->var_, op->indices_, reduceOp, others,
-                                    false, op->metadata(), op->id());
-            fail:;
+            } else {
+                if (invOthers.isValid()) { // a -= b
+                    ASSERT(invReduceOp.has_value());
+                    if (types_.count(*invReduceOp)) {
+                        return makeReduceTo(op->var_, op->indices_,
+                                            *invReduceOp, invOthers, false,
+                                            op->metadata(), op->id());
+                    }
+                } else { // a = a
+                    return makeStmtSeq({});
+                }
             }
+        fail:;
         }
     }
     return op;
@@ -62,19 +100,19 @@ Stmt MakeReduction::visit(const Store &_op) {
     auto op = __op.as<StoreNode>();
     switch (op->expr_->nodeType()) {
     case ASTNodeType::Add:
-        return doMake(op, ReduceOp::Add);
     case ASTNodeType::Sub:
-        return doMake(op, ReduceOp::Sub);
+        return doMake(op, ASTNodeType::Add, ReduceOp::Add, ASTNodeType::Sub,
+                      ReduceOp::Sub);
     case ASTNodeType::Mul:
-        return doMake(op, ReduceOp::Mul);
+        return doMake(op, ASTNodeType::Mul, ReduceOp::Mul);
     case ASTNodeType::Min:
-        return doMake(op, ReduceOp::Min);
+        return doMake(op, ASTNodeType::Min, ReduceOp::Min);
     case ASTNodeType::Max:
-        return doMake(op, ReduceOp::Max);
+        return doMake(op, ASTNodeType::Max, ReduceOp::Max);
     case ASTNodeType::LAnd:
-        return doMake(op, ReduceOp::LAnd);
+        return doMake(op, ASTNodeType::LAnd, ReduceOp::LAnd);
     case ASTNodeType::LOr:
-        return doMake(op, ReduceOp::LOr);
+        return doMake(op, ASTNodeType::LOr, ReduceOp::LOr);
     default:
         return op;
     }
