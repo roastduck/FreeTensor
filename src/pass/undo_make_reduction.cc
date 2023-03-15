@@ -9,20 +9,10 @@ Stmt undoMakeReduction(const ReduceTo &op, DataType dtype) {
             op->var_, op->indices_,
             makeAdd(makeLoad(op->var_, op->indices_, dtype), op->expr_),
             op->metadata(), op->id());
-    case ReduceOp::Sub:
-        return makeStore(
-            op->var_, op->indices_,
-            makeSub(makeLoad(op->var_, op->indices_, dtype), op->expr_),
-            op->metadata(), op->id());
     case ReduceOp::Mul:
         return makeStore(
             op->var_, op->indices_,
             makeMul(makeLoad(op->var_, op->indices_, dtype), op->expr_),
-            op->metadata(), op->id());
-    case ReduceOp::RealDiv:
-        return makeStore(
-            op->var_, op->indices_,
-            makeRealDiv(makeLoad(op->var_, op->indices_, dtype), op->expr_),
             op->metadata(), op->id());
     case ReduceOp::Min:
         return makeStore(

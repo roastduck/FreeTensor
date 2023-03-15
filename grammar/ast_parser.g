@@ -219,10 +219,6 @@ reduceOp returns [ReduceOp op]
       {
         $op = ReduceOp::Add;
       }
-    | SUBEQ
-      {
-        $op = ReduceOp::Sub;
-      }
     | STAREQ
       {
         $op = ReduceOp::Mul;
@@ -242,10 +238,6 @@ reduceOp returns [ReduceOp op]
     | OREQ
       {
         $op = ReduceOp::LOr;
-      }
-    | SLASHEQ
-      {
-        $op = ReduceOp::RealDiv;
       }
     ;
 

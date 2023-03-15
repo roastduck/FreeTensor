@@ -253,14 +253,8 @@ void PrintVisitor::visit(const ReduceTo &op) {
     case ReduceOp::Add:
         os() << "+=";
         break;
-    case ReduceOp::Sub:
-        os() << "-=";
-        break;
     case ReduceOp::Mul:
         os() << "*=";
-        break;
-    case ReduceOp::RealDiv:
-        os() << "/=";
         break;
     case ReduceOp::Min:
         os() << "@!min=";
@@ -587,9 +581,6 @@ void PrintVisitor::visit(const For &op) {
         switch (reduction->op_) {
         case ReduceOp::Add:
             os() << "+= ";
-            break;
-        case ReduceOp::Sub:
-            os() << "-= ";
             break;
         case ReduceOp::Mul:
             os() << "*= ";

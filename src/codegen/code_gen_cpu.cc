@@ -142,9 +142,7 @@ void CodeGenCPU::visit(const ReduceTo &op) {
     if (op->sync_) {
         switch (op->op_) {
         case ReduceOp::Add:
-        case ReduceOp::Sub:
         case ReduceOp::Mul:
-        case ReduceOp::RealDiv:
         case ReduceOp::LAnd:
         case ReduceOp::LOr:
             // Supported by `omp atomic`
@@ -224,9 +222,6 @@ void CodeGenCPU::visit(const For &op) {
             switch (op->property_->reductions_.front()->op_) {
             case ReduceOp::Add:
                 os() << "+: ";
-                break;
-            case ReduceOp::Sub:
-                os() << "-: ";
                 break;
             case ReduceOp::Mul:
                 os() << "*: ";

@@ -421,10 +421,6 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
             os() << "atomicAdd(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
             break;
-        case ReduceOp::Sub:
-            os() << "atomicSub(&", genAddr(), os() << ", ", genExpr();
-            os() << ");" << std::endl;
-            break;
         case ReduceOp::Min:
             os() << "atomicMin(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
@@ -445,13 +441,13 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
         // The followings are not supported by CUDA's atomic functions, do
         // atomic CAS by ourselves. `atomicUpdate` is defined in
         // `runtime/gpu_runtime.h`
-        case ReduceOp::RealDiv:
+        case ReduceOp::Mul:
             makeIndent();
             os() << "atomicUpdate(";
             genScalar(op);
             // User names are prefixed by an `_`, so we are safe with `x` here
             os() << ", [&](" << gen(buffer(op->var_)->tensor()->dtype())
-                 << " x) { return x / (";
+                 << " x) { return x * (";
             (*this)(op->expr_);
             os() << "); });" << std::endl;
             break;
@@ -464,14 +460,8 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
         case ReduceOp::Add:
             genAddr(), os() << " += ", genExpr();
             break;
-        case ReduceOp::Sub:
-            genAddr(), os() << " -= ", genExpr();
-            break;
         case ReduceOp::Mul:
             genAddr(), os() << " *= ", genExpr();
-            break;
-        case ReduceOp::RealDiv:
-            genAddr(), os() << " /= ", genExpr();
             break;
         case ReduceOp::Min:
             genAddr(), os() << " = min(";

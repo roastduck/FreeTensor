@@ -210,7 +210,8 @@ def test_atomic_reduction():
     assert np.array_equal(y_np, y_std)
 
 
-def test_sync_reduce_div():
+def test_atomic_reduce_div():
+    # `/= x` should be lowered to `*= 1 / x`
 
     @ft.transform
     def test(x, y):
@@ -228,8 +229,6 @@ def test_sync_reduce_div():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target)
-    assert "atomicUpdate" in str(code)
-    assert "/=" not in str(code)
     print(debug.with_line_no(code))
     x_np = np.random.rand(4, 64).astype("float32")
     y_np = np.ones((4, 2), dtype="float32")

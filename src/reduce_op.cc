@@ -11,10 +11,8 @@ Expr neutralVal(DataType dtype, ReduceOp op) {
     case DataType::Float32:
         switch (op) {
         case ReduceOp::Add:
-        case ReduceOp::Sub:
             return makeFloatConst(0.);
         case ReduceOp::Mul:
-        case ReduceOp::RealDiv:
             return makeFloatConst(1.);
         case ReduceOp::Max:
             return makeFloatConst(-INFINITY);
@@ -27,7 +25,6 @@ Expr neutralVal(DataType dtype, ReduceOp op) {
     case DataType::Int64:
         switch (op) {
         case ReduceOp::Add:
-        case ReduceOp::Sub:
             return makeIntConst(0);
         case ReduceOp::Mul:
             return makeIntConst(1);
@@ -42,7 +39,6 @@ Expr neutralVal(DataType dtype, ReduceOp op) {
     case DataType::Int32:
         switch (op) {
         case ReduceOp::Add:
-        case ReduceOp::Sub:
             return makeIntConst(0);
         case ReduceOp::Mul:
             return makeIntConst(1);
