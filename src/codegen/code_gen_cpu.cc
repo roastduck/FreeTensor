@@ -142,7 +142,6 @@ void CodeGenCPU::visit(const ReduceTo &op) {
     if (op->sync_) {
         switch (op->op_) {
         case ReduceOp::Add:
-        case ReduceOp::Sub:
         case ReduceOp::Mul:
         case ReduceOp::LAnd:
         case ReduceOp::LOr:
@@ -152,10 +151,10 @@ void CodeGenCPU::visit(const ReduceTo &op) {
             break;
 
         // The followings are not supported by `omp atomic`, do atomic CAS by
-        // ourselves. `atomic_update` is defined in `runtime/cpu_runtime.h`
+        // ourselves. `atomicUpdate` is defined in `runtime/cpu_runtime.h`
         case ReduceOp::Min:
             makeIndent();
-            os() << "atomic_update(";
+            os() << "atomicUpdate(";
             genScalar(op);
             // User names are prefixed by an `_`, so we are safe with `x` here
             os() << ", [&](auto &&x) { return std::min(x, ";
@@ -164,7 +163,7 @@ void CodeGenCPU::visit(const ReduceTo &op) {
             break;
         case ReduceOp::Max:
             makeIndent();
-            os() << "atomic_update(";
+            os() << "atomicUpdate(";
             genScalar(op);
             // User names are prefixed by an `_`, so we are safe with `x` here
             os() << ", [&](auto &&x) { return std::max(x, ";
@@ -223,9 +222,6 @@ void CodeGenCPU::visit(const For &op) {
             switch (op->property_->reductions_.front()->op_) {
             case ReduceOp::Add:
                 os() << "+: ";
-                break;
-            case ReduceOp::Sub:
-                os() << "-: ";
                 break;
             case ReduceOp::Mul:
                 os() << "*: ";

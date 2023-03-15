@@ -19,8 +19,11 @@ bool MakeReduction::isSameElem(const Store &s, const Load &l) {
 }
 
 Stmt MakeReduction::doMake(Store op, ASTNodeType binOp, ReduceOp reduceOp,
-                           std::optional<ASTNodeType> invBinOp,
-                           std::optional<ReduceOp> invReduceOp) {
+                           std::optional<ASTNodeType> invBinOp) {
+    if (!types_.count(reduceOp)) {
+        return op;
+    }
+
     auto expr = op->expr_.as<BinaryExprNode>();
 
     std::vector<Expr> items, invItems;
@@ -63,27 +66,24 @@ Stmt MakeReduction::doMake(Store op, ASTNodeType binOp, ReduceOp reduceOp,
             if (others.isValid()) {
                 if (invOthers.isValid()) { // a += b - c
                     ASSERT(invBinOp.has_value());
-                    if (types_.count(reduceOp)) {
-                        return makeReduceTo(
-                            op->var_, op->indices_, reduceOp,
-                            makeBinary(*invBinOp, others, invOthers), false,
-                            op->metadata(), op->id());
-                    }
+                    return makeReduceTo(
+                        op->var_, op->indices_, reduceOp,
+                        makeBinary(*invBinOp, others, invOthers), false,
+                        op->metadata(), op->id());
                 } else { // a += b
-                    if (types_.count(reduceOp)) {
-                        return makeReduceTo(op->var_, op->indices_, reduceOp,
-                                            others, false, op->metadata(),
-                                            op->id());
-                    }
+                    return makeReduceTo(op->var_, op->indices_, reduceOp,
+                                        others, false, op->metadata(),
+                                        op->id());
                 }
             } else {
-                if (invOthers.isValid()) { // a -= b
-                    ASSERT(invReduceOp.has_value());
-                    if (types_.count(*invReduceOp)) {
-                        return makeReduceTo(op->var_, op->indices_,
-                                            *invReduceOp, invOthers, false,
-                                            op->metadata(), op->id());
-                    }
+                if (invOthers.isValid()) { // a += 0 - b
+                    ASSERT(invBinOp.has_value());
+                    return makeReduceTo(
+                        op->var_, op->indices_, reduceOp,
+                        makeBinary(*invBinOp,
+                                   neutralVal(invOthers->dtype(), reduceOp),
+                                   invOthers),
+                        false, op->metadata(), op->id());
                 } else { // a = a
                     return makeStmtSeq({});
                 }
@@ -95,16 +95,19 @@ Stmt MakeReduction::doMake(Store op, ASTNodeType binOp, ReduceOp reduceOp,
 }
 
 Stmt MakeReduction::visit(const Store &_op) {
+    // No need to worry about reducing a float expression onto a int. The
+    // frontend has already inserted a Cast node in this case.
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     auto op = __op.as<StoreNode>();
     switch (op->expr_->nodeType()) {
     case ASTNodeType::Add:
     case ASTNodeType::Sub:
-        return doMake(op, ASTNodeType::Add, ReduceOp::Add, ASTNodeType::Sub,
-                      ReduceOp::Sub);
+        return doMake(op, ASTNodeType::Add, ReduceOp::Add, ASTNodeType::Sub);
     case ASTNodeType::Mul:
-        return doMake(op, ASTNodeType::Mul, ReduceOp::Mul);
+    case ASTNodeType::RealDiv:
+        return doMake(op, ASTNodeType::Mul, ReduceOp::Mul,
+                      ASTNodeType::RealDiv);
     case ASTNodeType::Min:
         return doMake(op, ASTNodeType::Min, ReduceOp::Min);
     case ASTNodeType::Max:

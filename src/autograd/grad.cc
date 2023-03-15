@@ -667,20 +667,6 @@ Stmt Grad::visit(const ReduceTo &op) {
                 return makeStmtSeq(std::move(stmts));
             }
 
-            case ReduceOp::Sub: {
-                GradExpr exprVisitor(
-                    replaceBySaved, gradNames_, op->expr_,
-                    makeMul(makeIntConst(-1),
-                            makeLoad(grad, indices, b->tensor()->dtype())));
-                exprVisitor(op->expr_);
-                std::vector<Stmt> stmts;
-                for (auto &&stmt : exprVisitor.appends()) {
-                    stmt->metadata() = newMetadata;
-                    stmts.emplace_back(stmt);
-                }
-                return makeStmtSeq(std::move(stmts));
-            }
-
             case ReduceOp::Min:
             case ReduceOp::Max: {
                 GradExpr exprVisitor(
@@ -723,7 +709,7 @@ Stmt Grad::visit(const ReduceTo &op) {
                 // AD for `y *= x[i]` by `dz/dx += dz/dy * y / x[i]`, but how
                 // should we update `dz/dy` for each statement? For example,
                 // what if we have two statement like `y *= x1[i]; y *= x2[i]`?
-                // (TODO)
+                // We also need to ensure `x[i] != 0`. (TODO)
                 ASSERT(false);
             }
         } else {
@@ -898,8 +884,7 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     // Reduce mul may need the intermediate value for gradients, but reduce
     // add/sub/min/max does not
     op = undoMakeReduction(op); // Because we need to record loadMap
-    op = makeReduction(
-        op, {ReduceOp::Add, ReduceOp::Sub, ReduceOp::Min, ReduceOp::Max}, true);
+    op = makeReduction(op, {ReduceOp::Add, ReduceOp::Min, ReduceOp::Max}, true);
 
     // Since we are outputing all tapes, and output variables can't have same
     // names, we need to deduplicate the names of variables that needs to be

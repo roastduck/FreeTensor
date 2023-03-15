@@ -21,8 +21,7 @@ class MakeReduction : public Mutator {
     bool isSameElem(const Store &s, const Load &l);
 
     Stmt doMake(Store op, ASTNodeType binOp, ReduceOp reduceOp,
-                std::optional<ASTNodeType> invBinOp = std::nullopt,
-                std::optional<ReduceOp> invReduceOp = std::nullopt);
+                std::optional<ASTNodeType> invBinOp = std::nullopt);
 
   protected:
     Stmt visit(const Store &op) override;
@@ -43,9 +42,8 @@ inline Stmt makeReduction(const Stmt &op,
 }
 
 inline Stmt makeReduction(const Stmt &op) {
-    return makeReduction(op, {ReduceOp::Add, ReduceOp::Sub, ReduceOp::Mul,
-                              ReduceOp::Min, ReduceOp::Max, ReduceOp::LAnd,
-                              ReduceOp::LOr});
+    return makeReduction(op, {ReduceOp::Add, ReduceOp::Mul, ReduceOp::Min,
+                              ReduceOp::Max, ReduceOp::LAnd, ReduceOp::LOr});
 }
 
 DEFINE_PASS_FOR_FUNC(makeReduction)

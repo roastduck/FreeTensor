@@ -52,7 +52,7 @@ def test_reduce_sub():
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
         y[...] = 0
         with ft.For("i", 0, 4) as i:
-            y[...] -= x[i]
+            y[...] += -1 * x[i]
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -73,7 +73,7 @@ def test_reduce_add_sub_1():
                     ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
         y[...] = 0
         with ft.For("i", 0, 4) as i:
-            y[...] -= x1[i] + x2[i]
+            y[...] += -1 * (x1[i] + x2[i])
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -136,7 +136,7 @@ def test_reduce_add_sub_4():
                     ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
         y[...] = 0
         with ft.For("i", 0, 4) as i:
-            y[...] -= x1[i] + x2[i]
+            y[...] += -1 * (x1[i] + x2[i])
     std = ft.pop_ast()
 
     assert std.match(ast)

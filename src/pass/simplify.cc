@@ -583,16 +583,6 @@ Stmt SimplifyPass::visit(const ReduceTo &_op) {
             return makeStmtSeq({});
         }
         break;
-    case ReduceOp::Sub:
-        if (op->expr_->nodeType() == ASTNodeType::IntConst &&
-            op->expr_.as<IntConstNode>()->val_ == 0) {
-            return makeStmtSeq({});
-        }
-        if (op->expr_->nodeType() == ASTNodeType::FloatConst &&
-            op->expr_.as<FloatConstNode>()->val_ == 0) {
-            return makeStmtSeq({});
-        }
-        break;
     case ReduceOp::Mul:
         if (op->expr_->nodeType() == ASTNodeType::IntConst &&
             op->expr_.as<IntConstNode>()->val_ == 1) {

@@ -23,7 +23,6 @@ FREE:       '@!free';
 // ReduceTo
 SYNC:       '@!sync';
 PLUSEQ:     '+=';
-SUBEQ:      '-=';
 STAREQ:     '*=';
 MINEQ:      '@!min=';
 MAXEQ:      '@!max=';
