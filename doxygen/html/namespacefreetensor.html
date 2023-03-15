@@ -1173,12 +1173,11 @@ Enumerations</h2></td></tr>
 <tr class="separator:a9a48aa452518564944ff7c33fb21134b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6c382c26df3486888425f7cc54de5c3"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3">ReduceOp</a> : int { <br />
 &#160;&#160;<a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3aec211f7c20af43e742bf2570c3cb84f9">Add</a>
-, <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3ae80155eceb940c89e2de63ad05868db2">Sub</a>
 , <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3a62b6d55816cf737bfc6f42e60df1a3f2">Mul</a>
 , <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3a78d811e98514cd165dda532286610fd2">Min</a>
+, <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3a6a061313d22e51e0f25b7cd4dc065233">Max</a>
 , <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3a6a061313d22e51e0f25b7cd4dc065233">Max</a>
-, <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3a97491c07168f35f5ad8a87122e45d85c">LAnd</a>
+&#160;&#160;<a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3a97491c07168f35f5ad8a87122e45d85c">LAnd</a>
 , <a class="el" href="namespacefreetensor.html#aa6c382c26df3486888425f7cc54de5c3ae02dc30ef38a2f4cdaf9357ae6afcaa6">LOr</a>
 <br />
  }</td></tr>
@@ -4176,11 +4175,18 @@ template&lt;class K &gt; </div>
 </table>
 </div><div class="memdoc">
 <p >Operation of a <code>ReduceTo</code> node</p>
-<p >All operations should obey the commutative law. Note that although <code>-</code> does not obey the commutative law, <code>-=</code> does</p>
-<p >Here is no support for <code>/=</code> because of the lack of support from OpenMP and CUDA </p>
+<p >All operations should obey the following laws, where <code>?=</code> is any of the reduction operations:</p>
+<ol type="1">
+<li>(Communicative) <code>a ?= b; a ?= c</code> equals to <code>a ?= c; a ?= b</code>.</li>
+<li>(Associative) <code>x ?= a; x ?= b; x ?= c; x ?= d</code> equals to `y = neutral_value; y ?= a; y ?= b; z = neutral_value; z ?= c; z ?= d; x ?= y; x ?= z`.</li>
+</ol>
+<p >Counter-examples:</p>
+<ul>
+<li><code>-=</code> or <code>/=</code> for RealDiv is not a reduction because it is against Law 2. Thus, <code>-= x</code> or <code>/= x</code> will be lowered to <code>+= -x</code> or <code>*= 1 / x</code> to obey the law. (NOTE: <code>/=</code> for RoundTowards0Div is also against Law 2, but it cannot be lowered <code>*= 1 / x</code>, thus we cannot do parallel reduction for RoundTowards0Div).</li>
+<li><code>/=</code> for FloorDiv is not only agains Law 2, but also against Law 1. E.g., <code>603 // 625 // -492 == 0</code>, but <code>603 // -492 // 625 == -1</code>. </li>
+</ul>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aa6c382c26df3486888425f7cc54de5c3aec211f7c20af43e742bf2570c3cb84f9" name="aa6c382c26df3486888425f7cc54de5c3aec211f7c20af43e742bf2570c3cb84f9"></a>Add&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="aa6c382c26df3486888425f7cc54de5c3ae80155eceb940c89e2de63ad05868db2" name="aa6c382c26df3486888425f7cc54de5c3ae80155eceb940c89e2de63ad05868db2"></a>Sub&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa6c382c26df3486888425f7cc54de5c3a62b6d55816cf737bfc6f42e60df1a3f2" name="aa6c382c26df3486888425f7cc54de5c3a62b6d55816cf737bfc6f42e60df1a3f2"></a>Mul&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa6c382c26df3486888425f7cc54de5c3a78d811e98514cd165dda532286610fd2" name="aa6c382c26df3486888425f7cc54de5c3a78d811e98514cd165dda532286610fd2"></a>Min&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa6c382c26df3486888425f7cc54de5c3a6a061313d22e51e0f25b7cd4dc065233" name="aa6c382c26df3486888425f7cc54de5c3a6a061313d22e51e0f25b7cd4dc065233"></a>Max&#160;</td><td class="fielddoc"></td></tr>

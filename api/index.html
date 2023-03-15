@@ -3240,7 +3240,7 @@ on <code>VarRef</code> objects generates AST nodes</p>
             <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
         <span class="n">top</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span>
         <span class="n">top</span><span class="o">.</span><span class="n">append_stmt</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">as_reduce_to</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">ReduceOp</span><span class="o">.</span><span class="n">Sub</span><span class="p">,</span> <span class="n">top</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">(),</span> <span class="n">other</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">as_reduce_to</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">ReduceOp</span><span class="o">.</span><span class="n">Add</span><span class="p">,</span> <span class="n">top</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">(),</span> <span class="o">-</span><span class="n">other</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
 
     <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
@@ -3282,7 +3282,10 @@ on <code>VarRef</code> objects generates AST nodes</p>
             <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">libop</span>
             <span class="n">libop</span><span class="o">.</span><span class="n">truediv_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
-        <span class="k">return</span> <span class="bp">NotImplemented</span>  <span class="c1"># Fallback to x = x / y</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="n">ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="p">()</span>
+        <span class="n">top</span><span class="o">.</span><span class="n">append_stmt</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">as_reduce_to</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">ReduceOp</span><span class="o">.</span><span class="n">Mul</span><span class="p">,</span> <span class="n">top</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">(),</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">other</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">AlreadyMadeReduceTo</span>
 
     <span class="k">def</span> <span class="fm">__floordiv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
