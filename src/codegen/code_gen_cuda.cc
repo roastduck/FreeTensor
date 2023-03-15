@@ -422,11 +422,13 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
             os() << ");" << std::endl;
             break;
         case ReduceOp::Min:
-            os() << "atomicMin(&", genAddr(), os() << ", ", genExpr();
+            // Defined in `runtime/gpu_runtime.h`
+            os() << "runtimeAtomicMin(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
             break;
         case ReduceOp::Max:
-            os() << "atomicMax(&", genAddr(), os() << ", ", genExpr();
+            // Defined in `runtime/gpu_runtime.h`
+            os() << "runtimeAtomicMax(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
             break;
         case ReduceOp::LAnd:

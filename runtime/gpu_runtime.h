@@ -302,4 +302,22 @@ __host__ __device__ void atomicUpdate(T &x, Func &&update) {
     // access with other accesses that cause side effect
 }
 
+template <typename T, typename = void>
+__host__ __device__ void runtimeAtomicMin(T *addr, T val) {
+    atomicUpdate(*addr, [&](T x) { return min(x, val); });
+}
+template <typename T, std::enable_if_t<std::is_integral_v<T>>>
+__host__ __device__ void runtimeAtomicMin(T *addr, T val) {
+    atomicMin(addr, val); // Only defined for integers
+}
+
+template <typename T, typename = void>
+__host__ __device__ void runtimeAtomicMax(T *addr, T val) {
+    atomicUpdate(*addr, [&](T x) { return max(x, val); });
+}
+template <typename T, std::enable_if_t<std::is_integral_v<T>>>
+__host__ __device__ void runtimeAtomicMax(T *addr, T val) {
+    atomicMax(addr, val); // Only defined for integers
+}
+
 #endif // FREE_TENSOR_GPU_RUNTIME_H
