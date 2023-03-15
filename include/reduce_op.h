@@ -27,14 +27,7 @@ namespace freetensor {
  * - `/=` for FloorDiv is not only agains Law 2, but also against Law 1. E.g.,
  * `603 // 625 // -492 == 0`, but `603 // -492 // 625 == -1`.
  */
-enum class ReduceOp : int {
-    Add,
-    Mul,
-    Min,
-    Max,
-    LAnd,
-    LOr,
-};
+enum class ReduceOp : int { Add, Mul, Min, Max, LAnd, LOr };
 
 Expr neutralVal(DataType dtype, ReduceOp op);
 
