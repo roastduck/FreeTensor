@@ -13,7 +13,8 @@ void init_ffi_reduce_op(py::module_ &m) {
         .value("Min", ReduceOp::Min)
         .value("Mul", ReduceOp::Mul)
         .value("And", ReduceOp::LAnd)
-        .value("Or", ReduceOp::LOr);
+        .value("Or", ReduceOp::LOr)
+        .value("RealDiv", ReduceOp::RealDiv);
 
     m.def("neutral_val", &neutralVal);
 }

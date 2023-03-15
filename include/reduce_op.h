@@ -9,13 +9,24 @@ namespace freetensor {
 /**
  * Operation of a `ReduceTo` node
  *
- * All operations should obey the commutative law. Note that although `-` does
- * not obey the commutative law, `-=` does
- *
- * Here is no support for `/=` because of the lack of support from OpenMP and
- * CUDA
+ * All operations should obey the following law: `a ?= b; a ?= c` equals to `a
+ * ?= c; a ?= b`, where `?=` is any of the reduction operations
  */
-enum class ReduceOp : int { Add, Sub, Mul, Min, Max, LAnd, LOr };
+enum class ReduceOp : int {
+    Add,
+    Sub,
+    Mul,
+    Min,
+    Max,
+    LAnd,
+    LOr,
+    RealDiv,
+    // NOTE: FloorDiv or CeilDiv dose not obey the requried law if divisors are
+    // in different signs. E.g., `603 // 625 // -492 == 0`, but `603 // -492 //
+    // 625 == -1`, where `//` means FloorDiv. RoundsTowards0Div obeys the law,
+    // but we don't expect it in user programs, and we only convert FloorDiv or
+    // CeilDiv to it until the last lowering pass
+};
 
 Expr neutralVal(DataType dtype, ReduceOp op);
 

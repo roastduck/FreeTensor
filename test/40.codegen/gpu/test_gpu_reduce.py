@@ -174,7 +174,7 @@ def test_atomic_reduction():
     @ft.transform
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
-        y: ft.Var[(4, 2), "int32", "output", "gpu/global"]
+        y: ft.Var[(4, 2), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 4):
             #! label: L2
@@ -183,7 +183,7 @@ def test_atomic_reduction():
 
     with ft.VarDef([
         ("x", (4, 64), "int32", "input", "gpu/global"),
-        ("y", (4, 2), "int32", "output", "gpu/global"),
+        ("y", (4, 2), "int32", "inout", "gpu/global"),
     ]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 64, label="L2") as j:
@@ -208,6 +208,38 @@ def test_atomic_reduction():
 
     y_std = np.sum(x_np.reshape((4, 32, 2)), axis=1)
     assert np.array_equal(y_np, y_std)
+
+
+def test_sync_reduce_div():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(4, 64), "float32", "input", "gpu/global"]
+        y: ft.Var[(4, 2), "float32", "inout", "gpu/global"]
+        #! label: L1
+        for i in range(0, 4):
+            #! label: L2
+            for j in range(0, 64):
+                y[i, j % 2] /= x[i, j]
+
+    s = ft.Schedule(test)
+    s.parallelize("L1", "blockIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=1)
+
+    code = ft.codegen(func, target)
+    assert "atomicUpdate" in str(code)
+    assert "/=" not in str(code)
+    print(debug.with_line_no(code))
+    x_np = np.random.rand(4, 64).astype("float32")
+    y_np = np.ones((4, 2), dtype="float32")
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.prod(1. / x_np.reshape((4, 32, 2)), axis=1)
+    assert np.all(np.isclose(y_np, y_std))
 
 
 def test_atomic_reduction_2_stmts_on_1_var_across_blocks():

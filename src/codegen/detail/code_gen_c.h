@@ -350,6 +350,9 @@ template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
     case ReduceOp::Mul:
         genAddr(), this->os() << " *= ", genExpr();
         break;
+    case ReduceOp::RealDiv:
+        genAddr(), this->os() << " /= ", genExpr();
+        break;
     case ReduceOp::Min:
         genAddr(), this->os()
                        << " = std::min<"

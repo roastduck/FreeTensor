@@ -95,6 +95,8 @@ Stmt MakeReduction::doMake(Store op, ASTNodeType binOp, ReduceOp reduceOp,
 }
 
 Stmt MakeReduction::visit(const Store &_op) {
+    // No need to worry about reducing a float expression onto a int. The
+    // frontend has already inserted a Cast node in this case.
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     auto op = __op.as<StoreNode>();
@@ -104,7 +106,9 @@ Stmt MakeReduction::visit(const Store &_op) {
         return doMake(op, ASTNodeType::Add, ReduceOp::Add, ASTNodeType::Sub,
                       ReduceOp::Sub);
     case ASTNodeType::Mul:
-        return doMake(op, ASTNodeType::Mul, ReduceOp::Mul);
+    case ASTNodeType::RealDiv:
+        return doMake(op, ASTNodeType::Mul, ReduceOp::Mul, ASTNodeType::RealDiv,
+                      ReduceOp::RealDiv);
     case ASTNodeType::Min:
         return doMake(op, ASTNodeType::Min, ReduceOp::Min);
     case ASTNodeType::Max:

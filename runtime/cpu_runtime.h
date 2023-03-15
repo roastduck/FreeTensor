@@ -47,7 +47,7 @@ template <class T> T runtime_square(T x) { return x * x; }
 
 template <class T> T runtime_sigmoid(T x) { return 1.0 / (1.0 + std::exp(-x)); }
 
-template <class T> void atomic_update(T &x, auto &&update) {
+template <class T> void atomicUpdate(T &x, auto &&update) {
     // No need to keep the life time of `std::atomic_ref` outside this function:
     // Atomic operations applied to an object through an `std::atomic_ref` are
     // atomic with respect to atomic operations applied through any other
@@ -60,10 +60,10 @@ template <class T> void atomic_update(T &x, auto &&update) {
     } while (
         !xAtomic.compare_exchange_weak(xOld, y, std::memory_order_relaxed));
     // - `_weak` means we may fail even if `x` is unchanged, and we retry
-    // - We can use a relaxed memory order: Since an `atomic_update` only
-    // competes with other `atomic_update`s (FreeTensor's schedule ensures there
+    // - We can use a relaxed memory order: Since an `atomicUpdate` only
+    // competes with other `atomicUpdate`s (FreeTensor's schedule ensures there
     // is no simultaneous `Load` and `ReduceTo` or simultaneous `Store` and
-    // `ReduceTo`), and the only memory access in the loop of `atomic_update` is
+    // `ReduceTo`), and the only memory access in the loop of `atomicUpdate` is
     // this `compare_exchange`, we don't need to worry about the relative order
     // of this access with other accesses that cause side effect
 }

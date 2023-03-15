@@ -243,6 +243,10 @@ reduceOp returns [ReduceOp op]
       {
         $op = ReduceOp::LOr;
       }
+    | SLASHEQ
+      {
+        $op = ReduceOp::RealDiv;
+      }
     ;
 
 storeOrReduceTo returns [Stmt node]

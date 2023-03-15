@@ -723,7 +723,7 @@ Stmt Grad::visit(const ReduceTo &op) {
                 // AD for `y *= x[i]` by `dz/dx += dz/dy * y / x[i]`, but how
                 // should we update `dz/dy` for each statement? For example,
                 // what if we have two statement like `y *= x1[i]; y *= x2[i]`?
-                // (TODO)
+                // We also need to ensure `x[i] != 0`. (TODO)
                 ASSERT(false);
             }
         } else {

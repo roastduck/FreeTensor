@@ -29,6 +29,7 @@ MINEQ:      '@!min=';
 MAXEQ:      '@!max=';
 ANDEQ:      '&&=';
 OREQ:       '||=';
+SLASHEQ:    '/=';
 
 // For
 NO_DEPS:    '@!no_deps';

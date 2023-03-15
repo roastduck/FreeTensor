@@ -45,7 +45,7 @@ inline Stmt makeReduction(const Stmt &op,
 inline Stmt makeReduction(const Stmt &op) {
     return makeReduction(op, {ReduceOp::Add, ReduceOp::Sub, ReduceOp::Mul,
                               ReduceOp::Min, ReduceOp::Max, ReduceOp::LAnd,
-                              ReduceOp::LOr});
+                              ReduceOp::LOr, ReduceOp::RealDiv});
 }
 
 DEFINE_PASS_FOR_FUNC(makeReduction)

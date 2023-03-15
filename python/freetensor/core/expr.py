@@ -230,7 +230,10 @@ class VarRef(ffi.FrontendVar):
             from .. import libop
             libop.truediv_to(self, other)
             return AlreadyMadeReduceTo
-        return NotImplemented  # Fallback to x = x / y
+        top = ctx_stack.top()
+        top.append_stmt(
+            self.as_reduce_to(ffi.ReduceOp.RealDiv, top.get_metadata(), other))
+        return AlreadyMadeReduceTo
 
     def __floordiv__(self, other):
         if self.ndim > 0:
