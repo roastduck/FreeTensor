@@ -213,7 +213,7 @@ def test_user_grad_on_range_crossing_def():
                     ("sin", (), "float32", "input", "cpu"),
                     ("cos", (), "float32", "input", "cpu")]) as (dx, dz, sin,
                                                                  cos):
-        dx[...] = 4 * (2 * dz[...]) * cos[...] * sin[...]
+        dx[...] = 8 * dz[...] * cos[...] * sin[...]
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -314,7 +314,7 @@ def test_frontend():
                     ("dz", (4,), "float32", "inout", "cpu")]) as (dx, sin, cos,
                                                                   dz):
         with ft.For("i", 0, 4) as i:
-            dx[i] = 4 * (2 * dz[i]) * cos[i] * sin[i]
+            dx[i] = 8 * dz[i] * cos[i] * sin[i]
     std = ft.pop_ast()
 
     assert std.match(bwd.body)
@@ -360,7 +360,7 @@ def test_stmt_range_robustness():
                     ("dz", (4,), "float32", "inout", "cpu")]) as (dx, sin, cos,
                                                                   dz):
         with ft.For("i", 0, 4) as i:
-            dx[i] = 4 * (2 * dz[i]) * cos[i] * sin[i]
+            dx[i] = 8 * dz[i] * cos[i] * sin[i]
     std = ft.pop_ast()
 
     assert std.match(bwd.body)

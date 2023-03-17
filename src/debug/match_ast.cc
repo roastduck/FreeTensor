@@ -126,6 +126,11 @@ void MatchVisitor::visit(const ReduceTo &op) {
 }
 
 void MatchVisitor::visit(const IntConst &op) {
+    if (instance_->nodeType() == ASTNodeType::FloatConst) {
+        auto instance = instance_.as<FloatConstNode>();
+        CHECK(op->val_ == instance->val_);
+        return;
+    }
     CHECK(instance_->nodeType() == ASTNodeType::IntConst);
     auto instance = instance_.as<IntConstNode>();
     CHECK(op->val_ == instance->val_);

@@ -1,6 +1,21 @@
 import freetensor as ft
 
 
+def test_cencel_const_in_numerator_and_denominator():
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = (3 * x[()]) / (2 * y[()])
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = 1.5 * (x[()] / y[()])
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_simplify_sqrt_1():
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
@@ -95,6 +110,21 @@ def test_simplify_redundant_abs():
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
         y[()] = ft.abs(x[()])
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_fold_into_if_expr():
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = x[()] * ft.if_then_else(x[()] > 0, 1, 0)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = ft.if_then_else(x[()] > 0, x[()], 0)
     std = ft.pop_ast()
 
     assert std.match(ast)

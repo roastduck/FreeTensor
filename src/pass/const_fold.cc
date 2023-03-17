@@ -99,7 +99,8 @@ Expr ConstFold::visit(const Cast &_op) {
         return castType(op->destType_, op->expr_.as<ConstNode>());
     }
     if (op->expr_->dtype() == op->destType_) {
-        return op->expr_;
+        return op->expr_; // FIXME: This may break assertions if we inherit
+                          // ConstFold in other passes
     }
     return op;
 }

@@ -934,7 +934,7 @@ def test_use_a_taped_var_to_recompute_another_var():
                 z[...] = 0
                 with ft.If(x[...] > 0):
                     z[...] = ft.square(y[...])
-                    dx[...] = 2 * (4 * y[...] * dw[...] * z[...] * x[...])
+                    dx[...] = 8 * y[...] * dw[...] * z[...] * x[...]
     std = ft.pop_ast()
 
     assert std.match(backward.body)
@@ -980,10 +980,12 @@ def test_recompute_using_another_recomputed_var():
                     with ft.For("i", 9, -1, -1) as i:
                         gradient_of_bi_in_di = dd[i] * ft.square(c[i])
                         # USE NEW b HERE
-                        gradient_of_ci_in_di = 2 * dd[i] * b[i] * c[i]
+                        # gradient_of_ci_in_di = 2 * dd[i] * b[i] * c[i]
                         # USE OLD b_recomp HERE
-                        dt = (4 * ft.square(b_recomp[0, i]) *
-                              gradient_of_ci_in_di * b_recomp[0, i])
+                        # dt = (4 * ft.square(b_recomp[0, i]) *
+                        #       gradient_of_ci_in_di * b_recomp[0, i])
+                        dt = (8 * ft.square(b_recomp[0, i]) * dd[i] * b[i] *
+                              c[i] * b_recomp[0, i])
                         da[i] = 2 * (gradient_of_bi_in_di + dt) * a[i]
     std = ft.pop_ast()
 
