@@ -202,21 +202,24 @@ std::unordered_set<ID> PropagateProvides::propagateUntilConverge(
     return propagator.affectedDefs();
 }
 
-Expr ReplaceBySaved::replaceForwardValue(const Expr &_equLoad) {
-    auto __equLoad = deepCopy(_equLoad);
-    ASSERT(__equLoad->nodeType() == ASTNodeType::Load);
-    auto equLoad = __equLoad.as<LoadNode>();
-    if (intermediatesMap_.count(symbolTable_.def(equLoad->var_)->id()) &&
-        versions_.count(parent_->id())) {
-        auto savedVar =
-            intermediatesMap_.at(symbolTable_.def(equLoad->var_)->id());
-        if (savedVar != equLoad->var_) {
-            equLoad->var_ = savedVar;
-            equLoad->indices_.insert(equLoad->indices_.begin(),
-                                     versions_.at(parent_->id()));
+Expr ReplaceBySaved::visitExpr(const Expr &expr) {
+    if (isGrad_ && alreadyStored_.isValid() &&
+        HashComparator{}(expr, alreadyStored_->expr_)) {
+        std::string var = alreadyStored_->var_;
+        std::vector<Expr> indices = alreadyStored_->indices_;
+        auto dtype = symbolTable_.buffer(var)->tensor()->dtype();
+        if (intermediatesMap_.count(symbolTable_.def(var)->id()) &&
+            versions_.count(parent_->id())) {
+            auto savedVar = intermediatesMap_.at(symbolTable_.def(var)->id());
+            if (savedVar != var) {
+                var = savedVar;
+                indices.insert(indices.begin(),
+                               versions_.at(alreadyStored_->id()));
+            }
         }
+        return makeLoad(var, std::move(indices), dtype); // No recursion
     }
-    return equLoad;
+    return Mutator::visitExpr(expr);
 }
 
 Expr ReplaceBySaved::visit(const Load &_op) {
@@ -259,8 +262,9 @@ Expr ReplaceLoadAtVersion::visit(const LoadAtVersion &_op) {
     }
 }
 
-ReplaceBySaved Grad::getReplacer(const Stmt &stmt) const {
-    return {*this, intermediatesMap_, versions_, stmt};
+ReplaceBySaved Grad::getReplacer(const Stmt &stmt,
+                                 const Store &alreadyStored) const {
+    return {*this, intermediatesMap_, versions_, stmt, alreadyStored};
 }
 
 Stmt Grad::doVisitStmt(const Stmt &s) {
@@ -402,10 +406,10 @@ Stmt Grad::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     auto replaceBySaved = getReplacer(op);
     if (isRecompute_) {
-        op->begin_ = replaceBySaved(op->begin_);
-        op->end_ = replaceBySaved(op->end_);
-        op->step_ = replaceBySaved(op->step_);
-        op->len_ = replaceBySaved(op->len_);
+        op->begin_ = replaceBySaved.recomp(op->begin_);
+        op->end_ = replaceBySaved.recomp(op->end_);
+        op->step_ = replaceBySaved.recomp(op->step_);
+        op->len_ = replaceBySaved.recomp(op->len_);
     } else {
         auto noDeps = op->property_->noDeps_;
         for (auto &&fwdVar : op->property_->noDeps_) {
@@ -413,12 +417,12 @@ Stmt Grad::visit(const For &_op) {
                 noDeps.emplace_back(fwdVar + ".grad");
             }
         }
-        auto begin = replaceBySaved(
+        auto begin = replaceBySaved.grad(
             makeAdd(op->begin_,
                     makeMul(op->step_, makeSub(op->len_, makeIntConst(1)))));
-        auto end = replaceBySaved(makeSub(op->begin_, op->step_));
-        auto step = replaceBySaved(makeSub(makeIntConst(0), op->step_));
-        auto len = replaceBySaved(op->len_);
+        auto end = replaceBySaved.grad(makeSub(op->begin_, op->step_));
+        auto step = replaceBySaved.grad(makeSub(makeIntConst(0), op->step_));
+        auto len = replaceBySaved.grad(op->len_);
 
         op->property_->noDeps_ = std::move(noDeps);
         op->begin_ = std::move(begin);
@@ -436,8 +440,10 @@ Stmt Grad::visit(const If &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::If);
     auto op = __op.as<IfNode>();
     auto replaceBySaved = getReplacer(op);
-    op->cond_ = replaceBySaved(op->cond_);
-    if (!isRecompute_) {
+    if (isRecompute_) {
+        op->cond_ = replaceBySaved.recomp(op->cond_);
+    } else {
+        op->cond_ = replaceBySaved.grad(op->cond_);
         op->metadata() = makeMetadata("grad", op);
         op->setId();
     }
@@ -449,8 +455,10 @@ Stmt Grad::visit(const Assert &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Assert);
     auto op = __op.as<AssertNode>();
     auto replaceBySaved = getReplacer(op);
-    op->cond_ = replaceBySaved(op->cond_);
-    if (!isRecompute_) {
+    if (isRecompute_) {
+        op->cond_ = replaceBySaved.recomp(op->cond_);
+    } else {
+        op->cond_ = replaceBySaved.grad(op->cond_);
         op->metadata() = makeMetadata("grad", op);
         op->setId();
     }
@@ -556,13 +564,13 @@ Stmt Grad::visit(const VarDef &_op) {
 
 Stmt Grad::visit(const Store &op) {
     auto &&b = buffer(op->var_);
-    auto replaceBySaved = getReplacer(op);
+    auto replaceBySaved = getReplacer(op, op);
     if (isRecompute_) {
         bool recomputed =
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
         if (!recomputed && !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
-            return replaceBySaved(op);
+            return replaceBySaved.recomp(op);
         } else {
             return makeStmtSeq({});
         }
@@ -582,8 +590,7 @@ Stmt Grad::visit(const Store &op) {
                 // Quick path for acyclic assignment
                 GradExpr exprVisitor(
                     replaceBySaved, gradNames_, op->expr_,
-                    makeLoad(grad, indices, b->tensor()->dtype()),
-                    makeLoad(op->var_, indices, b->tensor()->dtype()));
+                    makeLoad(grad, indices, b->tensor()->dtype()));
                 exprVisitor(op->expr_);
 
                 for (auto &&stmt : exprVisitor.appends()) {
@@ -610,8 +617,7 @@ Stmt Grad::visit(const Store &op) {
 
                 GradExpr exprVisitor(
                     replaceBySaved, gradNames_, op->expr_,
-                    makeLoad(oldGrad, {}, b->tensor()->dtype()),
-                    makeLoad(op->var_, indices, b->tensor()->dtype()));
+                    makeLoad(oldGrad, {}, b->tensor()->dtype()));
                 exprVisitor(op->expr_);
 
                 for (auto &&stmt : exprVisitor.appends()) {
@@ -639,7 +645,7 @@ Stmt Grad::visit(const ReduceTo &op) {
         if (!recomputed && b->atype() == AccessType::Cache &&
             !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
-            return replaceBySaved(op);
+            return replaceBySaved.recomp(op);
         } else {
             return makeStmtSeq({});
         }
@@ -678,9 +684,20 @@ Stmt Grad::visit(const ReduceTo &op) {
                     ASSERT(stmt->nodeType() == ASTNodeType::ReduceTo);
                     auto &&oldReduceGrad = stmt.as<ReduceToNode>();
                     ASSERT(oldReduceGrad->op_ == ReduceOp::Add);
-                    auto xi = replaceBySaved(op->expr_);
-                    auto y = replaceBySaved(
-                        makeLoad(op->var_, indices, b->tensor()->dtype()));
+                    auto xi = replaceBySaved.grad(op->expr_);
+                    // We need to pretend as if we are re-loading the final
+                    // value of `y` from a `Store` node. So `ReplaceBySaved` can
+                    // recognize it to use the `Store` versions, not `Load`
+                    // versions
+                    auto fakeFinalYVal = makeIntrinsic(
+                        "fake_final_y_val", {}, b->tensor()->dtype(), false);
+                    auto fakeFinalYStore =
+                        makeStore(op->var_, indices, fakeFinalYVal,
+                                  op->metadata(), op->id())
+                            .as<StoreNode>();
+                    auto y = ReplaceBySaved{*this, intermediatesMap_, versions_,
+                                            op, fakeFinalYStore}
+                                 .grad(fakeFinalYVal);
                     // dz/dx[i] += x[i] == y ? dz/dy : 0
                     auto dxi = makeReduceTo(
                         oldReduceGrad->var_, oldReduceGrad->indices_,

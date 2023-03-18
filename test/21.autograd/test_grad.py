@@ -371,6 +371,41 @@ def test_reduce_min_quick_path():
     assert std.match(ast)
 
 
+def test_reduce_min_quick_path_taped():
+    with ft.VarDef([("x", (2, 4), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = 0
+        with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
+            with ft.For("p", 0, 2) as p:
+                t[()] = float("inf")
+                with ft.For("i", 0, 4) as i:
+                    t[()] = ft.min(t[()], x[p, i])
+                y[()] += t[()]
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ft.GradTapeMode.All)
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (2, 4), "float32", "input", "cpu"),
+                    ("d_x", (2, 4), "float32", "output", "cpu"),
+                    ("d_y", (), "float32", "inout", "cpu"),
+                    ("t_tape", (2,), "float32", "input", "cpu")
+                   ]) as (x, d_x, d_y, t_tape):
+        with ft.VarDef("d_t", (), "float32", "cache", "cpu") as d_t:
+            with ft.For("p", 1, -1, -1) as p:
+                d_t[()] = d_y[()]
+                # We need to load a proper versino of `t`
+                with ft.For("i", 3, -1, -1) as i:
+                    d_x[p, i] = ft.if_then_else(x[p, i] == t_tape[p], d_t[()],
+                                                0)
+                    d_t[()] = ft.if_then_else(x[p, i] == t_tape[p], 0, d_t[()])
+            d_t[()] = 0
+        d_y[()] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_no_use_forward_value_in_reduce_sum_quick_path():
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
