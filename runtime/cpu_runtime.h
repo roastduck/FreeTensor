@@ -22,19 +22,25 @@
 #define restrict __restrict__
 #define __ByValArray std::array
 
-inline auto floorDiv(std::integral auto a, std::integral auto b) {
+template <typename T>
+concept IntegralExceptBool = requires {
+                                 requires std::integral<T>;
+                                 requires !std::same_as<T, bool>;
+                             };
+
+inline auto floorDiv(IntegralExceptBool auto a, IntegralExceptBool auto b) {
     auto res = a / b;
     auto rem = a % b;
     return res - (rem != 0 && ((rem < 0) != (b < 0)));
 }
 
-inline auto ceilDiv(std::integral auto a, std::integral auto b) {
+inline auto ceilDiv(IntegralExceptBool auto a, IntegralExceptBool auto b) {
     auto res = a / b;
     auto rem = a % b;
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
 
-inline auto runtime_mod(std::integral auto a, std::integral auto b) {
+inline auto runtime_mod(IntegralExceptBool auto a, IntegralExceptBool auto b) {
     auto m = a % b;
     if (m < 0) {
         // m += (b < 0) ? -b : b; // avoid this form: it is UB when b == INT_MIN
