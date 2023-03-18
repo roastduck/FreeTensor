@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Clang Format
-      uses: RafikFarhad/clang-format-github-action@v2.0.0
+      uses: RafikFarhad/clang-format-github-action@v3
       with:
         sources: include/**/*.h,runtime/**/*.h,runtime/**/*.cc,src/**/*.h,src/**/*.cc,ffi/**/*.h,ffi/**/*.cc
         style: file
