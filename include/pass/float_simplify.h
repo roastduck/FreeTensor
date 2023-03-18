@@ -31,6 +31,7 @@ class FloatSimplify : public SymbolTable<ConstFold> {
 
   protected:
     using BaseClass::visit;
+    Expr visitExpr(const Expr &expr) override;
     Expr visit(const Add &op) override;
     Expr visit(const Sub &op) override;
     Expr visit(const Mul &op) override;
