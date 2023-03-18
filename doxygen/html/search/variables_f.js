@@ -15,5 +15,6 @@ var searchData=
   ['rettype_5f_12',['retType_',['../classfreetensor_1_1IntrinsicNode.html#aabdf2f79d915080781d4d4dfa53fa720',1,'freetensor::IntrinsicNode']]],
   ['returnclosure_5f_13',['returnClosure_',['../structfreetensor_1_1FuncRet.html#a7fbbcc654f0d8b28041d3cbd46dca838',1,'freetensor::FuncRet']]],
   ['returns_5f_14',['returns_',['../classfreetensor_1_1FuncNode.html#ad79b48ec957b8fbebce7c13725d2fc16',1,'freetensor::FuncNode']]],
-  ['rhs_5f_15',['rhs_',['../classfreetensor_1_1BinaryExprNode.html#ae87839d910b0d33dd0c7760ac14dc28a',1,'freetensor::BinaryExprNode']]]
+  ['rhs_15',['rhs',['../namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005',1,'freetensor']]],
+  ['rhs_5f_16',['rhs_',['../classfreetensor_1_1BinaryExprNode.html#ae87839d910b0d33dd0c7760ac14dc28a',1,'freetensor::BinaryExprNode']]]
 ];

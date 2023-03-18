@@ -68,7 +68,9 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#namespaces">Namespaces</a> &#124;
-<a href="#define-members">Macros</a>  </div>
+<a href="#define-members">Macros</a> &#124;
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">const_fold.cc File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -141,10 +143,22 @@ Namespaces</h2></td></tr>
 Macros</h2></td></tr>
 <tr class="memitem:a169a61eec76ca69ef606c61e5962f864"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="const__fold_8cc.html#a169a61eec76ca69ef606c61e5962f864">BINARY_OP</a>(OPNAME,  OP)</td></tr>
 <tr class="separator:a169a61eec76ca69ef606c61e5962f864"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a8a6725c3c4eb336ba7b160fcc5d987"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="const__fold_8cc.html#a3a8a6725c3c4eb336ba7b160fcc5d987">BINARY_OP_F</a>(OPNAME,  OP_F,  OP_TYPE_HINT)</td></tr>
-<tr class="separator:a3a8a6725c3c4eb336ba7b160fcc5d987"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88b837a7e3c193dc7948d0248cd1ebf8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="const__fold_8cc.html#a88b837a7e3c193dc7948d0248cd1ebf8">BINARY_OP_F</a>(OPNAME,  OP_F)</td></tr>
+<tr class="separator:a88b837a7e3c193dc7948d0248cd1ebf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a84ac34a689def2b6a8cdb7804aeb8be9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="const__fold_8cc.html#a84ac34a689def2b6a8cdb7804aeb8be9">UNARY_OP</a>(OPNAME,  OP)</td></tr>
 <tr class="separator:a84ac34a689def2b6a8cdb7804aeb8be9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a4f6bb11131f2a45854676dc14ca7eed9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4f6bb11131f2a45854676dc14ca7eed9">freetensor::BINARY_OP_F</a> (Min, [](auto &amp;&amp;lhs, auto &amp;&amp;rhs) { typedef decltype(lhs+rhs) V;return std::min&lt; V &gt;(lhs, rhs);}) BINARY_OP_F(Max</td></tr>
+<tr class="separator:a4f6bb11131f2a45854676dc14ca7eed9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a192b70d1972bcd73d5ff58f30fad21a2"><td class="memItemLeft" align="right" valign="top">auto &amp;&amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a192b70d1972bcd73d5ff58f30fad21a2">freetensor::lhs</a></td></tr>
+<tr class="separator:a192b70d1972bcd73d5ff58f30fad21a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab90fc5289b6bee7e0a9b9c204290e005"><td class="memItemLeft" align="right" valign="top">auto auto &amp;&amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005">freetensor::rhs</a></td></tr>
+<tr class="separator:ab90fc5289b6bee7e0a9b9c204290e005"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="a169a61eec76ca69ef606c61e5962f864" name="a169a61eec76ca69ef606c61e5962f864"></a>
@@ -174,25 +188,25 @@ Macros</h2></td></tr>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">    <span class="keyword">struct </span>op_f_##OPNAME {                                                     \</div>
 <div class="line">        template &lt;typename T, typename U&gt;                                      \</div>
-<div class="line">        auto operator()(<span class="keyword">const</span> T &amp;l, <span class="keyword">const</span> U &amp;r, <span class="keywordtype">int</span>) -&gt; <span class="keyword">decltype</span>(l OP r) {     \</div>
+<div class="line">            requires <span class="keyword">requires</span>(T l, U r) { l OP r; }                            \</div>
+<div class="line">        auto operator()(<span class="keyword">const</span> T &amp;l, <span class="keyword">const</span> U &amp;r) {                              \</div>
 <div class="line">            return l OP r;                                                     \</div>
 <div class="line">        }                                                                      \</div>
 <div class="line">        template &lt;typename T, typename U&gt;                                      \</div>
-<div class="line">        auto operator()(<span class="keyword">const</span> T &amp;l, <span class="keyword">const</span> U &amp;r, <span class="keywordtype">char</span>) -&gt; <span class="keyword">decltype</span>(l) {         \</div>
+<div class="line">        auto operator()(<span class="keyword">const</span> T &amp;l, <span class="keyword">const</span> U &amp;r) -&gt; <span class="keyword">decltype</span>(l) {               \</div>
 <div class="line">            ERROR(<span class="stringliteral">&quot;Invalid operator &quot;</span> #OPNAME <span class="stringliteral">&quot; on given types&quot;</span>);              \</div>
-<div class="line">            return l;                                                          \</div>
 <div class="line">        }                                                                      \</div>
 <div class="line">    };                                                                         \</div>
 <div class="line">    Expr ConstFold::visit(<span class="keyword">const</span> OPNAME &amp;op) {                                  \</div>
 <div class="line">        return visitBinary(                                                    \</div>
-<div class="line">            op, [](<span class="keyword">auto</span> l, <span class="keyword">auto</span> r) { <span class="keywordflow">return</span> op_f_##OPNAME()(l, r, 0); },       \</div>
+<div class="line">            op, [](<span class="keyword">auto</span> l, <span class="keyword">auto</span> r) { <span class="keywordflow">return</span> op_f_##OPNAME()(l, r); },          \</div>
 <div class="line">            [](<span class="keyword">auto</span> l, <span class="keyword">auto</span> r) { <span class="keywordflow">return</span> make##OPNAME(l, r); });                \</div>
 <div class="line">    }</div>
 </div><!-- fragment -->
 </div>
 </div>
-<a id="a3a8a6725c3c4eb336ba7b160fcc5d987" name="a3a8a6725c3c4eb336ba7b160fcc5d987"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3a8a6725c3c4eb336ba7b160fcc5d987">&#9670;&nbsp;</a></span>BINARY_OP_F</h2>
+<a id="a88b837a7e3c193dc7948d0248cd1ebf8" name="a88b837a7e3c193dc7948d0248cd1ebf8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a88b837a7e3c193dc7948d0248cd1ebf8">&#9670;&nbsp;</a></span>BINARY_OP_F</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -207,13 +221,7 @@ Macros</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">OP_F, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">OP_TYPE_HINT&#160;</td>
+          <td class="paramname">OP_F&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -224,20 +232,18 @@ Macros</h2></td></tr>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">    <span class="keyword">struct </span>op_f_##OPNAME {                                                     \</div>
 <div class="line">        template &lt;typename T, typename U&gt;                                      \</div>
-<div class="line">        auto operator()(<span class="keyword">const</span> T &amp;l, <span class="keyword">const</span> U &amp;r, <span class="keywordtype">int</span>)                           \</div>
-<div class="line">            -&gt; <span class="keyword">decltype</span>(l OP_TYPE_HINT r) {                                    \</div>
-<div class="line">            typedef <span class="keyword">decltype</span>(l OP_TYPE_HINT r) V;                              \</div>
-<div class="line">            return (OP_F)((V)l, (V)r);                                         \</div>
+<div class="line">            requires <span class="keyword">requires</span>(T l, U r) { (OP_F)(l, r); }                      \</div>
+<div class="line">        auto operator()(<span class="keyword">const</span> T &amp;l, <span class="keyword">const</span> U &amp;r) {                              \</div>
+<div class="line">            return (OP_F)(l, r);                                               \</div>
 <div class="line">        }                                                                      \</div>
 <div class="line">        template &lt;typename T, typename U&gt;                                      \</div>
-<div class="line">        auto operator()(<span class="keyword">const</span> T &amp;l, <span class="keyword">const</span> U &amp;r, <span class="keywordtype">char</span>) -&gt; <span class="keyword">decltype</span>(l) {         \</div>
+<div class="line">        auto operator()(<span class="keyword">const</span> T &amp;l, <span class="keyword">const</span> U &amp;r) -&gt; <span class="keyword">decltype</span>(l) {               \</div>
 <div class="line">            ERROR(<span class="stringliteral">&quot;Invalid operator &quot;</span> #OPNAME <span class="stringliteral">&quot; on given types&quot;</span>);              \</div>
-<div class="line">            return l;                                                          \</div>
 <div class="line">        }                                                                      \</div>
 <div class="line">    };                                                                         \</div>
 <div class="line">    Expr ConstFold::visit(<span class="keyword">const</span> OPNAME &amp;op) {                                  \</div>
 <div class="line">        return visitBinary(                                                    \</div>
-<div class="line">            op, [](<span class="keyword">auto</span> l, <span class="keyword">auto</span> r) { <span class="keywordflow">return</span> op_f_##OPNAME()(l, r, 0); },       \</div>
+<div class="line">            op, [](<span class="keyword">auto</span> l, <span class="keyword">auto</span> r) { <span class="keywordflow">return</span> op_f_##OPNAME()(l, r); },          \</div>
 <div class="line">            [](<span class="keyword">auto</span> l, <span class="keyword">auto</span> r) { <span class="keywordflow">return</span> make##OPNAME(l, r); });                \</div>
 <div class="line">    }</div>
 </div><!-- fragment -->
@@ -270,18 +276,17 @@ Macros</h2></td></tr>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">    <span class="keyword">struct </span>op_f_##OPNAME {                                                     \</div>
 <div class="line">        template &lt;typename T&gt;                                                  \</div>
-<div class="line">        auto operator()(<span class="keyword">const</span> T &amp;t, <span class="keywordtype">int</span>) -&gt; <span class="keyword">decltype</span>(OP(t)) {                  \</div>
+<div class="line">            requires <span class="keyword">requires</span>(T t) { OP(t); }                                  \</div>
+<div class="line">        auto operator()(<span class="keyword">const</span> T &amp;t) {                                          \</div>
 <div class="line">            return OP(t);                                                      \</div>
 <div class="line">        }                                                                      \</div>
-<div class="line">        template &lt;typename T&gt;                                                  \</div>
-<div class="line">        auto operator()(<span class="keyword">const</span> T &amp;t, <span class="keywordtype">char</span>) -&gt; <span class="keyword">decltype</span>(t) {                     \</div>
+<div class="line">        template &lt;typename T&gt; <span class="keyword">auto</span> operator()(<span class="keyword">const</span> T &amp;t) -&gt; <span class="keyword">decltype</span>(t) {     \</div>
 <div class="line">            ERROR(<span class="stringliteral">&quot;Invalid operator &quot;</span> #OPNAME <span class="stringliteral">&quot; on given types&quot;</span>);              \</div>
-<div class="line">            return t;                                                          \</div>
 <div class="line">        }                                                                      \</div>
 <div class="line">    };                                                                         \</div>
 <div class="line">    Expr ConstFold::visit(<span class="keyword">const</span> OPNAME &amp;op) {                                  \</div>
 <div class="line">        return visitUnary(                                                     \</div>
-<div class="line">            op, [](<span class="keyword">auto</span> x) { <span class="keywordflow">return</span> op_f_##OPNAME()(x, 0); },                  \</div>
+<div class="line">            op, [](<span class="keyword">auto</span> x) { <span class="keywordflow">return</span> op_f_##OPNAME()(x); },                     \</div>
 <div class="line">            [](<span class="keyword">auto</span> x) { <span class="keywordflow">return</span> make##OPNAME(x); });                           \</div>
 <div class="line">    }</div>
 </div><!-- fragment -->
