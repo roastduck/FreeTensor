@@ -5,9 +5,10 @@
 #include <unordered_set>
 
 #include <analyze/symbol_table.h>
+#include <autograd/derivative.h>
+#include <autograd/replace_by_saved.h>
 #include <autograd/user_grad.h>
 #include <func.h>
-#include <hash.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -81,59 +82,6 @@ class PropagateProvides : public SymbolTable<Visitor> {
     void visit(const VarDef &op) override;
 };
 
-/**
- * Instead of directly using the variables from the original program, use taped
- * or recomputed variables as replacements
- *
- * (For gradient and recomputation) For each Load node, if it has a taped or
- * recomputed counterpart, replace it with new Load node that loads the taped or
- * recomputed version. In this case, versions of the Load node is used
- *
- * (Only for gradient only) For each sub-expression that matches
- * `alreadyStored`, it is re-loaded without computation. If the stored variable
- * has a taped or recomputed counterpart, also replace it. In this case,
- * versions of the Store node is used, which is one version later than that of a
- * Load node. This is for gradient only, or otherwise we will "re"-load what we
- * have not even computed
- */
-class ReplaceBySaved : public Mutator {
-    const SymbolTableInterface &symbolTable_;
-    const std::unordered_map<ID, std::string> &intermediatesMap_;
-    const std::unordered_map<StmtOrExprID, Expr> &versions_;
-    Stmt parent_;
-    Store alreadyStored_;
-    bool isGrad_ = false;
-
-  public:
-    ReplaceBySaved(const SymbolTableInterface &symbolTable,
-                   const std::unordered_map<ID, std::string> &intermediatesMap,
-                   const std::unordered_map<StmtOrExprID, Expr> &versions,
-                   const Stmt &parent, const Store alreadyStored_ = nullptr)
-        : symbolTable_(symbolTable), intermediatesMap_(intermediatesMap),
-          versions_(versions), parent_(parent), alreadyStored_(alreadyStored_) {
-    }
-
-    // Replace recomputing expressions
-    auto recomp(const auto &op) {
-        isGrad_ = false;
-        return (*this)(op);
-    }
-
-    // Replace gradient expressions
-    auto grad(const auto &op) {
-        isGrad_ = true;
-        return (*this)(op);
-    }
-
-  private:
-    // Disabled. Use `ReplcaeBySaved::recomp` or `RepalceBySaved::grad` instaed
-    using Mutator::operator();
-
-  protected:
-    Expr visitExpr(const Expr &expr) override;
-    Expr visit(const Load &op) override;
-};
-
 class ReplaceLoadAtVersion : public Mutator {
     const SymbolTableInterface &symbolTable_;
     const std::unordered_map<ID, std::string> &intermediatesMap_;
@@ -153,46 +101,6 @@ class ReplaceLoadAtVersion : public Mutator {
     Expr visit(const LoadAtVersion &op) override;
 };
 
-class GradExpr : public Visitor {
-    const std::unordered_map<std::string, std::string>
-        &gradNames_;                           // x -> dy/dx
-    std::unordered_map<Expr, Expr> gradExprs_; // x -> dy/dx
-    const Expr &root_;
-    ReplaceBySaved &replaceByTape_;
-    std::vector<Stmt> appends_;
-
-  public:
-    GradExpr(ReplaceBySaved &replaceByTape,
-             const std::unordered_map<std::string, std::string> &gradNames,
-             const Expr &root, const Expr &grad)
-        : gradNames_(gradNames), root_(root), replaceByTape_(replaceByTape) {
-        gradExprs_[root] = grad;
-    }
-
-    const std::vector<Stmt> &appends() const { return appends_; }
-
-  private:
-    Expr useForwardVal(const Expr &op) { return replaceByTape_.grad(op); }
-
-  protected:
-    void visit(const Load &op) override;
-    void visit(const Add &op) override;
-    void visit(const Sub &op) override;
-    void visit(const Mul &op) override;
-    void visit(const RealDiv &op) override;
-    void visit(const Min &op) override;
-    void visit(const Max &op) override;
-    void visit(const IfExpr &op) override;
-    void visit(const Sqrt &op) override;
-    void visit(const Exp &op) override;
-    void visit(const Ln &op) override;
-    void visit(const Square &op) override;
-    void visit(const Sigmoid &op) override;
-    void visit(const Tanh &op) override;
-    void visit(const Abs &op) override;
-    void visit(const Intrinsic &op) override;
-};
-
 template <class BaseClass> class RenewIDs : public BaseClass {
   protected:
     Stmt visitStmt(const Stmt &s) override {
@@ -208,6 +116,8 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
     // even for recomputation
     typedef RenewIDs<SymbolTable<Mutator>> BaseClass;
 
+    std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
+        &derivatives_; // Mutable for lazy operations
     const std::unordered_set<std::string> &requires_;
     const std::unordered_set<std::string> &provides_;
     const std::unordered_set<ID> &tapes_;
@@ -251,7 +161,9 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
     Stmt doVisitStmt(const Stmt &s);
 
   public:
-    Grad(const std::unordered_set<std::string> &_requires,
+    Grad(std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
+             &derivatives,
+         const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
          const std::unordered_set<ID> &tapes,
          const std::unordered_set<ID> &affectedDefs,
@@ -263,9 +175,10 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
          const std::unordered_set<ID> &saveLocalStmts,
          const std::unordered_set<Stmt> &notSingleWrite,
          const std::vector<RangeToUserGrad> &userGrads)
-        : requires_(_requires), provides_(provides), tapes_(tapes),
-          affectedDefs_(affectedDefs), intermediatesMap_(intermediatesMap),
-          versions_(versions), userVersions_(userVersions), totLens_(totLens),
+        : derivatives_(derivatives), requires_(_requires), provides_(provides),
+          tapes_(tapes), affectedDefs_(affectedDefs),
+          intermediatesMap_(intermediatesMap), versions_(versions),
+          userVersions_(userVersions), totLens_(totLens),
           saveLocalStmts_(saveLocalStmts), notSingleWrite_(notSingleWrite),
           userGrads_(userGrads) {}
 

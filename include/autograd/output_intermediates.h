@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <analyze/symbol_table.h>
+#include <autograd/derivative.h>
 #include <mutator.h>
 
 namespace freetensor {
@@ -92,6 +93,8 @@ class OutputIntermediates : public SymbolTable<Mutator> {
  *
  * @params op : The program
  * @params intermediates : VarDef IDs of the intermediate variables
+ * @param derivatives : Lazy derivative generators for each statement. We need
+ * this information to determine which values are to be used in gradients
  * @params stage : If transforming the forward pass to save all versions of the
  * intermediates as `AccessType::Output` variables (i.e. tapes), set this to
  * `Forward`. If transforming the backward pass to save all versions of the
@@ -115,6 +118,8 @@ std::tuple<Stmt, std::unordered_map<ID, std::string>,
            std::unordered_map<std::string, std::pair<std::string, Expr>>>
 outputIntermediates(
     const Stmt &op, const std::unordered_set<ID> &intermediates,
+    const std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
+        &derivatives,
     OutputIntermediatesStage stage = OutputIntermediatesStage::Forward,
     const std::string &varSuffix = ".tape");
 

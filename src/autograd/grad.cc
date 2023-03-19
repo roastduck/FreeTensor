@@ -202,42 +202,6 @@ std::unordered_set<ID> PropagateProvides::propagateUntilConverge(
     return propagator.affectedDefs();
 }
 
-Expr ReplaceBySaved::visitExpr(const Expr &expr) {
-    if (isGrad_ && alreadyStored_.isValid() &&
-        HashComparator{}(expr, alreadyStored_->expr_)) {
-        std::string var = alreadyStored_->var_;
-        std::vector<Expr> indices = alreadyStored_->indices_;
-        auto dtype = symbolTable_.buffer(var)->tensor()->dtype();
-        if (intermediatesMap_.count(symbolTable_.def(var)->id()) &&
-            versions_.count(parent_->id())) {
-            auto savedVar = intermediatesMap_.at(symbolTable_.def(var)->id());
-            if (savedVar != var) {
-                var = savedVar;
-                indices.insert(indices.begin(),
-                               versions_.at(alreadyStored_->id()));
-            }
-        }
-        return makeLoad(var, std::move(indices), dtype); // No recursion
-    }
-    return Mutator::visitExpr(expr);
-}
-
-Expr ReplaceBySaved::visit(const Load &_op) {
-    auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Load);
-    auto op = __op.as<LoadNode>();
-    if (intermediatesMap_.count(symbolTable_.def(_op->var_)->id()) &&
-        versions_.count(StmtOrExprID(_op, parent_))) {
-        auto savedVar = intermediatesMap_.at(symbolTable_.def(_op->var_)->id());
-        if (savedVar != op->var_) {
-            op->var_ = savedVar;
-            op->indices_.insert(op->indices_.begin(),
-                                versions_.at(StmtOrExprID(_op, parent_)));
-        }
-    }
-    return op;
-}
-
 Expr ReplaceLoadAtVersion::visit(const LoadAtVersion &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LoadAtVersion);
@@ -264,7 +228,7 @@ Expr ReplaceLoadAtVersion::visit(const LoadAtVersion &_op) {
 
 ReplaceBySaved Grad::getReplacer(const Stmt &stmt,
                                  const Store &alreadyStored) const {
-    return {*this, intermediatesMap_, versions_, stmt, alreadyStored};
+    return {*this, intermediatesMap_, versions_, stmt->id(), alreadyStored};
 }
 
 Stmt Grad::doVisitStmt(const Stmt &s) {
@@ -588,14 +552,14 @@ Stmt Grad::visit(const Store &op) {
             auto &&indices = op->indices_;
             if (!allReads(op->expr_).count(op->var_)) {
                 // Quick path for acyclic assignment
-                GradExpr exprVisitor(
-                    replaceBySaved, gradNames_, op->expr_,
-                    makeLoad(grad, indices, b->tensor()->dtype()));
-                exprVisitor(op->expr_);
-
-                for (auto &&stmt : exprVisitor.appends()) {
-                    stmt->metadata() = newMetadata;
-                    stmts.emplace_back(stmt);
+                if (auto it = derivatives_.find(StmtOrExprID{op->expr_, op});
+                    it != derivatives_.end()) {
+                    for (auto &&stmt : it->second.genGrads(
+                             intermediatesMap_, versions_, gradNames_,
+                             makeLoad(grad, indices, b->tensor()->dtype()))) {
+                        stmt->metadata() = newMetadata;
+                        stmts.emplace_back(stmt);
+                    }
                 }
                 if (notSingleWrite_.count(op)) {
                     stmts.emplace_back(
@@ -615,14 +579,14 @@ Stmt Grad::visit(const Store &op) {
                 stmts.emplace_back(
                     makeStore(grad, indices, makeIntConst(0), newMetadata));
 
-                GradExpr exprVisitor(
-                    replaceBySaved, gradNames_, op->expr_,
-                    makeLoad(oldGrad, {}, b->tensor()->dtype()));
-                exprVisitor(op->expr_);
-
-                for (auto &&stmt : exprVisitor.appends()) {
-                    stmt->metadata() = newMetadata;
-                    stmts.emplace_back(stmt);
+                if (auto it = derivatives_.find(StmtOrExprID{op->expr_, op});
+                    it != derivatives_.end()) {
+                    for (auto &&stmt : it->second.genGrads(
+                             intermediatesMap_, versions_, gradNames_,
+                             makeLoad(oldGrad, {}, b->tensor()->dtype()))) {
+                        stmt->metadata() = newMetadata;
+                        stmts.emplace_back(stmt);
+                    }
                 }
                 return makeVarDef(
                     oldGrad,
@@ -661,60 +625,64 @@ Stmt Grad::visit(const ReduceTo &op) {
                             // pass/make_reduction
             switch (op->op_) {
             case ReduceOp::Add: {
-                GradExpr exprVisitor(
-                    replaceBySaved, gradNames_, op->expr_,
-                    makeLoad(grad, indices, b->tensor()->dtype()));
-                exprVisitor(op->expr_);
                 std::vector<Stmt> stmts;
-                for (auto &&stmt : exprVisitor.appends()) {
-                    stmt->metadata() = newMetadata;
-                    stmts.emplace_back(stmt);
+                if (auto it = derivatives_.find(StmtOrExprID{op->expr_, op});
+                    it != derivatives_.end()) {
+                    for (auto &&stmt : it->second.genGrads(
+                             intermediatesMap_, versions_, gradNames_,
+                             makeLoad(grad, indices, b->tensor()->dtype()))) {
+                        stmt->metadata() = newMetadata;
+                        stmts.emplace_back(stmt);
+                    }
+                    return makeStmtSeq(std::move(stmts));
                 }
-                return makeStmtSeq(std::move(stmts));
             }
 
             case ReduceOp::Min:
             case ReduceOp::Max: {
-                GradExpr exprVisitor(
-                    replaceBySaved, gradNames_, op->expr_,
-                    makeLoad(grad, indices, b->tensor()->dtype()));
-                exprVisitor(op->expr_);
                 std::vector<Stmt> stmts;
-                for (auto &&stmt : exprVisitor.appends()) {
-                    ASSERT(stmt->nodeType() == ASTNodeType::ReduceTo);
-                    auto &&oldReduceGrad = stmt.as<ReduceToNode>();
-                    ASSERT(oldReduceGrad->op_ == ReduceOp::Add);
-                    auto xi = replaceBySaved.grad(op->expr_);
-                    // We need to pretend as if we are re-loading the final
-                    // value of `y` from a `Store` node. So `ReplaceBySaved` can
-                    // recognize it to use the `Store` versions, not `Load`
-                    // versions
-                    auto fakeFinalYVal = makeIntrinsic(
-                        "fake_final_y_val", {}, b->tensor()->dtype(), false);
-                    auto fakeFinalYStore =
-                        makeStore(op->var_, indices, fakeFinalYVal,
-                                  op->metadata(), op->id())
-                            .as<StoreNode>();
-                    auto y = ReplaceBySaved{*this, intermediatesMap_, versions_,
-                                            op, fakeFinalYStore}
-                                 .grad(fakeFinalYVal);
-                    // dz/dx[i] += x[i] == y ? dz/dy : 0
-                    auto dxi = makeReduceTo(
-                        oldReduceGrad->var_, oldReduceGrad->indices_,
-                        ReduceOp::Add,
-                        makeIfExpr(makeEQ(xi, y), oldReduceGrad->expr_,
-                                   makeIntConst(0)),
-                        false, oldReduceGrad->metadata());
-                    // dz/dy = x[i] == y ? 0 : dz/dy (Reset dz/dy to 0 after
-                    // use)
-                    auto dy =
-                        makeStore(grad, indices,
-                                  makeIfExpr(makeEQ(xi, y), makeIntConst(0),
-                                             makeLoad(grad, indices,
-                                                      b->tensor()->dtype())));
-                    auto newStmt = makeStmtSeq({dxi, dy});
-                    newStmt->metadata() = newMetadata;
-                    stmts.emplace_back(newStmt);
+                if (auto it = derivatives_.find(StmtOrExprID{op->expr_, op});
+                    it != derivatives_.end()) {
+                    for (auto &&stmt : it->second.genGrads(
+                             intermediatesMap_, versions_, gradNames_,
+                             makeLoad(grad, indices, b->tensor()->dtype()))) {
+                        ASSERT(stmt->nodeType() == ASTNodeType::ReduceTo);
+                        auto &&oldReduceGrad = stmt.as<ReduceToNode>();
+                        ASSERT(oldReduceGrad->op_ == ReduceOp::Add);
+                        auto xi = replaceBySaved.grad(op->expr_);
+                        // We need to pretend as if we are re-loading the final
+                        // value of `y` from a `Store` node. So `ReplaceBySaved`
+                        // can recognize it to use the `Store` versions, not
+                        // `Load` versions
+                        auto fakeFinalYVal =
+                            makeIntrinsic("fake_final_y_val", {},
+                                          b->tensor()->dtype(), false);
+                        auto fakeFinalYStore =
+                            makeStore(op->var_, indices, fakeFinalYVal,
+                                      op->metadata(), op->id())
+                                .as<StoreNode>();
+                        auto y =
+                            ReplaceBySaved{*this, intermediatesMap_, versions_,
+                                           op->id(), fakeFinalYStore}
+                                .grad(fakeFinalYVal);
+                        // dz/dx[i] += x[i] == y ? dz/dy : 0
+                        auto dxi = makeReduceTo(
+                            oldReduceGrad->var_, oldReduceGrad->indices_,
+                            ReduceOp::Add,
+                            makeIfExpr(makeEQ(xi, y), oldReduceGrad->expr_,
+                                       makeIntConst(0)),
+                            false, oldReduceGrad->metadata());
+                        // dz/dy = x[i] == y ? 0 : dz/dy (Reset dz/dy to 0 after
+                        // use)
+                        auto dy = makeStore(
+                            grad, indices,
+                            makeIfExpr(
+                                makeEQ(xi, y), makeIntConst(0),
+                                makeLoad(grad, indices, b->tensor()->dtype())));
+                        auto newStmt = makeStmtSeq({dxi, dy});
+                        newStmt->metadata() = newMetadata;
+                        stmts.emplace_back(newStmt);
+                    }
                 }
                 return makeStmtSeq(std::move(stmts));
             }
@@ -733,155 +701,6 @@ Stmt Grad::visit(const ReduceTo &op) {
             return makeStmtSeq({});
         }
     }
-}
-
-void GradExpr::visit(const Load &op) {
-    Visitor::visit(op);
-    if (gradExprs_.count(op) && gradNames_.count(op->var_)) {
-        appends_.push_back(makeReduceTo(
-            gradNames_.at(op->var_),
-            ranges::to<std::vector>(op->indices_ |
-                                    views::transform([this](const auto &idx) {
-                                        return useForwardVal(idx);
-                                    })),
-            ReduceOp::Add, gradExprs_.at(op), false));
-    }
-}
-
-void GradExpr::visit(const Add &op) {
-    if (gradExprs_.count(op)) {
-        gradExprs_[op->lhs_] = gradExprs_[op->rhs_] = gradExprs_.at(op);
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const Sub &op) {
-    if (gradExprs_.count(op)) {
-        gradExprs_[op->lhs_] = gradExprs_.at(op);
-        gradExprs_[op->rhs_] = makeSub(makeIntConst(0), gradExprs_.at(op));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const Mul &op) {
-    if (gradExprs_.count(op)) {
-        gradExprs_[op->lhs_] =
-            makeMul(gradExprs_.at(op), useForwardVal(op->rhs_));
-        gradExprs_[op->rhs_] =
-            makeMul(gradExprs_.at(op), useForwardVal(op->lhs_));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const RealDiv &op) {
-    if (gradExprs_.count(op)) {
-        auto lhs = useForwardVal(op->lhs_);
-        auto rhs = useForwardVal(op->rhs_);
-        gradExprs_[op->lhs_] = makeRealDiv(gradExprs_.at(op), rhs);
-        gradExprs_[op->rhs_] = makeSub(
-            makeIntConst(0),
-            makeRealDiv(makeMul(gradExprs_.at(op), lhs), makeMul(rhs, rhs)));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const Min &op) {
-    if (gradExprs_.count(op)) {
-        auto lhs = useForwardVal(op->lhs_);
-        auto rhs = useForwardVal(op->rhs_);
-        gradExprs_[op->lhs_] =
-            makeIfExpr(makeLE(lhs, rhs), gradExprs_.at(op), makeIntConst(0));
-        gradExprs_[op->rhs_] =
-            makeIfExpr(makeLT(rhs, lhs), gradExprs_.at(op), makeIntConst(0));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const Max &op) {
-    if (gradExprs_.count(op)) {
-        auto lhs = useForwardVal(op->lhs_);
-        auto rhs = useForwardVal(op->rhs_);
-        gradExprs_[op->lhs_] =
-            makeIfExpr(makeGE(lhs, rhs), gradExprs_.at(op), makeIntConst(0));
-        gradExprs_[op->rhs_] =
-            makeIfExpr(makeGT(rhs, lhs), gradExprs_.at(op), makeIntConst(0));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const IfExpr &op) {
-    if (gradExprs_.count(op)) {
-        gradExprs_[op->thenCase_] =
-            makeIfExpr(op->cond_, gradExprs_.at(op), makeIntConst(0));
-        gradExprs_[op->elseCase_] =
-            makeIfExpr(makeLNot(op->cond_), gradExprs_.at(op), makeIntConst(0));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const Sqrt &op) {
-    if (gradExprs_.count(op)) {
-        gradExprs_[op->expr_] = makeRealDiv(
-            gradExprs_.at(op), makeMul(makeIntConst(2), useForwardVal(op)));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const Exp &op) {
-    if (gradExprs_.count(op)) {
-        gradExprs_[op->expr_] = makeMul(gradExprs_.at(op), useForwardVal(op));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const Ln &op) {
-    if (gradExprs_.count(op)) {
-        gradExprs_[op->expr_] =
-            makeRealDiv(gradExprs_.at(op), useForwardVal(op->expr_));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const Square &op) {
-    if (gradExprs_.count(op)) {
-        gradExprs_[op->expr_] =
-            makeMul(makeIntConst(2),
-                    makeMul(gradExprs_.at(op), useForwardVal(op->expr_)));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const Sigmoid &op) {
-    if (gradExprs_.count(op)) {
-        gradExprs_[op->expr_] =
-            makeMul(gradExprs_.at(op),
-                    makeMul(makeSub(makeIntConst(1), useForwardVal(op)),
-                            useForwardVal(op)));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const Tanh &op) {
-    if (gradExprs_.count(op)) {
-        gradExprs_[op->expr_] =
-            makeMul(gradExprs_.at(op),
-                    makeSub(makeIntConst(1), makeSquare(useForwardVal(op))));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const Abs &op) {
-    if (gradExprs_.count(op)) {
-        gradExprs_[op->expr_] = makeIfExpr(
-            makeGE(useForwardVal(op->expr_), makeIntConst(0)),
-            gradExprs_.at(op), makeSub(makeIntConst(0), gradExprs_.at(op)));
-    }
-    Visitor::visit(op);
-}
-
-void GradExpr::visit(const Intrinsic &op) {
-    throw InvalidAutoGrad("Please provide gradient of " + toString(op) +
-                          " explicitly by `UserGrad`");
 }
 
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
@@ -908,6 +727,10 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     // taped
     op = dedupTapeNames(op, tapes);
 
+    Derivative derivative;
+    derivative(op);
+    auto derivatives = derivative.derivatives();
+
     // Save all versions of intermediates variables. If the variables are set to
     // be in tapes, save it in an output tensor globally in the forward pass.
     // The saved tensor in this case is called tapes. If not, save it in an
@@ -916,15 +739,15 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     auto allIntermediates = allDefs(op, {AccessType::Cache});
     auto [forward, tapeMap, versionsGlobal, totLensGlobal, _,
           userVersionsGlobal] =
-        outputIntermediates(op, tapes, OutputIntermediatesStage::Forward,
-                            ".tape");
+        outputIntermediates(op, tapes, derivatives,
+                            OutputIntermediatesStage::Forward, ".tape");
     auto [backward, intermediatesMapLocal, versionsLocal, totLensLocal,
           saveLocalStmts, userVersionsLocal] =
         outputIntermediates(
             op,
             diff(ranges::to<std::unordered_set>(allIntermediates | views::keys),
                  tapes),
-            OutputIntermediatesStage::Backward, ".recomp");
+            derivatives, OutputIntermediatesStage::Backward, ".recomp");
     auto intermediatesMap = tapeMap;
     intermediatesMap.merge(std::move(intermediatesMapLocal));
     auto versions = std::move(versionsGlobal);
@@ -955,9 +778,9 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
                                           stmtSetToUserGrad.bwdBody_);
         }
     }
-    Grad mutator(_requires, provides, tapes, affectedDefs, intermediatesMap,
-                 versions, userVersions, totLens, saveLocalStmts,
-                 notSingleWrite, rangeToUserGrads);
+    Grad mutator(derivatives, _requires, provides, tapes, affectedDefs,
+                 intermediatesMap, versions, userVersions, totLens,
+                 saveLocalStmts, notSingleWrite, rangeToUserGrads);
     backward = mutator(backward);
 
     // A backward program may re-input the same taped variable multiple times.

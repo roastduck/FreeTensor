@@ -103,13 +103,17 @@ void init_ffi_autograd(py::module_ &m) {
         .value("Forward", OutputIntermediatesStage::Forward)
         .value("Backward", OutputIntermediatesStage::Backward);
 
-    // std::unordered_map<Load, Expr> cannot be exported to Python
+    // This FFI binding is only for testing, so it is incomplete
+    //
+    // - std::unordered_map<Load, Expr> cannot be exported to Python
+    // - The `derivatives` parameter is omitted, so the gradient of `y = f(x)`
+    // w.r.t. `y` will not be output unless y is used elsewhere
     m.def(
         "output_intermediates",
         [](const Stmt &op, const std::unordered_set<ID> &intermediates,
            OutputIntermediatesStage stage, const std::string &varSuffix) {
             return std::get<0>(
-                outputIntermediates(op, intermediates, stage, varSuffix));
+                outputIntermediates(op, intermediates, {}, stage, varSuffix));
         },
         "stmt"_a, "intermediates"_a,
         "stage"_a = OutputIntermediatesStage::Forward,

@@ -195,6 +195,8 @@ class StmtOrExprID {
     Expr expr_;
 
   public:
+    StmtOrExprID() {}
+
     StmtOrExprID(const ID &stmtId) : stmtId_(stmtId) {}
 
     StmtOrExprID(const Expr &expr, const ID &stmtId)
@@ -207,6 +209,8 @@ class StmtOrExprID {
 
     const ID &stmtId() const { return stmtId_; }
     const Expr &expr() const { return expr_; }
+
+    bool isValid() const { return stmtId_.isValid(); }
 
     friend std::ostream &operator<<(std::ostream &os, const StmtOrExprID &id);
     friend bool operator==(const StmtOrExprID &lhs, const StmtOrExprID &rhs);
