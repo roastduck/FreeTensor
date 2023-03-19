@@ -21,8 +21,10 @@ var searchData=
   ['rename_5fvar_2eh_18',['rename_var.h',['../rename__var_8h.html',1,'']]],
   ['reorder_2ecc_19',['reorder.cc',['../reorder_8cc.html',1,'']]],
   ['reorder_2eh_20',['reorder.h',['../reorder_8h.html',1,'']]],
-  ['replace_5fiter_2eh_21',['replace_iter.h',['../replace__iter_8h.html',1,'']]],
-  ['replace_5fuses_2ecc_22',['replace_uses.cc',['../replace__uses_8cc.html',1,'']]],
-  ['replace_5fuses_2eh_23',['replace_uses.h',['../replace__uses_8h.html',1,'']]],
-  ['rule_2eh_24',['rule.h',['../rule_8h.html',1,'']]]
+  ['replace_5fby_5fsaved_2ecc_21',['replace_by_saved.cc',['../replace__by__saved_8cc.html',1,'']]],
+  ['replace_5fby_5fsaved_2eh_22',['replace_by_saved.h',['../replace__by__saved_8h.html',1,'']]],
+  ['replace_5fiter_2eh_23',['replace_iter.h',['../replace__iter_8h.html',1,'']]],
+  ['replace_5fuses_2ecc_24',['replace_uses.cc',['../replace__uses_8cc.html',1,'']]],
+  ['replace_5fuses_2eh_25',['replace_uses.h',['../replace__uses_8h.html',1,'']]],
+  ['rule_2eh_26',['rule.h',['../rule_8h.html',1,'']]]
 ];

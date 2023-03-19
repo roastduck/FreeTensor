@@ -78,6 +78,8 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a814362f7de6f2e34039553827bd01723"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1StmtOrExprID.html#a814362f7de6f2e34039553827bd01723">StmtOrExprID</a> ()</td></tr>
+<tr class="separator:a814362f7de6f2e34039553827bd01723"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2bdb60b41d4ab5159aa0213325afc967"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1StmtOrExprID.html#a2bdb60b41d4ab5159aa0213325afc967">StmtOrExprID</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;<a class="el" href="classfreetensor_1_1StmtOrExprID.html#a0fcf29d05a3fbb692ca0314b38aa521f">stmtId</a>)</td></tr>
 <tr class="separator:a2bdb60b41d4ab5159aa0213325afc967"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1392c1dc8feb537906e51672451f8d8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1StmtOrExprID.html#ae1392c1dc8feb537906e51672451f8d8">StmtOrExprID</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;<a class="el" href="classfreetensor_1_1StmtOrExprID.html#a49d3d190c3b268552b10ac6b894f81a3">expr</a>, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;<a class="el" href="classfreetensor_1_1StmtOrExprID.html#a0fcf29d05a3fbb692ca0314b38aa521f">stmtId</a>)</td></tr>
@@ -89,6 +91,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a0fcf29d05a3fbb692ca0314b38aa521f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49d3d190c3b268552b10ac6b894f81a3"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1StmtOrExprID.html#a49d3d190c3b268552b10ac6b894f81a3">expr</a> () const</td></tr>
 <tr class="separator:a49d3d190c3b268552b10ac6b894f81a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a678c901baa2434bd71c6cf095307ef"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1StmtOrExprID.html#a3a678c901baa2434bd71c6cf095307ef">isValid</a> () const</td></tr>
+<tr class="separator:a3a678c901baa2434bd71c6cf095307ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
@@ -103,8 +107,33 @@ Friends</h2></td></tr>
 <div class="textblock"><p >Identify an Stmt or Expr acrossing passes, so we do not need to pass pointers</p>
 <p >An Expr is identified by the hash of itself, combined with the string-typed <a class="el" href="classfreetensor_1_1ID.html">ID</a> of the Stmt its in, so that any identical Expr in the same Stmt is treated as the same node </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a814362f7de6f2e34039553827bd01723" name="a814362f7de6f2e34039553827bd01723"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a814362f7de6f2e34039553827bd01723">&#9670;&nbsp;</a></span>StmtOrExprID() <span class="overload">[1/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">freetensor::StmtOrExprID::StmtOrExprID </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a2bdb60b41d4ab5159aa0213325afc967" name="a2bdb60b41d4ab5159aa0213325afc967"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2bdb60b41d4ab5159aa0213325afc967">&#9670;&nbsp;</a></span>StmtOrExprID() <span class="overload">[1/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2bdb60b41d4ab5159aa0213325afc967">&#9670;&nbsp;</a></span>StmtOrExprID() <span class="overload">[2/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -130,7 +159,7 @@ Friends</h2></td></tr>
 </div>
 </div>
 <a id="ae1392c1dc8feb537906e51672451f8d8" name="ae1392c1dc8feb537906e51672451f8d8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae1392c1dc8feb537906e51672451f8d8">&#9670;&nbsp;</a></span>StmtOrExprID() <span class="overload">[2/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1392c1dc8feb537906e51672451f8d8">&#9670;&nbsp;</a></span>StmtOrExprID() <span class="overload">[3/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -166,7 +195,7 @@ Friends</h2></td></tr>
 </div>
 </div>
 <a id="a77e7cf9499271ed7f1462e2ea1081a74" name="a77e7cf9499271ed7f1462e2ea1081a74"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a77e7cf9499271ed7f1462e2ea1081a74">&#9670;&nbsp;</a></span>StmtOrExprID() <span class="overload">[3/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a77e7cf9499271ed7f1462e2ea1081a74">&#9670;&nbsp;</a></span>StmtOrExprID() <span class="overload">[4/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -215,6 +244,31 @@ template&lt;std::convertible_to&lt; <a class="el" href="namespacefreetensor.html
       <table class="memname">
         <tr>
           <td class="memname">const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp; freetensor::StmtOrExprID::expr </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3a678c901baa2434bd71c6cf095307ef" name="a3a678c901baa2434bd71c6cf095307ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a678c901baa2434bd71c6cf095307ef">&#9670;&nbsp;</a></span>isValid()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::StmtOrExprID::isValid </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>

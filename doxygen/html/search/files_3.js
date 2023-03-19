@@ -9,8 +9,10 @@ var searchData=
   ['dedup_5ftape_5fnames_2eh_6',['dedup_tape_names.h',['../dedup__tape__names_8h.html',1,'']]],
   ['deps_2ecc_7',['deps.cc',['../deps_8cc.html',1,'']]],
   ['deps_2eh_8',['deps.h',['../deps_8h.html',1,'']]],
-  ['device_2ecc_9',['device.cc',['../device_8cc.html',1,'']]],
-  ['device_2eh_10',['device.h',['../device_8h.html',1,'']]],
-  ['driver_2ecc_11',['driver.cc',['../driver_8cc.html',1,'']]],
-  ['driver_2eh_12',['driver.h',['../driver_8h.html',1,'']]]
+  ['derivative_2ecc_9',['derivative.cc',['../derivative_8cc.html',1,'']]],
+  ['derivative_2eh_10',['derivative.h',['../derivative_8h.html',1,'']]],
+  ['device_2ecc_11',['device.cc',['../device_8cc.html',1,'']]],
+  ['device_2eh_12',['device.h',['../device_8h.html',1,'']]],
+  ['driver_2ecc_13',['driver.cc',['../driver_8cc.html',1,'']]],
+  ['driver_2eh_14',['driver.h',['../driver_8h.html',1,'']]]
 ];

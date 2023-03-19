@@ -54,7 +54,7 @@ var searchData=
   ['output_5fintermediates_2ecc_51',['output_intermediates.cc',['../output__intermediates_8cc.html',1,'']]],
   ['output_5fintermediates_2eh_52',['output_intermediates.h',['../output__intermediates_8h.html',1,'']]],
   ['outputintermediates_53',['OutputIntermediates',['../classfreetensor_1_1OutputIntermediates.html',1,'freetensor']]],
-  ['outputintermediates_54',['outputIntermediates',['../namespacefreetensor.html#a2d13a4b272ce48ceece6c1004851f5ef',1,'freetensor']]],
+  ['outputintermediates_54',['outputIntermediates',['../namespacefreetensor.html#a7632bca6650b09704103bc5093e2cac7',1,'freetensor']]],
   ['outputintermediates_55',['OutputIntermediates',['../classfreetensor_1_1OutputIntermediates.html#a288edd6aeee62ab5ba206f5f60d53bea',1,'freetensor::OutputIntermediates']]],
   ['outputintermediatesstage_56',['OutputIntermediatesStage',['../namespacefreetensor.html#ae311ebcb64a1b27e8fb8ce65bc1ceb8f',1,'freetensor']]],
   ['outputs_57',['outputs',['../classfreetensor_1_1PBMapBuilder.html#ae96bca7c6d7f7da704d08f4f233b9e45',1,'freetensor::PBMapBuilder']]],
