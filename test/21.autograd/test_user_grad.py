@@ -410,3 +410,16 @@ def test_same_mark_version_name_in_different_call_site():
     std = ft.pop_ast()
 
     assert std.match(bwd.body)
+
+
+def test_error_missing_user_grad():
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        ft.MarkLabel('Vt')
+        with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
+            t[...] = x[...] * x[...]
+            y[...] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
+    ast, user_grads = ft.pop_ast_and_user_grads()
+
+    with pytest.raises(ft.InvalidAutoGrad):
+        ft.grad_body(ast, ["x"], ["y"], {'Vt'}, user_grads)

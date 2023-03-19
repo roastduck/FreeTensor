@@ -114,13 +114,13 @@ def test_math_funcs():
                     ("d_y3", (), "float32", "inout", "cpu")]) as (x, d_x, d_y1,
                                                                   d_y2, d_y3):
         d_x[()] = 2 * d_y3[()] * x[()] + d_y2[()] * ft.exp(x[()]) + d_y1[
-            ()] / (2 * ft.sqrt(x[()]))
+            ()] * (0.5 / ft.sqrt(x[()]))
     std = ft.pop_ast()
 
     assert std.match(ast)
 
 
-def test_use_forward_value_when_taped():
+def test_use_y_for_grad_when_taped():
     with ft.VarDef("x", (4,), "float32", "input", "cpu") as x:
         ft.MarkLabel("V_y1")
         with ft.VarDef("y1", (4,), "float32", "output", "cpu") as y1:
@@ -154,7 +154,7 @@ def test_use_forward_value_when_taped():
     assert std.match(ast)
 
 
-def test_use_taped_forward_value():
+def test_use_taped_y_for_grad():
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("y1", (4,), "float32", "output", "cpu"),
                     ("y2", (4,), "float32", "output", "cpu")]) as (x, y1, y2):
@@ -179,6 +179,38 @@ def test_use_taped_forward_value():
         with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
             with ft.For("i", 3, -1, -1) as i:
                 d_x[i] = ((d_y2[i] * 3) + (d_y1[i] * 2)) * t[i]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_tape_y_to_use_it_for_grad():
+    with ft.VarDef([("x1", (), "float32", "input", "cpu"),
+                    ("x2", (), "float32", "input", "cpu")]) as (x1, x2):
+        ft.MarkLabel("V_y")
+        with ft.VarDef("y", (), "float32", "output", "cpu") as y:
+            # `y` must be taped for use in the gradient. We must especially take care with
+            # the second statement, as its `y` output isn't used elsewhere, and may not be
+            # saved by other means
+            y[...] = ft.exp(x1[...])
+            y[...] = ft.exp(y[...] + x2[...])
+
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2"], ["y"], ["V_y"])
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("d_x1", (), "float32", "output", "cpu"),
+                    ("d_x2", (), "float32", "output", "cpu"),
+                    ("y_tape", (2,), "float32", "input", "cpu"),
+                    ("d_y", (), "float32", "inout", "cpu")]) as (d_x1, d_x2,
+                                                                 y_tape, d_y):
+        with ft.VarDef("d_y_old", (), "float32", "cache", "cpu") as d_y_old:
+            d_y_old[...] = d_y[...]
+            d_y[...] = d_y_old[...] * y_tape[1]
+            d_x2[...] = d_y_old[...] * y_tape[1]
+        d_x1[...] = d_y[...] * y_tape[0]
+        d_y[...] = 0
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -406,7 +438,7 @@ def test_reduce_min_quick_path_taped():
     assert std.match(ast)
 
 
-def test_no_use_forward_value_in_reduce_sum_quick_path():
+def test_no_use_y_for_grad_in_reduce_sum_quick_path():
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
         y[()] = 0
