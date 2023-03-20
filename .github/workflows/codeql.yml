@@ -37,11 +37,11 @@ jobs:
 
       - name: Configure (cpp)
         if: ${{ matrix.language == 'cpp' }}
+        # Use Debug mode for faster building
         run: |
           mkdir -p $GITHUB_WORKSPACE/build
           cd $GITHUB_WORKSPACE/build
-          # Use DEBUG mode for faster building
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=DEBUG -DFT_WITH_CUDA=OFF -DFT_WITH_PYTORCH=OFF $GITHUB_WORKSPACE
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DFT_WITH_CUDA=OFF -DFT_WITH_PYTORCH=OFF $GITHUB_WORKSPACE
 
       - name: After Prepare (cpp)
         if: ${{ matrix.language == 'cpp' }}
