@@ -3,6 +3,8 @@ name: "My CodeQL config"
 queries:
   - uses: security-and-quality
 
+# `paths-ignore` works for Python but not C++. So we also post-process analysis
+# result in .github/workflows/codeql.yml
 paths-ignore:
   - 3rd-party
   - test
