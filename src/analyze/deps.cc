@@ -82,7 +82,13 @@ void FindAccessPoint::removeTrivialScopeFromScopes(
         if (auto jt = scope2coord_.find(*it); jt != scope2coord_.end()) {
             auto &coord = jt->second;
             ASSERT(dim < (int)coord.size());
-            coord.erase(coord.begin() + dim);
+            if (dim + 1 < (int)coord.size()) {
+                // The position of this scope is changed
+                coord.erase(coord.begin() + dim);
+            } else {
+                // We no longer have this scope
+                scope2coord_.erase(jt);
+            }
         }
     }
 }
@@ -101,6 +107,7 @@ void FindAccessPoint::visit(const VarDef &op) {
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
+    ASSERT(!cur_.empty());
     scope2coord_[op->id()] = cur_;
     BaseClass::visit(op);
     allScopes_.emplace_back(op->id());
@@ -152,6 +159,7 @@ void FindAccessPoint::visit(const For &op) {
     }
 
     // Push For scope
+    ASSERT(!cur_.empty());
     scope2coord_[op->id()] = cur_;
 
     // Push potential StmtSeq scope
@@ -439,10 +447,17 @@ PBMap AnalyzeDeps::makeIneqBetweenOps(PBCtx &presburger, DepDirection mode,
 PBMap AnalyzeDeps::makeConstraintOfSingleLoop(PBCtx &presburger, const ID &loop,
                                               DepDirection mode, int iterDim) {
     if (!scope2coord_.count(loop)) {
-        return emptyMap(spaceAlloc(presburger, 0, iterDim, iterDim));
+        // If we don't have the scope in `scope2coord_`, it means the scope is
+        // trivial, which has only one instance inside. So it must be `Same`
+        if (mode == DepDirection::Same) {
+            return universeMap(spaceAlloc(presburger, 0, iterDim, iterDim));
+        } else {
+            return emptyMap(spaceAlloc(presburger, 0, iterDim, iterDim));
+        }
     }
 
     auto &&coord = scope2coord_.at(loop);
+    ASSERT(coord.size() > 0); // Or we would have removed it from scope2coord_
     int iterId = coord.size() - 1;
     if (iterId >= iterDim) {
         return emptyMap(spaceAlloc(presburger, 0, iterDim, iterDim));

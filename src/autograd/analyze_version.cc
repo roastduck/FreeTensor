@@ -102,8 +102,13 @@ void CountScopeLen::visit(const StmtSeq &op) {
         }
         lastLen = len;
         if (scopeLen_.count(stmt)) {
-            len = len.isValid() ? makeAdd(len, scopeLen_.at(stmt))
-                                : scopeLen_.at(stmt);
+            if (affectingScopes_.count(op->id())) {
+                len = len.isValid() ? makeAdd(len, scopeLen_.at(stmt))
+                                    : scopeLen_.at(stmt);
+            } else {
+                len = len.isValid() ? makeMax(len, scopeLen_.at(stmt))
+                                    : scopeLen_.at(stmt);
+            }
         }
     }
     if (len.isValid()) {
@@ -190,22 +195,29 @@ void AnalyzeVersion::visit(const For &op) {
 }
 
 void AnalyzeVersion::visit(const StmtSeq &op) {
-    auto oldOffset = offset_;
-    auto lastOffset = offset_;
-    for (auto &&stmt : op->stmts_) {
-        if (scopeLen_.count(stmt) &&
-            (var_.empty() || !allReads(stmt).count(var_))) {
-            offset_ = lastOffset;
+    if (affectingScopes_.count(op->id())) {
+        // Versioning for a `StmtSeq` node is more strict than that for a `For`
+        // node. This means that not only do we check if the `StmtSeq` node is
+        // affected, but we also distinguish between its sub-statements.
+        auto oldOffset = offset_;
+        auto lastOffset = offset_;
+        for (auto &&stmt : op->stmts_) {
+            if (scopeLen_.count(stmt) &&
+                (var_.empty() || !allReads(stmt).count(var_))) {
+                offset_ = lastOffset;
+            }
+            lastOffset = offset_;
+            if (scopeLen_.count(stmt)) {
+                (*this)(stmt);
+                offset_ = makeAdd(offset_, scopeLen_.at(stmt));
+            } else {
+                (*this)(stmt);
+            }
         }
-        lastOffset = offset_;
-        if (scopeLen_.count(stmt)) {
-            (*this)(stmt);
-            offset_ = makeAdd(offset_, scopeLen_.at(stmt));
-        } else {
-            (*this)(stmt);
-        }
+        offset_ = oldOffset;
+    } else {
+        BaseClass::visit(op);
     }
-    offset_ = oldOffset;
 }
 
 void SetUserVersionsForInputs::visit(const MarkVersion &op) {
@@ -262,7 +274,9 @@ analyzeVersion(
     // Find out scopes we need to account in version numbers
     std::unordered_map<ID, std::unordered_set<ID>> affectingScopes;
     std::vector<FindDepsDir> direction;
-    for (auto &&scope : findAllStmt(op, "<For>")) {
+    for (auto &&scope : findAllStmt(op, "<For>|<StmtSeq>")) {
+        // NOTE: If checking each `StmtSeq` is too slow, we can check node
+        // positions in the AST in the `found` callback
         direction.push_back({{scope->id(), DepDirection::Normal}});
     }
     FindDeps()

@@ -836,6 +836,63 @@ def test_tape_5():
     assert std.match(backward)
 
 
+def test_tape_6():
+    with ft.VarDef([("x1", (4, 2, 4), "float32", "input", "cpu"),
+                    ("x2", (4, 2, 4), "float32", "input", "cpu"),
+                    ("x3", (4, 2, 4), "float32", "input", "cpu"),
+                    ("y", (4, 2, 4), "float32", "output", "cpu")]) as (x1, x2,
+                                                                       x3, y):
+        with ft.For("i", 0, 4) as i:
+            ft.MarkLabel("V_t")
+            with ft.VarDef("t", (2, 4), "float32", "cache", "cpu") as t:
+                # When taping `t`, no need to distinguish the following two loops
+                # by versions
+                with ft.For("j", 0, 4) as j:
+                    t[0, j] = x1[i, 0, j] + x2[i, 0, j]
+                    y[i, 0, j] = t[0, j] * x3[i, 0, j]
+                with ft.For("j", 0, 4) as j:
+                    t[1, j] = x1[i, 1, j] + x2[i, 1, j]
+                    y[i, 1, j] = t[1, j] * x3[i, 1, j]
+
+    ast = ft.pop_ast(verbose=True)
+    forward, backward, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
+                                              ["V_t"])
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+    forward = ft.lower(forward)
+    backward = ft.lower(backward)
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+
+    with ft.VarDef([
+        ("d_x1", (4, 2, 4), "float32", "output", "cpu"),
+        ("d_x2", (4, 2, 4), "float32", "output", "cpu"),
+        ("x3", (4, 2, 4), "float32", "input", "cpu"),
+        ("d_x3", (4, 2, 4), "float32", "output", "cpu"),
+        ("d_y", (4, 2, 4), "float32", "inout", "cpu"),
+        ("t_tape", (4, 2, 4), "float32", "input", "cpu"),
+    ]) as (d_x1, d_x2, x3, d_x3, d_y, t_tape):
+        with ft.For("i", 3, -1, -1) as i:
+            with ft.VarDef("d_t", (2, 4), "float32", "cache", "cpu") as d_t:
+                with ft.For("j", 3, -1, -1) as j:
+                    d_t[1, j] = d_y[i, 1, j] * x3[i, 1, j]
+                    d_x3[i, 1, j] = d_y[i, 1, j] * t_tape[i, 1, j]
+                    d_x1[i, 1, j] = d_t[1, j]
+                    d_x2[i, 1, j] = d_t[1, j]
+                with ft.For("j", 3, -1, -1) as j:
+                    d_t[0, j] = d_y[i, 0, j] * x3[i, 0, j]
+                    d_x3[i, 0, j] = d_y[i, 0, j] * t_tape[i, 0, j]
+                    d_x1[i, 0, j] = d_t[0, j]
+                    d_x2[i, 0, j] = d_t[0, j]
+    std = ft.pop_ast()
+
+    assert std.match(backward)
+
+
 def test_hoist_tape_out_of_loop():
     with ft.VarDef([("x1", (4,), "float32", "input", "cpu"),
                     ("x2", (4,), "float32", "input", "cpu"),
