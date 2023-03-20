@@ -268,21 +268,19 @@ analyzeVersion(
     FindDeps()
         .direction(direction)
         .type(DEP_RAW | DEP_WAR)
-        .filterAccess(
-            [&](const auto &acc) { return needTapes.count(acc.def_->id()); })
-        .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
-            return needTapes.at(earlier.def_->id())
-                       .count(earlier.stmt_->id()) ||
-                   needTapes.at(earlier.def_->id()).count(later.stmt_->id());
+        .filterAccess([&](const auto &acc) -> bool {
+            if (!needTapes.count(acc.def_->id())) {
+                return false;
+            }
+            if (acc.op_->nodeType() == ASTNodeType::Load) {
+                return true;
+            } else {
+                return needTapes.at(acc.def_->id()).count(acc.stmt_->id());
+            }
         })
         .eraseOutsideVarDef(localVersionsOnly)(op, [&](const Dependence &d) {
-            if ((d.earlier()->nodeType() == ASTNodeType::Load &&
-                 d.later()->nodeType() != ASTNodeType::Load) ||
-                (d.later()->nodeType() == ASTNodeType::Load &&
-                 d.earlier()->nodeType() != ASTNodeType::Load)) {
-                ASSERT(d.dir_.size() == 1);
-                affectingScopes[d.defId()].insert(d.dir_[0].first.id_);
-            }
+            ASSERT(d.dir_.size() == 1);
+            affectingScopes[d.defId()].insert(d.dir_[0].first.id_);
         });
 
     std::unordered_map<StmtOrExprID, Expr> versions;
