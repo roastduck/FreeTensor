@@ -137,7 +137,7 @@ void init_ffi_ast_stmt(py::module_ &m) {
           static_cast<Stmt (*)(const std::string &, const std::vector<Expr> &,
                                ReduceOp, const Expr &, bool, const Metadata &,
                                const ID &)>(&_makeReduceTo<const Expr &>),
-          "var"_a, "indices"_a, "op"_a, "expr"_a, "atomic"_a, "metadata"_a,
+          "var"_a, "indices"_a, "op"_a, "expr"_a, "sync"_a, "metadata"_a,
           py::arg_v("id", ID(), "ID()"));
     m.def("makeAlloc",
           static_cast<Stmt (*)(const std::string &, const Metadata &,

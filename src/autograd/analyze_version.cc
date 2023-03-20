@@ -1,10 +1,58 @@
+#include <functional>
+
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
-#include <analyze/find_stmt.h>
+#include <analyze/symbol_table.h>
 #include <autograd/analyze_version.h>
 #include <pass/flatten_stmt_seq.h>
 
 namespace freetensor {
+
+namespace {
+
+class ReplaceMarkVersionByFakeLoad : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
+  protected:
+    using BaseClass::visit;
+
+    Stmt visit(const MarkVersion &op) override {
+        auto &&tensor = buffer(op->var_)->tensor();
+        return makeEval(
+            makeLoad(op->var_,
+                     std::vector<Expr>(
+                         tensor->shape().size(),
+                         makeIntrinsic("__any__", {}, DataType::Int32, false)),
+                     tensor->dtype()),
+            op->metadata(), op->id());
+    }
+};
+
+class FindWrites : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
+
+    std::function<void(const Expr & /* expr */, const ID & /* id */,
+                       const ID & /* defId */)>
+        callback_;
+
+  public:
+    FindWrites(const auto &callback) : callback_(callback) {}
+
+  protected:
+    using BaseClass::visit;
+
+    void visit(const Store &op) override {
+        BaseClass::visit(op);
+        callback_(op->expr_, op->id(), def(op->var_)->id());
+    }
+
+    void visit(const ReduceTo &op) override {
+        BaseClass::visit(op);
+        callback_(op->expr_, op->id(), def(op->var_)->id());
+    }
+};
+
+} // Anonymous namespace
 
 void CountScopeLen::visit(const Store &op) {
     Visitor::visit(op);
@@ -170,36 +218,53 @@ void SetUserVersionsForInputs::visit(const MarkVersion &op) {
 std::tuple<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
            std::unordered_set<ID>,
            std::unordered_map<std::string, std::pair<std::string, Expr>>>
-analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
-               bool localVersionsOnly) {
-    auto op = flattenStmtSeq(_op);
-
-    std::vector<FindDepsDir> direction;
-    for (auto &&scope : findAllStmt(op, "<For>")) {
-        direction.push_back({{scope->id(), DepDirection::Normal}});
-    }
-    std::unordered_map<ID, std::unordered_set<ID>> affectingScopes, needTapes;
-    auto found1 = [&](const Dependence &d) {
-        ASSERT(d.earlier()->nodeType() != ASTNodeType::Load);
-        if (d.later()->nodeType() != ASTNodeType::ReduceTo) {
-            needTapes[d.defId()].insert(d.earlier().as<StmtNode>()->id());
-        }
-    };
-    auto found2 = [&](const Dependence &d) {
-        if ((d.earlier()->nodeType() == ASTNodeType::Load &&
-             d.later()->nodeType() != ASTNodeType::Load) ||
-            (d.later()->nodeType() == ASTNodeType::Load &&
-             d.earlier()->nodeType() != ASTNodeType::Load)) {
-            ASSERT(d.dir_.size() == 1);
-            affectingScopes[d.defId()].insert(d.dir_[0].first.id_);
-        }
-    };
+analyzeVersion(
+    const Stmt &op, const std::unordered_set<ID> &intermediates,
+    const std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
+        &derivatives,
+    bool localVersionsOnly) {
+    // Find out the statements which we need to store its value as one version
+    //
+    // For each variable in `intermediates`, which means we are willing to save,
+    // we check if we need to save it for a particular statement. There are two
+    // cases:
+    //
+    // - (RAW) If the variable is written by statement X, and then read by
+    // statement Y, a version of it on X is needed, which can be used either to
+    // recompute Y's forward value, or to compute Y's gradient. Currently there
+    // may be false positive in this case, because we don't know which
+    // statements have to be recomputed.
+    // - (RAW) If the variable is written by statement X, where the value may
+    // propagate to a MarkVersion node, a version of it on X is needed. In order
+    // to find such statements, we replace MarkVersion by a fake Load node with
+    // relaxed indices before we do a dependence analysis.
+    // - (W) If the variable is written by statement X, and then overwritten
+    // by statement Y, and if we need X's result to compute X's gradient (use
+    // `y` for `y = f(x)`'s gradient), then we need a version of it on X.
+    std::unordered_map<ID, std::unordered_set<ID>> needTapes;
     FindDeps()
         .type(DEP_RAW)
         .filterAccess([&](const auto &acc) {
             return intermediates.count(acc.def_->id());
         })
-        .eraseOutsideVarDef(localVersionsOnly)(op, found1);
+        .eraseOutsideVarDef(localVersionsOnly)(op, [&](const Dependence &d) {
+            ASSERT(d.earlier()->nodeType() != ASTNodeType::Load);
+            if (d.later()->nodeType() != ASTNodeType::ReduceTo) {
+                needTapes[d.defId()].insert(d.earlier().as<StmtNode>()->id());
+            }
+        });
+    FindWrites{[&](const Expr &expr, const ID &id, const ID &defId) {
+        if (derivatives.count(StmtOrExprID{expr, id})) {
+            needTapes[defId].insert(id);
+        }
+    }}(ReplaceMarkVersionByFakeLoad{}(op));
+
+    // Find out scopes we need to account in version numbers
+    std::unordered_map<ID, std::unordered_set<ID>> affectingScopes;
+    std::vector<FindDepsDir> direction;
+    for (auto &&scope : findAllStmt(op, "<For>")) {
+        direction.push_back({{scope->id(), DepDirection::Normal}});
+    }
     FindDeps()
         .direction(direction)
         .type(DEP_RAW | DEP_WAR)
@@ -210,7 +275,15 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates,
                        .count(earlier.stmt_->id()) ||
                    needTapes.at(earlier.def_->id()).count(later.stmt_->id());
         })
-        .eraseOutsideVarDef(localVersionsOnly)(op, found2);
+        .eraseOutsideVarDef(localVersionsOnly)(op, [&](const Dependence &d) {
+            if ((d.earlier()->nodeType() == ASTNodeType::Load &&
+                 d.later()->nodeType() != ASTNodeType::Load) ||
+                (d.later()->nodeType() == ASTNodeType::Load &&
+                 d.earlier()->nodeType() != ASTNodeType::Load)) {
+                ASSERT(d.dir_.size() == 1);
+                affectingScopes[d.defId()].insert(d.dir_[0].first.id_);
+            }
+        });
 
     std::unordered_map<StmtOrExprID, Expr> versions;
     std::unordered_map<std::string, std::pair<std::string, Expr>> userVersions;

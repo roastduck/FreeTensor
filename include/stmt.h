@@ -214,7 +214,16 @@ class ReduceToNode : public StmtNode {
     SubTreeList<ExprNode> indices_ = ChildOf{this};
     ReduceOp op_;
     SubTree<ExprNode> expr_ = ChildOf{this};
-    bool atomic_;
+
+    /// If true, can safely reduce from multiple threads to one location. Prefer
+    /// atomic over other synchronizations
+    ///
+    /// NOTE: Synchronizations only have to be done among `ReduceTo` nodes. No
+    /// need to synchronize between a `ReduceTo` and a `Load`, or a `ReduceTo`
+    /// and a `Store`, since our schedules prohibits simultaneous `ReduceTo` and
+    /// `Load`, or `ReduceTo` and `Store`.
+    bool sync_;
+
     void compHash() override;
     DEFINE_NODE_TRAIT(ReduceTo)
 };
@@ -222,8 +231,8 @@ typedef Ref<ReduceToNode> ReduceTo;
 #define makeReduceTo(...) makeNode(ReduceTo, __VA_ARGS__)
 template <class Tindices, class Texpr>
 Stmt _makeReduceTo(const std::string &var, Tindices &&indices, ReduceOp op,
-                   Texpr &&expr, bool atomic,
-                   const Metadata &metadata = nullptr, const ID &id = {}) {
+                   Texpr &&expr, bool sync, const Metadata &metadata = nullptr,
+                   const ID &id = {}) {
     ASSERT(!var.empty());
     ReduceTo a = ReduceTo::make();
     a->metadata() = metadata;
@@ -232,12 +241,12 @@ Stmt _makeReduceTo(const std::string &var, Tindices &&indices, ReduceOp op,
     a->indices_ = std::forward<Tindices>(indices);
     a->op_ = op;
     a->expr_ = std::forward<Texpr>(expr);
-    a->atomic_ = atomic;
+    a->sync_ = sync;
     return a;
 }
 template <class Texpr>
 Stmt _makeReduceTo(const std::string &var, const std::vector<Expr> &indices,
-                   ReduceOp op, Texpr &&expr, bool atomic,
+                   ReduceOp op, Texpr &&expr, bool sync,
                    const Metadata &metadata = nullptr, const ID &id = {}) {
     ASSERT(!var.empty());
     ReduceTo a = ReduceTo::make();
@@ -247,7 +256,7 @@ Stmt _makeReduceTo(const std::string &var, const std::vector<Expr> &indices,
     a->indices_ = indices;
     a->op_ = op;
     a->expr_ = std::forward<Texpr>(expr);
-    a->atomic_ = atomic;
+    a->sync_ = sync;
     return a;
 }
 

@@ -49,6 +49,7 @@ void LOrNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void LNotNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void SqrtNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void ExpNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
+void LnNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void SquareNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void SigmoidNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void TanhNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }

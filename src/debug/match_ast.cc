@@ -126,6 +126,11 @@ void MatchVisitor::visit(const ReduceTo &op) {
 }
 
 void MatchVisitor::visit(const IntConst &op) {
+    if (instance_->nodeType() == ASTNodeType::FloatConst) {
+        auto instance = instance_.as<FloatConstNode>();
+        CHECK(op->val_ == instance->val_);
+        return;
+    }
     CHECK(instance_->nodeType() == ASTNodeType::IntConst);
     auto instance = instance_.as<IntConstNode>();
     CHECK(op->val_ == instance->val_);
@@ -392,6 +397,12 @@ void MatchVisitor::visit(const Sqrt &op) {
 void MatchVisitor::visit(const Exp &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Exp);
     auto instance = instance_.as<ExpNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Ln &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Ln);
+    auto instance = instance_.as<LnNode>();
     RECURSE(op->expr_, instance->expr_);
 }
 

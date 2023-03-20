@@ -49,11 +49,11 @@ class FindSerialLoopsOverReduce : public Visitor {
     void visit(const ReduceTo &op) override;
 };
 
-struct UseAtomicInfo {
+struct UseSyncInfo {
     // True if there is random access to the being-reduced variable. Note: even
-    // there is no random access, we may also forced to use atomic, for example
-    // cross-GPU-thread-block reduction. In this case, `isRandomAccess_` is
-    // false
+    // there is no random access, we may also forced to use a synced reduction,
+    // for example: cross-GPU-thread-block reduction can only be done by atomic.
+    // In this case, `isRandomAccess_` is false
     bool isRandomAccess_;
 };
 
@@ -61,7 +61,7 @@ struct UseAtomicInfo {
  * Lower supported parallel reductions to loop-carried reductions, which will be
  * further lowered to specific algorithms like binary reduction or local
  * accumulation in target-specific passes. Non-supported parallel reductions are
- * left for the following `MakeAtomicReduction`.
+ * left for the following `MakeSyncReduction`.
  */
 class MakeLoopCarriedReduction
     : public CompTransientBounds<SymbolTable<Mutator>> {
@@ -83,8 +83,8 @@ class MakeLoopCarriedReduction
     // ReduceTo ID -> whether randomly accessed. For all reductions in
     // `toAlter`, we first try to lower them as loop-carried reductions. If
     // impossible, we then insert them to this map, which is passed to
-    // `MakeAtomicReduction`.
-    std::unordered_map<ID, UseAtomicInfo> toUseAtomic_;
+    // `MakeSyncReduction`.
+    std::unordered_map<ID, UseSyncInfo> toUseSync_;
 
     std::unordered_map<ID, ParallelScope> paraScopes_; // For Id -> parallel
     std::unordered_map<ID, std::vector<ReductionItemFactors>> forReductions_;
@@ -97,7 +97,7 @@ class MakeLoopCarriedReduction
         const LoopVariExprMap &variantMap)
         : unique_(*this), toAlter_(toAlter), variantMap_(variantMap) {}
 
-    const auto &toUseAtomic() const { return toUseAtomic_; }
+    const auto &toUseSync() const { return toUseSync_; }
 
   protected:
     using BaseClass::visit;
@@ -106,28 +106,28 @@ class MakeLoopCarriedReduction
 };
 
 /**
- * Lower parallel reductions left by `MakeLoopCarriedReduction` to atomic
+ * Lower parallel reductions left by `MakeLoopCarriedReduction` to synchronized
  * reductions
  */
-class MakeAtomicReduction : public SymbolTable<Mutator> {
+class MakeSyncReduction : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
-    const std::unordered_map<ID, UseAtomicInfo> &toUseAtomic_;
+    const std::unordered_map<ID, UseSyncInfo> &toUseSync_;
     const std::unordered_map<ID, std::vector<For>>
         &serialOverRed_; // ReduceTo ID -> [For], from inner to outer
     const LoopVariExprMap &variantMap_;
 
     const Ref<Target> &target_;
 
-    struct AtomicCacheInfo {
+    struct SyncCacheInfo {
         ReduceTo oldNode_;
         std::vector<Expr> newShape_, newTargetIndices_;
         bool isRandomAccess_;
         std::vector<bool> preserveDim_;
     };
     std::unordered_map<ID,
-                       std::vector<AtomicCacheInfo>>
-        cacheAtomic_; // loop ID -> [AtomicCacheInfo]
+                       std::vector<SyncCacheInfo>>
+        cacheSync_; // loop ID -> [SyncCacheInfo]
 
     int64_t gpuThreadDim_ = 1;
 
@@ -168,11 +168,11 @@ class MakeAtomicReduction : public SymbolTable<Mutator> {
                        bool isRandomAccess) const;
 
   public:
-    MakeAtomicReduction(
-        const std::unordered_map<ID, UseAtomicInfo> &toUseAtomic,
+    MakeSyncReduction(
+        const std::unordered_map<ID, UseSyncInfo> &toUseSync,
         const std::unordered_map<ID, std::vector<For>> &serialOverRed,
         const LoopVariExprMap &variantMap, const Ref<Target> &target)
-        : toUseAtomic_(toUseAtomic), serialOverRed_(serialOverRed),
+        : toUseSync_(toUseSync), serialOverRed_(serialOverRed),
           variantMap_(variantMap), target_(target) {}
 
   protected:
@@ -186,7 +186,7 @@ class MakeAtomicReduction : public SymbolTable<Mutator> {
  *
  * If all ReduceTo nodes in a parallel for all reduce into a loop-invariant
  * possition, we will use a race-free implementation. Otherwise, we will use
- * atomic operations.
+ * synchronized (including atomic) operations.
  *
  * @param target : Target information. Can be null for target-agnostic debugging
  */

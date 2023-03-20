@@ -168,6 +168,22 @@ void CompUniqueBounds::visit(const Load &op) {
     BaseClass::visit(op);
     updLower(lower_[op], LowerBound{op});
     updUpper(upper_[op], UpperBound{op});
+
+    switch (op->dtype().sign()) {
+    case SignDataType::GT0:
+        updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 1}});
+        break;
+    case SignDataType::GE0:
+        updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
+        break;
+    case SignDataType::LT0:
+        updUpper(upper_[op], UpperBound{LinearExpr<Rational<int64_t>>{{}, -1}});
+        break;
+    case SignDataType::LE0:
+        updUpper(upper_[op], UpperBound{LinearExpr<Rational<int64_t>>{{}, 0}});
+        break;
+    default:; // do nothing
+    }
 }
 
 void CompUniqueBounds::visit(const IntConst &op) {

@@ -213,7 +213,7 @@ def test_user_grad_on_range_crossing_def():
                     ("sin", (), "float32", "input", "cpu"),
                     ("cos", (), "float32", "input", "cpu")]) as (dx, dz, sin,
                                                                  cos):
-        dx[...] = 4 * (2 * dz[...]) * cos[...] * sin[...]
+        dx[...] = 8 * dz[...] * cos[...] * sin[...]
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -314,7 +314,7 @@ def test_frontend():
                     ("dz", (4,), "float32", "inout", "cpu")]) as (dx, sin, cos,
                                                                   dz):
         with ft.For("i", 0, 4) as i:
-            dx[i] = 4 * (2 * dz[i]) * cos[i] * sin[i]
+            dx[i] = 8 * dz[i] * cos[i] * sin[i]
     std = ft.pop_ast()
 
     assert std.match(bwd.body)
@@ -360,7 +360,7 @@ def test_stmt_range_robustness():
                     ("dz", (4,), "float32", "inout", "cpu")]) as (dx, sin, cos,
                                                                   dz):
         with ft.For("i", 0, 4) as i:
-            dx[i] = 4 * (2 * dz[i]) * cos[i] * sin[i]
+            dx[i] = 8 * dz[i] * cos[i] * sin[i]
     std = ft.pop_ast()
 
     assert std.match(bwd.body)
@@ -410,3 +410,16 @@ def test_same_mark_version_name_in_different_call_site():
     std = ft.pop_ast()
 
     assert std.match(bwd.body)
+
+
+def test_error_missing_user_grad():
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        ft.MarkLabel('Vt')
+        with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
+            t[...] = x[...] * x[...]
+            y[...] = ft.intrinsic("sinf(%)", t[...], ret_type="float32")
+    ast, user_grads = ft.pop_ast_and_user_grads()
+
+    with pytest.raises(ft.InvalidAutoGrad):
+        ft.grad_body(ast, ["x"], ["y"], {'Vt'}, user_grads)

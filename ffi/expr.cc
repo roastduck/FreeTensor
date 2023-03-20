@@ -127,6 +127,9 @@ void init_ffi_ast_expr(py::module_ &m) {
     py::class_<ExpNode, Exp>(m, "Exp", pyExpr)
         .def_property_readonly("expr",
                                [](const Exp &op) -> Expr { return op->expr_; });
+    py::class_<LnNode, Ln>(m, "Ln", pyExpr)
+        .def_property_readonly("expr",
+                               [](const Ln &op) -> Expr { return op->expr_; });
     py::class_<SquareNode, Square>(m, "Square", pyExpr)
         .def_property_readonly(
             "expr", [](const Square &op) -> Expr { return op->expr_; });
@@ -295,6 +298,7 @@ void init_ffi_ast_expr(py::module_ &m) {
     m.def("makeSqrt", static_cast<Expr (*)(const Expr &)>(&_makeSqrt),
           "expr"_a);
     m.def("makeExp", static_cast<Expr (*)(const Expr &)>(&_makeExp), "expr"_a);
+    m.def("makeLn", static_cast<Expr (*)(const Expr &)>(&_makeLn), "expr"_a);
     m.def("makeSquare", static_cast<Expr (*)(const Expr &)>(&_makeSquare),
           "expr"_a);
     m.def("makeSigmoid", static_cast<Expr (*)(const Expr &)>(&_makeSigmoid),
@@ -325,7 +329,7 @@ void init_ffi_ast_expr(py::module_ &m) {
     m.def("makeIntrinsic",
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,
                                DataType, bool)>(&_makeIntrinsic),
-          "fmt"_a, "params"_a, "retType"_a = DataType::Void,
+          "fmt"_a, "params"_a, "retType"_a = DataType{DataType::Void},
           "hasSideEffect"_a = false);
     m.def("makeLoadAtVersion",
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,

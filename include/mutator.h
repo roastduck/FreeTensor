@@ -108,10 +108,10 @@ class Mutator {
             indices.emplace_back((*this)(index));
         }
         auto &&expr = (*this)(op->expr_);
-        return COPY_DEBUG_INFO(
-            makeReduceTo(op->var_, std::move(indices), op->op_, std::move(expr),
-                         op->atomic_, op->metadata(), op->id()),
-            op);
+        return COPY_DEBUG_INFO(makeReduceTo(op->var_, std::move(indices),
+                                            op->op_, std::move(expr), op->sync_,
+                                            op->metadata(), op->id()),
+                               op);
     }
 
     virtual Expr visit(const AnyExpr &op) {
@@ -235,6 +235,10 @@ class Mutator {
 
     virtual Expr visit(const Exp &op) {
         return COPY_DEBUG_INFO(makeExp((*this)(op->expr_)), op);
+    }
+
+    virtual Expr visit(const Ln &op) {
+        return COPY_DEBUG_INFO(makeLn((*this)(op->expr_)), op);
     }
 
     virtual Expr visit(const Square &op) {

@@ -46,9 +46,9 @@ atype returns [AccessType type]
     ;
 
 dtype returns [DataType type]
-    : SimpleVar
+    : var
       {
-        $type = parseDType($SimpleVar.text);
+        $type = parseDType($var.name);
       }
     ;
 
@@ -219,10 +219,6 @@ reduceOp returns [ReduceOp op]
       {
         $op = ReduceOp::Add;
       }
-    | SUBEQ
-      {
-        $op = ReduceOp::Sub;
-      }
     | STAREQ
       {
         $op = ReduceOp::Mul;
@@ -246,7 +242,7 @@ reduceOp returns [ReduceOp op]
     ;
 
 storeOrReduceTo returns [Stmt node]
-    : ATOMIC var indices reduceOp expr
+    : SYNC var indices reduceOp expr
       {
         $node = makeReduceTo($var.name, $indices.exprs, $reduceOp.op, $expr.node, true);
       }
@@ -423,6 +419,10 @@ expr returns [Expr node]
     | EXP '(' expr ')'
       {
         $node = makeExp($expr.node);
+      }
+    | LN '(' expr ')'
+      {
+        $node = makeLn($expr.node);
       }
     | ABS '(' expr ')'
       {

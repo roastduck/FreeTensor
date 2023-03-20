@@ -9,6 +9,8 @@
 namespace freetensor {
 
 class CodeGenCPU : public CodeGenC<CodeGenStream> {
+    typedef CodeGenC<CodeGenStream> BaseClass;
+
     bool inParallel_ = false;
     int64_t sharedStackTop_ = 0, sharedStackSize_ = 0;
     int64_t threadStackTop_ = 0, threadStackSize_ = 0;
@@ -29,10 +31,11 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
                   const std::string &shapePtr,
                   const std::string &dimPtr) override;
 
+    using BaseClass::genScalar;
     void genScalar(const VarDef &def,
                    const std::vector<Expr> &indices) override;
 
-    using CodeGenC<CodeGenStream>::visit;
+    using BaseClass::visit;
     void visit(const VarDef &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const For &op) override;

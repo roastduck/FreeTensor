@@ -344,9 +344,6 @@ template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
     case ReduceOp::Add:
         genAddr(), this->os() << " += ", genExpr();
         break;
-    case ReduceOp::Sub:
-        genAddr(), this->os() << " -= ", genExpr();
-        break;
     case ReduceOp::Mul:
         genAddr(), this->os() << " *= ", genExpr();
         break;
@@ -577,6 +574,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const Exp &op) {
     this->os() << ")";
 }
 
+template <class Stream> void CodeGenC<Stream>::visit(const Ln &op) {
+    this->os() << "log(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const Square &op) {
     this->os() << "runtime_square(";
     (*this)(op->expr_);
@@ -708,7 +711,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Eval &op) {
 }
 
 template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
-    switch (dtype) {
+    switch (dtype.base()) {
     case DataType::Float64:
         return "double";
     case DataType::Float32:

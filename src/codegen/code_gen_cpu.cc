@@ -11,7 +11,7 @@ namespace freetensor {
 #ifdef FT_WITH_MKL
 
 static char genMKLTypeMark(DataType dtype) {
-    switch (dtype) {
+    switch (dtype.base()) {
     case DataType::Float64:
         return 'd';
     case DataType::Float32:
@@ -50,7 +50,7 @@ void CodeGenCPU::genScalar(const VarDef &def,
             this->os() << "]";
         }
     } else {
-        CodeGenC<CodeGenStream>::genScalar(def, indices);
+        BaseClass::genScalar(def, indices);
     }
 }
 
@@ -60,7 +60,7 @@ void CodeGenCPU::visit(const VarDef &op) {
 
     if (op->buffer_->atype() != AccessType::Cache || op->viewOf_.has_value() ||
         shape.empty()) {
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
 
     } else {
         auto name = mangle(op->name_);
@@ -132,18 +132,51 @@ void CodeGenCPU::visit(const VarDef &op) {
         }
 
         default:
-            CodeGenC::visit(op);
+            BaseClass::visit(op);
             break;
         }
     }
 }
 
 void CodeGenCPU::visit(const ReduceTo &op) {
-    if (op->atomic_) {
-        os() << "#pragma omp atomic" << std::endl;
-        // FIXME: OpenMP supports atomic min and max only for FORTRAN
+    if (op->sync_) {
+        switch (op->op_) {
+        case ReduceOp::Add:
+        case ReduceOp::Mul:
+        case ReduceOp::LAnd:
+        case ReduceOp::LOr:
+            // Supported by `omp atomic`
+            os() << "#pragma omp atomic" << std::endl;
+            BaseClass::visit(op);
+            break;
+
+        // The followings are not supported by `omp atomic`, do atomic CAS by
+        // ourselves. `atomicUpdate` is defined in `runtime/cpu_runtime.h`
+        case ReduceOp::Min:
+            makeIndent();
+            os() << "atomicUpdate(";
+            genScalar(op);
+            // User names are prefixed by an `_`, so we are safe with `x` here
+            os() << ", [&](auto &&x) { return std::min(x, ";
+            (*this)(op->expr_);
+            os() << "); });" << std::endl;
+            break;
+        case ReduceOp::Max:
+            makeIndent();
+            os() << "atomicUpdate(";
+            genScalar(op);
+            // User names are prefixed by an `_`, so we are safe with `x` here
+            os() << ", [&](auto &&x) { return std::max(x, ";
+            (*this)(op->expr_);
+            os() << "); });" << std::endl;
+            break;
+
+        default:
+            ASSERT(false);
+        }
+    } else {
+        BaseClass::visit(op);
     }
-    CodeGenC::visit(op);
 }
 
 void CodeGenCPU::visit(const For &op) {
@@ -190,9 +223,6 @@ void CodeGenCPU::visit(const For &op) {
             case ReduceOp::Add:
                 os() << "+: ";
                 break;
-            case ReduceOp::Sub:
-                os() << "-: ";
-                break;
             case ReduceOp::Mul:
                 os() << "*: ";
                 break;
@@ -238,7 +268,7 @@ void CodeGenCPU::visit(const For &op) {
         os() << std::endl;
         bool oldInParallel = inParallel_;
         inParallel_ = true;
-        CodeGenC::visit(op);
+        BaseClass::visit(op);
         inParallel_ = oldInParallel;
         for (auto &&r : op->property_->reductions_) {
             if (!buffer(r->var_)->tensor()->shape().empty()) {
@@ -251,7 +281,7 @@ void CodeGenCPU::visit(const For &op) {
     } else if (op->property_->unroll_) {
         os() << "#pragma GCC unroll " << op->len_ << std::endl;
     }
-    CodeGenC::visit(op);
+    BaseClass::visit(op);
 }
 
 void CodeGenCPU::visit(const MatMul &op) {

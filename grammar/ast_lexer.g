@@ -21,9 +21,8 @@ ALLOC:      '@!alloc';
 FREE:       '@!free';
 
 // ReduceTo
-ATOMIC:     '@!atomic';
+SYNC:       '@!sync';
 PLUSEQ:     '+=';
-SUBEQ:      '-=';
 STAREQ:     '*=';
 MINEQ:      '@!min=';
 MAXEQ:      '@!max=';
@@ -53,6 +52,7 @@ MAX:        '@!max';
 MIN:        '@!min';
 SQRT:       '@!sqrt';
 EXP:        '@!exp';
+LN:         '@!ln';
 SQUARE:     '@!square';
 ABS:        '@!abs';
 SIGMOID:    '@!sigmoid';

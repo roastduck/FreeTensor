@@ -24,33 +24,10 @@ static bool sameParent(const Stmt &x, const Stmt &y) {
     return x->parentCtrlFlow() == y->parentCtrlFlow();
 }
 
-static ReduceOp combineReduce(ReduceOp reduceOp) {
-    // x -= 1; x -= 2; ==> x -= 1 + 2
-    switch (reduceOp) {
-    case ReduceOp::Add:
-    case ReduceOp::Sub: // !!!
-        return ReduceOp::Add;
-    case ReduceOp::Mul:
-        return ReduceOp::Mul;
-    case ReduceOp::Min:
-        return ReduceOp::Min;
-    case ReduceOp::Max:
-        return ReduceOp::Max;
-    case ReduceOp::LAnd:
-        return ReduceOp::LAnd;
-    case ReduceOp::LOr:
-        return ReduceOp::LOr;
-    default:
-        ASSERT(false);
-    }
-}
-
 static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
     switch (reduceOp) {
     case ReduceOp::Add:
         return makeAdd(lhs, rhs);
-    case ReduceOp::Sub:
-        return makeSub(lhs, rhs);
     case ReduceOp::Mul:
         return makeMul(lhs, rhs);
     case ReduceOp::Max:
@@ -457,8 +434,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                         redundant.insert(_earlier);
                         replacement[_later] =
                             makeReduceTo(l->var_, l->indices_, l->op_,
-                                         makeReduce(combineReduce(l->op_),
-                                                    newExpr, l->expr_),
+                                         makeReduce(l->op_, newExpr, l->expr_),
                                          false, later->metadata(), later->id());
                     }
                 } catch (const ParserError &e) {
@@ -477,10 +453,10 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                                       later->metadata(), later->id());
                     } else if (earlier.as<ReduceToNode>()->op_ == l->op_) {
                         redundant.insert(_earlier);
-                        replacement[_later] = makeReduceTo(
-                            l->var_, l->indices_, l->op_,
-                            makeReduce(combineReduce(l->op_), expr, l->expr_),
-                            false, later->metadata(), later->id());
+                        replacement[_later] =
+                            makeReduceTo(l->var_, l->indices_, l->op_,
+                                         makeReduce(l->op_, expr, l->expr_),
+                                         false, later->metadata(), later->id());
                     }
                 }
             }

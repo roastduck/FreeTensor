@@ -13,7 +13,7 @@
 namespace freetensor {
 
 static std::string genCUBLASType(DataType dtype) {
-    switch (dtype) {
+    switch (dtype.base()) {
     case DataType::Float64:
         return "CUDA_R_64F";
     case DataType::Float32:
@@ -283,6 +283,12 @@ void CodeGenCUDA::visit(const Exp &op) {
     os() << ")";
 }
 
+void CodeGenCUDA::visit(const Ln &op) {
+    os() << "runtime_log("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
 void CodeGenCUDA::visit(const Tanh &op) {
     os() << "runtime_tanh("; // Defined in runtime/gpu_runtime.h
     (*this)(op->expr_);
@@ -409,22 +415,20 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
     };
     auto genExpr = [&]() { (*this)(op->expr_); };
 
-    if (op->atomic_) {
+    if (op->sync_) {
         switch (op->op_) {
         case ReduceOp::Add:
             os() << "atomicAdd(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
             break;
-        case ReduceOp::Sub:
-            os() << "atomicSub(&", genAddr(), os() << ", ", genExpr();
-            os() << ");" << std::endl;
-            break;
         case ReduceOp::Min:
-            os() << "atomicMin(&", genAddr(), os() << ", ", genExpr();
+            // Defined in `runtime/gpu_runtime.h`
+            os() << "runtimeAtomicMin(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
             break;
         case ReduceOp::Max:
-            os() << "atomicMax(&", genAddr(), os() << ", ", genExpr();
+            // Defined in `runtime/gpu_runtime.h`
+            os() << "runtimeAtomicMax(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
             break;
         case ReduceOp::LAnd:
@@ -435,6 +439,21 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
             os() << "atomicOr(&", genAddr(), os() << ", (bool)(", genExpr();
             os() << "));" << std::endl;
             break;
+
+        // The followings are not supported by CUDA's atomic functions, do
+        // atomic CAS by ourselves. `atomicUpdate` is defined in
+        // `runtime/gpu_runtime.h`
+        case ReduceOp::Mul:
+            makeIndent();
+            os() << "atomicUpdate(";
+            genScalar(op);
+            // User names are prefixed by an `_`, so we are safe with `x` here
+            os() << ", [&](" << gen(buffer(op->var_)->tensor()->dtype())
+                 << " x) { return x * (";
+            (*this)(op->expr_);
+            os() << "); });" << std::endl;
+            break;
+
         default:
             ASSERT(false);
         }
@@ -442,9 +461,6 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
         switch (op->op_) {
         case ReduceOp::Add:
             genAddr(), os() << " += ", genExpr();
-            break;
-        case ReduceOp::Sub:
-            genAddr(), os() << " -= ", genExpr();
             break;
         case ReduceOp::Mul:
             genAddr(), os() << " *= ", genExpr();

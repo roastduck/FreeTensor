@@ -75,6 +75,7 @@ enum class ASTNodeType : int {
     LNot,
     Sqrt,
     Exp,
+    Ln,
     Square,
     Sigmoid,
     Tanh,
@@ -194,6 +195,8 @@ class StmtOrExprID {
     Expr expr_;
 
   public:
+    StmtOrExprID() {}
+
     StmtOrExprID(const ID &stmtId) : stmtId_(stmtId) {}
 
     StmtOrExprID(const Expr &expr, const ID &stmtId)
@@ -206,6 +209,8 @@ class StmtOrExprID {
 
     const ID &stmtId() const { return stmtId_; }
     const Expr &expr() const { return expr_; }
+
+    bool isValid() const { return stmtId_.isValid(); }
 
     friend std::ostream &operator<<(std::ostream &os, const StmtOrExprID &id);
     friend bool operator==(const StmtOrExprID &lhs, const StmtOrExprID &rhs);
@@ -304,8 +309,8 @@ Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs);
  * @param sourceStmts variadic parameters that accept the source Stmts.
  */
 template <typename... Srcs>
-requires(std::convertible_to<Srcs, Stmt> &&...) auto makeMetadata(
-    const std::string &op, Srcs &&...sourceStmts) {
+    requires(std::convertible_to<Srcs, Stmt> && ...)
+auto makeMetadata(const std::string &op, Srcs &&...sourceStmts) {
     auto metadataFrom = [](const Stmt &s) -> Metadata {
         if (s->metadata().isValid())
             return s->metadata();

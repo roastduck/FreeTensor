@@ -6,68 +6,71 @@ namespace freetensor {
 #define BINARY_OP(OPNAME, OP)                                                  \
     struct op_f_##OPNAME {                                                     \
         template <typename T, typename U>                                      \
-        auto operator()(const T &l, const U &r, int) -> decltype(l OP r) {     \
+            requires requires(T l, U r) { l OP r; }                            \
+        auto operator()(const T &l, const U &r) {                              \
             return l OP r;                                                     \
         }                                                                      \
         template <typename T, typename U>                                      \
-        auto operator()(const T &l, const U &r, char) -> decltype(l) {         \
+        auto operator()(const T &l, const U &r) -> decltype(l) {               \
             ERROR("Invalid operator " #OPNAME " on given types");              \
-            return l;                                                          \
         }                                                                      \
     };                                                                         \
     Expr ConstFold::visit(const OPNAME &op) {                                  \
         return visitBinary(                                                    \
-            op, [](auto l, auto r) { return op_f_##OPNAME()(l, r, 0); },       \
+            op, [](auto l, auto r) { return op_f_##OPNAME()(l, r); },          \
             [](auto l, auto r) { return make##OPNAME(l, r); });                \
     }
-#define BINARY_OP_F(OPNAME, OP_F, OP_TYPE_HINT)                                \
+#define BINARY_OP_F(OPNAME, OP_F)                                              \
     struct op_f_##OPNAME {                                                     \
         template <typename T, typename U>                                      \
-        auto operator()(const T &l, const U &r, int)                           \
-            -> decltype(l OP_TYPE_HINT r) {                                    \
-            typedef decltype(l OP_TYPE_HINT r) V;                              \
-            return (OP_F)((V)l, (V)r);                                         \
+            requires requires(T l, U r) { (OP_F)(l, r); }                      \
+        auto operator()(const T &l, const U &r) {                              \
+            return (OP_F)(l, r);                                               \
         }                                                                      \
         template <typename T, typename U>                                      \
-        auto operator()(const T &l, const U &r, char) -> decltype(l) {         \
+        auto operator()(const T &l, const U &r) -> decltype(l) {               \
             ERROR("Invalid operator " #OPNAME " on given types");              \
-            return l;                                                          \
         }                                                                      \
     };                                                                         \
     Expr ConstFold::visit(const OPNAME &op) {                                  \
         return visitBinary(                                                    \
-            op, [](auto l, auto r) { return op_f_##OPNAME()(l, r, 0); },       \
+            op, [](auto l, auto r) { return op_f_##OPNAME()(l, r); },          \
             [](auto l, auto r) { return make##OPNAME(l, r); });                \
     }
 #define UNARY_OP(OPNAME, OP)                                                   \
     struct op_f_##OPNAME {                                                     \
         template <typename T>                                                  \
-        auto operator()(const T &t, int) -> decltype(OP(t)) {                  \
+            requires requires(T t) { OP(t); }                                  \
+        auto operator()(const T &t) {                                          \
             return OP(t);                                                      \
         }                                                                      \
-        template <typename T>                                                  \
-        auto operator()(const T &t, char) -> decltype(t) {                     \
+        template <typename T> auto operator()(const T &t) -> decltype(t) {     \
             ERROR("Invalid operator " #OPNAME " on given types");              \
-            return t;                                                          \
         }                                                                      \
     };                                                                         \
     Expr ConstFold::visit(const OPNAME &op) {                                  \
         return visitUnary(                                                     \
-            op, [](auto x) { return op_f_##OPNAME()(x, 0); },                  \
+            op, [](auto x) { return op_f_##OPNAME()(x); },                     \
             [](auto x) { return make##OPNAME(x); });                           \
     }
 
 BINARY_OP(Add, +)
 BINARY_OP(Sub, -)
 BINARY_OP(Mul, *)
-BINARY_OP_F(RealDiv, realDiv, /)
-BINARY_OP_F(FloorDiv, floorDiv, %)
-BINARY_OP_F(CeilDiv, ceilDiv, %)
+BINARY_OP_F(RealDiv, realDiv)
+BINARY_OP_F(FloorDiv, floorDiv)
+BINARY_OP_F(CeilDiv, ceilDiv)
 BINARY_OP(RoundTowards0Div, /)
-BINARY_OP_F(Mod, mod, %)
+BINARY_OP_F(Mod, mod)
 BINARY_OP(Remainder, %)
-BINARY_OP_F(Min, std::min, +)
-BINARY_OP_F(Max, std::max, +)
+BINARY_OP_F(Min, [](auto &&lhs, auto &&rhs) {
+    typedef decltype(lhs + rhs) V;
+    return std::min<V>(lhs, rhs);
+})
+BINARY_OP_F(Max, [](auto &&lhs, auto &&rhs) {
+    typedef decltype(lhs + rhs) V;
+    return std::max<V>(lhs, rhs);
+})
 BINARY_OP(LT, <)
 BINARY_OP(LE, <=)
 BINARY_OP(GT, >)
@@ -99,7 +102,8 @@ Expr ConstFold::visit(const Cast &_op) {
         return castType(op->destType_, op->expr_.as<ConstNode>());
     }
     if (op->expr_->dtype() == op->destType_) {
-        return op->expr_;
+        return op->expr_; // FIXME: This may break assertions if we inherit
+                          // ConstFold in other passes
     }
     return op;
 }

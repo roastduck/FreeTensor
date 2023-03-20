@@ -395,6 +395,31 @@ def test_unreachable_assert_false(p):
 
 
 @pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
+def test_precondition_from_sign_type(p):
+    with ft.VarDef([
+        ("x1", (4,), "int32<0", "input", "cpu"),
+        ("x2", (4,), "int32>0", "input", "cpu"),
+        ("y", (4,), "int32", "output", "cpu"),
+    ]) as (x1, x2, y):
+        with ft.For("i", 0, 4) as i:
+            y[i] = ft.min(x1[i], x2[i])
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef([
+        ("x1", (4,), "int32<0", "input", "cpu"),
+        ("x2", (4,), "int32>0", "input", "cpu"),
+        ("y", (4,), "int32", "output", "cpu"),
+    ]) as (x1, x2, y):
+        with ft.For("i", 0, 4) as i:
+            y[i] = x1[i]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_different_scope(p):
     with ft.VarDef([
         ("x", (4, 10), "int32", "input", "cpu"),

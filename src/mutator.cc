@@ -37,6 +37,7 @@ Expr Mutator::visitExpr(const Expr &op) {
         DISPATCH_EXPR_CASE(LNot);
         DISPATCH_EXPR_CASE(Sqrt);
         DISPATCH_EXPR_CASE(Exp);
+        DISPATCH_EXPR_CASE(Ln);
         DISPATCH_EXPR_CASE(Square);
         DISPATCH_EXPR_CASE(Sigmoid);
         DISPATCH_EXPR_CASE(Tanh);

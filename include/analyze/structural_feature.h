@@ -17,7 +17,7 @@ namespace freetensor {
  */
 struct NodeFeature {
     // -1 means unknown
-    std::unordered_map<DataType, int64_t> opCnt_;
+    std::unordered_map<BaseDataType, int64_t> opCnt_;
     std::unordered_map<MemType, int64_t> loadCnt_, storeCnt_,
         accessCnt_; // Memory access count
     std::unordered_map<MemType, int64_t> loadArea_, storeArea_,
@@ -41,7 +41,7 @@ class StructuralFeature : public CompTransientBounds<SymbolTable<Visitor>> {
      * Info about an AST node, but not necessarily a feature
      */
     struct NodeInfo {
-        std::unordered_map<DataType, int64_t> opCnt_;
+        std::unordered_map<BaseDataType, int64_t> opCnt_;
         std::unordered_map<MemType, int64_t> loadCnt_, storeCnt_, accessCnt_;
 
         std::unordered_map<MemType, int64_t> innerLoadArea_, innerStoreArea_,

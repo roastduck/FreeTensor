@@ -16,7 +16,7 @@ void init_ffi_tensor_types(py::module_ &m) {
         .def("__eq__", [](AccessType lhs, const std::string &rhs) {
             return lhs == parseAType(rhs);
         });
-    // no py::implicitly_convertible, because it fails silently
+    // no py::implicitly_convertible from str, because it fails silently
 
     py::class_<MemType>(m, "MemType")
         .def(py::init<MemType>())
@@ -28,10 +28,11 @@ void init_ffi_tensor_types(py::module_ &m) {
         .def("__eq__", [](MemType lhs, const std::string &rhs) {
             return lhs == parseMType(rhs);
         });
-    // no py::implicitly_convertible, because it fails silently
+    // no py::implicitly_convertible from str, because it fails silently
 
     py::class_<DataType>(m, "DataType")
         .def(py::init<DataType>())
+        .def(py::init<BaseDataType>())
         .def(py::init(&parseDType))
         .def("__str__",
              static_cast<std::string (*)(const DataType &)>(&toString))
@@ -39,20 +40,24 @@ void init_ffi_tensor_types(py::module_ &m) {
              [](DataType dtype) {
                  auto str = toString(dtype);
                  str[0] = toupper(str[0]);
-                 return "DataType." + str;
+                 return "<DataType " + str + ">";
              })
-        .def("__hash__", [](DataType dtype) { return (size_t)dtype; })
+        .def("__hash__",
+             [](DataType dtype) { return std::hash<DataType>{}(dtype); })
         .def("__eq__", [](DataType lhs, DataType rhs) { return lhs == rhs; })
         .def("__eq__", [](DataType lhs, const std::string &rhs) {
             return lhs == parseDType(rhs);
         });
-    // no py::implicitly_convertible, because it fails silently
+    py::implicitly_convertible<BaseDataType, DataType>();
+    // no py::implicitly_convertible from str, because it fails silently
 
-    m.def("is_int", &isInt);
-    m.def("is_float", &isFloat);
-    m.def("is_number", &isNumber);
-    m.def("is_bool", &isBool);
-    m.def("up_cast", &upCast);
+    m.def("is_int", static_cast<bool (*)(const DataType &)>(&isInt));
+    m.def("is_float", static_cast<bool (*)(const DataType &)>(&isFloat));
+    m.def("is_number", static_cast<bool (*)(const DataType &)>(&isNumber));
+    m.def("is_bool", static_cast<bool (*)(const DataType &)>(&isBool));
+    m.def(
+        "up_cast",
+        static_cast<DataType (*)(const DataType &, const DataType &)>(&upCast));
 }
 
 } // namespace freetensor

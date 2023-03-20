@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <cmath> // INFINITY
 #include <cstdint>
+#include <functional>
 #include <stdexcept>
 #include <type_traits>
 
@@ -186,6 +187,13 @@ __host__ __device__ auto ceilDiv(T a, U b) {
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
 
+// Below are overloading of math functions. Although CUDA claims "many"
+// functions are already overloaded in
+// https://docs.nvidia.com/cuda/cuda-math-api/group__CUDA__MATH.html, but it
+// seems they never gave a full list of functions that we can safely use
+// (without implicitly converting to double). So we overload them explicitly
+// here
+
 template <class T, class U,
           typename std::enable_if_t<IsIntegralAnywhere<T> &&
                                     IsIntegralAnywhere<U>> * = nullptr>
@@ -208,6 +216,9 @@ inline __host__ __device__ double runtime_sqrt(double x) { return sqrt(x); }
 
 inline __host__ __device__ float runtime_exp(float x) { return expf(x); }
 inline __host__ __device__ double runtime_exp(double x) { return exp(x); }
+
+inline __host__ __device__ float runtime_log(float x) { return logf(x); }
+inline __host__ __device__ double runtime_log(double x) { return log(x); }
 
 inline __host__ __device__ float runtime_tanh(float x) { return tanhf(x); }
 inline __host__ __device__ double runtime_tanh(double x) { return tanh(x); }
@@ -242,6 +253,71 @@ inline __host__ __device__ int clzll(unsigned long long x) {
 #else
     return __builtin_clz(x);
 #endif
+}
+
+// TODO: Switch to concept after C++20 in CUDA 12
+template <typename T, typename = void> struct SameSizeUnsigned;
+template <typename T>
+struct SameSizeUnsigned<T, std::enable_if_t<sizeof(T) == 2>> {
+    typedef unsigned short type;
+};
+template <typename T>
+struct SameSizeUnsigned<T, std::enable_if_t<sizeof(T) == 4>> {
+    typedef unsigned type;
+};
+template <typename T>
+struct SameSizeUnsigned<T, std::enable_if_t<sizeof(T) == 8>> {
+    typedef unsigned long long type;
+};
+template <typename T>
+using SameSizeUnsignedT = typename SameSizeUnsigned<T>::type;
+
+template <typename T, typename Func, // Can't use std::function because it lost
+                                     // __device__ annotation
+          typename std::enable_if_t<sizeof(T) == 2 || sizeof(T) == 4 ||
+                                    sizeof(T) == 8> * = nullptr>
+__host__ __device__ void atomicUpdate(T &x, Func &&update) {
+    typedef SameSizeUnsignedT<T> U;
+    T xOld = x;
+    U xOldBits = *((U *)&xOld);
+    // TODO: Use `bit_cast` after we have C++20 in CUDA 12
+    while (true) {
+        T y = update(xOld);
+        U yBits = *((U *)&y);
+        // TODO: Use `bit_cast` after we have C++20 in CUDA 12
+        U xNewBits = atomicCAS((U *)&x, xOldBits, yBits);
+        if (xNewBits == xOldBits) {
+            break;
+        } else {
+            xOldBits = xNewBits;
+            xOld = *((T *)&xNewBits);
+            // TODO: Use `bit_cast` after we have C++20 in CUDA 12
+        }
+    }
+    // We are OK with CUDA's relaxed memory order. Since an `atomicUpdate` only
+    // competes with other `atomicUpdate`s (FreeTensor's schedule ensures there
+    // is no simultaneous `Load` and `ReduceTo` or simultaneous `Store` and
+    // `ReduceTo`), and the only memory access in the loop of `atomicUpdate` is
+    // this `atomicCAS`, we don't need to worry about the relative order of this
+    // access with other accesses that cause side effect
+}
+
+template <typename T, typename = void>
+__host__ __device__ void runtimeAtomicMin(T *addr, T val) {
+    atomicUpdate(*addr, [&](T x) { return min(x, val); });
+}
+template <typename T, std::enable_if_t<std::is_integral_v<T>>>
+__host__ __device__ void runtimeAtomicMin(T *addr, T val) {
+    atomicMin(addr, val); // Only defined for integers
+}
+
+template <typename T, typename = void>
+__host__ __device__ void runtimeAtomicMax(T *addr, T val) {
+    atomicUpdate(*addr, [&](T x) { return max(x, val); });
+}
+template <typename T, std::enable_if_t<std::is_integral_v<T>>>
+__host__ __device__ void runtimeAtomicMax(T *addr, T val) {
+    atomicMax(addr, val); // Only defined for integers
 }
 
 #endif // FREE_TENSOR_GPU_RUNTIME_H

@@ -68,6 +68,10 @@ std::string PrintVisitor::prettyKeyword(const std::string &kw) {
         return kw;
 }
 
+std::string PrintVisitor::prettyDType(const DataType &dtype) {
+    return escape(freetensor::toString(dtype));
+}
+
 void PrintVisitor::recur(const Expr &op) {
     if (op.isValid()) {
         (*this)(op);
@@ -146,7 +150,7 @@ void PrintVisitor::visit(const Func &op) {
         for (auto &&[i, ret] : views::enumerate(op->returns_)) {
             auto &&[name, dtype, closure, returnClosure] = ret;
             os() << (i > 0 ? ", " : "") << prettyVarDefName(name) << ": "
-                 << ::freetensor::toString(dtype);
+                 << prettyDType(dtype);
             if (closure.isValid()) {
                 os() << " @!closure /* " << closure.get() << " */";
             }
@@ -187,7 +191,7 @@ void PrintVisitor::visit(const VarDef &op) {
          << ::freetensor::toString(op->buffer_->mtype()) << " "
          << prettyVarDefName(op->name_) << ": ";
     auto &&tensor = op->buffer_->tensor();
-    os() << ::freetensor::toString(tensor->dtype()) << "[";
+    os() << prettyDType(tensor->dtype()) << "[";
     printList(tensor->shape());
     os() << "] ";
     if (op->viewOf_.has_value()) {
@@ -232,14 +236,14 @@ void PrintVisitor::visit(const Load &op) {
     printList(op->indices_);
     os() << "]";
     if (dtypeInLoad_) {
-        os() << SPACE << ":" << SPACE << ::freetensor::toString(op->loadType_);
+        os() << SPACE << ":" << SPACE << prettyDType(op->loadType_);
     }
 }
 
 void PrintVisitor::visit(const ReduceTo &op) {
-    if (op->atomic_) {
+    if (op->sync_) {
         makeIndent();
-        os() << "@!atomic" << std::endl;
+        os() << "@!sync" << std::endl;
     }
     makeIndent();
     os() << prettyVarDefName(op->var_) << "[";
@@ -248,9 +252,6 @@ void PrintVisitor::visit(const ReduceTo &op) {
     switch (op->op_) {
     case ReduceOp::Add:
         os() << "+=";
-        break;
-    case ReduceOp::Sub:
-        os() << "-=";
         break;
     case ReduceOp::Mul:
         os() << "*=";
@@ -485,6 +486,14 @@ void PrintVisitor::visit(const Exp &op) {
     });
 }
 
+void PrintVisitor::visit(const Ln &op) {
+    precedence_new([&] {
+        os() << "@!ln(";
+        recur(op->expr_);
+        os() << ")";
+    });
+}
+
 void PrintVisitor::visit(const Square &op) {
     precedence_new([&] {
         os() << "@!square(";
@@ -572,9 +581,6 @@ void PrintVisitor::visit(const For &op) {
         switch (reduction->op_) {
         case ReduceOp::Add:
             os() << "+= ";
-            break;
-        case ReduceOp::Sub:
-            os() << "-= ";
             break;
         case ReduceOp::Mul:
             os() << "*= ";
@@ -667,7 +673,7 @@ void PrintVisitor::visit(const Assume &op) {
 
 void PrintVisitor::visit(const Intrinsic &op) {
     os() << "@!intrinsic(\"" << op->format_ << "\" -> "
-         << ::freetensor::toString(op->retType_);
+         << prettyDType(op->retType_);
     for (auto &&param : op->params_) {
         os() << "," << SPACE;
         recur(param);
@@ -734,7 +740,7 @@ void PrintVisitor::visit(const LoadAtVersion &op) {
     os() << "@!load_at_version(" << escape(op->tapeName_) << "," << SPACE
          << "[";
     printList(op->indices_);
-    os() << "]," << SPACE << ::freetensor::toString(op->loadType_) << ")";
+    os() << "]," << SPACE << prettyDType(op->loadType_) << ")";
 }
 
 std::string toString(const AST &op) {

@@ -17,7 +17,7 @@ void checkVarCrossParallel(const Stmt &ast, const ID &def, MemType mtype) {
             {{NodeIDOrParallelScope(threadIdxY), DepDirection::Different}});
         direction.push_back(
             {{NodeIDOrParallelScope(threadIdxZ), DepDirection::Different}});
-        // fall through
+        [[fallthrough]];
     case MemType::GPUWarp:
     case MemType::GPUShared:
         direction.push_back(

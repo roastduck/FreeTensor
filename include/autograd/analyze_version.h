@@ -6,6 +6,7 @@
 
 #include <analyze/symbol_table.h>
 #include <analyze/track_stmt.h>
+#include <autograd/derivative.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -115,6 +116,8 @@ class SetUserVersionsForInputs : public SymbolTable<Visitor> {
  *
  * @param op : The AST to analyze
  * @param intermediates : Varaibles (VarDef IDs) to analyze
+ * @param derivatives : Lazy derivative generators for each statement. We need
+ * this information to determine which values are to be used in gradients
  * @param localVersionsOnly : If true, analyze local versions inside its VarDef
  * node. If false, analyze global versions within the whole program
  * @return : (node -> versions, VarDef IDs -> total version counts, trivial
@@ -124,8 +127,11 @@ class SetUserVersionsForInputs : public SymbolTable<Visitor> {
 std::tuple<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
            std::unordered_set<ID>,
            std::unordered_map<std::string, std::pair<std::string, Expr>>>
-analyzeVersion(const Stmt &op, const std::unordered_set<ID> &intermediates,
-               bool localVersionsOnly);
+analyzeVersion(
+    const Stmt &op, const std::unordered_set<ID> &intermediates,
+    const std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
+        &derivatives,
+    bool localVersionsOnly);
 
 } // namespace freetensor
 

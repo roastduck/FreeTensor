@@ -188,7 +188,7 @@ class VarRef(ffi.FrontendVar):
             return AlreadyMadeReduceTo
         top = ctx_stack.top()
         top.append_stmt(
-            self.as_reduce_to(ffi.ReduceOp.Sub, top.get_metadata(), other))
+            self.as_reduce_to(ffi.ReduceOp.Add, top.get_metadata(), -other))
         return AlreadyMadeReduceTo
 
     def __mul__(self, other):
@@ -230,7 +230,10 @@ class VarRef(ffi.FrontendVar):
             from .. import libop
             libop.truediv_to(self, other)
             return AlreadyMadeReduceTo
-        return NotImplemented  # Fallback to x = x / y
+        top = ctx_stack.top()
+        top.append_stmt(
+            self.as_reduce_to(ffi.ReduceOp.Mul, top.get_metadata(), 1. / other))
+        return AlreadyMadeReduceTo
 
     def __floordiv__(self, other):
         if self.ndim > 0:
@@ -968,6 +971,31 @@ def exp(expr):
     if isinstance(expr, Number):
         return math.exp(expr)
     return ffi.makeExp(expr)
+
+
+def ln(expr):
+    '''
+    Natural logarithm
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.ln
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The exponent
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.ln(expr)
+    if isinstance(expr, Number):
+        return math.log(expr)  # Defaults to ln without the base
+    return ffi.makeLn(expr)
 
 
 def square(expr):
