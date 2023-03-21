@@ -852,7 +852,7 @@ class PBMapBuilder : public PBBuilder {
     PBMapBuilder &operator=(PBMapBuilder &&) = default;
 
     void addInput(const PBBuildExpr &expr);
-    void addInputs(auto exprs) {
+    void addInputs(auto &&exprs) {
         for (auto &&e : exprs)
             addInput(e);
     }
@@ -862,7 +862,7 @@ class PBMapBuilder : public PBBuilder {
     void clearInputs() { inputs_.clear(); }
 
     void addOutput(const PBBuildExpr &expr);
-    void addOutputs(auto exprs) {
+    void addOutputs(auto &&exprs) {
         for (auto &&e : exprs)
             addOutput(e);
     }
@@ -885,7 +885,7 @@ class PBSetBuilder : public PBBuilder {
     PBSetBuilder &operator=(PBSetBuilder &&) = default;
 
     void addVar(const PBBuildExpr &expr);
-    void addVars(auto exprs) {
+    void addVars(auto &&exprs) {
         for (auto &&e : exprs)
             addVar(e);
     }
