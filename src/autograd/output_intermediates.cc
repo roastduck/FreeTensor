@@ -1,7 +1,41 @@
+#include <analyze/symbol_table.h>
 #include <autograd/analyze_version.h>
 #include <autograd/output_intermediates.h>
 
 namespace freetensor {
+
+namespace {
+
+class AllWritesToDefs : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
+
+    const std::unordered_set<ID> &defs_;
+    std::unordered_map<ID, std::unordered_set<ID>> writes_;
+
+  public:
+    AllWritesToDefs(const std::unordered_set<ID> &defs) : defs_(defs) {}
+
+    const auto &writes() const { return writes_; }
+
+  protected:
+    using BaseClass::visit;
+
+    void visit(const Store &op) override {
+        BaseClass::visit(op);
+        if (defs_.count(def(op->var_)->id())) {
+            writes_[def(op->var_)->id()].emplace(op->id());
+        }
+    }
+
+    void visit(const ReduceTo &op) override {
+        BaseClass::visit(op);
+        if (defs_.count(def(op->var_)->id())) {
+            writes_[def(op->var_)->id()].emplace(op->id());
+        }
+    }
+};
+
+} // Anonymous namespace
 
 static MemType toGlobalMemType(MemType mtype) {
     switch (mtype) {
@@ -133,17 +167,28 @@ std::tuple<Stmt, std::unordered_map<ID, std::string>,
            std::unordered_set<ID>,
            std::unordered_map<std::string, std::pair<std::string, Expr>>>
 outputIntermediates(
-    const Stmt &op, const std::unordered_set<ID> &intermediates,
+    const Stmt &op,
+    const std::unordered_map<ID, std::unordered_set<ID>> &needVersions,
     const std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
         &derivatives,
     OutputIntermediatesStage stage, const std::string &varSuffix) {
     auto [versions, totLens, trivials, userVersions] =
-        analyzeVersion(op, intermediates, derivatives,
+        analyzeVersion(op, needVersions, derivatives,
                        stage == OutputIntermediatesStage::Backward);
     OutputIntermediates mutator(versions, totLens, trivials, stage, varSuffix);
     auto ret = mutator(op);
     return {ret,     mutator.savedNames(),    versions,
             totLens, mutator.insertedStmts(), userVersions};
+}
+
+Stmt outputAllIntermedaites(const Stmt &op,
+                            const std::unordered_set<ID> &intermediates,
+                            OutputIntermediatesStage stage,
+                            const std::string &varSuffix) {
+    AllWritesToDefs visitor{intermediates};
+    visitor(op);
+    return std::get<0>(
+        outputIntermediates(op, visitor.writes(), {}, stage, varSuffix));
 }
 
 } // namespace freetensor

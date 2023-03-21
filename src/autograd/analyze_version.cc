@@ -2,68 +2,21 @@
 
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
-#include <analyze/symbol_table.h>
+#include <analyze/find_stmt.h>
 #include <autograd/analyze_version.h>
-#include <pass/flatten_stmt_seq.h>
 
 namespace freetensor {
 
-namespace {
-
-class ReplaceMarkVersionByFakeLoad : public SymbolTable<Mutator> {
-    typedef SymbolTable<Mutator> BaseClass;
-
-  protected:
-    using BaseClass::visit;
-
-    Stmt visit(const MarkVersion &op) override {
-        auto &&tensor = buffer(op->var_)->tensor();
-        return makeEval(
-            makeLoad(op->var_,
-                     std::vector<Expr>(
-                         tensor->shape().size(),
-                         makeIntrinsic("__any__", {}, DataType::Int32, false)),
-                     tensor->dtype()),
-            op->metadata(), op->id());
-    }
-};
-
-class FindWrites : public SymbolTable<Visitor> {
-    typedef SymbolTable<Visitor> BaseClass;
-
-    std::function<void(const Expr & /* expr */, const ID & /* id */,
-                       const ID & /* defId */)>
-        callback_;
-
-  public:
-    FindWrites(const auto &callback) : callback_(callback) {}
-
-  protected:
-    using BaseClass::visit;
-
-    void visit(const Store &op) override {
-        BaseClass::visit(op);
-        callback_(op->expr_, op->id(), def(op->var_)->id());
-    }
-
-    void visit(const ReduceTo &op) override {
-        BaseClass::visit(op);
-        callback_(op->expr_, op->id(), def(op->var_)->id());
-    }
-};
-
-} // Anonymous namespace
-
 void CountScopeLen::visit(const Store &op) {
     Visitor::visit(op);
-    if (op->var_ == var_ && needTapes_.count(op->id())) {
+    if (op->var_ == var_ && needVersions_.count(op->id())) {
         scopeLen_[op] = makeIntConst(1);
     }
 }
 
 void CountScopeLen::visit(const ReduceTo &op) {
     Visitor::visit(op);
-    if (op->var_ == var_ && needTapes_.count(op->id())) {
+    if (op->var_ == var_ && needVersions_.count(op->id())) {
         scopeLen_[op] = makeIntConst(1);
     }
 }
@@ -157,14 +110,14 @@ void AnalyzeVersion::visit(const MarkVersion &op) {
 
 void AnalyzeVersion::visit(const Store &op) {
     BaseClass::visit(op);
-    if (op->var_ == var_ && needTapes_.count(op->id())) {
+    if (op->var_ == var_ && needVersions_.count(op->id())) {
         versions_[op->id()] = offset_;
     }
 }
 
 void AnalyzeVersion::visit(const ReduceTo &op) {
     BaseClass::visit(op);
-    if (op->var_ == var_ && needTapes_.count(op->id())) {
+    if (op->var_ == var_ && needVersions_.count(op->id())) {
         versions_[op->id()] = offset_;
     }
 }
@@ -231,46 +184,11 @@ std::tuple<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
            std::unordered_set<ID>,
            std::unordered_map<std::string, std::pair<std::string, Expr>>>
 analyzeVersion(
-    const Stmt &op, const std::unordered_set<ID> &intermediates,
+    const Stmt &op,
+    const std::unordered_map<ID, std::unordered_set<ID>> &needVersions,
     const std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
         &derivatives,
     bool localVersionsOnly) {
-    // Find out the statements which we need to store its value as one version
-    //
-    // For each variable in `intermediates`, which means we are willing to save,
-    // we check if we need to save it for a particular statement. There are two
-    // cases:
-    //
-    // - (RAW) If the variable is written by statement X, and then read by
-    // statement Y, a version of it on X is needed, which can be used either to
-    // recompute Y's forward value, or to compute Y's gradient. Currently there
-    // may be false positive in this case, because we don't know which
-    // statements have to be recomputed.
-    // - (RAW) If the variable is written by statement X, where the value may
-    // propagate to a MarkVersion node, a version of it on X is needed. In order
-    // to find such statements, we replace MarkVersion by a fake Load node with
-    // relaxed indices before we do a dependence analysis.
-    // - (W) If the variable is written by statement X, and then overwritten
-    // by statement Y, and if we need X's result to compute X's gradient (use
-    // `y` for `y = f(x)`'s gradient), then we need a version of it on X.
-    std::unordered_map<ID, std::unordered_set<ID>> needTapes;
-    FindDeps()
-        .type(DEP_RAW)
-        .filterAccess([&](const auto &acc) {
-            return intermediates.count(acc.def_->id());
-        })
-        .eraseOutsideVarDef(localVersionsOnly)(op, [&](const Dependence &d) {
-            ASSERT(d.earlier()->nodeType() != ASTNodeType::Load);
-            if (d.later()->nodeType() != ASTNodeType::ReduceTo) {
-                needTapes[d.defId()].insert(d.earlier().as<StmtNode>()->id());
-            }
-        });
-    FindWrites{[&](const Expr &expr, const ID &id, const ID &defId) {
-        if (derivatives.count(StmtOrExprID{expr, id})) {
-            needTapes[defId].insert(id);
-        }
-    }}(ReplaceMarkVersionByFakeLoad{}(op));
-
     // Find out scopes we need to account in version numbers
     std::unordered_map<ID, std::unordered_set<ID>> affectingScopes;
     std::vector<FindDepsDir> direction;
@@ -283,13 +201,13 @@ analyzeVersion(
         .direction(direction)
         .type(DEP_RAW | DEP_WAR)
         .filterAccess([&](const auto &acc) -> bool {
-            if (!needTapes.count(acc.def_->id())) {
+            if (!needVersions.count(acc.def_->id())) {
                 return false;
             }
             if (acc.op_->nodeType() == ASTNodeType::Load) {
                 return true;
             } else {
-                return needTapes.at(acc.def_->id()).count(acc.stmt_->id());
+                return needVersions.at(acc.def_->id()).count(acc.stmt_->id());
             }
         })
         .eraseOutsideVarDef(localVersionsOnly)(op, [&](const Dependence &d) {
@@ -300,9 +218,8 @@ analyzeVersion(
     std::unordered_map<StmtOrExprID, Expr> versions;
     std::unordered_map<std::string, std::pair<std::string, Expr>> userVersions;
     std::unordered_map<ID, Expr> totLens;
-    for (auto &&defId : intermediates) {
+    for (auto &&[defId, needTape] : needVersions) {
         auto &&scopes = affectingScopes[defId];
-        auto &&needTape = needTapes[defId];
         CountScopeLen counter(defId, scopes, needTape);
         counter(op);
         auto &&scopeLen = counter.scopeLen();
@@ -313,13 +230,14 @@ analyzeVersion(
         analyzer(op);
     }
 
-    std::unordered_set<ID> trivials = intermediates;
+    std::unordered_set<ID> trivials =
+        ranges::to<std::unordered_set>(needVersions | views::keys);
     FindDeps()
         .type(DEP_WAW)
         .filterAccess(
-            [&](const auto &acc) { return needTapes.count(acc.def_->id()); })
+            [&](const auto &acc) { return needVersions.count(acc.def_->id()); })
         .filterEarlier([&](const auto &earlier) {
-            return needTapes.at(earlier.def_->id())
+            return needVersions.at(earlier.def_->id())
                 .count(earlier.op_.template as<StmtNode>()->id());
         })
         .eraseOutsideVarDef(localVersionsOnly)(

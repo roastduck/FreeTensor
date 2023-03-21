@@ -27,6 +27,28 @@ class HashMatcher : public Visitor {
     }
 };
 
+class AllReadsExcludingPattern : public Visitor {
+    Expr pattern_;
+    std::unordered_set<std::string> reads_;
+
+  public:
+    AllReadsExcludingPattern(const Expr &pattern) : pattern_(pattern) {}
+
+    const auto &reads() const { return reads_; }
+
+  protected:
+    void visitExpr(const Expr &expr) override {
+        if (!HashComparator{}(pattern_, expr)) {
+            Visitor::visitExpr(expr);
+        }
+    }
+
+    void visit(const Load &op) override {
+        Visitor::visit(op);
+        reads_.insert(op->var_);
+    }
+};
+
 } // Anonymous namespace
 
 bool Derivative::LazyPartialDerivative::usingStore() {
@@ -40,6 +62,17 @@ bool Derivative::LazyPartialDerivative::usingStore() {
         }
     }
     return *usingStore_;
+}
+
+const std::unordered_set<std::string> &
+Derivative::LazyPartialDerivative::reads() {
+    if (!reads_.has_value()) {
+        AllReadsExcludingPattern visitor{
+            rootStore_.isValid() ? (Expr)rootStore_->expr_ : nullptr};
+        visitor(mathExpr_);
+        reads_ = visitor.reads();
+    }
+    return *reads_;
 }
 
 Expr Derivative::LazyPartialDerivative::replaceExpr(
@@ -67,11 +100,26 @@ bool Derivative::LazyFullDerivative::usingStore() {
         for (auto &&[_, partial] : partials_) {
             if (partial.usingStore()) {
                 usingStore_ = true;
+                goto done;
             }
         }
         usingStore_ = false;
+    done:;
     }
     return *usingStore_;
+}
+
+const std::unordered_set<std::string> &Derivative::LazyFullDerivative::reads() {
+    if (!reads_.has_value()) {
+        std::unordered_set<std::string> reads;
+        for (auto &&[_, partial] : partials_) {
+            for (auto &&name : partial.reads()) {
+                reads.emplace(name);
+            }
+        }
+        reads_ = std::move(reads);
+    }
+    return *reads_;
 }
 
 std::vector<Stmt> Derivative::LazyFullDerivative::genGrads(
