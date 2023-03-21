@@ -150,14 +150,13 @@ class FreeTensorOverload(StagingOverload):
         key = parts[0]
         val = None
         if len(parts) > 1:
-            key = key[:-1]
             val = parts[1]
 
-        if key == 'label':
+        if key == 'label:':
             if val is not None:
                 ctx_stack.top().add_label(val)
                 return
-        elif key == 'no_deps':
+        elif key == 'no_deps:':
             if val is not None:
                 back = inspect.currentframe().f_back
 
