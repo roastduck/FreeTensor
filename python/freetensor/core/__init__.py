@@ -25,7 +25,4 @@ from .staging import (StagingError, StagedAssignable, StagedIterable,
                       StagedPredicate, StagedTypeAnnotation)
 
 from .meta import *
-from .auto_schedule import *
 from .optimize import optimize, optimize_to_pytorch
-
-from .task_scheduler import TaskScheduler

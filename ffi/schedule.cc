@@ -1,4 +1,3 @@
-#include <auto_schedule/auto_schedule.h>
 #include <driver/array.h>
 #include <ffi.h>
 #include <schedule.h>

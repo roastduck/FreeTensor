@@ -8,6 +8,7 @@
 #include <variant>
 
 #include <ast.h>
+#include <hash.h>
 #include <serialize/to_string.h>
 #include <shared_linked_list.h>
 

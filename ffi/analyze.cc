@@ -1,7 +1,5 @@
 #include <analyze/all_uses.h>
-#include <analyze/find_multi_level_tiling.h>
 #include <analyze/find_stmt.h>
-#include <analyze/fixed_length_feature.h>
 #include <analyze/structural_feature.h>
 #include <ffi.h>
 
@@ -28,17 +26,6 @@ void init_ffi_analyze(py::module_ &m) {
         .def_readonly("store_area", &NodeFeature::storeArea_)
         .def_readonly("access_area", &NodeFeature::accessArea_);
     m.def("structural_feature", structuralFeature);
-
-    m.def(
-        "fixed_length_feature",
-        static_cast<std::vector<double> (*)(const Stmt &)>(fixedLengthFeature));
-    m.def(
-        "fixed_length_feature",
-        static_cast<std::vector<double> (*)(const Func &)>(fixedLengthFeature));
-
-    m.def("feature_length", FixedLengthFeature::featureLen);
-
-    m.def("find_multi_level_tiling", fakeFindMultiLevelTiling);
 
     m.def("find_all_stmt",
           static_cast<std::vector<Stmt> (*)(const Stmt &, const ID &)>(

@@ -5,7 +5,6 @@
 #include <unordered_map>
 
 #include <analyze/find_stmt.h>
-#include <auto_schedule/structs.h>
 #include <driver/target.h>
 #include <func.h>
 #include <probability/rand_ctx.h>
@@ -805,18 +804,6 @@ class Schedule {
         const std::vector<Ref<Array>> &args,
         const std::unordered_map<std::string, Ref<Array>> &kws = {},
         const std::regex &toLearn = std::regex{".*"});
-
-    std::vector<std::pair<ID, int>>
-    multiLevelTiling(const ForsWithDataReuse &target,
-                     const MultiLevelTilingAnnotation &annotation,
-                     const std::string &pat, int level);
-
-    std::vector<std::pair<ID, int>>
-    multiLevelTilingWithFusion(const ForsWithDataReuse &target,
-                               const MultiLevelTilingAnnotation &annotation,
-                               const std::string &pat,
-                               const ElementWiseInfo &toFuse, int level,
-                               TargetType targetType, bool doCacheRead);
 };
 
 } // namespace freetensor
