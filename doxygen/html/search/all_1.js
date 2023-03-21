@@ -44,7 +44,7 @@ var searchData=
   ['_5fmakemul_41',['_makeMul',['../namespacefreetensor.html#a23554bdbe18a136fe0502f677b28ed48',1,'freetensor']]],
   ['_5fmakene_42',['_makeNE',['../namespacefreetensor.html#a209202b1fd995a20536f977629f40f8c',1,'freetensor']]],
   ['_5fmakerealdiv_43',['_makeRealDiv',['../namespacefreetensor.html#a1bcd22ae6c26660f5a1fbc6995af3674',1,'freetensor']]],
-  ['_5fmakereduceto_44',['_makeReduceTo',['../namespacefreetensor.html#aedf5d64274f114a354738239c046dde0',1,'freetensor::_makeReduceTo(const std::string &amp;var, const std::vector&lt; Expr &gt; &amp;indices, ReduceOp op, Texpr &amp;&amp;expr, bool sync, const Metadata &amp;metadata=nullptr, const ID &amp;id={})'],['../namespacefreetensor.html#a5938828db5fdf28d33c4772a830829fd',1,'freetensor::_makeReduceTo(const std::string &amp;var, Tindices &amp;&amp;indices, ReduceOp op, Texpr &amp;&amp;expr, bool sync, const Metadata &amp;metadata=nullptr, const ID &amp;id={})']]],
+  ['_5fmakereduceto_44',['_makeReduceTo',['../namespacefreetensor.html#a5938828db5fdf28d33c4772a830829fd',1,'freetensor::_makeReduceTo(const std::string &amp;var, Tindices &amp;&amp;indices, ReduceOp op, Texpr &amp;&amp;expr, bool sync, const Metadata &amp;metadata=nullptr, const ID &amp;id={})'],['../namespacefreetensor.html#aedf5d64274f114a354738239c046dde0',1,'freetensor::_makeReduceTo(const std::string &amp;var, const std::vector&lt; Expr &gt; &amp;indices, ReduceOp op, Texpr &amp;&amp;expr, bool sync, const Metadata &amp;metadata=nullptr, const ID &amp;id={})']]],
   ['_5fmakeremainder_45',['_makeRemainder',['../namespacefreetensor.html#afc3e6bc0630d057ca2cf7baf8c3e59ba',1,'freetensor']]],
   ['_5fmakeroundtowards0div_46',['_makeRoundTowards0Div',['../namespacefreetensor.html#a497a675855176c23b05039100bbe1959',1,'freetensor']]],
   ['_5fmakesigmoid_47',['_makeSigmoid',['../namespacefreetensor.html#ae1e4a859d34aa7c78dab40355cc66432',1,'freetensor']]],
@@ -55,7 +55,5 @@ var searchData=
   ['_5fmakesub_52',['_makeSub',['../namespacefreetensor.html#a3b202c26ac59d51b95bbbe263ad31275',1,'freetensor']]],
   ['_5fmaketanh_53',['_makeTanh',['../namespacefreetensor.html#a23425589018647096d042159b45856a9',1,'freetensor']]],
   ['_5fmakevar_54',['_makeVar',['../namespacefreetensor.html#a97aa155dcc7c5e89d937d23c6e74691a',1,'freetensor']]],
-  ['_5fmakevardef_55',['_makeVarDef',['../namespacefreetensor.html#a639108205228a2cf8a6589b02c8093e9',1,'freetensor']]],
-  ['_5fmultileveltiling_56',['_multiLevelTiling',['../namespacefreetensor.html#a348c30d39d8efb2fe76079a3c96bd2e9',1,'freetensor']]],
-  ['_5frandomfillarray_57',['_randomFillArray',['../namespacefreetensor.html#ae508b4bca4f3eb72e0a438d228b560d6',1,'freetensor']]]
+  ['_5fmakevardef_55',['_makeVarDef',['../namespacefreetensor.html#a639108205228a2cf8a6589b02c8093e9',1,'freetensor']]]
 ];

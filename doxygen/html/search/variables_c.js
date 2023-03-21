@@ -9,6 +9,5 @@ var searchData=
   ['os_5f_6',['os_',['../structfreetensor_1_1CodeGenStream.html#aceb5b4f98c6b14d5bc37b8dbfa42635e',1,'freetensor::CodeGenStream']]],
   ['ostream_5fno_5fid_5fsign_7',['OSTREAM_NO_ID_SIGN',['../namespacefreetensor.html#a2b3a7cce92187945d8acd0a73aceb0d5',1,'freetensor']]],
   ['ostream_5fno_5fpretty_8',['OSTREAM_NO_PRETTY',['../namespacefreetensor.html#ac26da81058e71b7672698be0094462c3',1,'freetensor']]],
-  ['outerloops_5f_9',['outerLoops_',['../structfreetensor_1_1ParallelInfo.html#a2c401989af2c23e98bf4700333efde1d',1,'freetensor::ParallelInfo']]],
-  ['outermost_10',['outermost',['../structfreetensor_1_1ForsWithDataReuse.html#ab142a2d137a6044adb81923edf898e52',1,'freetensor::ForsWithDataReuse']]]
+  ['outerloops_5f_9',['outerLoops_',['../structfreetensor_1_1ParallelInfo.html#a2c401989af2c23e98bf4700333efde1d',1,'freetensor::ParallelInfo']]]
 ];

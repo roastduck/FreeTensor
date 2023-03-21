@@ -1,8 +1,8 @@
 var searchData=
 [
   ['parallel_5fscope_2eh_0',['parallel_scope.h',['../parallel__scope_8h.html',1,'']]],
-  ['parallelize_2ecc_1',['parallelize.cc',['../schedule_2parallelize_8cc.html',1,'(Global Namespace)'],['../auto__schedule_2rules_2parallelize_8cc.html',1,'(Global Namespace)']]],
-  ['parallelize_2eh_2',['parallelize.h',['../auto__schedule_2rules_2parallelize_8h.html',1,'(Global Namespace)'],['../schedule_2parallelize_8h.html',1,'(Global Namespace)']]],
+  ['parallelize_2ecc_1',['parallelize.cc',['../parallelize_8cc.html',1,'']]],
+  ['parallelize_2eh_2',['parallelize.h',['../parallelize_8h.html',1,'']]],
   ['parse_5fpb_5fexpr_2ecc_3',['parse_pb_expr.cc',['../parse__pb__expr_8cc.html',1,'']]],
   ['parse_5fpb_5fexpr_2eh_4',['parse_pb_expr.h',['../parse__pb__expr_8h.html',1,'']]],
   ['pb_5fsimplify_2ecc_5',['pb_simplify.cc',['../pb__simplify_8cc.html',1,'']]],

@@ -24,10 +24,5 @@ var searchData=
   ['modnode_21',['ModNode',['../classfreetensor_1_1ModNode.html',1,'freetensor']]],
   ['moveoutfirstorlastiter_22',['MoveOutFirstOrLastIter',['../classfreetensor_1_1MoveOutFirstOrLastIter.html',1,'freetensor']]],
   ['mulnode_23',['MulNode',['../classfreetensor_1_1MulNode.html',1,'freetensor']]],
-  ['multileveltilingannotation_24',['MultiLevelTilingAnnotation',['../structfreetensor_1_1MultiLevelTilingAnnotation.html',1,'freetensor']]],
-  ['multileveltilingpart_25',['MultiLevelTilingPart',['../classfreetensor_1_1MultiLevelTilingPart.html',1,'freetensor']]],
-  ['multileveltilingrule_26',['MultiLevelTilingRule',['../classfreetensor_1_1MultiLevelTilingRule.html',1,'freetensor']]],
-  ['multileveltilingwithfusionpart_27',['MultiLevelTilingWithFusionPart',['../classfreetensor_1_1MultiLevelTilingWithFusionPart.html',1,'freetensor']]],
-  ['multileveltilingwithfusionrule_28',['MultiLevelTilingWithFusionRule',['../classfreetensor_1_1MultiLevelTilingWithFusionRule.html',1,'freetensor']]],
-  ['mutator_29',['Mutator',['../classfreetensor_1_1Mutator.html',1,'freetensor']]]
+  ['mutator_24',['Mutator',['../classfreetensor_1_1Mutator.html',1,'freetensor']]]
 ];

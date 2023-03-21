@@ -1,9 +1,7 @@
 <map id="include/pass/float_simplify.h" name="include/pass/float_simplify.h">
-<area shape="rect" id="node1" title=" " alt="" coords="397,5,533,47"/>
-<area shape="rect" id="node2" href="$lower_8h.html" title=" " alt="" coords="243,95,363,121"/>
-<area shape="rect" id="node6" href="$grad_8cc.html" title=" " alt="" coords="387,95,542,121"/>
-<area shape="rect" id="node7" href="$float__simplify_8cc.html" title=" " alt="" coords="567,95,749,121"/>
-<area shape="rect" id="node3" href="$auto__schedule_8cc.html" title=" " alt="" coords="5,169,177,211"/>
-<area shape="rect" id="node4" href="$sketch_8cc.html" title=" " alt="" coords="202,177,405,203"/>
-<area shape="rect" id="node5" href="$schedule_8cc.html" title=" " alt="" coords="429,177,551,203"/>
+<area shape="rect" id="node1" title=" " alt="" coords="159,5,295,47"/>
+<area shape="rect" id="node2" href="$lower_8h.html" title=" " alt="" coords="6,95,126,121"/>
+<area shape="rect" id="node4" href="$grad_8cc.html" title=" " alt="" coords="150,95,305,121"/>
+<area shape="rect" id="node5" href="$float__simplify_8cc.html" title=" " alt="" coords="329,95,512,121"/>
+<area shape="rect" id="node3" href="$schedule_8cc.html" title=" " alt="" coords="5,169,127,196"/>
 </map>

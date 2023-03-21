@@ -18,8 +18,8 @@ var searchData=
   ['newiter_15',['newIter',['../classfreetensor_1_1MergeFor.html#a3412ed37d3bc7034e7c8aeb6b7c90c7d',1,'freetensor::MergeFor']]],
   ['newoutput_16',['newOutput',['../classfreetensor_1_1PBMapBuilder.html#a12b005dff5ac6c621ce2309971d905c5',1,'freetensor::PBMapBuilder']]],
   ['newoutputs_17',['newOutputs',['../classfreetensor_1_1PBMapBuilder.html#a773b538e9273e21c74e6f583a1fe7a8d',1,'freetensor::PBMapBuilder']]],
-  ['newvar_18',['newVar',['../classfreetensor_1_1PBSetBuilder.html#afdcc865f6b68041549968562ae679883',1,'freetensor::PBSetBuilder::newVar()'],['../classfreetensor_1_1MakeCacheVar.html#a2dfcecc64de75e6109ad5b881d6975fa',1,'freetensor::MakeCacheVar::newVar()'],['../classfreetensor_1_1PBBuilder.html#ac017545dbe91c9a02a9b11b94e518343',1,'freetensor::PBBuilder::newVar()']]],
-  ['newvars_19',['newVars',['../classfreetensor_1_1PBSetBuilder.html#a709c7f94d7ff2581ac40bc326de142d4',1,'freetensor::PBSetBuilder::newVars()'],['../classfreetensor_1_1PBBuilder.html#ac29711f8e36b16d6cdc1be9fc56280c3',1,'freetensor::PBBuilder::newVars()']]],
+  ['newvar_18',['newVar',['../classfreetensor_1_1PBBuilder.html#ac017545dbe91c9a02a9b11b94e518343',1,'freetensor::PBBuilder::newVar()'],['../classfreetensor_1_1PBSetBuilder.html#afdcc865f6b68041549968562ae679883',1,'freetensor::PBSetBuilder::newVar()'],['../classfreetensor_1_1MakeCacheVar.html#a2dfcecc64de75e6109ad5b881d6975fa',1,'freetensor::MakeCacheVar::newVar()']]],
+  ['newvars_19',['newVars',['../classfreetensor_1_1PBBuilder.html#ac29711f8e36b16d6cdc1be9fc56280c3',1,'freetensor::PBBuilder::newVars()'],['../classfreetensor_1_1PBSetBuilder.html#a709c7f94d7ff2581ac40bc326de142d4',1,'freetensor::PBSetBuilder::newVars()']]],
   ['nextcandidates_20',['nextCandidates',['../classfreetensor_1_1SeparateTail.html#a96e73814c5aa40037d6ef416b8c2ab71',1,'freetensor::SeparateTail']]],
   ['nextinctrlflow_21',['nextInCtrlFlow',['../classfreetensor_1_1StmtNode.html#ad2efd4946f2b56c64f34cd091e63766b',1,'freetensor::StmtNode']]],
   ['nextstmt_22',['nextStmt',['../classfreetensor_1_1StmtNode.html#aff0e7574c1a1acc942ceefe5bc4031c8',1,'freetensor::StmtNode']]],
@@ -36,9 +36,7 @@ var searchData=
   ['notmetadataselector_33',['NotMetadataSelector',['../classfreetensor_1_1NotMetadataSelector.html#a35dca6fd4ab2369a8ac1aaf0c476ef88',1,'freetensor::NotMetadataSelector']]],
   ['notselector_34',['NotSelector',['../classfreetensor_1_1NotSelector.html#ace9cc116660caf9043a31b1c8fc1797f',1,'freetensor::NotSelector']]],
   ['noutdims_35',['nOutDims',['../classfreetensor_1_1PBMap.html#a8bce043612d8aaec2db345faf9371d6c',1,'freetensor::PBMap']]],
-  ['nowsubnum_36',['nowSubNum',['../classfreetensor_1_1Sketch.html#adde45ed793cf85e181b62134645022be',1,'freetensor::Sketch']]],
-  ['nowsubsketch_37',['nowSubSketch',['../classfreetensor_1_1Sketch.html#a751b9aab36ae535323bec9db51224c17',1,'freetensor::Sketch::nowSubSketch() const'],['../classfreetensor_1_1Sketch.html#aa45221226e616bb1330d168cb2fecb75',1,'freetensor::Sketch::nowSubSketch()']]],
-  ['nparamdims_38',['nParamDims',['../classfreetensor_1_1PBMap.html#a826dec63393648426680d49a7395528b',1,'freetensor::PBMap']]],
-  ['num_39',['num',['../classfreetensor_1_1Device.html#a21e8a9ed5f036f7aff100c0b170a713c',1,'freetensor::Device']]],
-  ['numsi_40',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]]
+  ['nparamdims_36',['nParamDims',['../classfreetensor_1_1PBMap.html#a826dec63393648426680d49a7395528b',1,'freetensor::PBMap']]],
+  ['num_37',['num',['../classfreetensor_1_1Device.html#a21e8a9ed5f036f7aff100c0b170a713c',1,'freetensor::Device']]],
+  ['numsi_38',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]]
 ];

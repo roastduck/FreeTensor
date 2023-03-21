@@ -171,10 +171,6 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a38ae1948ed53fbe5378905c90feb0d73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0de65b349dc7f8dedb0180b9857ed951"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structfreetensor_1_1AutoScheduleTuneTrial.html">AutoScheduleTuneTrial</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a0de65b349dc7f8dedb0180b9857ed951">tuneAutoSchedule</a> (int nBatch, int batchSize, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;device, const std::vector&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Array.html">Array</a> &gt; &gt; &amp;args, const std::unordered_map&lt; std::string, <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Array.html">Array</a> &gt; &gt; &amp;kws={}, const std::regex &amp;toLearn=std::regex{&quot;.*&quot;})</td></tr>
 <tr class="separator:a0de65b349dc7f8dedb0180b9857ed951"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a09dd211db7d4944ec50c6ed69fc5ccf9"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a09dd211db7d4944ec50c6ed69fc5ccf9">multiLevelTiling</a> (const <a class="el" href="structfreetensor_1_1ForsWithDataReuse.html">ForsWithDataReuse</a> &amp;target, const <a class="el" href="structfreetensor_1_1MultiLevelTilingAnnotation.html">MultiLevelTilingAnnotation</a> &amp;annotation, const std::string &amp;pat, int level)</td></tr>
-<tr class="separator:a09dd211db7d4944ec50c6ed69fc5ccf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1371b08ed69a961b5584db8adcbfde11"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a1371b08ed69a961b5584db8adcbfde11">multiLevelTilingWithFusion</a> (const <a class="el" href="structfreetensor_1_1ForsWithDataReuse.html">ForsWithDataReuse</a> &amp;target, const <a class="el" href="structfreetensor_1_1MultiLevelTilingAnnotation.html">MultiLevelTilingAnnotation</a> &amp;annotation, const std::string &amp;pat, const <a class="el" href="structfreetensor_1_1ElementWiseInfo.html">ElementWiseInfo</a> &amp;toFuse, int level, <a class="el" href="namespacefreetensor.html#a000c2c313211c04f40116e7f8117d66b">TargetType</a> targetType, bool doCacheRead)</td></tr>
-<tr class="separator:a1371b08ed69a961b5584db8adcbfde11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:a37474d22958f1e5ce605d8ed1677fd95"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a37474d22958f1e5ce605d8ed1677fd95">beginTransaction</a> ()</td></tr>
 <tr class="separator:a37474d22958f1e5ce605d8ed1677fd95"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1238,104 +1234,6 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a09dd211db7d4944ec50c6ed69fc5ccf9" name="a09dd211db7d4944ec50c6ed69fc5ccf9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a09dd211db7d4944ec50c6ed69fc5ccf9">&#9670;&nbsp;</a></span>multiLevelTiling()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt; std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; &gt; freetensor::Schedule::multiLevelTiling </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="structfreetensor_1_1ForsWithDataReuse.html">ForsWithDataReuse</a> &amp;&#160;</td>
-          <td class="paramname"><em>target</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="structfreetensor_1_1MultiLevelTilingAnnotation.html">MultiLevelTilingAnnotation</a> &amp;&#160;</td>
-          <td class="paramname"><em>annotation</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>pat</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>level</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a1371b08ed69a961b5584db8adcbfde11" name="a1371b08ed69a961b5584db8adcbfde11"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1371b08ed69a961b5584db8adcbfde11">&#9670;&nbsp;</a></span>multiLevelTilingWithFusion()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt; std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; &gt; freetensor::Schedule::multiLevelTilingWithFusion </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="structfreetensor_1_1ForsWithDataReuse.html">ForsWithDataReuse</a> &amp;&#160;</td>
-          <td class="paramname"><em>target</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="structfreetensor_1_1MultiLevelTilingAnnotation.html">MultiLevelTilingAnnotation</a> &amp;&#160;</td>
-          <td class="paramname"><em>annotation</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>pat</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="structfreetensor_1_1ElementWiseInfo.html">ElementWiseInfo</a> &amp;&#160;</td>
-          <td class="paramname"><em>toFuse</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>level</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="namespacefreetensor.html#a000c2c313211c04f40116e7f8117d66b">TargetType</a>&#160;</td>
-          <td class="paramname"><em>targetType</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>doCacheRead</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="ad805cbf90171357669445e969d69ebd8" name="ad805cbf90171357669445e969d69ebd8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad805cbf90171357669445e969d69ebd8">&#9670;&nbsp;</a></span>operator=()</h2>
 
@@ -2131,7 +2029,7 @@ template&lt;class T &gt; </div>
 <li>src/schedule/<a class="el" href="inlining_8cc.html">inlining.cc</a></li>
 <li>src/schedule/<a class="el" href="merge_8cc.html">merge.cc</a></li>
 <li>src/schedule/<a class="el" href="move__to_8cc.html">move_to.cc</a></li>
-<li>src/schedule/<a class="el" href="schedule_2parallelize_8cc.html">parallelize.cc</a></li>
+<li>src/schedule/<a class="el" href="parallelize_8cc.html">parallelize.cc</a></li>
 <li>src/schedule/<a class="el" href="permute_8cc.html">permute.cc</a></li>
 <li>src/schedule/<a class="el" href="pluto_8cc.html">pluto.cc</a></li>
 <li>src/schedule/<a class="el" href="reorder_8cc.html">reorder.cc</a></li>
@@ -2139,7 +2037,7 @@ template&lt;class T &gt; </div>
 <li>src/schedule/<a class="el" href="set__mem__type_8cc.html">set_mem_type.cc</a></li>
 <li>src/schedule/<a class="el" href="split_8cc.html">split.cc</a></li>
 <li>src/schedule/<a class="el" href="swap_8cc.html">swap.cc</a></li>
-<li>src/schedule/<a class="el" href="schedule_2unroll_8cc.html">unroll.cc</a></li>
+<li>src/schedule/<a class="el" href="unroll_8cc.html">unroll.cc</a></li>
 <li>src/schedule/<a class="el" href="var__merge_8cc.html">var_merge.cc</a></li>
 <li>src/schedule/<a class="el" href="var__reorder_8cc.html">var_reorder.cc</a></li>
 <li>src/schedule/<a class="el" href="var__split_8cc.html">var_split.cc</a></li>

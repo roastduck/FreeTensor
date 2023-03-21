@@ -1,7 +1,0 @@
-<map id="include/schedule/unroll.h" name="include/schedule/unroll.h">
-<area shape="rect" id="node1" title=" " alt="" coords="285,5,469,32"/>
-<area shape="rect" id="node2" href="$auto__schedule_2rules_2parallelize_8cc.html" title=" " alt="" coords="5,80,180,121"/>
-<area shape="rect" id="node3" href="$auto__schedule_2rules_2unroll_8cc.html" title=" " alt="" coords="204,80,379,121"/>
-<area shape="rect" id="node4" href="$schedule_8cc.html" title=" " alt="" coords="403,87,524,114"/>
-<area shape="rect" id="node5" href="$schedule_2unroll_8cc.html" title=" " alt="" coords="549,87,711,114"/>
-</map>

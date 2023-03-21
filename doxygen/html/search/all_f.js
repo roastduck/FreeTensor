@@ -59,12 +59,10 @@ var searchData=
   ['notnull_56',['NotNull',['../namespacefreetensor.html#af95889187755480d15e840d24f445312a493ee14cd89fab9eafecae430e90fd14',1,'freetensor']]],
   ['notselector_57',['NotSelector',['../classfreetensor_1_1NotSelector.html',1,'freetensor::NotSelector'],['../classfreetensor_1_1NotSelector.html#ace9cc116660caf9043a31b1c8fc1797f',1,'freetensor::NotSelector::NotSelector()']]],
   ['noutdims_58',['nOutDims',['../classfreetensor_1_1PBMap.html#a8bce043612d8aaec2db345faf9371d6c',1,'freetensor::PBMap']]],
-  ['nowsubnum_59',['nowSubNum',['../classfreetensor_1_1Sketch.html#adde45ed793cf85e181b62134645022be',1,'freetensor::Sketch']]],
-  ['nowsubsketch_60',['nowSubSketch',['../classfreetensor_1_1Sketch.html#a751b9aab36ae535323bec9db51224c17',1,'freetensor::Sketch::nowSubSketch() const'],['../classfreetensor_1_1Sketch.html#aa45221226e616bb1330d168cb2fecb75',1,'freetensor::Sketch::nowSubSketch()']]],
-  ['nparamdims_61',['nParamDims',['../classfreetensor_1_1PBMap.html#a826dec63393648426680d49a7395528b',1,'freetensor::PBMap']]],
-  ['nullable_62',['Nullable',['../namespacefreetensor.html#af95889187755480d15e840d24f445312a4caefb06d2949c49591f772166ef6c90',1,'freetensor']]],
-  ['nullpolicy_63',['NullPolicy',['../namespacefreetensor.html#af95889187755480d15e840d24f445312',1,'freetensor']]],
-  ['num_64',['num',['../classfreetensor_1_1Device.html#a21e8a9ed5f036f7aff100c0b170a713c',1,'freetensor::Device']]],
-  ['numsi_65',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]],
-  ['numtypes_66',['NumTypes',['../namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()']]]
+  ['nparamdims_59',['nParamDims',['../classfreetensor_1_1PBMap.html#a826dec63393648426680d49a7395528b',1,'freetensor::PBMap']]],
+  ['nullable_60',['Nullable',['../namespacefreetensor.html#af95889187755480d15e840d24f445312a4caefb06d2949c49591f772166ef6c90',1,'freetensor']]],
+  ['nullpolicy_61',['NullPolicy',['../namespacefreetensor.html#af95889187755480d15e840d24f445312',1,'freetensor']]],
+  ['num_62',['num',['../classfreetensor_1_1Device.html#a21e8a9ed5f036f7aff100c0b170a713c',1,'freetensor::Device']]],
+  ['numsi_63',['numSi',['../classfreetensor_1_1PBVal.html#a7fbcdcccfb6dc2c54bb06e70e1c4728d',1,'freetensor::PBVal']]],
+  ['numtypes_64',['NumTypes',['../namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()'],['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a86e30d8e0831512671e7ed103ad7c457',1,'freetensor::NumTypes()']]]
 ];

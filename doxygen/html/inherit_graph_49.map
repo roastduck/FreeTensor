@@ -1,3 +1,6 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$structfreetensor_1_1LinearExpr.html" title=" " alt="" coords="5,5,209,32"/>
+<area shape="rect" id="node1" href="$classfreetensor_1_1MetadataContent.html" title=" " alt="" coords="5,78,216,105"/>
+<area shape="rect" id="node2" href="$classfreetensor_1_1AnonymousMetadataContent.html" title=" " alt="" coords="266,5,502,47"/>
+<area shape="rect" id="node3" href="$classfreetensor_1_1SourceMetadataContent.html" title=" " alt="" coords="283,71,485,112"/>
+<area shape="rect" id="node4" href="$classfreetensor_1_1TransformedMetadataContent.html" title=" " alt="" coords="264,136,504,177"/>
 </map>

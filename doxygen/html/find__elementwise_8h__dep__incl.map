@@ -1,7 +1,0 @@
-<map id="include/analyze/find_elementwise.h" name="include/analyze/find_elementwise.h">
-<area shape="rect" id="node1" title=" " alt="" coords="371,5,523,47"/>
-<area shape="rect" id="node2" href="$find__elementwise_8cc.html" title=" " alt="" coords="5,109,239,136"/>
-<area shape="rect" id="node3" href="$auto__schedule_8cc.html" title=" " alt="" coords="263,102,435,143"/>
-<area shape="rect" id="node4" href="$cache__write_8cc.html" title=" " alt="" coords="459,102,633,143"/>
-<area shape="rect" id="node5" href="$multi__level__tiling__with__fusion_8cc.html" title=" " alt="" coords="657,95,832,151"/>
-</map>

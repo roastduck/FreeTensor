@@ -1,9 +1,0 @@
-<map id="include/auto_schedule/rules/multi_level_tiling.h" name="include/auto_schedule/rules/multi_level_tiling.h">
-<area shape="rect" id="node1" title=" " alt="" coords="322,5,509,47"/>
-<area shape="rect" id="node2" href="$multi__level__tiling__with__fusion_8h.html" title=" " alt="" coords="129,95,304,151"/>
-<area shape="rect" id="node3" href="$auto__schedule_8cc.html" title=" " alt="" coords="5,206,177,247"/>
-<area shape="rect" id="node5" href="$auto__schedule_2rules_2multi__level__tiling_8cc.html" title=" " alt="" coords="328,102,503,143"/>
-<area shape="rect" id="node6" href="$auto__schedule_2rules_2parallelize_8cc.html" title=" " alt="" coords="527,102,701,143"/>
-<area shape="rect" id="node7" href="$thread__bind_8cc.html" title=" " alt="" coords="725,102,900,143"/>
-<area shape="rect" id="node4" href="$multi__level__tiling__with__fusion_8cc.html" title=" " alt="" coords="201,199,376,255"/>
-</map>

@@ -29,6 +29,5 @@ var searchData=
   ['astnode_26',['ASTNode',['../classfreetensor_1_1ASTNode.html',1,'freetensor']]],
   ['astparserbase_27',['ASTParserBase',['../classfreetensor_1_1ASTParserBase.html',1,'freetensor']]],
   ['astpart_28',['ASTPart',['../classfreetensor_1_1ASTPart.html',1,'freetensor']]],
-  ['autoschedule_29',['AutoSchedule',['../classfreetensor_1_1AutoSchedule.html',1,'freetensor']]],
-  ['autoscheduletunetrial_30',['AutoScheduleTuneTrial',['../structfreetensor_1_1AutoScheduleTuneTrial.html',1,'freetensor']]]
+  ['autoscheduletunetrial_29',['AutoScheduleTuneTrial',['../structfreetensor_1_1AutoScheduleTuneTrial.html',1,'freetensor']]]
 ];
