@@ -15,7 +15,7 @@
 Other Python dependencies:
 
 ```sh
-pip3 install --user numpy sourceinspect astor Pygments xgboost
+pip3 install --user numpy sourceinspect astor Pygments
 ```
 
 !!! note "Note on Python version"

@@ -1,6 +1,5 @@
 #include <algorithm>
 
-#include <auto_schedule/utils.h>
 #include <autograd/clear_mark_version.h>
 #include <codegen/code_gen.h>
 #include <container_utils.h>
@@ -20,7 +19,6 @@
 #include <schedule/fuse.h>
 #include <schedule/inlining.h>
 #include <schedule/merge.h>
-#include <schedule/multi_level_tiling.h>
 #include <schedule/parallelize.h>
 #include <schedule/permute.h>
 #include <schedule/pluto.h>
@@ -148,18 +146,4 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
     }
 }
 
-std::vector<std::pair<ID, int>>
-Schedule::multiLevelTiling(const ForsWithDataReuse &target,
-                           const MultiLevelTilingAnnotation &annotation,
-                           const std::string &pat, int level) {
-    return freetensor::multiLevelTiling(*this, target, annotation, pat, level);
-}
-std::vector<std::pair<ID, int>> Schedule::multiLevelTilingWithFusion(
-    const ForsWithDataReuse &target,
-    const MultiLevelTilingAnnotation &annotation, const std::string &pat,
-    const ElementWiseInfo &toFuse, int level, TargetType targetType,
-    bool doCacheRead) {
-    return freetensor::multiLevelTilingWithFusion(
-        *this, target, annotation, pat, toFuse, level, targetType, doCacheRead);
-}
 } // namespace freetensor

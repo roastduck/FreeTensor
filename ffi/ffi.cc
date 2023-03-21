@@ -43,7 +43,6 @@ PYBIND11_MODULE(freetensor_ffi, m) {
     init_ffi_autograd(m);
     init_ffi_pass(m);
     init_ffi_schedule(m);
-    init_ffi_auto_schedule(m);
     init_ffi_config(m);
 }
 
