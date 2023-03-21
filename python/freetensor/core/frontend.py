@@ -148,31 +148,43 @@ class FreeTensorOverload(StagingOverload):
             return
 
         key = parts[0]
+        val = None
         if len(parts) > 1:
             key = key[:-1]
             val = parts[1]
 
         if key == 'label':
-            ctx_stack.top().add_label(val)
+            if val is not None:
+                ctx_stack.top().add_label(val)
+                return
         elif key == 'no_deps':
-            back = inspect.currentframe().f_back
+            if val is not None:
+                back = inspect.currentframe().f_back
 
-            if val in back.f_locals:
-                var = back.f_locals[val]
-            elif val in back.f_globals:
-                var = back.f_globals[val]
-            else:
-                raise self.error(
-                    f'Variable {val} not found for annotating comment ({key}: {val})'
-                )
+                if val in back.f_locals:
+                    var = back.f_locals[val]
+                elif val in back.f_globals:
+                    var = back.f_globals[val]
+                else:
+                    raise self.error(
+                        f'Variable {val} not found for annotating comment ({key}: {val})'
+                    )
 
-            if not isinstance(var, VarRef):
-                raise self.error(
-                    f'Variable {val} = {var} is not a VarRef, which is required by annotating comment ({key}: {val})'
-                )
-            ctx_stack.top().add_next_no_deps(var.name)
+                if not isinstance(var, VarRef):
+                    raise self.error(
+                        f'Variable {val} = {var} is not a VarRef, which is required by annotating comment ({key}: {val})'
+                    )
+                ctx_stack.top().add_next_no_deps(var.name)
+                return
         elif key == 'prefer_libs':
             ctx_stack.top().set_next_prefer_libs()
+            return
+
+        raise ffi.InvalidProgram('''Invalid metadata. Possible metadata are:
+`label: <label_name>`: to label the following statement,
+`no_deps: <variable_name>`: to mark a variable to have no dependence along the following loop,
+`prefer_libs`: to indicate the following statement should preferably be executed using external libraries.
+''')
 
     def at_position(self, filename: str, lineno: int) -> None:
         ctx_stack.top().set_next_location(filename, lineno)
