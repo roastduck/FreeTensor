@@ -89,6 +89,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5ec478a7d90ccb171f60d481c3b959a9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Derivative_1_1LazyPartialDerivative.html#a5ec478a7d90ccb171f60d481c3b959a9">usingStore</a> ()</td></tr>
 <tr class="memdesc:a5ec478a7d90ccb171f60d481c3b959a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if using <code>y</code> for <code>y = f(x)</code>'s derivative.  <a href="classfreetensor_1_1Derivative_1_1LazyPartialDerivative.html#a5ec478a7d90ccb171f60d481c3b959a9">More...</a><br /></td></tr>
 <tr class="separator:a5ec478a7d90ccb171f60d481c3b959a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a264541a6dc50dbcbeb0fd06c84b143"><td class="memItemLeft" align="right" valign="top">const std::unordered_set&lt; std::string &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Derivative_1_1LazyPartialDerivative.html#a6a264541a6dc50dbcbeb0fd06c84b143">reads</a> ()</td></tr>
+<tr class="separator:a6a264541a6dc50dbcbeb0fd06c84b143"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a528457e7fd8ef446b4bfc2027588b5d2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Derivative_1_1LazyPartialDerivative.html#a528457e7fd8ef446b4bfc2027588b5d2">replaceExpr</a> (const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt; &amp;intermediatesMap, const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;versions, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr)</td></tr>
 <tr class="separator:a528457e7fd8ef446b4bfc2027588b5d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1963e1fd854c94c8fafff212d972aa5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Derivative_1_1LazyPartialDerivative.html#ac1963e1fd854c94c8fafff212d972aa5">genReplaced</a> (const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt; &amp;intermediatesMap, const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;versions)</td></tr>
@@ -259,6 +261,24 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>+= another partial derivative </p>
+
+</div>
+</div>
+<a id="a6a264541a6dc50dbcbeb0fd06c84b143" name="a6a264541a6dc50dbcbeb0fd06c84b143"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a264541a6dc50dbcbeb0fd06c84b143">&#9670;&nbsp;</a></span>reads()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::unordered_set&lt; std::string &gt; &amp; freetensor::Derivative::LazyPartialDerivative::reads </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >All variables needed to compute the derivative, including variables for tensor indexing, NOT including the <code>y</code> in <code>usingStore</code>. Please note that since <code>grad(x) = derivative * grad(y)</code>, this function does not include variable used in <code>grad(x)</code> or <code>grad(y)</code>'s indices. </p>
 
 </div>
 </div>
