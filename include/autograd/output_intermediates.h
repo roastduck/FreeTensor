@@ -92,7 +92,7 @@ class OutputIntermediates : public SymbolTable<Mutator> {
  * better be a function of y, instead of a function of x.
  *
  * @params op : The program
- * @params intermediates : VarDef IDs of the intermediate variables
+ * @param needVersions : {VarDef ID -> ID of Statements to analyze}
  * @param derivatives : Lazy derivative generators for each statement. We need
  * this information to determine which values are to be used in gradients
  * @params stage : If transforming the forward pass to save all versions of the
@@ -117,9 +117,20 @@ std::tuple<Stmt, std::unordered_map<ID, std::string>,
            std::unordered_set<ID>,
            std::unordered_map<std::string, std::pair<std::string, Expr>>>
 outputIntermediates(
-    const Stmt &op, const std::unordered_set<ID> &intermediates,
+    const Stmt &op,
+    const std::unordered_map<ID, std::unordered_set<ID>> &needVersions,
     const std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
         &derivatives,
+    OutputIntermediatesStage stage = OutputIntermediatesStage::Forward,
+    const std::string &varSuffix = ".tape");
+
+/**
+ * A simple verison of `outputIntermediates` intended solely for testing. It
+ * disregards whether a variable is needed for the gradient and saves all
+ * variables specified by the user.
+ */
+Stmt outputAllIntermedaites(
+    const Stmt &op, const std::unordered_set<ID> &intermediates,
     OutputIntermediatesStage stage = OutputIntermediatesStage::Forward,
     const std::string &varSuffix = ".tape");
 

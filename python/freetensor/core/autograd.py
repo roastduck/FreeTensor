@@ -4,7 +4,7 @@ import sys
 import freetensor_ffi as ffi
 
 from freetensor_ffi import GradTapeMode
-from freetensor_ffi import output_intermediates
+from freetensor_ffi import output_all_intermediates
 
 from .analyze import find_stmt
 from .frontend import transform
@@ -242,7 +242,7 @@ def grad(func: ffi.Func,
                       verbose=verbose)
 
 
-def output_intermediates(stmt: ffi.Stmt, intermediates: Set[Union[str,
-                                                                  ffi.ID]]):
-    return ffi.output_intermediates(
+def output_all_intermediates(stmt: ffi.Stmt, intermediates: Set[Union[str,
+                                                                      ffi.ID]]):
+    return ffi.output_all_intermediates(
         stmt, {find_stmt(stmt, i).id for i in intermediates})

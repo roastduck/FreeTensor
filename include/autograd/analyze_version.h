@@ -15,13 +15,14 @@ class CountScopeLen : public Visitor {
     ID def_;
     std::string var_;
     const std::unordered_set<ID> &affectingScopes_; // For IDs
-    const std::unordered_set<ID> &needTapes_;       // Store or ReduceTo IDs
+    const std::unordered_set<ID> &needVersions_;    // Store or ReduceTo IDs
     std::unordered_map<Stmt, Expr> scopeLen_;
 
   public:
     CountScopeLen(const ID &def, const std::unordered_set<ID> &affectingScopes,
-                  const std::unordered_set<ID> &needTapes)
-        : def_(def), affectingScopes_(affectingScopes), needTapes_(needTapes) {}
+                  const std::unordered_set<ID> &needVersions)
+        : def_(def), affectingScopes_(affectingScopes),
+          needVersions_(needVersions) {}
 
     const std::unordered_map<Stmt, Expr> &scopeLen() const { return scopeLen_; }
 
@@ -41,7 +42,7 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
     ID def_;
     std::string var_;
     const std::unordered_set<ID> &affectingScopes_; // For IDs
-    const std::unordered_set<ID> &needTapes_;       // Store or ReduceTo IDs
+    const std::unordered_set<ID> &needVersions_;    // Store or ReduceTo IDs
     const std::unordered_map<Stmt, Expr> &scopeLen_;
     Expr totLen_;
     std::unordered_map<StmtOrExprID, Expr> &versions_;
@@ -52,15 +53,15 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
 
   public:
     AnalyzeVersion(const ID &def, const std::unordered_set<ID> &affectingScopes,
-                   const std::unordered_set<ID> &needTapes,
+                   const std::unordered_set<ID> &needVersions,
                    const std::unordered_map<Stmt, Expr> &scopeLen,
                    const Expr &totLen,
                    std::unordered_map<StmtOrExprID, Expr> &versions,
                    std::unordered_map<std::string, std::pair<std::string, Expr>>
                        &userVersions)
-        : def_(def), affectingScopes_(affectingScopes), needTapes_(needTapes),
-          scopeLen_(scopeLen), totLen_(totLen), versions_(versions),
-          userVersions_(userVersions) {}
+        : def_(def), affectingScopes_(affectingScopes),
+          needVersions_(needVersions), scopeLen_(scopeLen), totLen_(totLen),
+          versions_(versions), userVersions_(userVersions) {}
 
     const std::string &tapeName() const { return tapeName_; }
 
@@ -115,7 +116,7 @@ class SetUserVersionsForInputs : public SymbolTable<Visitor> {
  * variable's lifetime
  *
  * @param op : The AST to analyze
- * @param intermediates : Varaibles (VarDef IDs) to analyze
+ * @param needVersions : {VarDef ID -> ID of Statements to analyze}
  * @param derivatives : Lazy derivative generators for each statement. We need
  * this information to determine which values are to be used in gradients
  * @param localVersionsOnly : If true, analyze local versions inside its VarDef
@@ -128,7 +129,8 @@ std::tuple<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
            std::unordered_set<ID>,
            std::unordered_map<std::string, std::pair<std::string, Expr>>>
 analyzeVersion(
-    const Stmt &op, const std::unordered_set<ID> &intermediates,
+    const Stmt &op,
+    const std::unordered_map<ID, std::unordered_set<ID>> &needVersions,
     const std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
         &derivatives,
     bool localVersionsOnly);
