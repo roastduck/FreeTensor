@@ -4,6 +4,7 @@
 #include <cstdlib> // mkdtemp, system
 #include <cstring> // memset
 #include <dlfcn.h> // dlopen
+#include <filesystem>
 #include <fstream>
 #include <sys/stat.h>    // mkdir
 #include <sys/syscall.h> // SYS_fork
@@ -93,9 +94,9 @@ Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev,
 }
 
 void Driver::buildAndLoad() {
-    std::string home = getenv("HOME");
-    mkdir((home + "/.freetensor").c_str(), 0755);
-    std::string path_string = home + "/.freetensor/XXXXXX";
+    std::filesystem::path home = getenv("HOME");
+    mkdir((home / ".freetensor").c_str(), 0755);
+    std::string path_string = home / ".freetensor" / "XXXXXX";
     char path[64];
     ASSERT(path_string.size() < 64);
     strncpy(path, path_string.c_str(), 63);
