@@ -6,6 +6,7 @@
 
 #include <analyze/symbol_table.h>
 #include <autograd/derivative.h>
+#include <autograd/invert_stmts.h>
 #include <autograd/replace_by_saved.h>
 #include <autograd/user_grad.h>
 #include <func.h>
@@ -131,6 +132,7 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
     const std::unordered_map<ID, Expr> &totLens_;
     const std::unordered_set<ID> &saveLocalStmts_;
     const std::unordered_set<Stmt> &notSingleWrite_;
+    const std::unordered_map<ID, InversionInfo> &inverseStmts_;
     std::vector<RangeToUserGrad> userGrads_; // mutable
 
     std::unordered_map<std::string, std::string> requireGrads_; // var name map
@@ -174,13 +176,14 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
          const std::unordered_map<ID, Expr> &totLens,
          const std::unordered_set<ID> &saveLocalStmts,
          const std::unordered_set<Stmt> &notSingleWrite,
+         const std::unordered_map<ID, InversionInfo> &inverseStmts,
          const std::vector<RangeToUserGrad> &userGrads)
         : derivatives_(derivatives), requires_(_requires), provides_(provides),
           tapes_(tapes), affectedDefs_(affectedDefs),
           intermediatesMap_(intermediatesMap), versions_(versions),
           userVersions_(userVersions), totLens_(totLens),
           saveLocalStmts_(saveLocalStmts), notSingleWrite_(notSingleWrite),
-          userGrads_(userGrads) {}
+          inverseStmts_(inverseStmts), userGrads_(userGrads) {}
 
     const std::unordered_map<std::string, std::string> &requireGrads() const {
         return requireGrads_;
@@ -214,6 +217,9 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
  * to pass taped tensors from the forward function to the backward function in
  * implicit I/O parameters, i.e. in closure. False to pass these tensors as
  * explicit I/O parameters. Default to true
+ * @param invert: If set to true, it can reduce the amount of recomputation or
+ * taping required. However, this may result in a loss of precision for
+ * floating-point numbers. Defaults to true.
  * @param userGrads : For custom gradients. Each `StmtSetToUserGrad` item in the
  * list specifies a statement range in the original program, which should be
  * replaced by a backward statement
@@ -233,7 +239,7 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
 gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
-         const std::unordered_set<ID> &tapes,
+         const std::unordered_set<ID> &tapes, bool invert = true,
          const std::vector<StmtSetToUserGrad> &userGrads = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -242,6 +248,7 @@ gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
                 const std::unordered_set<ID> &tapes, bool tapeInClosure = true,
+                bool invert = true,
                 const std::vector<StmtSetToUserGrad> &userGrads = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -250,7 +257,7 @@ gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
                    const std::unordered_set<ID> &tapes,
-                   bool tapeInClosure = true,
+                   bool tapeInClosure = true, bool invert = true,
                    const std::vector<StmtSetToUserGrad> &userGrads = {});
 /** @} */
 
@@ -272,6 +279,9 @@ enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
  * to pass taped tensors from the forward function to the backward function in
  * implicit I/O parameters, i.e. in closure. False to pass these tensors as
  * explicit I/O parameters. Default to true
+ * @param invert: If set to true, it can reduce the amount of recomputation or
+ * taping required. However, this may result in a loss of precision for
+ * floating-point numbers. Defaults to true.
  * @param userGrads : For custom gradients. Each `StmtSetToUserGrad` item in the
  * list specifies a statement range in the original program, which should be
  * replaced by a backward statement
@@ -291,7 +301,7 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
 gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
-         GradTapeMode tapeMode = GradTapeMode::NoReuseOnly,
+         GradTapeMode tapeMode = GradTapeMode::NoReuseOnly, bool invert = true,
          const std::vector<StmtSetToUserGrad> &userGrads = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -300,7 +310,7 @@ gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
                 GradTapeMode tapeMode = GradTapeMode::NoReuseOnly,
-                bool tapeInClosure = true,
+                bool tapeInClosure = true, bool invert = true,
                 const std::vector<StmtSetToUserGrad> &userGrads = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -309,7 +319,7 @@ gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
                    GradTapeMode tapeMode = GradTapeMode::NoReuseOnly,
-                   bool tapeInClosure = true,
+                   bool tapeInClosure = true, bool invert = true,
                    const std::vector<StmtSetToUserGrad> &userGrads = {});
 /** @} */
 

@@ -246,6 +246,16 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
             userGradOpen_ = std::nullopt;
         }
 
+        // Insert inversion
+        if (auto it = inverseStmts_.find(s->id()); it != inverseStmts_.end()) {
+            auto replacer = getReplacer(s);
+            auto inv = replacer.recomp(it->second.inv_);
+            if (it->second.cond_.isValid()) {
+                inv = makeIf(replacer.recomp(it->second.cond_), std::move(inv));
+            }
+            ret = makeStmtSeq({ret, inv});
+        }
+
         return ret;
     }
 }
@@ -645,7 +655,7 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
 gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
-         const std::unordered_set<ID> &tapes,
+         const std::unordered_set<ID> &tapes, bool invert,
          const std::vector<StmtSetToUserGrad> &stmtSetToUserGrads) {
 
     // expand the scope of each local variable, to avoid unnecessary recomputing
@@ -670,6 +680,20 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
 
     auto &&[idsToTape, idsToRecomp] =
         findTapeOrRecompStmts(op, tapes, derivatives);
+
+    // We can reduce the number of statements in `idsToRecomp` by recovering
+    // them through the inversion of their follower statements.
+    std::unordered_map<ID, InversionInfo> toInvert;
+    if (invert) {
+        std::unordered_map<ID, InversionInfo> toInvertFromTape,
+            toInvertFromRecomp;
+        std::tie(op, toInvertFromTape) =
+            invertStmts(op, &idsToTape, &derivatives);
+        std::tie(op, toInvertFromRecomp) =
+            invertStmts(op, &idsToRecomp, &derivatives);
+        toInvert = toInvertFromTape;
+        toInvert.merge(toInvertFromRecomp);
+    }
 
     // Save all versions of intermediates variables. If the variables are set to
     // be in tapes, save it in an output tensor globally in the forward pass.
@@ -717,7 +741,7 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     }
     Grad mutator(derivatives, _requires, provides, tapes, affectedDefs,
                  intermediatesMap, versions, userVersions, totLens,
-                 saveLocalStmts, notSingleWrite, rangeToUserGrads);
+                 saveLocalStmts, notSingleWrite, toInvert, rangeToUserGrads);
     backward = mutator(backward);
 
     // A backward program may re-input the same taped variable multiple times.
@@ -745,9 +769,9 @@ static std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
              const std::unordered_set<std::string> &provides,
              const std::unordered_set<ID> &tapes, bool tapeInClosure,
-             const std::vector<StmtSetToUserGrad> &userGrads) {
+             bool invert, const std::vector<StmtSetToUserGrad> &userGrads) {
     auto [forward, backward, requireGrads, provideGrads, tapeMap] =
-        gradBody(func->body_, _requires, provides, tapes, userGrads);
+        gradBody(func->body_, _requires, provides, tapes, invert, userGrads);
 
     std::vector<FuncParam> forwardParams, backwardParams;
     std::vector<FuncRet> backwardRets;
@@ -843,9 +867,9 @@ gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
                 const std::unordered_set<ID> &tapes, bool tapeInClosure,
-                const std::vector<StmtSetToUserGrad> &userGrads) {
+                bool invert, const std::vector<StmtSetToUserGrad> &userGrads) {
     return gradFuncImpl<true>(func, _requires, provides, tapes, tapeInClosure,
-                              userGrads);
+                              invert, userGrads);
 }
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -854,9 +878,10 @@ gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
                    const std::unordered_set<ID> &tapes, bool tapeInClosure,
+                   bool invert,
                    const std::vector<StmtSetToUserGrad> &userGrads) {
     return gradFuncImpl<false>(func, _requires, provides, tapes, tapeInClosure,
-                               userGrads);
+                               invert, userGrads);
 }
 
 static std::vector<ID> _findTapeDefs(const Stmt &op, GradTapeMode mode) {
@@ -890,8 +915,8 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
 gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides, GradTapeMode tapeMode,
-         const std::vector<StmtSetToUserGrad> &userGrads) {
-    return gradBody(op, _requires, provides, findTapeDefs(op, tapeMode),
+         bool invert, const std::vector<StmtSetToUserGrad> &userGrads) {
+    return gradBody(op, _requires, provides, findTapeDefs(op, tapeMode), invert,
                     userGrads);
 }
 
@@ -900,11 +925,11 @@ std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
-                GradTapeMode tapeMode, bool tapeInClosure,
+                GradTapeMode tapeMode, bool tapeInClosure, bool invert,
                 const std::vector<StmtSetToUserGrad> &userGrads) {
     return gradFuncInplace(func, _requires, provides,
                            findTapeDefs(func->body_, tapeMode), tapeInClosure,
-                           userGrads);
+                           invert, userGrads);
 }
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -912,11 +937,11 @@ std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
-                   GradTapeMode tapeMode, bool tapeInClosure,
+                   GradTapeMode tapeMode, bool tapeInClosure, bool invert,
                    const std::vector<StmtSetToUserGrad> &userGrads) {
     return gradFuncOutOfPlace(func, _requires, provides,
                               findTapeDefs(func->body_, tapeMode),
-                              tapeInClosure, userGrads);
+                              tapeInClosure, invert, userGrads);
 }
 
 } // namespace freetensor

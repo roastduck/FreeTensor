@@ -166,6 +166,10 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
         if (viewOf.isValid()) {
             // Simultaneously access of a `VarDef` and the `VarDef` it views is
             // ALWAYS treated as dependences. Use Intrinsic as "any expression"
+            // FIXME: This may cause problems if we want the presburger
+            // expression from the `found_` callback. If `a[i]` is dependent on
+            // `a[any]`, we want `i` to be really anything, instead of `i ==
+            // this_intrin`
             exprs = std::vector<Expr>(
                 viewOf->buffer_->tensor()->shape().size(),
                 makeIntrinsic("", {}, DataType::Int32, false));
