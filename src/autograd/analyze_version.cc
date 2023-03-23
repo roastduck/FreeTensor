@@ -4,6 +4,7 @@
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <autograd/analyze_version.h>
+#include <pass/const_fold.h>
 
 namespace freetensor {
 
@@ -230,15 +231,28 @@ analyzeVersion(
         analyzer(op);
     }
 
-    std::unordered_set<ID> trivials =
-        ranges::to<std::unordered_set>(needVersions | views::keys);
+    std::unordered_set<ID> trivials;
+    for (auto &&[defId, _] : needVersions) {
+        if (auto it = totLens.find(defId); it != totLens.end()) {
+            if (auto len = constFold(it->second);
+                len->nodeType() == ASTNodeType::IntConst &&
+                len.template as<IntConstNode>()->val_ == 1) {
+                trivials.emplace(defId);
+            }
+        }
+    }
     FindDeps()
         .type(DEP_WAW)
+        .ignoreReductionWAW(false)
         .filterAccess(
-            [&](const auto &acc) { return needVersions.count(acc.def_->id()); })
+            [&](const auto &acc) { return trivials.count(acc.def_->id()); })
         .filterEarlier([&](const auto &earlier) {
             return needVersions.at(earlier.def_->id())
                 .count(earlier.op_.template as<StmtNode>()->id());
+        })
+        .filterLater([&](const auto &later) {
+            return !needVersions.at(later.def_->id())
+                        .count(later.op_.template as<StmtNode>()->id());
         })
         .eraseOutsideVarDef(localVersionsOnly)(
             op, [&](const Dependence &dep) { trivials.erase(dep.defId()); });

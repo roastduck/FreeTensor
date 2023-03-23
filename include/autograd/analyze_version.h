@@ -112,8 +112,8 @@ class SetUserVersionsForInputs : public SymbolTable<Visitor> {
  * variable is considered trivial if:
  *
  * - There is only one version, AND
- * - The value of the only version is not overwritten till the end of the
- * variable's lifetime
+ * - The value of the only version is not overwritten by un-versioned writes
+ * till the end of the variable's lifetime
  *
  * @param op : The AST to analyze
  * @param needVersions : {VarDef ID -> ID of Statements to analyze}
