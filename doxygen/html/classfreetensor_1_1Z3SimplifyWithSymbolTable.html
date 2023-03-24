@@ -103,6 +103,10 @@ Collaboration diagram for freetensor::Z3SimplifyWithSymbolTable:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a3563a3cf96c6b7f432fd3777ff5fc95d"><td class="memItemLeft" align="right" valign="top">const std::unordered_set&lt; std::string &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3SimplifyWithSymbolTable.html#a3563a3cf96c6b7f432fd3777ff5fc95d">names</a> () const override</td></tr>
 <tr class="separator:a3563a3cf96c6b7f432fd3777ff5fc95d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee4fa1cebb6775c832137cdeba388d7f"><td class="memItemLeft" align="right" valign="top">const std::unordered_map&lt; std::string, <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3SimplifyWithSymbolTable.html#aee4fa1cebb6775c832137cdeba388d7f">defs</a> () const override</td></tr>
+<tr class="separator:aee4fa1cebb6775c832137cdeba388d7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34ee07a3003a033fa1f5db534dca7d92"><td class="memItemLeft" align="right" valign="top">const std::unordered_map&lt; std::string, <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3SimplifyWithSymbolTable.html#a34ee07a3003a033fa1f5db534dca7d92">loops</a> () const override</td></tr>
+<tr class="separator:a34ee07a3003a033fa1f5db534dca7d92"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6d444d57ce722a2a784fa4ecae911de2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3SimplifyWithSymbolTable.html#a6d444d57ce722a2a784fa4ecae911de2">hasDef</a> (const std::string &amp;name) const override</td></tr>
 <tr class="separator:a6d444d57ce722a2a784fa4ecae911de2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0415263e84a36d1ad3c4e436f0747dd7"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Z3SimplifyWithSymbolTable.html#a0415263e84a36d1ad3c4e436f0747dd7">def</a> (const std::string &amp;name) const override</td></tr>
@@ -133,6 +137,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ac6dfdbe7b9a7aef2a5a5b89303200510 inherit pub_methods_classfreetensor_1_1Mutator"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a763772d4c13f55e5b0b389226e729a66"><td class="memItemLeft" align="right" valign="top">virtual const std::unordered_set&lt; std::string &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SymbolTableInterface.html#a763772d4c13f55e5b0b389226e729a66">names</a> () const =0</td></tr>
 <tr class="separator:a763772d4c13f55e5b0b389226e729a66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad67dcaa8f1f6e24acde1595770faa665"><td class="memItemLeft" align="right" valign="top">virtual const std::unordered_map&lt; std::string, <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SymbolTableInterface.html#ad67dcaa8f1f6e24acde1595770faa665">defs</a> () const =0</td></tr>
+<tr class="separator:ad67dcaa8f1f6e24acde1595770faa665"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adbc6f7fc1ace75e6103bc3122d1d24f9"><td class="memItemLeft" align="right" valign="top">virtual const std::unordered_map&lt; std::string, <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SymbolTableInterface.html#adbc6f7fc1ace75e6103bc3122d1d24f9">loops</a> () const =0</td></tr>
+<tr class="separator:adbc6f7fc1ace75e6103bc3122d1d24f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe9e8a8dc393333e32e9ad124d847fdf"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SymbolTableInterface.html#afe9e8a8dc393333e32e9ad124d847fdf">hasDef</a> (const std::string &amp;name) const =0</td></tr>
 <tr class="separator:afe9e8a8dc393333e32e9ad124d847fdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afbe0e351a4dcd8412628a1b680367eed"><td class="memItemLeft" align="right" valign="top">virtual const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SymbolTableInterface.html#afbe0e351a4dcd8412628a1b680367eed">def</a> (const std::string &amp;name) const =0</td></tr>
@@ -668,6 +676,33 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="aee4fa1cebb6775c832137cdeba388d7f" name="aee4fa1cebb6775c832137cdeba388d7f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee4fa1cebb6775c832137cdeba388d7f">&#9670;&nbsp;</a></span>defs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::unordered_map&lt; std::string, <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &gt; &amp; freetensor::Z3SimplifyWithSymbolTable::defs </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="classfreetensor_1_1SymbolTableInterface.html#ad67dcaa8f1f6e24acde1595770faa665">freetensor::SymbolTableInterface</a>.</p>
+
+</div>
+</div>
 <a id="a6d444d57ce722a2a784fa4ecae911de2" name="a6d444d57ce722a2a784fa4ecae911de2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6d444d57ce722a2a784fa4ecae911de2">&#9670;&nbsp;</a></span>hasDef()</h2>
 
@@ -749,6 +784,33 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Implements <a class="el" href="classfreetensor_1_1SymbolTableInterface.html#a4379d9a3410aff86670a9b9fcc16d048">freetensor::SymbolTableInterface</a>.</p>
+
+</div>
+</div>
+<a id="a34ee07a3003a033fa1f5db534dca7d92" name="a34ee07a3003a033fa1f5db534dca7d92"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a34ee07a3003a033fa1f5db534dca7d92">&#9670;&nbsp;</a></span>loops()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::unordered_map&lt; std::string, <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &gt; &amp; freetensor::Z3SimplifyWithSymbolTable::loops </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="classfreetensor_1_1SymbolTableInterface.html#adbc6f7fc1ace75e6103bc3122d1d24f9">freetensor::SymbolTableInterface</a>.</p>
 
 </div>
 </div>
