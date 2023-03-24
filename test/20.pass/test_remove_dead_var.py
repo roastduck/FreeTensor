@@ -56,3 +56,46 @@ def test_self_assign():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_remove_a_write_if_no_reads_after_it():
+    with ft.VarDef([("x", (), "int32", "inout", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
+            a[()] = x[()] + 1
+            y[()] = a[()] * a[()]
+            a[()] *= 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "int32", "inout", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
+            a[()] = x[()] + 1
+            y[()] = a[()] * a[()]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_remove_writes_in_a_loop():
+    with ft.VarDef([("x", (), "int32", "inout", "cpu"),
+                    ("y", (2,), "int32", "output", "cpu")]) as (x, y):
+        with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
+            a[()] = x[()] + 1
+            with ft.For("i", 0, 2) as i:
+                y[i] = a[()] * a[()]
+                a[()] *= 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "int32", "inout", "cpu"),
+                    ("y", (2,), "int32", "output", "cpu")]) as (x, y):
+        with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
+            a[()] = x[()] + 1
+            with ft.For("i", 0, 2) as i:
+                y[i] = a[()] * a[()]
+                a[()] *= 2
+    std = ft.pop_ast()
+
+    assert std.match(ast)
