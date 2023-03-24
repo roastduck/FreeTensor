@@ -13,6 +13,8 @@ namespace freetensor {
 class SymbolTableInterface {
   public:
     virtual const std::unordered_set<std::string> &names() const = 0;
+    virtual const std::unordered_map<std::string, VarDef> &defs() const = 0;
+    virtual const std::unordered_map<std::string, For> &loops() const = 0;
 
     virtual bool hasDef(const std::string &name) const = 0;
     virtual const VarDef &def(const std::string &name) const = 0;
@@ -36,6 +38,12 @@ class SymbolTableData : public SymbolTableInterface {
   public:
     const std::unordered_set<std::string> &names() const override {
         return names_;
+    }
+    const std::unordered_map<std::string, VarDef> &defs() const override {
+        return defs_;
+    }
+    const std::unordered_map<std::string, For> &loops() const override {
+        return loops_;
     }
 
     bool hasDef(const std::string &name) const override {
@@ -120,6 +128,12 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
 
     const std::unordered_set<std::string> &names() const override {
         return impl_.names();
+    }
+    const std::unordered_map<std::string, VarDef> &defs() const override {
+        return impl_.defs();
+    }
+    const std::unordered_map<std::string, For> &loops() const override {
+        return impl_.loops();
     }
 
     bool hasDef(const std::string &name) const override {

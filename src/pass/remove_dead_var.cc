@@ -17,11 +17,21 @@ Expr RemoveDeadVar::visit(const Load &_op) {
     auto op = __op.as<LoadNode>();
     if (destination_ != op->var_) {
         uses_.insert(op->var_);
+        for (auto source = def(op->var_); source->viewOf_.has_value();) {
+            source = def(*source->viewOf_);
+            uses_.insert(source->name_);
+        }
     }
     return op;
 }
 
 Stmt RemoveDeadVar::visit(const Store &op) {
+    if (!inLoopCnt_.count(op->var_) && !writtenToOutput_.count(op->var_) &&
+        !uses_.count(op->var_)) {
+        // If we are not in a loop, and there is no reads afterwards, remove
+        // this write
+        return makeStmtSeq({});
+    }
     destination_ = op->var_;
     auto ret = BaseClass::visit(op);
     destination_.clear();
@@ -29,6 +39,12 @@ Stmt RemoveDeadVar::visit(const Store &op) {
 }
 
 Stmt RemoveDeadVar::visit(const ReduceTo &op) {
+    if (!inLoopCnt_.count(op->var_) && !writtenToOutput_.count(op->var_) &&
+        !uses_.count(op->var_)) {
+        // If we are not in a loop, and there is no reads afterwards, remove
+        // this write
+        return makeStmtSeq({});
+    }
     destination_ = op->var_;
     auto ret = BaseClass::visit(op);
     destination_.clear();
@@ -36,33 +52,53 @@ Stmt RemoveDeadVar::visit(const ReduceTo &op) {
 }
 
 Stmt RemoveDeadVar::visit(const VarDef &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
-    auto op = __op.as<VarDefNode>();
-
-    if (uses_.count(op->name_)) {
-        for (auto source = op; source->viewOf_.has_value();) {
-            source = def(*source->viewOf_);
-            uses_.insert(source->name_);
-        }
-    }
-
-    bool writtenToOutput = op->buffer_->atype() == AccessType::Output ||
-                           op->buffer_->atype() == AccessType::InOut;
-    for (auto source = op; source->viewOf_.has_value();) {
+    bool writtenToOutput = _op->buffer_->atype() == AccessType::Output ||
+                           _op->buffer_->atype() == AccessType::InOut;
+    for (auto source = _op; source->viewOf_.has_value();) {
         source = def(*source->viewOf_);
         if (source->buffer_->atype() == AccessType::Output ||
             source->buffer_->atype() == AccessType::InOut) {
             writtenToOutput = true;
         }
     }
+
+    if (writtenToOutput) {
+        writtenToOutput_.insert(_op->name_);
+    }
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
+    auto op = __op.as<VarDefNode>();
+    writtenToOutput_.erase(_op->name_);
+
     if (!writtenToOutput && !uses_.count(op->name_)) {
         isFixPoint_ = false;
+        // If there is no write to this var at all, remove the entire var
         return RemoveAllWrites(op->name_)(op->body_);
     }
 
     uses_.erase(_op->name_);
     return op;
+}
+
+Stmt RemoveDeadVar::visit(const For &op) {
+    for (auto &&[name, _] : defs()) {
+        inLoopCnt_[name]++;
+    }
+    auto ret = BaseClass::visit(op);
+    for (auto &&[name, _] : defs()) {
+        if (--inLoopCnt_.at(name) == 0) {
+            inLoopCnt_.erase(name);
+        }
+    }
+    return ret;
+}
+
+Stmt RemoveDeadVar::visit(const StmtSeq &op) {
+    std::vector<Stmt> stmts(op->stmts_.size(), nullptr);
+    for (auto &&[s0, s1] : views::reverse(views::zip(op->stmts_, stmts))) {
+        s1 = (*this)(s0);
+    }
+    return makeStmtSeq(std::move(stmts), op->metadata(), op->id());
 }
 
 Stmt removeDeadVar(const Stmt &_op) {

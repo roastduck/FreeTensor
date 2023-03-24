@@ -431,7 +431,6 @@ def test_reduce_min_quick_path_taped():
                     d_x[p, i] = ft.if_then_else(x[p, i] == t_tape[p], d_t[()],
                                                 0)
                     d_t[()] = ft.if_then_else(x[p, i] == t_tape[p], 0, d_t[()])
-            d_t[()] = 0
         d_y[()] = 0
     std = ft.pop_ast()
 
@@ -581,14 +580,13 @@ def test_multi_versions_in_recomp_1():
         with ft.For("i", 0, 1024) as i:
             dx[i] = 0
         with ft.For("pn", 255, -1, -1) as pn:
-            with ft.VarDef("dz", (), "float32", "cache") as dz:
-                with ft.VarDef("z.recomp", (1024,), "float32",
-                               "cache") as z_recomp:
-                    with ft.VarDef("z", (), "float32", "cache") as z:
-                        z[()] = 1.
-                        with ft.For("fn", 0, 1024) as fn:
-                            z_recomp[fn] = z[()]
-                            z[()] = (z_recomp[fn] + 1) * x[fn]
+            with ft.VarDef("z.recomp", (1024,), "float32", "cache") as z_recomp:
+                with ft.VarDef("z", (), "float32", "cache") as z:
+                    z[()] = 1.
+                    with ft.For("fn", 0, 1024) as fn:
+                        z_recomp[fn] = z[()]
+                        z[()] = (z_recomp[fn] + 1) * x[fn]
+                with ft.VarDef("dz", (), "float32", "cache") as dz:
                     dz[()] = -1 * dy[pn]
                     with ft.For("fn", 1023, -1, -1) as fn:
                         with ft.VarDef("dz.old", (), "float32",
@@ -596,7 +594,6 @@ def test_multi_versions_in_recomp_1():
                             dz_old[()] = dz[()]
                             dz[()] = dz_old[()] * x[fn]
                             dx[fn] += dz_old[()] * (z_recomp[fn] + 1)
-                dz[()] = 0
 
     std = ft.pop_ast()
     assert std.match(bwd.body)
@@ -636,7 +633,6 @@ def test_multi_versions_in_recomp_2():
                     ds[...] += dy[...] * x[i]
                     dx[i] = dy[...] * s_recomp[i]
                     dw[i] = ds[...]
-            ds[...] = 0  # TODO: Remove this unused write in some passes
     std = ft.pop_ast()
     assert std.match(ast)
 
@@ -801,7 +797,6 @@ def test_tape_4():
                     d_t_old[()] = d_t[()]
                     d_t[()] = d_t_old[()] * x[i]
                     d_x[i] = d_t_old[()] * t[i]
-            d_t[()] = 0
     std = ft.pop_ast()
 
     assert std.match(backward)

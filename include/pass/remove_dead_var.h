@@ -23,7 +23,8 @@ class RemoveAllWrites : public Mutator {
 class RemoveDeadVar : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
-    std::unordered_set<std::string> uses_;
+    std::unordered_set<std::string> uses_, writtenToOutput_;
+    std::unordered_map<std::string, int> inLoopCnt_;
     std::string destination_;
     bool isFixPoint_ = true;
 
@@ -36,6 +37,8 @@ class RemoveDeadVar : public SymbolTable<Mutator> {
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const VarDef &op) override;
+    Stmt visit(const For &op) override;
+    Stmt visit(const StmtSeq &op) override;
 };
 
 Stmt removeDeadVar(const Stmt &op);
