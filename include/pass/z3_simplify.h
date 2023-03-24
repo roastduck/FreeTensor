@@ -111,6 +111,12 @@ class Z3SimplifyWithSymbolTable : public Z3Simplify,
     const std::unordered_set<std::string> &names() const override {
         return symbols_.names();
     }
+    const std::unordered_map<std::string, VarDef> &defs() const override {
+        return symbols_.defs();
+    }
+    const std::unordered_map<std::string, For> &loops() const override {
+        return symbols_.loops();
+    }
 
     bool hasDef(const std::string &name) const override {
         return symbols_.hasDef(name);
