@@ -78,7 +78,32 @@ def test_remove_a_write_if_no_reads_after_it():
     assert std.match(ast)
 
 
-def test_remove_writes_in_a_loop():
+def test_remove_a_write_in_a_loop_if_no_reads_after_it():
+    with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ft.VarDef("a", (4,), "int32", "cache", "cpu") as a:
+            with ft.For("i", 0, 4) as i:
+                a[i] = x[i] + 1
+            with ft.For("i", 0, 4) as i:
+                y[i] = a[i] * a[i]
+            with ft.For("i", 0, 4) as i:
+                a[i] *= 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ft.VarDef("a", (4,), "int32", "cache", "cpu") as a:
+            with ft.For("i", 0, 4) as i:
+                a[i] = x[i] + 1
+            with ft.For("i", 0, 4) as i:
+                y[i] = a[i] * a[i]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_no_remove_writes_if_maybe_looped_around():
     with ft.VarDef([("x", (), "int32", "inout", "cpu"),
                     ("y", (2,), "int32", "output", "cpu")]) as (x, y):
         with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
