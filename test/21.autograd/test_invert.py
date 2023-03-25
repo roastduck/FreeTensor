@@ -34,7 +34,6 @@ def test_free_from_recomp():
                     dw[i] = ds[...]
                     with ft.If(i > 0):
                         s[...] += -1 * w[i]
-            ds[...] = 0  # TODO: Remove this unused write in some passes
     std = ft.pop_ast()
 
     assert std.match(ast)
