@@ -11,43 +11,55 @@ Stmt RemoveAllWrites::visit(const ReduceTo &op) {
     return var_ == op->var_ ? makeStmtSeq({}) : Mutator::visit(op);
 }
 
+Stmt RemoveDeadVar::visitStmt(const Stmt &s) {
+    auto ret = BaseClass::visitStmt(s);
+    for (auto &&c : ret->children()) {
+        if (auto it = writes_.find(c); it != writes_.end()) {
+            for (auto &&var : it->second) {
+                if (hasDef(var)) { // If still in scope
+                    writes_[ret].emplace(var);
+                }
+            }
+        }
+    }
+    if (auto it = writes_.find(ret); it != writes_.end()) {
+        for (auto &&var : it->second) {
+            if (!inLoopCnt_.count(var) && !writtenToOutput_.count(var) &&
+                !readsAfterward_.count(var)) {
+                ret = RemoveAllWrites{var}(ret);
+            }
+        }
+    }
+    return ret;
+}
+
 Expr RemoveDeadVar::visit(const Load &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
     if (destination_ != op->var_) {
-        uses_.insert(op->var_);
+        readsAfterward_.insert(op->var_);
         for (auto source = def(op->var_); source->viewOf_.has_value();) {
             source = def(*source->viewOf_);
-            uses_.insert(source->name_);
+            readsAfterward_.insert(source->name_);
         }
     }
     return op;
 }
 
 Stmt RemoveDeadVar::visit(const Store &op) {
-    if (!inLoopCnt_.count(op->var_) && !writtenToOutput_.count(op->var_) &&
-        !uses_.count(op->var_)) {
-        // If we are not in a loop, and there is no reads afterwards, remove
-        // this write
-        return makeStmtSeq({});
-    }
     destination_ = op->var_;
     auto ret = BaseClass::visit(op);
     destination_.clear();
+    writes_[ret].emplace(op->var_);
     return ret;
 }
 
 Stmt RemoveDeadVar::visit(const ReduceTo &op) {
-    if (!inLoopCnt_.count(op->var_) && !writtenToOutput_.count(op->var_) &&
-        !uses_.count(op->var_)) {
-        // If we are not in a loop, and there is no reads afterwards, remove
-        // this write
-        return makeStmtSeq({});
-    }
     destination_ = op->var_;
     auto ret = BaseClass::visit(op);
     destination_.clear();
+    writes_[ret].emplace(op->var_);
     return ret;
 }
 
@@ -70,13 +82,13 @@ Stmt RemoveDeadVar::visit(const VarDef &_op) {
     auto op = __op.as<VarDefNode>();
     writtenToOutput_.erase(_op->name_);
 
-    if (!writtenToOutput && !uses_.count(op->name_)) {
+    if (!writtenToOutput && !readsAfterward_.count(op->name_)) {
         isFixPoint_ = false;
         // If there is no write to this var at all, remove the entire var
         return RemoveAllWrites(op->name_)(op->body_);
     }
 
-    uses_.erase(_op->name_);
+    readsAfterward_.erase(op->name_);
     return op;
 }
 
