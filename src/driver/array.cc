@@ -132,9 +132,28 @@ static void copyToCPU(void *dst /* CPU */, const void *src /* Any device */,
     }
 }
 
+static void copyOnSameDevice(void *dst, const void *src, size_t size,
+                             const Ref<Device> &device) {
+    ASSERT(dst != nullptr);
+    ASSERT(src != nullptr);
+    switch (device->type()) {
+    case TargetType::CPU:
+        memcpy(dst, src, size);
+        break;
+#ifdef FT_WITH_CUDA
+    case TargetType::GPU:
+        checkCudaError(cudaMemcpy(dst, src, size, cudaMemcpyDefault));
+        break;
+#endif // FT_WITH_CUDA
+    default:
+        ASSERT(false);
+    }
+}
+
 Array::Array(const std::vector<size_t> &shape, DataType dtype,
-             bool dontDropBorrow)
-    : shape_(shape), dtype_(dtype), dontDropBorrow_(dontDropBorrow) {
+             bool dontDropBorrow, bool moved)
+    : shape_(shape), dtype_(dtype), dontDropBorrow_(dontDropBorrow),
+      moved_(moved) {
     nElem_ = 1;
     for (size_t dim : shape_) {
         nElem_ *= dim;
@@ -151,8 +170,8 @@ Array Array::moveFromRaw(void *ptr, const std::vector<size_t> &shape,
 
 Array Array::borrowFromRaw(void *ptr, const std::vector<size_t> &shape,
                            DataType dtype, const Ref<Device> &device,
-                           bool dontDropBorrow) {
-    Array ret(shape, dtype, dontDropBorrow);
+                           bool dontDropBorrow, bool moved) {
+    Array ret(shape, dtype, dontDropBorrow, moved);
     ret.ptrs_ = {{device, (uint8_t *)ptr, true}};
     return ret;
 }
@@ -163,12 +182,22 @@ Array::~Array() {
             freeFrom(ptr, device);
         }
     }
+    if (tempPtr_.has_value()) {
+        if (!tempPtr_->borrowed_) {
+            freeFrom(tempPtr_->ptr_, tempPtr_->device_);
+        } else {
+            // Impossible, but we can't throw in a destructor
+        }
+    }
 }
 
 Array::Array(Array &&other)
     : ptrs_(std::move(other.ptrs_)), size_(other.size_), nElem_(other.nElem_),
       shape_(std::move(other.shape_)), dtype_(other.dtype_),
-      dontDropBorrow_(other.dontDropBorrow_) {
+      dontDropBorrow_(other.dontDropBorrow_),
+      moved_(other.moved_) // No need to clear moved. Users are using Ref<Array>
+                           // anyway
+{
     other.ptrs_.clear(); // MUST!
     other.size_ = 0;
 }
@@ -179,7 +208,9 @@ Array &Array::operator=(Array &&other) {
     nElem_ = other.nElem_;
     dtype_ = other.dtype_;
     dontDropBorrow_ = other.dontDropBorrow_;
-    other.ptrs_.clear(); // MUST!
+    moved_ = other.moved_; // No need to clear moved_. Users are using
+                           // Ref<Array> anyway
+    other.ptrs_.clear();   // MUST!
     other.size_ = 0;
     return *this;
 }
@@ -196,6 +227,7 @@ void *Array::rawSharedTo(const Ref<Device> &device) {
             copyToCPU(ptr, p, size_, d);
             goto done;
         }
+        ASSERT(false);
     } else {
         for (auto &&[d, p, _] : ptrs_) {
             if (d->type() == TargetType::CPU) {
@@ -235,6 +267,7 @@ void *Array::rawMovedTo(const Ref<Device> &device) {
             copyToCPU(ptr, p, size_, d);
             goto done;
         }
+        ASSERT(false);
     } else {
         for (auto &&[d, p, _] : ptrs_) {
             if (d->type() == TargetType::CPU) {
@@ -291,6 +324,40 @@ void *Array::rawInitTo(const Ref<Device> &device) {
         throw InvalidIO(err);
     }
     return ptr;
+}
+
+void *Array::rawTemporarilyCopiedTo(const Ref<Device> &device) {
+    if (tempPtr_.has_value() && *tempPtr_->device_ != *device) {
+        freeFrom(tempPtr_->ptr_, tempPtr_->device_);
+        tempPtr_ = std::nullopt;
+    }
+    if (!tempPtr_.has_value()) {
+        tempPtr_ = {{device, allocOn(size_, device), false}};
+    }
+    for (auto [d, p, borrowed] : ptrs_) {
+        if (*d == *device) {
+            copyOnSameDevice(tempPtr_->ptr_, p, size_, d);
+            return tempPtr_->ptr_;
+        }
+    }
+    if (device->type() == TargetType::CPU) {
+        for (auto &&[d, p, _] : ptrs_) {
+            copyToCPU(tempPtr_->ptr_, p, size_, d);
+            return tempPtr_->ptr_;
+        }
+        ASSERT(false);
+    } else {
+        for (auto &&[d, p, _] : ptrs_) {
+            if (d->type() == TargetType::CPU) {
+                copyFromCPU(tempPtr_->ptr_, p, size_, device);
+                return tempPtr_->ptr_;
+            }
+        }
+        copyFromCPU(tempPtr_->ptr_,
+                    rawSharedTo(Ref<Device>::make(TargetType::CPU)), size_,
+                    device);
+        return tempPtr_->ptr_;
+    }
 }
 
 void Array::makePrivateCopy() {

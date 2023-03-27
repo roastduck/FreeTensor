@@ -64,12 +64,10 @@ Stmt RemoveDeadVar::visit(const ReduceTo &op) {
 }
 
 Stmt RemoveDeadVar::visit(const VarDef &_op) {
-    bool writtenToOutput = _op->buffer_->atype() == AccessType::Output ||
-                           _op->buffer_->atype() == AccessType::InOut;
+    bool writtenToOutput = isOutputting(_op->buffer_->atype());
     for (auto source = _op; source->viewOf_.has_value();) {
         source = def(*source->viewOf_);
-        if (source->buffer_->atype() == AccessType::Output ||
-            source->buffer_->atype() == AccessType::InOut) {
+        if (isOutputting(source->buffer_->atype())) {
             writtenToOutput = true;
         }
     }

@@ -177,7 +177,7 @@ def test_modify_self_no_prop():
 
 
 def test_using_local_var_no_prop():
-    with ft.VarDef([("x", (5, 10), "float64", "inout", "cpu"),
+    with ft.VarDef([("x", (5, 10), "float64", "input", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
         with ft.VarDef("t", (5,), "float64", "cache", "cpu") as t:
             with ft.For("i", 0, 5) as i:
@@ -191,7 +191,7 @@ def test_using_local_var_no_prop():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (5, 10), "float64", "inout", "cpu"),
+    with ft.VarDef([("x", (5, 10), "float64", "input", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
         with ft.VarDef("t", (5,), "float64", "cache", "cpu") as t:
             with ft.For("i", 0, 5) as i:

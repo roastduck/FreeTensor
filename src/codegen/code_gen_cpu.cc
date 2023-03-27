@@ -58,7 +58,8 @@ void CodeGenCPU::visit(const VarDef &op) {
     auto &&tensor = op->buffer_->tensor();
     auto &&shape = tensor->shape();
 
-    if (op->buffer_->atype() != AccessType::Cache || op->viewOf_.has_value() ||
+    if (isInputting(op->buffer_->atype()) ||
+        isOutputting(op->buffer_->atype()) || op->viewOf_.has_value() ||
         shape.empty()) {
         BaseClass::visit(op);
 

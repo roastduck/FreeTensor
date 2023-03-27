@@ -18,6 +18,13 @@ void init_ffi_tensor_types(py::module_ &m) {
         });
     // no py::implicitly_convertible from str, because it fails silently
 
+    m.def("is_writable", &isWritable);
+    m.def("is_inputting", &isInputting);
+    m.def("is_outputting", &isOutputting);
+
+    m.def("add_outputting", &addOutputting);
+    m.def("remove_outputting", &removeOutputting);
+
     py::class_<MemType>(m, "MemType")
         .def(py::init<MemType>())
         .def(py::init(&parseMType))

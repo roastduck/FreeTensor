@@ -21,9 +21,10 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
         return inner->nodeType() == ASTNodeType::VarDef &&
                inner.as<VarDefNode>()->viewOf_ == _op->name_;
     };
-    if (_op->buffer_->atype() != AccessType::Cache ||
-        _op->viewOf_.has_value() || !findAllStmt(_op, isViewOfThis).empty() ||
-        _op->pinned_ || !newRange_.count(_op->id())) {
+    if (isInputting(_op->buffer_->atype()) ||
+        isOutputting(_op->buffer_->atype()) || _op->viewOf_.has_value() ||
+        !findAllStmt(_op, isViewOfThis).empty() || _op->pinned_ ||
+        !newRange_.count(_op->id())) {
         return Mutator::visit(_op);
     }
 

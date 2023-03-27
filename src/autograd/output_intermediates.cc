@@ -116,9 +116,9 @@ Stmt OutputIntermediates::visit(const ReduceTo &op) {
 
 Stmt OutputIntermediates::visit(const VarDef &_op) {
     if (totLens_.count(_op->id())) {
-        if (_op->buffer_->atype() == AccessType::InOut) {
-            // Taping an InOut variable is currently not supported, because we
-            // need to track the input version (TODO)
+        if (isInputting(_op->buffer_->atype())) {
+            // To tape an inputting variable, we need to track the input value
+            // as a separated version (TODO)
             ASSERT(false);
         }
         // FIXME: What if the scopeLen_ is a loop-variant temporary?
@@ -129,9 +129,8 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
             auto op = __op.as<VarDefNode>();
 
             savedNames_[op->id()] = op->name_;
-            if (stage_ == OutputIntermediatesStage::Forward &&
-                op->buffer_->atype() != AccessType::InOut) {
-                op->buffer_->setAtype(AccessType::Output);
+            if (stage_ == OutputIntermediatesStage::Forward) {
+                op->buffer_->setAtype(addOutputting(op->buffer_->atype()));
             }
             return op;
         } else {

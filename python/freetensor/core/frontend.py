@@ -17,10 +17,10 @@ from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
                    if_then_else, shape, VarVersionRef)
 from .stmt import (_VarDef, NamedScope, VarRef, For, If, Else, MarkLabel,
                    ctx_stack, Func, Assert, Invoke, MarkVersion, UserGradStaged)
-
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
                       StagedIterable, StagingError, StagingOverload,
                       TransformError)
+from .meta import add_outputting
 
 assert sys.version_info >= (3, 8), \
     "Python version lower than 3.8 is not supported"
@@ -586,10 +586,7 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
                 )
             # Set returned vardefs' access type to inout/output according to whether it was an input
             for ret in returns:
-                if ret.vardef.atype == 'input' or ret.vardef.atype == 'inout':
-                    ret.vardef.set_atype('inout')
-                else:
-                    ret.vardef.set_atype('output')
+                ret.vardef.set_atype(add_outputting(ret.vardef.atype))
             returns = [(ret.vardef.name, ret.vardef.dtype) for ret in returns]
 
             # Set closure; they are from captured Arrays.

@@ -14,6 +14,7 @@ from typing import Sequence
 import freetensor_ffi as ffi
 
 from .context import ctx_stack
+from .meta import is_writable
 
 
 class AlreadyMadeReduceTo:
@@ -355,9 +356,9 @@ class VarRefFromVarDef(VarRef):
             from .. import libop
             libop.assign(var, value)
             return
-        if var.vardef.atype == ffi.AccessType("input"):
-            raise ffi.InvalidProgram("Cannot modify an \"input\" tensor `" +
-                                     self.name + "`")
+        if not is_writable(var.vardef.atype):
+            raise ffi.InvalidProgram(
+                f"Cannot modify an \"{var.vardef.atype}\" tensor `{self.name}`")
         if var.vardef.borrower_cnt > 0:
             raise ffi.InvalidProgram(
                 "Cannot modify tensor `" + self.name +

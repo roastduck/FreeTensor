@@ -26,7 +26,8 @@ Stmt SinkVar::visit(const VarDef &_op) {
         return op;
     }
 
-    if (op->buffer_->atype() != AccessType::Cache || op->pinned_) {
+    if (isInputting(op->buffer_->atype()) ||
+        isOutputting(op->buffer_->atype()) || op->pinned_) {
         return op;
     }
 

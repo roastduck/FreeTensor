@@ -530,7 +530,8 @@ void CodeGenCUDA::visit(const For &op) {
 }
 
 void CodeGenCUDA::visit(const VarDef &op) {
-    if (op->buffer_->atype() != AccessType::Cache || op->viewOf_.has_value()) {
+    if (isInputting(op->buffer_->atype()) ||
+        isOutputting(op->buffer_->atype()) || op->viewOf_.has_value()) {
         CodeGenC::visit(op);
 
     } else {
@@ -852,8 +853,7 @@ extern "C" {
 
                 default:
                     // e.g. mdspan<float, extents<5, 5>> x
-                    os << visitor.genMdPtrType(d, buffer->atype() ==
-                                                      AccessType::Input)
+                    os << visitor.genMdPtrType(d, !isWritable(buffer->atype()))
                        << " " << mangle(name);
                 }
                 first = false;
