@@ -848,10 +848,10 @@ def test_tape_5():
         with ft.For(".u.grad.i0", 0, 256) as _du_i0:
             with ft.For(".u.grad.i1", 0, 256) as _du_i1:
                 du[_du_i0, _du_i1] = 0
-        with ft.VarDef("h.grad", (256,), "float32", "cache", "cpu") as dh:
-            with ft.VarDef("f.grad", (256,), "float32", "cache", "cpu") as df:
-                with ft.For(".f.grad.i0", 0, 256) as _df_i0:
-                    df[_df_i0] = 0
+        with ft.VarDef("f.grad", (256,), "float32", "cache", "cpu") as df:
+            with ft.For(".f.grad.i0", 0, 256) as _df_i0:
+                df[_df_i0] = 0
+            with ft.VarDef("h.grad", (256,), "float32", "cache", "cpu") as dh:
                 with ft.For("i", 255, -1, -1) as i:
                     dh[i] = dy[i]
                 with ft.For("k", 99, -1, -1) as k:
@@ -863,8 +863,6 @@ def test_tape_5():
                             du[j, l] += df[l] * h_tape[k, j]
                             dh[j] += df[l] * u[j, l]
                         df[l] = 0
-            with ft.For("l", 255, -1, -1) as l:
-                dh[l] = 0
     std = ft.pop_ast()
 
     assert std.match(backward)
