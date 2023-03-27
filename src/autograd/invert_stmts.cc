@@ -51,6 +51,24 @@ class InsertLifetimeEndChecker : public Mutator {
     }
 };
 
+/**
+ * Iteration sets from dependence analysis may have different numbers of
+ * dimensions, because some of them may be padded. We can simply remove those
+ * paddings.
+ */
+PBSet unionOnCommonDims(const PBSet &_lhs, const PBSet &_rhs) {
+    PBSet lhs = _lhs, rhs = _rhs;
+    auto nDimsL = lhs.nDims(), nDimsR = rhs.nDims();
+    auto nDims = std::min(nDimsL, nDimsR);
+    if (nDimsL > nDims) {
+        lhs = projectOutDims(lhs, nDims, nDimsL - nDims);
+    }
+    if (nDimsR > nDims) {
+        rhs = projectOutDims(rhs, nDims, nDimsR - nDims);
+    }
+    return uni(lhs, rhs);
+}
+
 struct CondInfo {
     std::vector<IterAxis> iter_;
     PBSet when_;
@@ -156,7 +174,7 @@ void FindInvertibles::visit(const ReduceTo &op) {
     auto targetDType = buffer(op->var_)->tensor()->dtype();
     auto exprDType = op->expr_->dtype();
     // There should not be implicit rounding. The frontend has ensured this
-    ASSERT(targetDType.base() == exprDType.base());
+    ASSERT(upCast(targetDType.base(), exprDType.base()) == targetDType.base());
 
     if (allReads(op->expr_).count(op->var_)) {
         return; // Unsupported
@@ -254,15 +272,15 @@ invertStmts(const Stmt &op,
                     toInvertInfo[toInvert] =
                         CondInfo{d.later_.iter_, laterIterSet, nullptr};
                 } else {
-                    toInvertInfo[toInvert].when_ =
-                        uni(toInvertInfo.at(toInvert).when_, laterIterSet);
+                    toInvertInfo[toInvert].when_ = unionOnCommonDims(
+                        toInvertInfo.at(toInvert).when_, laterIterSet);
                 }
             } else { // Cannot invert
                 if (!unrecoverableInfo.count(toRecover)) {
                     unrecoverableInfo[toRecover] =
                         CondInfo{d.earlier_.iter_, earlierIterSet, nullptr};
                 } else {
-                    unrecoverableInfo[toRecover].when_ = uni(
+                    unrecoverableInfo[toRecover].when_ = unionOnCommonDims(
                         unrecoverableInfo.at(toRecover).when_, earlierIterSet);
                 }
             }
@@ -270,8 +288,8 @@ invertStmts(const Stmt &op,
             if (!allPossibleIters.count(toRecover)) {
                 allPossibleIters[toRecover] = earlierIterSet;
             } else {
-                allPossibleIters[toRecover] =
-                    uni(allPossibleIters.at(toRecover), earlierIterSet);
+                allPossibleIters[toRecover] = unionOnCommonDims(
+                    allPossibleIters.at(toRecover), earlierIterSet);
             }
         });
     for (auto &&[id, info] : unrecoverableInfo) {
