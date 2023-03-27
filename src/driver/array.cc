@@ -192,18 +192,20 @@ Array::~Array() {
 }
 
 Array::Array(Array &&other)
-    : ptrs_(std::move(other.ptrs_)), size_(other.size_), nElem_(other.nElem_),
-      shape_(std::move(other.shape_)), dtype_(other.dtype_),
-      dontDropBorrow_(other.dontDropBorrow_),
+    : ptrs_(std::move(other.ptrs_)), tempPtr_(std::move(other.tempPtr_)),
+      size_(other.size_), nElem_(other.nElem_), shape_(std::move(other.shape_)),
+      dtype_(other.dtype_), dontDropBorrow_(other.dontDropBorrow_),
       moved_(other.moved_) // No need to clear moved. Users are using Ref<Array>
                            // anyway
 {
     other.ptrs_.clear(); // MUST!
+    other.tempPtr_ = std::nullopt;
     other.size_ = 0;
 }
 
 Array &Array::operator=(Array &&other) {
     ptrs_ = std::move(other.ptrs_);
+    tempPtr_ = std::move(other.tempPtr_);
     size_ = other.size_;
     nElem_ = other.nElem_;
     dtype_ = other.dtype_;
@@ -211,6 +213,7 @@ Array &Array::operator=(Array &&other) {
     moved_ = other.moved_; // No need to clear moved_. Users are using
                            // Ref<Array> anyway
     other.ptrs_.clear();   // MUST!
+    other.tempPtr_ = std::nullopt;
     other.size_ = 0;
     return *this;
 }
