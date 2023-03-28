@@ -44,7 +44,8 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
             isFixPoint_ = false;
             Stmt _newDef;
             if (namesCnt.at(def->name_) > 1) {
-                if (def->buffer_->atype() == AccessType::Cache) {
+                if (!isInputting(def->buffer_->atype()) &&
+                    !isOutputting(def->buffer_->atype())) {
                     ASSERT(!rename_.count(def->name_));
                     rename_[def->name_] =
                         def->name_ + "." + toString(def->id());

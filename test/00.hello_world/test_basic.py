@@ -357,6 +357,38 @@ def test_error_modifying_input_tensor():
         func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
 
 
+def test_input_mutable():
+    with ft.VarDef([("x", (), "int32", "input-mutable"),
+                    ("y", (), "int32", "output")]) as (x, y):
+        x[...] += 1
+        y[...] = x[...] * x[...]
+
+    f = ft.optimize(ft.Func("main", ["x", "y"], [], ft.pop_ast()), verbose=1)
+    # Suppose modification on x is not optimized out
+    assert "_x += 1" in f.native_code()
+    x_np = np.array(2, dtype="int32")
+    y_np = np.array(0, dtype="int32")
+    f(x_np, y_np)
+    assert x_np[...] == 2  # Unchanged
+    assert y_np[...] == 9
+
+
+def test_input_mutable_moved():
+    with ft.VarDef([("x", (), "int32", "input-mutable"),
+                    ("y", (), "int32", "output")]) as (x, y):
+        x[...] += 1
+        y[...] = x[...] * x[...]
+
+    f = ft.optimize(ft.Func("main", ["x", "y"], [], ft.pop_ast()), verbose=1)
+    # Suppose modification on x is not optimized out
+    assert "_x += 1" in f.native_code()
+    x_np = np.array(2, dtype="int32")
+    y_np = np.array(0, dtype="int32")
+    f(ft.move(x_np), y_np)
+    # x_np can be of any value
+    assert y_np[...] == 9
+
+
 def test_error_modifying_shape_of_a_var_when_using_it_in_store():
     with pytest.raises(ft.InvalidProgram):
         with ft.VarDef("n", (), "int32", "inout") as n:

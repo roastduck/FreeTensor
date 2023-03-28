@@ -14,8 +14,10 @@ Stmt VarMerge::visit(const VarDef &_op) {
         }
         factor_ = _op->buffer_->tensor()->shape()[dim_ + 1];
         var_ = _op->name_;
-        newVar_ =
-            _op->buffer_->atype() == AccessType::Cache ? var_ : var_ + ".view";
+        newVar_ = !isInputting(_op->buffer_->atype()) &&
+                          !isOutputting(_op->buffer_->atype())
+                      ? var_
+                      : var_ + ".view";
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::VarDef);
         auto op = __op.as<VarDefNode>();
@@ -26,7 +28,8 @@ Stmt VarMerge::visit(const VarDef &_op) {
         shape[dim_] = makeMul(shape[dim_], shape[dim_ + 1]);
         shape.erase(shape.begin() + dim_ + 1);
 
-        if (op->buffer_->atype() != AccessType::Cache) {
+        if (isInputting(op->buffer_->atype()) ||
+            isOutputting(op->buffer_->atype())) {
             op->name_ += ".view";
             op->viewOf_ = _op->name_;
             op->buffer_->setAtype(AccessType::Cache);

@@ -51,7 +51,8 @@ Stmt MakeHeapAlloc::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
-    if (op->buffer_->atype() != AccessType::Cache ||
+    if (isInputting(op->buffer_->atype()) ||
+        isOutputting(op->buffer_->atype()) ||
         op->buffer_->tensor()->shape().size() == 0) {
         return op;
     }

@@ -394,8 +394,7 @@ Stmt Grad::visit(const VarDef &_op) {
             }
 
             Stmt grad = op->body_;
-            if ((op->buffer_->atype() != AccessType::Output &&
-                 op->buffer_->atype() != AccessType::InOut)) {
+            if (!isOutputting(op->buffer_->atype())) {
                 // Initialize gradients to 0. Later when we compute gradients
                 // for each statements, we add the local result to it. This is
                 // because when `y = f(x)` and `z = g(x)` both exist, `dw/dx =
@@ -423,18 +422,10 @@ Stmt Grad::visit(const VarDef &_op) {
 
             grad = makeVarDef(gradName, op->buffer_, std::nullopt, grad,
                               op->pinned_, makeMetadata("grad", op));
-            switch (op->buffer_->atype()) {
-            case AccessType::Input:
-                grad.as<VarDefNode>()->buffer_->setAtype(AccessType::Output);
-                break;
-            case AccessType::Output:
-            case AccessType::InOut:
+            if (isOutputting(op->buffer_->atype())) {
                 grad.as<VarDefNode>()->buffer_->setAtype(AccessType::InOut);
-                break;
-            case AccessType::Cache:
-                break; // do nothing
-            default:
-                ASSERT(false);
+            } else if (isInputting(op->buffer_->atype())) {
+                grad.as<VarDefNode>()->buffer_->setAtype(AccessType::Output);
             }
 
             ret = makeVarDef(op->name_, op->buffer_, op->viewOf_, grad,
@@ -442,10 +433,7 @@ Stmt Grad::visit(const VarDef &_op) {
                       .as<VarDefNode>();
         }
 
-        if (ret->buffer_->atype() == AccessType::Output ||
-            ret->buffer_->atype() == AccessType::InOut) {
-            ret->buffer_->setAtype(AccessType::Cache);
-        }
+        ret->buffer_->setAtype(removeOutputting(ret->buffer_->atype()));
     }
 
     if (tapes_.count(op->id()) && intermediatesMap_.count(op->id())) {

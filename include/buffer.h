@@ -5,50 +5,13 @@
 #include <iostream>
 #include <string>
 
+#include <access_type.h>
 #include <container_utils.h>
 #include <serialize/to_string.h>
 #include <sub_tree.h>
 #include <tensor.h>
 
 namespace freetensor {
-
-enum class AccessType : size_t {
-    Input = 0,
-    Output,
-    InOut,
-    Cache,
-    // ------
-    NumTypes,
-};
-
-// First deduce array length, then assert, to ensure the length
-constexpr std::array accessTypeNames = {
-    "input",
-    "output",
-    "inout",
-    "cache",
-};
-static_assert(accessTypeNames.size() == (size_t)AccessType::NumTypes);
-
-inline std::ostream &operator<<(std::ostream &os, AccessType atype) {
-    return os << accessTypeNames.at((size_t)atype);
-}
-
-inline AccessType parseAType(const std::string &_str) {
-    auto &&str = tolower(_str);
-    for (auto &&[i, s] : views::enumerate(accessTypeNames)) {
-        if (s == str) {
-            return (AccessType)i;
-        }
-    }
-    std::string msg = "Unrecognized access type \"" + _str +
-                      "\". Candidates are (case-insensitive): ";
-    for (auto &&[i, s] : views::enumerate(accessTypeNames)) {
-        msg += (i > 0 ? ", " : "");
-        msg += s;
-    }
-    ERROR(msg);
-}
 
 enum class MemType : size_t {
     ByValue = 0, // Passed by value. Always in stack or registers

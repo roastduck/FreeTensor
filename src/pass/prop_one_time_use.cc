@@ -88,7 +88,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
         .mode(FindDepsMode::KillLater)
         .type(DEP_RAW)
         .filterAccess([&](const auto &acc) {
-            return acc.def_->buffer_->atype() == AccessType::Cache;
+            return !isOutputting(acc.def_->buffer_->atype());
         })
         .filterEarlier([&](const auto &earlier) {
             return earlier.op_->nodeType() == ASTNodeType::Store;

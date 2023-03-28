@@ -147,10 +147,11 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
         }
         this->os() << "auto &&" << name << " = ";
         genMdPtrDef(op, mangle(source->name_) + ".data_handle()",
-                    source->buffer_->atype() == AccessType::Input);
+                    !isWritable(source->buffer_->atype()));
         this->os() << ";" << std::endl;
 
-    } else if (op->buffer_->atype() == AccessType::Cache) {
+    } else if (!isInputting(op->buffer_->atype()) &&
+               !isOutputting(op->buffer_->atype())) {
         // e.g. 1. float x;
         //      2. float x[5][5][5];
         this->os() << gen(tensor->dtype()) << " " << name;
@@ -179,9 +180,9 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             int nthParam = nthParamIter - params_.begin();
             rawPtr = "_params[" + std::to_string(nthParam) + "]";
         } else {
-            if (op->buffer_->atype() != AccessType::Output) {
+            if (!isOutputting(op->buffer_->atype())) {
                 throw InvalidProgram(
-                    "Only output variable can be as a return value");
+                    "Only outputting variable can be as a return value");
             }
             int nthReturn = nthReturnsIter - returns_.begin();
             rawPtr = "_returns[" + std::to_string(nthReturn) + "]";
@@ -257,7 +258,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             // e.g.
             // auto &&x = mdspan_r<const float, extents<5, 5>>(_params[0]);
             this->os() << "auto &&" << name << " = ";
-            genMdPtrDef(op, rawPtr, op->buffer_->atype() == AccessType::Input);
+            genMdPtrDef(op, rawPtr, !isWritable(op->buffer_->atype()));
             this->os() << ";" << std::endl;
         }
     }

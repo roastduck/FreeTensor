@@ -46,13 +46,33 @@ static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
     }
     switch (atype) {
     case AccessType::Input:
+        // The program needs to read from the right place. It will not modify
+        // the data
         return arr->rawSharedTo(d);
-    case AccessType::Output:
-        return arr->rawInitTo(d);
-    case AccessType::InOut:
-        return arr->rawMovedTo(d);
+    case AccessType::Bypass:
+        // The program will not use the data at all
+        return nullptr;
     case AccessType::Cache:
+        // Impossible
         throw DriverError("A \"cache\" variable cannot be an I/O variable");
+    case AccessType::Output:
+        // The program does not read the data, but we need the data written by
+        // the program
+        return arr->rawInitTo(d);
+    case AccessType::InputMutable:
+        if (arr->moved()) {
+            // The program needs to read from the right place. We don't care
+            // whether it will modify the data
+            return arr->rawSharedTo(d);
+        } else {
+            // The program needs to read from the right place. We make a copy so
+            // the data won't be modified
+            return arr->rawTemporarilyCopiedTo(d);
+        }
+    case AccessType::InOut:
+        // The program reads the data, and we need the data written by the
+        // program
+        return arr->rawMovedTo(d);
     default:
         ASSERT(false);
     }
@@ -344,7 +364,7 @@ void Driver::setArgs(const std::vector<Ref<Array>> &args,
                 rawArg = requestPtr(*param.closure_, dev_, hostDev_,
                                     buffer->mtype(), buffer->atype());
             }
-            if (rawArg == nullptr) {
+            if (rawArg == nullptr && buffer->atype() != AccessType::Bypass) {
                 throw DriverError("The " + std::to_string(i) +
                                   "-th parameter " + param.name_ +
                                   " is missing");

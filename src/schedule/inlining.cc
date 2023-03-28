@@ -42,7 +42,8 @@ Stmt MakeInline::visit(const ReduceTo &op) {
 
 Stmt MakeInline::visit(const VarDef &_op) {
     if (_op->id() == def_) {
-        if (_op->buffer_->atype() != AccessType::Cache) {
+        if (isInputting(_op->buffer_->atype()) ||
+            isOutputting(_op->buffer_->atype())) {
             throw InvalidSchedule("Cannot remove an I/O variable");
         }
         var_ = _op->name_;

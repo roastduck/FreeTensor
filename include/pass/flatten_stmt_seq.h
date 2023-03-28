@@ -21,7 +21,7 @@ class FlattenStmtSeq : public Mutator {
 /**
  * Merge nested StmtSeq nodes into one
  *
- * Empty `VarDef` with `AccessType::Cache`, `For`, `If` or `Assert` nodes will
+ * Empty `VarDef` nodes that do not output, `For`, `If` or `Assert` nodes will
  * be removed
  *
  * This pass also clears Assume nodes (even if they are not empty)
