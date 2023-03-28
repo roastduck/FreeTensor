@@ -1,8 +1,8 @@
 #ifndef FREE_TENSOR_REDUCE_OP_H
 #define FREE_TENSOR_REDUCE_OP_H
 
-#include <data_type.h>
 #include <expr.h>
+#include <type/data_type.h>
 
 namespace freetensor {
 

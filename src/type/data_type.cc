@@ -1,5 +1,5 @@
-#include <data_type.h>
 #include <hash.h>
+#include <type/data_type.h>
 
 namespace freetensor {
 

@@ -6,12 +6,12 @@
 #include <iostream>
 #include <string>
 
-#include <data_type.h>
 #include <id.h>
 #include <metadata.h>
 #include <ref.h>
 #include <serialize/to_string.h>
 #include <sub_tree.h>
+#include <type/data_type.h>
 
 namespace freetensor {
 
