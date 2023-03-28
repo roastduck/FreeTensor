@@ -39,7 +39,6 @@ Stmt MergeTapeInput::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
     if (namesMerging_.count(op->name_)) {
-        ASSERT(op->buffer_->atype() == AccessType::Input);
         return op->body_;
     } else {
         return op;
@@ -50,7 +49,10 @@ Stmt mergeTapeInput(const Stmt &op) {
     std::unordered_map<std::string, std::vector<VarDef>> name2nodes;
     for (auto &&_input : findAllStmt(op, [](const Stmt &s) {
              return s->nodeType() == ASTNodeType::VarDef &&
-                    s.as<VarDefNode>()->buffer_->atype() == AccessType::Input;
+                    (s.as<VarDefNode>()->buffer_->atype() ==
+                         AccessType::Input ||
+                     s.as<VarDefNode>()->buffer_->atype() ==
+                         AccessType::InputMutable);
          })) {
         auto &&input = _input.as<VarDefNode>();
         name2nodes[input->name_].emplace_back(input);
@@ -61,8 +63,9 @@ Stmt mergeTapeInput(const Stmt &op) {
     std::unordered_set<std::string> namesMerging;
     for (auto &&[name, nodes] : name2nodes) {
         if (nodes.size() > 1) {
-            VarDef newNode = nodes.front();
-            Stmt lca = newNode;
+            VarDef newNode = deepCopy(nodes.front()).as<VarDefNode>();
+            Stmt lca = nodes.front();
+            AccessType atype = AccessType::Input;
             for (auto it = nodes.begin() + 1; it != nodes.end(); it++) {
                 auto &&node = *it;
                 if (!HashComparator{}(newNode->buffer_->tensor(),
@@ -72,7 +75,11 @@ Stmt mergeTapeInput(const Stmt &op) {
                           " have different definitions");
                 }
                 lca = lcaStmt(lca, node);
+                if (node->buffer_->atype() == AccessType::InputMutable) {
+                    atype = AccessType::InputMutable;
+                }
             }
+            newNode->buffer_->setAtype(atype);
             lca2newNodes[lca].emplace_back(newNode);
             namesMerging.insert(name);
         }

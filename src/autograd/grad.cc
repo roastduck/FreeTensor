@@ -250,6 +250,14 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
         if (auto it = inverseStmts_.find(s->id()); it != inverseStmts_.end()) {
             auto replacer = getReplacer(s);
             auto inv = replacer.recomp(it->second.inv_);
+            if (inv->nodeType() == ASTNodeType::Store) {
+                inverselyUpdated_.insert(def(inv.as<StoreNode>()->var_)->id());
+            } else if (inv->nodeType() == ASTNodeType::ReduceTo) {
+                inverselyUpdated_.insert(
+                    def(inv.as<ReduceToNode>()->var_)->id());
+            } else {
+                ASSERT(false);
+            }
             if (it->second.cond_.isValid()) {
                 inv = makeIf(replacer.recomp(it->second.cond_), std::move(inv));
             }
@@ -455,7 +463,9 @@ Stmt Grad::visit(const VarDef &_op) {
             auto &shape = ret->buffer_->tensor()->shape();
             shape.insert(shape.begin(), totLens_.at(op->id()));
         }
-        ret.as<VarDefNode>()->buffer_->setAtype(AccessType::Input);
+        ret.as<VarDefNode>()->buffer_->setAtype(
+            inverselyUpdated_.count(op->id()) ? AccessType::InputMutable
+                                              : AccessType::Input);
     }
 
     return ret;

@@ -145,6 +145,8 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
         recomputed_; // var name -> set{stmt}
     bool isRecompute_ = false;
 
+    std::unordered_set<ID> inverselyUpdated_; // {VarDef IDs}
+
     std::optional<RangeToUserGrad> userGradOpen_;
     ID userGradInsertPos_;
 
