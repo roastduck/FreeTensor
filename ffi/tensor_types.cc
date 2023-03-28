@@ -1,6 +1,7 @@
-#include <buffer.h>
-#include <data_type.h>
 #include <ffi.h>
+#include <type/access_type.h>
+#include <type/data_type.h>
+#include <type/mem_type.h>
 
 namespace freetensor {
 

@@ -5,7 +5,7 @@
 #include <vector>
 
 #include <ast.h>
-#include <data_type.h>
+#include <type/data_type.h>
 
 namespace freetensor {
 

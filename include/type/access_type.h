@@ -2,8 +2,11 @@
 #define FREE_TENSOR_ACCESS_TYPE_H
 
 #include <array>
-#include <container_utils.h>
 #include <iostream>
+#include <string>
+
+#include <container_utils.h>
+#include <serialize/to_string.h>
 
 namespace freetensor {
 

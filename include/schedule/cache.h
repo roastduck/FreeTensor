@@ -28,6 +28,7 @@ class MakeCacheVar : public Mutator {
             newVar_ += ".shared";
             break;
         case MemType::GPUGlobal:
+        case MemType::GPUGlobalHeap:
             newVar_ += ".global";
             break;
         case MemType::GPUWarp:
@@ -94,6 +95,7 @@ class MakeInitAndReduce : public SymbolTable<Mutator> {
     const ID &reduceStmt() const { return reduceStmt_; }
 
   protected:
+    using BaseClass::visit;
     Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const ReduceTo &op) override;

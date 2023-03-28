@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-#include <data_type.h>
 #include <except.h>
 #include <expr.h>
+#include <type/data_type.h>
 
 namespace freetensor {
 

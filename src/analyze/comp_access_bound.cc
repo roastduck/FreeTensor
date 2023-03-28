@@ -11,6 +11,7 @@ static bool isSharedAmong(MemType mtype, const ParallelScope &parallel) {
         if (std::get<CUDAScope>(parallel).level_ == CUDAScope::Thread) {
             switch (mtype) {
             case MemType::GPUGlobal:
+            case MemType::GPUGlobalHeap:
             case MemType::GPUShared:
             case MemType::GPUWarp:
                 return true;
@@ -21,6 +22,7 @@ static bool isSharedAmong(MemType mtype, const ParallelScope &parallel) {
         if (std::get<CUDAScope>(parallel).level_ == CUDAScope::Block) {
             switch (mtype) {
             case MemType::GPUGlobal:
+            case MemType::GPUGlobalHeap:
                 return true;
             default:
                 return false;
@@ -197,6 +199,11 @@ void CompAccessBound::visit(const ReduceTo &op) {
 
 void CompAccessBound::visit(const For &op) {
     if (isSharedAmong(mtype_, op->property_->parallel_)) {
+        // Suppose the only access to tensor `t` is `t[i, ...]`, where `i` is a
+        // parallel index (e.g. CUDA thread), we cannot shrink `t[i, ...]` to
+        // `t[...]` too early before all schedules are done, or we are not able
+        // to schedule a colaborative fetch. This does not apply to OpenMP
+        // threads, because we cannot do a collaborative fetch anyway in OpenMP.
         BaseClass::visit(op);
     } else {
         defs_.insert(op->iter_);
