@@ -63,6 +63,7 @@ def grad_body(stmt: ffi.Stmt,
               requires: Sequence[Union[str, Return]],
               provides: Sequence[Union[str, Return]],
               tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+              invert: bool = True,
               user_grads: Sequence[ffi.StmtSetToUserGrad] = []):
     ''' `grad` or `grad_` on a function body (for internal tests only) '''
 
@@ -70,7 +71,7 @@ def grad_body(stmt: ffi.Stmt,
     prov = set(provides)
     if type(tapes) is not GradTapeMode:
         tapes = {find_stmt(stmt, t).id for t in tapes}
-    return ffi.grad_body(stmt, req, prov, tapes, user_grads)
+    return ffi.grad_body(stmt, req, prov, tapes, invert, user_grads)
 
 
 def _grad_func(impl,
@@ -79,6 +80,7 @@ def _grad_func(impl,
                provides: Sequence[Union[str, Return]],
                tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
                tape_in_closure: bool = True,
+               invert: bool = True,
                user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
                verbose: Optional[int] = None):
 
@@ -99,7 +101,7 @@ def _grad_func(impl,
     if type(tapes) is not GradTapeMode:
         tapes = {find_stmt(func, t).id for t in tapes}
     fwd, bwd, req_map, prov_map = impl(func, req, prov, tapes, tape_in_closure,
-                                       user_grads)
+                                       invert, user_grads)
     if verbose is not None and verbose >= 1:
         print("Forward pass from AD:", file=sys.stderr)
         print(fwd, file=sys.stderr)
@@ -113,6 +115,7 @@ def grad_(func: ffi.Func,
           provides: Sequence[Union[str, Return]],
           tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
           tape_in_closure: bool = True,
+          invert: bool = True,
           user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
           verbose: Optional[int] = None):
     '''
@@ -147,6 +150,10 @@ def grad_(func: ffi.Func,
         True to pass taped tensors from the forward function to the backward function in
         implicit I/O parameters, i.e. in closure. False to pass these tensors as
         explicit I/O parameters. Default to True
+    invert: bool
+        If set to true, it can reduce the amount of recomputation or taping required.
+        However, this may result in a loss of precision for floating-point numbers. Defaults
+        to true.
     user_grads: List[ffi.StmtSetToUserGrad]
         For custom gradient. You do not have to explicitly set this parameter unless you
         are manipulating `func` by yourself (not getting it from the Python frontend). See
@@ -171,6 +178,7 @@ def grad_(func: ffi.Func,
                       provides,
                       tapes,
                       tape_in_closure,
+                      invert,
                       user_grads,
                       verbose=verbose)
 
@@ -180,6 +188,7 @@ def grad(func: ffi.Func,
          provides: Sequence[Union[str, Return]],
          tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
          tape_in_closure: bool = True,
+         invert: bool = True,
          user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
          verbose: Optional[int] = None):
     '''
@@ -214,6 +223,9 @@ def grad(func: ffi.Func,
         True to pass taped tensors from the forward function to the backward function in
         implicit I/O parameters, i.e. in closure. False to pass these tensors as
         explicit I/O parameters. Default to True
+    invert: bool
+        If set to true, it can reduce the amount of recomputation or taping required.
+        However, this may result in a loss of precision for floating-point numbers. Defaults
     user_grads: List[ffi.StmtSetToUserGrad]
         For custom gradient. You do not have to explicitly set this parameter unless you
         are manipulating `func` by yourself (not getting it from the Python frontend). See
@@ -238,6 +250,7 @@ def grad(func: ffi.Func,
                       provides,
                       tapes,
                       tape_in_closure,
+                      invert,
                       user_grads,
                       verbose=verbose)
 

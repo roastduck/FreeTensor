@@ -134,7 +134,7 @@ def test_input_mutable_can_be_optimized_out():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (), "int32", "input-mutable", "cpu"),
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] * 2
     std = ft.pop_ast()

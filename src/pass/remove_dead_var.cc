@@ -23,10 +23,14 @@ Stmt RemoveDeadVar::visitStmt(const Stmt &s) {
         }
     }
     if (auto it = writes_.find(ret); it != writes_.end()) {
-        for (auto &&var : it->second) {
+        for (auto jt = it->second.begin(); jt != it->second.end();) {
+            auto &&var = *jt;
             if (!inLoopCnt_.count(var) && !writtenToOutput_.count(var) &&
                 !readsAfterward_.count(var)) {
                 ret = RemoveAllWrites{var}(ret);
+                jt = it->second.erase(jt);
+            } else {
+                jt++;
             }
         }
     }
@@ -85,8 +89,14 @@ Stmt RemoveDeadVar::visit(const VarDef &_op) {
         // If there is no write to this var at all, remove the entire var
         return RemoveAllWrites(op->name_)(op->body_);
     }
-
     readsAfterward_.erase(op->name_);
+
+    if (op->buffer_->atype() == AccessType::InputMutable &&
+        (!writes_.count(op->body_) ||
+         !writes_.at(op->body_).count(op->name_))) {
+        op->buffer_->setAtype(AccessType::Input);
+    }
+
     return op;
 }
 

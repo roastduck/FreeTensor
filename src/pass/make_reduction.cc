@@ -116,6 +116,8 @@ Stmt MakeReduction::visit(const Store &_op) {
         return doMake(op, ASTNodeType::LAnd, ReduceOp::LAnd);
     case ASTNodeType::LOr:
         return doMake(op, ASTNodeType::LOr, ReduceOp::LOr);
+    case ASTNodeType::Load:
+        return isSameElem(op, op->expr_.as<LoadNode>()) ? makeStmtSeq({}) : op;
     default:
         return op;
     }

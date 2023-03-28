@@ -609,7 +609,7 @@ def test_multi_versions_in_recomp_2():
                 s[...] += w[i]
                 y[...] += s[...] * x[i]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad_body(ast, ["x", "w"], ["y"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x", "w"], ["y"], set(), invert=False)
     print(ast)
     ast = ft.lower(ast, verbose=1, skip_passes=['make_heap_alloc'])
 
@@ -738,7 +738,8 @@ def test_tape_3():
                     with ft.For("j", 0, 5, label="Lj") as j:
                         y[i, k] += t[k] * x2[i, j, k]
     ast = ft.pop_ast(verbose=True)
-    forward, backward, _, _, _ = ft.grad_body(ast, ["x2"], ["y"], ["V_t"])
+    forward, backward, _, _, _ = ft.grad_body(ast, ["x2"], ["y"], ["V_t"],
+                                              invert=False)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -1115,7 +1116,7 @@ def test_recompute_using_another_recomputed_var():
             d[i] = c[i] * c[i] * b[i]
         return d
 
-    _, bwd, _, _ = ft.grad(func, ["a"], ["d"], set())
+    _, bwd, _, _ = ft.grad(func, ["a"], ["d"], set(), invert=False)
     print(bwd)
     bwd = ft.lower(bwd, verbose=1)
 

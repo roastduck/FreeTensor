@@ -18,7 +18,8 @@ def test_basic():
                                                  ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
 
-    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], {'Vt'}, user_grads)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], {'Vt'},
+                                   user_grads=user_grads)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -48,7 +49,9 @@ def test_marked_version_is_recomputed():
                                                  ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
 
-    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set(), user_grads)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"],
+                                   set(),
+                                   user_grads=user_grads)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -74,7 +77,9 @@ def test_mark_version_on_input():
                                              ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
 
-    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set(), user_grads)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"],
+                                   set(),
+                                   user_grads=user_grads)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -102,7 +107,9 @@ def test_use_reduce_sum_for_partial_derivative():
         z[...] = x[...] * 2
     ast, user_grads = ft.pop_ast_and_user_grads()
 
-    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y", "z"], set(), user_grads)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y", "z"],
+                                   set(),
+                                   user_grads=user_grads)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -131,7 +138,9 @@ def test_use_reduce_sum_for_non_partial_derivative():
                                               ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
 
-    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set(), user_grads)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"],
+                                   set(),
+                                   user_grads=user_grads)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -164,7 +173,7 @@ def test_user_grad_on_scope():
     ast, user_grads = ft.pop_ast_and_user_grads()
 
     _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], {'Vsin', 'Vcos'},
-                                   user_grads)
+                                   user_grads=user_grads)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -204,7 +213,7 @@ def test_user_grad_on_range_crossing_def():
     ast, user_grads = ft.pop_ast_and_user_grads()
 
     _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["z"], {'Vsin', 'Vcos'},
-                                   user_grads)
+                                   user_grads=user_grads)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -236,7 +245,9 @@ def test_user_grad_on_scope_with_load_at_version_recomputed():
                     'sin_now', 'float32')
     ast, user_grads = ft.pop_ast_and_user_grads()
 
-    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set(), user_grads)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"],
+                                   set(),
+                                   user_grads=user_grads)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -267,7 +278,8 @@ def test_mark_from_multiple_versions():
                                                    ret_type="float32")
     ast, user_grads = ft.pop_ast_and_user_grads()
 
-    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], {'Vt'}, user_grads)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], {'Vt'},
+                                   user_grads=user_grads)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -303,8 +315,10 @@ def test_frontend():
         z = y * 2
         return z
 
-    _, bwd, _, _ = ft.grad(func, ["x"], [ft.Return()], ft.GradTapeMode.All,
-                           True, func.user_grads)
+    _, bwd, _, _ = ft.grad(func, ["x"], [ft.Return()],
+                           ft.GradTapeMode.All,
+                           True,
+                           user_grads=func.user_grads)
     print(bwd)
     bwd = ft.lower(bwd, verbose=1)
 
@@ -349,8 +363,10 @@ def test_stmt_range_robustness():
         z = y * 2
         return z
 
-    _, bwd, _, _ = ft.grad(func, ["x"], [ft.Return()], ft.GradTapeMode.All,
-                           True, func.user_grads)
+    _, bwd, _, _ = ft.grad(func, ["x"], [ft.Return()],
+                           ft.GradTapeMode.All,
+                           True,
+                           user_grads=func.user_grads)
     print(bwd)
     bwd = ft.lower(bwd, verbose=1)
 
@@ -391,7 +407,9 @@ def test_same_mark_version_name_in_different_call_site():
 
     print(func.user_grads)
     _, bwd, _, _ = ft.grad(func, ["x1", "x2"], [ft.Return()],
-                           ft.GradTapeMode.All, True, func.user_grads)
+                           ft.GradTapeMode.All,
+                           True,
+                           user_grads=func.user_grads)
     print(bwd)
     bwd = ft.lower(bwd, verbose=1)
 
@@ -422,4 +440,4 @@ def test_error_missing_user_grad():
     ast, user_grads = ft.pop_ast_and_user_grads()
 
     with pytest.raises(ft.InvalidAutoGrad):
-        ft.grad_body(ast, ["x"], ["y"], {'Vt'}, user_grads)
+        ft.grad_body(ast, ["x"], ["y"], {'Vt'}, user_grads=user_grads)

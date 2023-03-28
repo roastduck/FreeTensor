@@ -307,6 +307,12 @@ void MatchVisitor::visit(const Max &op) {
 }
 
 void MatchVisitor::visit(const LT &op) {
+    if (instance_->nodeType() == ASTNodeType::GT) {
+        auto instance = instance_.as<GTNode>();
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+        return;
+    }
     CHECK(instance_->nodeType() == ASTNodeType::LT);
     auto instance = instance_.as<LTNode>();
     RECURSE(op->lhs_, instance->lhs_);
@@ -314,6 +320,12 @@ void MatchVisitor::visit(const LT &op) {
 }
 
 void MatchVisitor::visit(const LE &op) {
+    if (instance_->nodeType() == ASTNodeType::GE) {
+        auto instance = instance_.as<GENode>();
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+        return;
+    }
     CHECK(instance_->nodeType() == ASTNodeType::LE);
     auto instance = instance_.as<LENode>();
     RECURSE(op->lhs_, instance->lhs_);
@@ -321,6 +333,12 @@ void MatchVisitor::visit(const LE &op) {
 }
 
 void MatchVisitor::visit(const GT &op) {
+    if (instance_->nodeType() == ASTNodeType::LT) {
+        auto instance = instance_.as<LTNode>();
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+        return;
+    }
     CHECK(instance_->nodeType() == ASTNodeType::GT);
     auto instance = instance_.as<GTNode>();
     RECURSE(op->lhs_, instance->lhs_);
@@ -328,6 +346,12 @@ void MatchVisitor::visit(const GT &op) {
 }
 
 void MatchVisitor::visit(const GE &op) {
+    if (instance_->nodeType() == ASTNodeType::LE) {
+        auto instance = instance_.as<LENode>();
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+        return;
+    }
     CHECK(instance_->nodeType() == ASTNodeType::GE);
     auto instance = instance_.as<GENode>();
     RECURSE(op->lhs_, instance->lhs_);
