@@ -9,7 +9,7 @@ from . import config
 from .codegen import NativeCode
 
 
-def array(data, dont_drop_borrow: bool = False):
+def array(data, dont_drop_borrow: bool = False, moved: bool = False):
     '''
     Factory function for Array
 
@@ -20,13 +20,18 @@ def array(data, dont_drop_borrow: bool = False):
     data : Numpy Array, PyTorch Tensor, or another FreeTensor Array
         Data to be copied to or borrowed by the new Array object
     dont_drop_borrow : bool
-        If true, report an error if we have to drop a borrwed data. This flag can
-        be set to true when the Array is cunstructed IMPLICITLY from a user object
-        by borrowing from it, where users may expect they are acutually manipulating
-        the their user object, instead of this Array
+        If true, report an error if we have to drop a borrwed data. This flag is set
+        to true when the Array is cunstructed IMPLICITLY (not by this function) from
+        a user object by borrowing from it, where users may expect they are acutually
+        manipulating the their user object, instead of this Array
+    moved : bool
+        If true, it means we do not care about data in this Array any more after the
+        program runs. Variables with "input-mutable" access type may modify the Array
     '''
 
     if type(data) is Array:
+        data.set_dont_drop_borrow(dont_drop_borrow)
+        data.set_moved(moved)
         return data
 
     # For NumPy, Although Pybind11's `array_t` type provides a flag `forcecast` to
@@ -38,7 +43,7 @@ def array(data, dont_drop_borrow: bool = False):
     if type(data) is np.ndarray:
         if not data.flags['C_CONTIGUOUS']:
             data = data.copy(order='C')
-        return Array(data, dont_drop_borrow)
+        return Array(data, dont_drop_borrow, moved)
 
     if data.__class__.__module__ == 'torch':
         import torch
@@ -49,9 +54,15 @@ def array(data, dont_drop_borrow: bool = False):
                 )
             if not data.is_contiguous():
                 data = data.contiguous()
-            return Array(data, dont_drop_borrow)
+            return Array(data, dont_drop_borrow, moved)
 
     raise ffi.InvalidIO(f"Unsupported data type {type(data)} for Array")
+
+
+def move(data):
+    ''' Alias for array(data, dont_drop_borrow=False, moved=True) '''
+
+    return array(data, dont_drop_borrow=False, moved=True)
 
 
 _old_target_device_stack = []
@@ -241,9 +252,9 @@ class Driver(ffi.Driver):
         args = list(args)
         kws = dict(kws)
         for i in range(len(args)):
-            args[i] = array(args[i], True)
+            args[i] = array(args[i], not isinstance(args[i], Array))
         for key in kws:
-            kws[key] = array(kws[key], True)
+            kws[key] = array(kws[key], not isinstance(kws[key], Array))
 
         for arg in args:
             self.args_ref_cnt_holder.append(arg)

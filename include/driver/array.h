@@ -42,11 +42,17 @@ struct ArrayCopy {
  * supported.
  */
 class Array {
+    // Identical data on different devices.
     std::vector<ArrayCopy> ptrs_;
+
+    // Temorary copy of the data used by AccessType::InputMutable. The data may
+    // become different after the program runs.
+    std::optional<ArrayCopy> tempPtr_;
+
     size_t size_ = 0, nElem_ = 0;
     std::vector<size_t> shape_;
     DataType dtype_;
-    bool dontDropBorrow_;
+    bool dontDropBorrow_, moved_;
 
   private:
     /**
@@ -59,9 +65,12 @@ class Array {
      * cunstructed IMPLICITLY from a user object by borrowing from it, where
      * users may expect they are acutually manipulating their user object,
      * instead of this Array
+     * @param moved : If true, it means we do not care about data in this Array
+     * any more after the program runs. Variables with "input-mutable" access
+     * type may modify the Array
      */
     Array(const std::vector<size_t> &shape, DataType dtype,
-          bool dontDropBorrow = false);
+          bool dontDropBorrow = false, bool moved = false);
 
   public:
     /**
@@ -78,7 +87,7 @@ class Array {
      */
     static Array borrowFromRaw(void *ptr, const std::vector<size_t> &shape,
                                DataType dtype, const Ref<Device> &device,
-                               bool dontDropBorrow);
+                               bool dontDropBorrow, bool moved);
 
     ~Array();
 
@@ -93,9 +102,16 @@ class Array {
     const std::vector<size_t> &shape() const { return shape_; }
     DataType dtype() const { return dtype_; }
 
+    bool dontDropBorrow() const { return dontDropBorrow_; }
+    void setDontDropBorrow(bool flag) { dontDropBorrow_ = flag; }
+
+    bool moved() const { return moved_; }
+    void setMoved(bool flag) { moved_ = flag; }
+
     void *rawSharedTo(const Ref<Device> &device);
     void *rawMovedTo(const Ref<Device> &device);
     void *rawInitTo(const Ref<Device> &device);
+    void *rawTemporarilyCopiedTo(const Ref<Device> &device);
 
     /**
      * Somethings we can't keep track of user objects, so we need to ensure we

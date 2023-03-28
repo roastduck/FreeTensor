@@ -1,5 +1,7 @@
 import freetensor_ffi as ffi
-from freetensor_ffi import up_cast, neutral_val, is_float, is_int, is_bool, DataType, MemType
+from freetensor_ffi import (DataType, up_cast, neutral_val, is_float, is_int,
+                            is_bool, MemType, is_writable, is_inputting,
+                            is_outputting, add_outputting, remove_outputting)
 
 
 def zero_value(dtype):

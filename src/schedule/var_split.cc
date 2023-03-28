@@ -21,8 +21,10 @@ Stmt VarSplit::visit(const VarDef &_op) {
         }
 
         var_ = _op->name_;
-        newVar_ =
-            _op->buffer_->atype() == AccessType::Cache ? var_ : var_ + ".view";
+        newVar_ = !isInputting(_op->buffer_->atype()) &&
+                          !isOutputting(_op->buffer_->atype())
+                      ? var_
+                      : var_ + ".view";
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::VarDef);
         auto op = __op.as<VarDefNode>();
@@ -39,7 +41,8 @@ Stmt VarSplit::visit(const VarDef &_op) {
             shape.insert(shape.begin() + dim_, makeIntConst(nparts_));
         }
 
-        if (op->buffer_->atype() != AccessType::Cache) {
+        if (isInputting(op->buffer_->atype()) ||
+            isOutputting(op->buffer_->atype())) {
             if (fixedSize_) {
                 op->name_ += ".view";
                 op->viewOf_ = _op->name_;
