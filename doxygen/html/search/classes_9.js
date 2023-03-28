@@ -17,5 +17,6 @@ var searchData=
   ['invalidio_14',['InvalidIO',['../classfreetensor_1_1InvalidIO.html',1,'freetensor']]],
   ['invalidprogram_15',['InvalidProgram',['../classfreetensor_1_1InvalidProgram.html',1,'freetensor']]],
   ['invalidschedule_16',['InvalidSchedule',['../classfreetensor_1_1InvalidSchedule.html',1,'freetensor']]],
-  ['iteraxis_17',['IterAxis',['../structfreetensor_1_1IterAxis.html',1,'freetensor']]]
+  ['inversioninfo_17',['InversionInfo',['../structfreetensor_1_1InversionInfo.html',1,'freetensor']]],
+  ['iteraxis_18',['IterAxis',['../structfreetensor_1_1IterAxis.html',1,'freetensor']]]
 ];
