@@ -7,5 +7,6 @@ var searchData=
   ['block_4',['Block',['../structfreetensor_1_1CUDAScope.html#a8ccc70e8b1080d6717251c1665cec212ada5767c923b48ddc8a99ff6ab04e1df4',1,'freetensor::CUDAScope']]],
   ['bool_5',['Bool',['../namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3ac26f15e86e3de4c398a8273272aba034',1,'freetensor']]],
   ['boolconst_6',['BoolConst',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fac2d25ec18fb4f10042019b14fdabea7e',1,'freetensor']]],
-  ['byvalue_7',['ByValue',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150ad678aba164b442f27e193f3f05ef614f',1,'freetensor']]]
+  ['bypass_7',['Bypass',['../namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba5ce88c4d66118388a69c6fd4262ca3a1',1,'freetensor']]],
+  ['byvalue_8',['ByValue',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150ad678aba164b442f27e193f3f05ef614f',1,'freetensor']]]
 ];

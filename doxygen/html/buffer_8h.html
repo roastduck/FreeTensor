@@ -78,6 +78,7 @@ $(function() {
 <div class="textblock"><code>#include &lt;array&gt;</code><br />
 <code>#include &lt;iostream&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
+<code>#include &lt;<a class="el" href="access__type_8h_source.html">access_type.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="container__utils_8h_source.html">container_utils.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="to__string_8h_source.html">serialize/to_string.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="sub__tree_8h_source.html">sub_tree.h</a>&gt;</code><br />
@@ -87,42 +88,43 @@ Include dependency graph for buffer.h:</div>
 <div class="dyncontent">
 <div class="center"><img src="buffer_8h__incl.png" border="0" usemap="#ainclude_2buffer_8h" alt=""/></div>
 <map name="ainclude_2buffer_8h" id="ainclude_2buffer_8h">
-<area shape="rect" title=" " alt="" coords="1214,5,1337,32"/>
-<area shape="rect" title=" " alt="" coords="1023,379,1079,405"/>
-<area shape="rect" title=" " alt="" coords="1346,528,1426,555"/>
-<area shape="rect" title=" " alt="" coords="2709,528,2767,555"/>
-<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="747,379,878,405"/>
-<area shape="rect" href="to__string_8h.html" title=" " alt="" coords="1205,379,1356,405"/>
-<area shape="rect" href="sub__tree_8h.html" title=" " alt="" coords="2054,304,2145,331"/>
-<area shape="rect" href="tensor_8h.html" title=" " alt="" coords="1335,80,1410,107"/>
-<area shape="rect" title=" " alt="" coords="770,453,855,480"/>
-<area shape="rect" title=" " alt="" coords="24,453,89,480"/>
-<area shape="rect" title=" " alt="" coords="114,453,181,480"/>
-<area shape="rect" title=" " alt="" coords="930,453,1005,480"/>
-<area shape="rect" title=" " alt="" coords="205,453,260,480"/>
-<area shape="rect" title=" " alt="" coords="284,453,408,480"/>
-<area shape="rect" title=" " alt="" coords="1029,453,1143,480"/>
-<area shape="rect" title=" " alt="" coords="1944,528,2007,555"/>
-<area shape="rect" title=" " alt="" coords="432,453,580,480"/>
-<area shape="rect" title=" " alt="" coords="605,453,746,480"/>
-<area shape="rect" href="except_8h.html" title=" " alt="" coords="1219,453,1297,480"/>
-<area shape="rect" title=" " alt="" coords="1215,528,1301,555"/>
-<area shape="rect" title=" " alt="" coords="2502,528,2569,555"/>
-<area shape="rect" href="ref_8h.html" title=" " alt="" coords="1929,379,1979,405"/>
-<area shape="rect" title=" " alt="" coords="1475,453,1561,480"/>
-<area shape="rect" title=" " alt="" coords="2421,453,2498,480"/>
-<area shape="rect" title=" " alt="" coords="2304,453,2396,480"/>
-<area shape="rect" href="allocator_8h.html" title=" " alt="" coords="2087,453,2178,480"/>
-<area shape="rect" title=" " alt="" coords="2033,528,2099,555"/>
-<area shape="rect" title=" " alt="" coords="2124,528,2189,555"/>
-<area shape="rect" href="data__type_8h.html" title=" " alt="" coords="1130,304,1229,331"/>
-<area shape="rect" href="expr_8h.html" title=" " alt="" coords="1364,155,1427,181"/>
-<area shape="rect" href="ast_8h.html" title=" " alt="" coords="1681,229,1736,256"/>
-<area shape="rect" href="id_8h.html" title=" " alt="" coords="1685,379,1732,405"/>
-<area shape="rect" href="metadata_8h.html" title=" " alt="" coords="1752,304,1849,331"/>
-<area shape="rect" title=" " alt="" coords="1837,453,1911,480"/>
-<area shape="rect" href="stream__utils_8h.html" title=" " alt="" coords="1637,453,1812,480"/>
-<area shape="rect" href="func__utils_8h.html" title=" " alt="" coords="1756,379,1853,405"/>
+<area shape="rect" title=" " alt="" coords="872,5,995,32"/>
+<area shape="rect" title=" " alt="" coords="378,379,434,405"/>
+<area shape="rect" title=" " alt="" coords="1352,528,1432,555"/>
+<area shape="rect" title=" " alt="" coords="1515,528,1574,555"/>
+<area shape="rect" href="access__type_8h.html" title=" " alt="" coords="268,304,383,331"/>
+<area shape="rect" href="container__utils_8h.html" title=" " alt="" coords="814,379,944,405"/>
+<area shape="rect" href="to__string_8h.html" title=" " alt="" coords="1000,379,1150,405"/>
+<area shape="rect" href="sub__tree_8h.html" title=" " alt="" coords="2690,304,2780,331"/>
+<area shape="rect" href="tensor_8h.html" title=" " alt="" coords="1386,80,1460,107"/>
+<area shape="rect" title=" " alt="" coords="418,453,503,480"/>
+<area shape="rect" title=" " alt="" coords="528,453,593,480"/>
+<area shape="rect" title=" " alt="" coords="618,453,684,480"/>
+<area shape="rect" title=" " alt="" coords="1038,453,1112,480"/>
+<area shape="rect" title=" " alt="" coords="709,453,764,480"/>
+<area shape="rect" title=" " alt="" coords="788,453,912,480"/>
+<area shape="rect" title=" " alt="" coords="1136,453,1251,480"/>
+<area shape="rect" title=" " alt="" coords="2586,528,2649,555"/>
+<area shape="rect" title=" " alt="" coords="80,453,228,480"/>
+<area shape="rect" title=" " alt="" coords="252,453,394,480"/>
+<area shape="rect" href="except_8h.html" title=" " alt="" coords="1276,453,1354,480"/>
+<area shape="rect" title=" " alt="" coords="1241,528,1328,555"/>
+<area shape="rect" title=" " alt="" coords="2812,528,2879,555"/>
+<area shape="rect" href="ref_8h.html" title=" " alt="" coords="1827,379,1878,405"/>
+<area shape="rect" title=" " alt="" coords="1953,453,2040,480"/>
+<area shape="rect" title=" " alt="" coords="1683,453,1760,480"/>
+<area shape="rect" title=" " alt="" coords="1785,453,1877,480"/>
+<area shape="rect" href="allocator_8h.html" title=" " alt="" coords="2366,453,2456,480"/>
+<area shape="rect" title=" " alt="" coords="2423,528,2490,555"/>
+<area shape="rect" title=" " alt="" coords="2333,528,2398,555"/>
+<area shape="rect" href="data__type_8h.html" title=" " alt="" coords="1262,304,1360,331"/>
+<area shape="rect" href="expr_8h.html" title=" " alt="" coords="1518,155,1581,181"/>
+<area shape="rect" href="ast_8h.html" title=" " alt="" coords="1825,229,1880,256"/>
+<area shape="rect" href="id_8h.html" title=" " alt="" coords="2177,379,2224,405"/>
+<area shape="rect" href="metadata_8h.html" title=" " alt="" coords="1904,304,2001,331"/>
+<area shape="rect" title=" " alt="" coords="2480,453,2555,480"/>
+<area shape="rect" href="stream__utils_8h.html" title=" " alt="" coords="2116,453,2290,480"/>
+<area shape="rect" href="func__utils_8h.html" title=" " alt="" coords="2004,379,2101,405"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -197,16 +199,6 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:a923130db6aad12a2b5d46dfe001c08cb"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cb">freetensor::AccessType</a> : size_t { <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba324118a6721dd6b8a9b9f4e327df2bf5">freetensor::Input</a> = 0
-, <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba29c2c02a361c9d7028472e5d92cd4a54">freetensor::Output</a>
-, <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba47a54d9da8952a3980d27488b00a21c1">freetensor::InOut</a>
-, <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cbaab0cf104f39708eabd07b8cb67e149ba">freetensor::Cache</a>
-, <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba86e30d8e0831512671e7ed103ad7c457">freetensor::NumTypes</a>
-<br />
- }</td></tr>
-<tr class="separator:a923130db6aad12a2b5d46dfe001c08cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af577e754b8b16f492893f80ae9d2b150"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150">freetensor::MemType</a> : size_t { <br />
 &#160;&#160;<a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150ad678aba164b442f27e193f3f05ef614f">freetensor::ByValue</a> = 0
 , <a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a2b55387dd066c5bac646ac61543d152d">freetensor::CPU</a>
@@ -225,10 +217,6 @@ Enumerations</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a5c0f4e93910a9324737e15d1bd575599"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5c0f4e93910a9324737e15d1bd575599">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, AccessType atype)</td></tr>
-<tr class="separator:a5c0f4e93910a9324737e15d1bd575599"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1442e05e6cde2ae3cda5aa32c79f3e72"><td class="memItemLeft" align="right" valign="top">AccessType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1442e05e6cde2ae3cda5aa32c79f3e72">freetensor::parseAType</a> (const std::string &amp;_str)</td></tr>
-<tr class="separator:a1442e05e6cde2ae3cda5aa32c79f3e72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5bcb73ee76b0e1c0a24e1b3010ef883d"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5bcb73ee76b0e1c0a24e1b3010ef883d">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, MemType mtype)</td></tr>
 <tr class="separator:a5bcb73ee76b0e1c0a24e1b3010ef883d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac45acfda18a11132b392e692d928734d"><td class="memItemLeft" align="right" valign="top">MemType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac45acfda18a11132b392e692d928734d">freetensor::parseMType</a> (const std::string &amp;_str)</td></tr>
@@ -241,8 +229,6 @@ Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:a1aa6a148d037368e978b8aba08427a4d"><td class="memItemLeft" align="right" valign="top">constexpr std::array&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1aa6a148d037368e978b8aba08427a4d">freetensor::accessTypeNames</a></td></tr>
-<tr class="separator:a1aa6a148d037368e978b8aba08427a4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8654dac6cb62afd5d396af9064c8822f"><td class="memItemLeft" align="right" valign="top">constexpr std::array&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8654dac6cb62afd5d396af9064c8822f">freetensor::memTypeNames</a></td></tr>
 <tr class="separator:a8654dac6cb62afd5d396af9064c8822f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>

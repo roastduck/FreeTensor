@@ -96,12 +96,22 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aa075e9db2f97c8177e4ba2227875d1d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9bc55289b4803930ebd6aadb12e2d628"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#a9bc55289b4803930ebd6aadb12e2d628">dtype</a> () const</td></tr>
 <tr class="separator:a9bc55289b4803930ebd6aadb12e2d628"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a610e61f81df6042c8d2343d76da2e5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#a6a610e61f81df6042c8d2343d76da2e5">dontDropBorrow</a> () const</td></tr>
+<tr class="separator:a6a610e61f81df6042c8d2343d76da2e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4ff026614ffc58a66c955636094ba0d5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#a4ff026614ffc58a66c955636094ba0d5">setDontDropBorrow</a> (bool flag)</td></tr>
+<tr class="separator:a4ff026614ffc58a66c955636094ba0d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb647c3d337ffd5511da152d3c8c588c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#adb647c3d337ffd5511da152d3c8c588c">moved</a> () const</td></tr>
+<tr class="separator:adb647c3d337ffd5511da152d3c8c588c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a571bcd56bc0d7a3216f71bea1249864a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#a571bcd56bc0d7a3216f71bea1249864a">setMoved</a> (bool flag)</td></tr>
+<tr class="separator:a571bcd56bc0d7a3216f71bea1249864a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad61f28032a1e20c6c14547b32ab3193e"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#ad61f28032a1e20c6c14547b32ab3193e">rawSharedTo</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;device)</td></tr>
 <tr class="separator:ad61f28032a1e20c6c14547b32ab3193e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ed2b5f3e877bb08f8d0c94cac4d59c9"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#a8ed2b5f3e877bb08f8d0c94cac4d59c9">rawMovedTo</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;device)</td></tr>
 <tr class="separator:a8ed2b5f3e877bb08f8d0c94cac4d59c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c0a6a35f713cbb1d8dffddedc0fd060"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#a3c0a6a35f713cbb1d8dffddedc0fd060">rawInitTo</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;device)</td></tr>
 <tr class="separator:a3c0a6a35f713cbb1d8dffddedc0fd060"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a444e4853623354d5fa6c0bd64ef0beef"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#a444e4853623354d5fa6c0bd64ef0beef">rawTemporarilyCopiedTo</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;device)</td></tr>
+<tr class="separator:a444e4853623354d5fa6c0bd64ef0beef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1bbbcae2b9f3f67d27580121ee2cfccd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#a1bbbcae2b9f3f67d27580121ee2cfccd">makePrivateCopy</a> ()</td></tr>
 <tr class="separator:a1bbbcae2b9f3f67d27580121ee2cfccd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -109,8 +119,8 @@ Public Member Functions</h2></td></tr>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ae86e4085b1908391f150b50a47742014"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classfreetensor_1_1Array.html">Array</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#ae86e4085b1908391f150b50a47742014">moveFromRaw</a> (void *ptr, const std::vector&lt; size_t &gt; &amp;<a class="el" href="classfreetensor_1_1Array.html#aa075e9db2f97c8177e4ba2227875d1d4">shape</a>, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> <a class="el" href="classfreetensor_1_1Array.html#a9bc55289b4803930ebd6aadb12e2d628">dtype</a>, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;device)</td></tr>
 <tr class="separator:ae86e4085b1908391f150b50a47742014"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac40f8b5c37307ccdc0b4563ccb29a5e2"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classfreetensor_1_1Array.html">Array</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#ac40f8b5c37307ccdc0b4563ccb29a5e2">borrowFromRaw</a> (void *ptr, const std::vector&lt; size_t &gt; &amp;<a class="el" href="classfreetensor_1_1Array.html#aa075e9db2f97c8177e4ba2227875d1d4">shape</a>, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> <a class="el" href="classfreetensor_1_1Array.html#a9bc55289b4803930ebd6aadb12e2d628">dtype</a>, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;device, bool dontDropBorrow)</td></tr>
-<tr class="separator:ac40f8b5c37307ccdc0b4563ccb29a5e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aded6cc969479f6121563d0e3d06d4775"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classfreetensor_1_1Array.html">Array</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Array.html#aded6cc969479f6121563d0e3d06d4775">borrowFromRaw</a> (void *ptr, const std::vector&lt; size_t &gt; &amp;<a class="el" href="classfreetensor_1_1Array.html#aa075e9db2f97c8177e4ba2227875d1d4">shape</a>, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> <a class="el" href="classfreetensor_1_1Array.html#a9bc55289b4803930ebd6aadb12e2d628">dtype</a>, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;device, bool <a class="el" href="classfreetensor_1_1Array.html#a6a610e61f81df6042c8d2343d76da2e5">dontDropBorrow</a>, bool <a class="el" href="classfreetensor_1_1Array.html#adb647c3d337ffd5511da152d3c8c588c">moved</a>)</td></tr>
+<tr class="separator:aded6cc969479f6121563d0e3d06d4775"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Data stored on a <code><a class="el" href="classfreetensor_1_1Device.html">Device</a></code> or shared by multiple <code><a class="el" href="classfreetensor_1_1Device.html">Device</a></code>s</p>
@@ -181,8 +191,8 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="ac40f8b5c37307ccdc0b4563ccb29a5e2" name="ac40f8b5c37307ccdc0b4563ccb29a5e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac40f8b5c37307ccdc0b4563ccb29a5e2">&#9670;&nbsp;</a></span>borrowFromRaw()</h2>
+<a id="aded6cc969479f6121563d0e3d06d4775" name="aded6cc969479f6121563d0e3d06d4775"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aded6cc969479f6121563d0e3d06d4775">&#9670;&nbsp;</a></span>borrowFromRaw()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -218,7 +228,13 @@ Static Public Member Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>dontDropBorrow</em>&#160;</td>
+          <td class="paramname"><em>dontDropBorrow</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>moved</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -234,6 +250,31 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 <p >Borrow from raw pointer.</p>
 <p >Please make sure the owner keeps alive. Use <code>keep_alive</code> when exposing with PyBind11 </p>
+
+</div>
+</div>
+<a id="a6a610e61f81df6042c8d2343d76da2e5" name="a6a610e61f81df6042c8d2343d76da2e5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a610e61f81df6042c8d2343d76da2e5">&#9670;&nbsp;</a></span>dontDropBorrow()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::Array::dontDropBorrow </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -277,6 +318,31 @@ Static Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p >Somethings we can't keep track of user objects, so we need to ensure we don't borrow from user data </p>
+
+</div>
+</div>
+<a id="adb647c3d337ffd5511da152d3c8c588c" name="adb647c3d337ffd5511da152d3c8c588c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adb647c3d337ffd5511da152d3c8c588c">&#9670;&nbsp;</a></span>moved()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::Array::moved </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -448,6 +514,76 @@ Static Public Member Functions</h2></td></tr>
           <td></td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a444e4853623354d5fa6c0bd64ef0beef" name="a444e4853623354d5fa6c0bd64ef0beef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a444e4853623354d5fa6c0bd64ef0beef">&#9670;&nbsp;</a></span>rawTemporarilyCopiedTo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void * freetensor::Array::rawTemporarilyCopiedTo </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Device.html">Device</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>device</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4ff026614ffc58a66c955636094ba0d5" name="a4ff026614ffc58a66c955636094ba0d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4ff026614ffc58a66c955636094ba0d5">&#9670;&nbsp;</a></span>setDontDropBorrow()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::Array::setDontDropBorrow </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>flag</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a571bcd56bc0d7a3216f71bea1249864a" name="a571bcd56bc0d7a3216f71bea1249864a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a571bcd56bc0d7a3216f71bea1249864a">&#9670;&nbsp;</a></span>setMoved()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::Array::setMoved </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>flag</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>
