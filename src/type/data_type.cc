@@ -62,6 +62,24 @@ BaseDataType upCast(BaseDataType lhs, BaseDataType rhs) {
                          toString(rhs));
 }
 
+SignDataType upCast(SignDataType lhs, SignDataType rhs) {
+    if (isGT0(lhs) && isGT0(rhs)) {
+        return SignDataType::GT0;
+    } else if (isLT0(lhs) && isLT0(rhs)) {
+        return SignDataType::LT0;
+    } else if (isEQ0(lhs) && isEQ0(rhs)) {
+        return SignDataType::EQ0;
+    } else if (isGE0(lhs) && isGE0(rhs)) {
+        return SignDataType::GE0;
+    } else if (isLE0(lhs) && isLE0(rhs)) {
+        return SignDataType::LE0;
+    } else if (isNE0(lhs) && isNE0(rhs)) {
+        return SignDataType::NE0;
+    } else {
+        return SignDataType::Any;
+    }
+}
+
 } // namespace freetensor
 
 namespace std {

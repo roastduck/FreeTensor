@@ -168,33 +168,85 @@ DataType DataTypeInfer::infer(const FloorDivNode &op) {
     // FIXME: Currently our codegen dose not support FloorDiv on floats
     CHK_TYPE(isNumber, op.lhs_->dtype(), op);
     CHK_TYPE(isNumber, op.rhs_->dtype(), op);
-    return upCast(op.lhs_->dtype(), op.rhs_->dtype());
+    auto base = upCast(op.lhs_->dtype().base(), op.rhs_->dtype().base());
+    SignDataType sign = SignDataType::Any;
+    if (isGE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    } else if (isGE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    } else if (isLE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    } else if (isLE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    }
+    // NOTE: Even if lhs != 0, the result may still be 0
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const CeilDivNode &op) {
     // FIXME: Currently our codegen dose not support CeilDiv on floats
     CHK_TYPE(isNumber, op.lhs_->dtype(), op);
     CHK_TYPE(isNumber, op.rhs_->dtype(), op);
-    return upCast(op.lhs_->dtype(), op.rhs_->dtype());
+    auto base = upCast(op.lhs_->dtype().base(), op.rhs_->dtype().base());
+    SignDataType sign = SignDataType::Any;
+    if (isGE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    } else if (isGE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    } else if (isLE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    } else if (isLE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    }
+    // NOTE: Even if lhs != 0, the result may still be 0
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const RoundTowards0DivNode &op) {
     // FIXME: Currently our codegen dose not support RoundTowards0Div on floats
     CHK_TYPE(isNumber, op.lhs_->dtype(), op);
     CHK_TYPE(isNumber, op.rhs_->dtype(), op);
-    return upCast(op.lhs_->dtype(), op.rhs_->dtype());
+    auto base = upCast(op.lhs_->dtype().base(), op.rhs_->dtype().base());
+    SignDataType sign = SignDataType::Any;
+    if (isGE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    } else if (isGE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    } else if (isLE0(op.lhs_->dtype()) && isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    } else if (isLE0(op.lhs_->dtype()) && isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    }
+    // NOTE: Even if lhs != 0, the result may still be 0
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const ModNode &op) {
     CHK_TYPE(isInt, op.lhs_->dtype(), op);
     CHK_TYPE(isInt, op.rhs_->dtype(), op);
-    return upCast(op.lhs_->dtype(), op.rhs_->dtype());
+    auto base = upCast(op.lhs_->dtype().base(), op.rhs_->dtype().base());
+    SignDataType sign = SignDataType::Any;
+    // Sign is determined by rhs
+    if (isGE0(op.rhs_->dtype())) {
+        sign = SignDataType::GE0;
+    } else if (isLE0(op.rhs_->dtype())) {
+        sign = SignDataType::LE0;
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const RemainderNode &op) {
     CHK_TYPE(isInt, op.lhs_->dtype(), op);
     CHK_TYPE(isInt, op.rhs_->dtype(), op);
-    return upCast(op.lhs_->dtype(), op.rhs_->dtype());
+    auto base = upCast(op.lhs_->dtype().base(), op.rhs_->dtype().base());
+    SignDataType sign = SignDataType::Any;
+    // Sign is determined by lhs
+    if (isGE0(op.lhs_->dtype())) {
+        sign = SignDataType::GE0;
+    } else if (isLE0(op.lhs_->dtype())) {
+        sign = SignDataType::LE0;
+    }
+    return {base, sign};
 }
 
 DataType DataTypeInfer::infer(const MinNode &op) {
@@ -350,6 +402,7 @@ DataType DataTypeInfer::infer(const CeilNode &op) {
 
 DataType DataTypeInfer::infer(const IfExprNode &op) {
     CHK_TYPE(isBool, op.cond_->dtype(), op);
+    // We can safely upcast both BaseDataType and SignDataType
     return upCast(op.thenCase_->dtype(), op.elseCase_->dtype());
 }
 

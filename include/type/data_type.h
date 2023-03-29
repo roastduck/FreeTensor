@@ -172,9 +172,21 @@ inline bool isNE0(SignDataType dtype) {
 }
 inline bool isNE0(const DataType &dtype) { return isNE0(dtype.sign()); }
 
+inline bool isEQ0(SignDataType dtype) { return dtype == SignDataType::EQ0; }
+inline bool isEQ0(const DataType &dtype) { return isNE0(dtype.sign()); }
+
+/**
+ * Union type
+ *
+ * Obtain a new data type capable of representing values from either input data
+ * type. Please note that although union type on BaseDataType can be used to
+ * predict the resulting type of some binary operations, this is not true for
+ * all cases and does not apply to SignDataType.
+ */
 BaseDataType upCast(BaseDataType lhs, BaseDataType rhs);
+SignDataType upCast(SignDataType lhs, SignDataType rhs);
 inline DataType upCast(const DataType &lhs, const DataType &rhs) {
-    return {upCast(lhs.base(), rhs.base()), SignDataType::Any};
+    return {upCast(lhs.base(), rhs.base()), upCast(lhs.sign(), rhs.sign())};
 }
 
 } // namespace freetensor

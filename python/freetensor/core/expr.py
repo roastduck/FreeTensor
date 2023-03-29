@@ -1193,7 +1193,7 @@ def intrinsic(fmt, *params, **kws):
 
 def any():
     '''
-    Create an AnyExpr node (only for testing)
+    Create an AnyExpr node (only for testing and type inference)
 
     Any nodes matches any expression nodes in `ast.match`
     '''

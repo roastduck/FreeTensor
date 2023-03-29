@@ -287,10 +287,10 @@ def gemm(A,
         The resulting tensor
     '''
 
-    dtype = core.up_cast(A.dtype, B.dtype)
+    dtype = core.up_cast(A.dtype, B.dtype).base
     mtype = core.same_mtype(A.mtype, B.mtype)
     if C is not None:
-        dtype = core.up_cast(dtype, C.dtype)
+        dtype = core.up_cast(dtype, C.dtype).base
         mtype = core.same_mtype(mtype, C.mtype)
 
     Y = core.empty(_comp_shape(A, B, trans_A, trans_B), dtype, mtype)
