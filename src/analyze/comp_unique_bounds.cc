@@ -363,10 +363,18 @@ void CompUniqueBounds::visit(const Mod &op) {
     }
     updLower(lower_[op], LowerBound{op});
     updUpper(upper_[op], UpperBound{op});
-    // FIXME
-    updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
-    for (auto &&item : getUpper(op->rhs_)) {
-        updUpper(upper_[op], sub(item, LinearExpr<Rational<int64_t>>{{}, 1}));
+    if (getIntLower(op->rhs_) >= 0) {
+        updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
+        for (auto &&item : getUpper(op->rhs_)) {
+            updUpper(upper_[op],
+                     sub(item, LinearExpr<Rational<int64_t>>{{}, 1}));
+        }
+    } else if (getIntUpper(op->rhs_) <= 0) {
+        updUpper(upper_[op], UpperBound{LinearExpr<Rational<int64_t>>{{}, 0}});
+        for (auto &&item : getLower(op->rhs_)) {
+            updLower(lower_[op],
+                     add(item, LinearExpr<Rational<int64_t>>{{}, 1}));
+        }
     }
 }
 
