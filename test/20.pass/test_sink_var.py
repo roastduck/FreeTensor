@@ -119,7 +119,9 @@ def test_no_sink_reduction():
                 b[()] += 1
                 y[i] = b[()] * 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['use_builtin_div'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['use_builtin_div', 'float_simplify'])
 
     with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
         with ft.VarDef("b", (), "int32", "cache", "cpu") as b:

@@ -286,15 +286,15 @@ bool StmtNode::isBefore(const Stmt &other) const {
 }
 
 DataType ExprNode::dtype() {
-    if (dtype_ == DataType::Invalid) {
+    if (!dtype_.has_value()) {
         inferDType();
     }
-    return dtype_;
+    return *dtype_;
 }
 
 void ExprNode::resetDType() {
-    if (dtype_ != DataType::Invalid) {
-        dtype_ = DataType::Invalid;
+    if (dtype_.has_value()) {
+        dtype_ = std::nullopt;
         if (auto p = parentExpr(); p.isValid()) {
             p->resetDType();
         }

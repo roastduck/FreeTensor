@@ -78,14 +78,14 @@ class VarRef(ffi.FrontendVar):
 
     def as_store(self, metadata, value):
         if (not isinstance(value, ffi.AnyExpr) and
-                ffi.up_cast(dtype(value), self.dtype) != self.dtype):
+                ffi.up_cast(dtype(value), self.dtype).base != self.dtype.base):
             # Add explicit cast node, to avoid confusion after propagation
             value = cast(value, self.dtype)
         return super(VarRef, self).as_store(metadata, value)
 
     def as_reduce_to(self, reduce_op, metadata, value, atomic=False):
         if (not isinstance(value, ffi.AnyExpr) and
-                ffi.up_cast(dtype(value), self.dtype) != self.dtype):
+                ffi.up_cast(dtype(value), self.dtype).base != self.dtype.base):
             # Add explicit cast node, to avoid confusion after propagation
             value = cast(value, self.dtype)
         return super(VarRef, self).as_reduce_to(reduce_op, metadata, value,

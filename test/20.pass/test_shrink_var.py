@@ -166,7 +166,7 @@ def test_read_bound_with_offset():
 
 def test_no_changing_unbounded_var():
     with ft.VarDef([("idx", (4,), "int32", "input", "cpu"),
-                    ("x", (4, 4), "int32", "output", "cpu"),
+                    ("x", (4, 4), "int32", "input", "cpu"),
                     ("t", (4, 4), "int32", "cache", "cpu"),
                     ("y", (4, 4), "int32", "output", "cpu")]) as (idx, x, t, y):
         with ft.For("i", 0, 4) as i:
@@ -178,7 +178,7 @@ def test_no_changing_unbounded_var():
 
     # This program should be kept as-is. No additional guards should be added
     with ft.VarDef([("idx", (4,), "int32", "input", "cpu"),
-                    ("x", (4, 4), "int32", "output", "cpu"),
+                    ("x", (4, 4), "int32", "input", "cpu"),
                     ("t", (4, 4), "int32", "cache", "cpu"),
                     ("y", (4, 4), "int32", "output", "cpu")]) as (idx, x, t, y):
         with ft.For("i", 0, 4) as i:

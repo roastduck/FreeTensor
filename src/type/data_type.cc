@@ -24,6 +24,7 @@ size_t sizeOf(BaseDataType dtype) {
 
 bool isInt(BaseDataType dtype) {
     switch (dtype) {
+    case BaseDataType::Never:
     case BaseDataType::Int32:
     case BaseDataType::Int64:
         return true;
@@ -34,6 +35,7 @@ bool isInt(BaseDataType dtype) {
 
 bool isFloat(BaseDataType dtype) {
     switch (dtype) {
+    case BaseDataType::Never:
     case BaseDataType::Float64:
     case BaseDataType::Float32:
         return true;
@@ -42,7 +44,89 @@ bool isFloat(BaseDataType dtype) {
     }
 }
 
+bool isBool(BaseDataType dtype) {
+    switch (dtype) {
+    case BaseDataType::Never:
+    case BaseDataType::Bool:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool isGT0(SignDataType dtype) {
+    switch (dtype) {
+    case SignDataType::Never:
+    case SignDataType::GT0:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool isGE0(SignDataType dtype) {
+    switch (dtype) {
+    case SignDataType::Never:
+    case SignDataType::GE0:
+    case SignDataType::GT0:
+    case SignDataType::EQ0:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool isLT0(SignDataType dtype) {
+    switch (dtype) {
+    case SignDataType::Never:
+    case SignDataType::LT0:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool isLE0(SignDataType dtype) {
+    switch (dtype) {
+    case SignDataType::Never:
+    case SignDataType::LE0:
+    case SignDataType::LT0:
+    case SignDataType::EQ0:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool isNE0(SignDataType dtype) {
+    switch (dtype) {
+    case SignDataType::Never:
+    case SignDataType::LT0:
+    case SignDataType::GT0:
+    case SignDataType::NE0:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool isEQ0(SignDataType dtype) {
+    switch (dtype) {
+    case SignDataType::Never:
+    case SignDataType::EQ0:
+        return true;
+    default:
+        return false;
+    }
+}
+
 BaseDataType upCast(BaseDataType lhs, BaseDataType rhs) {
+    if (lhs == BaseDataType::Never) {
+        return rhs;
+    }
+    if (rhs == BaseDataType::Never) {
+        return lhs;
+    }
     if (lhs == BaseDataType::Custom || rhs == BaseDataType::Custom) {
         return BaseDataType::Custom;
     }
@@ -63,6 +147,12 @@ BaseDataType upCast(BaseDataType lhs, BaseDataType rhs) {
 }
 
 SignDataType upCast(SignDataType lhs, SignDataType rhs) {
+    if (lhs == SignDataType::Never) {
+        return rhs;
+    }
+    if (rhs == SignDataType::Never) {
+        return lhs;
+    }
     if (isGT0(lhs) && isGT0(rhs)) {
         return SignDataType::GT0;
     } else if (isLT0(lhs) && isLT0(rhs)) {

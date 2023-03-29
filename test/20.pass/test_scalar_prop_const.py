@@ -7,7 +7,9 @@ def test_basic():
         y1[()] = 1
         y2[()] = y1[()]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const', 'float_simplify'])
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu")]) as (y1, y2):
@@ -28,7 +30,9 @@ def test_multiple_choices_no_remove():
             y1[()] = 2
         y2[()] = y1[()]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const', 'float_simplify'])
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y1", (), "int32", "output", "cpu"),
@@ -66,7 +70,9 @@ def test_remove_intermediate_array():
             t[()] = 2
             y[()] = t[()]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const', 'float_simplify'])
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 2
@@ -106,7 +112,9 @@ def test_propagate():
         y2[()] = y1[()]
         y3[()] = y2[()]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const', 'float_simplify'])
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu"),
@@ -127,7 +135,9 @@ def test_propagate_through_expressions():
         y2[()] = y1[()]
         y3[()] = y2[()] + y2[()]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const', 'float_simplify'])
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu"),
@@ -206,7 +216,9 @@ def test_loop_local_basic():
             y1[i] = 1
             y2[i] = y1[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const', 'float_simplify'])
 
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
@@ -229,7 +241,9 @@ def test_loop_local_multiple_choices_no_remove():
                 y1[i] = 2
             y2[i] = y1[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const', 'float_simplify'])
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -295,7 +309,9 @@ def test_reduction():
                 # assignment above
                 y[i] += 1
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const', 'float_simplify'])
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:

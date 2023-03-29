@@ -11,20 +11,20 @@
 namespace freetensor {
 
 enum class BaseDataType : size_t {
-    Void = 0,
+    Void = 0, // Returns nothing. It is a Unit Type
     Float32,
     Float64,
     Int32,
     Int64,
     Bool,
     Custom,
+    Never, // Never returns. It is the Bottom Type
     // ------
     NumTypes,
-    Invalid,
 };
 
 constexpr std::array baseDataTypeNames = {
-    "void", "float32", "float64", "int32", "int64", "bool", "custom",
+    "void", "float32", "float64", "int32", "int64", "bool", "custom", "never",
 };
 static_assert(baseDataTypeNames.size() == (size_t)BaseDataType::NumTypes);
 
@@ -57,12 +57,13 @@ enum class SignDataType : size_t {
     NE0,
     EQ0, // EQ0 is only for "0" literals. No need to type-inference EQ0 because
          // we have const_fold
+    Never, // Bottom type
     // ------
     NumTypes,
 };
 
 constexpr std::array signDataTypeNames = {
-    "", ">0", ">=0", "<0", "<=0", "!=0", "==0",
+    "", ">0", ">=0", "<0", "<=0", "!=0", "==0", "{}",
 };
 static_assert(signDataTypeNames.size() == (size_t)SignDataType::NumTypes);
 
@@ -109,7 +110,6 @@ class DataType {
     constexpr static auto Int32 = BaseDataType::Int32;
     constexpr static auto Int64 = BaseDataType::Int64;
     constexpr static auto Void = BaseDataType::Void;
-    constexpr static auto Invalid = BaseDataType::Invalid;
 
     const auto &base() const { return base_; }
     const auto &sign() const { return sign_; }
@@ -134,6 +134,10 @@ inline DataType parseDType(const std::string &str) {
 size_t sizeOf(BaseDataType dtype);
 inline size_t sizeOf(const DataType &dtype) { return sizeOf(dtype.base()); }
 
+// The following functions tests properties of a type. NOTE: All properties hold
+// for the bottom type `Never`, because $\forall x \in \emptyset : P(x)$ is
+// always true for any $P$
+
 bool isInt(BaseDataType dtype);
 inline bool isInt(const DataType &dtype) { return isInt(dtype.base()); }
 
@@ -145,49 +149,44 @@ inline bool isNumber(BaseDataType dtype) {
 }
 inline bool isNumber(const DataType &dtype) { return isNumber(dtype.base()); }
 
-inline bool isBool(BaseDataType dtype) { return dtype == BaseDataType::Bool; }
+bool isBool(BaseDataType dtype);
 inline bool isBool(const DataType &dtype) { return isBool(dtype.base()); }
 
-inline bool isGT0(SignDataType dtype) { return dtype == SignDataType::GT0; }
+bool isGT0(SignDataType dtype);
 inline bool isGT0(const DataType &dtype) { return isGT0(dtype.sign()); }
 
-inline bool isGE0(SignDataType dtype) {
-    return dtype == SignDataType::GE0 || dtype == SignDataType::GT0 ||
-           dtype == SignDataType::EQ0;
-}
+bool isGE0(SignDataType dtype);
 inline bool isGE0(const DataType &dtype) { return isGE0(dtype.sign()); }
 
-inline bool isLT0(SignDataType dtype) { return dtype == SignDataType::LT0; }
+bool isLT0(SignDataType dtype);
 inline bool isLT0(const DataType &dtype) { return isLT0(dtype.sign()); }
 
-inline bool isLE0(SignDataType dtype) {
-    return dtype == SignDataType::LE0 || dtype == SignDataType::LT0 ||
-           dtype == SignDataType::EQ0;
-}
+bool isLE0(SignDataType dtype);
 inline bool isLE0(const DataType &dtype) { return isLE0(dtype.sign()); }
 
-inline bool isNE0(SignDataType dtype) {
-    return dtype == SignDataType::LT0 || dtype == SignDataType::GT0 ||
-           dtype == SignDataType::NE0;
-}
+bool isNE0(SignDataType dtype);
 inline bool isNE0(const DataType &dtype) { return isNE0(dtype.sign()); }
 
-inline bool isEQ0(SignDataType dtype) { return dtype == SignDataType::EQ0; }
+bool isEQ0(SignDataType dtype);
 inline bool isEQ0(const DataType &dtype) { return isNE0(dtype.sign()); }
 
 /**
  * Union type
  *
- * Obtain a new data type capable of representing values from either input data
- * type. Please note that although union type on BaseDataType can be used to
- * predict the resulting type of some binary operations, this is not true for
- * all cases and does not apply to SignDataType.
+ * Obtain a new data type containing as few as possible values, where the value
+ * is of either of the input types. Please note that although union type on
+ * BaseDataType can be used to predict the resulting type of some binary
+ * operations, this is not true for all cases and does not apply to
+ * SignDataType.
+ *
+ * @{
  */
 BaseDataType upCast(BaseDataType lhs, BaseDataType rhs);
 SignDataType upCast(SignDataType lhs, SignDataType rhs);
 inline DataType upCast(const DataType &lhs, const DataType &rhs) {
     return {upCast(lhs.base(), rhs.base()), upCast(lhs.sign(), rhs.sign())};
 }
+/** @} */
 
 } // namespace freetensor
 

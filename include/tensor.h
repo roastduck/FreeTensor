@@ -26,6 +26,7 @@ class Tensor : public ASTPart {
     void setShape(std::initializer_list<Expr> shape) { shape_ = shape; }
 
     DataType dtype() const { return dtype_; }
+    void setDType(const DataType &dtype) { dtype_ = dtype; }
 
     bool isScalar() const;
 

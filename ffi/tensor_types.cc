@@ -40,10 +40,14 @@ void init_ffi_tensor_types(py::module_ &m) {
 
     py::class_<BaseDataType>(m, "BaseDataType")
         .def(py::init<BaseDataType>())
-        .def(py::init(&parseBaseDataType));
+        .def(py::init(&parseBaseDataType))
+        .def("__eq__",
+             [](BaseDataType lhs, BaseDataType rhs) { return lhs == rhs; });
     py::class_<SignDataType>(m, "SignDataType")
         .def(py::init<SignDataType>())
-        .def(py::init(&parseSignDataType));
+        .def(py::init(&parseSignDataType))
+        .def("__eq__",
+             [](SignDataType lhs, SignDataType rhs) { return lhs == rhs; });
     py::class_<DataType>(m, "DataType")
         .def(py::init<DataType>())
         .def(py::init<BaseDataType>())

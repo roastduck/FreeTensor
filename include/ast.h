@@ -4,6 +4,7 @@
 #include <atomic>
 #include <functional>
 #include <iostream>
+#include <optional>
 #include <string>
 
 #include <id.h>
@@ -156,7 +157,7 @@ typedef Ref<StmtNode> Stmt;
  */
 class ExprNode : public ASTNode {
   protected:
-    DataType dtype_ = DataType::Invalid;
+    std::optional<DataType> dtype_;
 
   public:
     bool isExpr() const override { return true; }

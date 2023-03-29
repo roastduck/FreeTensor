@@ -10,7 +10,7 @@ def test_type1_write_then_write():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
@@ -153,7 +153,7 @@ def test_type1_many_then_ones_reduce():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -217,7 +217,7 @@ def test_type1_write_then_reduce():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
@@ -406,7 +406,7 @@ def test_type1_write_then_multiple_reduces():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
@@ -719,7 +719,7 @@ def test_same_parent_but_dep_and_circular_dependence_on_init():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef([("f", (10,), "float32", "output", "cpu"),
@@ -804,7 +804,7 @@ def test_one_loop_depends_on_multiple_statements_no_remove():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use', 'make_heap_alloc'
+                       'prop_one_time_use', 'make_heap_alloc', 'float_simplify'
                    ])
 
     with ft.VarDef("u", (64,), "float64", "input", "cpu") as u:

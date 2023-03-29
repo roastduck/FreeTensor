@@ -308,9 +308,9 @@ void Driver::setArgs(const std::vector<Ref<Array>> &args,
         if (auto it = name2buffer_.find(f_->params_[j].name_);
             it != name2buffer_.end()) {
             auto &&buffer = it->second;
-            if (buffer->tensor()->dtype() != args[i]->dtype()) {
+            if (buffer->tensor()->dtype().base() != args[i]->dtype().base()) {
                 throw DriverError(
-                    "Cannnot pass a " + toString(args[i]->dtype()) +
+                    "Cannot pass a " + toString(args[i]->dtype()) +
                     " Array to the " + std::to_string(j) + "-th parameter " +
                     f_->params_[j].name_ + " of type " +
                     toString(buffer->tensor()->dtype()));
@@ -331,8 +331,8 @@ void Driver::setArgs(const std::vector<Ref<Array>> &args,
         auto paramId = name2param_[key];
         if (auto it = name2buffer_.find(key); it != name2buffer_.end()) {
             auto &&buffer = it->second;
-            if (buffer->tensor()->dtype() != value->dtype()) {
-                throw DriverError("Cannnot pass a " + toString(value->dtype()) +
+            if (buffer->tensor()->dtype().base() != value->dtype().base()) {
+                throw DriverError("Cannot pass a " + toString(value->dtype()) +
                                   " Array to the " +
                                   std::to_string(name2param_[key]) +
                                   "-th parameter " + key + " of type " +

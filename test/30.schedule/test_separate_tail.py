@@ -17,7 +17,7 @@ def test_basic():
     s = ft.Schedule(ast)
     s.separate_tail()
     ast = s.ast()
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
@@ -48,7 +48,7 @@ def test_multiple_cond():
     s = ft.Schedule(ast)
     s.separate_tail()
     ast = s.ast()
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef([("y1", (5,), "int32", "output", "cpu"),
                     ("y2", (5,), "int32", "output", "cpu")]) as (y1, y2):
@@ -76,7 +76,7 @@ def test_eq():
     s = ft.Schedule(ast)
     s.separate_tail()
     ast = s.ast()
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef("y", (5,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 2) as i:

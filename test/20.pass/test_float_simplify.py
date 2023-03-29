@@ -41,7 +41,7 @@ def test_simplify_sqrt_2():
 
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
-                    ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
+                    ("y", (), "float32>=0", "output", "cpu")]) as (x1, x2, y):
         y[()] = ft.sqrt(ft.min(4 * x1[()], 9 * x2[()]))
     std = ft.pop_ast()
 
@@ -58,7 +58,7 @@ def test_simplify_sqrt_3():
 
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
-                    ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
+                    ("y", (), "float32<=0", "output", "cpu")]) as (x1, x2, y):
         y[()] = -1 * ft.sqrt(ft.max(4 * x1[()], 9 * x2[()]))
     std = ft.pop_ast()
 
@@ -93,7 +93,7 @@ def test_simplify_square_abs():
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
-                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+                    ("y", (), "float32>=0", "output", "cpu")]) as (x, y):
         y[()] = ft.square(x[()])
     std = ft.pop_ast()
 
@@ -108,7 +108,7 @@ def test_simplify_redundant_abs():
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
-                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+                    ("y", (), "float32>=0", "output", "cpu")]) as (x, y):
         y[()] = ft.abs(x[()])
     std = ft.pop_ast()
 
@@ -138,7 +138,7 @@ def test_type_hint_from_user():
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "float32>=0", "input", "cpu"),
-                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+                    ("y", (), "float32>=0", "output", "cpu")]) as (x, y):
         y[()] = x[()]
     std = ft.pop_ast()
 

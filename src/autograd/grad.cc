@@ -440,6 +440,8 @@ Stmt Grad::visit(const VarDef &_op) {
 
             grad = makeVarDef(gradName, op->buffer_, std::nullopt, grad,
                               op->pinned_, makeMetadata("grad", op));
+            grad.as<VarDefNode>()->buffer_->tensor()->setDType(
+                grad.as<VarDefNode>()->buffer_->tensor()->dtype().base());
             if (isOutputting(op->buffer_->atype())) {
                 grad.as<VarDefNode>()->buffer_->setAtype(AccessType::InOut);
             } else if (isInputting(op->buffer_->atype())) {
