@@ -188,6 +188,20 @@ inline DataType upCast(const DataType &lhs, const DataType &rhs) {
 }
 /** @} */
 
+/**
+ * Intersect type
+ *
+ * Obatin a new data type containing as few as possible values, where the value
+ * is of both of the input types. This is actually merging restrictions from
+ * both types.
+ */
+BaseDataType downCast(BaseDataType lhs, BaseDataType rhs);
+SignDataType downCast(SignDataType lhs, SignDataType rhs);
+inline DataType downCast(const DataType &lhs, const DataType &rhs) {
+    return {downCast(lhs.base(), rhs.base()), downCast(lhs.sign(), rhs.sign())};
+}
+/** @} */
+
 } // namespace freetensor
 
 namespace std {

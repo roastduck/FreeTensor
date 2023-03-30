@@ -142,8 +142,8 @@ BaseDataType upCast(BaseDataType lhs, BaseDataType rhs) {
     if ((isInt(lhs) && isInt(rhs)) || (isFloat(lhs) && isFloat(rhs))) {
         return sizeOf(rhs) > sizeOf(lhs) ? rhs : lhs;
     }
-    throw InvalidProgram("Cannot operate between " + toString(lhs) + " and " +
-                         toString(rhs));
+    throw InvalidProgram("Cannot upCast(" + toString(lhs) + ", " +
+                         toString(rhs) + ")");
 }
 
 SignDataType upCast(SignDataType lhs, SignDataType rhs) {
@@ -164,6 +164,52 @@ SignDataType upCast(SignDataType lhs, SignDataType rhs) {
     } else if (isLE0(lhs) && isLE0(rhs)) {
         return SignDataType::LE0;
     } else if (isNE0(lhs) && isNE0(rhs)) {
+        return SignDataType::NE0;
+    } else {
+        return SignDataType::Any;
+    }
+}
+
+BaseDataType downCast(BaseDataType lhs, BaseDataType rhs) {
+    if (lhs == BaseDataType::Never || rhs == BaseDataType::Never) {
+        return BaseDataType::Never;
+    }
+    if (lhs == BaseDataType::Custom) {
+        return rhs;
+    }
+    if (rhs == BaseDataType::Custom) {
+        return lhs;
+    }
+    if (lhs == rhs) {
+        return lhs;
+    }
+    if (isInt(lhs) && isFloat(rhs)) {
+        return lhs;
+    }
+    if (isFloat(lhs) && isInt(rhs)) {
+        return rhs;
+    }
+    if ((isInt(lhs) && isInt(rhs)) || (isFloat(lhs) && isFloat(rhs))) {
+        return sizeOf(rhs) > sizeOf(lhs) ? lhs : rhs;
+    }
+    return BaseDataType::Never;
+}
+
+SignDataType downCast(SignDataType lhs, SignDataType rhs) {
+    if (lhs == SignDataType::Never && rhs == SignDataType::Never) {
+        return SignDataType::Never;
+    }
+    if (isGT0(lhs) || isGT0(rhs)) {
+        return SignDataType::GT0;
+    } else if (isLT0(lhs) || isLT0(rhs)) {
+        return SignDataType::LT0;
+    } else if (isEQ0(lhs) || isEQ0(rhs)) {
+        return SignDataType::EQ0;
+    } else if (isGE0(lhs) || isGE0(rhs)) {
+        return SignDataType::GE0;
+    } else if (isLE0(lhs) || isLE0(rhs)) {
+        return SignDataType::LE0;
+    } else if (isNE0(lhs) || isNE0(rhs)) {
         return SignDataType::NE0;
     } else {
         return SignDataType::Any;

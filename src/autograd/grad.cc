@@ -492,6 +492,9 @@ Stmt Grad::visit(const Store &op) {
             return makeStmtSeq({});
         }
 
+        // May be different by sign with forward variable
+        auto gradDType = b->tensor()->dtype().base();
+
         auto newMetadata = makeMetadata("grad", op);
         std::vector<Stmt> stmts;
         if (gradNames_.count(op->var_)) {
@@ -503,7 +506,7 @@ Stmt Grad::visit(const Store &op) {
                     it != derivatives_.end()) {
                     for (auto &&stmt : it->second.genGrads(
                              intermediatesMap_, versions_, gradNames_,
-                             makeLoad(grad, indices, b->tensor()->dtype()))) {
+                             makeLoad(grad, indices, gradDType))) {
                         stmt->metadata() = newMetadata;
                         stmts.emplace_back(stmt);
                     }
@@ -520,9 +523,9 @@ Stmt Grad::visit(const Store &op) {
                 // d_y[i] = 0
                 // deduce d_x[i] and d_y[i] using d_y.old
                 auto oldGrad = grad + ".old";
-                stmts.emplace_back(makeStore(
-                    oldGrad, {}, makeLoad(grad, indices, b->tensor()->dtype()),
-                    newMetadata));
+                stmts.emplace_back(makeStore(oldGrad, {},
+                                             makeLoad(grad, indices, gradDType),
+                                             newMetadata));
                 stmts.emplace_back(
                     makeStore(grad, indices, makeIntConst(0), newMetadata));
 
@@ -530,16 +533,16 @@ Stmt Grad::visit(const Store &op) {
                     it != derivatives_.end()) {
                     for (auto &&stmt : it->second.genGrads(
                              intermediatesMap_, versions_, gradNames_,
-                             makeLoad(oldGrad, {}, b->tensor()->dtype()))) {
+                             makeLoad(oldGrad, {}, gradDType))) {
                         stmt->metadata() = newMetadata;
                         stmts.emplace_back(stmt);
                     }
                 }
-                return makeVarDef(
-                    oldGrad,
-                    makeBuffer(makeTensor({}, b->tensor()->dtype()),
-                               AccessType::Cache, b->mtype()),
-                    std::nullopt, makeStmtSeq(std::move(stmts)), false);
+                return makeVarDef(oldGrad,
+                                  makeBuffer(makeTensor({}, gradDType),
+                                             AccessType::Cache, b->mtype()),
+                                  std::nullopt, makeStmtSeq(std::move(stmts)),
+                                  false);
             }
         } else {
             return makeStmtSeq({});
@@ -563,6 +566,10 @@ Stmt Grad::visit(const ReduceTo &op) {
     } else {
         // Quick path for reduce sum/min/max. Other reductions have been
         // converted back to Store
+
+        // May be different by sign with forward variable
+        auto gradDType = b->tensor()->dtype().base();
+
         auto newMetadata = makeMetadata("grad", op);
         if (gradNames_.count(op->var_)) {
             auto &&grad = gradNames_.at(op->var_);
@@ -577,7 +584,7 @@ Stmt Grad::visit(const ReduceTo &op) {
                     it != derivatives_.end()) {
                     for (auto &&stmt : it->second.genGrads(
                              intermediatesMap_, versions_, gradNames_,
-                             makeLoad(grad, indices, b->tensor()->dtype()))) {
+                             makeLoad(grad, indices, gradDType))) {
                         stmt->metadata() = newMetadata;
                         stmts.emplace_back(stmt);
                     }
@@ -592,7 +599,7 @@ Stmt Grad::visit(const ReduceTo &op) {
                     it != derivatives_.end()) {
                     for (auto &&stmt : it->second.genGrads(
                              intermediatesMap_, versions_, gradNames_,
-                             makeLoad(grad, indices, b->tensor()->dtype()))) {
+                             makeLoad(grad, indices, gradDType))) {
                         ASSERT(stmt->nodeType() == ASTNodeType::ReduceTo);
                         auto &&oldReduceGrad = stmt.as<ReduceToNode>();
                         ASSERT(oldReduceGrad->op_ == ReduceOp::Add);
@@ -623,9 +630,8 @@ Stmt Grad::visit(const ReduceTo &op) {
                         // use)
                         auto dy = makeStore(
                             grad, indices,
-                            makeIfExpr(
-                                makeEQ(xi, y), makeIntConst(0),
-                                makeLoad(grad, indices, b->tensor()->dtype())));
+                            makeIfExpr(makeEQ(xi, y), makeIntConst(0),
+                                       makeLoad(grad, indices, gradDType)));
                         auto newStmt = makeStmtSeq({dxi, dy});
                         newStmt->metadata() = newMetadata;
                         stmts.emplace_back(newStmt);

@@ -4,6 +4,9 @@
 namespace freetensor {
 
 Stmt ClearDataType::visit(const VarDef &_op) {
+    if (!_op->viewOf_.has_value()) {
+        oldTypes_[_op->id()] = _op->buffer_->tensor()->dtype();
+    }
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
@@ -72,11 +75,10 @@ Stmt RefineSignDataType::visit(const VarDef &_op) {
     auto op = __op.as<VarDefNode>();
 
     if (!_op->viewOf_.has_value()) {
-        auto newType = newTypes_.at(op->id());
+        auto newType =
+            downCast(newTypes_.at(op->id()), userTypes_.at(op->id()));
         if (newType.sign() != oldType.sign()) {
             converged_ = false;
-            // FIXME: Constraint from user must be preserved! Must downCast with
-            // the original dtype before the 1st iteration
             op->buffer_->tensor()->setDType({oldType.base(), newType.sign()});
         }
     }
@@ -108,9 +110,10 @@ Stmt RefineSignDataType::visit(const ReduceTo &_op) {
 }
 
 Stmt refineSignDataType(const Stmt &_op) {
-    auto op = ClearDataType{}(_op);
+    ClearDataType clear;
+    auto op = clear(_op);
     for (int i = 0;; i++) {
-        RefineSignDataType mutator;
+        RefineSignDataType mutator{clear.oldTypes()};
         op = mutator(op);
         op = UpdateDType{}(op);
         if (mutator.converged() || i > 100) {

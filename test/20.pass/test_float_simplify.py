@@ -24,7 +24,7 @@ def test_simplify_sqrt_1():
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
-                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+                    ("y", (), "float32>=0", "output", "cpu")]) as (x, y):
         y[()] = x[()]
     std = ft.pop_ast()
 
@@ -78,7 +78,8 @@ def test_simplify_sqrt_4():
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
-                    ("y", (), "float32", "output", "cpu")]) as (x1, x2, x3, y):
+                    ("y", (), "float32>=0", "output", "cpu")]) as (x1, x2, x3,
+                                                                   y):
         y[()] = ft.square(x2[()]) * (x1[()] / x3[()])
     std = ft.pop_ast()
 

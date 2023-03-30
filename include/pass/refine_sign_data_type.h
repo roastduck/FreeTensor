@@ -15,6 +15,11 @@ namespace freetensor {
 class ClearDataType : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
+    std::unordered_map<ID, DataType> oldTypes_; // {VarDef ID -> type}
+
+  public:
+    const auto &oldTypes() const { return oldTypes_; }
+
   protected:
     using BaseClass::visit;
     Stmt visit(const VarDef &op) override;
@@ -40,10 +45,14 @@ class UpdateDType : public SymbolTable<Mutator> {
 class RefineSignDataType : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
-    std::unordered_map<ID, DataType> newTypes_; // {VarDef ID -> type}
+    const std::unordered_map<ID, DataType> &userTypes_; // {VarDef ID -> type}
+    std::unordered_map<ID, DataType> newTypes_;         // {VarDef ID -> type}
     bool converged_ = true;
 
   public:
+    RefineSignDataType(const std::unordered_map<ID, DataType> &userTypes)
+        : userTypes_(userTypes) {}
+
     bool converged() const { return converged_; }
 
   protected:
