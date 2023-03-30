@@ -42,7 +42,9 @@ void GenPBExpr::visitExpr(const Expr &op) {
 
                 if (op->dtype() == DataType::Bool) {
                     // Treat the free variable as an integer because ISL
-                    // does not support bool variables
+                    // does not support bool variables. NOTE: When we are
+                    // parsing ISL objects back to AST in math/parse_pb_expr, we
+                    // need to recover bool variables.
                     results_[op] = "(" + freeVar + " > 0)";
                 } else {
                     results_[op] = freeVar;

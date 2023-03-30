@@ -11,7 +11,7 @@ namespace freetensor {
 struct SimplePBFuncAST {
     std::vector<std::string> args_;
     std::vector<Expr> values_;
-    Expr cond_;
+    Expr cond_; // Maybe null
 };
 
 /**
