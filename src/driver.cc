@@ -41,8 +41,8 @@ static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
         d = device;
         break;
     default:
-        throw DriverError("An I/O variable cannot have a " + toString(mtype) +
-                          " memory type");
+        throw InvalidProgram("An I/O variable cannot have a " +
+                             toString(mtype) + " memory type");
     }
     switch (atype) {
     case AccessType::Input:
@@ -54,7 +54,7 @@ static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
         return nullptr;
     case AccessType::Cache:
         // Impossible
-        throw DriverError("A \"cache\" variable cannot be an I/O variable");
+        throw InvalidProgram("A \"cache\" variable cannot be an I/O variable");
     case AccessType::Output:
         // The program does not read the data, but we need the data written by
         // the program
@@ -94,8 +94,9 @@ Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev,
                    s.as<VarDefNode>()->name_ == f->params_[i].name_;
         });
         if (possibleNode.size() > 1) {
-            throw DriverError("Name " + f->params_[i].name_ +
-                              " should be unique in the AST as a paramerter");
+            throw InvalidProgram(
+                "Name " + f->params_[i].name_ +
+                " should be unique in the AST as a paramerter");
         } else if (!possibleNode.empty()) {
             auto &&node = possibleNode.front();
             name2buffer_[f->params_[i].name_] = node.as<VarDefNode>()->buffer_;
@@ -303,21 +304,27 @@ void Driver::setArgs(const std::vector<Ref<Array>> &args,
             j++;
         }
         if (j >= rawArgs.size()) {
-            throw DriverError("More arguments are given than required");
+            throw InvalidIO("More arguments are given than required");
         }
         if (auto it = name2buffer_.find(f_->params_[j].name_);
             it != name2buffer_.end()) {
             auto &&buffer = it->second;
             if (buffer->tensor()->dtype().base() != args[i]->dtype().base()) {
-                throw DriverError(
-                    "Cannot pass a " + toString(args[i]->dtype()) +
-                    " Array to the " + std::to_string(j) + "-th parameter " +
-                    f_->params_[j].name_ + " of type " +
-                    toString(buffer->tensor()->dtype()));
+                throw InvalidIO("Cannot pass a " + toString(args[i]->dtype()) +
+                                " Array to the " + std::to_string(j) +
+                                "-th parameter " + f_->params_[j].name_ +
+                                " of type " +
+                                toString(buffer->tensor()->dtype()));
             }
             args_[j] = args[i];
-            rawArgs[j] = requestPtr(args[i], dev_, hostDev_, buffer->mtype(),
-                                    buffer->atype());
+            try {
+                rawArgs[j] = requestPtr(args[i], dev_, hostDev_,
+                                        buffer->mtype(), buffer->atype());
+            } catch (const InvalidIO &e) {
+                throw InvalidIO("Error passing the " + std::to_string(j) +
+                                "-th parameter " + f_->params_[j].name_ + ": " +
+                                e.what());
+            }
         }
         if (f_->params_[j].isInClosure() && f_->params_[j].updateClosure_) {
             *f_->params_[j].closure_ = args_[j];
@@ -326,28 +333,33 @@ void Driver::setArgs(const std::vector<Ref<Array>> &args,
     }
     for (auto &&[key, value] : kws) {
         if (!name2param_.count(key)) {
-            throw DriverError("There is no parameter named " + key);
+            throw InvalidIO("There is no parameter named " + key);
         }
         auto paramId = name2param_[key];
         if (auto it = name2buffer_.find(key); it != name2buffer_.end()) {
             auto &&buffer = it->second;
             if (buffer->tensor()->dtype().base() != value->dtype().base()) {
-                throw DriverError("Cannot pass a " + toString(value->dtype()) +
-                                  " Array to the " +
-                                  std::to_string(name2param_[key]) +
-                                  "-th parameter " + key + " of type " +
-                                  toString(buffer->tensor()->dtype()));
+                throw InvalidIO("Cannot pass a " + toString(value->dtype()) +
+                                " Array to the " +
+                                std::to_string(name2param_[key]) +
+                                "-th parameter " + key + " of type " +
+                                toString(buffer->tensor()->dtype()));
             }
             args_[paramId] = value;
-            rawArgs[paramId] = requestPtr(value, dev_, hostDev_,
-                                          buffer->mtype(), buffer->atype());
+            try {
+                rawArgs[paramId] = requestPtr(value, dev_, hostDev_,
+                                              buffer->mtype(), buffer->atype());
+            } catch (const InvalidIO &e) {
+                throw InvalidIO("Error passing the " +
+                                std::to_string(name2param_[key]) +
+                                "-th parameter " + key + ": " + e.what());
+            }
         }
         if (f_->params_[paramId].isInClosure()) {
             if (f_->params_[paramId].updateClosure_) {
                 *f_->params_[paramId].closure_ = value;
             } else {
-                throw DriverError("Enclosed parameter " + key +
-                                  " cannot be set");
+                throw InvalidIO("Enclosed parameter " + key + " cannot be set");
             }
         }
     }
@@ -358,16 +370,15 @@ void Driver::setArgs(const std::vector<Ref<Array>> &args,
             auto &&buffer = it->second;
             if (rawArg == nullptr && param.isInClosure()) {
                 if (!param.closure_->isValid()) {
-                    throw DriverError("Closure variable " + param.name_ +
-                                      " is not set");
+                    throw InvalidIO("Closure variable " + param.name_ +
+                                    " is not set");
                 }
                 rawArg = requestPtr(*param.closure_, dev_, hostDev_,
                                     buffer->mtype(), buffer->atype());
             }
             if (rawArg == nullptr && buffer->atype() != AccessType::Bypass) {
-                throw DriverError("The " + std::to_string(i) +
-                                  "-th parameter " + param.name_ +
-                                  " is missing");
+                throw InvalidIO("The " + std::to_string(i) + "-th parameter " +
+                                param.name_ + " is missing");
             }
         }
     }

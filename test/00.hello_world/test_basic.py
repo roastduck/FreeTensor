@@ -269,7 +269,7 @@ def test_error_missing_parameters():
     code = ft.codegen(func)
 
     driver = ft.build_binary(code)
-    with pytest.raises(ft.DriverError):
+    with pytest.raises(ft.InvalidIO):
         driver()
 
 
@@ -281,7 +281,7 @@ def test_error_wrong_positional_parameter_data_type():
     func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), verbose=1)
     code = ft.codegen(func, verbose=True)
 
-    with pytest.raises(ft.DriverError):
+    with pytest.raises(ft.InvalidIO):
         x_np = np.zeros((4, 4), dtype="float64")
         x_arr = ft.Array(x_np)
         ft.build_binary(code)(x_arr)
@@ -296,7 +296,7 @@ def test_error_wrong_keyword_parameter_data_type():
     func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), verbose=1)
     code = ft.codegen(func, verbose=True)
 
-    with pytest.raises(ft.DriverError):
+    with pytest.raises(ft.InvalidIO):
         x_np = np.zeros((4, 4), dtype="float64")
         x_arr = ft.Array(x_np)
         ft.build_binary(code)(x=x_arr)
