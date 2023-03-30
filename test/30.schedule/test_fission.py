@@ -307,7 +307,9 @@ def test_correct_dependence_branch():
 
     s = ft.Schedule(test, verbose=1)
     s.fission("L", ft.FissionSide.Before, "S")
-    test = ft.lower(s.func(), verbose=1, skip_passes=['prop_one_time_use'])
+    test = ft.lower(s.func(),
+                    verbose=1,
+                    skip_passes=['prop_one_time_use', 'float_simplify'])
 
     @ft.transform
     def expect(x: ft.Var[(3,), "float32"]):
@@ -344,7 +346,9 @@ def test_correct_dependence_branch_with_else():
 
     s = ft.Schedule(test, verbose=1)
     s.fission("L", ft.FissionSide.Before, "S2")
-    test = ft.lower(s.func(), verbose=1, skip_passes=['prop_one_time_use'])
+    test = ft.lower(s.func(),
+                    verbose=1,
+                    skip_passes=['prop_one_time_use', 'float_simplify'])
 
     @ft.transform(verbose=1)
     def expected(x: ft.Var[(4,), "float32"]):

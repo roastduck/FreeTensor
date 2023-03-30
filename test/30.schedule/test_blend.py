@@ -13,7 +13,7 @@ def test_basic():
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
@@ -41,7 +41,7 @@ def test_begin_and_step():
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef([("y1", (8,), "int32", "output", "cpu"),
                     ("y2", (8,), "int32", "output", "cpu")]) as (y1, y2):
@@ -73,7 +73,7 @@ def test_inner_if():
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
@@ -116,7 +116,7 @@ def test_inner_if_fuse():
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef("x", (()), "int32", "input", "cpu") as x:
         with ft.If(x[()] > 0):
@@ -155,7 +155,7 @@ def test_inner_if_else():
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef([
         ("x", (2,), "int32", "input", "cpu"),

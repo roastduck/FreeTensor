@@ -10,9 +10,9 @@
 namespace freetensor {
 
 /**
- * Matches any expression
+ * Any expression
  *
- * Only used in pattern matching
+ * Only used in pattern matching and type inference
  */
 class AnyExprNode : public ExprNode {
   public:
@@ -258,6 +258,8 @@ template <class T, class U> Expr _makeRoundTowards0Div(T &&lhs, U &&rhs) {
  *
  * Mod(3, 5) = 3
  * Mod(-3, 5) = 2
+ * Mod(-3, -5) = -3
+ * Mod(3, -5) = -2
  */
 class ModNode : public NonCommutativeBinaryExprNode {
     void inferDType() override;
@@ -275,6 +277,8 @@ template <class T, class U> Expr _makeMod(T &&lhs, U &&rhs) {
  *
  * Remainder(3, 5) = 3
  * Remainder(-3, 5) = -3
+ * Remainder(-3, -5) = -3
+ * Remainder(3, -5) = 3
  */
 class RemainderNode : public NonCommutativeBinaryExprNode {
     void inferDType() override;

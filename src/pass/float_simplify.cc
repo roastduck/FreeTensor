@@ -3,6 +3,7 @@
 #include <hash.h>
 #include <math/utils.h>
 #include <pass/float_simplify.h>
+#include <pass/refine_sign_data_type.h>
 
 namespace freetensor {
 
@@ -491,6 +492,7 @@ Stmt floatSimplify(const Stmt &_op) {
     auto op = _op;
 
     for (int i = 0;; i++) {
+        op = refineSignDataType(op); // Do this every iterations
         FloatSimplify mutator;
         auto newOp = mutator(op);
         if (HashComparator()(newOp, op) || i > 100) {

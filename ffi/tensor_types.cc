@@ -38,10 +38,22 @@ void init_ffi_tensor_types(py::module_ &m) {
         });
     // no py::implicitly_convertible from str, because it fails silently
 
+    py::class_<BaseDataType>(m, "BaseDataType")
+        .def(py::init<BaseDataType>())
+        .def(py::init(&parseBaseDataType))
+        .def("__eq__",
+             [](BaseDataType lhs, BaseDataType rhs) { return lhs == rhs; });
+    py::class_<SignDataType>(m, "SignDataType")
+        .def(py::init<SignDataType>())
+        .def(py::init(&parseSignDataType))
+        .def("__eq__",
+             [](SignDataType lhs, SignDataType rhs) { return lhs == rhs; });
     py::class_<DataType>(m, "DataType")
         .def(py::init<DataType>())
         .def(py::init<BaseDataType>())
         .def(py::init(&parseDType))
+        .def_property_readonly("base", &DataType::base)
+        .def_property_readonly("sign", &DataType::sign)
         .def("__str__",
              static_cast<std::string (*)(const DataType &)>(&toString))
         .def("__repr__",

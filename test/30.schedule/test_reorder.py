@@ -215,7 +215,7 @@ def test_illegal_dependence_of_stmt_in_between():
 
 
 def test_reduction():
-    with ft.VarDef([("x", (4, 8), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (1,), "int32", "output", "cpu")]) as (x, y):
         y[0] = 0
         with ft.For("i", 0, 4, label="L1") as i:
@@ -225,7 +225,7 @@ def test_reduction():
     ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (4, 8), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (1,), "int32", "output", "cpu")]) as (x, y):
         y[0] = 0
         with ft.For("j", 0, 8) as j:

@@ -57,7 +57,7 @@ def binary_op_(op, a, b, out):
 
 
 @core.inline
-def binary_op(op, a, b, out_dtype=None):
+def binary_op(op, a, b):
     '''
     (Broadcasted) any element-wise operation on two tensors and return the result
 
@@ -77,10 +77,13 @@ def binary_op(op, a, b, out_dtype=None):
     '''
 
     #! label: out
+    # NOTE: We only inference base data type, to avoid confusion in case the result
+    # tensor is further assigned by users with other sign data types
     out = core.empty(
         broadcast_shape(a, b),
-        out_dtype if out_dtype is not None else core.up_cast(
-            core.dtype(a), core.dtype(b)),
+        core.dtype(
+            op(core.cast(core.any(), core.dtype(a)),
+               core.cast(core.any(), core.dtype(b)))).base,
         core.same_mtype(core.mtype(a), core.mtype(b)))
     #! label: recur
     binary_op_(op, a, b, out)
@@ -223,55 +226,38 @@ l_or = _named_partial("l_or",
 
 lt_ = _named_partial("lt_", inplace_binary_doc_template.format("less-than"),
                      binary_op_, operator.lt)
-lt = _named_partial("lt",
-                    out_of_place_binary_doc_template.format("less-than"),
-                    binary_op,
-                    operator.lt,
-                    out_dtype="bool")
+lt = _named_partial("lt", out_of_place_binary_doc_template.format("less-than"),
+                    binary_op, operator.lt)
 
 le_ = _named_partial(
     "le_", inplace_binary_doc_template.format("less-than-or-equal-to"),
     binary_op_, operator.le)
 le = _named_partial(
-    "le",
-    out_of_place_binary_doc_template.format("less-than-or-equal-to"),
-    binary_op,
-    operator.le,
-    out_dtype="bool")
+    "le", out_of_place_binary_doc_template.format("less-than-or-equal-to"),
+    binary_op, operator.le)
 
 gt_ = _named_partial("gt_", inplace_binary_doc_template.format("greater-than"),
                      binary_op_, operator.gt)
 gt = _named_partial("gt",
                     out_of_place_binary_doc_template.format("greater-than"),
-                    binary_op,
-                    operator.gt,
-                    out_dtype="bool")
+                    binary_op, operator.gt)
 
 ge_ = _named_partial(
     "ge_", inplace_binary_doc_template.format("greater-than-or-equal-to"),
     binary_op_, operator.ge)
 ge = _named_partial(
-    "ge",
-    out_of_place_binary_doc_template.format("greater-than-or-equal-to"),
-    binary_op,
-    operator.ge,
-    out_dtype="bool")
+    "ge", out_of_place_binary_doc_template.format("greater-than-or-equal-to"),
+    binary_op, operator.ge)
 
 eq_ = _named_partial("eq_", inplace_binary_doc_template.format("equal"),
                      binary_op_, operator.eq)
-eq = _named_partial("eq",
-                    out_of_place_binary_doc_template.format("equal"),
-                    binary_op,
-                    operator.eq,
-                    out_dtype="bool")
+eq = _named_partial("eq", out_of_place_binary_doc_template.format("equal"),
+                    binary_op, operator.eq)
 
 ne_ = _named_partial("ne_", inplace_binary_doc_template.format("non-equal"),
                      binary_op_, operator.ne)
-ne = _named_partial("ne",
-                    out_of_place_binary_doc_template.format("non-equal"),
-                    binary_op,
-                    operator.ne,
-                    out_dtype="bool")
+ne = _named_partial("ne", out_of_place_binary_doc_template.format("non-equal"),
+                    binary_op, operator.ne)
 
 
 @core.inline
@@ -318,7 +304,11 @@ def unary_op(op, x):
     '''
 
     #! label: y
-    y = core.empty(copy_shape(x), core.dtype(x), core.mtype(x))
+    # NOTE: We only inference base data type, to avoid confusion in case the result
+    # tensor is further assigned by users with other sign data types
+    y = core.empty(copy_shape(x),
+                   core.dtype(op(core.cast(core.any(), core.dtype(x)))).base,
+                   core.mtype(x))
     #! label: recur
     unary_op_(op, x, y)
     return y

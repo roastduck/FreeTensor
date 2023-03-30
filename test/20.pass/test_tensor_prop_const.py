@@ -13,7 +13,7 @@ def test_multiple_choices_no_remove():
         with ft.For("i", 0, 4) as i:
             y2[i] = y1[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -62,7 +62,7 @@ def test_propagate():
         with ft.For("i", 0, 4) as i:
             y3[i] = y2[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu"),
@@ -89,7 +89,7 @@ def test_propagate_through_expressions():
         with ft.For("i", 0, 4) as i:
             y3[i] = y2[i] + y2[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu"),

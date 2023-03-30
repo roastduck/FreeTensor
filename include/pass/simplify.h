@@ -121,8 +121,8 @@ template <class Simplifier> Stmt simplifyImpl(const Stmt &_op) {
         newOp = flattenStmtSeq(newOp);
         if (HashComparator()(newOp, op) || i > 100) {
             if (i > 100) {
-                WARNING("SimplifyPass iterates over 100 rounds. Maybe there is "
-                        "a bug");
+                WARNING("pass/simplify iterates over 100 rounds. Maybe there "
+                        "is a bug");
             }
             return newOp;
         }

@@ -26,7 +26,7 @@ def test_basic():
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("dx", (), "float32", "output", "cpu"),
                     ("dy", (), "float32", "inout", "cpu")]) as (x, dx, dy):
-        with ft.VarDef("t", (), "float32", "input", "cpu") as t:
+        with ft.VarDef("t", (), "float32>=0", "input", "cpu") as t:
             dx[...] = 2 * (dy[...] * ft.intrinsic(
                 "cosf(%)", t[...], ret_type="float32") * x[...])
     std = ft.pop_ast()
@@ -286,7 +286,7 @@ def test_mark_from_multiple_versions():
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("dx", (4,), "float32", "output", "cpu"),
                     ("dy", (4,), "float32", "inout", "cpu")]) as (x, dx, dy):
-        with ft.VarDef("t", (4,), "float32", "input", "cpu") as t:
+        with ft.VarDef("t", (4,), "float32>=0", "input", "cpu") as t:
             with ft.For("i", 3, -1, -1) as i:
                 dx[i] = 2 * (dy[i] * ft.intrinsic(
                     "cosf(%)", t[i], ret_type="float32") * x[i])
