@@ -30,16 +30,26 @@ class InvalidAutoGrad : public Error {
     InvalidAutoGrad(const std::string &msg) : Error(msg) {}
 };
 
+/**
+ * Invalid configurations to Driver, or error reported by backend compilers or
+ * the OS
+ */
 class DriverError : public Error {
   public:
     DriverError(const std::string &msg) : Error(msg) {}
 };
 
+/**
+ * Unable to pass input data or receive output data from the compiled program
+ */
 class InvalidIO : public Error {
   public:
     InvalidIO(const std::string &msg) : Error(msg) {}
 };
 
+/**
+ * The program is ill-formed
+ */
 class InvalidProgram : public Error {
   public:
     InvalidProgram(const std::string &msg) : Error(msg) {}
