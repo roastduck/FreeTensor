@@ -46,6 +46,6 @@
 <area shape="rect" id="node4" href="$classfreetensor_1_1RenewIDs.html" title=" " alt="" coords="488,71,704,112"/>
 <area shape="rect" id="node5" href="$classfreetensor_1_1AddDimToVar.html" title=" " alt="" coords="504,137,688,163"/>
 <area shape="rect" id="node6" href="$classfreetensor_1_1AsMatMul.html" title=" " alt="" coords="515,187,677,214"/>
-<area shape="rect" id="node7" href="$classfreetensor_1_1HoistSelectedVar.html" title=" " alt="" coords="492,238,700,265"/>
-<area shape="rect" id="node8" href="$classfreetensor_1_1MakeFillAndFlush.html" title=" " alt="" coords="491,289,701,315"/>
+<area shape="rect" id="node7" href="$classfreetensor_1_1ClearDataType.html" title=" " alt="" coords="500,238,692,265"/>
+<area shape="rect" id="node8" href="$classfreetensor_1_1HoistSelectedVar.html" title=" " alt="" coords="492,289,700,315"/>
 </map>

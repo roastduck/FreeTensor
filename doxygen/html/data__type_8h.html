@@ -192,9 +192,9 @@ Enumerations</h2></td></tr>
 &#160;&#160;<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3afbde23b11d7e59af7828e81144c8b487">freetensor::Int64</a>
 , <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3ac26f15e86e3de4c398a8273272aba034">freetensor::Bool</a>
 , <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a90589c47f06eb971d548591f23c285af">freetensor::Custom</a>
-, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a86e30d8e0831512671e7ed103ad7c457">freetensor::NumTypes</a>
+, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a6e7b34fa59e1bd229b207892956dc41c">freetensor::Never</a>
 , <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a4bbb8f967da6d1a610596d7257179c2b">freetensor::Invalid</a>
+&#160;&#160;<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a86e30d8e0831512671e7ed103ad7c457">freetensor::NumTypes</a>
 <br />
  }</td></tr>
 <tr class="separator:af346f9de09dc96bd110e29ff9af378c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -207,7 +207,9 @@ Enumerations</h2></td></tr>
 &#160;&#160;<a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa7a3a08587b3e0e8a043081877f439c74">freetensor::LE0</a>
 , <a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa842d20047783c162789decd96e8efcd7">freetensor::NE0</a>
 , <a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caad6e5acbf223e5afb4d5b52d11d6c9d09">freetensor::EQ0</a>
-, <a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa86e30d8e0831512671e7ed103ad7c457">freetensor::NumTypes</a>
+, <a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa6e7b34fa59e1bd229b207892956dc41c">freetensor::Never</a>
+, <br />
+&#160;&#160;<a class="el" href="namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa86e30d8e0831512671e7ed103ad7c457">freetensor::NumTypes</a>
 <br />
  }</td></tr>
 <tr class="separator:a0c42d47b27414b977b47ce5f3c6329ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -266,8 +268,21 @@ Functions</h2></td></tr>
 <tr class="separator:ad0f4659d5186af1159cba883b8649c3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5eda36f15a23f85a126da10b81dd3fb3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5eda36f15a23f85a126da10b81dd3fb3">freetensor::isNE0</a> (const DataType &amp;dtype)</td></tr>
 <tr class="separator:a5eda36f15a23f85a126da10b81dd3fb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2acf3458fff2b6ba0688af3ec907243a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2acf3458fff2b6ba0688af3ec907243a">freetensor::isEQ0</a> (SignDataType dtype)</td></tr>
+<tr class="separator:a2acf3458fff2b6ba0688af3ec907243a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a73951479cd42a33088922fadbf6c4cfe"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a73951479cd42a33088922fadbf6c4cfe">freetensor::isEQ0</a> (const DataType &amp;dtype)</td></tr>
+<tr class="separator:a73951479cd42a33088922fadbf6c4cfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3808de6e43420c1f689edb432b3f9303"><td class="memItemLeft" align="right" valign="top">BaseDataType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3808de6e43420c1f689edb432b3f9303">freetensor::downCast</a> (BaseDataType lhs, BaseDataType rhs)</td></tr>
+<tr class="separator:a3808de6e43420c1f689edb432b3f9303"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c6375bc2690a63b5fcf6ed6c26629f5"><td class="memItemLeft" align="right" valign="top">SignDataType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2c6375bc2690a63b5fcf6ed6c26629f5">freetensor::downCast</a> (SignDataType lhs, SignDataType rhs)</td></tr>
+<tr class="separator:a2c6375bc2690a63b5fcf6ed6c26629f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5def81816c4d52e44068d60df8e0f4a2"><td class="memItemLeft" align="right" valign="top">DataType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5def81816c4d52e44068d60df8e0f4a2">freetensor::downCast</a> (const DataType &amp;lhs, const DataType &amp;rhs)</td></tr>
+<tr class="separator:a5def81816c4d52e44068d60df8e0f4a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:ac25770e9037860482bddbd0e2189b7b7"><td class="memItemLeft" align="right" valign="top">BaseDataType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac25770e9037860482bddbd0e2189b7b7">freetensor::upCast</a> (BaseDataType lhs, BaseDataType rhs)</td></tr>
 <tr class="separator:ac25770e9037860482bddbd0e2189b7b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a705cb75e6b4d069d3db93509a30b12aa"><td class="memItemLeft" align="right" valign="top">SignDataType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a705cb75e6b4d069d3db93509a30b12aa">freetensor::upCast</a> (SignDataType lhs, SignDataType rhs)</td></tr>
+<tr class="separator:a705cb75e6b4d069d3db93509a30b12aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a67a6d1e29ff7402b98fee080e2474b3f"><td class="memItemLeft" align="right" valign="top">DataType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a67a6d1e29ff7402b98fee080e2474b3f">freetensor::upCast</a> (const DataType &amp;lhs, const DataType &amp;rhs)</td></tr>
 <tr class="separator:a67a6d1e29ff7402b98fee080e2474b3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">

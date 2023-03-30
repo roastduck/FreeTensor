@@ -12,5 +12,5 @@ var searchData=
   ['dim_5f_9',['dim_',['../structfreetensor_1_1CUDAScope.html#ad0f0f52fb5e72e829462f4b71b08e268',1,'freetensor::CUDAScope']]],
   ['dir_5f_10',['dir_',['../structfreetensor_1_1Dependence.html#a2c4187a6820a3208265977d621d5e2d9',1,'freetensor::Dependence']]],
   ['doschedule_5f_11',['doSchedule_',['../classfreetensor_1_1ScheduleLogItemImpl.html#a8705437c2155eeb9ab22b34032a7e359',1,'freetensor::ScheduleLogItemImpl']]],
-  ['dtype_5f_12',['dtype_',['../classfreetensor_1_1ExprNode.html#aa6bdaed3f681ffb34d6f02bd2e62b9e0',1,'freetensor::ExprNode::dtype_()'],['../structfreetensor_1_1FuncRet.html#a2de7dd24f9ba1ad450751a7591f3d8ee',1,'freetensor::FuncRet::dtype_()']]]
+  ['dtype_5f_12',['dtype_',['../classfreetensor_1_1ExprNode.html#a3fbcda9cd087a91e76971daf15944768',1,'freetensor::ExprNode::dtype_()'],['../structfreetensor_1_1FuncRet.html#a2de7dd24f9ba1ad450751a7591f3d8ee',1,'freetensor::FuncRet::dtype_()']]]
 ];

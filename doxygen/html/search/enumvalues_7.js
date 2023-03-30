@@ -10,6 +10,5 @@ var searchData=
   ['int64_7',['Int64',['../namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3afbde23b11d7e59af7828e81144c8b487',1,'freetensor']]],
   ['intconst_8',['IntConst',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915faf79d80c388f479a9819dbf1fee3453c8',1,'freetensor']]],
   ['intrinsic_9',['Intrinsic',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa8b0f368e62695dc13b998050ea15a2c5',1,'freetensor']]],
-  ['inv_10',['Inv',['../namespacefreetensor.html#a814262c5e3a8f58a762fdf9c4c0670adaa7e871520a392b978d3c9e6344c4407f',1,'freetensor']]],
-  ['invalid_11',['Invalid',['../namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a4bbb8f967da6d1a610596d7257179c2b',1,'freetensor']]]
+  ['inv_10',['Inv',['../namespacefreetensor.html#a814262c5e3a8f58a762fdf9c4c0670adaa7e871520a392b978d3c9e6344c4407f',1,'freetensor']]]
 ];

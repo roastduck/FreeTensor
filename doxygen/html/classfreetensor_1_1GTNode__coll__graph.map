@@ -1,12 +1,11 @@
 <map id="freetensor::GTNode" name="freetensor::GTNode">
-<area shape="rect" id="node1" title=" " alt="" coords="221,623,370,649"/>
-<area shape="rect" id="node2" href="$classfreetensor_1_1NonCommutativeBinaryExprNode.html" title=" " alt="" coords="189,532,401,573"/>
-<area shape="rect" id="node3" href="$classfreetensor_1_1BinaryExprNode.html" title=" " alt="" coords="194,456,397,483"/>
-<area shape="rect" id="node4" href="$classfreetensor_1_1ExprNode.html" title=" " alt="" coords="115,345,275,371"/>
+<area shape="rect" id="node1" title=" " alt="" coords="130,609,279,636"/>
+<area shape="rect" id="node2" href="$classfreetensor_1_1NonCommutativeBinaryExprNode.html" title=" " alt="" coords="99,519,311,560"/>
+<area shape="rect" id="node3" href="$classfreetensor_1_1BinaryExprNode.html" title=" " alt="" coords="103,443,306,469"/>
+<area shape="rect" id="node4" href="$classfreetensor_1_1ExprNode.html" title=" " alt="" coords="25,331,185,358"/>
 <area shape="rect" id="node5" href="$classfreetensor_1_1ASTNode.html" title=" " alt="" coords="27,248,183,275"/>
 <area shape="rect" id="node6" href="$classfreetensor_1_1ASTPart.html" title=" " alt="" coords="31,172,178,199"/>
 <area shape="rect" id="node7" href="$classfreetensor_1_1EnableSelf.html" title=" " alt="" coords="21,81,188,123"/>
 <area shape="rect" id="node8" href="$classfreetensor_1_1EnableSelfBase.html" title=" " alt="" coords="5,5,204,32"/>
-<area shape="rect" id="node9" href="$classfreetensor_1_1DataType.html" title=" " alt="" coords="207,248,365,275"/>
-<area shape="rect" id="node10" href="$classfreetensor_1_1SubTree.html" title=" " alt="" coords="300,337,491,379"/>
+<area shape="rect" id="node9" href="$classfreetensor_1_1SubTree.html" title=" " alt="" coords="209,324,400,365"/>
 </map>
