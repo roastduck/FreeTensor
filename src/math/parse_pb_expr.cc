@@ -16,7 +16,7 @@ namespace {
  * convert it back to bool variables
  */
 class RecoverBoolVars : public Mutator {
-    bool isConst0(const Expr &e) {
+    static bool isConst0(const Expr &e) {
         return e->nodeType() == ASTNodeType::IntConst &&
                e.as<IntConstNode>()->val_ == 0;
     }
