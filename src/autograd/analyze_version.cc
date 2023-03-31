@@ -8,9 +8,50 @@
 
 namespace freetensor {
 
+namespace {
+
+/**
+ * The input data is also a version. As AccessType::Input and
+ * AccessType::InputMutable are directly redirected at the ft.Array level, this
+ * mutator only has an impact on AccessType::InOut.
+ */
+class InsertFakeStoreForInputs : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
+  public:
+    std::unordered_set<ID> ids_;
+
+    const auto &ids() const { return ids_; }
+
+  protected:
+    using BaseClass::visit;
+
+    Stmt visit(const VarDef &_op) override {
+        auto __op = BaseClass::visit(_op);
+        ASSERT(__op->nodeType() == ASTNodeType::VarDef);
+        auto op = __op.as<VarDefNode>();
+        if (isInputting(op->buffer_->atype())) {
+            auto fakeStore = makeStore(
+                op->name_,
+                std::vector<Expr>(
+                    op->buffer_->tensor()->shape().size(),
+                    makeIntrinsic("__any__", {}, DataType::Int32, false)),
+                makeIntrinsic("__any__", {}, op->buffer_->tensor()->dtype(),
+                              false));
+            ids_.emplace(fakeStore->id());
+            op->body_ =
+                makeStmtSeq({std::move(fakeStore), std::move(op->body_)});
+        }
+        return op;
+    }
+};
+
+} // Anonymous namespace
+
 void CountScopeLen::visit(const Store &op) {
     Visitor::visit(op);
-    if (op->var_ == var_ && needVersions_.count(op->id())) {
+    if (op->var_ == var_ &&
+        (fakeStoreIds_.count(op->id()) || needVersions_.count(op->id()))) {
         scopeLen_[op] = makeIntConst(1);
     }
 }
@@ -111,7 +152,8 @@ void AnalyzeVersion::visit(const MarkVersion &op) {
 
 void AnalyzeVersion::visit(const Store &op) {
     BaseClass::visit(op);
-    if (op->var_ == var_ && needVersions_.count(op->id())) {
+    if (op->var_ == var_ &&
+        (fakeStoreIds_.count(op->id()) || needVersions_.count(op->id()))) {
         versions_[op->id()] = offset_;
     }
 }
@@ -185,11 +227,14 @@ std::tuple<std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
            std::unordered_set<ID>,
            std::unordered_map<std::string, std::pair<std::string, Expr>>>
 analyzeVersion(
-    const Stmt &op,
+    const Stmt &_op,
     const std::unordered_map<ID, std::unordered_set<ID>> &needVersions,
     const std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
         &derivatives,
     bool localVersionsOnly) {
+    InsertFakeStoreForInputs insertFakeStore;
+    auto op = insertFakeStore(_op);
+
     // Find out scopes we need to account in version numbers
     std::unordered_map<ID, std::unordered_set<ID>> affectingScopes;
     std::vector<FindDepsDir> direction;
@@ -208,7 +253,8 @@ analyzeVersion(
             if (acc.op_->nodeType() == ASTNodeType::Load) {
                 return true;
             } else {
-                return needVersions.at(acc.def_->id()).count(acc.stmt_->id());
+                return insertFakeStore.ids().count(acc.stmt_->id()) ||
+                       needVersions.at(acc.def_->id()).count(acc.stmt_->id());
             }
         })
         .eraseOutsideVarDef(localVersionsOnly)(op, [&](const Dependence &d) {
@@ -221,19 +267,13 @@ analyzeVersion(
     std::unordered_map<ID, Expr> totLens;
     for (auto &&[defId, needTape] : needVersions) {
         auto &&scopes = affectingScopes[defId];
-        CountScopeLen counter(defId, scopes, needTape);
+        CountScopeLen counter(defId, scopes, needTape, insertFakeStore.ids());
         counter(op);
         auto &&scopeLen = counter.scopeLen();
-        auto &totLen = totLens[defId] =
+        auto totLen = totLens[defId] =
             scopeLen.count(op) ? scopeLen.at(op) : makeIntConst(1);
-        auto &&def = findStmt(op, defId);
-        ASSERT(def->nodeType() == ASTNodeType::VarDef);
-        auto atype = def.as<VarDefNode>()->buffer_->atype();
-        if (isInputting(atype)) {
-            totLen = constFold(makeAdd(totLen, makeIntConst(1)));
-        }
-        AnalyzeVersion analyzer(defId, atype, scopes, needTape, scopeLen,
-                                totLen, versions, userVersions);
+        AnalyzeVersion analyzer(defId, scopes, needTape, insertFakeStore.ids(),
+                                scopeLen, totLen, versions, userVersions);
         analyzer(op);
     }
 
@@ -253,12 +293,14 @@ analyzeVersion(
         .filterAccess(
             [&](const auto &acc) { return trivials.count(acc.def_->id()); })
         .filterEarlier([&](const auto &earlier) {
-            return needVersions.at(earlier.def_->id())
-                .count(earlier.op_.template as<StmtNode>()->id());
+            auto accId = earlier.op_.template as<StmtNode>()->id();
+            return insertFakeStore.ids().count(accId) ||
+                   needVersions.at(earlier.def_->id()).count(accId);
         })
         .filterLater([&](const auto &later) {
-            return !needVersions.at(later.def_->id())
-                        .count(later.op_.template as<StmtNode>()->id());
+            auto accId = later.op_.template as<StmtNode>()->id();
+            return !(insertFakeStore.ids().count(accId) ||
+                     needVersions.at(later.def_->id()).count(accId));
         })
         .eraseOutsideVarDef(localVersionsOnly)(
             op, [&](const Dependence &dep) { trivials.erase(dep.defId()); });
