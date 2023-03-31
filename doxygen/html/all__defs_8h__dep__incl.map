@@ -1,9 +1,10 @@
 <map id="include/analyze/all_defs.h" name="include/analyze/all_defs.h">
-<area shape="rect" id="node1" title=" " alt="" coords="443,5,587,47"/>
+<area shape="rect" id="node1" title=" " alt="" coords="547,5,691,47"/>
 <area shape="rect" id="node2" href="$all__no__reuse__defs_8cc.html" title=" " alt="" coords="5,95,152,136"/>
-<area shape="rect" id="node3" href="$grad_8cc.html" title=" " alt="" coords="176,102,331,129"/>
-<area shape="rect" id="node4" href="$hoist__var__over__stmt__seq_8cc.html" title=" " alt="" coords="355,95,498,136"/>
-<area shape="rect" id="node5" href="$shrink__var_8cc.html" title=" " alt="" coords="522,102,686,129"/>
-<area shape="rect" id="node6" href="$auto__set__mem__type_8cc.html" title=" " alt="" coords="711,95,873,136"/>
-<area shape="rect" id="node7" href="$auto__use__lib_8cc.html" title=" " alt="" coords="898,95,1065,136"/>
+<area shape="rect" id="node3" href="$find__tape__or__recomp__stmts_8cc.html" title=" " alt="" coords="177,95,343,136"/>
+<area shape="rect" id="node4" href="$grad_8cc.html" title=" " alt="" coords="368,102,523,129"/>
+<area shape="rect" id="node5" href="$hoist__var__over__stmt__seq_8cc.html" title=" " alt="" coords="547,95,690,136"/>
+<area shape="rect" id="node6" href="$shrink__var_8cc.html" title=" " alt="" coords="714,102,878,129"/>
+<area shape="rect" id="node7" href="$auto__set__mem__type_8cc.html" title=" " alt="" coords="903,95,1065,136"/>
+<area shape="rect" id="node8" href="$auto__use__lib_8cc.html" title=" " alt="" coords="1090,95,1257,136"/>
 </map>
