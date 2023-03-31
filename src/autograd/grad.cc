@@ -786,21 +786,38 @@ gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
             return stmt->nodeType() == ASTNodeType::VarDef &&
                    stmt.as<VarDefNode>()->name_ == param.name_;
         });
-        if (node.template as<VarDefNode>()->buffer_->atype() ==
-            AccessType::Input) {
+        auto atype = node.template as<VarDefNode>()->buffer_->atype();
+        switch (atype) {
+        case AccessType::Input:
+        case AccessType::InputMutable:
             if (tapeInClosure) {
                 auto closureArr = Ref<Ref<Array>>::make();
-                // Redirect input arguments from forward to backward
+                // Redirect Input or InputMutable arguments from forward to
+                // backward. Although we can re-store input data to a tape (our
+                // taping algorithm stores to tape both on reading and writing),
+                // there is no need.
                 forwardParams.emplace_back(param.name_, closureArr, true);
                 backwardParams.emplace_back(param.name_, closureArr, false);
             } else {
                 forwardParams.emplace_back(param.name_, nullptr, false);
                 backwardParams.emplace_back(param.name_, nullptr, false);
             }
-        } else {
-            // Backward does not need a froward's output argument. If needed, it
-            // will be found in the tape
+            break;
+        case AccessType::InOut:
+            if (!tapes.count(node->id())) {
+                throw InvalidAutoGrad("InOut variable " + param.name_ +
+                                      " must be in tapes");
+            }
+            [[fallthrough]];
+        case AccessType::Output:
+        case AccessType::Bypass:
+            // Backward does not need a froward's Output, InOut or Bypass
+            // argument. If needed, it will be found in the tape
             forwardParams.emplace_back(param);
+            break;
+        default:
+            ERROR("Parameter " + param.name_ + " should not be a \"" +
+                  toString(atype) + "\" variable");
         }
     }
 
@@ -893,19 +910,22 @@ gradFuncOutOfPlace(const Func &func,
 static std::vector<ID> _findTapeDefs(const Stmt &op, GradTapeMode mode) {
     switch (mode) {
     case GradTapeMode::All: {
-        std::vector<ID> ret;
-        for (auto &&[id, name] :
-             allDefs(op, {AccessType::Cache, AccessType::Output,
-                          AccessType::InOut})) {
-            ret.emplace_back(id);
-        }
-        return ret;
-    }
-    case GradTapeMode::Nothing:
-        return {};
-    case GradTapeMode::NoReuseOnly:
-        return allNoReuseDefs(
+        auto all = allDefs(
             op, {AccessType::Cache, AccessType::Output, AccessType::InOut});
+        return ranges::to<std::vector>(all | views::keys);
+    }
+    case GradTapeMode::Nothing: {
+        // All InOut vars must be taped
+        auto inouts = allDefs(op, {AccessType::InOut});
+        return ranges::to<std::vector>(inouts | views::keys);
+    }
+    case GradTapeMode::NoReuseOnly: {
+        std::vector<ID> noReuse =
+            allNoReuseDefs(op, {AccessType::Cache, AccessType::Output});
+        // All InOut vars must be taped
+        auto inouts = allDefs(op, {AccessType::InOut});
+        return cat(noReuse, ranges::to<std::vector>(inouts | views::keys));
+    }
     default:
         ASSERT(false);
     }

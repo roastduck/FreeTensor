@@ -224,10 +224,16 @@ analyzeVersion(
         CountScopeLen counter(defId, scopes, needTape);
         counter(op);
         auto &&scopeLen = counter.scopeLen();
-        auto totLen = totLens[defId] =
+        auto &totLen = totLens[defId] =
             scopeLen.count(op) ? scopeLen.at(op) : makeIntConst(1);
-        AnalyzeVersion analyzer(defId, scopes, needTape, scopeLen, totLen,
-                                versions, userVersions);
+        auto &&def = findStmt(op, defId);
+        ASSERT(def->nodeType() == ASTNodeType::VarDef);
+        auto atype = def.as<VarDefNode>()->buffer_->atype();
+        if (isInputting(atype)) {
+            totLen = constFold(makeAdd(totLen, makeIntConst(1)));
+        }
+        AnalyzeVersion analyzer(defId, atype, scopes, needTape, scopeLen,
+                                totLen, versions, userVersions);
         analyzer(op);
     }
 

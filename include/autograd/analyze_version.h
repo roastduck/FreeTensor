@@ -16,6 +16,9 @@ class CountScopeLen : public Visitor {
     std::string var_;
     const std::unordered_set<ID> &affectingScopes_; // For IDs
     const std::unordered_set<ID> &needVersions_;    // Store or ReduceTo IDs
+
+    // Total number of versions in a sub-tree, not accounting the inputting
+    // version for a input variable
     std::unordered_map<Stmt, Expr> scopeLen_;
 
   public:
@@ -49,10 +52,11 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
     std::unordered_map<std::string, std::pair<std::string, Expr>>
         &userVersions_;
     std::string tapeName_;
-    Expr offset_ = makeIntConst(0);
+    Expr offset_;
 
   public:
-    AnalyzeVersion(const ID &def, const std::unordered_set<ID> &affectingScopes,
+    AnalyzeVersion(const ID &def, AccessType atype,
+                   const std::unordered_set<ID> &affectingScopes,
                    const std::unordered_set<ID> &needVersions,
                    const std::unordered_map<Stmt, Expr> &scopeLen,
                    const Expr &totLen,
@@ -61,7 +65,8 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
                        &userVersions)
         : def_(def), affectingScopes_(affectingScopes),
           needVersions_(needVersions), scopeLen_(scopeLen), totLen_(totLen),
-          versions_(versions), userVersions_(userVersions) {}
+          versions_(versions), userVersions_(userVersions),
+          offset_(makeIntConst(isInputting(atype) ? 1 : 0)) {}
 
     const std::string &tapeName() const { return tapeName_; }
 

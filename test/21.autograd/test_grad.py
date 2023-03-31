@@ -1067,7 +1067,7 @@ def test_use_a_taped_var_to_recompute_another_var():
                     y[...] = x[...] * x[...]
                     z[...] = y[...] * y[...]
             w[...] = z[...] * z[...]
-    func = ft.Func("main", ["x", "y"], [], ft.pop_ast())
+    func = ft.Func("main", ["x", "w"], [], ft.pop_ast())
     print(func)
     forward, backward, _, _ = ft.grad_(func, ["x"], ["w"], ["V_y"])
     print("Forward:")
@@ -1371,6 +1371,35 @@ def test_tape_mode_no_reuse_only():
     std = ft.pop_ast()
 
     assert std.match(backward)
+
+
+def test_inout_tape():
+
+    @ft.transform
+    def test(x: ft.Var[(), "float32", "inout"]):
+        x[...] = ft.square(x[...])
+        x[...] = ft.square(x[...])
+
+    fwd, bwd, _, _ = ft.grad(test, ["x"], ["x"], ft.GradTapeMode.All, verbose=1)
+    fwd = ft.lower(fwd, verbose=1)
+    bwd = ft.lower(bwd, verbose=1)
+
+    @ft.transform
+    def fwd_std(x_tape: ft.Var[(2,), "float32", "output"],
+                x: ft.Var[(), "float32", "inout"]):
+        x_tape[0] = x[...]
+        x[...] = ft.square(x[...])
+        x_tape[1] = x[...]
+        x[...] = ft.square(x[...])
+
+    assert fwd_std.body.match(fwd.body)
+
+    @ft.transform
+    def bwd_std(x_tape: ft.Var[(2,), "float32", "input"],
+                dx: ft.Var[(), "float32", "inout"]):
+        dx[...] *= 2 * x_tape[1] * (2 * x_tape[0])
+
+    assert bwd_std.body.match(bwd.body)
 
 
 def test_no_unused_trival_tape():
