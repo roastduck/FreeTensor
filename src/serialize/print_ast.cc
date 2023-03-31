@@ -554,7 +554,7 @@ void PrintVisitor::visit(const IfExpr &op) {
 
 void PrintVisitor::visit(const Cast &op) {
     precedence_new([&] {
-        os() << ::freetensor::toString(op->destType_) << "(";
+        os() << prettyDType(op->destType_) << "(";
         recur(op->expr_);
         os() << ")";
     });

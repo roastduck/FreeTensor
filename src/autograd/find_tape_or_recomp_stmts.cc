@@ -1,3 +1,4 @@
+#include <analyze/all_defs.h>
 #include <analyze/deps.h>
 #include <analyze/symbol_table.h>
 #include <autograd/find_tape_or_recomp_stmts.h>
@@ -184,6 +185,13 @@ findTapeOrRecompStmts(
                 converged = false;
             });
     } while (!converged);
+
+    // InOut variables must be taped
+    for (auto &&[id, name] : allDefs(op, {AccessType::InOut})) {
+        if (!idsToTape.count(id)) {
+            idsToTape[id] = {};
+        }
+    }
 
     return {idsToTape, idsToRecomp};
 }

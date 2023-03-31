@@ -116,11 +116,6 @@ Stmt OutputIntermediates::visit(const ReduceTo &op) {
 
 Stmt OutputIntermediates::visit(const VarDef &_op) {
     if (totLens_.count(_op->id())) {
-        if (isInputting(_op->buffer_->atype())) {
-            // To tape an inputting variable, we need to track the input value
-            // as a separated version (TODO)
-            ASSERT(false);
-        }
         // FIXME: What if the scopeLen_ is a loop-variant temporary?
         if (trivials_.count(_op->id())) {
             // No need to create a new VarDef

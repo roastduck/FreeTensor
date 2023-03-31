@@ -16,13 +16,17 @@ class CountScopeLen : public Visitor {
     std::string var_;
     const std::unordered_set<ID> &affectingScopes_; // For IDs
     const std::unordered_set<ID> &needVersions_;    // Store or ReduceTo IDs
+    const std::unordered_set<ID> &fakeStoreIds_;
+
+    // Total number of versions in a sub-tree
     std::unordered_map<Stmt, Expr> scopeLen_;
 
   public:
     CountScopeLen(const ID &def, const std::unordered_set<ID> &affectingScopes,
-                  const std::unordered_set<ID> &needVersions)
+                  const std::unordered_set<ID> &needVersions,
+                  const std::unordered_set<ID> &fakeStoreIds)
         : def_(def), affectingScopes_(affectingScopes),
-          needVersions_(needVersions) {}
+          needVersions_(needVersions), fakeStoreIds_(fakeStoreIds) {}
 
     const std::unordered_map<Stmt, Expr> &scopeLen() const { return scopeLen_; }
 
@@ -43,6 +47,7 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
     std::string var_;
     const std::unordered_set<ID> &affectingScopes_; // For IDs
     const std::unordered_set<ID> &needVersions_;    // Store or ReduceTo IDs
+    const std::unordered_set<ID> &fakeStoreIds_;
     const std::unordered_map<Stmt, Expr> &scopeLen_;
     Expr totLen_;
     std::unordered_map<StmtOrExprID, Expr> &versions_;
@@ -54,14 +59,16 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
   public:
     AnalyzeVersion(const ID &def, const std::unordered_set<ID> &affectingScopes,
                    const std::unordered_set<ID> &needVersions,
+                   const std::unordered_set<ID> &fakeStoreIds,
                    const std::unordered_map<Stmt, Expr> &scopeLen,
                    const Expr &totLen,
                    std::unordered_map<StmtOrExprID, Expr> &versions,
                    std::unordered_map<std::string, std::pair<std::string, Expr>>
                        &userVersions)
         : def_(def), affectingScopes_(affectingScopes),
-          needVersions_(needVersions), scopeLen_(scopeLen), totLen_(totLen),
-          versions_(versions), userVersions_(userVersions) {}
+          needVersions_(needVersions), fakeStoreIds_(fakeStoreIds),
+          scopeLen_(scopeLen), totLen_(totLen), versions_(versions),
+          userVersions_(userVersions) {}
 
     const std::string &tapeName() const { return tapeName_; }
 
