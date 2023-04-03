@@ -140,30 +140,35 @@ std::vector<Stmt> Derivative::LazyFullDerivative::genGrads(
                     return derivativeLazy.replaceExpr(intermediatesMap,
                                                       versions, idx);
                 }));
+            auto expr = makeMul(gradY, derivative);
+            if (upCast(load->loadType_, expr->dtype()).base() !=
+                load->loadType_.base()) {
+                expr = makeCast(expr, load->loadType_.base());
+            }
             stmts.emplace_back(makeReduceTo(it->second, std::move(indices),
-                                            ReduceOp::Add,
-                                            makeMul(gradY, derivative), false));
+                                            ReduceOp::Add, std::move(expr),
+                                            false));
         }
     }
     return stmts;
 }
 
 void Derivative::setPartial(const Expr &expr, const Expr &partial) {
-    if (rootStore_.isValid()) {
-        partials_[expr] = LazyPartialDerivative{symbolTableSnapshot(), partial,
-                                                rootExpr_.stmtId(), rootStore_};
-    } else {
-        partials_[expr] = LazyPartialDerivative{symbolTableSnapshot(), partial,
-                                                rootExpr_.stmtId()};
+    if (isFloat(expr->dtype())) {
+        if (rootStore_.isValid()) {
+            partials_[expr] = LazyPartialDerivative{
+                symbolTableSnapshot(), partial, rootExpr_.stmtId(), rootStore_};
+        } else {
+            partials_[expr] = LazyPartialDerivative{
+                symbolTableSnapshot(), partial, rootExpr_.stmtId()};
+        }
     }
 }
 
 void Derivative::visitExpr(const Expr &expr) {
     if (!rootExpr_.isValid()) {
         rootExpr_ = StmtOrExprID{expr, expr->parentStmt()};
-        if (isFloat(expr->dtype())) {
-            setPartial(expr, makeIntConst(1));
-        }
+        setPartial(expr, makeIntConst(1));
         try {
             BaseClass::visitExpr(expr);
         } catch (const InvalidAutoGrad &e) {
@@ -303,6 +308,14 @@ void Derivative::visit(const Tanh &op) {
         setPartial(op->expr_,
                    makeMul(it->second.mathExpr(),
                            makeSub(makeIntConst(1), makeSquare(op))));
+    }
+    BaseClass::visit(op);
+}
+
+void Derivative::visit(const Cast &op) {
+    // No cast here. We handle different types in `genGrads`.
+    if (auto it = partials_.find(op); it != partials_.end()) {
+        setPartial(op->expr_, it->second.mathExpr());
     }
     BaseClass::visit(op);
 }

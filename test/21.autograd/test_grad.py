@@ -120,6 +120,36 @@ def test_math_funcs():
     assert std.match(ast)
 
 
+def test_cast():
+    with ft.VarDef([
+        ("x1", (), "float32", "input", "cpu"),
+        ("x2", (), "float32", "input", "cpu"),
+        ("x3", (), "float32", "input", "cpu"),
+        ("y", (), "float64", "output", "cpu"),
+    ]) as (x1, x2, x3, y):
+        y[()] = ft.cast(x1[()] + x2[()], "float64") * x3[()]
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"], set())
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x1", (), "float32", "input", "cpu"),
+                    ("d_x1", (), "float32", "output", "cpu"),
+                    ("x2", (), "float32", "input", "cpu"),
+                    ("d_x2", (), "float32", "output", "cpu"),
+                    ("x3", (), "float32", "input", "cpu"),
+                    ("d_x3", (), "float32", "output", "cpu"),
+                    ("d_y", (), "float64", "inout", "cpu")
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y):
+        d_x1[()] = ft.cast(d_y[()] * x3[()], "float32")
+        d_x2[()] = ft.cast(d_y[()] * x3[()], "float32")
+        d_x3[()] = ft.cast(d_y[()] * ft.cast(x1[()] + x2[()], "float64"),
+                           "float32")
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_use_y_for_grad_when_taped():
     with ft.VarDef("x", (4,), "float32", "input", "cpu") as x:
         ft.MarkLabel("V_y1")
