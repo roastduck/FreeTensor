@@ -138,6 +138,11 @@ class Derivative : public SymbolTable<Visitor> {
     StmtOrExprID rootExpr_;
     Store rootStore_;
 
+    /**
+     * Propagate partial gradient to a sub-expression
+     *
+     * Non-float sub-expressions are ignored.
+     */
     void setPartial(const Expr &expr, const Expr &partial);
 
   public:
@@ -168,6 +173,7 @@ class Derivative : public SymbolTable<Visitor> {
     void visit(const Sigmoid &op) override;
     void visit(const Tanh &op) override;
     void visit(const Abs &op) override;
+    void visit(const Cast &op) override;
     void visit(const Intrinsic &op) override;
 };
 
