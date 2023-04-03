@@ -124,11 +124,12 @@ Stmt RemoveDeadVar::visit(const StmtSeq &op) {
 Stmt removeDeadVar(const Stmt &_op) {
     auto op = _op;
 
-    // There may be redundant reads in an empty For's range or an empty If's
-    // condition. Remove these empty nodes first with flatten_stmt_seq
-    op = flattenStmtSeq(op);
-
     for (int i = 0;; i++) {
+        // There may be redundant reads in an empty For's range or an empty If's
+        // condition. Remove these empty nodes first with flatten_stmt_seq. Do
+        // it in every iteration.
+        op = flattenStmtSeq(op);
+
         RemoveDeadVar mutator;
         op = mutator(op);
         if (mutator.isFixPoint() || i > 100) {
