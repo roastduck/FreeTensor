@@ -705,19 +705,31 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
                                    const Ref<AccessPoint> &earlier,
                                    const PBMap &depAll, const PBMap &nearest,
                                    const PBMap &laterMap,
-                                   const PBMap &earlierMap, int iterDim) {
+                                   const PBMap &earlierMap,
+                                   const PBMap &extConstraint, int iterDim) {
     if (nearest.empty()) {
         return;
     }
-    // FIXME: Should these killing tests be after the conditional checks, for
-    // correctness?
+
+    // For dependence X->Y or Y->X, we can check for kill-X, which means any
+    // time (any coordinate in iteration space and any external variable of X)
+    // there is X, there is the dependence.
+    //
+    // NOTE 1 : Here "any time" does not include impossible external varaible
+    // combinations ruled out by `extConstraint`, so we need to intersect with
+    // it before checking.
+    //
+    // NOTE 2: When intersecting with "extConstraint", an external varaible only
+    // makes a difference when it is invariant to all loops, so we can safely
+    // use `extConstarint`s domain or range, without considering mappings
+    // between its input and output dimensions.
     if ((mode_ == FindDepsMode::KillEarlier ||
          mode_ == FindDepsMode::KillBoth) &&
-        domain(earlierMap) != range(nearest)) {
+        intersect(domain(earlierMap), range(extConstraint)) != range(nearest)) {
         return;
     }
     if ((mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth) &&
-        domain(laterMap) != domain(nearest)) {
+        intersect(domain(laterMap), domain(extConstraint)) != domain(nearest)) {
         return;
     }
 
@@ -911,7 +923,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     std::vector<PBMap> earlierMapList(earlierList.size());
     std::vector<GenPBExpr::VarMap> earlierExternalsList(earlierList.size());
     std::vector<PBMap> es2aList(earlierList.size()),
-        depAllList(earlierList.size());
+        extConstraintList(earlierList.size()), depAllList(earlierList.size());
     PBMap psDepAllUnion;
     for (auto &&[i, earlier, earlierMap, earlierExternals] :
          views::zip(views::ints(0, ranges::unreachable), earlierList,
@@ -922,10 +934,11 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     }
     projectOutPrivateAxis(presburger, later, earlierList, earlierMapList,
                           iterDim);
-    for (auto &&[i, earlier, earlierMap, earlierExternals, es2a, depAll] :
+    for (auto &&[i, earlier, earlierMap, earlierExternals, es2a, extConstraint,
+                 depAll] :
          views::zip(views::ints(0, ranges::unreachable), earlierList,
                     earlierMapList, earlierExternalsList, es2aList,
-                    depAllList)) {
+                    extConstraintList, depAllList)) {
         if (earlierMap.empty()) {
             continue;
         }
@@ -934,12 +947,24 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
 
         depAll = subtract(applyRange(laterMap, reverse(earlierMap)), allEQ);
 
+        // Constarints on dependences. They decide when there are dependence,
+        // but do not affect the existence of accesses. They should be applied
+        // only to `depAll`.
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
-        depAll = intersect(std::move(depAll),
-                           makeExternalVarConstraint(
-                               presburger, later, earlier, laterExternals,
-                               earlierExternals, iterDim));
+
+        // Constraints on external variables limit the possibility of certain
+        // relations on those variables. If these constraints are violated, it
+        // not only means that there is no dependence, but also that the
+        // accesses are completely impossible. Therefore, they should be
+        // considered as constraints on the universal set, applied to not only
+        // `depAll`, but also `earlierMap` and `laterMap` when checking killing
+        // cases.
+        extConstraint = makeExternalVarConstraint(presburger, later, earlier,
+                                                  laterExternals,
+                                                  earlierExternals, iterDim);
+        depAll = intersect(std::move(depAll), extConstraint);
+
         depAll = coalesce(std::move(depAll));
         PBMap psDepAll = applyRange(depAll, std::move(ea2s));
 
@@ -972,13 +997,14 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBMap psNearest = uni(lexmax(std::move(psDep)), std::move(psSelf));
     psNearest = coalesce(std::move(psNearest));
 
-    for (auto &&[earlier, es2a, earlierMap, depAll] :
-         views::zip(earlierList, es2aList, earlierMapList, depAllList)) {
+    for (auto &&[earlier, es2a, earlierMap, extConstraint, depAll] :
+         views::zip(earlierList, es2aList, earlierMapList, extConstraintList,
+                    depAllList)) {
         if (depAll.isValid()) {
             checkAgainstCond(
                 presburger, later, earlier, depAll,
                 intersect(applyRange(psNearest, std::move(es2a)), depAll),
-                laterMap, earlierMap, iterDim);
+                laterMap, earlierMap, extConstraint, iterDim);
         }
     }
 }
@@ -1012,7 +1038,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBMap ea2s = reverse(es2a);
     std::vector<PBMap> laterMapList(laterList.size());
     std::vector<GenPBExpr::VarMap> laterExternalsList(laterList.size());
-    std::vector<PBMap> ls2aList(laterList.size()), depAllList(laterList.size());
+    std::vector<PBMap> ls2aList(laterList.size()),
+        extConstraintList(laterList.size()), depAllList(laterList.size());
     PBMap spDepAllUnion;
     for (auto &&[i, later, laterMap, laterExternals] :
          views::zip(views::ints(0, ranges::unreachable), laterList,
@@ -1023,9 +1050,11 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     }
     projectOutPrivateAxis(presburger, earlier, laterList, laterMapList,
                           iterDim);
-    for (auto &&[i, later, laterMap, laterExternals, ls2a, depAll] :
+    for (auto &&[i, later, laterMap, laterExternals, ls2a, extConstraint,
+                 depAll] :
          views::zip(views::ints(0, ranges::unreachable), laterList,
-                    laterMapList, laterExternalsList, ls2aList, depAllList)) {
+                    laterMapList, laterExternalsList, ls2aList,
+                    extConstraintList, depAllList)) {
         if (laterMap.empty()) {
             continue;
         }
@@ -1034,12 +1063,23 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
 
         depAll = subtract(applyRange(laterMap, reverse(earlierMap)), allEQ);
 
+        // Constarints on dependences. They decide when there are dependence,
+        // but do not affect the existence of accesses. They should be applied
+        // only to `depAll`.
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
-        depAll = intersect(std::move(depAll),
-                           makeExternalVarConstraint(
-                               presburger, later, earlier, laterExternals,
-                               earlierExternals, iterDim));
+
+        // Constraints on external variables limit the possibility of certain
+        // relations on those variables. If these constraints are violated, it
+        // not only means that there is no dependence, but also that the
+        // accesses are completely impossible. Therefore, they should be
+        // considered as constraints on the universal set, applied to not only
+        // `depAll`, but also `earlierMap` and `laterMap` when checking killing
+        // cases.
+        extConstraint = makeExternalVarConstraint(presburger, later, earlier,
+                                                  laterExternals,
+                                                  earlierExternals, iterDim);
+        depAll = intersect(std::move(depAll), extConstraint);
         depAll = coalesce(std::move(depAll));
         PBMap spDepAll = applyDomain(depAll, std::move(la2s));
 
@@ -1073,13 +1113,14 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         uni(reverse(lexmin(reverse(std::move(spDep)))), std::move(spSelf));
     spNearest = coalesce(std::move(spNearest));
 
-    for (auto &&[later, ls2a, laterMap, depAll] :
-         views::zip(laterList, ls2aList, laterMapList, depAllList)) {
+    for (auto &&[later, ls2a, laterMap, extConstraint, depAll] :
+         views::zip(laterList, ls2aList, laterMapList, extConstraintList,
+                    depAllList)) {
         if (depAll.isValid()) {
             checkAgainstCond(
                 presburger, later, earlier, depAll,
                 intersect(applyDomain(spNearest, std::move(ls2a)), depAll),
-                laterMap, earlierMap, iterDim);
+                laterMap, earlierMap, extConstraint, iterDim);
         }
     }
 }

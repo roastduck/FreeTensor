@@ -906,7 +906,10 @@ def test_dynamic_shared_memory_size():
 
     s = ft.Schedule(ft.Func("main", ["n", "x", "y"], [], ft.pop_ast()))
     s.parallelize("L0", "threadIdx.x")
-    func = ft.lower(s.func(), target, verbose=1)
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
 
     with ft.VarDef("n", (), "int32", "input", "gpu/global") as n:
         with ft.VarDef([

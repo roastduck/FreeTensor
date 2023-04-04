@@ -246,7 +246,7 @@ def test_cache_with_condition():
     s.cache("L2", "x", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
 
     with ft.VarDef([
         ("n", (), "int32", "input", "cpu"),

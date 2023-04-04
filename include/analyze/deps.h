@@ -458,7 +458,8 @@ class AnalyzeDeps {
     void checkAgainstCond(PBCtx &presburger, const Ref<AccessPoint> &later,
                           const Ref<AccessPoint> &earlier, const PBMap &depAll,
                           const PBMap &nearest, const PBMap &laterMap,
-                          const PBMap &earlierMap, int iterDim);
+                          const PBMap &earlierMap, const PBMap &extConstraint,
+                          int iterDim);
 
     static const std::string &getVar(const AST &op);
 
