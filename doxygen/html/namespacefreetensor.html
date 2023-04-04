@@ -1454,9 +1454,9 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 <tr class="memitem:af95fc1906eada1fb1d442824e2c433b6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af95fc1906eada1fb1d442824e2c433b6">_makeCast</a> (T &amp;&amp;expr, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> destType)</td></tr>
 <tr class="separator:af95fc1906eada1fb1d442824e2c433b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeab414574c46fb9454a8c4ac8af90505"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:aeab414574c46fb9454a8c4ac8af90505"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aeab414574c46fb9454a8c4ac8af90505">_makeIntrinsic</a> (const std::string &amp;format, T &amp;&amp;params, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> retType, bool hasSideEffect)</td></tr>
+<tr class="memitem:aeab414574c46fb9454a8c4ac8af90505"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aeab414574c46fb9454a8c4ac8af90505">_makeIntrinsic</a> (const std::string &amp;format, T &amp;&amp;<a class="el" href="namespacefreetensor.html#a3105134553648956815c674a8c2eb931">params</a>, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> retType, bool hasSideEffect)</td></tr>
 <tr class="separator:aeab414574c46fb9454a8c4ac8af90505"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adccde89c00ca28d7b1143c162c9ede9f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adccde89c00ca28d7b1143c162c9ede9f">_makeIntrinsic</a> (const std::string &amp;format, std::initializer_list&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; params, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> retType, bool hasSideEffect)</td></tr>
+<tr class="memitem:adccde89c00ca28d7b1143c162c9ede9f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adccde89c00ca28d7b1143c162c9ede9f">_makeIntrinsic</a> (const std::string &amp;format, std::initializer_list&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; <a class="el" href="namespacefreetensor.html#a3105134553648956815c674a8c2eb931">params</a>, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> retType, bool hasSideEffect)</td></tr>
 <tr class="separator:adccde89c00ca28d7b1143c162c9ede9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a13f5b077c5808c5f43d9acd0307fcbe2"><td class="memTemplParams" colspan="2">template&lt;class Tindices &gt; </td></tr>
 <tr class="memitem:a13f5b077c5808c5f43d9acd0307fcbe2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a13f5b077c5808c5f43d9acd0307fcbe2">_makeLoadAtVersion</a> (const std::string &amp;tapeName, Tindices &amp;&amp;indices, const <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> loadType)</td></tr>
@@ -1487,10 +1487,10 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 <tr class="memitem:a19299c3dd40cc4de3eedd8af85b32767"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a19299c3dd40cc4de3eedd8af85b32767">inlinedInvoke</a> (const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;callSiteMetadata, const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func, const std::vector&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1FrontendVar.html">FrontendVar</a> &gt; &gt; &amp;args, const std::unordered_map&lt; std::string, <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1FrontendVar.html">FrontendVar</a> &gt; &gt; &amp;kvs, const std::vector&lt; std::string &gt; &amp;retNames)</td></tr>
 <tr class="separator:a19299c3dd40cc4de3eedd8af85b32767"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a11f0f26017a71b5d41fbef30ddbf3f5e"><td class="memTemplParams" colspan="2">template&lt;class Tbody , class Tparams , class Treturns , class Tclosure &gt; </td></tr>
-<tr class="memitem:a11f0f26017a71b5d41fbef30ddbf3f5e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a11f0f26017a71b5d41fbef30ddbf3f5e">_makeFunc</a> (const std::string &amp;name, Tparams &amp;&amp;params, Treturns &amp;&amp;returns, Tbody &amp;&amp;body)</td></tr>
+<tr class="memitem:a11f0f26017a71b5d41fbef30ddbf3f5e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a11f0f26017a71b5d41fbef30ddbf3f5e">_makeFunc</a> (const std::string &amp;name, Tparams &amp;&amp;<a class="el" href="namespacefreetensor.html#a3105134553648956815c674a8c2eb931">params</a>, Treturns &amp;&amp;returns, Tbody &amp;&amp;body)</td></tr>
 <tr class="separator:a11f0f26017a71b5d41fbef30ddbf3f5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5da51972a991be50ab08705a13765257"><td class="memTemplParams" colspan="2">template&lt;class Tbody &gt; </td></tr>
-<tr class="memitem:a5da51972a991be50ab08705a13765257"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5da51972a991be50ab08705a13765257">_makeFunc</a> (const std::string &amp;name, const std::vector&lt; <a class="el" href="structfreetensor_1_1FuncParam.html">FuncParam</a> &gt; &amp;params, const std::vector&lt; <a class="el" href="structfreetensor_1_1FuncRet.html">FuncRet</a> &gt; &amp;returns, Tbody &amp;&amp;body)</td></tr>
+<tr class="memitem:a5da51972a991be50ab08705a13765257"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5da51972a991be50ab08705a13765257">_makeFunc</a> (const std::string &amp;name, const std::vector&lt; <a class="el" href="structfreetensor_1_1FuncParam.html">FuncParam</a> &gt; &amp;<a class="el" href="namespacefreetensor.html#a3105134553648956815c674a8c2eb931">params</a>, const std::vector&lt; <a class="el" href="structfreetensor_1_1FuncRet.html">FuncRet</a> &gt; &amp;returns, Tbody &amp;&amp;body)</td></tr>
 <tr class="separator:a5da51972a991be50ab08705a13765257"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e7757ebdcaf7f998913716b135b7182"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8e7757ebdcaf7f998913716b135b7182">deepCopy</a> (const <a class="el" href="namespacefreetensor.html#ab9c83946ad65f5faea0aea2fe24e1a6f">Func</a> &amp;func)</td></tr>
 <tr class="separator:a8e7757ebdcaf7f998913716b135b7182"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1666,6 +1666,12 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:addbb8ccbe154347f263646ad48b6822d"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T, PBSetRef U&gt; </td></tr>
 <tr class="memitem:addbb8ccbe154347f263646ad48b6822d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#addbb8ccbe154347f263646ad48b6822d">intersectRange</a> (T &amp;&amp;<a class="el" href="namespacefreetensor.html#a192b70d1972bcd73d5ff58f30fad21a2">lhs</a>, U &amp;&amp;<a class="el" href="namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005">rhs</a>)</td></tr>
 <tr class="separator:addbb8ccbe154347f263646ad48b6822d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae104a350d85d4b10fc4dc07505423b95"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T, PBSetRef U&gt; </td></tr>
+<tr class="memitem:ae104a350d85d4b10fc4dc07505423b95"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae104a350d85d4b10fc4dc07505423b95">intersectParams</a> (T &amp;&amp;<a class="el" href="namespacefreetensor.html#a192b70d1972bcd73d5ff58f30fad21a2">lhs</a>, U &amp;&amp;<a class="el" href="namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005">rhs</a>)</td></tr>
+<tr class="separator:ae104a350d85d4b10fc4dc07505423b95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfa0e604523d5e88028e39baa38c1a4f"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T, PBSetRef U&gt; </td></tr>
+<tr class="memitem:adfa0e604523d5e88028e39baa38c1a4f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adfa0e604523d5e88028e39baa38c1a4f">intersectParams</a> (T &amp;&amp;<a class="el" href="namespacefreetensor.html#a192b70d1972bcd73d5ff58f30fad21a2">lhs</a>, U &amp;&amp;<a class="el" href="namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005">rhs</a>)</td></tr>
+<tr class="separator:adfa0e604523d5e88028e39baa38c1a4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa1a8f39c90fd721add82a2d0e3228432"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T, PBMapRef U&gt; </td></tr>
 <tr class="memitem:aa1a8f39c90fd721add82a2d0e3228432"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa1a8f39c90fd721add82a2d0e3228432">uni</a> (T &amp;&amp;<a class="el" href="namespacefreetensor.html#a192b70d1972bcd73d5ff58f30fad21a2">lhs</a>, U &amp;&amp;<a class="el" href="namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005">rhs</a>)</td></tr>
 <tr class="separator:aa1a8f39c90fd721add82a2d0e3228432"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1742,6 +1748,9 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:acfaf93568b1c66993de575777d454184"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:acfaf93568b1c66993de575777d454184"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#acfaf93568b1c66993de575777d454184">range</a> (T &amp;&amp;map)</td></tr>
 <tr class="separator:acfaf93568b1c66993de575777d454184"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3105134553648956815c674a8c2eb931"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:a3105134553648956815c674a8c2eb931"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3105134553648956815c674a8c2eb931">params</a> (T &amp;&amp;set)</td></tr>
+<tr class="separator:a3105134553648956815c674a8c2eb931"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae80b15ea357253d337ea9c84d92fdbb4"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
 <tr class="memitem:ae80b15ea357253d337ea9c84d92fdbb4"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae80b15ea357253d337ea9c84d92fdbb4">coalesce</a> (T &amp;&amp;set)</td></tr>
 <tr class="separator:ae80b15ea357253d337ea9c84d92fdbb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -10659,6 +10668,66 @@ template&lt;PBMapRef T, PBSetRef U&gt; </div>
 
 </div>
 </div>
+<a id="ae104a350d85d4b10fc4dc07505423b95" name="ae104a350d85d4b10fc4dc07505423b95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae104a350d85d4b10fc4dc07505423b95">&#9670;&nbsp;</a></span>intersectParams() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBSetRef T, PBSetRef U&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> freetensor::intersectParams </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">U &amp;&amp;&#160;</td>
+          <td class="paramname"><em>rhs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="adfa0e604523d5e88028e39baa38c1a4f" name="adfa0e604523d5e88028e39baa38c1a4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adfa0e604523d5e88028e39baa38c1a4f">&#9670;&nbsp;</a></span>intersectParams() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T, PBSetRef U&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::intersectParams </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">U &amp;&amp;&#160;</td>
+          <td class="paramname"><em>rhs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="addbb8ccbe154347f263646ad48b6822d" name="addbb8ccbe154347f263646ad48b6822d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#addbb8ccbe154347f263646ad48b6822d">&#9670;&nbsp;</a></span>intersectRange()</h2>
 
@@ -15102,6 +15171,26 @@ template&lt;std::ranges::range Container&gt; </div>
           <td></td>
           <td>)</td>
           <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3105134553648956815c674a8c2eb931" name="a3105134553648956815c674a8c2eb931"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3105134553648956815c674a8c2eb931">&#9670;&nbsp;</a></span>params()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBSetRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> freetensor::params </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>set</em></td><td>)</td>
+          <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
