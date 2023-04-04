@@ -17,6 +17,7 @@
 #include <pass/move_out_first_or_last_iter.h>
 #include <pass/pb_simplify.h>
 #include <pass/prop_one_time_use.h>
+#include <pass/remove_cyclic_assign.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
 #include <pass/scalar_prop_const.h>
@@ -127,6 +128,11 @@ void init_ffi_pass(py::module_ &m) {
     m.def("remove_writes",
           static_cast<Stmt (*)(const Stmt &, const ID &)>(&removeWrites),
           "stmt"_a, py::arg_v("single_def_id", ID(), "ID()"));
+
+    m.def("remove_cyclic_assign",
+          static_cast<Func (*)(const Func &)>(&removeCyclicAssign), "func"_a);
+    m.def("remove_cyclic_assign",
+          static_cast<Stmt (*)(const Stmt &)>(&removeCyclicAssign), "stmt"_a);
 
     m.def("remove_dead_var",
           static_cast<Func (*)(const Func &)>(&removeDeadVar), "func"_a);

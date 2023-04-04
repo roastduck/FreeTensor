@@ -762,8 +762,9 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     backward = propOneTimeUse(backward);
     backward = simplify(backward);
     backward = tensorPropConst(backward);
-    backward = removeWrites(backward);
     backward = removeCyclicAssign(backward);
+    backward = removeDeadVar(backward);
+    backward = removeWrites(backward);
 
     return std::make_tuple(forward, backward, mutator.requireGrads(),
                            mutator.provideGrads(), tapeMap);

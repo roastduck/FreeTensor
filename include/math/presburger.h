@@ -516,6 +516,13 @@ template <PBMapRef T, PBSetRef U> PBMap intersectRange(T &&lhs, U &&rhs) {
     return isl_map_intersect_range(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
+template <PBSetRef T, PBSetRef U> PBSet intersectParams(T &&lhs, U &&rhs) {
+    return isl_set_intersect_params(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+template <PBMapRef T, PBSetRef U> PBMap intersectParams(T &&lhs, U &&rhs) {
+    return isl_map_intersect_params(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
 template <PBMapRef T, PBMapRef U> PBMap uni(T &&lhs, U &&rhs) {
     DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
                                      "," + std::to_string(rhs.nBasic()));
@@ -637,6 +644,13 @@ template <PBMapRef T> PBSet domain(T &&map) {
 
 template <PBMapRef T> PBSet range(T &&map) {
     return isl_map_range(PBRefTake<T>(map));
+}
+
+template <PBSetRef T> PBSet params(T &&set) {
+    return isl_set_params(PBRefTake<T>(set));
+}
+template <PBMapRef T> PBSet params(T &&map) {
+    return isl_map_params(PBRefTake<T>(map));
 }
 
 template <PBSetRef T> PBSet coalesce(T &&set) {
