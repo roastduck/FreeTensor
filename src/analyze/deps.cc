@@ -715,21 +715,25 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
     // time (any coordinate in iteration space and any external variable of X)
     // there is X, there is the dependence.
     //
-    // NOTE 1 : Here "any time" does not include impossible external varaible
+    // Here "any time" does not include impossible external varaible
     // combinations ruled out by `extConstraint`, so we need to intersect with
     // it before checking.
     //
-    // NOTE 2: When intersecting with "extConstraint", an external varaible only
-    // makes a difference when it is invariant to all loops, so we can safely
-    // use `extConstarint`s domain or range, without considering mappings
-    // between its input and output dimensions.
+    // Besides, (TODO: prove it) `extConstraint` includes multiple cases, which
+    // can be written as `{[...] -> [...] : coordinates 1 -> params constraints
+    // 1, or coordinates 2 -> params constraints 2, or ...}`. We intersect with
+    // `nearest`'s coordinates to get the effective parameter constraints.
+    auto effectiveExtConstraint =
+        params(intersect(extConstraint, projectOutAllParams(nearest)));
     if ((mode_ == FindDepsMode::KillEarlier ||
          mode_ == FindDepsMode::KillBoth) &&
-        intersect(domain(earlierMap), range(extConstraint)) != range(nearest)) {
+        intersectParams(domain(earlierMap), effectiveExtConstraint) !=
+            range(nearest)) {
         return;
     }
     if ((mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth) &&
-        intersect(domain(laterMap), domain(extConstraint)) != domain(nearest)) {
+        intersectParams(domain(laterMap), effectiveExtConstraint) !=
+            domain(nearest)) {
         return;
     }
 

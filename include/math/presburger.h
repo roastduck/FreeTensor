@@ -646,6 +646,13 @@ template <PBMapRef T> PBSet range(T &&map) {
     return isl_map_range(PBRefTake<T>(map));
 }
 
+template <PBSetRef T> PBSet params(T &&set) {
+    return isl_set_params(PBRefTake<T>(set));
+}
+template <PBMapRef T> PBSet params(T &&map) {
+    return isl_map_params(PBRefTake<T>(map));
+}
+
 template <PBSetRef T> PBSet coalesce(T &&set) {
     DEBUG_PROFILE("coalesce");
     return isl_set_coalesce(PBRefTake<T>(set));

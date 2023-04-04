@@ -37,3 +37,31 @@ def test_in_branch():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_in_branch_2():
+    with ft.VarDef([("p", (4,), "int32", "input", "cpu"),
+                    ("a", (4,), "int32", "inout", "cpu"),
+                    ("b", (4,), "int32", "output", "cpu")]) as (p, a, b):
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("cond", (), "bool", "cache", "cpu") as cond:
+                cond[...] = p[i] > 0
+                with ft.If(cond[i]):
+                    b[i] = a[i]
+                    a[i] = b[i]
+    ast = ft.pop_ast(verbose=True)
+    # Run this pass only. No sinking vars into If
+    ast = ft.remove_cyclic_assign(ast)
+    print(ast)
+
+    with ft.VarDef([("p", (4,), "int32", "input", "cpu"),
+                    ("a", (4,), "int32", "inout", "cpu"),
+                    ("b", (4,), "int32", "output", "cpu")]) as (p, a, b):
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("cond", (), "bool", "cache", "cpu") as cond:
+                cond[...] = p[i] > 0
+                with ft.If(cond[i]):
+                    b[i] = a[i]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
