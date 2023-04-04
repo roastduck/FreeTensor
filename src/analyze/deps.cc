@@ -534,10 +534,11 @@ PBMap AnalyzeDeps::makeConstraintOfParallelScope(PBCtx &presburger,
 PBMap AnalyzeDeps::makeExternalEq(PBCtx &presburger, int iterDim,
                                   const std::string &ext1,
                                   const std::string &ext2) {
-    std::string mapping =
-        makeNdList("d", iterDim) + " -> " + makeNdList("d_", iterDim);
-    return PBMap(presburger, "[" + ext1 + ", " + ext2 + "] -> {" + mapping +
-                                 ": " + ext1 + " = " + ext2 + "}");
+    PBMap universe = universeMap(spaceAlloc(presburger, 0, iterDim, iterDim));
+    PBSet constraint =
+        PBSet(presburger, "[" + ext1 + ", " + ext2 + "] -> {[] : " + ext1 +
+                              " = " + ext2 + "}");
+    return intersectParams(universe, constraint);
 }
 
 const std::string &AnalyzeDeps::getVar(const AST &op) {

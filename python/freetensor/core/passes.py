@@ -19,6 +19,7 @@ from freetensor_ffi import merge_and_hoist_if
 from freetensor_ffi import make_reduction
 from freetensor_ffi import make_parallel_reduction
 from freetensor_ffi import remove_writes
+from freetensor_ffi import remove_cyclic_assign
 from freetensor_ffi import remove_dead_var
 from freetensor_ffi import make_heap_alloc
 from freetensor_ffi import use_builtin_div

@@ -392,11 +392,16 @@ class AnalyzeDeps {
 
     /**
      * Constraint for variables defined inside some loops
+     *
      * E.g.
+     *
+     * ```
      * for i
      *   var def a
      *     a[0] = i
      *     ... = a[0]
+     * ```
+     *
      * There will be no dependences of a[0] across i
      */
     PBMap makeEraseVarDefConstraint(PBCtx &presburger,
@@ -408,12 +413,17 @@ class AnalyzeDeps {
     PBMap makeNoDepsConstraint(PBCtx &presburger, const std::string &var,
                                int iterDim);
 
-    /*
+    /**
      * Constraint for external variables inside loop
+     *
      * E.g.
+     *
+     * ```
      * for i
      *   for j
      *     a[idx[i] + j]
+     * ```
+     *
      * idx[i] + j must be different for the same i but different j, but
      * idx[i] + j may be the same for different i
      */
@@ -426,11 +436,15 @@ class AnalyzeDeps {
 
     /**
      * If we are analyzing the dependence between A and B, e.g.
+     *
+     * ```
      * for i
      *   for j
      *     A
      *   for k
      *     B
+     * ```
+     *
      * Analyzing the value of j and k will spend a great amount of time, but in
      * FindDepsMode::Dep mode, we do not care about the result. Therefore, we
      * project out these dimensions

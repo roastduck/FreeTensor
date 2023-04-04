@@ -516,6 +516,13 @@ template <PBMapRef T, PBSetRef U> PBMap intersectRange(T &&lhs, U &&rhs) {
     return isl_map_intersect_range(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
+template <PBSetRef T, PBSetRef U> PBSet intersectParams(T &&lhs, U &&rhs) {
+    return isl_set_intersect_params(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+template <PBMapRef T, PBSetRef U> PBMap intersectParams(T &&lhs, U &&rhs) {
+    return isl_map_intersect_params(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
 template <PBMapRef T, PBMapRef U> PBMap uni(T &&lhs, U &&rhs) {
     DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
                                      "," + std::to_string(rhs.nBasic()));
