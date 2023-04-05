@@ -73,3 +73,57 @@ def test_free_from_tape():
     std = ft.pop_ast()
 
     assert std.match(bwd)
+
+
+def test_reduce_mul_gt0():
+    with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("w", (4,), "float32>0", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, w, y):
+        with ft.VarDef("s", (), "float32", "cache", "cpu") as s:
+            s[...] = 1
+            with ft.For("i", 0, 4) as i:
+                s[...] *= w[i]
+                y[...] += s[...] * x[i]
+    ast = ft.pop_ast(verbose=True)
+    fwd, bwd, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ft.GradTapeMode.All)
+    fwd = ft.lower(fwd, verbose=1)
+    bwd = ft.lower(bwd, verbose=1)
+
+    with ft.VarDef([
+        ("dx", (4,), "float32", "output", "cpu"),
+        ("w", (4,), "float32>0", "input", "cpu"),
+        ("dy", (), "float32", "inout", "cpu"),
+    ]) as (dx, w, dy):
+        with ft.VarDef("s", (), "float32>0", "input-mutable", "cpu") as s:
+            with ft.For("i", 3, -1, -1) as i:
+                dx[i] = dy[...] * s[...]
+                s[...] *= 1 / w[i]  # TODO: `if (i > 0)` around this
+    std = ft.pop_ast()
+
+    assert std.match(bwd)
+
+
+def test_reduce_mul_may_eq0_no_invert():
+    with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("w", (4,), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, w, y):
+        with ft.VarDef("s", (), "float32", "cache", "cpu") as s:
+            s[...] = 1
+            with ft.For("i", 0, 4) as i:
+                s[...] *= w[i]
+                y[...] += s[...] * x[i]
+    ast = ft.pop_ast(verbose=True)
+    fwd, bwd, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ft.GradTapeMode.All)
+    fwd = ft.lower(fwd, verbose=1)
+    bwd = ft.lower(bwd, verbose=1)
+
+    with ft.VarDef([
+        ("dx", (4,), "float32", "output", "cpu"),
+        ("dy", (), "float32", "inout", "cpu"),
+    ]) as (dx, dy):
+        with ft.VarDef("s", (5,), "float32", "input", "cpu") as s:
+            with ft.For("i", 3, -1, -1) as i:
+                dx[i] = dy[...] * s[i + 1]  # can be s[i]
+    std = ft.pop_ast()
+
+    assert std.match(bwd)

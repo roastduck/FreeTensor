@@ -6,6 +6,7 @@
 #include <math/parse_pb_expr.h>
 #include <mutator.h>
 #include <pass/make_nested_loops.h>
+#include <pass/make_reduction.h>
 #include <pass/replace_iter.h>
 
 namespace freetensor {
@@ -211,7 +212,10 @@ invertStmts(const Stmt &op,
             std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
                 *derivatives) {
     FindInvertibles finder;
-    finder(op);
+    // Make ReduceTo nodes before finding. Since some ReduceOp is not supported
+    // by autograd/grad, the modified AST is only used to find invertibles, but
+    // not returned.
+    finder(makeReduction(op));
     auto &&invertibles = finder.invertibles();
     if (invertibles.empty()) {
         return {op, {}};
