@@ -1,5 +1,5 @@
-#ifndef FREE_TENSOR_GPU_NORMALIZE_VAR_IN_KERNEL
-#define FREE_TENSOR_GPU_NORMALIZE_VAR_IN_KERNEL
+#ifndef FREE_TENSOR_GPU_NORMALIZE_VAR_IN_KERNEL_H
+#define FREE_TENSOR_GPU_NORMALIZE_VAR_IN_KERNEL_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -47,4 +47,4 @@ DEFINE_PASS_FOR_FUNC(normalizeVarInKernel)
 
 } // namespace freetensor
 
-#endif // FREE_TENSOR_GPU_NORMALIZE_VAR_IN_KERNEL
+#endif // FREE_TENSOR_GPU_NORMALIZE_VAR_IN_KERNEL_H

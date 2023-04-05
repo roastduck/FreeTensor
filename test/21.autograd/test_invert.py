@@ -97,7 +97,8 @@ def test_reduce_mul_gt0():
         with ft.VarDef("s", (), "float32>0", "input-mutable", "cpu") as s:
             with ft.For("i", 3, -1, -1) as i:
                 dx[i] = dy[...] * s[...]
-                s[...] *= 1 / w[i]  # TODO: `if (i > 0)` around this
+                with ft.If(i > 0):
+                    s[...] *= 1 / w[i]
     std = ft.pop_ast()
 
     assert std.match(bwd)
@@ -121,9 +122,9 @@ def test_reduce_mul_may_eq0_no_invert():
         ("dx", (4,), "float32", "output", "cpu"),
         ("dy", (), "float32", "inout", "cpu"),
     ]) as (dx, dy):
-        with ft.VarDef("s", (5,), "float32", "input", "cpu") as s:
+        with ft.VarDef("s", (4,), "float32", "input", "cpu") as s:
             with ft.For("i", 3, -1, -1) as i:
-                dx[i] = dy[...] * s[i + 1]  # can be s[i]
+                dx[i] = dy[...] * s[i]
     std = ft.pop_ast()
 
     assert std.match(bwd)

@@ -15,74 +15,6 @@
 
 namespace freetensor {
 
-/**
- * Determine what variables we need to compute gradient for (propagete from
- * inputs to outputs)
- */
-class PropagateRequires : public SymbolTable<Visitor> {
-    typedef SymbolTable<Visitor> BaseClass;
-
-    const std::unordered_set<std::string> &requires_; // input var names
-    const std::unordered_set<std::string> &provides_; // output var names
-
-    std::unordered_set<ID> affectedDefs_; // all VarDef IDs
-
-    ID curTarget_; // VarDef ID of current var being written to
-
-  public:
-    PropagateRequires(const std::unordered_set<std::string> &_requires,
-                      const std::unordered_set<std::string> &provides)
-        : requires_(_requires), provides_(provides) {}
-
-    const std::unordered_set<ID> &affectedDefs() const { return affectedDefs_; }
-
-    static std::unordered_set<ID>
-    propagateUntilConverge(const Stmt &op,
-                           const std::unordered_set<std::string> &_requires,
-                           const std::unordered_set<std::string> &provides);
-
-  protected:
-    using BaseClass::visit;
-    void visit(const Load &op) override;
-    void visit(const Store &op) override;
-    void visit(const ReduceTo &op) override;
-    void visit(const VarDef &op) override;
-};
-
-/**
- * Determine what variables we need to compute gradient for (propagete from
- * outputs to inputs)
- */
-class PropagateProvides : public SymbolTable<Visitor> {
-    typedef SymbolTable<Visitor> BaseClass;
-
-    const std::unordered_set<std::string> &requires_; // input var names
-    const std::unordered_set<std::string> &provides_; // output var names
-
-    std::unordered_set<ID> affectedDefs_; // all VarDef IDs
-
-    ID curTarget_; // VarDef ID of current var being written to
-
-  public:
-    PropagateProvides(const std::unordered_set<std::string> &_requires,
-                      const std::unordered_set<std::string> &provides)
-        : requires_(_requires), provides_(provides) {}
-
-    const std::unordered_set<ID> &affectedDefs() const { return affectedDefs_; }
-
-    static std::unordered_set<ID>
-    propagateUntilConverge(const Stmt &op,
-                           const std::unordered_set<std::string> &_requires,
-                           const std::unordered_set<std::string> &provides);
-
-  protected:
-    using BaseClass::visit;
-    void visit(const Load &op) override;
-    void visit(const Store &op) override;
-    void visit(const ReduceTo &op) override;
-    void visit(const VarDef &op) override;
-};
-
 class ReplaceLoadAtVersion : public Mutator {
     const SymbolTableInterface &symbolTable_;
     const std::unordered_map<ID, std::string> &intermediatesMap_;
@@ -122,7 +54,7 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
     const std::unordered_set<std::string> &requires_;
     const std::unordered_set<std::string> &provides_;
     const std::unordered_set<ID> &tapes_;
-    const std::unordered_set<ID> &affectedDefs_;
+    const std::unordered_set<ID> &defsNeedGrad_;
     const std::unordered_map<ID, std::string>
         &intermediatesMap_; // All saved variables, including in forward stage
                             // (tapes) and backward stage (during recomputation)
@@ -170,7 +102,7 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
          const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
          const std::unordered_set<ID> &tapes,
-         const std::unordered_set<ID> &affectedDefs,
+         const std::unordered_set<ID> &defsNeedGrad,
          const std::unordered_map<ID, std::string> &intermediatesMap,
          const std::unordered_map<StmtOrExprID, Expr> &versions,
          const std::unordered_map<std::string, std::pair<std::string, Expr>>
@@ -181,7 +113,7 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
          const std::unordered_map<ID, InversionInfo> &inverseStmts,
          const std::vector<RangeToUserGrad> &userGrads)
         : derivatives_(derivatives), requires_(_requires), provides_(provides),
-          tapes_(tapes), affectedDefs_(affectedDefs),
+          tapes_(tapes), defsNeedGrad_(defsNeedGrad),
           intermediatesMap_(intermediatesMap), versions_(versions),
           userVersions_(userVersions), totLens_(totLens),
           saveLocalStmts_(saveLocalStmts), notSingleWrite_(notSingleWrite),

@@ -9,6 +9,7 @@
 #include <autograd/grad.h>
 #include <autograd/merge_tape_input.h>
 #include <autograd/output_intermediates.h>
+#include <autograd/propagate_defs_need_grad.h>
 #include <container_utils.h>
 #include <pass/float_simplify.h>
 #include <pass/hoist_return_vars.h>
@@ -25,119 +26,6 @@
 #include <schedule/hoist_selected_var.h>
 
 namespace freetensor {
-
-void PropagateRequires::visit(const Load &op) {
-    if (isFloat(op->dtype()) && curTarget_.isValid() &&
-        affectedDefs_.count(def(op->var_)->id())) {
-        affectedDefs_.insert(curTarget_);
-        // No need to recurse deeper
-    }
-}
-
-void PropagateRequires::visit(const Store &op) {
-    if (buffer(op->var_)->atype() == AccessType::Cache) {
-        curTarget_ = def(op->var_)->id();
-        (*this)(op->expr_);
-        // No need to recurse into indices
-        curTarget_ = {};
-    }
-}
-
-void PropagateRequires::visit(const ReduceTo &op) {
-    if (buffer(op->var_)->atype() == AccessType::Cache) {
-        curTarget_ = def(op->var_)->id();
-        (*this)(op->expr_);
-        // No need to recurse into indices
-        curTarget_ = {};
-    }
-}
-
-void PropagateRequires::visit(const VarDef &op) {
-    if (requires_.count(op->name_) || provides_.count(op->name_)) {
-        affectedDefs_.insert(op->id());
-    }
-    BaseClass::visit(op);
-}
-
-std::unordered_set<ID> PropagateRequires::propagateUntilConverge(
-    const Stmt &op, const std::unordered_set<std::string> &_requires,
-    const std::unordered_set<std::string> &provides) {
-    for (auto &&name : _requires) {
-        try {
-            findStmt(op, [&](const Stmt &s) {
-                return s->nodeType() == ASTNodeType::VarDef &&
-                       s.as<VarDefNode>()->name_ == name;
-            });
-        } catch (const UnexpectedQueryResult &e) {
-            throw InvalidAutoGrad("Input variable requesting for gradient `" +
-                                  name + "` is not found or duplicated");
-        }
-    }
-    for (auto &&name : provides) {
-        try {
-            findStmt(op, [&](const Stmt &s) {
-                return s->nodeType() == ASTNodeType::VarDef &&
-                       s.as<VarDefNode>()->name_ == name;
-            });
-        } catch (const UnexpectedQueryResult &e) {
-            throw InvalidAutoGrad("Output variable providing gradient `" +
-                                  name + "` is not found or duplicated");
-        }
-    }
-
-    PropagateRequires propagator(_requires, provides);
-    size_t affectCnt;
-    do {
-        affectCnt = propagator.affectedDefs().size();
-        propagator(op);
-    } while (propagator.affectedDefs().size() > affectCnt);
-    return propagator.affectedDefs();
-}
-
-void PropagateProvides::visit(const Load &op) {
-    if (isFloat(op->dtype()) && curTarget_.isValid() &&
-        buffer(op->var_)->atype() == AccessType::Cache) {
-        affectedDefs_.insert(def(op->var_)->id());
-        // No need to recurse deeper
-    }
-}
-
-void PropagateProvides::visit(const Store &op) {
-    if (affectedDefs_.count(def(op->var_)->id())) {
-        curTarget_ = def(op->var_)->id();
-        (*this)(op->expr_);
-        // No need to recurse into indices
-        curTarget_ = {};
-    }
-}
-
-void PropagateProvides::visit(const ReduceTo &op) {
-    if (affectedDefs_.count(def(op->var_)->id())) {
-        curTarget_ = def(op->var_)->id();
-        (*this)(op->expr_);
-        // No need to recurse into indices
-        curTarget_ = {};
-    }
-}
-
-void PropagateProvides::visit(const VarDef &op) {
-    if (requires_.count(op->name_) || provides_.count(op->name_)) {
-        affectedDefs_.insert(op->id());
-    }
-    BaseClass::visit(op);
-}
-
-std::unordered_set<ID> PropagateProvides::propagateUntilConverge(
-    const Stmt &op, const std::unordered_set<std::string> &_requires,
-    const std::unordered_set<std::string> &provides) {
-    PropagateProvides propagator(_requires, provides);
-    size_t affectCnt;
-    do {
-        affectCnt = propagator.affectedDefs().size();
-        propagator(op);
-    } while (propagator.affectedDefs().size() > affectCnt);
-    return propagator.affectedDefs();
-}
 
 Expr ReplaceLoadAtVersion::visit(const LoadAtVersion &_op) {
     auto __op = Mutator::visit(_op);
@@ -332,7 +220,7 @@ Stmt Grad::visit(const For &_op) {
     } else {
         auto noDeps = op->property_->noDeps_;
         for (auto &&fwdVar : op->property_->noDeps_) {
-            if (hasDef(fwdVar) && affectedDefs_.count(def(fwdVar)->id())) {
+            if (hasDef(fwdVar) && defsNeedGrad_.count(def(fwdVar)->id())) {
                 noDeps.emplace_back(fwdVar + ".grad");
             }
         }
@@ -388,7 +276,7 @@ Stmt Grad::visit(const VarDef &_op) {
     ASSERT(!gradNames_.count(_op->name_));
     ASSERT(!recomputed_.count(_op->name_));
     std::string gradName;
-    if (affectedDefs_.count(_op->id())) {
+    if (defsNeedGrad_.count(_op->id())) {
         gradName = gradNames_[_op->name_] = _op->name_ + ".grad";
     }
     if (tapes_.count(_op->id())) {
@@ -403,7 +291,7 @@ Stmt Grad::visit(const VarDef &_op) {
 
     VarDef ret = op;
     if (!isRecompute_) {
-        if (affectedDefs_.count(_op->id())) {
+        if (defsNeedGrad_.count(_op->id())) {
             if (requires_.count(op->name_)) {
                 requireGrads_[op->name_] = gradName;
             }
@@ -684,8 +572,10 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     derivative(op);
     auto derivatives = derivative.derivatives();
 
+    auto defsNeedGrad = propagateDefsNeedGrad(op, _requires, provides);
+
     auto &&[idsToTape, idsToRecomp] =
-        findTapeOrRecompStmts(op, tapes, derivatives);
+        findTapeOrRecompStmts(op, tapes, defsNeedGrad, derivatives);
 
     // We can reduce the number of statements in `idsToRecomp` by recovering
     // them through the inversion of their follower statements.
@@ -724,11 +614,6 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     auto userVersions = std::move(userVersionsGlobal);
     userVersions.merge(std::move(userVersionsLocal));
 
-    auto affectedDefs = intersect(PropagateProvides::propagateUntilConverge(
-                                      backward, _requires, provides),
-                                  PropagateRequires::propagateUntilConverge(
-                                      backward, _requires, provides));
-
     std::unordered_set<Stmt> notSingleWrite;
     auto foundWAW = [&](const Dependence &d) {
         notSingleWrite.insert(d.earlier().as<StmtNode>());
@@ -745,7 +630,7 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
                                           stmtSetToUserGrad.bwdBody_);
         }
     }
-    Grad mutator(derivatives, _requires, provides, tapes, affectedDefs,
+    Grad mutator(derivatives, _requires, provides, tapes, defsNeedGrad,
                  intermediatesMap, versions, userVersions, totLens,
                  saveLocalStmts, notSingleWrite, toInvert, rangeToUserGrads);
     backward = mutator(backward);
