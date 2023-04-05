@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <analyze/symbol_table.h>
 #include <analyze/track_stmt.h>
 #include <visitor.h>
 
@@ -105,12 +106,11 @@ class MarkStores : public TrackStmt<Visitor> {
     }
 };
 
-class FindLoopVariance : public TrackStmt<Visitor> {
-    typedef TrackStmt<Visitor> BaseClass;
+class FindLoopVariance : public SymbolTable<TrackStmt<Visitor>> {
+    typedef SymbolTable<TrackStmt<Visitor>> BaseClass;
 
     std::vector<ID> loopStack_;
     std::vector<StmtOrExprID> condStack_;
-    std::unordered_map<std::string, For> loops_;
     LoopVariTransVarMap varInfo_;
     LoopVariUniqVarMap uniqVarInfo_;
     LoopVariExprMap exprInfo_;
