@@ -149,7 +149,9 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
             if (it->second.cond_.isValid()) {
                 inv = makeIf(replacer.recomp(it->second.cond_), std::move(inv));
             }
-            ret = makeStmtSeq({ret, inv});
+            // Invert first, and then compute gradient. (TODO: this will break
+            // after we support inverting Store nodes)
+            ret = makeStmtSeq({inv, ret});
         }
 
         return ret;
