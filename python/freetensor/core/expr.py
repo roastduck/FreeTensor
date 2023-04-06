@@ -5,6 +5,15 @@ Classes and functions in this module are not only used internally for constructi
 and also exposed to users via multi-stage programming
 '''
 
+__all__ = [
+    'VarRef', 'VarRefFromVarDef', 'VarVersionRef', 'add', 'sub', 'mul',
+    'truediv', 'floordiv', 'ceildiv', 'round_towards_0_div', 'mod', 'remainder',
+    'min', 'max', 'l_and', 'l_or', 'lt', 'le', 'gt', 'ge', 'eq', 'ne', 'l_not',
+    'abs', 'sqrt', 'exp', 'ln', 'square', 'sigmoid', 'tanh', 'floor', 'ceil',
+    'if_then_else', 'cast', 'intrinsic', 'any', 'load_at_version', 'ndim',
+    'shape', 'dtype', 'mtype'
+]
+
 import collections
 import builtins
 import math

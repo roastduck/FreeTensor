@@ -1,8 +1,19 @@
+__all__ = [
+    'binary_op', 'binary_op_', 'add', 'add_', 'sub', 'sub_', 'mul', 'mul_',
+    'truediv', 'truediv_', 'floordiv', 'floordiv_', 'ceildiv', 'ceildiv_',
+    'round_towards_0_div', 'round_towards_0_div_', 'mod', 'mod_', 'remainder',
+    'remainder_', 'min', 'min_', 'max', 'max_', 'l_and', 'l_and_', 'l_or',
+    'l_or_', 'lt', 'lt_', 'le', 'le_', 'gt', 'gt_', 'ge', 'ge_', 'eq', 'eq_',
+    'ne', 'ne_', 'unary_op', 'unary_op_', 'neg', 'neg_', 'l_not', 'l_not_',
+    'relu', 'relu_', 'abs', 'abs_', 'sqrt', 'sqrt_', 'square', 'square_', 'exp',
+    'exp_', 'ln', 'ln_', 'sigmoid', 'sigmoid_', 'tanh', 'tanh_', 'floor',
+    'floor_', 'ceil', 'ceil_'
+]
+
 import operator
 
 from .. import core
-from .utils import *
-from .shape_utils import *
+from .shape_utils import broadcast_shape, copy_shape
 
 
 def _named_partial(name: str, doc: str, f, *args, **kvs):
@@ -358,56 +369,56 @@ relu = _named_partial("relu", out_of_place_unary_doc_template.format("ReLU"),
 
 abs_ = _named_partial("abs_",
                       inplace_unary_doc_template.format("absolute value"),
-                      unary_op_, lambda x: core.abs(x))
+                      unary_op_, core.abs)
 abs = _named_partial("abs",
                      out_of_place_unary_doc_template.format("absolute value"),
-                     unary_op, lambda x: core.abs(x))
+                     unary_op, core.abs)
 
 sqrt_ = _named_partial("sqrt_",
                        inplace_unary_doc_template.format("square root"),
-                       unary_op_, lambda x: core.sqrt(x))
+                       unary_op_, core.sqrt)
 sqrt = _named_partial("sqrt",
                       out_of_place_unary_doc_template.format("square root"),
-                      unary_op, lambda x: core.sqrt(x))
+                      unary_op, core.sqrt)
 
 square_ = _named_partial("square_", inplace_unary_doc_template.format("square"),
-                         unary_op_, lambda x: core.square(x))
+                         unary_op_, core.square)
 square = _named_partial("square",
                         out_of_place_unary_doc_template.format("square"),
-                        unary_op, lambda x: core.square(x))
+                        unary_op, core.square)
 
 exp_ = _named_partial("exp_",
                       inplace_unary_doc_template.format("natrual exponent"),
-                      unary_op_, lambda x: core.exp(x))
+                      unary_op_, core.exp)
 exp = _named_partial("exp",
                      out_of_place_unary_doc_template.format("natrual exponent"),
-                     unary_op, lambda x: core.exp(x))
+                     unary_op, core.exp)
 
 ln_ = _named_partial("ln_",
                      inplace_unary_doc_template.format("natrual logarithm"),
-                     unary_op_, lambda x: core.ln(x))
+                     unary_op_, core.ln)
 ln = _named_partial("ln",
                     out_of_place_unary_doc_template.format("natrual logarithm"),
-                    unary_op, lambda x: core.ln(x))
+                    unary_op, core.ln)
 
 sigmoid_ = _named_partial("sigmoid_",
                           inplace_unary_doc_template.format("sigmoid"),
-                          unary_op_, lambda x: core.sigmoid(x))
+                          unary_op_, core.sigmoid)
 sigmoid = _named_partial("sigmoid",
                          out_of_place_unary_doc_template.format("sigmoid"),
-                         unary_op, lambda x: core.sigmoid(x))
+                         unary_op, core.sigmoid)
 
 tanh_ = _named_partial("tanh_", inplace_unary_doc_template.format("tanh"),
-                       unary_op_, lambda x: core.tanh(x))
+                       unary_op_, core.tanh)
 tanh = _named_partial("tanh", out_of_place_unary_doc_template.format("tanh"),
-                      unary_op, lambda x: core.tanh(x))
+                      unary_op, core.tanh)
 
 floor_ = _named_partial("floor_", inplace_unary_doc_template.format("floor"),
-                        unary_op_, lambda x: core.floor(x))
+                        unary_op_, core.floor)
 floor = _named_partial("floor", out_of_place_unary_doc_template.format("floor"),
-                       unary_op, lambda x: core.floor(x))
+                       unary_op, core.floor)
 
 ceil_ = _named_partial("ceil_", inplace_unary_doc_template.format("ceil"),
-                       unary_op_, lambda x: core.ceil(x))
+                       unary_op_, core.ceil)
 ceil = _named_partial("ceil", out_of_place_unary_doc_template.format("ceil"),
-                      unary_op, lambda x: core.ceil(x))
+                      unary_op, core.ceil)

@@ -1,3 +1,5 @@
+__all__ = ['logger', 'check_conflict_id', 'with_line_no']
+
 import itertools
 
 from freetensor_ffi import logger

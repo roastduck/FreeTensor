@@ -1,7 +1,14 @@
-import freetensor_ffi as ffi
+__all__ = [
+    'DataType', 'up_cast', 'neutral_val', 'is_float', 'is_int', 'is_bool',
+    'MemType', 'is_writable', 'is_inputting', 'is_outputting', 'add_outputting',
+    'remove_outputting', 'zero_value', 'min_value', 'max_value', 'same_mtype',
+    'AccessType'
+]
+
 from freetensor_ffi import (DataType, up_cast, neutral_val, is_float, is_int,
                             is_bool, MemType, is_writable, is_inputting,
-                            is_outputting, add_outputting, remove_outputting)
+                            is_outputting, add_outputting, remove_outputting,
+                            AccessType)
 
 
 def zero_value(dtype):

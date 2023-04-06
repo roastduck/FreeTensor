@@ -13,10 +13,10 @@ from dataclasses import dataclass
 import freetensor_ffi as ffi
 
 from .context import pop_ast_and_user_grads
-from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
-                   if_then_else, shape, VarVersionRef)
-from .stmt import (_VarDef, NamedScope, VarRef, For, If, Else, MarkLabel,
-                   ctx_stack, Func, Assert, Invoke, MarkVersion, UserGradStaged)
+from .expr import (dtype, mtype, ndim, l_and, l_or, l_not, if_then_else, shape,
+                   VarVersionRef)
+from .stmt import (_VarDef, VarRef, For, If, Else, ctx_stack, Func, Assert,
+                   Invoke, MarkVersion, UserGradStaged)
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
                       StagedIterable, StagingError, StagingOverload,
                       TransformError)
