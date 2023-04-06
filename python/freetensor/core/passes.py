@@ -1,7 +1,17 @@
+__all__ = [
+    'lower', 'scalar_prop_const', 'tensor_prop_const', 'prop_one_time_use',
+    'simplify', 'pb_simplify', 'z3_simplify', 'sink_var', 'shrink_var',
+    'shrink_for', 'merge_and_hoist_if', 'make_reduction',
+    'make_parallel_reduction', 'remove_writes', 'remove_cyclic_assign',
+    'remove_dead_var', 'make_heap_alloc', 'use_builtin_div',
+    'hoist_var_over_stmt_seq', 'flatten_stmt_seq',
+    'cpu_lower_parallel_reduction', 'gpu_lower_parallel_reduction',
+    'gpu_make_sync', 'gpu_multiplex_buffers', 'gpu_simplex_buffers',
+    'gpu_normalize_threads', 'gpu_normalize_var_in_kernel', 'gpu_lower_vector'
+]
+
 from typing import Optional, Sequence
 import functools
-
-from . import config
 
 import freetensor_ffi as ffi
 
@@ -26,15 +36,13 @@ from freetensor_ffi import use_builtin_div
 from freetensor_ffi import hoist_var_over_stmt_seq
 from freetensor_ffi import flatten_stmt_seq
 from freetensor_ffi import cpu_lower_parallel_reduction
-
-if config.with_cuda():
-    from freetensor_ffi import gpu_lower_parallel_reduction
-    from freetensor_ffi import gpu_make_sync
-    from freetensor_ffi import gpu_multiplex_buffers
-    from freetensor_ffi import gpu_simplex_buffers
-    from freetensor_ffi import gpu_normalize_threads
-    from freetensor_ffi import gpu_normalize_var_in_kernel
-    from freetensor_ffi import gpu_lower_vector
+from freetensor_ffi import gpu_lower_parallel_reduction
+from freetensor_ffi import gpu_make_sync
+from freetensor_ffi import gpu_multiplex_buffers
+from freetensor_ffi import gpu_simplex_buffers
+from freetensor_ffi import gpu_normalize_threads
+from freetensor_ffi import gpu_normalize_var_in_kernel
+from freetensor_ffi import gpu_lower_vector
 
 
 def lower(ast=None,

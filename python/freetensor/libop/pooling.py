@@ -1,3 +1,5 @@
+__all__ = ['max_pool', 'max_pool_', 'global_avg_pool', 'global_avg_pool_']
+
 from typing import Sequence, Optional
 
 from .. import core

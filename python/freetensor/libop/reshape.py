@@ -1,3 +1,8 @@
+__all__ = [
+    'reshape', 'reshape_', 'flatten', 'flatten_', 'unsqueeze', 'unsqueeze_',
+    'expand', 'expand_'
+]
+
 from typing import Sequence, Optional
 from numbers import Number
 

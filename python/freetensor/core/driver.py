@@ -1,9 +1,14 @@
+__all__ = [
+    'Array', 'array', 'move', 'TargetType', 'Target', 'Device', 'CPU', 'GPU',
+    'ReturnValuesPack', 'Driver', 'build_binary'
+]
+
 import freetensor_ffi as ffi
 import functools
 import numpy as np
 
 from typing import Optional, Sequence
-from freetensor_ffi import Target, Array
+from freetensor_ffi import TargetType, Target, Array
 
 from . import config
 from .codegen import NativeCode
@@ -141,13 +146,13 @@ class Device(ffi.Device):
 class CPU(Device):
 
     def __init__(self, *args):
-        super().__init__(ffi.TargetType.CPU, *args)
+        super().__init__(TargetType.CPU, *args)
 
 
 class GPU(Device):
 
     def __init__(self, *args):
-        super().__init__(ffi.TargetType.GPU, *args)
+        super().__init__(TargetType.GPU, *args)
 
 
 class ReturnValuesPack:

@@ -1,3 +1,5 @@
+__all__ = ['zeros', 'zeros_']
+
 from .. import core
 from .assign import assign
 

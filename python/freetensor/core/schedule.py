@@ -1,11 +1,17 @@
+__all__ = [
+    'FissionSide', 'MoveToSide', 'VarSplitMode', 'ID', 'IDMap', 'Schedule',
+    'schedule'
+]
+
 import functools
 from collections.abc import Sequence
 from typing import Optional, Callable, Union, List, Dict
 
 import freetensor_ffi as ffi
-from freetensor_ffi import (MemType, ParallelScope, ID, Selector, FissionSide,
-                            MoveToSide)
+from freetensor_ffi import (ParallelScope, ID, Selector, FissionSide,
+                            MoveToSide, VarSplitMode)
 from .analyze import find_stmt
+from .meta import MemType
 
 
 class IDMap:

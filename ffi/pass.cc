@@ -168,57 +168,75 @@ void init_ffi_pass(py::module_ &m) {
 
     // GPU
 #ifdef FT_WITH_CUDA
-    m.def("gpu_lower_parallel_reduction",
-          static_cast<Func (*)(const Func &)>(&gpu::lowerParallelReduction));
-    m.def("gpu_lower_parallel_reduction",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerParallelReduction));
+#define GPU_ONLY(name, ...) name, __VA_ARGS__
+#else
+#define GPU_ONLY(name, ...)                                                    \
+    name, [](const py::args &, const py::kwargs &) {                           \
+        ERROR((std::string)name + " is unavailable because FT_WITH_CUDA is "   \
+                                  "disabled when building FreeTensor");        \
+    }
+#endif
 
-    m.def("gpu_normalize_threads",
-          static_cast<Func (*)(const Func &)>(&gpu::normalizeThreads),
-          "func"_a);
-    m.def("gpu_normalize_threads",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeThreads),
-          "stmt"_a);
+    m.def(GPU_ONLY(
+        "gpu_lower_parallel_reduction",
+        static_cast<Func (*)(const Func &)>(&gpu::lowerParallelReduction)));
+    m.def(GPU_ONLY(
+        "gpu_lower_parallel_reduction",
+        static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerParallelReduction)));
 
-    m.def("gpu_normalize_var_in_kernel",
-          static_cast<Func (*)(const Func &)>(&gpu::normalizeVarInKernel),
-          "func"_a);
-    m.def("gpu_normalize_var_in_kernel",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeVarInKernel),
-          "stmt"_a);
+    m.def(GPU_ONLY("gpu_normalize_threads",
+                   static_cast<Func (*)(const Func &)>(&gpu::normalizeThreads),
+                   "func"_a));
+    m.def(GPU_ONLY("gpu_normalize_threads",
+                   static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeThreads),
+                   "stmt"_a));
 
-    m.def("gpu_make_sync",
-          static_cast<Func (*)(const Func &, const Ref<GPUTarget> &)>(
-              &gpu::makeSync),
-          "func"_a, "target"_a);
-    m.def("gpu_make_sync",
-          static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &)>(
-              &gpu::makeSync),
-          "stmt"_a, "target"_a);
+    m.def(GPU_ONLY(
+        "gpu_normalize_var_in_kernel",
+        static_cast<Func (*)(const Func &)>(&gpu::normalizeVarInKernel),
+        "func"_a));
+    m.def(GPU_ONLY(
+        "gpu_normalize_var_in_kernel",
+        static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeVarInKernel),
+        "stmt"_a));
 
-    m.def(
+    m.def(GPU_ONLY("gpu_make_sync",
+                   static_cast<Func (*)(const Func &, const Ref<GPUTarget> &)>(
+                       &gpu::makeSync),
+                   "func"_a, "target"_a));
+    m.def(GPU_ONLY("gpu_make_sync",
+                   static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &)>(
+                       &gpu::makeSync),
+                   "stmt"_a, "target"_a));
+
+    m.def(GPU_ONLY(
         "gpu_multiplex_buffers",
         static_cast<Func (*)(const Func &, const Ref<GPUTarget> &, const ID &)>(
             &gpu::multiplexBuffers),
-        "func"_a, "target"_a, "def_id"_a = std::nullopt);
-    m.def(
+        "func"_a, "target"_a, "def_id"_a = std::nullopt));
+    m.def(GPU_ONLY(
         "gpu_multiplex_buffers",
         static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &, const ID &)>(
             &gpu::multiplexBuffers),
-        "stmt"_a, "target"_a, "def_id"_a = std::nullopt);
+        "stmt"_a, "target"_a, "def_id"_a = std::nullopt));
 
-    m.def("gpu_simplex_buffers",
-          static_cast<Func (*)(const Func &, const ID &)>(&gpu::simplexBuffers),
-          "func"_a, "def_id"_a = std::nullopt);
-    m.def("gpu_simplex_buffers",
-          static_cast<Stmt (*)(const Stmt &, const ID &)>(&gpu::simplexBuffers),
-          "stmt"_a, "def_id"_a = std::nullopt);
+    m.def(GPU_ONLY(
+        "gpu_simplex_buffers",
+        static_cast<Func (*)(const Func &, const ID &)>(&gpu::simplexBuffers),
+        "func"_a, "def_id"_a = std::nullopt));
+    m.def(GPU_ONLY(
+        "gpu_simplex_buffers",
+        static_cast<Stmt (*)(const Stmt &, const ID &)>(&gpu::simplexBuffers),
+        "stmt"_a, "def_id"_a = std::nullopt));
 
-    m.def("gpu_lower_vector",
-          static_cast<Func (*)(const Func &)>(&gpu::lowerVector), "func"_a);
-    m.def("gpu_lower_vector",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerVector), "stmt"_a);
-#endif // FT_WITH_CUDA
+    m.def(GPU_ONLY("gpu_lower_vector",
+                   static_cast<Func (*)(const Func &)>(&gpu::lowerVector),
+                   "func"_a));
+    m.def(GPU_ONLY("gpu_lower_vector",
+                   static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerVector),
+                   "stmt"_a));
+
+#undef GPU_ONLY
 
     m.def("lower",
           static_cast<Func (*)(const Func &, const Ref<Target> &,
