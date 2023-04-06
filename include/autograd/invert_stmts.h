@@ -29,7 +29,9 @@ class FindInvertibles : public SymbolTable<Visitor> {
 
   protected:
     using BaseClass::visit;
-    // TOOD: Store
+    // TODO 1: Support invertibles in Store.
+    // TODO 2: We now always invert first, and then compute gradient. Things
+    // will go wrong after we support Store, where we may use y for gradient.
     void visit(const ReduceTo &op) override;
 };
 

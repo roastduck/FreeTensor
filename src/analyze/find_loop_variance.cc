@@ -108,11 +108,11 @@ void FindLoopVariance::visit(const For &op) {
 
     loopStack_.emplace_back(op->id());
     condStack_.emplace_back(op->len_, op); // May make a ReduceTo variant
-    loops_[op->iter_] = op;
+    pushFor(op);
 
     (*this)(op->body_);
 
-    loops_.erase(op->iter_);
+    popFor(op);
     condStack_.pop_back();
     loopStack_.pop_back();
 }
@@ -165,7 +165,7 @@ void FindLoopVariance::visitExpr(const Expr &op) {
 void FindLoopVariance::visit(const Var &op) {
     BaseClass::visit(op);
     exprInfo_.erase({op, curStmt()});
-    exprInfo_[{op, curStmt()}][loops_.at(op->name_)->id()] =
+    exprInfo_[{op, curStmt()}][loop(op->name_)->id()] =
         LoopVariability::Variant;
 }
 

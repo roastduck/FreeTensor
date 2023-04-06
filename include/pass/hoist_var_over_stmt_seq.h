@@ -1,5 +1,5 @@
-#ifndef FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ
-#define FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ
+#ifndef FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ_H
+#define FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ_H
 
 #include <optional>
 #include <unordered_map>
@@ -49,4 +49,4 @@ DEFINE_PASS_FOR_FUNC(hoistVarOverStmtSeq)
 
 } // namespace freetensor
 
-#endif // FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ
+#endif // FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ_H

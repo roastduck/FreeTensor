@@ -7,6 +7,18 @@ namespace freetensor {
 
 namespace {
 
+VarDef findDefInAncestors(const Stmt &_s, const std::string &name) {
+    for (auto s = _s; s.isValid(); s = s->parentStmt()) {
+        if (s->nodeType() == ASTNodeType::VarDef) {
+            auto &&def = s.as<VarDefNode>();
+            if (def->name_ == name) {
+                return def;
+            }
+        }
+    }
+    return nullptr;
+}
+
 class ReplaceMarkVersionByFakeLoad : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
@@ -90,12 +102,14 @@ std::pair<std::unordered_map<ID, std::unordered_set<ID>>,
           std::unordered_map<ID, std::unordered_set<ID>>>
 findTapeOrRecompStmts(
     const Stmt &op, const std::unordered_set<ID> &defsToTape,
+    const std::unordered_set<ID> defsNeedGrad,
     std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
         &derivatives) {
     std::unordered_map<ID, std::unordered_set<ID>> idsToTape, idsToRecomp;
 
     // - (RAW) If the variable is written by statement X, then read by statement
-    // Y, and Y's gradient needs X, a version of it on X is needed
+    // Y, and we need Y's gradient, which further needs X, a version of it on X
+    // is needed
     // - (RAW) If the variable is written by statement X, where the value may
     // propagate to a MarkVersion node, a version of it on X is needed. In order
     // to find such statements, we replace MarkVersion by a fake Load node with
@@ -119,10 +133,22 @@ findTapeOrRecompStmts(
             // Use in indices: always needed
             return true;
         }
-        if (auto it = derivatives.find(StmtOrExprID{rootExpr, acc.stmt_->id()});
-            it != derivatives.end()) {
-            // Use in values: needed if the derivative needs it
-            return it->second.reads().count(acc.def_->name_);
+        std::string gradVar;
+        if (acc.stmt_->nodeType() == ASTNodeType::Store) {
+            gradVar = acc.stmt_.template as<StoreNode>()->var_;
+        } else if (acc.stmt_->nodeType() == ASTNodeType::ReduceTo) {
+            gradVar = acc.stmt_.template as<ReduceToNode>()->var_;
+        }
+        if (!gradVar.empty() &&
+            defsNeedGrad.count(findDefInAncestors(acc.stmt_, gradVar)->id())) {
+            // We need this statement's gradient, which is computed by a
+            // derivative
+            if (auto it =
+                    derivatives.find(StmtOrExprID{rootExpr, acc.stmt_->id()});
+                it != derivatives.end()) {
+                // Use in values: needed if the derivative needs it
+                return it->second.reads().count(acc.def_->name_);
+            }
         }
         return false;
     })(fakeOp, [&](const Dependence &d) {
@@ -134,27 +160,29 @@ findTapeOrRecompStmts(
         }
     });
 
-    // - (W) If the variable is written by statement X, and then overwritten
-    // by statement Y, and if we need X's result to compute X's gradient (use
-    // `y` for `y = f(x)`'s gradient), then we need a version of it on X.
+    // - (W) If the variable is written by statement X, whose gradient is
+    // needed, and if we need X's result to compute X's gradient (use `y` for `y
+    // = f(x)`'s gradient), then we need a version of it on X.
     FindWrites{[&](const Expr &expr, const Stmt &write, const ID &defId) {
-        if (auto it = derivatives.find(StmtOrExprID{expr, write->id()});
-            it != derivatives.end() && it->second.usingStore()) {
-            if (defsToTape.count(defId)) {
-                idsToTape[defId].insert(write->id());
-            } else {
-                idsToRecomp[defId].insert(write->id());
+        if (defsNeedGrad.count(defId)) {
+            if (auto it = derivatives.find(StmtOrExprID{expr, write->id()});
+                it != derivatives.end() && it->second.usingStore()) {
+                if (defsToTape.count(defId)) {
+                    idsToTape[defId].insert(write->id());
+                } else {
+                    idsToRecomp[defId].insert(write->id());
+                }
             }
-        }
 
-        // Special. See Grad::visit(ReduceTo)
-        if (write->nodeType() == ASTNodeType::ReduceTo &&
-            (write.as<ReduceToNode>()->op_ == ReduceOp::Min ||
-             write.as<ReduceToNode>()->op_ == ReduceOp::Max)) {
-            if (defsToTape.count(defId)) {
-                idsToTape[defId].insert(write->id());
-            } else {
-                idsToRecomp[defId].insert(write->id());
+            // Special. See Grad::visit(ReduceTo)
+            if (write->nodeType() == ASTNodeType::ReduceTo &&
+                (write.as<ReduceToNode>()->op_ == ReduceOp::Min ||
+                 write.as<ReduceToNode>()->op_ == ReduceOp::Max)) {
+                if (defsToTape.count(defId)) {
+                    idsToTape[defId].insert(write->id());
+                } else {
+                    idsToRecomp[defId].insert(write->id());
+                }
             }
         }
     }}(op);

@@ -6,6 +6,7 @@
 #include <math/parse_pb_expr.h>
 #include <mutator.h>
 #include <pass/make_nested_loops.h>
+#include <pass/make_reduction.h>
 #include <pass/replace_iter.h>
 
 namespace freetensor {
@@ -50,24 +51,6 @@ class InsertLifetimeEndChecker : public Mutator {
         return op;
     }
 };
-
-/**
- * Iteration sets from dependence analysis may have different numbers of
- * dimensions, because some of them may be padded. We can simply remove those
- * paddings.
- */
-PBSet unionOnCommonDims(const PBSet &_lhs, const PBSet &_rhs) {
-    PBSet lhs = _lhs, rhs = _rhs;
-    auto nDimsL = lhs.nDims(), nDimsR = rhs.nDims();
-    auto nDims = std::min(nDimsL, nDimsR);
-    if (nDimsL > nDims) {
-        lhs = projectOutDims(lhs, nDims, nDimsL - nDims);
-    }
-    if (nDimsR > nDims) {
-        rhs = projectOutDims(rhs, nDims, nDimsR - nDims);
-    }
-    return uni(lhs, rhs);
-}
 
 struct CondInfo {
     std::vector<IterAxis> iter_;
@@ -211,7 +194,10 @@ invertStmts(const Stmt &op,
             std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
                 *derivatives) {
     FindInvertibles finder;
-    finder(op);
+    // Make ReduceTo nodes before finding. Since some ReduceOp is not supported
+    // by autograd/grad, the modified AST is only used to find invertibles, but
+    // not returned.
+    finder(makeReduction(op));
     auto &&invertibles = finder.invertibles();
     if (invertibles.empty()) {
         return {op, {}};
@@ -261,6 +247,11 @@ invertStmts(const Stmt &op,
             auto earlierIterSet =
                 PBSet(presburger, toString(range(d.later2EarlierIter_)));
 
+            // Trim paddings
+            earlierIterSet = projectOutDims(
+                earlierIterSet, d.earlier_.iter_.size(),
+                earlierIterSet.nDims() - d.earlier_.iter_.size());
+
             auto toInvert = d.later_.stmt_->id();
             auto toRecover = d.earlier_.stmt_->id();
             if (invertibles.count(d.later_.stmt_->id())) { // Can invert
@@ -268,19 +259,24 @@ invertStmts(const Stmt &op,
                 auto laterIterSet =
                     PBSet(presburger, toString(domain(d.later2EarlierIter_)));
 
+                // Trim paddings
+                laterIterSet = projectOutDims(
+                    laterIterSet, d.later_.iter_.size(),
+                    laterIterSet.nDims() - d.later_.iter_.size());
+
                 if (!toInvertInfo.count(toInvert)) {
                     toInvertInfo[toInvert] =
                         CondInfo{d.later_.iter_, laterIterSet, nullptr};
                 } else {
-                    toInvertInfo[toInvert].when_ = unionOnCommonDims(
-                        toInvertInfo.at(toInvert).when_, laterIterSet);
+                    toInvertInfo[toInvert].when_ =
+                        uni(toInvertInfo.at(toInvert).when_, laterIterSet);
                 }
             } else { // Cannot invert
                 if (!unrecoverableInfo.count(toRecover)) {
                     unrecoverableInfo[toRecover] =
                         CondInfo{d.earlier_.iter_, earlierIterSet, nullptr};
                 } else {
-                    unrecoverableInfo[toRecover].when_ = unionOnCommonDims(
+                    unrecoverableInfo[toRecover].when_ = uni(
                         unrecoverableInfo.at(toRecover).when_, earlierIterSet);
                 }
             }
@@ -288,8 +284,8 @@ invertStmts(const Stmt &op,
             if (!allPossibleIters.count(toRecover)) {
                 allPossibleIters[toRecover] = earlierIterSet;
             } else {
-                allPossibleIters[toRecover] = unionOnCommonDims(
-                    allPossibleIters.at(toRecover), earlierIterSet);
+                allPossibleIters[toRecover] =
+                    uni(allPossibleIters.at(toRecover), earlierIterSet);
             }
         });
     for (auto &&[id, info] : unrecoverableInfo) {
