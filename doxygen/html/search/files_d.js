@@ -20,5 +20,7 @@ var searchData=
   ['profile_2ecc_17',['profile.cc',['../profile_8cc.html',1,'']]],
   ['profile_2eh_18',['profile.h',['../profile_8h.html',1,'']]],
   ['prop_5fone_5ftime_5fuse_2ecc_19',['prop_one_time_use.cc',['../prop__one__time__use_8cc.html',1,'']]],
-  ['prop_5fone_5ftime_5fuse_2eh_20',['prop_one_time_use.h',['../prop__one__time__use_8h.html',1,'']]]
+  ['prop_5fone_5ftime_5fuse_2eh_20',['prop_one_time_use.h',['../prop__one__time__use_8h.html',1,'']]],
+  ['propagate_5fdefs_5fneed_5fgrad_2ecc_21',['propagate_defs_need_grad.cc',['../propagate__defs__need__grad_8cc.html',1,'']]],
+  ['propagate_5fdefs_5fneed_5fgrad_2eh_22',['propagate_defs_need_grad.h',['../propagate__defs__need__grad_8h.html',1,'']]]
 ];

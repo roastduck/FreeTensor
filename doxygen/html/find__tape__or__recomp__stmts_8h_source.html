@@ -80,18 +80,19 @@ $(function() {
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>std::pair&lt;std::unordered_map&lt;ID, std::unordered_set&lt;ID&gt;&gt;,</div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>          std::unordered_map&lt;ID, std::unordered_set&lt;ID&gt;&gt;&gt;</div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><a class="code hl_function" href="namespacefreetensor.html#a771f04bffe1bb0b97e324593cc52c9cd">findTapeOrRecompStmts</a>(</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><a class="code hl_function" href="namespacefreetensor.html#aeb9811733008ae4749a3871929811651">findTapeOrRecompStmts</a>(</div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, <span class="keyword">const</span> std::unordered_set&lt;ID&gt; &amp;defsToTape,</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    std::unordered_map&lt;StmtOrExprID, Derivative::LazyFullDerivative&gt;</div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>        &amp;derivatives);</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>} <span class="comment">// namespace freetensor</span></div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_FIND_TAPE_OR_RECOMP_STMTS_H</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="keyword">const</span> std::unordered_set&lt;ID&gt; defsNeedGrad,</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    std::unordered_map&lt;StmtOrExprID, Derivative::LazyFullDerivative&gt;</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>        &amp;derivatives);</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_FIND_TAPE_OR_RECOMP_STMTS_H</span></div>
 <div class="ttc" id="aderivative_8h_html"><div class="ttname"><a href="derivative_8h.html">derivative.h</a></div></div>
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
-<div class="ttc" id="anamespacefreetensor_html_a771f04bffe1bb0b97e324593cc52c9cd"><div class="ttname"><a href="namespacefreetensor.html#a771f04bffe1bb0b97e324593cc52c9cd">freetensor::findTapeOrRecompStmts</a></div><div class="ttdeci">std::pair&lt; std::unordered_map&lt; ID, std::unordered_set&lt; ID &gt; &gt;, std::unordered_map&lt; ID, std::unordered_set&lt; ID &gt; &gt; &gt; findTapeOrRecompStmts(const Stmt &amp;op, const std::unordered_set&lt; ID &gt; &amp;defsToTape, std::unordered_map&lt; StmtOrExprID, Derivative::LazyFullDerivative &gt; &amp;derivatives)</div><div class="ttdef"><b>Definition:</b> find_tape_or_recomp_stmts.cc:91</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a8b7e165b3601cc722c7b357347dc6de9"><div class="ttname"><a href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">freetensor::Stmt</a></div><div class="ttdeci">Ref&lt; StmtNode &gt; Stmt</div><div class="ttdef"><b>Definition:</b> ast.h:152</div></div>
+<div class="ttc" id="anamespacefreetensor_html_aeb9811733008ae4749a3871929811651"><div class="ttname"><a href="namespacefreetensor.html#aeb9811733008ae4749a3871929811651">freetensor::findTapeOrRecompStmts</a></div><div class="ttdeci">std::pair&lt; std::unordered_map&lt; ID, std::unordered_set&lt; ID &gt; &gt;, std::unordered_map&lt; ID, std::unordered_set&lt; ID &gt; &gt; &gt; findTapeOrRecompStmts(const Stmt &amp;op, const std::unordered_set&lt; ID &gt; &amp;defsToTape, const std::unordered_set&lt; ID &gt; defsNeedGrad, std::unordered_map&lt; StmtOrExprID, Derivative::LazyFullDerivative &gt; &amp;derivatives)</div><div class="ttdef"><b>Definition:</b> find_tape_or_recomp_stmts.cc:103</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
