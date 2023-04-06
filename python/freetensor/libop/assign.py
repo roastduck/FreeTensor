@@ -4,8 +4,6 @@ __all__ = [
 ]
 
 from .. import core
-from .utils import *
-from .shape_utils import *
 
 
 def _named_partial(name: str, doc: str, f, *args, **kvs):

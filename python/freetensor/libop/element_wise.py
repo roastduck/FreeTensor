@@ -13,8 +13,7 @@ __all__ = [
 import operator
 
 from .. import core
-from .utils import *
-from .shape_utils import *
+from .shape_utils import broadcast_shape, copy_shape
 
 
 def _named_partial(name: str, doc: str, f, *args, **kvs):

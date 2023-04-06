@@ -3,7 +3,7 @@ __all__ = ['max_pool', 'max_pool_', 'global_avg_pool', 'global_avg_pool_']
 from typing import Sequence, Optional
 
 from .. import core
-from .conv_shape_utils import *
+from .conv_shape_utils import calc_same_upper_pad, calc_same_lower_pad, calc_out_size
 
 
 @core.inline

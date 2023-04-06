@@ -3,12 +3,12 @@ __all__ = [
     'expand', 'expand_'
 ]
 
-from typing import Sequence, Optional
+from typing import Sequence
 from numbers import Number
 
 from .. import core
-from .utils import *
-from .shape_utils import *
+from .utils import begin_with_0, all_minus_one
+from .shape_utils import copy_shape
 
 
 class _ExprHolder:
@@ -271,7 +271,7 @@ def _flatten_comp_shape(x, axis):
 
 
 @core.inline
-def flatten(x, axis=1):
+def flatten(x, axis: int = 1):
     '''
     Flatten a tensor to have fewer dimensions, and return the result
 

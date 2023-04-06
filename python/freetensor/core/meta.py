@@ -5,7 +5,6 @@ __all__ = [
     'AccessType'
 ]
 
-import freetensor_ffi as ffi
 from freetensor_ffi import (DataType, up_cast, neutral_val, is_float, is_int,
                             is_bool, MemType, is_writable, is_inputting,
                             is_outputting, add_outputting, remove_outputting,

@@ -5,7 +5,7 @@ __all__ = [
 
 from typing import Sequence, Optional
 
-from .utils import *
+from .utils import begin_with_0, all_minus_one
 from .. import core
 
 

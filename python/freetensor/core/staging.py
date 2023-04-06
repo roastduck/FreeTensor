@@ -16,8 +16,6 @@ from dataclasses import dataclass
 
 from . import config
 
-import freetensor_ffi as ffi
-
 assert sys.version_info >= (3,
                             8), "Python version lower than 3.8 is not supported"
 

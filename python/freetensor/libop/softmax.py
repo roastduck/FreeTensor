@@ -2,7 +2,7 @@ __all__ = ['softmax', 'softmax_']
 
 from .. import core
 from .element_wise import exp, exp_, sub, sub_, truediv, truediv_
-from .reduction import reduce_max, reduce_max_, reduce_sum, reduce_sum_
+from .reduction import reduce_max, reduce_sum
 
 
 @core.inline
