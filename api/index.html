@@ -1997,9 +1997,11 @@ Driver            (<span title="freetensor_ffi.Driver">Driver</span>)
         <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
         <span class="n">kws</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kws</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)):</span>
-            <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">Array</span><span class="p">))</span>
+            <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                            <span class="n">dont_drop_borrow</span><span class="o">=</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">Array</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kws</span><span class="p">:</span>
-            <span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">Array</span><span class="p">))</span>
+            <span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+                             <span class="n">dont_drop_borrow</span><span class="o">=</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">Array</span><span class="p">))</span>
 
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">args_ref_cnt_holder</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
@@ -2300,9 +2302,11 @@ ReturnValuesPack</p>
     <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
     <span class="n">kws</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kws</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)):</span>
-        <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">Array</span><span class="p">))</span>
+        <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="n">dont_drop_borrow</span><span class="o">=</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">Array</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kws</span><span class="p">:</span>
-        <span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">Array</span><span class="p">))</span>
+        <span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+                         <span class="n">dont_drop_borrow</span><span class="o">=</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">Array</span><span class="p">))</span>
 
     <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">args_ref_cnt_holder</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
@@ -2524,7 +2528,7 @@ OrderedDict unpacks to keys rather than values</p>
 
 
 <h4 id="freetensor.core.driver.array" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dont_drop_borrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">moved</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dont_drop_borrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">moved</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 
 <a href="#freetensor.core.driver.array" class="headerlink" title="Permanent link">&para;</a></h4>
@@ -2532,7 +2536,21 @@ OrderedDict unpacks to keys rather than values</p>
     <div class="doc doc-contents ">
 
       <p>Factory function for Array</p>
-<p>It converts more data format to Array</p>
+<p>This function is preferred over directly calling <code>Array</code>'s constructor, because
+it accepts more data format.</p>
+<ul>
+<li>If <code>data</code> is another FreeTensor <code>Array</code>, the original object will be returned,
+with <code>dont_drop_borrow</code> and <code>moved</code> set to new values. If <code>dtype</code> is set and
+different from the original data type, the <code>Array</code> will be copied first to convert
+the data type.</li>
+<li>If <code>data</code> is Numpy <code>Array</code> or PyTorch <code>Tensor</code>, it will be converted to FreeTensor
+<code>Array</code>. Memory copy will be avoided in most cases, but it is inevitable if the
+data is strided. If <code>dtype</code> is set and different from the original data type, the
+<code>Array</code> or <code>Tensor</code> will be copied first to convert the data type.</li>
+<li>Otherwise, the data will be treated as an n-dimensional array-like object, and
+will be parsed according the rules in NumPy. The data type is also set accordingly,
+unless <code>dtype</code> is set.</li>
+</ul>
 
 <table class="field-list">
   <colgroup>
@@ -2544,7 +2562,9 @@ OrderedDict unpacks to keys rather than values</p>
       <th class="field-name">Parameters:</th>
       <td class="field-body">
         <ul class="first simple">
-            <li><p><strong>data</strong> (<code>Numpy Array, PyTorch Tensor, or another FreeTensor Array</code>) – Data to be copied to or borrowed by the new Array object</p></li>
+            <li><p><strong>data</strong> (<code>FreeTensor Array, Numpy Array, PyTorch Tensor, or other array-like objects</code>) – Data to be copied to or borrowed by the new Array object</p></li>
+            <li><p><strong>dtype</strong> (<code>ft.DataType or str</code>) – If <code>data</code> is not in <code>dtype</code>, convert it to <code>dtype</code> first before constructing
+the <code>Array</code></p></li>
             <li><p><strong>dont_drop_borrow</strong> (<code>bool</code>) – If true, report an error if we have to drop a borrwed data. This flag is set
 to true when the Array is cunstructed IMPLICITLY (not by this function) from
 a user object by borrowing from it, where users may expect they are acutually
@@ -2558,16 +2578,35 @@ program runs. Variables with "input-mutable" access type may modify the Array</p
 </table>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/driver.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dont_drop_borrow</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">moved</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span>
+          <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">dont_drop_borrow</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+          <span class="n">moved</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Factory function for Array</span>
 
-<span class="sd">    It converts more data format to Array</span>
+<span class="sd">    This function is preferred over directly calling `Array`&#39;s constructor, because</span>
+<span class="sd">    it accepts more data format.</span>
+
+<span class="sd">    - If `data` is another FreeTensor `Array`, the original object will be returned,</span>
+<span class="sd">    with `dont_drop_borrow` and `moved` set to new values. If `dtype` is set and</span>
+<span class="sd">    different from the original data type, the `Array` will be copied first to convert</span>
+<span class="sd">    the data type.</span>
+<span class="sd">    - If `data` is Numpy `Array` or PyTorch `Tensor`, it will be converted to FreeTensor</span>
+<span class="sd">    `Array`. Memory copy will be avoided in most cases, but it is inevitable if the</span>
+<span class="sd">    data is strided. If `dtype` is set and different from the original data type, the</span>
+<span class="sd">    `Array` or `Tensor` will be copied first to convert the data type.</span>
+<span class="sd">    - Otherwise, the data will be treated as an n-dimensional array-like object, and</span>
+<span class="sd">    will be parsed according the rules in NumPy. The data type is also set accordingly,</span>
+<span class="sd">    unless `dtype` is set.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    data : Numpy Array, PyTorch Tensor, or another FreeTensor Array</span>
+<span class="sd">    data : FreeTensor Array, Numpy Array, PyTorch Tensor, or other array-like objects</span>
 <span class="sd">        Data to be copied to or borrowed by the new Array object</span>
+<span class="sd">    dtype : ft.DataType or str</span>
+<span class="sd">        If `data` is not in `dtype`, convert it to `dtype` first before constructing</span>
+<span class="sd">        the `Array`</span>
 <span class="sd">    dont_drop_borrow : bool</span>
 <span class="sd">        If true, report an error if we have to drop a borrwed data. This flag is set</span>
 <span class="sd">        to true when the Array is cunstructed IMPLICITLY (not by this function) from</span>
@@ -2578,7 +2617,13 @@ program runs. Variables with "input-mutable" access type may modify the Array</p
 <span class="sd">        program runs. Variables with &quot;input-mutable&quot; access type may modify the Array</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
+    <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">DataType</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Array</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">dtype</span> <span class="o">!=</span> <span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+            <span class="c1"># Must be contiguous</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">Array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">to_numpy_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)))</span>
         <span class="n">data</span><span class="o">.</span><span class="n">set_dont_drop_borrow</span><span class="p">(</span><span class="n">dont_drop_borrow</span><span class="p">)</span>
         <span class="n">data</span><span class="o">.</span><span class="n">set_moved</span><span class="p">(</span><span class="n">moved</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span>
@@ -2590,7 +2635,9 @@ program runs. Variables with "input-mutable" access type may modify the Array</p
     <span class="c1"># function can only be called from Python side (not from PyBind11&#39;s `py::array`</span>
     <span class="c1"># type).</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">flags</span><span class="p">[</span><span class="s1">&#39;C_CONTIGUOUS&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">to_numpy_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">to_numpy_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">),</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">flags</span><span class="p">[</span><span class="s1">&#39;C_CONTIGUOUS&#39;</span><span class="p">]:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dont_drop_borrow</span><span class="p">,</span> <span class="n">moved</span><span class="p">)</span>
 
@@ -2601,11 +2648,18 @@ program runs. Variables with "input-mutable" access type may modify the Array</p
                 <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidIO</span><span class="p">(</span>
                     <span class="s2">&quot;FreeTensor should be built with WITH_PYTORCH to accept a PyTorch tensor&quot;</span>
                 <span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">is_contiguous</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">to_torch_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">to_torch_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">),</span>
+                               <span class="n">memory_format</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">contiguous_format</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">is_contiguous</span><span class="p">():</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">Array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dont_drop_borrow</span><span class="p">,</span> <span class="n">moved</span><span class="p">)</span>
 
-    <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">InvalidIO</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> for Array&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">to_numpy_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)),</span>
+                 <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+                 <span class="n">dont_drop_borrow</span><span class="o">=</span><span class="n">dont_drop_borrow</span><span class="p">,</span>
+                 <span class="n">moved</span><span class="o">=</span><span class="n">moved</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
