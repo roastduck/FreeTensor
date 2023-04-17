@@ -12,18 +12,38 @@ from freetensor_ffi import TargetType, Target, Array
 
 from . import config
 from .codegen import NativeCode
+from .meta import DataType, to_numpy_dtype, to_torch_dtype
 
 
-def array(data, dont_drop_borrow: bool = False, moved: bool = False):
+def array(data,
+          dtype=None,
+          dont_drop_borrow: bool = False,
+          moved: bool = False):
     '''
     Factory function for Array
 
-    It converts more data format to Array
+    This function is preferred over directly calling `Array`'s constructor, because
+    it accepts more data format.
+
+    - If `data` is another FreeTensor `Array`, the original object will be returned,
+    with `dont_drop_borrow` and `moved` set to new values. If `dtype` is set and
+    different from the original data type, the `Array` will be copied first to convert
+    the data type.
+    - If `data` is Numpy `Array` or PyTorch `Tensor`, it will be converted to FreeTensor
+    `Array`. Memory copy will be avoided in most cases, but it is inevitable if the
+    data is strided. If `dtype` is set and different from the original data type, the
+    `Array` or `Tensor` will be copied first to convert the data type.
+    - Otherwise, the data will be treated as an n-dimensional array-like object, and
+    will be parsed according the rules in NumPy. The data type is also set accordingly,
+    unless `dtype` is set.
 
     Parameters
     ----------
-    data : Numpy Array, PyTorch Tensor, or another FreeTensor Array
+    data : FreeTensor Array, Numpy Array, PyTorch Tensor, or other array-like objects
         Data to be copied to or borrowed by the new Array object
+    dtype : ft.DataType or str
+        If `data` is not in `dtype`, convert it to `dtype` first before constructing
+        the `Array`
     dont_drop_borrow : bool
         If true, report an error if we have to drop a borrwed data. This flag is set
         to true when the Array is cunstructed IMPLICITLY (not by this function) from
@@ -34,7 +54,13 @@ def array(data, dont_drop_borrow: bool = False, moved: bool = False):
         program runs. Variables with "input-mutable" access type may modify the Array
     '''
 
+    if dtype is not None:
+        dtype = DataType(dtype)
+
     if type(data) is Array:
+        if dtype is not None and dtype != data.dtype:
+            # Must be contiguous
+            data = Array(data.numpy().astype(to_numpy_dtype(dtype)))
         data.set_dont_drop_borrow(dont_drop_borrow)
         data.set_moved(moved)
         return data
@@ -46,7 +72,9 @@ def array(data, dont_drop_borrow: bool = False, moved: bool = False):
     # function can only be called from Python side (not from PyBind11's `py::array`
     # type).
     if type(data) is np.ndarray:
-        if not data.flags['C_CONTIGUOUS']:
+        if dtype is not None and to_numpy_dtype(dtype) != data.dtype:
+            data = data.astype(to_numpy_dtype(dtype), order='C')
+        elif not data.flags['C_CONTIGUOUS']:
             data = data.copy(order='C')
         return Array(data, dont_drop_borrow, moved)
 
@@ -57,11 +85,18 @@ def array(data, dont_drop_borrow: bool = False, moved: bool = False):
                 raise ffi.InvalidIO(
                     "FreeTensor should be built with WITH_PYTORCH to accept a PyTorch tensor"
                 )
-            if not data.is_contiguous():
+            if dtype is not None and to_torch_dtype(dtype) != data.dtype:
+                data = data.to(to_torch_dtype(dtype),
+                               memory_format=torch.contiguous_format)
+            elif not data.is_contiguous():
                 data = data.contiguous()
             return Array(data, dont_drop_borrow, moved)
 
-    raise ffi.InvalidIO(f"Unsupported data type {type(data)} for Array")
+    return array(np.array(
+        data, dtype=None if dtype is None else to_numpy_dtype(dtype)),
+                 dtype=dtype,
+                 dont_drop_borrow=dont_drop_borrow,
+                 moved=moved)
 
 
 def move(data):
@@ -257,9 +292,11 @@ class Driver(ffi.Driver):
         args = list(args)
         kws = dict(kws)
         for i in range(len(args)):
-            args[i] = array(args[i], not isinstance(args[i], Array))
+            args[i] = array(args[i],
+                            dont_drop_borrow=not isinstance(args[i], Array))
         for key in kws:
-            kws[key] = array(kws[key], not isinstance(kws[key], Array))
+            kws[key] = array(kws[key],
+                             dont_drop_borrow=not isinstance(kws[key], Array))
 
         for arg in args:
             self.args_ref_cnt_holder.append(arg)

@@ -1,14 +1,48 @@
 __all__ = [
     'DataType', 'up_cast', 'neutral_val', 'is_float', 'is_int', 'is_bool',
-    'MemType', 'is_writable', 'is_inputting', 'is_outputting', 'add_outputting',
-    'remove_outputting', 'zero_value', 'min_value', 'max_value', 'same_mtype',
-    'AccessType'
+    'to_numpy_dtype', 'to_torch_dtype', 'MemType', 'is_writable',
+    'is_inputting', 'is_outputting', 'add_outputting', 'remove_outputting',
+    'zero_value', 'min_value', 'max_value', 'same_mtype', 'AccessType'
 ]
 
 from freetensor_ffi import (DataType, up_cast, neutral_val, is_float, is_int,
                             is_bool, MemType, is_writable, is_inputting,
                             is_outputting, add_outputting, remove_outputting,
                             AccessType)
+import numpy as np
+
+
+def to_numpy_dtype(dtype):
+    dtype = DataType(dtype)
+    if dtype == 'float32':
+        return np.float32
+    elif dtype == 'float64':
+        return np.float64
+    elif dtype == 'int32':
+        return np.int32
+    elif dtype == 'int64':
+        return np.int64
+    elif dtype == 'bool':
+        return np.bool_
+    else:
+        assert False, "Cannot convert data type %s to a NumPy type" % dtype
+
+
+def to_torch_dtype(dtype):
+    import torch  # torch is optional dependency
+    dtype = DataType(dtype)
+    if dtype == 'float32':
+        return torch.float32
+    elif dtype == 'float64':
+        return torch.float64
+    elif dtype == 'int32':
+        return torch.int32
+    elif dtype == 'int64':
+        return torch.int64
+    elif dtype == 'bool':
+        return torch.bool
+    else:
+        assert False, "Cannot convert data type %s to a PyTorch type" % dtype
 
 
 def zero_value(dtype):
