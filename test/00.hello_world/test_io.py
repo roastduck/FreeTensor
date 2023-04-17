@@ -19,6 +19,22 @@ def test_build_array_from_list():
     assert np.array_equal(y.numpy(), np.array([[1, 3], [2, 4]], dtype="int32"))
 
 
+def test_cast():
+
+    @ft.optimize
+    def test(x: ft.Var[(2, 2), "int64"]):
+        y = ft.empty((2, 2), "int64")
+        for i in range(2):
+            for j in range(2):
+                y[i, j] = x[i, j] + 1
+        return y
+
+    x = ft.array([[0, 2], [1, 3]], dtype="int32")
+    x_arr = ft.array(x, dtype="int64")
+    y = test(x_arr).numpy()
+    assert np.array_equal(y, np.array([[1, 3], [2, 4]], dtype="int64"))
+
+
 def test_numpy_strided():
 
     @ft.optimize

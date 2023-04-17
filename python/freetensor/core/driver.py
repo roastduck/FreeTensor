@@ -59,7 +59,8 @@ def array(data,
 
     if type(data) is Array:
         if dtype is not None and dtype != data.dtype:
-            data = data.numpy().astype(to_numpy_dtype(dtype))
+            # Must be contiguous
+            data = Array(data.numpy().astype(to_numpy_dtype(dtype)))
         data.set_dont_drop_borrow(dont_drop_borrow)
         data.set_moved(moved)
         return data
