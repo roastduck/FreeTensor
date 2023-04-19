@@ -1,5 +1,6 @@
 import pytest
 import freetensor as ft
+import numpy as np
 
 
 def test_basic():
@@ -1520,6 +1521,39 @@ def test_no_deps():
     s = ft.Schedule(backward)
     s.parallelize("$grad{Li}", "openmp")  # No exception here
     print(s.ast())
+
+
+def test_inlined_invoke_func_from_ad():
+
+    def test(a: ft.Var[(4,), "float32"], b: ft.Var[(4,), "float32"]):
+        y = ft.zeros((), "float32")
+        for i in range(4):
+            y[()] += a[i] * b[i]
+        return y
+
+    fwd, bwd, input_grads, output_grads = ft.grad(test, ['b'], [ft.Return()],
+                                                  ft.GradTapeMode.Nothing,
+                                                  tape_in_closure=False,
+                                                  verbose=1)
+
+    @ft.transform(verbose=1)
+    def custom_bwd(a: ft.Var[(4,), "float32"], b: ft.Var[(4,), "float32"],
+                   dzdy: ft.Var[(), "float32"]):
+        b_grad = bwd(a, b, **{output_grads[ft.Return()]: dzdy})
+        b_grad[...] += 1
+        return b_grad
+
+    fwd = ft.optimize(fwd)
+    custom_bwd = ft.optimize(custom_bwd)
+
+    a = ft.array([0, 1, 2, 3], dtype="float32")
+    b = ft.array([3, 2, 1, 0], dtype="float32")
+    y = fwd(a, b)
+    dzdy = ft.array(1, dtype='float32')
+    dzdb = custom_bwd(a, b, dzdy)
+
+    assert y.numpy() == 4
+    assert np.array_equal(dzdb.numpy(), [1, 2, 3, 4])
 
 
 def test_error_input_not_found():

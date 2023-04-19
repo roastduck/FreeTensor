@@ -12,7 +12,8 @@ from freetensor_ffi import GradTapeMode
 from freetensor_ffi import output_all_intermediates
 
 from .analyze import find_stmt
-from .frontend import transform
+from .transform import transform
+from .func import Func
 
 
 class Return:
@@ -107,6 +108,11 @@ def _grad_func(impl,
         tapes = {find_stmt(func, t).id for t in tapes}
     fwd, bwd, req_map, prov_map = impl(func, req, prov, tapes, tape_in_closure,
                                        invert, user_grads)
+
+    # Wrap fwd and bwd (originally ft.ffi.Func with ft.Func)
+    fwd = Func(fwd.name, fwd.params, fwd.returns, fwd.body)
+    bwd = Func(bwd.name, bwd.params, bwd.returns, bwd.body)
+
     if verbose is not None and verbose >= 1:
         print("Forward pass from AD:", file=sys.stderr)
         print(fwd, file=sys.stderr)

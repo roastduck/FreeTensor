@@ -4,7 +4,8 @@ from typing import Optional, Callable, Union, Sequence
 import freetensor_ffi as ffi
 from freetensor_ffi import GradTapeMode
 
-from .frontend import transform, staged_callable
+from .frontend import staged_callable
+from .transform import transform
 from .autograd import grad
 from .schedule import Schedule, schedule
 from .passes import lower

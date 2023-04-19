@@ -4,7 +4,6 @@ A frontend transforming user Python functions to ASTs via staging.
 
 import sys
 import numpy as np
-import functools
 import inspect
 from numbers import Number
 from typing import Callable, Dict, List, Sequence, Optional, Any, Union
@@ -12,15 +11,12 @@ from dataclasses import dataclass
 
 import freetensor_ffi as ffi
 
-from .context import pop_ast_and_user_grads
 from .expr import (dtype, mtype, ndim, l_and, l_or, l_not, if_then_else, shape,
                    VarVersionRef)
-from .stmt import (_VarDef, VarRef, For, If, Else, ctx_stack, Func, Assert,
-                   Invoke, MarkVersion, UserGradStaged)
+from .stmt import (_VarDef, VarRef, For, If, Else, ctx_stack, Assert, Invoke,
+                   MarkVersion, UserGradStaged)
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
-                      StagedIterable, StagingError, StagingOverload,
-                      TransformError)
-from .meta import add_outputting
+                      StagedIterable, StagingOverload)
 
 assert sys.version_info >= (3, 8), \
     "Python version lower than 3.8 is not supported"
@@ -29,7 +25,7 @@ assert sys.version_info >= (3, 8), \
 def staged_callable(staging, original, doc: Optional[str] = None):
 
     def impl(*args, **kwargs):
-        if _overload.in_staging():
+        if lang_overload.in_staging():
             return staging(*args, **kwargs)
         else:
             return original(*args, **kwargs)
@@ -53,14 +49,14 @@ class LifetimeScope:
         self.inner_scopes = []
 
     def __enter__(self):
-        _overload.lifetime_stack.append(self)
+        lang_overload.lifetime_stack.append(self)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         for scope in reversed(self.inner_scopes):
             scope.__exit__(exc_type, exc_val, exc_tb)
-        popped = _overload.lifetime_stack.pop()
+        popped = lang_overload.lifetime_stack.pop()
         if popped != self:
-            raise _overload.error(
+            raise lang_overload.error(
                 'LifetimeScope enter/exit not match, must be FILO')
 
     def register_inner_scope(self, scope):
@@ -189,7 +185,7 @@ class FreeTensorOverload(StagingOverload):
         ctx_stack.top().set_next_location(filename, lineno)
 
 
-_overload: FreeTensorOverload = FreeTensorOverload()
+lang_overload: FreeTensorOverload = FreeTensorOverload()
 
 
 def _register_as_predicate(ty):
@@ -205,7 +201,7 @@ def _register_as_predicate(ty):
 
     def _if_then_else_stmt(pred: ty, then_body: Callable[[], None],
                            else_body: Optional[Callable[[], None]]):
-        with _overload.allow_shortcut_scope(False):
+        with lang_overload.allow_shortcut_scope(False):
             with If(pred):
                 with LifetimeScope():
                     then_body()
@@ -222,7 +218,7 @@ def _register_as_predicate(ty):
         raise NotImplementedError()
 
     def _assert_stmt(pred: ty):
-        _overload.register_assert(pred)
+        lang_overload.register_assert(pred)
 
     StagedPredicate.register(ty)
     ty.logical_and = _logical_and
@@ -249,10 +245,10 @@ class VarCreator(StagedAssignable):
         '''Customized assign behavior. Creates a VarDef with its full name.'''
         if not self.assigned:
             self.assigned = True
-            return _overload.register_vardef(name, self.shape, self.dtype,
-                                             'cache', self.mtype)
+            return lang_overload.register_vardef(name, self.shape, self.dtype,
+                                                 'cache', self.mtype)
         else:
-            raise _overload.error(
+            raise lang_overload.error(
                 "Create new tensors in an `a = b = c`-like multi-assignment "
                 "is not supported")
 
@@ -349,11 +345,11 @@ def capture_var_fallback(arr: ffi.Array, name: str = 'captured'):
 
 
 def capture_var_staging(arr: ffi.Array, name: str = 'captured'):
-    return _overload.register_vardef(name,
-                                     arr.shape,
-                                     arr.dtype,
-                                     'input',
-                                     capture=arr)
+    return lang_overload.register_vardef(name,
+                                         arr.shape,
+                                         arr.dtype,
+                                         'input',
+                                         capture=arr)
 
 
 capture_var = staged_callable(capture_var_staging, capture_var_fallback,
@@ -385,8 +381,8 @@ class Var(StagedTypeAnnotation):
         self.shape, self.dtype, self.atype, self.mtype = shape, dtype, atype, mtype
 
     def annotate(self, name: str) -> VarRef:
-        return _overload.register_vardef(name, self.shape, self.dtype,
-                                         self.atype, self.mtype)
+        return lang_overload.register_vardef(name, self.shape, self.dtype,
+                                             self.atype, self.mtype)
 
 
 @dataclass
@@ -398,13 +394,13 @@ class VersionMarker(StagedAssignable):
         '''Customized assign behavior. Creates a MarkVersion with its full name.'''
         if not self.assigned:
             self.assigned = True
-            full_tape_name = _overload.fullname(tape_name)
+            full_tape_name = lang_overload.fullname(tape_name)
             MarkVersion(full_tape_name, self.var)
             return VarVersionRef(full_tape_name, self.var.full_shape,
                                  self.var.dtype, self.var.mtype,
                                  self.var.indices)
         else:
-            raise _overload.error(
+            raise lang_overload.error(
                 "Marking version in an `a = b = c`-like multi-assignment is not"
                 " supported")
 
@@ -497,7 +493,7 @@ class dynamic_range(StagedIterable):
     def foreach(self, name, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
         if not isinstance(name, str):
-            raise _overload.error(
+            raise lang_overload.error(
                 'dynamic_range only supports exactly one target variable')
 
         # Early optimizations
@@ -510,170 +506,11 @@ class dynamic_range(StagedIterable):
                     body(self.start)
                 return
 
-        with _overload.allow_shortcut_scope(False):
-            with For(_overload.fullname(name), self.start, self.stop,
+        with lang_overload.allow_shortcut_scope(False):
+            with For(lang_overload.fullname(name), self.start, self.stop,
                      self.step) as iter_var:
                 with LifetimeScope():
                     body(iter_var)
 
 
 static_range = range
-
-
-def _prepare_extra_locals(default_dynamic_range):
-    extra_locals = {'__ft__': sys.modules['freetensor']}
-    if default_dynamic_range:
-        extra_locals['range'] = dynamic_range
-    return extra_locals
-
-
-def transform(func=None, default_dynamic_range=True, verbose: int = 0):
-    '''
-    Transform a user function to an AST
-
-    Parameters
-    ----------
-    func : Python function
-        The user function to transform. If not specified, a partial function will
-        be returend, which can be used as a decorator
-    default_dynamic_range : bool
-        If True, the built-in range is replaced with freetensor.dynamic_range.
-        Defaults to True
-    verbose : int
-        0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
-        Python code that is used for transforming
-    '''
-
-    if func is None:
-        return functools.partial(transform,
-                                 default_dynamic_range=default_dynamic_range,
-                                 verbose=verbose)
-
-    if verbose is None:
-        verbose = 0
-
-    extra_locals = _prepare_extra_locals(default_dynamic_range)
-
-    params = list(inspect.signature(func).parameters)
-
-    staging_func = _overload.into_staging(func,
-                                          extra_locals,
-                                          verbose=verbose >= 2)
-
-    try:
-        # Initialize _overload to prepare for staging.
-        _overload.__init__()
-        # Create a new scope for the function
-        with LifetimeScope():
-            # Run staging function with the tensor program arguments' names as parameters
-            returns = staging_func(*params,
-                                   __freetensor_transform_outermost__=True)
-            # Check returned vardefs (if any)
-            if isinstance(returns, VarRef):
-                returns = [returns]
-            elif isinstance(returns, tuple):
-                for ret in returns:
-                    if not isinstance(ret, VarRef):
-                        raise _overload.error(
-                            'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
-                        )
-                returns = list(returns)
-            elif returns is None:
-                returns = []
-            else:
-                raise _overload.error(
-                    'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
-                )
-            # Set returned vardefs' access type to inout/output according to whether it was an input
-            for ret in returns:
-                ret.vardef.set_atype(add_outputting(ret.vardef.atype))
-            returns = [(ret.vardef.name, ret.vardef.dtype) for ret in returns]
-
-            # Set closure; they are from captured Arrays.
-            closure = _overload.closure
-    except StagingError:
-        raise
-    except TransformError:
-        raise
-    except Exception as e:
-        raise _overload.error('Exception occurred in staging') from e
-    finally:
-        # Despite whether the exception is raised, we need to clean up the ctx_stack
-        staged_ast, user_grads = pop_ast_and_user_grads()
-
-    staged = None
-
-    # Enable invoking a transformed AST in another function being transformed,
-    # via `inlined_invoke`
-    def prepare_inlined_invoke(*args, **kvs):
-        nonlocal staged
-        if _overload.in_staging():
-            if len(returns) == 1:
-                names = (func.__name__,)
-            else:
-                names = tuple(
-                    f"{func.__name__}.{i}" for i in range(len(returns)))
-            return _overload.register_inlined_invoke(names, staged, args, kvs)
-        else:
-            raise _overload.error(
-                'Unexpected call on a transformed AST. A transformed AST can only '
-                'be called in the following two ways: 1) called with actual data '
-                'after `@optimize`, and 2) called from another function to be '
-                '`@transform`ed')
-
-    staged = Func(func.__name__,
-                  params + list(closure.keys()),
-                  returns,
-                  staged_ast,
-                  closure,
-                  custom_callback=prepare_inlined_invoke,
-                  user_grads=user_grads)
-
-    if verbose >= 1:
-        print("The transformed AST is:", file=sys.stderr)
-        print(staged, file=sys.stderr)
-        print(file=sys.stderr)
-
-    return staged
-
-
-def inline(func=None,
-           src=None,
-           fallback=None,
-           default_dynamic_range=True,
-           verbose=False):
-    '''
-    Enable a user function to be called by a transformed function at run time
-
-    Parameters
-    ----------
-    func : Python function
-        The user function
-    src : str (Optional)
-        The source code of `func`. This parameter is only required if the source
-        code cannot be get automatically, e.g., if `func` is generated from a `exec`
-    default_dynamic_range : bool
-        If True, the built-in range is replaced with freetensor.dynamic_range.
-        Defaults to True
-    verbose : bool
-        True to print the generated Python code that is used for transforming
-    '''
-
-    if func is None:
-        return functools.partial(inline,
-                                 src=src,
-                                 fallback=fallback,
-                                 default_dynamic_range=default_dynamic_range,
-                                 verbose=verbose)
-
-    extra_locals = _prepare_extra_locals(default_dynamic_range)
-
-    # Do not initialize _overload here, since `into_staging` does not use the context.
-    # Keep the context as-is to support adding new inline functions during transforming.
-    # Such a case occurs when a transformed function dynamically imports a new inline.
-    transformed = _overload.into_staging(func,
-                                         extra_locals,
-                                         src,
-                                         verbose=verbose)
-
-    return functools.wraps(func)(staged_callable(transformed, fallback or func))

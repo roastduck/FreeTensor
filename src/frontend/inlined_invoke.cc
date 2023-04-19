@@ -100,14 +100,14 @@ Stmt inlinedInvoke(
     ast = undoMakeReduction(ast);
 
     auto kvs = _kvs;
-    if (args.size() != func->params_.size()) {
-        throw InvalidProgram(func->name_ + " has " +
-                             std::to_string(func->params_.size()) +
-                             " parameters, but " + std::to_string(args.size()) +
-                             " arguments are provided");
-    }
     for (auto &&[param, arg] : views::zip(func->params_, args)) {
         kvs[param.name_] = arg;
+    }
+    if (kvs.size() != func->params_.size()) {
+        throw InvalidProgram(func->name_ + " has " +
+                             std::to_string(func->params_.size()) +
+                             " parameters, but " + std::to_string(kvs.size()) +
+                             " arguments are provided");
     }
 
     std::unordered_map<std::string, std::string> renameRets;

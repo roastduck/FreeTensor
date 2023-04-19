@@ -330,7 +330,7 @@ def test_inlined_invoke_with_returns():
         y[1] = 3.0
         y[2] = 2.0
         y[3] = 4.0
-    g = ft.lower(ft.Func("g", [], [("y", "float32")], ft.pop_ast()))
+    g = ft.lower(ft.Func("g", [], [ft.FuncRet("y", "float32")], ft.pop_ast()))
 
     with ft.VarDef("x", (4, 4), "float32", "inout") as x:
         with ft.Invoke(["y"], g) as y:
