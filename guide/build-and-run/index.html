@@ -140,7 +140,14 @@
 <div class="admonition note">
 <p class="admonition-title">PyTorch support</p>
 <p>FreeTensor can optionally link PyTorch to support a copy-free interface between FreeTensor and PyTorch. Please note that, if you are using CUDA, FreeTensor and PyTorch should link CUDA
-of <em>the same version</em>. PyTorch can be installed in any way you like, see <a href="https://pytorch.org/get-started/locally/">PyTorch's guide</a>.</p>
+of <em>the same version</em>. PyTorch can be installed in any way you like, see <a href="https://pytorch.org/get-started/locally/">PyTorch's guide</a>. If you are installing a CUDA-supporting release of
+PyTorch via <code>pip</code>, you need to tell <code>pip</code> where to find the release, for example by a <code>-i &lt;url-to-some-pypi-index&gt;</code> argument, or a <code>-f https://download.pytorch.org/whl/torch_stable.html</code>
+argument.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Tested python dependencies</p>
+<p>You can also install Python dependencies of the versions we have tested, instead of the latest, by <code>pip3 install --user -r requirements.txt -f https://download.pytorch.org/whl/torch_stable.html</code>. This also
+includes optional dependencies and dependencies only for development.</p>
 </div>
 <h2 id="build">Build<a class="headerlink" href="#build" title="Permanent link">&para;</a></h2>
 <p>First, clone this repo. Don't forget there are some submodules.</p>
@@ -204,7 +211,7 @@ make -j  # Or use Ninja
 </div>
 <h2 id="build-this-document">Build this Document<a class="headerlink" href="#build-this-document" title="Permanent link">&para;</a></h2>
 <p>First install some dependencies:</p>
-<pre><code class="language-sh">pip3 install --user mkdocs mkdocstrings==0.18.1 &quot;pytkdocs[numpy-style]&quot;
+<pre><code class="language-sh">pip3 install --user mkdocs &quot;mkdocstrings[python]&quot;
 </code></pre>
 <p>From the root directory of FreeTensor, run a HTTP server to serve the document (recommended, but without document on C++ interface due to <a href="https://github.com/mkdocs/mkdocs/issues/1901">a limitation</a>):</p>
 <pre><code class="language-sh">PYTHONPATH=./python:./build:$PYTHONPATH mkdocs serve
