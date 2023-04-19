@@ -481,27 +481,3 @@ class UserGradStaged:
         # Record the body to context
         ctx_stack.user_grads.append(
             ffi.StmtSetToUserGrad(self.ori_stmts, self.body))
-
-
-class Func(ffi.Func):
-
-    def __init__(self,
-                 name,
-                 params,
-                 returns,
-                 body,
-                 closure={},
-                 custom_callback=None,
-                 user_grads=[]):
-        super().__init__(
-            name, params,
-            list(map(lambda x: (x[0], ffi.DataType(x[1])), returns)), body,
-            closure)
-        self.custom_callback = custom_callback
-        self.user_grads = user_grads
-
-        # Mimic a Python function
-        self.__name__ = name
-
-    def __call__(self, *args, **kvs):
-        return self.custom_callback(*args, **kvs)

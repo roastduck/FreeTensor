@@ -44,8 +44,8 @@ def test_func_with_return_value():
         x[2, 3] = 2.0
         x[1, 0] = 3.0
     func = ft.lower(
-        ft.Func("main", [], [("x", ft.DataType("float32"))], ft.pop_ast()),
-        ft.CPU())
+        ft.Func("main", [], [ft.FuncRet("x", ft.DataType("float32"))],
+                ft.pop_ast()), ft.CPU())
     txt = ft.dump_ast(func)
     print(txt)
     func2 = ft.load_ast(txt)
