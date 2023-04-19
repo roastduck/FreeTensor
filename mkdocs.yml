@@ -9,9 +9,10 @@ plugins:
     - mkdocstrings:
         handlers:
             python:
-                selection:
+                options:
                     docstring_style: numpy
                     inherited_members: True
+                    show_submodules: True
         watch:
             - python/
             # We cannot watch build/. Reload mkdocs manually after rebuilding
