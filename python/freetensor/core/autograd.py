@@ -16,7 +16,7 @@ from .frontend import LifetimeScope, ndim
 from .transform import transform, inline
 from .func import Func, FuncRet
 from .stmt import VarDef
-from .context import ctx_stack, pop_ast
+from .context import pop_ast
 
 
 class Return:
