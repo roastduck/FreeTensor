@@ -24,8 +24,8 @@ open_vardefs = {}
 def find_borrowed_vardefs(exprs: Sequence):
     borrowed_vardefs = set()
     for expr in exprs:
-        for name in ffi.all_reads(
-                expr if type(expr) is ffi.FrontendVarIdx else ffi.Expr(expr)):
+        for name in ffi.all_reads(expr if type(expr) is
+                                  ffi.FrontendVarIdx else ffi.Expr(expr)):
             borrowed_vardefs.add(open_vardefs[name])
     return borrowed_vardefs
 
