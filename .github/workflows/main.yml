@@ -26,16 +26,16 @@ jobs:
           git submodule foreach --recursive git clean -ffdx
           git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.6.2 cudnn@8.4.0.27-11.6 intel-mkl@2020.4.304 java@11
-          source /home/rd/venv-freetensor-20230321/bin/activate
+          spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.8.0 cudnn@8.7.0.84-11.8 intel-mkl@2020.4.304 java@11
+          source /home/rd/venv-freetensor-20230419/bin/activate
           mkdir build
           cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=ON -DFT_WITH_MKL=/home/spack/spack/opt/spack/linux-debian11-zen2/gcc-10.2.1/intel-mkl-2020.4.304-py6elz2mzhdgres34nr5e2ta5isfja7k/mkl -DFT_WITH_PYTORCH=ON -DCMAKE_INSTALL_PREFIX=./install
           cd build && ninja && ninja install
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.6.2 cudnn@8.4.0.27-11.6 intel-mkl@2020.4.304 java@11
-          source /home/rd/venv-freetensor-20230321/bin/activate
+          spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.8.0 cudnn@8.7.0.84-11.8 intel-mkl@2020.4.304 java@11
+          source /home/rd/venv-freetensor-20230419/bin/activate
           # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
           OMP_PROC_BIND=true LD_LIBRARY_PATH=./install/lib:$LD_LIBRARY_PATH PYTHONPATH=install/lib:python:$PYTHONPATH srun --exclusive -N 1 -p gpu pytest --color=yes test
   build-and-test-minimal-run_in_tree:
@@ -53,7 +53,7 @@ jobs:
           git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@12.1.0
-          source /home/rd/venv-freetensor-20230321/bin/activate
+          source /home/rd/venv-freetensor-20230419/bin/activate
           mkdir build
           # certain new GCC 12 warnings are not stable and triggered with false-positive right now, so suppress them here with -Wno-*
           cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF -DCMAKE_CXX_FLAGS="-Wno-restrict -Wno-array-bounds"
@@ -62,5 +62,5 @@ jobs:
         run: |
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@12.1.0
-          source /home/rd/venv-freetensor-20230321/bin/activate
+          source /home/rd/venv-freetensor-20230419/bin/activate
           PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p cpu pytest --color=yes test

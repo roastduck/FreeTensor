@@ -23,7 +23,13 @@ pip3 install --user numpy sourceinspect astor Pygments
 
 !!! note "PyTorch support"
     FreeTensor can optionally link PyTorch to support a copy-free interface between FreeTensor and PyTorch. Please note that, if you are using CUDA, FreeTensor and PyTorch should link CUDA
-    of *the same version*. PyTorch can be installed in any way you like, see [PyTorch's guide](https://pytorch.org/get-started/locally/).
+    of *the same version*. PyTorch can be installed in any way you like, see [PyTorch's guide](https://pytorch.org/get-started/locally/). If you are installing a CUDA-supporting release of
+    PyTorch via `pip`, you need to tell `pip` where to find the release, for example by a `-i <url-to-some-pypi-index>` argument, or a `-f https://download.pytorch.org/whl/torch_stable.html`
+    argument.
+
+!!! note "Tested python dependencies"
+    You can also install Python dependencies of the versions we have tested, instead of the latest, by `pip3 install --user -r requirements.txt -f https://download.pytorch.org/whl/torch_stable.html`. This also
+    includes optional dependencies and dependencies only for development.
 
 ## Build
 
@@ -122,7 +128,7 @@ PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 00.hello_world/test_basic.py
 First install some dependencies:
 
 ```sh
-pip3 install --user mkdocs mkdocstrings==0.18.1 "pytkdocs[numpy-style]"
+pip3 install --user mkdocs "mkdocstrings[python]"
 ```
 
 From the root directory of FreeTensor, run a HTTP server to serve the document (recommended, but without document on C++ interface due to [a limitation](https://github.com/mkdocs/mkdocs/issues/1901)):
