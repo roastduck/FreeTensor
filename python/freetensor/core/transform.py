@@ -126,7 +126,8 @@ def inline(func=None,
         The user function
     src : str (Optional)
         The source code of `func`. This parameter is only required if the source
-        code cannot be get automatically, e.g., if `func` is generated from a `exec`
+        code cannot be get automatically, e.g., if `func` is generated from an
+        `exec`
     default_dynamic_range : bool
         If True, the built-in range is replaced with freetensor.dynamic_range.
         Defaults to True

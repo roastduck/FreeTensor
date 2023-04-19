@@ -3,7 +3,6 @@
 #include <container_utils.h>
 #include <frontend/inlined_invoke.h>
 #include <pass/hoist_return_vars.h>
-#include <pass/undo_make_reduction.h>
 
 namespace freetensor {
 
@@ -66,17 +65,37 @@ Stmt InlinedInvoke::visit(const Store &_op) {
     return op;
 }
 
-Stmt InlinedInvoke::visit(const ReduceTo &op) {
-    ASSERT(false); // We have called undoMakeReduction
+Stmt InlinedInvoke::visit(const ReduceTo &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
+    auto op = __op.as<ReduceToNode>();
+    if (kvs_.count(op->var_)) {
+        std::vector<FrontendVarIdx> indices;
+        indices.reserve(op->indices_.size());
+        for (auto &&idx : op->indices_) {
+            indices.emplace_back(FrontendVarIdx::fromSingle(idx));
+        }
+        auto &&fv = *kvs_.at(op->var_);
+        return FrontendVar(fv.name(), fv.fullShape(), fv.dtype(), fv.mtype(),
+                           fv.chainIndices(indices))
+            .asReduceTo(op->op_, op->metadata(), op->expr_);
+    }
+    if (auto it = renameRets_.find(op->var_); it != renameRets_.end()) {
+        op->var_ = it->second;
+    }
+    return op;
 }
 
 Stmt InlinedInvoke::visit(const VarDef &op) {
     if (kvs_.count(op->name_)) {
         if ((int)op->buffer_->tensor()->shape().size() !=
             kvs_.at(op->name_)->ndim()) {
-            throw InvalidProgram("The number of dimensions of argument " +
-                                 toString(*kvs_.at(op->name_)) +
-                                 " does not match parameter " + op->name_);
+            throw InvalidProgram(
+                "The number of dimensions of argument " +
+                toString(*kvs_.at(op->name_)) + " (" +
+                std::to_string(kvs_.at(op->name_)->ndim()) +
+                ") does not match parameter " + op->name_ + " (" +
+                std::to_string(op->buffer_->tensor()->shape().size()) + ")");
         }
         return (*this)(op->body_);
     } else {
@@ -97,7 +116,6 @@ Stmt inlinedInvoke(
     const std::unordered_map<std::string, Ref<FrontendVar>> &_kvs,
     const std::vector<std::string> &retNames) {
     Stmt ast = func->body_;
-    ast = undoMakeReduction(ast);
 
     auto kvs = _kvs;
     for (auto &&[param, arg] : views::zip(func->params_, args)) {
