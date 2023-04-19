@@ -6659,6 +6659,7 @@ it calls libop.truediv</p>
 
 
 
+
   <div class="doc doc-object doc-class">
 
 
@@ -7627,14 +7628,14 @@ They will be exited in reverse order of their registration.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">inner_scopes</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">_overload</span><span class="o">.</span><span class="n">lifetime_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">lang_overload</span><span class="o">.</span><span class="n">lifetime_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">scope</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inner_scopes</span><span class="p">):</span>
             <span class="n">scope</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">)</span>
-        <span class="n">popped</span> <span class="o">=</span> <span class="n">_overload</span><span class="o">.</span><span class="n">lifetime_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">popped</span> <span class="o">=</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">lifetime_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">popped</span> <span class="o">!=</span> <span class="bp">self</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
                 <span class="s1">&#39;LifetimeScope enter/exit not match, must be FILO&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">register_inner_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">):</span>
@@ -8245,8 +8246,8 @@ Var            (<a class="autorefs autorefs-internal" title="freetensor.core.sta
         <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">atype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span> <span class="o">=</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">atype</span><span class="p">,</span> <span class="n">mtype</span>
 
     <span class="k">def</span> <span class="nf">annotate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VarRef</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_overload</span><span class="o">.</span><span class="n">register_vardef</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                                         <span class="bp">self</span><span class="o">.</span><span class="n">atype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">register_vardef</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                                             <span class="bp">self</span><span class="o">.</span><span class="n">atype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">)</span>
 </code></pre></div>
         </details>
 
@@ -8696,10 +8697,10 @@ VarCreator            (<a class="autorefs autorefs-internal" title="freetensor.c
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Customized assign behavior. Creates a VarDef with its full name.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="k">return</span> <span class="n">_overload</span><span class="o">.</span><span class="n">register_vardef</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                                             <span class="s1">&#39;cache&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">register_vardef</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                                                 <span class="s1">&#39;cache&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
                 <span class="s2">&quot;Create new tensors in an `a = b = c`-like multi-assignment &quot;</span>
                 <span class="s2">&quot;is not supported&quot;</span><span class="p">)</span>
 </code></pre></div>
@@ -8976,10 +8977,10 @@ even via super()).</p>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Customized assign behavior. Creates a VarDef with its full name.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">return</span> <span class="n">_overload</span><span class="o">.</span><span class="n">register_vardef</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                                         <span class="s1">&#39;cache&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">register_vardef</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                                             <span class="s1">&#39;cache&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+        <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
             <span class="s2">&quot;Create new tensors in an `a = b = c`-like multi-assignment &quot;</span>
             <span class="s2">&quot;is not supported&quot;</span><span class="p">)</span>
 </code></pre></div>
@@ -9031,13 +9032,13 @@ VersionMarker            (<a class="autorefs autorefs-internal" title="freetenso
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Customized assign behavior. Creates a MarkVersion with its full name.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="n">full_tape_name</span> <span class="o">=</span> <span class="n">_overload</span><span class="o">.</span><span class="n">fullname</span><span class="p">(</span><span class="n">tape_name</span><span class="p">)</span>
+            <span class="n">full_tape_name</span> <span class="o">=</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">fullname</span><span class="p">(</span><span class="n">tape_name</span><span class="p">)</span>
             <span class="n">MarkVersion</span><span class="p">(</span><span class="n">full_tape_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">VarVersionRef</span><span class="p">(</span><span class="n">full_tape_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span>
                                  <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">mtype</span><span class="p">,</span>
                                  <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
                 <span class="s2">&quot;Marking version in an `a = b = c`-like multi-assignment is not&quot;</span>
                 <span class="s2">&quot; supported&quot;</span><span class="p">)</span>
 </code></pre></div>
@@ -9312,13 +9313,13 @@ even via super()).</p>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Customized assign behavior. Creates a MarkVersion with its full name.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">full_tape_name</span> <span class="o">=</span> <span class="n">_overload</span><span class="o">.</span><span class="n">fullname</span><span class="p">(</span><span class="n">tape_name</span><span class="p">)</span>
+        <span class="n">full_tape_name</span> <span class="o">=</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">fullname</span><span class="p">(</span><span class="n">tape_name</span><span class="p">)</span>
         <span class="n">MarkVersion</span><span class="p">(</span><span class="n">full_tape_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">VarVersionRef</span><span class="p">(</span><span class="n">full_tape_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">full_shape</span><span class="p">,</span>
                              <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">mtype</span><span class="p">,</span>
                              <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+        <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
             <span class="s2">&quot;Marking version in an `a = b = c`-like multi-assignment is not&quot;</span>
             <span class="s2">&quot; supported&quot;</span><span class="p">)</span>
 </code></pre></div>
@@ -9375,7 +9376,7 @@ dynamic_range            (<span title="freetensor.core.staging.StagedIterable">S
     <span class="k">def</span> <span class="nf">foreach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Customized foreach behavior. Creates a For loop.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
                 <span class="s1">&#39;dynamic_range only supports exactly one target variable&#39;</span><span class="p">)</span>
 
         <span class="c1"># Early optimizations</span>
@@ -9388,8 +9389,8 @@ dynamic_range            (<span title="freetensor.core.staging.StagedIterable">S
                     <span class="n">body</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
                 <span class="k">return</span>
 
-        <span class="k">with</span> <span class="n">_overload</span><span class="o">.</span><span class="n">allow_shortcut_scope</span><span class="p">(</span><span class="kc">False</span><span class="p">):</span>
-            <span class="k">with</span> <span class="n">For</span><span class="p">(</span><span class="n">_overload</span><span class="o">.</span><span class="n">fullname</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
+        <span class="k">with</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">allow_shortcut_scope</span><span class="p">(</span><span class="kc">False</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">For</span><span class="p">(</span><span class="n">lang_overload</span><span class="o">.</span><span class="n">fullname</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
                      <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">)</span> <span class="k">as</span> <span class="n">iter_var</span><span class="p">:</span>
                 <span class="k">with</span> <span class="n">LifetimeScope</span><span class="p">():</span>
                     <span class="n">body</span><span class="p">(</span><span class="n">iter_var</span><span class="p">)</span>
@@ -9465,7 +9466,7 @@ dynamic_range            (<span title="freetensor.core.staging.StagedIterable">S
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">foreach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Customized foreach behavior. Creates a For loop.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+        <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
             <span class="s1">&#39;dynamic_range only supports exactly one target variable&#39;</span><span class="p">)</span>
 
     <span class="c1"># Early optimizations</span>
@@ -9478,8 +9479,8 @@ dynamic_range            (<span title="freetensor.core.staging.StagedIterable">S
                 <span class="n">body</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
             <span class="k">return</span>
 
-    <span class="k">with</span> <span class="n">_overload</span><span class="o">.</span><span class="n">allow_shortcut_scope</span><span class="p">(</span><span class="kc">False</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">For</span><span class="p">(</span><span class="n">_overload</span><span class="o">.</span><span class="n">fullname</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
+    <span class="k">with</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">allow_shortcut_scope</span><span class="p">(</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">For</span><span class="p">(</span><span class="n">lang_overload</span><span class="o">.</span><span class="n">fullname</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
                  <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">)</span> <span class="k">as</span> <span class="n">iter_var</span><span class="p">:</span>
             <span class="k">with</span> <span class="n">LifetimeScope</span><span class="p">():</span>
                 <span class="n">body</span><span class="p">(</span><span class="n">iter_var</span><span class="p">)</span>
@@ -9519,7 +9520,7 @@ dynamic_range            (<span title="freetensor.core.staging.StagedIterable">S
         <details class="quote">
           <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">impl</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">_overload</span><span class="o">.</span><span class="n">in_staging</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">in_staging</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">staging</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">original</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -9570,7 +9571,7 @@ default Target in config will be used</p></li>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">impl</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">_overload</span><span class="o">.</span><span class="n">in_staging</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">in_staging</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">staging</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">original</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -9581,91 +9582,6 @@ default Target in config will be used</p></li>
   </div>
 
 
-
-
-
-  <div class="doc doc-object doc-function">
-
-
-
-<h4 id="freetensor.core.frontend.inline" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">inline</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
-
-
-<a href="#freetensor.core.frontend.inline" class="headerlink" title="Permanent link">&para;</a></h4>
-
-    <div class="doc doc-contents ">
-
-      <p>Enable a user function to be called by a transformed function at run time</p>
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li><p><strong>func</strong> (<code>Python function</code>) – The user function</p></li>
-            <li><p><strong>src</strong> (<code>str (Optional)</code>) – The source code of <code>func</code>. This parameter is only required if the source
-code cannot be get automatically, e.g., if <code>func</code> is generated from a <code>exec</code></p></li>
-            <li><p><strong>default_dynamic_range</strong> (<code>bool</code>) – If True, the built-in range is replaced with freetensor.dynamic_range.
-Defaults to True</p></li>
-            <li><p><strong>verbose</strong> (<code>bool</code>) – True to print the generated Python code that is used for transforming</p></li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">inline</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-           <span class="n">src</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-           <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-           <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-           <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Enable a user function to be called by a transformed function at run time</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    func : Python function</span>
-<span class="sd">        The user function</span>
-<span class="sd">    src : str (Optional)</span>
-<span class="sd">        The source code of `func`. This parameter is only required if the source</span>
-<span class="sd">        code cannot be get automatically, e.g., if `func` is generated from a `exec`</span>
-<span class="sd">    default_dynamic_range : bool</span>
-<span class="sd">        If True, the built-in range is replaced with freetensor.dynamic_range.</span>
-<span class="sd">        Defaults to True</span>
-<span class="sd">    verbose : bool</span>
-<span class="sd">        True to print the generated Python code that is used for transforming</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">inline</span><span class="p">,</span>
-                                 <span class="n">src</span><span class="o">=</span><span class="n">src</span><span class="p">,</span>
-                                 <span class="n">fallback</span><span class="o">=</span><span class="n">fallback</span><span class="p">,</span>
-                                 <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
-                                 <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-
-    <span class="n">extra_locals</span> <span class="o">=</span> <span class="n">_prepare_extra_locals</span><span class="p">(</span><span class="n">default_dynamic_range</span><span class="p">)</span>
-
-    <span class="c1"># Do not initialize _overload here, since `into_staging` does not use the context.</span>
-    <span class="c1"># Keep the context as-is to support adding new inline functions during transforming.</span>
-    <span class="c1"># Such a case occurs when a transformed function dynamically imports a new inline.</span>
-    <span class="n">transformed</span> <span class="o">=</span> <span class="n">_overload</span><span class="o">.</span><span class="n">into_staging</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
-                                         <span class="n">extra_locals</span><span class="p">,</span>
-                                         <span class="n">src</span><span class="p">,</span>
-                                         <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)(</span><span class="n">staged_callable</span><span class="p">(</span><span class="n">transformed</span><span class="p">,</span> <span class="n">fallback</span> <span class="ow">or</span> <span class="n">func</span><span class="p">))</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
 
 
 
@@ -9727,159 +9643,6 @@ stack at runtime: it can be compiled to any data structure.</p>
 
 
 
-<h4 id="freetensor.core.frontend.transform" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">transform</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
-
-
-<a href="#freetensor.core.frontend.transform" class="headerlink" title="Permanent link">&para;</a></h4>
-
-    <div class="doc doc-contents ">
-
-      <p>Transform a user function to an AST</p>
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li><p><strong>func</strong> (<code>Python function</code>) – The user function to transform. If not specified, a partial function will
-be returend, which can be used as a decorator</p></li>
-            <li><p><strong>default_dynamic_range</strong> (<code>bool</code>) – If True, the built-in range is replaced with freetensor.dynamic_range.
-Defaults to True</p></li>
-            <li><p><strong>verbose</strong> (<code>int</code>) – 0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
-Python code that is used for transforming</p></li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Transform a user function to an AST</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    func : Python function</span>
-<span class="sd">        The user function to transform. If not specified, a partial function will</span>
-<span class="sd">        be returend, which can be used as a decorator</span>
-<span class="sd">    default_dynamic_range : bool</span>
-<span class="sd">        If True, the built-in range is replaced with freetensor.dynamic_range.</span>
-<span class="sd">        Defaults to True</span>
-<span class="sd">    verbose : int</span>
-<span class="sd">        0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated</span>
-<span class="sd">        Python code that is used for transforming</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">transform</span><span class="p">,</span>
-                                 <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
-                                 <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">verbose</span> <span class="o">=</span> <span class="mi">0</span>
-
-    <span class="n">extra_locals</span> <span class="o">=</span> <span class="n">_prepare_extra_locals</span><span class="p">(</span><span class="n">default_dynamic_range</span><span class="p">)</span>
-
-    <span class="n">params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
-
-    <span class="n">staging_func</span> <span class="o">=</span> <span class="n">_overload</span><span class="o">.</span><span class="n">into_staging</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
-                                          <span class="n">extra_locals</span><span class="p">,</span>
-                                          <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="c1"># Initialize _overload to prepare for staging.</span>
-        <span class="n">_overload</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="c1"># Create a new scope for the function</span>
-        <span class="k">with</span> <span class="n">LifetimeScope</span><span class="p">():</span>
-            <span class="c1"># Run staging function with the tensor program arguments&#39; names as parameters</span>
-            <span class="n">returns</span> <span class="o">=</span> <span class="n">staging_func</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">,</span>
-                                   <span class="n">__freetensor_transform_outermost__</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="c1"># Check returned vardefs (if any)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">):</span>
-                <span class="n">returns</span> <span class="o">=</span> <span class="p">[</span><span class="n">returns</span><span class="p">]</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">):</span>
-                        <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                            <span class="s1">&#39;Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s&#39;</span>
-                        <span class="p">)</span>
-                <span class="n">returns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">returns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">returns</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                    <span class="s1">&#39;Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s&#39;</span>
-                <span class="p">)</span>
-            <span class="c1"># Set returned vardefs&#39; access type to inout/output according to whether it was an input</span>
-            <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">:</span>
-                <span class="n">ret</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">set_atype</span><span class="p">(</span><span class="n">add_outputting</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">atype</span><span class="p">))</span>
-            <span class="n">returns</span> <span class="o">=</span> <span class="p">[(</span><span class="n">ret</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">ret</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">]</span>
-
-            <span class="c1"># Set closure; they are from captured Arrays.</span>
-            <span class="n">closure</span> <span class="o">=</span> <span class="n">_overload</span><span class="o">.</span><span class="n">closure</span>
-    <span class="k">except</span> <span class="n">StagingError</span><span class="p">:</span>
-        <span class="k">raise</span>
-    <span class="k">except</span> <span class="n">TransformError</span><span class="p">:</span>
-        <span class="k">raise</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Exception occurred in staging&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="c1"># Despite whether the exception is raised, we need to clean up the ctx_stack</span>
-        <span class="n">staged_ast</span><span class="p">,</span> <span class="n">user_grads</span> <span class="o">=</span> <span class="n">pop_ast_and_user_grads</span><span class="p">()</span>
-
-    <span class="n">staged</span> <span class="o">=</span> <span class="kc">None</span>
-
-    <span class="c1"># Enable invoking a transformed AST in another function being transformed,</span>
-    <span class="c1"># via `inlined_invoke`</span>
-    <span class="k">def</span> <span class="nf">prepare_inlined_invoke</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
-        <span class="k">nonlocal</span> <span class="n">staged</span>
-        <span class="k">if</span> <span class="n">_overload</span><span class="o">.</span><span class="n">in_staging</span><span class="p">():</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)))</span>
-            <span class="k">return</span> <span class="n">_overload</span><span class="o">.</span><span class="n">register_inlined_invoke</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">staged</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kvs</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                <span class="s1">&#39;Unexpected call on a transformed AST. A transformed AST can only &#39;</span>
-                <span class="s1">&#39;be called in the following two ways: 1) called with actual data &#39;</span>
-                <span class="s1">&#39;after `@optimize`, and 2) called from another function to be &#39;</span>
-                <span class="s1">&#39;`@transform`ed&#39;</span><span class="p">)</span>
-
-    <span class="n">staged</span> <span class="o">=</span> <span class="n">Func</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                  <span class="n">params</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">closure</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
-                  <span class="n">returns</span><span class="p">,</span>
-                  <span class="n">staged_ast</span><span class="p">,</span>
-                  <span class="n">closure</span><span class="p">,</span>
-                  <span class="n">custom_callback</span><span class="o">=</span><span class="n">prepare_inlined_invoke</span><span class="p">,</span>
-                  <span class="n">user_grads</span><span class="o">=</span><span class="n">user_grads</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The transformed AST is:&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">staged</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">staged</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-function">
-
-
-
 <h4 id="freetensor.core.frontend.var" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">var</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
@@ -9914,7 +9677,7 @@ default Target in config will be used</p></li>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/frontend.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">impl</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">_overload</span><span class="o">.</span><span class="n">in_staging</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">in_staging</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">staging</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">original</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -9924,6 +9687,173 @@ default Target in config will be used</p></li>
 
   </div>
 
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-module">
+
+
+
+<h3 id="freetensor.core.func" class="doc doc-heading">
+        <code>func</code>
+
+
+
+<a href="#freetensor.core.func" class="headerlink" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h4 id="freetensor.core.func.Func" class="doc doc-heading">
+        <code>
+Func            (<span title="freetensor_ffi.Func">Func</span>)
+        </code>
+
+
+
+<a href="#freetensor.core.func.Func" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/func.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Func</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">Func</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">params</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FuncParam</span><span class="p">],</span>
+                 <span class="n">returns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FuncRet</span><span class="p">],</span>
+                 <span class="n">body</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">,</span>
+                 <span class="n">extra_closure</span><span class="o">=</span><span class="p">{},</span>
+                 <span class="n">user_grads</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">returns</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">extra_closure</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_grads</span> <span class="o">=</span> <span class="n">user_grads</span>
+
+        <span class="c1"># Mimic a Python function</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Enable invoking a transformed AST in another function being transformed, via</span>
+<span class="sd">        `inlined_invoke`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">in_staging</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">returns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">returns</span><span class="p">)))</span>
+            <span class="k">return</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">register_inlined_invoke</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kvs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s1">&#39;Unexpected call on a transformed AST. A transformed AST can only &#39;</span>
+                <span class="s1">&#39;be called in the following two ways: 1) called with actual data &#39;</span>
+                <span class="s1">&#39;after `@optimize`, and 2) called from another function to be &#39;</span>
+                <span class="s1">&#39;`@transform`ed&#39;</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.func.Func.__call__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+<a href="#freetensor.core.func.Func.__call__" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Enable invoking a transformed AST in another function being transformed, via</p>
+<p><code>inlined_invoke</code></p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/func.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Enable invoking a transformed AST in another function being transformed, via</span>
+<span class="sd">    `inlined_invoke`</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">in_staging</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">returns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">returns</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">register_inlined_invoke</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kvs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s1">&#39;Unexpected call on a transformed AST. A transformed AST can only &#39;</span>
+            <span class="s1">&#39;be called in the following two ways: 1) called with actual data &#39;</span>
+            <span class="s1">&#39;after `@optimize`, and 2) called from another function to be &#39;</span>
+            <span class="s1">&#39;`@transform`ed&#39;</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
 
 
 
@@ -18911,7 +18841,6 @@ For        </code>
 
 
 
-
   <div class="doc doc-object doc-class">
 
 
@@ -19429,6 +19358,263 @@ UserGradStaged        </code>
 
   </div>
 
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-module">
+
+
+
+<h3 id="freetensor.core.transform" class="doc doc-heading">
+        <code>transform</code>
+
+
+
+<a href="#freetensor.core.transform" class="headerlink" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.transform.inline" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">inline</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.transform.inline" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Enable a user function to be called by a transformed function at run time</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>func</strong> (<code>Python function</code>) – The user function</p></li>
+            <li><p><strong>src</strong> (<code>str (Optional)</code>) – The source code of <code>func</code>. This parameter is only required if the source
+code cannot be get automatically, e.g., if <code>func</code> is generated from a <code>exec</code></p></li>
+            <li><p><strong>default_dynamic_range</strong> (<code>bool</code>) – If True, the built-in range is replaced with freetensor.dynamic_range.
+Defaults to True</p></li>
+            <li><p><strong>verbose</strong> (<code>bool</code>) – True to print the generated Python code that is used for transforming</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/transform.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">inline</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+           <span class="n">src</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+           <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+           <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+           <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Enable a user function to be called by a transformed function at run time</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    func : Python function</span>
+<span class="sd">        The user function</span>
+<span class="sd">    src : str (Optional)</span>
+<span class="sd">        The source code of `func`. This parameter is only required if the source</span>
+<span class="sd">        code cannot be get automatically, e.g., if `func` is generated from a `exec`</span>
+<span class="sd">    default_dynamic_range : bool</span>
+<span class="sd">        If True, the built-in range is replaced with freetensor.dynamic_range.</span>
+<span class="sd">        Defaults to True</span>
+<span class="sd">    verbose : bool</span>
+<span class="sd">        True to print the generated Python code that is used for transforming</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">inline</span><span class="p">,</span>
+                                 <span class="n">src</span><span class="o">=</span><span class="n">src</span><span class="p">,</span>
+                                 <span class="n">fallback</span><span class="o">=</span><span class="n">fallback</span><span class="p">,</span>
+                                 <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
+                                 <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+    <span class="n">extra_locals</span> <span class="o">=</span> <span class="n">_prepare_extra_locals</span><span class="p">(</span><span class="n">default_dynamic_range</span><span class="p">)</span>
+
+    <span class="c1"># Do not initialize lang_overload here, since `into_staging` does not use the context.</span>
+    <span class="c1"># Keep the context as-is to support adding new inline functions during transforming.</span>
+    <span class="c1"># Such a case occurs when a transformed function dynamically imports a new inline.</span>
+    <span class="n">transformed</span> <span class="o">=</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">into_staging</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
+                                             <span class="n">extra_locals</span><span class="p">,</span>
+                                             <span class="n">src</span><span class="p">,</span>
+                                             <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)(</span><span class="n">staged_callable</span><span class="p">(</span><span class="n">transformed</span><span class="p">,</span> <span class="n">fallback</span> <span class="ow">or</span> <span class="n">func</span><span class="p">))</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.transform.transform" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">transform</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+
+
+<a href="#freetensor.core.transform.transform" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Transform a user function to an AST</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>func</strong> (<code>Python function</code>) – The user function to transform. If not specified, a partial function will
+be returend, which can be used as a decorator</p></li>
+            <li><p><strong>default_dynamic_range</strong> (<code>bool</code>) – If True, the built-in range is replaced with freetensor.dynamic_range.
+Defaults to True</p></li>
+            <li><p><strong>verbose</strong> (<code>int</code>) – 0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
+Python code that is used for transforming</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/transform.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Transform a user function to an AST</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    func : Python function</span>
+<span class="sd">        The user function to transform. If not specified, a partial function will</span>
+<span class="sd">        be returend, which can be used as a decorator</span>
+<span class="sd">    default_dynamic_range : bool</span>
+<span class="sd">        If True, the built-in range is replaced with freetensor.dynamic_range.</span>
+<span class="sd">        Defaults to True</span>
+<span class="sd">    verbose : int</span>
+<span class="sd">        0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated</span>
+<span class="sd">        Python code that is used for transforming</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">transform</span><span class="p">,</span>
+                                 <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
+                                 <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">extra_locals</span> <span class="o">=</span> <span class="n">_prepare_extra_locals</span><span class="p">(</span><span class="n">default_dynamic_range</span><span class="p">)</span>
+
+    <span class="n">params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+
+    <span class="n">staging_func</span> <span class="o">=</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">into_staging</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
+                                              <span class="n">extra_locals</span><span class="p">,</span>
+                                              <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Initialize lang_overload to prepare for staging.</span>
+        <span class="n">lang_overload</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1"># Create a new scope for the function</span>
+        <span class="k">with</span> <span class="n">LifetimeScope</span><span class="p">():</span>
+            <span class="c1"># Run staging function with the tensor program arguments&#39; names as parameters</span>
+            <span class="n">returns</span> <span class="o">=</span> <span class="n">staging_func</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">,</span>
+                                   <span class="n">__freetensor_transform_outermost__</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="c1"># Check returned vardefs (if any)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">):</span>
+                <span class="n">returns</span> <span class="o">=</span> <span class="p">[</span><span class="n">returns</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s1">&#39;Illegal return at top level, need to be a `VarRef` or a tuple of&#39;</span>
+                            <span class="sa">f</span><span class="s1">&#39; `VarRef`s, got </span><span class="si">{</span><span class="n">ret</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">returns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">returns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">returns</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s,&#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39; got </span><span class="si">{</span><span class="n">returns</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="c1"># Set returned vardefs&#39; access type to inout/output according to whether it was an input</span>
+            <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">:</span>
+                <span class="n">ret</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">set_atype</span><span class="p">(</span><span class="n">add_outputting</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">atype</span><span class="p">))</span>
+            <span class="n">returns</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">ffi</span><span class="o">.</span><span class="n">FuncRet</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">ret</span><span class="o">.</span><span class="n">vardef</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">returns</span>
+            <span class="p">]</span>
+
+            <span class="c1"># Set closure; they are from captured Arrays.</span>
+            <span class="n">closure</span> <span class="o">=</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">closure</span>
+    <span class="k">except</span> <span class="n">StagingError</span><span class="p">:</span>
+        <span class="k">raise</span>
+    <span class="k">except</span> <span class="n">TransformError</span><span class="p">:</span>
+        <span class="k">raise</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Exception occurred in staging&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="c1"># Despite whether the exception is raised, we need to clean up the ctx_stack</span>
+        <span class="n">staged_ast</span><span class="p">,</span> <span class="n">user_grads</span> <span class="o">=</span> <span class="n">pop_ast_and_user_grads</span><span class="p">()</span>
+
+    <span class="n">staged</span> <span class="o">=</span> <span class="n">Func</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                  <span class="n">params</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">closure</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                  <span class="n">returns</span><span class="p">,</span>
+                  <span class="n">staged_ast</span><span class="p">,</span>
+                  <span class="n">closure</span><span class="p">,</span>
+                  <span class="n">user_grads</span><span class="o">=</span><span class="n">user_grads</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The transformed AST is:&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">staged</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">staged</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
