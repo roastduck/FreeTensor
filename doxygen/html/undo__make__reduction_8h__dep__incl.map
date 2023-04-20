@@ -1,8 +1,7 @@
 <map id="include/pass/undo_make_reduction.h" name="include/pass/undo_make_reduction.h">
-<area shape="rect" id="node1" title=" " alt="" coords="341,5,523,47"/>
+<area shape="rect" id="node1" title=" " alt="" coords="257,5,439,47"/>
 <area shape="rect" id="node2" href="$grad_8cc.html" title=" " alt="" coords="5,102,160,129"/>
-<area shape="rect" id="node3" href="$inlined__invoke_8cc.html" title=" " alt="" coords="185,95,333,136"/>
-<area shape="rect" id="node4" href="$refine__sign__data__type_8cc.html" title=" " alt="" coords="357,95,507,136"/>
-<area shape="rect" id="node5" href="$scalar__prop__const_8cc.html" title=" " alt="" coords="532,95,687,136"/>
-<area shape="rect" id="node6" href="$undo__make__reduction_8cc.html" title=" " alt="" coords="711,95,865,136"/>
+<area shape="rect" id="node3" href="$refine__sign__data__type_8cc.html" title=" " alt="" coords="185,95,335,136"/>
+<area shape="rect" id="node4" href="$scalar__prop__const_8cc.html" title=" " alt="" coords="360,95,515,136"/>
+<area shape="rect" id="node5" href="$undo__make__reduction_8cc.html" title=" " alt="" coords="539,95,693,136"/>
 </map>
