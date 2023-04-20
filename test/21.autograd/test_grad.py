@@ -1556,6 +1556,28 @@ def test_inlined_invoke_func_from_ad():
     assert np.array_equal(dzdb.numpy(), [1, 2, 3, 4])
 
 
+def test_specify_param_and_return_by_position():
+
+    @ft.transform
+    def test(a, b):
+        a: ft.Var[(4,), "float32", "input", "cpu"]
+        b: ft.Var[(4,), "float32", "input", "cpu"]
+        x = a + b
+        y = a * b
+        return x, y
+
+    fwd, bwd, _, _ = ft.grad(test, [ft.Parameter(0)], [ft.Return(1)])
+    fwd = ft.optimize(fwd)
+    bwd = ft.optimize(bwd)
+    a = ft.array([1, 2, 3, 4], dtype="float32")
+    b = ft.array([5, 6, 7, 8], dtype="float32")
+    one = ft.array([1, 1, 1, 1], dtype="float32")
+    c, d = fwd(a, b)
+    da = bwd(one)
+
+    assert np.array_equal(da.numpy(), [5, 6, 7, 8])
+
+
 def test_error_input_not_found():
 
     @ft.transform
