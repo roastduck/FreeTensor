@@ -1,6 +1,6 @@
 __all__ = [
-    'GradTapeMode', 'Return', 'ArgRetDict', 'grad_body', 'grad', 'grad_',
-    'jacrev', 'output_all_intermediates'
+    'GradTapeMode', 'Parameter', 'Return', 'ParamRetDict', 'grad_body', 'grad',
+    'grad_', 'jacrev', 'output_all_intermediates'
 ]
 
 from typing import Optional, Set, Union, Sequence
@@ -19,9 +19,37 @@ from .stmt import VarDef
 from .context import pop_ast
 
 
+class Parameter:
+    '''
+    Alias of a parameter of a function by position instead of by name
+
+    `Parameter(n)` represents the n-th parameter (counted from 0)
+
+    `Parameter()` can be used if there is only one parameter
+    '''
+
+    def __init__(self, n: Optional[int] = None):
+        self.n = n
+
+    def get_name(self, func):
+        if len(func.params) == 0:
+            raise KeyError(f"{func.name} has no parameter")
+        if self.n is not None:
+            return func.params[self.n].name
+        else:
+            if len(func.params) != 1:
+                raise KeyError(
+                    f"{func.name} has more than one return value, and you"
+                    f" need to specify the number of a return value")
+            return func.params[0].name
+
+    def __str__(self):
+        return f"Parameter({self.n})"
+
+
 class Return:
     '''
-    Alias of a return value of a function
+    Alias of a return value of a function by position instead of by name
 
     `Return(n)` represents the n-th return value (counted from 0)
 
@@ -32,30 +60,34 @@ class Return:
         self.n = n
 
     def get_name(self, func):
-        assert len(func.returns) > 0, f"{func.name} has no return value"
+        if len(func.returns) == 0:
+            raise KeyError(f"{func.name} has no return value")
         if self.n is not None:
             return func.returns[self.n].name
         else:
-            assert len(
-                func.returns
-            ) == 1, f"{func.name} has more than one return value, and you need to specify the number of a return value"
+            if len(func.returns) != 1:
+                raise KeyError(
+                    f"{func.name} has more than one return value, and you"
+                    f" need to specify the number of a return value")
             return func.returns[0].name
 
     def __str__(self):
         return f"Return({self.n})"
 
 
-class ArgRetDict:
-    ''' Look an object using either a function argument or return value's name or its position '''
+class ParamRetDict:
+    ''' Look an object using either a function parameter or return value's name or position '''
 
     def __init__(self, func, d):
         self.func = func
         self.d = d
 
     def __getitem__(self, key):
-        if type(key) is Return:
-            key = key.get_name(self.func)
         try:
+            if type(key) is Parameter:
+                key = key.get_name(self.func)
+            elif type(key) is Return:
+                key = key.get_name(self.func)
             return self.d[key]
         except KeyError as e:
             raise KeyError(
@@ -64,9 +96,14 @@ class ArgRetDict:
     def __contains__(self, key):
         # Python's auto fallback from __getitem__ to __contains__ only works for
         # integer index
-        if type(key) is Return:
-            key = key.get_name(self.func)
-        return key in self.d
+        try:
+            if type(key) is Parameter:
+                key = key.get_name(self.func)
+            elif type(key) is Return:
+                key = key.get_name(self.func)
+            return key in self.d
+        except KeyError as e:
+            return False
 
     def __str__(self):
         return str(self.d)
@@ -76,8 +113,8 @@ class ArgRetDict:
 
 
 def grad_body(stmt: ffi.Stmt,
-              requires: Sequence[Union[str, Return]],
-              provides: Sequence[Union[str, Return]],
+              requires: Sequence[Union[str, Parameter]],
+              provides: Sequence[Union[str, Parameter, Return]],
               tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
               invert: bool = True,
               user_grads: Sequence[ffi.StmtSetToUserGrad] = []):
@@ -92,8 +129,8 @@ def grad_body(stmt: ffi.Stmt,
 
 def _grad_func(impl,
                func: ffi.Func,
-               requires: Sequence[Union[str, Return]],
-               provides: Sequence[Union[str, Return]],
+               requires: Sequence[Union[str, Parameter]],
+               provides: Sequence[Union[str, Parameter, Return]],
                tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
                tape_in_closure: bool = True,
                invert: bool = True,
@@ -107,10 +144,17 @@ def _grad_func(impl,
             user_grads = func.user_grads
         else:
             user_grads = []
-    req = set(requires)
+    req = set([])
     prov = set([])
+    for r in requires:
+        if type(r) is Parameter:
+            req.add(r.get_name(func))
+        else:
+            req.add(r)
     for p in provides:
-        if type(p) is Return:
+        if type(p) is Parameter:
+            prov.add(p.get_name(func))
+        elif type(p) is Return:
             prov.add(p.get_name(func))
         else:
             prov.add(p)
@@ -128,12 +172,12 @@ def _grad_func(impl,
         print(fwd, file=sys.stderr)
         print("Backward pass from AD:", file=sys.stderr)
         print(bwd, file=sys.stderr)
-    return fwd, bwd, ArgRetDict(func, req_map), ArgRetDict(func, prov_map)
+    return fwd, bwd, ParamRetDict(func, req_map), ParamRetDict(func, prov_map)
 
 
 def grad_(func: ffi.Func,
-          requires: Sequence[str],
-          provides: Sequence[Union[str, Return]],
+          requires: Sequence[Union[str, Parameter]],
+          provides: Sequence[Union[str, Parameter, Return]],
           tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
           tape_in_closure: bool = True,
           invert: bool = True,
@@ -165,11 +209,13 @@ def grad_(func: ffi.Func,
     ----------
     func : AST
         The original function
-    requires : Sequence[str]
-        Name of input variables that need gradients
-    provides : Sequence[Union[str, Return]]
-        Name of output variables whose gradients are known. A return value of a
-        function can be specified with a `Return` object
+    requires : Sequence[Union[str, Parameter]]
+        Name of input variables that need gradients. A parameter of a function can also
+        be specified with a `Parameter` object by position
+    provides : Sequence[Union[str, Parameter, Return]]
+        Name of output variables whose gradients are known. A mutable parameter of a
+        function can also be specified with a `Parameter` object by position. A return
+        value of a function can also be specified with a `Return` object by position
     tapes : Union[Sequence, GradTapeMode]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
@@ -216,8 +262,8 @@ def grad_(func: ffi.Func,
 
 
 def grad(func: ffi.Func,
-         requires: Sequence[str],
-         provides: Sequence[Union[str, Return]],
+         requires: Sequence[Union[str, Parameter]],
+         provides: Sequence[Union[str, Parameter, Return]],
          tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
          tape_in_closure: bool = True,
          invert: bool = True,
@@ -250,11 +296,13 @@ def grad(func: ffi.Func,
     ----------
     func : AST
         The original function
-    requires : Sequence[str]
-        Name of input variables that need gradients
-    provides : Sequence[Union[str, Return]]
-        Name of output variables whose gradients are known. A return value of a
-        function can be specified with a `Return` object
+    requires : Sequence[Union[str, Parameter]]
+        Name of input variables that need gradients. A parameter of a function can also
+        be specified with a `Parameter` object by position
+    provides : Sequence[Union[str, Parameter, Return]]
+        Name of output variables whose gradients are known. A mutable parameter of a
+        function can also be specified with a `Parameter` object by position. A return
+        value of a function can also be specified with a `Return` object by position
     tapes : Union[Sequence, GradTapeMode]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
@@ -300,8 +348,8 @@ def grad(func: ffi.Func,
 
 
 def jacrev_(func: ffi.Func,
-            inputs: Sequence[str],
-            output: Union[str, Return],
+            inputs: Sequence[Union[str, Parameter]],
+            output: Union[str, Parameter, Return],
             tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
             invert: bool = True,
             user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
@@ -333,11 +381,13 @@ def jacrev_(func: ffi.Func,
     ----------
     func : AST
         The original function
-    inputs : Sequence[str]
-        Name of input variables that the Jacobian tensors are for.
-    output : Union[str, Return]
-        Name of one output variables that the Jacobian tensors are for. A return value of a
-        function can be specified with a `Return` object
+    inputs : Sequence[Union[str, Parameter]]
+        Name of input variables that the Jacobian tensors are for. A parameter of a function
+        can also be specified with a `Parameter` object by position
+    provides : Sequence[Union[str, Parameter, Return]]
+        Name of one output variables that the Jacobian tensors are for. A mutable parameter
+        of a function can also be specified with a `Parameter` object by position. A return
+        value of a function can also be specified with a `Return` object by position
     tapes : Union[Sequence, GradTapeMode]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
@@ -489,8 +539,8 @@ def jacrev_(func: ffi.Func,
 
 
 def jacrev(func: ffi.Func,
-           inputs: Sequence[str],
-           output: Union[str, Return],
+           inputs: Sequence[Union[str, Parameter]],
+           output: Union[str, Parameter, Return],
            tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
            invert: bool = True,
            user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
