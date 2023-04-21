@@ -132,7 +132,7 @@ FrontendVar::chainIndices(const std::vector<FrontendVarIdx> &next) const {
                 } else {
                     indices.emplace_back(FrontendVarIdx::fromSlice(
                         makeAdd(idx.start(), it->start()),
-                        makeAdd(idx.stop(), it->start())));
+                        makeAdd(idx.start(), it->stop())));
                 }
                 it++;
             } else {

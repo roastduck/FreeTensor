@@ -61,6 +61,24 @@ def test_chained_subscript():
     assert ft.pop_ast().match(f.body)
 
 
+def test_chained_slice():
+
+    @ft.lower(verbose=1)
+    @ft.transform(verbose=1)
+    def f(y):
+        y: ft.Var[(8, 8), "int32", "inout", "cpu"]
+        y_slice = y[:, :4][2:6]
+        for i in range(y_slice.shape(0)):
+            for j in range(y_slice.shape(1)):
+                y_slice[i, j] = 1
+
+    with ft.VarDef("y", (8, 8), "int32", "inout", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            with ft.For("j", 0, 4) as j:
+                y[i + 2, j] = 1
+    assert ft.pop_ast().match(f.body)
+
+
 def test_select():
 
     @ft.transform
