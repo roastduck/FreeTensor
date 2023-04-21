@@ -1,5 +1,6 @@
 #include <ffi.h>
 #include <func.h>
+#include <serialize/to_string.h>
 
 namespace freetensor {
 
@@ -24,7 +25,9 @@ void init_ffi_ast_func(py::module_ &m) {
              "name"_a, "closure"_a = nullptr, "update_closure"_a = false)
         .def_readonly("name", &FuncParam::name_)
         .def_readonly("update_closure", &FuncParam::updateClosure_)
-        .def_property_readonly("is_in_closure", &FuncParam::isInClosure);
+        .def_property_readonly("is_in_closure", &FuncParam::isInClosure)
+        .def("__str__",
+             static_cast<std::string (*)(const FuncParam &)>(&toString));
     py::implicitly_convertible<std::string, FuncParam>();
 
     auto initFuncRet = [](const std::string &name, DataType dtype,
@@ -53,7 +56,9 @@ void init_ffi_ast_func(py::module_ &m) {
         .def_readonly("name", &FuncRet::name_)
         .def_readonly("dtype", &FuncRet::dtype_)
         .def_readonly("return_closure", &FuncRet::returnClosure_)
-        .def_property_readonly("is_in_closure", &FuncRet::isInClosure);
+        .def_property_readonly("is_in_closure", &FuncRet::isInClosure)
+        .def("__str__",
+             static_cast<std::string (*)(const FuncRet &)>(&toString));
 
     m.attr("Func")
         .cast<py::class_<FuncNode, Func>>()

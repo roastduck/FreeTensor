@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_FUNC_H
 #define FREE_TENSOR_FUNC_H
 
+#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -26,6 +27,8 @@ struct FuncParam {
         : name_(name), closure_(closure), updateClosure_(updateClosure) {}
 };
 
+std::ostream &operator<<(std::ostream &os, const FuncParam &p);
+
 struct FuncRet {
     std::string name_;
     DataType dtype_;
@@ -39,6 +42,8 @@ struct FuncRet {
         : name_(name), dtype_(dtype), closure_(closure),
           returnClosure_(returnClosure) {}
 };
+
+std::ostream &operator<<(std::ostream &os, const FuncRet &r);
 
 class FuncNode : public ASTNode {
   public:

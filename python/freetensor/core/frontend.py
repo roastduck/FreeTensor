@@ -364,8 +364,6 @@ class Var(StagedTypeAnnotation):
 
         Parameters
         ----------
-        name : str
-            Name of the variable
         shape : Sequence[Expr] or Var
             Shape of the variable. A variable can be created using a literal shape,
             or another fixed-length VarRef as a shape
