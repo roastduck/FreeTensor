@@ -5,6 +5,7 @@ __all__ = [
 
 from typing import Optional, Set, Union, Sequence
 import sys
+import functools
 
 import freetensor_ffi as ffi
 
@@ -113,8 +114,8 @@ class ParamRetDict:
 
 
 def grad_body(stmt: ffi.Stmt,
-              requires: Sequence[Union[str, Parameter]],
-              provides: Sequence[Union[str, Parameter, Return]],
+              requires: Sequence[str],
+              provides: Sequence[str],
               tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
               invert: bool = True,
               user_grads: Sequence[ffi.StmtSetToUserGrad] = []):
@@ -350,6 +351,7 @@ def grad(func: ffi.Func,
 def jacrev_(func: ffi.Func,
             inputs: Sequence[Union[str, Parameter]],
             output: Union[str, Parameter, Return],
+            flatten: bool = False,
             tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
             invert: bool = True,
             user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
@@ -375,7 +377,11 @@ def jacrev_(func: ffi.Func,
     function passes the resulting gradients by additional mutable arguments. Names of
     the additional arguments can be looked up in the map returned by `jacrev_`.
 
-    Suppose the output
+    Suppose the output's shape is `(d1, d2, ...)`, and there are two inputs, whose shapes
+    are `(e1, e2, ...)` and `(f1, f2, ...)`, respectively. If `flatten` is False (by
+    default), the Jacobian tensors' shape will be `(d1, d2, ..., e1, e2, ...)` and
+    `(d1, d2, ..., f1, f2, ...)`, respectively. If `flatten` is True, there will be only
+    one Jacbian tensor, whose shape will be `(d1 * d2 * ..., e1 * e2 * ... + f1 * f2 * ...)`.
 
     Parameters
     ----------
@@ -388,6 +394,12 @@ def jacrev_(func: ffi.Func,
         Name of one output variables that the Jacobian tensors are for. A mutable parameter
         of a function can also be specified with a `Parameter` object by position. A return
         value of a function can also be specified with a `Return` object by position
+    flatten : bool
+        If True, concatenate all Jacobian tensors together, to form an `(n, m)`-shaped output,
+        where `n` is the total number of elements in the specified output, and `m` is the
+        total number of elements in the specified inputs. This requires all involved inputs
+        having the same data type and memory type. In this case, the name of the Jacobian
+        tensor will be `"jacrev.flatten"`, and the returned name map will be empty
     tapes : Union[Sequence, GradTapeMode]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
@@ -412,7 +424,7 @@ def jacrev_(func: ffi.Func,
         (
          0. Forward AST.
          1. Backward AST.
-         2. Mapping from names in inputs to its gradient name.
+         2. Mapping from names in inputs to its Jacobian tensor name.
         )
     '''
 
@@ -444,19 +456,19 @@ def jacrev_(func: ffi.Func,
                     return True
         return False
 
-    def is_out_grad(old_io_vardef):
-        return old_io_vardef.name == prov_map[output]
+    def is_out_grad(name):
+        return name == prov_map[output]
 
-    def is_in_grad(old_io_vardef):
+    def is_in_grad(name):
         for item in inputs:
-            if old_io_vardef.name == req_map[item]:
+            if name == req_map[item]:
                 return True
         return False
 
     old_io_vardefs = find_all_stmt(bwd.body, is_io_vardef)  # In DFS pre order
     old_out_grad_vardef = None
     for old_io_vardef in old_io_vardefs:
-        if is_out_grad(old_io_vardef):
+        if is_out_grad(old_io_vardef.name):
             old_out_grad_vardef = old_io_vardef
     assert old_out_grad_vardef is not None, "Output is not found"
     open_new_vardefs = []
@@ -465,16 +477,17 @@ def jacrev_(func: ffi.Func,
     new_out_ref = None
     for old_io_vardef in old_io_vardefs:
         new_vardef = None
-        if is_in_grad(old_io_vardef):
+        if is_in_grad(old_io_vardef.name):
             # Prepend the output dimension to the input dimension. FIXME: What if a variable
             # used in the output dimension is undefined here?
             new_shape = list(old_io_vardef.buffer.tensor.shape)
             new_shape = list(
                 old_out_grad_vardef.buffer.tensor.shape) + new_shape
-            new_vardef = VarDef(old_io_vardef.name, new_shape,
-                                old_io_vardef.buffer.tensor.dtype,
-                                old_io_vardef.buffer.atype,
-                                old_io_vardef.buffer.mtype)
+            new_vardef = VarDef(
+                old_io_vardef.name, new_shape,
+                old_io_vardef.buffer.tensor.dtype,
+                'cache' if flatten else old_io_vardef.buffer.atype,
+                old_io_vardef.buffer.mtype)
             in_grad_to_new_ref[old_io_vardef.name] = new_vardef.__enter__()
         elif old_io_vardef is old_out_grad_vardef:
             new_vardef = VarDef(old_io_vardef.name,
@@ -518,8 +531,50 @@ def jacrev_(func: ffi.Func,
                         for key in in_grad_to_new_ref_slice
                     })
 
+    def prod(iterable):
+        return functools.reduce(lambda x, y: x * y, iterable, 1)
+
+    @inline
+    def body_wrapper(*args, **kvs):
+        body(*args, **kvs)
+        if flatten:
+            from .. import libop
+            dtype = None
+            mtype = None
+            tot_in_size = 0
+            for p in bwd.params:
+                if p.name in in_grad_to_new_ref:
+                    in_grad_new_ref = in_grad_to_new_ref[p.name]
+                    tot_in_size += prod(
+                        in_grad_new_ref.shape()[new_out_ref.ndim:])
+                    if dtype is not None and dtype != in_grad_new_ref.dtype:
+                        raise ffi.InvalidAutoGrad(
+                            "jacrev with flatten=True requires all involved inputs having the"
+                            " same data type")
+                    if mtype is not None and mtype != in_grad_new_ref.mtype:
+                        raise ffi.InvalidAutoGrad(
+                            "jacrev with flatten=True requires all involved inputs having the"
+                            " same memory type")
+                    dtype = in_grad_new_ref.dtype
+                    mtype = in_grad_new_ref.mtype
+            tot_out_size = prod(new_out_ref.shape())
+            with VarDef("jacrev.flatten", (tot_out_size, tot_in_size), dtype,
+                        'output', mtype) as flattened_ref:
+                flattened_off = 0
+                for p in bwd.params:
+                    if p.name in in_grad_to_new_ref:
+                        in_grad_new_ref = in_grad_to_new_ref[p.name]
+                        this_in_size = prod(
+                            in_grad_new_ref.shape()[new_out_ref.ndim:])
+                        libop.flatten_onnx_(
+                            in_grad_new_ref,
+                            flattened_ref[:, flattened_off:flattened_off +
+                                          this_in_size],
+                            axis=new_out_ref.ndim)
+                        flattened_off += this_in_size
+
     with LifetimeScope():
-        body(new_out_ref, in_grad_to_new_ref)
+        body_wrapper(new_out_ref, in_grad_to_new_ref)
 
     # 2c. Close scopes and build a new AST
     for new_vardef in reversed(open_new_vardefs):
@@ -527,20 +582,23 @@ def jacrev_(func: ffi.Func,
     new_bwd_body = pop_ast()
 
     # 2d. Make Func signature
-    new_bwd = ffi.Func(
-        bwd.name, list(filter(lambda x: x.name != prov_map[output],
-                              bwd.params)), bwd.returns, new_bwd_body)
+    new_params = list(filter(lambda p: not is_out_grad(p.name), bwd.params))
+    if flatten:
+        new_params = list(filter(lambda p: not is_in_grad(p.name),
+                                 new_params)) + ['jacrev.flatten']
+    new_bwd = ffi.Func(bwd.name, new_params, bwd.returns, new_bwd_body)
 
     if verbose:
         print("Backward pass from jacrev:", file=sys.stderr)
         print(new_bwd, file=sys.stderr)
 
-    return (fwd, new_bwd, req_map)
+    return (fwd, new_bwd, {} if flatten else req_map)
 
 
 def jacrev(func: ffi.Func,
            inputs: Sequence[Union[str, Parameter]],
            output: Union[str, Parameter, Return],
+           flatten: bool = False,
            tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
            invert: bool = True,
            user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
@@ -566,7 +624,11 @@ def jacrev(func: ffi.Func,
     function returns the resulting Jacobian as additional return values. Names of the
     additional return values can be looked up in the map returned by `jacrev`.
 
-    Suppose the output
+    Suppose the output's shape is `(d1, d2, ...)`, and there are two inputs, whose shapes
+    are `(e1, e2, ...)` and `(f1, f2, ...)`, respectively. If `flatten` is False (by
+    default), the Jacobian tensors' shape will be `(d1, d2, ..., e1, e2, ...)` and
+    `(d1, d2, ..., f1, f2, ...)`, respectively. If `flatten` is True, there will be only
+    one Jacbian tensor, whose shape will be `(d1 * d2 * ..., e1 * e2 * ... + f1 * f2 * ...)`.
 
     Parameters
     ----------
@@ -577,6 +639,12 @@ def jacrev(func: ffi.Func,
     output : Union[str, Return]
         Name of one output variables that the Jacobian tensors are for. A return value of a
         function can be specified with a `Return` object
+    flatten : bool
+        If True, concatenate all Jacobian tensors together, to form an `(n, m)`-shaped output,
+        where `n` is the total number of elements in the specified output, and `m` is the
+        total number of elements in the specified inputs. This requires all involved inputs
+        having the same data type and memory type. In this case, the name of the Jacobian
+        tensor will be `"jacrev.flatten"`, and the returned name map will be empty
     tapes : Union[Sequence, GradTapeMode]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
@@ -601,21 +669,25 @@ def jacrev(func: ffi.Func,
         (
          0. Forward AST.
          1. Backward AST.
-         2. Mapping from names in inputs to its gradient name.
+         2. Mapping from names in inputs to its Jacobian tensor name.
         )
     '''
 
     fwd, bwd, input_map = jacrev_(func,
                                   inputs,
                                   output,
+                                  flatten=flatten,
                                   tapes=tapes,
                                   invert=invert,
                                   user_grads=user_grads,
                                   verbose=verbose)
 
     in_grads = set()
-    for key in input_map:
-        in_grads.add(input_map[key])
+    if flatten:
+        in_grads = {"jacrev.flatten"}
+    else:
+        for key in input_map:
+            in_grads.add(input_map[key])
 
     new_params = []
     new_returns = bwd.returns

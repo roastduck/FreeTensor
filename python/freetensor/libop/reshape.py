@@ -1,6 +1,6 @@
 __all__ = [
-    'reshape', 'reshape_', 'flatten', 'flatten_', 'unsqueeze', 'unsqueeze_',
-    'expand', 'expand_'
+    'reshape', 'reshape_', 'flatten', 'flatten_', 'flatten_onnx',
+    'flatten_onnx_', 'unsqueeze', 'unsqueeze_', 'expand', 'expand_'
 ]
 
 from typing import Sequence
@@ -236,7 +236,10 @@ def _flatten_inner_(x, y):
 @core.inline
 def flatten_(x, y, axis: int = 1):
     '''
-    Flatten a tensor to have fewer dimensions, and write to another tensor
+    Flatten a tensor to have two dimensions, and write to another tensor
+
+    NOTE: This function follows the ONNX convension that reshapes to 2-D instead
+    of 1-D.
 
     Parameters
     ----------
@@ -245,9 +248,10 @@ def flatten_(x, y, axis: int = 1):
     y : VarRef
         The result tensor
     axis : int (Optional)
-        The result tensor will have up to `axis` dimensions. All dimensions after
-        `axis` will be flatten to 1-D. Negative axis means counting form the last
-        dimension
+        The result tensor will have 2 dimensions. All dimensions up to `axis`
+        (inclusive) will be flattend to the first dimension. All dimensions after
+        `axis` (exclusive) will be flatten to the second dimension. Negative axis
+        means counting form the last dimension
     '''
     if axis == 0:
         #! label: recur
@@ -273,16 +277,20 @@ def _flatten_comp_shape(x, axis):
 @core.inline
 def flatten(x, axis: int = 1):
     '''
-    Flatten a tensor to have fewer dimensions, and return the result
+    Flatten a tensor to have two dimensions, and return the result
+
+    NOTE: This function follows the ONNX convension that reshapes to 2-D instead
+    of 1-D.
 
     Parameters
     ----------
     x : VarRef
         The input tensor
     axis : int (Optional)
-        The result tensor will have up to `axis` dimensions. All dimensions after
-        `axis` will be flatten to 1-D. Negative axis means counting form the last
-        dimension
+        The result tensor will have 2 dimensions. All dimensions up to `axis`
+        (inclusive) will be flattend to the first dimension. All dimensions after
+        `axis` (exclusive) will be flatten to the second dimension. Negative axis
+        means counting form the last dimension
 
     Returns
     -------
@@ -293,6 +301,13 @@ def flatten(x, axis: int = 1):
     #! label: recur
     flatten_(x, y, axis)
     return y
+
+
+flatten_onnx_ = flatten_
+''' Alias of `flatten_` '''
+
+flatten_onnx = flatten
+''' Alias of `flatten` '''
 
 
 def _circular_axes(axes, x_ndim):
