@@ -1,5 +1,6 @@
 __all__ = ['transform', 'inline']
 
+from typing import Mapping, Any
 import sys
 import inspect
 import functools
@@ -22,7 +23,10 @@ def _prepare_extra_locals(default_dynamic_range):
 
 
 @as_decorator
-def transform(func=None, default_dynamic_range=True, verbose: int = 0):
+def transform(func=None,
+              default_dynamic_range=True,
+              bind: Mapping[str, Any] = {},
+              verbose: int = 0):
     '''
     Transform a user function to an AST
 
@@ -34,6 +38,9 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
     default_dynamic_range : bool
         If True, the built-in range is replaced with freetensor.dynamic_range.
         Defaults to True
+    bind : Mapping[str, Any]
+        Bind some parameters to specific values before transformations. Accpeting a
+        parameter-name-to-value dict.
     verbose : int
         0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
         Python code that is used for transforming
@@ -49,6 +56,9 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
     staging_func = lang_overload.into_staging(func,
                                               extra_locals,
                                               verbose=verbose >= 2)
+
+    staging_func = functools.partial(staging_func, **bind)
+    params = list(filter(lambda name: name not in bind, params))
 
     try:
         # Initialize lang_overload to prepare for staging.

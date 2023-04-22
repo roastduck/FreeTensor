@@ -565,3 +565,18 @@ def test_not_captured_annotation():
         return y
 
     assert test.body.match(test_expected.body)
+
+
+def test_bind():
+
+    @ft.transform(bind={'v': 2}, verbose=1)
+    def test(x: ft.Var[(4,), "float32"], v: int):
+        y = x + v
+        return y
+
+    @ft.transform
+    def test_expected(x: ft.Var[(4,), "float32"]):
+        y = x + 2
+        return y
+
+    assert test.body.match(test_expected.body)
