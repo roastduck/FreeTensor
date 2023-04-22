@@ -10,7 +10,9 @@ from typing import Optional, Callable, Union, List, Dict
 import freetensor_ffi as ffi
 from freetensor_ffi import (ParallelScope, ID, Selector, FissionSide,
                             MoveToSide, VarSplitMode)
+
 from .analyze import find_stmt
+from .jit import JITTemplate
 from .meta import MemType
 from .utils import as_decorator
 
@@ -913,6 +915,7 @@ class Schedule(ffi.Schedule):
 @as_decorator
 def schedule(ast=None,
              callback: Callable[[Schedule], None] = None,
+             jit_cache: Callable[Callable, Callable] = functools.cache,
              verbose: Optional[int] = None):
     '''
     Apply any schedule on an AST through a user callback
@@ -924,10 +927,30 @@ def schedule(ast=None,
         returned that cna be used as a decorator
     callback : Callable
         Specify what schedule(s) to do in this callback
+    jit_cache : Callable[Callable, Callable]
+        Function decorator used to cache JIT instances
     verbose : int (Optional)
         0 = print nothing. 1 = print the final AST. 2 = print an AST after
         each schedule
+
+    Returns
+    -------
+    Func or JITTemplate
+        Return a Func for an AST if there is no JIT parameters. Return a JITTemplate
+        that generates a Func if there is at least one
     '''
+
+    if isinstance(ast, JITTemplate):
+
+        class ScheduleTemplate(JITTemplate):
+
+            @jit_cache
+            def instantiate_by_only_jit_args(self, *jit_args):
+                return schedule(ast.instantiate_by_only_jit_args(*jit_args),
+                                callback=callback,
+                                verbose=verbose)
+
+        return ScheduleTemplate(ast.params, ast.jit_param_names)
 
     if callback is None:
         return ast

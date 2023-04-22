@@ -3,14 +3,16 @@ __all__ = [
     'ReturnValuesPack', 'Driver', 'build_binary'
 ]
 
-import freetensor_ffi as ffi
+from typing import Optional, Sequence, Callable
+import functools
 import numpy as np
 
-from typing import Optional, Sequence
+import freetensor_ffi as ffi
 from freetensor_ffi import TargetType, Target, Array
 
 from . import config
 from .codegen import NativeCode
+from .jit import JITTemplate
 from .meta import DataType, to_numpy_dtype, to_torch_dtype
 from .utils import as_decorator
 
@@ -347,6 +349,7 @@ class Driver(ffi.Driver):
 def build_binary(code: Optional[NativeCode] = None,
                  device: Optional[Device] = None,
                  host_device: Optional[Device] = None,
+                 jit_cache: Callable[Callable, Callable] = functools.cache,
                  verbose: Optional[bool] = None):
     '''
     Compile a program using a backend compiler and load it into memory
@@ -359,7 +362,36 @@ def build_binary(code: Optional[NativeCode] = None,
     device : Device (Optional)
         The device to run the program. If omitted, use the default device
         in config
+    jit_cache : Callable[Callable, Callable]
+        Function decorator used to cache JIT instances
+    verbose : int
+        Verbosity level
+
+    Returns
+    -------
+    Driver or JITTemplate
+        Return a Driver for the executable if there is no JIT parameters.
+        Return a JITTemplate that generates a Driver if there is at least one
     '''
+
+    if isinstance(code, JITTemplate):
+
+        class BuildBinaryTemplate(JITTemplate):
+
+            @jit_cache
+            def instantiate_by_only_jit_args(self, *jit_args):
+                return build_binary(
+                    code.instantiate_by_only_jit_args(*jit_args),
+                    device=device,
+                    host_device=host_device,
+                    verbose=verbose)
+
+            def __call__(self, *args, **kvs):
+                ''' Helper to directly run the template '''
+
+                return self.instantiate_and_call(*args, **kvs)
+
+        return BuildBinaryTemplate(code.params, code.jit_param_names)
 
     if device is None:
         device = config.default_device()

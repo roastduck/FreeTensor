@@ -1,6 +1,6 @@
 __all__ = ['transform', 'inline']
 
-from typing import Mapping, Any
+from typing import Mapping, Callable, Any
 import sys
 import inspect
 import functools
@@ -11,6 +11,7 @@ from .func import Func
 from .frontend import lang_overload, staged_callable, LifetimeScope, dynamic_range
 from .context import pop_ast_and_user_grads
 from .staging import StagingError, TransformError
+from .jit import JIT, JITTemplate
 from .meta import add_outputting
 from .utils import as_decorator
 
@@ -26,6 +27,7 @@ def _prepare_extra_locals(default_dynamic_range):
 def transform(func=None,
               default_dynamic_range=True,
               bind: Mapping[str, Any] = {},
+              jit_cache: Callable[Callable, Callable] = functools.cache,
               verbose: int = 0):
     '''
     Transform a user function to an AST
@@ -41,9 +43,17 @@ def transform(func=None,
     bind : Mapping[str, Any]
         Bind some parameters to specific values before transformations. Accpeting a
         parameter-name-to-value dict.
+    jit_cache : Callable[Callable, Callable]
+        Function decorator used to cache JIT instances
     verbose : int
         0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
         Python code that is used for transforming
+
+    Returns
+    -------
+    Func or JITTemplate
+        Return a Func for an AST if there is no JIT parameters. Return a JITTemplate
+        that generates a Func if there is at least one
     '''
 
     if verbose is None:
@@ -51,14 +61,39 @@ def transform(func=None,
 
     extra_locals = _prepare_extra_locals(default_dynamic_range)
 
-    params = list(inspect.signature(func).parameters)
+    params = inspect.signature(func).parameters
+    param_names = []
+    jit_param_names = []
+    for name, param in params.items():
+        if name not in bind:
+            param_names.append(name)
+            if param.annotation is JIT:
+                jit_param_names.append(name)
+
+    if len(jit_param_names) > 0:
+
+        class TransformTemplate(JITTemplate):
+
+            @jit_cache
+            def instantiate_by_only_jit_args(self, *jit_args):
+                new_bind = {
+                    name: value
+                    for name, value in zip(self.jit_param_names, jit_args)
+                }
+                return transform(func,
+                                 default_dynamic_range=default_dynamic_range,
+                                 bind={
+                                     **bind,
+                                     **new_bind
+                                 },
+                                 verbose=verbose)
+
+        return TransformTemplate(params, jit_param_names)
 
     staging_func = lang_overload.into_staging(func,
                                               extra_locals,
                                               verbose=verbose >= 2)
-
     staging_func = functools.partial(staging_func, **bind)
-    params = list(filter(lambda name: name not in bind, params))
 
     try:
         # Initialize lang_overload to prepare for staging.
@@ -66,7 +101,7 @@ def transform(func=None,
         # Create a new scope for the function
         with LifetimeScope():
             # Run staging function with the tensor program arguments' names as parameters
-            returns = staging_func(*params,
+            returns = staging_func(*param_names,
                                    __freetensor_transform_outermost__=True)
             # Check returned vardefs (if any)
             if isinstance(returns, VarRef):
@@ -105,7 +140,7 @@ def transform(func=None,
         staged_ast, user_grads = pop_ast_and_user_grads()
 
     staged = Func(func.__name__,
-                  params + list(closure.keys()),
+                  param_names + list(closure.keys()),
                   returns,
                   staged_ast,
                   closure,
