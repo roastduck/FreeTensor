@@ -282,7 +282,7 @@ def unary_op_(op, x, y):
         The operation applied to each item
     x : VarRef
         The input tensor
-    out : VarRef
+    y : VarRef
         The result tensor
     '''
 

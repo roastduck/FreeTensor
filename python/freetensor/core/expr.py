@@ -1139,9 +1139,9 @@ def if_then_else(cond, then_case, else_case):
     ----------
     cond : VarRef of Number
         Condition
-    lhs : VarRef or Number
+    then_case : VarRef or Number
         Then-case experssion
-    rhs : VarRef or Number
+    else_case : VarRef or Number
         Else-case expression
 
     Returns
@@ -1173,7 +1173,7 @@ def cast(expr, dtype):
     return ffi.makeCast(expr, ffi.DataType(dtype))
 
 
-def intrinsic(fmt, *params, **kws):
+def intrinsic(fmt, *params, ret_type="void", has_side_effect: bool = False):
     """
     Invoke whatever target code
 
@@ -1181,22 +1181,14 @@ def intrinsic(fmt, *params, **kws):
     ----------
     fmt : str
         What to run. "%" is filled by parameters one by one. E.g. sinf(%)
-    The following variadic arguments : Expr
-        Parameters to `fmt`
+    *params : Sequence[Expr]
+        (Positional variadic) Parameters to `fmt`
     ret_type : DataType or str
         (Keyword argument only) The return type. Void for no return type. Defaults to Void
     has_side_effect: bool
         (Keyword argument only) True to indicate the intrinsic modifes something other than the return value. Defaults to false
     """
-    ret_type = ffi.DataType("void")
-    has_side_effect = False
-    if "ret_type" in kws:
-        ret_type = ffi.DataType(kws["ret_type"])
-        del kws["ret_type"]
-    if "has_side_effect" in kws:
-        has_side_effect = kws["has_side_effect"]
-        del kws["has_side_effect"]
-    assert len(kws) == 0, "Unrecognized keyword arguments: %s" % kws
+    ret_type = ffi.DataType(ret_type)
     return ffi.makeIntrinsic(fmt, params, ret_type, has_side_effect)
 
 

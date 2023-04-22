@@ -434,22 +434,18 @@ class UserGradStaged:
     Internal staged implementation of `UserGrad`
     '''
 
-    def __init__(self, *args: Sequence[VarRef], **kvs):
+    def __init__(self, *args: Sequence[VarRef], stmt_range: StmtRange = None):
         self.ori_vars = args
         self.body = None
         self.grad_defs = []
-        if 'stmt_range' in kvs:
-            stmt_range = kvs['stmt_range']
+        if stmt_range is not None:
             if isinstance(stmt_range, StmtRange):
                 self.ori_stmts = stmt_range.make()
             else:
                 raise TypeError(
                     "`stmt_range` should be a `StmtRange` for `UserGrad`")
-            del kvs['stmt_range']
         else:
             self.ori_stmts = {ctx_stack.get_last_stmt_id()}
-        for key in kvs:
-            raise TypeError(f"Unrecognized parameter `{key}` of `UserGrad`")
 
     def __enter__(self):
         # Make `VarDef` scopes for the gradients

@@ -390,7 +390,7 @@ def jacrev_(func: ffi.Func,
     inputs : Sequence[Union[str, Parameter]]
         Name of input variables that the Jacobian tensors are for. A parameter of a function
         can also be specified with a `Parameter` object by position
-    provides : Sequence[Union[str, Parameter, Return]]
+    output : Union[str, Parameter, Return]
         Name of one output variables that the Jacobian tensors are for. A mutable parameter
         of a function can also be specified with a `Parameter` object by position. A return
         value of a function can also be specified with a `Return` object by position
@@ -634,9 +634,9 @@ def jacrev(func: ffi.Func,
     ----------
     func : AST
         The original function
-    inputs : Sequence[str]
+    inputs : Sequence[Union[str, Parameter]]
         Name of input variables that the Jacobian tensors are for.
-    output : Union[str, Return]
+    output : Union[str, Parameter, Return]
         Name of one output variables that the Jacobian tensors are for. A return value of a
         function can be specified with a `Return` object
     flatten : bool

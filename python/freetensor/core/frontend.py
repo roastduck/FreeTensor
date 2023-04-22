@@ -17,6 +17,7 @@ from .stmt import (_VarDef, VarRef, For, If, Else, ctx_stack, Assert, Invoke,
                    MarkVersion, UserGradStaged)
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
                       StagedIterable, StagingOverload)
+from .context import StmtRange
 
 assert sys.version_info >= (3, 8), \
     "Python version lower than 3.8 is not supported"
@@ -454,14 +455,14 @@ class UserGrad(UserGradStaged):
 
     Parameters
     ----------
+    *args: Sequence[VarRef]
+        (Positional variadic) Mapping from original variables to gradient variables
     stmt_range: Optional[StmtRange]
         The range in the original program that we are setting custom gradient for
-    args: Sequence[VarRef]
-        (Positional variadic) Mapping from original variables to gradient variables
     '''
 
-    def __init__(self, *args: Sequence[VarRef], **kvs):
-        super(UserGrad, self).__init__(*args, **kvs)
+    def __init__(self, *args: Sequence[VarRef], stmt_range: StmtRange = None):
+        super(UserGrad, self).__init__(*args, stmt_range=stmt_range)
         self.lifetime_scope = LifetimeScope()
 
     def __enter__(self):
