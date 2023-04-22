@@ -11,6 +11,7 @@ from .frontend import lang_overload, staged_callable, LifetimeScope, dynamic_ran
 from .context import pop_ast_and_user_grads
 from .staging import StagingError, TransformError
 from .meta import add_outputting
+from .utils import as_decorator
 
 
 def _prepare_extra_locals(default_dynamic_range):
@@ -20,6 +21,7 @@ def _prepare_extra_locals(default_dynamic_range):
     return extra_locals
 
 
+@as_decorator
 def transform(func=None, default_dynamic_range=True, verbose: int = 0):
     '''
     Transform a user function to an AST
@@ -36,11 +38,6 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
         0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
         Python code that is used for transforming
     '''
-
-    if func is None:
-        return functools.partial(transform,
-                                 default_dynamic_range=default_dynamic_range,
-                                 verbose=verbose)
 
     if verbose is None:
         verbose = 0
@@ -112,6 +109,7 @@ def transform(func=None, default_dynamic_range=True, verbose: int = 0):
     return staged
 
 
+@as_decorator
 def inline(func=None,
            src=None,
            fallback=None,
@@ -134,13 +132,6 @@ def inline(func=None,
     verbose : bool
         True to print the generated Python code that is used for transforming
     '''
-
-    if func is None:
-        return functools.partial(inline,
-                                 src=src,
-                                 fallback=fallback,
-                                 default_dynamic_range=default_dynamic_range,
-                                 verbose=verbose)
 
     extra_locals = _prepare_extra_locals(default_dynamic_range)
 

@@ -1,11 +1,11 @@
-import freetensor_ffi as ffi
+from typing import Optional
 import sys
-import functools
+
+import freetensor_ffi as ffi
 
 from . import config
 from .. import debug
-
-from typing import Optional
+from .utils import as_decorator
 
 
 class NativeCode:
@@ -19,6 +19,7 @@ class NativeCode:
         return self.code
 
 
+@as_decorator
 def codegen(ast=None,
             target: Optional[ffi.Target] = None,
             verbose: Optional[bool] = None) -> NativeCode:
@@ -35,21 +36,10 @@ def codegen(ast=None,
         The target architecture. If omitted, use the default one in config
     '''
 
-    if ast is not None:
+    if target is None:
+        target = config.default_target()
+    raw_code = ffi.code_gen(ast, target)
+    if verbose:
+        print(debug.with_line_no(raw_code), file=sys.stderr)
 
-        if target is None:
-            target = config.default_target()
-        raw_code = ffi.code_gen(ast, target)
-        if verbose:
-            print(debug.with_line_no(raw_code), file=sys.stderr)
-
-        return NativeCode(ast, raw_code, target)
-
-    else:
-
-        f = codegen
-        if target is not None:
-            f = functools.partial(f, target=target)
-        if verbose is not None:
-            f = functools.partial(f, verbose=verbose)
-        return f
+    return NativeCode(ast, raw_code, target)

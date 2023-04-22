@@ -4,7 +4,6 @@ __all__ = [
 ]
 
 import freetensor_ffi as ffi
-import functools
 import numpy as np
 
 from typing import Optional, Sequence
@@ -13,6 +12,7 @@ from freetensor_ffi import TargetType, Target, Array
 from . import config
 from .codegen import NativeCode
 from .meta import DataType, to_numpy_dtype, to_torch_dtype
+from .utils import as_decorator
 
 
 def array(data,
@@ -343,6 +343,7 @@ class Driver(ffi.Driver):
         return self.collect_returns()
 
 
+@as_decorator
 def build_binary(code: Optional[NativeCode] = None,
                  device: Optional[Device] = None,
                  host_device: Optional[Device] = None,
@@ -360,20 +361,10 @@ def build_binary(code: Optional[NativeCode] = None,
         in config
     '''
 
-    if code is not None:
-        if device is None:
-            device = config.default_device()
-        if device.target() != code.target:
-            raise ffi.DriverError(
-                f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"
-            )
-        return Driver(code.func, code.code, device, host_device, verbose)
-    else:
-        f = build_binary
-        if device is not None:
-            f = functools.partial(f, device=device)
-        if host_device is not None:
-            f = functools.partial(f, host_device=host_device)
-        if verbose is not None:
-            f = functools.partial(f, verbose=verbose)
-        return f
+    if device is None:
+        device = config.default_device()
+    if device.target() != code.target:
+        raise ffi.DriverError(
+            f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"
+        )
+    return Driver(code.func, code.code, device, host_device, verbose)

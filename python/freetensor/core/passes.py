@@ -11,7 +11,6 @@ __all__ = [
 ]
 
 from typing import Optional, Sequence
-import functools
 
 import freetensor_ffi as ffi
 
@@ -44,7 +43,10 @@ from freetensor_ffi import gpu_normalize_threads
 from freetensor_ffi import gpu_normalize_var_in_kernel
 from freetensor_ffi import gpu_lower_vector
 
+from .utils import as_decorator
 
+
+@as_decorator
 def lower(ast=None,
           target: Optional[ffi.Target] = None,
           skip_passes: Optional[Sequence[str]] = None,
@@ -71,16 +73,6 @@ def lower(ast=None,
         single passes
     '''
 
-    if ast is not None:
-        return ffi.lower(ast, target,
-                         set() if skip_passes is None else set(skip_passes),
-                         0 if verbose is None else verbose)
-    else:
-        _lower = lower
-        if target is not None:
-            _lower = functools.partial(_lower, target=target)
-        if skip_passes is not None:
-            _lower = functools.partial(_lower, skip_passes=skip_passes)
-        if verbose is not None:
-            _lower = functools.partial(_lower, verbose=verbose)
-        return _lower
+    return ffi.lower(ast, target,
+                     set() if skip_passes is None else set(skip_passes),
+                     0 if verbose is None else verbose)

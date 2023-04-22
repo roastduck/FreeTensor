@@ -12,6 +12,7 @@ from freetensor_ffi import (ParallelScope, ID, Selector, FissionSide,
                             MoveToSide, VarSplitMode)
 from .analyze import find_stmt
 from .meta import MemType
+from .utils import as_decorator
 
 
 class IDMap:
@@ -909,6 +910,7 @@ class Schedule(ffi.Schedule):
         super().auto_unroll(target)
 
 
+@as_decorator
 def schedule(ast=None,
              callback: Callable[[Schedule], None] = None,
              verbose: Optional[int] = None):
@@ -926,21 +928,14 @@ def schedule(ast=None,
         0 = print nothing. 1 = print the final AST. 2 = print an AST after
         each schedule
     '''
-    if ast is not None:
-        if callback is None:
-            return ast
-        if verbose is None:
-            verbose = 0
-        s = Schedule(ast, verbose=verbose)
-        callback(s)
-        if ast.type() == ffi.ASTNodeType.Func:
-            return s.func()
-        else:
-            return s.ast()
+
+    if callback is None:
+        return ast
+    if verbose is None:
+        verbose = 0
+    s = Schedule(ast, verbose=verbose)
+    callback(s)
+    if ast.type() == ffi.ASTNodeType.Func:
+        return s.func()
     else:
-        f = schedule
-        if callback is not None:
-            f = functools.partial(f, callback=callback)
-        if verbose is not None:
-            f = functools.partial(f, verbose=verbose)
-        return f
+        return s.ast()
