@@ -1260,7 +1260,7 @@ one Jacbian tensor, whose shape will be <code>(d1 * d2 * ..., e1 * e2 * ... + f1
         <tr>
           <td><code>inputs</code></td>
           <td>
-                <code><span title="typing.Sequence">Sequence</span>[str]</code>
+                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Parameter" href="#freetensor.core.autograd.Parameter">Parameter</a>]]</code>
           </td>
           <td><p>Name of input variables that the Jacobian tensors are for.</p></td>
           <td>
@@ -1270,7 +1270,7 @@ one Jacbian tensor, whose shape will be <code>(d1 * d2 * ..., e1 * e2 * ... + f1
         <tr>
           <td><code>output</code></td>
           <td>
-                <code><span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Return" href="#freetensor.core.autograd.Return">Return</a>]</code>
+                <code><span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Parameter" href="#freetensor.core.autograd.Parameter">Parameter</a>, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Return" href="#freetensor.core.autograd.Return">Return</a>]</code>
           </td>
           <td><p>Name of one output variables that the Jacobian tensors are for. A return value of a
 function can be specified with a <code>Return</code> object</p></td>
@@ -1514,9 +1514,9 @@ are manipulating <code>func</code> by yourself (not getting it from the Python f
 <span class="sd">    ----------</span>
 <span class="sd">    func : AST</span>
 <span class="sd">        The original function</span>
-<span class="sd">    inputs : Sequence[str]</span>
+<span class="sd">    inputs : Sequence[Union[str, Parameter]]</span>
 <span class="sd">        Name of input variables that the Jacobian tensors are for.</span>
-<span class="sd">    output : Union[str, Return]</span>
+<span class="sd">    output : Union[str, Parameter, Return]</span>
 <span class="sd">        Name of one output variables that the Jacobian tensors are for. A return value of a</span>
 <span class="sd">        function can be specified with a `Return` object</span>
 <span class="sd">    flatten : bool</span>
@@ -1656,9 +1656,9 @@ can also be specified with a <code>Parameter</code> object by position</p></td>
           </td>
         </tr>
         <tr>
-          <td><code>provides</code></td>
+          <td><code>output</code></td>
           <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Parameter" href="#freetensor.core.autograd.Parameter">Parameter</a>, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Return" href="#freetensor.core.autograd.Return">Return</a>]]</code>
+                <code><span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Parameter" href="#freetensor.core.autograd.Parameter">Parameter</a>, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Return" href="#freetensor.core.autograd.Return">Return</a>]</code>
           </td>
           <td><p>Name of one output variables that the Jacobian tensors are for. A mutable parameter
 of a function can also be specified with a <code>Parameter</code> object by position. A return
@@ -2043,7 +2043,7 @@ are manipulating <code>func</code> by yourself (not getting it from the Python f
 <span class="sd">    inputs : Sequence[Union[str, Parameter]]</span>
 <span class="sd">        Name of input variables that the Jacobian tensors are for. A parameter of a function</span>
 <span class="sd">        can also be specified with a `Parameter` object by position</span>
-<span class="sd">    provides : Sequence[Union[str, Parameter, Return]]</span>
+<span class="sd">    output : Union[str, Parameter, Return]</span>
 <span class="sd">        Name of one output variables that the Jacobian tensors are for. A mutable parameter</span>
 <span class="sd">        of a function can also be specified with a `Parameter` object by position. A return</span>
 <span class="sd">        value of a function can also be specified with a `Return` object by position</span>
@@ -2359,17 +2359,8 @@ returned, which can be used as a decorator</p></td>
 <span class="normal">42</span>
 <span class="normal">43</span>
 <span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">codegen</span><span class="p">(</span><span class="n">ast</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="normal">45</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@as_decorator</span>
+<span class="k">def</span> <span class="nf">codegen</span><span class="p">(</span><span class="n">ast</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">target</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">Target</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NativeCode</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
@@ -2385,24 +2376,13 @@ returned, which can be used as a decorator</p></td>
 <span class="sd">        The target architecture. If omitted, use the default one in config</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">if</span> <span class="n">ast</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_target</span><span class="p">()</span>
+    <span class="n">raw_code</span> <span class="o">=</span> <span class="n">ffi</span><span class="o">.</span><span class="n">code_gen</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">debug</span><span class="o">.</span><span class="n">with_line_no</span><span class="p">(</span><span class="n">raw_code</span><span class="p">),</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">target</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_target</span><span class="p">()</span>
-        <span class="n">raw_code</span> <span class="o">=</span> <span class="n">ffi</span><span class="o">.</span><span class="n">code_gen</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">debug</span><span class="o">.</span><span class="n">with_line_no</span><span class="p">(</span><span class="n">raw_code</span><span class="p">),</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">NativeCode</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">raw_code</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-
-    <span class="k">else</span><span class="p">:</span>
-
-        <span class="n">f</span> <span class="o">=</span> <span class="n">codegen</span>
-        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">f</span>
+    <span class="k">return</span> <span class="n">NativeCode</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">raw_code</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>
@@ -4283,16 +4263,8 @@ in config</p></td>
 <span class="normal">367</span>
 <span class="normal">368</span>
 <span class="normal">369</span>
-<span class="normal">370</span>
-<span class="normal">371</span>
-<span class="normal">372</span>
-<span class="normal">373</span>
-<span class="normal">374</span>
-<span class="normal">375</span>
-<span class="normal">376</span>
-<span class="normal">377</span>
-<span class="normal">378</span>
-<span class="normal">379</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">build_binary</span><span class="p">(</span><span class="n">code</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NativeCode</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="normal">370</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@as_decorator</span>
+<span class="k">def</span> <span class="nf">build_binary</span><span class="p">(</span><span class="n">code</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NativeCode</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">host_device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
@@ -4309,23 +4281,13 @@ in config</p></td>
 <span class="sd">        in config</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">if</span> <span class="n">code</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">device</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_device</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">target</span><span class="p">()</span> <span class="o">!=</span> <span class="n">code</span><span class="o">.</span><span class="n">target</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DriverError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Codegen target (</span><span class="si">{</span><span class="n">code</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2">) is inconsistent with device target (</span><span class="si">{</span><span class="n">device</span><span class="o">.</span><span class="n">target</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="n">Driver</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">host_device</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="n">build_binary</span>
-        <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">host_device</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">host_device</span><span class="o">=</span><span class="n">host_device</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">f</span>
+    <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_device</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">target</span><span class="p">()</span> <span class="o">!=</span> <span class="n">code</span><span class="o">.</span><span class="n">target</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DriverError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Codegen target (</span><span class="si">{</span><span class="n">code</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2">) is inconsistent with device target (</span><span class="si">{</span><span class="n">device</span><span class="o">.</span><span class="n">target</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">Driver</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">host_device</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>
@@ -5591,13 +5553,13 @@ it calls libop.add</p>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/expr.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1203</span>
-<span class="normal">1204</span>
-<span class="normal">1205</span>
-<span class="normal">1206</span>
-<span class="normal">1207</span>
-<span class="normal">1208</span>
-<span class="normal">1209</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">any</span><span class="p">():</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1195</span>
+<span class="normal">1196</span>
+<span class="normal">1197</span>
+<span class="normal">1198</span>
+<span class="normal">1199</span>
+<span class="normal">1200</span>
+<span class="normal">1201</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">any</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Create an AnyExpr node (only for testing and type inference)</span>
 
@@ -5970,7 +5932,15 @@ it calls libop.ceildiv</p>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/expr.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1241</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1233</span>
+<span class="normal">1234</span>
+<span class="normal">1235</span>
+<span class="normal">1236</span>
+<span class="normal">1237</span>
+<span class="normal">1238</span>
+<span class="normal">1239</span>
+<span class="normal">1240</span>
+<span class="normal">1241</span>
 <span class="normal">1242</span>
 <span class="normal">1243</span>
 <span class="normal">1244</span>
@@ -5978,15 +5948,7 @@ it calls libop.ceildiv</p>
 <span class="normal">1246</span>
 <span class="normal">1247</span>
 <span class="normal">1248</span>
-<span class="normal">1249</span>
-<span class="normal">1250</span>
-<span class="normal">1251</span>
-<span class="normal">1252</span>
-<span class="normal">1253</span>
-<span class="normal">1254</span>
-<span class="normal">1255</span>
-<span class="normal">1256</span>
-<span class="normal">1257</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
+<span class="normal">1249</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39; Get element data type of a variable &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">var</span><span class="o">.</span><span class="n">dtype</span>
@@ -6734,7 +6696,7 @@ Therefore, please do NOT use <code>if_then_else</code> to guard an out-of-bound 
           </td>
         </tr>
         <tr>
-          <td><code>lhs</code></td>
+          <td><code>then_case</code></td>
           <td>
                 <code>VarRef or Number</code>
           </td>
@@ -6744,7 +6706,7 @@ Therefore, please do NOT use <code>if_then_else</code> to guard an out-of-bound 
           </td>
         </tr>
         <tr>
-          <td><code>rhs</code></td>
+          <td><code>else_case</code></td>
           <td>
                 <code>VarRef or Number</code>
           </td>
@@ -6812,9 +6774,9 @@ Therefore, please do NOT use <code>if_then_else</code> to guard an out-of-bound 
 <span class="sd">    ----------</span>
 <span class="sd">    cond : VarRef of Number</span>
 <span class="sd">        Condition</span>
-<span class="sd">    lhs : VarRef or Number</span>
+<span class="sd">    then_case : VarRef or Number</span>
 <span class="sd">        Then-case experssion</span>
-<span class="sd">    rhs : VarRef or Number</span>
+<span class="sd">    else_case : VarRef or Number</span>
 <span class="sd">        Else-case expression</span>
 
 <span class="sd">    Returns</span>
@@ -6836,7 +6798,7 @@ Therefore, please do NOT use <code>if_then_else</code> to guard an out-of-bound 
 
 
 <h4 id="freetensor.core.expr.intrinsic" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">intrinsic</span><span class="p">(</span><span class="n">fmt</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">intrinsic</span><span class="p">(</span><span class="n">fmt</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="n">ret_type</span><span class="o">=</span><span class="s1">&#39;void&#39;</span><span class="p">,</span> <span class="n">has_side_effect</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.expr.intrinsic" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -6867,12 +6829,13 @@ Therefore, please do NOT use <code>if_then_else</code> to guard an out-of-bound 
           </td>
         </tr>
         <tr>
-          <td><code>The</code></td>
+          <td><code>*params</code></td>
           <td>
+                <code><span title="typing.Sequence">Sequence</span>[Expr]</code>
           </td>
-          <td><p>Parameters to <code>fmt</code></p></td>
+          <td><p>(Positional variadic) Parameters to <code>fmt</code></p></td>
           <td>
-              <em>required</em>
+                <code>()</code>
           </td>
         </tr>
         <tr>
@@ -6882,16 +6845,17 @@ Therefore, please do NOT use <code>if_then_else</code> to guard an out-of-bound 
           </td>
           <td><p>(Keyword argument only) The return type. Void for no return type. Defaults to Void</p></td>
           <td>
-              <em>required</em>
+                <code>&#39;void&#39;</code>
           </td>
         </tr>
         <tr>
           <td><code>has_side_effect</code></td>
           <td>
+                <code>bool</code>
           </td>
           <td><p>(Keyword argument only) True to indicate the intrinsic modifes something other than the return value. Defaults to false</p></td>
           <td>
-              <em>required</em>
+                <code>False</code>
           </td>
         </tr>
     </tbody>
@@ -6915,15 +6879,7 @@ Therefore, please do NOT use <code>if_then_else</code> to guard an out-of-bound 
 <span class="normal">1189</span>
 <span class="normal">1190</span>
 <span class="normal">1191</span>
-<span class="normal">1192</span>
-<span class="normal">1193</span>
-<span class="normal">1194</span>
-<span class="normal">1195</span>
-<span class="normal">1196</span>
-<span class="normal">1197</span>
-<span class="normal">1198</span>
-<span class="normal">1199</span>
-<span class="normal">1200</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">intrinsic</span><span class="p">(</span><span class="n">fmt</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
+<span class="normal">1192</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">intrinsic</span><span class="p">(</span><span class="n">fmt</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="n">ret_type</span><span class="o">=</span><span class="s2">&quot;void&quot;</span><span class="p">,</span> <span class="n">has_side_effect</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Invoke whatever target code</span>
 
@@ -6931,22 +6887,14 @@ Therefore, please do NOT use <code>if_then_else</code> to guard an out-of-bound 
 <span class="sd">    ----------</span>
 <span class="sd">    fmt : str</span>
 <span class="sd">        What to run. &quot;%&quot; is filled by parameters one by one. E.g. sinf(%)</span>
-<span class="sd">    The following variadic arguments : Expr</span>
-<span class="sd">        Parameters to `fmt`</span>
+<span class="sd">    *params : Sequence[Expr]</span>
+<span class="sd">        (Positional variadic) Parameters to `fmt`</span>
 <span class="sd">    ret_type : DataType or str</span>
 <span class="sd">        (Keyword argument only) The return type. Void for no return type. Defaults to Void</span>
 <span class="sd">    has_side_effect: bool</span>
 <span class="sd">        (Keyword argument only) True to indicate the intrinsic modifes something other than the return value. Defaults to false</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">ret_type</span> <span class="o">=</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DataType</span><span class="p">(</span><span class="s2">&quot;void&quot;</span><span class="p">)</span>
-    <span class="n">has_side_effect</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="k">if</span> <span class="s2">&quot;ret_type&quot;</span> <span class="ow">in</span> <span class="n">kws</span><span class="p">:</span>
-        <span class="n">ret_type</span> <span class="o">=</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DataType</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="s2">&quot;ret_type&quot;</span><span class="p">])</span>
-        <span class="k">del</span> <span class="n">kws</span><span class="p">[</span><span class="s2">&quot;ret_type&quot;</span><span class="p">]</span>
-    <span class="k">if</span> <span class="s2">&quot;has_side_effect&quot;</span> <span class="ow">in</span> <span class="n">kws</span><span class="p">:</span>
-        <span class="n">has_side_effect</span> <span class="o">=</span> <span class="n">kws</span><span class="p">[</span><span class="s2">&quot;has_side_effect&quot;</span><span class="p">]</span>
-        <span class="k">del</span> <span class="n">kws</span><span class="p">[</span><span class="s2">&quot;has_side_effect&quot;</span><span class="p">]</span>
-    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">kws</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Unrecognized keyword arguments: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">kws</span>
+    <span class="n">ret_type</span> <span class="o">=</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DataType</span><span class="p">(</span><span class="n">ret_type</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">makeIntrinsic</span><span class="p">(</span><span class="n">fmt</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">ret_type</span><span class="p">,</span> <span class="n">has_side_effect</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
       </details>
@@ -7574,13 +7522,13 @@ it calls libop.ln</p>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/expr.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1212</span>
-<span class="normal">1213</span>
-<span class="normal">1214</span>
-<span class="normal">1215</span>
-<span class="normal">1216</span>
-<span class="normal">1217</span>
-<span class="normal">1218</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">load_at_version</span><span class="p">(</span><span class="n">tape_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="o">*</span><span class="n">indices</span><span class="p">):</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1204</span>
+<span class="normal">1205</span>
+<span class="normal">1206</span>
+<span class="normal">1207</span>
+<span class="normal">1208</span>
+<span class="normal">1209</span>
+<span class="normal">1210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">load_at_version</span><span class="p">(</span><span class="n">tape_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="o">*</span><span class="n">indices</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Create an LoadAtVersion node (only for custom gradient)</span>
 
@@ -8097,12 +8045,12 @@ it calls libop.mod</p>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/expr.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1260</span>
-<span class="normal">1261</span>
-<span class="normal">1262</span>
-<span class="normal">1263</span>
-<span class="normal">1264</span>
-<span class="normal">1265</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">mtype</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1252</span>
+<span class="normal">1253</span>
+<span class="normal">1254</span>
+<span class="normal">1255</span>
+<span class="normal">1256</span>
+<span class="normal">1257</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">mtype</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39; Get memory type of a variable &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">var</span><span class="o">.</span><span class="n">mtype</span>
@@ -8245,12 +8193,12 @@ it calls libop.mul</p>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/expr.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1221</span>
-<span class="normal">1222</span>
-<span class="normal">1223</span>
-<span class="normal">1224</span>
-<span class="normal">1225</span>
-<span class="normal">1226</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">ndim</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1213</span>
+<span class="normal">1214</span>
+<span class="normal">1215</span>
+<span class="normal">1216</span>
+<span class="normal">1217</span>
+<span class="normal">1218</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">ndim</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39; Get the number of dimensions of a variable &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">var</span><span class="o">.</span><span class="n">ndim</span>
@@ -8658,16 +8606,16 @@ shape(var): Get sizes of all dimensions of a variable</p>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/expr.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1229</span>
-<span class="normal">1230</span>
-<span class="normal">1231</span>
-<span class="normal">1232</span>
-<span class="normal">1233</span>
-<span class="normal">1234</span>
-<span class="normal">1235</span>
-<span class="normal">1236</span>
-<span class="normal">1237</span>
-<span class="normal">1238</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">i</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1221</span>
+<span class="normal">1222</span>
+<span class="normal">1223</span>
+<span class="normal">1224</span>
+<span class="normal">1225</span>
+<span class="normal">1226</span>
+<span class="normal">1227</span>
+<span class="normal">1228</span>
+<span class="normal">1229</span>
+<span class="normal">1230</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">i</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39; shape(var, i): Get size of specified dimension of a variable</span>
 <span class="sd">        shape(var): Get sizes of all dimensions of a variable &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">):</span>
@@ -9407,8 +9355,7 @@ it calls libop.truediv</p>
 
         <details class="quote">
           <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 67</span>
-<span class="normal"> 68</span>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 68</span>
 <span class="normal"> 69</span>
 <span class="normal"> 70</span>
 <span class="normal"> 71</span>
@@ -9525,7 +9472,8 @@ it calls libop.truediv</p>
 <span class="normal">182</span>
 <span class="normal">183</span>
 <span class="normal">184</span>
-<span class="normal">185</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">FreeTensorOverload</span><span class="p">(</span><span class="n">StagingOverload</span><span class="p">):</span>
+<span class="normal">185</span>
+<span class="normal">186</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">FreeTensorOverload</span><span class="p">(</span><span class="n">StagingOverload</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Helper class managing context in IR staging.&#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -9675,14 +9623,14 @@ it calls libop.truediv</p>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 99</span>
-<span class="normal">100</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">100</span>
 <span class="normal">101</span>
 <span class="normal">102</span>
 <span class="normal">103</span>
 <span class="normal">104</span>
 <span class="normal">105</span>
-<span class="normal">106</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">fullname</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="normal">106</span>
+<span class="normal">107</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">fullname</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Get distinct name.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">name_dict</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -9725,8 +9673,7 @@ They will be exited in reverse order of their registration.</p>
 
         <details class="quote">
           <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">42</span>
-<span class="normal">43</span>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">43</span>
 <span class="normal">44</span>
 <span class="normal">45</span>
 <span class="normal">46</span>
@@ -9747,7 +9694,8 @@ They will be exited in reverse order of their registration.</p>
 <span class="normal">61</span>
 <span class="normal">62</span>
 <span class="normal">63</span>
-<span class="normal">64</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">LifetimeScope</span><span class="p">:</span>
+<span class="normal">64</span>
+<span class="normal">65</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">LifetimeScope</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;This scope is used to register multiple scopes inside a single lifetime scope.</span>
 <span class="sd">    The inner scopes might be used to register variables, etc.</span>
 <span class="sd">    They will be exited in reverse order of their registration.</span>
@@ -9846,16 +9794,7 @@ the forward-to-backward relation of the nodes.</li>
     </thead>
     <tbody>
         <tr>
-          <td><code>stmt_range</code></td>
-          <td>
-          </td>
-          <td><p>The range in the original program that we are setting custom gradient for</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>args</code></td>
+          <td><code>*args</code></td>
           <td>
                 <code><span title="typing.Sequence">Sequence</span>[<a class="autorefs autorefs-internal" title="freetensor.core.stmt.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a>]</code>
           </td>
@@ -9864,14 +9803,23 @@ the forward-to-backward relation of the nodes.</li>
                 <code>()</code>
           </td>
         </tr>
+        <tr>
+          <td><code>stmt_range</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="freetensor.core.context.StmtRange" href="#freetensor.core.context.StmtRange">StmtRange</a></code>
+          </td>
+          <td><p>The range in the original program that we are setting custom gradient for</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
     </tbody>
   </table>
 
 
         <details class="quote">
           <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">427</span>
-<span class="normal">428</span>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">428</span>
 <span class="normal">429</span>
 <span class="normal">430</span>
 <span class="normal">431</span>
@@ -9917,7 +9865,8 @@ the forward-to-backward relation of the nodes.</li>
 <span class="normal">471</span>
 <span class="normal">472</span>
 <span class="normal">473</span>
-<span class="normal">474</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">UserGrad</span><span class="p">(</span><span class="n">UserGradStaged</span><span class="p">):</span>
+<span class="normal">474</span>
+<span class="normal">475</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">UserGrad</span><span class="p">(</span><span class="n">UserGradStaged</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Define a custom gradient</span>
 
@@ -9947,14 +9896,14 @@ the forward-to-backward relation of the nodes.</li>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
+<span class="sd">    *args: Sequence[VarRef]</span>
+<span class="sd">        (Positional variadic) Mapping from original variables to gradient variables</span>
 <span class="sd">    stmt_range: Optional[StmtRange]</span>
 <span class="sd">        The range in the original program that we are setting custom gradient for</span>
-<span class="sd">    args: Sequence[VarRef]</span>
-<span class="sd">        (Positional variadic) Mapping from original variables to gradient variables</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">VarRef</span><span class="p">],</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">UserGrad</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">VarRef</span><span class="p">],</span> <span class="n">stmt_range</span><span class="p">:</span> <span class="n">StmtRange</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">UserGrad</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">stmt_range</span><span class="o">=</span><span class="n">stmt_range</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lifetime_scope</span> <span class="o">=</span> <span class="n">LifetimeScope</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -10007,8 +9956,7 @@ the forward-to-backward relation of the nodes.</li>
 
         <details class="quote">
           <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">359</span>
-<span class="normal">360</span>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">360</span>
 <span class="normal">361</span>
 <span class="normal">362</span>
 <span class="normal">363</span>
@@ -10031,7 +9979,8 @@ the forward-to-backward relation of the nodes.</li>
 <span class="normal">380</span>
 <span class="normal">381</span>
 <span class="normal">382</span>
-<span class="normal">383</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Var</span><span class="p">(</span><span class="n">StagedTypeAnnotation</span><span class="p">):</span>
+<span class="normal">383</span>
+<span class="normal">384</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Var</span><span class="p">(</span><span class="n">StagedTypeAnnotation</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">atype</span><span class="o">=</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="n">mtype</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
@@ -10144,8 +10093,7 @@ default Target in config will be used</p></td>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">361</span>
-<span class="normal">362</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">362</span>
 <span class="normal">363</span>
 <span class="normal">364</span>
 <span class="normal">365</span>
@@ -10162,7 +10110,8 @@ default Target in config will be used</p></td>
 <span class="normal">376</span>
 <span class="normal">377</span>
 <span class="normal">378</span>
-<span class="normal">379</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">atype</span><span class="o">=</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="n">mtype</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">379</span>
+<span class="normal">380</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">atype</span><span class="o">=</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="n">mtype</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Declare a variable</span>
 
@@ -10218,8 +10167,7 @@ default Target in config will be used</p></td>
 
         <details class="quote">
           <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">237</span>
-<span class="normal">238</span>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">238</span>
 <span class="normal">239</span>
 <span class="normal">240</span>
 <span class="normal">241</span>
@@ -10234,7 +10182,8 @@ default Target in config will be used</p></td>
 <span class="normal">250</span>
 <span class="normal">251</span>
 <span class="normal">252</span>
-<span class="normal">253</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="normal">253</span>
+<span class="normal">254</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">VarCreator</span><span class="p">(</span><span class="n">StagedAssignable</span><span class="p">):</span>
     <span class="n">shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">]</span>
     <span class="n">dtype</span><span class="p">:</span> <span class="nb">str</span>
@@ -10282,8 +10231,7 @@ default Target in config will be used</p></td>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">244</span>
-<span class="normal">245</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">245</span>
 <span class="normal">246</span>
 <span class="normal">247</span>
 <span class="normal">248</span>
@@ -10291,7 +10239,8 @@ default Target in config will be used</p></td>
 <span class="normal">250</span>
 <span class="normal">251</span>
 <span class="normal">252</span>
-<span class="normal">253</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VarRef</span><span class="p">:</span>
+<span class="normal">253</span>
+<span class="normal">254</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VarRef</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Customized assign behavior. Creates a VarDef with its full name.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span> <span class="o">=</span> <span class="kc">True</span>
@@ -10338,8 +10287,7 @@ default Target in config will be used</p></td>
 
         <details class="quote">
           <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">386</span>
-<span class="normal">387</span>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">387</span>
 <span class="normal">388</span>
 <span class="normal">389</span>
 <span class="normal">390</span>
@@ -10355,7 +10303,8 @@ default Target in config will be used</p></td>
 <span class="normal">400</span>
 <span class="normal">401</span>
 <span class="normal">402</span>
-<span class="normal">403</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="normal">403</span>
+<span class="normal">404</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">VersionMarker</span><span class="p">(</span><span class="n">StagedAssignable</span><span class="p">):</span>
     <span class="n">var</span><span class="p">:</span> <span class="n">VarRef</span>
     <span class="n">assigned</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
@@ -10404,8 +10353,7 @@ default Target in config will be used</p></td>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">391</span>
-<span class="normal">392</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">392</span>
 <span class="normal">393</span>
 <span class="normal">394</span>
 <span class="normal">395</span>
@@ -10416,7 +10364,8 @@ default Target in config will be used</p></td>
 <span class="normal">400</span>
 <span class="normal">401</span>
 <span class="normal">402</span>
-<span class="normal">403</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tape_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VarRef</span><span class="p">:</span>
+<span class="normal">403</span>
+<span class="normal">404</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tape_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VarRef</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Customized assign behavior. Creates a MarkVersion with its full name.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assigned</span> <span class="o">=</span> <span class="kc">True</span>
@@ -10464,8 +10413,7 @@ default Target in config will be used</p></td>
 
         <details class="quote">
           <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">477</span>
-<span class="normal">478</span>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">478</span>
 <span class="normal">479</span>
 <span class="normal">480</span>
 <span class="normal">481</span>
@@ -10498,7 +10446,8 @@ default Target in config will be used</p></td>
 <span class="normal">508</span>
 <span class="normal">509</span>
 <span class="normal">510</span>
-<span class="normal">511</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">dynamic_range</span><span class="p">(</span><span class="n">StagedIterable</span><span class="p">):</span>
+<span class="normal">511</span>
+<span class="normal">512</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">dynamic_range</span><span class="p">(</span><span class="n">StagedIterable</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Dynamic range that generates For loop in IR tree.&#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -10565,8 +10514,7 @@ Arguments semantic identical to builtin <code>range</code>.</p>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">480</span>
-<span class="normal">481</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">481</span>
 <span class="normal">482</span>
 <span class="normal">483</span>
 <span class="normal">484</span>
@@ -10574,7 +10522,8 @@ Arguments semantic identical to builtin <code>range</code>.</p>
 <span class="normal">486</span>
 <span class="normal">487</span>
 <span class="normal">488</span>
-<span class="normal">489</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">489</span>
+<span class="normal">490</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Initialize a dynamic range.</span>
 <span class="sd">    Arguments semantic identical to builtin `range`.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">stop</span><span class="p">:</span>
@@ -10606,8 +10555,7 @@ Arguments semantic identical to builtin <code>range</code>.</p>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">491</span>
-<span class="normal">492</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">492</span>
 <span class="normal">493</span>
 <span class="normal">494</span>
 <span class="normal">495</span>
@@ -10626,7 +10574,8 @@ Arguments semantic identical to builtin <code>range</code>.</p>
 <span class="normal">508</span>
 <span class="normal">509</span>
 <span class="normal">510</span>
-<span class="normal">511</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">foreach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">511</span>
+<span class="normal">512</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">foreach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Customized foreach behavior. Creates a For loop.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">lang_overload</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
@@ -10688,8 +10637,7 @@ stack at runtime: it can be compiled to any data structure.</p>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/frontend.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">406</span>
-<span class="normal">407</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">407</span>
 <span class="normal">408</span>
 <span class="normal">409</span>
 <span class="normal">410</span>
@@ -10706,7 +10654,8 @@ stack at runtime: it can be compiled to any data structure.</p>
 <span class="normal">421</span>
 <span class="normal">422</span>
 <span class="normal">423</span>
-<span class="normal">424</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">push_for_backward</span><span class="p">(</span><span class="n">var</span><span class="p">:</span> <span class="n">VarRef</span><span class="p">):</span>
+<span class="normal">424</span>
+<span class="normal">425</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">push_for_backward</span><span class="p">(</span><span class="n">var</span><span class="p">:</span> <span class="n">VarRef</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Push the current value from the forward pass to be used at the backward pass</span>
 
@@ -11129,14 +11078,8 @@ Defaults to True</p></td>
 <span class="normal">73</span>
 <span class="normal">74</span>
 <span class="normal">75</span>
-<span class="normal">76</span>
-<span class="normal">77</span>
-<span class="normal">78</span>
-<span class="normal">79</span>
-<span class="normal">80</span>
-<span class="normal">81</span>
-<span class="normal">82</span>
-<span class="normal">83</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">optimize</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="normal">76</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@as_decorator</span>
+<span class="k">def</span> <span class="nf">optimize</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">schedule_callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Schedule</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
              <span class="n">target</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Target</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
              <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -11181,29 +11124,21 @@ Defaults to True</p></td>
 <span class="sd">    verbose : int (Optional)</span>
 <span class="sd">        Verbosity level. Can be 0, 1 or 2</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">device</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">target</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">target</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">func</span><span class="p">),</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AST</span><span class="p">):</span>
-            <span class="n">ast</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
-                            <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
-                            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">ast</span> <span class="o">=</span> <span class="n">func</span>
-        <span class="n">ast</span> <span class="o">=</span> <span class="n">schedule</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">schedule_callback</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="n">ast</span> <span class="o">=</span> <span class="n">lower</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="n">code</span> <span class="o">=</span> <span class="n">codegen</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="n">exe</span> <span class="o">=</span> <span class="n">build_binary</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">exe</span>
+    <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">device</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">target</span><span class="p">()</span>
 
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">func</span><span class="p">),</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AST</span><span class="p">):</span>
+        <span class="n">ast</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
+                        <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
+                        <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">optimize</span><span class="p">,</span>
-                                 <span class="n">schedule_callback</span><span class="o">=</span><span class="n">schedule_callback</span><span class="p">,</span>
-                                 <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
-                                 <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
-                                 <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
-                                 <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">ast</span> <span class="o">=</span> <span class="n">func</span>
+    <span class="n">ast</span> <span class="o">=</span> <span class="n">schedule</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">schedule_callback</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+    <span class="n">ast</span> <span class="o">=</span> <span class="n">lower</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">codegen</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+    <span class="n">exe</span> <span class="o">=</span> <span class="n">build_binary</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">exe</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>
@@ -11335,7 +11270,14 @@ Defaults to True</p></td>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/optimize.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 86</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
 <span class="normal"> 87</span>
 <span class="normal"> 88</span>
 <span class="normal"> 89</span>
@@ -11521,32 +11463,8 @@ Defaults to True</p></td>
 <span class="normal">269</span>
 <span class="normal">270</span>
 <span class="normal">271</span>
-<span class="normal">272</span>
-<span class="normal">273</span>
-<span class="normal">274</span>
-<span class="normal">275</span>
-<span class="normal">276</span>
-<span class="normal">277</span>
-<span class="normal">278</span>
-<span class="normal">279</span>
-<span class="normal">280</span>
-<span class="normal">281</span>
-<span class="normal">282</span>
-<span class="normal">283</span>
-<span class="normal">284</span>
-<span class="normal">285</span>
-<span class="normal">286</span>
-<span class="normal">287</span>
-<span class="normal">288</span>
-<span class="normal">289</span>
-<span class="normal">290</span>
-<span class="normal">291</span>
-<span class="normal">292</span>
-<span class="normal">293</span>
-<span class="normal">294</span>
-<span class="normal">295</span>
-<span class="normal">296</span>
-<span class="normal">297</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">optimize_to_pytorch</span><span class="p">(</span>
+<span class="normal">272</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@as_decorator</span>
+<span class="k">def</span> <span class="nf">optimize_to_pytorch</span><span class="p">(</span>
         <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
         <span class="n">forward_schedule_callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Schedule</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -11595,169 +11513,150 @@ Defaults to True</p></td>
 <span class="sd">        Verbosity level. Can be 0, 1 or 2</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="kn">import</span> <span class="nn">torch</span>
+    <span class="kn">import</span> <span class="nn">torch</span>
 
-        <span class="c1"># Transform from Python source to AST</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">func</span><span class="p">),</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AST</span><span class="p">):</span>
-            <span class="n">ast</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
-                            <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
-                            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">ast</span> <span class="o">=</span> <span class="n">func</span>
-
-        <span class="c1"># Compile lazily because we know `requires` and `provides` only when</span>
-        <span class="c1"># executing. Re-compile when gradient requirements changes</span>
-        <span class="n">saved_requires</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="n">saved_provides</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="n">cur_requires</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">cur_provides</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">fwd_exe</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">bwd_exe</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">input_grad_map</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">output_grad_map</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">tape_rets</span> <span class="o">=</span> <span class="kc">None</span>
-
-        <span class="k">def</span> <span class="nf">lazy_compile</span><span class="p">():</span>
-            <span class="k">nonlocal</span> <span class="n">saved_requires</span><span class="p">,</span> <span class="n">saved_provides</span><span class="p">,</span> <span class="n">cur_requires</span><span class="p">,</span> <span class="n">cur_provides</span>
-            <span class="k">nonlocal</span> <span class="n">fwd_exe</span><span class="p">,</span> <span class="n">bwd_exe</span><span class="p">,</span> <span class="n">input_grad_map</span><span class="p">,</span> <span class="n">output_grad_map</span><span class="p">,</span> <span class="n">tape_rets</span>
-            <span class="k">if</span> <span class="n">saved_requires</span> <span class="o">==</span> <span class="n">cur_requires</span> <span class="ow">and</span> <span class="n">saved_provides</span> <span class="o">==</span> <span class="n">cur_provides</span><span class="p">:</span>
-                <span class="k">return</span>
-            <span class="n">saved_requires</span> <span class="o">=</span> <span class="n">cur_requires</span>
-            <span class="n">saved_provides</span> <span class="o">=</span> <span class="n">cur_provides</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cur_requires</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">fwd_ast</span><span class="p">,</span> <span class="n">bwd_ast</span><span class="p">,</span> <span class="n">input_grad_map</span><span class="p">,</span> <span class="n">output_grad_map</span> <span class="o">=</span> <span class="n">grad</span><span class="p">(</span>
-                    <span class="n">ast</span><span class="p">,</span>
-                    <span class="n">requires</span><span class="o">=</span><span class="n">saved_requires</span><span class="p">,</span>
-                    <span class="n">provides</span><span class="o">=</span><span class="n">saved_provides</span><span class="p">,</span>
-                    <span class="n">tapes</span><span class="o">=</span><span class="n">tapes</span><span class="p">,</span>
-                    <span class="c1"># PyTorch requires explicitly marking saved states via</span>
-                    <span class="c1"># `save_for_backward()`</span>
-                    <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                    <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-                <span class="n">tape_rets</span> <span class="o">=</span> <span class="n">fwd_ast</span><span class="o">.</span><span class="n">returns</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">):]</span>
-                <span class="n">fwd_exe</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">fwd_ast</span><span class="p">,</span> <span class="n">forward_schedule_callback</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
-                                   <span class="n">device</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
-                <span class="n">bwd_exe</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">bwd_ast</span><span class="p">,</span> <span class="n">backward_schedule_callback</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
-                                   <span class="n">device</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># No one needs grad. No need to do autograd</span>
-                <span class="n">fwd_ast</span> <span class="o">=</span> <span class="n">ast</span>
-                <span class="n">fwd_exe</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">fwd_ast</span><span class="p">,</span> <span class="n">forward_schedule_callback</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
-                                   <span class="n">device</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
-                <span class="n">bwd_exe</span> <span class="o">=</span> <span class="kc">None</span>
-                <span class="n">input_grad_map</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="n">output_grad_map</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="n">tape_rets</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="c1"># Generate a PyTorch Function</span>
-        <span class="k">class</span> <span class="nc">GeneratedPyTorchFunction</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">Function</span><span class="p">):</span>
-
-            <span class="nd">@staticmethod</span>
-            <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
-                <span class="k">nonlocal</span> <span class="n">cur_requires</span><span class="p">,</span> <span class="n">cur_provides</span>
-
-                <span class="c1"># We only get to know provided gradients of output tensors when we</span>
-                <span class="c1"># run `backward`, but we need to run autograd and compile the program</span>
-                <span class="c1"># here in `forward`. We can only assume gradients are provided for</span>
-                <span class="c1"># every output tensors, even if they are unrelated to the inputs.</span>
-                <span class="c1"># Setting this option to True makes PyTorch generate zero gradient</span>
-                <span class="c1"># for such outputs. (TODO: better solution?)</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">set_materialize_grads</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-
-                <span class="c1"># Gather required gradients of the inputs</span>
-                <span class="n">cur_requires</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">:</span>
-                        <span class="n">cur_requires</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kvs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">:</span>
-                        <span class="n">cur_requires</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-                <span class="c1"># For the reason above, we assume gradients are provided for every</span>
-                <span class="c1"># output tensors</span>
-                <span class="n">cur_provides</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">:</span>
-                    <span class="n">cur_provides</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-
-                <span class="n">lazy_compile</span><span class="p">()</span>
-                <span class="n">fwd_exe</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
-                <span class="n">fwd_exe</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-                <span class="n">returns</span> <span class="o">=</span> <span class="n">fwd_exe</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">(</span><span class="n">always_return_pack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="n">returns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">torch</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">)</span>
-
-                <span class="c1"># Save states for 1) all inputs and 2) all taped tensors (taped</span>
-                <span class="c1"># outputs are also taped tensors). For taped tensors, we need to</span>
-                <span class="c1"># make them output tensors, so PyTorch can recognize them. This is</span>
-                <span class="c1"># an officially recommanded trick at</span>
-                <span class="c1"># https://pytorch.org/tutorials/intermediate/custom_function_double_backward_tutorial.html#saving-intermediate-results</span>
-                <span class="c1"># So, please be aware that only the first part in `returns` are real</span>
-                <span class="c1"># return tensors</span>
-                <span class="n">saved_tensors</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>  <span class="c1"># 1)</span>
-                    <span class="n">saved_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">:</span>  <span class="c1"># 2) and maybe other junks</span>
-                    <span class="n">saved_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="o">*</span><span class="n">saved_tensors</span><span class="p">)</span>
-
-                <span class="k">return</span> <span class="n">returns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">returns</span>
-
-            <span class="nd">@staticmethod</span>
-            <span class="nd">@torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">once_differentiable</span>
-            <span class="k">def</span> <span class="nf">backward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
-                <span class="n">saved_tensors</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span>
-                <span class="n">internal_kvs</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">for</span> <span class="n">ret</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
-                    <span class="n">internal_kvs</span><span class="p">[</span><span class="n">output_grad_map</span><span class="p">[</span><span class="n">ret</span><span class="o">.</span><span class="n">name</span><span class="p">]]</span> <span class="o">=</span> <span class="n">arg</span>
-                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
-                    <span class="n">internal_kvs</span><span class="p">[</span><span class="n">output_grad_map</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
-                <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">saved</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">saved_tensors</span><span class="p">):</span>
-                    <span class="c1"># NOTE: Now we only support &quot;input&quot; parameters for PyTorch</span>
-                    <span class="c1"># interface (no &quot;inout&quot; or &quot;output&quot;), so we can forward all</span>
-                    <span class="c1"># parameters. If we support &quot;inout&quot; or &quot;output&quot; in the future,</span>
-                    <span class="c1"># we need to filter only &quot;input&quot; parameters here</span>
-                    <span class="n">internal_kvs</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span>
-                <span class="k">for</span> <span class="n">tape_ret</span><span class="p">,</span> <span class="n">saved</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
-                        <span class="n">tape_rets</span><span class="p">,</span>
-                        <span class="n">saved_tensors</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">):]):</span>
-                    <span class="n">internal_kvs</span><span class="p">[</span><span class="n">tape_ret</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span>
-
-                <span class="n">bwd_exe</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="o">**</span><span class="n">internal_kvs</span><span class="p">)</span>
-                <span class="n">bwd_exe</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-                <span class="n">input_grads</span> <span class="o">=</span> <span class="n">bwd_exe</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">(</span><span class="n">always_return_pack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-                <span class="c1"># PyTorch requires returning gradient of inputs in their original</span>
-                <span class="c1"># order. If no gradient is required for an input, set it to None</span>
-                <span class="n">returns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">input_grads</span><span class="p">[</span><span class="n">input_grad_map</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">]]</span><span class="o">.</span><span class="n">torch</span><span class="p">(</span>
-                <span class="p">)</span> <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">input_grad_map</span> <span class="k">else</span> <span class="kc">None</span>
-                                <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
-
-                <span class="k">return</span> <span class="n">returns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">returns</span>
-
-        <span class="c1"># Wrap around the PyTorch `Function`, to be a real Python &quot;function&quot;, and</span>
-        <span class="c1"># remove our extra tape outputs</span>
-        <span class="k">def</span> <span class="nf">generatedPyTorchFunction</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
-            <span class="n">returns</span> <span class="o">=</span> <span class="n">GeneratedPyTorchFunction</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
-            <span class="n">returns_tuple</span> <span class="o">=</span> <span class="n">returns</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span>
-                                                  <span class="n">Sequence</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">returns</span><span class="p">,)</span>
-            <span class="n">returns_tuple</span> <span class="o">=</span> <span class="n">returns_tuple</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">)]</span>
-            <span class="k">return</span> <span class="n">returns_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span>
-                <span class="n">returns_tuple</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">returns_tuple</span>
-
-        <span class="c1"># If called inside a FreeTensor funcion, don&#39;t care about PyTorch, just</span>
-        <span class="c1"># inline the transformed AST</span>
-        <span class="k">return</span> <span class="n">staged_callable</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">generatedPyTorchFunction</span><span class="p">)</span>
-
+    <span class="c1"># Transform from Python source to AST</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">func</span><span class="p">),</span> <span class="n">ffi</span><span class="o">.</span><span class="n">AST</span><span class="p">):</span>
+        <span class="n">ast</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
+                        <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
+                        <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
-            <span class="n">optimize_to_pytorch</span><span class="p">,</span>
-            <span class="n">tapes</span><span class="o">=</span><span class="n">tapes</span><span class="p">,</span>
-            <span class="n">forward_schedule_callback</span><span class="o">=</span><span class="n">forward_schedule_callback</span><span class="p">,</span>
-            <span class="n">backward_schedule_callback</span><span class="o">=</span><span class="n">backward_schedule_callback</span><span class="p">,</span>
-            <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
-            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
-            <span class="n">default_dynamic_range</span><span class="o">=</span><span class="n">default_dynamic_range</span><span class="p">,</span>
-            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">ast</span> <span class="o">=</span> <span class="n">func</span>
+
+    <span class="c1"># Compile lazily because we know `requires` and `provides` only when executing. Re-compile</span>
+    <span class="c1"># when gradient requirements changes</span>
+    <span class="n">saved_requires</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">saved_provides</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">cur_requires</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cur_provides</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">fwd_exe</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">bwd_exe</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">input_grad_map</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">output_grad_map</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">tape_rets</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">lazy_compile</span><span class="p">():</span>
+        <span class="k">nonlocal</span> <span class="n">saved_requires</span><span class="p">,</span> <span class="n">saved_provides</span><span class="p">,</span> <span class="n">cur_requires</span><span class="p">,</span> <span class="n">cur_provides</span>
+        <span class="k">nonlocal</span> <span class="n">fwd_exe</span><span class="p">,</span> <span class="n">bwd_exe</span><span class="p">,</span> <span class="n">input_grad_map</span><span class="p">,</span> <span class="n">output_grad_map</span><span class="p">,</span> <span class="n">tape_rets</span>
+        <span class="k">if</span> <span class="n">saved_requires</span> <span class="o">==</span> <span class="n">cur_requires</span> <span class="ow">and</span> <span class="n">saved_provides</span> <span class="o">==</span> <span class="n">cur_provides</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">saved_requires</span> <span class="o">=</span> <span class="n">cur_requires</span>
+        <span class="n">saved_provides</span> <span class="o">=</span> <span class="n">cur_provides</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cur_requires</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">fwd_ast</span><span class="p">,</span> <span class="n">bwd_ast</span><span class="p">,</span> <span class="n">input_grad_map</span><span class="p">,</span> <span class="n">output_grad_map</span> <span class="o">=</span> <span class="n">grad</span><span class="p">(</span>
+                <span class="n">ast</span><span class="p">,</span>
+                <span class="n">requires</span><span class="o">=</span><span class="n">saved_requires</span><span class="p">,</span>
+                <span class="n">provides</span><span class="o">=</span><span class="n">saved_provides</span><span class="p">,</span>
+                <span class="n">tapes</span><span class="o">=</span><span class="n">tapes</span><span class="p">,</span>
+                <span class="c1"># PyTorch requires explicitly marking saved states via `save_for_backward()`</span>
+                <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+            <span class="n">tape_rets</span> <span class="o">=</span> <span class="n">fwd_ast</span><span class="o">.</span><span class="n">returns</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">):]</span>
+            <span class="n">fwd_exe</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">fwd_ast</span><span class="p">,</span> <span class="n">forward_schedule_callback</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
+                               <span class="n">device</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+            <span class="n">bwd_exe</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">bwd_ast</span><span class="p">,</span> <span class="n">backward_schedule_callback</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
+                               <span class="n">device</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># No one needs grad. No need to do autograd</span>
+            <span class="n">fwd_ast</span> <span class="o">=</span> <span class="n">ast</span>
+            <span class="n">fwd_exe</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">fwd_ast</span><span class="p">,</span> <span class="n">forward_schedule_callback</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
+                               <span class="n">device</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+            <span class="n">bwd_exe</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">input_grad_map</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">output_grad_map</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">tape_rets</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Generate a PyTorch Function</span>
+    <span class="k">class</span> <span class="nc">GeneratedPyTorchFunction</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">Function</span><span class="p">):</span>
+
+        <span class="nd">@staticmethod</span>
+        <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+            <span class="k">nonlocal</span> <span class="n">cur_requires</span><span class="p">,</span> <span class="n">cur_provides</span>
+
+            <span class="c1"># We only get to know provided gradients of output tensors when we run `backward`,</span>
+            <span class="c1"># but we need to run autograd and compile the program here in `forward`. We can</span>
+            <span class="c1"># only assume gradients are provided for every output tensors, even if they are</span>
+            <span class="c1"># unrelated to the inputs. Setting this option to True makes PyTorch generate zero</span>
+            <span class="c1"># gradient for such outputs. (TODO: better solution?)</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">set_materialize_grads</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Gather required gradients of the inputs</span>
+            <span class="n">cur_requires</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">:</span>
+                    <span class="n">cur_requires</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kvs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">:</span>
+                    <span class="n">cur_requires</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+            <span class="c1"># For the reason above, we assume gradients are provided for every</span>
+            <span class="c1"># output tensors</span>
+            <span class="n">cur_provides</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">:</span>
+                <span class="n">cur_provides</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="n">lazy_compile</span><span class="p">()</span>
+            <span class="n">fwd_exe</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+            <span class="n">fwd_exe</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+            <span class="n">returns</span> <span class="o">=</span> <span class="n">fwd_exe</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">(</span><span class="n">always_return_pack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">returns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">torch</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">)</span>
+
+            <span class="c1"># Save states for 1) all inputs and 2) all taped tensors (taped outputs are also</span>
+            <span class="c1"># taped tensors). For taped tensors, we need to make them output tensors, so PyTorch</span>
+            <span class="c1"># can recognize them. This is an officially recommanded trick at</span>
+            <span class="c1"># https://pytorch.org/tutorials/intermediate/custom_function_double_backward_tutorial.html#saving-intermediate-results</span>
+            <span class="c1"># So, please be aware that only the first part in `returns` are real return tensors</span>
+            <span class="n">saved_tensors</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>  <span class="c1"># 1)</span>
+                <span class="n">saved_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ret</span> <span class="ow">in</span> <span class="n">returns</span><span class="p">:</span>  <span class="c1"># 2) and maybe other junks</span>
+                <span class="n">saved_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="o">*</span><span class="n">saved_tensors</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">returns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">returns</span>
+
+        <span class="nd">@staticmethod</span>
+        <span class="nd">@torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">once_differentiable</span>
+        <span class="k">def</span> <span class="nf">backward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+            <span class="n">saved_tensors</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span>
+            <span class="n">internal_kvs</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">ret</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+                <span class="n">internal_kvs</span><span class="p">[</span><span class="n">output_grad_map</span><span class="p">[</span><span class="n">ret</span><span class="o">.</span><span class="n">name</span><span class="p">]]</span> <span class="o">=</span> <span class="n">arg</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
+                <span class="n">internal_kvs</span><span class="p">[</span><span class="n">output_grad_map</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">saved</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">saved_tensors</span><span class="p">):</span>
+                <span class="c1"># NOTE: Now we only support &quot;input&quot; parameters for PyTorch interface (no &quot;inout&quot;</span>
+                <span class="c1"># or &quot;output&quot;), so we can forward all parameters. If we support &quot;inout&quot; or</span>
+                <span class="c1"># &quot;output&quot; in the future, we need to filter only &quot;input&quot; parameters here</span>
+                <span class="n">internal_kvs</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span>
+            <span class="k">for</span> <span class="n">tape_ret</span><span class="p">,</span> <span class="n">saved</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                    <span class="n">tape_rets</span><span class="p">,</span>
+                    <span class="n">saved_tensors</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">):]):</span>
+                <span class="n">internal_kvs</span><span class="p">[</span><span class="n">tape_ret</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span>
+
+            <span class="n">bwd_exe</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="o">**</span><span class="n">internal_kvs</span><span class="p">)</span>
+            <span class="n">bwd_exe</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+            <span class="n">input_grads</span> <span class="o">=</span> <span class="n">bwd_exe</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">(</span><span class="n">always_return_pack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># PyTorch requires returning gradient of inputs in their original order. If no</span>
+            <span class="c1"># gradient is required for an input, set it to None</span>
+            <span class="n">returns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="n">input_grads</span><span class="p">[</span><span class="n">input_grad_map</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">]]</span><span class="o">.</span><span class="n">torch</span><span class="p">()</span> <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span>
+                <span class="n">input_grad_map</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">returns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">returns</span>
+
+    <span class="c1"># Wrap around the PyTorch `Function`, to be a real Python &quot;function&quot;, and remove our extra</span>
+    <span class="c1"># tape outputs</span>
+    <span class="k">def</span> <span class="nf">generatedPyTorchFunction</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+        <span class="n">returns</span> <span class="o">=</span> <span class="n">GeneratedPyTorchFunction</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+        <span class="n">returns_tuple</span> <span class="o">=</span> <span class="n">returns</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">returns</span><span class="p">,)</span>
+        <span class="n">returns_tuple</span> <span class="o">=</span> <span class="n">returns_tuple</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">returns_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns_tuple</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">returns_tuple</span>
+
+    <span class="c1"># If called inside a FreeTensor funcion, don&#39;t care about PyTorch, just inline the</span>
+    <span class="c1"># transformed AST</span>
+    <span class="k">return</span> <span class="n">staged_callable</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">generatedPyTorchFunction</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>
@@ -11873,8 +11772,7 @@ single passes</p></td>
 
       <details class="quote">
         <summary>Source code in <code>python/freetensor/core/passes.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">48</span>
-<span class="normal">49</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">49</span>
 <span class="normal">50</span>
 <span class="normal">51</span>
 <span class="normal">52</span>
@@ -11903,15 +11801,8 @@ single passes</p></td>
 <span class="normal">75</span>
 <span class="normal">76</span>
 <span class="normal">77</span>
-<span class="normal">78</span>
-<span class="normal">79</span>
-<span class="normal">80</span>
-<span class="normal">81</span>
-<span class="normal">82</span>
-<span class="normal">83</span>
-<span class="normal">84</span>
-<span class="normal">85</span>
-<span class="normal">86</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">lower</span><span class="p">(</span><span class="n">ast</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="normal">78</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@as_decorator</span>
+<span class="k">def</span> <span class="nf">lower</span><span class="p">(</span><span class="n">ast</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
           <span class="n">target</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ffi</span><span class="o">.</span><span class="n">Target</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
           <span class="n">skip_passes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
           <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
@@ -11937,19 +11828,9 @@ single passes</p></td>
 <span class="sd">        single passes</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">if</span> <span class="n">ast</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
-                         <span class="nb">set</span><span class="p">()</span> <span class="k">if</span> <span class="n">skip_passes</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">set</span><span class="p">(</span><span class="n">skip_passes</span><span class="p">),</span>
-                         <span class="mi">0</span> <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">verbose</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">_lower</span> <span class="o">=</span> <span class="n">lower</span>
-        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">_lower</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">_lower</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">skip_passes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">_lower</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">_lower</span><span class="p">,</span> <span class="n">skip_passes</span><span class="o">=</span><span class="n">skip_passes</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">_lower</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">_lower</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">_lower</span>
+    <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
+                     <span class="nb">set</span><span class="p">()</span> <span class="k">if</span> <span class="n">skip_passes</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">set</span><span class="p">(</span><span class="n">skip_passes</span><span class="p">),</span>
+                     <span class="mi">0</span> <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">verbose</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>
@@ -16541,31 +16422,23 @@ instead, which supports generic types</p>
 <span class="normal">476</span>
 <span class="normal">477</span>
 <span class="normal">478</span>
-<span class="normal">479</span>
-<span class="normal">480</span>
-<span class="normal">481</span>
-<span class="normal">482</span>
-<span class="normal">483</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">UserGradStaged</span><span class="p">:</span>
+<span class="normal">479</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">UserGradStaged</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Internal staged implementation of `UserGrad`</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">VarRef</span><span class="p">],</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">VarRef</span><span class="p">],</span> <span class="n">stmt_range</span><span class="p">:</span> <span class="n">StmtRange</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ori_vars</span> <span class="o">=</span> <span class="n">args</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">grad_defs</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="s1">&#39;stmt_range&#39;</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
-            <span class="n">stmt_range</span> <span class="o">=</span> <span class="n">kvs</span><span class="p">[</span><span class="s1">&#39;stmt_range&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">stmt_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt_range</span><span class="p">,</span> <span class="n">StmtRange</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">ori_stmts</span> <span class="o">=</span> <span class="n">stmt_range</span><span class="o">.</span><span class="n">make</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                     <span class="s2">&quot;`stmt_range` should be a `StmtRange` for `UserGrad`&quot;</span><span class="p">)</span>
-            <span class="k">del</span> <span class="n">kvs</span><span class="p">[</span><span class="s1">&#39;stmt_range&#39;</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ori_stmts</span> <span class="o">=</span> <span class="p">{</span><span class="n">ctx_stack</span><span class="o">.</span><span class="n">get_last_stmt_id</span><span class="p">()}</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unrecognized parameter `</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">` of `UserGrad`&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Make `VarDef` scopes for the gradients</span>
@@ -16809,6 +16682,150 @@ instead, which supports generic types</p>
         <span class="k">return</span> <span class="n">_VarsDef</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_VarDef</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="freetensor.core.utils" class="doc doc-heading">
+          <code>utils</code>
+
+
+<a href="#freetensor.core.utils" class="headerlink" title="Permanent link">&para;</a></h3>
+
+  <div class="doc doc-contents ">
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.utils.as_decorator" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">as_decorator</span><span class="p">(</span><span class="n">f</span><span class="p">)</span></code>
+
+<a href="#freetensor.core.utils.as_decorator" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Enable a multi-parameter function <code>f</code> to be used as a decorator</p>
+<p>Suppose <code>g = as_decorator(f)</code>, enable the following usages:</p>
+<pre><code>@g
+def h(...):
+    ...
+
+@g(a=a, b=b, c=c)
+def h(...):
+    ...
+</code></pre>
+<p>Formally, <code>g</code> will have the same parameters as <code>f</code>. <code>f</code>'s first parameter should
+be the function it decorate, say <code>h</code>, and may have other parameters with default
+values. If <code>h</code> is set when called, <code>g</code> will return the decorated function, just
+as <code>f</code> does. If <code>h</code> is not set, <code>g</code> will return an <code>f</code>'s partial function with
+all other parameters set, and the partial function can then be decorate another
+<code>h</code> again.</p>
+
+      <details class="quote">
+        <summary>Source code in <code>python/freetensor/core/utils.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">as_decorator</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Enable a multi-parameter function `f` to be used as a decorator</span>
+
+<span class="sd">    Suppose `g = as_decorator(f)`, enable the following usages:</span>
+
+<span class="sd">    ```</span>
+<span class="sd">    @g</span>
+<span class="sd">    def h(...):</span>
+<span class="sd">        ...</span>
+
+<span class="sd">    @g(a=a, b=b, c=c)</span>
+<span class="sd">    def h(...):</span>
+<span class="sd">        ...</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    Formally, `g` will have the same parameters as `f`. `f`&#39;s first parameter should</span>
+<span class="sd">    be the function it decorate, say `h`, and may have other parameters with default</span>
+<span class="sd">    values. If `h` is set when called, `g` will return the decorated function, just</span>
+<span class="sd">    as `f` does. If `h` is not set, `g` will return an `f`&#39;s partial function with</span>
+<span class="sd">    all other parameters set, and the partial function can then be decorate another</span>
+<span class="sd">    `h` again.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="n">h</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">h</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># g(h, a=a, b=b, c=c)</span>
+            <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># g(a=a, b=b, c=c)(h)</span>
+            <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># g(None, x, y, a=a, b=b)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Please do not explicitly pass None as a missing first argument to &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="n">g</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>
@@ -17589,7 +17606,7 @@ default Target in config will be used</p></td>
           </td>
         </tr>
         <tr>
-          <td><code>out</code></td>
+          <td><code>y</code></td>
           <td>
                 <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
           </td>
@@ -17636,7 +17653,7 @@ default Target in config will be used</p></td>
 <span class="sd">        The operation applied to each item</span>
 <span class="sd">    x : VarRef</span>
 <span class="sd">        The input tensor</span>
-<span class="sd">    out : VarRef</span>
+<span class="sd">    y : VarRef</span>
 <span class="sd">        The result tensor</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
