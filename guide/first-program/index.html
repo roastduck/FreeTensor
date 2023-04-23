@@ -116,6 +116,7 @@
 <li><a href="#declare-and-define-tensors">Declare and Define Tensors</a></li>
 <li><a href="#manipulating-tensors">Manipulating Tensors</a></li>
 <li><a href="#dynamic-or-static">Dynamic or Static</a></li>
+<li><a href="#just-in-time-jit-compilation">Just-in-Time (JIT) Compilation</a></li>
 <li><a href="#dynamic-tensor-shapes">Dynamic Tensor Shapes</a></li>
 <li><a href="#copy-free-interface-fromto-pytorch">Copy-free interface from/to PyTorch</a></li>
 </ul>
@@ -187,14 +188,43 @@ print(y)
 for i in range(10):  # Dynamic
     lst.append(i)  # Static. Appends only once
 </code></pre>
+<h2 id="just-in-time-jit-compilation">Just-in-Time (JIT) Compilation<a class="headerlink" href="#just-in-time-jit-compilation" title="Permanent link">&para;</a></h2>
+<p>In the example of vector addition above, we support <em>any</em> vector length, but only in a <em>static</em> way. This means each time you change the vector length <code>n</code>, you need to recompile (run <code>optimize</code> again) the function. You may find it inconvenient because you need to write your own code to control whether or when to do the re-compilation, and the compilation code is entangled with the computation code.</p>
+<p>Therefore, FreeTensor supports automating this recompilation procedure, which can be considered as Just-in-Time (JIT) compilation. To enable this feature, just declare <code>n</code> as an additional parameter, with the type <code>ft.JIT</code>:</p>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+@ft.optimize
+def test(n: ft.JIT, a, b):
+    # Or `n: ft.JIT[int]` if you like, but it is only for documentation
+    a: ft.Var[(n,), &quot;int32&quot;]  # After the function signature to use `n`
+    b: ft.Var[(n,), &quot;int32&quot;]
+    y = ft.empty((n,), &quot;int32&quot;)
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(4, np.array([1, 2, 3, 4], dtype=&quot;int32&quot;),
+         np.array([2, 3, 4, 5], dtype=&quot;int32&quot;)).numpy()
+print(y)
+</code></pre>
+<p>For each different <code>n</code> you pass, <code>test</code> will be automatically recompiled. The compiled <code>test</code> for the same <code>n</code> will be memoized, so the same instance will not be repelated compiled. You can also custom the memoization by setting the <code>jit_cache</code> parameter of <code>ft.optimize</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note on parameter declaration</p>
+<p>You may have note that it is non-trivial to include a parameter <code>n</code> in other parameters <code>a</code> and <code>b</code>'s type annotation. Python actually forbids such a declaration if <code>a</code> and <code>b</code>'s type annotation is inside the function signature. To cope with this restriction, FreeTensor allows declaring <code>a</code> and <code>b</code>'s type AFTER the function sigature as statements. But this off-sigature annoation is only supported for <code>ft.Var</code> types, NOT <code>ft.JIT</code>.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note on Automatic Differentiation</p>
+<p>JIT is not yet supported by <a href="../ad">Automatic Differentiation</a>.</p>
+</div>
 <h2 id="dynamic-tensor-shapes">Dynamic Tensor Shapes<a class="headerlink" href="#dynamic-tensor-shapes" title="Permanent link">&para;</a></h2>
-<p>In the example of vector addition above, we support <em>any</em> vector length, but only in a <em>static</em> way. This means each time you change the vector length <code>n</code>, you need to recompile (run <code>optimize</code> again) the function. FreeTensor supports defining tensors with <em>dynamic</em> shapes, just by setting their shapes to a dynamic values. The following code shows an example:</p>
+<p>Frequent recompilation does not meet many requirements, so FreeTensor also supports defining tensors with <em>dynamic</em> shapes, just by setting their shapes to a dynamic values. The following code shows an example:</p>
 <pre><code class="language-python">import freetensor as ft
 import numpy as np
 
 @ft.optimize
 def test(n: ft.Var[(), &quot;int32&quot;], a, b):
-    a: ft.Var[(n,), &quot;int32&quot;]
+    a: ft.Var[(n,), &quot;int32&quot;]  # After the function signature to use `n`
     b: ft.Var[(n,), &quot;int32&quot;]
     y = ft.empty((n,), &quot;int32&quot;)
     for i in range(n):
@@ -207,7 +237,7 @@ print(y)
 
 assert np.array_equal(y, [3, 5, 7, 9])
 </code></pre>
-<p>In this way, in only have to compile your program once. But you will expect a longer compiling time, and some optimizations are not possible with dynamic shapes.</p>
+<p>In this way, in only have to compile your program once. You will expect a single but longer compiling time, and some optimizations are not possible with dynamic shapes.</p>
 <h2 id="copy-free-interface-fromto-pytorch">Copy-free interface from/to PyTorch<a class="headerlink" href="#copy-free-interface-fromto-pytorch" title="Permanent link">&para;</a></h2>
 <p>If FreeTensor is built with <code>WITH_PYTORCH=ON</code>, you can directly pass PyTorch tensors to or get them from FreeTensor. For example,</p>
 <pre><code class="language-python">import freetensor as ft
