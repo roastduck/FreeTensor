@@ -3,7 +3,7 @@ import pytest
 
 
 def test_vector_add():
-    # Used in docs/index.md and docs/guide/schedules.md
+    # Used in docs/index.md and docs/guide/first-program.md
 
     import freetensor as ft
     import numpy as np
@@ -25,15 +25,38 @@ def test_vector_add():
     assert np.array_equal(y, [3, 5, 7, 9])
 
 
+def test_vector_add_jit_length():
+    # Used in docs/index.md and docs/guide/first-program.md
+
+    import freetensor as ft
+    import numpy as np
+
+    @ft.optimize
+    def test(n: ft.JIT, a, b):
+        # Or `n: ft.JIT[int]` if you like, but it is only for documentation
+        a: ft.Var[(n,), "int32"]  # After the function signature to use `n`
+        b: ft.Var[(n,), "int32"]
+        y = ft.empty((n,), "int32")
+        for i in range(n):
+            y[i] = a[i] + b[i]
+        return y
+
+    y = test(4, np.array([1, 2, 3, 4], dtype="int32"),
+             np.array([2, 3, 4, 5], dtype="int32")).numpy()
+    print(y)
+
+    assert np.array_equal(y, [3, 5, 7, 9])
+
+
 def test_vector_add_dynamic_length():
-    # Used in docs/index.md and docs/guide/schedules.md
+    # Used in docs/index.md and docs/guide/first-program.md
 
     import freetensor as ft
     import numpy as np
 
     @ft.optimize
     def test(n: ft.Var[(), "int32"], a, b):
-        a: ft.Var[(n,), "int32"]
+        a: ft.Var[(n,), "int32"]  # After the function signature to use `n`
         b: ft.Var[(n,), "int32"]
         y = ft.empty((n,), "int32")
         for i in range(n):

@@ -49,7 +49,7 @@ class JITTemplate(abc.ABC):
 
     Parameters
     ----------
-    param : OrderedDict
+    params : OrderedDict
         Parameter list from inspect.signature(func).parameters
     jit_param_names : Sequence
         Sequence of names of JIT parameters in the original order defined in the function
