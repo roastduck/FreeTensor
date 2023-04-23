@@ -13,6 +13,9 @@ plugins:
                     docstring_style: numpy
                     inherited_members: True
                     show_submodules: True
+                    show_object_full_path: True
+                    show_source: False  # If true, it would be hard to use Ctrl+F to search in the doc
+                                        # (it will search in the code!)
         watch:
             - python/
             # We cannot watch build/. Reload mkdocs manually after rebuilding
@@ -27,7 +30,9 @@ markdown_extensions:
     - admonition
     - toc:
         permalink: true
-        toc_depth: "2-5"
+        toc_depth: "2-5"  # Show Level 2-5 in the TOC of each page, but hide Level 2-5 from the side
+                          # nav-bar. (But hiding from the nav-bar is inconvenient for the API page.
+                          # How to fix it?)
     - pymdownx.arithmatex:
         generic: true  # Required by MathJax
 
