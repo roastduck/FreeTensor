@@ -6,6 +6,7 @@ import inspect
 import functools
 
 import freetensor_ffi as ffi
+from .expr import UndeclaredParam
 from .stmt import VarRef
 from .func import Func
 from .frontend import lang_overload, staged_callable, LifetimeScope, dynamic_range
@@ -100,8 +101,10 @@ def transform(func=None,
         lang_overload.__init__()
         # Create a new scope for the function
         with LifetimeScope():
-            # Run staging function with the tensor program arguments' names as parameters
-            returns = staging_func(*param_names,
+            # Each argument is passed by default an `UndeclaredParam`, until it is declared
+            returns = staging_func(**{
+                name: UndeclaredParam(name) for name in param_names
+            },
                                    __freetensor_transform_outermost__=True)
             # Check returned vardefs (if any)
             if isinstance(returns, VarRef):

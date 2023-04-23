@@ -1,4 +1,5 @@
 from typing import Optional, Callable, Union, Sequence
+import functools
 
 import freetensor_ffi as ffi
 from freetensor_ffi import GradTapeMode
@@ -19,6 +20,7 @@ def optimize(func=None,
              target: Optional[Target] = None,
              device: Optional[Device] = None,
              default_dynamic_range: bool = True,
+             jit_cache: Callable[Callable, Callable] = functools.cache,
              verbose: Optional[int] = None):
     '''
     An one-click optimization from Python function to binary executable
@@ -66,13 +68,14 @@ def optimize(func=None,
     if not issubclass(type(func), ffi.AST):
         ast = transform(func,
                         default_dynamic_range=default_dynamic_range,
+                        jit_cache=jit_cache,
                         verbose=verbose)
     else:
         ast = func
-    ast = schedule(ast, schedule_callback, verbose=verbose)
-    ast = lower(ast, target, verbose=verbose)
-    code = codegen(ast, target, verbose=verbose)
-    exe = build_binary(code, device, verbose=verbose)
+    ast = schedule(ast, schedule_callback, jit_cache=jit_cache, verbose=verbose)
+    ast = lower(ast, target, jit_cache=jit_cache, verbose=verbose)
+    code = codegen(ast, target, jit_cache=jit_cache, verbose=verbose)
+    exe = build_binary(code, device, jit_cache=jit_cache, verbose=verbose)
     return exe
 
 

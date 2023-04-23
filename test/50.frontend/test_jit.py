@@ -1,5 +1,6 @@
 import freetensor as ft
 import numpy as np
+import pytest
 
 
 def test_basic():
@@ -19,3 +20,13 @@ def test_basic():
     # Test memoization
     assert test.instantiate(x, 2) is test.instantiate(x, 2)
     assert test.instantiate(x, 2) is not test.instantiate(x, 3)
+
+
+def test_check_param_must_be_either_var_or_jit():
+
+    with pytest.raises(ft.StagingError):
+
+        @ft.transform(verbose=2)
+        def test(x: ft.Var[(4,), "int32"], v):
+            y = x * v
+            return y

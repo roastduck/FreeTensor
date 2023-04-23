@@ -19,6 +19,7 @@ import builtins
 import math
 from numbers import Number
 from typing import Sequence
+from dataclasses import dataclass
 
 import freetensor_ffi as ffi
 
@@ -1230,6 +1231,13 @@ def shape(var, i=None):
             raise Exception(f'Getting size of dimension {i} of scalar {var}')
 
 
+@dataclass
+class UndeclaredParam:
+    ''' Error type. For error reporting only. '''
+
+    name: str
+
+
 def dtype(var):
     ''' Get element data type of a variable '''
     if isinstance(var, VarRef):
@@ -1245,8 +1253,12 @@ def dtype(var):
             return ffi.DataType("float32")
         elif isinstance(var, int):
             return ffi.DataType("int32")
+        elif isinstance(var, UndeclaredParam):
+            raise TypeError(
+                f"Parameter '{var.name}' should be declared to be either a `freetensor.Var`"
+                f" or a `freetensor.JIT`")
         else:
-            raise Exception('Unknown scalar type: ' + str(type(var)))
+            raise TypeError(f"Unknown scalar type: {type(var)}")
 
 
 def mtype(var):
