@@ -10,7 +10,8 @@ __all__ = [
     'gpu_normalize_threads', 'gpu_normalize_var_in_kernel', 'gpu_lower_vector'
 ]
 
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Callable
+import functools
 
 import freetensor_ffi as ffi
 
@@ -43,6 +44,7 @@ from freetensor_ffi import gpu_normalize_threads
 from freetensor_ffi import gpu_normalize_var_in_kernel
 from freetensor_ffi import gpu_lower_vector
 
+from .jit import JITTemplate
 from .utils import as_decorator
 
 
@@ -50,6 +52,7 @@ from .utils import as_decorator
 def lower(ast=None,
           target: Optional[ffi.Target] = None,
           skip_passes: Optional[Sequence[str]] = None,
+          jit_cache: Callable[Callable, Callable] = functools.cache,
           verbose: Optional[int] = None):
     '''
     Lower an AST using a series of passes
@@ -68,10 +71,31 @@ def lower(ast=None,
         underscore_style, as in Python. Please note that some passes will not be
         skipped even specified in these parameter, because they are indirectly
         called in some other passes
+    jit_cache : Callable[Callable, Callable]
+        Function decorator used to cache JIT instances
     verbose : int (Optional)
         0 = print nothing. 1 = print the lowered AST. 2 = print AST after every
         single passes
+
+    Returns
+    -------
+    Func or JITTemplate
+        Return a Func for an AST if there is no JIT parameters. Return a JITTemplate
+        that generates a Func if there is at least one
     '''
+
+    if isinstance(ast, JITTemplate):
+
+        class LowerTemplate(JITTemplate):
+
+            @jit_cache
+            def instantiate_by_only_jit_args(self, *jit_args):
+                return lower(ast.instantiate_by_only_jit_args(*jit_args),
+                             target=target,
+                             skip_passes=skip_passes,
+                             verbose=verbose)
+
+        return LowerTemplate(ast.params, ast.jit_param_names)
 
     return ffi.lower(ast, target,
                      set() if skip_passes is None else set(skip_passes),

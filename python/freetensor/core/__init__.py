@@ -24,6 +24,7 @@ from .staging import (StagingError, StagedAssignable, StagedIterable,
                       StagedPredicate, StagedTypeAnnotation)
 from .transform import *
 from .func import *
+from .jit import JIT
 
 from .meta import *
 from .optimize import optimize, optimize_to_pytorch
