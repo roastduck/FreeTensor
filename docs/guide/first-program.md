@@ -122,6 +122,10 @@ For each different `n` you pass, `test` will be automatically recompiled. The co
 
     You may have note that it is non-trivial to include a parameter `n` in other parameters `a` and `b`'s type annotation. Python actually forbids such a declaration if `a` and `b`'s type annotation is inside the function signature. To cope with this restriction, FreeTensor allows declaring `a` and `b`'s type AFTER the function sigature as statements. But this off-sigature annoation is only supported for `ft.Var` types, NOT `ft.JIT`.
 
+!!! note "Note on Automatic Differentiation"
+
+    JIT is not yet supported by [Automatic Differentiation](../ad).
+
 ## Dynamic Tensor Shapes
 
 Frequent recompilation does not meet many requirements, so FreeTensor also supports defining tensors with *dynamic* shapes, just by setting their shapes to a dynamic values. The following code shows an example:
