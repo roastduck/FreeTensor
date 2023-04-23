@@ -1,19 +1,18 @@
 import abc
 import copy
-import inspect
-from typing import Tuple, Callable, Mapping, Any
+from typing import Tuple, Any
 
 
 class JITMeta(type):
 
-    def __init__(self, *args, **kvs):
-        super(JITMeta, self).__init__(*args, **kvs)
-        self.inner_type = None
+    def __init__(cls, *args, **kvs):
+        super(JITMeta, cls).__init__(*args, **kvs)
+        cls.inner_type = None
 
-    def __getitem__(self, inner_type):
-        if self.inner_type is not None:
+    def __getitem__(cls, inner_type):
+        if cls.inner_type is not None:
             raise TypeError("Cannot call __getitem__ on JIT twice")
-        new = copy.copy(self)
+        new = copy.copy(cls)
         new.inner_type = inner_type
         return new
 
