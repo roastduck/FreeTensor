@@ -616,8 +616,8 @@ class StagedAssignable(abc.ABC):
 
 class StagedTypeAnnotationMeta(abc.ABCMeta):
 
-    def __getitem__(self, args):
-        return self(*args)
+    def __getitem__(cls, args):
+        return cls(*args)
 
 
 class StagedTypeAnnotation(metaclass=StagedTypeAnnotationMeta):
