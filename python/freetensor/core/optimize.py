@@ -21,7 +21,7 @@ def optimize(func=None,
              device: Optional[Device] = None,
              default_dynamic_range: bool = True,
              jit_cache: Callable[Callable, Callable] = functools.cache,
-             verbose: Optional[int] = None):
+             verbose: int = 0):
     '''
     An one-click optimization from Python function to binary executable
 
@@ -65,7 +65,7 @@ def optimize(func=None,
     if target is None and device is not None:
         target = device.target()
 
-    if not issubclass(type(func), ffi.AST):
+    if not isinstance(func, ffi.AST):
         ast = transform(func,
                         default_dynamic_range=default_dynamic_range,
                         jit_cache=jit_cache,
@@ -88,7 +88,7 @@ def optimize_to_pytorch(
         target: Optional[Target] = None,
         device: Optional[Device] = None,
         default_dynamic_range: bool = True,
-        verbose: Optional[int] = None):
+        verbose: int = 0):
     '''
     Compile a FreeTensor function to a PyTorch call, whose gradient can be
     recognized by PyTorch

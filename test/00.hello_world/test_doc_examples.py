@@ -241,24 +241,23 @@ def test_grad():
 
     n = 4
 
+    @ft.optimize
+    @ft.grad(requires=['a', 'b'], provides=[ft.Return()], attach_backward=True)
     def test(a: ft.Var[(n,), "float32"], b: ft.Var[(n,), "float32"]):
         y = ft.zeros((), "float32")
         for i in range(n):
             y[()] += a[i] * b[i]
         return y
 
-    fwd, bwd, input_grads, output_grads = ft.grad(test, ['a', 'b'],
-                                                  [ft.Return()])
-    fwd = ft.optimize(fwd)
-    bwd = ft.optimize(bwd)
-
     a = np.array([0, 1, 2, 3], dtype="float32")
     b = np.array([3, 2, 1, 0], dtype="float32")
-    y = fwd(a, b)
+    y = test(a, b)
     print(y.numpy())
     dzdy = np.array(1, dtype='float32')
-    dzda, dzdb = bwd(**{output_grads[ft.Return()]: dzdy})[input_grads['a'],
-                                                          input_grads['b']]
+    input_grads = test.input_name_to_gradient_name
+    output_grads = test.output_name_to_gradient_name
+    dzda, dzdb = test.backward(
+        **{output_grads[ft.Return()]: dzdy})[input_grads['a'], input_grads['b']]
     print(dzda.numpy())
     print(dzdb.numpy())
 
@@ -276,6 +275,8 @@ def test_auto_grad_of_softmax():
 
     n = 4
 
+    @ft.optimize  # Set verbose=1 to see the code
+    @ft.grad(requires=['x'], provides=[ft.Return()], attach_backward=True)
     def test(x: ft.Var[(n,), "float32"]):
         # Automatically decide gradients for this statement
         m = ft.reduce_max(x, axes=[-1])
@@ -284,20 +285,18 @@ def test_auto_grad_of_softmax():
         y = e / s
         return y
 
-    fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
-    fwd = ft.optimize(fwd)
-    bwd = ft.optimize(bwd)  # Set verbose=1 to see the code
-
     # Check forward result
     x = torch.rand(n, dtype=torch.float32)
     x.requires_grad = True
-    y_ft = fwd(x).torch()
+    y_ft = test(x).torch()
     y_torch = torch.softmax(x, axis=-1)
     assert torch.all(torch.isclose(y_ft, y_torch))
 
     # Check backward result
     y_torch.grad = dzdy = torch.rand(n, dtype=torch.float32)
-    dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+    input_grads = test.input_name_to_gradient_name
+    output_grads = test.output_name_to_gradient_name
+    dzdx_ft = test.backward(**{output_grads[ft.Return()]: dzdy}).torch()
     y_torch.backward(y_torch.grad)
     dzdx_torch = x.grad
     assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))
@@ -312,6 +311,8 @@ def test_custom_grad_of_softmax():
 
     n = 4
 
+    @ft.optimize  # Set verbose=1 to see the code
+    @ft.grad(requires=['x'], provides=[ft.Return()], attach_backward=True)
     def test(x: ft.Var[(n,), "float32"]):
         # Mark the range that you want to provide graident for, with `StmtRange`
         with ft.StmtRange() as rng:
@@ -332,20 +333,18 @@ def test_custom_grad_of_softmax():
             dzdx[...] += dzde * e_now  # Use `+=` here
         return y
 
-    fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
-    fwd = ft.optimize(fwd)
-    bwd = ft.optimize(bwd)  # Set verbose=1 to see the code
-
     # Check forward result
     x = torch.rand(n, dtype=torch.float32)
     x.requires_grad = True
-    y_ft = fwd(x).torch()
+    y_ft = test(x).torch()
     y_torch = torch.softmax(x, axis=-1)
     assert torch.all(torch.isclose(y_ft, y_torch))
 
     # Check backward result
     y_torch.grad = dzdy = torch.rand(n, dtype=torch.float32)
-    dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+    input_grads = test.input_name_to_gradient_name
+    output_grads = test.output_name_to_gradient_name
+    dzdx_ft = test.backward(**{output_grads[ft.Return()]: dzdy}).torch()
     y_torch.backward(y_torch.grad)
     dzdx_torch = x.grad
     assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))
@@ -360,6 +359,8 @@ def test_custom_grad_of_softmax_loop_form():
 
     n = 4
 
+    @ft.optimize  # Set verbose=1 to see the code
+    @ft.grad(requires=['x'], provides=[ft.Return()], attach_backward=True)
     def test(x: ft.Var[(n, n), "float32"]):
         y = ft.empty((n, n), "float32")
         for i in range(n):
@@ -383,20 +384,18 @@ def test_custom_grad_of_softmax_loop_form():
                 dzdx[i] += dzde * e_now  # Use `+=` here
         return y
 
-    fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
-    fwd = ft.optimize(fwd)
-    bwd = ft.optimize(bwd)  # Set verbose=1 to see the code
-
     # Check forward result
     x = torch.rand(n, n, dtype=torch.float32)
     x.requires_grad = True
-    y_ft = fwd(x).torch()
+    y_ft = test(x).torch()
     y_torch = torch.softmax(x, axis=-1)
     assert torch.all(torch.isclose(y_ft, y_torch))
 
     # Check backward result
     y_torch.grad = dzdy = torch.rand(n, n, dtype=torch.float32)
-    dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+    input_grads = test.input_name_to_gradient_name
+    output_grads = test.output_name_to_gradient_name
+    dzdx_ft = test.backward(**{output_grads[ft.Return()]: dzdy}).torch()
     y_torch.backward(y_torch.grad)
     dzdx_torch = x.grad
     assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))

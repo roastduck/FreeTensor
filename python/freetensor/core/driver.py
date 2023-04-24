@@ -12,6 +12,7 @@ from freetensor_ffi import TargetType, Target, Array
 
 from . import config
 from .codegen import NativeCode
+from .enable_attach_backward import EnableAttachBackward
 from .jit import JITTemplate
 from .meta import DataType, to_numpy_dtype, to_torch_dtype
 from .utils import as_decorator
@@ -234,7 +235,7 @@ class ReturnValuesPack:
         return False
 
 
-class Driver(ffi.Driver):
+class Driver(EnableAttachBackward, ffi.Driver):
 
     def __init__(self,
                  func: ffi.Func,
@@ -350,7 +351,7 @@ def build_binary(code: Optional[NativeCode] = None,
                  device: Optional[Device] = None,
                  host_device: Optional[Device] = None,
                  jit_cache: Callable[Callable, Callable] = functools.cache,
-                 verbose: Optional[bool] = None):
+                 verbose: bool = False):
     '''
     Compile a program using a backend compiler and load it into memory
 
@@ -399,4 +400,14 @@ def build_binary(code: Optional[NativeCode] = None,
         raise ffi.DriverError(
             f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"
         )
-    return Driver(code.func, code.code, device, host_device, verbose)
+    ret = Driver(code.func, code.code, device, host_device, verbose)
+
+    if code.has_backward():
+        ret.attach_backward(
+            build_binary(code.backward,
+                         device=device,
+                         host_device=host_device,
+                         jit_cache=jit_cache,
+                         verbose=verbose), code.input_name_to_gradient_name,
+            code.output_name_to_gradient_name)
+    return ret

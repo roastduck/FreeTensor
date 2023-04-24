@@ -4,10 +4,12 @@ from typing import Sequence
 
 import freetensor_ffi as ffi
 from freetensor_ffi import FuncParam, FuncRet
+
+from .enable_attach_backward import EnableAttachBackward
 from .frontend import lang_overload
 
 
-class Func(ffi.Func):
+class Func(EnableAttachBackward, ffi.Func):
 
     def __init__(self,
                  name: str,

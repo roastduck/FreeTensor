@@ -44,6 +44,7 @@ from freetensor_ffi import gpu_normalize_threads
 from freetensor_ffi import gpu_normalize_var_in_kernel
 from freetensor_ffi import gpu_lower_vector
 
+from .func import Func
 from .jit import JITTemplate
 from .utils import as_decorator
 
@@ -51,9 +52,9 @@ from .utils import as_decorator
 @as_decorator
 def lower(ast=None,
           target: Optional[ffi.Target] = None,
-          skip_passes: Optional[Sequence[str]] = None,
+          skip_passes: Sequence[str] = [],
           jit_cache: Callable[Callable, Callable] = functools.cache,
-          verbose: Optional[int] = None):
+          verbose: int = 0):
     '''
     Lower an AST using a series of passes
 
@@ -97,6 +98,15 @@ def lower(ast=None,
 
         return LowerTemplate(ast.params, ast.jit_param_names)
 
-    return ffi.lower(ast, target,
-                     set() if skip_passes is None else set(skip_passes),
-                     0 if verbose is None else verbose)
+    ret = ffi.lower(ast, target, skip_passes=set(skip_passes), verbose=verbose)
+    if isinstance(ast, Func):
+        ret = Func(ret.name, ret.params, ret.returns, ret.body)
+        if ast.has_backward():
+            ret.attach_backward(
+                lower(ast.backward,
+                      target=target,
+                      skip_passes=skip_passes,
+                      jit_cache=jit_cache,
+                      verbose=verbose), ast.input_name_to_gradient_name,
+                ast.output_name_to_gradient_name)
+    return ret

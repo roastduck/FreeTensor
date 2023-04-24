@@ -6,13 +6,16 @@ import freetensor_ffi as ffi
 
 from . import config
 from .. import debug
+from .func import Func
+from .enable_attach_backward import EnableAttachBackward
 from .jit import JITTemplate
 from .utils import as_decorator
 
 
-class NativeCode:
+class NativeCode(EnableAttachBackward):
 
     def __init__(self, func, code, target):
+        super().__init__()
         self.func = func
         self.code = code
         self.target = target
@@ -22,16 +25,16 @@ class NativeCode:
 
 
 @as_decorator
-def codegen(ast=None,
+def codegen(ast: Func = None,
             target: Optional[ffi.Target] = None,
             jit_cache: Callable[Callable, Callable] = functools.cache,
-            verbose: Optional[bool] = None) -> NativeCode:
+            verbose: bool = False) -> NativeCode:
     '''
     Generate native code
 
     Parameters
     ----------
-    ast : AST
+    ast : Func
         The AST to be lowered. It must includes function signature to determine
         parameters and return values. If not specified, a partial function is
         returned, which can be used as a decorator
@@ -65,4 +68,12 @@ def codegen(ast=None,
     if verbose:
         print(debug.with_line_no(raw_code), file=sys.stderr)
 
-    return NativeCode(ast, raw_code, target)
+    ret = NativeCode(ast, raw_code, target)
+    if isinstance(ast, Func) and ast.has_backward():
+        ret.attach_backward(
+            codegen(ast.backward,
+                    target=target,
+                    jit_cache=jit_cache,
+                    verbose=verbose), ast.input_name_to_gradient_name,
+            ast.output_name_to_gradient_name)
+    return ret

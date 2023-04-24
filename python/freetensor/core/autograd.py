@@ -1,6 +1,6 @@
 __all__ = [
-    'GradTapeMode', 'Parameter', 'Return', 'ParamRetDict', 'grad_body', 'grad',
-    'grad_', 'jacrev', 'output_all_intermediates'
+    'GradTapeMode', 'grad_body', 'grad', 'grad_', 'jacrev',
+    'output_all_intermediates'
 ]
 
 from typing import Optional, Set, Union, Sequence
@@ -18,99 +18,8 @@ from .transform import transform, inline
 from .func import Func, FuncRet
 from .stmt import VarDef
 from .context import pop_ast
-
-
-class Parameter:
-    '''
-    Alias of a parameter of a function by position instead of by name
-
-    `Parameter(n)` represents the n-th parameter (counted from 0)
-
-    `Parameter()` can be used if there is only one parameter
-    '''
-
-    def __init__(self, n: Optional[int] = None):
-        self.n = n
-
-    def get_name(self, func):
-        if len(func.params) == 0:
-            raise KeyError(f"{func.name} has no parameter")
-        if self.n is not None:
-            return func.params[self.n].name
-        else:
-            if len(func.params) != 1:
-                raise KeyError(
-                    f"{func.name} has more than one return value, and you"
-                    f" need to specify the number of a return value")
-            return func.params[0].name
-
-    def __str__(self):
-        return f"Parameter({self.n})"
-
-
-class Return:
-    '''
-    Alias of a return value of a function by position instead of by name
-
-    `Return(n)` represents the n-th return value (counted from 0)
-
-    `Return()` can be used if there is only one return value
-    '''
-
-    def __init__(self, n: Optional[int] = None):
-        self.n = n
-
-    def get_name(self, func):
-        if len(func.returns) == 0:
-            raise KeyError(f"{func.name} has no return value")
-        if self.n is not None:
-            return func.returns[self.n].name
-        else:
-            if len(func.returns) != 1:
-                raise KeyError(
-                    f"{func.name} has more than one return value, and you"
-                    f" need to specify the number of a return value")
-            return func.returns[0].name
-
-    def __str__(self):
-        return f"Return({self.n})"
-
-
-class ParamRetDict:
-    ''' Look an object using either a function parameter or return value's name or position '''
-
-    def __init__(self, func, d):
-        self.func = func
-        self.d = d
-
-    def __getitem__(self, key):
-        try:
-            if type(key) is Parameter:
-                key = key.get_name(self.func)
-            elif type(key) is Return:
-                key = key.get_name(self.func)
-            return self.d[key]
-        except KeyError as e:
-            raise KeyError(
-                f"There is no {key} in arguments or return values") from e
-
-    def __contains__(self, key):
-        # Python's auto fallback from __getitem__ to __contains__ only works for
-        # integer index
-        try:
-            if type(key) is Parameter:
-                key = key.get_name(self.func)
-            elif type(key) is Return:
-                key = key.get_name(self.func)
-            return key in self.d
-        except KeyError as e:
-            return False
-
-    def __str__(self):
-        return str(self.d)
-
-    def __iter__(self):
-        return iter(self.d)
+from .param_ret_dict import Parameter, Return, ParamRetDict
+from .utils import as_decorator
 
 
 def grad_body(stmt: ffi.Stmt,
@@ -128,18 +37,24 @@ def grad_body(stmt: ffi.Stmt,
     return ffi.grad_body(stmt, req, prov, tapes, invert, user_grads)
 
 
-def _grad_func(impl,
-               func: ffi.Func,
+@as_decorator
+def _grad_func(func,
+               impl,
                requires: Sequence[Union[str, Parameter]],
                provides: Sequence[Union[str, Parameter, Return]],
                tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
                tape_in_closure: bool = True,
                invert: bool = True,
                user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
+               attach_backward: bool = False,
                verbose: Optional[int] = None):
 
     if not issubclass(type(func), ffi.AST):
         func = transform(func, verbose=verbose)
+    if requires is None:
+        raise TypeError("Parameter `requires` is required")
+    if provides is None:
+        raise TypeError("Parameter `provides` is required")
     if user_grads is None:
         if func.user_grads is not None:
             user_grads = func.user_grads
@@ -168,21 +83,31 @@ def _grad_func(impl,
     fwd = Func(fwd.name, fwd.params, fwd.returns, fwd.body)
     bwd = Func(bwd.name, bwd.params, bwd.returns, bwd.body)
 
+    # Enable lookup by positions of parameters or return values
+    req_map = ParamRetDict(func, req_map)
+    prov_map = ParamRetDict(func, prov_map)
+
     if verbose is not None and verbose >= 1:
         print("Forward pass from AD:", file=sys.stderr)
         print(fwd, file=sys.stderr)
         print("Backward pass from AD:", file=sys.stderr)
         print(bwd, file=sys.stderr)
-    return fwd, bwd, ParamRetDict(func, req_map), ParamRetDict(func, prov_map)
+
+    if attach_backward:
+        fwd.attach_backward(bwd, req_map, prov_map)
+        return fwd
+    else:
+        return fwd, bwd, req_map, prov_map
 
 
-def grad_(func: ffi.Func,
-          requires: Sequence[Union[str, Parameter]],
-          provides: Sequence[Union[str, Parameter, Return]],
+def grad_(func=None,
+          requires: Sequence[Union[str, Parameter]] = None,
+          provides: Sequence[Union[str, Parameter, Return]] = None,
           tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
           tape_in_closure: bool = True,
           invert: bool = True,
           user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
+          attach_backward: bool = False,
           verbose: Optional[int] = None):
     '''
     Reverse mode automatic differentiation (in-place version)
@@ -229,46 +154,58 @@ def grad_(func: ffi.Func,
         True to pass taped tensors from the forward function to the backward function in
         implicit I/O parameters, i.e. in closure. False to pass these tensors as
         explicit I/O parameters. Default to True
-    invert: bool
+    invert : bool
         If set to true, it can reduce the amount of recomputation or taping required.
         However, this may result in a loss of precision for floating-point numbers. Defaults
         to true.
-    user_grads: List[ffi.StmtSetToUserGrad]
+    user_grads : List[ffi.StmtSetToUserGrad]
         For custom gradient. You do not have to explicitly set this parameter unless you
         are manipulating `func` by yourself (not getting it from the Python frontend). See
         `UserGrad` for details
+    attach_backward : bool
+        If True, the forward function will be the only return value, with backward function
+        and other metadata attached to it
     verbose: int
         Verbosity level
 
     Returns
     -------
-    tuple
-        (
-         0. Forward AST.
-         1. Backward AST.
-         2. Mapping from names in requries to its gradient name.
-         3. Mapping from names in provides to its gradient name.
-        )
+    Func if attach_backward else Tuple
+        If `attach_backward` is False, return a tuple.
+
+        - Return[0]: forward AST.
+        - Return[1]: backward AST.
+        - Return[2]: Mapping from names in requries to its gradient name.
+        - Return[3]: Mapping from names in provides to its gradient name.
+
+        If `attach_backward` is True, only the forward AST is returned, and others can be get by
+        `.backward`, `.input_name_to_gradient_name` and `.output_name_to_gradient_name` on the
+        return value, respectively.
     '''
 
-    return _grad_func(ffi.grad_,
-                      func,
-                      requires,
-                      provides,
-                      tapes,
-                      tape_in_closure,
-                      invert,
-                      user_grads,
+    if func is None and not attach_backward:
+        raise TypeError("`_grad` can be used as a decorator only when"
+                        " `attach_backward=True`")
+    return _grad_func(func,
+                      impl=ffi.grad_,
+                      requires=requires,
+                      provides=provides,
+                      tapes=tapes,
+                      tape_in_closure=tape_in_closure,
+                      invert=invert,
+                      user_grads=user_grads,
+                      attach_backward=attach_backward,
                       verbose=verbose)
 
 
-def grad(func: ffi.Func,
-         requires: Sequence[Union[str, Parameter]],
-         provides: Sequence[Union[str, Parameter, Return]],
+def grad(func=None,
+         requires: Sequence[Union[str, Parameter]] = None,
+         provides: Sequence[Union[str, Parameter, Return]] = None,
          tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
          tape_in_closure: bool = True,
          invert: bool = True,
          user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
+         attach_backward: bool = False,
          verbose: Optional[int] = None):
     '''
     Reverse mode automatic differentiation (out-of-place version)
@@ -316,45 +253,58 @@ def grad(func: ffi.Func,
         True to pass taped tensors from the forward function to the backward function in
         implicit I/O parameters, i.e. in closure. False to pass these tensors as
         explicit I/O parameters. Default to True
-    invert: bool
+    invert : bool
         If set to true, it can reduce the amount of recomputation or taping required.
         However, this may result in a loss of precision for floating-point numbers. Defaults
-    user_grads: List[ffi.StmtSetToUserGrad]
+    user_grads : List[ffi.StmtSetToUserGrad]
         For custom gradient. You do not have to explicitly set this parameter unless you
         are manipulating `func` by yourself (not getting it from the Python frontend). See
         `UserGrad` for details
+    attach_backward : bool
+        If True, the forward function will be the only return value, with backward function
+        and other metadata attached to it
     verbose: int
         Verbosity level
 
     Returns
     -------
-    tuple
-        (
-         0. Forward AST.
-         1. Backward AST.
-         2. Mapping from names in requries to its gradient name.
-         3. Mapping from names in provides to its gradient name.
-        )
+    Func if attach_backward else Tuple
+        If `attach_backward` is False, return a tuple.
+
+        - Return[0]: forward AST.
+        - Return[1]: backward AST.
+        - Return[2]: Mapping from names in requries to its gradient name.
+        - Return[3]: Mapping from names in provides to its gradient name.
+
+        If `attach_backward` is True, only the forward AST is returned, and others can be get by
+        `.backward`, `.input_name_to_gradient_name` and `.output_name_to_gradient_name` on the
+        return value, respectively.
     '''
 
-    return _grad_func(ffi.grad,
-                      func,
-                      requires,
-                      provides,
-                      tapes,
-                      tape_in_closure,
-                      invert,
-                      user_grads,
+    if func is None and not attach_backward:
+        raise TypeError("`grad` can be used as a decorator only when"
+                        " `attach_backward=True`")
+    return _grad_func(func,
+                      impl=ffi.grad,
+                      requires=requires,
+                      provides=provides,
+                      tapes=tapes,
+                      tape_in_closure=tape_in_closure,
+                      invert=invert,
+                      user_grads=user_grads,
+                      attach_backward=attach_backward,
                       verbose=verbose)
 
 
-def jacrev_(func: ffi.Func,
-            inputs: Sequence[Union[str, Parameter]],
-            output: Union[str, Parameter, Return],
+@as_decorator
+def jacrev_(func=None,
+            inputs: Sequence[Union[str, Parameter]] = None,
+            output: Union[str, Parameter, Return] = None,
             flatten: bool = False,
             tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
             invert: bool = True,
             user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
+            attach_backward: bool = False,
             verbose: Optional[int] = None):
     '''
     Compute Jacobian tensors using Reverse mode automatic differentiation (in-place)
@@ -415,17 +365,23 @@ def jacrev_(func: ffi.Func,
         For custom gradient. You do not have to explicitly set this parameter unless you
         are manipulating `func` by yourself (not getting it from the Python frontend). See
         `UserGrad` for details
+    attach_backward : bool
+        If True, the forward function will be the only return value, with backward function
+        and other metadata attached to it
     verbose: int
         Verbosity level
 
     Returns
     -------
-    tuple
-        (
-         0. Forward AST.
-         1. Backward AST.
-         2. Mapping from names in inputs to its Jacobian tensor name.
-        )
+    Func if attach_backward else Tuple
+        If `attach_backward` is False, return a tuple.
+
+        - Return[0]: forward AST.
+        - Return[1]: backward AST.
+        - Return[2]: Mapping from names in inputs to its Jacobian tensor name.
+
+        If `attach_backward` is True, only the forward AST is returned, and others can be get by
+        `.backward` and `.input_name_to_gradient_name` on the return value, respectively.
     '''
 
     # 1. Do a general AD
@@ -592,16 +548,24 @@ def jacrev_(func: ffi.Func,
         print("Backward pass from jacrev:", file=sys.stderr)
         print(new_bwd, file=sys.stderr)
 
-    return (fwd, new_bwd, {} if flatten else req_map)
+    if flatten:
+        req_map = {}
+    if attach_backward:
+        fwd.attach_backward(new_bwd, req_map, None)
+        return fwd
+    else:
+        return fwd, new_bwd, req_map
 
 
-def jacrev(func: ffi.Func,
-           inputs: Sequence[Union[str, Parameter]],
-           output: Union[str, Parameter, Return],
+@as_decorator
+def jacrev(func=None,
+           inputs: Sequence[Union[str, Parameter]] = None,
+           output: Union[str, Parameter, Return] = None,
            flatten: bool = False,
            tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
            invert: bool = True,
            user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
+           attach_backward: bool = False,
            verbose: Optional[int] = None):
     '''
     Compute Jacobian tensors using Reverse mode automatic differentiation (out-of-place)
@@ -660,17 +624,23 @@ def jacrev(func: ffi.Func,
         For custom gradient. You do not have to explicitly set this parameter unless you
         are manipulating `func` by yourself (not getting it from the Python frontend). See
         `UserGrad` for details
+    attach_backward : bool
+        If True, the forward function will be the only return value, with backward function
+        and other metadata attached to it
     verbose: int
         Verbosity level
 
     Returns
     -------
-    tuple
-        (
-         0. Forward AST.
-         1. Backward AST.
-         2. Mapping from names in inputs to its Jacobian tensor name.
-        )
+    Func if attach_backward else Tuple
+        If `attach_backward` is False, return a tuple.
+
+        - Return[0]: forward AST.
+        - Return[1]: backward AST.
+        - Return[2]: Mapping from names in inputs to its Jacobian tensor name.
+
+        If `attach_backward` is True, only the forward AST is returned, and others can be get by
+        `.backward` and `.input_name_to_gradient_name` on the return value, respectively.
     '''
 
     fwd, bwd, input_map = jacrev_(func,
@@ -680,6 +650,7 @@ def jacrev(func: ffi.Func,
                                   tapes=tapes,
                                   invert=invert,
                                   user_grads=user_grads,
+                                  attach_backward=False,
                                   verbose=verbose)
 
     in_grads = set()
@@ -702,7 +673,11 @@ def jacrev(func: ffi.Func,
             new_params.append(p)
 
     new_bwd = Func(bwd.name, new_params, new_returns, bwd.body)
-    return fwd, new_bwd, input_map
+    if attach_backward:
+        fwd.attach_backward(new_bwd, input_map, None)
+        return fwd
+    else:
+        return fwd, new_bwd, input_map
 
 
 def output_all_intermediates(stmt: ffi.Stmt, intermediates: Set[Union[str,

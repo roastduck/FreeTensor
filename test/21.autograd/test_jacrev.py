@@ -128,3 +128,34 @@ def test_flatten():
                                              argnums=(0, 1))(a_torch, b_torch)
     assert torch.all(torch.isclose(a_jac_torch, a_jac_std))
     assert torch.all(torch.isclose(b_jac_torch, b_jac_std))
+
+
+def test_attach_backward():
+
+    @ft.optimize
+    @ft.jacrev(inputs=["a", "b"],
+               output=ft.Return(),
+               attach_backward=True,
+               verbose=1)
+    def f(a, b):
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        return ft.libop.matmul(a, b)
+
+    a_torch = torch.rand(4, 5, dtype=torch.float32)
+    a_arr = ft.Array(a_torch.numpy())
+    b_torch = torch.rand(5, 6, dtype=torch.float32)
+    b_arr = ft.Array(b_torch.numpy())
+    y_arr = f(a_arr, b_arr)
+    y_torch = torch.tensor(y_arr.numpy())
+    jac = f.backward()
+    a_jac_torch = torch.tensor(jac[f.input_name_to_gradient_name['a']].numpy())
+    b_jac_torch = torch.tensor(jac[f.input_name_to_gradient_name['b']].numpy())
+
+    y_std = torch.matmul(a_torch, b_torch)
+    assert torch.all(torch.isclose(y_torch, y_std))
+
+    a_jac_std, b_jac_std = torch.func.jacrev(torch.matmul,
+                                             argnums=(0, 1))(a_torch, b_torch)
+    assert torch.all(torch.isclose(a_jac_torch, a_jac_std))
+    assert torch.all(torch.isclose(b_jac_torch, b_jac_std))
