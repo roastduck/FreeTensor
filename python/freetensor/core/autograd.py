@@ -3,7 +3,7 @@ __all__ = [
     'output_all_intermediates'
 ]
 
-from typing import Optional, Set, Union, Sequence
+from typing import Optional, Set, Union, Sequence, Callable
 import sys
 import functools
 
@@ -19,6 +19,7 @@ from .func import Func, FuncRet
 from .stmt import VarDef
 from .context import pop_ast
 from .param_ret_dict import Parameter, Return, ParamRetDict
+from .jit import JITTemplate
 from .utils import as_decorator
 
 
@@ -47,14 +48,45 @@ def _grad_func(func,
                invert: bool = True,
                user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
                attach_backward: bool = False,
-               verbose: Optional[int] = None):
+               jit_cache: Callable[Callable, Callable] = functools.cache,
+               verbose: int = 0,
+               _override_func_params: Sequence[str] = None):
 
-    if not issubclass(type(func), ffi.AST):
-        func = transform(func, verbose=verbose)
     if requires is None:
         raise TypeError("Parameter `requires` is required")
     if provides is None:
         raise TypeError("Parameter `provides` is required")
+
+    if not isinstance(func, ffi.AST) and not isinstance(func, JITTemplate):
+        func = transform(func, verbose=verbose)
+
+    if isinstance(func, JITTemplate):
+
+        if not attach_backward:
+            raise KeyError(
+                "JIT is only supported when attach_backward=True in `grad`"
+                " or `grad_`")
+
+        class GradTemplate(JITTemplate):
+
+            @jit_cache
+            def instantiate_by_only_jit_args(self, *jit_args):
+                return _grad_func(
+                    func.instantiate_by_only_jit_args(*jit_args),
+                    impl=impl,
+                    requires=requires,
+                    provides=provides,
+                    tapes=tapes,
+                    tape_in_closure=tape_in_closure,
+                    invert=invert,
+                    user_grads=user_grads,
+                    attach_backward=attach_backward,
+                    verbose=verbose,
+                    # Override func params to leave please for JIT parameters
+                    _override_func_params=list(self.params))
+
+        return GradTemplate(func.params, func.jit_param_names)
+
     if user_grads is None:
         if func.user_grads is not None:
             user_grads = func.user_grads
@@ -62,16 +94,20 @@ def _grad_func(func,
             user_grads = []
     req = set([])
     prov = set([])
+    func_param_names = [p.name for p in func.params]
+    func_return_names = [r.name for r in func.returns]
+    if _override_func_params is not None:
+        func_param_names = _override_func_params
     for r in requires:
         if type(r) is Parameter:
-            req.add(r.get_name(func))
+            req.add(r.get_name(func.name, func_param_names))
         else:
             req.add(r)
     for p in provides:
         if type(p) is Parameter:
-            prov.add(p.get_name(func))
+            prov.add(p.get_name(func.name, func_param_names))
         elif type(p) is Return:
-            prov.add(p.get_name(func))
+            prov.add(p.get_name(func.name, func_return_names))
         else:
             prov.add(p)
     if type(tapes) is not GradTapeMode:
@@ -84,8 +120,13 @@ def _grad_func(func,
     bwd = Func(bwd.name, bwd.params, bwd.returns, bwd.body)
 
     # Enable lookup by positions of parameters or return values
-    req_map = ParamRetDict(func, req_map)
-    prov_map = ParamRetDict(func, prov_map)
+    req_map = ParamRetDict(req_map, func=func)
+    prov_map = ParamRetDict(prov_map, func=func)
+    if _override_func_params is not None:
+        req_map = ParamRetDict(req_map.d,
+                               func_name=req_map.func_name,
+                               param_names=_override_func_params,
+                               return_names=req_map.return_names)
 
     if verbose is not None and verbose >= 1:
         print("Forward pass from AD:", file=sys.stderr)
@@ -108,7 +149,9 @@ def grad_(func=None,
           invert: bool = True,
           user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
           attach_backward: bool = False,
-          verbose: Optional[int] = None):
+          jit_cache: Callable[Callable, Callable] = functools.cache,
+          verbose: Optional[int] = None,
+          _override_func_params: Sequence[str] = None):
     '''
     Reverse mode automatic differentiation (in-place version)
 
@@ -165,6 +208,8 @@ def grad_(func=None,
     attach_backward : bool
         If True, the forward function will be the only return value, with backward function
         and other metadata attached to it
+    jit_cache : Callable[Callable, Callable]
+        Function decorator used to cache JIT instances
     verbose: int
         Verbosity level
 
@@ -195,7 +240,9 @@ def grad_(func=None,
                       invert=invert,
                       user_grads=user_grads,
                       attach_backward=attach_backward,
-                      verbose=verbose)
+                      jit_cache=jit_cache,
+                      verbose=verbose,
+                      _override_func_params=_override_func_params)
 
 
 def grad(func=None,
@@ -206,7 +253,9 @@ def grad(func=None,
          invert: bool = True,
          user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
          attach_backward: bool = False,
-         verbose: Optional[int] = None):
+         jit_cache: Callable[Callable, Callable] = functools.cache,
+         verbose: Optional[int] = None,
+         _override_func_params: Sequence[str] = None):
     '''
     Reverse mode automatic differentiation (out-of-place version)
 
@@ -263,6 +312,8 @@ def grad(func=None,
     attach_backward : bool
         If True, the forward function will be the only return value, with backward function
         and other metadata attached to it
+    jit_cache : Callable[Callable, Callable]
+        Function decorator used to cache JIT instances
     verbose: int
         Verbosity level
 
@@ -293,7 +344,9 @@ def grad(func=None,
                       invert=invert,
                       user_grads=user_grads,
                       attach_backward=attach_backward,
-                      verbose=verbose)
+                      jit_cache=jit_cache,
+                      verbose=verbose,
+                      _override_func_params=_override_func_params)
 
 
 @as_decorator
@@ -305,7 +358,9 @@ def jacrev_(func=None,
             invert: bool = True,
             user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
             attach_backward: bool = False,
-            verbose: Optional[int] = None):
+            jit_cache: Callable[Callable, Callable] = functools.cache,
+            verbose: Optional[int] = None,
+            _override_func_params: Sequence[str] = None):
     '''
     Compute Jacobian tensors using Reverse mode automatic differentiation (in-place)
 
@@ -368,6 +423,8 @@ def jacrev_(func=None,
     attach_backward : bool
         If True, the forward function will be the only return value, with backward function
         and other metadata attached to it
+    jit_cache : Callable[Callable, Callable]
+        Function decorator used to cache JIT instances
     verbose: int
         Verbosity level
 
@@ -384,13 +441,43 @@ def jacrev_(func=None,
         `.backward` and `.input_name_to_gradient_name` on the return value, respectively.
     '''
 
+    if not isinstance(func, ffi.AST) and not isinstance(func, JITTemplate):
+        func = transform(func, verbose=verbose)
+
+    if isinstance(func, JITTemplate):
+
+        if not attach_backward:
+            raise KeyError(
+                "JIT is only supported when attach_backward=True in `jacrev_`")
+
+        class JacRevTemplate(JITTemplate):
+
+            @jit_cache
+            def instantiate_by_only_jit_args(self, *jit_args):
+                return jacrev_(
+                    func.instantiate_by_only_jit_args(*jit_args),
+                    inputs=inputs,
+                    output=output,
+                    flatten=flatten,
+                    tapes=tapes,
+                    invert=invert,
+                    user_grads=user_grads,
+                    attach_backward=attach_backward,
+                    verbose=verbose,
+                    # Override func params to leave please for JIT parameters
+                    _override_func_params=list(self.params))
+
+        return JacRevTemplate(func.params, func.jit_param_names)
+
     # 1. Do a general AD
-    fwd, bwd, req_map, prov_map = grad_(func,
-                                        inputs, [output],
-                                        tapes=tapes,
-                                        invert=invert,
-                                        user_grads=user_grads,
-                                        verbose=verbose)
+    fwd, bwd, req_map, prov_map = grad_(
+        func,
+        inputs, [output],
+        tapes=tapes,
+        invert=invert,
+        user_grads=user_grads,
+        verbose=verbose,
+        _override_func_params=_override_func_params)
 
     # 2. Build a new backawrd, which runs the general backward multiple times. Each time we
     # set one of the elements of the output gradient to 1, and others to 0.
@@ -566,7 +653,9 @@ def jacrev(func=None,
            invert: bool = True,
            user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
            attach_backward: bool = False,
-           verbose: Optional[int] = None):
+           jit_cache: Callable[Callable, Callable] = functools.cache,
+           verbose: Optional[int] = None,
+           _override_func_params: Sequence[str] = None):
     '''
     Compute Jacobian tensors using Reverse mode automatic differentiation (out-of-place)
 
@@ -627,6 +716,8 @@ def jacrev(func=None,
     attach_backward : bool
         If True, the forward function will be the only return value, with backward function
         and other metadata attached to it
+    jit_cache : Callable[Callable, Callable]
+        Function decorator used to cache JIT instances
     verbose: int
         Verbosity level
 
@@ -643,6 +734,34 @@ def jacrev(func=None,
         `.backward` and `.input_name_to_gradient_name` on the return value, respectively.
     '''
 
+    if not isinstance(func, ffi.AST) and not isinstance(func, JITTemplate):
+        func = transform(func, verbose=verbose)
+
+    if isinstance(func, JITTemplate):
+
+        if not attach_backward:
+            raise KeyError(
+                "JIT is only supported when attach_backward=True in `jacrev`")
+
+        class JacRevTemplate(JITTemplate):
+
+            @jit_cache
+            def instantiate_by_only_jit_args(self, *jit_args):
+                return jacrev(
+                    func.instantiate_by_only_jit_args(*jit_args),
+                    inputs=inputs,
+                    output=output,
+                    flatten=flatten,
+                    tapes=tapes,
+                    invert=invert,
+                    user_grads=user_grads,
+                    attach_backward=True,
+                    verbose=verbose,
+                    # Override func params to leave please for JIT parameters
+                    _override_func_params=list(self.params))
+
+        return JacRevTemplate(func.params, func.jit_param_names)
+
     fwd, bwd, input_map = jacrev_(func,
                                   inputs,
                                   output,
@@ -651,7 +770,8 @@ def jacrev(func=None,
                                   invert=invert,
                                   user_grads=user_grads,
                                   attach_backward=False,
-                                  verbose=verbose)
+                                  verbose=verbose,
+                                  _override_func_params=_override_func_params)
 
     in_grads = set()
     if flatten:

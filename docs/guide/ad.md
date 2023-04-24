@@ -41,6 +41,10 @@ print(dzdb.numpy())
 
 You need to call [`ft.grad`](../../api/#freetensor.core.autograd.grad) (or the inplace version [`ft.grad_`](../../api/#freetensor.core.autograd.grad_)) to generate a *forward* function and a *backward* function. In this example, the backward function is attached as the `test.backward` property because `attach_backward` is set to `True`. You can set it to `False` and `ft.grad` will return both functions. Please note that `test` is updated by `ft.grad` and becomes different than the original function, as it may save some intermediate tensors to a global `tape`, and it must be executed before the backward `test.backward`.
 
+!!! note "Note on JIT"
+
+    [JIT](../first-program/#just-in-time-jit-compilation) is only supported when `attach_backward = True`.
+
 After that, you call `ft.optimize` to optimize and compile the program just as in previous examples. This time it is done for both `test` and `test.backward`.
 
 Finally, you execute `test` and `test.backward`. The parameters and return values of `test.backward` are the gradients of `a`, `b` and `y`, which have their own names. To set and get these parameters and return values, you look up for them in two dictionaries `test.input_name_to_gradient_name` and `test.output_name_to_gradient_name` (in type [`ft.ParamRetDict`](../../api/#freetensor.core.autograd.ParamRetDict). These two dictionaries accept either a name of a parameter, or a special [`ft.Return`](../../api/#freetensor.core.autograd.Return) to specify a return value. When invoking `test.backward`, parameters can be set via keyword arguments, and return values can be collect via a bracket (from a special type [`ft.ReturnValuesPack`](../../api/#freetensor.core.driver.ReturnValuesPack)). These two maps are attached to `test` because `attach_backward` is `True`. Otherwise, they are returned as return values from `ft.grad`.

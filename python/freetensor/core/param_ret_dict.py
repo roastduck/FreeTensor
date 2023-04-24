@@ -1,6 +1,6 @@
 __all__ = ['Parameter', 'Return', 'ParamRetDict']
 
-from typing import Optional
+from typing import Optional, Sequence
 
 
 class Parameter:
@@ -15,17 +15,18 @@ class Parameter:
     def __init__(self, n: Optional[int] = None):
         self.n = n
 
-    def get_name(self, func):
-        if len(func.params) == 0:
-            raise KeyError(f"{func.name} has no parameter")
+    def get_name(self, func_name: str, param_names: Sequence[str]):
+        param_names = list(param_names)
+        if len(param_names) == 0:
+            raise KeyError(f"{func_name} has no parameter")
         if self.n is not None:
-            return func.params[self.n].name
+            return param_names[self.n]
         else:
-            if len(func.params) != 1:
+            if len(param_names) != 1:
                 raise KeyError(
-                    f"{func.name} has more than one return value, and you"
+                    f"{func_name} has more than one return value, and you"
                     f" need to specify the number of a return value")
-            return func.params[0].name
+            return param_names[0]
 
     def __str__(self):
         return f"Parameter({self.n})"
@@ -43,17 +44,18 @@ class Return:
     def __init__(self, n: Optional[int] = None):
         self.n = n
 
-    def get_name(self, func):
-        if len(func.returns) == 0:
-            raise KeyError(f"{func.name} has no return value")
+    def get_name(self, func_name: str, return_names: Sequence[str]):
+        return_names = list(return_names)
+        if len(return_names) == 0:
+            raise KeyError(f"{func_name} has no return value")
         if self.n is not None:
-            return func.returns[self.n].name
+            return return_names[self.n]
         else:
-            if len(func.returns) != 1:
+            if len(return_names) != 1:
                 raise KeyError(
-                    f"{func.name} has more than one return value, and you"
+                    f"{func_name} has more than one return value, and you"
                     f" need to specify the number of a return value")
-            return func.returns[0].name
+            return return_names[0]
 
     def __str__(self):
         return f"Return({self.n})"
@@ -62,16 +64,31 @@ class Return:
 class ParamRetDict:
     ''' Look an object using either a function parameter or return value's name or position '''
 
-    def __init__(self, func, d):
-        self.func = func
+    def __init__(self,
+                 d,
+                 *,
+                 func=None,
+                 func_name: str = None,
+                 param_names: Sequence[str] = None,
+                 return_names: Sequence[str] = None):
+        ''' Either `func` or (`func_name` and `param_names` and `return_names`) should be provided '''
+
         self.d = d
+        if func is None:
+            self.func_name = func_name
+            self.param_names = param_names
+            self.return_names = return_names
+        else:
+            self.func_name = func.name
+            self.param_names = [p.name for p in func.params]
+            self.return_names = [r.name for r in func.returns]
 
     def __getitem__(self, key):
         try:
             if type(key) is Parameter:
-                key = key.get_name(self.func)
+                key = key.get_name(self.func_name, self.param_names)
             elif type(key) is Return:
-                key = key.get_name(self.func)
+                key = key.get_name(self.func_name, self.return_names)
             return self.d[key]
         except KeyError as e:
             raise KeyError(
@@ -82,9 +99,9 @@ class ParamRetDict:
         # integer index
         try:
             if type(key) is Parameter:
-                key = key.get_name(self.func)
+                key = key.get_name(self.func_name, self.param_names)
             elif type(key) is Return:
-                key = key.get_name(self.func)
+                key = key.get_name(self.func_name, self.return_names)
             return key in self.d
         except KeyError as e:
             return False

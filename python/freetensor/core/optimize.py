@@ -11,6 +11,7 @@ from .schedule import Schedule, schedule
 from .passes import lower
 from .codegen import codegen
 from .driver import Target, Device, build_binary
+from .jit import JITTemplate
 from .utils import as_decorator
 
 
@@ -65,7 +66,7 @@ def optimize(func=None,
     if target is None and device is not None:
         target = device.target()
 
-    if not isinstance(func, ffi.AST):
+    if not isinstance(func, ffi.AST) and not isinstance(func, JITTemplate):
         ast = transform(func,
                         default_dynamic_range=default_dynamic_range,
                         jit_cache=jit_cache,
@@ -132,7 +133,7 @@ def optimize_to_pytorch(
     import torch
 
     # Transform from Python source to AST
-    if not issubclass(type(func), ffi.AST):
+    if not isinstance(func, ffi.AST) and not isinstance(func, JITTemplate):
         ast = transform(func,
                         default_dynamic_range=default_dynamic_range,
                         verbose=verbose)

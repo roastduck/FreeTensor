@@ -379,6 +379,11 @@ def build_binary(code: Optional[NativeCode] = None,
 
         class BuildBinaryTemplate(JITTemplate):
 
+            def __init__(self, *args, **kvs):
+                super().__init__(*args, **kvs)
+                self.args = None
+                self.kvs = None
+
             @jit_cache
             def instantiate_by_only_jit_args(self, *jit_args):
                 return build_binary(
@@ -390,7 +395,43 @@ def build_binary(code: Optional[NativeCode] = None,
             def __call__(self, *args, **kvs):
                 ''' Helper to directly run the template '''
 
+                self.args = args
+                self.kvs = kvs
                 return self.instantiate_and_call(*args, **kvs)
+
+            @property
+            def backward(self):
+                ''' Helper to act as an EnableAttachBackward object '''
+
+                if self.args is None or self.kvs is None:
+                    raise TypeError(
+                        "A JIT program requires first running the forward pass before getting"
+                        " .backward")
+                # TODO: Here we re-instantiate. Change to another implementation if the overhead
+                # is too much
+                return self.instantiate(*self.args, **self.kvs).backward
+
+            @property
+            def input_name_to_gradient_name(self):
+                ''' Helper to act as an EnableAttachBackward object '''
+
+                if self.args is None or self.kvs is None:
+                    raise TypeError(
+                        "A JIT program requires first running the forward pass before getting"
+                        " .input_name_to_gradient_name")
+                return self.instantiate(*self.args,
+                                        **self.kvs).input_name_to_gradient_name
+
+            @property
+            def output_name_to_gradient_name(self):
+                ''' Helper to act as an EnableAttachBackward object '''
+
+                if self.args is None or self.kvs is None:
+                    raise TypeError(
+                        "A JIT program requires first running the forward pass before getting"
+                        " .output_name_to_gradient_name")
+                return self.instantiate(*self.args,
+                                        **self.kvs).output_name_to_gradient_name
 
         return BuildBinaryTemplate(code.params, code.jit_param_names)
 
