@@ -179,131 +179,13 @@
 
 
 
-<div class="doc doc-object doc-class">
-
-
-
-<h4 id="freetensor.core.autograd.ParamRetDict" class="doc doc-heading">
-        <code>freetensor.core.autograd.ParamRetDict</code>
-
-
-<a href="#freetensor.core.autograd.ParamRetDict" class="headerlink" title="Permanent link">&para;</a></h4>
-
-
-  <div class="doc doc-contents ">
-
-  
-      <p>Look an object using either a function parameter or return value's name or position</p>
-
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h4 id="freetensor.core.autograd.Parameter" class="doc doc-heading">
-        <code>freetensor.core.autograd.Parameter</code>
-
-
-<a href="#freetensor.core.autograd.Parameter" class="headerlink" title="Permanent link">&para;</a></h4>
-
-
-  <div class="doc doc-contents ">
-
-  
-      <p>Alias of a parameter of a function by position instead of by name</p>
-<p><code>Parameter(n)</code> represents the n-th parameter (counted from 0)</p>
-<p><code>Parameter()</code> can be used if there is only one parameter</p>
-
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h4 id="freetensor.core.autograd.Return" class="doc doc-heading">
-        <code>freetensor.core.autograd.Return</code>
-
-
-<a href="#freetensor.core.autograd.Return" class="headerlink" title="Permanent link">&para;</a></h4>
-
-
-  <div class="doc doc-contents ">
-
-  
-      <p>Alias of a return value of a function by position instead of by name</p>
-<p><code>Return(n)</code> represents the n-th return value (counted from 0)</p>
-<p><code>Return()</code> can be used if there is only one return value</p>
-
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h4 id="freetensor.core.autograd.grad" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">requires</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">provides</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.autograd.grad" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -329,136 +211,91 @@ by <code>grad</code>.</p>
 explicit arguments and return values, so you can store or manipluate these states
 between the forward run and the backward run.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>func</code></td>
-          <td>
-                <code>AST</code>
-          </td>
-          <td><p>The original function</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>requires</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Parameter" href="#freetensor.core.autograd.Parameter">Parameter</a>]]</code>
-          </td>
-          <td><p>Name of input variables that need gradients. A parameter of a function can also
-be specified with a <code>Parameter</code> object by position</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>provides</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Parameter" href="#freetensor.core.autograd.Parameter">Parameter</a>, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Return" href="#freetensor.core.autograd.Return">Return</a>]]</code>
-          </td>
-          <td><p>Name of output variables whose gradients are known. A mutable parameter of a
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>func</b>
+            (<code>AST</code>)
+        – <p>The original function</p>
+      </li>
+      <li class="field-body">
+        <b>requires</b>
+            (<code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.param_ret_dict.Parameter" href="#freetensor.core.param_ret_dict.Parameter">Parameter</a>]]</code>)
+        – <p>Name of input variables that need gradients. A parameter of a function can also
+be specified with a <code>Parameter</code> object by position</p>
+      </li>
+      <li class="field-body">
+        <b>provides</b>
+            (<code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.param_ret_dict.Parameter" href="#freetensor.core.param_ret_dict.Parameter">Parameter</a>, <a class="autorefs autorefs-internal" title="freetensor.core.param_ret_dict.Return" href="#freetensor.core.param_ret_dict.Return">Return</a>]]</code>)
+        – <p>Name of output variables whose gradients are known. A mutable parameter of a
 function can also be specified with a <code>Parameter</code> object by position. A return
-value of a function can also be specified with a <code>Return</code> object by position</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>tapes</code></td>
-          <td>
-                <code><span title="typing.Union">Union</span>[<span title="typing.Sequence">Sequence</span>, <span title="freetensor_ffi.GradTapeMode">GradTapeMode</span>]</code>
-          </td>
-          <td><p>Intermediate variables that need to be stored from the forward pass and
+value of a function can also be specified with a <code>Return</code> object by position</p>
+      </li>
+      <li class="field-body">
+        <b>tapes</b>
+            (<code><span title="typing.Union">Union</span>[<span title="typing.Sequence">Sequence</span>, <span title="freetensor_ffi.GradTapeMode">GradTapeMode</span>]</code>)
+        – <p>Intermediate variables that need to be stored from the forward pass and
 reused in the backward pass. This parameter can be a sequence, which contains
 VarDef selectors of them. It can also be a <code>GradTapeMode</code>, then it will determine
 which intermediate variables to be stored by heuristics. Avail <code>GradTapeMode</code>s
 are: All: store all variables including local scalars; None: store nothing;
 NoReuseOnly: store variables that only hold one version of data, which means
-we do not have to store each version of them in their history</p></td>
-          <td>
-                <code>GradTapeMode.NoReuseOnly</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>tape_in_closure</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>True to pass taped tensors from the forward function to the backward function in
+we do not have to store each version of them in their history</p>
+      </li>
+      <li class="field-body">
+        <b>tape_in_closure</b>
+            (<code>bool</code>)
+        – <p>True to pass taped tensors from the forward function to the backward function in
 implicit I/O parameters, i.e. in closure. False to pass these tensors as
-explicit I/O parameters. Default to True</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>invert</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>If set to true, it can reduce the amount of recomputation or taping required.
-However, this may result in a loss of precision for floating-point numbers. Defaults</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>user_grads</code></td>
-          <td>
-                <code><span title="typing.Optional">Optional</span>[<span title="typing.Sequence">Sequence</span>[<span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.StmtSetToUserGrad">StmtSetToUserGrad</span>]]</code>
-          </td>
-          <td><p>For custom gradient. You do not have to explicitly set this parameter unless you
+explicit I/O parameters. Default to True</p>
+      </li>
+      <li class="field-body">
+        <b>invert</b>
+            (<code>bool</code>)
+        – <p>If set to true, it can reduce the amount of recomputation or taping required.
+However, this may result in a loss of precision for floating-point numbers. Defaults</p>
+      </li>
+      <li class="field-body">
+        <b>user_grads</b>
+            (<code>List[<span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.StmtSetToUserGrad">StmtSetToUserGrad</span>]</code>)
+        – <p>For custom gradient. You do not have to explicitly set this parameter unless you
 are manipulating <code>func</code> by yourself (not getting it from the Python frontend). See
-<code>UserGrad</code> for details</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>verbose</code></td>
-          <td>
-                <code><span title="typing.Optional">Optional</span>[int]</code>
-          </td>
-          <td><p>Verbosity level</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+<code>UserGrad</code> for details</p>
+      </li>
+      <li class="field-body">
+        <b>attach_backward</b>
+            (<code>bool</code>)
+        – <p>If True, the forward function will be the only return value, with backward function
+and other metadata attached to it</p>
+      </li>
+      <li class="field-body">
+        <b>jit_cache</b>
+            (<code><span title="typing.Callable">Callable</span>[<span title="typing.Callable">Callable</span>, <span title="typing.Callable">Callable</span>]</code>)
+        – <p>Function decorator used to cache JIT instances</p>
+      </li>
+      <li class="field-body">
+        <b>verbose</b>
+            (<code><span title="typing.Optional">Optional</span>[int]</code>)
+        – <p>Verbosity level</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>tuple</code>
-          </td>
-          <td><p>(
-0. Forward AST.
-1. Backward AST.
-2. Mapping from names in requries to its gradient name.
-3. Mapping from names in provides to its gradient name.
-)</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code><a class="autorefs autorefs-internal" title="freetensor.core.func.Func" href="#freetensor.core.func.Func">Func</a> if attach_backward elseTuple</code>
+        – <p>If <code>attach_backward</code> is False, return a tuple.</p>
+<ul>
+<li>Return[0]: forward AST.</li>
+<li>Return[1]: backward AST.</li>
+<li>Return[2]: Mapping from names in requries to its gradient name.</li>
+<li>Return[3]: Mapping from names in provides to its gradient name.</li>
+</ul>
+<p>If <code>attach_backward</code> is True, only the forward AST is returned, and others can be get by
+<code>.backward</code>, <code>.input_name_to_gradient_name</code> and <code>.output_name_to_gradient_name</code> on the
+return value, respectively.</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -469,7 +306,7 @@ are manipulating <code>func</code> by yourself (not getting it from the Python f
 
 
 <h4 id="freetensor.core.autograd.grad_" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">requires</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">provides</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.autograd.grad_" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -494,137 +331,92 @@ the additional arguments can be looked up in the maps returned by <code>grad_</c
 explicit arguments and return values, so you can store or manipluate these states
 between the forward run and the backward run.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>func</code></td>
-          <td>
-                <code>AST</code>
-          </td>
-          <td><p>The original function</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>requires</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Parameter" href="#freetensor.core.autograd.Parameter">Parameter</a>]]</code>
-          </td>
-          <td><p>Name of input variables that need gradients. A parameter of a function can also
-be specified with a <code>Parameter</code> object by position</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>provides</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Parameter" href="#freetensor.core.autograd.Parameter">Parameter</a>, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Return" href="#freetensor.core.autograd.Return">Return</a>]]</code>
-          </td>
-          <td><p>Name of output variables whose gradients are known. A mutable parameter of a
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>func</b>
+            (<code>AST</code>)
+        – <p>The original function</p>
+      </li>
+      <li class="field-body">
+        <b>requires</b>
+            (<code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.param_ret_dict.Parameter" href="#freetensor.core.param_ret_dict.Parameter">Parameter</a>]]</code>)
+        – <p>Name of input variables that need gradients. A parameter of a function can also
+be specified with a <code>Parameter</code> object by position</p>
+      </li>
+      <li class="field-body">
+        <b>provides</b>
+            (<code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.param_ret_dict.Parameter" href="#freetensor.core.param_ret_dict.Parameter">Parameter</a>, <a class="autorefs autorefs-internal" title="freetensor.core.param_ret_dict.Return" href="#freetensor.core.param_ret_dict.Return">Return</a>]]</code>)
+        – <p>Name of output variables whose gradients are known. A mutable parameter of a
 function can also be specified with a <code>Parameter</code> object by position. A return
-value of a function can also be specified with a <code>Return</code> object by position</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>tapes</code></td>
-          <td>
-                <code><span title="typing.Union">Union</span>[<span title="typing.Sequence">Sequence</span>, <span title="freetensor_ffi.GradTapeMode">GradTapeMode</span>]</code>
-          </td>
-          <td><p>Intermediate variables that need to be stored from the forward pass and
+value of a function can also be specified with a <code>Return</code> object by position</p>
+      </li>
+      <li class="field-body">
+        <b>tapes</b>
+            (<code><span title="typing.Union">Union</span>[<span title="typing.Sequence">Sequence</span>, <span title="freetensor_ffi.GradTapeMode">GradTapeMode</span>]</code>)
+        – <p>Intermediate variables that need to be stored from the forward pass and
 reused in the backward pass. This parameter can be a sequence, which contains
 VarDef selectors of them. It can also be a <code>GradTapeMode</code>, then it will determine
 which intermediate variables to be stored by heuristics. Avail <code>GradTapeMode</code>s
 are: All: store all variables including local scalars; None: store nothing;
 NoReuseOnly: store variables that only hold one version of data, which means
-we do not have to store each version of them in their history</p></td>
-          <td>
-                <code>GradTapeMode.NoReuseOnly</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>tape_in_closure</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>True to pass taped tensors from the forward function to the backward function in
+we do not have to store each version of them in their history</p>
+      </li>
+      <li class="field-body">
+        <b>tape_in_closure</b>
+            (<code>bool</code>)
+        – <p>True to pass taped tensors from the forward function to the backward function in
 implicit I/O parameters, i.e. in closure. False to pass these tensors as
-explicit I/O parameters. Default to True</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>invert</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>If set to true, it can reduce the amount of recomputation or taping required.
+explicit I/O parameters. Default to True</p>
+      </li>
+      <li class="field-body">
+        <b>invert</b>
+            (<code>bool</code>)
+        – <p>If set to true, it can reduce the amount of recomputation or taping required.
 However, this may result in a loss of precision for floating-point numbers. Defaults
-to true.</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>user_grads</code></td>
-          <td>
-                <code><span title="typing.Optional">Optional</span>[<span title="typing.Sequence">Sequence</span>[<span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.StmtSetToUserGrad">StmtSetToUserGrad</span>]]</code>
-          </td>
-          <td><p>For custom gradient. You do not have to explicitly set this parameter unless you
+to true.</p>
+      </li>
+      <li class="field-body">
+        <b>user_grads</b>
+            (<code>List[<span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.StmtSetToUserGrad">StmtSetToUserGrad</span>]</code>)
+        – <p>For custom gradient. You do not have to explicitly set this parameter unless you
 are manipulating <code>func</code> by yourself (not getting it from the Python frontend). See
-<code>UserGrad</code> for details</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>verbose</code></td>
-          <td>
-                <code><span title="typing.Optional">Optional</span>[int]</code>
-          </td>
-          <td><p>Verbosity level</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+<code>UserGrad</code> for details</p>
+      </li>
+      <li class="field-body">
+        <b>attach_backward</b>
+            (<code>bool</code>)
+        – <p>If True, the forward function will be the only return value, with backward function
+and other metadata attached to it</p>
+      </li>
+      <li class="field-body">
+        <b>jit_cache</b>
+            (<code><span title="typing.Callable">Callable</span>[<span title="typing.Callable">Callable</span>, <span title="typing.Callable">Callable</span>]</code>)
+        – <p>Function decorator used to cache JIT instances</p>
+      </li>
+      <li class="field-body">
+        <b>verbose</b>
+            (<code><span title="typing.Optional">Optional</span>[int]</code>)
+        – <p>Verbosity level</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>tuple</code>
-          </td>
-          <td><p>(
-0. Forward AST.
-1. Backward AST.
-2. Mapping from names in requries to its gradient name.
-3. Mapping from names in provides to its gradient name.
-)</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code><a class="autorefs autorefs-internal" title="freetensor.core.func.Func" href="#freetensor.core.func.Func">Func</a> if attach_backward elseTuple</code>
+        – <p>If <code>attach_backward</code> is False, return a tuple.</p>
+<ul>
+<li>Return[0]: forward AST.</li>
+<li>Return[1]: backward AST.</li>
+<li>Return[2]: Mapping from names in requries to its gradient name.</li>
+<li>Return[3]: Mapping from names in provides to its gradient name.</li>
+</ul>
+<p>If <code>attach_backward</code> is True, only the forward AST is returned, and others can be get by
+<code>.backward</code>, <code>.input_name_to_gradient_name</code> and <code>.output_name_to_gradient_name</code> on the
+return value, respectively.</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -653,7 +445,7 @@ are manipulating <code>func</code> by yourself (not getting it from the Python f
 
 
 <h4 id="freetensor.core.autograd.jacrev" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">jacrev</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">jacrev</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.autograd.jacrev" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -682,135 +474,89 @@ default), the Jacobian tensors' shape will be <code>(d1, d2, ..., e1, e2, ...)</
 <code>(d1, d2, ..., f1, f2, ...)</code>, respectively. If <code>flatten</code> is True, there will be only
 one Jacbian tensor, whose shape will be <code>(d1 * d2 * ..., e1 * e2 * ... + f1 * f2 * ...)</code>.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>func</code></td>
-          <td>
-                <code>AST</code>
-          </td>
-          <td><p>The original function</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>inputs</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Parameter" href="#freetensor.core.autograd.Parameter">Parameter</a>]]</code>
-          </td>
-          <td><p>Name of input variables that the Jacobian tensors are for.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>output</code></td>
-          <td>
-                <code><span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Parameter" href="#freetensor.core.autograd.Parameter">Parameter</a>, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Return" href="#freetensor.core.autograd.Return">Return</a>]</code>
-          </td>
-          <td><p>Name of one output variables that the Jacobian tensors are for. A return value of a
-function can be specified with a <code>Return</code> object</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>flatten</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>If True, concatenate all Jacobian tensors together, to form an <code>(n, m)</code>-shaped output,
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>func</b>
+            (<code>AST</code>)
+        – <p>The original function</p>
+      </li>
+      <li class="field-body">
+        <b>inputs</b>
+            (<code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.param_ret_dict.Parameter" href="#freetensor.core.param_ret_dict.Parameter">Parameter</a>]]</code>)
+        – <p>Name of input variables that the Jacobian tensors are for.</p>
+      </li>
+      <li class="field-body">
+        <b>output</b>
+            (<code><span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.param_ret_dict.Parameter" href="#freetensor.core.param_ret_dict.Parameter">Parameter</a>, <a class="autorefs autorefs-internal" title="freetensor.core.param_ret_dict.Return" href="#freetensor.core.param_ret_dict.Return">Return</a>]</code>)
+        – <p>Name of one output variables that the Jacobian tensors are for. A return value of a
+function can be specified with a <code>Return</code> object</p>
+      </li>
+      <li class="field-body">
+        <b>flatten</b>
+            (<code>bool</code>)
+        – <p>If True, concatenate all Jacobian tensors together, to form an <code>(n, m)</code>-shaped output,
 where <code>n</code> is the total number of elements in the specified output, and <code>m</code> is the
 total number of elements in the specified inputs. This requires all involved inputs
 having the same data type and memory type. In this case, the name of the Jacobian
-tensor will be <code>"jacrev.flatten"</code>, and the returned name map will be empty</p></td>
-          <td>
-                <code>False</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>tapes</code></td>
-          <td>
-                <code><span title="typing.Union">Union</span>[<span title="typing.Sequence">Sequence</span>, <span title="freetensor_ffi.GradTapeMode">GradTapeMode</span>]</code>
-          </td>
-          <td><p>Intermediate variables that need to be stored from the forward pass and
+tensor will be <code>"jacrev.flatten"</code>, and the returned name map will be empty</p>
+      </li>
+      <li class="field-body">
+        <b>tapes</b>
+            (<code><span title="typing.Union">Union</span>[<span title="typing.Sequence">Sequence</span>, <span title="freetensor_ffi.GradTapeMode">GradTapeMode</span>]</code>)
+        – <p>Intermediate variables that need to be stored from the forward pass and
 reused in the backward pass. This parameter can be a sequence, which contains
 VarDef selectors of them. It can also be a <code>GradTapeMode</code>, then it will determine
 which intermediate variables to be stored by heuristics. Avail <code>GradTapeMode</code>s
 are: All: store all variables including local scalars; None: store nothing;
 NoReuseOnly: store variables that only hold one version of data, which means
-we do not have to store each version of them in their history</p></td>
-          <td>
-                <code>GradTapeMode.NoReuseOnly</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>invert</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>If set to true, it can reduce the amount of recomputation or taping required.
-However, this may result in a loss of precision for floating-point numbers. Defaults</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>user_grads</code></td>
-          <td>
-                <code><span title="typing.Optional">Optional</span>[<span title="typing.Sequence">Sequence</span>[<span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.StmtSetToUserGrad">StmtSetToUserGrad</span>]]</code>
-          </td>
-          <td><p>For custom gradient. You do not have to explicitly set this parameter unless you
+we do not have to store each version of them in their history</p>
+      </li>
+      <li class="field-body">
+        <b>invert</b>
+            (<code>bool</code>)
+        – <p>If set to true, it can reduce the amount of recomputation or taping required.
+However, this may result in a loss of precision for floating-point numbers. Defaults</p>
+      </li>
+      <li class="field-body">
+        <b>user_grads</b>
+            (<code><span title="typing.Optional">Optional</span>[<span title="typing.Sequence">Sequence</span>[<span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.StmtSetToUserGrad">StmtSetToUserGrad</span>]]</code>)
+        – <p>For custom gradient. You do not have to explicitly set this parameter unless you
 are manipulating <code>func</code> by yourself (not getting it from the Python frontend). See
-<code>UserGrad</code> for details</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>verbose</code></td>
-          <td>
-                <code><span title="typing.Optional">Optional</span>[int]</code>
-          </td>
-          <td><p>Verbosity level</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+<code>UserGrad</code> for details</p>
+      </li>
+      <li class="field-body">
+        <b>attach_backward</b>
+            (<code>bool</code>)
+        – <p>If True, the forward function will be the only return value, with backward function
+and other metadata attached to it</p>
+      </li>
+      <li class="field-body">
+        <b>jit_cache</b>
+            (<code><span title="typing.Callable">Callable</span>[<span title="typing.Callable">Callable</span>, <span title="typing.Callable">Callable</span>]</code>)
+        – <p>Function decorator used to cache JIT instances</p>
+      </li>
+      <li class="field-body">
+        <b>verbose</b>
+            (<code><span title="typing.Optional">Optional</span>[int]</code>)
+        – <p>Verbosity level</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>tuple</code>
-          </td>
-          <td><p>(
-0. Forward AST.
-1. Backward AST.
-2. Mapping from names in inputs to its Jacobian tensor name.
-)</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code><a class="autorefs autorefs-internal" title="freetensor.core.func.Func" href="#freetensor.core.func.Func">Func</a> if attach_backward elseTuple</code>
+        – <p>If <code>attach_backward</code> is False, return a tuple.</p>
+<ul>
+<li>Return[0]: forward AST.</li>
+<li>Return[1]: backward AST.</li>
+<li>Return[2]: Mapping from names in inputs to its Jacobian tensor name.</li>
+</ul>
+<p>If <code>attach_backward</code> is True, only the forward AST is returned, and others can be get by
+<code>.backward</code> and <code>.input_name_to_gradient_name</code> on the return value, respectively.</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -821,7 +567,7 @@ are manipulating <code>func</code> by yourself (not getting it from the Python f
 
 
 <h4 id="freetensor.core.autograd.jacrev_" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">jacrev_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">jacrev_</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.autograd.jacrev_" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -850,137 +596,91 @@ default), the Jacobian tensors' shape will be <code>(d1, d2, ..., e1, e2, ...)</
 <code>(d1, d2, ..., f1, f2, ...)</code>, respectively. If <code>flatten</code> is True, there will be only
 one Jacbian tensor, whose shape will be <code>(d1 * d2 * ..., e1 * e2 * ... + f1 * f2 * ...)</code>.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>func</code></td>
-          <td>
-                <code>AST</code>
-          </td>
-          <td><p>The original function</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>inputs</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Parameter" href="#freetensor.core.autograd.Parameter">Parameter</a>]]</code>
-          </td>
-          <td><p>Name of input variables that the Jacobian tensors are for. A parameter of a function
-can also be specified with a <code>Parameter</code> object by position</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>output</code></td>
-          <td>
-                <code><span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Parameter" href="#freetensor.core.autograd.Parameter">Parameter</a>, <a class="autorefs autorefs-internal" title="freetensor.core.autograd.Return" href="#freetensor.core.autograd.Return">Return</a>]</code>
-          </td>
-          <td><p>Name of one output variables that the Jacobian tensors are for. A mutable parameter
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>func</b>
+            (<code>AST</code>)
+        – <p>The original function</p>
+      </li>
+      <li class="field-body">
+        <b>inputs</b>
+            (<code><span title="typing.Sequence">Sequence</span>[<span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.param_ret_dict.Parameter" href="#freetensor.core.param_ret_dict.Parameter">Parameter</a>]]</code>)
+        – <p>Name of input variables that the Jacobian tensors are for. A parameter of a function
+can also be specified with a <code>Parameter</code> object by position</p>
+      </li>
+      <li class="field-body">
+        <b>output</b>
+            (<code><span title="typing.Union">Union</span>[str, <a class="autorefs autorefs-internal" title="freetensor.core.param_ret_dict.Parameter" href="#freetensor.core.param_ret_dict.Parameter">Parameter</a>, <a class="autorefs autorefs-internal" title="freetensor.core.param_ret_dict.Return" href="#freetensor.core.param_ret_dict.Return">Return</a>]</code>)
+        – <p>Name of one output variables that the Jacobian tensors are for. A mutable parameter
 of a function can also be specified with a <code>Parameter</code> object by position. A return
-value of a function can also be specified with a <code>Return</code> object by position</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>flatten</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>If True, concatenate all Jacobian tensors together, to form an <code>(n, m)</code>-shaped output,
+value of a function can also be specified with a <code>Return</code> object by position</p>
+      </li>
+      <li class="field-body">
+        <b>flatten</b>
+            (<code>bool</code>)
+        – <p>If True, concatenate all Jacobian tensors together, to form an <code>(n, m)</code>-shaped output,
 where <code>n</code> is the total number of elements in the specified output, and <code>m</code> is the
 total number of elements in the specified inputs. This requires all involved inputs
 having the same data type and memory type. In this case, the name of the Jacobian
-tensor will be <code>"jacrev.flatten"</code>, and the returned name map will be empty</p></td>
-          <td>
-                <code>False</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>tapes</code></td>
-          <td>
-                <code><span title="typing.Union">Union</span>[<span title="typing.Sequence">Sequence</span>, <span title="freetensor_ffi.GradTapeMode">GradTapeMode</span>]</code>
-          </td>
-          <td><p>Intermediate variables that need to be stored from the forward pass and
+tensor will be <code>"jacrev.flatten"</code>, and the returned name map will be empty</p>
+      </li>
+      <li class="field-body">
+        <b>tapes</b>
+            (<code><span title="typing.Union">Union</span>[<span title="typing.Sequence">Sequence</span>, <span title="freetensor_ffi.GradTapeMode">GradTapeMode</span>]</code>)
+        – <p>Intermediate variables that need to be stored from the forward pass and
 reused in the backward pass. This parameter can be a sequence, which contains
 VarDef selectors of them. It can also be a <code>GradTapeMode</code>, then it will determine
 which intermediate variables to be stored by heuristics. Avail <code>GradTapeMode</code>s
 are: All: store all variables including local scalars; None: store nothing;
 NoReuseOnly: store variables that only hold one version of data, which means
-we do not have to store each version of them in their history</p></td>
-          <td>
-                <code>GradTapeMode.NoReuseOnly</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>invert</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>If set to true, it can reduce the amount of recomputation or taping required.
-However, this may result in a loss of precision for floating-point numbers. Defaults</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>user_grads</code></td>
-          <td>
-                <code><span title="typing.Optional">Optional</span>[<span title="typing.Sequence">Sequence</span>[<span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.StmtSetToUserGrad">StmtSetToUserGrad</span>]]</code>
-          </td>
-          <td><p>For custom gradient. You do not have to explicitly set this parameter unless you
+we do not have to store each version of them in their history</p>
+      </li>
+      <li class="field-body">
+        <b>invert</b>
+            (<code>bool</code>)
+        – <p>If set to true, it can reduce the amount of recomputation or taping required.
+However, this may result in a loss of precision for floating-point numbers. Defaults</p>
+      </li>
+      <li class="field-body">
+        <b>user_grads</b>
+            (<code><span title="typing.Optional">Optional</span>[<span title="typing.Sequence">Sequence</span>[<span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.StmtSetToUserGrad">StmtSetToUserGrad</span>]]</code>)
+        – <p>For custom gradient. You do not have to explicitly set this parameter unless you
 are manipulating <code>func</code> by yourself (not getting it from the Python frontend). See
-<code>UserGrad</code> for details</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>verbose</code></td>
-          <td>
-                <code><span title="typing.Optional">Optional</span>[int]</code>
-          </td>
-          <td><p>Verbosity level</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+<code>UserGrad</code> for details</p>
+      </li>
+      <li class="field-body">
+        <b>attach_backward</b>
+            (<code>bool</code>)
+        – <p>If True, the forward function will be the only return value, with backward function
+and other metadata attached to it</p>
+      </li>
+      <li class="field-body">
+        <b>jit_cache</b>
+            (<code><span title="typing.Callable">Callable</span>[<span title="typing.Callable">Callable</span>, <span title="typing.Callable">Callable</span>]</code>)
+        – <p>Function decorator used to cache JIT instances</p>
+      </li>
+      <li class="field-body">
+        <b>verbose</b>
+            (<code><span title="typing.Optional">Optional</span>[int]</code>)
+        – <p>Verbosity level</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>tuple</code>
-          </td>
-          <td><p>(
-0. Forward AST.
-1. Backward AST.
-2. Mapping from names in inputs to its Jacobian tensor name.
-)</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code><a class="autorefs autorefs-internal" title="freetensor.core.func.Func" href="#freetensor.core.func.Func">Func</a> if attach_backward elseTuple</code>
+        – <p>If <code>attach_backward</code> is False, return a tuple.</p>
+<ul>
+<li>Return[0]: forward AST.</li>
+<li>Return[1]: backward AST.</li>
+<li>Return[2]: Mapping from names in inputs to its Jacobian tensor name.</li>
+</ul>
+<p>If <code>attach_backward</code> is True, only the forward AST is returned, and others can be get by
+<code>.backward</code> and <code>.input_name_to_gradient_name</code> on the return value, respectively.</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -1023,7 +723,7 @@ are manipulating <code>func</code> by yourself (not getting it from the Python f
 
 
 <h4 id="freetensor.core.codegen.codegen" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">codegen</span><span class="o">.</span><span class="n">codegen</span><span class="p">(</span><span class="n">ast</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">codegen</span><span class="o">.</span><span class="n">codegen</span><span class="p">(</span><span class="n">ast</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.codegen.codegen" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -1032,70 +732,35 @@ are manipulating <code>func</code> by yourself (not getting it from the Python f
   
       <p>Generate native code</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>ast</code></td>
-          <td>
-                <code>AST</code>
-          </td>
-          <td><p>The AST to be lowered. It must includes function signature to determine
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>ast</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.func.Func" href="#freetensor.core.func.Func">Func</a></code>)
+        – <p>The AST to be lowered. It must includes function signature to determine
 parameters and return values. If not specified, a partial function is
-returned, which can be used as a decorator</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>jit_cache</code></td>
-          <td>
-                <code><span title="typing.Callable">Callable</span>[<span title="typing.Callable">Callable</span>, <span title="typing.Callable">Callable</span>]</code>
-          </td>
-          <td><p>Function decorator used to cache JIT instances</p></td>
-          <td>
-                <code>functools.cache</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>target</code></td>
-          <td>
-                <code><span title="freetensor.core.driver.Target">Target</span>(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>The target architecture. If omitted, use the default one in config</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+returned, which can be used as a decorator</p>
+      </li>
+      <li class="field-body">
+        <b>jit_cache</b>
+            (<code><span title="typing.Callable">Callable</span>[<span title="typing.Callable">Callable</span>, <span title="typing.Callable">Callable</span>]</code>)
+        – <p>Function decorator used to cache JIT instances</p>
+      </li>
+      <li class="field-body">
+        <b>target</b>
+            (<code><span title="freetensor.core.driver.Target">Target</span>(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>The target architecture. If omitted, use the default one in config</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>NativeCode or JITTemplate</code>
-          </td>
-          <td><p>Return a NativeCode for the generated code if there is no JIT parameters.
-Return a JITTemplate that generates a NativeCode if there is at least one</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>NativeCode or JITTemplate</code>
+        – <p>Return a NativeCode for the generated code if there is no JIT parameters.
+Return a JITTemplate that generates a NativeCode if there is at least one</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -1431,7 +1096,7 @@ will use it by default. In this style, it also sets the default Target. E.g:</p>
 
   <div class="doc doc-contents ">
       <p class="doc doc-class-bases">
-        Bases: <code><span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.Driver">Driver</span></code></p>
+        Bases: <code><a class="autorefs autorefs-internal" title="freetensor.core.enable_attach_backward.EnableAttachBackward" href="#freetensor.core.enable_attach_backward.EnableAttachBackward">EnableAttachBackward</a></code>, <code><span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.Driver">Driver</span></code></p>
 
 
 
@@ -1486,61 +1151,31 @@ values. For an accurate execution time measurement, plase call
       <p>Compile a program using a backend compiler and load it into memory</p>
 <p>This class is for internal use. Please consider using <code>build_binary</code></p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>func</code></td>
-          <td>
-                <code><span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.Func">Func</span></code>
-          </td>
-          <td><p>AST of the function, where the function signature is needed to
-determine the parameters and return values</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>src</code></td>
-          <td>
-                <code>str</code>
-          </td>
-          <td><p>Native code generated from codegen</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>device</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.driver.Device" href="#freetensor.core.driver.Device">Device</a>(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>The device to run the program. If omitted, use the default device
-in config</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>verbose</code></td>
-          <td>
-                <code>bool(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>True to print extra infomation</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>func</b>
+            (<code><span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.Func">Func</span></code>)
+        – <p>AST of the function, where the function signature is needed to
+determine the parameters and return values</p>
+      </li>
+      <li class="field-body">
+        <b>src</b>
+            (<code>str</code>)
+        – <p>Native code generated from codegen</p>
+      </li>
+      <li class="field-body">
+        <b>device</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.driver.Device" href="#freetensor.core.driver.Device">Device</a>(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>The device to run the program. If omitted, use the default device
+in config</p>
+      </li>
+      <li class="field-body">
+        <b>verbose</b>
+            (<code>bool(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>True to print extra infomation</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -1738,64 +1373,34 @@ will be parsed according the rules in NumPy. The data type is also set according
 unless <code>dtype</code> is set.</li>
 </ul>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>data</code></td>
-          <td>
-                <code>FreeTensor Array, Numpy Array, PyTorch Tensor, or other array-like objects</code>
-          </td>
-          <td><p>Data to be copied to or borrowed by the new Array object</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>dtype</code></td>
-          <td>
-                <code>ft.DataType or str</code>
-          </td>
-          <td><p>If <code>data</code> is not in <code>dtype</code>, convert it to <code>dtype</code> first before constructing
-the <code>Array</code></p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>dont_drop_borrow</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>If true, report an error if we have to drop a borrwed data. This flag is set
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>data</b>
+            (<code>FreeTensor Array, Numpy Array, PyTorch Tensor, or other array-like objects</code>)
+        – <p>Data to be copied to or borrowed by the new Array object</p>
+      </li>
+      <li class="field-body">
+        <b>dtype</b>
+            (<code>ft.DataType or str</code>)
+        – <p>If <code>data</code> is not in <code>dtype</code>, convert it to <code>dtype</code> first before constructing
+the <code>Array</code></p>
+      </li>
+      <li class="field-body">
+        <b>dont_drop_borrow</b>
+            (<code>bool</code>)
+        – <p>If true, report an error if we have to drop a borrwed data. This flag is set
 to true when the Array is cunstructed IMPLICITLY (not by this function) from
 a user object by borrowing from it, where users may expect they are acutually
-manipulating the their user object, instead of this Array</p></td>
-          <td>
-                <code>False</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>moved</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>If true, it means we do not care about data in this Array any more after the
-program runs. Variables with "input-mutable" access type may modify the Array</p></td>
-          <td>
-                <code>False</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+manipulating the their user object, instead of this Array</p>
+      </li>
+      <li class="field-body">
+        <b>moved</b>
+            (<code>bool</code>)
+        – <p>If true, it means we do not care about data in this Array any more after the
+program runs. Variables with "input-mutable" access type may modify the Array</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -1806,7 +1411,7 @@ program runs. Variables with "input-mutable" access type may modify the Array</p
 
 
 <h4 id="freetensor.core.driver.build_binary" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">build_binary</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">host_device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">build_binary</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">host_device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.driver.build_binary" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -1815,80 +1420,40 @@ program runs. Variables with "input-mutable" access type may modify the Array</p
   
       <p>Compile a program using a backend compiler and load it into memory</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>code</code></td>
-          <td>
-                <code><span title="freetensor.core.codegen.NativeCode">NativeCode</span></code>
-          </td>
-          <td><p>Native code generated by <code>codegen</code>. If not specified, a partial
-function is returned, which can be used as a decorator</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>device</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.driver.Device" href="#freetensor.core.driver.Device">Device</a>(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>The device to run the program. If omitted, use the default device
-in config</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>jit_cache</code></td>
-          <td>
-                <code><span title="typing.Callable">Callable</span>[<span title="typing.Callable">Callable</span>, <span title="typing.Callable">Callable</span>]</code>
-          </td>
-          <td><p>Function decorator used to cache JIT instances</p></td>
-          <td>
-                <code>functools.cache</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>verbose</code></td>
-          <td>
-                <code>int</code>
-          </td>
-          <td><p>Verbosity level</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>code</b>
+            (<code><span title="freetensor.core.codegen.NativeCode">NativeCode</span></code>)
+        – <p>Native code generated by <code>codegen</code>. If not specified, a partial
+function is returned, which can be used as a decorator</p>
+      </li>
+      <li class="field-body">
+        <b>device</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.driver.Device" href="#freetensor.core.driver.Device">Device</a>(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>The device to run the program. If omitted, use the default device
+in config</p>
+      </li>
+      <li class="field-body">
+        <b>jit_cache</b>
+            (<code><span title="typing.Callable">Callable</span>[<span title="typing.Callable">Callable</span>, <span title="typing.Callable">Callable</span>]</code>)
+        – <p>Function decorator used to cache JIT instances</p>
+      </li>
+      <li class="field-body">
+        <b>verbose</b>
+            (<code>int</code>)
+        – <p>Verbosity level</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>Driver or JITTemplate</code>
-          </td>
-          <td><p>Return a Driver for the executable if there is no JIT parameters.
-Return a JITTemplate that generates a Driver if there is at least one</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>Driver or JITTemplate</code>
+        – <p>Return a Driver for the executable if there is no JIT parameters.
+Return a JITTemplate that generates a Driver if there is at least one</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -1911,6 +1476,99 @@ Return a JITTemplate that generates a Driver if there is at least one</p></td>
   </div>
 
 </div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="freetensor.core.enable_attach_backward" class="doc doc-heading">
+          <code>freetensor.core.enable_attach_backward</code>
+
+
+<a href="#freetensor.core.enable_attach_backward" class="headerlink" title="Permanent link">&para;</a></h3>
+
+  <div class="doc doc-contents ">
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="freetensor.core.enable_attach_backward.EnableAttachBackward" class="doc doc-heading">
+        <code>freetensor.core.enable_attach_backward.EnableAttachBackward</code>
+
+
+<a href="#freetensor.core.enable_attach_backward.EnableAttachBackward" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+  <div class="doc doc-contents ">
+
+  
+      <p>Get backward object (Func, Driver, etc) and other meta data from a forward object</p>
+<p>This class is a Mixin Class. It should be inherited BEFORE other base classes in
+multiple inheritance.</p>
+
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h5 id="freetensor.core.enable_attach_backward.EnableAttachBackward.__init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">enable_attach_backward</span><span class="o">.</span><span class="n">EnableAttachBackward</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+<a href="#freetensor.core.enable_attach_backward.EnableAttachBackward.__init__" class="headerlink" title="Permanent link">&para;</a></h5>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Forward all arguments to other base classes</p>
+<p>In Python, super().<strong>init</strong> calls the next base class in the full inheritance
+graph of the final class, not only base classes of BackwardAttachedMixin.
+See https://docs.python.org/3/tutorial/classes.html#multiple-inheritance</p>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
 
 
 
@@ -2178,47 +1836,22 @@ or <code>Expr</code></p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.abs</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>expr</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>expr</b>
+            (<code>VarRef or Number</code>)
+        – <p>The operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The absolute value</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The absolute value</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -2240,57 +1873,27 @@ it calls libop.abs</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.add</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The sum</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The sum</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -2329,57 +1932,27 @@ it calls libop.add</p>
   
       <p>Cast to another type</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>expr</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>dtype</code></td>
-          <td>
-                <code>DataTypr or str</code>
-          </td>
-          <td><p>The target data type</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>expr</b>
+            (<code>VarRef or Number</code>)
+        – <p>The operand</p>
+      </li>
+      <li class="field-body">
+        <b>dtype</b>
+            (<code>DataTypr or str</code>)
+        – <p>The target data type</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The result</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The result</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -2401,47 +1974,22 @@ it calls libop.add</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.ceil</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>expr</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>expr</b>
+            (<code>VarRef or Number</code>)
+        – <p>The operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The result</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The result</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -2464,57 +2012,27 @@ it calls libop.ceil</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.ceildiv</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The quotient</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The quotient</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -2554,57 +2072,27 @@ it calls libop.ceildiv</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.eq</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The comparison</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The comparison</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -2626,47 +2114,22 @@ it calls libop.eq</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.exp</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>expr</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>expr</b>
+            (<code>VarRef or Number</code>)
+        – <p>The operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The exponent</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The exponent</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -2688,47 +2151,22 @@ it calls libop.exp</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.floor</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>expr</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>expr</b>
+            (<code>VarRef or Number</code>)
+        – <p>The operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The result</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The result</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -2752,57 +2190,27 @@ This function is recommended over <code>round_towards_0_div</code>, as it enjoys
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.floordiv</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The quotient</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The quotient</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -2824,57 +2232,27 @@ it calls libop.floordiv</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.ge</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The comparison</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The comparison</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -2896,57 +2274,27 @@ it calls libop.ge</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.gt</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The comparison</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The comparison</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -2969,67 +2317,32 @@ it calls libop.gt</p>
 both branches will be executed and the result of one of them will be picked.
 Therefore, please do NOT use <code>if_then_else</code> to guard an out-of-bound array indexing</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>cond</code></td>
-          <td>
-                <code>VarRef of Number</code>
-          </td>
-          <td><p>Condition</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>then_case</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>Then-case experssion</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>else_case</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>Else-case expression</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>cond</b>
+            (<code>VarRef of Number</code>)
+        – <p>Condition</p>
+      </li>
+      <li class="field-body">
+        <b>then_case</b>
+            (<code>VarRef or Number</code>)
+        – <p>Then-case experssion</p>
+      </li>
+      <li class="field-body">
+        <b>else_case</b>
+            (<code>VarRef or Number</code>)
+        – <p>Else-case expression</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The result</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The result</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3049,59 +2362,29 @@ Therefore, please do NOT use <code>if_then_else</code> to guard an out-of-bound 
   
       <p>Invoke whatever target code</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>fmt</code></td>
-          <td>
-                <code>str</code>
-          </td>
-          <td><p>What to run. "%" is filled by parameters one by one. E.g. sinf(%)</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>*params</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[Expr]</code>
-          </td>
-          <td><p>(Positional variadic) Parameters to <code>fmt</code></p></td>
-          <td>
-                <code>()</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>ret_type</code></td>
-          <td>
-                <code>DataType or str</code>
-          </td>
-          <td><p>(Keyword argument only) The return type. Void for no return type. Defaults to Void</p></td>
-          <td>
-                <code>&#39;void&#39;</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>has_side_effect</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>(Keyword argument only) True to indicate the intrinsic modifes something other than the return value. Defaults to false</p></td>
-          <td>
-                <code>False</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>fmt</b>
+            (<code>str</code>)
+        – <p>What to run. "%" is filled by parameters one by one. E.g. sinf(%)</p>
+      </li>
+      <li class="field-body">
+        <b>*params</b>
+            (<code><span title="typing.Sequence">Sequence</span>[Expr]</code>)
+        – <p>(Positional variadic) Parameters to <code>fmt</code></p>
+      </li>
+      <li class="field-body">
+        <b>ret_type</b>
+            (<code>DataType or str</code>)
+        – <p>(Keyword argument only) The return type. Void for no return type. Defaults to Void</p>
+      </li>
+      <li class="field-body">
+        <b>has_side_effect</b>
+            (<code>bool</code>)
+        – <p>(Keyword argument only) True to indicate the intrinsic modifes something other than the return value. Defaults to false</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3124,57 +2407,27 @@ Therefore, please do NOT use <code>if_then_else</code> to guard an out-of-bound 
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.l_and</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The logical and</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The logical and</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3196,47 +2449,22 @@ it calls libop.l_and</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.l_not</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>expr</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>expr</b>
+            (<code>VarRef or Number</code>)
+        – <p>The operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The logical not</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The logical not</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3259,57 +2487,27 @@ it calls libop.l_not</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.l_or</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The logical or</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The logical or</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3331,57 +2529,27 @@ it calls libop.l_or</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.le</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The comparison</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The comparison</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3403,47 +2571,22 @@ it calls libop.le</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.ln</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>expr</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>expr</b>
+            (<code>VarRef or Number</code>)
+        – <p>The operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The exponent</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The exponent</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3484,57 +2627,27 @@ it calls libop.ln</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.lt</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The comparison</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The comparison</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3556,57 +2669,27 @@ it calls libop.lt</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.max</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The maximum</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The maximum</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3628,57 +2711,27 @@ it calls libop.max</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.min</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The minimum</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The minimum</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3702,57 +2755,27 @@ This function is recommended over <code>remainder</code>, as it enjoys more opti
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.mod</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The modulo</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The modulo</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3792,57 +2815,27 @@ it calls libop.mod</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.mul</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The product</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The product</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3882,57 +2875,27 @@ it calls libop.mul</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.ne</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The comparison</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The comparison</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -3957,57 +2920,27 @@ and enjoys better optimization in FreeTensor</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.remainder</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The remainder</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The remainder</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -4032,57 +2965,27 @@ and enjoys better optimization in FreeTensor</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.round_towards_0_div</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The quotient</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The quotient</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -4123,47 +3026,22 @@ shape(var): Get sizes of all dimensions of a variable</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.sigmoid</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>expr</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>expr</b>
+            (<code>VarRef or Number</code>)
+        – <p>The operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The result</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The result</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -4185,47 +3063,22 @@ it calls libop.sigmoid</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.sqrt</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>expr</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>expr</b>
+            (<code>VarRef or Number</code>)
+        – <p>The operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The square root</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The square root</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -4247,47 +3100,22 @@ it calls libop.sqrt</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.square</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>expr</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>expr</b>
+            (<code>VarRef or Number</code>)
+        – <p>The operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The square</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The square</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -4309,57 +3137,27 @@ it calls libop.square</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.sub</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The difference</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The difference</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -4381,47 +3179,22 @@ it calls libop.sub</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.tanh</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>expr</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>expr</b>
+            (<code>VarRef or Number</code>)
+        – <p>The operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The result</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The result</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -4443,57 +3216,27 @@ it calls libop.tanh</p>
 <p>For scalar operands, it emit an expression node in AST. For non-scalar operands,
 it calls libop.truediv</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>rhs</code></td>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>rhs</b>
+            (<code>VarRef or Number</code>)
+        – <p>The right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>VarRef or Number</code>
-          </td>
-          <td><p>The quotient</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>VarRef or Number</code>
+        – <p>The quotient</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -4671,39 +3414,19 @@ the forward-to-backward relation of the nodes.</li>
 </ol>
 <p>If you are directly writing staged code, use <code>UserGradStaged</code> instead.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>*args</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[<a class="autorefs autorefs-internal" title="freetensor.core.stmt.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a>]</code>
-          </td>
-          <td><p>(Positional variadic) Mapping from original variables to gradient variables</p></td>
-          <td>
-                <code>()</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>stmt_range</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.context.StmtRange" href="#freetensor.core.context.StmtRange">StmtRange</a></code>
-          </td>
-          <td><p>The range in the original program that we are setting custom gradient for</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>*args</b>
+            (<code><span title="typing.Sequence">Sequence</span>[<a class="autorefs autorefs-internal" title="freetensor.core.stmt.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a>]</code>)
+        – <p>(Positional variadic) Mapping from original variables to gradient variables</p>
+      </li>
+      <li class="field-body">
+        <b>stmt_range</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.context.StmtRange" href="#freetensor.core.context.StmtRange">StmtRange</a></code>)
+        – <p>The range in the original program that we are setting custom gradient for</p>
+      </li>
+  </ul>
 
 
 
@@ -4771,62 +3494,32 @@ the forward-to-backward relation of the nodes.</li>
   
       <p>Declare a variable</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>shape</code></td>
-          <td>
-                <code>Sequence[Expr] or Var</code>
-          </td>
-          <td><p>Shape of the variable. A variable can be created using a literal shape,
-or another fixed-length VarRef as a shape</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>dtype</code></td>
-          <td>
-                <code>str or DataType</code>
-          </td>
-          <td><p>Data type of the variable</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>atype</code></td>
-          <td>
-                <code>str or AccessType</code>
-          </td>
-          <td><p>Access type of the variable. It specifies whether (and how) the variable
-is an I/O variable of the function it belongs to. Defaults to "input"</p></td>
-          <td>
-                <code>&#39;input&#39;</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>mtype</code></td>
-          <td>
-                <code>str or MemType (Optional)</code>
-          </td>
-          <td><p>Memory type of the variable. If omitted, the main memory type of the
-default Target in config will be used</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>shape</b>
+            (<code>Sequence[Expr] or Var</code>)
+        – <p>Shape of the variable. A variable can be created using a literal shape,
+or another fixed-length VarRef as a shape</p>
+      </li>
+      <li class="field-body">
+        <b>dtype</b>
+            (<code>str or DataType</code>)
+        – <p>Data type of the variable</p>
+      </li>
+      <li class="field-body">
+        <b>atype</b>
+            (<code>str or AccessType</code>)
+        – <p>Access type of the variable. It specifies whether (and how) the variable
+is an I/O variable of the function it belongs to. Defaults to "input"</p>
+      </li>
+      <li class="field-body">
+        <b>mtype</b>
+            (<code>str or MemType (Optional)</code>)
+        – <p>Memory type of the variable. If omitted, the main memory type of the
+default Target in config will be used</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -5110,7 +3803,7 @@ stack at runtime: it can be compiled to any data structure.</p>
 
   <div class="doc doc-contents ">
       <p class="doc doc-class-bases">
-        Bases: <code><span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.Func">Func</span></code></p>
+        Bases: <code><a class="autorefs autorefs-internal" title="freetensor.core.enable_attach_backward.EnableAttachBackward" href="#freetensor.core.enable_attach_backward.EnableAttachBackward">EnableAttachBackward</a></code>, <code><span title="freetensor_ffi">ffi</span>.<span title="freetensor_ffi.Func">Func</span></code></p>
 
 
 
@@ -5238,39 +3931,19 @@ signature. It is NOT supported in annotations for statements.</p>
 an instantiated object will be returned. Subclasses of <code>JITTemplate</code> should override
 <code>instantiate_by_only_jit_args</code>, and define what is actually returned.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>params</code></td>
-          <td>
-                <code>OrderedDict</code>
-          </td>
-          <td><p>Parameter list from inspect.signature(func).parameters</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>jit_param_names</code></td>
-          <td>
-                <code>Sequence</code>
-          </td>
-          <td><p>Sequence of names of JIT parameters in the original order defined in the function</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>params</b>
+            (<code>OrderedDict</code>)
+        – <p>Parameter list from inspect.signature(func).parameters</p>
+      </li>
+      <li class="field-body">
+        <b>jit_param_names</b>
+            (<code>Sequence</code>)
+        – <p>Sequence of names of JIT parameters in the original order defined in the function</p>
+      </li>
+  </ul>
 
 
 
@@ -5410,7 +4083,7 @@ memoization can be easier, with considering the order of the arguments.</p>
 
 
 <h4 id="freetensor.core.optimize.optimize" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">schedule_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">schedule_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">backward_schedule_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.optimize.optimize" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -5432,81 +4105,47 @@ def f(...):
     ...
 </code></pre>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>func</code></td>
-          <td>
-                <code>Python function or AST</code>
-          </td>
-          <td><p>The user function to optimize. If not specified, a partial function will
-be returend, which can be used as a decorator</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>schedule_callback</code></td>
-          <td>
-                <code><span title="typing.Callable">Callable</span>(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Schedule(s) to apply</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>target</code></td>
-          <td>
-                <code><span title="freetensor.core.driver.Target">Target</span>(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>The target architecture. You don't have to set target if you set device</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>device</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.driver.Device" href="#freetensor.core.driver.Device">Device</a>(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Where to run the program</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>default_dynamic_range</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>If True, the built-in range is replaced with freetensor.dynamic_range.
-Defaults to True</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>verbose</code></td>
-          <td>
-                <code>int(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Verbosity level. Can be 0, 1 or 2</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>func</b>
+            (<code>Python function or AST</code>)
+        – <p>The user function to optimize. If not specified, a partial function will
+be returend, which can be used as a decorator</p>
+      </li>
+      <li class="field-body">
+        <b>schedule_callback</b>
+            (<code><span title="typing.Callable">Callable</span>(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Schedule(s) to apply</p>
+      </li>
+      <li class="field-body">
+        <b>backward_callback</b>
+            (<code><span title="typing.Callable">Callable</span></code>)
+        – <p>Specify what schedule(s) to do for the backward function, if <code>ast</code> is returned
+from AD with <code>attach_backward=True</code>. Defaults to be the same with <code>callback</code></p>
+      </li>
+      <li class="field-body">
+        <b>target</b>
+            (<code><span title="freetensor.core.driver.Target">Target</span>(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>The target architecture. You don't have to set target if you set device</p>
+      </li>
+      <li class="field-body">
+        <b>device</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.driver.Device" href="#freetensor.core.driver.Device">Device</a>(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Where to run the program</p>
+      </li>
+      <li class="field-body">
+        <b>default_dynamic_range</b>
+            (<code>bool</code>)
+        – <p>If True, the built-in range is replaced with freetensor.dynamic_range.
+Defaults to True</p>
+      </li>
+      <li class="field-body">
+        <b>verbose</b>
+            (<code>int(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Verbosity level. Can be 0, 1 or 2</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -5517,7 +4156,7 @@ Defaults to True</p></td>
 
 
 <h4 id="freetensor.core.optimize.optimize_to_pytorch" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">optimize_to_pytorch</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">forward_schedule_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">backward_schedule_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">optimize_to_pytorch</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">forward_schedule_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">backward_schedule_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_dynamic_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.optimize.optimize_to_pytorch" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -5533,111 +4172,229 @@ around a PyTorch's <code>Function</code>'s <code>apply</code> method</p>
 function separated. For this reason, currently only first-order gradient
 is supported</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>func</code></td>
-          <td>
-                <code>Python function or AST</code>
-          </td>
-          <td><p>The user function to optimize. If not specified, a partial function will
-be returend, which can be used as a decorator</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>tapes</code></td>
-          <td>
-                <code><span title="typing.Union">Union</span>[<span title="typing.Sequence">Sequence</span>, <span title="freetensor_ffi.GradTapeMode">GradTapeMode</span>]</code>
-          </td>
-          <td><p>Intermediate variables that need to be stored from the forward pass and
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>func</b>
+            (<code>Python function or AST</code>)
+        – <p>The user function to optimize. If not specified, a partial function will
+be returend, which can be used as a decorator</p>
+      </li>
+      <li class="field-body">
+        <b>tapes</b>
+            (<code><span title="typing.Union">Union</span>[<span title="typing.Sequence">Sequence</span>, <span title="freetensor_ffi.GradTapeMode">GradTapeMode</span>]</code>)
+        – <p>Intermediate variables that need to be stored from the forward pass and
 reused in the backward pass. This parameter can be a sequence, which contains
 VarDef selectors of them. It can also be a <code>GradTapeMode</code>, then it will determine
 which intermediate variables to be stored by heuristics. Avail <code>GradTapeMode</code>s
 are: All: store all variables including local scalars; None: store nothing;
 NoReuseOnly: store variables that only hold one version of data, which means
-we do not have to store each version of them in their history</p></td>
-          <td>
-                <code>GradTapeMode.NoReuseOnly</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>forward_schedule_callback</code></td>
-          <td>
-                <code><span title="typing.Callable">Callable</span>(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Schedule(s) to apply to the forward function</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>backward_schedule_callback</code></td>
-          <td>
-                <code><span title="typing.Callable">Callable</span>(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Schedule(s) to apply to the backward function</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>target</code></td>
-          <td>
-                <code><span title="freetensor.core.driver.Target">Target</span>(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>The target architecture. You don't have to set target if you set device</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>device</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.driver.Device" href="#freetensor.core.driver.Device">Device</a>(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Where to run the program</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>default_dynamic_range</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>If True, the built-in range is replaced with freetensor.dynamic_range.
-Defaults to True</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>verbose</code></td>
-          <td>
-                <code>int(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Verbosity level. Can be 0, 1 or 2</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+we do not have to store each version of them in their history</p>
+      </li>
+      <li class="field-body">
+        <b>forward_schedule_callback</b>
+            (<code><span title="typing.Callable">Callable</span>(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Schedule(s) to apply to the forward function</p>
+      </li>
+      <li class="field-body">
+        <b>backward_schedule_callback</b>
+            (<code><span title="typing.Callable">Callable</span>(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Schedule(s) to apply to the backward function</p>
+      </li>
+      <li class="field-body">
+        <b>target</b>
+            (<code><span title="freetensor.core.driver.Target">Target</span>(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>The target architecture. You don't have to set target if you set device</p>
+      </li>
+      <li class="field-body">
+        <b>device</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.driver.Device" href="#freetensor.core.driver.Device">Device</a>(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Where to run the program</p>
+      </li>
+      <li class="field-body">
+        <b>default_dynamic_range</b>
+            (<code>bool</code>)
+        – <p>If True, the built-in range is replaced with freetensor.dynamic_range.
+Defaults to True</p>
+      </li>
+      <li class="field-body">
+        <b>verbose</b>
+            (<code>int(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Verbosity level. Can be 0, 1 or 2</p>
+      </li>
+  </ul>
 
   </div>
 
 </div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="freetensor.core.param_ret_dict" class="doc doc-heading">
+          <code>freetensor.core.param_ret_dict</code>
+
+
+<a href="#freetensor.core.param_ret_dict" class="headerlink" title="Permanent link">&para;</a></h3>
+
+  <div class="doc doc-contents ">
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="freetensor.core.param_ret_dict.ParamRetDict" class="doc doc-heading">
+        <code>freetensor.core.param_ret_dict.ParamRetDict</code>
+
+
+<a href="#freetensor.core.param_ret_dict.ParamRetDict" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+  <div class="doc doc-contents ">
+
+  
+      <p>Look an object using either a function parameter or return value's name or position</p>
+
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h5 id="freetensor.core.param_ret_dict.ParamRetDict.__init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">param_ret_dict</span><span class="o">.</span><span class="n">ParamRetDict</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">func_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">param_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_names</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#freetensor.core.param_ret_dict.ParamRetDict.__init__" class="headerlink" title="Permanent link">&para;</a></h5>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Either <code>func</code> or (<code>func_name</code> and <code>param_names</code> and <code>return_names</code>) should be provided</p>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="freetensor.core.param_ret_dict.Parameter" class="doc doc-heading">
+        <code>freetensor.core.param_ret_dict.Parameter</code>
+
+
+<a href="#freetensor.core.param_ret_dict.Parameter" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+  <div class="doc doc-contents ">
+
+  
+      <p>Alias of a parameter of a function by position instead of by name</p>
+<p><code>Parameter(n)</code> represents the n-th parameter (counted from 0)</p>
+<p><code>Parameter()</code> can be used if there is only one parameter</p>
+
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="freetensor.core.param_ret_dict.Return" class="doc doc-heading">
+        <code>freetensor.core.param_ret_dict.Return</code>
+
+
+<a href="#freetensor.core.param_ret_dict.Return" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+  <div class="doc doc-contents ">
+
+  
+      <p>Alias of a return value of a function by position instead of by name</p>
+<p><code>Return(n)</code> represents the n-th return value (counted from 0)</p>
+<p><code>Return()</code> can be used if there is only one return value</p>
+
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
 
 
 
@@ -5676,7 +4433,7 @@ Defaults to True</p></td>
 
 
 <h4 id="freetensor.core.passes.lower" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">passes</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">ast</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skip_passes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">passes</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">ast</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skip_passes</span><span class="o">=</span><span class="p">[],</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.passes.lower" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -5685,95 +4442,50 @@ Defaults to True</p></td>
   
       <p>Lower an AST using a series of passes</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>ast</code></td>
-          <td>
-                <code>AST</code>
-          </td>
-          <td><p>The AST to be lowered. Can be a <code>Func</code> or a <code>Stmt</code>. If not specified, a
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>ast</b>
+            (<code>AST</code>)
+        – <p>The AST to be lowered. Can be a <code>Func</code> or a <code>Stmt</code>. If not specified, a
 partial function of <code>lower</code> will be returned, which can be used as a
-decorator</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>target</code></td>
-          <td>
-                <code><span title="freetensor.core.driver.Target">Target</span>(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Lower the AST to a target with target-specific passes, then the AST can
-be used for codegen. If not set, use the default Target in Config</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>skip_passes</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[str](<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Skip some pass for testing or debugging. Names in <code>skip_passes</code> are in
+decorator</p>
+      </li>
+      <li class="field-body">
+        <b>target</b>
+            (<code><span title="freetensor.core.driver.Target">Target</span>(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Lower the AST to a target with target-specific passes, then the AST can
+be used for codegen. If not set, use the default Target in Config</p>
+      </li>
+      <li class="field-body">
+        <b>skip_passes</b>
+            (<code><span title="typing.Sequence">Sequence</span>[str](<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Skip some pass for testing or debugging. Names in <code>skip_passes</code> are in
 underscore_style, as in Python. Please note that some passes will not be
 skipped even specified in these parameter, because they are indirectly
-called in some other passes</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>jit_cache</code></td>
-          <td>
-                <code><span title="typing.Callable">Callable</span>[<span title="typing.Callable">Callable</span>, <span title="typing.Callable">Callable</span>]</code>
-          </td>
-          <td><p>Function decorator used to cache JIT instances</p></td>
-          <td>
-                <code>functools.cache</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>verbose</code></td>
-          <td>
-                <code>int(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>0 = print nothing. 1 = print the lowered AST. 2 = print AST after every
-single passes</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+called in some other passes</p>
+      </li>
+      <li class="field-body">
+        <b>jit_cache</b>
+            (<code><span title="typing.Callable">Callable</span>[<span title="typing.Callable">Callable</span>, <span title="typing.Callable">Callable</span>]</code>)
+        – <p>Function decorator used to cache JIT instances</p>
+      </li>
+      <li class="field-body">
+        <b>verbose</b>
+            (<code>int(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>0 = print nothing. 1 = print the lowered AST. 2 = print AST after every
+single passes</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>Func or JITTemplate</code>
-          </td>
-          <td><p>Return a Func for an AST if there is no JIT parameters. Return a JITTemplate
-that generates a Func if there is at least one</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>Func or JITTemplate</code>
+        – <p>Return a Func for an AST if there is no JIT parameters. Return a JITTemplate
+that generates a Func if there is at least one</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -6089,39 +4801,19 @@ This wrapper is used for initializing a variable.</p>
 <p>Defaults to a no-op.
 Can be overridden by subclasses.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>filename</code></td>
-          <td>
-                <code>str</code>
-          </td>
-          <td><p>Name of the file containing code for the next statement.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>lineno</code></td>
-          <td>
-                <code>int</code>
-          </td>
-          <td><p>Line number of the next statement.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>filename</b>
+            (<code>str</code>)
+        – <p>Name of the file containing code for the next statement.</p>
+      </li>
+      <li class="field-body">
+        <b>lineno</b>
+            (<code>int</code>)
+        – <p>Line number of the next statement.</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -6181,57 +4873,27 @@ for this overloaded custom attribute resolver.</p>
 <p>The default implementation provides no custom attribute.
 Can be overridden by subclasses.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>obj</code></td>
-          <td>
-                <code><span title="typing.Any">Any</span></code>
-          </td>
-          <td><p>Object to access attribute.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>attr</code></td>
-          <td>
-                <code>str</code>
-          </td>
-          <td><p>Attribute name.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>obj</b>
+            (<code><span title="typing.Any">Any</span></code>)
+        – <p>Object to access attribute.</p>
+      </li>
+      <li class="field-body">
+        <b>attr</b>
+            (<code>str</code>)
+        – <p>Attribute name.</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-<th>Name</th>        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-<td><code>Any</code></td>          <td>
-                <code><span title="typing.Any">Any</span></code>
-          </td>
-          <td><p>The attribute value.</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+<b>Any</b>(            <code><span title="typing.Any">Any</span></code>
+)        – <p>The attribute value.</p>
+      </li>
+  </ul>
       <h6 id="freetensor.core.staging.StagingOverload.custom_attr--throws">Throws<a class="headerlink" href="#freetensor.core.staging.StagingOverload.custom_attr--throws" title="Permanent link">&para;</a></h6>
 <p>AttributeError :
     If the attribute is not found.</p>
@@ -6354,29 +5016,14 @@ represented as a string parameter.</p>
 <p>Defaults to a no-op.
 Can be overridden by subclasses.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>content</code></td>
-          <td>
-                <code>str</code>
-          </td>
-          <td><p>The metadata content.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>content</b>
+            (<code>str</code>)
+        – <p>The metadata content.</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -7310,68 +5957,33 @@ all other parameters set, and the partial function can then be decorate another
   
       <p>Create a zero tensor</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>shape</code></td>
-          <td>
-                <code>Sequence[Expr] or Var</code>
-          </td>
-          <td><p>Shape of the variable. A variable can be created using a literal shape,
-or another fixed-length VarRef as a shape</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>dtype</code></td>
-          <td>
-                <code>str or DataType</code>
-          </td>
-          <td><p>Data type of the variable</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>mtype</code></td>
-          <td>
-                <code>str or MemType (Optional)</code>
-          </td>
-          <td><p>Memory type of the variable. If omitted, the main memory type of the
-default Target in config will be used</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>shape</b>
+            (<code>Sequence[Expr] or Var</code>)
+        – <p>Shape of the variable. A variable can be created using a literal shape,
+or another fixed-length VarRef as a shape</p>
+      </li>
+      <li class="field-body">
+        <b>dtype</b>
+            (<code>str or DataType</code>)
+        – <p>Data type of the variable</p>
+      </li>
+      <li class="field-body">
+        <b>mtype</b>
+            (<code>str or MemType (Optional)</code>)
+        – <p>Memory type of the variable. If omitted, the main memory type of the
+default Target in config will be used</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-<th>Name</th>        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-<td><code>VarRef</code></td>          <td>
-          </td>
-          <td><p>The zero tensor</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+<b>VarRef</b>        – <p>The zero tensor</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -7391,29 +6003,14 @@ default Target in config will be used</p></td>
   
       <p>Fill zeros to a tensor</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>y</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The tensor to fill</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>y</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>The tensor to fill</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -7465,67 +6062,32 @@ default Target in config will be used</p></td>
   
       <p>(Broadcasted) any element-wise operation on two tensors and return the result</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>op</code></td>
-          <td>
-                <code>Callable</code>
-          </td>
-          <td><p>The operation applied to each item</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>a</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>Left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>b</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>Right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>op</b>
+            (<code>Callable</code>)
+        – <p>The operation applied to each item</p>
+      </li>
+      <li class="field-body">
+        <b>a</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>Left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>b</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>Right-hand-side operand</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The result tensor</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
+        – <p>The result tensor</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -7545,59 +6107,29 @@ default Target in config will be used</p></td>
   
       <p>(Broadcasted) any element-wise operation on two tensors. The result is written to another tensor</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>op</code></td>
-          <td>
-                <code>Callable</code>
-          </td>
-          <td><p>The operation applied to each item</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>a</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>Left-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>b</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>Right-hand-side operand</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>out</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The result tensor</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>op</b>
+            (<code>Callable</code>)
+        – <p>The operation applied to each item</p>
+      </li>
+      <li class="field-body">
+        <b>a</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>Left-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>b</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>Right-hand-side operand</p>
+      </li>
+      <li class="field-body">
+        <b>out</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>The result tensor</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -7617,57 +6149,27 @@ default Target in config will be used</p></td>
   
       <p>Any element-wise operation on a tensor and return the result</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>op</code></td>
-          <td>
-                <code>Callable</code>
-          </td>
-          <td><p>The operation applied to each item</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>x</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The input tensor</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>op</b>
+            (<code>Callable</code>)
+        – <p>The operation applied to each item</p>
+      </li>
+      <li class="field-body">
+        <b>x</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>The input tensor</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The result tensor</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
+        – <p>The result tensor</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -7687,49 +6189,24 @@ default Target in config will be used</p></td>
   
       <p>Any element-wise operation on a tensor. The result is written to another tensor</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>op</code></td>
-          <td>
-                <code>Callable</code>
-          </td>
-          <td><p>The operation applied to each item</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>x</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The input tensor</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>y</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The result tensor</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>op</b>
+            (<code>Callable</code>)
+        – <p>The operation applied to each item</p>
+      </li>
+      <li class="field-body">
+        <b>x</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>The input tensor</p>
+      </li>
+      <li class="field-body">
+        <b>y</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>The result tensor</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -7889,68 +6366,33 @@ default Target in config will be used</p></td>
   
       <p>Maximum of a tensor through one or more dimensions and return the result</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>x</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The input tensor</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>axes</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[int](<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Which dimensions to reduce through. Defaults to None, standing for all dimensions,
-i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>keepdims</code></td>
-          <td>
-                <code>bool(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Keep the reduced dimensions as singleton dimensions. Defaults to True</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>x</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>The input tensor</p>
+      </li>
+      <li class="field-body">
+        <b>axes</b>
+            (<code><span title="typing.Sequence">Sequence</span>[int](<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Which dimensions to reduce through. Defaults to None, standing for all dimensions,
+i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension</p>
+      </li>
+      <li class="field-body">
+        <b>keepdims</b>
+            (<code>bool(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Keep the reduced dimensions as singleton dimensions. Defaults to True</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The result tensor</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
+        – <p>The result tensor</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -7970,60 +6412,30 @@ i.e., reduce the tensor to a scalar. Negative axis means counting form the last 
   
       <p>Maximum of a tensor through one or more dimensions. The result is written to another tensor</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>x</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The input tensor</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>y</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The result tensor</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>axes</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[int](<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Which dimensions to reduce through. Defaults to None, standing for all dimensions,
-i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>keepdims</code></td>
-          <td>
-                <code>bool(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Keep the reduced dimensions as singleton dimensions. Defaults to True</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>x</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>The input tensor</p>
+      </li>
+      <li class="field-body">
+        <b>y</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>The result tensor</p>
+      </li>
+      <li class="field-body">
+        <b>axes</b>
+            (<code><span title="typing.Sequence">Sequence</span>[int](<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Which dimensions to reduce through. Defaults to None, standing for all dimensions,
+i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension</p>
+      </li>
+      <li class="field-body">
+        <b>keepdims</b>
+            (<code>bool(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Keep the reduced dimensions as singleton dimensions. Defaults to True</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -8043,68 +6455,33 @@ i.e., reduce the tensor to a scalar. Negative axis means counting form the last 
   
       <p>Minimum of a tensor through one or more dimensions and return the result</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>x</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The input tensor</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>axes</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[int](<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Which dimensions to reduce through. Defaults to None, standing for all dimensions,
-i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>keepdims</code></td>
-          <td>
-                <code>bool(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Keep the reduced dimensions as singleton dimensions. Defaults to True</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>x</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>The input tensor</p>
+      </li>
+      <li class="field-body">
+        <b>axes</b>
+            (<code><span title="typing.Sequence">Sequence</span>[int](<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Which dimensions to reduce through. Defaults to None, standing for all dimensions,
+i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension</p>
+      </li>
+      <li class="field-body">
+        <b>keepdims</b>
+            (<code>bool(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Keep the reduced dimensions as singleton dimensions. Defaults to True</p>
+      </li>
+  </ul>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The result tensor</p></td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
+        – <p>The result tensor</p>
+      </li>
+  </ul>
 
   </div>
 
@@ -8124,60 +6501,30 @@ i.e., reduce the tensor to a scalar. Negative axis means counting form the last 
   
       <p>Minimum of a tensor through one or more dimensions. The result is written to another tensor</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>x</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The input tensor</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>y</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>
-          </td>
-          <td><p>The result tensor</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>axes</code></td>
-          <td>
-                <code><span title="typing.Sequence">Sequence</span>[int](<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Which dimensions to reduce through. Defaults to None, standing for all dimensions,
-i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>keepdims</code></td>
-          <td>
-                <code>bool(<span title="typing.Optional">Optional</span>)</code>
-          </td>
-          <td><p>Keep the reduced dimensions as singleton dimensions. Defaults to True</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>x</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>The input tensor</p>
+      </li>
+      <li class="field-body">
+        <b>y</b>
+            (<code><a class="autorefs autorefs-internal" title="freetensor.core.VarRef" href="#freetensor.core.expr.VarRef">VarRef</a></code>)
+        – <p>The result tensor</p>
+      </li>
+      <li class="field-body">
+        <b>axes</b>
+            (<code><span title="typing.Sequence">Sequence</span>[int](<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Which dimensions to reduce through. Defaults to None, standing for all dimensions,
+i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension</p>
+      </li>
+      <li class="field-body">
+        <b>keepdims</b>
+            (<code>bool(<span title="typing.Optional">Optional</span>)</code>)
+        – <p>Keep the reduced dimensions as singleton dimensions. Defaults to True</p>
+      </li>
+  </ul>
 
   </div>
 

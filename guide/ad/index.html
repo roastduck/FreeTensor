@@ -131,30 +131,33 @@ import numpy as np
 
 n = 4
 
+@ft.optimize
+@ft.grad(requires=['a', 'b'], provides=[ft.Return()], attach_backward=True)
 def test(a: ft.Var[(n,), &quot;float32&quot;], b: ft.Var[(n,), &quot;float32&quot;]):
     y = ft.zeros((), &quot;float32&quot;)
     for i in range(n):
         y[()] += a[i] * b[i]
     return y
 
-fwd, bwd, input_grads, output_grads = ft.grad(test, ['a', 'b'],
-                                              [ft.Return()])
-fwd = ft.optimize(fwd)
-bwd = ft.optimize(bwd)
-
 a = np.array([0, 1, 2, 3], dtype=&quot;float32&quot;)
 b = np.array([3, 2, 1, 0], dtype=&quot;float32&quot;)
-y = fwd(a, b)
+y = test(a, b)
 print(y.numpy())
 dzdy = np.array(1, dtype='float32')
-dzda, dzdb = bwd(**{output_grads[ft.Return()]: dzdy})[input_grads['a'],
-                                                      input_grads['b']]
+input_grads = test.input_name_to_gradient_name
+output_grads = test.output_name_to_gradient_name
+dzda, dzdb = test.backward(
+    **{output_grads[ft.Return()]: dzdy})[input_grads['a'], input_grads['b']]
 print(dzda.numpy())
 print(dzdb.numpy())
 </code></pre>
-<p>You need to call <a href="../../api/#freetensor.core.autograd.grad"><code>ft.grad</code></a> (or the inplace version <a href="../../api/#freetensor.core.autograd.grad_"><code>ft.grad_</code></a>) to generate a <em>forward</em> function and a <em>backward</em> function. Please note that the forward function <code>fwd</code> is not the same as the original function <code>test</code>, because <code>fwd</code> may save some intermediate tensors to a global <code>tape</code>, and <code>fwd</code> must be executed before the backward one <code>bwd</code>.</p>
-<p>After that, you call <code>ft.optimize</code> to optimize and compile the program just as in previous examples, but for both <code>fwd</code> and <code>bwd</code> this time.</p>
-<p>Finally, you execute <code>fwd</code> and <code>bwd</code>. The parameters and return values of <code>bwd</code> are the gradients of <code>a</code>, <code>b</code> and <code>y</code>, which have their own names. To set and get these parameters and return values, you look up for them in two dictionaries <code>input_grads</code> and <code>output_grads</code> returned from <code>ft.grad</code> (in type <a href="../../api/#freetensor.core.autograd.ParamRetDict"><code>ft.ParamRetDict</code></a>. <code>input_grads</code> and <code>output_grads</code> accept either a name of a parameter, or a special <a href="../../api/#freetensor.core.autograd.Return"><code>ft.Return</code></a> to specify a return value. When invoking <code>bwd</code>, parameters can be set via keyword arguments, and return values can be collect via a bracket (from a special type <a href="../../api/#freetensor.core.driver.ReturnValuesPack"><code>ft.ReturnValuesPack</code></a>).</p>
+<p>You need to call <a href="../../api/#freetensor.core.autograd.grad"><code>ft.grad</code></a> (or the inplace version <a href="../../api/#freetensor.core.autograd.grad_"><code>ft.grad_</code></a>) to generate a <em>forward</em> function and a <em>backward</em> function. In this example, the backward function is attached as the <code>test.backward</code> property because <code>attach_backward</code> is set to <code>True</code>. You can set it to <code>False</code> and <code>ft.grad</code> will return both functions. Please note that <code>test</code> is updated by <code>ft.grad</code> and becomes different than the original function, as it may save some intermediate tensors to a global <code>tape</code>, and it must be executed before the backward <code>test.backward</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note on JIT</p>
+<p><a href="../first-program/#just-in-time-jit-compilation">JIT</a> is only supported when <code>attach_backward = True</code>.</p>
+</div>
+<p>After that, you call <code>ft.optimize</code> to optimize and compile the program just as in previous examples. This time it is done for both <code>test</code> and <code>test.backward</code>.</p>
+<p>Finally, you execute <code>test</code> and <code>test.backward</code>. The parameters and return values of <code>test.backward</code> are the gradients of <code>a</code>, <code>b</code> and <code>y</code>, which have their own names. To set and get these parameters and return values, you look up for them in two dictionaries <code>test.input_name_to_gradient_name</code> and <code>test.output_name_to_gradient_name</code> (in type <a href="../../api/#freetensor.core.autograd.ParamRetDict"><code>ft.ParamRetDict</code></a>. These two dictionaries accept either a name of a parameter, or a special <a href="../../api/#freetensor.core.autograd.Return"><code>ft.Return</code></a> to specify a return value. When invoking <code>test.backward</code>, parameters can be set via keyword arguments, and return values can be collect via a bracket (from a special type <a href="../../api/#freetensor.core.driver.ReturnValuesPack"><code>ft.ReturnValuesPack</code></a>). These two maps are attached to <code>test</code> because <code>attach_backward</code> is <code>True</code>. Otherwise, they are returned as return values from <code>ft.grad</code>.</p>
 <p>Intermediate variables are not always have to be saved to the "tape" from the forward function. If a variable is need in the backward function but not saved, it will be re-computed, which is sometimes even faster than saving it due to better locality. By default, FreeTensor uses heuristics to determine which variable to save. To get better performance, you may want to control which intermediate variables should be saved by setting an optional <code>tapes</code> parameter in <code>ft.grad</code>. <code>tapes</code> can either be a different mode, or a explicit list of AST node IDs of all <code>VarDef</code> nodes of the variables you want to save.</p>
 <h2 id="providing-your-custom-gradients">Providing Your Custom Gradients<a class="headerlink" href="#providing-your-custom-gradients" title="Permanent link">&para;</a></h2>
 <h3 id="why-or-when-do-we-need-custom-gradients">Why or When do We Need Custom Gradients<a class="headerlink" href="#why-or-when-do-we-need-custom-gradients" title="Permanent link">&para;</a></h3>
@@ -194,6 +197,8 @@ import torch
 
 n = 4
 
+@ft.optimize  # Set verbose=1 to see the code
+@ft.grad(requires=['x'], provides=[ft.Return()], attach_backward=True)
 def test(x: ft.Var[(n,), &quot;float32&quot;]):
     # Automatically decide gradients for this statement
     m = ft.reduce_max(x, axes=[-1])
@@ -202,20 +207,18 @@ def test(x: ft.Var[(n,), &quot;float32&quot;]):
     y = e / s
     return y
 
-fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
-fwd = ft.optimize(fwd)
-bwd = ft.optimize(bwd)  # Set verbose=1 to see the code
-
 # Check forward result
 x = torch.rand(n, dtype=torch.float32)
 x.requires_grad = True
-y_ft = fwd(x).torch()
+y_ft = test(x).torch()
 y_torch = torch.softmax(x, axis=-1)
 assert torch.all(torch.isclose(y_ft, y_torch))
 
 # Check backward result
 y_torch.grad = dzdy = torch.rand(n, dtype=torch.float32)
-dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+input_grads = test.input_name_to_gradient_name
+output_grads = test.output_name_to_gradient_name
+dzdx_ft = test.backward(**{output_grads[ft.Return()]: dzdy}).torch()
 y_torch.backward(y_torch.grad)
 dzdx_torch = x.grad
 assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))
@@ -226,6 +229,8 @@ import torch
 
 n = 4
 
+@ft.optimize  # Set verbose=1 to see the code
+@ft.grad(requires=['x'], provides=[ft.Return()], attach_backward=True)
 def test(x: ft.Var[(n,), &quot;float32&quot;]):
     # Mark the range that you want to provide graident for, with `StmtRange`
     with ft.StmtRange() as rng:
@@ -246,20 +251,18 @@ def test(x: ft.Var[(n,), &quot;float32&quot;]):
         dzdx[...] += dzde * e_now  # Use `+=` here
     return y
 
-fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
-fwd = ft.optimize(fwd)
-bwd = ft.optimize(bwd)  # Set verbose=1 to see the code
-
 # Check forward result
 x = torch.rand(n, dtype=torch.float32)
 x.requires_grad = True
-y_ft = fwd(x).torch()
+y_ft = test(x).torch()
 y_torch = torch.softmax(x, axis=-1)
 assert torch.all(torch.isclose(y_ft, y_torch))
 
 # Check backward result
 y_torch.grad = dzdy = torch.rand(n, dtype=torch.float32)
-dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+input_grads = test.input_name_to_gradient_name
+output_grads = test.output_name_to_gradient_name
+dzdx_ft = test.backward(**{output_grads[ft.Return()]: dzdy}).torch()
 y_torch.backward(y_torch.grad)
 dzdx_torch = x.grad
 assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))
@@ -276,6 +279,8 @@ import torch
 
 n = 4
 
+@ft.optimize  # Set verbose=1 to see the code
+@ft.grad(requires=['x'], provides=[ft.Return()], attach_backward=True)
 def test(x: ft.Var[(n, n), &quot;float32&quot;]):
     y = ft.empty((n, n), &quot;float32&quot;)
     for i in range(n):
@@ -299,20 +304,18 @@ def test(x: ft.Var[(n, n), &quot;float32&quot;]):
             dzdx[i] += dzde * e_now  # Use `+=` here
     return y
 
-fwd, bwd, input_grads, output_grads = ft.grad(test, ['x'], [ft.Return()])
-fwd = ft.optimize(fwd)
-bwd = ft.optimize(bwd)  # Set verbose=1 to see the code
-
 # Check forward result
 x = torch.rand(n, n, dtype=torch.float32)
 x.requires_grad = True
-y_ft = fwd(x).torch()
+y_ft = test(x).torch()
 y_torch = torch.softmax(x, axis=-1)
 assert torch.all(torch.isclose(y_ft, y_torch))
 
 # Check backward result
 y_torch.grad = dzdy = torch.rand(n, n, dtype=torch.float32)
-dzdx_ft = bwd(**{output_grads[ft.Return()]: dzdy}).torch()
+input_grads = test.input_name_to_gradient_name
+output_grads = test.output_name_to_gradient_name
+dzdx_ft = test.backward(**{output_grads[ft.Return()]: dzdy}).torch()
 y_torch.backward(y_torch.grad)
 dzdx_torch = x.grad
 assert torch.all(torch.isclose(dzdx_ft, dzdx_torch, 1e-4, 1e-7))

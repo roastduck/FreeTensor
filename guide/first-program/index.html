@@ -213,10 +213,6 @@ print(y)
 <p class="admonition-title">Note on parameter declaration</p>
 <p>You may have note that it is non-trivial to include a parameter <code>n</code> in other parameters <code>a</code> and <code>b</code>'s type annotation. Python actually forbids such a declaration if <code>a</code> and <code>b</code>'s type annotation is inside the function signature. To cope with this restriction, FreeTensor allows declaring <code>a</code> and <code>b</code>'s type AFTER the function sigature as statements. But this off-sigature annoation is only supported for <code>ft.Var</code> types, NOT <code>ft.JIT</code>.</p>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note on Automatic Differentiation</p>
-<p>JIT is not yet supported by <a href="../ad">Automatic Differentiation</a>.</p>
-</div>
 <h2 id="dynamic-tensor-shapes">Dynamic Tensor Shapes<a class="headerlink" href="#dynamic-tensor-shapes" title="Permanent link">&para;</a></h2>
 <p>Frequent recompilation does not meet many requirements, so FreeTensor also supports defining tensors with <em>dynamic</em> shapes, just by setting their shapes to a dynamic values. The following code shows an example:</p>
 <pre><code class="language-python">import freetensor as ft
