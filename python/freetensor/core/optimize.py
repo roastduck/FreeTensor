@@ -18,6 +18,7 @@ from .utils import as_decorator
 @as_decorator
 def optimize(func=None,
              schedule_callback: Optional[Callable[[Schedule], None]] = None,
+             backward_schedule_callback: Callable[[Schedule], None] = None,
              target: Optional[Target] = None,
              device: Optional[Device] = None,
              default_dynamic_range: bool = True,
@@ -52,6 +53,9 @@ def optimize(func=None,
         be returend, which can be used as a decorator
     schedule_callback : Callable (Optional)
         Schedule(s) to apply
+    backward_callback : Callable
+        Specify what schedule(s) to do for the backward function, if `ast` is returned
+        from AD with `attach_backward=True`. Defaults to be the same with `callback`
     target : Target (Optional)
         The target architecture. You don't have to set target if you set device
     device : Device (Optional)
@@ -73,7 +77,11 @@ def optimize(func=None,
                         verbose=verbose)
     else:
         ast = func
-    ast = schedule(ast, schedule_callback, jit_cache=jit_cache, verbose=verbose)
+    ast = schedule(ast,
+                   schedule_callback,
+                   backward_schedule_callback,
+                   jit_cache=jit_cache,
+                   verbose=verbose)
     ast = lower(ast, target, jit_cache=jit_cache, verbose=verbose)
     code = codegen(ast, target, jit_cache=jit_cache, verbose=verbose)
     exe = build_binary(code, device, jit_cache=jit_cache, verbose=verbose)
@@ -146,49 +154,45 @@ def optimize_to_pytorch(
     saved_provides = set()
     cur_requires = None
     cur_provides = None
-    fwd_exe = None
-    bwd_exe = None
-    input_grad_map = None
-    output_grad_map = None
-    tape_rets = None
+
+    # JIT instance for the current input
+    ast_inst = None
+    exe_inst = None
 
     def lazy_compile():
-        nonlocal saved_requires, saved_provides, cur_requires, cur_provides
-        nonlocal fwd_exe, bwd_exe, input_grad_map, output_grad_map, tape_rets
+        nonlocal saved_requires, saved_provides, cur_requires, cur_provides, ast_inst, exe_inst
+
         if saved_requires == cur_requires and saved_provides == cur_provides:
             return
         saved_requires = cur_requires
         saved_provides = cur_provides
         if len(cur_requires) != 0:
-            fwd_ast, bwd_ast, input_grad_map, output_grad_map = grad(
-                ast,
+            fwd_ast = grad(
+                ast_inst,
+                attach_backward=True,
                 requires=saved_requires,
                 provides=saved_provides,
                 tapes=tapes,
                 # PyTorch requires explicitly marking saved states via `save_for_backward()`
                 tape_in_closure=False,
                 verbose=verbose)
-            tape_rets = fwd_ast.returns[len(ast.returns):]
-            fwd_exe = optimize(fwd_ast, forward_schedule_callback, target,
-                               device, default_dynamic_range, verbose)
-            bwd_exe = optimize(bwd_ast, backward_schedule_callback, target,
-                               device, default_dynamic_range, verbose)
         else:
-            # No one needs grad. No need to do autograd
-            fwd_ast = ast
-            fwd_exe = optimize(fwd_ast, forward_schedule_callback, target,
-                               device, default_dynamic_range, verbose)
-            bwd_exe = None
-            input_grad_map = {}
-            output_grad_map = {}
-            tape_rets = []
+            fwd_ast = ast_inst
+        exe_inst = optimize(
+            fwd_ast,
+            schedule_callback=forward_schedule_callback,
+            backward_schedule_callback=backward_schedule_callback,
+            target=target,
+            device=device,
+            default_dynamic_range=default_dynamic_range,
+            verbose=verbose)
 
     # Generate a PyTorch Function
     class GeneratedPyTorchFunction(torch.autograd.Function):
 
         @staticmethod
         def forward(ctx, *args, **kvs):
-            nonlocal cur_requires, cur_provides
+            nonlocal cur_requires, cur_provides, ast_inst, exe_inst
 
             # We only get to know provided gradients of output tensors when we run `backward`,
             # but we need to run autograd and compile the program here in `forward`. We can
@@ -197,25 +201,33 @@ def optimize_to_pytorch(
             # gradient for such outputs. (TODO: better solution?)
             ctx.set_materialize_grads(True)
 
+            if isinstance(ast, JITTemplate):
+                non_jit_args, jit_args = ast.separate_args(*args, **kvs)
+                non_jit_kvs = {}
+            else:
+                non_jit_args = args
+                non_jit_kvs = kvs
+
             # Gather required gradients of the inputs
             cur_requires = set()
-            for param, arg in zip(ast.params, args):
-                if arg.requires_grad:
+            for param, arg in zip(ast_inst.params, non_jit_args):
+                if isinstance(arg, torch.Tensor) and arg.requires_grad:
                     cur_requires.add(param.name)
-            for key, value in kvs.items():
-                if value.requires_grad:
+            for key, value in non_jit_kvs.items():
+                if isinstance(value, torch.Tensor) and value.requires_grad:
                     cur_requires.add(key)
 
             # For the reason above, we assume gradients are provided for every
             # output tensors
             cur_provides = set()
-            for ret in ast.returns:
+            for ret in ast_inst.returns:
                 cur_provides.add(ret.name)
 
             lazy_compile()
-            fwd_exe.set_args(*args, **kvs)
-            fwd_exe.run()
-            returns = fwd_exe.collect_returns(always_return_pack=True)
+
+            exe_inst.set_args(*non_jit_args, **non_jit_kvs)
+            exe_inst.run()
+            returns = exe_inst.collect_returns(always_return_pack=True)
             returns = tuple(item.torch() for item in returns)
 
             # Save states for 1) all inputs and 2) all taped tensors (taped outputs are also
@@ -224,8 +236,10 @@ def optimize_to_pytorch(
             # https://pytorch.org/tutorials/intermediate/custom_function_double_backward_tutorial.html#saving-intermediate-results
             # So, please be aware that only the first part in `returns` are real return tensors
             saved_tensors = []
-            for arg in args:  # 1)
+            for arg in non_jit_args:  # 1)
                 saved_tensors.append(arg)
+            for key, value in non_jit_kvs.items():  # 1)
+                saved_tensors.append(value)
             for ret in returns:  # 2) and maybe other junks
                 saved_tensors.append(ret)
             ctx.save_for_backward(*saved_tensors)
@@ -235,40 +249,57 @@ def optimize_to_pytorch(
         @staticmethod
         @torch.autograd.function.once_differentiable
         def backward(ctx, *args, **kvs):
+            nonlocal ast_inst, exe_inst
+
+            input_grad_map = exe_inst.input_name_to_gradient_name
+            output_grad_map = exe_inst.output_name_to_gradient_name
+            tape_rets = exe_inst.func.returns[len(ast_inst.returns):]
             saved_tensors = ctx.saved_tensors
             internal_kvs = {}
-            for ret, arg in zip(ast.returns, args):
+            for ret, arg in zip(ast_inst.returns, args):
                 internal_kvs[output_grad_map[ret.name]] = arg
             for key, value in kvs:
                 internal_kvs[output_grad_map[key]] = value
-            for param, saved in zip(ast.params, saved_tensors):
+            for param, saved in zip(ast_inst.params, saved_tensors):
                 # NOTE: Now we only support "input" parameters for PyTorch interface (no "inout"
                 # or "output"), so we can forward all parameters. If we support "inout" or
                 # "output" in the future, we need to filter only "input" parameters here
                 internal_kvs[param.name] = saved
             for tape_ret, saved in zip(
-                    tape_rets,
-                    saved_tensors[len(ast.params) + len(ast.returns):]):
+                    tape_rets, saved_tensors[len(ast_inst.params) +
+                                             len(ast_inst.returns):]):
                 internal_kvs[tape_ret.name] = saved
 
-            bwd_exe.set_args(**internal_kvs)
-            bwd_exe.run()
-            input_grads = bwd_exe.collect_returns(always_return_pack=True)
+            exe_inst.backward.set_args(**internal_kvs)
+            exe_inst.backward.run()
+            input_grads = exe_inst.backward.collect_returns(
+                always_return_pack=True)
 
             # PyTorch requires returning gradient of inputs in their original order. If no
             # gradient is required for an input, set it to None
+            if isinstance(ast, JITTemplate):
+                param_names = list(ast.params)
+            else:
+                param_names = [param.name for param in ast.params]
             returns = tuple(
-                input_grads[input_grad_map[param.name]].torch() if param.name in
-                input_grad_map else None for param in ast.params)
+                input_grads[input_grad_map[param_name]].torch() if param_name in
+                input_grad_map else None for param_name in param_names)
 
             return returns[0] if len(returns) == 1 else returns
 
     # Wrap around the PyTorch `Function`, to be a real Python "function", and remove our extra
     # tape outputs
     def generatedPyTorchFunction(*args, **kvs):
+        nonlocal ast_inst
+
+        if isinstance(ast, JITTemplate):
+            ast_inst = ast.instantiate(*args, **kvs)
+        else:
+            ast_inst = ast
+
         returns = GeneratedPyTorchFunction.apply(*args, **kvs)
         returns_tuple = returns if isinstance(returns, Sequence) else (returns,)
-        returns_tuple = returns_tuple[:len(ast.returns)]
+        returns_tuple = returns_tuple[:len(ast_inst.returns)]
         return returns_tuple[0] if len(returns_tuple) == 1 else returns_tuple
 
     # If called inside a FreeTensor funcion, don't care about PyTorch, just inline the

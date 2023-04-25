@@ -1,3 +1,4 @@
+#include <sstream>
 #include <typeinfo>
 
 #include <except.h>
@@ -118,9 +119,18 @@ builds `EQ` nodes and compares at run time)'''")
 This is a normal function `hash` instead of `__hash__`. The corresponding comparing
 function is `same_as` instead of `__eq__`. The latter is used for building `EQ`
 nodes)'''")
-        .def("__str__", [](const AST &op) { return toString(op); })
+        .def("__str__",
+             [](const AST &op) {
+                 // .__str__() appears when we print an object
+                 return toString(op);
+             })
         .def("__repr__", [](const AST &op) {
-            return "<" + toString(op->nodeType()) + ": " + toString(op) + ">";
+            // .__repr__() appears in an error message, especially when we pass
+            // an invalid type of argument
+            std::ostringstream os;
+            os << "<" << op->nodeType() << " @ 0x" << std::hex << op.get()
+               << ">";
+            return os.str();
         });
     m.def("dump_ast", &dumpAST, "ast"_a, "dtype_in_load"_a = false,
           "hex_float"_a = true);

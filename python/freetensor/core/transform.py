@@ -89,7 +89,11 @@ def transform(func=None,
                                  },
                                  verbose=verbose)
 
-        return TransformTemplate(params, jit_param_names)
+        template = TransformTemplate(params, jit_param_names)
+        template.__name__ = func.__name__
+        if func.__doc__ is not None:
+            template.__doc__ = func.__doc__
+        return template
 
     staging_func = lang_overload.into_staging(func,
                                               extra_locals,

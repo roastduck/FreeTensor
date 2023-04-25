@@ -96,3 +96,28 @@ def test_jacrev():
                                              argnums=(0, 1))(a_torch, b_torch)
     assert torch.all(torch.isclose(a_jac_torch, a_jac_std))
     assert torch.all(torch.isclose(b_jac_torch, b_jac_std))
+
+
+@pytest.mark.skipif(not ft.with_pytorch(), reason="requires PyTorch")
+def test_pytorch_integration():
+
+    @ft.optimize_to_pytorch(verbose=1)
+    def sinh(n: ft.JIT, x: ft.Var[(4,), "float64"]):
+        y = ft.empty((n,), "float64")
+        for i in range(n):
+            y[i] = (ft.exp(x[i]) - ft.exp(-x[i])) / 2
+        return y
+
+    # Test inference without grad
+    x = torch.rand(4, requires_grad=False, dtype=torch.double)
+    assert torch.all(
+        torch.isclose(sinh(4, x), (torch.exp(x) - torch.exp(-x)) / 2))
+
+    # Test forward with grad
+    x = torch.rand(4, requires_grad=True, dtype=torch.double)
+    assert torch.all(
+        torch.isclose(sinh(4, x), (torch.exp(x) - torch.exp(-x)) / 2))
+
+    # Test backward
+    x = torch.rand(4, requires_grad=True, dtype=torch.double)
+    assert torch.autograd.gradcheck(sinh, (4, x))
