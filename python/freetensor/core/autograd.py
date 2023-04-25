@@ -18,6 +18,7 @@ from .transform import transform, inline
 from .func import Func, FuncRet
 from .stmt import VarDef
 from .context import pop_ast
+from .frontend import lang_overload
 from .param_ret_dict import Parameter, Return, ParamRetDict
 from .jit import JITTemplate
 from .utils import as_decorator
@@ -150,7 +151,7 @@ def grad_(func=None,
           user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
           attach_backward: bool = False,
           jit_cache: Callable[Callable, Callable] = functools.cache,
-          verbose: Optional[int] = None,
+          verbose: int = 0,
           _override_func_params: Sequence[str] = None):
     '''
     Reverse mode automatic differentiation (in-place version)
@@ -254,7 +255,7 @@ def grad(func=None,
          user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
          attach_backward: bool = False,
          jit_cache: Callable[Callable, Callable] = functools.cache,
-         verbose: Optional[int] = None,
+         verbose: int = 0,
          _override_func_params: Sequence[str] = None):
     '''
     Reverse mode automatic differentiation (out-of-place version)
@@ -359,7 +360,7 @@ def jacrev_(func=None,
             user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
             attach_backward: bool = False,
             jit_cache: Callable[Callable, Callable] = functools.cache,
-            verbose: Optional[int] = None,
+            verbose: int = 0,
             _override_func_params: Sequence[str] = None):
     '''
     Compute Jacobian tensors using Reverse mode automatic differentiation (in-place)
@@ -567,10 +568,10 @@ def jacrev_(func=None,
             #! label: general_bwd
             bwd(**params)
         else:
-            for i in range(new_out_ref_slice.shape(0)):
+            for _freetensor_jacrev_i in range(new_out_ref_slice.shape(0)):
                 body(
-                    new_out_ref_slice[i], {
-                        key: in_grad_to_new_ref_slice[key][i]
+                    new_out_ref_slice[_freetensor_jacrev_i], {
+                        key: in_grad_to_new_ref_slice[key][_freetensor_jacrev_i]
                         for key in in_grad_to_new_ref_slice
                     })
 
@@ -616,8 +617,9 @@ def jacrev_(func=None,
                             axis=new_out_ref.ndim)
                         flattened_off += this_in_size
 
-    with LifetimeScope():
-        body_wrapper(new_out_ref, in_grad_to_new_ref)
+    with lang_overload:
+        with LifetimeScope():
+            body_wrapper(new_out_ref, in_grad_to_new_ref)
 
     # 2c. Close scopes and build a new AST
     for new_vardef in reversed(open_new_vardefs):
@@ -654,7 +656,7 @@ def jacrev(func=None,
            user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
            attach_backward: bool = False,
            jit_cache: Callable[Callable, Callable] = functools.cache,
-           verbose: Optional[int] = None,
+           verbose: int = 0,
            _override_func_params: Sequence[str] = None):
     '''
     Compute Jacobian tensors using Reverse mode automatic differentiation (out-of-place)

@@ -121,3 +121,20 @@ def test_pytorch_integration():
     # Test backward
     x = torch.rand(4, requires_grad=True, dtype=torch.double)
     assert torch.autograd.gradcheck(sinh, (4, x))
+
+
+def test_ast_inline():
+
+    @ft.transform
+    def g(v: ft.JIT[int], x: ft.Var[(4,), 'int32', 'inout']):
+        x[v] = 2
+
+    @ft.transform(verbose=2)
+    def f(x: ft.Var[(8, 4), 'int32', 'inout']):
+        g(1, x[3])
+
+    @ft.transform
+    def expect(x: ft.Var[(8, 4), 'int32', 'inout']):
+        x[3, 1] = 2
+
+    assert expect.body.match(f.body)

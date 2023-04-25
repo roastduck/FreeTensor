@@ -18,15 +18,13 @@ from . import config
 from .context import ctx_stack, StmtRange
 from .expr import VarRef, VarRefFromVarDef
 
-open_vardefs = {}
-
 
 def find_borrowed_vardefs(exprs: Sequence):
     borrowed_vardefs = set()
     for expr in exprs:
         for name in ffi.all_reads(expr if type(expr) is
                                   ffi.FrontendVarIdx else ffi.Expr(expr)):
-            borrowed_vardefs.add(open_vardefs[name])
+            borrowed_vardefs.add(ctx_stack.open_vardefs[name])
     return borrowed_vardefs
 
 
@@ -38,6 +36,7 @@ class _VarDef:
                  dtype,
                  atype,
                  mtype=None,
+                 *,
                  view_of=None):
         '''
         Scope used for creating a VarDef AST node. A VarRef will be returned as a
@@ -102,15 +101,15 @@ class _VarDef:
             item.lend_out()
 
         ctx_stack.push()
-        if self.name in open_vardefs:
+        if self.name in ctx_stack.open_vardefs:
             raise ffi.InvalidProgram("Nested VarDefs with the same name `" +
                                      self.name + "` is not allowed")
-        open_vardefs[self.name] = self
+        ctx_stack.open_vardefs[self.name] = self
         return VarRefFromVarDef(self.name, self, self.shape, self.dtype,
                                 self.mtype)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        del open_vardefs[self.name]
+        del ctx_stack.open_vardefs[self.name]
         for item in self.borrowed_vardefs:
             item.reclaim()
 
@@ -191,7 +190,7 @@ class For:
         self.borrowed_vardefs = set()
         for x in [begin, end, step]:
             for name in ffi.all_reads(ffi.Expr(x)):
-                self.borrowed_vardefs.add(open_vardefs[name])
+                self.borrowed_vardefs.add(ctx_stack.open_vardefs[name])
 
     def __enter__(self):
         for item in self.borrowed_vardefs:

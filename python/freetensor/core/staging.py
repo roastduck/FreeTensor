@@ -9,7 +9,6 @@ import sys
 import ast
 import functools
 import inspect
-import traceback
 import sourceinspect as ins
 from typing import Callable, Dict, List, Sequence, Optional, Any, Set
 from dataclasses import dataclass
@@ -33,11 +32,8 @@ class TransformError(Exception):
 class StagingError(Exception):
     '''Error occurred during staging function execution (i.e. IR tree generation).'''
 
-    def __init__(self, overload: StagingOverload, message: str) -> None:
-        # TODO: add output of StagingContext.call_stack
-        super().__init__(
-            f'{message}:\n{"".join(traceback.format_list(overload.debug_call_stack))}'
-            .lstrip())
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
 
 
 @dataclass
@@ -114,7 +110,6 @@ class StagingOverload:
 
     def __init__(self) -> None:
         self.is_shortcut_allowed: bool = True
-        self.debug_call_stack: List[traceback.FrameSummary] = []
 
     def custom_attr(self, obj: Any, attr: str) -> Any:
         '''
@@ -159,22 +154,6 @@ class StagingOverload:
         ----------
         content : str
             The metadata content.
-        '''
-        pass
-
-    def at_position(self, filename: str, lineno: int) -> None:
-        '''
-        Code position handler.
-
-        Defaults to a no-op.
-        Can be overridden by subclasses.
-
-        Parameters
-        ----------
-        filename : str
-            Name of the file containing code for the next statement.
-        lineno : int
-            Line number of the next statement.
         '''
         pass
 
@@ -377,10 +356,6 @@ class StagingOverload:
         '''
 
         def wrapped(*args, **kwargs):
-            # Push debug call stack with some random line number.
-            # It will be updated by `mark_position` calls in the function.
-            self.debug_call_stack.append(
-                traceback.FrameSummary(filename, 1, func.__name__))
             # The called function can now return from itself, despite what the outer
             # control flow is.
             with self.allow_shortcut_scope(True):
@@ -391,8 +366,6 @@ class StagingOverload:
                 else:
                     # No return_stmt was called, naturally returns None
                     result = None
-            # Pop debug call stack.
-            self.debug_call_stack.pop()
             return result
 
         return wrapped
@@ -403,13 +376,18 @@ class StagingOverload:
         return None
 
     def mark_position(self, lineno: int):
-        # FrameSummary is immutable, so we have to initialize a new one with updated
-        # line number.
-        self.debug_call_stack[-1] = traceback.FrameSummary(
-            self.debug_call_stack[-1].filename, lineno,
-            self.debug_call_stack[-1].name)
-        self.at_position(self.debug_call_stack[-1].filename,
-                         self.debug_call_stack[-1].lineno)
+        '''
+        Code position handler.
+
+        Defaults to a no-op. Can be overridden by subclasses.
+
+        Parameters
+        ----------
+        lineno : int
+            Line number of the next statement.
+        '''
+
+        pass
 
     def into_staging(self,
                      func,
