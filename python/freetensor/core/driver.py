@@ -12,6 +12,7 @@ from freetensor_ffi import TargetType, Target, Array
 
 from . import config
 from .codegen import NativeCode
+from .enable_attach_backward import EnableAttachBackward
 from .jit import JITTemplate
 from .meta import DataType, to_numpy_dtype, to_torch_dtype
 from .utils import as_decorator
@@ -234,7 +235,7 @@ class ReturnValuesPack:
         return False
 
 
-class Driver(ffi.Driver):
+class Driver(EnableAttachBackward, ffi.Driver):
 
     def __init__(self,
                  func: ffi.Func,
@@ -350,7 +351,7 @@ def build_binary(code: Optional[NativeCode] = None,
                  device: Optional[Device] = None,
                  host_device: Optional[Device] = None,
                  jit_cache: Callable[Callable, Callable] = functools.cache,
-                 verbose: Optional[bool] = None):
+                 verbose: bool = False):
     '''
     Compile a program using a backend compiler and load it into memory
 
@@ -378,6 +379,11 @@ def build_binary(code: Optional[NativeCode] = None,
 
         class BuildBinaryTemplate(JITTemplate):
 
+            def __init__(self, *args, **kvs):
+                super().__init__(*args, **kvs)
+                self.args = None
+                self.kvs = None
+
             @jit_cache
             def instantiate_by_only_jit_args(self, *jit_args):
                 return build_binary(
@@ -389,7 +395,43 @@ def build_binary(code: Optional[NativeCode] = None,
             def __call__(self, *args, **kvs):
                 ''' Helper to directly run the template '''
 
+                self.args = args
+                self.kvs = kvs
                 return self.instantiate_and_call(*args, **kvs)
+
+            @property
+            def backward(self):
+                ''' Helper to act as an EnableAttachBackward object '''
+
+                if self.args is None or self.kvs is None:
+                    raise TypeError(
+                        "A JIT program requires first running the forward pass before getting"
+                        " .backward")
+                # TODO: Here we re-instantiate. Change to another implementation if the overhead
+                # is too much
+                return self.instantiate(*self.args, **self.kvs).backward
+
+            @property
+            def input_name_to_gradient_name(self):
+                ''' Helper to act as an EnableAttachBackward object '''
+
+                if self.args is None or self.kvs is None:
+                    raise TypeError(
+                        "A JIT program requires first running the forward pass before getting"
+                        " .input_name_to_gradient_name")
+                return self.instantiate(*self.args,
+                                        **self.kvs).input_name_to_gradient_name
+
+            @property
+            def output_name_to_gradient_name(self):
+                ''' Helper to act as an EnableAttachBackward object '''
+
+                if self.args is None or self.kvs is None:
+                    raise TypeError(
+                        "A JIT program requires first running the forward pass before getting"
+                        " .output_name_to_gradient_name")
+                return self.instantiate(*self.args,
+                                        **self.kvs).output_name_to_gradient_name
 
         return BuildBinaryTemplate(code.params, code.jit_param_names)
 
@@ -399,4 +441,14 @@ def build_binary(code: Optional[NativeCode] = None,
         raise ffi.DriverError(
             f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"
         )
-    return Driver(code.func, code.code, device, host_device, verbose)
+    ret = Driver(code.func, code.code, device, host_device, verbose)
+
+    if code.has_backward():
+        ret.attach_backward(
+            build_binary(code.backward,
+                         device=device,
+                         host_device=host_device,
+                         jit_cache=jit_cache,
+                         verbose=verbose), code.input_name_to_gradient_name,
+            code.output_name_to_gradient_name)
+    return ret

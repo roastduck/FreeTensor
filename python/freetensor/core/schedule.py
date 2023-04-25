@@ -11,6 +11,7 @@ import freetensor_ffi as ffi
 from freetensor_ffi import (ParallelScope, ID, Selector, FissionSide,
                             MoveToSide, VarSplitMode)
 
+from .func import Func
 from .analyze import find_stmt
 from .jit import JITTemplate
 from .meta import MemType
@@ -915,8 +916,9 @@ class Schedule(ffi.Schedule):
 @as_decorator
 def schedule(ast=None,
              callback: Callable[[Schedule], None] = None,
+             backward_callback: Callable[[Schedule], None] = None,
              jit_cache: Callable[Callable, Callable] = functools.cache,
-             verbose: Optional[int] = None):
+             verbose: int = 0):
     '''
     Apply any schedule on an AST through a user callback
 
@@ -927,6 +929,9 @@ def schedule(ast=None,
         returned that cna be used as a decorator
     callback : Callable
         Specify what schedule(s) to do in this callback
+    backward_callback : Callable
+        Specify what schedule(s) to do for the backward function, if `ast` is returned
+        from AD with `attach_backward=True`. Defaults to be the same with `callback`
     jit_cache : Callable[Callable, Callable]
         Function decorator used to cache JIT instances
     verbose : int (Optional)
@@ -954,11 +959,18 @@ def schedule(ast=None,
 
     if callback is None:
         return ast
-    if verbose is None:
-        verbose = 0
     s = Schedule(ast, verbose=verbose)
     callback(s)
-    if ast.type() == ffi.ASTNodeType.Func:
-        return s.func()
-    else:
-        return s.ast()
+    ret = s.func() if ast.type() == ffi.ASTNodeType.Func else s.ast()
+    if isinstance(ast, Func):
+        ret = Func(ret.name, ret.params, ret.returns, ret.body)
+        if ast.has_backward():
+            if backward_callback is None:
+                backward_callback = callback
+            ret.attach_backward(
+                schedule(ast.backward,
+                         callback=backward_callback,
+                         jit_cache=jit_cache,
+                         verbose=verbose), ast.input_name_to_gradient_name,
+                ast.output_name_to_gradient_name)
+    return ret

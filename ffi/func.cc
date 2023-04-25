@@ -89,8 +89,14 @@ void init_ffi_ast_func(py::module_ &m) {
         .def_readonly("name", &FuncNode::name_)
         .def_readonly("params", &FuncNode::params_)
         .def_readonly("returns", &FuncNode::returns_)
-        .def_property_readonly(
-            "body", [](const Func &op) -> Stmt { return op->body_; });
+        .def_property_readonly("body",
+                               [](const Func &op) -> Stmt { return op->body_; })
+        // __str__ is inherited from AST
+        .def("__repr__", [](const Func &func) {
+            // .__repr__() appears in an error message, especially when we pass
+            // an invalid type of argument
+            return "<Func " + func->name_ + ">";
+        });
 }
 
 } // namespace freetensor

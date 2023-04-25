@@ -10,6 +10,7 @@ from .expr import *
 from .stmt import (VarDef, For, If, Else, Alloc, Free, Assert, MarkLabel,
                    NamedScope, Invoke, Eval, Any, MarkVersion, UserGradStaged)
 from .analyze import *
+from .param_ret_dict import Parameter, Return, ParamRetDict
 from .autograd import *
 from .passes import *
 from .schedule import *
