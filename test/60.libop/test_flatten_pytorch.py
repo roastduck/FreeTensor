@@ -11,18 +11,18 @@ def test_static():
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
         x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
-        y: ft.Var[(3, 20), "float32", "output", "cpu"]
+        y: ft.Var[(60,), "float32", "output", "cpu"]
         #! label: flatten
-        libop.flatten_(x, y)
+        libop.flatten_pytorch_(x, y)
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy())
-    y_torch = torch.zeros(3, 20, dtype=torch.float32)
+    y_torch = torch.zeros(60, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
-    assert torch.all(torch.isclose(y_torch, x_torch.reshape(3, -1)))
+    assert torch.all(torch.isclose(y_torch, x_torch.reshape(-1)))
 
 
 def test_axis():
@@ -30,19 +30,19 @@ def test_axis():
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
-        x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
-        y: ft.Var[(12, 5), "float32", "output", "cpu"]
+        x: ft.Var[(3, 4, 5, 6), "float32", "input", "cpu"]
+        y: ft.Var[(3, 20, 6), "float32", "output", "cpu"]
         #! label: flatten
-        libop.flatten_(x, y, axis=2)
+        libop.flatten_pytorch_(x, y, start_dim=1, end_dim=2)
 
-    x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
+    x_torch = torch.rand(3, 4, 5, 6, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy())
-    y_torch = torch.zeros(12, 5, dtype=torch.float32)
+    y_torch = torch.zeros(3, 20, 6, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
-    assert torch.all(torch.isclose(y_torch, x_torch.reshape(-1, 5)))
+    assert torch.all(torch.isclose(y_torch, x_torch.reshape(3, -1, 6)))
 
 
 def test_circular_axis():
@@ -50,19 +50,19 @@ def test_circular_axis():
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y):
-        x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
-        y: ft.Var[(12, 5), "float32", "output", "cpu"]
+        x: ft.Var[(3, 4, 5, 6), "float32", "input", "cpu"]
+        y: ft.Var[(3, 20, 6), "float32", "output", "cpu"]
         #! label: flatten
-        libop.flatten_(x, y, axis=-1)
+        libop.flatten_pytorch_(x, y, start_dim=1, end_dim=-2)
 
-    x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
+    x_torch = torch.rand(3, 4, 5, 6, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy())
-    y_torch = torch.zeros(12, 5, dtype=torch.float32)
+    y_torch = torch.zeros(3, 20, 6, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
-    assert torch.all(torch.isclose(y_torch, x_torch.reshape(-1, 5)))
+    assert torch.all(torch.isclose(y_torch, x_torch.reshape(3, -1, 6)))
 
 
 def test_out_of_place():
@@ -72,12 +72,12 @@ def test_out_of_place():
     def f(x):
         x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
         #! label: flatten
-        return libop.flatten(x)
+        return libop.flatten_pytorch(x)
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy())
     y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
-    assert np.array_equal(y_arr.shape, [3, 20])
-    assert torch.all(torch.isclose(y_torch, x_torch.reshape(3, -1)))
+    assert np.array_equal(y_arr.shape, [60])
+    assert torch.all(torch.isclose(y_torch, x_torch.reshape(-1)))

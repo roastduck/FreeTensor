@@ -1,6 +1,7 @@
 __all__ = [
     'reshape', 'reshape_', 'flatten', 'flatten_', 'flatten_onnx',
-    'flatten_onnx_', 'unsqueeze', 'unsqueeze_', 'expand', 'expand_'
+    'flatten_onnx_', 'flatten_pytorch', 'flatten_pytorch_', 'unsqueeze',
+    'unsqueeze_', 'expand', 'expand_'
 ]
 
 from typing import Sequence
@@ -222,20 +223,20 @@ def reshape(x, shape):
 
 
 @core.inline
-def _flatten_inner_(x, y):
+def _flatten_onnx_inner_(x, y):
     if core.ndim(x) == 0:
         y[0] = x
     else:
         #! label: L_inner
         for i in range(x.shape(0)):
             #! label: recur
-            _flatten_inner_(
+            _flatten_onnx_inner_(
                 x[i], y[i * (y.shape(0) // x.shape(0)):(i + 1) *
                         (y.shape(0) // x.shape(0))])
 
 
 @core.inline
-def flatten_(x, y, axis: int = 1):
+def flatten_onnx_(x, y, axis: int = 1):
     '''
     Flatten a tensor to have two dimensions, and write to another tensor
 
@@ -257,17 +258,17 @@ def flatten_(x, y, axis: int = 1):
     axis = circular_axis(axis, core.ndim(x))
     if axis == 0:
         #! label: recur
-        _flatten_inner_(x, y[0])
+        _flatten_onnx_inner_(x, y[0])
     else:
         #! label: L_outer
         for i in range(x.shape(0)):
             #! label: recur
-            flatten_(
+            flatten_onnx_(
                 x[i], y[i * (y.shape(0) // x.shape(0)):(i + 1) *
                         (y.shape(0) // x.shape(0))], axis - 1)
 
 
-def _flatten_comp_shape(x, axis):
+def _flatten_onnx_comp_shape(x, axis):
     y_shape = [1, 1]
     for i in range(axis):
         y_shape[0] *= core.shape(x, i)
@@ -277,7 +278,7 @@ def _flatten_comp_shape(x, axis):
 
 
 @core.inline
-def flatten(x, axis: int = 1):
+def flatten_onnx(x, axis: int = 1):
     '''
     Flatten a tensor to have two dimensions, and return the result
 
@@ -300,17 +301,83 @@ def flatten(x, axis: int = 1):
         The result tensor
     '''
     axis = circular_axis(axis, core.ndim(x))
-    y = core.empty(_flatten_comp_shape(x, axis), core.dtype(x), core.mtype(x))
+    y = core.empty(_flatten_onnx_comp_shape(x, axis), core.dtype(x),
+                   core.mtype(x))
     #! label: recur
-    flatten_(x, y, axis)
+    flatten_onnx_(x, y, axis)
     return y
 
 
-flatten_onnx_ = flatten_
-''' Alias of `flatten_` '''
+@core.inline
+def flatten_pytorch_(x: core.VarRef, y: core.VarRef, start_dim=0, end_dim=-1):
+    '''
+    Flatten a tensor to have fewer dimensions, and write to another tensor
 
-flatten_onnx = flatten
-''' Alias of `flatten` '''
+    NOTE: This function follows the PyTorch convension
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    y : VarRef
+        The result tensor
+    start_dim, end_dim : int (Optional)
+        All dimensions ranging from `start_dim` and `end_dim` (inclusive) will be
+        flattend to 1-D. Negative axis means counting form the last dimension
+    '''
+    start_dim = circular_axis(start_dim, core.ndim(x))
+    end_dim = circular_axis(end_dim, core.ndim(x))
+    if start_dim == end_dim:
+        y[...] = x[...]
+    elif start_dim > 0:
+        assert x.shape(0) == y.shape(0)
+        for i in range(x.shape(0)):
+            flatten_pytorch_(x[i], y[i], start_dim - 1, end_dim - 1)
+    else:
+        for i in range(x.shape(0)):
+            flatten_pytorch_(
+                x[i], y[i * (y.shape(0) // x.shape(0)):(i + 1) *
+                        (y.shape(0) // x.shape(0))], 0, end_dim - 1)
+
+
+@core.inline
+def flatten_pytorch(x: core.VarRef, start_dim=0, end_dim=-1) -> core.VarRef:
+    '''
+    Flatten a tensor to have fewer dimensions, and return the result
+
+    NOTE: This function follows the PyTorch convension
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    start_dim, end_dim : int (Optional)
+        All dimensions ranging from `start_dim` and `end_dim` (inclusive) will be
+        flattend to 1-D. Negative axis means counting form the last dimension
+
+    Returns
+    -------
+    VarRef
+        The result tensor
+    '''
+    start_dim = circular_axis(start_dim, core.ndim(x))
+    end_dim = circular_axis(end_dim, core.ndim(x))
+
+    def prod(iterable):
+        return functools.reduce(lambda x, y: x * y, iterable, 1)
+
+    y_shape = x.shape()[:start_dim] + [prod(x.shape()[start_dim:end_dim + 1])
+                                      ] + x.shape()[end_dim + 1:]
+    y = core.empty(y_shape, core.dtype(x), core.mtype(x))
+    flatten_pytorch_(x, y, start_dim, end_dim)
+    return y
+
+
+flatten_ = flatten_onnx_
+''' Alias of `flatten_onnx_` '''
+
+flatten = flatten_onnx
+''' Alias of `flatten_onnx` '''
 
 
 def _circular_axes(axes, x_ndim):
