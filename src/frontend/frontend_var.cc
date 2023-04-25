@@ -38,7 +38,12 @@ Expr FrontendVar::shape(const Expr &idx) const {
         }
         k++;
     }
-    ASSERT(ret.isValid());
+    if (!ret.isValid()) {
+        ASSERT(idx->nodeType() == ASTNodeType::IntConst);
+        throw InvalidProgram(toString(*this) + ".shape(" + toString(idx) +
+                             ") is out of range. Must be in [0, " +
+                             std::to_string(ndim()) + ")");
+    }
     return ret;
 }
 

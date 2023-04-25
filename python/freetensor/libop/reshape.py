@@ -5,9 +5,10 @@ __all__ = [
 
 from typing import Sequence
 from numbers import Number
+import functools
 
 from .. import core
-from .utils import begin_with_0, all_minus_one
+from .utils import begin_with_0, all_minus_one, circular_axis
 from .shape_utils import copy_shape
 
 
@@ -253,6 +254,7 @@ def flatten_(x, y, axis: int = 1):
         `axis` (exclusive) will be flatten to the second dimension. Negative axis
         means counting form the last dimension
     '''
+    axis = circular_axis(axis, core.ndim(x))
     if axis == 0:
         #! label: recur
         _flatten_inner_(x, y[0])
@@ -297,6 +299,7 @@ def flatten(x, axis: int = 1):
     VarRef
         The result tensor
     '''
+    axis = circular_axis(axis, core.ndim(x))
     y = core.empty(_flatten_comp_shape(x, axis), core.dtype(x), core.mtype(x))
     #! label: recur
     flatten_(x, y, axis)
@@ -312,7 +315,8 @@ flatten_onnx = flatten
 
 def _circular_axes(axes, x_ndim):
     # ONNX >= 13 treats axes as a tensor, which we don't support for now
-    return sorted(map(lambda x: x if x >= 0 else x_ndim + len(axes) + x, axes))
+    return sorted(
+        map(functools.partial(circular_axis, ndim=x_ndim + len(axes)), axes))
 
 
 @core.inline

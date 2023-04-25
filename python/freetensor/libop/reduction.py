@@ -4,8 +4,9 @@ __all__ = [
 ]
 
 from typing import Sequence, Optional
+import functools
 
-from .utils import begin_with_0, all_minus_one
+from .utils import begin_with_0, all_minus_one, circular_axis
 from .. import core
 
 
@@ -35,8 +36,9 @@ def _circular_axes(axes, x_ndim, keepdims):
         return core.static_range(x_ndim)
 
     return sorted(
-        map(lambda x: x
-            if x >= 0 else _y_ndim(x_ndim, axes, keepdims) + x, axes))
+        map(
+            functools.partial(circular_axis,
+                              ndim=_y_ndim(x_ndim, axes, keepdims)), axes))
 
 
 @core.inline

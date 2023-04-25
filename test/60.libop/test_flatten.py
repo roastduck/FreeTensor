@@ -45,6 +45,26 @@ def test_axis():
     assert torch.all(torch.isclose(y_torch, x_torch.reshape(-1, 5)))
 
 
+def test_circular_axis():
+    device = ft.CPU()
+
+    @ft.optimize(device=device, verbose=1)
+    def f(x, y):
+        x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
+        y: ft.Var[(12, 5), "float32", "output", "cpu"]
+        #! label: flatten
+        libop.flatten_(x, y, axis=-1)
+
+    x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
+    x_arr = ft.Array(x_torch.numpy())
+    y_torch = torch.zeros(12, 5, dtype=torch.float32)
+    y_arr = ft.Array(y_torch.numpy())
+    f(x_arr, y_arr)
+    y_torch = torch.tensor(y_arr.numpy())
+
+    assert torch.all(torch.isclose(y_torch, x_torch.reshape(-1, 5)))
+
+
 def test_out_of_place():
     device = ft.CPU()
 
