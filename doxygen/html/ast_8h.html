@@ -287,17 +287,21 @@ Enumerations</h2></td></tr>
 , <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915faceb46ca115d05c51aa5a16a8867c3304">freetensor::Square</a>
 , <br />
 &#160;&#160;<a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa21eebb164e4b8b9bcf64fdb4d8d5dff4">freetensor::Sigmoid</a>
-, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915facc132a41cab5676334f353a22a0aa5c5">freetensor::Tanh</a>
+, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa0986d137604183312e6d3599578bc6cd">freetensor::Sin</a>
+, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915faffca562be079b9e4e41ea9d6a86c582b">freetensor::Cos</a>
+, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa1266b4e6f81e60733ec6c717e0181f60">freetensor::Tan</a>
+, <br />
+&#160;&#160;<a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915facc132a41cab5676334f353a22a0aa5c5">freetensor::Tanh</a>
 , <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa1e34af023adeb7d5f484f8eb4b9826b6">freetensor::Abs</a>
 , <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915faf3f6d0343d56ce88ce7958170ed05cb3">freetensor::Floor</a>
+, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fab95a01ffffa8fcdd2a9af961937c097c">freetensor::Ceil</a>
 , <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fab95a01ffffa8fcdd2a9af961937c097c">freetensor::Ceil</a>
-, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa8657d89169b0bb2eee53bb1efe8fdf09">freetensor::IfExpr</a>
+&#160;&#160;<a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa8657d89169b0bb2eee53bb1efe8fdf09">freetensor::IfExpr</a>
 , <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa4cd9f3996d60790cd11c04f842ebc43c">freetensor::Cast</a>
 , <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa8b0f368e62695dc13b998050ea15a2c5">freetensor::Intrinsic</a>
+, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa8e15aeb38a7c50c440d974cfadb9a42a">freetensor::MarkVersion</a>
 , <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa8e15aeb38a7c50c440d974cfadb9a42a">freetensor::MarkVersion</a>
-, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fae41195428f448a7971141f894e236b2d">freetensor::LoadAtVersion</a>
+&#160;&#160;<a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fae41195428f448a7971141f894e236b2d">freetensor::LoadAtVersion</a>
 <br />
  }</td></tr>
 <tr class="separator:afc87eee71f05eb84c5799d7f3492915f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -386,7 +390,7 @@ requires (std::convertible_to&lt;Srcs, Stmt&gt; &amp;&amp; ...)</td></tr>
 <b>Value:</b><div class="fragment"><div class="line">    <a class="code hl_define" href="ast_8h.html#aa2403af1a97efd46112478db9e5aff51">DEFINE_NODE_ACCESS</a>(name)                                                   \</div>
 <div class="line">  public:                                                                      \</div>
 <div class="line">    virtual <a class="code hl_enumeration" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> nodeType()<span class="keyword"> const override </span>{ <span class="keywordflow">return</span> ASTNodeType::name; }</div>
-<div class="ttc" id="aast_8h_html_aa2403af1a97efd46112478db9e5aff51"><div class="ttname"><a href="ast_8h.html#aa2403af1a97efd46112478db9e5aff51">DEFINE_NODE_ACCESS</a></div><div class="ttdeci">#define DEFINE_NODE_ACCESS(name)</div><div class="ttdef"><b>Definition:</b> ast.h:99</div></div>
+<div class="ttc" id="aast_8h_html_aa2403af1a97efd46112478db9e5aff51"><div class="ttname"><a href="ast_8h.html#aa2403af1a97efd46112478db9e5aff51">DEFINE_NODE_ACCESS</a></div><div class="ttdeci">#define DEFINE_NODE_ACCESS(name)</div><div class="ttdef"><b>Definition:</b> ast.h:102</div></div>
 <div class="ttc" id="anamespacefreetensor_html_afc87eee71f05eb84c5799d7f3492915f"><div class="ttname"><a href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">freetensor::ASTNodeType</a></div><div class="ttdeci">ASTNodeType</div><div class="ttdef"><b>Definition:</b> ast.h:19</div></div>
 </div><!-- fragment -->
 </div>

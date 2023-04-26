@@ -33,11 +33,12 @@ var searchData=
   ['config_30',['Config',['../classfreetensor_1_1Config.html',1,'freetensor']]],
   ['constfold_31',['ConstFold',['../classfreetensor_1_1ConstFold.html',1,'freetensor']]],
   ['constnode_32',['ConstNode',['../classfreetensor_1_1ConstNode.html',1,'freetensor']]],
-  ['countcontigaccessloops_33',['CountContigAccessLoops',['../classfreetensor_1_1CountContigAccessLoops.html',1,'freetensor']]],
-  ['countheavyops_34',['CountHeavyOps',['../classfreetensor_1_1CountHeavyOps.html',1,'freetensor']]],
-  ['countnames_35',['CountNames',['../classfreetensor_1_1CountNames.html',1,'freetensor']]],
-  ['countscopelen_36',['CountScopeLen',['../classfreetensor_1_1CountScopeLen.html',1,'freetensor']]],
-  ['cputarget_37',['CPUTarget',['../classfreetensor_1_1CPUTarget.html',1,'freetensor']]],
-  ['cudascope_38',['CUDAScope',['../structfreetensor_1_1CUDAScope.html',1,'freetensor']]],
-  ['cudastreamscope_39',['CUDAStreamScope',['../structfreetensor_1_1CUDAStreamScope.html',1,'freetensor']]]
+  ['cosnode_33',['CosNode',['../classfreetensor_1_1CosNode.html',1,'freetensor']]],
+  ['countcontigaccessloops_34',['CountContigAccessLoops',['../classfreetensor_1_1CountContigAccessLoops.html',1,'freetensor']]],
+  ['countheavyops_35',['CountHeavyOps',['../classfreetensor_1_1CountHeavyOps.html',1,'freetensor']]],
+  ['countnames_36',['CountNames',['../classfreetensor_1_1CountNames.html',1,'freetensor']]],
+  ['countscopelen_37',['CountScopeLen',['../classfreetensor_1_1CountScopeLen.html',1,'freetensor']]],
+  ['cputarget_38',['CPUTarget',['../classfreetensor_1_1CPUTarget.html',1,'freetensor']]],
+  ['cudascope_39',['CUDAScope',['../structfreetensor_1_1CUDAScope.html',1,'freetensor']]],
+  ['cudastreamscope_40',['CUDAStreamScope',['../structfreetensor_1_1CUDAStreamScope.html',1,'freetensor']]]
 ];

@@ -254,6 +254,12 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SigmoidNode.html">freetensor::SigmoidNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SinNode.html">freetensor::SinNode</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CosNode.html">freetensor::CosNode</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1TanNode.html">freetensor::TanNode</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1TanhNode.html">freetensor::TanhNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1AbsNode.html">freetensor::AbsNode</a></td></tr>
@@ -340,6 +346,12 @@ Macros</h2></td></tr>
 <tr class="separator:ab9ac610cebeae4d3bb0958e623ed357b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aefcc9e494a4f9721cf3f00b85c01359a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="expr_8h.html#aefcc9e494a4f9721cf3f00b85c01359a">makeSigmoid</a>(...)&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(Sigmoid, __VA_ARGS__)</td></tr>
 <tr class="separator:aefcc9e494a4f9721cf3f00b85c01359a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7b29f788676c9baf21ccfada1cef18bd"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="expr_8h.html#a7b29f788676c9baf21ccfada1cef18bd">makeSin</a>(...)&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(Sin, __VA_ARGS__)</td></tr>
+<tr class="separator:a7b29f788676c9baf21ccfada1cef18bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac205be6931d8adb8ce3b98bebd9562c0"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="expr_8h.html#ac205be6931d8adb8ce3b98bebd9562c0">makeCos</a>(...)&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(Cos, __VA_ARGS__)</td></tr>
+<tr class="separator:ac205be6931d8adb8ce3b98bebd9562c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd1c64afd0d3a97c15691d59d74653ce"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="expr_8h.html#afd1c64afd0d3a97c15691d59d74653ce">makeTan</a>(...)&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(Tan, __VA_ARGS__)</td></tr>
+<tr class="separator:afd1c64afd0d3a97c15691d59d74653ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7d779ea3b5e44cd8a1befdb7c574e58b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="expr_8h.html#a7d779ea3b5e44cd8a1befdb7c574e58b">makeTanh</a>(...)&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(Tanh, __VA_ARGS__)</td></tr>
 <tr class="separator:a7d779ea3b5e44cd8a1befdb7c574e58b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac13b2b6fe607876c525791f7d0763b6"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="expr_8h.html#aac13b2b6fe607876c525791f7d0763b6">makeAbs</a>(...)&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(Abs, __VA_ARGS__)</td></tr>
@@ -431,6 +443,12 @@ Typedefs</h2></td></tr>
 <tr class="separator:a4d7d68d8c65380c3d98d35dd7649b0cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a507415329865ad3021f9c773fbb6d1d2"><td class="memItemLeft" align="right" valign="top">typedef Ref&lt; SigmoidNode &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a507415329865ad3021f9c773fbb6d1d2">freetensor::Sigmoid</a></td></tr>
 <tr class="separator:a507415329865ad3021f9c773fbb6d1d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae6b80fc447f76e142e8b89c893907119"><td class="memItemLeft" align="right" valign="top">typedef Ref&lt; SinNode &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae6b80fc447f76e142e8b89c893907119">freetensor::Sin</a></td></tr>
+<tr class="separator:ae6b80fc447f76e142e8b89c893907119"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5f8bdfc78f09538425792c368241549"><td class="memItemLeft" align="right" valign="top">typedef Ref&lt; CosNode &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae5f8bdfc78f09538425792c368241549">freetensor::Cos</a></td></tr>
+<tr class="separator:ae5f8bdfc78f09538425792c368241549"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00c2904f804700b979fb7d88256277c5"><td class="memItemLeft" align="right" valign="top">typedef Ref&lt; TanNode &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a00c2904f804700b979fb7d88256277c5">freetensor::Tan</a></td></tr>
+<tr class="separator:a00c2904f804700b979fb7d88256277c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78af20234718ac4a78892dca954efbd6"><td class="memItemLeft" align="right" valign="top">typedef Ref&lt; TanhNode &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a78af20234718ac4a78892dca954efbd6">freetensor::Tanh</a></td></tr>
 <tr class="separator:a78af20234718ac4a78892dca954efbd6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa7f10066d67f03fd2010696fa1bfa70e"><td class="memItemLeft" align="right" valign="top">typedef Ref&lt; AbsNode &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa7f10066d67f03fd2010696fa1bfa70e">freetensor::Abs</a></td></tr>
@@ -540,6 +558,15 @@ Functions</h2></td></tr>
 <tr class="memitem:ae1e4a859d34aa7c78dab40355cc66432"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:ae1e4a859d34aa7c78dab40355cc66432"><td class="memTemplItemLeft" align="right" valign="top">Expr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae1e4a859d34aa7c78dab40355cc66432">freetensor::_makeSigmoid</a> (T &amp;&amp;expr)</td></tr>
 <tr class="separator:ae1e4a859d34aa7c78dab40355cc66432"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb703bdf37a175a88f80cfd8eceb44ef"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:abb703bdf37a175a88f80cfd8eceb44ef"><td class="memTemplItemLeft" align="right" valign="top">Expr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#abb703bdf37a175a88f80cfd8eceb44ef">freetensor::_makeSin</a> (T &amp;&amp;expr)</td></tr>
+<tr class="separator:abb703bdf37a175a88f80cfd8eceb44ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0984139fbc86737cfa72fe07feff39eb"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a0984139fbc86737cfa72fe07feff39eb"><td class="memTemplItemLeft" align="right" valign="top">Expr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0984139fbc86737cfa72fe07feff39eb">freetensor::_makeCos</a> (T &amp;&amp;expr)</td></tr>
+<tr class="separator:a0984139fbc86737cfa72fe07feff39eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af795462f92a0e9466d5a56d3e91ec195"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:af795462f92a0e9466d5a56d3e91ec195"><td class="memTemplItemLeft" align="right" valign="top">Expr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af795462f92a0e9466d5a56d3e91ec195">freetensor::_makeTan</a> (T &amp;&amp;expr)</td></tr>
+<tr class="separator:af795462f92a0e9466d5a56d3e91ec195"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a23425589018647096d042159b45856a9"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a23425589018647096d042159b45856a9"><td class="memTemplItemLeft" align="right" valign="top">Expr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a23425589018647096d042159b45856a9">freetensor::_makeTanh</a> (T &amp;&amp;expr)</td></tr>
 <tr class="separator:a23425589018647096d042159b45856a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -696,6 +723,24 @@ Functions</h2></td></tr>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>...</em></td><td>)</td>
           <td>&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(CeilDiv, __VA_ARGS__)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac205be6931d8adb8ce3b98bebd9562c0" name="ac205be6931d8adb8ce3b98bebd9562c0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac205be6931d8adb8ce3b98bebd9562c0">&#9670;&nbsp;</a></span>makeCos</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define makeCos</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em></td><td>)</td>
+          <td>&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(Cos, __VA_ARGS__)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1188,6 +1233,24 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a7b29f788676c9baf21ccfada1cef18bd" name="a7b29f788676c9baf21ccfada1cef18bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7b29f788676c9baf21ccfada1cef18bd">&#9670;&nbsp;</a></span>makeSin</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define makeSin</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em></td><td>)</td>
+          <td>&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(Sin, __VA_ARGS__)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a8b404465a51db2f254d06e9117e421e8" name="a8b404465a51db2f254d06e9117e421e8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8b404465a51db2f254d06e9117e421e8">&#9670;&nbsp;</a></span>makeSqrt</h2>
 
@@ -1236,6 +1299,24 @@ Functions</h2></td></tr>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>...</em></td><td>)</td>
           <td>&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(Sub, __VA_ARGS__)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="afd1c64afd0d3a97c15691d59d74653ce" name="afd1c64afd0d3a97c15691d59d74653ce"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afd1c64afd0d3a97c15691d59d74653ce">&#9670;&nbsp;</a></span>makeTan</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define makeTan</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em></td><td>)</td>
+          <td>&#160;&#160;&#160;<a class="el" href="ast_8h.html#a8716a5466fa45f1ec72d8f1505159b2f">makeNode</a>(Tan, __VA_ARGS__)</td>
         </tr>
       </table>
 </div><div class="memdoc">
