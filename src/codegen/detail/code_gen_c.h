@@ -593,6 +593,24 @@ template <class Stream> void CodeGenC<Stream>::visit(const Sigmoid &op) {
     this->os() << ")";
 }
 
+template <class Stream> void CodeGenC<Stream>::visit(const Sin &op) {
+    this->os() << "std::sin(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Cos &op) {
+    this->os() << "std::cos(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Tan &op) {
+    this->os() << "std::tan(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const Tanh &op) {
     this->os() << "std::tanh(";
     (*this)(op->expr_);

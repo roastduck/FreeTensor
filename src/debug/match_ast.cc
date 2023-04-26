@@ -442,6 +442,24 @@ void MatchVisitor::visit(const Sigmoid &op) {
     RECURSE(op->expr_, instance->expr_);
 }
 
+void MatchVisitor::visit(const Sin &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Sin);
+    auto instance = instance_.as<SinNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Cos &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Cos);
+    auto instance = instance_.as<CosNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Tan &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Tan);
+    auto instance = instance_.as<TanNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
 void MatchVisitor::visit(const Tanh &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Tanh);
     auto instance = instance_.as<TanhNode>();

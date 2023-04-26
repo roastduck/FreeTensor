@@ -155,6 +155,9 @@ class ConstFold : public Mutator {
     Expr visit(const Exp &op) override;
     Expr visit(const Square &op) override;
     Expr visit(const Sigmoid &op) override;
+    Expr visit(const Sin &op) override;
+    Expr visit(const Cos &op) override;
+    Expr visit(const Tan &op) override;
     Expr visit(const Tanh &op) override;
     Expr visit(const Abs &op) override;
     Expr visit(const Floor &op) override;

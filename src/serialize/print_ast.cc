@@ -510,6 +510,30 @@ void PrintVisitor::visit(const Sigmoid &op) {
     });
 }
 
+void PrintVisitor::visit(const Sin &op) {
+    precedence_new([&] {
+        os() << "@!sin(";
+        recur(op->expr_);
+        os() << ")";
+    });
+}
+
+void PrintVisitor::visit(const Cos &op) {
+    precedence_new([&] {
+        os() << "@!cos(";
+        recur(op->expr_);
+        os() << ")";
+    });
+}
+
+void PrintVisitor::visit(const Tan &op) {
+    precedence_new([&] {
+        os() << "@!tan(";
+        recur(op->expr_);
+        os() << ")";
+    });
+}
+
 void PrintVisitor::visit(const Tanh &op) {
     precedence_new([&] {
         os() << "@!tanh(";
