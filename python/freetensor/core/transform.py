@@ -65,7 +65,12 @@ def transform(func=None,
     for name, param in params.items():
         if name not in bind:
             param_names.append(name)
-            if param.annotation is JIT:
+            is_jit = False
+            try:
+                is_jit = issubclass(param.annotation, JIT)
+            except TypeError:
+                pass  # issubclass will raise if the first argument is not a class
+            if is_jit:
                 jit_param_names.append(name)
 
     if len(jit_param_names) > 0:
