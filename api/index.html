@@ -185,7 +185,7 @@
 
 
 <h4 id="freetensor.core.autograd.grad" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">requires</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">provides</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">requires</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">provides</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.autograd.grad" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -275,7 +275,7 @@ and other metadata attached to it</p>
       </li>
       <li class="field-body">
         <b>verbose</b>
-            (<code><span title="typing.Optional">Optional</span>[int]</code>)
+            (<code>int</code>)
         – <p>Verbosity level</p>
       </li>
   </ul>
@@ -306,7 +306,7 @@ return value, respectively.</p>
 
 
 <h4 id="freetensor.core.autograd.grad_" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">requires</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">provides</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">requires</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">provides</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.autograd.grad_" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -396,7 +396,7 @@ and other metadata attached to it</p>
       </li>
       <li class="field-body">
         <b>verbose</b>
-            (<code><span title="typing.Optional">Optional</span>[int]</code>)
+            (<code>int</code>)
         – <p>Verbosity level</p>
       </li>
   </ul>
@@ -445,7 +445,7 @@ return value, respectively.</p>
 
 
 <h4 id="freetensor.core.autograd.jacrev" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">jacrev</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">jacrev</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.autograd.jacrev" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -538,7 +538,7 @@ and other metadata attached to it</p>
       </li>
       <li class="field-body">
         <b>verbose</b>
-            (<code><span title="typing.Optional">Optional</span>[int]</code>)
+            (<code>int</code>)
         – <p>Verbosity level</p>
       </li>
   </ul>
@@ -567,7 +567,7 @@ and other metadata attached to it</p>
 
 
 <h4 id="freetensor.core.autograd.jacrev_" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">jacrev_</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">jacrev_</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.autograd.jacrev_" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -662,7 +662,7 @@ and other metadata attached to it</p>
       </li>
       <li class="field-body">
         <b>verbose</b>
-            (<code><span title="typing.Optional">Optional</span>[int]</code>)
+            (<code>int</code>)
         – <p>Verbosity level</p>
       </li>
   </ul>
@@ -3337,6 +3337,46 @@ it calls libop.truediv</p>
 
 
 
+<h4 id="freetensor.core.frontend.FreeTensorStagingError" class="doc doc-heading">
+        <code>freetensor.core.frontend.FreeTensorStagingError</code>
+
+
+<a href="#freetensor.core.frontend.FreeTensorStagingError" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+  <div class="doc doc-contents ">
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="freetensor.core.staging.StagingError" href="#freetensor.core.staging.StagingError">StagingError</a></code></p>
+
+  
+      <p>Error occurred during staging function execution (i.e. IR tree generation).</p>
+
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h4 id="freetensor.core.frontend.LifetimeScope" class="doc doc-heading">
         <code>freetensor.core.frontend.LifetimeScope</code>
 
@@ -3905,6 +3945,22 @@ functions intended for <code>@inline</code>.</p>
 signature. It is NOT supported in annotations for statements.</p>
 
 
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
 
   </div>
 
@@ -4789,40 +4845,6 @@ This wrapper is used for initializing a variable.</p>
 
 
 
-<h5 id="freetensor.core.staging.StagingOverload.at_position" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">staging</span><span class="o">.</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">at_position</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">lineno</span><span class="p">)</span></code>
-
-<a href="#freetensor.core.staging.StagingOverload.at_position" class="headerlink" title="Permanent link">&para;</a></h5>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Code position handler.</p>
-<p>Defaults to a no-op.
-Can be overridden by subclasses.</p>
-
-  <p>Parameters:</p>
-  <ul>
-      <li class="field-body">
-        <b>filename</b>
-            (<code>str</code>)
-        – <p>Name of the file containing code for the next statement.</p>
-      </li>
-      <li class="field-body">
-        <b>lineno</b>
-            (<code>int</code>)
-        – <p>Line number of the next statement.</p>
-      </li>
-  </ul>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-
 <h5 id="freetensor.core.staging.StagingOverload.break_stmt" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">staging</span><span class="o">.</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">break_stmt</span><span class="p">()</span></code>
 
@@ -4993,6 +5015,34 @@ Otherwise, a If node in IR is generated.</p>
   <div class="doc doc-contents ">
   
       <p>Load attribute staging tool. Allows customization of reading attributes.</p>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h5 id="freetensor.core.staging.StagingOverload.mark_position" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">staging</span><span class="o">.</span><span class="n">StagingOverload</span><span class="o">.</span><span class="n">mark_position</span><span class="p">(</span><span class="n">lineno</span><span class="p">)</span></code>
+
+<a href="#freetensor.core.staging.StagingOverload.mark_position" class="headerlink" title="Permanent link">&para;</a></h5>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Code position handler.</p>
+<p>Defaults to a no-op. Can be overridden by subclasses.</p>
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b>lineno</b>
+            (<code>int</code>)
+        – <p>Line number of the next statement.</p>
+      </li>
+  </ul>
 
   </div>
 
