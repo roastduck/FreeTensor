@@ -190,6 +190,12 @@ class Visitor {
 
     virtual void visit(const Sigmoid &op) { (*this)(op->expr_); }
 
+    virtual void visit(const Sin &op) { (*this)(op->expr_); }
+
+    virtual void visit(const Cos &op) { (*this)(op->expr_); }
+
+    virtual void visit(const Tan &op) { (*this)(op->expr_); }
+
     virtual void visit(const Tanh &op) { (*this)(op->expr_); }
 
     virtual void visit(const Abs &op) { (*this)(op->expr_); }

@@ -494,6 +494,42 @@ template <class T> Expr _makeSigmoid(T &&expr) {
     return e;
 }
 
+class SinNode : public UnaryExprNode {
+    void inferDType() override;
+    DEFINE_NODE_TRAIT(Sin);
+};
+typedef Ref<SinNode> Sin;
+#define makeSin(...) makeNode(Sin, __VA_ARGS__)
+template <class T> Expr _makeSin(T &&expr) {
+    Sin e = Sin::make();
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
+class CosNode : public UnaryExprNode {
+    void inferDType() override;
+    DEFINE_NODE_TRAIT(Cos);
+};
+typedef Ref<CosNode> Cos;
+#define makeCos(...) makeNode(Cos, __VA_ARGS__)
+template <class T> Expr _makeCos(T &&expr) {
+    Cos e = Cos::make();
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
+class TanNode : public UnaryExprNode {
+    void inferDType() override;
+    DEFINE_NODE_TRAIT(Tan);
+};
+typedef Ref<TanNode> Tan;
+#define makeTan(...) makeNode(Tan, __VA_ARGS__)
+template <class T> Expr _makeTan(T &&expr) {
+    Tan e = Tan::make();
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
 class TanhNode : public UnaryExprNode {
     void inferDType() override;
     DEFINE_NODE_TRAIT(Tanh);

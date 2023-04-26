@@ -136,6 +136,15 @@ void init_ffi_ast_expr(py::module_ &m) {
     py::class_<SigmoidNode, Sigmoid>(m, "Sigmoid", pyExpr)
         .def_property_readonly(
             "expr", [](const Sigmoid &op) -> Expr { return op->expr_; });
+    py::class_<SinNode, Sin>(m, "Sin", pyExpr)
+        .def_property_readonly("expr",
+                               [](const Sin &op) -> Expr { return op->expr_; });
+    py::class_<CosNode, Cos>(m, "Cos", pyExpr)
+        .def_property_readonly("expr",
+                               [](const Cos &op) -> Expr { return op->expr_; });
+    py::class_<TanNode, Tan>(m, "Tan", pyExpr)
+        .def_property_readonly("expr",
+                               [](const Tan &op) -> Expr { return op->expr_; });
     py::class_<TanhNode, Tanh>(m, "Tanh", pyExpr)
         .def_property_readonly(
             "expr", [](const Tanh &op) -> Expr { return op->expr_; });
@@ -303,6 +312,9 @@ void init_ffi_ast_expr(py::module_ &m) {
           "expr"_a);
     m.def("makeSigmoid", static_cast<Expr (*)(const Expr &)>(&_makeSigmoid),
           "expr"_a);
+    m.def("makeSin", static_cast<Expr (*)(const Expr &)>(&_makeSin), "expr"_a);
+    m.def("makeCos", static_cast<Expr (*)(const Expr &)>(&_makeCos), "expr"_a);
+    m.def("makeTan", static_cast<Expr (*)(const Expr &)>(&_makeTan), "expr"_a);
     m.def("makeTanh", static_cast<Expr (*)(const Expr &)>(&_makeTanh),
           "expr"_a);
     m.def("makeAbs", static_cast<Expr (*)(const Expr &)>(&_makeAbs), "expr"_a);

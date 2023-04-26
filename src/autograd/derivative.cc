@@ -303,6 +303,31 @@ void Derivative::visit(const Sigmoid &op) {
     BaseClass::visit(op);
 }
 
+void Derivative::visit(const Sin &op) {
+    if (auto it = partials_.find(op); it != partials_.end()) {
+        setPartial(op->expr_,
+                   makeMul(it->second.mathExpr(), makeCos(op->expr_)));
+    }
+    BaseClass::visit(op);
+}
+
+void Derivative::visit(const Cos &op) {
+    if (auto it = partials_.find(op); it != partials_.end()) {
+        setPartial(op->expr_,
+                   makeMul(it->second.mathExpr(),
+                           makeSub(makeIntConst(0), makeSin(op->expr_))));
+    }
+    BaseClass::visit(op);
+}
+
+void Derivative::visit(const Tan &op) {
+    if (auto it = partials_.find(op); it != partials_.end()) {
+        setPartial(op->expr_, makeRealDiv(it->second.mathExpr(),
+                                          makeSquare(makeCos(op->expr_))));
+    }
+    BaseClass::visit(op);
+}
+
 void Derivative::visit(const Tanh &op) {
     if (auto it = partials_.find(op); it != partials_.end()) {
         setPartial(op->expr_,

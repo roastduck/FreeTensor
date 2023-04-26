@@ -433,6 +433,21 @@ DataType DataTypeInfer::infer(const SigmoidNode &op) {
     return mathFuncFrom(op.expr_->dtype());
 }
 
+DataType DataTypeInfer::infer(const SinNode &op) {
+    CHK_TYPE(isNumber, op.expr_->dtype(), op);
+    return mathFuncFrom(op.expr_->dtype());
+}
+
+DataType DataTypeInfer::infer(const CosNode &op) {
+    CHK_TYPE(isNumber, op.expr_->dtype(), op);
+    return mathFuncFrom(op.expr_->dtype());
+}
+
+DataType DataTypeInfer::infer(const TanNode &op) {
+    CHK_TYPE(isNumber, op.expr_->dtype(), op);
+    return mathFuncFrom(op.expr_->dtype());
+}
+
 DataType DataTypeInfer::infer(const TanhNode &op) {
     CHK_TYPE(isNumber, op.expr_->dtype(), op);
     return mathFuncFrom(op.expr_->dtype());
