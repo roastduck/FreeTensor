@@ -26,18 +26,22 @@ static char genMKLTypeMark(DataType dtype) {
 void CodeGenCPU::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
                           const std::string &shapePtr,
                           const std::string &dimPtr) {
+    // Allocate for return values. The allocated buffer is moved as `Array`s,
+    // which will be free'd using `delete[]`, so we are using `new` here.
     auto ndim = tensor->shape().size();
     makeIndent();
-    os() << shapePtr << " = " << ndim << " > 0 ? (size_t*)malloc((" << dimPtr
-         << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
+    os() << dimPtr << " = " << ndim << ";" << std::endl;
     makeIndent();
-    os() << rawPtr << " = malloc(";
+    os() << shapePtr << " = " << ndim << " > 0 ? (new size_t[" << ndim
+         << "]) : NULL;" << std::endl;
+    makeIndent();
+    os() << rawPtr << " = new std::byte[";
     for (auto &&[i, dim] : views::enumerate(tensor->shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
         os() << ") * ";
     }
-    os() << "sizeof(" << gen(tensor->dtype()) << "));" << std::endl;
+    os() << "sizeof(" << gen(tensor->dtype()) << ")];" << std::endl;
 }
 
 void CodeGenCPU::genScalar(const VarDef &def,
