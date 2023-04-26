@@ -17,9 +17,10 @@ class Device;
  * All writable options with simple types can be set by environment variables
  */
 class Config {
-    static bool prettyPrint_; /// Env FT_PRETTY_PRINT
-    static bool printAllId_;  /// Env FT_PRINT_ALL_ID
-    static bool werror_;      /// Treat warnings as errors. Env FT_WERROR
+    static bool prettyPrint_;         /// Env FT_PRETTY_PRINT
+    static bool printAllId_;          /// Env FT_PRINT_ALL_ID
+    static bool printSourceLocation_; /// Env FT_PRINT_SOURCE_LOCATION
+    static bool werror_; /// Treat warnings as errors. Env FT_WERROR
     static bool
         debugBinary_; /// Compile with `-g` at backend. Do not delete the binary
                       /// file after loaded. Env FT_DEBUG_BINARY
@@ -69,6 +70,11 @@ class Config {
 
     static void setPrintAllId(bool flag = true) { printAllId_ = flag; }
     static bool printAllId() { return printAllId_; }
+
+    static void setPrintSourceLocation(bool flag = true) {
+        printSourceLocation_ = flag;
+    }
+    static bool printSourceLocation() { return printSourceLocation_; }
 
     static void setWerror(bool flag = true) { werror_ = flag; }
     static bool werror() { return werror_; }
