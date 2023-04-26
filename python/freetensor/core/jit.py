@@ -1,23 +1,8 @@
 import abc
-import copy
 from typing import Tuple, Any
 
 
-class JITMeta(type):
-
-    def __init__(cls, *args, **kvs):
-        super(JITMeta, cls).__init__(*args, **kvs)
-        cls.inner_type = None
-
-    def __getitem__(cls, inner_type):
-        if cls.inner_type is not None:
-            raise TypeError("Cannot call __getitem__ on JIT twice")
-        new = copy.copy(cls)
-        new.inner_type = inner_type
-        return new
-
-
-class JIT(metaclass=JITMeta):
+class JIT:
     '''
     Declare a function parameter as a JIT parameter
 
@@ -35,7 +20,16 @@ class JIT(metaclass=JITMeta):
     signature. It is NOT supported in annotations for statements.
     '''
 
-    pass
+    def __class_getitem__(cls, inner_type):
+
+        if hasattr(cls, 'inner_type'):
+            raise TypeError("Cannot call __getitem__ on JIT twice")
+
+        class JITAlias(JIT):
+            pass
+
+        JITAlias.inner_type = inner_type
+        return JITAlias
 
 
 class JITTemplate(abc.ABC):
@@ -99,7 +93,11 @@ class JITTemplate(abc.ABC):
         non_jit_args = []
         jit_args = []
         for i, name in enumerate(self.params):
-            is_jit = self.params[name].annotation is JIT
+            is_jit = False
+            try:
+                is_jit = issubclass(self.params[name].annotation, JIT)
+            except TypeError:
+                pass  # issubclass will raise if the first argument is not a class
             if i < len(args):
                 if name in kvs:
                     raise TypeError(

@@ -6,8 +6,9 @@ They are also used by some internal tests. API of these classes and functions ar
 End users are encouraged to use `transformer`, instead of this module.
 '''
 
-import sys
 from typing import List, Sequence, Optional, Callable
+import sys
+import traceback
 
 import freetensor_ffi as ffi
 
@@ -125,6 +126,8 @@ class ContextStack:
     def reset(self):
         self.stack = [Context(self)]
         self.user_grads = []
+        self.open_vardefs = {}
+        self.debug_call_stack: List[traceback.FrameSummary] = []
 
         # [fn(ffi.Stmt)], invoked for every `append_stmt`
         self.append_stmt_callbacks = []
@@ -163,8 +166,32 @@ class ContextStack:
     def pop_append_stmt_callback(self):
         self.append_stmt_callbacks.pop()
 
+    def mark_position(self, lineno: int):
+        # FrameSummary is immutable, so we have to initialize a new one with updated
+        # line number.
+        self.debug_call_stack[-1] = traceback.FrameSummary(
+            self.debug_call_stack[-1].filename, lineno,
+            self.debug_call_stack[-1].name)
+        self.top().set_next_location(self.debug_call_stack[-1].filename,
+                                     self.debug_call_stack[-1].lineno)
 
-ctx_stack = ContextStack()
+
+class ContextStackStack:
+
+    def __init__(self):
+        self.ctx_stack_stack = [ContextStack()]
+
+    def __enter__(self):
+        self.ctx_stack_stack.append(ContextStack())
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.ctx_stack_stack.pop()
+
+    def __getattr__(self, name):
+        return getattr(self.ctx_stack_stack[-1], name)
+
+
+ctx_stack = ContextStackStack()
 
 
 def pop_ast(verbose: bool = False):

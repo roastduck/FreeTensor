@@ -5,6 +5,7 @@ A frontend transforming user Python functions to ASTs via staging.
 import sys
 import numpy as np
 import inspect
+import traceback
 from numbers import Number
 from typing import Callable, Dict, List, Sequence, Optional, Any, Union
 from dataclasses import dataclass
@@ -16,7 +17,7 @@ from .expr import (dtype, mtype, ndim, l_and, l_or, l_not, if_then_else, shape,
 from .stmt import (_VarDef, VarRef, For, If, Else, ctx_stack, Assert, Invoke,
                    MarkVersion, UserGradStaged)
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
-                      StagedIterable, StagingOverload)
+                      StagedIterable, StagingOverload, StagingError)
 from .context import StmtRange
 
 assert sys.version_info >= (3, 8), \
@@ -50,19 +51,31 @@ class LifetimeScope:
         self.inner_scopes = []
 
     def __enter__(self):
-        lang_overload.lifetime_stack.append(self)
+        if lang_overload.in_staging():
+            lang_overload.lifetime_stack.append(self)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         for scope in reversed(self.inner_scopes):
             scope.__exit__(exc_type, exc_val, exc_tb)
-        popped = lang_overload.lifetime_stack.pop()
-        if popped != self:
-            raise lang_overload.error(
-                'LifetimeScope enter/exit not match, must be FILO')
+        if lang_overload.in_staging():
+            popped = lang_overload.lifetime_stack.pop()
+            if popped != self:
+                raise lang_overload.error(
+                    'LifetimeScope enter/exit not match, must be FILO')
 
     def register_inner_scope(self, scope):
         self.inner_scopes.append(scope)
         return scope.__enter__()
+
+
+class FreeTensorStagingError(StagingError):
+    '''Error occurred during staging function execution (i.e. IR tree generation).'''
+
+    def __init__(self, message: str) -> None:
+        # TODO: add output of StagingContext.call_stack
+        super().__init__(
+            f'{message}:\n{"".join(traceback.format_list(ctx_stack.debug_call_stack))}'
+            .lstrip())
 
 
 class FreeTensorOverload(StagingOverload):
@@ -106,9 +119,6 @@ class FreeTensorOverload(StagingOverload):
             self.name_dict[name] = 0
             return name
 
-    def in_staging(self,):
-        return len(self.lifetime_stack) > 0
-
     def custom_attr(self, obj: Any, attr: str) -> Any:
         if attr == "ndim":
             return ndim(obj)
@@ -132,7 +142,17 @@ class FreeTensorOverload(StagingOverload):
 
             prev = ctx_stack.top().caller_metadata
             ctx_stack.top().set_caller_metadata(call_metadata)
+
+            # Push debug call stack with some random line number.
+            # It will be updated by `mark_position` calls in the function.
+            ctx_stack.debug_call_stack.append(
+                traceback.FrameSummary(filename, 1, func.__name__))
+
             result = basic_wrapped(*args, **kwargs)
+
+            # Pop debug call stack.
+            ctx_stack.debug_call_stack.pop()
+
             ctx_stack.top().set_caller_metadata(prev)
 
             return result
@@ -182,11 +202,32 @@ class FreeTensorOverload(StagingOverload):
 `prefer_libs`: to indicate the following statement should preferably be executed using external libraries.
 ''')
 
-    def at_position(self, filename: str, lineno: int) -> None:
-        ctx_stack.top().set_next_location(filename, lineno)
+    def mark_position(self, lineno: int):
+        ctx_stack.mark_position(lineno)
+
+    def error(self, content: str):
+        return FreeTensorStagingError(content)
 
 
-lang_overload: FreeTensorOverload = FreeTensorOverload()
+class FreeTensorOverloadStack:
+
+    def __init__(self):
+        self.overload_stack = []
+
+    def in_staging(self):
+        return len(self.overload_stack) > 0
+
+    def __enter__(self):
+        self.overload_stack.append(FreeTensorOverload())
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.overload_stack.pop()
+
+    def __getattr__(self, name):
+        return getattr(self.overload_stack[-1], name)
+
+
+lang_overload: FreeTensorOverloadStack = FreeTensorOverloadStack()
 
 
 def _register_as_predicate(ty):

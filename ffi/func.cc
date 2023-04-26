@@ -72,12 +72,18 @@ void init_ffi_ast_func(py::module_ &m) {
                  for (auto &p : params) {
                      if (auto it = extraClosure.find(p.name_);
                          it != extraClosure.end()) {
+                         // Because we load Array back to C++ part, we cannot
+                         // keep tracking user data with py::keep_alive
+                         it->second->makePrivateCopy();
                          p.closure_ = Ref<Ref<Array>>::make(it->second);
                      }
                  }
                  for (auto &r : returns) {
                      if (auto it = extraClosure.find(r.name_);
                          it != extraClosure.end()) {
+                         // Because we load Array back to C++ part, we cannot
+                         // keep tracking user data with py::keep_alive
+                         it->second->makePrivateCopy();
                          r.closure_ = Ref<Ref<Array>>::make(it->second);
                      }
                  }
