@@ -410,7 +410,7 @@ std::vector<Ref<Array>> Driver::collectReturns() {
             val = Ref<Array>::make(
                 Array::moveFromRaw(rawRets[i], shape, dtype, dev_));
             if (retShapes_[i] != nullptr) {
-                free(retShapes_[i]);
+                delete[] retShapes_[i];
             }
             rawRets[i] = nullptr;
             retShapes_[i] = nullptr;
