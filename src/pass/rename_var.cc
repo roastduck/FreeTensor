@@ -47,10 +47,23 @@ Stmt RenameVar::visit(const ReduceTo &_op) {
     return op;
 }
 
+Expr RenameVar::visit(const Var &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Var);
+    auto op = __op.as<VarNode>();
+    if (auto it = rename_.find(op->name_); it != rename_.end()) {
+        op->name_ = it->second;
+    }
+    return op;
+}
+
 Stmt RenameVar::visit(const For &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
+    if (auto it = rename_.find(op->iter_); it != rename_.end()) {
+        op->iter_ = it->second;
+    }
     for (auto &&red : op->property_->reductions_) {
         if (auto it = rename_.find(red->var_); it != rename_.end()) {
             red->var_ = it->second;

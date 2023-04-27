@@ -110,15 +110,30 @@ Stmt InlinedInvoke::visit(const VarDef &op) {
         }
         return (*this)(op->body_);
     } else {
-        auto ret = BaseClass::visit(op);
         if (conflictNames_.count(op->name_)) {
             auto name =
                 getNewName(op->name_, uni(conflictNames_,
                                           uni(this->names(), allNames(op))));
-            return renameVar(ret, op->name_, name);
+            auto newOp = renameVar(op, op->name_, name);
+            // tail recursion, because kvs_ may contain conflict names, and we
+            // don't want to rename those arguments
+            return (*this)(newOp);
         } else {
-            return ret;
+            return BaseClass::visit(op);
         }
+    }
+}
+
+Stmt InlinedInvoke::visit(const For &op) {
+    if (conflictNames_.count(op->iter_)) {
+        auto name = getNewName(
+            op->iter_, uni(conflictNames_, uni(this->names(), allNames(op))));
+        auto newOp = renameVar(op, op->iter_, name);
+        // tail recursion, because kvs_ may contain conflict names, and we don't
+        // want to rename those arguments
+        return (*this)(newOp);
+    } else {
+        return BaseClass::visit(op);
     }
 }
 

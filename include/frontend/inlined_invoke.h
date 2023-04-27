@@ -50,6 +50,7 @@ class InlinedInvoke : public SymbolTable<Mutator> {
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const VarDef &op) override;
+    Stmt visit(const For &op) override;
 };
 
 /**

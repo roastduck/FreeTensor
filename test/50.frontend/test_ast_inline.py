@@ -119,7 +119,7 @@ def test_call_as_arg_and_return():
     assert expect.body.match(f.body)
 
 
-def test_name_conflict():
+def test_vardef_name_conflict():
 
     @ft.transform
     def g(x: ft.Var[(), 'int32', 'inout']):
@@ -146,5 +146,26 @@ def test_name_conflict():
         a[...] = x[...] + 1
         g(a)
         x[...] = a[...]
+
+    assert expect.body.match(f.body)
+
+
+def test_for_name_conflict():
+
+    @ft.transform
+    def g(x: ft.Var[(4,), 'int32', 'inout']):
+        for i in range(4):
+            x[i] += 1
+
+    @ft.transform(verbose=1)
+    def f(x: ft.Var[(4, 4), 'int32', 'inout']):
+        for i in range(4):
+            g(x[i])
+
+    @ft.transform
+    def expect(x: ft.Var[(4, 4), 'int32', 'inout']):
+        for i in range(4):
+            for j in range(4):
+                x[i, j] += 1
 
     assert expect.body.match(f.body)
