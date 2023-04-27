@@ -432,6 +432,18 @@ expr returns [Expr node]
       {
         $node = makeSigmoid($expr.node);
       }
+    | SIN '(' expr ')'
+      {
+        $node = makeSin($expr.node);
+      }
+    | COS '(' expr ')'
+      {
+        $node = makeCos($expr.node);
+      }
+    | TAN '(' expr ')'
+      {
+        $node = makeTan($expr.node);
+      }
     | TANH '(' expr ')'
       {
         $node = makeTanh($expr.node);

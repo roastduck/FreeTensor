@@ -9,9 +9,9 @@ __all__ = [
     'VarRef', 'VarRefFromVarDef', 'VarVersionRef', 'add', 'sub', 'mul',
     'truediv', 'floordiv', 'ceildiv', 'round_towards_0_div', 'mod', 'remainder',
     'min', 'max', 'l_and', 'l_or', 'lt', 'le', 'gt', 'ge', 'eq', 'ne', 'l_not',
-    'abs', 'sqrt', 'exp', 'ln', 'square', 'sigmoid', 'tanh', 'floor', 'ceil',
-    'if_then_else', 'cast', 'intrinsic', 'any', 'load_at_version', 'ndim',
-    'shape', 'dtype', 'mtype'
+    'abs', 'sqrt', 'exp', 'ln', 'square', 'sigmoid', 'sin', 'cos', 'tan',
+    'tanh', 'floor', 'ceil', 'if_then_else', 'cast', 'intrinsic', 'any',
+    'load_at_version', 'ndim', 'shape', 'dtype', 'mtype'
 ]
 
 import collections
@@ -1055,6 +1055,81 @@ def sigmoid(expr):
         from .. import libop
         return libop.sigmoid(expr)
     return ffi.makeSigmoid(expr)
+
+
+def sin(expr):
+    '''
+    Sine
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.tanh
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The result
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.sin(expr)
+    if isinstance(expr, Number):
+        return math.sin(expr)
+    return ffi.makeSin(expr)
+
+
+def cos(expr):
+    '''
+    Cosine
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.tanh
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The result
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.cos(expr)
+    if isinstance(expr, Number):
+        return math.cos(expr)
+    return ffi.makeCos(expr)
+
+
+def tan(expr):
+    '''
+    Tangent
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.tanh
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The result
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.tan(expr)
+    if isinstance(expr, Number):
+        return math.tan(expr)
+    return ffi.makeTan(expr)
 
 
 def tanh(expr):

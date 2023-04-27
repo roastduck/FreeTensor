@@ -80,6 +80,7 @@ static std::optional<bool> getBoolEnv(const char *name) {
 
 bool Config::prettyPrint_ = false;
 bool Config::printAllId_ = false;
+bool Config::printSourceLocation_ = false;
 bool Config::werror_ = false;
 bool Config::debugBinary_ = false;
 bool Config::debugRuntimeCheck_ = false;
@@ -126,6 +127,9 @@ void Config::init() {
     }
     if (auto flag = getBoolEnv("FT_PRINT_ALL_ID"); flag.has_value()) {
         Config::setPrintAllId(*flag);
+    }
+    if (auto flag = getBoolEnv("FT_PRINT_SOURCE_LOCATION"); flag.has_value()) {
+        Config::setPrintSourceLocation(*flag);
     }
     if (auto flag = getBoolEnv("FT_WERROR"); flag.has_value()) {
         Config::setWerror(*flag);

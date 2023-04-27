@@ -55,6 +55,9 @@ std::ostream &operator<<(std::ostream &os, ASTNodeType type) {
         DISPATCH(Ln);
         DISPATCH(Square);
         DISPATCH(Sigmoid);
+        DISPATCH(Sin);
+        DISPATCH(Cos);
+        DISPATCH(Tan);
         DISPATCH(Tanh);
         DISPATCH(Abs);
         DISPATCH(Floor);

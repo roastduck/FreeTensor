@@ -78,6 +78,7 @@ There are serveral global configurations can be set via environment variables:
 
 - `FT_PRETTY_PRINT=ON/OFF`. Enable/disable colored printing.
 - `FT_PRINT_ALL_ID=ON/OFF`. Print (or not) IDs of all statements in an AST.
+- `FT_PRINT_SOURCE_LOCATION=ON/OFF`. Print (or not) Python source location of all statements in an AST,
 - `FT_WERROR=ON/OFF`. Treat warnings as errors (or not).
 - `FT_BACKEND_COMPILER_CXX=<path/to/compiler>`. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself, and compilers found in the `PATH` enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.
 - `FT_BACKEND_COMPILER_NVCC=<path/to/compiler>`. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself, and compilers found in the `PATH` enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.

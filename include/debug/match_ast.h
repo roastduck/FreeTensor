@@ -69,6 +69,9 @@ class MatchVisitor : public Visitor {
     void visit(const Ln &op) override;
     void visit(const Square &op) override;
     void visit(const Sigmoid &op) override;
+    void visit(const Sin &op) override;
+    void visit(const Cos &op) override;
+    void visit(const Tan &op) override;
     void visit(const Tanh &op) override;
     void visit(const Abs &op) override;
     void visit(const Floor &op) override;

@@ -12,7 +12,7 @@ namespace freetensor {
 
 class PrintVisitor : public CodeGen<CodeGenStream> {
     bool printAllId_ = false, pretty_ = false, dtypeInLoad_ = false,
-         hexFloat_ = false;
+         hexFloat_ = false, printSourceLocation_ = false;
     const std::unordered_set<std::string> keywords = {
         "if", "else", "for", "in", "assert", "assume", "func", "true", "false",
     };
@@ -80,10 +80,13 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
   public:
     PrintVisitor(bool printAllId = false, bool pretty = false,
                  bool dtypeInLoad = false, bool hexFloat = false,
-                 bool compact = false)
+                 bool compact = false, bool printSourceLocation = false)
         : CodeGen(compact), printAllId_(printAllId), pretty_(pretty),
-          dtypeInLoad_(dtypeInLoad), hexFloat_(hexFloat) {
-        os() << manipNoIdSign(true);
+          dtypeInLoad_(dtypeInLoad), hexFloat_(hexFloat),
+          printSourceLocation_(printSourceLocation) {
+        os() << manipNoIdSign(true)
+             << (printSourceLocation ? manipMetadataWithLocation
+                                     : manipMetadataSkipLocation);
     }
 
   private:
@@ -142,6 +145,9 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void visit(const Ln &op) override;
     void visit(const Square &op) override;
     void visit(const Sigmoid &op) override;
+    void visit(const Sin &op) override;
+    void visit(const Cos &op) override;
+    void visit(const Tan &op) override;
     void visit(const Tanh &op) override;
     void visit(const Abs &op) override;
     void visit(const Floor &op) override;

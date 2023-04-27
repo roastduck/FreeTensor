@@ -84,6 +84,9 @@ UNARY_OP(Sqrt, std::sqrt)
 UNARY_OP(Exp, std::exp)
 UNARY_OP(Square, square)
 UNARY_OP(Sigmoid, sigmoid)
+UNARY_OP(Sin, std::sin)
+UNARY_OP(Cos, std::cos)
+UNARY_OP(Tan, std::tan)
 UNARY_OP(Tanh, std::tanh)
 
 // Avoid -Wabsolute-value in Clang

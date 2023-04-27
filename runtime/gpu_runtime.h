@@ -220,6 +220,15 @@ inline __host__ __device__ double runtime_exp(double x) { return exp(x); }
 inline __host__ __device__ float runtime_log(float x) { return logf(x); }
 inline __host__ __device__ double runtime_log(double x) { return log(x); }
 
+inline __host__ __device__ float runtime_sin(float x) { return sinf(x); }
+inline __host__ __device__ double runtime_sin(double x) { return sin(x); }
+
+inline __host__ __device__ float runtime_cos(float x) { return cosf(x); }
+inline __host__ __device__ double runtime_cos(double x) { return cos(x); }
+
+inline __host__ __device__ float runtime_tan(float x) { return tanf(x); }
+inline __host__ __device__ double runtime_tan(double x) { return tan(x); }
+
 inline __host__ __device__ float runtime_tanh(float x) { return tanhf(x); }
 inline __host__ __device__ double runtime_tanh(double x) { return tanh(x); }
 

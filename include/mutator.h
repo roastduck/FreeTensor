@@ -249,6 +249,18 @@ class Mutator {
         return COPY_DEBUG_INFO(makeSigmoid((*this)(op->expr_)), op);
     }
 
+    virtual Expr visit(const Sin &op) {
+        return COPY_DEBUG_INFO(makeSin((*this)(op->expr_)), op);
+    }
+
+    virtual Expr visit(const Cos &op) {
+        return COPY_DEBUG_INFO(makeCos((*this)(op->expr_)), op);
+    }
+
+    virtual Expr visit(const Tan &op) {
+        return COPY_DEBUG_INFO(makeTan((*this)(op->expr_)), op);
+    }
+
     virtual Expr visit(const Tanh &op) {
         return COPY_DEBUG_INFO(makeTanh((*this)(op->expr_)), op);
     }

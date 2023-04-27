@@ -26,7 +26,7 @@ class MetadataContent {
 
     virtual MetadataType getType() const = 0;
     virtual bool printByDefault() const = 0;
-    virtual void print(std::ostream &os, bool skipLocation,
+    virtual void print(std::ostream &os, bool printLocation,
                        int nIndent) const = 0;
 
     virtual size_t hash() const = 0;
@@ -63,7 +63,8 @@ class TransformedMetadataContent : public MetadataContent {
 
     MetadataType getType() const override { return MetadataType::Transformed; }
     bool printByDefault() const override { return true; }
-    void print(std::ostream &os, bool skipLocation, int nIndent) const override;
+    void print(std::ostream &os, bool printLocation,
+               int nIndent) const override;
 
     size_t hash() const override;
     bool sameAs(const MetadataContent &other) const override;
@@ -98,7 +99,8 @@ class SourceMetadataContent : public MetadataContent {
 
     MetadataType getType() const override { return MetadataType::Source; }
     bool printByDefault() const override { return !labels_.empty(); }
-    void print(std::ostream &os, bool skipLocation, int nIndent) const override;
+    void print(std::ostream &os, bool printLocation,
+               int nIndent) const override;
 
     size_t hash() const override;
     bool sameAs(const MetadataContent &other) const override;
@@ -118,7 +120,8 @@ class AnonymousMetadataContent : public MetadataContent {
     ~AnonymousMetadataContent() override = default;
     MetadataType getType() const override { return MetadataType::Anonymous; }
     bool printByDefault() const override { return false; }
-    void print(std::ostream &os, bool skipLocation, int nIndent) const override;
+    void print(std::ostream &os, bool printLocation,
+               int nIndent) const override;
 
     size_t hash() const override;
     bool sameAs(const MetadataContent &other) const override;

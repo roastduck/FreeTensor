@@ -40,6 +40,9 @@ void Visitor::visitExpr(const Expr &op) {
         DISPATCH_EXPR_CASE(Ln);
         DISPATCH_EXPR_CASE(Square);
         DISPATCH_EXPR_CASE(Sigmoid);
+        DISPATCH_EXPR_CASE(Sin);
+        DISPATCH_EXPR_CASE(Cos);
+        DISPATCH_EXPR_CASE(Tan);
         DISPATCH_EXPR_CASE(Tanh);
         DISPATCH_EXPR_CASE(Abs);
         DISPATCH_EXPR_CASE(Floor);

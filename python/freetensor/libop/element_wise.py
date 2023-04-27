@@ -6,8 +6,8 @@ __all__ = [
     'l_or_', 'lt', 'lt_', 'le', 'le_', 'gt', 'gt_', 'ge', 'ge_', 'eq', 'eq_',
     'ne', 'ne_', 'unary_op', 'unary_op_', 'neg', 'neg_', 'l_not', 'l_not_',
     'relu', 'relu_', 'abs', 'abs_', 'sqrt', 'sqrt_', 'square', 'square_', 'exp',
-    'exp_', 'ln', 'ln_', 'sigmoid', 'sigmoid_', 'tanh', 'tanh_', 'floor',
-    'floor_', 'ceil', 'ceil_'
+    'exp_', 'ln', 'ln_', 'sigmoid', 'sigmoid_', 'sin', 'sin_', 'cos', 'cos_',
+    'tan', 'tan_', 'tanh', 'tanh_', 'floor', 'floor_', 'ceil', 'ceil_'
 ]
 
 import operator
@@ -407,6 +407,21 @@ sigmoid_ = _named_partial("sigmoid_",
 sigmoid = _named_partial("sigmoid",
                          out_of_place_unary_doc_template.format("sigmoid"),
                          unary_op, core.sigmoid)
+
+sin_ = _named_partial("sin_", inplace_unary_doc_template.format("sin"),
+                      unary_op_, core.sin)
+sin = _named_partial("sin", out_of_place_unary_doc_template.format("sin"),
+                     unary_op, core.sin)
+
+cos_ = _named_partial("cos_", inplace_unary_doc_template.format("cos"),
+                      unary_op_, core.cos)
+cos = _named_partial("cos", out_of_place_unary_doc_template.format("cos"),
+                     unary_op, core.cos)
+
+tan_ = _named_partial("tan_", inplace_unary_doc_template.format("tan"),
+                      unary_op_, core.tan)
+tan = _named_partial("tan", out_of_place_unary_doc_template.format("tan"),
+                     unary_op, core.tan)
 
 tanh_ = _named_partial("tanh_", inplace_unary_doc_template.format("tanh"),
                        unary_op_, core.tanh)
