@@ -2,9 +2,10 @@
 
 __all__ = [
     'with_mkl', 'with_cuda', 'with_pytorch', 'set_pretty_print', 'pretty_print',
-    'set_print_all_id', 'print_all_id', 'set_werror', 'werror',
-    'set_debug_binary', 'debug_binary', 'set_debug_cuda_with_um',
-    'debug_cuda_with_um', 'set_backend_compiler_cxx', 'backend_compiler_cxx',
+    'set_print_all_id', 'print_all_id', 'set_print_source_location',
+    'print_source_location', 'set_werror', 'werror', 'set_debug_binary',
+    'debug_binary', 'set_debug_cuda_with_um', 'debug_cuda_with_um',
+    'set_backend_compiler_cxx', 'backend_compiler_cxx',
     'set_backend_compiler_nvcc', 'backend_compiler_nvcc', 'set_default_target',
     'default_target', 'set_default_device', 'default_device'
 ]
@@ -35,8 +36,11 @@ with_pytorch = _import_func(ffi.with_pytorch)
 set_pretty_print = _import_func(ffi.set_pretty_print)
 pretty_print = _import_func(ffi.pretty_print)
 
-set_print_all_id = _import_func(ffi.set_pretty_print)
-print_all_id = _import_func(ffi.pretty_print)
+set_print_all_id = _import_func(ffi.set_print_all_id)
+print_all_id = _import_func(ffi.print_all_id)
+
+set_print_source_location = _import_func(ffi.set_print_source_location)
+print_source_location = _import_func(ffi.print_source_location)
 
 set_werror = _import_func(ffi.set_werror)
 werror = _import_func(ffi.werror)

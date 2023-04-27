@@ -32,7 +32,8 @@ class Context:
     def get_metadata(self, labels=None):
         if labels is None:
             labels = self.next_labels
-        if len(labels) > 0 or self.caller_metadata is not None:
+        if (len(labels) > 0 or self.next_location is not None or
+                self.caller_metadata is not None):
             return ffi.SourceMetadata(list(labels), self.next_location,
                                       self.caller_metadata)
         else:

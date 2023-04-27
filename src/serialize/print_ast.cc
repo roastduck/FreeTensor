@@ -95,7 +95,8 @@ void PrintVisitor::printMetadataAndId(const Stmt &op) {
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
     if (printAllId_ ||
-        (op->metadata().isValid() && op->metadata()->printByDefault())) {
+        (op->metadata().isValid() &&
+         (printSourceLocation_ || op->metadata()->printByDefault()))) {
         makeIndent();
         os() << "#!";
         if (printAllId_)
@@ -781,7 +782,8 @@ std::string toString(const AST &op, bool pretty, bool printAllId) {
 
 std::string toString(const AST &op, bool pretty, bool printAllId,
                      bool dtypeInLoad, bool hexFloat, bool compact) {
-    PrintVisitor visitor(printAllId, pretty, dtypeInLoad, hexFloat, compact);
+    PrintVisitor visitor(printAllId, pretty, dtypeInLoad, hexFloat, compact,
+                         Config::printSourceLocation());
     visitor(op);
     return visitor.toString(
         [](const CodeGenStream &stream) { return stream.os_.str(); });
