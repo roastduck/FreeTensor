@@ -543,3 +543,19 @@ def test_late_definition_global():
         x[()] = x[()] + 1
 
     assert test.body.match(test_expected.body)
+
+
+def test_overload_of_caller_and_callee_is_the_same():
+
+    overloads = {}
+
+    @ft.inline
+    def g():
+        overloads['g'] = __staging_overload__
+
+    @ft.transform
+    def f():
+        overloads['f'] = __staging_overload__
+        g()
+
+    assert overloads['f'] is overloads['g']
