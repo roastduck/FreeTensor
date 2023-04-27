@@ -115,7 +115,7 @@ class FreeTensorOverload(StagingOverload):
         '''Get distinct name.'''
         if name in self.name_dict:
             self.name_dict[name] += 1
-            return f'{name}_{self.name_dict[name]}'
+            return self.fullname(f'{name}_{self.name_dict[name]}')
         else:
             self.name_dict[name] = 0
             return name

@@ -580,3 +580,32 @@ def test_bind():
         return y
 
     assert test.body.match(test_expected.body)
+
+
+def test_name_conflict():
+
+    @ft.transform(verbose=1)
+    def test(x: ft.Var[(), "int32", "inout"]):
+        y = ft.empty((), "int32")
+        y[...] = x[...] + 1
+        x[...] = y[...]
+        y = ft.empty((), "int32")
+        y[...] = x[...] + 1
+        x[...] = y[...]
+        y_1 = ft.empty((), "int32")
+        y_1[...] = x[...] + 1
+        x[...] = y_1[...]
+
+    @ft.transform
+    def expect(x: ft.Var[(), "int32", "inout"]):
+        y1 = ft.empty((), "int32")
+        y1[...] = x[...] + 1
+        x[...] = y1[...]
+        y2 = ft.empty((), "int32")
+        y2[...] = x[...] + 1
+        x[...] = y2[...]
+        y3 = ft.empty((), "int32")
+        y3[...] = x[...] + 1
+        x[...] = y3[...]
+
+    assert expect.body.match(test.body)
