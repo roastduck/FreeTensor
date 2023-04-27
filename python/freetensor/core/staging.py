@@ -402,8 +402,21 @@ class StagingOverloadStack:
     def __exit__(self, exc_type, exc_value, traceback):
         self.overload_stack.pop()
 
+    def top(self):
+        return self.overload_stack[-1]
+
     def __getattr__(self, name):
-        return getattr(self.overload_stack[-1], name)
+        return getattr(self.top(), name)
+
+    def functiondef_decorator(self, filename, func=None):
+        if func is None:
+            return functools.partial(self.functiondef_decorator, filename)
+
+        def f(*args, **kvs):
+            # Always use the current top, instead of enclosuring the old top
+            return self.top().functiondef_wrapper(filename, func)(*args, **kvs)
+
+        return f
 
     def into_staging(self,
                      func,
@@ -585,10 +598,7 @@ class StagingOverloadStack:
         f_staging = f_wrapper(extra_locals, LocalsDictWrapper(func_locals),
                               func.__annotations__)
 
-        def f_ret(*args, **kvs):
-            return self.functiondef_wrapper(file, f_staging)(*args, **kvs)
-
-        return f_ret
+        return f_staging
 
 
 class StagedIterable:
@@ -961,8 +971,12 @@ class Transformer(ast.NodeTransformer):
 
             # Transform the function body
             node: ast.FunctionDef = self.generic_visit(old_node)
+
             # Cleanup the decorators
-            node.decorator_list = []
+            node.decorator_list = [
+                call_helper(StagingOverloadStack.functiondef_decorator,
+                            ast.Constant(self.filename))
+            ]
 
             annotations_dict_name = f'__staging_annotations__{node.name}__'
             # Handle the type annotations
