@@ -106,7 +106,11 @@ class FreeTensorOverload(StagingOverload):
                                 args, kvs):
         ret_names = [self.fullname(name) for name in ret_names]
         return self.lifetime_stack[-1].register_inner_scope(
-            Invoke(ret_names, func, args, kvs))
+            Invoke(ret_names,
+                   func,
+                   args,
+                   kvs,
+                   conflict_names=set(self.name_dict.keys())))
 
     def register_assert(self, pred):
         self.lifetime_stack[-1].register_inner_scope(Assert(pred))

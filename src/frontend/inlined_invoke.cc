@@ -1,10 +1,21 @@
 #include <algorithm>
 
+#include <analyze/all_uses.h>
 #include <container_utils.h>
 #include <frontend/inlined_invoke.h>
 #include <pass/hoist_return_vars.h>
+#include <pass/rename_var.h>
 
 namespace freetensor {
+
+static std::string getNewName(const std::string &oldName,
+                              const std::unordered_set<std::string> &used) {
+    for (int i = 1;; i++) {
+        if (auto name = oldName + "." + std::to_string(i); !used.count(name)) {
+            return name;
+        }
+    }
+}
 
 Stmt StripReturns::visit(const VarDef &op) {
     if (std::find_if(returns_.begin(), returns_.end(), [&](const FuncRet &ret) {
@@ -18,13 +29,13 @@ Stmt StripReturns::visit(const VarDef &op) {
 }
 
 Stmt InlinedInvoke::visitStmt(const Stmt &op) {
-    auto ret = Mutator::visitStmt(op);
+    auto ret = BaseClass::visitStmt(op);
     ret->metadata() = makeMetadata("inlined_invoke", {callSiteMetadata_});
     return ret;
 }
 
 Expr InlinedInvoke::visit(const Load &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
     if (kvs_.count(op->var_)) {
@@ -45,7 +56,7 @@ Expr InlinedInvoke::visit(const Load &_op) {
 }
 
 Stmt InlinedInvoke::visit(const Store &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     auto op = __op.as<StoreNode>();
     if (kvs_.count(op->var_)) {
@@ -66,7 +77,7 @@ Stmt InlinedInvoke::visit(const Store &_op) {
 }
 
 Stmt InlinedInvoke::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     if (kvs_.count(op->var_)) {
@@ -99,7 +110,15 @@ Stmt InlinedInvoke::visit(const VarDef &op) {
         }
         return (*this)(op->body_);
     } else {
-        return Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
+        if (conflictNames_.count(op->name_)) {
+            auto name =
+                getNewName(op->name_, uni(conflictNames_,
+                                          uni(this->names(), allNames(op))));
+            return renameVar(ret, op->name_, name);
+        } else {
+            return ret;
+        }
     }
 }
 
@@ -114,7 +133,8 @@ Stmt inlinedInvoke(
     const Metadata &callSiteMetadata, const Func &func,
     const std::vector<Ref<FrontendVar>> &args,
     const std::unordered_map<std::string, Ref<FrontendVar>> &_kvs,
-    const std::vector<std::string> &retNames) {
+    const std::vector<std::string> &retNames,
+    const std::unordered_set<std::string> &conflictNames) {
     Stmt ast = func->body_;
 
     auto kvs = _kvs;
@@ -141,7 +161,7 @@ Stmt inlinedInvoke(
 
     ast = InlinedInvoke(callSiteMetadata.isValid() ? callSiteMetadata
                                                    : makeMetadata(),
-                        kvs, renameRets)(ast);
+                        kvs, renameRets, conflictNames)(ast);
 
     return ast;
 }

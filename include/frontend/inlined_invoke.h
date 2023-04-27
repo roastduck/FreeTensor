@@ -2,7 +2,9 @@
 #define FREE_TENSOR_INLINED_INVOKE_H
 
 #include <unordered_map>
+#include <unordered_set>
 
+#include <analyze/symbol_table.h>
 #include <frontend/frontend_var.h>
 #include <func.h>
 #include <mutator.h>
@@ -22,22 +24,27 @@ class StripReturns : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
-class InlinedInvoke : public Mutator {
+class InlinedInvoke : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     Metadata callSiteMetadata_;
     const std::unordered_map<std::string, Ref<FrontendVar>> &kvs_;
     const std::unordered_map<std::string, std::string> &renameRets_;
+    const std::unordered_set<std::string> &conflictNames_;
 
   public:
     InlinedInvoke(
         const Metadata &callSiteMetadata,
         const std::unordered_map<std::string, Ref<FrontendVar>> &kvs,
-        const std::unordered_map<std::string, std::string> &renameRets)
+        const std::unordered_map<std::string, std::string> &renameRets,
+        const std::unordered_set<std::string> &conflictNames)
         : callSiteMetadata_(callSiteMetadata), kvs_(kvs),
-          renameRets_(renameRets) {
+          renameRets_(renameRets), conflictNames_(conflictNames) {
         ASSERT(callSiteMetadata_.isValid());
     }
 
   protected:
+    using BaseClass::visit;
     Stmt visitStmt(const Stmt &op) override;
     Expr visit(const Load &op) override;
     Stmt visit(const Store &op) override;
@@ -64,7 +71,8 @@ std::pair<Func, std::vector<Ref<Buffer>>> stripReturns(const Func &func);
 Stmt inlinedInvoke(const Metadata &callSiteMetadata, const Func &func,
                    const std::vector<Ref<FrontendVar>> &args,
                    const std::unordered_map<std::string, Ref<FrontendVar>> &kvs,
-                   const std::vector<std::string> &retNames);
+                   const std::vector<std::string> &retNames,
+                   const std::unordered_set<std::string> &conflictNames);
 
 } // namespace freetensor
 
