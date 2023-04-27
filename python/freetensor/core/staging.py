@@ -347,9 +347,6 @@ class StagingOverload:
         else:
             return not arg
 
-    def functiondef_decorator(self, filename):
-        return functools.partial(self.functiondef_wrapper, filename)
-
     def functiondef_wrapper(self, filename, func):
         '''Function definition wrapper.
         This wrapper performs extra initialization and cleanup for function definition.
@@ -388,6 +385,38 @@ class StagingOverload:
         '''
 
         pass
+
+
+class StagingOverloadStack:
+
+    def __init__(self, overload_type: type):
+        self.overload_type = overload_type
+        self.overload_stack = []
+
+    def in_staging(self):
+        return len(self.overload_stack) > 0
+
+    def __enter__(self):
+        self.overload_stack.append(self.overload_type())
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.overload_stack.pop()
+
+    def top(self):
+        return self.overload_stack[-1]
+
+    def __getattr__(self, name):
+        return getattr(self.top(), name)
+
+    def functiondef_decorator(self, filename, func=None):
+        if func is None:
+            return functools.partial(self.functiondef_decorator, filename)
+
+        def f(*args, **kvs):
+            # Always use the current top, instead of enclosuring the old top
+            return self.top().functiondef_wrapper(filename, func)(*args, **kvs)
+
+        return f
 
     def into_staging(self,
                      func,
@@ -942,9 +971,10 @@ class Transformer(ast.NodeTransformer):
 
             # Transform the function body
             node: ast.FunctionDef = self.generic_visit(old_node)
+
             # Cleanup the decorators
             node.decorator_list = [
-                call_helper(StagingOverload.functiondef_decorator,
+                call_helper(StagingOverloadStack.functiondef_decorator,
                             ast.Constant(self.filename))
             ]
 

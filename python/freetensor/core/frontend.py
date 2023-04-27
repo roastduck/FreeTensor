@@ -17,7 +17,8 @@ from .expr import (dtype, mtype, ndim, l_and, l_or, l_not, if_then_else, shape,
 from .stmt import (_VarDef, VarRef, For, If, Else, ctx_stack, Assert, Invoke,
                    MarkVersion, UserGradStaged)
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
-                      StagedIterable, StagingOverload, StagingError)
+                      StagedIterable, StagingOverload, StagingOverloadStack,
+                      StagingError)
 from .context import StmtRange
 
 assert sys.version_info >= (3, 8), \
@@ -114,7 +115,7 @@ class FreeTensorOverload(StagingOverload):
         '''Get distinct name.'''
         if name in self.name_dict:
             self.name_dict[name] += 1
-            return f'{name}_{self.name_dict[name]}'
+            return self.fullname(f'{name}_{self.name_dict[name]}')
         else:
             self.name_dict[name] = 0
             return name
@@ -209,22 +210,10 @@ class FreeTensorOverload(StagingOverload):
         return FreeTensorStagingError(content)
 
 
-class FreeTensorOverloadStack:
+class FreeTensorOverloadStack(StagingOverloadStack):
 
     def __init__(self):
-        self.overload_stack = []
-
-    def in_staging(self):
-        return len(self.overload_stack) > 0
-
-    def __enter__(self):
-        self.overload_stack.append(FreeTensorOverload())
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.overload_stack.pop()
-
-    def __getattr__(self, name):
-        return getattr(self.overload_stack[-1], name)
+        super().__init__(FreeTensorOverload)
 
 
 lang_overload: FreeTensorOverloadStack = FreeTensorOverloadStack()

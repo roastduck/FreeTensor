@@ -232,10 +232,13 @@ def inline(func=None,
 
     extra_locals = _prepare_extra_locals(default_dynamic_range)
 
-    with lang_overload, ctx_stack:
-        transformed = lang_overload.into_staging(func,
-                                                 extra_locals,
-                                                 src,
-                                                 verbose=verbose)
+    # No need to push lang_overload here, because `into_staging` is a function on
+    # `StagedOverloadStack`, instead of `StagedOverload`. Since the staged code is run in
+    # `transform` rather than in `inline`, this design is to ensure the overload used here
+    # in `inline` should be the same object with that is pushed from `transform`.
+    transformed = lang_overload.into_staging(func,
+                                             extra_locals,
+                                             src,
+                                             verbose=verbose)
 
     return functools.wraps(func)(staged_callable(transformed, fallback or func))
