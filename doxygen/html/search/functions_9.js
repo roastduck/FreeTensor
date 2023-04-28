@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['id_0',['id',['../classfreetensor_1_1AnonymousMetadataContent.html#a7861869e96eb7ec133dc0386ed7ffa73',1,'freetensor::AnonymousMetadataContent']]],
-  ['id_1',['ID',['../classfreetensor_1_1ID.html#a21f660dbc00df4358e524387ceb4b012',1,'freetensor::ID::ID()'],['../classfreetensor_1_1ID.html#a72c67f2976770c28bb36e5ac53bb016b',1,'freetensor::ID::ID(std::nullopt_t)']]],
-  ['id_2',['id',['../classfreetensor_1_1StmtNode.html#af09459c091b5b292e8afcd6afa61eddc',1,'freetensor::StmtNode']]],
+  ['id_0',['ID',['../classfreetensor_1_1ID.html#a72c67f2976770c28bb36e5ac53bb016b',1,'freetensor::ID']]],
+  ['id_1',['id',['../classfreetensor_1_1StmtNode.html#af09459c091b5b292e8afcd6afa61eddc',1,'freetensor::StmtNode::id()'],['../classfreetensor_1_1AnonymousMetadataContent.html#a7861869e96eb7ec133dc0386ed7ffa73',1,'freetensor::AnonymousMetadataContent::id()']]],
+  ['id_2',['ID',['../classfreetensor_1_1ID.html#a21f660dbc00df4358e524387ceb4b012',1,'freetensor::ID']]],
   ['identity_3',['identity',['../namespacefreetensor.html#a5714e61b29754a1a972d4fe6b32192a4',1,'freetensor']]],
   ['ids0_4',['ids0',['../classfreetensor_1_1FissionFor.html#ac9cdffd2d2b23fa2a6223493eaf2e579',1,'freetensor::FissionFor']]],
   ['ids1_5',['ids1',['../classfreetensor_1_1FissionFor.html#a6d2359250d2f4ff666296d80b6240095',1,'freetensor::FissionFor']]],
@@ -15,8 +15,8 @@ var searchData=
   ['init_12',['init',['../classfreetensor_1_1Config.html#a3b42adca2cdd2bbe34a28abf828d75fd',1,'freetensor::Config']]],
   ['initexprvari_13',['InitExprVari',['../classfreetensor_1_1InitExprVari.html#adeeabc59cf77e2fd1b8260645dbd05a2',1,'freetensor::InitExprVari']]],
   ['initstmt_14',['initStmt',['../classfreetensor_1_1MakeInitAndReduce.html#a34b1dc7f72f6d06b5a25cb25c7688704',1,'freetensor::MakeInitAndReduce']]],
-  ['inlinedinvoke_15',['inlinedInvoke',['../namespacefreetensor.html#a19299c3dd40cc4de3eedd8af85b32767',1,'freetensor']]],
-  ['inlinedinvoke_16',['InlinedInvoke',['../classfreetensor_1_1InlinedInvoke.html#a5f90223c9b0c475998f7aa0ae23452d6',1,'freetensor::InlinedInvoke']]],
+  ['inlinedinvoke_15',['inlinedInvoke',['../namespacefreetensor.html#a54a66a3840b9fafbef0a494f6fe2eab9',1,'freetensor']]],
+  ['inlinedinvoke_16',['InlinedInvoke',['../classfreetensor_1_1InlinedInvoke.html#aa42df3c7450bf638ce80dd4f6627ccaa',1,'freetensor::InlinedInvoke']]],
   ['inlining_17',['inlining',['../classfreetensor_1_1Schedule.html#a9bfc2f98d42e75a3838eaa0166b802e2',1,'freetensor::Schedule::inlining()'],['../namespacefreetensor.html#a0611eaa53154125f43b7c1660fc35d7d',1,'freetensor::inlining()']]],
   ['innerid_18',['innerId',['../classfreetensor_1_1Splitter.html#a408e28f3a897410325b4d5767bfb699d',1,'freetensor::Splitter']]],
   ['innnermost_19',['innnerMost',['../classfreetensor_1_1FindInnerMostScope.html#ae9069f7d61b869820949762d48b282a6',1,'freetensor::FindInnerMostScope']]],
