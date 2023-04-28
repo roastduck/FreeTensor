@@ -21,6 +21,7 @@ class RenameVar : public Mutator {
     Expr visit(const Load &op) override;
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;
+    Expr visit(const Var &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const Alloc &op) override;
     Stmt visit(const Free &op) override;
@@ -28,7 +29,7 @@ class RenameVar : public Mutator {
 };
 
 /**
- * Rename a variable's definition and use sites
+ * Rename a variable's definition (from VarDef or For) and use sites
  *
  * This function can be applied to an AST sub-tree
  *

@@ -10,7 +10,7 @@ expressions in `expr.py`
 '''
 
 import collections
-from typing import Sequence, Mapping, Tuple, Any, Optional
+from typing import Sequence, Set, Mapping, Tuple, Any, Optional
 
 import freetensor_ffi as ffi
 
@@ -360,9 +360,12 @@ class Invoke:
                  ret_names: Sequence[str],
                  func: ffi.Func,
                  args: Sequence = [],
-                 kvs: Mapping = {}):
+                 kvs: Mapping = {},
+                 *,
+                 conflict_names: Set[str] = set()):
         self.args = args
         self.kvs = kvs
+        self.conflict_names = conflict_names
         self.func, returns = ffi.strip_returns(func)
         self.vardefs = []  # Outer to inner
         assert len(ret_names) == len(returns)
@@ -380,7 +383,8 @@ class Invoke:
             ret_names.append(varref.name)
         ctx_stack.top().append_stmt(
             ffi.inlined_invoke(ctx_stack.top().get_metadata(), self.func,
-                               self.args, self.kvs, ret_names))
+                               self.args, self.kvs, ret_names,
+                               self.conflict_names))
         return varrefs[0] if len(varrefs) == 1 else tuple(varrefs)
 
     def __exit__(self, exc_type, exc_value, traceback):
