@@ -13,4 +13,4 @@ source /tmp/venv-freetensor-ci/bin/activate
 pip3 install --upgrade -r requirements.txt -f https://download.pytorch.org/whl/torch_stable.html
 
 # Uninstall unneeded packages
-pip3 freeze | grep -v -f requirements.txt - | xargs pip3 uninstall -y
+pip3 freeze | grep -v -f requirements.txt - | xargs --no-run-if-empty pip3 uninstall -y
