@@ -18,10 +18,11 @@ static std::string getNewName(const std::string &oldName,
 }
 
 Stmt StripReturns::visit(const VarDef &op) {
-    if (std::find_if(returns_.begin(), returns_.end(), [&](const FuncRet &ret) {
-            return ret.name_ == op->name_;
-        }) != returns_.end()) {
-        bufToReturn_.emplace_back(op->buffer_);
+    if (auto it = std::find_if(
+            returns_.begin(), returns_.end(),
+            [&](const FuncRet &ret) { return ret.name_ == op->name_; });
+        it != returns_.end()) {
+        bufToReturn_.emplace_back(it - returns_.begin(), op->buffer_);
         return (*this)(op->body_);
     } else {
         return Mutator::visit(op);
@@ -137,7 +138,8 @@ Stmt InlinedInvoke::visit(const For &op) {
     }
 }
 
-std::pair<Func, std::vector<Ref<Buffer>>> stripReturns(const Func &_func) {
+std::pair<Func, std::vector<std::pair<int, Ref<Buffer>>>>
+stripReturns(const Func &_func) {
     auto func = hoistReturnVars(_func);
     StripReturns mutator(func->returns_);
     func->body_ = mutator(func->body_);
