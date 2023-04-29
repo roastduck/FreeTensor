@@ -82,7 +82,7 @@ var searchData=
   ['stmtsettousergrad_79',['StmtSetToUserGrad',['../structfreetensor_1_1StmtSetToUserGrad.html#a6eceb8baa072b5a0c5048a0eb76f531e',1,'freetensor::StmtSetToUserGrad']]],
   ['stop_80',['stop',['../classfreetensor_1_1FrontendVarIdx.html#a4352caaac2c7d0450eb6063516349b36',1,'freetensor::FrontendVarIdx']]],
   ['stripreturns_81',['StripReturns',['../classfreetensor_1_1StripReturns.html#a2ecade859d5ea267e0565786ac2e7cfb',1,'freetensor::StripReturns']]],
-  ['stripreturns_82',['stripReturns',['../namespacefreetensor.html#a0525bc98a05b2f0db5a52f4abda3ff23',1,'freetensor']]],
+  ['stripreturns_82',['stripReturns',['../namespacefreetensor.html#a67805451cf0700d71553c3d6fef4ff82',1,'freetensor']]],
   ['structuralfeature_83',['StructuralFeature',['../classfreetensor_1_1StructuralFeature.html#a23343a817beff3393e309db3f0532f6e',1,'freetensor::StructuralFeature']]],
   ['structuralfeature_84',['structuralFeature',['../namespacefreetensor.html#a3c1f048f611801fa66e32f223861ff41',1,'freetensor']]],
   ['sub_85',['sub',['../namespacefreetensor.html#a488435a138d11cf4f7862c2cc9c43e4d',1,'freetensor::sub(const UpperBound &amp;b1, const LowerBound &amp;b2)'],['../namespacefreetensor.html#aff89102d2c678dad90c900732147ed98',1,'freetensor::sub(const LowerBound &amp;b1, const UpperBound &amp;b2)'],['../namespacefreetensor.html#a058c0209ec7d466e06d6f65e7015bdde',1,'freetensor::sub(const LinearExpr&lt; T &gt; &amp;lhs, const LinearExpr&lt; T &gt; &amp;rhs)']]],

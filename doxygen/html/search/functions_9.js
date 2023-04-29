@@ -15,7 +15,7 @@ var searchData=
   ['init_12',['init',['../classfreetensor_1_1Config.html#a3b42adca2cdd2bbe34a28abf828d75fd',1,'freetensor::Config']]],
   ['initexprvari_13',['InitExprVari',['../classfreetensor_1_1InitExprVari.html#adeeabc59cf77e2fd1b8260645dbd05a2',1,'freetensor::InitExprVari']]],
   ['initstmt_14',['initStmt',['../classfreetensor_1_1MakeInitAndReduce.html#a34b1dc7f72f6d06b5a25cb25c7688704',1,'freetensor::MakeInitAndReduce']]],
-  ['inlinedinvoke_15',['inlinedInvoke',['../namespacefreetensor.html#a54a66a3840b9fafbef0a494f6fe2eab9',1,'freetensor']]],
+  ['inlinedinvoke_15',['inlinedInvoke',['../namespacefreetensor.html#ae5b9e562204f399de35823134dca7cbb',1,'freetensor']]],
   ['inlinedinvoke_16',['InlinedInvoke',['../classfreetensor_1_1InlinedInvoke.html#aa42df3c7450bf638ce80dd4f6627ccaa',1,'freetensor::InlinedInvoke']]],
   ['inlining_17',['inlining',['../classfreetensor_1_1Schedule.html#a9bfc2f98d42e75a3838eaa0166b802e2',1,'freetensor::Schedule::inlining()'],['../namespacefreetensor.html#a0611eaa53154125f43b7c1660fc35d7d',1,'freetensor::inlining()']]],
   ['innerid_18',['innerId',['../classfreetensor_1_1Splitter.html#a408e28f3a897410325b4d5767bfb699d',1,'freetensor::Splitter']]],

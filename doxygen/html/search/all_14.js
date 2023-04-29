@@ -180,7 +180,7 @@ var searchData=
   ['strideb_5f_177',['strideb_',['../classfreetensor_1_1MatMulNode.html#afb12f7051dad0223f6e5fe0a380f6a08',1,'freetensor::MatMulNode']]],
   ['stridec_5f_178',['stridec_',['../classfreetensor_1_1MatMulNode.html#a82efe76eb75e567c400820c805589ba0',1,'freetensor::MatMulNode']]],
   ['stripreturns_179',['StripReturns',['../classfreetensor_1_1StripReturns.html',1,'freetensor']]],
-  ['stripreturns_180',['stripReturns',['../namespacefreetensor.html#a0525bc98a05b2f0db5a52f4abda3ff23',1,'freetensor']]],
+  ['stripreturns_180',['stripReturns',['../namespacefreetensor.html#a67805451cf0700d71553c3d6fef4ff82',1,'freetensor']]],
   ['stripreturns_181',['StripReturns',['../classfreetensor_1_1StripReturns.html#a2ecade859d5ea267e0565786ac2e7cfb',1,'freetensor::StripReturns']]],
   ['structural_5ffeature_2ecc_182',['structural_feature.cc',['../structural__feature_8cc.html',1,'']]],
   ['structural_5ffeature_2eh_183',['structural_feature.h',['../structural__feature_8h.html',1,'']]],

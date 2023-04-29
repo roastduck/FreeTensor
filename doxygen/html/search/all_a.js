@@ -31,7 +31,7 @@ var searchData=
   ['inlined_5finvoke_2ecc_28',['inlined_invoke.cc',['../inlined__invoke_8cc.html',1,'']]],
   ['inlined_5finvoke_2eh_29',['inlined_invoke.h',['../inlined__invoke_8h.html',1,'']]],
   ['inlinedinvoke_30',['InlinedInvoke',['../classfreetensor_1_1InlinedInvoke.html',1,'freetensor']]],
-  ['inlinedinvoke_31',['inlinedInvoke',['../namespacefreetensor.html#a54a66a3840b9fafbef0a494f6fe2eab9',1,'freetensor']]],
+  ['inlinedinvoke_31',['inlinedInvoke',['../namespacefreetensor.html#ae5b9e562204f399de35823134dca7cbb',1,'freetensor']]],
   ['inlinedinvoke_32',['InlinedInvoke',['../classfreetensor_1_1InlinedInvoke.html#aa42df3c7450bf638ce80dd4f6627ccaa',1,'freetensor::InlinedInvoke']]],
   ['inlining_33',['inlining',['../namespacefreetensor.html#a0611eaa53154125f43b7c1660fc35d7d',1,'freetensor::inlining()'],['../classfreetensor_1_1Schedule.html#a9bfc2f98d42e75a3838eaa0166b802e2',1,'freetensor::Schedule::inlining()']]],
   ['inlining_2ecc_34',['inlining.cc',['../inlining_8cc.html',1,'']]],

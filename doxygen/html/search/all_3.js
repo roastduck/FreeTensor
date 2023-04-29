@@ -54,7 +54,7 @@ var searchData=
   ['buffer_2ecc_51',['buffer.cc',['../buffer_8cc.html',1,'']]],
   ['buffer_2eh_52',['buffer.h',['../buffer_8h.html',1,'']]],
   ['buffer_5f_53',['buffer_',['../classfreetensor_1_1VarDefNode.html#a6092e2ac0f53788f2ef040883cf36101',1,'freetensor::VarDefNode::buffer_()'],['../structfreetensor_1_1AccessPoint.html#ae5dee38c8af03951c72f8fa814ed4978',1,'freetensor::AccessPoint::buffer_()'],['../structfreetensor_1_1Access.html#abeafe394c1d679c13e3b969f273ec0c7',1,'freetensor::Access::buffer_()']]],
-  ['buftoreturn_54',['bufToReturn',['../classfreetensor_1_1StripReturns.html#a778792e6731241930b9dfcc686c12002',1,'freetensor::StripReturns']]],
+  ['buftoreturn_54',['bufToReturn',['../classfreetensor_1_1StripReturns.html#a1e486818c6aefd9cd6e7691a3813a9e6',1,'freetensor::StripReturns']]],
   ['build_55',['build',['../classfreetensor_1_1PBSetBuilder.html#aed62f3ca77d91fa81b29936f7d65a400',1,'freetensor::PBSetBuilder::build()'],['../classfreetensor_1_1PBMapBuilder.html#adfd40ce5de8835fed589042c83db5546',1,'freetensor::PBMapBuilder::build()']]],
   ['builtinsimplify_56',['builtinSimplify',['../namespacefreetensor.html#a5c54f4c7a864a4e7051d226cfff73cb1',1,'freetensor']]],
   ['builtinsimplify_57',['BuiltinSimplify',['../classfreetensor_1_1BuiltinSimplify.html#a03d431a4e9cb9b24f6ab0157252c7fbb',1,'freetensor::BuiltinSimplify::BuiltinSimplify()'],['../classfreetensor_1_1BuiltinSimplify.html',1,'freetensor::BuiltinSimplify']]],

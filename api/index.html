@@ -445,7 +445,7 @@ return value, respectively.</p>
 
 
 <h4 id="freetensor.core.autograd.jacrev" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">jacrev</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">jacrev</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.autograd.jacrev" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -460,8 +460,8 @@ all elements in each inputs tensor.</p>
 forward function computes the original results. The backward function computes
 the Jacobian tensors. The map maps from the names of the original arguments to the
 names of their Jacobian tensors.</p>
-<p>The forward function has the same interface of the original function, but it will
-store some intermediate tensors (the tape) in some hidden global states. The
+<p>By default, the forward function has the same interface of the original function, but
+it will store some intermediate tensors (the tape) in some hidden global states. The
 backward functions receives the same inputs as the original function, and also reads
 from the hidden states. The outputs of the original function are no longer exist
 in the backward function, and the input-outputs of the original function are
@@ -473,6 +473,9 @@ are <code>(e1, e2, ...)</code> and <code>(f1, f2, ...)</code>, respectively. If 
 default), the Jacobian tensors' shape will be <code>(d1, d2, ..., e1, e2, ...)</code> and
 <code>(d1, d2, ..., f1, f2, ...)</code>, respectively. If <code>flatten</code> is True, there will be only
 one Jacbian tensor, whose shape will be <code>(d1 * d2 * ..., e1 * e2 * ... + f1 * f2 * ...)</code>.</p>
+<p>If <code>tape_in_closure</code> is False, global states described above will be passed by
+explicit arguments and return values, so you can store or manipluate these states
+between the forward run and the backward run.</p>
 
   <p>Parameters:</p>
   <ul>
@@ -511,6 +514,13 @@ which intermediate variables to be stored by heuristics. Avail <code>GradTapeMod
 are: All: store all variables including local scalars; None: store nothing;
 NoReuseOnly: store variables that only hold one version of data, which means
 we do not have to store each version of them in their history</p>
+      </li>
+      <li class="field-body">
+        <b>tape_in_closure</b>
+            (<code>bool</code>)
+        – <p>True to pass taped tensors from the forward function to the backward function in
+implicit I/O parameters, i.e. in closure. False to pass these tensors as
+explicit I/O parameters. Default to True</p>
       </li>
       <li class="field-body">
         <b>invert</b>
@@ -567,7 +577,7 @@ and other metadata attached to it</p>
 
 
 <h4 id="freetensor.core.autograd.jacrev_" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">jacrev_</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">jacrev_</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span> <span class="n">tape_in_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_grads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attach_backward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jit_cache</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_override_func_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#freetensor.core.autograd.jacrev_" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -582,8 +592,8 @@ all elements in each inputs tensor.</p>
 forward function computes the original results. The backward function computes
 the Jacobian tensors. The map maps from the names of the original arguments to the
 names of their Jacobian tensors.</p>
-<p>The forward function has the same interface of the original function, but it will
-store some intermediate tensors (the tape) in some hidden global states. The
+<p>By default, the forward function has the same interface of the original function, but
+it will store some intermediate tensors (the tape) in some hidden global states. The
 backward functions receives the same inputs as the original function, and also reads
 from the hidden states. The outputs of the original function are no longer exist
 in the backward function, and the input-outputs of the original function are
@@ -595,6 +605,9 @@ are <code>(e1, e2, ...)</code> and <code>(f1, f2, ...)</code>, respectively. If 
 default), the Jacobian tensors' shape will be <code>(d1, d2, ..., e1, e2, ...)</code> and
 <code>(d1, d2, ..., f1, f2, ...)</code>, respectively. If <code>flatten</code> is True, there will be only
 one Jacbian tensor, whose shape will be <code>(d1 * d2 * ..., e1 * e2 * ... + f1 * f2 * ...)</code>.</p>
+<p>If <code>tape_in_closure</code> is False, global states described above will be passed by
+explicit arguments and return values, so you can store or manipluate these states
+between the forward run and the backward run.</p>
 
   <p>Parameters:</p>
   <ul>
@@ -635,6 +648,13 @@ which intermediate variables to be stored by heuristics. Avail <code>GradTapeMod
 are: All: store all variables including local scalars; None: store nothing;
 NoReuseOnly: store variables that only hold one version of data, which means
 we do not have to store each version of them in their history</p>
+      </li>
+      <li class="field-body">
+        <b>tape_in_closure</b>
+            (<code>bool</code>)
+        – <p>True to pass taped tensors from the forward function to the backward function in
+implicit I/O parameters, i.e. in closure. False to pass these tensors as
+explicit I/O parameters. Default to True</p>
       </li>
       <li class="field-body">
         <b>invert</b>
@@ -1234,102 +1254,6 @@ ReturnValuesPack</p>
   <div class="doc doc-contents ">
   
       <p>Set argument for an invocation</p>
-
-  </div>
-
-</div>
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h4 id="freetensor.core.driver.ReturnValuesPack" class="doc doc-heading">
-        <code>freetensor.core.driver.ReturnValuesPack</code>
-
-
-<a href="#freetensor.core.driver.ReturnValuesPack" class="headerlink" title="Permanent link">&para;</a></h4>
-
-
-  <div class="doc doc-contents ">
-
-  
-      <p>Hold return values from a Driver invocation</p>
-<p>Return values can be retrieved in an anonymous manner: <code>x, y, z = pack</code>,
-or in a named manner: <code>pack['x']</code></p>
-<p>Please note that a ReturnValuesPack is different from a OrderedDict, as
-OrderedDict unpacks to keys rather than values</p>
-
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h5 id="freetensor.core.driver.ReturnValuesPack.__contains__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">ReturnValuesPack</span><span class="o">.</span><span class="fm">__contains__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></code>
-
-<a href="#freetensor.core.driver.ReturnValuesPack.__contains__" class="headerlink" title="Permanent link">&para;</a></h5>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Test if a return value exists</p>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-
-<h5 id="freetensor.core.driver.ReturnValuesPack.__getitem__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">ReturnValuesPack</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></code>
-
-<a href="#freetensor.core.driver.ReturnValuesPack.__getitem__" class="headerlink" title="Permanent link">&para;</a></h5>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Get a return value with a name. Tuple is supported for multiple values</p>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-
-<h5 id="freetensor.core.driver.ReturnValuesPack.__iter__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">ReturnValuesPack</span><span class="o">.</span><span class="fm">__iter__</span><span class="p">()</span></code>
-
-<a href="#freetensor.core.driver.ReturnValuesPack.__iter__" class="headerlink" title="Permanent link">&para;</a></h5>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Get all return values in the order declared in Func</p>
 
   </div>
 
@@ -4657,6 +4581,134 @@ that generates a Func if there is at least one</p>
   </div>
 
 </div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="freetensor.core.return_values_pack" class="doc doc-heading">
+          <code>freetensor.core.return_values_pack</code>
+
+
+<a href="#freetensor.core.return_values_pack" class="headerlink" title="Permanent link">&para;</a></h3>
+
+  <div class="doc doc-contents ">
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="freetensor.core.return_values_pack.ReturnValuesPack" class="doc doc-heading">
+        <code>freetensor.core.return_values_pack.ReturnValuesPack</code>
+
+
+<a href="#freetensor.core.return_values_pack.ReturnValuesPack" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+  <div class="doc doc-contents ">
+
+  
+      <p>Hold return values from a Driver invocation</p>
+<p>Return values can be retrieved in an anonymous manner: <code>x, y, z = pack</code>,
+or in a named manner: <code>pack['x']</code></p>
+<p>Please note that a ReturnValuesPack is different from a OrderedDict, as
+OrderedDict unpacks to keys rather than values</p>
+
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h5 id="freetensor.core.return_values_pack.ReturnValuesPack.__contains__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">return_values_pack</span><span class="o">.</span><span class="n">ReturnValuesPack</span><span class="o">.</span><span class="fm">__contains__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></code>
+
+<a href="#freetensor.core.return_values_pack.ReturnValuesPack.__contains__" class="headerlink" title="Permanent link">&para;</a></h5>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Test if a return value exists</p>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h5 id="freetensor.core.return_values_pack.ReturnValuesPack.__getitem__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">return_values_pack</span><span class="o">.</span><span class="n">ReturnValuesPack</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></code>
+
+<a href="#freetensor.core.return_values_pack.ReturnValuesPack.__getitem__" class="headerlink" title="Permanent link">&para;</a></h5>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get a return value with a name. Tuple is supported for multiple values</p>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h5 id="freetensor.core.return_values_pack.ReturnValuesPack.__iter__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">freetensor</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">return_values_pack</span><span class="o">.</span><span class="n">ReturnValuesPack</span><span class="o">.</span><span class="fm">__iter__</span><span class="p">()</span></code>
+
+<a href="#freetensor.core.return_values_pack.ReturnValuesPack.__iter__" class="headerlink" title="Permanent link">&para;</a></h5>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get all return values in the order declared in Func</p>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
 
 
 
