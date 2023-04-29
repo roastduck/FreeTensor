@@ -724,23 +724,22 @@ gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
                     forwardReturns.begin(), forwardReturns.end(),
                     [&](const FuncRet &r) { return r.name_ == tapeName; });
                 iter == forwardReturns.end()) {
+                // Add a new closured return
                 forwardReturns.emplace_back(tapeName, tapeDType, tapeArr,
                                             false);
             } else {
-                // The tape is already a return value
+                // The tape is already a return value, mark it to update closure
                 ASSERT(!iter->isInClosure());
                 iter->closure_ = tapeArr;
                 iter->returnClosure_ = true;
             }
             backwardParams.emplace_back(tapeName, tapeArr, false);
         } else {
-            if (std::find_if(forwardReturns.begin(), forwardReturns.end(),
-                             [&](const FuncRet &r) {
-                                 return r.name_ == tapeName;
-                             }) == forwardReturns.end()) {
-                forwardReturns.emplace_back(tapeName, tapeDType, nullptr,
-                                            false);
-            }
+            // No matter if the variable is already a return value, always add a
+            // new return, so we can easily identify these returns. This is OK
+            // because we support returning the same variable to multiple
+            // positions
+            forwardReturns.emplace_back(tapeName, tapeDType, nullptr, false);
             backwardParams.emplace_back(tapeName, nullptr, false);
         }
     }

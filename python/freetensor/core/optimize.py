@@ -53,7 +53,7 @@ def optimize(func=None,
         be returend, which can be used as a decorator
     schedule_callback : Callable (Optional)
         Schedule(s) to apply
-    backward_callback : Callable
+    backward_schedule_callback : Callable
         Specify what schedule(s) to do for the backward function, if `ast` is returned
         from AD with `attach_backward=True`. Defaults to be the same with `callback`
     target : Target (Optional)

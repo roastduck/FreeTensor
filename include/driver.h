@@ -24,9 +24,9 @@ class Driver {
     Func f_;
     std::string src_;
     std::vector<Ref<Array>> args_; /// Ref count holders
-    std::vector<void *> rawArgs,
-        rawRets; /// Raw arguments and return values passed to (from) the
-                 /// native function
+    std::vector<void *> rawArgs_,
+        rawRets_; /// Raw arguments and return values passed to (from) the
+                  /// native function
     std::vector<size_t *> retShapes_;
     std::vector<size_t> retDims_;
     std::unordered_map<std::string, size_t> name2param_;
@@ -63,7 +63,7 @@ class Driver {
     /** @} */
 
     ~Driver() {
-        for (void *retVal : rawRets) {
+        for (void *retVal : rawRets_) {
             if (retVal != nullptr) {
                 WARNING("Return values must be collected, or there will be "
                         "memory leaks");
