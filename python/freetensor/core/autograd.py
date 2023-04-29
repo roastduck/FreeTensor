@@ -356,6 +356,7 @@ def jacrev_(func=None,
             output: Union[str, Parameter, Return] = None,
             flatten: bool = False,
             tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+            tape_in_closure: bool = True,
             invert: bool = True,
             user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
             attach_backward: bool = False,
@@ -374,8 +375,8 @@ def jacrev_(func=None,
     the Jacobian tensors. The map maps from the names of the original arguments to the
     names of their Jacobian tensors.
 
-    The forward function has the same interface of the original function, but it will
-    store some intermediate tensors (the tape) in some hidden global states. The
+    By default, the forward function has the same interface of the original function, but
+    it will store some intermediate tensors (the tape) in some hidden global states. The
     backward functions receives the same inputs as the original function, and also reads
     from the hidden states. The outputs of the original function are no longer exist
     in the backward function, and the input-outputs of the original function are
@@ -388,6 +389,10 @@ def jacrev_(func=None,
     default), the Jacobian tensors' shape will be `(d1, d2, ..., e1, e2, ...)` and
     `(d1, d2, ..., f1, f2, ...)`, respectively. If `flatten` is True, there will be only
     one Jacbian tensor, whose shape will be `(d1 * d2 * ..., e1 * e2 * ... + f1 * f2 * ...)`.
+
+    If `tape_in_closure` is False, global states described above will be passed by
+    explicit arguments and return values, so you can store or manipluate these states
+    between the forward run and the backward run.
 
     Parameters
     ----------
@@ -414,6 +419,10 @@ def jacrev_(func=None,
         are: All: store all variables including local scalars; None: store nothing;
         NoReuseOnly: store variables that only hold one version of data, which means
         we do not have to store each version of them in their history
+    tape_in_closure : bool
+        True to pass taped tensors from the forward function to the backward function in
+        implicit I/O parameters, i.e. in closure. False to pass these tensors as
+        explicit I/O parameters. Default to True
     invert: bool
         If set to true, it can reduce the amount of recomputation or taping required.
         However, this may result in a loss of precision for floating-point numbers. Defaults
@@ -461,6 +470,7 @@ def jacrev_(func=None,
                     output=output,
                     flatten=flatten,
                     tapes=tapes,
+                    tape_in_closure=tape_in_closure,
                     invert=invert,
                     user_grads=user_grads,
                     attach_backward=attach_backward,
@@ -475,6 +485,7 @@ def jacrev_(func=None,
         func,
         inputs, [output],
         tapes=tapes,
+        tape_in_closure=tape_in_closure,
         invert=invert,
         user_grads=user_grads,
         verbose=verbose,
@@ -568,7 +579,7 @@ def jacrev_(func=None,
                     **other_to_new_ref
                 }
                 #! label: general_bwd
-                bwd(**params)
+                bwd(**params, _freetensor_force_allow_closures=True)
             else:
                 for _freetensor_jacrev_i in range(new_out_ref_slice.shape(0)):
                     body(
@@ -656,6 +667,7 @@ def jacrev(func=None,
            output: Union[str, Parameter, Return] = None,
            flatten: bool = False,
            tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+           tape_in_closure: bool = True,
            invert: bool = True,
            user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
            attach_backward: bool = False,
@@ -674,8 +686,8 @@ def jacrev(func=None,
     the Jacobian tensors. The map maps from the names of the original arguments to the
     names of their Jacobian tensors.
 
-    The forward function has the same interface of the original function, but it will
-    store some intermediate tensors (the tape) in some hidden global states. The
+    By default, the forward function has the same interface of the original function, but
+    it will store some intermediate tensors (the tape) in some hidden global states. The
     backward functions receives the same inputs as the original function, and also reads
     from the hidden states. The outputs of the original function are no longer exist
     in the backward function, and the input-outputs of the original function are
@@ -688,6 +700,10 @@ def jacrev(func=None,
     default), the Jacobian tensors' shape will be `(d1, d2, ..., e1, e2, ...)` and
     `(d1, d2, ..., f1, f2, ...)`, respectively. If `flatten` is True, there will be only
     one Jacbian tensor, whose shape will be `(d1 * d2 * ..., e1 * e2 * ... + f1 * f2 * ...)`.
+
+    If `tape_in_closure` is False, global states described above will be passed by
+    explicit arguments and return values, so you can store or manipluate these states
+    between the forward run and the backward run.
 
     Parameters
     ----------
@@ -712,6 +728,10 @@ def jacrev(func=None,
         are: All: store all variables including local scalars; None: store nothing;
         NoReuseOnly: store variables that only hold one version of data, which means
         we do not have to store each version of them in their history
+    tape_in_closure : bool
+        True to pass taped tensors from the forward function to the backward function in
+        implicit I/O parameters, i.e. in closure. False to pass these tensors as
+        explicit I/O parameters. Default to True
     invert: bool
         If set to true, it can reduce the amount of recomputation or taping required.
         However, this may result in a loss of precision for floating-point numbers. Defaults
@@ -759,6 +779,7 @@ def jacrev(func=None,
                     output=output,
                     flatten=flatten,
                     tapes=tapes,
+                    tape_in_closure=tape_in_closure,
                     invert=invert,
                     user_grads=user_grads,
                     attach_backward=True,
@@ -773,6 +794,7 @@ def jacrev(func=None,
                                   output,
                                   flatten=flatten,
                                   tapes=tapes,
+                                  tape_in_closure=tape_in_closure,
                                   invert=invert,
                                   user_grads=user_grads,
                                   attach_backward=False,

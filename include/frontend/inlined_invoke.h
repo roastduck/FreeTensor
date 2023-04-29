@@ -68,12 +68,22 @@ std::pair<Func, std::vector<Ref<Buffer>>> stripReturns(const Func &func);
  * Usually we handle function calls directly in the frontend. But sometimes we
  * may want to call a differentiated function, which is already lowered as an
  * AST. Then, we can use `inlinedInvoke` to call it
+ *
+ * @param callSiteMetadata : Metadata marked for the call site
+ * @param func : Function to invoke
+ * @param args : Positional arguments
+ * @param kvs : Keyword arguments
+ * @param retNames : Catch return values in these names
+ * @param conflictNames : Avoiding using these names in the inlined statements
+ * @param forceAllowClosures : Allow closures in the callee function. Please be
+ * sure to redirect closures in the caller properly
  */
 Stmt inlinedInvoke(const Metadata &callSiteMetadata, const Func &func,
                    const std::vector<Ref<FrontendVar>> &args,
                    const std::unordered_map<std::string, Ref<FrontendVar>> &kvs,
                    const std::vector<std::string> &retNames,
-                   const std::unordered_set<std::string> &conflictNames);
+                   const std::unordered_set<std::string> &conflictNames,
+                   bool forceAllowClosures = false);
 
 } // namespace freetensor
 

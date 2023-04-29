@@ -159,3 +159,52 @@ def test_attach_backward():
                                              argnums=(0, 1))(a_torch, b_torch)
     assert torch.all(torch.isclose(a_jac_torch, a_jac_std))
     assert torch.all(torch.isclose(b_jac_torch, b_jac_std))
+
+
+def test_inline_invoke_func_from_jacrev():
+
+    @ft.jacrev(inputs=["a", "b"],
+               output=ft.Return(),
+               tapes=ft.GradTapeMode.All,
+               attach_backward=True,
+               tape_in_closure=False,
+               verbose=1)
+    def f(a, b):
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        # Square so we can test for tapes
+        return ft.square(ft.libop.matmul(a, b))
+
+    @ft.optimize
+    def fwd_then_bwd(a, b):
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        fwd_ret = f(a, b)
+        y = None
+        tapes = {}
+        if isinstance(fwd_ret, ft.VarRef):
+            y = fwd_ret
+        else:
+            y = fwd_ret[0]
+            for (tape_decl, tape_val) in zip(f.returns[1:], fwd_ret[1:]):
+                tapes[tape_decl.name] = tape_val
+        jac = f.backward(a, b, **tapes)
+        input_map = f.input_name_to_gradient_name
+        return y, jac[input_map['a']], jac[input_map['b']]
+
+    a_torch = torch.rand(4, 5, dtype=torch.float32)
+    a_arr = ft.Array(a_torch.numpy())
+    b_torch = torch.rand(5, 6, dtype=torch.float32)
+    b_arr = ft.Array(b_torch.numpy())
+    y_arr, a_jac_arr, b_jac_arr = fwd_then_bwd(a_arr, b_arr)
+    y_torch = torch.tensor(y_arr.numpy())
+    a_jac_torch = torch.tensor(a_jac_arr.numpy())
+    b_jac_torch = torch.tensor(b_jac_arr.numpy())
+
+    y_std = torch.matmul(a_torch, b_torch)**2
+    assert torch.all(torch.isclose(y_torch, y_std))
+
+    a_jac_std, b_jac_std = torch.func.jacrev(lambda a, b: torch.matmul(a, b)**2,
+                                             argnums=(0, 1))(a_torch, b_torch)
+    assert torch.all(torch.isclose(a_jac_torch, a_jac_std))
+    assert torch.all(torch.isclose(b_jac_torch, b_jac_std))

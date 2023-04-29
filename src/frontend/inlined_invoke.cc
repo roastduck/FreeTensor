@@ -149,8 +149,34 @@ Stmt inlinedInvoke(
     const std::vector<Ref<FrontendVar>> &args,
     const std::unordered_map<std::string, Ref<FrontendVar>> &_kvs,
     const std::vector<std::string> &retNames,
-    const std::unordered_set<std::string> &conflictNames) {
+    const std::unordered_set<std::string> &conflictNames,
+    bool forceAllowClosures) {
     Stmt ast = func->body_;
+
+    if (!forceAllowClosures) {
+        for (auto &&param : func->params_) {
+            if (param.isInClosure()) {
+                throw InvalidProgram(
+                    "Closure '" + param.name_ +
+                    "' is not supported for inlined invoke. If you are "
+                    "invoking a "
+                    "function from AD (`grad`, `jacrev`, etc), please pass "
+                    "`tape_in_closure=False` to it, and pass the tapes "
+                    "explicitly.");
+            }
+        }
+        for (auto &&ret : func->returns_) {
+            if (ret.isInClosure()) {
+                throw InvalidProgram(
+                    "Closure '" + ret.name_ +
+                    "' is not supported for inlined invoke. If you are "
+                    "invoking a "
+                    "function from AD (`grad`, `jacrev`, etc), please pass "
+                    "`tape_in_closure=False` to it, and pass the tapes "
+                    "explicitly.");
+            }
+        }
+    }
 
     auto kvs = _kvs;
     for (auto &&[param, arg] : views::zip(func->params_, args)) {
