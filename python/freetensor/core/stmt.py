@@ -17,6 +17,7 @@ import freetensor_ffi as ffi
 from . import config
 from .context import ctx_stack, StmtRange
 from .expr import VarRef, VarRefFromVarDef
+from .return_values_pack import ReturnValuesPack
 
 
 def find_borrowed_vardefs(exprs: Sequence):
@@ -362,33 +363,41 @@ class Invoke:
                  args: Sequence = [],
                  kvs: Mapping = {},
                  *,
-                 conflict_names: Set[str] = set()):
+                 conflict_names: Set[str] = set(),
+                 force_allow_closures: bool = False):
         self.args = args
         self.kvs = kvs
         self.conflict_names = conflict_names
-        self.func, returns = ffi.strip_returns(func)
-        self.vardefs = []  # Outer to inner
-        assert len(ret_names) == len(returns)
-        for name, ret in zip(ret_names, returns):
-            self.vardefs.append(
-                _VarDef(name, ret.tensor.shape, ret.tensor.dtype, "cache",
-                        ret.mtype))
+        self.force_allow_closures = force_allow_closures
+        self.func, returns_info = ffi.strip_returns(func)
+        self.vardefs = []  # (pos, vardef) each, from outer to inner
+        assert len(ret_names) == len(returns_info)
+        for pos, buf in returns_info:
+            self.vardefs.append((pos,
+                                 _VarDef(ret_names[pos], buf.tensor.shape,
+                                         buf.tensor.dtype, "cache", buf.mtype)))
 
     def __enter__(self):
-        varrefs = []
-        ret_names = []
-        for vardef in self.vardefs:
+        varrefs = [None] * len(self.func.returns)
+        ret_names = [None] * len(self.func.returns)
+        for pos, vardef in self.vardefs:
             varref = vardef.__enter__()
-            varrefs.append(varref)
-            ret_names.append(varref.name)
+            varrefs[pos] = varref
+            ret_names[pos] = varref.name
         ctx_stack.top().append_stmt(
             ffi.inlined_invoke(ctx_stack.top().get_metadata(), self.func,
                                self.args, self.kvs, ret_names,
-                               self.conflict_names))
-        return varrefs[0] if len(varrefs) == 1 else tuple(varrefs)
+                               self.conflict_names, self.force_allow_closures))
+        if len(varrefs) == 0:
+            return None
+        elif len(varrefs) == 1:
+            return varrefs[0]
+        else:
+            return ReturnValuesPack(map(lambda r: r.name, self.func.returns),
+                                    varrefs)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        for vardef in reversed(self.vardefs):
+        for pos, vardef in reversed(self.vardefs):
             vardef.__exit__(exc_type, exc_value, traceback)
 
 

@@ -105,12 +105,17 @@ class FreeTensorOverload(StagingOverload):
     def register_inlined_invoke(self, ret_names: Sequence[str], func: ffi.Func,
                                 args, kvs):
         ret_names = [self.fullname(name) for name in ret_names]
+        force_allow_closures = False
+        if '_freetensor_force_allow_closures' in kvs:
+            force_allow_closures = kvs['_freetensor_force_allow_closures']
+            del kvs['_freetensor_force_allow_closures']
         return self.lifetime_stack[-1].register_inner_scope(
             Invoke(ret_names,
                    func,
                    args,
                    kvs,
-                   conflict_names=set(self.name_dict.keys())))
+                   conflict_names=set(self.name_dict.keys()),
+                   force_allow_closures=force_allow_closures))
 
     def register_assert(self, pred):
         self.lifetime_stack[-1].register_inner_scope(Assert(pred))

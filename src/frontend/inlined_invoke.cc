@@ -18,10 +18,11 @@ static std::string getNewName(const std::string &oldName,
 }
 
 Stmt StripReturns::visit(const VarDef &op) {
-    if (std::find_if(returns_.begin(), returns_.end(), [&](const FuncRet &ret) {
-            return ret.name_ == op->name_;
-        }) != returns_.end()) {
-        bufToReturn_.emplace_back(op->buffer_);
+    if (auto it = std::find_if(
+            returns_.begin(), returns_.end(),
+            [&](const FuncRet &ret) { return ret.name_ == op->name_; });
+        it != returns_.end()) {
+        bufToReturn_.emplace_back(it - returns_.begin(), op->buffer_);
         return (*this)(op->body_);
     } else {
         return Mutator::visit(op);
@@ -137,7 +138,8 @@ Stmt InlinedInvoke::visit(const For &op) {
     }
 }
 
-std::pair<Func, std::vector<Ref<Buffer>>> stripReturns(const Func &_func) {
+std::pair<Func, std::vector<std::pair<int, Ref<Buffer>>>>
+stripReturns(const Func &_func) {
     auto func = hoistReturnVars(_func);
     StripReturns mutator(func->returns_);
     func->body_ = mutator(func->body_);
@@ -149,8 +151,34 @@ Stmt inlinedInvoke(
     const std::vector<Ref<FrontendVar>> &args,
     const std::unordered_map<std::string, Ref<FrontendVar>> &_kvs,
     const std::vector<std::string> &retNames,
-    const std::unordered_set<std::string> &conflictNames) {
+    const std::unordered_set<std::string> &conflictNames,
+    bool forceAllowClosures) {
     Stmt ast = func->body_;
+
+    if (!forceAllowClosures) {
+        for (auto &&param : func->params_) {
+            if (param.isInClosure()) {
+                throw InvalidProgram(
+                    "Closure '" + param.name_ +
+                    "' is not supported for inlined invoke. If you are "
+                    "invoking a "
+                    "function from AD (`grad`, `jacrev`, etc), please pass "
+                    "`tape_in_closure=False` to it, and pass the tapes "
+                    "explicitly.");
+            }
+        }
+        for (auto &&ret : func->returns_) {
+            if (ret.isInClosure()) {
+                throw InvalidProgram(
+                    "Closure '" + ret.name_ +
+                    "' is not supported for inlined invoke. If you are "
+                    "invoking a "
+                    "function from AD (`grad`, `jacrev`, etc), please pass "
+                    "`tape_in_closure=False` to it, and pass the tapes "
+                    "explicitly.");
+            }
+        }
+    }
 
     auto kvs = _kvs;
     for (auto &&[param, arg] : views::zip(func->params_, args)) {

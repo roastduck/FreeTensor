@@ -292,7 +292,9 @@ Stmt Grad::visit(const VarDef &_op) {
     recomputed_.erase(op->name_);
 
     VarDef ret = op;
-    if (!isRecompute_) {
+    if (isRecompute_) {
+        ret->buffer_->setAtype(removeOutputting(ret->buffer_->atype()));
+    } else {
         if (defsNeedGrad_.count(_op->id())) {
             if (requires_.count(op->name_)) {
                 requireGrads_[op->name_] = gradName;

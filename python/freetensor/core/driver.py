@@ -1,9 +1,9 @@
 __all__ = [
     'Array', 'array', 'move', 'TargetType', 'Target', 'Device', 'CPU', 'GPU',
-    'ReturnValuesPack', 'Driver', 'build_binary'
+    'Driver', 'build_binary'
 ]
 
-from typing import Optional, Sequence, Callable
+from typing import Optional, Callable
 import functools
 import numpy as np
 
@@ -13,6 +13,7 @@ from freetensor_ffi import TargetType, Target, Array
 from . import config
 from .codegen import NativeCode
 from .enable_attach_backward import EnableAttachBackward
+from .return_values_pack import ReturnValuesPack
 from .jit import JITTemplate
 from .meta import DataType, to_numpy_dtype, to_torch_dtype
 from .utils import as_decorator
@@ -191,48 +192,6 @@ class GPU(Device):
 
     def __init__(self, *args):
         super().__init__(TargetType.GPU, *args)
-
-
-class ReturnValuesPack:
-    '''
-    Hold return values from a Driver invocation
-
-    Return values can be retrieved in an anonymous manner: `x, y, z = pack`,
-    or in a named manner: `pack['x']`
-
-    Please note that a ReturnValuesPack is different from a OrderedDict, as
-    OrderedDict unpacks to keys rather than values
-    '''
-
-    def __init__(self, keys: Sequence[str], values: Sequence[Array]):
-        keys = list(keys)
-        values = list(values)
-        assert len(keys) == len(values)
-        self.keys = keys
-        self.values = values
-
-    def __iter__(self):
-        ''' Get all return values in the order declared in Func '''
-        yield from self.values
-
-    def __getitem__(self, key) -> Array:
-        ''' Get a return value with a name. Tuple is supported for multiple values '''
-        if type(key) is tuple or type(key) is list:
-            ret = []
-            for k in key:
-                ret.append(self[k])
-            return ret
-        for k, v in zip(self.keys, self.values):
-            if k == key:
-                return v
-        raise ffi.DriverError("No such return value named " + key)
-
-    def __contains__(self, key):
-        ''' Test if a return value exists '''
-        for k, v in zip(self.keys, self.values):
-            if k == key:
-                return True
-        return False
 
 
 class Driver(EnableAttachBackward, ffi.Driver):
