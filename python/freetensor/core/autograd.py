@@ -17,7 +17,7 @@ from .frontend import LifetimeScope, ndim
 from .transform import transform, inline
 from .func import Func, FuncRet
 from .stmt import VarDef
-from .context import pop_ast
+from .context import pop_ast, ctx_stack
 from .frontend import lang_overload
 from .param_ret_dict import Parameter, Return, ParamRetDict
 from .jit import JITTemplate
@@ -487,151 +487,155 @@ def jacrev_(func=None,
     # pass/shrink_var on the forward pass and then do AD. But this requires to somehow merge
     # the forward passes for every items, to share the forward pass among multiple backward
     # passes
+    with lang_overload, ctx_stack:
+        # 2a. Find I/O VarDefs, modify them, and build them in correct order
 
-    # 2a. Find I/O VarDefs, modify them, and build them in correct order
+        def is_io_vardef(x):
+            if x.type() == ffi.ASTNodeType.VarDef:
+                for param in bwd.params:
+                    if param.name == x.name:
+                        return True
+                for ret in bwd.returns:
+                    if ret.name == x.name:
+                        return True
+            return False
 
-    def is_io_vardef(x):
-        if x.type() == ffi.ASTNodeType.VarDef:
-            for param in bwd.params:
-                if param.name == x.name:
+        def is_out_grad(name):
+            return name == prov_map[output]
+
+        def is_in_grad(name):
+            for item in inputs:
+                if name == req_map[item]:
                     return True
-            for ret in bwd.returns:
-                if ret.name == x.name:
-                    return True
-        return False
+            return False
 
-    def is_out_grad(name):
-        return name == prov_map[output]
+        old_io_vardefs = find_all_stmt(bwd.body,
+                                       is_io_vardef)  # In DFS pre order
+        old_out_grad_vardef = None
+        for old_io_vardef in old_io_vardefs:
+            if is_out_grad(old_io_vardef.name):
+                old_out_grad_vardef = old_io_vardef
+        assert old_out_grad_vardef is not None, "Output is not found"
+        open_new_vardefs = []
+        in_grad_to_new_ref = {}
+        other_to_new_ref = {}
+        new_out_ref = None
+        for old_io_vardef in old_io_vardefs:
+            new_vardef = None
+            if is_in_grad(old_io_vardef.name):
+                # Prepend the output dimension to the input dimension. FIXME: What if a variable
+                # used in the output dimension is undefined here?
+                new_shape = list(old_io_vardef.buffer.tensor.shape)
+                new_shape = list(
+                    old_out_grad_vardef.buffer.tensor.shape) + new_shape
+                new_vardef = VarDef(
+                    old_io_vardef.name, new_shape,
+                    old_io_vardef.buffer.tensor.dtype,
+                    'cache' if flatten else old_io_vardef.buffer.atype,
+                    old_io_vardef.buffer.mtype)
+                in_grad_to_new_ref[old_io_vardef.name] = new_vardef.__enter__()
+            elif old_io_vardef is old_out_grad_vardef:
+                new_vardef = VarDef(old_io_vardef.name,
+                                    old_io_vardef.buffer.tensor.shape,
+                                    old_io_vardef.buffer.tensor.dtype, 'cache',
+                                    old_io_vardef.buffer.mtype)
+                new_out_ref = new_vardef.__enter__()
+            else:
+                new_vardef = VarDef(old_io_vardef.name,
+                                    old_io_vardef.buffer.tensor.shape,
+                                    old_io_vardef.buffer.tensor.dtype,
+                                    old_io_vardef.buffer.atype,
+                                    old_io_vardef.buffer.mtype)
+                other_to_new_ref[old_io_vardef.name] = new_vardef.__enter__()
+            open_new_vardefs.append(new_vardef)
+        # There may be unused parameters, just pass None to them
+        for p in bwd.params:
+            if (p.name != prov_map[output] and
+                    p.name not in in_grad_to_new_ref and
+                    p.name not in other_to_new_ref):
+                other_to_new_ref[p.name] = None
 
-    def is_in_grad(name):
-        for item in inputs:
-            if name == req_map[item]:
-                return True
-        return False
+        # 2b. Iterate through all elements in the output, and computes its gradient
 
-    old_io_vardefs = find_all_stmt(bwd.body, is_io_vardef)  # In DFS pre order
-    old_out_grad_vardef = None
-    for old_io_vardef in old_io_vardefs:
-        if is_out_grad(old_io_vardef.name):
-            old_out_grad_vardef = old_io_vardef
-    assert old_out_grad_vardef is not None, "Output is not found"
-    open_new_vardefs = []
-    in_grad_to_new_ref = {}
-    other_to_new_ref = {}
-    new_out_ref = None
-    for old_io_vardef in old_io_vardefs:
-        new_vardef = None
-        if is_in_grad(old_io_vardef.name):
-            # Prepend the output dimension to the input dimension. FIXME: What if a variable
-            # used in the output dimension is undefined here?
-            new_shape = list(old_io_vardef.buffer.tensor.shape)
-            new_shape = list(
-                old_out_grad_vardef.buffer.tensor.shape) + new_shape
-            new_vardef = VarDef(
-                old_io_vardef.name, new_shape,
-                old_io_vardef.buffer.tensor.dtype,
-                'cache' if flatten else old_io_vardef.buffer.atype,
-                old_io_vardef.buffer.mtype)
-            in_grad_to_new_ref[old_io_vardef.name] = new_vardef.__enter__()
-        elif old_io_vardef is old_out_grad_vardef:
-            new_vardef = VarDef(old_io_vardef.name,
-                                old_io_vardef.buffer.tensor.shape,
-                                old_io_vardef.buffer.tensor.dtype, 'cache',
-                                old_io_vardef.buffer.mtype)
-            new_out_ref = new_vardef.__enter__()
-        else:
-            new_vardef = VarDef(old_io_vardef.name,
-                                old_io_vardef.buffer.tensor.shape,
-                                old_io_vardef.buffer.tensor.dtype,
-                                old_io_vardef.buffer.atype,
-                                old_io_vardef.buffer.mtype)
-            other_to_new_ref[old_io_vardef.name] = new_vardef.__enter__()
-        open_new_vardefs.append(new_vardef)
-    # There may be unused parameters, just pass None to them
-    for p in bwd.params:
-        if (p.name != prov_map[output] and p.name not in in_grad_to_new_ref and
-                p.name not in other_to_new_ref):
-            other_to_new_ref[p.name] = None
+        @inline
+        def body(new_out_ref_slice, in_grad_to_new_ref_slice):
+            if ndim(new_out_ref_slice) == 0:
+                new_out_ref[...] = 0
+                new_out_ref_slice[...] = 1
+                params = {
+                    prov_map[output]: new_out_ref,
+                    **in_grad_to_new_ref_slice,
+                    **other_to_new_ref
+                }
+                #! label: general_bwd
+                bwd(**params)
+            else:
+                for _freetensor_jacrev_i in range(new_out_ref_slice.shape(0)):
+                    body(
+                        new_out_ref_slice[_freetensor_jacrev_i], {
+                            key:
+                                in_grad_to_new_ref_slice[key]
+                                [_freetensor_jacrev_i]
+                            for key in in_grad_to_new_ref_slice
+                        })
 
-    # 2b. Iterate through all elements in the output, and computes its gradient
+        def prod(iterable):
+            return functools.reduce(lambda x, y: x * y, iterable, 1)
 
-    @inline
-    def body(new_out_ref_slice, in_grad_to_new_ref_slice):
-        if ndim(new_out_ref_slice) == 0:
-            new_out_ref[...] = 0
-            new_out_ref_slice[...] = 1
-            params = {
-                prov_map[output]: new_out_ref,
-                **in_grad_to_new_ref_slice,
-                **other_to_new_ref
-            }
-            #! label: general_bwd
-            bwd(**params)
-        else:
-            for _freetensor_jacrev_i in range(new_out_ref_slice.shape(0)):
-                body(
-                    new_out_ref_slice[_freetensor_jacrev_i], {
-                        key: in_grad_to_new_ref_slice[key][_freetensor_jacrev_i]
-                        for key in in_grad_to_new_ref_slice
-                    })
-
-    def prod(iterable):
-        return functools.reduce(lambda x, y: x * y, iterable, 1)
-
-    @inline
-    def body_wrapper(*args, **kvs):
-        body(*args, **kvs)
-        if flatten:
-            from .. import libop
-            dtype = None
-            mtype = None
-            tot_in_size = 0
-            for p in bwd.params:
-                if p.name in in_grad_to_new_ref:
-                    in_grad_new_ref = in_grad_to_new_ref[p.name]
-                    tot_in_size += prod(
-                        in_grad_new_ref.shape()[new_out_ref.ndim:])
-                    if dtype is not None and dtype != in_grad_new_ref.dtype:
-                        raise ffi.InvalidAutoGrad(
-                            "jacrev with flatten=True requires all involved inputs having the"
-                            " same data type")
-                    if mtype is not None and mtype != in_grad_new_ref.mtype:
-                        raise ffi.InvalidAutoGrad(
-                            "jacrev with flatten=True requires all involved inputs having the"
-                            " same memory type")
-                    dtype = in_grad_new_ref.dtype
-                    mtype = in_grad_new_ref.mtype
-            tot_out_size = prod(new_out_ref.shape())
-            with VarDef("jacrev.flatten", (tot_out_size, tot_in_size), dtype,
-                        'output', mtype) as flattened_ref:
-                flattened_off = 0
+        @inline
+        def body_wrapper(*args, **kvs):
+            body(*args, **kvs)
+            if flatten:
+                from .. import libop
+                dtype = None
+                mtype = None
+                tot_in_size = 0
                 for p in bwd.params:
                     if p.name in in_grad_to_new_ref:
                         in_grad_new_ref = in_grad_to_new_ref[p.name]
-                        this_in_size = prod(
+                        tot_in_size += prod(
                             in_grad_new_ref.shape()[new_out_ref.ndim:])
-                        libop.flatten_onnx_(
-                            in_grad_new_ref,
-                            flattened_ref[:, flattened_off:flattened_off +
-                                          this_in_size],
-                            axis=new_out_ref.ndim)
-                        flattened_off += this_in_size
+                        if dtype is not None and dtype != in_grad_new_ref.dtype:
+                            raise ffi.InvalidAutoGrad(
+                                "jacrev with flatten=True requires all involved inputs having the"
+                                " same data type")
+                        if mtype is not None and mtype != in_grad_new_ref.mtype:
+                            raise ffi.InvalidAutoGrad(
+                                "jacrev with flatten=True requires all involved inputs having the"
+                                " same memory type")
+                        dtype = in_grad_new_ref.dtype
+                        mtype = in_grad_new_ref.mtype
+                tot_out_size = prod(new_out_ref.shape())
+                with VarDef("jacrev.flatten", (tot_out_size, tot_in_size),
+                            dtype, 'output', mtype) as flattened_ref:
+                    flattened_off = 0
+                    for p in bwd.params:
+                        if p.name in in_grad_to_new_ref:
+                            in_grad_new_ref = in_grad_to_new_ref[p.name]
+                            this_in_size = prod(
+                                in_grad_new_ref.shape()[new_out_ref.ndim:])
+                            libop.flatten_onnx_(
+                                in_grad_new_ref,
+                                flattened_ref[:, flattened_off:flattened_off +
+                                              this_in_size],
+                                axis=new_out_ref.ndim)
+                            flattened_off += this_in_size
 
-    with lang_overload:
         with LifetimeScope():
             body_wrapper(new_out_ref, in_grad_to_new_ref)
 
-    # 2c. Close scopes and build a new AST
-    for new_vardef in reversed(open_new_vardefs):
-        new_vardef.__exit__(None, None, None)
-    new_bwd_body = pop_ast()
+        # 2c. Close scopes and build a new AST
+        for new_vardef in reversed(open_new_vardefs):
+            new_vardef.__exit__(None, None, None)
+        new_bwd_body = pop_ast()
 
-    # 2d. Make Func signature
-    new_params = list(filter(lambda p: not is_out_grad(p.name), bwd.params))
-    if flatten:
-        new_params = list(filter(lambda p: not is_in_grad(p.name),
-                                 new_params)) + ['jacrev.flatten']
-    new_bwd = ffi.Func(bwd.name, new_params, bwd.returns, new_bwd_body)
+        # 2d. Make Func signature
+        new_params = list(filter(lambda p: not is_out_grad(p.name), bwd.params))
+        if flatten:
+            new_params = list(
+                filter(lambda p: not is_in_grad(p.name),
+                       new_params)) + ['jacrev.flatten']
+        new_bwd = ffi.Func(bwd.name, new_params, bwd.returns, new_bwd_body)
 
     if verbose:
         print("Backward pass from jacrev:", file=sys.stderr)
