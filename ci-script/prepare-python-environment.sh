@@ -2,11 +2,12 @@
 
 set -ex
 
-# Prepare a virtual environment in /tmp. If already created, keep it.
-python3 -m venv /tmp/venv-freetensor-ci
+# Prepare a virtual environment in ~/.cache. (/tmp is not shared by NFS). If already created,
+# keep it.
+python3 -m venv ~/.cache/venv-freetensor-ci
 
 # Load the virtual environment.
-source /tmp/venv-freetensor-ci/bin/activate
+source ~/.cache/venv-freetensor-ci/bin/activate
 
 # Install Python dependencies. Need `-f` for PyTorch. `--upgrade` forces
 # to use the required version even if already installed
