@@ -1,5 +1,7 @@
 # `source` THIS FILE! AT FreeTensor ROOT!
 
+set -ex
+
 # Prepare a virtual environment in /tmp. If already created, keep it.
 python3 -m venv /tmp/venv-freetensor-ci
 
