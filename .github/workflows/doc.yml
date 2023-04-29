@@ -29,10 +29,15 @@ jobs:
           mkdir build
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF
           cmake --build build -j
+      - name: Run Doxygen
+        run: |
+          # Doxygen from Spack can't be used together with our Python venv. So run it in this separated step
+          source /opt/spack/share/spack/setup-env.sh
+          spack load doxygen+graphviz
+          doxygen Doxyfile
       - name: Build and publish doc
         run: |
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 java@11 doxygen+graphviz
+          spack load python~debug@3.9.2%gcc@10.2.1 java@11
           source ci-script/prepare-python-environment.sh
-          doxygen Doxyfile
           PYTHONPATH=build:python:$PYTHONPATH mkdocs gh-deploy
