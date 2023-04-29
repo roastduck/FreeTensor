@@ -420,10 +420,10 @@ std::vector<Ref<Array>> Driver::collectReturns() {
                 if (retShapes_[i] != nullptr) {
                     delete[] retShapes_[i];
                 }
-                rawRets_[i] = nullptr;
-                retShapes_[i] = nullptr;
-                retDims_[i] = 0;
             }
+            rawRets_[i] = nullptr;
+            retShapes_[i] = nullptr;
+            retDims_[i] = 0;
         }
         if (closure.isValid()) {
             *closure = val;
