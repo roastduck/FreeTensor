@@ -3,7 +3,10 @@
 
 #include <cstdint>
 #include <cstdlib>
-#include <iostream>
+
+// CUDA supports only `printf` in kernel. Neither `fprintf` nor `iostream` is
+// supported. If unsure whether we are in a CUDA kernel, always use `printf`
+#include <cstdio>
 
 #include "../3rd-party/mdspan/mdspan.hpp"
 
@@ -37,14 +40,14 @@ class mdspan_dbg : public stdex::mdspan<ElementType, Extents> {
 
     template <size_t DIM, typename FirstIdx, typename... OtherIdx>
     FUNC_ATTR void printIndices(FirstIdx &&first, OtherIdx &&...others) const {
-        std::cerr << (DIM > 0 ? ", " : "") << first;
+        printf(DIM > 0 ? ", %ll" : "%ll", (long long)first);
         printIndices<DIM + 1>(std::forward<OtherIdx>(others)...);
     }
     template <size_t DIM> FUNC_ATTR void printIndices() const {}
 
     template <size_t DIM, typename FirstIdx, typename... OtherIdx>
     FUNC_ATTR void printExtents(FirstIdx &&first, OtherIdx &&...others) const {
-        std::cerr << (DIM > 0 ? ", " : "") << this->extent(DIM);
+        printf(DIM > 0 ? ", %ll" : "%ll", (long long)(this->extent(DIM)));
         printExtents<DIM + 1>(std::forward<OtherIdx>(others)...);
     }
     template <size_t DIM> FUNC_ATTR void printExtents() const {}
@@ -57,11 +60,11 @@ class mdspan_dbg : public stdex::mdspan<ElementType, Extents> {
     template <typename... Args>
     FUNC_ATTR constexpr auto &&operator()(Args &&...args) {
         if (!checkDims<0>(args...)) {
-            std::cerr << "Out of range access on index (";
+            printf("Out of range access on index (");
             printIndices<0>(args...);
-            std::cerr << "). The range is (";
+            printf("). The range is (");
             printExtents<0>(args...);
-            std::cerr << ")" << std::endl;
+            printf(")\n");
             exit(-1);
         }
         return BaseClass::operator()(std::forward<Args>(args)...);
@@ -70,11 +73,11 @@ class mdspan_dbg : public stdex::mdspan<ElementType, Extents> {
     template <typename... Args>
     FUNC_ATTR constexpr auto &&operator()(Args &&...args) const {
         if (!checkDims<0>(args...)) {
-            std::cerr << "Out of range access on index (";
+            printf("Out of range access on index (");
             printIndices<0>(args...);
-            std::cerr << "). The range is (";
+            printf("). The range is (");
             printExtents<0>(args...);
-            std::cerr << ")" << std::endl;
+            printf(")\n");
             exit(-1);
         }
         return BaseClass::operator()(std::forward<Args>(args)...);
@@ -95,10 +98,11 @@ template <class ElementType> struct restrict_accessor {
 
     template <class OtherElementType>
 #if (_MDSPAN_CPLUSPLUS >= MDSPAN_CXX_STD_20)
-    requires(std::is_convertible_v<OtherElementType (*)[], element_type (*)[]>)
+        requires(
+            std::is_convertible_v<OtherElementType (*)[], element_type (*)[]>)
 #endif
-        FUNC_ATTR constexpr restrict_accessor(
-            restrict_accessor<OtherElementType>) noexcept {
+    FUNC_ATTR constexpr restrict_accessor(
+        restrict_accessor<OtherElementType>) noexcept {
     }
 
     FUNC_ATTR constexpr reference access(data_handle_type p,
@@ -128,7 +132,9 @@ template <class T, size_t S, size_t... Ss> struct arr_t<T, S, Ss...> {
                   "Dynamic extent is not supported for C array pointers");
     typedef typename arr_t<T, Ss...>::type type[S];
 };
-template <class T> struct arr_t<T> { typedef T type; };
+template <class T> struct arr_t<T> {
+    typedef T type;
+};
 
 template <class T, size_t S, size_t... Ss> struct arr_ptr_t {
     typedef typename arr_t<T, Ss...>::type *type;
