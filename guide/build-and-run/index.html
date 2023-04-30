@@ -182,15 +182,16 @@ make -j  # Or use Ninja
 <h2 id="global-configurations">Global Configurations<a class="headerlink" href="#global-configurations" title="Permanent link">&para;</a></h2>
 <p>There are serveral global configurations can be set via environment variables:</p>
 <ul>
-<li><code>FT_PRETTY_PRINT=ON/OFF</code>. Enable/disable colored printing.</li>
-<li><code>FT_PRINT_ALL_ID=ON/OFF</code>. Print (or not) IDs of all statements in an AST.</li>
-<li><code>FT_PRINT_SOURCE_LOCATION=ON/OFF</code>. Print (or not) Python source location of all statements in an AST,</li>
-<li><code>FT_WERROR=ON/OFF</code>. Treat warnings as errors (or not).</li>
+<li><code>FT_PRETTY_PRINT=ON/OFF</code>. Enable/disable colored printing. If omitted, FreeTensor will guess this option with runtime information.</li>
+<li><code>FT_PRINT_ALL_ID=ON/OFF</code>. Print (or not) IDs of all statements in an AST. Defaults to <code>OFF</code>.</li>
+<li><code>FT_PRINT_SOURCE_LOCATION=ON/OFF</code>. Print (or not) Python source location of all statements in an AST. Defaults to <code>OFF</code>.</li>
+<li><code>FT_FAST_MATH=ON/OFF</code>. Run (or not) <code>pass/float_simplify</code> optimization pass, and enable (or not) fast math on backend compilers. Defaults to <code>ON</code>.</li>
+<li><code>FT_WERROR=ON/OFF</code>. Treat warnings as errors (or not). Defaults to <code>OFF</code>.</li>
 <li><code>FT_BACKEND_COMPILER_CXX=&lt;path/to/compiler&gt;</code>. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself, and compilers found in the <code>PATH</code> enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.</li>
 <li><code>FT_BACKEND_COMPILER_NVCC=&lt;path/to/compiler&gt;</code>. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself, and compilers found in the <code>PATH</code> enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.</li>
-<li><code>FT_DEBUG_RUNTIME_CHECK</code>. Check out-of-bound access and integer overflow at the generated code at runtime. This option is only for debugging, and will introduce significant runtime overhead. Currently the checker cannot print the error site, please also enable <code>FT_DEBUG_BINARY</code> and then use GDB to locate the error site.</li>
-<li><code>FT_DEBUG_BINARY=ON</code> (for developers). Compile with <code>-g</code> at backend. Do not delete the binary file after loaded.</li>
-<li><code>FT_DEBUG_CUDA_WITH_UM</code>. Allocate CUDA buffers on Unified Memory, for faster (debugging) access of GPU <code>Array</code> from CPU, but with slower <code>Array</code> allocations and more synchronizations. No performance effect on normal in-kernel computations.</li>
+<li><code>FT_DEBUG_RUNTIME_CHECK=ON/OFF</code>. If <code>ON</code>, check out-of-bound access and integer overflow at the generated code at runtime. This option is only for debugging, and will introduce significant runtime overhead. Currently the checker cannot print the error site, please also enable <code>FT_DEBUG_BINARY</code> and then use GDB to locate the error site. Defaults to <code>OFF</code>.</li>
+<li><code>FT_DEBUG_BINARY=ON/OFF</code> (for developers). If <code>ON</code>, compile with <code>-g</code> at backend. FreeTensor will not delete the binary file after loading it. Defaults to <code>OFF</code>.</li>
+<li><code>FT_DEBUG_CUDA_WITH_UM=ON/OFF</code>. If <code>ON</code>, allocate CUDA buffers on Unified Memory, for faster (debugging) access of GPU <code>Array</code> from CPU, but with slower <code>Array</code> allocations and more synchronizations. No performance effect on normal in-kernel computations. Defaults to <code>OFF</code>.</li>
 </ul>
 <p>This configurations can also set at runtime in <a href="../../api/#freetensor.core.config"><code>ft.config</code></a>.</p>
 <h2 id="run-the-tests">Run the Tests<a class="headerlink" href="#run-the-tests" title="Permanent link">&para;</a></h2>
