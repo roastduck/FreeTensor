@@ -46,6 +46,8 @@ class FloatSimplify : public SymbolTable<ConstFold> {
 
 /**
  * Simplify floating-point expressions in an AST
+ *
+ * This pass is by-passed when Config::fastMath is unset
  */
 Stmt floatSimplify(const Stmt &op);
 

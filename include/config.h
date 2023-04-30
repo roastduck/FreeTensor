@@ -20,6 +20,7 @@ class Config {
     static bool prettyPrint_;         /// Env FT_PRETTY_PRINT
     static bool printAllId_;          /// Env FT_PRINT_ALL_ID
     static bool printSourceLocation_; /// Env FT_PRINT_SOURCE_LOCATION
+    static bool fastMath_;            /// Env FT_FAST_MATH
     static bool werror_; /// Treat warnings as errors. Env FT_WERROR
     static bool
         debugBinary_; /// Compile with `-g` at backend. Do not delete the binary
@@ -75,6 +76,9 @@ class Config {
         printSourceLocation_ = flag;
     }
     static bool printSourceLocation() { return printSourceLocation_; }
+
+    static void setFastMath(bool flag = true) { fastMath_ = flag; }
+    static bool fastMath() { return fastMath_; }
 
     static void setWerror(bool flag = true) { werror_ = flag; }
     static bool werror() { return werror_; }

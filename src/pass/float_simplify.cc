@@ -1,5 +1,6 @@
 #include <cmath>
 
+#include <config.h>
 #include <hash.h>
 #include <math/utils.h>
 #include <pass/float_simplify.h>
@@ -489,6 +490,10 @@ Expr FloatSimplify::visit(const Abs &_op) {
 }
 
 Stmt floatSimplify(const Stmt &_op) {
+    if (!Config::fastMath()) {
+        return _op;
+    }
+
     auto op = _op;
 
     for (int i = 0;; i++) {
