@@ -6,7 +6,7 @@
 
 // CUDA supports only `printf` in kernel. Neither `fprintf` nor `iostream` is
 // supported. If unsure whether we are in a CUDA kernel, always use `printf`
-#include <iostream>
+#include <cstdio>
 
 #include "../3rd-party/mdspan/mdspan.hpp"
 
