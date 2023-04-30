@@ -212,7 +212,7 @@ make -j  # Or use Ninja
 </div>
 <h2 id="build-this-document">Build this Document<a class="headerlink" href="#build-this-document" title="Permanent link">&para;</a></h2>
 <p>First install some dependencies:</p>
-<pre><code class="language-sh">pip3 install --user mkdocs &quot;mkdocstrings[python]&quot;
+<pre><code class="language-sh">pip3 install --user mkdocs mkdocstrings==0.18.1 &quot;pytkdocs[numpy-style]&quot;
 </code></pre>
 <p>From the root directory of FreeTensor, run a HTTP server to serve the document (recommended, but without document on C++ interface due to <a href="https://github.com/mkdocs/mkdocs/issues/1901">a limitation</a>):</p>
 <pre><code class="language-sh">PYTHONPATH=./python:./build:$PYTHONPATH mkdocs serve
