@@ -49,7 +49,10 @@ class FuncNode : public ASTNode {
   public:
     std::string name_;
     std::vector<FuncParam> params_;
-    std::vector<FuncRet> returns_;
+    std::vector<FuncRet>
+        returns_; // NOTE: multiple items in `returns_` may share the same name.
+                  // In this case, one variable should be returned to multiple
+                  // positions
     SubTree<StmtNode> body_ = ChildOf{this};
 
     bool isFunc() const override { return true; }

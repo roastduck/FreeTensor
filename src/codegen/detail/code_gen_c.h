@@ -9,6 +9,7 @@
 #include <analyze/find_stmt.h>
 #include <codegen/code_gen_c.h>
 #include <config.h>
+#include <container_utils.h>
 #include <serialize/mangle.h>
 
 #include "code_gen.h"
@@ -162,14 +163,18 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
         }
         this->os() << ";" << std::endl;
     } else {
-        auto nthParamIter = std::find_if(
-            params_.begin(), params_.end(),
-            [&](const FuncParam &p) { return p.name_ == op->name_; });
-        auto nthReturnsIter = std::find_if(
-            returns_.begin(), returns_.end(),
-            [&](const FuncRet &item) { return item.name_ == op->name_; });
-        bool isParam = nthParamIter != params_.end();
-        bool isReturn = nthReturnsIter != returns_.end();
+        auto paramPositions = ranges::to<std::vector>(
+            params_ | views::enumerate | views::filter([&](auto &&pair) {
+                return pair.second.name_ == op->name_;
+            }) |
+            views::keys);
+        auto returnPositions = ranges::to<std::vector>(
+            returns_ | views::enumerate | views::filter([&](auto &&pair) {
+                return pair.second.name_ == op->name_;
+            }) |
+            views::keys);
+        bool isParam = !paramPositions.empty();
+        bool isReturn = !returnPositions.empty();
         if (!isParam && !isReturn) {
             throw InvalidProgram("I/O variable " + op->name_ +
                                  " used but not defined as a function's "
@@ -177,14 +182,21 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
         }
         std::string rawPtr;
         if (isParam) {
-            int nthParam = nthParamIter - params_.begin();
+            if (paramPositions.size() > 1) {
+                throw InvalidProgram("Parameter '" + op->name_ +
+                                     "' is duplicated");
+            }
+            int nthParam = paramPositions.front();
             rawPtr = "_params[" + std::to_string(nthParam) + "]";
         } else {
             if (!isOutputting(op->buffer_->atype())) {
                 throw InvalidProgram(
                     "Only outputting variable can be as a return value");
             }
-            int nthReturn = nthReturnsIter - returns_.begin();
+            // If there are multiple position with the same name, we only fill
+            // the first position. Driver::collectReturns will only collect the
+            // first
+            int nthReturn = returnPositions.front();
             rawPtr = "_returns[" + std::to_string(nthReturn) + "]";
             std::string shapePtr =
                 "_retShapes[" + std::to_string(nthReturn) + "]";

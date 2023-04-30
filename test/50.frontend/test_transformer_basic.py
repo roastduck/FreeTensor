@@ -109,6 +109,23 @@ def test_multiple_return_values():
     assert z_np[()] == 11
 
 
+def test_return_the_same_variable_twice():
+
+    @ft.optimize(verbose=1)
+    def test(x):
+        x: ft.Var[(), "int32"]
+        y = ft.empty((), "int32")
+        y[()] = x[()] * 2 + 1
+        return y, y
+
+    y_arr_1, y_arr_2 = test(np.array(5, dtype="int32"))
+    y_np_1 = y_arr_1.numpy()
+    y_np_2 = y_arr_2.numpy()
+
+    assert y_np_1[()] == 11
+    assert y_np_2[()] == 11
+
+
 def test_named_return_values():
 
     @ft.optimize(verbose=1)
