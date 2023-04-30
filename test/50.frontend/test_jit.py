@@ -151,4 +151,14 @@ def test_default_device():
             return y
 
     x = ft.array([0, 1, 2, 3], "int32")
-    assert test.instantiate(x, 2).device == ft.GPU(0)
+    instance = test.instantiate(x, 2)
+
+    @ft.lower
+    @ft.transform
+    def expect(x: ft.Var[(4,), "int32", "input", "gpu/global"]):
+        y = x * 2
+        return y
+
+    assert expect.body.match(instance.func.body)
+
+    assert instance.device == ft.GPU(0)
