@@ -1,4 +1,9 @@
 import freetensor as ft
+import pytest
+
+if not ft.fast_math():
+    pytest.skip("pass/float_simplify only runs when fast_math is enabled",
+                allow_module_level=True)
 
 
 def test_cencel_const_in_numerator_and_denominator():

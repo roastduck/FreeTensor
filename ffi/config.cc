@@ -29,11 +29,18 @@ void init_ffi_config(py::module_ &m) {
     m.def(
         "print_source_location", Config::printSourceLocation,
         "Check if printing Python source location of all statements in an AST");
+    m.def("fast_math", Config::fastMath,
+          "Run `pass/float_simplify` optimization pass, and enable fast math "
+          "on backend compilers");
+    m.def("set_fast_math", Config::setFastMath,
+          "Set to run `pass/float_simplify` optimization pass, and enable fast "
+          "math on backend compilers (or not)",
+          "flag"_a = true);
     m.def("set_werror", Config::setWerror, "Error on warning", "flag"_a = true);
     m.def("werror", Config::werror, "Check if error-on-warning enabled");
     m.def("set_debug_binary", Config::setDebugBinary,
-          "Compile with `-g` at backend. Do not delete the binary file after "
-          "loaded",
+          "Compile with `-g` at backend. FreeTensor will not delete the binary "
+          "file after loading it",
           "flag"_a = true);
     m.def("debug_binary", Config::debugBinary,
           "Check if compiling binary in debug mode");
