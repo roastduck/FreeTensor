@@ -334,6 +334,10 @@ def build_binary(code: Optional[NativeCode] = None,
         Return a JITTemplate that generates a Driver if there is at least one
     '''
 
+    # Note for JIT: `build_binary` should respect the default target when it is called
+    if device is None:
+        device = config.default_device()
+
     if isinstance(code, JITTemplate):
 
         class BuildBinaryTemplate(JITTemplate):
@@ -394,8 +398,6 @@ def build_binary(code: Optional[NativeCode] = None,
 
         return BuildBinaryTemplate(code.params, code.jit_param_names)
 
-    if device is None:
-        device = config.default_device()
     if device.target() != code.target:
         raise ffi.DriverError(
             f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"

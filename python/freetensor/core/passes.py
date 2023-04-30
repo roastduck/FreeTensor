@@ -44,6 +44,7 @@ from freetensor_ffi import gpu_normalize_threads
 from freetensor_ffi import gpu_normalize_var_in_kernel
 from freetensor_ffi import gpu_lower_vector
 
+from . import config
 from .func import Func
 from .jit import JITTemplate
 from .utils import as_decorator
@@ -84,6 +85,10 @@ def lower(ast=None,
         Return a Func for an AST if there is no JIT parameters. Return a JITTemplate
         that generates a Func if there is at least one
     '''
+
+    # Note for JIT: `lower` should respect the default target when it is called
+    if target is None:
+        target = config.default_target()
 
     if isinstance(ast, JITTemplate):
 

@@ -106,6 +106,8 @@ class Driver {
     std::pair<double, double> time(int rounds = 10, int warmups = 3);
 
     void unload();
+
+    const Ref<Device> &device() const { return dev_; }
 };
 
 } // namespace freetensor
