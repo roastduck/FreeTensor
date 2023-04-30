@@ -76,15 +76,16 @@ PYTHONPATH=../python:../build:$PYTHONPATH python3 a.py
 
 There are serveral global configurations can be set via environment variables:
 
-- `FT_PRETTY_PRINT=ON/OFF`. Enable/disable colored printing.
-- `FT_PRINT_ALL_ID=ON/OFF`. Print (or not) IDs of all statements in an AST.
-- `FT_PRINT_SOURCE_LOCATION=ON/OFF`. Print (or not) Python source location of all statements in an AST,
-- `FT_WERROR=ON/OFF`. Treat warnings as errors (or not).
+- `FT_PRETTY_PRINT=ON/OFF`. Enable/disable colored printing. If omitted, FreeTensor will guess this option with runtime information.
+- `FT_PRINT_ALL_ID=ON/OFF`. Print (or not) IDs of all statements in an AST. Defaults to `OFF`.
+- `FT_PRINT_SOURCE_LOCATION=ON/OFF`. Print (or not) Python source location of all statements in an AST. Defaults to `OFF`.
+- `FT_FAST_MATH=ON/OFF`. Run (or not) `pass/float_simplify` optimization pass, and enable (or not) fast math on backend compilers. Defaults to `ON`.
+- `FT_WERROR=ON/OFF`. Treat warnings as errors (or not). Defaults to `OFF`.
 - `FT_BACKEND_COMPILER_CXX=<path/to/compiler>`. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself, and compilers found in the `PATH` enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.
 - `FT_BACKEND_COMPILER_NVCC=<path/to/compiler>`. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself, and compilers found in the `PATH` enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.
-- `FT_DEBUG_RUNTIME_CHECK`. Check out-of-bound access and integer overflow at the generated code at runtime. This option is only for debugging, and will introduce significant runtime overhead. Currently the checker cannot print the error site, please also enable `FT_DEBUG_BINARY` and then use GDB to locate the error site.
-- `FT_DEBUG_BINARY=ON` (for developers). Compile with `-g` at backend. Do not delete the binary file after loaded.
-- `FT_DEBUG_CUDA_WITH_UM`. Allocate CUDA buffers on Unified Memory, for faster (debugging) access of GPU `Array` from CPU, but with slower `Array` allocations and more synchronizations. No performance effect on normal in-kernel computations.
+- `FT_DEBUG_RUNTIME_CHECK=ON/OFF`. If `ON`, check out-of-bound access and integer overflow at the generated code at runtime. This option is only for debugging, and will introduce significant runtime overhead. Currently the checker cannot print the error site, please also enable `FT_DEBUG_BINARY` and then use GDB to locate the error site. Defaults to `OFF`.
+- `FT_DEBUG_BINARY=ON/OFF` (for developers). If `ON`, compile with `-g` at backend. FreeTensor will not delete the binary file after loading it. Defaults to `OFF`.
+- `FT_DEBUG_CUDA_WITH_UM=ON/OFF`. If `ON`, allocate CUDA buffers on Unified Memory, for faster (debugging) access of GPU `Array` from CPU, but with slower `Array` allocations and more synchronizations. No performance effect on normal in-kernel computations. Defaults to `OFF`.
 
 This configurations can also set at runtime in [`ft.config`](../../api/#freetensor.core.config).
 

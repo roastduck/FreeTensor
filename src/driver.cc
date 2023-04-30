@@ -147,8 +147,6 @@ void Driver::buildAndLoad() {
     auto addArgs = [&](auto... s) {
         args.insert(args.end(), {std::string(s)...});
     };
-    // We enable fast-math because our own transformations do not preserve
-    // strict floating point rounding order either
     switch (dev_->type()) {
     case TargetType::CPU:
         ASSERT(!Config::backendCompilerCXX().empty());
@@ -160,8 +158,10 @@ void Driver::buildAndLoad() {
             // be split into multiple arguments.
             addArgs("-I" + (std::string)path);
         }
-        addArgs("-std=c++20", "-shared", "-O3", "-fPIC", "-Wall", "-fopenmp",
-                "-ffast-math");
+        addArgs("-std=c++20", "-shared", "-O3", "-fPIC", "-Wall", "-fopenmp");
+        if (Config::fastMath()) {
+            addArgs("-ffast-math");
+        }
         addArgs("-o", so, cpp);
 #ifdef FT_WITH_MKL
         addArgs("-I" FT_WITH_MKL "/include", "-Wl,--start-group",
@@ -190,8 +190,10 @@ void Driver::buildAndLoad() {
             addArgs("-I" + (std::string)path);
         }
         addArgs("-std=c++17", "-shared", "-Xcompiler", "-fPIC,-Wall,-O3",
-                //"--use_fast_math",
                 "--expt-relaxed-constexpr" /* required by mdspan */);
+        if (Config::fastMath()) {
+            addArgs("--use_fast_math");
+        }
         addArgs("-o", so, cpp);
         addArgs("-lcublas");
         auto cc = dev_->target().as<GPUTarget>()->computeCapability();
