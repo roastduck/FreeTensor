@@ -129,7 +129,7 @@ PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 00.hello_world/test_basic.py
 First install some dependencies:
 
 ```sh
-pip3 install --user mkdocs "mkdocstrings[python]"
+pip3 install --user mkdocs mkdocstrings==0.18.1 "pytkdocs[numpy-style]"
 ```
 
 From the root directory of FreeTensor, run a HTTP server to serve the document (recommended, but without document on C++ interface due to [a limitation](https://github.com/mkdocs/mkdocs/issues/1901)):

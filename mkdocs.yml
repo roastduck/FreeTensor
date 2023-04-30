@@ -9,14 +9,17 @@ plugins:
     - mkdocstrings:
         handlers:
             python:
-                options:
+                selection:  # Merge to `options:` when using the new python handler
                     docstring_style: numpy
                     inherited_members: True
-                    show_submodules: True
+                rendering:  # Merge to `options:` when using the new python handler
                     show_object_full_path: True
                     show_source: False  # If true, it would be hard to use Ctrl+F to search in the doc
                                         # (it will search in the code!)
-                    docstring_section_style: list
+                # New options only affective with the new python handler
+                #options:
+                #    show_submodules: True
+                #    docstring_section_style: list
         watch:
             - python/
             # We cannot watch build/. Reload mkdocs manually after rebuilding
