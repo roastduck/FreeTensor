@@ -102,6 +102,11 @@ void CodeGenCUDA::genScalar(const VarDef &def,
                                  ::freetensor::toString(mtype) +
                                  " from outside of a kernel");
         }
+    } else if (inKernel() &&
+               (mtype == MemType::CPU || mtype == MemType::CPUHeap)) {
+        throw InvalidProgram("Unable to access " +
+                             ::freetensor::toString(mtype) +
+                             " from inside a kernel");
     } else if (indices.empty() && (mtype == MemType::GPUGlobal ||
                                    mtype == MemType::GPUGlobalHeap ||
                                    mtype == MemType::GPUShared)) {
