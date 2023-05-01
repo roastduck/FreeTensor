@@ -1,7 +1,7 @@
 __all__ = ['softmax', 'softmax_']
 
 from .. import core
-from .element_wise import exp, exp_, sub, sub_, truediv, truediv_
+from .element_wise import exp, sub, truediv, truediv_
 from .reduction import reduce_max, reduce_sum
 
 
@@ -9,6 +9,8 @@ from .reduction import reduce_max, reduce_sum
 def softmax_(x, y, axis: int = -1):
     '''
     Softmax of tensor `x` along an axis, and write to tensor `y`
+
+    The computation is numerically stabilized.
 
     Parameters
     ----------
@@ -18,7 +20,7 @@ def softmax_(x, y, axis: int = -1):
         The result tensor
     axis : int (Optional)
         Axis that the softmax is performed along. Negative axis means
-        count from the last dimension
+        counting from the last dimension
     '''
     with core.StmtRange() as rng:
         #! label: max
@@ -48,13 +50,15 @@ def softmax(x, axis=-1):
     '''
     Softmax of tensor `x` along an axis and return the result
 
+    The computation is numerically stabilized.
+
     Parameters
     ----------
     x : VarRef
         The input tensor
     axis : int (Optional)
         Axis that the softmax is performed along. Negative axis means
-        count from the last dimension
+        counting from the last dimension
 
     Returns
     -------

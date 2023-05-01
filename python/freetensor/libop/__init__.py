@@ -8,3 +8,4 @@ from .matmul import *
 from .reshape import *
 from .reduction import *
 from .softmax import *
+from .logsumexp import *
