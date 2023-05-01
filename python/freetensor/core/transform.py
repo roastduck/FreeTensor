@@ -6,6 +6,7 @@ import inspect
 import functools
 
 import freetensor_ffi as ffi
+from . import config
 from .expr import UndeclaredParam
 from .stmt import VarRef
 from .func import Func
@@ -29,6 +30,7 @@ def transform(func=None,
               default_dynamic_range=True,
               bind: Mapping[str, Any] = {},
               jit_cache: Callable[Callable, Callable] = functools.cache,
+              target: ffi.Target = None,
               verbose: int = 0):
     '''
     Transform a user function to an AST
@@ -46,6 +48,9 @@ def transform(func=None,
         parameter-name-to-value dict.
     jit_cache : Callable[Callable, Callable]
         Function decorator used to cache JIT instances
+    target : Target
+        If not None, set `config.default_target` when transforming. This affects the
+        default memory type use to create variables from `Var`, `empty` and etc.
     verbose : int
         0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
         Python code that is used for transforming
@@ -57,7 +62,9 @@ def transform(func=None,
         that generates a Func if there is at least one
     '''
 
-    extra_locals = _prepare_extra_locals(default_dynamic_range)
+    # Note for JIT: `transform` should respect the default target when it is called
+    if target is None:
+        target = config.default_target()
 
     params = inspect.signature(func).parameters
     param_names = []
@@ -89,6 +96,7 @@ def transform(func=None,
                                      **bind,
                                      **new_bind
                                  },
+                                 target=target,
                                  verbose=verbose)
 
             def __call__(self, *args, **kvs):
@@ -141,7 +149,9 @@ def transform(func=None,
             template.__doc__ = func.__doc__
         return template
 
-    with lang_overload, ctx_stack:
+    extra_locals = _prepare_extra_locals(default_dynamic_range)
+
+    with target, lang_overload, ctx_stack:
         staging_func = lang_overload.into_staging(func,
                                                   extra_locals,
                                                   verbose=verbose >= 2)

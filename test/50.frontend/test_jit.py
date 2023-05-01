@@ -138,3 +138,27 @@ def test_ast_inline():
         x[3, 1] = 2
 
     assert expect.body.match(f.body)
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_default_device():
+
+    with ft.GPU(0):
+
+        @ft.optimize(verbose=1)
+        def test(x: ft.Var[(4,), "int32"], v: ft.JIT[int]):
+            y = x * v
+            return y
+
+    x = ft.array([0, 1, 2, 3], "int32")
+    instance = test.instantiate(x, 2)
+
+    @ft.lower
+    @ft.transform
+    def expect(x: ft.Var[(4,), "int32", "input", "gpu/global"]):
+        y = x * 2
+        return y
+
+    assert expect.body.match(instance.func.body)
+
+    assert instance.device == ft.GPU(0)

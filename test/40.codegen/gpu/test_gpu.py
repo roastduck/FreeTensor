@@ -1336,3 +1336,38 @@ def test_access_gpu_from_cpu_for_debugging():
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")
     assert np.array_equal(y_np, y_std)
+
+
+def test_error_invalid_mtype_out_of_kernel():
+
+    with device:
+
+        @ft.lower
+        @ft.transform
+        def test(x, y):
+            x: ft.Var[(4,), "int32", "input", "gpu/local"]
+            y: ft.Var[(4,), "int32", "output", "gpu/local"]
+            #! label: L1
+            for i in range(0, 4):
+                y[i] = x[i] + 1
+
+        with pytest.raises(ft.InvalidProgram):
+            ft.codegen(test)
+
+
+def test_error_invalid_mtype_inside_kernel():
+
+    with device:
+
+        @ft.lower
+        @ft.schedule(callback=lambda s: s.parallelize("L1", "threadIdx.x"))
+        @ft.transform
+        def test(x, y):
+            x: ft.Var[(4,), "int32", "input", "cpu"]
+            y: ft.Var[(4,), "int32", "output", "cpu"]
+            #! label: L1
+            for i in range(0, 4):
+                y[i] = x[i] + 1
+
+        with pytest.raises(ft.InvalidProgram):
+            ft.codegen(test)

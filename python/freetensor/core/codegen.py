@@ -50,6 +50,10 @@ def codegen(ast: Func = None,
         Return a JITTemplate that generates a NativeCode if there is at least one
     '''
 
+    # Note for JIT: `codegen` should respect the default target when it is called
+    if target is None:
+        target = config.default_target()
+
     if isinstance(ast, JITTemplate):
 
         class CodeGenTemplate(JITTemplate):
@@ -62,8 +66,6 @@ def codegen(ast: Func = None,
 
         return CodeGenTemplate(ast.params, ast.jit_param_names)
 
-    if target is None:
-        target = config.default_target()
     raw_code = ffi.code_gen(ast, target)
     if verbose:
         print(debug.with_line_no(raw_code), file=sys.stderr)
