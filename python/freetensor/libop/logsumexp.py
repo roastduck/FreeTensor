@@ -1,7 +1,7 @@
 __all__ = ['logsumexp', 'logsumexp_']
 
 from .. import core
-from .reshape import squeeze
+from .reshape import squeeze, unsqueeze
 from .element_wise import sub, exp, ln, add_
 from .reduction import reduce_max, reduce_sum, reduction_circular_axes, reduction_comp_shape
 
@@ -28,18 +28,27 @@ def logsumexp_(x: core.VarRef,
     keepdims : bool (Optional)
         Keep the reduced dimensions as singleton dimensions. Defaults to True
     '''
-    #! label: max
-    maxval = reduce_max(x, axes=[axis], keepdims=True)
-    #! label: sub
-    corrected = sub(x, maxval)
-    #! label: exp
-    exponent = exp(corrected)
-    #! label: sum
-    summation = reduce_sum(exponent, axes=[axis], keepdims=keepdims)
-    #! label: ln
-    logged = ln(summation)
-    #! label: add
-    add_(logged, squeeze(maxval, [axis]), y)
+    with core.StmtRange() as rng:
+        #! label: max
+        maxval = reduce_max(x, axes=[axis], keepdims=True)
+        #! label: sub
+        corrected = sub(x, maxval)
+        #! label: exp
+        exponent = exp(corrected)
+        #! label: sum
+        summation = reduce_sum(exponent, axes=[axis], keepdims=keepdims)
+        #! label: ln
+        logged = ln(summation)
+        #! label: add
+        add_(logged, squeeze(maxval, [axis]), y)
+
+        exponent_handle = core.push_for_backward(exponent)
+        summation_handle = core.push_for_backward(summation)
+
+    with core.UserGrad(x, y, stmt_range=rng) as (d_x, d_y):
+        d_summation = d_y / summation_handle
+        d_exponent = unsqueeze(d_summation, [axis])
+        d_x[...] += d_exponent * exponent_handle
 
 
 @core.inline
