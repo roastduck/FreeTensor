@@ -1,7 +1,7 @@
 __all__ = [
     'reshape', 'reshape_', 'flatten', 'flatten_', 'flatten_onnx',
-    'flatten_onnx_', 'flatten_pytorch', 'flatten_pytorch_', 'unsqueeze',
-    'unsqueeze_', 'expand', 'expand_'
+    'flatten_onnx_', 'flatten_pytorch', 'flatten_pytorch_', 'squeeze',
+    'squeeze_', 'unsqueeze', 'unsqueeze_', 'expand', 'expand_'
 ]
 
 from typing import Sequence
@@ -380,7 +380,74 @@ flatten = flatten_onnx
 ''' Alias of `flatten_onnx` '''
 
 
-def _circular_axes(axes, x_ndim):
+def _squeeze_circular_axes(axes, x_ndim):
+    # ONNX >= 13 treats axes as a tensor, which we don't support for now
+    return sorted(map(functools.partial(circular_axis, ndim=x_ndim), axes))
+
+
+@core.inline
+def squeeze_(x, y, axes: Sequence[int]):
+    '''
+    Remove singleton dimensions from a tensor, and write the result to another tensor
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    y : VarRef
+        The resulting tensor
+    axes :
+        Dimension numbers of the singleton dimensions. Negative axis means counting
+        from the last dimension
+    '''
+    axes = _squeeze_circular_axes(axes, core.ndim(x))
+    if x.ndim == 0:
+        y[()] = x
+    elif begin_with_0(axes):
+        assert x.shape(0) == 1
+        #! label: recur
+        squeeze_(x[0], y, all_minus_one(axes[1:]))
+    else:
+        #! label: L
+        for i in range(x.shape(0)):
+            #! label: recur
+            squeeze_(x[i], y[i], all_minus_one(axes))
+
+
+def _squeeze_comp_shape(axes, x):
+    y_shape = copy_shape(x)
+    for item in reversed(axes):
+        del y_shape[item]
+    return y_shape
+
+
+@core.inline
+def squeeze(x, axes: Sequence[int]):
+    '''
+    Remove singleton dimensions from a tensor, and return the result
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    axes :
+        Dimension numbers of the singleton dimensions. Negative axis means counting
+        from the last dimension
+
+    Returns
+    -------
+    VarRef
+        The resulting tensor
+    '''
+    y = core.empty(
+        _squeeze_comp_shape(_squeeze_circular_axes(axes, core.ndim(x)), x),
+        core.dtype(x), core.mtype(x))
+    #! label: recur
+    squeeze_(x, y, axes)
+    return y
+
+
+def _unsqueeze_circular_axes(axes, x_ndim):
     # ONNX >= 13 treats axes as a tensor, which we don't support for now
     return sorted(
         map(functools.partial(circular_axis, ndim=x_ndim + len(axes)), axes))
@@ -401,7 +468,7 @@ def unsqueeze_(x, y, axes: Sequence[int]):
         Dimension numbers of the new singleton dimensions. Negative axis means counting
         from the last dimension
     '''
-    axes = _circular_axes(axes, core.ndim(x))
+    axes = _unsqueeze_circular_axes(axes, core.ndim(x))
     if y.ndim == 0:
         y[()] = x
     elif begin_with_0(axes):
@@ -439,8 +506,9 @@ def unsqueeze(x, axes: Sequence[int]):
     VarRef
         The resulting tensor
     '''
-    y = core.empty(_unsqueeze_comp_shape(_circular_axes(axes, core.ndim(x)), x),
-                   core.dtype(x), core.mtype(x))
+    y = core.empty(
+        _unsqueeze_comp_shape(_unsqueeze_circular_axes(axes, core.ndim(x)), x),
+        core.dtype(x), core.mtype(x))
     #! label: recur
     unsqueeze_(x, y, axes)
     return y

@@ -78,6 +78,36 @@ def test_static(libop_func, torch_func, dtype):
     (libop.all_, torch.all, "bool"),
     (libop.any_, torch.any, "bool"),
 ])
+def test_negative_axis(libop_func, torch_func, dtype):
+    device = ft.CPU()
+
+    @ft.optimize(device=device, verbose=1)
+    def f(x, y):
+        x: ft.Var[(3, 4, 5), dtype, "input", "cpu"]
+        y: ft.Var[(3, 5), dtype, "output", "cpu"]
+        #! label: reduce
+        libop_func(x, y, axes=[-2], keepdims=False)
+
+    x_torch = rand(3, 4, 5, dtype=dtype)
+    x_arr = ft.Array(x_torch.numpy())
+    y_torch = zeros(3, 5, dtype=dtype)
+    y_arr = ft.Array(y_torch.numpy())
+    f(x_arr, y_arr)
+    y_torch = torch.tensor(y_arr.numpy())
+
+    assert same(y_torch, torch_func(x_torch, axis=-2), dtype=dtype)
+
+
+@pytest.mark.parametrize('libop_func, torch_func, dtype', [
+    (libop.reduce_sum_, torch.sum, "float32"),
+    (libop.reduce_prod_, torch.prod, "float32"),
+    (libop.reduce_max_, lambda *args, **kvs: torch.max(*args, **kvs).values,
+     "float32"),
+    (libop.reduce_min_, lambda *args, **kvs: torch.min(*args, **kvs).values,
+     "float32"),
+    (libop.all_, torch.all, "bool"),
+    (libop.any_, torch.any, "bool"),
+])
 def test_keepdims(libop_func, torch_func, dtype):
     device = ft.CPU()
 
