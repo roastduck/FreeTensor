@@ -158,7 +158,7 @@ class StagingOverload:
         pass
 
     def error(self, content: str):
-        return StagingError(self, content)
+        return StagingError(content)
 
     def allow_shortcut_scope(self, allow: bool):
         '''Opens a scope that allows shortcut control flows in a statically deterministic

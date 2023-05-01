@@ -1,6 +1,7 @@
 __all__ = [
     'reduce_sum', 'reduce_sum_', 'reduce_prod', 'reduce_prod_', 'all', 'all_',
-    'any', 'any_', 'reduce_min', 'reduce_min_', 'reduce_max', 'reduce_max_'
+    'any', 'any_', 'reduce_min', 'reduce_min_', 'reduce_max', 'reduce_max_',
+    'reduction_circular_axes', 'reduction_comp_shape'
 ]
 
 from typing import Sequence, Optional
@@ -24,7 +25,7 @@ def _named_partial(name: str, doc: str, f, *args, **kvs):
     return g
 
 
-def _circular_axes(axes, x_ndim, keepdims):
+def reduction_circular_axes(axes, x_ndim, keepdims):
     # ONNX >= 13 treats axes as a tensor, which we don't support for now
 
     # None for all dimensions
@@ -78,10 +79,11 @@ def _general_reduce_(op,
     #! label: init
     _init(neutral_val, y)
     #! label: reduce
-    _reduce(op, _circular_axes(axes, core.ndim(x), keepdims), keepdims, x, y)
+    _reduce(op, reduction_circular_axes(axes, core.ndim(x), keepdims), keepdims,
+            x, y)
 
 
-def _comp_shape(axes, keepdims, x):
+def reduction_comp_shape(axes, keepdims, x):
     out_shape = []
     for i in range(core.ndim(x)):
         if len(axes) > 0 and axes[0] == i:
@@ -101,11 +103,13 @@ def _general_reduce(op,
                     keepdims: bool = True):
     #! label: y
     y = core.empty(
-        _comp_shape(_circular_axes(axes, core.ndim(x), keepdims), keepdims, x),
+        reduction_comp_shape(
+            reduction_circular_axes(axes, core.ndim(x), keepdims), keepdims, x),
         core.dtype(x), core.mtype(x))
     #! label: recur
     _general_reduce_(op, neutral_val, x, y,
-                     _circular_axes(axes, core.ndim(x), keepdims), keepdims)
+                     reduction_circular_axes(axes, core.ndim(x), keepdims),
+                     keepdims)
     return y
 
 

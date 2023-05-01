@@ -5,7 +5,7 @@ __all__ = [
 
 import functools
 from collections.abc import Sequence
-from typing import Optional, Callable, Union, List, Dict
+from typing import Callable, Union, List, Dict
 
 import freetensor_ffi as ffi
 from freetensor_ffi import (ParallelScope, ID, Selector, FissionSide,
