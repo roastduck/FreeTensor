@@ -24,10 +24,6 @@ def _named_partial(name: str, doc: str, f, *args, **kvs):
     return g
 
 
-def _y_ndim(x_ndim, axes, keepdims):
-    return x_ndim if keepdims else x_ndim - len(axes)
-
-
 def _circular_axes(axes, x_ndim, keepdims):
     # ONNX >= 13 treats axes as a tensor, which we don't support for now
 
@@ -35,10 +31,7 @@ def _circular_axes(axes, x_ndim, keepdims):
     if axes is None:
         return core.static_range(x_ndim)
 
-    return sorted(
-        map(
-            functools.partial(circular_axis,
-                              ndim=_y_ndim(x_ndim, axes, keepdims)), axes))
+    return sorted(map(functools.partial(circular_axis, ndim=x_ndim), axes))
 
 
 @core.inline
