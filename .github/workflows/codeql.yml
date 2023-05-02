@@ -33,7 +33,7 @@ jobs:
         if: ${{ matrix.language == 'cpp' }}
         run: |
           sudo apt-get update
-          sudo apt-get install --yes g++-10 libgmp-dev ninja-build
+          sudo apt-get install --yes g++-11 libgmp-dev ninja-build
 
       - name: Configure (cpp)
         if: ${{ matrix.language == 'cpp' }}
@@ -46,8 +46,8 @@ jobs:
       - name: After Prepare (cpp)
         if: ${{ matrix.language == 'cpp' }}
         run: |
-          export CC=gcc-10 && echo "CC=$CC" >> $GITHUB_ENV
-          export CXX=g++-10 && echo "CXX=$CXX" >> $GITHUB_ENV
+          export CC=gcc-11 && echo "CC=$CC" >> $GITHUB_ENV
+          export CXX=g++-11 && echo "CXX=$CXX" >> $GITHUB_ENV
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2

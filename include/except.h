@@ -2,6 +2,7 @@
 #define FREE_TENSOR_EXCEPT_H
 
 #include <iostream>
+#include <source_location>
 #include <stdexcept>
 #include <string>
 
@@ -9,7 +10,12 @@ namespace freetensor {
 
 class Error : public std::runtime_error {
   public:
-    Error(const std::string &msg) : std::runtime_error(msg) {}
+    // NOTE: `source_location` is intended to have a small size and can be
+    // copied efficiently.
+    Error(const std::string &msg,
+          std::source_location loc = std::source_location::current())
+        : std::runtime_error((std::string)loc.file_name() + ":" +
+                             std::to_string(loc.line()) + ": " + msg) {}
 };
 
 class StmtNode;
@@ -19,15 +25,21 @@ typedef Ref<StmtNode> Stmt;
 
 class InvalidSchedule : public Error {
   public:
-    InvalidSchedule(const std::string &msg) : Error(msg) {}
-    InvalidSchedule(const Stmt &ast, const std::string &msg);
+    InvalidSchedule(const std::string &msg,
+                    std::source_location loc = std::source_location::current())
+        : Error(msg, loc) {}
+    InvalidSchedule(const Stmt &ast, const std::string &msg,
+                    std::source_location loc = std::source_location::current());
     InvalidSchedule(const Ref<ScheduleLogItem> &log, const Stmt &ast,
-                    const std::string &msg);
+                    const std::string &msg,
+                    std::source_location loc = std::source_location::current());
 };
 
 class InvalidAutoGrad : public Error {
   public:
-    InvalidAutoGrad(const std::string &msg) : Error(msg) {}
+    InvalidAutoGrad(const std::string &msg,
+                    std::source_location loc = std::source_location::current())
+        : Error(msg, loc) {}
 };
 
 /**
@@ -36,7 +48,9 @@ class InvalidAutoGrad : public Error {
  */
 class DriverError : public Error {
   public:
-    DriverError(const std::string &msg) : Error(msg) {}
+    DriverError(const std::string &msg,
+                std::source_location loc = std::source_location::current())
+        : Error(msg, loc) {}
 };
 
 /**
@@ -44,7 +58,9 @@ class DriverError : public Error {
  */
 class InvalidIO : public Error {
   public:
-    InvalidIO(const std::string &msg) : Error(msg) {}
+    InvalidIO(const std::string &msg,
+              std::source_location loc = std::source_location::current())
+        : Error(msg, loc) {}
 };
 
 /**
@@ -52,27 +68,39 @@ class InvalidIO : public Error {
  */
 class InvalidProgram : public Error {
   public:
-    InvalidProgram(const std::string &msg) : Error(msg) {}
+    InvalidProgram(const std::string &msg,
+                   std::source_location loc = std::source_location::current())
+        : Error(msg, loc) {}
 };
 
 class SymbolNotFound : public Error {
   public:
-    SymbolNotFound(const std::string &msg) : Error(msg) {}
+    SymbolNotFound(const std::string &msg,
+                   std::source_location loc = std::source_location::current())
+        : Error(msg, loc) {}
 };
 
 class AssertAlwaysFalse : public InvalidProgram {
   public:
-    AssertAlwaysFalse(const std::string &msg) : InvalidProgram(msg) {}
+    AssertAlwaysFalse(
+        const std::string &msg,
+        std::source_location loc = std::source_location::current())
+        : InvalidProgram(msg, loc) {}
 };
 
 class ParserError : public Error {
   public:
-    ParserError(const std::string &msg) : Error(msg) {}
+    ParserError(const std::string &msg,
+                std::source_location loc = std::source_location::current())
+        : Error(msg, loc) {}
 };
 
 class UnexpectedQueryResult : public Error {
   public:
-    UnexpectedQueryResult(const std::string &msg) : Error(msg) {}
+    UnexpectedQueryResult(
+        const std::string &msg,
+        std::source_location loc = std::source_location::current())
+        : Error(msg, loc) {}
 };
 
 /**
@@ -98,8 +126,7 @@ void reportWarning(const std::string &msg);
 
 #define ERROR(msg)                                                             \
     do {                                                                       \
-        throw ::freetensor::Error((std::string) "[ERROR] " __FILE__ ":" +      \
-                                  std::to_string(__LINE__) + ": " + (msg));    \
+        throw ::freetensor::Error(msg);                                        \
     } while (0)
 
 #define WARNING(msg)                                                           \

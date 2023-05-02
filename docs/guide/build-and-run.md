@@ -6,8 +6,8 @@
 
 - Linux
 - Python (>= 3.8, for the Python frontend)
-- GCC (>= 10, to support C++20 and the "unroll" pragma)
-- CUDA (>= 11.4.1, to support GCC 10, Optional)
+- GCC (>= 11, to have enough C++20 support and the "unroll" pragma)
+- CUDA (>= 11.4.1, to support GCC 11, Optional)
 - MKL (Optional)
 - PyTorch (Optional, see below)
 - Java (= 11, Build-time dependency only)

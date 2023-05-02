@@ -16,6 +16,13 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}")
 endif()
 
+# Check compiler version
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11)
+        message(FATAL_ERROR "The minimum required version for GCC is 11")
+    endif()
+endif()
+
 # Check whther 3rd-party modules exist
 foreach(MODULE IN ITEMS antlr/antlr4 range-v3 cuda-samples isl pybind11 z3)
     file(GLOB RESULT ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/${MODULE}/*)
