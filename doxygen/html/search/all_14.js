@@ -215,7 +215,7 @@ var searchData=
   ['swap_2ecc_212',['swap.cc',['../swap_8cc.html',1,'']]],
   ['swap_2eh_213',['swap.h',['../swap_8h.html',1,'']]],
   ['symbol_5ftable_2eh_214',['symbol_table.h',['../symbol__table_8h.html',1,'']]],
-  ['symbolnotfound_215',['SymbolNotFound',['../classfreetensor_1_1SymbolNotFound.html',1,'freetensor::SymbolNotFound'],['../classfreetensor_1_1SymbolNotFound.html#a9564694f97b6d363996456ee2eac80a6',1,'freetensor::SymbolNotFound::SymbolNotFound()']]],
+  ['symbolnotfound_215',['SymbolNotFound',['../classfreetensor_1_1SymbolNotFound.html',1,'freetensor::SymbolNotFound'],['../classfreetensor_1_1SymbolNotFound.html#a4583773abaa74152bef16fb71ee87d5d',1,'freetensor::SymbolNotFound::SymbolNotFound()']]],
   ['symboltable_216',['SymbolTable',['../classfreetensor_1_1SymbolTable.html',1,'freetensor::SymbolTable&lt; BaseClass &gt;'],['../classfreetensor_1_1SymbolTable.html#a21f40bf443a4d90af7bbdfe11fae0c3e',1,'freetensor::SymbolTable::SymbolTable()']]],
   ['symboltable_3c_20constfold_20_3e_217',['SymbolTable&lt; ConstFold &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
   ['symboltable_3c_20mutator_20_3e_218',['SymbolTable&lt; Mutator &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],

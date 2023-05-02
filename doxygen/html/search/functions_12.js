@@ -93,7 +93,7 @@ var searchData=
   ['sum_90',['sum',['../namespacefreetensor.html#add4664574b538934f2e9798de5f2d80d',1,'freetensor::sum(T &amp;&amp;lhs, U &amp;&amp;rhs)'],['../namespacefreetensor.html#a0c9ed402d06313ae47881e5da1a4987c',1,'freetensor::sum(T &amp;&amp;lhs, U &amp;&amp;rhs)']]],
   ['swap_91',['swap',['../namespacefreetensor.html#a95590ae1fa3aca0790ca34b5dde1a105',1,'freetensor::swap()'],['../classfreetensor_1_1Schedule.html#ade01fd2d0d808e2e6f76ee11af33c33d',1,'freetensor::Schedule::swap()']]],
   ['swap_92',['Swap',['../classfreetensor_1_1Swap.html#acdb6555999815a8676fc7e2fc8ac9c57',1,'freetensor::Swap']]],
-  ['symbolnotfound_93',['SymbolNotFound',['../classfreetensor_1_1SymbolNotFound.html#a9564694f97b6d363996456ee2eac80a6',1,'freetensor::SymbolNotFound']]],
+  ['symbolnotfound_93',['SymbolNotFound',['../classfreetensor_1_1SymbolNotFound.html#a4583773abaa74152bef16fb71ee87d5d',1,'freetensor::SymbolNotFound']]],
   ['symboltable_94',['SymbolTable',['../classfreetensor_1_1SymbolTable.html#a21f40bf443a4d90af7bbdfe11fae0c3e',1,'freetensor::SymbolTable']]],
   ['symboltablesnapshot_95',['symbolTableSnapshot',['../classfreetensor_1_1SymbolTable.html#a220ea6ad481ecee95c2cfc400d5a703a',1,'freetensor::SymbolTable']]],
   ['sync_96',['sync',['../classfreetensor_1_1Device.html#af73e42a7ec1104947792ee141bb46eb0',1,'freetensor::Device::sync()'],['../classfreetensor_1_1Driver.html#a6d1e788d588cfdebe6198a79066231dd',1,'freetensor::Driver::sync()']]],

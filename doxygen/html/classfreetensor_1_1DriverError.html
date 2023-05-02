@@ -99,17 +99,17 @@ Collaboration diagram for freetensor::DriverError:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aaa5264eb643f9e6fde2da901d95df4fa"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DriverError.html#aaa5264eb643f9e6fde2da901d95df4fa">DriverError</a> (const std::string &amp;msg)</td></tr>
-<tr class="separator:aaa5264eb643f9e6fde2da901d95df4fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d91252773b71cc0f96d3eb15e8cbebf"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DriverError.html#a7d91252773b71cc0f96d3eb15e8cbebf">DriverError</a> (const std::string &amp;msg, std::source_location loc=std::source_location::current())</td></tr>
+<tr class="separator:a7d91252773b71cc0f96d3eb15e8cbebf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1Error"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1Error')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1Error.html">freetensor::Error</a></td></tr>
-<tr class="memitem:a9871bc3d3fdb06911d59c80dccebe644 inherit pub_methods_classfreetensor_1_1Error"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Error.html#a9871bc3d3fdb06911d59c80dccebe644">Error</a> (const std::string &amp;msg)</td></tr>
-<tr class="separator:a9871bc3d3fdb06911d59c80dccebe644 inherit pub_methods_classfreetensor_1_1Error"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff273818ed5369051f749237c066ca13 inherit pub_methods_classfreetensor_1_1Error"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Error.html#aff273818ed5369051f749237c066ca13">Error</a> (const std::string &amp;msg, std::source_location loc=std::source_location::current())</td></tr>
+<tr class="separator:aff273818ed5369051f749237c066ca13 inherit pub_methods_classfreetensor_1_1Error"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Invalid configurations to <a class="el" href="classfreetensor_1_1Driver.html">Driver</a>, or error reported by backend compilers or the OS </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="aaa5264eb643f9e6fde2da901d95df4fa" name="aaa5264eb643f9e6fde2da901d95df4fa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaa5264eb643f9e6fde2da901d95df4fa">&#9670;&nbsp;</a></span>DriverError()</h2>
+<a id="a7d91252773b71cc0f96d3eb15e8cbebf" name="a7d91252773b71cc0f96d3eb15e8cbebf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d91252773b71cc0f96d3eb15e8cbebf">&#9670;&nbsp;</a></span>DriverError()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -121,8 +121,18 @@ Public Member Functions</h2></td></tr>
           <td class="memname">freetensor::DriverError::DriverError </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>msg</em></td><td>)</td>
+          <td class="paramname"><em>msg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">std::source_location&#160;</td>
+          <td class="paramname"><em>loc</em> = <code>std::source_location::current()</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
