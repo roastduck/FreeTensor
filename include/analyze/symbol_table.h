@@ -188,11 +188,9 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
             auto body = (*this)(op->body_);
             popDef(op);
 
-            return COPY_DEBUG_INFO(makeVarDef(op->name_, std::move(b),
-                                              op->viewOf_, std::move(body),
-                                              op->pinned_, op->metadata(),
-                                              op->id()),
-                                   op);
+            return makeVarDef(op->name_, std::move(b), op->viewOf_,
+                              std::move(body), op->pinned_, op->metadata(),
+                              op->id(), op->debugBlame());
         }
     }
 
@@ -231,11 +229,10 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
         popFor(op);
 
         if constexpr (!std::is_same_v<typename BaseClass::StmtRetType, void>) {
-            auto ret =
-                makeFor(op->iter_, std::move(begin), std::move(end),
-                        std::move(step), std::move(len), std::move(property),
-                        std::move(body), op->metadata(), op->id());
-            return COPY_DEBUG_INFO(ret, op);
+            return makeFor(op->iter_, std::move(begin), std::move(end),
+                           std::move(step), std::move(len), std::move(property),
+                           std::move(body), op->metadata(), op->id(),
+                           op->debugBlame());
         }
     }
 };

@@ -80,7 +80,7 @@ Expr FrontendVar::asLoad() const {
     if (!isLoadAtVersion_) {
         return makeLoad(name_, std::move(indices), dtype_);
     } else {
-        return _makeLoadAtVersion(name_, std::move(indices), dtype_);
+        return makeLoadAtVersion(name_, std::move(indices), dtype_);
     }
 }
 

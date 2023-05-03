@@ -62,10 +62,9 @@ class FuncNode : public ASTNode {
     DEFINE_NODE_TRAIT(Func);
 };
 typedef Ref<FuncNode> Func;
-#define makeFunc(...) makeNode(Func, __VA_ARGS__)
 template <class Tbody, class Tparams, class Treturns, class Tclosure>
-Func _makeFunc(const std::string &name, Tparams &&params, Treturns &&returns,
-               Tbody &&body) {
+Func makeFunc(const std::string &name, Tparams &&params, Treturns &&returns,
+              Tbody &&body) {
     Func f = Func::make();
     f->name_ = name;
     f->params_ = std::forward<Tparams>(params);
@@ -74,8 +73,8 @@ Func _makeFunc(const std::string &name, Tparams &&params, Treturns &&returns,
     return f;
 }
 template <class Tbody>
-Func _makeFunc(const std::string &name, const std::vector<FuncParam> &params,
-               const std::vector<FuncRet> &returns, Tbody &&body) {
+Func makeFunc(const std::string &name, const std::vector<FuncParam> &params,
+              const std::vector<FuncRet> &returns, Tbody &&body) {
     Func f = Func::make();
     f->name_ = name;
     f->params_ = params;

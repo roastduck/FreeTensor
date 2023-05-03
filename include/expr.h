@@ -22,8 +22,12 @@ class AnyExprNode : public ExprNode {
     DEFINE_NODE_TRAIT(AnyExpr);
 };
 typedef Ref<AnyExprNode> AnyExpr;
-#define makeAnyExpr(...) makeNode(AnyExpr, __VA_ARGS__)
-inline Expr _makeAnyExpr() { return AnyExpr::make(); }
+inline Expr
+makeAnyExpr(std::source_location loc = std::source_location::current()) {
+    AnyExpr a = AnyExpr::make();
+    a->setDebugBlame(loc);
+    return a;
+}
 
 class VarNode : public ExprNode {
   public:
@@ -34,11 +38,13 @@ class VarNode : public ExprNode {
     DEFINE_NODE_TRAIT(Var);
 };
 typedef Ref<VarNode> Var;
-#define makeVar(...) makeNode(Var, __VA_ARGS__)
-inline Expr _makeVar(const std::string &name) {
+inline Expr
+makeVar(const std::string &name,
+        std::source_location loc = std::source_location::current()) {
     ASSERT(!name.empty());
     Var v = Var::make();
     v->name_ = name;
+    v->setDebugBlame(loc);
     return v;
 }
 
@@ -53,23 +59,27 @@ class LoadNode : public ExprNode {
     DEFINE_NODE_TRAIT(Load);
 };
 typedef Ref<LoadNode> Load;
-#define makeLoad(...) makeNode(Load, __VA_ARGS__)
 template <class Tindices>
-Expr _makeLoad(const std::string &var, Tindices &&indices, DataType loadType) {
+Expr makeLoad(const std::string &var, Tindices &&indices, DataType loadType,
+              std::source_location loc = std::source_location::current()) {
     ASSERT(!var.empty());
     Load l = Load::make();
     l->var_ = var;
     l->indices_ = std::forward<Tindices>(indices);
     l->loadType_ = loadType;
+    l->setDebugBlame(loc);
     return l;
 }
-inline Expr _makeLoad(const std::string &var, const std::vector<Expr> &indices,
-                      DataType loadType) {
+inline Expr
+makeLoad(const std::string &var, const std::vector<Expr> &indices,
+         DataType loadType,
+         std::source_location loc = std::source_location::current()) {
     ASSERT(!var.empty());
     Load l = Load::make();
     l->var_ = var;
     l->indices_ = indices;
     l->loadType_ = loadType;
+    l->setDebugBlame(loc);
     return l;
 }
 
@@ -88,10 +98,12 @@ class IntConstNode : public ConstNode {
     DEFINE_NODE_TRAIT(IntConst);
 };
 typedef Ref<IntConstNode> IntConst;
-#define makeIntConst(...) makeNode(IntConst, __VA_ARGS__)
-inline Expr _makeIntConst(int64_t val) {
+inline Expr
+makeIntConst(int64_t val,
+             std::source_location loc = std::source_location::current()) {
     IntConst c = IntConst::make();
     c->val_ = val;
+    c->setDebugBlame(loc);
     return c;
 }
 
@@ -103,10 +115,12 @@ class FloatConstNode : public ConstNode {
     DEFINE_NODE_TRAIT(FloatConst);
 };
 typedef Ref<FloatConstNode> FloatConst;
-#define makeFloatConst(...) makeNode(FloatConst, __VA_ARGS__)
-inline Expr _makeFloatConst(double val) {
+inline Expr
+makeFloatConst(double val,
+               std::source_location loc = std::source_location::current()) {
     FloatConst c = FloatConst::make();
     c->val_ = val;
+    c->setDebugBlame(loc);
     return c;
 }
 
@@ -118,10 +132,12 @@ class BoolConstNode : public ConstNode {
     DEFINE_NODE_TRAIT(BoolConst);
 };
 typedef Ref<BoolConstNode> BoolConst;
-#define makeBoolConst(...) makeNode(BoolConst, __VA_ARGS__)
-inline Expr _makeBoolConst(bool val) {
+inline Expr
+makeBoolConst(bool val,
+              std::source_location loc = std::source_location::current()) {
     BoolConst b = BoolConst::make();
     b->val_ = val;
+    b->setDebugBlame(loc);
     return b;
 }
 
@@ -154,10 +170,12 @@ class AddNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Add);
 };
 typedef Ref<AddNode> Add;
-#define makeAdd(...) makeNode(Add, __VA_ARGS__)
-template <class T, class U> Expr _makeAdd(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeAdd(T &&lhs, U &&rhs,
+             std::source_location loc = std::source_location::current()) {
     Add a = Add::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -166,10 +184,12 @@ class SubNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Sub);
 };
 typedef Ref<SubNode> Sub;
-#define makeSub(...) makeNode(Sub, __VA_ARGS__)
-template <class T, class U> Expr _makeSub(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeSub(T &&lhs, U &&rhs,
+             std::source_location loc = std::source_location::current()) {
     Sub a = Sub::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -178,10 +198,12 @@ class MulNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Mul);
 };
 typedef Ref<MulNode> Mul;
-#define makeMul(...) makeNode(Mul, __VA_ARGS__)
-template <class T, class U> Expr _makeMul(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeMul(T &&lhs, U &&rhs,
+             std::source_location loc = std::source_location::current()) {
     Mul a = Mul::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -193,10 +215,12 @@ class RealDivNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(RealDiv);
 };
 typedef Ref<RealDivNode> RealDiv;
-#define makeRealDiv(...) makeNode(RealDiv, __VA_ARGS__)
-template <class T, class U> Expr _makeRealDiv(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeRealDiv(T &&lhs, U &&rhs,
+                 std::source_location loc = std::source_location::current()) {
     RealDiv a = RealDiv::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -211,10 +235,12 @@ class FloorDivNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(FloorDiv);
 };
 typedef Ref<FloorDivNode> FloorDiv;
-#define makeFloorDiv(...) makeNode(FloorDiv, __VA_ARGS__)
-template <class T, class U> Expr _makeFloorDiv(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeFloorDiv(T &&lhs, U &&rhs,
+                  std::source_location loc = std::source_location::current()) {
     FloorDiv a = FloorDiv::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -229,10 +255,12 @@ class CeilDivNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(CeilDiv);
 };
 typedef Ref<CeilDivNode> CeilDiv;
-#define makeCeilDiv(...) makeNode(CeilDiv, __VA_ARGS__)
-template <class T, class U> Expr _makeCeilDiv(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeCeilDiv(T &&lhs, U &&rhs,
+                 std::source_location loc = std::source_location::current()) {
     CeilDiv a = CeilDiv::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -247,10 +275,13 @@ class RoundTowards0DivNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(RoundTowards0Div);
 };
 typedef Ref<RoundTowards0DivNode> RoundTowards0Div;
-#define makeRoundTowards0Div(...) makeNode(RoundTowards0Div, __VA_ARGS__)
-template <class T, class U> Expr _makeRoundTowards0Div(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeRoundTowards0Div(
+    T &&lhs, U &&rhs,
+    std::source_location loc = std::source_location::current()) {
     RoundTowards0Div a = RoundTowards0Div::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -266,10 +297,12 @@ class ModNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Mod);
 };
 typedef Ref<ModNode> Mod;
-#define makeMod(...) makeNode(Mod, __VA_ARGS__)
-template <class T, class U> Expr _makeMod(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeMod(T &&lhs, U &&rhs,
+             std::source_location loc = std::source_location::current()) {
     Mod a = Mod::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -285,10 +318,12 @@ class RemainderNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Remainder);
 };
 typedef Ref<RemainderNode> Remainder;
-#define makeRemainder(...) makeNode(Remainder, __VA_ARGS__)
-template <class T, class U> Expr _makeRemainder(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeRemainder(T &&lhs, U &&rhs,
+                   std::source_location loc = std::source_location::current()) {
     Remainder a = Remainder::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -297,10 +332,12 @@ class MinNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Min);
 };
 typedef Ref<MinNode> Min;
-#define makeMin(...) makeNode(Min, __VA_ARGS__)
-template <class T, class U> Expr _makeMin(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeMin(T &&lhs, U &&rhs,
+             std::source_location loc = std::source_location::current()) {
     Min m = Min::make();
     m->lhs_ = std::forward<T>(lhs), m->rhs_ = std::forward<U>(rhs);
+    m->setDebugBlame(loc);
     return m;
 }
 
@@ -309,10 +346,12 @@ class MaxNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Max);
 };
 typedef Ref<MaxNode> Max;
-#define makeMax(...) makeNode(Max, __VA_ARGS__)
-template <class T, class U> Expr _makeMax(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeMax(T &&lhs, U &&rhs,
+             std::source_location loc = std::source_location::current()) {
     Max m = Max::make();
     m->lhs_ = std::forward<T>(lhs), m->rhs_ = std::forward<U>(rhs);
+    m->setDebugBlame(loc);
     return m;
 }
 
@@ -321,10 +360,12 @@ class LTNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(LT);
 };
 typedef Ref<LTNode> LT;
-#define makeLT(...) makeNode(LT, __VA_ARGS__)
-template <class T, class U> Expr _makeLT(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeLT(T &&lhs, U &&rhs,
+            std::source_location loc = std::source_location::current()) {
     LT a = LT::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -333,10 +374,12 @@ class LENode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(LE);
 };
 typedef Ref<LENode> LE;
-#define makeLE(...) makeNode(LE, __VA_ARGS__)
-template <class T, class U> Expr _makeLE(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeLE(T &&lhs, U &&rhs,
+            std::source_location loc = std::source_location::current()) {
     LE a = LE::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -345,10 +388,12 @@ class GTNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(GT);
 };
 typedef Ref<GTNode> GT;
-#define makeGT(...) makeNode(GT, __VA_ARGS__)
-template <class T, class U> Expr _makeGT(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeGT(T &&lhs, U &&rhs,
+            std::source_location loc = std::source_location::current()) {
     GT a = GT::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -357,10 +402,12 @@ class GENode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(GE);
 };
 typedef Ref<GENode> GE;
-#define makeGE(...) makeNode(GE, __VA_ARGS__)
-template <class T, class U> Expr _makeGE(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeGE(T &&lhs, U &&rhs,
+            std::source_location loc = std::source_location::current()) {
     GE a = GE::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -369,10 +416,12 @@ class EQNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(EQ);
 };
 typedef Ref<EQNode> EQ;
-#define makeEQ(...) makeNode(EQ, __VA_ARGS__)
-template <class T, class U> Expr _makeEQ(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeEQ(T &&lhs, U &&rhs,
+            std::source_location loc = std::source_location::current()) {
     EQ a = EQ::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -381,10 +430,12 @@ class NENode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(NE);
 };
 typedef Ref<NENode> NE;
-#define makeNE(...) makeNode(NE, __VA_ARGS__)
-template <class T, class U> Expr _makeNE(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeNE(T &&lhs, U &&rhs,
+            std::source_location loc = std::source_location::current()) {
     NE a = NE::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -393,10 +444,12 @@ class LAndNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(LAnd);
 };
 typedef Ref<LAndNode> LAnd;
-#define makeLAnd(...) makeNode(LAnd, __VA_ARGS__)
-template <class T, class U> Expr _makeLAnd(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeLAnd(T &&lhs, U &&rhs,
+              std::source_location loc = std::source_location::current()) {
     LAnd l = LAnd::make();
     l->lhs_ = std::forward<T>(lhs), l->rhs_ = std::forward<U>(rhs);
+    l->setDebugBlame(loc);
     return l;
 }
 
@@ -405,10 +458,12 @@ class LOrNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(LOr);
 };
 typedef Ref<LOrNode> LOr;
-#define makeLOr(...) makeNode(LOr, __VA_ARGS__)
-template <class T, class U> Expr _makeLOr(T &&lhs, U &&rhs) {
+template <class T, class U>
+Expr makeLOr(T &&lhs, U &&rhs,
+             std::source_location loc = std::source_location::current()) {
     LOr l = LOr::make();
     l->lhs_ = std::forward<T>(lhs), l->rhs_ = std::forward<U>(rhs);
+    l->setDebugBlame(loc);
     return l;
 }
 
@@ -427,10 +482,12 @@ class LNotNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(LNot);
 };
 typedef Ref<LNotNode> LNot;
-#define makeLNot(...) makeNode(LNot, __VA_ARGS__)
-template <class T> Expr _makeLNot(T &&expr) {
+template <class T>
+Expr makeLNot(T &&expr,
+              std::source_location loc = std::source_location::current()) {
     LNot n = LNot::make();
     n->expr_ = std::forward<T>(expr);
+    n->setDebugBlame(loc);
     return n;
 }
 
@@ -439,10 +496,12 @@ class SqrtNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(Sqrt);
 };
 typedef Ref<SqrtNode> Sqrt;
-#define makeSqrt(...) makeNode(Sqrt, __VA_ARGS__)
-template <class T> Expr _makeSqrt(T &&expr) {
+template <class T>
+Expr makeSqrt(T &&expr,
+              std::source_location loc = std::source_location::current()) {
     Sqrt s = Sqrt::make();
     s->expr_ = std::forward<T>(expr);
+    s->setDebugBlame(loc);
     return s;
 }
 
@@ -451,10 +510,12 @@ class ExpNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(Exp);
 };
 typedef Ref<ExpNode> Exp;
-#define makeExp(...) makeNode(Exp, __VA_ARGS__)
-template <class T> Expr _makeExp(T &&expr) {
+template <class T>
+Expr makeExp(T &&expr,
+             std::source_location loc = std::source_location::current()) {
     Exp e = Exp::make();
     e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -463,10 +524,12 @@ class LnNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(Ln);
 };
 typedef Ref<LnNode> Ln;
-#define makeLn(...) makeNode(Ln, __VA_ARGS__)
-template <class T> Expr _makeLn(T &&expr) {
+template <class T>
+Expr makeLn(T &&expr,
+            std::source_location loc = std::source_location::current()) {
     Ln e = Ln::make();
     e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -475,10 +538,12 @@ class SquareNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(Square);
 };
 typedef Ref<SquareNode> Square;
-#define makeSquare(...) makeNode(Square, __VA_ARGS__)
-template <class T> Expr _makeSquare(T &&expr) {
+template <class T>
+Expr makeSquare(T &&expr,
+                std::source_location loc = std::source_location::current()) {
     Square e = Square::make();
     e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -487,10 +552,12 @@ class SigmoidNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(Sigmoid);
 };
 typedef Ref<SigmoidNode> Sigmoid;
-#define makeSigmoid(...) makeNode(Sigmoid, __VA_ARGS__)
-template <class T> Expr _makeSigmoid(T &&expr) {
+template <class T>
+Expr makeSigmoid(T &&expr,
+                 std::source_location loc = std::source_location::current()) {
     Sigmoid e = Sigmoid::make();
     e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -499,10 +566,12 @@ class SinNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(Sin);
 };
 typedef Ref<SinNode> Sin;
-#define makeSin(...) makeNode(Sin, __VA_ARGS__)
-template <class T> Expr _makeSin(T &&expr) {
+template <class T>
+Expr makeSin(T &&expr,
+             std::source_location loc = std::source_location::current()) {
     Sin e = Sin::make();
     e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -511,10 +580,12 @@ class CosNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(Cos);
 };
 typedef Ref<CosNode> Cos;
-#define makeCos(...) makeNode(Cos, __VA_ARGS__)
-template <class T> Expr _makeCos(T &&expr) {
+template <class T>
+Expr makeCos(T &&expr,
+             std::source_location loc = std::source_location::current()) {
     Cos e = Cos::make();
     e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -523,10 +594,12 @@ class TanNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(Tan);
 };
 typedef Ref<TanNode> Tan;
-#define makeTan(...) makeNode(Tan, __VA_ARGS__)
-template <class T> Expr _makeTan(T &&expr) {
+template <class T>
+Expr makeTan(T &&expr,
+             std::source_location loc = std::source_location::current()) {
     Tan e = Tan::make();
     e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -535,10 +608,12 @@ class TanhNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(Tanh);
 };
 typedef Ref<TanhNode> Tanh;
-#define makeTanh(...) makeNode(Tanh, __VA_ARGS__)
-template <class T> Expr _makeTanh(T &&expr) {
+template <class T>
+Expr makeTanh(T &&expr,
+              std::source_location loc = std::source_location::current()) {
     Tanh e = Tanh::make();
     e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -547,10 +622,12 @@ class AbsNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(Abs);
 };
 typedef Ref<AbsNode> Abs;
-#define makeAbs(...) makeNode(Abs, __VA_ARGS__)
-template <class T> Expr _makeAbs(T &&expr) {
+template <class T>
+Expr makeAbs(T &&expr,
+             std::source_location loc = std::source_location::current()) {
     Abs e = Abs::make();
     e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -559,10 +636,12 @@ class FloorNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(Floor);
 };
 typedef Ref<FloorNode> Floor;
-#define makeFloor(...) makeNode(Floor, __VA_ARGS__)
-template <class T> Expr _makeFloor(T &&expr) {
+template <class T>
+Expr makeFloor(T &&expr,
+               std::source_location loc = std::source_location::current()) {
     Floor e = Floor::make();
     e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -571,10 +650,12 @@ class CeilNode : public UnaryExprNode {
     DEFINE_NODE_TRAIT(Ceil);
 };
 typedef Ref<CeilNode> Ceil;
-#define makeCeil(...) makeNode(Ceil, __VA_ARGS__)
-template <class T> Expr _makeCeil(T &&expr) {
+template <class T>
+Expr makeCeil(T &&expr,
+              std::source_location loc = std::source_location::current()) {
     Ceil e = Ceil::make();
     e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -591,13 +672,14 @@ class IfExprNode : public ExprNode {
     DEFINE_NODE_TRAIT(IfExpr);
 };
 typedef Ref<IfExprNode> IfExpr;
-#define makeIfExpr(...) makeNode(IfExpr, __VA_ARGS__)
 template <class T, class U, class V>
-Expr _makeIfExpr(T &&cond, U &&thenCase, V &&elseCase) {
+Expr makeIfExpr(T &&cond, U &&thenCase, V &&elseCase,
+                std::source_location loc = std::source_location::current()) {
     IfExpr e = IfExpr::make();
     e->cond_ = std::forward<T>(cond);
     e->thenCase_ = std::forward<U>(thenCase);
     e->elseCase_ = std::forward<V>(elseCase);
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -611,11 +693,13 @@ class CastNode : public ExprNode {
     DEFINE_NODE_TRAIT(Cast);
 };
 typedef Ref<CastNode> Cast;
-#define makeCast(...) makeNode(Cast, __VA_ARGS__)
-template <class T> Expr _makeCast(T &&expr, DataType destType) {
+template <class T>
+Expr makeCast(T &&expr, DataType destType,
+              std::source_location loc = std::source_location::current()) {
     Cast e = Cast::make();
     e->expr_ = std::forward<T>(expr);
     e->destType_ = destType;
+    e->setDebugBlame(loc);
     return e;
 }
 
@@ -635,25 +719,28 @@ class IntrinsicNode : public ExprNode {
     DEFINE_NODE_TRAIT(Intrinsic);
 };
 typedef Ref<IntrinsicNode> Intrinsic;
-#define makeIntrinsic(...) makeNode(Intrinsic, __VA_ARGS__)
 template <class T>
-Expr _makeIntrinsic(const std::string &format, T &&params, DataType retType,
-                    bool hasSideEffect) {
+Expr makeIntrinsic(const std::string &format, T &&params, DataType retType,
+                   bool hasSideEffect,
+                   std::source_location loc = std::source_location::current()) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
     i->params_ = std::forward<T>(params);
     i->retType_ = retType;
     i->hasSideEffect_ = hasSideEffect;
+    i->setDebugBlame(loc);
     return i;
 }
-inline Expr _makeIntrinsic(const std::string &format,
-                           std::initializer_list<Expr> params, DataType retType,
-                           bool hasSideEffect) {
+inline Expr
+makeIntrinsic(const std::string &format, std::initializer_list<Expr> params,
+              DataType retType, bool hasSideEffect,
+              std::source_location loc = std::source_location::current()) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
     i->params_ = params;
     i->retType_ = retType;
     i->hasSideEffect_ = hasSideEffect;
+    i->setDebugBlame(loc);
     return i;
 }
 
@@ -668,86 +755,108 @@ class LoadAtVersionNode : public ExprNode {
     DEFINE_NODE_TRAIT(LoadAtVersion);
 };
 typedef Ref<LoadAtVersionNode> LoadAtVersion;
-#define makeLoadAtVersion(...) makeNode(LoadAtVersion, __VA_ARGS__)
 template <class Tindices>
-inline Expr _makeLoadAtVersion(const std::string &tapeName, Tindices &&indices,
-                               const DataType loadType) {
+inline Expr
+makeLoadAtVersion(const std::string &tapeName, Tindices &&indices,
+                  const DataType loadType,
+                  std::source_location loc = std::source_location::current()) {
     LoadAtVersion l = LoadAtVersion::make();
     l->tapeName_ = tapeName;
     l->indices_ = std::forward<Tindices>(indices);
     l->loadType_ = loadType;
+    l->setDebugBlame(loc);
     return l;
 }
-inline Expr _makeLoadAtVersion(const std::string &tapeName,
-                               const std::vector<Expr> &indices,
-                               const DataType loadType) {
+inline Expr
+makeLoadAtVersion(const std::string &tapeName, const std::vector<Expr> &indices,
+                  const DataType loadType,
+                  std::source_location loc = std::source_location::current()) {
     LoadAtVersion l = LoadAtVersion::make();
     l->tapeName_ = tapeName;
     l->indices_ = indices;
     l->loadType_ = loadType;
+    l->setDebugBlame(loc);
     return l;
 }
 
 template <class T, class U>
-Expr makeBinary(ASTNodeType nodeType, T &&lhs, U &&rhs) {
+Expr makeBinary(ASTNodeType nodeType, T &&lhs, U &&rhs,
+                std::source_location loc = std::source_location::current()) {
     switch (nodeType) {
     case ASTNodeType::Add:
-        return makeAdd(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeAdd(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::Sub:
-        return makeSub(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeSub(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::Mul:
-        return makeMul(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeMul(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::RealDiv:
-        return makeRealDiv(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeRealDiv(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::FloorDiv:
-        return makeFloorDiv(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeFloorDiv(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::CeilDiv:
-        return makeCeilDiv(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeCeilDiv(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::RoundTowards0Div:
-        return makeRoundTowards0Div(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeRoundTowards0Div(std::forward<T>(lhs), std::forward<U>(rhs),
+                                    loc);
     case ASTNodeType::Mod:
-        return makeMod(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeMod(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::Remainder:
-        return makeRemainder(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeRemainder(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::Min:
-        return makeMin(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeMin(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::Max:
-        return makeMax(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeMax(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::LT:
-        return makeLT(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeLT(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::LE:
-        return makeLE(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeLE(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::GT:
-        return makeGT(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeGT(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::GE:
-        return makeGE(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeGE(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::EQ:
-        return makeEQ(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeEQ(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::NE:
-        return makeNE(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeNE(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::LAnd:
-        return makeLAnd(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeLAnd(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     case ASTNodeType::LOr:
-        return makeLOr(std::forward<T>(lhs), std::forward<U>(rhs));
+        return makeLOr(std::forward<T>(lhs), std::forward<U>(rhs), loc);
     default:
         ASSERT(false);
     }
 }
 
-template <class T> Expr makeUnary(ASTNodeType nodeType, T &&expr) {
+template <class T>
+Expr makeUnary(ASTNodeType nodeType, T &&expr,
+               std::source_location loc = std::source_location::current()) {
     switch (nodeType) {
     case ASTNodeType::LNot:
-        return makeLNot(std::forward<T>(expr));
+        return makeLNot(std::forward<T>(expr), loc);
     case ASTNodeType::Sqrt:
-        return makeSqrt(std::forward<T>(expr));
+        return makeSqrt(std::forward<T>(expr), loc);
     case ASTNodeType::Exp:
-        return makeExp(std::forward<T>(expr));
+        return makeExp(std::forward<T>(expr), loc);
+    case ASTNodeType::Ln:
+        return makeLn(std::forward<T>(expr), loc);
     case ASTNodeType::Square:
-        return makeSquare(std::forward<T>(expr));
+        return makeSquare(std::forward<T>(expr), loc);
     case ASTNodeType::Sigmoid:
-        return makeSigmoid(std::forward<T>(expr));
+        return makeSigmoid(std::forward<T>(expr), loc);
+    case ASTNodeType::Sin:
+        return makeSin(std::forward<T>(expr), loc);
+    case ASTNodeType::Cos:
+        return makeCos(std::forward<T>(expr), loc);
+    case ASTNodeType::Tan:
+        return makeTan(std::forward<T>(expr), loc);
     case ASTNodeType::Tanh:
-        return makeTanh(std::forward<T>(expr));
+        return makeTanh(std::forward<T>(expr), loc);
+    case ASTNodeType::Abs:
+        return makeAbs(std::forward<T>(expr), loc);
+    case ASTNodeType::Floor:
+        return makeFloor(std::forward<T>(expr), loc);
+    case ASTNodeType::Ceil:
+        return makeCeil(std::forward<T>(expr), loc);
     default:
         ASSERT(false);
     }

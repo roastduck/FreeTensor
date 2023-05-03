@@ -90,9 +90,11 @@ void PrintVisitor::recur(const Stmt &op) {
 }
 
 void PrintVisitor::printMetadataAndId(const Stmt &op) {
-#ifdef FT_DEBUG_LOG_NODE
+#ifdef FT_DEBUG_BLAME_AST
     makeIndent();
-    os() << "// By " << op->debugCreator_ << std::endl;
+    os() << "// By " << op->debugBlame().file_name() << ":"
+         << op->debugBlame().line() << ":" << op->debugBlame().column()
+         << " in " << op->debugBlame().function_name() << std::endl;
 #endif
     if (printAllId_ ||
         (op->metadata().isValid() &&

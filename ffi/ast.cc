@@ -93,8 +93,14 @@ void init_ffi_ast(py::module_ &m) {
     m.def("make_id", static_cast<ID (*)()>(&ID::make));
     m.def("make_id", static_cast<ID (*)(uint64_t)>(&ID::make));
 
-#ifdef FT_DEBUG_LOG_NODE
-    pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);
+#ifdef FT_DEBUG_BLAME_AST
+    pyAST.def_property_readonly("debug_blame", [&](const AST &ast) {
+        std::ostringstream os;
+        os << ast->debugBlame().file_name() << ":" << ast->debugBlame().line()
+           << ":" << ast->debugBlame().column() << " in "
+           << ast->debugBlame().function_name() << std::endl;
+        return os.str();
+    });
 #endif
 
     pyAST
