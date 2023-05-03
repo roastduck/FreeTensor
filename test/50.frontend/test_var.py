@@ -152,3 +152,18 @@ def test_var_as_index_2():
                     ("y", (), "int32", "output", "cpu")]) as (idx, x, y):
         y[()] = x[idx]
     assert ft.pop_ast().match(f.body)
+
+
+def test_const_fold_in_slice():
+    # Don't introduce unnecessary `Expr`s (stage-2 expressions) in shape.
+    # Try out best to stay in constants (stage-1 expressions)
+
+    @ft.transform
+    def f(x: ft.Var[(5,), "float64"]):
+        # Use `is` to check type and value, but we have to use extra
+        # variables to supress warnings from Python
+        three, four, five = 3, 4, 5
+        assert x[:].shape(0) is five
+        assert x[1:].shape(0) is four
+        assert x[:4].shape(0) is four
+        assert x[1:4].shape(0) is three
