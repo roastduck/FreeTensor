@@ -18,7 +18,7 @@ import collections
 import builtins
 import math
 from numbers import Number
-from typing import Sequence
+from typing import Sequence, Union
 from dataclasses import dataclass
 
 import freetensor_ffi as ffi
@@ -101,13 +101,18 @@ class VarRef(ffi.FrontendVar):
         return super(VarRef, self).as_reduce_to(reduce_op, metadata, value,
                                                 atomic)
 
-    def select(self, idx, dim):
+    def select(self, idx: Union[int, ffi.Expr, slice], dim: int):
+        ''' Alias for `self[..., idx, ...]`, where `idx` is at the `dim`-th dimension '''
         assert isinstance(dim, int)
         assert dim >= 0 and dim < self.ndim
         indices = [
             slice(None, None) if d != dim else idx for d in range(self.ndim)
         ]
         return self[indices]
+
+    def select_slice(self, begin, end, *, dim: int):
+        ''' Alias for `self[..., begin:end, ...]`, where `begin:end` is at the `dim`-th dimension '''
+        return self.select(slice(begin, end), dim=dim)
 
     def shape(self, dim=None):
         '''
