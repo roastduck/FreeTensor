@@ -77,27 +77,38 @@ class AsMatMul : public SymbolTable<Mutator> {
     }
 
     template <class T>
-    std::pair<Expr, Expr> findLenAndStride(const T &acc,
-                                           const std::vector<bool> &flag) {
-        Expr len, stride;
-        bool thisDimIn = false, lastDimIn = false;
-        Expr lastInDim;
-        for (auto &&[idx, dimLen] :
-             views::zip(acc->indices_, buffer(acc->var_)->tensor()->shape())) {
+    std::vector<bool> findDimsUsed(const T &acc,
+                                   const std::vector<bool> &loopsUsed) {
+        std::vector<bool> dimsUsed(acc->indices_.size(), false);
+        for (auto &&[dimUsed, idx, dimLen] :
+             views::zip(dimsUsed, acc->indices_,
+                        buffer(acc->var_)->tensor()->shape())) {
             auto &&lin = analyzeLinear(idx);
-            lastDimIn = thisDimIn;
-            thisDimIn = true;
+            dimUsed = true;
             if (lin.coeff_.size() != 1 ||
                 std::abs(lin.coeff_.front().k_) != 1 ||
                 lin.coeff_.front().a_->nodeType() != ASTNodeType::Var) {
-                thisDimIn = false;
+                dimUsed = false;
             } else {
                 Var var = lin.coeff_.front().a_.template as<VarNode>();
                 if (!iterMap_.count(var->name_) ||
-                    !flag[iterMap_.at(var->name_)]) {
-                    thisDimIn = false;
+                    !loopsUsed[iterMap_.at(var->name_)]) {
+                    dimUsed = false;
                 }
             }
+        }
+        return dimsUsed;
+    }
+
+    template <class T>
+    std::pair<Expr, Expr> findLenAndStride(const T &acc,
+                                           const std::vector<bool> &dimsIn) {
+        Expr len, stride;
+        bool lastDimIn = false;
+        Expr lastInDim;
+        for (auto &&[thisDimIn, idx, dimLen] : views::zip(
+                 dimsIn, acc->indices_, buffer(acc->var_)->tensor()->shape())) {
+            lastDimIn = thisDimIn;
             if (thisDimIn) {
                 if (lastInDim.isValid()) {
                     if (!lastDimIn) {
