@@ -24,9 +24,9 @@
 
 template <typename T>
 concept IntegralExceptBool = requires {
-                                 requires std::integral<T>;
-                                 requires !std::same_as<T, bool>;
-                             };
+    requires std::integral<T>;
+    requires !std::same_as<T, bool>;
+};
 
 inline auto floorDiv(IntegralExceptBool auto a, IntegralExceptBool auto b) {
     auto res = a / b;

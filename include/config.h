@@ -62,7 +62,7 @@ class Config {
   public:
     static void init(); /// Called in src/ffi/config.cc
 
-    static std::string withMKL();
+    static bool withMKL();
     static bool withCUDA();
     static bool withPyTorch();
 
