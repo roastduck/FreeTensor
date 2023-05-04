@@ -87,6 +87,7 @@ class VarRef(ffi.FrontendVar):
         top.append_stmt(var.as_store(top.get_metadata(), value))
 
     def as_store(self, metadata, value):
+        self._check_write_permission()
         if (not isinstance(value, ffi.AnyExpr) and
                 ffi.up_cast(dtype(value), self.dtype).base != self.dtype.base):
             # Add explicit cast node, to avoid confusion after propagation
@@ -94,6 +95,7 @@ class VarRef(ffi.FrontendVar):
         return super(VarRef, self).as_store(metadata, value)
 
     def as_reduce_to(self, reduce_op, metadata, value, atomic=False):
+        self._check_write_permission()
         if (not isinstance(value, ffi.AnyExpr) and
                 ffi.up_cast(dtype(value), self.dtype).base != self.dtype.base):
             # Add explicit cast node, to avoid confusion after propagation
@@ -131,6 +133,17 @@ class VarRef(ffi.FrontendVar):
             return [intOrExpr(d) for d in super(VarRef, self).shape()]
         else:
             return intOrExpr(super(VarRef, self).shape(dim))
+
+    def _check_write_permission(self):
+        if not is_writable(self.vardef.atype):
+            raise ffi.InvalidProgram(
+                f"Cannot modify an \"{self.vardef.atype}\" tensor `{self.name}`"
+            )
+        if self.vardef.borrower_cnt > 0:
+            raise ffi.InvalidProgram(
+                "Cannot modify tensor `" + self.name +
+                "` becuase it has been borrowed in another tensor's shape, "
+                "a tensor slice, or a range of a loop")
 
     def _parse_key(self, key):
         if key is None or key is ...:
@@ -371,15 +384,7 @@ class VarRefFromVarDef(VarRef):
             from .. import libop
             libop.assign(var, value)
             return
-        if not is_writable(var.vardef.atype):
-            raise ffi.InvalidProgram(
-                f"Cannot modify an \"{var.vardef.atype}\" tensor `{self.name}`")
-        if var.vardef.borrower_cnt > 0:
-            raise ffi.InvalidProgram(
-                "Cannot modify tensor `" + self.name +
-                "` becuase it has been borrowed in another tensor's shape, "
-                "a tensor slice, or a range of a loop")
-        if value is AlreadyMadeReduceTo:  # Following the checks above
+        if value is AlreadyMadeReduceTo:
             return
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_metadata(), value))
