@@ -12,7 +12,11 @@
 #include <omp.h>
 
 #ifdef FT_WITH_MKL
+#ifdef FT_MKL_INCLUDE
 #include <mkl.h>
+#else
+#include <mkl/mkl.h>
+#endif
 #endif
 
 #include "cpu_context.h"
@@ -24,9 +28,9 @@
 
 template <typename T>
 concept IntegralExceptBool = requires {
-                                 requires std::integral<T>;
-                                 requires !std::same_as<T, bool>;
-                             };
+    requires std::integral<T>;
+    requires !std::same_as<T, bool>;
+};
 
 inline auto floorDiv(IntegralExceptBool auto a, IntegralExceptBool auto b) {
     auto res = a / b;

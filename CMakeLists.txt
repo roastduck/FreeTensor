@@ -157,7 +157,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 if(FT_WITH_MKL)
     add_definitions(-DFT_WITH_MKL)
     if(IS_DIRECTORY "${FT_WITH_MKL}")  # IS_DIRECTORY's argument should be a string
-        add_definitions(-DFT_MKL_INCLDUE="${FT_WITH_MKL}/include")
+        add_definitions(-DFT_MKL_INCLUDE="${FT_WITH_MKL}/include")
         add_definitions(-DFT_MKL_LIB="${FT_WITH_MKL}/lib/intel64")
     endif()
 endif()
