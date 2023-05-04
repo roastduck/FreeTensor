@@ -166,11 +166,11 @@ void Config::init() {
 #endif
 }
 
-std::string Config::withMKL() {
+bool Config::withMKL() {
 #ifdef FT_WITH_MKL
-    return FT_WITH_MKL;
+    return true;
 #else
-    return "";
+    return false;
 #endif
 }
 

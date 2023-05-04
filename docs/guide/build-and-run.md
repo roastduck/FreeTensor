@@ -51,7 +51,7 @@ make -j  # Or use Ninja
 There are some options to `cmake`:
 
 - `-DFT_WITH_CUDA=ON/OFF`: build with/without CUDA (defaults to `ON`).
-- `-DFT_WITH_MKL=<path/to/mkl/root>`: build with MKL (path to MKL is required, defaults to building without it).
+- `-DFT_WITH_MKL=ON/<path/to/mkl/root>/OFF`: build with MKL (defaults to `OFF`).
 
     The path accepts by CMake should be a raw unescaped path; i.e. `-DFT_WITH_MKL="/some path"` is good since the quotes are resolved by the shell but `-DFT_WITH_MKL=\"/some\ path\"` is not.
 
