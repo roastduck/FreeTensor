@@ -40,14 +40,14 @@ class mdspan_dbg : public stdex::mdspan<ElementType, Extents> {
 
     template <size_t DIM, typename FirstIdx, typename... OtherIdx>
     FUNC_ATTR void printIndices(FirstIdx &&first, OtherIdx &&...others) const {
-        printf(DIM > 0 ? ", %ll" : "%ll", (long long)first);
+        printf(DIM > 0 ? ", %lld" : "%lld", (long long)first);
         printIndices<DIM + 1>(std::forward<OtherIdx>(others)...);
     }
     template <size_t DIM> FUNC_ATTR void printIndices() const {}
 
     template <size_t DIM, typename FirstIdx, typename... OtherIdx>
     FUNC_ATTR void printExtents(FirstIdx &&first, OtherIdx &&...others) const {
-        printf(DIM > 0 ? ", %ll" : "%ll", (long long)(this->extent(DIM)));
+        printf(DIM > 0 ? ", %lld" : "%lld", (long long)(this->extent(DIM)));
         printExtents<DIM + 1>(std::forward<OtherIdx>(others)...);
     }
     template <size_t DIM> FUNC_ATTR void printExtents() const {}
