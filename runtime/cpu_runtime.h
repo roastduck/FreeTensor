@@ -12,11 +12,7 @@
 #include <omp.h>
 
 #ifdef FT_WITH_MKL
-#ifdef FT_MKL_INCLUDE
 #include <mkl.h>
-#else
-#include <mkl/mkl.h>
-#endif
 #endif
 
 #include "cpu_context.h"

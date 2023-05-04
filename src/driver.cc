@@ -166,23 +166,11 @@ void Driver::buildAndLoad() {
 
 #ifdef FT_WITH_MKL
         addArgs("-DFT_WITH_MKL");
-
-#ifdef FT_MKL_INCLUDE
-        addArgs("-DFT_MKL_INCLUDE=" FT_MKL_INCLUDE);
         addArgs("-I" FT_MKL_INCLUDE);
-#endif // FT_MKL_INCLUDE
-
-        // Link statically, or there will be dlopen issues
-        // Generated with MKL Link Line Advisor
-#ifdef FT_MKL_LIB
-        addArgs("-DFT_MKL_LIB=" FT_MKL_LIB);
-        addArgs("-Wl,--start-group", FT_MKL_LIB "/libmkl_intel_lp64.a",
-                FT_MKL_LIB "/libmkl_gnu_thread.a", FT_MKL_LIB "/libmkl_core.a",
+        // The order of these libraries are generated with MKL Link Line Advisor
+        addArgs("-Wl,--start-group", FT_MKL_LIBMKL_INTEL_LP64,
+                FT_MKL_LIBMKL_GNU_THREAD, FT_MKL_LIBMKL_CORE,
                 "-Wl,--end-group");
-#else  // !defined(FT_MKL_LIB)
-        addArgs("-Wl,--start-group", "libmkl_intel_lp64.a",
-                "libmkl_gnu_thread.a", "libmkl_core.a", "-Wl,--end-group");
-#endif // FT_MKL_LIB
 #endif // FT_WITH_MKL
 
         if (dev_->target()->useNativeArch()) {
