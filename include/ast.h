@@ -5,6 +5,7 @@
 #include <functional>
 #include <iostream>
 #include <optional>
+#include <source_location>
 #include <string>
 
 #include <id.h>
@@ -114,11 +115,11 @@ std::ostream &operator<<(std::ostream &os, ASTNodeType type);
  * `ASTPart`, and a derived node of `ASTNode` may contain other `ASTPart`s
  */
 class ASTNode : public ASTPart {
-  public:
-#ifdef FT_DEBUG_LOG_NODE
-    std::string debugCreator_ = "Python API";
+#ifdef FT_DEBUG_BLAME_AST
+    std::source_location debugBlame_;
 #endif
 
+  public:
     virtual ~ASTNode() {}
     virtual ASTNodeType nodeType() const = 0;
 
@@ -129,28 +130,22 @@ class ASTNode : public ASTPart {
 
     Ref<ASTNode> parentAST() const;
 
+    std::source_location debugBlame() const {
+#ifdef FT_DEBUG_BLAME_AST
+        return debugBlame_;
+#else
+        return std::source_location::current(); // Arbitrary return
+#endif
+    }
+    void setDebugBlame(std::source_location loc) {
+#ifdef FT_DEBUG_BLAME_AST
+        debugBlame_ = loc;
+#endif
+    }
+
     DEFINE_NODE_ACCESS(AST);
 };
 typedef Ref<ASTNode> AST;
-
-#ifdef FT_DEBUG_LOG_NODE
-#define makeNode(type, ...)                                                    \
-    ({                                                                         \
-        auto __x = _make##type(__VA_ARGS__);                                   \
-        __x->debugCreator_ = __FILE__ ":" + std::to_string(__LINE__);          \
-        __x;                                                                   \
-    }) // GCC Extension: Statement expression
-#define COPY_DEBUG_INFO(ret, old)                                              \
-    ({                                                                         \
-        auto __x = (ret);                                                      \
-        auto __y = (old);                                                      \
-        __x->debugCreator_ = __y->debugCreator_;                               \
-        __x;                                                                   \
-    }) // GCC Extension: Statement expression
-#else
-#define makeNode(type, ...) _make##type(__VA_ARGS__)
-#define COPY_DEBUG_INFO(ret, old) (ret)
-#endif
 
 class StmtNode;
 typedef Ref<StmtNode> Stmt;

@@ -3,8 +3,8 @@
 namespace freetensor {
 
 Func deepCopy(const Func &func) {
-    return _makeFunc(func->name_, func->params_, func->returns_,
-                     deepCopy(func->body_));
+    return makeFunc(func->name_, func->params_, func->returns_,
+                    deepCopy(func->body_));
 }
 
 std::ostream &operator<<(std::ostream &os, const FuncParam &p) {

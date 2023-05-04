@@ -433,9 +433,8 @@ Expr Z3Simplify::visit(const IfExpr &op) {
     }
     auto thenCase = (*this)(op->thenCase_);
     auto elseCase = (*this)(op->elseCase_);
-    auto ret =
-        makeIfExpr(std::move(cond), std::move(thenCase), std::move(elseCase));
-    return COPY_DEBUG_INFO(ret, op);
+    return makeIfExpr(std::move(cond), std::move(thenCase), std::move(elseCase),
+                      op->debugBlame());
 }
 
 Stmt Z3Simplify::visit(const If &op) {
@@ -469,9 +468,8 @@ Stmt Z3Simplify::visit(const If &op) {
         }
     }
 
-    auto ret = makeIf(std::move(cond), std::move(thenCase), std::move(elseCase),
-                      op->metadata(), op->id());
-    return COPY_DEBUG_INFO(ret, op);
+    return makeIf(std::move(cond), std::move(thenCase), std::move(elseCase),
+                  op->metadata(), op->id(), op->debugBlame());
 }
 
 Stmt Z3Simplify::visit(const Assert &op) {
@@ -555,10 +553,9 @@ Stmt Z3Simplify::visit(const For &op) {
         body = (*this)(op->body_);
     }
 
-    auto ret = makeFor(op->iter_, std::move(begin), std::move(end),
-                       std::move(step), std::move(len), op->property_,
-                       std::move(body), op->metadata(), op->id());
-    return COPY_DEBUG_INFO(ret, op);
+    return makeFor(op->iter_, std::move(begin), std::move(end), std::move(step),
+                   std::move(len), op->property_, std::move(body),
+                   op->metadata(), op->id(), op->debugBlame());
 }
 
 Stmt Z3SimplifyWithSymbolTable::visit(const VarDef &op) {

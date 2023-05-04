@@ -171,11 +171,10 @@ class CompTransientBounds : public BaseClass,
                 property->reductions_.emplace_back(makeReductionItem(
                     r->op_, r->var_, std::move(begins), std::move(ends)));
             }
-            auto ret =
-                makeFor(op->iter_, std::move(begin), std::move(end),
-                        std::move(step), std::move(len), std::move(property),
-                        std::move(body), op->metadata(), op->id());
-            return COPY_DEBUG_INFO(ret, op);
+            return makeFor(op->iter_, std::move(begin), std::move(end),
+                           std::move(step), std::move(len), std::move(property),
+                           std::move(body), op->metadata(), op->id(),
+                           op->debugBlame());
         }
     }
 
@@ -199,9 +198,9 @@ class CompTransientBounds : public BaseClass,
         }
 
         if constexpr (!std::is_same_v<typename BaseClass::StmtRetType, void>) {
-            auto ret = makeIf(std::move(cond), std::move(thenCase),
-                              std::move(elseCase), op->metadata(), op->id());
-            return COPY_DEBUG_INFO(ret, op);
+            return makeIf(std::move(cond), std::move(thenCase),
+                          std::move(elseCase), op->metadata(), op->id(),
+                          op->debugBlame());
         }
     }
 
@@ -216,9 +215,8 @@ class CompTransientBounds : public BaseClass,
         conds_.resize(oldCondsSize);
 
         if constexpr (!std::is_same_v<typename BaseClass::StmtRetType, void>) {
-            auto ret = makeAssert(std::move(cond), std::move(body),
-                                  op->metadata(), op->id());
-            return COPY_DEBUG_INFO(ret, op);
+            return makeAssert(std::move(cond), std::move(body), op->metadata(),
+                              op->id(), op->debugBlame());
         }
     }
 
@@ -233,9 +231,8 @@ class CompTransientBounds : public BaseClass,
         conds_.resize(oldCondsSize);
 
         if constexpr (!std::is_same_v<typename BaseClass::StmtRetType, void>) {
-            auto ret = makeAssume(std::move(cond), std::move(body),
-                                  op->metadata(), op->id());
-            return COPY_DEBUG_INFO(ret, op);
+            return makeAssume(std::move(cond), std::move(body), op->metadata(),
+                              op->id(), op->debugBlame());
         }
     }
 };
