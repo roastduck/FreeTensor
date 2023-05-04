@@ -27,6 +27,20 @@ static std::vector<int> filter(const std::vector<int> &order,
     return ret;
 }
 
+static bool inOrder(const std::vector<bool> &before,
+                    const std::vector<bool> &after) {
+    bool metAfter = false;
+    for (auto &&[isBefore, isAfter] : views::zip(before, after)) {
+        if (isAfter) {
+            metAfter = true;
+        }
+        if (isBefore && metAfter) {
+            return false;
+        }
+    }
+    return true;
+}
+
 const LinearExpr<int64_t> &AsMatMul::analyzeLinear(const Expr &expr) {
     analyzeLinear_(expr);
     return analyzeLinear_.result().at(expr);
@@ -144,6 +158,7 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
         }
         Load loadB = mul->rhs_.as<LoadNode>();
 
+        // Find out which LOOPS are used
         std::vector<bool> usedByA, usedByB, usedByC;
         std::vector<int> orderA, orderB, orderC;
         std::tie(usedByA, orderA, a_) = findIterUsedAndBaseAddr(loadA);
@@ -195,16 +210,27 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             }
         }
 
+        // Find out which TENSOR DIMENSIONS are used
+        std::vector<bool> dimsABatch = findDimsUsed(loadA, batchAxes);
+        std::vector<bool> dimsBBatch = findDimsUsed(loadB, batchAxes);
+        std::vector<bool> dimsCBatch = findDimsUsed(op, batchAxes);
+        std::vector<bool> dimsAM = findDimsUsed(loadA, mAxes);
+        std::vector<bool> dimsAK = findDimsUsed(loadA, kAxes);
+        std::vector<bool> dimsBK = findDimsUsed(loadB, kAxes);
+        std::vector<bool> dimsBN = findDimsUsed(loadB, nAxes);
+        std::vector<bool> dimsCM = findDimsUsed(op, mAxes);
+        std::vector<bool> dimsCN = findDimsUsed(op, nAxes);
+
         Expr strideAM, strideAK, strideBK, strideBN, strideCM, strideCN;
-        std::tie(batchSize_, stridea_) = findLenAndStride(loadA, batchAxes);
-        std::tie(batchSize_, strideb_) = findLenAndStride(loadB, batchAxes);
-        std::tie(batchSize_, stridec_) = findLenAndStride(op, batchAxes);
-        std::tie(m_, strideAM) = findLenAndStride(loadA, mAxes);
-        std::tie(k_, strideAK) = findLenAndStride(loadA, kAxes);
-        std::tie(k_, strideBK) = findLenAndStride(loadB, kAxes);
-        std::tie(n_, strideBN) = findLenAndStride(loadB, nAxes);
-        std::tie(m_, strideCM) = findLenAndStride(op, mAxes);
-        std::tie(n_, strideCN) = findLenAndStride(op, nAxes);
+        std::tie(batchSize_, stridea_) = findLenAndStride(loadA, dimsABatch);
+        std::tie(batchSize_, strideb_) = findLenAndStride(loadB, dimsBBatch);
+        std::tie(batchSize_, stridec_) = findLenAndStride(op, dimsCBatch);
+        std::tie(m_, strideAM) = findLenAndStride(loadA, dimsAM);
+        std::tie(k_, strideAK) = findLenAndStride(loadA, dimsAK);
+        std::tie(k_, strideBK) = findLenAndStride(loadB, dimsBK);
+        std::tie(n_, strideBN) = findLenAndStride(loadB, dimsBN);
+        std::tie(m_, strideCM) = findLenAndStride(op, dimsCM);
+        std::tie(n_, strideCN) = findLenAndStride(op, dimsCN);
         if (isIntConst1(strideAK)) {
             aIsRowMajor_ = true;
             lda_ = strideAM;
@@ -251,10 +277,23 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             ldc_ = cIsRowMajor_ ? n_ : m_;
         }
         if (std::find(batchAxes.begin(), batchAxes.end(), true) ==
-            batchAxes.end()) {
+            batchAxes.end()) { // There is no batch axes
             stridea_ = makeMul(lda_, aIsRowMajor_ ? m_ : k_);
             strideb_ = makeMul(ldb_, bIsRowMajor_ ? k_ : n_);
             stridec_ = makeMul(ldc_, cIsRowMajor_ ? m_ : n_);
+        } else {
+            if (!inOrder(dimsABatch, dimsAM) || !inOrder(dimsABatch, dimsAK)) {
+                throw InvalidSchedule("BLAS requires batch dimensions to be "
+                                      "out of matrix dimensions in A");
+            }
+            if (!inOrder(dimsBBatch, dimsBK) || !inOrder(dimsABatch, dimsBN)) {
+                throw InvalidSchedule("BLAS requires batch dimensions to be "
+                                      "out of matrix dimensions in B");
+            }
+            if (!inOrder(dimsCBatch, dimsCM) || !inOrder(dimsABatch, dimsCN)) {
+                throw InvalidSchedule("BLAS requires batch dimensions to be "
+                                      "out of matrix dimensions in C");
+            }
         }
     }
 
