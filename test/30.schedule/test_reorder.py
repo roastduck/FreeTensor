@@ -62,7 +62,7 @@ def test_if_in_between():
     assert std.match(ast)
 
 
-def test_stmt_in_between():
+def test_stmt_in_between_before():
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -80,6 +80,29 @@ def test_stmt_in_between():
                 with ft.If(j == 0):
                     z[i] = i
                 y[i, j] = i + j
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_stmt_in_between_after():
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4,), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                y[i, j] = i + j
+            z[i] = i
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4,), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("j", 0, 8) as j:
+            with ft.For("i", 0, 4) as i:
+                y[i, j] = i + j
+                with ft.If(j == 7):
+                    z[i] = i
     std = ft.pop_ast()
 
     assert std.match(ast)
