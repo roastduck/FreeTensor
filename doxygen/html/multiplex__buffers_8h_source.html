@@ -132,7 +132,7 @@ $(function() {
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = pos - 1; i &gt;= 0; i--) {</div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                <span class="keywordflow">if</span> (aff.count(stack_[i]-&gt;id())) {</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>                    <span class="keyword">auto</span> &amp;indices = op-&gt;indices_;</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                    indices.insert(indices.begin(), <a class="code hl_define" href="expr_8h.html#a8791cc9ae81f9849cd9e7c2715965f30">makeVar</a>(stack_[i]-&gt;<a class="code hl_variable" href="invert__stmts_8cc.html#a09c6cc7e84d9cce963f88ccd6405c6c9">iter_</a>));</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                    indices.insert(indices.begin(), <a class="code hl_function" href="namespacefreetensor.html#ac5b81cebdacd1c002dcf5a9c13fbb3c3">makeVar</a>(stack_[i]-&gt;<a class="code hl_variable" href="invert__stmts_8cc.html#a09c6cc7e84d9cce963f88ccd6405c6c9">iter_</a>));</div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                }</div>
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>            }</div>
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>        }</div>
@@ -159,14 +159,14 @@ $(function() {
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="preprocessor">#endif </span><span class="comment">// FT_WITH_CUDA</span></div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_GPU_MULTIPLEX_BUFFERS_H</span></div>
-<div class="ttc" id="aexpr_8h_html_a8791cc9ae81f9849cd9e7c2715965f30"><div class="ttname"><a href="expr_8h.html#a8791cc9ae81f9849cd9e7c2715965f30">makeVar</a></div><div class="ttdeci">#define makeVar(...)</div><div class="ttdef"><b>Definition:</b> expr.h:37</div></div>
 <div class="ttc" id="afunc_8h_html"><div class="ttname"><a href="func_8h.html">func.h</a></div></div>
 <div class="ttc" id="ainvert__stmts_8cc_html_a09c6cc7e84d9cce963f88ccd6405c6c9"><div class="ttname"><a href="invert__stmts_8cc.html#a09c6cc7e84d9cce963f88ccd6405c6c9">iter_</a></div><div class="ttdeci">std::vector&lt; IterAxis &gt; iter_</div><div class="ttdef"><b>Definition:</b> invert_stmts.cc:56</div></div>
 <div class="ttc" id="amutator_8h_html"><div class="ttname"><a href="mutator_8h.html">mutator.h</a></div></div>
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
-<div class="ttc" id="anamespacefreetensor_html_a8b7e165b3601cc722c7b357347dc6de9"><div class="ttname"><a href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">freetensor::Stmt</a></div><div class="ttdeci">Ref&lt; StmtNode &gt; Stmt</div><div class="ttdef"><b>Definition:</b> ast.h:155</div></div>
+<div class="ttc" id="anamespacefreetensor_html_a8b7e165b3601cc722c7b357347dc6de9"><div class="ttname"><a href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">freetensor::Stmt</a></div><div class="ttdeci">Ref&lt; StmtNode &gt; Stmt</div><div class="ttdef"><b>Definition:</b> ast.h:150</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a9fc9252c3954dc411dae3a03e6821f6c"><div class="ttname"><a href="namespacefreetensor.html#a9fc9252c3954dc411dae3a03e6821f6c">freetensor::DEFINE_PASS_FOR_FUNC</a></div><div class="ttdeci">DEFINE_PASS_FOR_FUNC(makeHeapAlloc)</div></div>
-<div class="ttc" id="anamespacefreetensor_html_acfa6f07a5497b3d187fe112708aa335b"><div class="ttname"><a href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">freetensor::Expr</a></div><div class="ttdeci">Ref&lt; ExprNode &gt; Expr</div><div class="ttdef"><b>Definition:</b> ast.h:188</div></div>
+<div class="ttc" id="anamespacefreetensor_html_ac5b81cebdacd1c002dcf5a9c13fbb3c3"><div class="ttname"><a href="namespacefreetensor.html#ac5b81cebdacd1c002dcf5a9c13fbb3c3">freetensor::makeVar</a></div><div class="ttdeci">Expr makeVar(const std::string &amp;name, std::source_location loc=std::source_location::current())</div><div class="ttdef"><b>Definition:</b> expr.h:42</div></div>
+<div class="ttc" id="anamespacefreetensor_html_acfa6f07a5497b3d187fe112708aa335b"><div class="ttname"><a href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">freetensor::Expr</a></div><div class="ttdeci">Ref&lt; ExprNode &gt; Expr</div><div class="ttdef"><b>Definition:</b> ast.h:183</div></div>
 <div class="ttc" id="asymbol__table_8h_html"><div class="ttname"><a href="symbol__table_8h.html">symbol_table.h</a></div></div>
 <div class="ttc" id="atarget_8h_html"><div class="ttname"><a href="target_8h.html">target.h</a></div></div>
 <div class="ttc" id="avisitor_8h_html"><div class="ttname"><a href="visitor_8h.html">visitor.h</a></div></div>
