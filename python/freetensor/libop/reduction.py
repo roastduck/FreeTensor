@@ -178,7 +178,7 @@ any = _named_partial(
 
 
 @core.inline
-def reduce_max_(x, y, axes: Sequence[int], keepdims: bool = True):
+def reduce_max_(x, y, axes: Sequence[int] = None, keepdims: bool = True):
     '''
     Maximum of a tensor through one or more dimensions. The result is written to another tensor
 
@@ -200,7 +200,7 @@ def reduce_max_(x, y, axes: Sequence[int], keepdims: bool = True):
 
 
 @core.inline
-def reduce_max(x, axes: Sequence[int], keepdims: bool = True):
+def reduce_max(x, axes: Sequence[int] = None, keepdims: bool = True):
     '''
     Maximum of a tensor through one or more dimensions and return the result
 
@@ -226,7 +226,7 @@ def reduce_max(x, axes: Sequence[int], keepdims: bool = True):
 
 
 @core.inline
-def reduce_min_(x, y, axes: Sequence[int], keepdims: bool = True):
+def reduce_min_(x, y, axes: Sequence[int] = None, keepdims: bool = True):
     '''
     Minimum of a tensor through one or more dimensions. The result is written to another tensor
 
@@ -248,7 +248,7 @@ def reduce_min_(x, y, axes: Sequence[int], keepdims: bool = True):
 
 
 @core.inline
-def reduce_min(x, axes: Sequence[int], keepdims: bool = True):
+def reduce_min(x, axes: Sequence[int] = None, keepdims: bool = True):
     '''
     Minimum of a tensor through one or more dimensions and return the result
 
