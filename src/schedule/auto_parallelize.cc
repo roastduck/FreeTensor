@@ -1,4 +1,7 @@
 #include <analyze/count_contig_access_loops.h>
+#include <analyze/find_stmt.h>
+#include <container_utils.h>
+#include <pass/simplify.h>
 #include <schedule.h>
 
 namespace freetensor {
@@ -10,29 +13,33 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
         // We try to parallelize the loop with most contiguous access count
         // first. If the counts are equal, we try to parallel the out-most loop
         // with the same count first
+        auto simplified =
+            simplify(ast()); // Simplify lengths and remove 1-lengthed loops
         CountContigAccessLoops contigFinder;
-        contigFinder(ast());
-        std::vector<std::pair<ID, std::pair<int64_t, int>>> contigLoops(
-            contigFinder.counts().begin(), contigFinder.counts().end());
+        contigFinder(simplified);
+        auto ignoreIfTooShort =
+            [&](const std::pair<ID, std::pair<int64_t, int>> &item) {
+                auto loop = findStmt(simplified, item.first);
+                if (auto &&len = loop.as<ForNode>()->len_;
+                    len->nodeType() == ASTNodeType::IntConst &&
+                    len.as<IntConstNode>()->val_ <= 4) {
+                    return false;
+                }
+                return true;
+            };
+        auto contigLoops =
+            ranges::to<std::vector<std::pair<ID, std::pair<int64_t, int>>>>(
+                contigFinder.counts() | views::filter(ignoreIfTooShort));
         std::sort(contigLoops.begin(), contigLoops.end(),
                   [](const std::pair<ID, std::pair<int64_t, int>> &lhs,
                      const std::pair<ID, std::pair<int64_t, int>> &rhs) {
                       return lhs.second > rhs.second;
                   });
         for (auto &&[loopId, cnt] : contigLoops) {
-            auto loop = find(loopId);
-
-            // Ignore if too short
-            if (auto &&len = loop.as<ForNode>()->len_;
-                len->nodeType() == ASTNodeType::IntConst &&
-                len.as<IntConstNode>()->val_ <= 4) {
-                continue;
-            }
-
             beginTransaction();
             try {
                 auto [l0, l1] =
-                    split(loop->id(), target.as<GPUTarget>()->warpSize());
+                    split(loopId, target.as<GPUTarget>()->warpSize());
                 parallelize(l1, threadIdxX);
 
                 try {
