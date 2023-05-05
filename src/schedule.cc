@@ -133,7 +133,18 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
                 auto &[trace, _1, _2, t, stddev] = trials[i * batchSize + j];
                 d.setArgs(args, kws);
                 // TODO: Allow setting measuring repeats
-                std::tie(t, stddev) = d.time();
+                for (int k = 0; k < 3; k++) {
+                    std::tie(t, stddev) = d.time();
+                    if (stddev <= 0.25 * t) {
+                        break;
+                    }
+                    if (k < 2) {
+                        WARNING(
+                            "Rerunning measurement because stddev is too high");
+                    } else {
+                        WARNING("Cannot get a low enough stddev");
+                    }
+                }
                 d.collectReturns();
                 randCtx_->observeTrace(trace, t, stddev);
             }
