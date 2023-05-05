@@ -23,9 +23,10 @@ using stdex::mdspan;
 
 template <size_t... S> using extents = stdex::extents<size_t, S...>;
 
-FUNC_ATTR void abortFromAnywhere() {
-#ifdef __CUDA_ARCH__ // In CUDA kernel
-    assert(0);       // CUDA does not support `exit`, but supports `assert`
+FUNC_ATTR inline void
+abortFromAnywhere() { // `inline` is still needed even we have `always_inline`
+#ifdef __CUDA_ARCH__  // In CUDA kernel
+    assert(0);        // CUDA does not support `exit`, but supports `assert`
 #else
     exit(-1);
 #endif
