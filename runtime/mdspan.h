@@ -23,6 +23,14 @@ using stdex::mdspan;
 
 template <size_t... S> using extents = stdex::extents<size_t, S...>;
 
+FUNC_ATTR void abortFromAnywhere() {
+#ifdef __CUDA_ARCH__ // In CUDA kernel
+    assert(0);       // CUDA does not support `exit`, but supports `assert`
+#else
+    exit(-1);
+#endif
+}
+
 // mdspan with runtime range check for debugging
 
 template <typename ElementType, typename Extents>
@@ -65,7 +73,7 @@ class mdspan_dbg : public stdex::mdspan<ElementType, Extents> {
             printf("). The range is (");
             printExtents<0>(args...);
             printf(")\n");
-            exit(-1);
+            abortFromAnywhere();
         }
         return BaseClass::operator()(std::forward<Args>(args)...);
     }
@@ -78,7 +86,7 @@ class mdspan_dbg : public stdex::mdspan<ElementType, Extents> {
             printf("). The range is (");
             printExtents<0>(args...);
             printf(")\n");
-            exit(-1);
+            abortFromAnywhere();
         }
         return BaseClass::operator()(std::forward<Args>(args)...);
     }
