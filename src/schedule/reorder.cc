@@ -123,9 +123,12 @@ Stmt Reorder::visit(const StmtSeq &_op) {
                         "Imperfect nesting is not allowed when "
                         "the inner loop is parallelized");
                 }
-                after =
-                    makeIf(makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                           RenameIter{oldInner_->iter_}(after));
+                auto &&end =
+                    makeAdd(oldInner_->begin_,
+                            makeMul(makeSub(oldInner_->len_, makeIntConst(1)),
+                                    oldInner_->step_));
+                after = makeIf(makeEQ(makeVar(oldInner_->iter_), end),
+                               RenameIter{oldInner_->iter_}(after));
             }
         }
 
@@ -163,7 +166,7 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
     }
 
     // A reorder is leagal if and only if:
-    // 1. when all the outer loops are in the same iteration,
+    // 1. when all the loops out of what reordered are in the same iteration,
     // 2. after transformation, for each dependence pair, `earlier` is still
     // earlier (lexicographically less) than `later`.
     std::vector<ID> dstLoopAndStmtSeqOrder;
