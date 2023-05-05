@@ -304,6 +304,22 @@ class Driver(EnableAttachBackward, ffi.Driver):
         self.run()
         return self.collect_returns()
 
+    def time(self, *args, kws={}, rounds=10, warmups=3):
+        '''
+        Measure running time. The return is dropped.
+
+        Returns
+        -------
+        Tuple[float, float]
+            - [0] = average time, in ms
+            - [1] = estimated standard deviation of the average time = sqrt(Var(X1 +
+            X2 + ... + Xn))), in ms
+        '''
+        self.set_args(*args, **kws)
+        t = super().time(rounds=rounds, warmups=warmups)
+        self.collect_returns()  # Must collect. Then we drop the result
+        return t
+
 
 @as_decorator
 def build_binary(code: Optional[NativeCode] = None,

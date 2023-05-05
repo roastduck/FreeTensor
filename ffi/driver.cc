@@ -30,7 +30,7 @@ void init_ffi_driver(py::module_ &m) {
         .def("run", &Driver::run)
         .def("sync", &Driver::sync)
         .def("collect_returns", &Driver::collectReturns)
-        .def("time", &Driver::time, "rounds"_a = 10, "warmpups"_a = 3)
+        .def("time", &Driver::time, "rounds"_a = 10, "warmups"_a = 3)
         .def_property_readonly("device", &Driver::device);
 
     // Serialization

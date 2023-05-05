@@ -91,8 +91,10 @@ def test_stmt_in_between_2():
 
 
 def test_tune_fuse():
-    # We may fuse these loops. But fusing them will make it impossible to parallelize.
-    # After tuning, we will end up in not fusing them
+    # Plan 1: Fuse these loops, which makes it impossible to parallelize
+    # Plan 2: Not fusing these loops, then we can parallelize them
+    # We should decide on real measurement. (Parallelization does not always bring speedup,
+    # especially when there are too many cores).
     with ft.VarDef([("a", (100, 100, 100), "int32", "input", "cpu"),
                     ("b", (100, 100, 100), "int32", "inout", "cpu"),
                     ("c", (100, 100, 100), "int32", "inout", "cpu")]) as (a, b,
@@ -129,18 +131,27 @@ def test_tune_fuse():
     logs = list(map(str, s.logs()))
     print(logs)
 
-    for log in logs:
-        assert "fuse" not in log
+    s_plan1 = ft.Schedule(func)
+    s_plan1.fuse("Li1", "Li2")
+    s_plan1.fuse("Lj1", "Lj2")
+    s_plan1.fuse("Lk1", "Lk2")
+
+    s_plan2 = ft.Schedule(func)
+    s_plan2.parallelize("Li1", "openmp")
+    s_plan2.reorder(["Lj2", "Li2"])
+    s_plan2.parallelize("Lj2", "openmp")
+
+    t1, stddev1 = ft.optimize(s_plan1.func()).time(a, b, c)
+    t2, stddev2 = ft.optimize(s_plan2.func()).time(a, b, c)
+    print(f"t1 = {t1}ms; t2 = {t2}ms")
+    if (t1 < t2):
+        assert "fuse" in ", ".join(logs)
+    else:
+        assert "fuse" not in ", ".join(logs)
 
 
 def test_tune_fission():
     # The reverse schedule of `test_tune_fuse`
-
-    # NOTE: To pass this test, the OpenMP parallel version must run faster than
-    # the serial version. However, this is not always true for unknown reasons.
-    # Known configurations to pass this test are: GCC 10.2.1's OpenMP with
-    # OMP_PROC_BIND=true, GCC 12.1.0's OpenMP with OMP_PROC_BIND=false, or
-    # LLVM 14.0.1's OpenMP with OMP_PROC_BIND=false. (FIXME)
 
     with ft.VarDef([("a", (100, 100, 100), "int32", "input", "cpu"),
                     ("b", (100, 100, 100), "int32", "inout", "cpu"),
@@ -149,6 +160,7 @@ def test_tune_fission():
         with ft.For("i", 0, 100, label="Li") as i:
             with ft.For("j", 0, 100, label="Lj") as j:
                 with ft.For("k", 0, 100, label="Lk") as k:
+                    ft.MarkLabel("S0")
                     b[i, j,
                       k] = b[i,
                              (j + 1) % 100, k] + b[i, j,
@@ -175,11 +187,29 @@ def test_tune_fission():
     logs = list(map(str, s.logs()))
     print(logs)
 
-    assert "fission" in ", ".join(logs)
+    s_plan1 = ft.Schedule(func)
+    s_plan1.fission("Lk", ft.FissionSide.After, "S0")
+    s_plan1.fission("Lj", ft.FissionSide.After, "$fission.0{S0}")
+    s_plan1.fission("Li", ft.FissionSide.After, "$fission.0{$fission.0{S0}}")
+    s_plan1.parallelize("$fission.0{Li}", "openmp")
+    s_plan1.reorder(["$fission.1{$fission.1{Lj}}", "$fission.1{Li}"])
+    s_plan1.parallelize("$fission.1{$fission.1{Lj}}", "openmp")
+
+    s_plan2 = ft.Schedule(func)
+    # Do nothing
+
+    t1, stddev1 = ft.optimize(s_plan1.func()).time(a, b, c)
+    t2, stddev2 = ft.optimize(s_plan2.func()).time(a, b, c)
+    print(f"t1 = {t1}ms; t2 = {t2}ms")
+    if (t1 < t2):
+        assert "fission" in ", ".join(logs)
+    else:
+        assert "fission" not in ", ".join(logs)
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_tune_with_cond():
+    # Test different dicisions in a single program
     # Fuse loops that can parallelize. Don't fuse loops that can't
     with ft.VarDef([("a", (100, 100, 10), "int32", "input", "gpu/global"),
                     ("b", (100, 100, 10), "int32", "inout", "gpu/global"),

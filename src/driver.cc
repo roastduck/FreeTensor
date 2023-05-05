@@ -5,6 +5,7 @@
 #include <cstring> // memset
 #include <dlfcn.h> // dlopen
 #include <fstream>
+#include <omp.h>
 #include <sys/stat.h>    // mkdir
 #include <sys/syscall.h> // SYS_fork
 #include <sys/wait.h>    // waitpid
@@ -446,6 +447,9 @@ std::vector<Ref<Array>> Driver::collectReturns() {
 }
 
 std::pair<double, double> Driver::time(int rounds, int warmups) {
+    // Restart OpenMP for a more reproducible result
+    omp_pause_resource_all(omp_pause_hard);
+
     namespace ch = std::chrono;
 
     std::vector<double> times(rounds);
