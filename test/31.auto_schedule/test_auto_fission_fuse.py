@@ -141,17 +141,20 @@ def test_tune_fuse():
     s_plan2.reorder(["Lj2", "Li2"])
     s_plan2.parallelize("Lj2", "openmp")
 
+    exe1 = ft.optimize(s_plan1.func())
+    exe2 = ft.optimize(s_plan2.func())
     for i in range(3):
-        t1, stddev1 = ft.optimize(s_plan1.func()).time(a, b, c)
-        if stddev1 <= 0.25 * t1:
+        t1, stddev1 = exe1.time(a, b, c)
+        if stddev1 <= 0.1 * t1:
             break
         print("Rerunning because stddev is too high")
     for i in range(3):
-        t2, stddev2 = ft.optimize(s_plan2.func()).time(a, b, c)
-        if stddev2 <= 0.25 * t2:
+        t2, stddev2 = exe2.time(a, b, c)
+        if stddev2 <= 0.1 * t2:
             break
         print("Rerunning because stddev is too high")
-    print(f"t1 = {t1}ms; t2 = {t2}ms")
+    print(f"t1 = {t1}ms, stddev1 = {stddev1}ms")
+    print(f"t2 = {t2}ms, stddev2 = {stddev2}ms")
     if (t1 < t2):
         assert "fuse" in ", ".join(logs)
     else:
@@ -206,17 +209,20 @@ def test_tune_fission():
     s_plan2 = ft.Schedule(func)
     # Do nothing
 
+    exe1 = ft.optimize(s_plan1.func())
+    exe2 = ft.optimize(s_plan2.func())
     for i in range(3):
-        t1, stddev1 = ft.optimize(s_plan1.func()).time(a, b, c)
-        if stddev1 <= 0.25 * t1:
+        t1, stddev1 = exe1.time(a, b, c)
+        if stddev1 <= 0.1 * t1:
             break
-        print("Rerunning measurement because stddev is too high")
+        print("Rerunning because stddev is too high")
     for i in range(3):
-        t2, stddev2 = ft.optimize(s_plan2.func()).time(a, b, c)
-        if stddev2 <= 0.25 * t2:
+        t2, stddev2 = exe2.time(a, b, c)
+        if stddev2 <= 0.1 * t2:
             break
-        print("Rerunning measurement because stddev is too high")
-    print(f"t1 = {t1}ms; t2 = {t2}ms")
+        print("Rerunning because stddev is too high")
+    print(f"t1 = {t1}ms, stddev1 = {stddev1}ms")
+    print(f"t2 = {t2}ms, stddev2 = {stddev2}ms")
     if (t1 < t2):
         assert "fission" in ", ".join(logs)
     else:

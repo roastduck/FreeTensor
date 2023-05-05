@@ -135,7 +135,7 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
                 // TODO: Allow setting measuring repeats
                 for (int k = 0; k < 3; k++) {
                     std::tie(t, stddev) = d.time();
-                    if (stddev <= 0.25 * t) {
+                    if (stddev <= 0.1 * t) {
                         break;
                     }
                     if (k < 2) {
