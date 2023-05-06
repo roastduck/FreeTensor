@@ -196,6 +196,8 @@ endif()
 
 # OpenMP used to parallelize the compilation of different instances
 find_package(OpenMP REQUIRED)
+list(JOIN OpenMP_CXX_LIBRARIES ":" OMP_LIBS_COLON_SEPARATED)
+add_definitions(-DFT_BACKEND_OPENMP="${OMP_LIBS_COLON_SEPARATED}")
 
 file(GLOB_RECURSE SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc)
 

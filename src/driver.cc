@@ -22,6 +22,72 @@
 
 namespace freetensor {
 
+namespace {
+
+struct Command {
+    std::string executable_;
+    std::vector<std::string> args_;
+
+    Command(const std::string &executable,
+            const std::vector<std::string> &args = {})
+        : executable_(executable), args_(args) {}
+
+    void run(bool verbose = false) {
+        if (Config::debugBinary() || verbose) {
+            std::stringstream cmdStream;
+            cmdStream << "\"" << executable_ << "\" ";
+            for (auto &s : args_) {
+                cmdStream << "\"" << s << "\" ";
+            }
+            auto cmd = cmdStream.str();
+
+            if (Config::debugBinary()) {
+                WARNING("debug-binary mode on. Compiling with " + cmd);
+            } else if (verbose) {
+                logger() << "Running " << cmd << std::endl;
+            }
+        }
+
+        // fork + execv to execute the compiler
+        {
+            // construct the argv array
+            std::vector<const char *> argv;
+            argv.push_back(executable_.c_str());
+            for (auto &s : args_) {
+                argv.push_back(s.c_str());
+            }
+            argv.push_back(nullptr);
+
+            // We use the raw syscall instead of libc fork() here.
+            // This is because libc fork() processes the pthread_atfork()
+            // handlers, in which handlers from like OpenMP implementations will
+            // do something against potential broken states (e.g. mutexes) due
+            // to the fork(). With raw syscall, we can avoid this.
+            int pid = syscall(SYS_fork);
+            if (pid == 0) {
+                execv(executable_.c_str(),
+                      const_cast<char *const *>(argv.data()));
+                std::cerr << "Failed to execute " << executable_ << ": "
+                          << strerror(errno);
+                exit(-1);
+            } else {
+                int status;
+                waitpid(pid, &status, 0);
+                if (WIFSIGNALED(status) && WTERMSIG(status) == SIGINT) {
+                    // Interrupted (Ctrl+C). Interrupt FreeTensor as well
+                    // Do not directly raise SIGINT. See the doc of
+                    // InterruptExcept
+                    throw InterruptExcept();
+                }
+                if (status != 0)
+                    throw DriverError("Backend compiler reports error");
+            }
+        }
+    }
+};
+
+} // Anonymous namespace
+
 static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
                         const Ref<Device> &hostDevice, MemType mtype,
                         AccessType atype) {
@@ -142,15 +208,28 @@ void Driver::buildAndLoad() {
         std::ofstream f(cpp);
         f << src_;
     }
-    const char *executable;
-    std::vector<std::string> args;
+    std::vector<Command> commands;
+    auto addCommand = [&](const std::string &executable) {
+        commands.emplace_back(executable);
+    };
     auto addArgs = [&](auto... s) {
+        auto &args = commands.back().args_;
         args.insert(args.end(), {std::string(s)...});
     };
     switch (dev_->type()) {
-    case TargetType::CPU:
+    case TargetType::CPU: {
         ASSERT(!Config::backendCompilerCXX().empty());
-        executable = Config::backendCompilerCXX().front().c_str();
+        auto &&compiler = Config::backendCompilerCXX().front();
+
+        // We need to separate the compiling command and the linking command, in
+        // order to specify a custom OpenMP library. The compiling command is
+        // with `-fopenmp`, and the linking command is with `-l<some_omp_lib>`,
+        // but without `-fopenmp`.
+        auto oFile = (std::string)path + "/run.o";
+
+        // 1. Compling command
+        addCommand(compiler);
+        addArgs(cpp);
         for (auto &&path : Config::runtimeDir()) {
             // For path arguments, we do not quote it again since the arguments
             // are passed directly to the compiler (with execv) without going
@@ -158,21 +237,15 @@ void Driver::buildAndLoad() {
             // be split into multiple arguments.
             addArgs("-I" + (std::string)path);
         }
-        addArgs("-std=c++20", "-shared", "-O3", "-fPIC", "-Wall", "-fopenmp");
+        addArgs("-std=c++20", "-O3", "-fPIC", "-Wall", "-fopenmp");
         if (Config::fastMath()) {
             addArgs("-ffast-math");
         }
-        addArgs("-o", so, cpp);
-
+        addArgs("-c", "-o", oFile);
 #ifdef FT_WITH_MKL
         addArgs("-DFT_WITH_MKL");
         addArgs("-I" FT_MKL_INCLUDE);
-        // The order of these libraries are generated with MKL Link Line Advisor
-        addArgs("-Wl,--start-group", FT_MKL_LIBMKL_INTEL_LP64,
-                FT_MKL_LIBMKL_GNU_THREAD, FT_MKL_LIBMKL_CORE,
-                "-Wl,--end-group");
 #endif // FT_WITH_MKL
-
         if (dev_->target()->useNativeArch()) {
             addArgs("-march=native");
         }
@@ -182,11 +255,29 @@ void Driver::buildAndLoad() {
         if (Config::debugBinary()) {
             addArgs("-g");
         }
+
+        // 2. Linking command
+        addCommand(compiler);
+        addArgs(oFile);
+        addArgs("-shared");
+        for (auto &&item : Config::backendOpenMP()) {
+            addArgs(item);
+        }
+#ifdef FT_WITH_MKL
+        // The order of these libraries are generated with MKL Link Line Advisor
+        addArgs("-Wl,--start-group", FT_MKL_LIBMKL_INTEL_LP64,
+                FT_MKL_LIBMKL_GNU_THREAD, FT_MKL_LIBMKL_CORE,
+                "-Wl,--end-group");
+#endif // FT_WITH_MKL
+        addArgs("-o", so);
+
         break;
+    }
+
 #ifdef FT_WITH_CUDA
     case TargetType::GPU: {
         ASSERT(!Config::backendCompilerNVCC().empty());
-        executable = Config::backendCompilerNVCC().front().c_str();
+        addCommand(Config::backendCompilerNVCC().front());
         for (auto &&path : Config::runtimeDir()) {
             addArgs("-I" + (std::string)path);
         }
@@ -213,54 +304,8 @@ void Driver::buildAndLoad() {
         ASSERT(false);
     }
 
-    if (Config::debugBinary() || verbose_) {
-        std::stringstream cmdStream;
-        cmdStream << "\"" << executable << "\" ";
-        for (auto &s : args) {
-            cmdStream << "\"" << s << "\" ";
-        }
-        auto cmd = cmdStream.str();
-
-        if (Config::debugBinary()) {
-            WARNING("debug-binary mode on. Compiling with " + cmd);
-        }
-        if (verbose_) {
-            logger() << "Running " << cmd << std::endl;
-        }
-    }
-
-    // fork + execv to execute the compiler
-    {
-        // construct the argv array
-        std::vector<const char *> argv;
-        argv.push_back(executable);
-        for (auto &s : args) {
-            argv.push_back(s.c_str());
-        }
-        argv.push_back(nullptr);
-
-        // We use the raw syscall instead of libc fork() here.
-        // This is because libc fork() processes the pthread_atfork() handlers,
-        // in which handlers from like OpenMP implementations will do something
-        // against potential broken states (e.g. mutexes) due to the fork().
-        // With raw syscall, we can avoid this.
-        int pid = syscall(SYS_fork);
-        if (pid == 0) {
-            execv(executable, const_cast<char *const *>(argv.data()));
-            std::cerr << "Failed to execute " << executable << ": "
-                      << strerror(errno);
-            exit(-1);
-        } else {
-            int status;
-            waitpid(pid, &status, 0);
-            if (WIFSIGNALED(status) && WTERMSIG(status) == SIGINT) {
-                // Interrupted (Ctrl+C). Interrupt FreeTensor as well
-                // Do not directly raise SIGINT. See the doc of InterruptExcept
-                throw InterruptExcept();
-            }
-            if (status != 0)
-                throw DriverError("Backend compiler reports error");
-        }
+    for (auto &&command : commands) {
+        command.run(verbose_);
     }
 
     dlHandle_ = dlopen(so.c_str(), RTLD_NOW);

@@ -60,6 +60,9 @@ backend_compiler_cxx = _import_func(ffi.backend_compiler_cxx)
 set_backend_compiler_nvcc = _import_func(ffi.set_backend_compiler_nvcc)
 backend_compiler_nvcc = _import_func(ffi.backend_compiler_nvcc)
 
+set_backend_openmp = _import_func(ffi.set_backend_openmp)
+backend_openmp = _import_func(ffi.backend_openmp)
+
 set_default_target = _import_func(ffi.set_default_target)
 default_target = _import_func(ffi.default_target)
 
