@@ -6,8 +6,9 @@ __all__ = [
     'print_source_location', 'set_fast_math', 'fast_math', 'set_werror',
     'werror', 'set_debug_binary', 'debug_binary', 'set_debug_cuda_with_um',
     'debug_cuda_with_um', 'set_backend_compiler_cxx', 'backend_compiler_cxx',
-    'set_backend_compiler_nvcc', 'backend_compiler_nvcc', 'set_default_target',
-    'default_target', 'set_default_device', 'default_device'
+    'set_backend_compiler_nvcc', 'backend_compiler_nvcc', 'backend_openmp',
+    'set_backend_openmp', 'set_default_target', 'default_target',
+    'set_default_device', 'default_device'
 ]
 
 import freetensor_ffi as ffi
