@@ -110,3 +110,29 @@ def test_hint(n: ft.Var[(), "int32"], a, b):
 # You will find a 32-length loop
 assert re.search(r".* = 0; .* < 32; .*\+\+", test_hint.native_code())
 ```
+
+## Hint Free of Dependence by `no_deps`
+
+Schedules and optimization passes in FreeTensor are guaranteed not to break the program semantics by analyzing the dependence of reads and writes. But sometimes there will be false positives: the program still runs correctly, but some schedules and optimization passes are unable to apply to it. Here is an exmple of iterating through all elements in a sparse matrix in CSR format:
+
+```python
+import freetensor as ft
+
+@ft.schedule(callback=lambda s: s.parallelize("Li", "openmp"))
+@ft.transform
+def test(ptr, edge1, edge2):
+    ptr: ft.Var[(11,), "int32", "input", "cpu"]
+    edge1: ft.Var[(50,), "int32", "input", "cpu"]
+    edge2: ft.Var[(50,), "int32", "output", "cpu"]
+    #! label: Li
+    #! no_deps: edge2
+    #  ^^^^^^^^^^^^^^ LOOK HERE
+    for i in range(10):
+        for j in range(ptr[i], ptr[i + 1]):
+            edge2[j] = edge1[j] + i
+```
+
+Suppose in this example users guarantee values in `ptr` is monotonically increasing (because it is a CSR format), the `i` loop can then be parallelized, but FreeTensor does not aknowledge it. Without this assumption, the ranges of `j` may overlap for different `i`, which can be expressed as dependence between different `i`, and it stops FreeTensor to parallelize the `i` loop. By adding a `#! no_deps: edge2` line as in the example, you can hint FreeTensor there is actually no dependence on variable `edge1` at all, and FreeTensor can safely do the parallelization. If you are hinting for multiple variables, add one line for each.
+
+!!! note "Note for Automatic Differentiation"
+    If you are performing an [Automatic Differentiation](../ad), you may hint for more variables to make the schedules and passes also applicable to the differentiated program. Specifically, all read-only variables' gradient will be written in the differentiated program. In the case above, `edge1`'s gradient will be written. Thus, you need to hint `no_deps` for both `edge1` and `edge2` (hint for a variable is automatically applied to its gradient).
