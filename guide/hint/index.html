@@ -114,6 +114,7 @@
 <ul>
 <li><a href="#types-with-sign-information">Types with Sign Information</a></li>
 <li><a href="#provide-information-by-assertions">Provide Information by Assertions</a></li>
+<li><a href="#hint-free-of-dependence-by-no_deps">Hint Free of Dependence by no_deps</a></li>
 </ul>
 </div>
 <p>Expressions and statements in a program do not always provide enough mathematical information for the compiler. Since the compiler must ensure safety for all possible cases, optimizations might be missed. In FreeTensor, you may provide additional information in some ways to guide the compiler, in other words, guide FreeTensor.</p>
@@ -207,6 +208,28 @@ def test_hint(n: ft.Var[(), &quot;int32&quot;], a, b):
 # You will find a 32-length loop
 assert re.search(r&quot;.* = 0; .* &lt; 32; .*\+\+&quot;, test_hint.native_code())
 </code></pre>
+<h2 id="hint-free-of-dependence-by-no_deps">Hint Free of Dependence by <code>no_deps</code><a class="headerlink" href="#hint-free-of-dependence-by-no_deps" title="Permanent link">&para;</a></h2>
+<p>Schedules and optimization passes in FreeTensor are guaranteed not to break the program semantics by analyzing the dependence of reads and writes. But sometimes there will be false positives: the program still runs correctly, but some schedules and optimization passes are unable to apply to it. Here is an exmple of iterating through all elements in a sparse matrix in CSR format:</p>
+<pre><code class="language-python">import freetensor as ft
+
+@ft.schedule(callback=lambda s: s.parallelize(&quot;Li&quot;, &quot;openmp&quot;))
+@ft.transform
+def test(ptr, edge1, edge2):
+    ptr: ft.Var[(11,), &quot;int32&quot;, &quot;input&quot;, &quot;cpu&quot;]
+    edge1: ft.Var[(50,), &quot;int32&quot;, &quot;input&quot;, &quot;cpu&quot;]
+    edge2: ft.Var[(50,), &quot;int32&quot;, &quot;output&quot;, &quot;cpu&quot;]
+    #! label: Li
+    #! no_deps: edge2
+    #  ^^^^^^^^^^^^^^ LOOK HERE
+    for i in range(10):
+        for j in range(ptr[i], ptr[i + 1]):
+            edge2[j] = edge1[j] + i
+</code></pre>
+<p>Suppose in this example users guarantee values in <code>ptr</code> is monotonically increasing (because it is a CSR format), the <code>i</code> loop can then be parallelized, but FreeTensor does not aknowledge it. Without this assumption, the ranges of <code>j</code> may overlap for different <code>i</code>, which can be expressed as dependence between different <code>i</code>, and it stops FreeTensor to parallelize the <code>i</code> loop. By adding a <code>#! no_deps: edge2</code> line as in the example, you can hint FreeTensor there is actually no dependence on variable <code>edge1</code> at all, and FreeTensor can safely do the parallelization. If you are hinting for multiple variables, add one line for each.</p>
+<div class="admonition note">
+<p class="admonition-title">Note for Automatic Differentiation</p>
+<p>If you are performing an <a href="../ad">Automatic Differentiation</a>, you may hint for more variables to make the schedules and passes also applicable to the differentiated program. Specifically, all read-only variables' gradient will be written in the differentiated program. In the case above, <code>edge1</code>'s gradient will be written. Thus, you need to hint <code>no_deps</code> for both <code>edge1</code> and <code>edge2</code> (hint for a variable is automatically applied to its gradient).</p>
+</div>
               
             </div>
           </div><footer>
