@@ -88,6 +88,7 @@ bool Config::debugRuntimeCheck_ = false;
 bool Config::debugCUDAWithUM_ = false;
 std::vector<fs::path> Config::backendCompilerCXX_;
 std::vector<fs::path> Config::backendCompilerNVCC_;
+std::vector<fs::path> Config::backendOpenMP_;
 Ref<Target> Config::defaultTarget_;
 Ref<Device> Config::defaultDevice_;
 std::vector<fs::path> Config::runtimeDir_;
@@ -122,6 +123,9 @@ void Config::init() {
         fileInDirs("nvcc", makePaths(getStrEnvRequired("PATH"))));
 #endif // FT_BACKEND_COMPILER_NVCC
 #endif // FT_WITH_CUDA
+#ifdef FT_BACKEND_OPENMP
+    Config::setBackendOpenMP(makePaths(FT_BACKEND_OPENMP));
+#endif
 
     if (auto flag = getBoolEnv("FT_PRETTY_PRINT"); flag.has_value()) {
         Config::setPrettyPrint(*flag);
@@ -155,6 +159,9 @@ void Config::init() {
         Config::setBackendCompilerNVCC(makePaths(*path));
     }
 #endif // FT_WITH_CUDA
+    if (auto &&path = getStrEnv("FT_BACKEND_OPENMP"); path.has_value()) {
+        Config::setBackendOpenMP(makePaths(*path));
+    }
     auto device = Ref<Device>::make(TargetType::CPU);
     Config::setDefaultDevice(device);
     Config::setDefaultTarget(device->target());
