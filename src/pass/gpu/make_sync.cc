@@ -6,6 +6,7 @@
 
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <pass/const_fold.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/merge_and_hoist_if.h>
@@ -303,6 +304,71 @@ Stmt MakeSync::visit(const If &_op) {
 
 Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
     auto op = constFold(_op);
+
+    auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
+        if (!lcaStmt(later.stmt_, earlier.stmt_)
+                 ->parentStmtByFilter([&](const Stmt &s) {
+                     return s->nodeType() == ASTNodeType::For &&
+                            std::holds_alternative<CUDAScope>(
+                                s.as<ForNode>()->property_->parallel_);
+                 })
+                 .isValid()) {
+            // Crossing kernels, skipping
+            return false;
+        }
+
+        // Already synchronized for specific `ReduceTo` node (for example by
+        // using atomic). No need for additional `__syncthreads`.
+        //
+        // NOTE 1: We prefer `__syncthreads` over synchronizing individual
+        // `ReduceTo` nodes: We check in `pass/make_parallel_reduction`, if
+        // we are able to use `__syncthreads` here, we won't set `sync_`
+        // there.
+        //
+        // NOTE 2: Our schedules prohibits simultaneous `Load` and
+        // `ReduceTo`, or simultaneous `Store` and `ReduceTo`, so
+        // synchronizations for `ReduceTo` nodes may only synchronize among
+        // `ReduceTo` nodes, not between `ReduceTo` and `Store`, or between
+        // `ReduceTo` and `Load`. But after `pass/normalize_threads`,
+        // everything can happen simultaneously (and that's why we need this
+        // `pass/make_sync`). Thus we can only ignore the synchronization
+        // only if BOTH `earlier` and `later` are `ReduceTo`.
+        if (later.op_->nodeType() == ASTNodeType::ReduceTo &&
+            earlier.op_->nodeType() == ASTNodeType::ReduceTo &&
+            later.op_.as<ReduceToNode>()->sync_ &&
+            earlier.op_.as<ReduceToNode>()->sync_) {
+            return false;
+        }
+
+        return later.op_ != earlier.op_;
+    };
+
+    // Reject all cross-block dependences
+    std::vector<FindDepsDir> queryBlocks;
+    for (auto &&loop : findAllStmt(op, [](const Stmt &s) {
+             if (s->nodeType() == ASTNodeType::For) {
+                 auto &&p = s.as<ForNode>()->property_->parallel_;
+                 return std::holds_alternative<CUDAScope>(p) &&
+                        std::get<CUDAScope>(p).level_ == CUDAScope::Block;
+             }
+             return false;
+         })) {
+        queryBlocks.push_back({{loop->id(), DepDirection::Different}});
+    }
+    FindDeps()
+        .direction(queryBlocks)
+        .filterAccess([](const auto &acc) {
+            return acc.buffer_->mtype() == MemType::GPUGlobal ||
+                   acc.buffer_->mtype() == MemType::GPUGlobalHeap;
+        })
+        .filter(filter)
+        .ignoreReductionWAW(false)
+        .eraseOutsideVarDef(false)(op, [](const Dependence &d) {
+            throw InvalidProgram("Dependence between blocks in a single CUDA "
+                                 "kernel cannot be resolved: " +
+                                 toString(d));
+        });
+
     FindAllThreads finder(target);
     finder(op);
     auto &&loop2thread = finder.results();
@@ -346,43 +412,10 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
         .direction(query)
         .filterAccess([](const auto &acc) {
             return acc.buffer_->mtype() == MemType::GPUGlobal ||
+                   acc.buffer_->mtype() == MemType::GPUGlobalHeap ||
                    acc.buffer_->mtype() == MemType::GPUShared;
         })
-        .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
-            if (!lcaStmt(later.stmt_, earlier.stmt_)
-                     ->parentStmtByFilter([&](const Stmt &s) {
-                         return loop2thread.count(s->id());
-                     })
-                     .isValid()) {
-                // Crossing kernels, skipping
-                return false;
-            }
-
-            // Already synchronized for specific `ReduceTo` node (for example by
-            // using atomic). No need for additional `__syncthreads`.
-            //
-            // NOTE 1: We prefer `__syncthreads` over synchronizing individual
-            // `ReduceTo` nodes: We check in `pass/make_parallel_reduction`, if
-            // we are able to use `__syncthreads` here, we won't set `sync_`
-            // there.
-            //
-            // NOTE 2: Our schedules prohibits simultaneous `Load` and
-            // `ReduceTo`, or simultaneous `Store` and `ReduceTo`, so
-            // synchronizations for `ReduceTo` nodes may only synchronize among
-            // `ReduceTo` nodes, not between `ReduceTo` and `Store`, or between
-            // `ReduceTo` and `Load`. But after `pass/normalize_threads`,
-            // everything can happen simultaneously (and that's why we need this
-            // `pass/make_sync`). Thus we can only ignore the synchronization
-            // only if BOTH `earlier` and `later` are `ReduceTo`.
-            if (later.op_->nodeType() == ASTNodeType::ReduceTo &&
-                earlier.op_->nodeType() == ASTNodeType::ReduceTo &&
-                later.op_.as<ReduceToNode>()->sync_ &&
-                earlier.op_.as<ReduceToNode>()->sync_) {
-                return false;
-            }
-
-            return later.op_ != earlier.op_;
-        })
+        .filter(filter)
         .ignoreReductionWAW(false)
         .eraseOutsideVarDef(false)(op, found);
 
