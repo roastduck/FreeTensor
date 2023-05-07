@@ -154,11 +154,6 @@ endif()
 # kindly preserves the quotes through escaping. Once expanded by C preprocessor, they
 # become string literals in C/C++ code and we are safe to use them.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # Compilers can always ignore an attribute. You don't need to issue a warning when
-    # you are not going to check an attribute
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-ignored-attributes")
-endif()
 if(FT_WITH_MKL)
     add_definitions(-DFT_WITH_MKL)
     # Libraries are selected by MKL Link Line Advisor

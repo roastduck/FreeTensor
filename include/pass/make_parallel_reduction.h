@@ -105,6 +105,12 @@ class MakeLoopCarriedReduction
     Stmt visit(const For &op) override;
 };
 
+#ifdef __GNUC__
+#define MAYBE_UNUSED_MEMBER_VAR // GCC<12 dose not support it
+#else
+#define MAYBE_UNUSED_MEMBER_VAR [[maybe_unused]]
+#endif
+
 /**
  * Lower parallel reductions left by `MakeLoopCarriedReduction` to synchronized
  * reductions
@@ -117,7 +123,8 @@ class MakeSyncReduction : public SymbolTable<Mutator> {
         &serialOverRed_; // ReduceTo ID -> [For], from inner to outer
     const LoopVariExprMap &variantMap_;
 
-    [[maybe_unused]] /* used only if FT_WITH_CUDA */ const Ref<Target> &target_;
+    MAYBE_UNUSED_MEMBER_VAR /* used only if FT_WITH_CUDA */ const Ref<Target>
+        &target_;
 
     struct SyncCacheInfo {
         ReduceTo oldNode_;
