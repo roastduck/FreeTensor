@@ -448,7 +448,8 @@ void Driver::sync() { dev_->sync(); }
 std::vector<Ref<Array>> Driver::collectReturns() {
     std::vector<Ref<Array>> ret;
     for (size_t i = 0, n = f_->returns_.size(); i < n; i++) {
-        auto &&[name, dtype, closure, returnClosure] = f_->returns_[i];
+        auto &&[_name, dtype, closure, returnClosure] = f_->returns_[i];
+        auto &&name = _name;
         Ref<Array> val;
         if (name2param_.count(name)) {
             // Returning an argument

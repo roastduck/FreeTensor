@@ -117,7 +117,7 @@ class MakeSyncReduction : public SymbolTable<Mutator> {
         &serialOverRed_; // ReduceTo ID -> [For], from inner to outer
     const LoopVariExprMap &variantMap_;
 
-    const Ref<Target> &target_;
+    [[maybe_unused]] /* used only if FT_WITH_CUDA */ const Ref<Target> &target_;
 
     struct SyncCacheInfo {
         ReduceTo oldNode_;

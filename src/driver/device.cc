@@ -3,8 +3,8 @@
 #include <driver/gpu.h>
 namespace freetensor {
 
-static const size_t deviceNameMaxLength =
-    255; // not 256, for '\0' terminated string
+[[maybe_unused]] /* used only if FT_WITH_CUDA */ static const size_t
+    deviceNameMaxLength = 255; // not 256, for '\0' terminated string
 
 Device::Device(const TargetType &targetType, int num) : num_(num) {
     switch (targetType) {

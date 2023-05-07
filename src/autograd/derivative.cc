@@ -131,7 +131,8 @@ std::vector<Stmt> Derivative::LazyFullDerivative::genGrads(
         std::rethrow_exception(error_);
     }
     std::vector<Stmt> stmts;
-    for (auto &&[load, derivativeLazy] : partials_) {
+    for (auto &&[load, _derivativeLazy] : partials_) {
+        auto &&derivativeLazy = _derivativeLazy;
         auto &&derivative =
             derivativeLazy.genReplaced(intermediatesMap, versions);
         if (auto it = gradNames.find(load->var_); it != gradNames.end()) {

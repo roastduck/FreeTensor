@@ -19,7 +19,10 @@ namespace freetensor {
 template <class Stream>
 std::function<std::ostream &(std::ostream &)>
 CodeGenC<Stream>::genMdPtrType(const VarDef &def, bool isConst) {
-    return [=, this](std::ostream &os) -> std::ostream & {
+    // NOTE: `[=]` implicitly capturing `this` is deprecated in C++20, but if we
+    // use `[=, this]`, clang will raise a warning because it will think `this`
+    // is duplicated.
+    return [=](std::ostream &os) -> std::ostream & {
         auto &&buf = def->buffer_;
 
         if (buf->tensor()->shape().empty()) {
