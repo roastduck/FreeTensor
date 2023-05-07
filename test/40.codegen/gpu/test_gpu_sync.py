@@ -943,3 +943,26 @@ def test_no_sync_between_atomic_reductions():
     code = ft.codegen(func, target, verbose=True)
 
     assert "__syncthreads" not in code.code
+
+
+def test_reject_dependence_between_blocks():
+    ast = ft.load_ast('''
+@input @gpu/global x: float32[4, 4] {
+  @cache @gpu/global t: float32[4, 4] {
+    @output @gpu/global y: float32[4, 4] {
+      @!parallel : @blockIdx.x
+      for i in 0 : 4 : 1 : 4 {
+        @!parallel : @blockIdx.y
+        for j in 0 : 4 : 1 : 4 {
+          t[i, j] = x[i, j] * 2
+        }
+        @!parallel : @blockIdx.y
+        for j_1 in 0 : 4 : 1 : 4 {
+          y[i, j_1] = t[i, (j_1 + 1) % 4]
+        }
+      }
+    }
+  }
+}''')
+    with pytest.raises(ft.InvalidProgram):
+        ft.lower(ast, target, skip_passes=['prop_one_time_use'])
