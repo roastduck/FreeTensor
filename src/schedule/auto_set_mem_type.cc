@@ -155,14 +155,55 @@ SizeOnEachLevel estimateSizeOnEachLevel(Schedule &s, const ID &defId,
     return ret;
 }
 
-Stmt findKernelNode(const Stmt &_s) {
-    Stmt ret = _s; // The root of a kernel can be a shared memory VarDef
-    for (auto s = _s->parentStmt(); s.isValid(); s = s->parentStmt()) {
-        if (s->nodeType() == ASTNodeType::For &&
-            std::holds_alternative<CUDAScope>(
-                s.as<ForNode>()->property_->parallel_)) {
-            ret = s;
+bool maybeKernelBoundary(const Stmt &s) {
+    if (s->nodeType() == ASTNodeType::For &&
+        std::holds_alternative<CUDAScope>(
+            s.as<ForNode>()->property_->parallel_)) {
+        return true;
+    } else if (s->nodeType() == ASTNodeType::VarDef) {
+        auto mtype = s.as<VarDefNode>()->buffer_->mtype();
+        if (mtype == MemType::GPULocal || mtype == MemType::GPUWarp ||
+            mtype == MemType::GPUShared) {
+            return true;
         }
+    }
+    return false;
+}
+
+Stmt findKernelBoundaryOutwards(const Stmt &s) {
+    return s->parentStmtByFilter(maybeKernelBoundary);
+}
+
+std::vector<Stmt> findKernelBoundariesInwards(const Stmt &s) {
+    class Finder : public Visitor {
+        std::vector<Stmt> found_;
+
+      public:
+        const auto &found() const { return found_; }
+
+      protected:
+        void visitStmt(const Stmt &s) override {
+            if (maybeKernelBoundary(s)) {
+                found_.emplace_back(s);
+                // no recurse
+            } else {
+                Visitor::visitStmt(s);
+            }
+        }
+    };
+
+    Finder finder;
+    finder(s);
+    return finder.found();
+}
+
+/**
+ * New kernel boundary after setting mtype for `s`
+ */
+Stmt findNewKernelNode(const Stmt &s) {
+    Stmt ret = s; // The root of a kernel can be a shared memory VarDef
+    if (auto &&outer = findKernelBoundaryOutwards(s); outer.isValid()) {
+        ret = outer;
     }
     return ret;
 };
@@ -203,8 +244,30 @@ void Schedule::autoSetMemType(const Ref<Target> &target) {
         // To use GPUShared, we should not overrun the size limit per thread
         // block.
 
-        auto all =
-            ranges::to<std::unordered_map>(allDefs(ast(), {AccessType::Cache}));
+        auto allDefsVec = allDefs(ast(), {AccessType::Cache});
+        // We only set memory types for variables used in only one kernel.
+        // Setting memory types for cross-kernel variables will implicitly merge
+        // the kernels, which may lead to illegal dependences currently
+        // unchecked in the `set_mem_type` schedule. For example, setting `t` to
+        // be `gpu/shared` in
+        //
+        // ```
+        // @!parallel blockIdx.x for i = ...  { t[i] = ...; }
+        // @!parallel blockIdx.x for i = ... { ... = t[i + 1]; }
+        // ```
+        //
+        // results in a cross-block dependence.
+        auto all = ranges::to<std::unordered_map>(
+            allDefsVec | views::filter([this](auto &&pair) {
+                auto defNode = find(pair.first);
+                if (findKernelBoundaryOutwards(defNode).isValid()) {
+                    return true; // Inside a kernel
+                }
+                if (findKernelBoundariesInwards(defNode).size() <= 1) {
+                    return true; // Out of no more than 1 kernel
+                }
+                return false;
+            }));
         std::multimap<SizeOnEachLevel, ID> sortedSize2defId; // small to large
 
         // Try setting to GPULocal
@@ -220,7 +283,7 @@ void Schedule::autoSetMemType(const Ref<Target> &target) {
             target.as<GPUTarget>()->maxLocalMemorySizePerThread();
         size_t localSizeLimPerBlock = target.as<GPUTarget>()->regsPerBlock();
         for (auto &&[size, defId] : sortedSize2defId) {
-            auto kernel = findKernelNode(find(defId))->id();
+            auto kernel = findNewKernelNode(find(defId))->id();
             auto regPerWord = ceilDiv(size.dtypeSize_, 4); // 32-bit register
             if (size.block_.has_value() &&
                 kernelLocalSizePerBlock_[kernel] + *size.block_ * regPerWord <
@@ -252,7 +315,7 @@ void Schedule::autoSetMemType(const Ref<Target> &target) {
         std::unordered_map<ID, size_t> kernelSharedSize_;
         auto sharedSizeLim = target.as<GPUTarget>()->sharedMemPerBlock();
         for (auto &&[size, defId] : sortedSize2defId) {
-            auto kernel = findKernelNode(find(defId))->id();
+            auto kernel = findNewKernelNode(find(defId))->id();
             if (size.block_.has_value() &&
                 kernelSharedSize_[kernel] + *size.block_ < sharedSizeLim) {
                 try {

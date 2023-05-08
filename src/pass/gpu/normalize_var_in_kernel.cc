@@ -95,8 +95,8 @@ Stmt NormalizeVarInKernel::visit(const VarDef &_op) {
 }
 
 Stmt NormalizeVarInKernel::visit(const For &op) {
-    if (!inKernel_ &&
-        std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
+    if (!inKernel_ && std::holds_alternative<CUDAScope>(
+                          op->property_->parallel_)) { // entering kernel
         nameCntInKernel_ = countNames(op);
         usedNamesInKernel_ =
             uni(this->names(),
@@ -115,11 +115,13 @@ Stmt NormalizeVarInKernel::visit(const For &op) {
         usedNamesInKernel_.clear();
         nameCntInKernel_.clear();
         return ret;
-    } else {
+    } else if (!inKernel_) { // out of kernel
         legalNames_.emplace_back(op->iter_);
         auto ret = BaseClass::visit(op);
         legalNames_.pop_back();
         return ret;
+    } else { // in kernel
+        return BaseClass::visit(op);
     }
 }
 
