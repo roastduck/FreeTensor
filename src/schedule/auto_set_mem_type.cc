@@ -247,7 +247,7 @@ void Schedule::autoSetMemType(const Ref<Target> &target) {
         auto allDefsVec = allDefs(ast(), {AccessType::Cache});
         // We only set memory types for variables used in only one kernel.
         // Setting memory types for cross-kernel variables will implicitly merge
-        // the kernels, which may lead to illegal dependences currecntly
+        // the kernels, which may lead to illegal dependences currently
         // unchecked in the `set_mem_type` schedule. For example, setting `t` to
         // be `gpu/shared` in
         //
