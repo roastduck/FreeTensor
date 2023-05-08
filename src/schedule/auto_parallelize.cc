@@ -72,14 +72,21 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
     // Try to merge and parallelize as many outer loops as possible
     std::function<void(For)> autoParallelizeOuter = [&](For root) {
 #ifdef FT_WITH_CUDA
+        bool parallelizeAmongBlocks = true;
         bool parentIsWarp = false;
         while (root->property_->parallel_ != serialScope) {
-            if (auto inners =
-                    findAll("<For><-(!<For><-)*" + toString(root->id()));
-                inners.size() == 1) {
+            auto inners = findAll("<For><-(!<For><-)*" + toString(root->id()));
+            if (inners.empty()) {
+                return;
+            } else if (inners.size() == 1) {
                 root = inners.front().as<ForNode>();
                 parentIsWarp = true;
             } else {
+                // There are multiple loop nests inside one kernel. Don't
+                // parallelize these inner loops to blocks. Otherwise, there
+                // might be cross-block dependence inside one kernel, which
+                // cannot be resolved.
+                parallelizeAmongBlocks = false;
                 break;
             }
         }
@@ -155,7 +162,10 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                     // split it only once, to reduce redundant guards, and
                     // save time for dependence analysis. If not, we split
                     // it twice, and merge once
-                    int numSM = target.as<GPUTarget>()->multiProcessorCount();
+                    int numSM = 1;
+                    if (parallelizeAmongBlocks) {
+                        numSM = target.as<GPUTarget>()->multiProcessorCount();
+                    }
                     int maxThreads = 256; // Can be max thread per block (1024),
                                           // but our generated kernels are huge,
                                           // so set it lower to reserve for more
@@ -167,7 +177,9 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                     if (auto loopNode = merged.as<ForNode>();
                         loopNode->len_->nodeType() == ASTNodeType::IntConst) {
                         auto len = loopNode->len_.as<IntConstNode>()->val_;
-                        if (len < numSM * maxThreads) {
+                        if (len <= numSM) {
+                            l2 = mergedId;
+                        } else if (len <= numSM * maxThreads) {
                             std::tie(l1, l2) = split(mergedId, -1, numSM);
                         } else {
                             std::tie(l1, l2) = split(mergedId, maxThreads);
@@ -184,7 +196,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                             std::tie(l1b, l2) = split(l2, maxThreads);
                         }
                     }
-                    if (!findAll(l1).empty()) {
+                    if (l1.isValid() && !findAll(l1).empty()) {
                         if (l1b.isValid() && !findAll(l1b).empty()) {
                             // We are unable to fuse `l1` and `l1b` back to
                             // one loop. Because the length of `l1b` is not
