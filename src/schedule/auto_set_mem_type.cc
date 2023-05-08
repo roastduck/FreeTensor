@@ -162,6 +162,12 @@ Stmt findKernelNode(const Stmt &_s) {
             std::holds_alternative<CUDAScope>(
                 s.as<ForNode>()->property_->parallel_)) {
             ret = s;
+        } else if (s->nodeType() == ASTNodeType::VarDef) {
+            auto mtype = s.as<VarDefNode>()->buffer_->mtype();
+            if (mtype == MemType::GPULocal || mtype == MemType::GPUWarp ||
+                mtype == MemType::GPUShared) {
+                ret = s;
+            }
         }
     }
     return ret;
@@ -203,8 +209,23 @@ void Schedule::autoSetMemType(const Ref<Target> &target) {
         // To use GPUShared, we should not overrun the size limit per thread
         // block.
 
-        auto all =
-            ranges::to<std::unordered_map>(allDefs(ast(), {AccessType::Cache}));
+        auto allDefsVec = allDefs(ast(), {AccessType::Cache});
+        // We only set memory types for variables already in kernel. Setting
+        // memory types for variables out of kernels may implicitly merge the
+        // kernels, which may lead to illegal dependences currecntly unchecked
+        // in the `set_mem_type` schedule. For example, setting `t` to be
+        // `gpu/shared` in
+        //
+        // ```
+        // @!parallel blockIdx.x for i = ...  { t[i] = ...; }
+        // @!parallel blockIdx.x for i = ... { ... = t[i + 1]; }
+        // ```
+        //
+        // results in a cross-block dependence.
+        auto all = ranges::to<std::unordered_map>(
+            allDefsVec | views::filter([this](auto &&pair) {
+                return findKernelNode(find(pair.first)).isValid();
+            }));
         std::multimap<SizeOnEachLevel, ID> sortedSize2defId; // small to large
 
         // Try setting to GPULocal
