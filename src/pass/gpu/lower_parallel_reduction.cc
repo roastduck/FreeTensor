@@ -24,6 +24,7 @@ Expr makeCeilLog2(const Expr &_x) {
                       (unsigned long long)(x.as<IntConstNode>()->val_ - 1))) +
             1);
     }
+    // TODO: Use std::bits after we have C++20 in CUDA
     switch (x->dtype().base()) {
     case DataType::Int32:
         // Similar to __builtin_clz, defined in gpu_runtime.h
@@ -56,6 +57,12 @@ InsertWorkspaces::reducedBy(const ReduceTo &op) {
     return ret;
 }
 
+Stmt InsertWorkspaces::visit(const VarDef &op) {
+    auto ret = BaseClass::visit(op);
+    handledVars_.erase(op->name_);
+    return ret;
+}
+
 Stmt InsertWorkspaces::visit(const For &_op) {
     if (_op->property_->reductions_.empty()) {
         return BaseClass::visit(_op);
@@ -67,17 +74,26 @@ Stmt InsertWorkspaces::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     loopStack_.pop_back();
 
+    std::vector<Ref<ReductionItem>> responsibleReductions;
+    std::vector<Ref<ReductionItem>> nonResponsibleReductions;
     std::vector<std::string> workspaces;
     std::vector<std::vector<Expr>> workspaceShapes;
     std::vector<DataType> dtypes;
-    for (auto &&[i, r] : views::enumerate(op->property_->reductions_)) {
+    for (auto &&r : op->property_->reductions_) {
+        if (handledVars_.count(r->var_)) {
+            nonResponsibleReductions.emplace_back(r);
+            continue; // An inner scope is responsible for it
+        } else {
+            responsibleReductions.emplace_back(r);
+        }
+
         std::vector<Expr> shape;
         shape.reserve(r->begins_.size());
         for (auto &&[begin, end] : views::zip(r->begins_, r->ends_)) {
             shape.emplace_back(makeSub(end, begin));
         }
         workspaces.emplace_back("__reduce_" + toString(op->id()) + "_" +
-                                std::to_string(i));
+                                std::to_string(Hasher{}(r)));
         workspaceShapes.emplace_back(std::move(shape));
         dtypes.emplace_back(buffer(r->var_)->tensor()->dtype());
     }
@@ -86,16 +102,18 @@ Stmt InsertWorkspaces::visit(const For &_op) {
     // loop, so it can be further sinked
     Stmt body = op->body_;
     for (auto &&[workspace, wsShape, dtype, red] : views::zip(
-             workspaces, workspaceShapes, dtypes, op->property_->reductions_)) {
+             workspaces, workspaceShapes, dtypes, responsibleReductions)) {
         body = makeVarDef(workspace,
                           makeBuffer(makeTensor(wsShape, dtype),
                                      AccessType::Cache, MemType::GPUShared),
                           std::nullopt, std::move(body), false);
         ws2red_[body->id()] = std::make_pair(op->iter_, red);
+        handledVars_.insert(red->var_);
+        converged_ = false;
     }
 
     op->body_ = std::move(body);
-    op->property_->reductions_.clear();
+    op->property_->reductions_ = std::move(nonResponsibleReductions);
     return op;
 }
 
@@ -110,15 +128,11 @@ Stmt InsertWorkspaces::visit(const ReduceTo &_op) {
 
     auto redLoops = reducedBy(op);
     if (!redLoops.empty()) {
-        if (redLoops.size() > 1) {
-            ERROR(
-                "Parallel reduction over multiple scopes is not supported yet");
-        }
-        auto &&redLoop = redLoops.front();
+        auto &&redLoop = redLoops.back(); // The most inner scope
+        auto &&redItem = redLoop.first->property_->reductions_[redLoop.second];
         auto workspace = "__reduce_" + toString(redLoop.first->id()) + "_" +
-                         std::to_string(redLoop.second);
-        auto &&begins =
-            redLoop.first->property_->reductions_[redLoop.second]->begins_;
+                         std::to_string(Hasher{}(redItem));
+        auto &&begins = redItem->begins_;
         ASSERT(op->indices_.size() == begins.size());
         std::vector<Expr> indices;
         indices.reserve(begins.size());
@@ -252,40 +266,61 @@ Stmt lowerParallelReduction(const Stmt &_op) {
     // small as possible (which means to put the reduction as early as possible)
     // as long as there is no dependence or loop-carried variance on the
     // workspace.
+    //
+    // For reducing over multiple scopes, we transform the code iteratively from
+    // inner to outer.
+    //
+    // TODO: When reducing over multiple scopes and the scopes are prefectly
+    // nested, we can do a global `O(log n)` binary reduction, where `n` is the
+    // product of the lengths of all scopes.
+    //
+    // NOTE: Potentially we may use NVIDIA CUB for more efficient reduction
+    // algorithms, but CUB comes with the following limitations:
+    // - It requires the `blockDim` to be constant.
+    // - It only works on scalars (but we can call it multiple times or we can
+    // make a data type to wrap around an array slice).
+    // - It only supports reducing along ALL `threadIdx`es, instead of some of
+    // them.
 
-    // 1. Insert the workspace with the same size of the reduction target.
-    InsertWorkspaces insertWorkspaces;
-    op = insertWorkspaces(op);
+    while (true) {
+        // 1. Insert the workspace with the same size of the reduction target.
+        InsertWorkspaces insertWorkspaces;
+        op = insertWorkspaces(op);
+        if (insertWorkspaces.converged()) {
+            break;
+        }
 
-    // 2. Try to make the workspace more inner by `pass/sink_var`
-    op = sinkVar(op, ranges::to<std::unordered_set>(
-                         views::keys(insertWorkspaces.ws2red())));
+        // 2. Try to make the workspace more inner by `pass/sink_var`
+        op = sinkVar(op, ranges::to<std::unordered_set>(
+                             views::keys(insertWorkspaces.ws2red())));
 
-    // 3. Enlarge the workspace to thread-number-fold, and insert the binary
-    // reduction algorithm.
-    InsertBinaryReduction insertBinaryReduction(insertWorkspaces.ws2red());
-    op = insertBinaryReduction(op);
+        // 3. Enlarge the workspace to thread-number-fold, and insert the binary
+        // reduction algorithm.
+        InsertBinaryReduction insertBinaryReduction(insertWorkspaces.ws2red());
+        op = insertBinaryReduction(op);
 
-    // 4. Try to make the workspace smaller by `pass/shrink_var`. Here we use
-    // custom bounds only considering the real use of the workspaces
-    std::unordered_map<ID, AccessBound> bounds;
-    for (auto &&[wsId, scopeId] : insertBinaryReduction.ws2scope()) {
-        bounds[wsId] =
-            compAccessBound(op, wsId, COMP_ACCESS_BOUND_READ, false, scopeId);
+        // 4. Try to make the workspace smaller by `pass/shrink_var`. Here we
+        // use custom bounds only considering the real use of the workspaces
+        std::unordered_map<ID, AccessBound> bounds;
+        for (auto &&[wsId, scopeId] : insertBinaryReduction.ws2scope()) {
+            bounds[wsId] = compAccessBound(op, wsId, COMP_ACCESS_BOUND_READ,
+                                           false, scopeId);
+        }
+        op = ShrinkVar(bounds, true)(op);
+
+        // 5. Simplify, to flatten singleton loops, and to simplify the
+        // expressions from `pass/shrink_var`
+        op = simplify(op);
+
+        // 6. As per our definition of inter-thread dependence, a VarDef defined
+        // inside a parallel For is considered thread local to it, while a
+        // VarDef defined outside a parallel For is considered thread by all the
+        // threads. The former will be further lower by
+        // pass/gpu/multiplex_buffers. We need to put workspace back to the
+        // original place to meet this definition, but this time with a shrinked
+        // shape
+        op = CorrectInterThreadDependence(insertWorkspaces.ws2red())(op);
     }
-    op = ShrinkVar(bounds, true)(op);
-
-    // 5. Simplify, to flatten singleton loops, and to simplify the expressions
-    // from `pass/shrink_var`
-    op = simplify(op);
-
-    // 6. As per our definition of inter-thread dependence, a VarDef defined
-    // inside a parallel For is considered thread local to it, while a VarDef
-    // defined outside a parallel For is considered thread by all the threads.
-    // The former will be further lower by pass/gpu/multiplex_buffers. We need
-    // to put workspace back to the original place to meet this definition, but
-    // this time with a shrinked shape
-    op = CorrectInterThreadDependence(insertWorkspaces.ws2red())(op);
 
     return op;
 }
