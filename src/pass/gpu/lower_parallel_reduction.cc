@@ -24,7 +24,7 @@ Expr makeCeilLog2(const Expr &_x) {
                       (unsigned long long)(x.as<IntConstNode>()->val_ - 1))) +
             1);
     }
-    // TODO: Use std::bits after we have C++20 in CUDA
+    // TODO: Use std::bit_width after we have C++20 in CUDA
     switch (x->dtype().base()) {
     case DataType::Int32:
         // Similar to __builtin_clz, defined in gpu_runtime.h
