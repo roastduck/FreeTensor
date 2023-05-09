@@ -201,7 +201,7 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
             ret = makeStmtSeq({sync, ret});
             markSyncForSplitting(op, sync, needSyncWarp);
         } else {
-            syncBeforeFor_[whereToInsert->id()] = sync;
+            syncBeforeFor_[whereToInsert->id()] = {sync, needSyncWarp};
         }
 
         for (CrossThreadDep &dep : deps_) {
@@ -262,8 +262,8 @@ Stmt MakeSync::visit(const For &_op) {
         }
     }
     if (syncBeforeFor_.count(op->id())) {
-        auto &&sync = syncBeforeFor_.at(op->id());
-        markSyncForSplitting(_op->body_, sync, needSyncWarp);
+        auto &&[sync, isSyncWarp] = syncBeforeFor_.at(op->id());
+        markSyncForSplitting(_op->body_, sync, isSyncWarp);
         return makeStmtSeq({sync, op});
     }
     return op;
