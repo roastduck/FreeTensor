@@ -487,6 +487,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1NonCommutativeBinaryExprNode.html">NonCommutativeBinaryExprNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1NormalizeLoops.html">NormalizeLoops</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1NotMetadataSelector.html">NotMetadataSelector</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1NotSelector.html">NotSelector</a></td></tr>
@@ -1904,6 +1906,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:a6d02a01fc1b040df10f08a0fba5d09e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa7120fe32e8d80979a3fd0cce5d79082"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa7120fe32e8d80979a3fd0cce5d79082">moveOutFirstOrLastIter</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:aa7120fe32e8d80979a3fd0cce5d79082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0f58dc8dcd954f044db7e58c248f0af"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad0f58dc8dcd954f044db7e58c248f0af">normalizeLoops</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::function&lt; bool(const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;)&gt; &amp;<a class="el" href="namespacefreetensor.html#a5997edb53e600a6645243d5d2684f129">filter</a>=nullptr)</td></tr>
+<tr class="separator:ad0f58dc8dcd954f044db7e58c248f0af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a351b8ec93ce130376baacb2c4a8d9a0c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a351b8ec93ce130376baacb2c4a8d9a0c">pbSimplify</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a351b8ec93ce130376baacb2c4a8d9a0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1a48994880ee7750e6ce3d25e44b2468"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1a48994880ee7750e6ce3d25e44b2468">propOneTimeUse</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
@@ -14269,6 +14273,41 @@ template&lt;PBSetRef T&gt; </div>
       </table>
 </div><div class="memdoc">
 <p >The function is only for serialization The original <a class="el" href="classfreetensor_1_1Array.html">Array</a> constructor is disabled See <a class="el" href="array_8h.html">include/driver/array.h</a> for more info </p>
+
+</div>
+</div>
+<a id="ad0f58dc8dcd954f044db7e58c248f0af" name="ad0f58dc8dcd954f044db7e58c248f0af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0f58dc8dcd954f044db7e58c248f0af">&#9670;&nbsp;</a></span>normalizeLoops()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::normalizeLoops </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; bool(const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>filter</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Make loops to begin at 0 and have step 1</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filter</td><td>: Optional. Normalize only filtered loops </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
