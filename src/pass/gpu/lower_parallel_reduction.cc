@@ -4,7 +4,9 @@
 #include <hash.h>
 #include <pass/const_fold.h>
 #include <pass/gpu/lower_parallel_reduction.h>
+#include <pass/gpu/normalize_thread_dims.h>
 #include <pass/make_nested_loops.h>
+#include <pass/normalize_loops.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
@@ -247,6 +249,16 @@ Stmt CorrectInterThreadDependence::visit(const For &op) {
 
 Stmt lowerParallelReduction(const Stmt &_op) {
     auto op = _op;
+
+    // 0. Pre-run pass/gpu/normalize_thread_dims here before
+    // pass/gpu/normalize_threads, so our `O(log n)` reduction loop will be with
+    // a legal `n`, where variables in `n` are all defined outside of kernels.
+    op = normalizeLoops(op, [](const For &l) {
+        return std::holds_alternative<CUDAScope>(l->property_->parallel_) &&
+               std::get<CUDAScope>(l->property_->parallel_).level_ ==
+                   CUDAScope::Thread;
+    });
+    op = normalizeThreadDims(op);
 
     // For each parallel reduction, we don't reduce onto the target variable
     // directly, but first reduce into a thread-local workspace (implemented by
