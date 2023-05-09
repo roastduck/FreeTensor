@@ -168,6 +168,52 @@ def test_scalar():
     assert np.array_equal(z_np, [4, 6, 3, 7])
 
 
+def test_shmem_scalar():
+
+    @ft.transform
+    def test(x):
+        x: ft.Var[(4,), "int32", "input", "gpu/global"]
+        t1 = ft.empty((), "int32", "gpu/shared")
+        t2 = ft.empty((), "int32", "gpu/shared")
+        t3 = ft.empty((), "int32", "gpu/shared")
+        t4 = ft.empty((), "int32", "gpu/shared")
+        #! label: L1
+        for i in range(4):
+            if i == 0:
+                t1[...] = x[i]
+            elif i == 1:
+                t2[...] = x[i]
+            elif i == 2:
+                t3[...] = x[i]
+            else:
+                t4[...] = x[i]
+        y = ft.empty((4,), "int32", "gpu/global")
+        #! label: L2
+        for i in range(4):
+            if i == 0:
+                y[i] = t1[...] + t3[...]
+            elif i == 1:
+                y[i] = t2[...] + t4[...]
+            elif i == 2:
+                y[i] = t1[...] + t2[...]
+            else:
+                y[i] = t3[...] + t4[...]
+        return y
+
+    with device:
+        s = ft.Schedule(test)
+        s.parallelize("L1", "threadIdx.x")
+        s.parallelize("L2", "threadIdx.x")
+        func = ft.lower(s.func(), verbose=1)
+        code = ft.codegen(func, verbose=True)
+        x_np = np.array([1, 2, 3, 4]).astype("int32")
+        x_arr = ft.Array(x_np)
+        y_arr = ft.build_binary(code)(x_arr)
+        y_np = y_arr.numpy()
+
+    assert np.array_equal(y_np, [4, 6, 3, 7])
+
+
 def test_split_by_block_and_bind():
 
     @ft.transform

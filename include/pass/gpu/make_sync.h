@@ -63,7 +63,12 @@ class CopyParts : public Mutator {
 struct CrossThreadDep {
     Stmt later_, earlier_, lcaStmt_, lcaLoop_;
     bool inWarp_;
-    bool visiting_, synced_;
+    bool visiting_ = false, synced_ = false, syncedOnlyInBranch_ = false;
+
+    CrossThreadDep(const Stmt &later, const Stmt &earlier, const Stmt &lcaStmt,
+                   const Stmt &lcaLoop, bool inWarp)
+        : later_(later), earlier_(earlier), lcaStmt_(lcaStmt),
+          lcaLoop_(lcaLoop), inWarp_(inWarp) {}
 };
 
 class MakeSync : public Mutator {
@@ -144,7 +149,7 @@ class MakeSync : public Mutator {
      * @param needSync : True if `__syncwarp`, false if `__syncthreads`
      */
     void markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync,
-                              bool needSyncWarp);
+                              bool isSyncWarp);
 
   protected:
     Stmt visitStmt(const Stmt &op) override;

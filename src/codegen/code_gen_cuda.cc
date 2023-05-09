@@ -108,8 +108,7 @@ void CodeGenCUDA::genScalar(const VarDef &def,
                              ::freetensor::toString(mtype) +
                              " from inside a kernel");
     } else if (indices.empty() && (mtype == MemType::GPUGlobal ||
-                                   mtype == MemType::GPUGlobalHeap ||
-                                   mtype == MemType::GPUShared)) {
+                                   mtype == MemType::GPUGlobalHeap)) {
         os() << "*" << mangle(var);
     } else if (def->buffer_->mtype() == MemType::GPULocal ||
                def->buffer_->mtype() == MemType::GPUWarp) {

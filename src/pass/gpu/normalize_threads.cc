@@ -5,7 +5,6 @@
 #include <analyze/merge_no_deps_hint.h>
 #include <pass/gpu/normalize_thread_dims.h>
 #include <pass/gpu/normalize_threads.h>
-#include <pass/merge_and_hoist_if.h>
 #include <pass/normalize_loops.h>
 #include <pass/shrink_for.h>
 
@@ -151,8 +150,11 @@ Stmt normalizeThreads(const Stmt &_op) {
     });
     op = NormalizeThreads(op)(op);
     op = shrinkFor(op);
-    op = mergeAndHoistIf(op);
     op = normalizeThreadDims(op);
+    // NOTE: Although we have inserted a lot of identical `if`s, we must delay
+    // `pass/merge_and_hoist_if` until we have done `pass/gpu/make_sync`.
+    // Otherwise, we are introducing dependences between an `if`'s "then" case
+    // and its "else" case, which is ill-defined in our IR.
     return op;
 }
 
