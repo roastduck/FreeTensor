@@ -124,13 +124,19 @@ Stmt SinkVar::visit(const VarDef &_op) {
             throw InvalidProgram(_op->name_ + " is used before defining");
         }
         Stmt thenCase, elseCase;
-        thenCase =
-            makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
-                       branch->thenCase_, false, makeMetadata("sink.1", _op));
         if (branch->elseCase_.isValid()) {
+            // Can't preserve ID. Create new metadata
+            thenCase = makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
+                                  branch->thenCase_, false,
+                                  makeMetadata("sink.1", _op));
             elseCase = makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
                                   branch->elseCase_, false,
                                   makeMetadata("sink.0", _op));
+        } else {
+            // Preserve metadata and ID
+            thenCase = makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
+                                  branch->thenCase_, false, _op->metadata(),
+                                  _op->id());
         }
         ret = makeIf(branch->cond_, std::move(thenCase), std::move(elseCase),
                      branch->metadata(), branch->id());

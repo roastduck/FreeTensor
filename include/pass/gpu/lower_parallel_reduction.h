@@ -4,6 +4,7 @@
 #ifdef FT_WITH_CUDA
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include <analyze/symbol_table.h>
 #include <func.h>
@@ -19,15 +20,19 @@ class InsertWorkspaces : public SymbolTable<Mutator> {
     std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
         ws2red_; // workspace ID -> (loop iter name, reduction info)
     std::vector<For> loopStack_;
+    std::unordered_set<std::string> handledVars_;
+    bool converged_ = true;
 
   public:
     const auto &ws2red() const { return ws2red_; }
+    bool converged() const { return converged_; }
 
   private:
     std::vector<std::pair<For, int>> reducedBy(const ReduceTo &op);
 
   protected:
     using BaseClass::visit;
+    Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const ReduceTo &op) override;
 };
