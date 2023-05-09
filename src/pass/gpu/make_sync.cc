@@ -139,8 +139,8 @@ split_this_level:
 }
 
 void MakeSync::markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync,
-                                    bool needSyncWarp) {
-    if (needSyncWarp) {
+                                    bool isSyncWarp) {
+    if (isSyncWarp) {
         return;
     }
     for (Stmt ctx = stmtInTree->parentStmt(), childOfCtx = stmtInTree;
@@ -211,6 +211,9 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
                 }
                 if (needSyncWarp && dep.inWarp_) {
                     dep.synced_ = true;
+                    if (!needSyncThreads) {
+                        dep.syncedOnlyInBranch_ = true;
+                    }
                 }
             }
         }
@@ -251,6 +254,9 @@ Stmt MakeSync::visit(const For &_op) {
                 }
                 if (needSyncWarp && dep.inWarp_) {
                     dep.synced_ = true;
+                    if (!needSyncThreads) {
+                        dep.syncedOnlyInBranch_ = true;
+                    }
                 }
             }
         }
@@ -263,43 +269,57 @@ Stmt MakeSync::visit(const For &_op) {
     return op;
 }
 
-Stmt MakeSync::visit(const If &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::If);
-    auto op = __op.as<IfNode>();
+Stmt MakeSync::visit(const If &op) {
+    auto cond = (*this)(op->cond_);
+    auto thenCase = (*this)(op->thenCase_);
+    for (auto &&dep : deps_) {
+        if (dep.syncedOnlyInBranch_) {
+            dep.synced_ = false;
+        }
+    }
+    Stmt elseCase;
+    if (op->elseCase_.isValid()) {
+        elseCase = (*this)(op->elseCase_);
+        for (auto &&dep : deps_) {
+            if (dep.syncedOnlyInBranch_) {
+                dep.synced_ = false;
+            }
+        }
+    }
 
     if (branchSplittersThen_.count(op->id()) ||
         branchSplittersElse_.count(op->id())) {
-        if (!checkNotModified(root_, op->cond_, CheckNotModifiedSide::Before,
+        if (!checkNotModified(root_, cond, CheckNotModifiedSide::Before,
                               op->id(), CheckNotModifiedSide::After,
                               op->id())) {
             throw InvalidProgram("Unable to insert a synchronizing statment "
                                  "inside an If node because the condition " +
-                                 toString(op->cond_) + " is being modified");
+                                 toString(cond) + " is being modified");
         }
 
         Stmt thenBody;
         if (branchSplittersThen_.count(op->id())) {
-            CopyParts thenCopier(op->cond_, branchSplittersThen_.at(op->id()));
-            thenBody = thenCopier(op->thenCase_);
+            CopyParts thenCopier(cond, branchSplittersThen_.at(op->id()));
+            thenBody = thenCopier(thenCase);
         } else {
-            thenBody = makeIf(op->cond_, op->thenCase_);
+            thenBody = makeIf(cond, thenCase);
         }
-        if (op->elseCase_.isValid()) {
+        if (elseCase.isValid()) {
             Stmt elseBody;
             if (branchSplittersElse_.count(op->id())) {
-                CopyParts elseCopier(makeLNot(op->cond_),
+                CopyParts elseCopier(makeLNot(cond),
                                      branchSplittersElse_.at(op->id()));
-                elseBody = elseCopier(op->elseCase_);
+                elseBody = elseCopier(elseCase);
             } else {
-                elseBody = makeIf(makeLNot(op->cond_), op->elseCase_);
+                elseBody = makeIf(makeLNot(cond), elseCase);
             }
             return makeStmtSeq({thenBody, elseBody});
         } else {
             return thenBody;
         }
     }
-    return op;
+    return makeIf(std::move(cond), std::move(thenCase), std::move(elseCase),
+                  op->metadata(), op->id(), op->debugBlame());
 }
 
 Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
@@ -404,9 +424,8 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
             commonLoop = commonLoop->parentStmt();
         }
         ASSERT(commonLoop->nodeType() == ASTNodeType::For);
-        deps.emplace_back(CrossThreadDep{
-            laterStmt, earlierStmt, commonStmt, commonLoop,
-            loop2thread.at(d.dir_[0].first.id_).inWarp_, false, false});
+        deps.emplace_back(laterStmt, earlierStmt, commonStmt, commonLoop,
+                          loop2thread.at(d.dir_[0].first.id_).inWarp_);
     };
     FindDeps()
         .direction(query)
