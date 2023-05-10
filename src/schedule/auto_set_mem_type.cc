@@ -89,6 +89,7 @@ SizeOnEachLevel estimateSizeOnEachLevel(Schedule &s, const ID &defId,
             _newVarDef = findStmt(ast, defId);
         } catch (const UnexpectedQueryResult &e) {
             // Maybe a trivial VarDef that can be optimized out
+            s.abortTransaction();
             return ret;
         }
         ASSERT(_newVarDef->nodeType() == ASTNodeType::VarDef);
