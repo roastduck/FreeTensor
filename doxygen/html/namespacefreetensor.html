@@ -179,6 +179,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CheckNameToDefMapping.html">CheckNameToDefMapping</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CheckReadToParallelScopeMapping.html">CheckReadToParallelScopeMapping</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CheckSideEffect.html">CheckSideEffect</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1ChildOf.html">ChildOf</a></td></tr>
@@ -5468,11 +5470,12 @@ template&lt;class T &gt; </div>
       </table>
 </div><div class="memdoc">
 <p >Verify if <code>expr</code> evaluates to the same value in the period that AFTER ENCOUNTERING <code>s0</code> UNTIL ENCOUNTERING THE NEXT <code>s1</code>. The exact boundary of the period to check can be set by <code>s0Side</code> and <code>s1Side</code>, to specify whether the period includes <code>s0</code> and <code>s1</code> themselves</p>
-<p >It will return false in two cases:</p>
+<p >It will return false in four cases:</p>
 <ol type="1">
-<li>Variables in <code>expr</code> is not defined at <code>s0</code> or <code>s1</code>, or</li>
+<li>Any variable in <code>expr</code> is not defined at <code>s0</code> or <code>s1</code>, or</li>
 <li>The defining VarDef or For nodes in <code>s0</code> and <code>s1</code> are different, or</li>
-<li>Variables used in <code>expr</code> is written between <code>s0</code> and <code>s1</code>. </li>
+<li>Any variable used in <code>expr</code> is written between <code>s0</code> and <code>s1</code>, or</li>
+<li>Any variable used in <code>expr</code> is thread-local, but <code>s0</code> and <code>s1</code> do not share the same thread. </li>
 </ol>
 
 </div>
