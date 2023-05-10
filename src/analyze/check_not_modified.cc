@@ -29,6 +29,47 @@ void CheckNameToDefMapping::visitStmt(const Stmt &stmt) {
     }
 }
 
+static std::unordered_map<std::string, ID>
+usedScopesAt(const Stmt &ast, const ID &pos,
+             const std::unordered_set<std::string> &reads) {
+    CheckReadToParallelScopeMapping checker(pos, reads);
+    checker(ast);
+    return checker.read2scope();
+}
+
+void CheckReadToParallelScopeMapping::visitStmt(const Stmt &stmt) {
+    BaseClass::visitStmt(stmt);
+    if (stmt->id() == pos_) {
+        for (auto &&read : reads_) {
+            switch (buffer(read)->mtype()) {
+            case MemType::GPULocal:
+            case MemType::GPUWarp:
+                read2scope_[read] =
+                    stmt->parentStmtByFilter([](const Stmt &p) {
+                            return p->nodeType() == ASTNodeType::For &&
+                                   std::holds_alternative<CUDAScope>(
+                                       p.as<ForNode>()->property_->parallel_);
+                        })
+                        ->id();
+                break;
+            case MemType::GPUShared:
+                read2scope_[read] =
+                    stmt->parentStmtByFilter([](const Stmt &p) {
+                            return p->nodeType() == ASTNodeType::For &&
+                                   std::holds_alternative<CUDAScope>(
+                                       p.as<ForNode>()->property_->parallel_) &&
+                                   std::get<CUDAScope>(
+                                       p.as<ForNode>()->property_->parallel_)
+                                           .level_ == CUDAScope::Block;
+                        })
+                        ->id();
+                break;
+            default:; // do nothing
+            }
+        }
+    }
+}
+
 Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
     auto op = Mutator::visitStmt(_op);
     auto ret = op;
@@ -65,6 +106,9 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
     auto reads = allReads(s0Expr); // uses of s1 should be the same
     if (reads.empty()) {
         return true; // early exit: impossible to be written
+    }
+    if (usedScopesAt(op, s0, reads) != usedScopesAt(op, s1, reads)) {
+        return false;
     }
 
     // First insert temporarily Eval node to the AST, then perform dependence
