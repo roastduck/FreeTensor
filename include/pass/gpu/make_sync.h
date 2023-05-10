@@ -77,7 +77,8 @@ class MakeSync : public Mutator {
     Stmt root_;
     const std::unordered_map<ID, ThreadInfo> &loop2thread_;
     std::vector<CrossThreadDep> deps_;
-    std::unordered_map<ID, Stmt> syncBeforeFor_;
+    std::unordered_map<ID, std::pair<Stmt, bool /* isSyncWarp */>>
+        syncBeforeFor_;
     std::unordered_map<ID, std::vector<Stmt>> branchSplittersThen_,
         branchSplittersElse_;
     LoopVariExprMap variantExprs_;

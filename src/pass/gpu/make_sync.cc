@@ -199,9 +199,13 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
         }
         if (!whereToInsert.isValid()) {
             ret = makeStmtSeq({sync, ret});
-            markSyncForSplitting(op, sync, needSyncWarp);
+            markSyncForSplitting(op, sync, !needSyncThreads);
         } else {
-            syncBeforeFor_[whereToInsert->id()] = sync;
+            if (!syncBeforeFor_.count(whereToInsert->id()) ||
+                (needSyncThreads &&
+                 syncBeforeFor_.at(whereToInsert->id()).second)) {
+                syncBeforeFor_[whereToInsert->id()] = {sync, !needSyncThreads};
+            }
         }
 
         for (CrossThreadDep &dep : deps_) {
@@ -246,7 +250,7 @@ Stmt MakeSync::visit(const For &_op) {
                 makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
         }
         op->body_ = makeStmtSeq({op->body_, sync});
-        markSyncForSplitting(_op->body_, sync, needSyncWarp);
+        markSyncForSplitting(_op->body_, sync, !needSyncThreads);
         for (CrossThreadDep &dep : deps_) {
             if (dep.visiting_) {
                 if (needSyncThreads) {
@@ -262,8 +266,8 @@ Stmt MakeSync::visit(const For &_op) {
         }
     }
     if (syncBeforeFor_.count(op->id())) {
-        auto &&sync = syncBeforeFor_.at(op->id());
-        markSyncForSplitting(_op->body_, sync, needSyncWarp);
+        auto &&[sync, isSyncWarp] = syncBeforeFor_.at(op->id());
+        markSyncForSplitting(_op->body_, sync, isSyncWarp);
         return makeStmtSeq({sync, op});
     }
     return op;
