@@ -385,3 +385,14 @@ def test_dep_by_external_var_reversed_loop():
     s = ft.Schedule(ast, verbose=2)
     with pytest.raises(ft.InvalidSchedule):
         s.reorder(["L2", "L1"])
+
+
+def test_no_merge_if_outer_iter_var_is_used_in_inner():
+    with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, i, label="L2") as j:
+                y[i, j] = i * j
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast, verbose=2)
+    with pytest.raises(ft.InvalidSchedule):
+        s.reorder(["L2", "L1"])
