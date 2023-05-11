@@ -44,25 +44,27 @@ void CheckReadToParallelScopeMapping::visitStmt(const Stmt &stmt) {
             switch (buffer(read)->mtype()) {
             case MemType::GPULocal:
             case MemType::GPUWarp:
-                read2scope_[read] =
-                    stmt->parentStmtByFilter([](const Stmt &p) {
-                            return p->nodeType() == ASTNodeType::For &&
-                                   std::holds_alternative<CUDAScope>(
-                                       p.as<ForNode>()->property_->parallel_);
-                        })
-                        ->id();
+                if (auto &&scope = stmt->parentStmtByFilter([](const Stmt &p) {
+                        return p->nodeType() == ASTNodeType::For &&
+                               std::holds_alternative<CUDAScope>(
+                                   p.as<ForNode>()->property_->parallel_);
+                    });
+                    scope.isValid()) {
+                    read2scope_[read] = scope->id();
+                }
                 break;
             case MemType::GPUShared:
-                read2scope_[read] =
-                    stmt->parentStmtByFilter([](const Stmt &p) {
-                            return p->nodeType() == ASTNodeType::For &&
-                                   std::holds_alternative<CUDAScope>(
-                                       p.as<ForNode>()->property_->parallel_) &&
-                                   std::get<CUDAScope>(
-                                       p.as<ForNode>()->property_->parallel_)
-                                           .level_ == CUDAScope::Block;
-                        })
-                        ->id();
+                if (auto &&scope = stmt->parentStmtByFilter([](const Stmt &p) {
+                        return p->nodeType() == ASTNodeType::For &&
+                               std::holds_alternative<CUDAScope>(
+                                   p.as<ForNode>()->property_->parallel_) &&
+                               std::get<CUDAScope>(
+                                   p.as<ForNode>()->property_->parallel_)
+                                       .level_ == CUDAScope::Block;
+                    });
+                    scope.isValid()) {
+                    read2scope_[read] = scope->id();
+                }
                 break;
             default:; // do nothing
             }
