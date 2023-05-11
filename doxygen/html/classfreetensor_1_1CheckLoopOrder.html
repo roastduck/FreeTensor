@@ -96,8 +96,8 @@ Collaboration diagram for freetensor::CheckLoopOrder:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a2883fbe123eecd8c31f5e282aefc229d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CheckLoopOrder.html#a2883fbe123eecd8c31f5e282aefc229d">CheckLoopOrder</a> (const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;dstOrder)</td></tr>
-<tr class="separator:a2883fbe123eecd8c31f5e282aefc229d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6940a32d706c53ae3fdffd481612ce83"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CheckLoopOrder.html#a6940a32d706c53ae3fdffd481612ce83">CheckLoopOrder</a> (const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;dstOrder, bool reqireRangeDefinedOutside=true)</td></tr>
+<tr class="separator:a6940a32d706c53ae3fdffd481612ce83"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af23a677c371e152cb5477c0b72590831"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CheckLoopOrder.html#af23a677c371e152cb5477c0b72590831">order</a> () const</td></tr>
 <tr class="separator:af23a677c371e152cb5477c0b72590831"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a37c6b141c7a44fc110416e1a7d431d24"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96">StmtSeq</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CheckLoopOrder.html#a37c6b141c7a44fc110416e1a7d431d24">stmtSeqInBetween</a> () const</td></tr>
@@ -247,10 +247,16 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:ac691148816dc27aaa03c2e573cec3988 inherit pub_types_classfreetensor_1_1Visitor"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p >Return loops in nesting order </p>
+<div class="textblock"><p >Return loops in nesting order</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">requireRangeDefinedOutside</td><td>: If true, throw <a class="el" href="classfreetensor_1_1InvalidSchedule.html">InvalidSchedule</a> when the range of any loop is an expression of the iterating variable of other loops in the nest. For example, <code>for i = 0 to 4 { for j = 0 to i {}}</code> will be illegal. </td></tr>
+  </table>
+  </dd>
+</dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a2883fbe123eecd8c31f5e282aefc229d" name="a2883fbe123eecd8c31f5e282aefc229d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2883fbe123eecd8c31f5e282aefc229d">&#9670;&nbsp;</a></span>CheckLoopOrder()</h2>
+<a id="a6940a32d706c53ae3fdffd481612ce83" name="a6940a32d706c53ae3fdffd481612ce83"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6940a32d706c53ae3fdffd481612ce83">&#9670;&nbsp;</a></span>CheckLoopOrder()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -262,8 +268,18 @@ Additional Inherited Members</h2></td></tr>
           <td class="memname">freetensor::CheckLoopOrder::CheckLoopOrder </td>
           <td>(</td>
           <td class="paramtype">const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>dstOrder</em></td><td>)</td>
+          <td class="paramname"><em>dstOrder</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>reqireRangeDefinedOutside</em> = <code>true</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
