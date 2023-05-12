@@ -1040,7 +1040,9 @@ def test_parallel_different_length():
                 with ft.VarDef("t", (4,), "int32", "cache", "gpu/shared") as t:
                     with ft.If(th < 4):
                         t[th] = a[blk, th]
-                    ft.Eval(ft.intrinsic("__syncwarp()", has_side_effect=True))
+                    ft.Eval(
+                        ft.intrinsic("__syncwarp(__activemask())",
+                                     has_side_effect=True))
                     with ft.For("j", 0, 4) as j:
                         ft.Any()
     assert ft.pop_ast().match(func.body)
@@ -1132,7 +1134,9 @@ def test_parallel_broadcast():
                 with ft.VarDef("t", (1,), "int32", "cache", "gpu/shared") as t:
                     with ft.If(th == 0):
                         t[0] = a[blk, 0]
-                    ft.Eval(ft.intrinsic("__syncwarp()", has_side_effect=True))
+                    ft.Eval(
+                        ft.intrinsic("__syncwarp(__activemask())",
+                                     has_side_effect=True))
                     ft.Any()
     assert ft.pop_ast().match(func.body)
 
