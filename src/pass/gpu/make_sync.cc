@@ -138,6 +138,15 @@ split_this_level:
     return op;
 }
 
+Stmt MakeSync::makeSyncThreads() {
+    return makeEval(makeIntrinsic("__syncthreads()", {}, DataType::Void, true));
+}
+
+Stmt MakeSync::makeSyncWarp() {
+    return makeEval(
+        makeIntrinsic("__syncwarp(__activemask())", {}, DataType::Void, true));
+}
+
 void MakeSync::markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync,
                                     bool isSyncWarp) {
     if (isSyncWarp) {
@@ -181,30 +190,36 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
     }
 
     if (needSyncThreads || needSyncWarp) {
-        Stmt sync;
-        if (needSyncThreads) {
-            sync = makeEval(
-                makeIntrinsic("__syncthreads()", {}, DataType::Void, true));
-        } else {
-            sync = makeEval(
-                makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
-        }
+        Stmt sync = needSyncThreads ? makeSyncThreads() : makeSyncWarp();
 
         Stmt whereToInsert;
         for (auto ctx = op->parentStmt(); ctx->id() != target->id();
              ctx = ctx->parentStmt()) {
             if (ctx->nodeType() == ASTNodeType::For) {
                 whereToInsert = ctx;
+            } else if (ctx->nodeType() == ASTNodeType::If &&
+                       ctx.as<IfNode>()->elseCase_.isValid()) {
+                // Need to sync before an `if` only when there is an `else`
+                // case, where we need the `then` case AND the `else` case to
+                // sync on ONE sync point
+                whereToInsert = ctx;
             }
         }
         if (!whereToInsert.isValid()) {
             ret = makeStmtSeq({sync, ret});
             markSyncForSplitting(op, sync, !needSyncThreads);
-        } else {
+        } else if (whereToInsert->nodeType() == ASTNodeType::For) {
             if (!syncBeforeFor_.count(whereToInsert->id()) ||
                 (needSyncThreads &&
                  syncBeforeFor_.at(whereToInsert->id()).second)) {
                 syncBeforeFor_[whereToInsert->id()] = {sync, !needSyncThreads};
+            }
+        } else {
+            ASSERT(whereToInsert->nodeType() == ASTNodeType::If);
+            if (!syncBeforeIf_.count(whereToInsert->id()) ||
+                (needSyncThreads &&
+                 syncBeforeIf_.at(whereToInsert->id()).second)) {
+                syncBeforeIf_[whereToInsert->id()] = {sync, !needSyncThreads};
             }
         }
 
@@ -241,14 +256,7 @@ Stmt MakeSync::visit(const For &_op) {
         }
     }
     if (needSyncThreads || needSyncWarp) {
-        Stmt sync;
-        if (needSyncThreads) {
-            sync = makeEval(
-                makeIntrinsic("__syncthreads()", {}, DataType::Void, true));
-        } else if (needSyncWarp) {
-            sync = makeEval(
-                makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
-        }
+        Stmt sync = needSyncThreads ? makeSyncThreads() : makeSyncWarp();
         op->body_ = makeStmtSeq({op->body_, sync});
         markSyncForSplitting(_op->body_, sync, !needSyncThreads);
         for (CrossThreadDep &dep : deps_) {
@@ -267,7 +275,7 @@ Stmt MakeSync::visit(const For &_op) {
     }
     if (syncBeforeFor_.count(op->id())) {
         auto &&[sync, isSyncWarp] = syncBeforeFor_.at(op->id());
-        markSyncForSplitting(_op->body_, sync, isSyncWarp);
+        markSyncForSplitting(_op, sync, isSyncWarp);
         return makeStmtSeq({sync, op});
     }
     return op;
@@ -291,6 +299,7 @@ Stmt MakeSync::visit(const If &op) {
         }
     }
 
+    Stmt ret;
     if (branchSplittersThen_.count(op->id()) ||
         branchSplittersElse_.count(op->id())) {
         if (!checkNotModified(root_, cond, CheckNotModifiedSide::Before,
@@ -317,13 +326,22 @@ Stmt MakeSync::visit(const If &op) {
             } else {
                 elseBody = makeIf(makeLNot(cond), elseCase);
             }
-            return makeStmtSeq({thenBody, elseBody});
+            ret = makeStmtSeq({thenBody, elseBody});
         } else {
-            return thenBody;
+            ret = thenBody;
         }
+    } else {
+        ret = makeIf(std::move(cond), std::move(thenCase), std::move(elseCase),
+                     op->metadata(), op->id(), op->debugBlame());
     }
-    return makeIf(std::move(cond), std::move(thenCase), std::move(elseCase),
-                  op->metadata(), op->id(), op->debugBlame());
+
+    if (syncBeforeIf_.count(op->id())) {
+        auto &&[sync, isSyncWarp] = syncBeforeIf_.at(op->id());
+        markSyncForSplitting(op, sync, isSyncWarp);
+        return makeStmtSeq({sync, ret});
+    }
+
+    return ret;
 }
 
 Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
