@@ -480,3 +480,19 @@ def test_default_device():
     with ft.GPU() as dev:
         assert ft.config.default_device() == dev
         assert ft.config.default_target() == dev.target()
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_the_initial_default_cpu_target_can_be_used_as_a_scope():
+    init_tgt = ft.config.default_target()
+    ft.config.set_default_target(ft.GPU().target())
+    with init_tgt:
+        assert ft.config.default_target() == init_tgt
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_the_initial_default_cpu_device_can_be_used_as_a_scope():
+    init_dev = ft.config.default_device()
+    ft.config.set_default_device(ft.GPU())
+    with init_dev:
+        assert ft.config.default_device() == init_dev
