@@ -2,7 +2,8 @@ __all__ = [
     'DataType', 'up_cast', 'neutral_val', 'is_float', 'is_int', 'is_bool',
     'to_numpy_dtype', 'to_torch_dtype', 'MemType', 'is_writable',
     'is_inputting', 'is_outputting', 'add_outputting', 'remove_outputting',
-    'zero_value', 'min_value', 'max_value', 'same_mtype', 'AccessType'
+    'zero_value', 'one_value', 'min_value', 'max_value', 'same_mtype',
+    'AccessType'
 ]
 
 from freetensor_ffi import (DataType, up_cast, neutral_val, is_float, is_int,
@@ -53,6 +54,18 @@ def zero_value(dtype):
         return 0
     elif is_bool(dtype):
         return False
+    else:
+        assert False, "Unrecognized data type %s" % dtype
+
+
+def one_value(dtype):
+    dtype = DataType(dtype)
+    if is_float(dtype):
+        return 1.
+    elif is_int(dtype):
+        return 1
+    elif is_bool(dtype):
+        return True
     else:
         assert False, "Unrecognized data type %s" % dtype
 
