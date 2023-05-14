@@ -108,12 +108,15 @@ class CompUniqueBounds : public Visitor {
      */
     void visitLinear(const Expr &op);
 
+    void insertSignDataTypeInfo(const Expr &op);
+
   protected:
     void visitExpr(const Expr &op) override;
 
     void visit(const Var &op) override;
     void visit(const Load &op) override;
-    // TODO: Cast can also be treated as Load
+    void visit(const Cast &op) override;
+    void visit(const Intrinsic &op) override;
     void visit(const IntConst &op) override;
     void visit(const Add &op) override;
     void visit(const Sub &op) override;

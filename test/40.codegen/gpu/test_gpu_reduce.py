@@ -37,8 +37,10 @@ def test_parallel_reduction():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target)
-    assert "atomicAdd" not in str(code)
     print(debug.with_line_no(code))
+    assert "atomicAdd" not in str(code)
+    assert "runtime_mod" not in str(
+        code), "We should use `%` to check the parallel reduction loop index"
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np)
