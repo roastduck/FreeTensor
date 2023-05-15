@@ -289,9 +289,7 @@ Stmt lowerParallelReduction(const Stmt &_op) {
     // pass/gpu/normalize_threads, so our `O(log n)` reduction loop will be with
     // a legal `n`, where variables in `n` are all defined outside of kernels.
     op = normalizeLoops(op, [](const For &l) {
-        return std::holds_alternative<CUDAScope>(l->property_->parallel_) &&
-               std::get<CUDAScope>(l->property_->parallel_).level_ ==
-                   CUDAScope::Thread;
+        return std::holds_alternative<CUDAScope>(l->property_->parallel_);
     });
     op = normalizeThreadDims(op);
 
