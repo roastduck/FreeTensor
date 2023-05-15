@@ -708,8 +708,10 @@ Expr makeCast(T &&expr, DataType destType,
  */
 class IntrinsicNode : public ExprNode {
   public:
-    std::string format_; /// what to run. "%" is filled by parameters one by one
-                         /// E.g. sinf(%)
+    std::string
+        format_; /// what to run. "%" is filled by parameters one by one
+                 /// E.g. sinf(%). Use "%%" to escape for "%". If you need two
+                 /// adjacent parameters, type "(%)(%)" or "% %".
     SubTreeList<ExprNode> params_ = ChildOf{this};
     DataType retType_;
     bool hasSideEffect_;

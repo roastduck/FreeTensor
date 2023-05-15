@@ -1266,13 +1266,15 @@ def intrinsic(fmt, *params, ret_type="void", has_side_effect: bool = False):
     Parameters
     ----------
     fmt : str
-        What to run. "%" is filled by parameters one by one. E.g. sinf(%)
+        What to run. "%" is filled by parameters one by one. E.g. sinf(%). Use "%%" to
+        escape for "%". If you need two adjacent parameters, type "(%)(%)" or "% %".
     *params : Sequence[Expr]
         (Positional variadic) Parameters to `fmt`
     ret_type : DataType or str
         (Keyword argument only) The return type. Void for no return type. Defaults to Void
     has_side_effect: bool
-        (Keyword argument only) True to indicate the intrinsic modifes something other than the return value. Defaults to false
+        (Keyword argument only) True to indicate the intrinsic modifes something other
+        than the return value. Defaults to false
     """
     ret_type = ffi.DataType(ret_type)
     return ffi.makeIntrinsic(fmt, params, ret_type, has_side_effect)

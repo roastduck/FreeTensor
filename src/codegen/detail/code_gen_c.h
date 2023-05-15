@@ -724,12 +724,19 @@ template <class Stream> void CodeGenC<Stream>::visit(const Assert &op) {
 
 template <class Stream> void CodeGenC<Stream>::visit(const Intrinsic &op) {
     this->os() << "(";
-    int i = 0;
-    for (char c : op->format_) {
-        if (c == '%') {
-            (*this)(op->params_.at(i++));
+    size_t i = 0, j = 0, n = op->format_.length();
+    while (j < n) {
+        if (op->format_[j] == '%') {
+            if (j + 1 < n && op->format_[j + 1] == '%') {
+                this->os() << '%';
+                j += 2;
+            } else {
+                (*this)(op->params_.at(i++));
+                j++;
+            }
         } else {
-            this->os() << c;
+            this->os() << op->format_[j];
+            j++;
         }
     }
     this->os() << ")";
