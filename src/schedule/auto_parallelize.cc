@@ -1,4 +1,5 @@
 #include <analyze/count_contig_access_loops.h>
+#include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <pass/simplify.h>
@@ -151,17 +152,31 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                         };
                         bool childIsWarp =
                             !findAllStmt(merged, isParallelLoop).empty();
-                        // We guarantee the following requirements in order:
+                        // We are parallelizing loops to occupy SMs and cores in
+                        // each SM. Depending on wether there is dependence
+                        // along the loop (only reduction dependence is
+                        // allowed), we have different priority.
+                        //
+                        // If there IS NO dependence, we want to occupy as much
+                        // hardware resouce as possible. We meet the following
+                        // requirements in order:
                         //
                         // 1. If `parallelizeAmongBlocks`, make sure all SMs are
                         // used, else use only one SM.
-                        // 2. If there are too many threads, make sure blockDim
-                        // is not too large.
+                        // 2. Try to use more threads on each SM. But if there
+                        // are too many, scale to more SMs.
                         //
-                        // If the loop length is constant, we split it only
-                        // once, to reduce redundant guards, and save time for
-                        // dependence analysis. If not, we split it twice, and
-                        // merge once
+                        // If there IS dependence, we want to put threads near
+                        // each other if there are few threads. We only need to
+                        // meet the following requirement:
+                        //
+                        // 2. Try to use more threads on each SM. But if there
+                        // are too many, scale to more SMs.
+                        //
+                        // When splitting a loop, if the loop length is
+                        // constant, we split it only once, to reduce redundant
+                        // guards, and save time for dependence analysis. If
+                        // not, we split it twice, and merge once
                         int numSM = 1;
                         if (parallelizeAmongBlocks) {
                             numSM =
@@ -175,29 +190,43 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                         if (parentIsWarp || childIsWarp) {
                             maxThreads /= target.as<GPUTarget>()->warpSize();
                         }
+                        bool hasDep =
+                            FindDeps()
+                                .direction(
+                                    {{{mergedId, DepDirection::Different}}})
+                                .filterSubAST(mergedId)
+                                .ignoreReductionWAW(false)
+                                .exists(ast());
                         ID l1, l1b, l2;
-                        if (auto loopNode = merged.as<ForNode>();
-                            loopNode->len_->nodeType() ==
-                            ASTNodeType::IntConst) {
-                            auto len = loopNode->len_.as<IntConstNode>()->val_;
-                            if (len <= numSM) {
-                                l1 = mergedId;
-                            } else if (len <= numSM * maxThreads) {
-                                std::tie(l1, l2) = split(mergedId, -1, numSM);
+                        if (!hasDep) {
+                            if (auto loopNode = merged.as<ForNode>();
+                                loopNode->len_->nodeType() ==
+                                ASTNodeType::IntConst) {
+                                auto len =
+                                    loopNode->len_.as<IntConstNode>()->val_;
+                                if (len <= numSM) {
+                                    l1 = mergedId;
+                                } else if (len <= numSM * maxThreads) {
+                                    std::tie(l1, l2) =
+                                        split(mergedId, -1, numSM);
+                                } else {
+                                    std::tie(l1, l2) =
+                                        split(mergedId, maxThreads);
+                                }
                             } else {
-                                std::tie(l1, l2) = split(mergedId, maxThreads);
+                                // We don't use the `nparts` mode of `split`,
+                                // because it will hinder dependence analysis.
+                                // Instead, we use the `factor` mode and then
+                                // reorder. See the doc string of `split` for
+                                // details
+                                std::tie(l2, l1) = split(mergedId, numSM);
+                                reorder({l1, l2});
+                                if (!findAll(l2).empty()) {
+                                    std::tie(l1b, l2) = split(l2, maxThreads);
+                                }
                             }
                         } else {
-                            // We don't use the `nparts` mode of `split`,
-                            // because it will hinder dependence analysis.
-                            // Instead, we use the `factor` mode and then
-                            // reorder. See the doc string of `split` for
-                            // details
-                            std::tie(l2, l1) = split(mergedId, numSM);
-                            reorder({l1, l2});
-                            if (!findAll(l2).empty()) {
-                                std::tie(l1b, l2) = split(l2, maxThreads);
-                            }
+                            std::tie(l1, l2) = split(mergedId, maxThreads);
                         }
                         if (parallelizeAmongBlocks && l1.isValid() &&
                             !findAll(l1).empty()) {
