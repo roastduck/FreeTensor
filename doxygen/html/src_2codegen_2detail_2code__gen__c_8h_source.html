@@ -258,7 +258,7 @@ $(function() {
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>                                     <span class="stringliteral">&quot;&#39; is duplicated&quot;</span>);</div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>            }</div>
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>            <span class="keywordtype">int</span> nthParam = paramPositions.front();</div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>            rawPtr = <span class="stringliteral">&quot;_params[&quot;</span> + std::to_string(nthParam) + <span class="stringliteral">&quot;]&quot;</span>;</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>            rawPtr = <span class="stringliteral">&quot;params[&quot;</span> + std::to_string(nthParam) + <span class="stringliteral">&quot;]&quot;</span>;</div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>        } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>            <span class="keywordflow">if</span> (!<a class="code hl_function" href="namespacefreetensor.html#ae82e81c9ffa1715b4ca30a38c761d262">isOutputting</a>(op-&gt;<a class="code hl_variable" href="classfreetensor_1_1VarDefNode.html#a6092e2ac0f53788f2ef040883cf36101">buffer_</a>-&gt;atype())) {</div>
 <div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>                <span class="keywordflow">throw</span> <a class="code hl_class" href="classfreetensor_1_1InvalidProgram.html">InvalidProgram</a>(</div>
@@ -268,10 +268,10 @@ $(function() {
 <div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>            <span class="comment">// the first position. Driver::collectReturns will only collect the</span></div>
 <div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>            <span class="comment">// first</span></div>
 <div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>            <span class="keywordtype">int</span> nthReturn = returnPositions.front();</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>            rawPtr = <span class="stringliteral">&quot;_returns[&quot;</span> + std::to_string(nthReturn) + <span class="stringliteral">&quot;]&quot;</span>;</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>            rawPtr = <span class="stringliteral">&quot;returns[&quot;</span> + std::to_string(nthReturn) + <span class="stringliteral">&quot;]&quot;</span>;</div>
 <div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>            std::string shapePtr =</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>                <span class="stringliteral">&quot;_retShapes[&quot;</span> + std::to_string(nthReturn) + <span class="stringliteral">&quot;]&quot;</span>;</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>            std::string dimPtr = <span class="stringliteral">&quot;_retDims[&quot;</span> + std::to_string(nthReturn) + <span class="stringliteral">&quot;]&quot;</span>;</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>                <span class="stringliteral">&quot;retShapes[&quot;</span> + std::to_string(nthReturn) + <span class="stringliteral">&quot;]&quot;</span>;</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>            std::string dimPtr = <span class="stringliteral">&quot;retDims[&quot;</span> + std::to_string(nthReturn) + <span class="stringliteral">&quot;]&quot;</span>;</div>
 <div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>            this-&gt;os() &lt;&lt; <span class="stringliteral">&quot;if (&quot;</span> + rawPtr + <span class="stringliteral">&quot; == NULL) &quot;</span>;</div>
 <div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>            this-&gt;beginBlock();</div>
 <div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>            this-&gt;genAlloc(op-&gt;<a class="code hl_variable" href="classfreetensor_1_1VarDefNode.html#a6092e2ac0f53788f2ef040883cf36101">buffer_</a>-&gt;tensor(), rawPtr, shapePtr, dimPtr);</div>
@@ -283,14 +283,14 @@ $(function() {
 <div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>        <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150ad678aba164b442f27e193f3f05ef614f">MemType::ByValue</a>:</div>
 <div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>            <span class="comment">// e.g. (1)</span></div>
 <div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>            <span class="comment">// float x;</span></div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>            <span class="comment">// x = *((float*)_params[0]);</span></div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>            <span class="comment">// x = *((float*)params[0]);</span></div>
 <div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span> </div>
 <div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>            <span class="comment">// e.g. (2)</span></div>
 <div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>            <span class="comment">// __ByValArray&lt;__ByValArray&lt;float, 2&gt;, 2&gt; x;</span></div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>            <span class="comment">// x[0][0] = *((float*)_params[0])[0];</span></div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>            <span class="comment">// x[0][1] = *((float*)_params[0])[1];</span></div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>            <span class="comment">// x[1][0] = *((float*)_params[0])[2];</span></div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>            <span class="comment">// x[1][1] = *((float*)_params[0])[3];</span></div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>            <span class="comment">// x[0][0] = *((float*)params[0])[0];</span></div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>            <span class="comment">// x[0][1] = *((float*)params[0])[1];</span></div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>            <span class="comment">// x[1][0] = *((float*)params[0])[2];</span></div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>            <span class="comment">// x[1][1] = *((float*)params[0])[3];</span></div>
 <div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>            <span class="keywordflow">if</span> (op-&gt;<a class="code hl_variable" href="classfreetensor_1_1VarDefNode.html#a6092e2ac0f53788f2ef040883cf36101">buffer_</a>-&gt;atype() != <a class="code hl_enumvalue" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba324118a6721dd6b8a9b9f4e327df2bf5">AccessType::Input</a>) {</div>
 <div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>                <span class="keywordflow">throw</span> <a class="code hl_class" href="classfreetensor_1_1InvalidProgram.html">InvalidProgram</a>(<span class="stringliteral">&quot;ByValue typed var &quot;</span> + op-&gt;<a class="code hl_variable" href="classfreetensor_1_1VarDefNode.html#a944541360a560bdebe398550f86e11bd">name_</a> +</div>
 <div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>                                     <span class="stringliteral">&quot; can only be Input&quot;</span>);</div>
@@ -339,7 +339,7 @@ $(function() {
 <div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span> </div>
 <div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>        <span class="keywordflow">default</span>:</div>
 <div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>            <span class="comment">// e.g.</span></div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>            <span class="comment">// auto &amp;&amp;x = mdspan_r&lt;const float, extents&lt;5, 5&gt;&gt;(_params[0]);</span></div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>            <span class="comment">// auto &amp;&amp;x = mdspan_r&lt;const float, extents&lt;5, 5&gt;&gt;(params[0]);</span></div>
 <div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>            this-&gt;os() &lt;&lt; <span class="stringliteral">&quot;auto &amp;&amp;&quot;</span> &lt;&lt; name &lt;&lt; <span class="stringliteral">&quot; = &quot;</span>;</div>
 <div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>            genMdPtrDef(op, rawPtr, !<a class="code hl_function" href="namespacefreetensor.html#ac2ab8dc8c00680f62f010a1385c2f240">isWritable</a>(op-&gt;<a class="code hl_variable" href="classfreetensor_1_1VarDefNode.html#a6092e2ac0f53788f2ef040883cf36101">buffer_</a>-&gt;atype()));</div>
 <div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>            this-&gt;os() &lt;&lt; <span class="stringliteral">&quot;;&quot;</span> &lt;&lt; std::endl;</div>
