@@ -17,7 +17,7 @@ def test_out_of_place():
     assert np.all(y_np == x_np.transpose())
 
 
-def test_perm():
+def test_perm_1():
 
     @ft.optimize(verbose=1)
     def f(x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]):
@@ -28,6 +28,19 @@ def test_perm():
     y_np = f(x_np).numpy()
 
     assert np.all(y_np == x_np.transpose(0, 2, 1))
+
+
+def test_perm_2():
+
+    @ft.optimize(verbose=1)
+    def f(x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]):
+        #! label: reshape
+        return libop.transpose(x, perm=[2, 0, 1])
+
+    x_np = np.random.rand(3, 4, 5).astype("float32")
+    y_np = f(x_np).numpy()
+
+    assert np.all(y_np == x_np.transpose(2, 0, 1))
 
 
 def test_circular_axis():
