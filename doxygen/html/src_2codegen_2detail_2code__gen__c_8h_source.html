@@ -795,47 +795,54 @@ $(function() {
 <div class="line"><a id="l00724" name="l00724"></a><span class="lineno">  724</span> </div>
 <div class="line"><a id="l00725" name="l00725"></a><span class="lineno"><a class="line" href="classfreetensor_1_1CodeGenC.html#afa7ef773a9805a22645ad8e826bdfc52">  725</a></span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Stream&gt; <span class="keywordtype">void</span> <a class="code hl_function" href="classfreetensor_1_1CodeGenC.html#a2f412d9bb26a68231c0567a871135bd5">CodeGenC&lt;Stream&gt;::visit</a>(<span class="keyword">const</span> <a class="code hl_class" href="classfreetensor_1_1Ref.html">Intrinsic</a> &amp;op) {</div>
 <div class="line"><a id="l00726" name="l00726"></a><span class="lineno">  726</span>    this-&gt;os() &lt;&lt; <span class="stringliteral">&quot;(&quot;</span>;</div>
-<div class="line"><a id="l00727" name="l00727"></a><span class="lineno">  727</span>    <span class="keywordtype">int</span> i = 0;</div>
-<div class="line"><a id="l00728" name="l00728"></a><span class="lineno">  728</span>    <span class="keywordflow">for</span> (<span class="keywordtype">char</span> c : op-&gt;format_) {</div>
-<div class="line"><a id="l00729" name="l00729"></a><span class="lineno">  729</span>        <span class="keywordflow">if</span> (c == <span class="charliteral">&#39;%&#39;</span>) {</div>
-<div class="line"><a id="l00730" name="l00730"></a><span class="lineno">  730</span>            (*this)(op-&gt;params_.at(i++));</div>
-<div class="line"><a id="l00731" name="l00731"></a><span class="lineno">  731</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00732" name="l00732"></a><span class="lineno">  732</span>            this-&gt;os() &lt;&lt; c;</div>
-<div class="line"><a id="l00733" name="l00733"></a><span class="lineno">  733</span>        }</div>
-<div class="line"><a id="l00734" name="l00734"></a><span class="lineno">  734</span>    }</div>
-<div class="line"><a id="l00735" name="l00735"></a><span class="lineno">  735</span>    this-&gt;os() &lt;&lt; <span class="stringliteral">&quot;)&quot;</span>;</div>
-<div class="line"><a id="l00736" name="l00736"></a><span class="lineno">  736</span>}</div>
-<div class="line"><a id="l00737" name="l00737"></a><span class="lineno">  737</span> </div>
-<div class="line"><a id="l00738" name="l00738"></a><span class="lineno"><a class="line" href="classfreetensor_1_1CodeGenC.html#a75e544f58be71601d1c5f4eee5888744">  738</a></span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Stream&gt; <span class="keywordtype">void</span> <a class="code hl_function" href="classfreetensor_1_1CodeGenC.html#a2f412d9bb26a68231c0567a871135bd5">CodeGenC&lt;Stream&gt;::visit</a>(<span class="keyword">const</span> <a class="code hl_class" href="classfreetensor_1_1Ref.html">Eval</a> &amp;op) {</div>
-<div class="line"><a id="l00739" name="l00739"></a><span class="lineno">  739</span>    this-&gt;makeIndent();</div>
-<div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span>    (*this)(op-&gt;expr_);</div>
-<div class="line"><a id="l00741" name="l00741"></a><span class="lineno">  741</span>    this-&gt;os() &lt;&lt; <span class="stringliteral">&quot;;&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span>}</div>
-<div class="line"><a id="l00743" name="l00743"></a><span class="lineno">  743</span> </div>
-<div class="line"><a id="l00744" name="l00744"></a><span class="lineno"><a class="line" href="classfreetensor_1_1CodeGenC.html#a633e15d8e8b9eab2fdbbb74aac6b9b1c">  744</a></span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Stream&gt; std::string <a class="code hl_function" href="classfreetensor_1_1CodeGenC.html#a633e15d8e8b9eab2fdbbb74aac6b9b1c">CodeGenC&lt;Stream&gt;::gen</a>(<a class="code hl_class" href="classfreetensor_1_1DataType.html">DataType</a> dtype) {</div>
-<div class="line"><a id="l00745" name="l00745"></a><span class="lineno">  745</span>    <span class="keywordflow">switch</span> (dtype.<a class="code hl_function" href="classfreetensor_1_1DataType.html#a530a552af1092b26608a13ef92956dc0">base</a>()) {</div>
-<div class="line"><a id="l00746" name="l00746"></a><span class="lineno">  746</span>    <span class="keywordflow">case</span> <a class="code hl_variable" href="classfreetensor_1_1DataType.html#ad6edd2f8ee1f11fe288807a6b142e638">DataType::Float64</a>:</div>
-<div class="line"><a id="l00747" name="l00747"></a><span class="lineno">  747</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;double&quot;</span>;</div>
-<div class="line"><a id="l00748" name="l00748"></a><span class="lineno">  748</span>    <span class="keywordflow">case</span> <a class="code hl_variable" href="classfreetensor_1_1DataType.html#a17c04d048fc80c4cc1660efe87398a8e">DataType::Float32</a>:</div>
-<div class="line"><a id="l00749" name="l00749"></a><span class="lineno">  749</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;float&quot;</span>;</div>
-<div class="line"><a id="l00750" name="l00750"></a><span class="lineno">  750</span>    <span class="keywordflow">case</span> <a class="code hl_variable" href="classfreetensor_1_1DataType.html#a81729dc27eca5d35264b04d2e2e4e54a">DataType::Int64</a>:</div>
-<div class="line"><a id="l00751" name="l00751"></a><span class="lineno">  751</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;int64_t&quot;</span>;</div>
-<div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span>    <span class="keywordflow">case</span> <a class="code hl_variable" href="classfreetensor_1_1DataType.html#a6ed1c8097c2e4ec19a3cffad1c6a1f3a">DataType::Int32</a>:</div>
-<div class="line"><a id="l00753" name="l00753"></a><span class="lineno">  753</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;int32_t&quot;</span>;</div>
-<div class="line"><a id="l00754" name="l00754"></a><span class="lineno">  754</span>    <span class="keywordflow">case</span> <a class="code hl_variable" href="classfreetensor_1_1DataType.html#ad742752186f651ad8a64151b55e8b4ea">DataType::Bool</a>:</div>
-<div class="line"><a id="l00755" name="l00755"></a><span class="lineno">  755</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;bool&quot;</span>;</div>
-<div class="line"><a id="l00756" name="l00756"></a><span class="lineno">  756</span>    <span class="keywordflow">default</span>:</div>
-<div class="line"><a id="l00757" name="l00757"></a><span class="lineno">  757</span>        <a class="code hl_define" href="except_8h.html#a28301f76c53b643912da7c538f74e2c6">ASSERT</a>(<span class="keyword">false</span>);</div>
-<div class="line"><a id="l00758" name="l00758"></a><span class="lineno">  758</span>    }</div>
-<div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span>}</div>
-<div class="line"><a id="l00760" name="l00760"></a><span class="lineno">  760</span> </div>
-<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>} <span class="comment">// namespace freetensor</span></div>
-<div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span> </div>
-<div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span><span class="preprocessor">#endif </span><span class="comment">// DETAIL_CODE_GEN_C_H</span></div>
+<div class="line"><a id="l00727" name="l00727"></a><span class="lineno">  727</span>    <span class="keywordtype">size_t</span> i = 0, j = 0, <a class="code hl_variable" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a> = op-&gt;format_.length();</div>
+<div class="line"><a id="l00728" name="l00728"></a><span class="lineno">  728</span>    <span class="keywordflow">while</span> (j &lt; <a class="code hl_variable" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>) {</div>
+<div class="line"><a id="l00729" name="l00729"></a><span class="lineno">  729</span>        <span class="keywordflow">if</span> (op-&gt;format_[j] == <span class="charliteral">&#39;%&#39;</span>) {</div>
+<div class="line"><a id="l00730" name="l00730"></a><span class="lineno">  730</span>            <span class="keywordflow">if</span> (j + 1 &lt; <a class="code hl_variable" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a> &amp;&amp; op-&gt;format_[j + 1] == <span class="charliteral">&#39;%&#39;</span>) {</div>
+<div class="line"><a id="l00731" name="l00731"></a><span class="lineno">  731</span>                this-&gt;os() &lt;&lt; <span class="charliteral">&#39;%&#39;</span>;</div>
+<div class="line"><a id="l00732" name="l00732"></a><span class="lineno">  732</span>                j += 2;</div>
+<div class="line"><a id="l00733" name="l00733"></a><span class="lineno">  733</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00734" name="l00734"></a><span class="lineno">  734</span>                (*this)(op-&gt;params_.at(i++));</div>
+<div class="line"><a id="l00735" name="l00735"></a><span class="lineno">  735</span>                j++;</div>
+<div class="line"><a id="l00736" name="l00736"></a><span class="lineno">  736</span>            }</div>
+<div class="line"><a id="l00737" name="l00737"></a><span class="lineno">  737</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00738" name="l00738"></a><span class="lineno">  738</span>            this-&gt;os() &lt;&lt; op-&gt;format_[j];</div>
+<div class="line"><a id="l00739" name="l00739"></a><span class="lineno">  739</span>            j++;</div>
+<div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span>        }</div>
+<div class="line"><a id="l00741" name="l00741"></a><span class="lineno">  741</span>    }</div>
+<div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span>    this-&gt;os() &lt;&lt; <span class="stringliteral">&quot;)&quot;</span>;</div>
+<div class="line"><a id="l00743" name="l00743"></a><span class="lineno">  743</span>}</div>
+<div class="line"><a id="l00744" name="l00744"></a><span class="lineno">  744</span> </div>
+<div class="line"><a id="l00745" name="l00745"></a><span class="lineno"><a class="line" href="classfreetensor_1_1CodeGenC.html#a75e544f58be71601d1c5f4eee5888744">  745</a></span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Stream&gt; <span class="keywordtype">void</span> <a class="code hl_function" href="classfreetensor_1_1CodeGenC.html#a2f412d9bb26a68231c0567a871135bd5">CodeGenC&lt;Stream&gt;::visit</a>(<span class="keyword">const</span> <a class="code hl_class" href="classfreetensor_1_1Ref.html">Eval</a> &amp;op) {</div>
+<div class="line"><a id="l00746" name="l00746"></a><span class="lineno">  746</span>    this-&gt;makeIndent();</div>
+<div class="line"><a id="l00747" name="l00747"></a><span class="lineno">  747</span>    (*this)(op-&gt;expr_);</div>
+<div class="line"><a id="l00748" name="l00748"></a><span class="lineno">  748</span>    this-&gt;os() &lt;&lt; <span class="stringliteral">&quot;;&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00749" name="l00749"></a><span class="lineno">  749</span>}</div>
+<div class="line"><a id="l00750" name="l00750"></a><span class="lineno">  750</span> </div>
+<div class="line"><a id="l00751" name="l00751"></a><span class="lineno"><a class="line" href="classfreetensor_1_1CodeGenC.html#a633e15d8e8b9eab2fdbbb74aac6b9b1c">  751</a></span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Stream&gt; std::string <a class="code hl_function" href="classfreetensor_1_1CodeGenC.html#a633e15d8e8b9eab2fdbbb74aac6b9b1c">CodeGenC&lt;Stream&gt;::gen</a>(<a class="code hl_class" href="classfreetensor_1_1DataType.html">DataType</a> dtype) {</div>
+<div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span>    <span class="keywordflow">switch</span> (dtype.<a class="code hl_function" href="classfreetensor_1_1DataType.html#a530a552af1092b26608a13ef92956dc0">base</a>()) {</div>
+<div class="line"><a id="l00753" name="l00753"></a><span class="lineno">  753</span>    <span class="keywordflow">case</span> <a class="code hl_variable" href="classfreetensor_1_1DataType.html#ad6edd2f8ee1f11fe288807a6b142e638">DataType::Float64</a>:</div>
+<div class="line"><a id="l00754" name="l00754"></a><span class="lineno">  754</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;double&quot;</span>;</div>
+<div class="line"><a id="l00755" name="l00755"></a><span class="lineno">  755</span>    <span class="keywordflow">case</span> <a class="code hl_variable" href="classfreetensor_1_1DataType.html#a17c04d048fc80c4cc1660efe87398a8e">DataType::Float32</a>:</div>
+<div class="line"><a id="l00756" name="l00756"></a><span class="lineno">  756</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;float&quot;</span>;</div>
+<div class="line"><a id="l00757" name="l00757"></a><span class="lineno">  757</span>    <span class="keywordflow">case</span> <a class="code hl_variable" href="classfreetensor_1_1DataType.html#a81729dc27eca5d35264b04d2e2e4e54a">DataType::Int64</a>:</div>
+<div class="line"><a id="l00758" name="l00758"></a><span class="lineno">  758</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;int64_t&quot;</span>;</div>
+<div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span>    <span class="keywordflow">case</span> <a class="code hl_variable" href="classfreetensor_1_1DataType.html#a6ed1c8097c2e4ec19a3cffad1c6a1f3a">DataType::Int32</a>:</div>
+<div class="line"><a id="l00760" name="l00760"></a><span class="lineno">  760</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;int32_t&quot;</span>;</div>
+<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>    <span class="keywordflow">case</span> <a class="code hl_variable" href="classfreetensor_1_1DataType.html#ad742752186f651ad8a64151b55e8b4ea">DataType::Bool</a>:</div>
+<div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;bool&quot;</span>;</div>
+<div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span>    <span class="keywordflow">default</span>:</div>
+<div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>        <a class="code hl_define" href="except_8h.html#a28301f76c53b643912da7c538f74e2c6">ASSERT</a>(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span>    }</div>
+<div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span>}</div>
+<div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span> </div>
+<div class="line"><a id="l00768" name="l00768"></a><span class="lineno">  768</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00769" name="l00769"></a><span class="lineno">  769</span> </div>
+<div class="line"><a id="l00770" name="l00770"></a><span class="lineno">  770</span><span class="preprocessor">#endif </span><span class="comment">// DETAIL_CODE_GEN_C_H</span></div>
 <div class="ttc" id="aclassfreetensor_1_1ASTNode_html_a9231cccded096dfb8a9b7070a4f39baf"><div class="ttname"><a href="classfreetensor_1_1ASTNode.html#a9231cccded096dfb8a9b7070a4f39baf">freetensor::ASTNode::nodeType</a></div><div class="ttdeci">virtual ASTNodeType nodeType() const =0</div></div>
 <div class="ttc" id="aclassfreetensor_1_1CodeGenC_html"><div class="ttname"><a href="classfreetensor_1_1CodeGenC.html">freetensor::CodeGenC</a></div><div class="ttdef"><b>Definition:</b> code_gen_c.h:14</div></div>
 <div class="ttc" id="aclassfreetensor_1_1CodeGenC_html_a2f412d9bb26a68231c0567a871135bd5"><div class="ttname"><a href="classfreetensor_1_1CodeGenC.html#a2f412d9bb26a68231c0567a871135bd5">freetensor::CodeGenC::visit</a></div><div class="ttdeci">virtual void visit(const StmtSeq &amp;op) override</div><div class="ttdef"><b>Definition:</b> code_gen_c.h:123</div></div>
-<div class="ttc" id="aclassfreetensor_1_1CodeGenC_html_a633e15d8e8b9eab2fdbbb74aac6b9b1c"><div class="ttname"><a href="classfreetensor_1_1CodeGenC.html#a633e15d8e8b9eab2fdbbb74aac6b9b1c">freetensor::CodeGenC::gen</a></div><div class="ttdeci">static std::string gen(DataType dtype)</div><div class="ttdef"><b>Definition:</b> code_gen_c.h:744</div></div>
+<div class="ttc" id="aclassfreetensor_1_1CodeGenC_html_a633e15d8e8b9eab2fdbbb74aac6b9b1c"><div class="ttname"><a href="classfreetensor_1_1CodeGenC.html#a633e15d8e8b9eab2fdbbb74aac6b9b1c">freetensor::CodeGenC::gen</a></div><div class="ttdeci">static std::string gen(DataType dtype)</div><div class="ttdef"><b>Definition:</b> code_gen_c.h:751</div></div>
 <div class="ttc" id="aclassfreetensor_1_1CodeGenC_html_a8511ed3fa6fc02442db5255e4590848f"><div class="ttname"><a href="classfreetensor_1_1CodeGenC.html#a8511ed3fa6fc02442db5255e4590848f">freetensor::CodeGenC::genMdPtrDef</a></div><div class="ttdeci">virtual void genMdPtrDef(const VarDef &amp;def, const std::function&lt; void()&gt; &amp;genRawPtr, bool isConst=false)</div><div class="ttdef"><b>Definition:</b> code_gen_c.h:63</div></div>
 <div class="ttc" id="aclassfreetensor_1_1CodeGenC_html_a8724fe5a2e5e2d3003b0515add91c29b"><div class="ttname"><a href="classfreetensor_1_1CodeGenC.html#a8724fe5a2e5e2d3003b0515add91c29b">freetensor::CodeGenC::genScalar</a></div><div class="ttdeci">virtual void genScalar(const VarDef &amp;def, const std::vector&lt; Expr &gt; &amp;indices)</div><div class="ttdef"><b>Definition:</b> code_gen_c.h:99</div></div>
 <div class="ttc" id="aclassfreetensor_1_1Config_html_a2645c5ff29d951b51d08f69da0e8981e"><div class="ttname"><a href="classfreetensor_1_1Config.html#a2645c5ff29d951b51d08f69da0e8981e">freetensor::Config::debugRuntimeCheck</a></div><div class="ttdeci">static bool debugRuntimeCheck()</div><div class="ttdef"><b>Definition:</b> config.h:95</div></div>
@@ -875,6 +882,7 @@ $(function() {
 <div class="ttc" id="afind__stmt_8h_html"><div class="ttname"><a href="find__stmt_8h.html">find_stmt.h</a></div></div>
 <div class="ttc" id="ainclude_2codegen_2code__gen__c_8h_html"><div class="ttname"><a href="include_2codegen_2code__gen__c_8h.html">code_gen_c.h</a></div></div>
 <div class="ttc" id="amangle_8h_html"><div class="ttname"><a href="mangle_8h.html">mangle.h</a></div></div>
+<div class="ttc" id="ametadata_8cc_html_a76f11d9a0a47b94f72c2d0e77fb32240"><div class="ttname"><a href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a></div><div class="ttdeci">int n</div><div class="ttdef"><b>Definition:</b> metadata.cc:15</div></div>
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a5997edb53e600a6645243d5d2684f129"><div class="ttname"><a href="namespacefreetensor.html#a5997edb53e600a6645243d5d2684f129">freetensor::filter</a></div><div class="ttdeci">std::vector&lt; T &gt; filter(const std::vector&lt; T &gt; &amp;vec, const U &amp;callback)</div><div class="ttdef"><b>Definition:</b> container_utils.h:133</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a923130db6aad12a2b5d46dfe001c08cba324118a6721dd6b8a9b9f4e327df2bf5"><div class="ttname"><a href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba324118a6721dd6b8a9b9f4e327df2bf5">freetensor::AccessType::Input</a></div><div class="ttdeci">@ Input</div></div>
