@@ -511,3 +511,35 @@ def test_parallel_reduction_on_triangular_dim():
         [[x_np[i, j] if j <= i else 0 for j in range(64)] for i in range(64)])
     y_std = np.sum(x_triangle, axis=1)
     assert np.array_equal(y_np, y_std)
+
+
+def test_parallel_reduction_with_inactive_threads():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
+        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        #! label: L1
+        for i in range(0, 4):
+            #! label: L2
+            for j in range(0, 64):
+                if j % 2 == 0:
+                    y[i] = y[i] + x[i, j]
+
+    s = ft.Schedule(test)
+    s.parallelize("L1", "blockIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=1)
+
+    code = ft.codegen(func, target)
+    assert "atomicAdd" not in str(code)
+    print(debug.with_line_no(code))
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
+    y_np = np.zeros((4,), dtype="int32")
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.sum(x_np.reshape(4, 32, 2)[:, :, 0], axis=1)
+    assert np.array_equal(y_np, y_std)
