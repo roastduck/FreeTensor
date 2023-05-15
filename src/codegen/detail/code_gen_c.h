@@ -187,7 +187,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
                                      "' is duplicated");
             }
             int nthParam = paramPositions.front();
-            rawPtr = "_params[" + std::to_string(nthParam) + "]";
+            rawPtr = "params[" + std::to_string(nthParam) + "]";
         } else {
             if (!isOutputting(op->buffer_->atype())) {
                 throw InvalidProgram(
@@ -197,10 +197,10 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             // the first position. Driver::collectReturns will only collect the
             // first
             int nthReturn = returnPositions.front();
-            rawPtr = "_returns[" + std::to_string(nthReturn) + "]";
+            rawPtr = "returns[" + std::to_string(nthReturn) + "]";
             std::string shapePtr =
-                "_retShapes[" + std::to_string(nthReturn) + "]";
-            std::string dimPtr = "_retDims[" + std::to_string(nthReturn) + "]";
+                "retShapes[" + std::to_string(nthReturn) + "]";
+            std::string dimPtr = "retDims[" + std::to_string(nthReturn) + "]";
             this->os() << "if (" + rawPtr + " == NULL) ";
             this->beginBlock();
             this->genAlloc(op->buffer_->tensor(), rawPtr, shapePtr, dimPtr);
@@ -212,14 +212,14 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
         case MemType::ByValue:
             // e.g. (1)
             // float x;
-            // x = *((float*)_params[0]);
+            // x = *((float*)params[0]);
 
             // e.g. (2)
             // __ByValArray<__ByValArray<float, 2>, 2> x;
-            // x[0][0] = *((float*)_params[0])[0];
-            // x[0][1] = *((float*)_params[0])[1];
-            // x[1][0] = *((float*)_params[0])[2];
-            // x[1][1] = *((float*)_params[0])[3];
+            // x[0][0] = *((float*)params[0])[0];
+            // x[0][1] = *((float*)params[0])[1];
+            // x[1][0] = *((float*)params[0])[2];
+            // x[1][1] = *((float*)params[0])[3];
             if (op->buffer_->atype() != AccessType::Input) {
                 throw InvalidProgram("ByValue typed var " + op->name_ +
                                      " can only be Input");
@@ -268,7 +268,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
 
         default:
             // e.g.
-            // auto &&x = mdspan_r<const float, extents<5, 5>>(_params[0]);
+            // auto &&x = mdspan_r<const float, extents<5, 5>>(params[0]);
             this->os() << "auto &&" << name << " = ";
             genMdPtrDef(op, rawPtr, !isWritable(op->buffer_->atype()));
             this->os() << ";" << std::endl;
