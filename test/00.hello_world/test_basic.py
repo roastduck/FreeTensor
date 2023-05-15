@@ -260,6 +260,23 @@ def test_var_as_index():
     assert np.array_equal(y_np, y_std)
 
 
+def test_intrinsic_escape():
+    with ft.VarDef([("x1", (), "int32", "input"), ("x2", (), "int32", "input"),
+                    ("y", (), "int32", "output")]) as (x1, x2, y):
+        y[...] = ft.intrinsic("% %% %", x1[...], x2[...], ret_type="int32")
+
+    func = ft.lower(ft.Func("main", ["x1", "x2", "y"], [], ft.pop_ast()),
+                    verbose=1)
+    code = ft.codegen(func, verbose=True)
+    x1 = ft.array(5, dtype="int32")
+    x2 = ft.array(2, dtype="int32")
+    y = ft.array(0, dtype="int32")
+    ft.build_binary(code)(x1, x2, y)
+    y_np = y.numpy()
+
+    assert y_np[...] == 1
+
+
 def test_error_missing_parameters():
     with ft.VarDef("x", (4, 4), "float32", "output") as x:
         x[2, 3] = 2.0
