@@ -28,11 +28,11 @@
         }                                                                      \
     }
 
-inline void *cudaNew(size_t size) {
+inline void *cudaNew(size_t size, cudaStream_t stream) {
     void *ptr = nullptr;
     if (size > 0) {
 #ifndef FT_DEBUG_CUDA_WITH_UM
-        checkCudaError(cudaMalloc(&ptr, size));
+        checkCudaError(cudaMallocAsync(&ptr, size, stream));
 #else
         // Please refer to src/driver/array.cc:allocOn for details
         int device;

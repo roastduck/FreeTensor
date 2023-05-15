@@ -79,7 +79,7 @@ void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
         (*this)(dim);
         os() << ") * ";
     }
-    os() << "sizeof(" << gen(tensor->dtype()) << "));" << std::endl;
+    os() << "sizeof(" << gen(tensor->dtype()) << "), __stream);" << std::endl;
 }
 
 void CodeGenCUDA::genScalar(const VarDef &def,
@@ -385,7 +385,8 @@ void CodeGenCUDA::visit(const Alloc &op) {
     ASSERT(buf->mtype() == MemType::GPUGlobalHeap);
 
     // e.g.
-    // x_opt = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 * sizeof(int)));
+    // x_opt = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 * sizeof(int),
+    // __stream));
     makeIndent();
     os() << mangle(op->var_) << "_opt = ";
     genMdPtrDef(vardef, [&]() {
@@ -394,7 +395,7 @@ void CodeGenCUDA::visit(const Alloc &op) {
             (*this)(dim);
             os() << " * ";
         }
-        os() << "sizeof(" << gen(dtype) << "))";
+        os() << "sizeof(" << gen(dtype) << "), __stream)";
     });
     os() << ";" << std::endl;
 }
@@ -405,7 +406,7 @@ void CodeGenCUDA::visit(const Free &op) {
     // e.g. auto x_ptr = x.data_handle();
     //      x_opt.drop();
     //      x_opt = std::nullopt;
-    //      cudaFree(x_ptr);
+    //      cudaFreeAsync(x_ptr, __stream);
     auto &&name = mangle(op->var_);
     makeIndent();
     os() << "auto " << name << "_ptr = " << name << ".data_handle();"
@@ -415,7 +416,7 @@ void CodeGenCUDA::visit(const Free &op) {
     makeIndent();
     os() << name << "_opt = std::nullopt;" << std::endl;
     makeIndent();
-    os() << "cudaFree(" << name << "_ptr);" << std::endl;
+    os() << "cudaFreeAsync(" << name << "_ptr, __stream);" << std::endl;
 }
 
 void CodeGenCUDA::visit(const ReduceTo &op) {
@@ -816,14 +817,15 @@ extern "C" {
             // FIXME: Support non-constant
             ASSERT(globalSize->nodeType() == ASTNodeType::IntConst);
             s += "uint8_t *__glmem = (uint8_t*)cudaNew(" +
-                 std::to_string(globalSize.as<IntConstNode>()->val_) + ");\n";
+                 std::to_string(globalSize.as<IntConstNode>()->val_) +
+                 ", __stream);\n";
             s += "\n";
 
             s += stream.os_.str();
             s += "\n";
 
             // Free stack for gpu/global
-            s += "cudaFree(__glmem);\n";
+            s += "cudaFreeAsync(__glmem, __stream);\n";
 
             s += "}\n";
             return s;
