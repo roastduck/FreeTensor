@@ -29,7 +29,8 @@ jobs:
           spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.8.0 cudnn@8.7.0.84-11.8 intel-mkl@2020.4.304 java@11 gcc@11.3.0
           source ci-script/prepare-python-environment.sh
           mkdir build
-          cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=ON -DFT_WITH_MKL=/home/spack/spack/opt/spack/linux-debian11-zen2/gcc-10.2.1/intel-mkl-2020.4.304-py6elz2mzhdgres34nr5e2ta5isfja7k/mkl -DFT_WITH_PYTORCH=ON -DCMAKE_INSTALL_PREFIX=./install
+          # We may use a LD_PRELOAD-based proxy in a CI runner, but it crashes PyTorch's CMake script, thus reset LD_PRELOAD here
+          LD_PRELOAD= cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=ON -DFT_WITH_MKL=/home/spack/spack/opt/spack/linux-debian11-zen2/gcc-10.2.1/intel-mkl-2020.4.304-py6elz2mzhdgres34nr5e2ta5isfja7k/mkl -DFT_WITH_PYTORCH=ON -DCMAKE_INSTALL_PREFIX=./install
           cd build && ninja && ninja install
       - name: Run PyTest
         run: |
