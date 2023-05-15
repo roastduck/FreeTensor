@@ -178,7 +178,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                         loopNode->len_->nodeType() == ASTNodeType::IntConst) {
                         auto len = loopNode->len_.as<IntConstNode>()->val_;
                         if (len <= numSM) {
-                            l2 = mergedId;
+                            l1 = mergedId;
                         } else if (len <= numSM * maxThreads) {
                             std::tie(l1, l2) = split(mergedId, -1, numSM);
                         } else {
@@ -209,7 +209,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                             parallelize(l1, blockIdxX);
                         }
                     }
-                    if (!findAll(l2).empty()) {
+                    if (l2.isValid() && !findAll(l2).empty()) {
                         parallelize(l2, (!parentIsWarp && !childIsWarp)
                                             ? threadIdxX
                                             : threadIdxY);
