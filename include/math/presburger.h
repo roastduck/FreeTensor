@@ -915,19 +915,10 @@ class PBSetBuilder : public PBBuilder {
 
 template <class... Args>
 std::string pbFuncSerializedWithTimeout(const auto &func, int seconds,
-                                        const Args &...args) {
-    auto serializePBArgs = [](const auto &...args) {
-        return std::make_tuple(toString(args)...);
-    };
-    auto serialized = serializePBArgs(args...);
+                                        Args &&...args) {
     auto bytes = timeout(
         [&]() {
-            PBCtx ctx;
-            auto parsePBArgs = [&](const auto &...args) {
-                return std::make_tuple(Args(ctx, args)...);
-            };
-            auto objs = std::apply(parsePBArgs, serialized);
-            auto result = std::apply(func, std::move(objs));
+            auto result = func(std::forward<Args>(args)...);
             std::string str = toString(result);
             std::vector<std::byte> bytes((const std::byte *)str.data(),
                                          (const std::byte *)str.data() +
@@ -941,8 +932,9 @@ std::string pbFuncSerializedWithTimeout(const auto &func, int seconds,
 
 template <class... Args>
 auto pbFuncWithTimeout(const auto &func, int seconds, const PBCtx &ctx,
-                       const Args &...args) {
-    auto str = pbFuncSerializedWithTimeout(func, seconds, args...);
+                       Args &&...args) {
+    auto str =
+        pbFuncSerializedWithTimeout(func, seconds, std::forward<Args>(args)...);
     if (str.empty()) {
         return nullptr;
     }
