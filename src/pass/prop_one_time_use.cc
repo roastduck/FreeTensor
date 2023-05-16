@@ -1,3 +1,5 @@
+#include <mutex>
+
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
@@ -67,7 +69,8 @@ Stmt propOneTimeUse(const Stmt &_op) {
     std::unordered_map<AST, std::vector<Stmt>> r2wMay;
     std::unordered_map<Stmt, std::vector<AST>> w2r, w2rMay;
     std::unordered_map<AST, Stmt> stmts;
-    auto foundMust = [&](const Dependence &d) {
+    std::mutex lock;
+    auto foundMust = unsyncFunc([&](const Dependence &d) {
         if (d.later2EarlierIter_.isBijective()) {
             // Check before converting into PBFunc. In prop_one_time_use, we
             // not only need `singleValued`, but also `bijective`, to ensure
@@ -76,6 +79,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
                     [](const PBMap &map) { return PBFunc(map); }, 10,
                     d.later2EarlierIter_);
                 !str.empty()) {
+                std::lock_guard _(lock);
                 r2wCandidates[d.later()].emplace_back(
                     d.earlier().as<StmtNode>(),
                     ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
@@ -83,7 +87,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
                 stmts[d.later()] = d.later_.stmt_;
             }
         }
-    };
+    });
     auto foundMay = [&](const Dependence &d) {
         r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
         w2rMay[d.earlier().as<StmtNode>()].emplace_back(d.later());
