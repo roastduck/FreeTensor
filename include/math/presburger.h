@@ -14,9 +14,11 @@
 #include <isl/set.h>
 #include <isl/space.h>
 
+#include <debug.h>
 #include <debug/profile.h>
 #include <except.h>
 #include <serialize/to_string.h>
+#include <timeout.h>
 
 namespace freetensor {
 
@@ -910,6 +912,43 @@ class PBSetBuilder : public PBBuilder {
 
     PBSet build(const PBCtx &ctx) const;
 };
+
+template <class... Args>
+std::string pbFuncSerializedWithTimeout(const auto &func, int seconds,
+                                        const Args &...args) {
+    auto serializePBArgs = [](const auto &...args) {
+        return std::make_tuple(toString(args)...);
+    };
+    auto serialized = serializePBArgs(args...);
+    auto bytes = timeout(
+        [&]() {
+            PBCtx ctx;
+            auto parsePBArgs = [&](const auto &...args) {
+                return std::make_tuple(Args(ctx, args)...);
+            };
+            auto objs = std::apply(parsePBArgs, serialized);
+            auto result = std::apply(func, std::move(objs));
+            std::string str = toString(result);
+            std::vector<std::byte> bytes((const std::byte *)str.data(),
+                                         (const std::byte *)str.data() +
+                                             str.length());
+            return bytes;
+        },
+        seconds);
+    std::string str((const char *)bytes.data(), bytes.size());
+    return str;
+}
+
+template <class... Args>
+auto pbFuncWithTimeout(const auto &func, int seconds, const PBCtx &ctx,
+                       const Args &...args) {
+    auto str = pbFuncSerializedWithTimeout(func, seconds, args...);
+    if (str.empty()) {
+        return nullptr;
+    }
+    decltype(func(args...)) result(ctx, str);
+    return result;
+}
 
 } // namespace freetensor
 

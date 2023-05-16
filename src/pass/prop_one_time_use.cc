@@ -72,12 +72,16 @@ Stmt propOneTimeUse(const Stmt &_op) {
             // Check before converting into PBFunc. In prop_one_time_use, we
             // not only need `singleValued`, but also `bijective`, to ensure
             // it is really used "one time"
-            r2wCandidates[d.later()].emplace_back(
-                d.earlier().as<StmtNode>(),
-                ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
-                            toString(PBFunc(d.later2EarlierIter_))});
-            w2r[d.earlier().as<StmtNode>()].emplace_back(d.later());
-            stmts[d.later()] = d.later_.stmt_;
+            if (std::string str = pbFuncSerializedWithTimeout(
+                    [](const PBMap &map) { return PBFunc(map); }, 10,
+                    d.later2EarlierIter_);
+                !str.empty()) {
+                r2wCandidates[d.later()].emplace_back(
+                    d.earlier().as<StmtNode>(),
+                    ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
+                w2r[d.earlier().as<StmtNode>()].emplace_back(d.later());
+                stmts[d.later()] = d.later_.stmt_;
+            }
         }
     };
     auto foundMay = [&](const Dependence &d) {

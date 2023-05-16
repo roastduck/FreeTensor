@@ -61,10 +61,14 @@ Stmt tensorPropConst(const Stmt &_op) {
             }
             if (d.later2EarlierIter_
                     .isSingleValued()) { // Check before converting into PBFunc
-                r2w[d.later()].emplace_back(
-                    d.earlier().as<StmtNode>(),
-                    ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
-                                toString(PBFunc(d.later2EarlierIter_))});
+                if (std::string str = pbFuncSerializedWithTimeout(
+                        [](const PBMap &map) { return PBFunc(map); }, 10,
+                        d.later2EarlierIter_);
+                    !str.empty()) {
+                    r2w[d.later()].emplace_back(
+                        d.earlier().as<StmtNode>(),
+                        ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
+                }
             }
         };
         auto foundMay = [&](const Dependence &d) {
