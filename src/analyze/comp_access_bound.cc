@@ -45,6 +45,10 @@ void FindMemType::visit(const VarDef &op) {
 }
 
 void CompAccessBound::visitStmt(const Stmt &stmt) {
+    // CompUniqueBounds requires one instance per Stmt
+    auto uniqueOfOuterStmt = unique_;
+    unique_ = Ref<CompUniqueBounds>::make(*this);
+
     if (stmt->id() == filterSubTree_) {
         filtered_ = true;
         BaseClass::visitStmt(stmt);
@@ -52,6 +56,8 @@ void CompAccessBound::visitStmt(const Stmt &stmt) {
     } else {
         BaseClass::visitStmt(stmt);
     }
+
+    unique_ = uniqueOfOuterStmt;
 }
 
 void CompAccessBound::visit(const VarDef &op) {
@@ -176,7 +182,7 @@ void CompAccessBound::visit(const VarDef &op) {
 void CompAccessBound::visit(const Load &op) {
     BaseClass::visit(op);
     if (filtered_ && op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_READ) {
-        access_.emplace_back(unique_, op->indices_, conds(),
+        access_.emplace_back(*unique_, op->indices_, conds(),
                              defsAtVarDef_.at(op->var_));
     }
 }
@@ -184,7 +190,7 @@ void CompAccessBound::visit(const Load &op) {
 void CompAccessBound::visit(const Store &op) {
     BaseClass::visit(op);
     if (filtered_ && op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_WRITE) {
-        access_.emplace_back(unique_, op->indices_, conds(),
+        access_.emplace_back(*unique_, op->indices_, conds(),
                              defsAtVarDef_.at(op->var_));
     }
 }
@@ -192,7 +198,7 @@ void CompAccessBound::visit(const Store &op) {
 void CompAccessBound::visit(const ReduceTo &op) {
     BaseClass::visit(op);
     if (filtered_ && op->var_ == var_) {
-        access_.emplace_back(unique_, op->indices_, conds(),
+        access_.emplace_back(*unique_, op->indices_, conds(),
                              defsAtVarDef_.at(op->var_));
     }
 }

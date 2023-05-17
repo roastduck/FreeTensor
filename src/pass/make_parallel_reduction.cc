@@ -1,5 +1,6 @@
 #include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
+#include <analyze/comp_unique_bounds.h>
 #include <analyze/deps.h>
 #include <container_utils.h>
 #include <hash.h>
@@ -79,6 +80,7 @@ Stmt MakeLoopCarriedReduction::visit(const ReduceTo &_op) {
         }
 
         // 2. Compute range of loop-carried reduction
+        CompUniqueBounds unique(*this);
         std::unordered_map<ID, std::vector<std::vector<Expr>>> lowerMap,
             upperMap; // loop ID -> [dim][bound]
         for (auto &&loopId : toAlter_.at(op->id())) {
@@ -87,11 +89,11 @@ Stmt MakeLoopCarriedReduction::visit(const ReduceTo &_op) {
                             buffer(_op->var_)->tensor()->shape())) {
                 std::vector<Expr> dimLowers{makeIntConst(0)}, dimUppers{dim};
                 for (auto &&item :
-                     unique_.getDefinedLower(idx, scopeDefined_.at(loopId))) {
+                     unique.getDefinedLower(idx, scopeDefined_.at(loopId))) {
                     dimLowers.emplace_back(item.expr());
                 }
                 for (auto &&item :
-                     unique_.getDefinedUpper(idx, scopeDefined_.at(loopId))) {
+                     unique.getDefinedUpper(idx, scopeDefined_.at(loopId))) {
                     dimUppers.emplace_back(item.expr());
                 }
                 lowerMap[loopId].emplace_back(std::move(dimLowers));

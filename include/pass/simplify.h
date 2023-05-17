@@ -49,10 +49,15 @@ class SimplifyPass : public CompTransientBounds<SymbolTable<ConstFold>> {
     std::unordered_map<std::string, int> varScope_;
     int curScope_ = 0;
 
-    CompUniqueBounds &unique_;
+    Ref<CompUniqueBounds> unique_;
+    std::function<Ref<CompUniqueBounds>(const CompTransientBoundsInterface &)>
+        compUniqueBoundsFactory_;
 
   public:
-    SimplifyPass(CompUniqueBounds &unique) : unique_(unique) {}
+    SimplifyPass(std::function<
+                 Ref<CompUniqueBounds>(const CompTransientBoundsInterface &)>
+                     compUniqueBoundsFactory)
+        : compUniqueBoundsFactory_(compUniqueBoundsFactory) {}
 
   private:
     template <class T> bool equals(const Expr &op, T &&val) const {
@@ -70,6 +75,7 @@ class SimplifyPass : public CompTransientBounds<SymbolTable<ConstFold>> {
   protected:
     using BaseClass::visit;
 
+    Stmt visitStmt(const Stmt &op) override;
     Expr visitExpr(const Expr &op) override;
 
     Expr visit(const Add &op) override;
@@ -98,10 +104,11 @@ class SimplifyPass : public CompTransientBounds<SymbolTable<ConstFold>> {
 };
 
 class BuiltinSimplify : public SimplifyPass {
-    CompUniqueBounds unique_;
-
   public:
-    BuiltinSimplify() : SimplifyPass(unique_), unique_(*this) {}
+    BuiltinSimplify()
+        : SimplifyPass([](const CompTransientBoundsInterface &tr) {
+              return Ref<CompUniqueBounds>::make(tr);
+          }) {}
 };
 
 /**

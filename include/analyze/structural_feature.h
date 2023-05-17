@@ -54,14 +54,12 @@ class StructuralFeature : public CompTransientBounds<SymbolTable<Visitor>> {
             loads_, stores_, accesses_;
     };
 
-    CompUniqueBounds bound_;
+    Ref<CompUniqueBounds> bound_;
 
     std::unordered_map<ID, NodeFeature> features_; // Node ID -> features
     std::unordered_map<AST, NodeInfo> info_;       // AST -> info
 
   public:
-    StructuralFeature() : bound_(*this) {}
-
     const std::unordered_map<ID, NodeFeature> &features() const {
         return features_;
     }
