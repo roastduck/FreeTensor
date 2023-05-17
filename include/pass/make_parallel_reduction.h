@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <analyze/comp_unique_bounds.h>
 #include <analyze/find_loop_variance.h>
 #include <analyze/symbol_table.h>
 #include <driver/target.h>
@@ -74,8 +73,6 @@ class MakeLoopCarriedReduction
             upper_; // [dim][access][bound]
     };
 
-    CompUniqueBounds unique_;
-
     const std::unordered_map<ID, std::unordered_set<ID>>
         &toAlter_; // ReduceTo ID -> Racing For ID
     const LoopVariExprMap &variantMap_;
@@ -95,7 +92,7 @@ class MakeLoopCarriedReduction
     MakeLoopCarriedReduction(
         const std::unordered_map<ID, std::unordered_set<ID>> &toAlter,
         const LoopVariExprMap &variantMap)
-        : unique_(*this), toAlter_(toAlter), variantMap_(variantMap) {}
+        : toAlter_(toAlter), variantMap_(variantMap) {}
 
     const auto &toUseSync() const { return toUseSync_; }
 

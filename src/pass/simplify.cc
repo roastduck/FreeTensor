@@ -99,6 +99,14 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
     return visitor.innnerMost();
 }
 
+Stmt SimplifyPass::visitStmt(const Stmt &op) {
+    auto uniqueOfOuterStmt = unique_;
+    unique_ = compUniqueBoundsFactory_(*this);
+    auto ret = BaseClass::visitStmt(op);
+    unique_ = uniqueOfOuterStmt;
+    return ret;
+}
+
 Expr SimplifyPass::visitExpr(const Expr &_op) {
     auto op = BaseClass::visitExpr(_op);
 
@@ -112,8 +120,8 @@ Expr SimplifyPass::visitExpr(const Expr &_op) {
 
     Expr best = nullptr;
     auto bestScope = -1, bestHeavyOps = -1;
-    for (auto &&lower : unique_.getLower(op)) {
-        for (auto &&upper : unique_.getUpper(op)) {
+    for (auto &&lower : unique_->getLower(op)) {
+        for (auto &&upper : unique_->getUpper(op)) {
             // Check upper <= lower ==> equal
             // Here we use the less precise alwaysLE instead of analyzing bounds
             // of `upper - lower`, in order to avoid infinite recursion
@@ -284,14 +292,14 @@ Expr SimplifyPass::visit(const Mod &_op) {
         return makeIntConst(0);
     }
 
-    if (unique_.getIntLower(op->rhs_) > 0 &&
-        unique_.getIntLower(op->lhs_) >= 0 &&
-        unique_.alwaysLT(op->lhs_, op->rhs_)) {
+    if (unique_->getIntLower(op->rhs_) > 0 &&
+        unique_->getIntLower(op->lhs_) >= 0 &&
+        unique_->alwaysLT(op->lhs_, op->rhs_)) {
         return op->lhs_;
     }
-    if (unique_.getIntUpper(op->rhs_) < 0 &&
-        unique_.getIntUpper(op->rhs_) <= 0 &&
-        unique_.alwaysLT(op->rhs_, op->lhs_)) {
+    if (unique_->getIntUpper(op->rhs_) < 0 &&
+        unique_->getIntUpper(op->rhs_) <= 0 &&
+        unique_->alwaysLT(op->rhs_, op->lhs_)) {
         return op->lhs_;
     }
 
@@ -359,10 +367,10 @@ Expr SimplifyPass::visit(const LT &_op) {
         return op;
     }
     auto diff = makeSub(op->lhs_, op->rhs_);
-    if (unique_.getIntUpper(diff) < 0) {
+    if (unique_->getIntUpper(diff) < 0) {
         return makeBoolConst(true);
     }
-    if (unique_.getIntLower(diff) >= 0) {
+    if (unique_->getIntLower(diff) >= 0) {
         return makeBoolConst(false);
     }
     return op;
@@ -379,10 +387,10 @@ Expr SimplifyPass::visit(const LE &_op) {
         return op;
     }
     auto diff = makeSub(op->lhs_, op->rhs_);
-    if (unique_.getIntUpper(diff) <= 0) {
+    if (unique_->getIntUpper(diff) <= 0) {
         return makeBoolConst(true);
     }
-    if (unique_.getIntLower(diff) > 0) {
+    if (unique_->getIntLower(diff) > 0) {
         return makeBoolConst(false);
     }
     return op;
@@ -399,10 +407,10 @@ Expr SimplifyPass::visit(const GT &_op) {
         return op;
     }
     auto diff = makeSub(op->lhs_, op->rhs_);
-    if (unique_.getIntLower(diff) > 0) {
+    if (unique_->getIntLower(diff) > 0) {
         return makeBoolConst(true);
     }
-    if (unique_.getIntUpper(diff) <= 0) {
+    if (unique_->getIntUpper(diff) <= 0) {
         return makeBoolConst(false);
     }
     return op;
@@ -419,10 +427,10 @@ Expr SimplifyPass::visit(const GE &_op) {
         return op;
     }
     auto diff = makeSub(op->lhs_, op->rhs_);
-    if (unique_.getIntLower(diff) >= 0) {
+    if (unique_->getIntLower(diff) >= 0) {
         return makeBoolConst(true);
     }
-    if (unique_.getIntUpper(diff) < 0) {
+    if (unique_->getIntUpper(diff) < 0) {
         return makeBoolConst(false);
     }
     return op;
@@ -439,13 +447,13 @@ Expr SimplifyPass::visit(const EQ &_op) {
         return op;
     }
     auto diff = makeSub(op->lhs_, op->rhs_);
-    if (unique_.getIntLower(diff) > 0) {
+    if (unique_->getIntLower(diff) > 0) {
         return makeBoolConst(false);
     }
-    if (unique_.getIntUpper(diff) < 0) {
+    if (unique_->getIntUpper(diff) < 0) {
         return makeBoolConst(false);
     }
-    if (auto &&c = unique_.getInt(diff); c.has_value() && *c == 0) {
+    if (auto &&c = unique_->getInt(diff); c.has_value() && *c == 0) {
         return makeBoolConst(true);
     }
     return op;
@@ -462,13 +470,13 @@ Expr SimplifyPass::visit(const NE &_op) {
         return op;
     }
     auto diff = makeSub(op->lhs_, op->rhs_);
-    if (unique_.getIntLower(diff) > 0) {
+    if (unique_->getIntLower(diff) > 0) {
         return makeBoolConst(true);
     }
-    if (unique_.getIntUpper(diff) < 0) {
+    if (unique_->getIntUpper(diff) < 0) {
         return makeBoolConst(true);
     }
-    if (auto &&c = unique_.getInt(diff); c.has_value() && *c == 0) {
+    if (auto &&c = unique_->getInt(diff); c.has_value() && *c == 0) {
         return makeBoolConst(false);
     }
     return op;
@@ -636,7 +644,7 @@ Stmt SimplifyPass::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     varScope_.erase(_op->iter_), curScope_--;
 
-    if (auto _intLen = unique_.getInt(op->len_); _intLen.has_value()) {
+    if (auto _intLen = unique_->getInt(op->len_); _intLen.has_value()) {
         auto intLen = *_intLen;
         if (intLen == 1) {
             auto body = ReplaceIter(_op->iter_, op->begin_)(_op->body_);
@@ -646,7 +654,7 @@ Stmt SimplifyPass::visit(const For &_op) {
             return makeStmtSeq({});
         }
     }
-    if (unique_.getIntUpper(op->len_) == 1) {
+    if (unique_->getIntUpper(op->len_) == 1) {
         auto body = ReplaceIter(_op->iter_, op->begin_)(_op->body_);
         body = (*this)(body);
         return makeIf(makeEQ(op->len_, makeIntConst(1)), body);
