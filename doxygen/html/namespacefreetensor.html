@@ -1814,6 +1814,12 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:afb7116b28332c5e953fc318f2e77e48c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29a0ea44021bb36284780e36a5e4951a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a29a0ea44021bb36284780e36a5e4951a">operator==</a> (const <a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> &amp;<a class="el" href="namespacefreetensor.html#a192b70d1972bcd73d5ff58f30fad21a2">lhs</a>, const <a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> &amp;<a class="el" href="namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005">rhs</a>)</td></tr>
 <tr class="separator:a29a0ea44021bb36284780e36a5e4951a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ba898e99c8a9db577af5f7b9db0758d"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; </td></tr>
+<tr class="memitem:a5ba898e99c8a9db577af5f7b9db0758d"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5ba898e99c8a9db577af5f7b9db0758d">pbFuncSerializedWithTimeout</a> (const auto &amp;func, int seconds, Args &amp;&amp;...args)</td></tr>
+<tr class="separator:a5ba898e99c8a9db577af5f7b9db0758d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a591db288f41d9a1f594ec90c5fb2b2f5"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; </td></tr>
+<tr class="memitem:a591db288f41d9a1f594ec90c5fb2b2f5"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a591db288f41d9a1f594ec90c5fb2b2f5">pbFuncWithTimeout</a> (const auto &amp;func, int seconds, const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;ctx, Args &amp;&amp;...args)</td></tr>
+<tr class="separator:a591db288f41d9a1f594ec90c5fb2b2f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a642e41a3db951b295abd0cb9acf31010"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a642e41a3db951b295abd0cb9acf31010">floorDiv</a> (IntegralExceptBool auto a, IntegralExceptBool auto b)</td></tr>
 <tr class="separator:a642e41a3db951b295abd0cb9acf31010"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a35487170b634f4d6fe6a832639d59730"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a35487170b634f4d6fe6a832639d59730">ceilDiv</a> (IntegralExceptBool auto a, IntegralExceptBool auto b)</td></tr>
@@ -2108,6 +2114,8 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:a67c9e15cd811e9f2c9ac1f8717b177c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a386180ba6a8ac3e4cccbf7edeb1b8e5b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a386180ba6a8ac3e4cccbf7edeb1b8e5b">deepCopy</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt; &amp;t)</td></tr>
 <tr class="separator:a386180ba6a8ac3e4cccbf7edeb1b8e5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a706678279e0a8de81abccc6a9825a967"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::byte &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a706678279e0a8de81abccc6a9825a967">timeout</a> (const std::function&lt; std::vector&lt; std::byte &gt;()&gt; &amp;func, int seconds)</td></tr>
+<tr class="separator:a706678279e0a8de81abccc6a9825a967"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c0f4e93910a9324737e15d1bd575599"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5c0f4e93910a9324737e15d1bd575599">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cb">AccessType</a> atype)</td></tr>
 <tr class="separator:a5c0f4e93910a9324737e15d1bd575599"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1442e05e6cde2ae3cda5aa32c79f3e72"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cb">AccessType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1442e05e6cde2ae3cda5aa32c79f3e72">parseAType</a> (const std::string &amp;_str)</td></tr>
@@ -16122,6 +16130,84 @@ template&lt;PBSetRef T&gt; </div>
 
 </div>
 </div>
+<a id="a5ba898e99c8a9db577af5f7b9db0758d" name="a5ba898e99c8a9db577af5f7b9db0758d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5ba898e99c8a9db577af5f7b9db0758d">&#9670;&nbsp;</a></span>pbFuncSerializedWithTimeout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class... Args&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string freetensor::pbFuncSerializedWithTimeout </td>
+          <td>(</td>
+          <td class="paramtype">const auto &amp;&#160;</td>
+          <td class="paramname"><em>func</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>seconds</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Args &amp;&amp;...&#160;</td>
+          <td class="paramname"><em>args</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a591db288f41d9a1f594ec90c5fb2b2f5" name="a591db288f41d9a1f594ec90c5fb2b2f5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a591db288f41d9a1f594ec90c5fb2b2f5">&#9670;&nbsp;</a></span>pbFuncWithTimeout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class... Args&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">auto freetensor::pbFuncWithTimeout </td>
+          <td>(</td>
+          <td class="paramtype">const auto &amp;&#160;</td>
+          <td class="paramname"><em>func</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>seconds</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;&#160;</td>
+          <td class="paramname"><em>ctx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Args &amp;&amp;...&#160;</td>
+          <td class="paramname"><em>args</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a2b34ae9ba8409e38bc3385a9047daf55" name="a2b34ae9ba8409e38bc3385a9047daf55"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2b34ae9ba8409e38bc3385a9047daf55">&#9670;&nbsp;</a></span>PBRefTake() <span class="overload">[1/2]</span></h2>
 
@@ -17824,6 +17910,36 @@ template&lt;class T &gt; </div>
 <div class="fragment"><div class="line">x[i] = 1</div>
 <div class="line">y[i] = 1</div>
 </div><!-- fragment --><p >This version of const propagation is designed for both scalars and tensors. For scalars, it directly invokes scalarPropConst. For tensors, it invokes the Presburger solver </p>
+
+</div>
+</div>
+<a id="a706678279e0a8de81abccc6a9825a967" name="a706678279e0a8de81abccc6a9825a967"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a706678279e0a8de81abccc6a9825a967">&#9670;&nbsp;</a></span>timeout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; std::byte &gt; freetensor::timeout </td>
+          <td>(</td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; std::byte &gt;()&gt; &amp;&#160;</td>
+          <td class="paramname"><em>func</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>seconds</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Run a function with timeout</p>
+<p >Fork a new process to run. If success, return a byte-vector result. If timeout, return an empty vector </p>
 
 </div>
 </div>
