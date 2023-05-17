@@ -1,3 +1,4 @@
+#include <analyze/comp_unique_bounds.h>
 #include <container_utils.h>
 #include <pass/gpu/normalize_var_in_kernel.h>
 #include <pass/rename_var.h>
@@ -51,9 +52,12 @@ Stmt NormalizeVarInKernel::visit(const VarDef &_op) {
         ASSERT(__op->nodeType() == ASTNodeType::VarDef);
         auto op = __op.as<VarDefNode>();
 
+        // CompUniqueBounds requires one instance per Stmt
+        CompUniqueBounds unique(*this);
+
         for (auto &dim : op->buffer_->tensor()->shape()) {
             Expr newDim;
-            for (auto &&b : unique_.getDefinedUpper(
+            for (auto &&b : unique.getDefinedUpper(
                      dim, ranges::to<std::unordered_set>(legalNames_))) {
                 newDim = newDim.isValid() ? makeMin(std::move(newDim), b.expr())
                                           : b.expr();
