@@ -7,6 +7,7 @@
 #include <math/parse_pb_expr.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/pb_simplify.h>
 #include <pass/shrink_for.h>
 #include <pass/sink_var.h>
 #include <schedule.h>

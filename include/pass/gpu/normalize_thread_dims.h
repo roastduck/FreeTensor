@@ -6,7 +6,6 @@
 #include <unordered_set>
 
 #include <analyze/comp_transient_bounds.h>
-#include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
 #include <mutator.h>
 
@@ -17,12 +16,8 @@ namespace gpu {
 class NormalizeThreadDims : public CompTransientBounds<SymbolTable<Mutator>> {
     typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
-    CompUniqueBounds bound_;
     std::unordered_set<For> openLoopsInKernel_;
     bool inKernel_ = false;
-
-  public:
-    NormalizeThreadDims() : bound_(*this) {}
 
   private:
     /**

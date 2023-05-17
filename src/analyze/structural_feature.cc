@@ -152,7 +152,7 @@ int64_t StructuralFeature::calcArea(
         auto l = makeMinMax(lower);
         auto u = makeMaxMin(upper);
         auto len = makeAdd(makeSub(u, l), makeIntConst(1));
-        if (auto constLen = bound_.getInt(len); constLen.has_value()) {
+        if (auto constLen = bound_->getInt(len); constLen.has_value()) {
             area *= *constLen;
         }
     }
@@ -206,8 +206,11 @@ void StructuralFeature::visitUnaryOp(const UnaryExpr &op) {
 }
 
 void StructuralFeature::visitStmt(const Stmt &op) {
+    auto boundOfOuterStmt = bound_;
+    bound_ = Ref<CompUniqueBounds>::make(*this);
     BaseClass::visitStmt(op);
     calcFeatures(op);
+    bound_ = boundOfOuterStmt;
 }
 
 void StructuralFeature::visitExpr(const Expr &op) {
@@ -226,7 +229,7 @@ void StructuralFeature::visit(const Load &op) {
     info_[op].loadCnt_[buffer(op->var_)->mtype()]++;
     info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
     info_[op].loads_[op->var_] = info_[op].accesses_[op->var_] = {
-        CompAccessBound::Access(bound_, op->indices_, conds())};
+        CompAccessBound::Access(*bound_, op->indices_, conds())};
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
@@ -239,7 +242,7 @@ void StructuralFeature::visit(const Store &op) {
     info_[op].storeCnt_[buffer(op->var_)->mtype()]++;
     info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
     info_[op].stores_[op->var_] = info_[op].accesses_[op->var_] = {
-        CompAccessBound::Access(bound_, op->indices_, conds())};
+        CompAccessBound::Access(*bound_, op->indices_, conds())};
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
@@ -257,7 +260,7 @@ void StructuralFeature::visit(const ReduceTo &op) {
     info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
     info_[op].loads_[op->var_] = info_[op].stores_[op->var_] =
         info_[op].accesses_[op->var_] = {
-            CompAccessBound::Access(bound_, op->indices_, conds())};
+            CompAccessBound::Access(*bound_, op->indices_, conds())};
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
@@ -306,7 +309,7 @@ void StructuralFeature::visit(const For &op) {
 
     updInfo(op, op->begin_);
     updInfo(op, op->end_);
-    if (auto intLen = bound_.getInt(op->len_); intLen.has_value()) {
+    if (auto intLen = bound_->getInt(op->len_); intLen.has_value()) {
         updInfo(op, op->body_, *intLen);
     } else {
         updInfo(op, op->body_, -1);

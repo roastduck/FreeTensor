@@ -10,6 +10,12 @@
 
 namespace freetensor {
 
+/**
+ * CompUniqueBounds added with Presburger information
+ *
+ * For each statements in the AST, a corresponding instance of this class should
+ * be created to deal with all (sub)expressions in the statement
+ */
 class PBCompBounds : public CompUniqueBounds {
     const CompTransientBoundsInterface &transients_;
     GenPBExpr genPBExpr_;
@@ -27,10 +33,11 @@ class PBCompBounds : public CompUniqueBounds {
 };
 
 class PBSimplify : public SimplifyPass {
-    PBCompBounds unique_;
-
   public:
-    PBSimplify() : SimplifyPass(unique_), unique_(*this) {}
+    PBSimplify()
+        : SimplifyPass([](const CompTransientBoundsInterface &tr) {
+              return Ref<PBCompBounds>::make(tr);
+          }) {}
 };
 
 Stmt pbSimplify(const Stmt &op);

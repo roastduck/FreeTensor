@@ -1,6 +1,7 @@
 #ifdef FT_WITH_CUDA
 
 #include <analyze/all_uses.h>
+#include <analyze/comp_unique_bounds.h>
 #include <pass/gpu/normalize_thread_dims.h>
 
 namespace freetensor {
@@ -37,11 +38,14 @@ Stmt NormalizeThreadDims::visit(const For &_op) {
         auto op = __op.as<ForNode>();
         inKernel_ = oldInKernel;
 
+        // CompUniqueBounds requires one instance per Stmt
+        CompUniqueBounds bound(*this);
+
         if (!isLegalLen(op->begin_)) {
             op->body_ =
                 makeIf(makeGE(makeVar(op->iter_), op->begin_), op->body_);
             Expr begin;
-            for (auto &&b : bound_.getLower(op->begin_)) {
+            for (auto &&b : bound.getLower(op->begin_)) {
                 if (isLegalLen(b.allNames())) {
                     if (b.lin().isConst() && b.lin().bias_ <= INT_MIN + 1) {
                         continue;
@@ -64,7 +68,7 @@ Stmt NormalizeThreadDims::visit(const For &_op) {
         if (!isLegalLen(op->end_)) {
             op->body_ = makeIf(makeLT(makeVar(op->iter_), op->end_), op->body_);
             Expr end;
-            for (auto &&b : bound_.getUpper(op->end_)) {
+            for (auto &&b : bound.getUpper(op->end_)) {
                 if (isLegalLen(b.allNames())) {
                     if (b.lin().isConst() && b.lin().bias_ >= INT_MAX - 1) {
                         continue;
