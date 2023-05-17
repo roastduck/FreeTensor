@@ -19,9 +19,8 @@ var searchData=
   ['upperboundinputdim_16',['upperBoundInputDim',['../namespacefreetensor.html#ac61211102c3bb6738758e588f3aaf00a',1,'freetensor']]],
   ['upperboundoutputdim_17',['upperBoundOutputDim',['../namespacefreetensor.html#a4418378670985f9a7ce6882994ab6f1b',1,'freetensor']]],
   ['usebuiltindiv_18',['useBuiltinDiv',['../namespacefreetensor.html#a1d7e8385e1c871b2c861b2f70a041196',1,'freetensor']]],
-  ['usebuiltindiv_19',['UseBuiltinDiv',['../classfreetensor_1_1UseBuiltinDiv.html#a74633855d3143a469c5618cb12ebfd85',1,'freetensor::UseBuiltinDiv']]],
-  ['usedcnt_20',['usedCnt',['../classfreetensor_1_1CountNames.html#afad8f61b1acc507f0a14a8771bf3d6e8',1,'freetensor::CountNames']]],
-  ['usenativearch_21',['useNativeArch',['../classfreetensor_1_1CPUTarget.html#ac52a20371e64021a721432db24228aa6',1,'freetensor::CPUTarget::useNativeArch()'],['../classfreetensor_1_1Target.html#a94430881a13dba49deed1f5a8d9f677e',1,'freetensor::Target::useNativeArch()']]],
-  ['uses_22',['uses',['../classfreetensor_1_1AllUses.html#a6f2622151ea97b652b0c579e728e67e9',1,'freetensor::AllUses']]],
-  ['usingstore_23',['usingStore',['../classfreetensor_1_1Derivative_1_1LazyFullDerivative.html#ac2ea6ce62d9a22411f9e2432dbd446f0',1,'freetensor::Derivative::LazyFullDerivative::usingStore()'],['../classfreetensor_1_1Derivative_1_1LazyPartialDerivative.html#a5ec478a7d90ccb171f60d481c3b959a9',1,'freetensor::Derivative::LazyPartialDerivative::usingStore()']]]
+  ['usedcnt_19',['usedCnt',['../classfreetensor_1_1CountNames.html#afad8f61b1acc507f0a14a8771bf3d6e8',1,'freetensor::CountNames']]],
+  ['usenativearch_20',['useNativeArch',['../classfreetensor_1_1CPUTarget.html#ac52a20371e64021a721432db24228aa6',1,'freetensor::CPUTarget::useNativeArch()'],['../classfreetensor_1_1Target.html#a94430881a13dba49deed1f5a8d9f677e',1,'freetensor::Target::useNativeArch()']]],
+  ['uses_21',['uses',['../classfreetensor_1_1AllUses.html#a6f2622151ea97b652b0c579e728e67e9',1,'freetensor::AllUses']]],
+  ['usingstore_22',['usingStore',['../classfreetensor_1_1Derivative_1_1LazyFullDerivative.html#ac2ea6ce62d9a22411f9e2432dbd446f0',1,'freetensor::Derivative::LazyFullDerivative::usingStore()'],['../classfreetensor_1_1Derivative_1_1LazyPartialDerivative.html#a5ec478a7d90ccb171f60d481c3b959a9',1,'freetensor::Derivative::LazyPartialDerivative::usingStore()']]]
 ];

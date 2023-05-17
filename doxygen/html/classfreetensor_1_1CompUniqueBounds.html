@@ -102,10 +102,10 @@ Public Types</h2></td></tr>
 <tr class="separator:a910b8cc3aa5a4910fbf2b843834856a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4052f68cf28a2505fd64eb83b601a8e4"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; <a class="el" href="classfreetensor_1_1UpperBound.html">UpperBound</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a4052f68cf28a2505fd64eb83b601a8e4">UpperBoundsList</a></td></tr>
 <tr class="separator:a4052f68cf28a2505fd64eb83b601a8e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8e342bfda4b0016a0696ecee4e369615"><td class="memItemLeft" align="right" valign="top">typedef std::unordered_map&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>, <a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a910b8cc3aa5a4910fbf2b843834856a3">LowerBoundsList</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a8e342bfda4b0016a0696ecee4e369615">LowerBoundsMap</a></td></tr>
-<tr class="separator:a8e342bfda4b0016a0696ecee4e369615"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a193a86b1335f170a3ad4536687b46715"><td class="memItemLeft" align="right" valign="top">typedef std::unordered_map&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>, <a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a4052f68cf28a2505fd64eb83b601a8e4">UpperBoundsList</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a193a86b1335f170a3ad4536687b46715">UpperBoundsMap</a></td></tr>
-<tr class="separator:a193a86b1335f170a3ad4536687b46715"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:affffa78f1c87faad9780e21c2fde7295"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="namespacefreetensor.html#a137c7e71df6ccedef1b85327775a72b6">ASTHashMap</a>&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>, <a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a910b8cc3aa5a4910fbf2b843834856a3">LowerBoundsList</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompUniqueBounds.html#affffa78f1c87faad9780e21c2fde7295">LowerBoundsMap</a></td></tr>
+<tr class="separator:affffa78f1c87faad9780e21c2fde7295"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab21a41a3b9b22274241a19c45503d8f2"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="namespacefreetensor.html#a137c7e71df6ccedef1b85327775a72b6">ASTHashMap</a>&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>, <a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a4052f68cf28a2505fd64eb83b601a8e4">UpperBoundsList</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompUniqueBounds.html#ab21a41a3b9b22274241a19c45503d8f2">UpperBoundsMap</a></td></tr>
+<tr class="separator:ab21a41a3b9b22274241a19c45503d8f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_types_classfreetensor_1_1Visitor"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classfreetensor_1_1Visitor')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classfreetensor_1_1Visitor.html">freetensor::Visitor</a></td></tr>
 <tr class="memitem:a9d28e45c80d3c0939f64b4dba016e168 inherit pub_types_classfreetensor_1_1Visitor"><td class="memItemLeft" align="right" valign="top">typedef void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Visitor.html#a9d28e45c80d3c0939f64b4dba016e168">ExprRetType</a></td></tr>
 <tr class="separator:a9d28e45c80d3c0939f64b4dba016e168 inherit pub_types_classfreetensor_1_1Visitor"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -314,6 +314,7 @@ Protected Member Functions</h2></td></tr>
 <div class="line">}</div>
 <div class="line">... = x;</div>
 </div><!-- fragment --><p >Two UNIQUE expressions <code>x</code> have different upper bounds</p>
+<p >For each statements in the AST, a corresponding instance of this class should be created to deal with all (sub)expressions in the statement, so as to distinguish different <code>x</code> sites in the example above</p>
 <p >This pass is not accurate. Simplifying passes using this analysis may need to run for multiple rounds </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a910b8cc3aa5a4910fbf2b843834856a3" name="a910b8cc3aa5a4910fbf2b843834856a3"></a>
@@ -330,14 +331,14 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a8e342bfda4b0016a0696ecee4e369615" name="a8e342bfda4b0016a0696ecee4e369615"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8e342bfda4b0016a0696ecee4e369615">&#9670;&nbsp;</a></span>LowerBoundsMap</h2>
+<a id="affffa78f1c87faad9780e21c2fde7295" name="affffa78f1c87faad9780e21c2fde7295"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#affffa78f1c87faad9780e21c2fde7295">&#9670;&nbsp;</a></span>LowerBoundsMap</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef std::unordered_map&lt;<a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>, <a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a910b8cc3aa5a4910fbf2b843834856a3">LowerBoundsList</a>&gt; <a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a8e342bfda4b0016a0696ecee4e369615">freetensor::CompUniqueBounds::LowerBoundsMap</a></td>
+          <td class="memname">typedef <a class="el" href="namespacefreetensor.html#a137c7e71df6ccedef1b85327775a72b6">ASTHashMap</a>&lt;<a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>, <a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a910b8cc3aa5a4910fbf2b843834856a3">LowerBoundsList</a>&gt; <a class="el" href="classfreetensor_1_1CompUniqueBounds.html#affffa78f1c87faad9780e21c2fde7295">freetensor::CompUniqueBounds::LowerBoundsMap</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -358,14 +359,14 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a193a86b1335f170a3ad4536687b46715" name="a193a86b1335f170a3ad4536687b46715"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a193a86b1335f170a3ad4536687b46715">&#9670;&nbsp;</a></span>UpperBoundsMap</h2>
+<a id="ab21a41a3b9b22274241a19c45503d8f2" name="ab21a41a3b9b22274241a19c45503d8f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab21a41a3b9b22274241a19c45503d8f2">&#9670;&nbsp;</a></span>UpperBoundsMap</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef std::unordered_map&lt;<a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>, <a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a4052f68cf28a2505fd64eb83b601a8e4">UpperBoundsList</a>&gt; <a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a193a86b1335f170a3ad4536687b46715">freetensor::CompUniqueBounds::UpperBoundsMap</a></td>
+          <td class="memname">typedef <a class="el" href="namespacefreetensor.html#a137c7e71df6ccedef1b85327775a72b6">ASTHashMap</a>&lt;<a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>, <a class="el" href="classfreetensor_1_1CompUniqueBounds.html#a4052f68cf28a2505fd64eb83b601a8e4">UpperBoundsList</a>&gt; <a class="el" href="classfreetensor_1_1CompUniqueBounds.html#ab21a41a3b9b22274241a19c45503d8f2">freetensor::CompUniqueBounds::UpperBoundsMap</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
