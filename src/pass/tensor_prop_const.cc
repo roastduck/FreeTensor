@@ -1,3 +1,5 @@
+#include <mutex>
+
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <container_utils.h>
@@ -39,7 +41,8 @@ Stmt tensorPropConst(const Stmt &_op) {
         // pass/remove_writes can not, because statement (1) cannot be removed
         std::unordered_map<AST, std::vector<std::pair<Stmt, ReplaceInfo>>> r2w;
         std::unordered_map<AST, std::vector<Stmt>> r2wMay;
-        auto foundMust = [&](const Dependence &d) {
+        std::mutex lock;
+        auto foundMust = unsyncFunc([&](const Dependence &d) {
             auto &&expr = d.earlier().as<StoreNode>()->expr_;
             auto &&iters = allIters(expr);
             auto common = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
@@ -61,12 +64,17 @@ Stmt tensorPropConst(const Stmt &_op) {
             }
             if (d.later2EarlierIter_
                     .isSingleValued()) { // Check before converting into PBFunc
-                r2w[d.later()].emplace_back(
-                    d.earlier().as<StmtNode>(),
-                    ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
-                                toString(PBFunc(d.later2EarlierIter_))});
+                if (std::string str = pbFuncSerializedWithTimeout(
+                        [](const PBMap &map) { return PBFunc(map); }, 10,
+                        d.later2EarlierIter_);
+                    !str.empty()) {
+                    std::lock_guard _(lock);
+                    r2w[d.later()].emplace_back(
+                        d.earlier().as<StmtNode>(),
+                        ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
+                }
             }
-        };
+        });
         auto foundMay = [&](const Dependence &d) {
             r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
         };

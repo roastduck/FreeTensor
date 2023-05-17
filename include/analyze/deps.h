@@ -283,7 +283,7 @@ class AnalyzeDeps {
     const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord_;
     const std::unordered_map<std::string, std::vector<ID>>
         &noDepsLists_; // Var name -> [loop ID]
-    Lazy<LoopVariExprMap> variantExpr_;
+    Lazy<LoopVariExprMap> &variantExpr_;
 
     const std::vector<FindDepsDir> &direction_;
     const FindDepsCallback &found_;
@@ -305,7 +305,7 @@ class AnalyzeDeps {
         const std::vector<Ref<AccessPoint>> &writes,
         const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord,
         const std::unordered_map<std::string, std::vector<ID>> &noDepsLists,
-        const Lazy<LoopVariExprMap> &variantExpr,
+        Lazy<LoopVariExprMap> &variantExpr,
         const std::vector<FindDepsDir> &direction,
         const FindDepsCallback &found, FindDepsMode mode, DepType depType,
         const FindDepsAccPtFilter &earlierFilter,

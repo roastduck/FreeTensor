@@ -1,3 +1,5 @@
+#include <mutex>
+
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
@@ -235,26 +237,33 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             ReplaceInfo{});
         suspect.insert(d.def());
     };
-    auto foundOverwriteReduce = [&](const Dependence &d) {
+    std::mutex lock;
+    auto foundOverwriteReduce = unsyncFunc([&](const Dependence &d) {
         if (d.later() != d.earlier() &&
             (!selfDependentReduces.count(d.later().as<StmtNode>()) ||
              sameParent(d.later_.stmt_, d.earlier_.stmt_))) {
             if (d.later2EarlierIter_.isSingleValued()) {
-                auto earlier = d.earlier().as<StmtNode>();
-                auto later = d.later().as<StmtNode>();
-                if (!kill.count(earlier)) {
-                    kill[earlier] =
-                        PBSet(presburger, toString(domain(d.earlierIter2Idx_)));
+                if (std::string str = pbFuncSerializedWithTimeout(
+                        [](const PBMap &map) { return PBFunc(map); }, 10,
+                        d.later2EarlierIter_);
+                    !str.empty()) {
+                    std::lock_guard _(lock);
+                    auto earlier = d.earlier().as<StmtNode>();
+                    auto later = d.later().as<StmtNode>();
+                    if (!kill.count(earlier)) {
+                        kill[earlier] = PBSet(
+                            presburger, toString(domain(d.earlierIter2Idx_)));
+                    }
+                    overwrites.emplace_back(
+                        later, earlier,
+                        PBSet(presburger,
+                              toString(range(d.later2EarlierIter_))),
+                        ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
+                    suspect.insert(d.def());
                 }
-                overwrites.emplace_back(
-                    later, earlier,
-                    PBSet(presburger, toString(range(d.later2EarlierIter_))),
-                    ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
-                                toString(PBFunc(d.later2EarlierIter_))});
-                suspect.insert(d.def());
             }
         }
-    };
+    });
     auto foundUse = [&](const Dependence &d) {
         if (d.later()->nodeType() != ASTNodeType::Store &&
             d.earlier()->nodeType() != ASTNodeType::Load &&
