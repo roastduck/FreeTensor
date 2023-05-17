@@ -158,20 +158,25 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                         // allowed), we have different priority.
                         //
                         // If there IS NO dependence, we want to occupy as much
-                        // hardware resouce as possible. We meet the following
-                        // requirements in order:
+                        // hardware resouce as possible. As the loop length
+                        // increases, we meet the following requirements in
+                        // order:
                         //
-                        // 1. If `parallelizeAmongBlocks`, make sure all SMs are
-                        // used, else use only one SM.
+                        // 1. If `parallelizeAmongBlocks`, we try to use all SMs
+                        // by increasing the number of blocks, else use only one
+                        // SM (one block).
                         // 2. Try to use more threads on each SM. But if there
-                        // are too many, scale to more SMs.
+                        // are too many, scale to more blocks. There extra
+                        // blocks will be queued to run on SMs.
                         //
                         // If there IS dependence, we want to put threads near
                         // each other if there are few threads. We only need to
                         // meet the following requirement:
                         //
-                        // 2. Try to use more threads on each SM. But if there
-                        // are too many, scale to more SMs.
+                        // 1. Try to allocate threads on one SM (one block).
+                        // Only if the number of threads reaches the limits of
+                        // one block and `parallelizeAmongBlocks` is true, scale
+                        // to more blocks.
                         //
                         // When splitting a loop, if the loop length is
                         // constant, we split it only once, to reduce redundant
