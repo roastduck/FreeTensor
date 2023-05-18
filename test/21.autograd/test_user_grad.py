@@ -1,5 +1,4 @@
 import freetensor as ft
-import torch
 import pytest
 
 
