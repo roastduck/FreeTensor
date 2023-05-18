@@ -1,3 +1,5 @@
+import pytest
+
 import freetensor as ft
 from freetensor import libop
 

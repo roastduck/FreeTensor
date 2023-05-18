@@ -2,6 +2,7 @@ import freetensor as ft
 from freetensor import libop
 
 import numpy as np
+import pytest
 
 if not ft.with_pytorch():
     pytest.skip(
