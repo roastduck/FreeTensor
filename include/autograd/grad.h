@@ -71,7 +71,6 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
     std::unordered_map<std::string, std::string> provideGrads_; // var name map
 
     std::unordered_map<std::string, std::string> gradNames_; // x -> dy/dx
-    std::unordered_set<std::string> taped_;
     std::unordered_map<Expr, Expr> equLoads_;
     std::unordered_map<std::string, std::unordered_set<Stmt>>
         recomputed_; // var name -> set{stmt}

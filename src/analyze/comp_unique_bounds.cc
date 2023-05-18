@@ -123,6 +123,24 @@ bool CompUniqueBounds::alwaysLE(const Expr &lhs, const Expr &rhs) {
     return false;
 }
 
+void CompUniqueBounds::insertSignDataTypeInfo(const Expr &op) {
+    switch (op->dtype().sign()) {
+    case SignDataType::GT0:
+        updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 1}});
+        break;
+    case SignDataType::GE0:
+        updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
+        break;
+    case SignDataType::LT0:
+        updUpper(upper_[op], UpperBound{LinearExpr<Rational<int64_t>>{{}, -1}});
+        break;
+    case SignDataType::LE0:
+        updUpper(upper_[op], UpperBound{LinearExpr<Rational<int64_t>>{{}, 0}});
+        break;
+    default:; // do nothing
+    }
+}
+
 void CompUniqueBounds::visitExpr(const Expr &op) {
     if (lower_.count(op) || upper_.count(op)) {
         return;
@@ -168,22 +186,19 @@ void CompUniqueBounds::visit(const Load &op) {
     BaseClass::visit(op);
     updLower(lower_[op], LowerBound{op});
     updUpper(upper_[op], UpperBound{op});
+    insertSignDataTypeInfo(op);
+}
 
-    switch (op->dtype().sign()) {
-    case SignDataType::GT0:
-        updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 1}});
-        break;
-    case SignDataType::GE0:
-        updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
-        break;
-    case SignDataType::LT0:
-        updUpper(upper_[op], UpperBound{LinearExpr<Rational<int64_t>>{{}, -1}});
-        break;
-    case SignDataType::LE0:
-        updUpper(upper_[op], UpperBound{LinearExpr<Rational<int64_t>>{{}, 0}});
-        break;
-    default:; // do nothing
-    }
+void CompUniqueBounds::visit(const Cast &op) {
+    BaseClass::visit(op);
+    // TODO: Use the expression itself as a bound just like Load?
+    insertSignDataTypeInfo(op);
+}
+
+void CompUniqueBounds::visit(const Intrinsic &op) {
+    BaseClass::visit(op);
+    // TODO: Use the expression itself as a bound just like Load?
+    insertSignDataTypeInfo(op);
 }
 
 void CompUniqueBounds::visit(const IntConst &op) {

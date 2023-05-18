@@ -63,7 +63,12 @@ class CopyParts : public Mutator {
 struct CrossThreadDep {
     Stmt later_, earlier_, lcaStmt_, lcaLoop_;
     bool inWarp_;
-    bool visiting_, synced_;
+    bool visiting_ = false, synced_ = false, syncedOnlyInBranch_ = false;
+
+    CrossThreadDep(const Stmt &later, const Stmt &earlier, const Stmt &lcaStmt,
+                   const Stmt &lcaLoop, bool inWarp)
+        : later_(later), earlier_(earlier), lcaStmt_(lcaStmt),
+          lcaLoop_(lcaLoop), inWarp_(inWarp) {}
 };
 
 class MakeSync : public Mutator {
@@ -72,7 +77,8 @@ class MakeSync : public Mutator {
     Stmt root_;
     const std::unordered_map<ID, ThreadInfo> &loop2thread_;
     std::vector<CrossThreadDep> deps_;
-    std::unordered_map<ID, Stmt> syncBeforeFor_;
+    std::unordered_map<ID, std::pair<Stmt, bool /* isSyncWarp */>>
+        syncBeforeFor_, syncBeforeIf_;
     std::unordered_map<ID, std::vector<Stmt>> branchSplittersThen_,
         branchSplittersElse_;
     LoopVariExprMap variantExprs_;
@@ -85,6 +91,38 @@ class MakeSync : public Mutator {
           variantExprs_(std::move(variantExprs)) {}
 
   private:
+    /**
+     * Make `__syncthreads()` or `__syncwarp(__activemask())` statement.
+     *
+     * The semantics of the synchronization inserted intents to synchronize
+     * among all threads RUNNING TO the synchronization point, not including the
+     * threads in other control flows. For example,
+     *
+     * ```
+     * if (threadIdx < X) {
+     *   sync  // Sync point A
+     * } else {
+     *   sync  // Sync point B
+     * }
+     * ```
+     *
+     * Sync point A only synchronizes threads whose indices are < X. Sync point
+     * B only syncrhonizes threads whose indices are >= X, while these two
+     * groups of threads will not synchronize against each other.
+     *
+     * To correctly lower the code, the caller of these functions should decide
+     * where to insert the synchronization (in this particular example, whether
+     * to insert in the branch or out of it).
+     *
+     * Beside this consideration, CUDA does not allow `__syncthreads` in control
+     * flow anyway. So `__syncthreads` should always be located out of branches.
+     *
+     * @{
+     */
+    static Stmt makeSyncThreads();
+    static Stmt makeSyncWarp();
+    /** @} */
+
     /**
      * Mark some `If` nodes to be split, in order to insert a synchronization
      *
@@ -144,7 +182,7 @@ class MakeSync : public Mutator {
      * @param needSync : True if `__syncwarp`, false if `__syncthreads`
      */
     void markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync,
-                              bool needSyncWarp);
+                              bool isSyncWarp);
 
   protected:
     Stmt visitStmt(const Stmt &op) override;

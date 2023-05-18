@@ -40,6 +40,9 @@ class Config {
         backendCompilerNVCC_; /// Env and macro FT_BACKEND_COMPILER_NVCC.
                               /// Colon-separated paths, searched from left to
                               /// right
+    static std::vector<std::filesystem::path>
+        backendOpenMP_; // Env and macro FT_BACKEND_OPENMP. Colon-separated
+                        // paths, linked from left to right
 
     static Ref<Target>
         defaultTarget_; /// Used for lower and codegen when target is omitted.
@@ -120,6 +123,20 @@ class Config {
     }
     static const std::vector<std::filesystem::path> &backendCompilerNVCC() {
         return backendCompilerNVCC_;
+    }
+
+    /**
+     * @brief Set the OpenMP library linked to the compiled executable
+     *
+     * @param path : Path to the OpenMP library. Should be a raw path
+     * (unescaped).
+     */
+    static void
+    setBackendOpenMP(const std::vector<std::filesystem::path> &path) {
+        backendOpenMP_ = path;
+    }
+    static const std::vector<std::filesystem::path> &backendOpenMP() {
+        return backendOpenMP_;
     }
 
     static void setDefaultTarget(const Ref<Target> &target) {

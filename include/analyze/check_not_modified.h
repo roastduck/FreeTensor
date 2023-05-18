@@ -32,6 +32,24 @@ class CheckNameToDefMapping : public SymbolTable<Visitor> {
     void visitStmt(const Stmt &stmt) override;
 };
 
+class CheckReadToParallelScopeMapping : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
+
+    ID pos_;
+    const std::unordered_set<std::string> &reads_;
+    std::unordered_map<std::string, ID> read2scope_;
+
+  public:
+    CheckReadToParallelScopeMapping(
+        const ID &pos, const std::unordered_set<std::string> &reads)
+        : pos_(pos), reads_(reads) {}
+
+    const auto &read2scope() const { return read2scope_; }
+
+  protected:
+    void visitStmt(const Stmt &stmt) override;
+};
+
 class InsertTmpEval : public Mutator {
     Expr s0Expr_, s1Expr_;
     ID s0_, s1_, s0Eval_, s1Eval_;
@@ -57,11 +75,13 @@ class InsertTmpEval : public Mutator {
  * period to check can be set by `s0Side` and `s1Side`, to specify whether the
  * period includes `s0` and `s1` themselves
  *
- * It will return false in two cases:
+ * It will return false in four cases:
  *
- * 1. Variables in `expr` is not defined at `s0` or `s1`, or
+ * 1. Any variable in `expr` is not defined at `s0` or `s1`, or
  * 2. The defining VarDef or For nodes in `s0` and `s1` are different, or
- * 3. Variables used in `expr` is written between `s0` and `s1`.
+ * 3. Any variable used in `expr` is written between `s0` and `s1`, or
+ * 4. Any variable used in `expr` is thread-local, but `s0` and `s1` do not
+ * share the same thread.
  */
 bool checkNotModified(const Stmt &op, const Expr &expr,
                       CheckNotModifiedSide s0Side, const ID &s0,

@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <analyze/comp_transient_bounds.h>
+#include <hash.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -23,6 +24,10 @@ namespace freetensor {
  *
  * Two UNIQUE expressions `x` have different upper bounds
  *
+ * For each statements in the AST, a corresponding instance of this class should
+ * be created to deal with all (sub)expressions in the statement, so as to
+ * distinguish different `x` sites in the example above
+ *
  * This pass is not accurate. Simplifying passes using this analysis may need
  * to run for multiple rounds
  */
@@ -32,8 +37,8 @@ class CompUniqueBounds : public Visitor {
   public:
     typedef std::vector<LowerBound> LowerBoundsList;
     typedef std::vector<UpperBound> UpperBoundsList;
-    typedef std::unordered_map<Expr, LowerBoundsList> LowerBoundsMap;
-    typedef std::unordered_map<Expr, UpperBoundsList> UpperBoundsMap;
+    typedef ASTHashMap<Expr, LowerBoundsList> LowerBoundsMap;
+    typedef ASTHashMap<Expr, UpperBoundsList> UpperBoundsMap;
 
   private:
     const CompTransientBoundsInterface &transients_;
@@ -108,12 +113,15 @@ class CompUniqueBounds : public Visitor {
      */
     void visitLinear(const Expr &op);
 
+    void insertSignDataTypeInfo(const Expr &op);
+
   protected:
     void visitExpr(const Expr &op) override;
 
     void visit(const Var &op) override;
     void visit(const Load &op) override;
-    // TODO: Cast can also be treated as Load
+    void visit(const Cast &op) override;
+    void visit(const Intrinsic &op) override;
     void visit(const IntConst &op) override;
     void visit(const Add &op) override;
     void visit(const Sub &op) override;

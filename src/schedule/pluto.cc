@@ -7,6 +7,7 @@
 #include <math/parse_pb_expr.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/pb_simplify.h>
 #include <pass/shrink_for.h>
 #include <pass/sink_var.h>
 #include <schedule.h>
@@ -480,6 +481,9 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                     // later dimensions first, so the first half would be
                     // target, and second half being source
                     auto hSet = flattenMapToSet(std::move(hMap));
+                    // overapproximate to allow coefficients on strided
+                    // dependences
+                    hSet = isl_set_remove_unknown_divs(hSet.move());
                     auto strSet = toString(std::move(hSet));
 
                     std::lock_guard l(m);
@@ -753,6 +757,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     std::vector<std::vector<int>> c1ParamValue, c1IterValue;
     // start computing permuted dimensions
     int fusedLevel, parallelCount = 0;
+    bool isParallel = true;
     for (fusedLevel = 0; fusedLevel < std::min(nestLevel0, nestLevel1);
          ++fusedLevel) {
         //! FIXME: handle parameters from loads
@@ -819,7 +824,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                          }) |
                          ranges::to<std::vector>();
 
-        bool isParallel = true;
+        // don't reset since we only count outer parallelism
         for (int i = 0; i < nParams + 1; ++i)
             isParallel = isParallel && optimized[i] == 0;
         if (isParallel)

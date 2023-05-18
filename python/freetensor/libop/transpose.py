@@ -3,7 +3,7 @@ __all__ = ['transpose', 'transpose_']
 from typing import Sequence
 
 from .. import core
-from .utils import all_minus_one, circular_axis
+from .utils import circular_axis
 
 
 def _get_transpose_perm(perm, ndim):
@@ -36,7 +36,9 @@ def transpose_(x: core.VarRef, y: core.VarRef, perm: Sequence[int] = None):
         y[...] = x[...]
     else:
         for i in range(y.shape(0)):
-            transpose_(x.select(i, dim=perm[0]), y[i], perm=all_minus_one(perm))
+            transpose_(x.select(i, dim=perm[0]),
+                       y[i],
+                       perm=[d if d < perm[0] else d - 1 for d in perm[1:]])
 
 
 @core.inline

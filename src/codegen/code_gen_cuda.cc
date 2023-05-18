@@ -79,7 +79,7 @@ void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
         (*this)(dim);
         os() << ") * ";
     }
-    os() << "sizeof(" << gen(tensor->dtype()) << "));" << std::endl;
+    os() << "sizeof(" << gen(tensor->dtype()) << "), __stream);" << std::endl;
 }
 
 void CodeGenCUDA::genScalar(const VarDef &def,
@@ -108,8 +108,7 @@ void CodeGenCUDA::genScalar(const VarDef &def,
                              ::freetensor::toString(mtype) +
                              " from inside a kernel");
     } else if (indices.empty() && (mtype == MemType::GPUGlobal ||
-                                   mtype == MemType::GPUGlobalHeap ||
-                                   mtype == MemType::GPUShared)) {
+                                   mtype == MemType::GPUGlobalHeap)) {
         os() << "*" << mangle(var);
     } else if (def->buffer_->mtype() == MemType::GPULocal ||
                def->buffer_->mtype() == MemType::GPUWarp) {
@@ -184,7 +183,7 @@ void CodeGenCUDA::enterKernel(const Stmt &body) {
         os() << (first ? "" : ", ") << mangle(name);
         first = false;
     }
-    os() << ", _params, __glmem);" << std::endl;
+    os() << ", params, __glmem);" << std::endl;
 
     // While run time error inside a kernel can be checked in future
     // synchronizations, invalid kernel launches has to be checked here
@@ -386,7 +385,8 @@ void CodeGenCUDA::visit(const Alloc &op) {
     ASSERT(buf->mtype() == MemType::GPUGlobalHeap);
 
     // e.g.
-    // x_opt = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 * sizeof(int)));
+    // x_opt = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 * sizeof(int),
+    // __stream));
     makeIndent();
     os() << mangle(op->var_) << "_opt = ";
     genMdPtrDef(vardef, [&]() {
@@ -395,7 +395,7 @@ void CodeGenCUDA::visit(const Alloc &op) {
             (*this)(dim);
             os() << " * ";
         }
-        os() << "sizeof(" << gen(dtype) << "))";
+        os() << "sizeof(" << gen(dtype) << "), __stream)";
     });
     os() << ";" << std::endl;
 }
@@ -406,7 +406,7 @@ void CodeGenCUDA::visit(const Free &op) {
     // e.g. auto x_ptr = x.data_handle();
     //      x_opt.drop();
     //      x_opt = std::nullopt;
-    //      cudaFree(x_ptr);
+    //      cudaFreeAsync(x_ptr, __stream);
     auto &&name = mangle(op->var_);
     makeIndent();
     os() << "auto " << name << "_ptr = " << name << ".data_handle();"
@@ -416,7 +416,7 @@ void CodeGenCUDA::visit(const Free &op) {
     makeIndent();
     os() << name << "_opt = std::nullopt;" << std::endl;
     makeIndent();
-    os() << "cudaFree(" << name << "_ptr);" << std::endl;
+    os() << "cudaFreeAsync(" << name << "_ptr, __stream);" << std::endl;
 }
 
 void CodeGenCUDA::visit(const ReduceTo &op) {
@@ -731,13 +731,13 @@ void CodeGenCUDA::visit(const MatMul &op) {
     makeIndent();
     beginBlock();
     makeIndent();
-    os() << gen(op->c_->dtype()) << " _cublasAlpha = ";
+    os() << gen(op->c_->dtype()) << " cublasAlpha = ";
     (*this)(op->alpha_);
-    os() << ", _cublasBeta = ";
+    os() << ", cublasBeta = ";
     (*this)(op->beta_);
     os() << ";" << std::endl;
     makeIndent();
-    os() << "cublasGemmStridedBatchedEx(_ctx->cublas(), "
+    os() << "cublasGemmStridedBatchedEx(ctx->cublas(), "
          << (transA ? "CUBLAS_OP_N" : "CUBLAS_OP_T") << ", "
          << (transB ? "CUBLAS_OP_N" : "CUBLAS_OP_T") << ", ";
     (*this)(m);
@@ -745,7 +745,7 @@ void CodeGenCUDA::visit(const MatMul &op) {
     (*this)(n);
     os() << ", ";
     (*this)(k);
-    os() << ", &_cublasAlpha, &";
+    os() << ", &cublasAlpha, &";
     (*this)(a);
     os() << ", " << genCUBLASType(op->a_->dtype()) << ", ";
     (*this)(lda);
@@ -757,7 +757,7 @@ void CodeGenCUDA::visit(const MatMul &op) {
     (*this)(ldb);
     os() << ", ";
     (*this)(strideb);
-    os() << ", &_cublasBeta, &";
+    os() << ", &cublasBeta, &";
     (*this)(c);
     os() << ", " << genCUBLASType(op->c_->dtype()) << ", ";
     (*this)(ldc);
@@ -795,14 +795,14 @@ extern "C" {
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
             std::string s =
-                "void run(void **__params, void **_returns, size_t "
-                "**_retShapes, size_t *_retDims, GPUContext_t _ctx) {\n";
-            // We copy __params to _params, in order to pass the parameter pack
-            // into a kernel
+                "void run(void **__params, void **returns, size_t **retShapes, "
+                "size_t *retDims, GPUContext_t ctx) {\n";
+            // We copy `__params` to `params`, in order to pass the parameter
+            // pack into a kernel
             s += "__ByValArray<void *, " + std::to_string(nParams) +
-                 "> _params;\n";
+                 "> params;\n";
             for (size_t i = 0; i < nParams; i++) {
-                s += "_params[" + std::to_string(i) + "] = __params[" +
+                s += "params[" + std::to_string(i) + "] = __params[" +
                      std::to_string(i) + "];\n";
             }
             s += "\n";
@@ -817,14 +817,15 @@ extern "C" {
             // FIXME: Support non-constant
             ASSERT(globalSize->nodeType() == ASTNodeType::IntConst);
             s += "uint8_t *__glmem = (uint8_t*)cudaNew(" +
-                 std::to_string(globalSize.as<IntConstNode>()->val_) + ");\n";
+                 std::to_string(globalSize.as<IntConstNode>()->val_) +
+                 ", __stream);\n";
             s += "\n";
 
             s += stream.os_.str();
             s += "\n";
 
             // Free stack for gpu/global
-            s += "cudaFree(__glmem);\n";
+            s += "cudaFreeAsync(__glmem, __stream);\n";
 
             s += "}\n";
             return s;
@@ -886,7 +887,7 @@ extern "C" {
                 first = false;
             }
             os << ", __ByValArray<void *, " + std::to_string(nParams) +
-                      "> _params, uint8_t *__glmem) ";
+                      "> params, uint8_t *__glmem) ";
             os << stream.os_.str() << std::endl;
             return os.str();
         }

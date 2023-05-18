@@ -19,14 +19,14 @@ def test_float():
     @ft.optimize(device=device, verbose=1)
     def f(y):
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        libop.zeros_(y)
+        libop.ones_(y)
 
     y_torch = torch.ones(4, 4, dtype=torch.float32)
     y_arr = ft.array(y_torch)
     f(y_arr)
     y_torch = y_arr.torch()
 
-    assert torch.all(y_torch == torch.zeros(4, 4, dtype=torch.float32))
+    assert torch.all(y_torch == torch.ones(4, 4, dtype=torch.float32))
 
 
 def test_int():
@@ -35,14 +35,14 @@ def test_int():
     @ft.optimize(device=device, verbose=1)
     def f(y):
         y: ft.Var[(4, 4), "int32", "output", "cpu"]
-        libop.zeros_(y)
+        libop.ones_(y)
 
     y_torch = torch.ones(4, 4, dtype=torch.int32)
     y_arr = ft.array(y_torch)
     f(y_arr)
     y_torch = y_arr.torch()
 
-    assert torch.all(y_torch == torch.zeros(4, 4, dtype=torch.int32))
+    assert torch.all(y_torch == torch.ones(4, 4, dtype=torch.int32))
 
 
 def test_bool():
@@ -51,14 +51,14 @@ def test_bool():
     @ft.optimize(device=device, verbose=1)
     def f(y):
         y: ft.Var[(4, 4), "bool", "output", "cpu"]
-        libop.zeros_(y)
+        libop.ones_(y)
 
     y_torch = torch.ones(4, 4, dtype=torch.bool)
     y_arr = ft.array(y_torch)
     f(y_arr)
     y_torch = y_arr.torch()
 
-    assert torch.all(y_torch == torch.zeros(4, 4, dtype=torch.bool))
+    assert torch.all(y_torch == torch.ones(4, 4, dtype=torch.bool))
 
 
 def test_out_of_place():
@@ -66,9 +66,9 @@ def test_out_of_place():
 
     @ft.optimize(device=device, verbose=1)
     def f():
-        return libop.zeros((4, 4), "float32")
+        return libop.ones((4, 4), "float32")
 
     y_arr = f()
     y_torch = y_arr.torch()
 
-    assert torch.all(y_torch == torch.zeros(4, 4, dtype=torch.float32))
+    assert torch.all(y_torch == torch.ones(4, 4, dtype=torch.float32))

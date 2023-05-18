@@ -4,11 +4,7 @@
 #ifdef FT_WITH_CUDA
 
 #include <unordered_map>
-#include <unordered_set>
 
-#include <analyze/comp_transient_bounds.h>
-#include <analyze/comp_unique_bounds.h>
-#include <analyze/symbol_table.h>
 #include <func.h>
 #include <mutator.h>
 
@@ -17,13 +13,8 @@ namespace freetensor {
 namespace gpu {
 
 class NormalizeThreads : public Mutator {
-    struct IterInfo {
-        std::string newIter_;
-        Expr offset_;
-    };
-
     Stmt root_;
-    std::unordered_map<std::string, IterInfo> varMap_;
+    std::unordered_map<std::string, std::string> varMap_;
     std::unordered_map<ParallelScope, int>
         inside_; // Multiple nested `threadIdx.x`s are possible. See the
                  // doc-string of schedule/parallelize
@@ -48,28 +39,13 @@ class NormalizeThreads : public Mutator {
     Stmt visit(const Eval &op) override;
 };
 
-class CheckThreadNum : public CompTransientBounds<SymbolTable<Mutator>> {
-    typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
-
-    CompUniqueBounds bound_;
-    std::unordered_set<For> openLoopsInKernel_;
-    bool inKernel_ = false;
-
-  public:
-    CheckThreadNum() : bound_(*this) {}
-
-  private:
-    /**
-     * Ensure the length is defined with only constants and "byvalue" variables
-     */
-    bool isLegalLen(const Expr &expr);
-    bool isLegalLen(const std::unordered_set<std::string> &names);
-
-  protected:
-    using BaseClass::visit;
-    Stmt visit(const For &op) override;
-};
-
+/**
+ * Make GPU parallel scopes to be GPU kernel-like scopes
+ *
+ * After this pass, each kernel will be surrounded by perfectly nested block and
+ * thread scopes. Semantic of the original program will be perserved by adding
+ * conditions into the kernel body
+ */
 Stmt normalizeThreads(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(normalizeThreads)

@@ -6,8 +6,8 @@
 
 - Linux
 - Python (>= 3.8, for the Python frontend)
-- GCC (>= 11, to have enough C++20 support and the "unroll" pragma)
-- CUDA (>= 11.4.1, to support GCC 11, Optional)
+- C++ compiler (GCC >= 11 or Clang >= 16, to have enough C++20 support and the "unroll" pragma)
+- CUDA (>= 11.4.1, to support GCC 11, Optional, only supported with GCC)
 - MKL (Optional)
 - PyTorch (Optional, see below)
 - Java (= 11, Build-time dependency only)
@@ -81,8 +81,9 @@ There are serveral global configurations can be set via environment variables:
 - `FT_PRINT_SOURCE_LOCATION=ON/OFF`. Print (or not) Python source location of all statements in an AST. Defaults to `OFF`.
 - `FT_FAST_MATH=ON/OFF`. Run (or not) `pass/float_simplify` optimization pass, and enable (or not) fast math on backend compilers. Defaults to `ON`.
 - `FT_WERROR=ON/OFF`. Treat warnings as errors (or not). Defaults to `OFF`.
-- `FT_BACKEND_COMPILER_CXX=<path/to/compiler>`. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself, and compilers found in the `PATH` enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.
-- `FT_BACKEND_COMPILER_NVCC=<path/to/compiler>`. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself, and compilers found in the `PATH` enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.
+- `FT_BACKEND_COMPILER_CXX=<path/to/compiler>`. The C++ compiler used to compile the optimized program. Default to the same compiler found when building FreeTensor itself, and compilers found in the `PATH` enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.
+- `FT_BACKEND_COMPILER_NVCC=<path/to/compiler>`. The CUDA compiler used to compile the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself, and compilers found in the `PATH` enviroment variable. This environment variable should be set to a colon-separated list of paths, in which the paths are searched from left to right.
+- `FT_BACKEND_OPENMP`. Path to an OpenMP library linked to the optimized program. Default to the same library linked to FreeTensor itself. This environment variable should be set to a colon-separated list of paths, in which the libraries are linked from left to right.
 - `FT_DEBUG_RUNTIME_CHECK=ON/OFF`. If `ON`, check out-of-bound access and integer overflow at the generated code at runtime. This option is only for debugging, and will introduce significant runtime overhead. Currently the checker cannot print the error site, please also enable `FT_DEBUG_BINARY` and then use GDB to locate the error site (by setting a breakpoint on `exit`). Defaults to `OFF`.
 - `FT_DEBUG_BINARY=ON/OFF` (for developers). If `ON`, compile with `-g` at backend. FreeTensor will not delete the binary file after loading it. Defaults to `OFF`.
 - `FT_DEBUG_CUDA_WITH_UM=ON/OFF`. If `ON`, allocate CUDA buffers on Unified Memory, for faster (debugging) access of GPU `Array` from CPU, but with slower `Array` allocations and more synchronizations. No performance effect on normal in-kernel computations. Defaults to `OFF`.

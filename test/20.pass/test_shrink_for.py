@@ -75,3 +75,31 @@ def test_linear_bounds():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_multiple_branches():
+    with ft.VarDef([("x", (32, 4), "int32", "inout", "cpu"),
+                    ("y", (32, 4), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("i", 0, 32) as i:
+            with ft.For("j", 0, 4, label='L') as j:
+                with ft.If((j // 2) * 32 + i < 50):
+                    with ft.If(j % 2 == 0):
+                        y[i, j] = x[i, j] * 2
+                    y[i, j] += 1
+    ast1 = ft.pop_ast(verbose=True)
+    ast1 = ft.shrink_for(ast1)
+    print(ast1)
+
+    with ft.VarDef([("x", (32, 4), "int32", "inout", "cpu"),
+                    ("y", (32, 4), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("i", 0, 32) as i:
+            with ft.For("j", 0, 4, label='L') as j:
+                with ft.If((j // 2) * 32 + i < 50):
+                    y[i, j] += 1
+    ast2 = ft.pop_ast(verbose=True)
+    ast2 = ft.shrink_for(ast2)
+    print(ast2)
+
+    # No matter if the `if j % 2 == 0` branch exists, the shrinked length to be
+    # the same
+    assert ft.find_stmt(ast1, 'L').len.same_as(ft.find_stmt(ast2, 'L').len)

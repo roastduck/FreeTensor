@@ -281,13 +281,9 @@ Stmt Grad::visit(const VarDef &_op) {
     if (defsNeedGrad_.count(_op->id())) {
         gradName = gradNames_[_op->name_] = _op->name_ + ".grad";
     }
-    if (tapes_.count(_op->id())) {
-        taped_.insert(_op->name_);
-    }
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
-    taped_.erase(op->name_);
     gradNames_.erase(op->name_);
     recomputed_.erase(op->name_);
 
@@ -371,7 +367,7 @@ Stmt Grad::visit(const Store &op) {
     if (isRecompute_) {
         bool recomputed =
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
-        if (!recomputed && !taped_.count(op->var_)) {
+        if (!recomputed && !tapes_.count(def(op->var_)->id())) {
             recomputed_[op->var_].insert(op);
             return replaceBySaved.recomp(op);
         } else {
@@ -449,7 +445,7 @@ Stmt Grad::visit(const ReduceTo &op) {
         bool recomputed =
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
         if (!recomputed && b->atype() == AccessType::Cache &&
-            !taped_.count(op->var_)) {
+            !tapes_.count(def(op->var_)->id())) {
             recomputed_[op->var_].insert(op);
             return replaceBySaved.recomp(op);
         } else {

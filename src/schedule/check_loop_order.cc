@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include <analyze/all_uses.h>
 #include <container_utils.h>
 #include <schedule/check_loop_order.h>
 
@@ -15,6 +16,16 @@ void CheckLoopOrder::visitStmt(const Stmt &stmt) {
 void CheckLoopOrder::visit(const For &op) {
     if (std::find(dstOrder_.begin(), dstOrder_.end(), op->id()) !=
         dstOrder_.end()) {
+        if (reqireRangeDefinedOutside_) {
+            if (hasIntersect(itersDefinedInNest_, allIters(op->begin_)) ||
+                hasIntersect(itersDefinedInNest_, allIters(op->end_)) ||
+                hasIntersect(itersDefinedInNest_, allIters(op->step_))) {
+                throw InvalidSchedule(
+                    "The range of Loop " + toString(op->id()) +
+                    " is not defined out of the loop nest being scheduled");
+            }
+            itersDefinedInNest_.emplace(op->iter_);
+        }
         curOrder_.emplace_back(op);
         if (curOrder_.size() < dstOrder_.size()) {
             Visitor::visit(op);

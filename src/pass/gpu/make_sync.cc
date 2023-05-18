@@ -6,6 +6,7 @@
 
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <pass/const_fold.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/merge_and_hoist_if.h>
@@ -137,9 +138,18 @@ split_this_level:
     return op;
 }
 
+Stmt MakeSync::makeSyncThreads() {
+    return makeEval(makeIntrinsic("__syncthreads()", {}, DataType::Void, true));
+}
+
+Stmt MakeSync::makeSyncWarp() {
+    return makeEval(
+        makeIntrinsic("__syncwarp(__activemask())", {}, DataType::Void, true));
+}
+
 void MakeSync::markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync,
-                                    bool needSyncWarp) {
-    if (needSyncWarp) {
+                                    bool isSyncWarp) {
+    if (isSyncWarp) {
         return;
     }
     for (Stmt ctx = stmtInTree->parentStmt(), childOfCtx = stmtInTree;
@@ -180,27 +190,37 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
     }
 
     if (needSyncThreads || needSyncWarp) {
-        Stmt sync;
-        if (needSyncThreads) {
-            sync = makeEval(
-                makeIntrinsic("__syncthreads()", {}, DataType::Void, true));
-        } else {
-            sync = makeEval(
-                makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
-        }
+        Stmt sync = needSyncThreads ? makeSyncThreads() : makeSyncWarp();
 
         Stmt whereToInsert;
         for (auto ctx = op->parentStmt(); ctx->id() != target->id();
              ctx = ctx->parentStmt()) {
             if (ctx->nodeType() == ASTNodeType::For) {
                 whereToInsert = ctx;
+            } else if (ctx->nodeType() == ASTNodeType::If &&
+                       ctx.as<IfNode>()->elseCase_.isValid()) {
+                // Need to sync before an `if` only when there is an `else`
+                // case, where we need the `then` case AND the `else` case to
+                // sync on ONE sync point
+                whereToInsert = ctx;
             }
         }
         if (!whereToInsert.isValid()) {
             ret = makeStmtSeq({sync, ret});
-            markSyncForSplitting(op, sync, needSyncWarp);
+            markSyncForSplitting(op, sync, !needSyncThreads);
+        } else if (whereToInsert->nodeType() == ASTNodeType::For) {
+            if (!syncBeforeFor_.count(whereToInsert->id()) ||
+                (needSyncThreads &&
+                 syncBeforeFor_.at(whereToInsert->id()).second)) {
+                syncBeforeFor_[whereToInsert->id()] = {sync, !needSyncThreads};
+            }
         } else {
-            syncBeforeFor_[whereToInsert->id()] = sync;
+            ASSERT(whereToInsert->nodeType() == ASTNodeType::If);
+            if (!syncBeforeIf_.count(whereToInsert->id()) ||
+                (needSyncThreads &&
+                 syncBeforeIf_.at(whereToInsert->id()).second)) {
+                syncBeforeIf_[whereToInsert->id()] = {sync, !needSyncThreads};
+            }
         }
 
         for (CrossThreadDep &dep : deps_) {
@@ -210,6 +230,9 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
                 }
                 if (needSyncWarp && dep.inWarp_) {
                     dep.synced_ = true;
+                    if (!needSyncThreads) {
+                        dep.syncedOnlyInBranch_ = true;
+                    }
                 }
             }
         }
@@ -233,16 +256,9 @@ Stmt MakeSync::visit(const For &_op) {
         }
     }
     if (needSyncThreads || needSyncWarp) {
-        Stmt sync;
-        if (needSyncThreads) {
-            sync = makeEval(
-                makeIntrinsic("__syncthreads()", {}, DataType::Void, true));
-        } else if (needSyncWarp) {
-            sync = makeEval(
-                makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
-        }
+        Stmt sync = needSyncThreads ? makeSyncThreads() : makeSyncWarp();
         op->body_ = makeStmtSeq({op->body_, sync});
-        markSyncForSplitting(_op->body_, sync, needSyncWarp);
+        markSyncForSplitting(_op->body_, sync, !needSyncThreads);
         for (CrossThreadDep &dep : deps_) {
             if (dep.visiting_) {
                 if (needSyncThreads) {
@@ -250,59 +266,151 @@ Stmt MakeSync::visit(const For &_op) {
                 }
                 if (needSyncWarp && dep.inWarp_) {
                     dep.synced_ = true;
+                    if (!needSyncThreads) {
+                        dep.syncedOnlyInBranch_ = true;
+                    }
                 }
             }
         }
     }
     if (syncBeforeFor_.count(op->id())) {
-        auto &&sync = syncBeforeFor_.at(op->id());
-        markSyncForSplitting(_op->body_, sync, needSyncWarp);
+        auto &&[sync, isSyncWarp] = syncBeforeFor_.at(op->id());
+        markSyncForSplitting(_op, sync, isSyncWarp);
         return makeStmtSeq({sync, op});
     }
     return op;
 }
 
-Stmt MakeSync::visit(const If &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::If);
-    auto op = __op.as<IfNode>();
+Stmt MakeSync::visit(const If &op) {
+    auto cond = (*this)(op->cond_);
+    auto thenCase = (*this)(op->thenCase_);
+    for (auto &&dep : deps_) {
+        if (dep.syncedOnlyInBranch_) {
+            dep.synced_ = false;
+        }
+    }
+    Stmt elseCase;
+    if (op->elseCase_.isValid()) {
+        elseCase = (*this)(op->elseCase_);
+        for (auto &&dep : deps_) {
+            if (dep.syncedOnlyInBranch_) {
+                dep.synced_ = false;
+            }
+        }
+    }
 
+    Stmt ret;
     if (branchSplittersThen_.count(op->id()) ||
         branchSplittersElse_.count(op->id())) {
-        if (!checkNotModified(root_, op->cond_, CheckNotModifiedSide::Before,
+        if (!checkNotModified(root_, cond, CheckNotModifiedSide::Before,
                               op->id(), CheckNotModifiedSide::After,
                               op->id())) {
             throw InvalidProgram("Unable to insert a synchronizing statment "
                                  "inside an If node because the condition " +
-                                 toString(op->cond_) + " is being modified");
+                                 toString(cond) + " is being modified");
         }
 
         Stmt thenBody;
         if (branchSplittersThen_.count(op->id())) {
-            CopyParts thenCopier(op->cond_, branchSplittersThen_.at(op->id()));
-            thenBody = thenCopier(op->thenCase_);
+            CopyParts thenCopier(cond, branchSplittersThen_.at(op->id()));
+            thenBody = thenCopier(thenCase);
         } else {
-            thenBody = makeIf(op->cond_, op->thenCase_);
+            thenBody = makeIf(cond, thenCase);
         }
-        if (op->elseCase_.isValid()) {
+        if (elseCase.isValid()) {
             Stmt elseBody;
             if (branchSplittersElse_.count(op->id())) {
-                CopyParts elseCopier(makeLNot(op->cond_),
+                CopyParts elseCopier(makeLNot(cond),
                                      branchSplittersElse_.at(op->id()));
-                elseBody = elseCopier(op->elseCase_);
+                elseBody = elseCopier(elseCase);
             } else {
-                elseBody = makeIf(makeLNot(op->cond_), op->elseCase_);
+                elseBody = makeIf(makeLNot(cond), elseCase);
             }
-            return makeStmtSeq({thenBody, elseBody});
+            ret = makeStmtSeq({thenBody, elseBody});
         } else {
-            return thenBody;
+            ret = thenBody;
         }
+    } else {
+        ret = makeIf(std::move(cond), std::move(thenCase), std::move(elseCase),
+                     op->metadata(), op->id(), op->debugBlame());
     }
-    return op;
+
+    if (syncBeforeIf_.count(op->id())) {
+        auto &&[sync, isSyncWarp] = syncBeforeIf_.at(op->id());
+        markSyncForSplitting(op, sync, isSyncWarp);
+        return makeStmtSeq({sync, ret});
+    }
+
+    return ret;
 }
 
 Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
     auto op = constFold(_op);
+
+    auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
+        if (!lcaStmt(later.stmt_, earlier.stmt_)
+                 ->parentStmtByFilter([&](const Stmt &s) {
+                     return s->nodeType() == ASTNodeType::For &&
+                            std::holds_alternative<CUDAScope>(
+                                s.as<ForNode>()->property_->parallel_);
+                 })
+                 .isValid()) {
+            // Crossing kernels, skipping
+            return false;
+        }
+
+        // Already synchronized for specific `ReduceTo` node (for example by
+        // using atomic). No need for additional `__syncthreads`.
+        //
+        // NOTE 1: We prefer `__syncthreads` over synchronizing individual
+        // `ReduceTo` nodes: We check in `pass/make_parallel_reduction`, if
+        // we are able to use `__syncthreads` here, we won't set `sync_`
+        // there.
+        //
+        // NOTE 2: Our schedules prohibits simultaneous `Load` and
+        // `ReduceTo`, or simultaneous `Store` and `ReduceTo`, so
+        // synchronizations for `ReduceTo` nodes may only synchronize among
+        // `ReduceTo` nodes, not between `ReduceTo` and `Store`, or between
+        // `ReduceTo` and `Load`. But after `pass/normalize_threads`,
+        // everything can happen simultaneously (and that's why we need this
+        // `pass/make_sync`). Thus we can only ignore the synchronization
+        // only if BOTH `earlier` and `later` are `ReduceTo`.
+        if (later.op_->nodeType() == ASTNodeType::ReduceTo &&
+            earlier.op_->nodeType() == ASTNodeType::ReduceTo &&
+            later.op_.as<ReduceToNode>()->sync_ &&
+            earlier.op_.as<ReduceToNode>()->sync_) {
+            return false;
+        }
+
+        return later.op_ != earlier.op_;
+    };
+
+    // Reject all cross-block dependences
+    std::vector<FindDepsDir> queryBlocks;
+    for (auto &&loop : findAllStmt(op, [](const Stmt &s) {
+             if (s->nodeType() == ASTNodeType::For) {
+                 auto &&p = s.as<ForNode>()->property_->parallel_;
+                 return std::holds_alternative<CUDAScope>(p) &&
+                        std::get<CUDAScope>(p).level_ == CUDAScope::Block;
+             }
+             return false;
+         })) {
+        queryBlocks.push_back({{loop->id(), DepDirection::Different}});
+    }
+    FindDeps()
+        .direction(queryBlocks)
+        .filterAccess([](const auto &acc) {
+            return acc.buffer_->mtype() == MemType::GPUGlobal ||
+                   acc.buffer_->mtype() == MemType::GPUGlobalHeap;
+        })
+        .filter(filter)
+        .ignoreReductionWAW(false)
+        .eraseOutsideVarDef(false)(op, [](const Dependence &d) {
+            throw InvalidProgram("Dependence between blocks in a single CUDA "
+                                 "kernel cannot be resolved: " +
+                                 toString(d));
+        });
+
     FindAllThreads finder(target);
     finder(op);
     auto &&loop2thread = finder.results();
@@ -338,51 +446,17 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
             commonLoop = commonLoop->parentStmt();
         }
         ASSERT(commonLoop->nodeType() == ASTNodeType::For);
-        deps.emplace_back(CrossThreadDep{
-            laterStmt, earlierStmt, commonStmt, commonLoop,
-            loop2thread.at(d.dir_[0].first.id_).inWarp_, false, false});
+        deps.emplace_back(laterStmt, earlierStmt, commonStmt, commonLoop,
+                          loop2thread.at(d.dir_[0].first.id_).inWarp_);
     };
     FindDeps()
         .direction(query)
         .filterAccess([](const auto &acc) {
             return acc.buffer_->mtype() == MemType::GPUGlobal ||
+                   acc.buffer_->mtype() == MemType::GPUGlobalHeap ||
                    acc.buffer_->mtype() == MemType::GPUShared;
         })
-        .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
-            if (!lcaStmt(later.stmt_, earlier.stmt_)
-                     ->parentStmtByFilter([&](const Stmt &s) {
-                         return loop2thread.count(s->id());
-                     })
-                     .isValid()) {
-                // Crossing kernels, skipping
-                return false;
-            }
-
-            // Already synchronized for specific `ReduceTo` node (for example by
-            // using atomic). No need for additional `__syncthreads`.
-            //
-            // NOTE 1: We prefer `__syncthreads` over synchronizing individual
-            // `ReduceTo` nodes: We check in `pass/make_parallel_reduction`, if
-            // we are able to use `__syncthreads` here, we won't set `sync_`
-            // there.
-            //
-            // NOTE 2: Our schedules prohibits simultaneous `Load` and
-            // `ReduceTo`, or simultaneous `Store` and `ReduceTo`, so
-            // synchronizations for `ReduceTo` nodes may only synchronize among
-            // `ReduceTo` nodes, not between `ReduceTo` and `Store`, or between
-            // `ReduceTo` and `Load`. But after `pass/normalize_threads`,
-            // everything can happen simultaneously (and that's why we need this
-            // `pass/make_sync`). Thus we can only ignore the synchronization
-            // only if BOTH `earlier` and `later` are `ReduceTo`.
-            if (later.op_->nodeType() == ASTNodeType::ReduceTo &&
-                earlier.op_->nodeType() == ASTNodeType::ReduceTo &&
-                later.op_.as<ReduceToNode>()->sync_ &&
-                earlier.op_.as<ReduceToNode>()->sync_) {
-                return false;
-            }
-
-            return later.op_ != earlier.op_;
-        })
+        .filter(filter)
         .ignoreReductionWAW(false)
         .eraseOutsideVarDef(false)(op, found);
 

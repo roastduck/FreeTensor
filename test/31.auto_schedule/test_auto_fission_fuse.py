@@ -164,6 +164,8 @@ def test_tune_fuse():
 def test_tune_fission():
     # The reverse schedule of `test_tune_fuse`
 
+    # NOTE: Library conflict with PyTorch (#421) may break this test. (FIXME)
+
     with ft.VarDef([("a", (100, 100, 100), "int32", "input", "cpu"),
                     ("b", (100, 100, 100), "int32", "inout", "cpu"),
                     ("c", (100, 100, 100), "int32", "inout", "cpu")]) as (a, b,

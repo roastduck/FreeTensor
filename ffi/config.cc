@@ -89,6 +89,23 @@ void init_ffi_config(py::module_ &m) {
             return std::vector<std::string>(paths.begin(), paths.end());
         },
         "Backend compiler used to compile generated CUDA code");
+    m.def(
+        "backend_openmp",
+        []() {
+            auto &&paths = Config::backendOpenMP();
+            return std::vector<std::string>(paths.begin(), paths.end());
+        },
+        "OpenMP library linked to the compiled executable");
+    m.def(
+        "set_backend_openmp",
+        [](const std::vector<std::string> &paths) {
+            auto pathsFs =
+                paths | views::transform([](const std::string &path) {
+                    return std::filesystem::path(path);
+                });
+            Config::setBackendOpenMP({pathsFs.begin(), pathsFs.end()});
+        },
+        "Set the OpenMP library linked to the compiled executable");
     m.def("set_default_target", Config::setDefaultTarget,
           "Set default target (internal implementation of `with Target`)",
           "target"_a);

@@ -8,7 +8,7 @@ import functools
 import numpy as np
 
 import freetensor_ffi as ffi
-from freetensor_ffi import TargetType, Target, Array
+from freetensor_ffi import TargetType, Target, Device, Array
 
 from . import config
 from .codegen import NativeCode
@@ -147,39 +147,35 @@ if config.with_cuda():
     _register_target(ffi.GPUTarget)
 
 
-class Device(ffi.Device):
-    '''
+def _register_device(cls):
 
-    A computing device can be constructed from
-         1. (TargetType, DeviceNumber)
-         2. (TargetType, getDeviceByName): cuda uses best matches criteria.
-         3. (TargetType, FullName, nth): get nth(from 0) device named `Fullname`.
+    def __enter__(self: cls):
+        '''
+        A Device can be used as a "with" scope, then all the `Array`s and `Driver`s
+        will use it by default. In this style, it also sets the default Target. E.g:
 
-    E.g. Device(TargetType::GPU, 0) means the 0-th GPU (device)
-         Device(TargetType::GPU, "V100") means a GPU which best matches "V100"
-         Device(TargetType::GPU, "NVIDIA GeForce RTX 3060 Laptop GPU", 0)
-
-    A Device can be used as a "with" scope, then all the `Array`s and `Driver`s
-    will use it by default. In this style, it also sets the default Target. E.g:
-
-    ```
-    with Device(...):
-        ast = lower(ast)  # Use the Target of the Device above by default
-        a = Array(...)  # Use the Device above by default
-    ```
-    '''
-
-    def __enter__(self):
+        ```
+        with Device(...):
+            ast = lower(ast)  # Use the Target of the Device above by default
+            a = Array(...)  # Use the Device above by default
+        ```
+        '''
         _old_target_device_stack.append(
             (config.default_target(), config.default_device()))
         config.set_default_target(self.target())
         config.set_default_device(self)
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self: cls, exc_type, exc_value, traceback):
         old_target, old_device = _old_target_device_stack.pop()
         config.set_default_target(old_target)
         config.set_default_device(old_device)
+
+    cls.__enter__ = __enter__
+    cls.__exit__ = __exit__
+
+
+_register_device(Device)
 
 
 class CPU(Device):

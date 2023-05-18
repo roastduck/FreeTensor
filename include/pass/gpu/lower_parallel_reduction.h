@@ -4,6 +4,7 @@
 #ifdef FT_WITH_CUDA
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include <analyze/symbol_table.h>
 #include <func.h>
@@ -19,15 +20,19 @@ class InsertWorkspaces : public SymbolTable<Mutator> {
     std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
         ws2red_; // workspace ID -> (loop iter name, reduction info)
     std::vector<For> loopStack_;
+    std::unordered_set<std::string> handledVars_;
+    bool converged_ = true;
 
   public:
     const auto &ws2red() const { return ws2red_; }
+    bool converged() const { return converged_; }
 
   private:
     std::vector<std::pair<For, int>> reducedBy(const ReduceTo &op);
 
   protected:
     using BaseClass::visit;
+    Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const ReduceTo &op) override;
 };
@@ -40,6 +45,7 @@ class InsertBinaryReduction : public SymbolTable<Mutator> {
     std::unordered_map<ID, ID>
         ws2scope_; // workspace ID -> scope that actually do the computation,
                    // excluding initialization, binary reduction and flushing
+    std::vector<Expr> condStack_;
 
   public:
     InsertBinaryReduction(
@@ -50,6 +56,9 @@ class InsertBinaryReduction : public SymbolTable<Mutator> {
     const auto &ws2scope() const { return ws2scope_; }
 
   private:
+    Expr makeCondForNeighborThread(const std::string &thisThreadIter,
+                                   const Expr &neighborThreadIter);
+
     template <class T> T visitMemAcc(const T &_op) {
         auto __op = BaseClass::visit(_op);
         ASSERT(__op->nodeType() == _op->nodeType());
@@ -68,6 +77,7 @@ class InsertBinaryReduction : public SymbolTable<Mutator> {
     Stmt visit(const Store &op) override { return visitMemAcc(op); }
     Stmt visit(const ReduceTo &op) override { return visitMemAcc(op); }
     Expr visit(const Load &op) override { return visitMemAcc(op); }
+    Stmt visit(const If &op) override;
 };
 
 class CorrectInterThreadDependence : public SymbolTable<Mutator> {

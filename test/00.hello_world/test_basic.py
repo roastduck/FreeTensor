@@ -260,6 +260,23 @@ def test_var_as_index():
     assert np.array_equal(y_np, y_std)
 
 
+def test_intrinsic_escape():
+    with ft.VarDef([("x1", (), "int32", "input"), ("x2", (), "int32", "input"),
+                    ("y", (), "int32", "output")]) as (x1, x2, y):
+        y[...] = ft.intrinsic("% %% %", x1[...], x2[...], ret_type="int32")
+
+    func = ft.lower(ft.Func("main", ["x1", "x2", "y"], [], ft.pop_ast()),
+                    verbose=1)
+    code = ft.codegen(func, verbose=True)
+    x1 = ft.array(5, dtype="int32")
+    x2 = ft.array(2, dtype="int32")
+    y = ft.array(0, dtype="int32")
+    ft.build_binary(code)(x1, x2, y)
+    y_np = y.numpy()
+
+    assert y_np[...] == 1
+
+
 def test_error_missing_parameters():
     with ft.VarDef("x", (4, 4), "float32", "output") as x:
         x[2, 3] = 2.0
@@ -480,3 +497,25 @@ def test_default_device():
     with ft.GPU() as dev:
         assert ft.config.default_device() == dev
         assert ft.config.default_target() == dev.target()
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_the_initial_default_cpu_target_can_be_used_as_a_scope():
+    init_tgt = ft.config.default_target()
+    try:
+        ft.config.set_default_target(ft.GPU().target())
+        with init_tgt:
+            assert ft.config.default_target() == init_tgt
+    finally:
+        ft.config.set_default_target(init_tgt)  # Reset for other tests
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_the_initial_default_cpu_device_can_be_used_as_a_scope():
+    init_dev = ft.config.default_device()
+    try:
+        ft.config.set_default_device(ft.GPU())
+        with init_dev:
+            assert ft.config.default_device() == init_dev
+    finally:
+        ft.config.set_default_device(init_dev)  # Reset for other tests

@@ -533,3 +533,22 @@ def test_assert_hint():
 
     # You will find a 32-length loop
     assert re.search(r".* = 0; .* < 32; .*\+\+", test_hint.native_code())
+
+
+def test_no_deps():
+    # Used in docs/guide/hint.md
+
+    import freetensor as ft
+
+    @ft.schedule(callback=lambda s: s.parallelize("Li", "openmp"))
+    @ft.transform
+    def test(ptr, edge1, edge2):
+        ptr: ft.Var[(11,), "int32", "input", "cpu"]
+        edge1: ft.Var[(50,), "int32", "input", "cpu"]
+        edge2: ft.Var[(50,), "int32", "output", "cpu"]
+        #! label: Li
+        #! no_deps: edge2
+        #  ^^^^^^^^^^^^^^ LOOK HERE
+        for i in range(10):
+            for j in range(ptr[i], ptr[i + 1]):
+                edge2[j] = edge1[j] + i
