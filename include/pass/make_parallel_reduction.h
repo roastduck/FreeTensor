@@ -114,7 +114,12 @@ class MakeSyncReduction : public SymbolTable<Mutator> {
         &serialOverRed_; // ReduceTo ID -> [For], from inner to outer
     const LoopVariExprMap &variantMap_;
 
+#if defined(__GNUC__) && !defined(__clang__)
+    // GCC<12 dose not support [[maybe_unused]] on member vars
     const Ref<Target> &target_;
+#else
+    [[maybe_unused]] /* used only if FT_WITH_CUDA */ const Ref<Target> &target_;
+#endif
 
     struct SyncCacheInfo {
         ReduceTo oldNode_;

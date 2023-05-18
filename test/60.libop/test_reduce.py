@@ -1,9 +1,17 @@
-import torch
 import pytest
 import numpy as np
 
 import freetensor as ft
 from freetensor import libop
+
+if not ft.with_pytorch():
+    pytest.skip(
+        "The tests requires PyTorch, and FreeTensor is expected to be built with "
+        "PyTorch to be compatible with it, even if there is no direct interaction "
+        "between FreeTensor and PyTorch",
+        allow_module_level=True)
+
+import torch
 
 
 def rand(*shape, **kvs):
@@ -59,11 +67,11 @@ def test_static(libop_func, torch_func, dtype):
         libop_func(x, y, axes=[1], keepdims=False)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = zeros(3, 5, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(x_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     assert same(y_torch, torch_func(x_torch, axis=1), dtype=dtype)
 
@@ -89,11 +97,11 @@ def test_negative_axis(libop_func, torch_func, dtype):
         libop_func(x, y, axes=[-2], keepdims=False)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = zeros(3, 5, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(x_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     assert same(y_torch, torch_func(x_torch, axis=-2), dtype=dtype)
 
@@ -119,11 +127,11 @@ def test_keepdims(libop_func, torch_func, dtype):
         libop_func(x, y, axes=[1], keepdims=True)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = zeros(3, 1, 5, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(x_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     assert same(y_torch, torch_func(x_torch, axis=1, keepdim=True), dtype=dtype)
 
@@ -147,11 +155,11 @@ def test_reduce_all_dims(libop_func, torch_func, dtype):
         libop_func(x, y, axes=None, keepdims=True)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = zeros(1, 1, 1, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(x_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     assert same(y_torch, torch_func(x_torch).reshape(1, 1, 1), dtype=dtype)
 
@@ -176,9 +184,9 @@ def test_out_of_place(libop_func, torch_func, dtype):
         return libop_func(x, axes=[1], keepdims=False)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_arr = f(x_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     assert np.array_equal(y_arr.shape, [3, 5])
     assert same(y_torch, torch_func(x_torch, axis=1), dtype=dtype)
@@ -204,9 +212,9 @@ def test_out_of_place_keepdims(libop_func, torch_func, dtype):
         return libop_func(x, axes=[1], keepdims=True)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_arr = f(x_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     assert np.array_equal(y_arr.shape, [3, 1, 5])
     assert same(y_torch, torch_func(x_torch, axis=1, keepdim=True), dtype=dtype)

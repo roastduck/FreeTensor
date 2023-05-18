@@ -136,11 +136,11 @@ def test_tune_fuse():
 def test_tune_fission():
     # The reverse schedule of `test_tune_fuse`
 
-    # NOTE: To pass this test, the OpenMP parallel version must run faster than
+    # NOTE 1: To pass this test, the OpenMP parallel version must run faster than
     # the serial version. However, this is not always true for unknown reasons.
-    # Known configurations to pass this test are: GCC 10.2.1's OpenMP with
-    # OMP_PROC_BIND=true, GCC 12.1.0's OpenMP with OMP_PROC_BIND=false, or
-    # LLVM 14.0.1's OpenMP with OMP_PROC_BIND=false. (FIXME)
+    # Set OMP_PROC_BIND=true can mitigate the problem.
+
+    # NOTE 2: Library conflict with PyTorch (#421) may break this test. (FIXME)
 
     with ft.VarDef([("a", (100, 100, 100), "int32", "input", "cpu"),
                     ("b", (100, 100, 100), "int32", "inout", "cpu"),
