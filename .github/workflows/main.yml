@@ -64,7 +64,8 @@ jobs:
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@12.1.0
           source ci-script/prepare-python-environment.sh
-          PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p cpu pytest --color=yes test
+          # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
+          OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p cpu pytest --color=yes test
   build-and-test-clang-run-in-tree:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
@@ -90,4 +91,5 @@ jobs:
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@11.3.0 llvm@16.0.0
           source ci-script/prepare-python-environment.sh
-          PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p cpu pytest --color=yes test
+          # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
+          OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p cpu pytest --color=yes test
