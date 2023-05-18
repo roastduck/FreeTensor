@@ -1,9 +1,17 @@
-import torch
 import pytest
 import operator
 import numpy as np
 
 import freetensor as ft
+
+if not ft.with_pytorch():
+    pytest.skip(
+        "The tests requires PyTorch, and FreeTensor is expected to be built with "
+        "PyTorch to be compatible with it, even if there is no direct interaction "
+        "between FreeTensor and PyTorch",
+        allow_module_level=True)
+
+import torch
 
 
 @pytest.mark.parametrize('libop_func, torch_func, require_positive', [
@@ -35,11 +43,11 @@ def test_static_shape(libop_func, torch_func, require_positive):
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 + 0.001
     else:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = torch.zeros(4, 4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(x_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     assert torch.all(torch.isclose(y_torch, torch_func(x_torch)))
 
@@ -74,9 +82,9 @@ def test_out_of_place(libop_func, torch_func, require_positive):
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_arr = f(x_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     assert np.array_equal(y_arr.shape, [4, 4])
     assert torch.all(torch.isclose(y_torch, torch_func(x_torch)))
@@ -118,21 +126,21 @@ def test_inplace_grad_of_inplace_func(libop_func, torch_func, require_positive):
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     x_torch.requires_grad = True
     y_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch_ours.numpy())
+    y_arr = ft.array(y_torch_ours)
     f(x_arr, y_arr)
-    y_torch_ours = torch.tensor(y_arr.numpy())
+    y_torch_ours = y_arr.torch()
     y_torch = torch_func(x_torch)
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
 
     y_torch.grad = torch.rand(4, 4, dtype=torch.float32)
-    d_y_arr = ft.Array(y_torch.grad.numpy())
+    d_y_arr = ft.array(y_torch.grad)
     x_grad_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
-    d_x_arr = ft.Array(x_grad_torch_ours.numpy())
+    d_x_arr = ft.array(x_grad_torch_ours)
     g(**{provides['y']: d_y_arr, requires['x']: d_x_arr})
-    x_grad_torch_ours = torch.tensor(d_x_arr.numpy())
+    x_grad_torch_ours = d_x_arr.torch()
     y_torch.backward(y_torch.grad)
     assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad, 1e-4, 1e-7))
 
@@ -173,19 +181,19 @@ def test_inplace_grad_of_out_of_place_func(libop_func, torch_func,
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     x_torch.requires_grad = True
     y_arr = f(x_arr)
-    y_torch_ours = torch.tensor(y_arr.numpy())
+    y_torch_ours = y_arr.torch()
     y_torch = torch_func(x_torch)
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
 
     y_torch.grad = torch.rand(4, 4, dtype=torch.float32)
-    d_y_arr = ft.Array(y_torch.grad.numpy())
+    d_y_arr = ft.array(y_torch.grad)
     x_grad_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
-    d_x_arr = ft.Array(x_grad_torch_ours.numpy())
+    d_x_arr = ft.array(x_grad_torch_ours)
     g(**{provides['y']: d_y_arr, requires['x']: d_x_arr})
-    x_grad_torch_ours = torch.tensor(d_x_arr.numpy())
+    x_grad_torch_ours = d_x_arr.torch()
     y_torch.backward(y_torch.grad)
     assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad, 1e-4, 1e-7))
 
@@ -226,16 +234,16 @@ def test_out_of_place_grad_of_out_of_place_func(libop_func, torch_func,
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     x_torch.requires_grad = True
     y_arr = f(x_arr)
-    y_torch_ours = torch.tensor(y_arr.numpy())
+    y_torch_ours = y_arr.torch()
     y_torch = torch_func(x_torch)
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
 
     y_torch.grad = torch.rand(4, 4, dtype=torch.float32)
-    d_y_arr = ft.Array(y_torch.grad.numpy())
+    d_y_arr = ft.array(y_torch.grad)
     d_x_arr = g(**{provides[ft.Return()]: d_y_arr})
-    x_grad_torch_ours = torch.tensor(d_x_arr.numpy())
+    x_grad_torch_ours = d_x_arr.torch()
     y_torch.backward(y_torch.grad)
     assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad, 1e-4, 1e-7))

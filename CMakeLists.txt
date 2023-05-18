@@ -238,7 +238,9 @@ file(GLOB_RECURSE FFI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ffi/*.cc)
 pybind11_add_module(freetensor_ffi SHARED ${FFI_SRC})
 # PyTorch libraries needs to be linked `--as-needed`. This enables loading FreeTensor on a system
 # without CUDA driver (but not running CUDA functions), even if `FT_WITH_CUDA=ON`.
-target_link_libraries(freetensor_ffi PRIVATE freetensor "${CMAKE_CXX_LINKER_WRAPPER_FLAG}--as-needed" ${TORCH_LIBRARIES})
+list(JOIN CMAKE_CXX_LINKER_WRAPPER_FLAG " " CXX_LINKER_WRAPPER_FLAG_STR) # May be one or more arguments, ending with " " or not
+set(AS_NEEDED_FLAG "${CXX_LINKER_WRAPPER_FLAG_STR}--as-needed")
+target_link_libraries(freetensor_ffi PRIVATE freetensor ${AS_NEEDED_FLAG} ${TORCH_LIBRARIES})
 target_include_directories(freetensor_ffi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ffi)
 
 # Pybind11 stubgen

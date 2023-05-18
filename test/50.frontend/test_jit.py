@@ -1,6 +1,5 @@
 import freetensor as ft
 import numpy as np
-import torch
 import pytest
 
 
@@ -67,7 +66,9 @@ def test_grad():
     assert np.array_equal(db.numpy(), [3, 6, 9, 12])
 
 
+@pytest.mark.skipif(not ft.with_pytorch(), reason="requires PyTorch")
 def test_jacrev():
+    import torch
 
     @ft.optimize
     @ft.jacrev(inputs=[ft.Parameter(1), ft.Parameter(2)],
@@ -100,6 +101,7 @@ def test_jacrev():
 
 @pytest.mark.skipif(not ft.with_pytorch(), reason="requires PyTorch")
 def test_pytorch_integration():
+    import torch
 
     @ft.optimize_to_pytorch(verbose=1)
     def sinh(n: ft.JIT, x: ft.Var[(4,), "float64"]):

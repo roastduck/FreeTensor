@@ -1,6 +1,5 @@
 import freetensor as ft
 import numpy as np
-import torch
 import pytest
 
 
@@ -69,6 +68,7 @@ def test_numpy_cast():
 
 @pytest.mark.skipif(not ft.with_pytorch(), reason="requires PyTorch")
 def test_torch():
+    import torch
 
     @ft.optimize
     def test(x: ft.Var[(2, 2), "int32"]):
@@ -85,6 +85,7 @@ def test_torch():
 
 @pytest.mark.skipif(not ft.with_pytorch(), reason="requires PyTorch")
 def test_torch_strided():
+    import torch
 
     @ft.optimize
     def test(x: ft.Var[(2, 2), "int32"]):
@@ -102,6 +103,7 @@ def test_torch_strided():
 
 @pytest.mark.skipif(not ft.with_pytorch(), reason="requires PyTorch")
 def test_torch_cast():
+    import torch
 
     @ft.optimize
     def test(x: ft.Var[(2, 2), "int64"]):
@@ -120,6 +122,7 @@ def test_torch_cast():
 @pytest.mark.skipif(not ft.with_pytorch() or not ft.with_cuda(),
                     reason="requires PyTorch and CUDA")
 def test_torch_cuda():
+    import torch
 
     with ft.GPU():
 
@@ -147,6 +150,7 @@ def test_torch_cuda():
 @pytest.mark.skipif(not ft.with_pytorch() or not ft.with_cuda(),
                     reason="requires PyTorch and CUDA")
 def test_torch_cuda_auto_copy_read():
+    import torch
 
     with ft.GPU():
 
@@ -174,6 +178,7 @@ def test_torch_cuda_auto_copy_read():
 @pytest.mark.skipif(not ft.with_pytorch() or not ft.with_cuda(),
                     reason="requires PyTorch and CUDA")
 def test_torch_cuda_no_write_to_other_device():
+    import torch
 
     with ft.GPU():
 
@@ -200,6 +205,7 @@ def test_torch_cuda_no_write_to_other_device():
 @pytest.mark.skipif(not ft.with_pytorch() or not ft.with_cuda(),
                     reason="requires PyTorch and CUDA")
 def test_torch_cuda_explicitly_copy_from_other_device():
+    import torch
 
     with ft.GPU():
 
