@@ -14,9 +14,11 @@
 #include <isl/set.h>
 #include <isl/space.h>
 
+#include <debug.h>
 #include <debug/profile.h>
 #include <except.h>
 #include <serialize/to_string.h>
+#include <timeout.h>
 
 namespace freetensor {
 
@@ -910,6 +912,35 @@ class PBSetBuilder : public PBBuilder {
 
     PBSet build(const PBCtx &ctx) const;
 };
+
+template <class... Args>
+std::string pbFuncSerializedWithTimeout(const auto &func, int seconds,
+                                        Args &&...args) {
+    auto bytes = timeout(
+        [&]() {
+            auto result = func(std::forward<Args>(args)...);
+            std::string str = toString(result);
+            std::vector<std::byte> bytes((const std::byte *)str.data(),
+                                         (const std::byte *)str.data() +
+                                             str.length());
+            return bytes;
+        },
+        seconds);
+    std::string str((const char *)bytes.data(), bytes.size());
+    return str;
+}
+
+template <class... Args>
+auto pbFuncWithTimeout(const auto &func, int seconds, const PBCtx &ctx,
+                       Args &&...args) {
+    auto str =
+        pbFuncSerializedWithTimeout(func, seconds, std::forward<Args>(args)...);
+    if (str.empty()) {
+        return nullptr;
+    }
+    decltype(func(args...)) result(ctx, str);
+    return result;
+}
 
 } // namespace freetensor
 

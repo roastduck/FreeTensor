@@ -137,6 +137,12 @@ findTapeOrRecompStmts(
         if (acc.stmt_->nodeType() == ASTNodeType::Store) {
             gradVar = acc.stmt_.template as<StoreNode>()->var_;
         } else if (acc.stmt_->nodeType() == ASTNodeType::ReduceTo) {
+            if (acc.stmt_.template as<ReduceToNode>()->op_ == ReduceOp::Min ||
+                acc.stmt_.template as<ReduceToNode>()->op_ == ReduceOp::Max) {
+                // `y min= x` or `y max= x` always need `x`'s value to compare
+                // with `y`
+                return true;
+            }
             gradVar = acc.stmt_.template as<ReduceToNode>()->var_;
         }
         if (!gradVar.empty() &&

@@ -58,12 +58,17 @@ struct Command {
             }
             argv.push_back(nullptr);
 
-            // We use the raw syscall instead of libc fork() here.
+            // We use POSIX vfork() instead of libc fork() here.
+            //
             // This is because libc fork() processes the pthread_atfork()
             // handlers, in which handlers from like OpenMP implementations will
             // do something against potential broken states (e.g. mutexes) due
-            // to the fork(). With raw syscall, we can avoid this.
-            int pid = syscall(SYS_fork);
+            // to the fork().
+            //
+            // Besides, raw syscall to SYS_fork will result a failure in VTune
+            // Profiler, but vfork() will not; vfork() is also especially
+            // suitable for immediately execv().
+            int pid = vfork();
             if (pid == 0) {
                 execv(executable_.c_str(),
                       const_cast<char *const *>(argv.data()));

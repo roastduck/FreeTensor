@@ -1,4 +1,5 @@
 #include <math/min_max.h>
+#include <pass/pb_simplify.h>
 #include <pass/shrink_for.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
@@ -57,14 +58,21 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
         for (auto &&[_var, _names] : views::zip(iterStack_, namesStack_)) {
             auto &&names = _names;
 
-            // Trigger recomputing in analyze/comp_unique_bounds
+            // We need linear programming from PBCompBounds, because the
+            // minimum/maximum value of a linear function does not always appear
+            // at the minimum/maximum points of its parameters.
+            // See 2.pass/test_shrink_for.py::test_linear_bounds
+            //
+            // PBCompBounds requires one instance per Stmt
+            PBCompBounds bound(*this);
+
             auto var = deepCopy(_var).as<VarNode>();
 
             std::vector<Expr> lower, upper;
-            for (auto &&b : bound_.getDefinedLower(var, names)) {
+            for (auto &&b : bound.getDefinedLower(var, names)) {
                 lower.emplace_back(b.expr());
             }
-            for (auto &&b : bound_.getDefinedUpper(var, names)) {
+            for (auto &&b : bound.getDefinedUpper(var, names)) {
                 upper.emplace_back(b.expr());
             }
             newRange_[var].first.emplace_back(std::move(lower));
@@ -95,8 +103,12 @@ Stmt ShrinkFor::visit(const For &_op) {
 
     if (op->property_->unroll_) {
         // Backends do not support these loops to be of variable lengths
-        lower = makeIntConst(bound_.getIntLower(lower));
-        upper = makeIntConst(bound_.getIntUpper(upper));
+
+        // PBCompBounds requires one instance per Stmt
+        PBCompBounds bound(*this);
+
+        lower = makeIntConst(bound.getIntLower(lower));
+        upper = makeIntConst(bound.getIntUpper(upper));
     }
 
     if (op->step_->nodeType() == ASTNodeType::IntConst) {

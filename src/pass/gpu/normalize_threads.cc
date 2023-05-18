@@ -2,10 +2,10 @@
 
 #include <climits>
 
-#include <analyze/all_uses.h>
 #include <analyze/merge_no_deps_hint.h>
+#include <pass/gpu/normalize_thread_dims.h>
 #include <pass/gpu/normalize_threads.h>
-#include <pass/merge_and_hoist_if.h>
+#include <pass/normalize_loops.h>
 #include <pass/shrink_for.h>
 
 namespace freetensor {
@@ -17,8 +17,7 @@ Expr NormalizeThreads::visit(const Var &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
     if (varMap_.count(op->name_)) {
-        auto &&info = varMap_.at(op->name_);
-        return makeAdd(makeVar(info.newIter_), (*this)(info.offset_));
+        return makeVar(varMap_.at(op->name_));
     }
     return op;
 }
@@ -87,7 +86,7 @@ Stmt NormalizeThreads::doVisitStmt(const Stmt &_op) {
 Stmt NormalizeThreads::doVisitFor(const For &_op) {
     if (std::holds_alternative<CUDAScope>(_op->property_->parallel_)) {
         auto newIter = "." + toString(_op->property_->parallel_);
-        varMap_[_op->iter_] = {newIter, _op->begin_};
+        varMap_[_op->iter_] = newIter;
         inside_[_op->property_->parallel_]++;
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
@@ -145,104 +144,17 @@ Stmt NormalizeThreads::visit(const Eval &op) {
     return doVisitStmt(Mutator::visit(op));
 }
 
-bool CheckThreadNum::isLegalLen(const Expr &expr) {
-    return isLegalLen(allNames(expr));
-}
-
-bool CheckThreadNum::isLegalLen(const std::unordered_set<std::string> &names) {
-    for (auto &&name : names) {
-        if (hasLoop(name)) {
-            // Only iterators from outside of the kernel is OK
-            if (openLoopsInKernel_.count(loop(name))) {
-                return false;
-            }
-        } else if (!hasDef(name) || buffer(name)->mtype() != MemType::ByValue) {
-            return false;
-        }
-    }
-    return true;
-}
-
-Stmt CheckThreadNum::visit(const For &_op) {
-    if (std::holds_alternative<CUDAScope>(_op->property_->parallel_)) {
-        openLoopsInKernel_.insert(_op);
-
-        auto oldInKernel = inKernel_;
-        inKernel_ = true;
-        auto __op = BaseClass::visit(_op);
-        ASSERT(__op->nodeType() == ASTNodeType::For);
-        auto op = __op.as<ForNode>();
-        inKernel_ = oldInKernel;
-
-        if (!isLegalLen(op->begin_)) {
-            op->body_ =
-                makeIf(makeGE(makeVar(op->iter_), op->begin_), op->body_);
-            Expr begin;
-            for (auto &&b : bound_.getLower(op->begin_)) {
-                if (isLegalLen(b.allNames())) {
-                    if (b.lin().isConst() && b.lin().bias_ <= INT_MIN + 1) {
-                        continue;
-                    }
-                    begin =
-                        begin.isValid() ? makeMax(begin, b.expr()) : b.expr();
-                }
-            }
-            if (!begin.isValid()) {
-                throw InvalidProgram(
-                    "Length of " + toString(op->property_->parallel_) +
-                    " should have a finite bound. Note: if you are making a "
-                    "dynamic ranged threadIdx or blockIdx loop, please use "
-                    "memory type \"byvalue\" for its range, because it is used "
-                    "both for launching the kernel and guarding the execution "
-                    "inside the kernel");
-            }
-            op->begin_ = std::move(begin);
-        }
-        if (!isLegalLen(op->end_)) {
-            op->body_ = makeIf(makeLT(makeVar(op->iter_), op->end_), op->body_);
-            Expr end;
-            for (auto &&b : bound_.getUpper(op->end_)) {
-                if (isLegalLen(b.allNames())) {
-                    if (b.lin().isConst() && b.lin().bias_ >= INT_MAX - 1) {
-                        continue;
-                    }
-                    end = end.isValid() ? makeMin(end, b.expr()) : b.expr();
-                }
-            }
-            if (!end.isValid()) {
-                throw InvalidProgram(
-                    "Length of " + toString(op->property_->parallel_) +
-                    " should have a finite bound. Note: if you are making a "
-                    "dynamic ranged threadIdx or blockIdx loop, please use "
-                    "memory type \"byvalue\" for its range, because it is used "
-                    "both for launching the kernel and guarding the execution "
-                    "inside the kernel");
-            }
-            op->end_ = std::move(end);
-        }
-        ASSERT(op->step_->nodeType() == ASTNodeType::IntConst &&
-               op->step_.as<IntConstNode>()->val_ == 1);
-        op->len_ = makeSub(op->end_, op->begin_);
-
-        openLoopsInKernel_.erase(_op);
-        return op;
-    } else {
-        if (inKernel_) {
-            openLoopsInKernel_.insert(_op);
-            auto ret = BaseClass::visit(_op);
-            openLoopsInKernel_.erase(_op);
-            return ret;
-        } else {
-            return BaseClass::visit(_op);
-        }
-    }
-}
-
 Stmt normalizeThreads(const Stmt &_op) {
-    auto op = NormalizeThreads(_op)(_op);
+    auto op = normalizeLoops(_op, [](const For &l) {
+        return std::holds_alternative<CUDAScope>(l->property_->parallel_);
+    });
+    op = NormalizeThreads(op)(op);
     op = shrinkFor(op);
-    op = mergeAndHoistIf(op);
-    op = CheckThreadNum()(op);
+    op = normalizeThreadDims(op);
+    // NOTE: Although we have inserted a lot of identical `if`s, we must delay
+    // `pass/merge_and_hoist_if` until we have done `pass/gpu/make_sync`.
+    // Otherwise, we are introducing dependences between an `if`'s "then" case
+    // and its "else" case, which is ill-defined in our IR.
     return op;
 }
 

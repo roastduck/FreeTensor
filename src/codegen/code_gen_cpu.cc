@@ -406,8 +406,8 @@ extern "C" {
             s += "  delete[] __threadStack;\n";
         }
         s += "}\n";
-        s += "void run(void **_params, void **_returns, size_t **_retShapes, "
-             "size_t *_retDims, CPUContext_t _ctx) {\n";
+        s += "void run(void **params, void **returns, size_t **retShapes, "
+             "size_t *retDims, CPUContext_t ctx) {\n";
         s += stream.os_.str();
         s += "}";
         return s;

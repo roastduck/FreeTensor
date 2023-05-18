@@ -71,7 +71,7 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
     };
 
   private:
-    CompUniqueBounds unique_;
+    Ref<CompUniqueBounds> unique_;
 
     // The variable to compute
     ID varDefId_;
@@ -99,7 +99,7 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
                     CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL,
                     bool includeTrivialBound = true,
                     const ID &filterSubTree = ID())
-        : unique_(*this), varDefId_(varDefId), mtype_(mtype), mode_(mode),
+        : varDefId_(varDefId), mtype_(mtype), mode_(mode),
           includeTrivialBound_(includeTrivialBound),
           filterSubTree_(filterSubTree) {
         if (!filterSubTree_.isValid()) {

@@ -1,3 +1,4 @@
+#include <analyze/comp_unique_bounds.h>
 #include <container_utils.h>
 #include <pass/gpu/normalize_var_in_kernel.h>
 #include <pass/rename_var.h>
@@ -51,9 +52,12 @@ Stmt NormalizeVarInKernel::visit(const VarDef &_op) {
         ASSERT(__op->nodeType() == ASTNodeType::VarDef);
         auto op = __op.as<VarDefNode>();
 
+        // CompUniqueBounds requires one instance per Stmt
+        CompUniqueBounds unique(*this);
+
         for (auto &dim : op->buffer_->tensor()->shape()) {
             Expr newDim;
-            for (auto &&b : unique_.getDefinedUpper(
+            for (auto &&b : unique.getDefinedUpper(
                      dim, ranges::to<std::unordered_set>(legalNames_))) {
                 newDim = newDim.isValid() ? makeMin(std::move(newDim), b.expr())
                                           : b.expr();
@@ -95,8 +99,8 @@ Stmt NormalizeVarInKernel::visit(const VarDef &_op) {
 }
 
 Stmt NormalizeVarInKernel::visit(const For &op) {
-    if (!inKernel_ &&
-        std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
+    if (!inKernel_ && std::holds_alternative<CUDAScope>(
+                          op->property_->parallel_)) { // entering kernel
         nameCntInKernel_ = countNames(op);
         usedNamesInKernel_ =
             uni(this->names(),
@@ -115,11 +119,13 @@ Stmt NormalizeVarInKernel::visit(const For &op) {
         usedNamesInKernel_.clear();
         nameCntInKernel_.clear();
         return ret;
-    } else {
+    } else if (!inKernel_) { // out of kernel
         legalNames_.emplace_back(op->iter_);
         auto ret = BaseClass::visit(op);
         legalNames_.pop_back();
         return ret;
+    } else { // in kernel
+        return BaseClass::visit(op);
     }
 }
 
