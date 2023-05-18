@@ -1,6 +1,11 @@
 import freetensor as ft
-import torch
 import pytest
+
+if not ft.with_pytorch():
+    pytest.skip("Requires FreeTensor to be built with PyTorch",
+                allow_module_level=True)
+
+import torch
 
 
 @pytest.mark.skipif(not ft.with_pytorch(), reason="requires PyTorch")

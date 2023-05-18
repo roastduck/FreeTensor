@@ -1,8 +1,16 @@
-import torch
 import numpy as np
 
 import freetensor as ft
 from freetensor import libop
+
+if not ft.with_pytorch():
+    pytest.skip(
+        "The tests requires PyTorch, and FreeTensor is expected to be built with "
+        "PyTorch to be compatible with it, even if there is no direct interaction "
+        "between FreeTensor and PyTorch",
+        allow_module_level=True)
+
+import torch
 
 
 def test_basic():
@@ -17,13 +25,13 @@ def test_basic():
         libop.einsum_("ij,j->i", a, b, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy())
+    a_arr = ft.array(a_torch)
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy())
+    b_arr = ft.array(b_torch)
     y_torch = torch.zeros(4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.einsum("ij,j->i", a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -41,13 +49,13 @@ def test_broadcast():
         libop.einsum_("ij,j->i", a, b, y)
 
     a_torch = torch.rand(4, 1, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy())
+    a_arr = ft.array(a_torch)
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy())
+    b_arr = ft.array(b_torch)
     y_torch = torch.zeros(4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.einsum("ij,j->i", a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -64,11 +72,11 @@ def test_out_of_place():
         return libop.einsum("ij,j->i", a, b)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy())
+    a_arr = ft.array(a_torch)
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy())
+    b_arr = ft.array(b_torch)
     y_arr = f(a_arr, b_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.einsum("ij,j->i", a_torch, b_torch)
     assert np.array_equal(y_arr.shape, [4])

@@ -1,8 +1,16 @@
-import torch
 import numpy as np
 
 import freetensor as ft
 from freetensor import libop
+
+if not ft.with_pytorch():
+    pytest.skip(
+        "The tests requires PyTorch, and FreeTensor is expected to be built with "
+        "PyTorch to be compatible with it, even if there is no direct interaction "
+        "between FreeTensor and PyTorch",
+        allow_module_level=True)
+
+import torch
 
 
 def test_mm():
@@ -17,13 +25,13 @@ def test_mm():
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy())
+    a_arr = ft.array(a_torch)
     b_torch = torch.rand(5, 6, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy())
+    b_arr = ft.array(b_torch)
     y_torch = torch.zeros(4, 6, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -41,13 +49,13 @@ def test_bmm_1():
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(2, 4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy())
+    a_arr = ft.array(a_torch)
     b_torch = torch.rand(2, 5, 6, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy())
+    b_arr = ft.array(b_torch)
     y_torch = torch.zeros(2, 4, 6, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -65,13 +73,13 @@ def test_bmm_2():
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(2, 4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy())
+    a_arr = ft.array(a_torch)
     b_torch = torch.rand(5, 6, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy())
+    b_arr = ft.array(b_torch)
     y_torch = torch.zeros(2, 4, 6, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -89,13 +97,13 @@ def test_mv():
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy())
+    a_arr = ft.array(a_torch)
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy())
+    b_arr = ft.array(b_torch)
     y_torch = torch.zeros(4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -113,13 +121,13 @@ def test_vm():
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy())
+    a_arr = ft.array(a_torch)
     b_torch = torch.rand(5, 6, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy())
+    b_arr = ft.array(b_torch)
     y_torch = torch.zeros(6, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -157,11 +165,11 @@ def test_scalar_multiply_matrix():
 
     a_arr = ft.Array(np.array(2, dtype="float32"))
     b_torch = torch.rand(5, 6, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy())
+    b_arr = ft.array(b_torch)
     y_torch = torch.zeros(5, 6, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = 2 * b_torch
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -178,11 +186,11 @@ def test_out_of_place():
         return libop.matmul(a, b)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy())
+    a_arr = ft.array(a_torch)
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy())
+    b_arr = ft.array(b_torch)
     y_arr = f(a_arr, b_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.matmul(a_torch, b_torch)
     assert np.array_equal(y_arr.shape, [4])
@@ -200,11 +208,11 @@ def test_operator_overload():
         return a @ b
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy())
+    a_arr = ft.array(a_torch)
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy())
+    b_arr = ft.array(b_torch)
     y_arr = f(a_arr, b_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.matmul(a_torch, b_torch)
     assert np.array_equal(y_arr.shape, [4])
@@ -222,11 +230,11 @@ def test_subtensor():
         return a[0, 0, 0] @ b[0, 0, 0]
 
     a_torch = torch.rand(2, 2, 2, 4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy())
+    a_arr = ft.array(a_torch)
     b_torch = torch.rand(2, 2, 2, 5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy())
+    b_arr = ft.array(b_torch)
     y_arr = f(a_arr, b_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.matmul(a_torch[0, 0, 0], b_torch[0, 0, 0])
     assert np.array_equal(y_arr.shape, [4])

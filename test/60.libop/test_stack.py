@@ -1,8 +1,16 @@
 import freetensor as ft
 from freetensor import libop
 
-import torch
 import numpy as np
+
+if not ft.with_pytorch():
+    pytest.skip(
+        "The tests requires PyTorch, and FreeTensor is expected to be built with "
+        "PyTorch to be compatible with it, even if there is no direct interaction "
+        "between FreeTensor and PyTorch",
+        allow_module_level=True)
+
+import torch
 
 
 def test_static():
@@ -18,15 +26,15 @@ def test_static():
         libop.stack_([x1, x2, x3], y, axis=1)
 
     x1_torch = torch.rand(3, 4, dtype=torch.float32)
-    x1_arr = ft.Array(x1_torch.numpy())
+    x1_arr = ft.array(x1_torch)
     x2_torch = torch.rand(3, 4, dtype=torch.float32)
-    x2_arr = ft.Array(x2_torch.numpy())
+    x2_arr = ft.array(x2_torch)
     x3_torch = torch.rand(3, 4, dtype=torch.float32)
-    x3_arr = ft.Array(x3_torch.numpy())
+    x3_arr = ft.array(x3_torch)
     y_torch = torch.zeros(3, 3, 4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(x1_arr, x2_arr, x3_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     assert torch.all(
         torch.isclose(y_torch, torch.stack([x1_torch, x2_torch, x3_torch],
@@ -45,13 +53,13 @@ def test_out_of_place():
         return libop.stack([x1, x2, x3], axis=1)
 
     x1_torch = torch.rand(3, 4, dtype=torch.float32)
-    x1_arr = ft.Array(x1_torch.numpy())
+    x1_arr = ft.array(x1_torch)
     x2_torch = torch.rand(3, 4, dtype=torch.float32)
-    x2_arr = ft.Array(x2_torch.numpy())
+    x2_arr = ft.array(x2_torch)
     x3_torch = torch.rand(3, 4, dtype=torch.float32)
-    x3_arr = ft.Array(x3_torch.numpy())
+    x3_arr = ft.array(x3_torch)
     y_arr = f(x1_arr, x2_arr, x3_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     assert np.array_equal(y_arr.shape, [3, 3, 4])
     assert torch.all(

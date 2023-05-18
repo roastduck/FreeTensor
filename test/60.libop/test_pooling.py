@@ -1,8 +1,16 @@
-import torch
 import numpy as np
 
 import freetensor as ft
 from freetensor import libop
+
+if not ft.with_pytorch():
+    pytest.skip(
+        "The tests requires PyTorch, and FreeTensor is expected to be built with "
+        "PyTorch to be compatible with it, even if there is no direct interaction "
+        "between FreeTensor and PyTorch",
+        allow_module_level=True)
+
+import torch
 
 
 def test_max_pooling_basic():
@@ -16,11 +24,11 @@ def test_max_pooling_basic():
         libop.max_pool_(x, y, auto_pad='VALID', kernel_shape=[3, 3])
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = torch.zeros(2, 3, 12, 12, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(x_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.nn.functional.max_pool2d(x_torch,
                                            kernel_size=[3, 3],
@@ -41,11 +49,11 @@ def test_max_pooling_same_padding():
         libop.max_pool_(x, y, auto_pad='SAME_UPPER', kernel_shape=[3, 3])
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = torch.zeros(2, 3, 14, 14, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(x_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.nn.functional.max_pool2d(x_torch,
                                            padding=[1, 1],
@@ -69,11 +77,11 @@ def test_max_pooling_stride():
                         strides=[3, 3])
 
     x_torch = torch.rand(2, 3, 12, 12, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = torch.zeros(2, 3, 4, 4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(x_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.nn.functional.max_pool2d(x_torch,
                                            kernel_size=[3, 3],
@@ -96,11 +104,11 @@ def test_max_pooling_dilation():
                         dilations=[2, 2])
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = torch.zeros(2, 3, 10, 10, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(x_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.nn.functional.max_pool2d(x_torch,
                                            kernel_size=[3, 3],
@@ -119,9 +127,9 @@ def test_max_pooling_out_of_place():
         return libop.max_pool(x, auto_pad='VALID', kernel_shape=[3, 3])
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_arr = f(x_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.nn.functional.max_pool2d(x_torch,
                                            kernel_size=[3, 3],
@@ -141,11 +149,11 @@ def test_global_avg_pool():
         libop.global_avg_pool_(x, y)
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = torch.zeros(2, 3, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     f(x_arr, y_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.nn.functional.avg_pool2d(x_torch,
                                            kernel_size=[14, 14]).reshape(2, 3)
@@ -162,9 +170,9 @@ def test_global_avg_pool_out_of_place():
         return libop.global_avg_pool(x)
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_arr = f(x_arr)
-    y_torch = torch.tensor(y_arr.numpy())
+    y_torch = y_arr.torch()
 
     y_std = torch.nn.functional.avg_pool2d(x_torch,
                                            kernel_size=[14, 14]).reshape(2, 3)
