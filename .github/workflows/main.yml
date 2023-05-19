@@ -56,8 +56,7 @@ jobs:
           spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@12.1.0
           source ci-script/prepare-python-environment.sh
           mkdir build
-          # certain new GCC 12 warnings are not stable and triggered with false-positive right now, so suppress them here with -Wno-*
-          cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF -DCMAKE_CXX_FLAGS="-Wno-restrict -Wno-array-bounds"
+          cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF
           cd build && ninja
       - name: Run PyTest
         run: |
