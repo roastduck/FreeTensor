@@ -228,7 +228,7 @@ void CodeGenCPU::visit(const For &op) {
         // need to explicitly set `num_threads` here. It will not affect the
         // semantics as long as we don't use `no_wait`.
         os() << " num_threads(";
-        (*this)(makeMin(totLen, makeIntrinsic("omp_get_num_threads()", {},
+        (*this)(makeMin(totLen, makeIntrinsic("omp_get_max_threads()", {},
                                               DataType::Int32, false)));
         os() << ")";
         if (!op->property_->reductions_.empty()) {
