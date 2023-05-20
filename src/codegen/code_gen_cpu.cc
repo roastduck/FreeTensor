@@ -423,6 +423,9 @@ extern "C" {
             s += "  delete[] __threadStack[omp_get_thread_num()];\n";
             s += "  delete[] __threadStack;\n";
         }
+#ifdef FT_WITH_MKL
+        s += "mkl_finalize();\n";
+#endif // FT_WITH_MKL
         s += "}\n";
         s += "void run(void **params, void **returns, size_t **retShapes, "
              "size_t *retDims, CPUContext_t ctx) {\n";
