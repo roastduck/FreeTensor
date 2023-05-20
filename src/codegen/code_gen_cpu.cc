@@ -1,3 +1,4 @@
+#include <analyze/all_uses.h>
 #include <codegen/code_gen_cpu.h>
 #include <container_utils.h>
 #include <math/utils.h>
@@ -187,12 +188,21 @@ void CodeGenCPU::visit(const ReduceTo &op) {
 void CodeGenCPU::visit(const For &op) {
     if (std::holds_alternative<OpenMPScope>(op->property_->parallel_) &&
         !collapsed_.count(op)) {
+        Expr totLen = op->len_;
+
         int collapse = 1;
         for (Stmt inner = op->body_;
              inner->nodeType() == ASTNodeType::For &&
              std::holds_alternative<OpenMPScope>(
                  inner.as<ForNode>()->property_->parallel_);
              inner = inner.as<ForNode>()->body_) {
+            Expr innerLen = inner.as<ForNode>()->len_;
+            if (allIters(innerLen).count(op->iter_)) {
+                // Collapsed inner loops' length should not depend on the outer
+                // loop
+                break;
+            }
+            totLen = makeMul(totLen, innerLen);
             collapse++;
             collapsed_.insert(inner.as<ForNode>());
             if (!inner.as<ForNode>()->property_->reductions_.empty())
@@ -213,6 +223,14 @@ void CodeGenCPU::visit(const For &op) {
         if (collapse > 1) {
             os() << " collapse(" << collapse << ")";
         }
+        // As per OpenMP specification, even the loop's length is only 2, it
+        // still synchronizes all the threads in the implicit barrier. Thus we
+        // need to explicitly set `num_threads` here. It will not affect the
+        // semantics as long as we don't use `no_wait`.
+        os() << " num_threads(";
+        (*this)(makeMin(totLen, makeIntrinsic("omp_get_max_threads()", {},
+                                              DataType::Int32, false)));
+        os() << ")";
         if (!op->property_->reductions_.empty()) {
             for (size_t i = 1, n = op->property_->reductions_.size(); i < n;
                  i++) {
@@ -405,6 +423,9 @@ extern "C" {
             s += "  delete[] __threadStack[omp_get_thread_num()];\n";
             s += "  delete[] __threadStack;\n";
         }
+#ifdef FT_WITH_MKL
+        s += "mkl_finalize();\n";
+#endif // FT_WITH_MKL
         s += "}\n";
         s += "void run(void **params, void **returns, size_t **retShapes, "
              "size_t *retDims, CPUContext_t ctx) {\n";

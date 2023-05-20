@@ -32,7 +32,7 @@ def test_parallel_reduction():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target, verbose=True)
-    assert "#pragma omp parallel for reduction(+:" in str(code)
+    assert re.search(r"#pragma omp parallel for.* reduction\(\+\:", str(code))
     assert "#pragma omp atomic" not in str(code)
     assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
@@ -65,7 +65,7 @@ def test_parallel_reduction_on_2_vars():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target, verbose=True)
-    assert "#pragma omp parallel for reduction(+:" in str(code)
+    assert re.search(r"#pragma omp parallel for.* reduction\(\+\:", str(code))
     assert "#pragma omp atomic" not in str(code)
     assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
@@ -103,7 +103,7 @@ def test_parallel_reduction_on_array():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target, verbose=True)
-    assert "#pragma omp parallel for reduction(+:" in str(code)
+    assert re.search(r"#pragma omp parallel for.* reduction\(\+\:", str(code))
     assert "#pragma omp atomic" not in str(code)
     assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64, 64)).astype("int32")
@@ -136,7 +136,7 @@ def test_parallel_reduction_on_array_range():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target, verbose=True)
-    assert re.search(r"pragma omp parallel for reduction.*16", str(code))
+    assert re.search(r"#pragma omp parallel for.* reduction.*16", str(code))
     assert "#pragma omp atomic" not in str(code)
     assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (64, 64)).astype("int32")
@@ -170,7 +170,7 @@ def test_parallel_reduction_multiple_statements():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target, verbose=True)
-    assert "#pragma omp parallel for reduction(+:" in str(code)
+    assert re.search(r"#pragma omp parallel for.* reduction\(\+\:", str(code))
     assert "#pragma omp atomic" not in str(code)
     assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64, 64)).astype("int32")
@@ -530,7 +530,7 @@ def test_simultenous_parallel_and_atomic_reduction():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target, verbose=True)
-    assert "#pragma omp parallel for reduction(+:" in str(code)
+    assert re.search(r"#pragma omp parallel for.* reduction\(\+\:", str(code))
     assert "#pragma omp atomic" in str(code)
     assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
