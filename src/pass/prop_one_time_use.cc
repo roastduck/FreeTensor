@@ -53,7 +53,7 @@ topoSort(const std::unordered_map<AST, std::pair<Stmt, ReplaceInfo>> &r2w,
 
 } // Anonymous namespace
 
-Stmt propOneTimeUse(const Stmt &_op) {
+Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
     auto op = makeReduction(_op);
 
     // A new Store/ReduceTo node may contain Load nodes out of their VarDef
@@ -70,49 +70,63 @@ Stmt propOneTimeUse(const Stmt &_op) {
     std::unordered_map<Stmt, std::vector<AST>> w2r, w2rMay;
     std::unordered_map<AST, Stmt> stmts;
     std::mutex lock;
-    auto foundMust = unsyncFunc([&](const Dependence &d) {
-        if (d.later2EarlierIter_.isBijective()) {
-            // Check before converting into PBFunc. In prop_one_time_use, we
-            // not only need `singleValued`, but also `bijective`, to ensure
-            // it is really used "one time"
-            if (std::string str = pbFuncSerializedWithTimeout(
-                    [](const PBMap &map) { return PBFunc(map); }, 10,
-                    d.later2EarlierIter_);
-                !str.empty()) {
-                std::lock_guard _(lock);
-                r2wCandidates[d.later()].emplace_back(
-                    d.earlier().as<StmtNode>(),
-                    ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
-                w2r[d.earlier().as<StmtNode>()].emplace_back(d.later());
-                stmts[d.later()] = d.later_.stmt_;
-            }
-        }
-    });
-    auto foundMay = [&](const Dependence &d) {
+
+    // Find dependence A->B that always happen for B which may propagate
+    auto finder = FindDeps()
+                      .mode(FindDepsMode::KillLater)
+                      .type(DEP_RAW)
+                      .filterAccess([&](const auto &acc) {
+                          return !isOutputting(acc.def_->buffer_->atype());
+                      })
+                      .filterEarlier([&](const auto &earlier) {
+                          return earlier.op_->nodeType() == ASTNodeType::Store;
+                      })
+                      .filterLater([&](const auto &later) {
+                          // pass/remove_write will deal with it (TODO: Really?
+                          // What if we want to do interleaved prop_one_time_use
+                          // and remove_write?)
+                          return later.op_->nodeType() != ASTNodeType::ReduceTo;
+                      });
+    if (subAST.isValid()) {
+        finder = finder.filterSubAST(subAST);
+    }
+    finder(op, unsyncFunc([&](const Dependence &d) {
+               if (d.later2EarlierIter_.isBijective()) {
+                   // Check before converting into PBFunc. In prop_one_time_use,
+                   // we not only need `singleValued`, but also `bijective`, to
+                   // ensure it is really used "one time"
+                   if (std::string str = pbFuncSerializedWithTimeout(
+                           [](const PBMap &map) { return PBFunc(map); }, 10,
+                           d.later2EarlierIter_);
+                       !str.empty()) {
+                       std::lock_guard _(lock);
+                       r2wCandidates[d.later()].emplace_back(
+                           // Find dependence A->B that always happen for B
+                           // which may propagate
+                           d.earlier().as<StmtNode>(),
+                           ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
+                       w2r[d.earlier().as<StmtNode>()].emplace_back(d.later());
+                       stmts[d.later()] = d.later_.stmt_;
+                   }
+               }
+           }));
+
+    // Find other potential dependence that may prevent propagation
+    finder =
+        FindDeps()
+            .type(DEP_RAW)
+            .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
+                return r2wCandidates.count(later.op_) ||
+                       w2r.count(earlier.op_.as<StmtNode>());
+            })
+            .ignoreReductionWAW(false);
+    if (subAST.isValid()) {
+        finder = finder.filterSubAST(subAST);
+    }
+    finder(op, [&](const Dependence &d) {
         r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
         w2rMay[d.earlier().as<StmtNode>()].emplace_back(d.later());
-    };
-    FindDeps()
-        .mode(FindDepsMode::KillLater)
-        .type(DEP_RAW)
-        .filterAccess([&](const auto &acc) {
-            return !isOutputting(acc.def_->buffer_->atype());
-        })
-        .filterEarlier([&](const auto &earlier) {
-            return earlier.op_->nodeType() == ASTNodeType::Store;
-        })
-        .filterLater([&](const auto &later) {
-            // pass/remove_write will deal with it (TODO: Really? What if we
-            // want to do interleaved prop_one_time_use and remove_write?)
-            return later.op_->nodeType() != ASTNodeType::ReduceTo;
-        })(op, foundMust);
-    FindDeps()
-        .type(DEP_RAW)
-        .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
-            return r2wCandidates.count(later.op_) ||
-                   w2r.count(earlier.op_.as<StmtNode>());
-        })
-        .ignoreReductionWAW(false)(op, foundMay);
+    });
 
     // Filter one-time use
     std::unordered_map<AST, std::pair<Stmt, ReplaceInfo>> r2w;

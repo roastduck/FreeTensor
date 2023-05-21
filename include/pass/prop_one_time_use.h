@@ -21,8 +21,10 @@ namespace freetensor {
  * x[0] = a
  * y[0] = a
  * ```
+ *
+ * @param subAST : If set, only propagate in this sub-tree
  */
-Stmt propOneTimeUse(const Stmt &op);
+Stmt propOneTimeUse(const Stmt &op, const ID &subAST = ID());
 
 DEFINE_PASS_FOR_FUNC(propOneTimeUse)
 

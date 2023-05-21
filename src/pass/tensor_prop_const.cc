@@ -20,7 +20,7 @@ struct ReplaceInfo {
 
 } // namespace
 
-Stmt tensorPropConst(const Stmt &_op) {
+Stmt tensorPropConst(const Stmt &_op, const ID &subAST) {
     auto op = _op;
 
     for (int i = 0;; i++) {
@@ -42,66 +42,81 @@ Stmt tensorPropConst(const Stmt &_op) {
         std::unordered_map<AST, std::vector<std::pair<Stmt, ReplaceInfo>>> r2w;
         std::unordered_map<AST, std::vector<Stmt>> r2wMay;
         std::mutex lock;
-        auto foundMust = unsyncFunc([&](const Dependence &d) {
-            auto &&expr = d.earlier().as<StoreNode>()->expr_;
-            auto &&iters = allIters(expr);
-            auto common = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
-            auto dep = d.later2EarlierIter_;
-            for (auto &&iter : iters) {
-                for (auto c = common; c.isValid(); c = c->parentStmt()) {
-                    if (c->nodeType() == ASTNodeType::For) {
-                        if (auto &&f = c.as<ForNode>(); f->iter_ == iter) {
-                            dep =
-                                d.extraCheck(dep, f->id(), DepDirection::Same);
-                            if (dep != d.later2EarlierIter_) {
-                                // Iterating variable in different iterations
-                                return;
+
+        // Find dependence A->B that always happen for B which may propagate
+        auto finder =
+            FindDeps()
+                .mode(FindDepsMode::KillLater)
+                .type(DEP_RAW)
+                .filterAccess([&](const auto &acc) {
+                    return !acc.buffer_->tensor()->isScalar();
+                })
+                .filterEarlier([&](const auto &earlier) {
+                    if (earlier.op_->nodeType() != ASTNodeType::Store) {
+                        return false;
+                    }
+                    auto &&expr = earlier.op_.template as<StoreNode>()->expr_;
+                    if (!allReads(expr).empty()) {
+                        // Expressions should contain only constants and
+                        // iterating vars
+                        return false;
+                    }
+                    return true;
+                })
+                .noProjectOutPrivateAxis(true);
+        if (subAST.isValid()) {
+            finder = finder.filterSubAST(subAST);
+        }
+        finder(
+            op, unsyncFunc([&](const Dependence &d) {
+                auto &&expr = d.earlier().as<StoreNode>()->expr_;
+                auto &&iters = allIters(expr);
+                auto common = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
+                auto dep = d.later2EarlierIter_;
+                for (auto &&iter : iters) {
+                    for (auto c = common; c.isValid(); c = c->parentStmt()) {
+                        if (c->nodeType() == ASTNodeType::For) {
+                            if (auto &&f = c.as<ForNode>(); f->iter_ == iter) {
+                                dep = d.extraCheck(dep, f->id(),
+                                                   DepDirection::Same);
+                                if (dep != d.later2EarlierIter_) {
+                                    // Iterating variable in different
+                                    // iterations
+                                    return;
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
                 }
-            }
-            if (d.later2EarlierIter_
-                    .isSingleValued()) { // Check before converting into PBFunc
-                if (std::string str = pbFuncSerializedWithTimeout(
-                        [](const PBMap &map) { return PBFunc(map); }, 10,
-                        d.later2EarlierIter_);
-                    !str.empty()) {
-                    std::lock_guard _(lock);
-                    r2w[d.later()].emplace_back(
-                        d.earlier().as<StmtNode>(),
-                        ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
+                if (d.later2EarlierIter_
+                        .isSingleValued()) { // Check before converting into
+                                             // PBFunc
+                    if (std::string str = pbFuncSerializedWithTimeout(
+                            [](const PBMap &map) { return PBFunc(map); }, 10,
+                            d.later2EarlierIter_);
+                        !str.empty()) {
+                        std::lock_guard _(lock);
+                        r2w[d.later()].emplace_back(
+                            d.earlier().as<StmtNode>(),
+                            ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
+                    }
                 }
-            }
-        });
-        auto foundMay = [&](const Dependence &d) {
+            }));
+
+        // Find other potential dependence that may prevent propagation
+        finder = FindDeps()
+                     .type(DEP_RAW)
+                     .filterLater([&](const AccessPoint &later) {
+                         return r2w.count(later.op_);
+                     })
+                     .ignoreReductionWAW(false);
+        if (subAST.isValid()) {
+            finder = finder.filterSubAST(subAST);
+        }
+        finder(op, [&](const Dependence &d) {
             r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
-        };
-        FindDeps()
-            .mode(FindDepsMode::KillLater)
-            .type(DEP_RAW)
-            .filterAccess([&](const auto &acc) {
-                return !acc.buffer_->tensor()->isScalar();
-            })
-            .filterEarlier([&](const auto &earlier) {
-                if (earlier.op_->nodeType() != ASTNodeType::Store) {
-                    return false;
-                }
-                auto &&expr = earlier.op_.template as<StoreNode>()->expr_;
-                if (!allReads(expr).empty()) {
-                    // Expressions should contain only constants and iterating
-                    // vars
-                    return false;
-                }
-                return true;
-            })
-            .noProjectOutPrivateAxis(true)(op, foundMust);
-        FindDeps()
-            .type(DEP_RAW)
-            .filterLater(
-                [&](const AccessPoint &later) { return r2w.count(later.op_); })
-            .ignoreReductionWAW(false)(op, foundMay);
+        });
 
         std::unordered_map<AST, Expr> replace;
         for (auto &&item : r2w) {
