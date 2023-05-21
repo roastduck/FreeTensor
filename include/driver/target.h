@@ -2,6 +2,7 @@
 #define FREE_TENSOR_TARGET_H
 
 #include <iostream>
+#include <optional>
 #include <string>
 
 #ifdef FT_WITH_CUDA
@@ -31,10 +32,11 @@ class Target {
 
 class CPUTarget : public Target {
     bool useNativeArch_;
+    std::optional<int> nCore_;
     // TODO: infoArch
 
   public:
-    CPUTarget(bool useNativeArch = true) : useNativeArch_(useNativeArch) {}
+    CPUTarget(bool useNativeArch = true);
 
     void setUseNativeArch(bool useNativeArch = true) {
         useNativeArch_ = useNativeArch;
@@ -43,6 +45,8 @@ class CPUTarget : public Target {
     TargetType type() const override { return TargetType::CPU; }
     std::string toString() const override { return "CPU"; }
     MemType mainMemType() const override { return MemType::CPU; }
+
+    auto nCore() const { return nCore_; }
 };
 
 #ifdef FT_WITH_CUDA

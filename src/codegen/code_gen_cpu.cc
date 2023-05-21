@@ -2,6 +2,7 @@
 #include <codegen/code_gen_cpu.h>
 #include <container_utils.h>
 #include <math/utils.h>
+#include <pass/const_fold.h>
 #include <pass/simplify.h>
 #include <serialize/mangle.h>
 
@@ -228,8 +229,10 @@ void CodeGenCPU::visit(const For &op) {
         // need to explicitly set `num_threads` here. It will not affect the
         // semantics as long as we don't use `no_wait`.
         os() << " num_threads(";
-        (*this)(makeMin(totLen, makeIntrinsic("omp_get_max_threads()", {},
-                                              DataType::Int32, false)));
+        (*this)(makeMin(totLen,
+                        makeFloorDiv(makeIntrinsic("omp_get_max_threads()", {},
+                                                   DataType::Int32, false),
+                                     outerParallelSize_)));
         os() << ")";
         if (!op->property_->reductions_.empty()) {
             for (size_t i = 1, n = op->property_->reductions_.size(); i < n;
@@ -290,8 +293,11 @@ void CodeGenCPU::visit(const For &op) {
         }
         os() << std::endl;
         bool oldInParallel = inParallel_;
+        Expr oldOuterParallelSize = outerParallelSize_;
         inParallel_ = true;
+        outerParallelSize_ = constFold(makeMul(outerParallelSize_, totLen));
         BaseClass::visit(op);
+        outerParallelSize_ = oldOuterParallelSize;
         inParallel_ = oldInParallel;
         for (auto &&r : op->property_->reductions_) {
             if (!buffer(r->var_)->tensor()->shape().empty()) {
@@ -429,6 +435,8 @@ extern "C" {
         s += "}\n";
         s += "void run(void **params, void **returns, size_t **retShapes, "
              "size_t *retDims, CPUContext_t ctx) {\n";
+        // Enable multi-level parallelism
+        s += "omp_set_max_active_levels(omp_get_supported_active_levels());\n";
         s += stream.os_.str();
         s += "}";
         return s;

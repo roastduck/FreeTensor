@@ -12,6 +12,7 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
     typedef CodeGenC<CodeGenStream> BaseClass;
 
     bool inParallel_ = false;
+    Expr outerParallelSize_ = makeIntConst(1);
     int64_t sharedStackTop_ = 0, sharedStackSize_ = 0;
     int64_t threadStackTop_ = 0, threadStackSize_ = 0;
     std::unordered_set<For> collapsed_;

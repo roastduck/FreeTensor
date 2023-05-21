@@ -1,7 +1,15 @@
+#include <omp.h>
+
 #include <cstring>
 #include <driver/target.h>
 
 namespace freetensor {
+
+CPUTarget::CPUTarget(bool useNativeArch) : useNativeArch_(useNativeArch) {
+    if (useNativeArch) {
+        nCore_ = omp_get_max_threads();
+    }
+}
 
 bool isSameTarget(const Ref<Target> &lhs, const Ref<Target> &rhs) {
     if (lhs.isValid() != rhs.isValid()) {

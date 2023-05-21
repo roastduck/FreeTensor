@@ -2,6 +2,7 @@
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <container_utils.h>
+#include <pass/const_fold.h>
 #include <pass/simplify.h>
 #include <schedule.h>
 
@@ -71,8 +72,9 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
 #endif // FT_WITH_CUDA
 
     // Try to merge and parallelize as many outer loops as possible
-    std::function<void(For, bool, bool)> autoParallelizeOuter =
-        [&](For root, bool parentIsWarp, bool parallelizeAmongBlocks) {
+    std::function<void(For, bool, bool, int64_t)> autoParallelizeOuter =
+        [&](For root, bool parentIsWarp, bool parallelizeAmongBlocks,
+            int64_t outerParallelSize) {
 #ifdef FT_WITH_CUDA
             if (root->property_->parallel_ != serialScope) {
                 parentIsWarp = true;
@@ -122,6 +124,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
             // Suppose we can merge n loops at maximum, we try merging and
             // parallelizing n loops first, then try n - 1, n - 2, and so on.
             bool done = false;
+            Expr mergedLen;
             for (int mergeLevel = maxMergeLevel; mergeLevel > 0; mergeLevel--) {
                 beginTransaction();
                 try {
@@ -136,6 +139,9 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                                        .as<ForNode>();
                         }
                     }
+                    Stmt merged = find(mergedId);
+                    ASSERT(merged->nodeType() == ASTNodeType::For);
+                    mergedLen = constFold(merged.as<ForNode>()->len_);
 
                     switch (target->type()) {
                     case TargetType::CPU:
@@ -144,7 +150,6 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
 
 #ifdef FT_WITH_CUDA
                     case TargetType::GPU: {
-                        auto merged = find(mergedId);
                         auto isParallelLoop = [](const Stmt &s) {
                             return s->nodeType() == ASTNodeType::For &&
                                    s.as<ForNode>()->property_->parallel_ !=
@@ -268,29 +273,57 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                 }
             }
 
+            bool parallelizeInner = false;
+            int64_t innerParallelSize = outerParallelSize;
             if (!done) {
+                parallelizeInner = true;
+            } else if (target->type() == TargetType::CPU) {
+                if (mergedLen->nodeType() == ASTNodeType::IntConst) {
+                    innerParallelSize *= mergedLen.as<IntConstNode>()->val_;
+                    auto nCore = target.as<CPUTarget>()->nCore();
+                    if (nCore.has_value() && *nCore / innerParallelSize > 1) {
+                        parallelizeInner = true;
+                    }
+                }
+            }
+            if (parallelizeInner) {
                 for (auto &&subLoop :
                      findAll("<For><-(!<For><-)*" + toString(root->id()))) {
                     autoParallelizeOuter(subLoop.as<ForNode>(), parentIsWarp,
-                                         parallelizeAmongBlocks);
+                                         parallelizeAmongBlocks,
+                                         innerParallelSize);
                 }
             }
         };
     for (auto &&_root : findAll("<For><-(!<For><-)*<-|")) {
         // Suppose the root node is not <For>. It should be <VarDef>
         auto root = _root.as<ForNode>();
-        // If the outer most loop is too short, we try the second outer loops
-        // instead
-        if (auto &&inners =
-                findAll("<For><-(!<For><-)*" + toString(root->id()));
-            inners.size() > 1 &&
-            root->len_->nodeType() == ASTNodeType::IntConst &&
-            root->len_.as<IntConstNode>()->val_ < 32) {
-            for (auto &&inner : inners) {
-                autoParallelizeOuter(inner.as<ForNode>(), false, true);
+        switch (target->type()) {
+        case TargetType::CPU:
+            autoParallelizeOuter(root, false, true, 1);
+            break;
+
+#ifdef FT_WITH_CUDA
+        case TargetType::GPU:
+            // Since there is no nested parallelism for GPU, we can only choose
+            // one level to parallelize. If the outer most loop is too short, we
+            // try the second outer loops instead
+            if (auto &&inners =
+                    findAll("<For><-(!<For><-)*" + toString(root->id()));
+                inners.size() > 1 &&
+                root->len_->nodeType() == ASTNodeType::IntConst &&
+                root->len_.as<IntConstNode>()->val_ < 32) {
+                for (auto &&inner : inners) {
+                    autoParallelizeOuter(inner.as<ForNode>(), false, true, 1);
+                }
+            } else {
+                autoParallelizeOuter(root, false, true, 1);
             }
-        } else {
-            autoParallelizeOuter(root, false, true);
+            break;
+#endif // FT_WITH_CUDA
+
+        default:
+            ASSERT(false);
         }
     }
 }

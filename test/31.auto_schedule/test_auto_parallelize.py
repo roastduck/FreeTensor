@@ -182,10 +182,12 @@ def test_gpu_warp_dynamic():
     ]
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_outer_loop_too_short():
-    with ft.VarDef([("x", (8, 1000), "int32", "input", "cpu"),
-                    ("y", (8, 1000), "int32", "output", "cpu"),
-                    ("z", (8, 1000), "int32", "output", "cpu")]) as (x, y, z):
+    with ft.VarDef([("x", (8, 1000), "int32", "input", "gpu/global"),
+                    ("y", (8, 1000), "int32", "output", "gpu/global"),
+                    ("z", (8, 1000), "int32", "output", "gpu/global")
+                   ]) as (x, y, z):
         with ft.For("i", 0, 8, label="Li") as i:
             with ft.For("j", 0, 1000, label="Lj1") as j:
                 y[i, j] = x[i, j] + x[i, (j + 1) % 1000]
@@ -194,23 +196,23 @@ def test_outer_loop_too_short():
 
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.auto_parallelize(ft.CPU())
+    s.auto_parallelize(ft.GPU())
     print(s.ast())
     logs = list(map(str, s.logs()))
     print(logs)
-    assert logs == ["parallelize(Lj1, openmp)", "parallelize(Lj2, openmp)"]
+    assert "Li" not in ", ".join(logs)
 
 
 def test_outer_loop_not_parallelizable():
-    with ft.VarDef([("x", (100,), "float32", "inout", "cpu"),
-                    ("w", (100, 100), "float32", "input", "cpu")]) as (x, w):
+    with ft.VarDef([("x", (200,), "float32", "inout", "cpu"),
+                    ("w", (200, 200), "float32", "input", "cpu")]) as (x, w):
         with ft.For("p", 0, 1000, label="Lp") as p:
-            with ft.VarDef("y", (100,), "float32", "cache", "cpu") as y:
-                with ft.For("i", 0, 100, label="Li0") as i:
+            with ft.VarDef("y", (200,), "float32", "cache", "cpu") as y:
+                with ft.For("i", 0, 200, label="Li0") as i:
                     y[i] = 0
-                    with ft.For("j", 0, 100, label="Lj") as j:
+                    with ft.For("j", 0, 200, label="Lj") as j:
                         y[i] += x[j] * w[i, j]
-                with ft.For("i", 0, 100, label="Li1") as i:
+                with ft.For("i", 0, 200, label="Li1") as i:
                     x[i] = y[i]
 
     ast = ft.pop_ast(verbose=True)
