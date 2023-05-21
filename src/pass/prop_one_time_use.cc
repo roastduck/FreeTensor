@@ -112,21 +112,20 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
            }));
 
     // Find other potential dependence that may prevent propagation
-    finder =
-        FindDeps()
-            .type(DEP_RAW)
-            .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
-                return r2wCandidates.count(later.op_) ||
-                       w2r.count(earlier.op_.as<StmtNode>());
-            })
-            .ignoreReductionWAW(false);
-    if (subAST.isValid()) {
-        finder = finder.filterSubAST(subAST);
-    }
-    finder(op, [&](const Dependence &d) {
-        r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
-        w2rMay[d.earlier().as<StmtNode>()].emplace_back(d.later());
-    });
+    //
+    // No filter sub-AST because there may be A->C->B dependence for A,B,C in
+    // program order. Besides, we need to ensure one-time use in the whole
+    // program
+    FindDeps()
+        .type(DEP_RAW)
+        .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
+            return r2wCandidates.count(later.op_) ||
+                   w2r.count(earlier.op_.as<StmtNode>());
+        })
+        .ignoreReductionWAW(false)(op, [&](const Dependence &d) {
+            r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
+            w2rMay[d.earlier().as<StmtNode>()].emplace_back(d.later());
+        });
 
     // Filter one-time use
     std::unordered_map<AST, std::pair<Stmt, ReplaceInfo>> r2w;

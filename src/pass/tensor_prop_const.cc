@@ -105,18 +105,16 @@ Stmt tensorPropConst(const Stmt &_op, const ID &subAST) {
             }));
 
         // Find other potential dependence that may prevent propagation
-        finder = FindDeps()
-                     .type(DEP_RAW)
-                     .filterLater([&](const AccessPoint &later) {
-                         return r2w.count(later.op_);
-                     })
-                     .ignoreReductionWAW(false);
-        if (subAST.isValid()) {
-            finder = finder.filterSubAST(subAST);
-        }
-        finder(op, [&](const Dependence &d) {
-            r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
-        });
+        //
+        // No filter sub-AST because there may be A->C->B dependence for A,B,C
+        // in program order
+        FindDeps()
+            .type(DEP_RAW)
+            .filterLater(
+                [&](const AccessPoint &later) { return r2w.count(later.op_); })
+            .ignoreReductionWAW(false)(op, [&](const Dependence &d) {
+                r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
+            });
 
         std::unordered_map<AST, Expr> replace;
         for (auto &&item : r2w) {

@@ -44,6 +44,7 @@ def test_manual_static():
     L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
+    L_head = s.fuse(L_head)
 
     # L_seq_outer
     L_seq_outer = s.fuse("L<~recur<~recur<~init<~recur<~impl<~max<~softmax")
