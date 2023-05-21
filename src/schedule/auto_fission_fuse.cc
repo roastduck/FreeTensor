@@ -163,16 +163,19 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
                                         .first;
                             }
                             loopId = fuse(lastId, loopId, true);
+                            lastId = ID(), last = nullptr;
                             loop = find(loopId).as<ForNode>();
                             commitTransaction();
                         } catch (const InvalidSchedule &e) {
                             abortTransaction();
-                            tryFuse(last);
                         }
                     }
                 }
             }
         skip:
+            if (last.isValid()) {
+                tryFuse(last);
+            }
             lastId = loopId, last = loop;
         }
         if (last.isValid()) {
