@@ -113,14 +113,18 @@ void init_ffi_pass(py::module_ &m) {
           "stmt"_a, "target"_a);
 
     m.def("tensor_prop_const",
-          static_cast<Func (*)(const Func &)>(&tensorPropConst), "func"_a);
+          static_cast<Func (*)(const Func &, const ID &)>(&tensorPropConst),
+          "func"_a, py::arg_v("sub_ast", ID(), "ID()"));
     m.def("tensor_prop_const",
-          static_cast<Stmt (*)(const Stmt &)>(&tensorPropConst), "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const ID &)>(&tensorPropConst),
+          "stmt"_a, py::arg_v("sub_ast", ID(), "ID()"));
 
     m.def("prop_one_time_use",
-          static_cast<Func (*)(const Func &)>(&propOneTimeUse), "func"_a);
+          static_cast<Func (*)(const Func &, const ID &)>(&propOneTimeUse),
+          "func"_a, py::arg_v("sub_ast", ID(), "ID()"));
     m.def("prop_one_time_use",
-          static_cast<Stmt (*)(const Stmt &)>(&propOneTimeUse), "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const ID &)>(&propOneTimeUse),
+          "stmt"_a, py::arg_v("sub_ast", ID(), "ID()"));
 
     m.def("remove_writes",
           static_cast<Func (*)(const Func &, const ID &)>(&removeWrites),

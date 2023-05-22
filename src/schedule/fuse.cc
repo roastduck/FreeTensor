@@ -242,8 +242,8 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
                               " loop1 with different lengths? " + e.what());
     }
 
-    ast = propOneTimeUse(ast);
-    ast = tensorPropConst(ast);
+    ast = propOneTimeUse(ast, mutator.fused());
+    ast = tensorPropConst(ast, mutator.fused());
     ast = sinkVar(ast);
     ast = shrinkVar(ast);
     ast = removeDeadVar(ast);

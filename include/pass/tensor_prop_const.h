@@ -25,8 +25,10 @@ namespace freetensor {
  * This version of const propagation is designed for both scalars and tensors.
  * For scalars, it directly invokes scalarPropConst. For tensors, it invokes the
  * Presburger solver
+ *
+ * @param subAST : If set, only propagate in this sub-tree
  */
-Stmt tensorPropConst(const Stmt &op);
+Stmt tensorPropConst(const Stmt &op, const ID &subAST = ID());
 
 DEFINE_PASS_FOR_FUNC(tensorPropConst)
 
