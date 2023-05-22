@@ -3,6 +3,7 @@
 #include <analyze/deps.h>
 #include <schedule.h>
 #include <schedule/check_loop_order.h>
+#include <schedule/hoist_selected_var.h>
 #include <schedule/reorder.h>
 
 namespace freetensor {
@@ -164,6 +165,13 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
             std::find(dstOrder.begin(), dstOrder.end(), loop->id()) -
             dstOrder.begin());
     }
+
+    // We do not analyze dependences that exit and re-enter a VarDef
+    // (`eraseOutsideVarDef(true)`), so local variables will not stop
+    // reordering. However, we need to first ensure there is no VarDef between
+    // two reordered loops to ensure this exception is correct.
+    ast = hoistSelectedVar(ast, "<<-" + toString(curOrder.front()->id()) +
+                                    "&->>" + toString(curOrder.back()->id()));
 
     // A reorder is leagal if and only if:
     // 1. when all the loops out of what reordered are in the same iteration,

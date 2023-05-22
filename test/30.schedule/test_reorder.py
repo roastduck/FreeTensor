@@ -396,3 +396,20 @@ def test_no_merge_if_outer_iter_var_is_used_in_inner():
     s = ft.Schedule(ast, verbose=2)
     with pytest.raises(ft.InvalidSchedule):
         s.reorder(["L2", "L1"])
+
+
+def test_dep_by_local_var_between_reordered_loops():
+
+    @ft.transform
+    def f(x: ft.Var[(4,), "int32", "input"], y: ft.Var[(4,), "int32", "inout"]):
+        #! label: L1
+        for i in range(0, 4):
+            t = ft.empty((), "int32")
+            t[...] = x[i] * 2
+            #! label: L2
+            for j in range(0, 4):
+                y[i] += t[...] * j
+
+    s = ft.Schedule(f, verbose=2)
+    with pytest.raises(ft.InvalidSchedule):
+        s.reorder(["L2", "L1"])
