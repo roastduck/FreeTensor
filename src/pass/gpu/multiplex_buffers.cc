@@ -25,7 +25,8 @@ void FindParallelLoops::visit(const VarDef &op) {
     if (defId_.isValid() && op->id() != defId_) {
         return;
     }
-    if (op->buffer_->mtype() == MemType::GPUGlobal) {
+    if (op->buffer_->mtype() == MemType::GPUGlobal ||
+        op->buffer_->mtype() == MemType::GPUGlobalHeap) {
         for (auto &&outer : stack_) {
             if (std::holds_alternative<CUDAScope>(
                     outer->property_->parallel_) &&
