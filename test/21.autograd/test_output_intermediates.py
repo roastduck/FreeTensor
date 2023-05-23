@@ -251,10 +251,11 @@ def test_circular_reuse():
                     with ft.For("i", 0, 128, label='Li0') as i:
                         h[i] = 0
                     ft.MarkLabel("V_c")
-                    with ft.VarDef("c", (128,), "float32", "cache", "cpu") as c:
-                        with ft.For("p", 0, 100, label='Lp') as p:
-                            with ft.For("i", 0, 128, label='Li1') as i:
-                                h_tape[p, i] = h[i]
+                    with ft.For("p", 0, 100, label='Lp') as p:
+                        with ft.For("i", 0, 128, label='Li1') as i:
+                            h_tape[p, i] = h[i]
+                            with ft.VarDef("c", (128,), "float32", "cache",
+                                           "cpu") as c:
                                 c[i] = h[i] / 2 - 1
                                 c_tape[p, i] = c[i]
                                 h[i] = c[i] * 2 + 1

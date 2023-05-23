@@ -22,6 +22,7 @@ from .frontend import lang_overload
 from .param_ret_dict import Parameter, Return, ParamRetDict
 from .jit import JITTemplate
 from .utils import as_decorator
+from .passes import sink_var
 
 
 def grad_body(stmt: ffi.Stmt,
@@ -640,7 +641,14 @@ def jacrev_(func=None,
             new_vardef.__exit__(None, None, None)
         new_bwd_body = pop_ast()
 
-        # 2d. Make Func signature
+        # 2d. Post optimization
+        #
+        # The outputs' gradient are out of the `_freetensor_jacrev_i` loops that iterates elements
+        # of the output tensor, because they are inputs to `old_bwd`. However, they are actually
+        # local variables now, so we can sink them to enable more schedules.
+        new_bwd_body = sink_var(new_bwd_body)
+
+        # 2e. Make Func signature
         new_params = list(filter(lambda p: not is_out_grad(p.name), bwd.params))
         if flatten:
             new_params = list(

@@ -607,13 +607,13 @@ def test_type2_outer_loop():
 
 def test_type2_used_no_remove():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (1,), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu"),
-                    ("w", (4,), "int32", "output", "cpu")]) as (x, z, w):
-        with ft.VarDef("y", (1,), "int32", "cache", "cpu") as y:
-            with ft.For("i", 0, 4) as i:
-                y[0] = x[i] * 2
-                z[i] = y[0] + 1
-                w[i] = y[0] + 2
+                    ("w", (4,), "int32", "output", "cpu")]) as (x, y, z, w):
+        with ft.For("i", 0, 4) as i:
+            y[0] = x[i] * 2
+            z[i] = y[0] + 1
+            w[i] = y[0] + 2
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
@@ -623,13 +623,13 @@ def test_type2_used_no_remove():
                    ])
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (1,), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu"),
-                    ("w", (4,), "int32", "output", "cpu")]) as (x, z, w):
-        with ft.VarDef("y", (1,), "int32", "cache", "cpu") as y:
-            with ft.For("i", 0, 4) as i:
-                y[0] = x[i] * 2
-                z[i] = y[0] + 1
-                w[i] = y[0] + 2
+                    ("w", (4,), "int32", "output", "cpu")]) as (x, y, z, w):
+        with ft.For("i", 0, 4) as i:
+            y[0] = x[i] * 2
+            z[i] = y[0] + 1
+            w[i] = y[0] + 2
     std = ft.pop_ast()
 
     assert std.match(ast)

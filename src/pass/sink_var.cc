@@ -198,6 +198,8 @@ Stmt sinkVar(const Stmt &_op,
 
         if (!needDepAnalysis.empty()) {
             FindDeps()
+                .type(DEP_RAW) // Only RAW stops sinking. Exiting and
+                               // re-entering a VarDef will not break WAR or WAW
                 .direction(direction)
                 .filterAccess([&](const auto &acc) {
                     return needDepAnalysis.count(acc.def_->id());
