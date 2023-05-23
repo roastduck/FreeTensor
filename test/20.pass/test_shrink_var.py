@@ -174,17 +174,17 @@ def test_no_changing_unbounded_var():
                 t[idx[i], j] = x[idx[i], j] + 1
                 y[idx[i], j] = t[idx[i], j] * 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['prop_one_time_use'])
+    ast = ft.lower(ast, verbose=2, skip_passes=['prop_one_time_use'])
 
-    # This program should be kept as-is. No additional guards should be added
+    # No additional guards should be added even we don't know the range of `idx[i]`
     with ft.VarDef([("idx", (4,), "int32", "input", "cpu"),
                     ("x", (4, 4), "int32", "input", "cpu"),
-                    ("t", (4, 4), "int32", "cache", "cpu"),
-                    ("y", (4, 4), "int32", "output", "cpu")]) as (idx, x, t, y):
+                    ("y", (4, 4), "int32", "output", "cpu")]) as (idx, x, y):
         with ft.For("i", 0, 4) as i:
             with ft.For("j", 0, 4) as j:
-                t[idx[i], j] = x[idx[i], j] + 1
-                y[idx[i], j] = t[idx[i], j] * 2
+                with ft.VarDef("t", (1, 1), "int32", "cache", "cpu") as t:
+                    t[0, 0] = x[idx[i], j] + 1
+                    y[idx[i], j] = t[0, 0] * 2
     assert ft.pop_ast().match(ast)
 
 

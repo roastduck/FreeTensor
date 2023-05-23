@@ -98,11 +98,15 @@ void CompAccessBound::visit(const VarDef &op) {
             if (checkAllDefined(defs_, index)) {
                 lowerItem.emplace_back(index);
             }
+            bool insertedNonTrivialBounds = false;
             for (auto &&b : access_[j].lower_[i]) {
-                lowerItem.emplace_back(b.expr());
+                if (!HashComparator{}(index, b.expr())) {
+                    lowerItem.emplace_back(b.expr());
+                    insertedNonTrivialBounds = true;
+                }
             }
-            if (includeTrivialBound_ || !lowerItem.empty()) {
-                // If lowerItem is not empty, we still include the trivial
+            if (includeTrivialBound_ || insertedNonTrivialBounds) {
+                // If `insertedNonTrivialBounds`, we still include the trivial
                 // bound, to avoid make a variable even larger after
                 // pass/shrink_var
                 lowerItem.emplace_back(makeIntConst(0));
@@ -117,11 +121,15 @@ void CompAccessBound::visit(const VarDef &op) {
             if (checkAllDefined(defs_, index)) {
                 upperItem.emplace_back(index);
             }
+            bool insertedNonTrivialBounds = false;
             for (auto &&b : access_[j].upper_[i]) {
-                upperItem.emplace_back(b.expr());
+                if (!HashComparator{}(index, b.expr())) {
+                    upperItem.emplace_back(b.expr());
+                    insertedNonTrivialBounds = true;
+                }
             }
-            if (includeTrivialBound_ || !upperItem.empty()) {
-                // If upperItem is not empty, we still include the trivial
+            if (includeTrivialBound_ || insertedNonTrivialBounds) {
+                // If `insertedNonTrivialBounds`, we still include the trivial
                 // bound, to avoid make a variable even larger after
                 // pass/shrink_var
                 upperItem.emplace_back(makeSub(

@@ -454,8 +454,8 @@ def test_reduce_min_quick_path_taped_1():
                     ("d_y", (), "float32", "inout", "cpu"),
                     ("t_tape", (2,), "float32", "input", "cpu")
                    ]) as (x, d_x, d_y, t_tape):
-        with ft.VarDef("d_t", (), "float32", "cache", "cpu") as d_t:
-            with ft.For("p", 1, -1, -1) as p:
+        with ft.For("p", 1, -1, -1) as p:
+            with ft.VarDef("d_t", (), "float32", "cache", "cpu") as d_t:
                 d_t[()] = d_y[()]
                 # We need to load a proper version of `t`
                 with ft.For("i", 3, -1, -1) as i:
