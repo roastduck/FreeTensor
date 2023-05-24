@@ -1,7 +1,6 @@
 from typing import Optional, Callable
 import sys
 import functools
-import astor
 from pygments import highlight
 from pygments.lexers import CppLexer, CudaLexer
 from pygments.formatters import TerminalFormatter
