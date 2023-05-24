@@ -9,7 +9,8 @@ namespace freetensor {
 namespace gpu {
 
 void FindParallelLoops::visit(const For &op) {
-    if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
+    if (std::holds_alternative<CUDAScope>(op->property_->parallel_) ||
+        std::holds_alternative<CUDAStreamScope>(op->property_->parallel_)) {
         loops_.emplace_back(op);
         stack_.emplace_back(op);
         Visitor::visit(op);
@@ -24,9 +25,17 @@ void FindParallelLoops::visit(const VarDef &op) {
     if (defId_.isValid() && op->id() != defId_) {
         return;
     }
-    if (op->buffer_->mtype() == MemType::GPUGlobal) {
+    if (op->buffer_->mtype() == MemType::GPUGlobal ||
+        op->buffer_->mtype() == MemType::GPUGlobalHeap) {
         for (auto &&outer : stack_) {
-            affecting_[op->id()].insert(outer->id());
+            if (std::holds_alternative<CUDAScope>(
+                    outer->property_->parallel_) &&
+                std::get<CUDAScope>(outer->property_->parallel_).level_ ==
+                    CUDAScope::Thread) {
+                affecting_[op->id()][outer->id()] = true;
+            } else {
+                affecting_[op->id()][outer->id()] = false;
+            }
         }
     } else if (op->buffer_->mtype() == MemType::GPUShared) {
         for (auto &&outer : stack_) {
@@ -34,7 +43,7 @@ void FindParallelLoops::visit(const VarDef &op) {
                     outer->property_->parallel_) &&
                 std::get<CUDAScope>(outer->property_->parallel_).level_ ==
                     CUDAScope::Thread) {
-                affecting_[op->id()].insert(outer->id());
+                affecting_[op->id()][outer->id()] = true;
             }
         }
     } else if (op->buffer_->mtype() == MemType::GPUWarp) {
@@ -44,7 +53,7 @@ void FindParallelLoops::visit(const VarDef &op) {
                 makeAssert(
                     makeLE(outer->len_, makeIntConst(target_->warpSize())),
                     makeStmtSeq(std::initializer_list<Stmt>()));
-                affecting_[op->id()].insert(outer->id());
+                affecting_[op->id()][outer->id()] = true;
             }
         }
     }
@@ -107,27 +116,28 @@ Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target,
     FindParallelLoops finder(target, defId);
     finder(op);
 
-    std::unordered_map<ID, std::unordered_set<ID>> affecting,
-        newAffecting; // VarDef ID -> For ID
-    affecting = finder.affecting();
+    std::unordered_map<ID, std::unordered_set<ID>>
+        affecting; // VarDef ID -> For ID
 
     // Criteria:
-    // 1. The value stored is loop-variant
+    // 1. The value stored is loop-variant or if we are unable to broadcast a
+    // loop-invariant value
     // AND
     // 2. There is dependence
 
-    // 1. The value stored is loop-variant
+    // 1. The value stored is loop-variant or if we are unable to broadcast a
+    // loop-invariant value
     auto variantMap = findLoopVariance(op).second;
-    for (auto &&[vardef, loops] : affecting) {
-        for (auto &&loop : loops) {
-            if (isVariant(variantMap, vardef, loop)) {
-                newAffecting[vardef].insert(loop);
+    for (auto &&[vardef, loops] : finder.affecting()) {
+        for (auto &&[loop, canComm] : loops) {
+            if (!canComm || isVariant(variantMap, vardef, loop)) {
+                affecting[vardef].insert(loop);
             }
         }
     }
-    affecting = std::move(newAffecting);
 
     // 2. There is dependence
+    std::unordered_map<ID, std::unordered_set<ID>> newAffecting;
     std::vector<FindDepsDir> direction;
     for (auto &&loop : finder.loops()) {
         direction.emplace_back(
