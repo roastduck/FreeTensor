@@ -307,7 +307,7 @@ def test_shmem():
         s.parallelize("L1", "threadIdx.x")
         func = ft.lower(s.func(), verbose=1)
         code = ft.codegen(func, verbose=True)
-        assert "__shared__" in str(code)
+        assert "__shared__" in code.code
         x_np = np.array([1, 2, 3, 4], dtype="int32")
         y_np = np.zeros((4,), dtype="int32")
         x_arr = ft.Array(x_np)
@@ -350,8 +350,8 @@ def test_global_mem():
         s.parallelize("L2", "threadIdx.x")
         func = ft.lower(s.func(), skip_passes=['prop_one_time_use'], verbose=1)
         code = ft.codegen(func, verbose=True)
-        assert "cudaNew" in str(code)  # cudaNew is our wrapper over cudaMalloc
-        assert "cudaFree" in str(code)
+        assert "cudaNew" in code.code  # cudaNew is our wrapper over cudaMalloc
+        assert "cudaFree" in code.code
         x_np = np.array([1, 2, 3, 4], dtype="int32")
         y_np = np.zeros((4,), dtype="int32")
         x_arr = ft.Array(x_np)
@@ -956,8 +956,8 @@ def test_unroll_for():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target, verbose=True)
-    assert "atomicAdd" not in str(code)
-    assert "+=" in str(code)
+    assert "atomicAdd" not in code.code
+    assert "+=" in code.code
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np)
@@ -990,7 +990,7 @@ def test_streams():
     s.parallelize("L3", "threadIdx.x")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cudaStreamCreate" in str(code)
+    assert "cudaStreamCreate" in code.code
     x_np = np.random.randint(0, 100, (4, 256)).astype("int32")
     y_np = np.zeros((4, 256), dtype="int32")
     x_arr = ft.Array(x_np)

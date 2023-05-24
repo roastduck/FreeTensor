@@ -10,6 +10,10 @@ import ast
 import functools
 import inspect
 import sourceinspect as ins
+import astor
+from pygments import highlight
+from pygments.lexers import PythonLexer
+from pygments.formatters import TerminalFormatter
 from typing import Callable, Dict, List, Sequence, Optional, Any, Set
 from dataclasses import dataclass
 
@@ -573,13 +577,9 @@ class StagingOverloadStack:
         tree = ast.fix_missing_locations(tree)
 
         if verbose:
-            import astor
             source = astor.to_source(tree)
 
             if config.pretty_print():
-                from pygments import highlight
-                from pygments.lexers import PythonLexer
-                from pygments.formatters import TerminalFormatter
                 print(highlight(source, PythonLexer(),
                                 TerminalFormatter(bg='dark', linenos=True)),
                       file=sys.stderr)

@@ -112,7 +112,7 @@ def test_call_with_external_data():
 
     y_np = np.zeros((2, 2), dtype="int32")
     y_arr = ft.Array(y_np)
-    ft.Driver(f, code, ft.CPU())(y=y_arr)
+    ft.build_binary(code, ft.CPU())(y=y_arr)
     y_np = y_arr.numpy()
 
     assert np.array_equal(y_np, data.numpy() * 2)
@@ -145,7 +145,7 @@ def test_call_with_literal_data():
 
     y_np = np.zeros((2, 2), dtype="int32")
     y_arr = ft.Array(y_np)
-    ft.Driver(f, code, dev)(y=y_arr)
+    ft.build_binary(code, dev)(y=y_arr)
     y_np = y_arr.numpy()
 
     assert np.array_equal(y_np, np.array([[0, 1], [2, 3]], dtype=np.int32) * 2)

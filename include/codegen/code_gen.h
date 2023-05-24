@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <analyze/symbol_table.h>
+#include <codegen/native_code.h>
 #include <container_utils.h>
 #include <visitor.h>
 
@@ -81,7 +82,7 @@ template <class Stream> class CodeGen : public SymbolTable<Visitor> {
  * determine parameters and return values
  * @param target : The target architecture
  */
-std::string codeGen(const Func &func, const Ref<Target> &target);
+NativeCode codeGen(const Func &func, const Ref<Target> &target);
 
 } // namespace freetensor
 

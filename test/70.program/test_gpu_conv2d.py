@@ -1,7 +1,6 @@
 import functools
 
 import freetensor as ft
-from freetensor import debug
 import pytest
 import numpy as np
 
@@ -38,7 +37,7 @@ def test_manual_static():
             print(func, flush=True)
         code = ft.codegen(func, target)
         if print_code:
-            print(debug.with_line_no(code), flush=True)
+            print(code, flush=True)
         driver = ft.build_binary(code, device)
         B_np = np.zeros((out_size, out_size, out_channel, batch),
                         dtype="float32")

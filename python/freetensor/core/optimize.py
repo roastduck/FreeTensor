@@ -253,7 +253,7 @@ def optimize_to_pytorch(
 
             input_grad_map = exe_inst.input_name_to_gradient_name
             output_grad_map = exe_inst.output_name_to_gradient_name
-            tape_rets = exe_inst.func.returns[len(ast_inst.returns):]
+            tape_rets = exe_inst.native_code().returns[len(ast_inst.returns):]
             saved_tensors = ctx.saved_tensors
             internal_kvs = {}
             for ret, arg in zip(ast_inst.returns, args):

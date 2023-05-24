@@ -193,8 +193,7 @@ class GPU(Device):
 class Driver(EnableAttachBackward, ffi.Driver):
 
     def __init__(self,
-                 func: ffi.Func,
-                 src: str,
+                 native_code: NativeCode,
                  device: Optional[Device] = None,
                  host_device: Optional[Device] = None,
                  verbose: Optional[bool] = None):
@@ -205,10 +204,7 @@ class Driver(EnableAttachBackward, ffi.Driver):
 
         Parameters
         ----------
-        func : ffi.Func
-            AST of the function, where the function signature is needed to
-            determine the parameters and return values
-        src : str
+        native_code : NativeCode
             Native code generated from codegen
         device : Device (Optional)
             The device to run the program. If omitted, use the default device
@@ -216,17 +212,16 @@ class Driver(EnableAttachBackward, ffi.Driver):
         verbose : bool (Optional)
             True to print extra infomation
         '''
-        self.src = str(src)
+        self._native_code = native_code
         if device is None:
             device = config.default_device()
         if verbose is None:
             verbose = False
         if host_device is None:
-            super(Driver, self).__init__(func, self.src, device, verbose)
+            super(Driver, self).__init__(native_code, device, verbose)
         else:
-            super(Driver, self).__init__(func, self.src, device, host_device,
+            super(Driver, self).__init__(native_code, device, host_device,
                                          verbose)
-        self.func = func
 
         # When we pass numpy or pytorch tensors to `set_args`, they are
         # converted to `Array` objects by reference. In `Array`'s FFI, we
@@ -239,7 +234,7 @@ class Driver(EnableAttachBackward, ffi.Driver):
 
     def native_code(self):
         ''' Get native code compiled by backend compiler '''
-        return self.src
+        return self._native_code
 
     def set_args(self, *args, **kws):
         ''' Set argument for an invocation '''
@@ -283,7 +278,7 @@ class Driver(EnableAttachBackward, ffi.Driver):
                 map(
                     lambda r: r.name,
                     filter(lambda r: not r.is_in_closure or r.return_closure,
-                           self.func.returns)), values)
+                           self._native_code.returns)), values)
 
     def __call__(self, *args, **kws):
         '''
@@ -398,7 +393,7 @@ def build_binary(code: Optional[NativeCode] = None,
         raise ffi.DriverError(
             f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"
         )
-    ret = Driver(code.func, code.code, device, host_device, verbose)
+    ret = Driver(code, device, host_device, verbose)
 
     if code.has_backward():
         ret.attach_backward(

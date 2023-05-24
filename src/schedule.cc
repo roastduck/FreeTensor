@@ -124,7 +124,7 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
                     s.autoSchedule(device->target(), trace);
                     lowered = lower(s.func(), device->target());
                     code = codeGen(lowered, device->target());
-                    drivers[j] = Ref<Driver>::make(lowered, code, device);
+                    drivers[j] = Ref<Driver>::make(code, device);
                 },
                 omp_sched_static); // use schedule(static) to guarantee
                                    // deterministic RNG

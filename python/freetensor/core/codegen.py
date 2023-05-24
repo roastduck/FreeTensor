@@ -1,27 +1,49 @@
 from typing import Optional, Callable
 import sys
 import functools
+from pygments import highlight
+from pygments.lexers import CppLexer, CudaLexer
+from pygments.formatters import TerminalFormatter
 
 import freetensor_ffi as ffi
 
 from . import config
-from .. import debug
 from .func import Func
 from .enable_attach_backward import EnableAttachBackward
 from .jit import JITTemplate
 from .utils import as_decorator
 
 
-class NativeCode(EnableAttachBackward):
+class NativeCode(EnableAttachBackward, ffi.NativeCode):
+    '''
+    Generated native code with metadata
 
-    def __init__(self, func, code, target):
-        super().__init__()
-        self.func = func
-        self.code = code
-        self.target = target
+    NOTE: This class does not support serialization yet. If you need serialization,
+    serialize the Func, and re-run codegen.
+    '''
+
+    def __init__(self, *args, **kvs):
+        super().__init__(*args, **kvs)
 
     def __str__(self):
-        return self.code
+        params = "[" + ", ".join(map(str, self.params)) + "]"
+        returns = "[" + ", ".join(map(str, self.returns)) + "]"
+        code = self.code
+        if config.pretty_print():
+            if self.target.type == ffi.TargetType.GPU:
+                lexer = CudaLexer()
+            else:
+                lexer = CppLexer()
+            code = highlight(code, lexer,
+                             TerminalFormatter(bg='dark', linenos=True))
+        return (f'NativeCode(params={params}, returns={returns}):\n'
+                f'---- BEGIN NATIVE CODE ----\n'
+                f'{code}'
+                f'---- END NATIVE CODE ----\n')
+
+    def __contains__(self, item):
+        ''' Legacy interface for testing if a string is in the code '''
+        return item in self.code
 
 
 @as_decorator
@@ -66,11 +88,12 @@ def codegen(ast: Func = None,
 
         return CodeGenTemplate(ast.params, ast.jit_param_names)
 
-    raw_code = ffi.code_gen(ast, target)
+    ret = ffi.code_gen(ast, target)
+    ret = NativeCode(ret.name, ret.params, ret.returns, ret.code,
+                     ret.target)  # ffi.NativeCode -> ft.NativeCode
     if verbose:
-        print(debug.with_line_no(raw_code), file=sys.stderr)
+        print(ret, file=sys.stderr)
 
-    ret = NativeCode(ast, raw_code, target)
     if isinstance(ast, Func) and ast.has_backward():
         ret.attach_backward(
             codegen(ast.backward,
