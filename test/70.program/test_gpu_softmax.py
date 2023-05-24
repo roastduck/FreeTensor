@@ -137,7 +137,7 @@ def test_manual_static():
                           seq_len,
                           dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy())
-    ft.Driver(f, code, device)(x_arr, y_arr)
+    ft.build_binary(code, device)(x_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, torch.softmax(x_torch, axis=-1)))
