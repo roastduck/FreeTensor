@@ -138,8 +138,8 @@ def test_no_hint(n: ft.Var[(), &quot;int32&quot;], m: ft.Var[(), &quot;int32&quo
     return y
 
 # You will find `runtime_mod` in the code, which involves additional branching
-assert &quot;runtime_mod&quot; in test_no_hint.native_code()
-assert &quot;%&quot; not in test_no_hint.native_code()
+assert &quot;runtime_mod&quot; in test_no_hint.native_code().code
+assert &quot;%&quot; not in test_no_hint.native_code().code
 
 print(&quot;With hint&quot;)
 
@@ -152,8 +152,8 @@ def test_hint(n: ft.Var[(), &quot;int32&quot;], m: ft.Var[(), &quot;int32&gt;=0&
 
 # You will find native C++ `%` in the code, which compiles directly to mod
 # instructions
-assert &quot;runtime_mod&quot; not in test_hint.native_code()
-assert &quot;%&quot; in test_hint.native_code()
+assert &quot;runtime_mod&quot; not in test_hint.native_code().code
+assert &quot;%&quot; in test_hint.native_code().code
 </code></pre>
 <p>The sign hint also works for other optimizations. One example is <code>ft.sqrt(x * x)</code> can be automatically optimized to <code>x</code> if <code>x</code> is non-negative. Another example is <code>ft.min(a, b)</code> can be automatically optimized to <code>a</code> if <code>a</code> is negative while <code>b</code> is positive.</p>
 <h2 id="provide-information-by-assertions">Provide Information by Assertions<a class="headerlink" href="#provide-information-by-assertions" title="Permanent link">&para;</a></h2>
@@ -192,7 +192,8 @@ def test_no_hint(n: ft.Var[(), &quot;int32&quot;], a, b):
     return y
 
 # You will not find a 32-length loop
-assert not re.search(r&quot;.* = 0; .* &lt; 32; .*\+\+&quot;, test_no_hint.native_code())
+assert not re.search(r&quot;.* = 0; .* &lt; 32; .*\+\+&quot;,
+                     test_no_hint.native_code().code)
 
 @ft.optimize(schedule_callback=sch, verbose=1)
 def test_hint(n: ft.Var[(), &quot;int32&quot;], a, b):
@@ -206,7 +207,7 @@ def test_hint(n: ft.Var[(), &quot;int32&quot;], a, b):
     return y
 
 # You will find a 32-length loop
-assert re.search(r&quot;.* = 0; .* &lt; 32; .*\+\+&quot;, test_hint.native_code())
+assert re.search(r&quot;.* = 0; .* &lt; 32; .*\+\+&quot;, test_hint.native_code().code)
 </code></pre>
 <h2 id="hint-free-of-dependence-by-no_deps">Hint Free of Dependence by <code>no_deps</code><a class="headerlink" href="#hint-free-of-dependence-by-no_deps" title="Permanent link">&para;</a></h2>
 <p>Schedules and optimization passes in FreeTensor are guaranteed not to break the program semantics by analyzing the dependence of reads and writes. But sometimes there will be false positives: the program still runs correctly, but some schedules and optimization passes are unable to apply to it. Here is an exmple of iterating through all elements in a sparse matrix in CSR format:</p>

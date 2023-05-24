@@ -1,7 +1,6 @@
 <map id="freetensor::AutoScheduleTuneTrial" name="freetensor::AutoScheduleTuneTrial">
-<area shape="rect" id="node1" title=" " alt="" coords="259,185,445,227"/>
-<area shape="rect" id="node2" href="$classfreetensor_1_1Ref.html" title=" " alt="" coords="5,96,221,123"/>
-<area shape="rect" id="node3" href="$classfreetensor_1_1Ref.html" title=" " alt="" coords="245,96,459,123"/>
-<area shape="rect" id="node4" title=" " alt="" coords="483,96,570,123"/>
-<area shape="rect" id="node5" title=" " alt="" coords="457,5,596,47"/>
+<area shape="rect" id="node1" title=" " alt="" coords="259,95,445,136"/>
+<area shape="rect" id="node2" href="$classfreetensor_1_1Ref.html" title=" " alt="" coords="5,5,221,32"/>
+<area shape="rect" id="node3" href="$classfreetensor_1_1Ref.html" title=" " alt="" coords="245,5,459,32"/>
+<area shape="rect" id="node4" href="$classfreetensor_1_1NativeCode.html" title=" " alt="" coords="483,5,656,32"/>
 </map>
