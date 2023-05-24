@@ -7,9 +7,9 @@ namespace freetensor {
 NativeCode codeGen(const Func &func, const Ref<Target> &target) {
     switch (target->type()) {
     case TargetType::CPU:
-        return NativeCode::fromFunc(func, codeGenCPU(func), target);
+        return NativeCode::fromFunc(func, codeGenCPU(func), "run", target);
     case TargetType::GPU:
-        return NativeCode::fromFunc(func, codeGenCUDA(func), target);
+        return NativeCode::fromFunc(func, codeGenCUDA(func), "run", target);
     default:
         ERROR("Unrecognized target " + target->toString());
     }

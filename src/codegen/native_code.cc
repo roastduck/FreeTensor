@@ -81,11 +81,12 @@ std::ostream &operator<<(std::ostream &os, const NativeCodeRet &r) {
 }
 
 NativeCode NativeCode::fromFunc(const Func &func, const std::string &code,
+                                const std::string &entry,
                                 const Ref<Target> &target) {
     FindSignatureTypes finder(func->params_, func->returns_);
     finder(func->body_);
     return NativeCode(func->name_, finder.params(), finder.returns(), code,
-                      target);
+                      entry, target);
 }
 
 } // namespace freetensor

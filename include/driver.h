@@ -33,6 +33,8 @@ class Driver {
 
     std::unique_ptr<Context> ctx_;
 
+    std::vector<std::string> cxxFlags_;
+
     bool verbose_ = false;
 
   private:
@@ -45,17 +47,20 @@ class Driver {
      * @param nativeCode : Native code generated from codegen
      * @param device : The device to run the program
      * @param hostDevice : The hosting CPU device (Optional)
+     * @param cxxFlags : Additional C++ flags passed to the backend compiler
+     *
      * @{
      */
     Driver(const NativeCode &nativeCode, const Ref<Device> &device,
-           const Ref<Device> &hostDevice, bool verbose = false);
+           const Ref<Device> &hostDevice,
+           const std::vector<std::string> &cxxFlags = {}, bool verbose = false);
     Driver(const NativeCode &nativeCode, const Ref<Device> &device,
-           bool verbose = false)
+           const std::vector<std::string> &cxxFlags = {}, bool verbose = false)
         : Driver(nativeCode, device,
                  device->type() == TargetType::CPU
                      ? device
                      : Ref<Device>::make(TargetType::CPU),
-                 verbose) {}
+                 cxxFlags, verbose) {}
     /** @} */
 
     ~Driver() {

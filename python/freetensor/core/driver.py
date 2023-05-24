@@ -3,7 +3,7 @@ __all__ = [
     'Driver', 'build_binary'
 ]
 
-from typing import Optional, Callable
+from typing import Optional, Callable, Sequence
 import functools
 import numpy as np
 
@@ -196,7 +196,8 @@ class Driver(EnableAttachBackward, ffi.Driver):
                  native_code: NativeCode,
                  device: Optional[Device] = None,
                  host_device: Optional[Device] = None,
-                 verbose: Optional[bool] = None):
+                 cxx_flags: Sequence[str] = [],
+                 verbose: bool = False):
         '''
         Compile a program using a backend compiler and load it into memory
 
@@ -209,19 +210,20 @@ class Driver(EnableAttachBackward, ffi.Driver):
         device : Device (Optional)
             The device to run the program. If omitted, use the default device
             in config
+        cxx_flags : Sequence[str]
+            Additional C++ flags passed to the backend compiler
         verbose : bool (Optional)
             True to print extra infomation
         '''
         self._native_code = native_code
         if device is None:
             device = config.default_device()
-        if verbose is None:
-            verbose = False
         if host_device is None:
-            super(Driver, self).__init__(native_code, device, verbose)
+            super(Driver, self).__init__(native_code, device, cxx_flags,
+                                         verbose)
         else:
             super(Driver, self).__init__(native_code, device, host_device,
-                                         verbose)
+                                         cxx_flags, verbose)
 
         # When we pass numpy or pytorch tensors to `set_args`, they are
         # converted to `Array` objects by reference. In `Array`'s FFI, we
@@ -232,7 +234,7 @@ class Driver(EnableAttachBackward, ffi.Driver):
         # objects alive.
         self.args_ref_cnt_holder = []
 
-    def native_code(self):
+    def native_code(self) -> NativeCode:
         ''' Get native code compiled by backend compiler '''
         return self._native_code
 
@@ -301,6 +303,7 @@ def build_binary(code: Optional[NativeCode] = None,
                  device: Optional[Device] = None,
                  host_device: Optional[Device] = None,
                  jit_cache: Callable[Callable, Callable] = functools.cache,
+                 cxx_flags: Sequence[str] = [],
                  verbose: bool = False):
     '''
     Compile a program using a backend compiler and load it into memory
@@ -315,6 +318,8 @@ def build_binary(code: Optional[NativeCode] = None,
         in config
     jit_cache : Callable[Callable, Callable]
         Function decorator used to cache JIT instances
+    cxx_flags : Sequence[str]
+        Additional C++ flags passed to the backend compiler
     verbose : int
         Verbosity level
 
@@ -344,6 +349,7 @@ def build_binary(code: Optional[NativeCode] = None,
                     code.instantiate_by_only_jit_args(*jit_args),
                     device=device,
                     host_device=host_device,
+                    cxx_flags=cxx_flags,
                     verbose=verbose)
 
             def __call__(self, *args, **kvs):
@@ -393,7 +399,7 @@ def build_binary(code: Optional[NativeCode] = None,
         raise ffi.DriverError(
             f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"
         )
-    ret = Driver(code, device, host_device, verbose)
+    ret = Driver(code, device, host_device, cxx_flags, verbose)
 
     if code.has_backward():
         ret.attach_backward(
@@ -401,6 +407,7 @@ def build_binary(code: Optional[NativeCode] = None,
                          device=device,
                          host_device=host_device,
                          jit_cache=jit_cache,
+                         cxx_flags=cxx_flags,
                          verbose=verbose), code.input_name_to_gradient_name,
             code.output_name_to_gradient_name)
     return ret

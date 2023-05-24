@@ -149,13 +149,14 @@ static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
 }
 
 Driver::Driver(const NativeCode &nativeCode, const Ref<Device> &dev,
-               const Ref<Device> &hostDev, bool verbose)
+               const Ref<Device> &hostDev,
+               const std::vector<std::string> &cxxFlags, bool verbose)
     : nativeCode_(nativeCode), args_(nativeCode.params().size(), nullptr),
       rawArgs_(nativeCode.params().size(), nullptr),
       rawRets_(nativeCode.returns().size(), nullptr),
       retShapes_(nativeCode.returns().size(), nullptr),
       retDims_(nativeCode.returns().size(), 0), dev_(dev), hostDev_(hostDev),
-      verbose_(verbose) {
+      cxxFlags_(cxxFlags), verbose_(verbose) {
     auto nParams = nativeCode.params().size();
     name2param_.reserve(nParams);
     for (auto &&[i, param] : views::enumerate(nativeCode_.params())) {
@@ -239,6 +240,9 @@ void Driver::buildAndLoad() {
         if (Config::debugBinary()) {
             addArgs("-g");
         }
+        for (auto &&extra : cxxFlags_) {
+            addArgs(extra);
+        }
 
         // 2. Linking command
         addCommand(compiler);
@@ -281,6 +285,9 @@ void Driver::buildAndLoad() {
         if (Config::debugCUDAWithUM()) {
             addArgs("-DFT_DEBUG_CUDA_WITH_UM");
         }
+        for (auto &&extra : cxxFlags_) {
+            addArgs(extra);
+        }
         break;
     }
 #endif // FT_WITH_CUDA
@@ -299,7 +306,7 @@ void Driver::buildAndLoad() {
     }
 
     func_ = (void (*)(void **, void **, size_t **, size_t *, void *))dlsym(
-        dlHandle_, "run");
+        dlHandle_, nativeCode_.entry().c_str());
     if (!func_) {
         throw DriverError((std::string) "Target function not found: " +
                           dlerror());
