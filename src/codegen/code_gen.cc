@@ -4,12 +4,12 @@
 
 namespace freetensor {
 
-std::string codeGen(const Func &func, const Ref<Target> &target) {
+NativeCode codeGen(const Func &func, const Ref<Target> &target) {
     switch (target->type()) {
     case TargetType::CPU:
-        return codeGenCPU(func);
+        return NativeCode::fromFunc(func, codeGenCPU(func), target);
     case TargetType::GPU:
-        return codeGenCUDA(func);
+        return NativeCode::fromFunc(func, codeGenCUDA(func), target);
     default:
         ERROR("Unrecognized target " + target->toString());
     }

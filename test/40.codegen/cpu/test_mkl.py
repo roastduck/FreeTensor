@@ -26,15 +26,15 @@ def test_basic():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
-    assert "mkl_set_num_threads_local(0)" in str(code)
+    assert "cblas" in code.code
+    assert "mkl_set_num_threads_local(0)" in code.code
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -57,15 +57,15 @@ def test_reversed_idx():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
-    assert "mkl_set_num_threads_local(0)" in str(code)
+    assert "cblas" in code.code
+    assert "mkl_set_num_threads_local(0)" in code.code
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -88,15 +88,15 @@ def test_reversed_step():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
-    assert "mkl_set_num_threads_local(0)" in str(code)
+    assert "cblas" in code.code
+    assert "mkl_set_num_threads_local(0)" in code.code
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -119,14 +119,14 @@ def test_trans_a():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
+    assert "cblas" in code.code
     a_np = np.random.uniform(size=(64, 48)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np.transpose() @ b_np))
@@ -149,14 +149,14 @@ def test_trans_b():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
+    assert "cblas" in code.code
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(72, 64)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np.transpose()))
@@ -179,14 +179,14 @@ def test_trans_c():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
+    assert "cblas" in code.code
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(72, 48)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + (a_np @ b_np).transpose()))
@@ -210,14 +210,14 @@ def test_batch():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
+    assert "cblas" in code.code
     a_np = np.random.uniform(size=(4, 48, 64)).astype("float32")
     b_np = np.random.uniform(size=(4, 64, 72)).astype("float32")
     c_np = np.random.uniform(size=(4, 48, 72)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -241,14 +241,14 @@ def test_splitted_dim():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
+    assert "cblas" in code.code
     a_np = np.random.uniform(size=(48, 16, 4)).astype("float32")
     b_np = np.random.uniform(size=(16, 4, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(
@@ -274,14 +274,14 @@ def test_with_init():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
+    assert "cblas" in code.code
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, a_np @ b_np))
@@ -306,14 +306,14 @@ def test_splitted_dim_with_init():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
+    assert "cblas" in code.code
     a_np = np.random.uniform(size=(3, 16, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(3, 16, 72)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(
@@ -340,15 +340,15 @@ def test_in_parallel():
     s.parallelize("L1", "openmp")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
-    assert "mkl_set_num_threads_local(1)" in str(code)
+    assert "cblas" in code.code
+    assert "mkl_set_num_threads_local(1)" in code.code
     a_np = np.random.uniform(size=(64, 48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 64, 72)).astype("float32")
     c_np = np.random.uniform(size=(64, 48, 72)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -370,15 +370,15 @@ def test_matrix_vector():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
-    assert "mkl_set_num_threads_local(0)" in str(code)
+    assert "cblas" in code.code
+    assert "mkl_set_num_threads_local(0)" in code.code
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64,)).astype("float32")
     c_np = np.random.uniform(size=(48,)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -400,15 +400,15 @@ def test_vector_matrix():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
-    assert "mkl_set_num_threads_local(0)" in str(code)
+    assert "cblas" in code.code
+    assert "mkl_set_num_threads_local(0)" in code.code
     a_np = np.random.uniform(size=(64,)).astype("float32")
     b_np = np.random.uniform(size=(64, 48)).astype("float32")
     c_np = np.random.uniform(size=(48,)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
@@ -432,15 +432,15 @@ def test_vardef_in_loop():
     print(s.ast())
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cblas" in str(code)
-    assert "mkl_set_num_threads_local(0)" in str(code)
+    assert "cblas" in code.code
+    assert "mkl_set_num_threads_local(0)" in code.code
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
     a_arr = ft.Array(a_np)
     b_arr = ft.Array(b_np)
     c_arr = ft.Array(c_np.copy())
-    ft.Driver(func, code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, ft.CPU())(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))

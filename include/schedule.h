@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include <analyze/find_stmt.h>
+#include <codegen/native_code.h>
 #include <driver/target.h>
 #include <func.h>
 #include <probability/rand_ctx.h>
@@ -22,7 +23,7 @@ enum class MoveToSide : int { Before, After };
 struct AutoScheduleTuneTrial {
     Ref<RandTrace> trace_;
     Func lowered_;
-    std::string code_;
+    NativeCode code_;
     double time_, stddev_;
 };
 

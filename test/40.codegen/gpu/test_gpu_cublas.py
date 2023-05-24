@@ -27,7 +27,7 @@ def test_basic():
     s.as_matmul("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "cublas" in str(code)
+    assert "cublas" in code.code
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")

@@ -147,13 +147,20 @@ def test_default_device():
 
     with ft.GPU(0):
 
-        @ft.optimize(verbose=1)
-        def test(x: ft.Var[(4,), "int32"], v: ft.JIT[int]):
+        @ft.lower(verbose=1)
+        @ft.transform
+        def test1(x: ft.Var[(4,), "int32"], v: ft.JIT[int]):
+            y = x * v
+            return y
+
+        @ft.optimize(verbose=2)
+        def test2(x: ft.Var[(4,), "int32"], v: ft.JIT[int]):
             y = x * v
             return y
 
     x = ft.array([0, 1, 2, 3], "int32")
-    instance = test.instantiate(x, 2)
+    instance1 = test1.instantiate(x, 2)
+    instance2 = test2.instantiate(x, 2)
 
     @ft.lower
     @ft.transform
@@ -161,6 +168,6 @@ def test_default_device():
         y = x * 2
         return y
 
-    assert expect.body.match(instance.func.body)
+    assert expect.body.match(instance1.body)
 
-    assert instance.device == ft.GPU(0)
+    assert instance2.device == ft.GPU(0)

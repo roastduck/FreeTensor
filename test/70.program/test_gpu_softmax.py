@@ -1,7 +1,6 @@
 import pytest
 
 import freetensor as ft
-from freetensor import debug
 from freetensor import libop
 
 if not ft.with_cuda():
@@ -124,8 +123,7 @@ def test_manual_static():
     f = ft.lower(s.func(), target)
     print(f)
 
-    code = ft.codegen(f, target)
-    print(debug.with_line_no(code))
+    code = ft.codegen(f, target, verbose=1)
 
     x_torch = torch.rand(batch_size,
                          n_heads,

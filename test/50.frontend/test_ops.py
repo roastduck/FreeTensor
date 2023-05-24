@@ -1,5 +1,4 @@
 import freetensor as ft
-from freetensor import debug
 import numpy as np
 
 
@@ -16,7 +15,7 @@ def test_binary_op():
     y_np = np.array(0, dtype="int32")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code, ft.CPU())(x=x_arr, y=y_arr)
+    ft.build_binary(code, ft.CPU())(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
     y_func = np.array(0, dtype="int32")
     test(x_np, y_func)
@@ -41,7 +40,7 @@ def test_bool_op():
     y_np = np.array([0, 0, 0, 0], dtype="bool")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code, ft.CPU())(x=x_arr, y=y_arr)
+    ft.build_binary(code, ft.CPU())(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
     y_func = np.array([0, 0, 0, 0], dtype="bool")
     test(x_np, y_func)
@@ -65,7 +64,7 @@ def test_unary_op():
     y_np = np.array([0, 0, 0, 0], dtype="bool")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code, ft.CPU())(x=x_arr, y=y_arr)
+    ft.build_binary(code, ft.CPU())(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
     y_func = np.array([0, 0, 0, 0], dtype="bool")
     test(x_np, y_func)
@@ -91,7 +90,7 @@ def test_comparison_op():
     y_np = np.array([1, 0, 0, 0], dtype="bool")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code, ft.CPU())(x=x_arr, y=y_arr)
+    ft.build_binary(code, ft.CPU())(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
     y_func = np.array([0, 0, 0, 0], dtype="bool")
     test(x_np, y_func)
@@ -110,15 +109,14 @@ def test_if_expr():
         y[()] = x1[()] if x1[()] > 2 * x2[()] else x2[()]
 
     func = ft.lower(ft.transform(test), ft.CPU())
-    code = ft.codegen(func, ft.CPU())
-    print(debug.with_line_no(code))
+    code = ft.codegen(func, ft.CPU(), verbose=1)
     x1_np = np.array(5, dtype="int32")
     x2_np = np.array(2, dtype="int32")
     y_np = np.array(0, dtype="int32")
     x1_arr = ft.Array(x1_np)
     x2_arr = ft.Array(x2_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code, ft.CPU())(x1=x1_arr, x2=x2_arr, y=y_arr)
+    ft.build_binary(code, ft.CPU())(x1=x1_arr, x2=x2_arr, y=y_arr)
     y_np = y_arr.numpy()
     y_func = np.array(0, dtype="int32")
     test(x1_np, x2_np, y_func)

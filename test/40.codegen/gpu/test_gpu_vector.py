@@ -26,7 +26,7 @@ def test_vectorize():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target, verbose=True)
-    assert "int4" in str(code)
+    assert "int4" in code.code
 
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
@@ -55,7 +55,7 @@ def test_vectorize_with_non_vector_access():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target, verbose=True)
-    assert "int4" in str(code)
+    assert "int4" in code.code
 
     x_np = np.random.randint(0, 100, (4,)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
@@ -81,7 +81,7 @@ def test_vectorize_use_iter():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target, verbose=True)
-    assert "int4" in str(code)
+    assert "int4" in code.code
 
     y_np = np.zeros((4, 64), dtype="int32")
     y_arr = ft.Array(y_np)
@@ -108,7 +108,7 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target, verbose=True)
-    assert "int2" in str(code)
+    assert "int2" in code.code
 
     x_np = np.random.randint(0, 100, (4, 62)).astype("int32")
     y_np = np.zeros((4, 62), dtype="int32")
@@ -137,7 +137,7 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
     func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target, verbose=True)
-    assert "int2" in str(code)
+    assert "int2" in code.code
 
     x_np = np.random.randint(0, 100, (4, 66)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")

@@ -479,8 +479,8 @@ def test_sign_hint():
         return y
 
     # You will find `runtime_mod` in the code, which involves additional branching
-    assert "runtime_mod" in test_no_hint.native_code()
-    assert "%" not in test_no_hint.native_code()
+    assert "runtime_mod" in test_no_hint.native_code().code
+    assert "%" not in test_no_hint.native_code().code
 
     print("With hint")
 
@@ -493,8 +493,8 @@ def test_sign_hint():
 
     # You will find native C++ `%` in the code, which compiles directly to mod
     # instructions
-    assert "runtime_mod" not in test_hint.native_code()
-    assert "%" in test_hint.native_code()
+    assert "runtime_mod" not in test_hint.native_code().code
+    assert "%" in test_hint.native_code().code
 
 
 def test_assert_hint():
@@ -518,7 +518,8 @@ def test_assert_hint():
         return y
 
     # You will not find a 32-length loop
-    assert not re.search(r".* = 0; .* < 32; .*\+\+", test_no_hint.native_code())
+    assert not re.search(r".* = 0; .* < 32; .*\+\+",
+                         test_no_hint.native_code().code)
 
     @ft.optimize(schedule_callback=sch, verbose=1)
     def test_hint(n: ft.Var[(), "int32"], a, b):
@@ -532,7 +533,7 @@ def test_assert_hint():
         return y
 
     # You will find a 32-length loop
-    assert re.search(r".* = 0; .* < 32; .*\+\+", test_hint.native_code())
+    assert re.search(r".* = 0; .* < 32; .*\+\+", test_hint.native_code().code)
 
 
 def test_no_deps():

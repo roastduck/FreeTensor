@@ -10,7 +10,6 @@
 #include <sys/wait.h>    // waitpid
 #include <unistd.h>      // rmdir
 
-#include <analyze/find_stmt.h>
 #include <config.h>
 #include <container_utils.h>
 #include <debug.h>
@@ -149,38 +148,18 @@ static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
     }
 }
 
-Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev,
+Driver::Driver(const NativeCode &nativeCode, const Ref<Device> &dev,
                const Ref<Device> &hostDev, bool verbose)
-    : f_(f), src_(src), args_(f->params_.size(), nullptr),
-      rawArgs_(f->params_.size(), nullptr),
-      rawRets_(f->returns_.size(), nullptr),
-      retShapes_(f->returns_.size(), nullptr), retDims_(f->returns_.size(), 0),
-      dev_(dev), hostDev_(hostDev), verbose_(verbose) {
-    auto nParams = f->params_.size();
+    : nativeCode_(nativeCode), args_(nativeCode.params().size(), nullptr),
+      rawArgs_(nativeCode.params().size(), nullptr),
+      rawRets_(nativeCode.returns().size(), nullptr),
+      retShapes_(nativeCode.returns().size(), nullptr),
+      retDims_(nativeCode.returns().size(), 0), dev_(dev), hostDev_(hostDev),
+      verbose_(verbose) {
+    auto nParams = nativeCode.params().size();
     name2param_.reserve(nParams);
-    name2buffer_.reserve(nParams);
-    for (size_t i = 0; i < nParams; i++) {
-        name2param_[f->params_[i].name_] = i;
-        auto possibleNode = findAllStmt(f->body_, [&](const Stmt &s) -> bool {
-            return s->nodeType() == ASTNodeType::VarDef &&
-                   s.as<VarDefNode>()->name_ == f->params_[i].name_;
-        });
-        if (possibleNode.size() > 1) {
-            throw InvalidProgram(
-                "Name " + f->params_[i].name_ +
-                " should be unique in the AST as a paramerter");
-        } else if (!possibleNode.empty()) {
-            auto &&node = possibleNode.front();
-            name2buffer_[f->params_[i].name_] = node.as<VarDefNode>()->buffer_;
-        } else {
-            // This parameter is not used. Ignore it. NOTE: Since we allow
-            // removing a parameter, please be aware of potential bugs that a
-            // newly introduced parameter takes the same name with the removed
-            // one. Currently we only introduce new parameters in autograd, with
-            // ".grad" and ".tape" suffix in names, so it's OK
-
-            // This block is left empty
-        }
+    for (auto &&[i, param] : views::enumerate(nativeCode_.params())) {
+        name2param_[param.name_] = i;
     }
     buildAndLoad();
 }
@@ -211,7 +190,7 @@ void Driver::buildAndLoad() {
     auto so = (std::string)path + "/run.so";
     {
         std::ofstream f(cpp);
-        f << src_;
+        f << nativeCode_.code();
     }
     std::vector<Command> commands;
     auto addCommand = [&](const std::string &executable) {
@@ -353,35 +332,35 @@ void Driver::buildAndLoad() {
 void Driver::setArgs(const std::vector<Ref<Array>> &args,
                      const std::unordered_map<std::string, Ref<Array>> &kws) {
     for (size_t i = 0, iEnd = args.size(), j = 0; i < iEnd; i++) {
-        while (j < rawArgs_.size() && f_->params_[j].isInClosure() &&
-               !f_->params_[j].updateClosure_) {
+        while (j < rawArgs_.size() && nativeCode_.params()[j].isInClosure() &&
+               !nativeCode_.params()[j].updateClosure_) {
             j++;
         }
         if (j >= rawArgs_.size()) {
             throw InvalidIO("More arguments are given than required");
         }
-        if (auto it = name2buffer_.find(f_->params_[j].name_);
-            it != name2buffer_.end()) {
-            auto &&buffer = it->second;
-            if (buffer->tensor()->dtype().base() != args[i]->dtype().base()) {
+        const auto &param = nativeCode_.params()[j];
+        args_[j] = args[i];
+        if (param.atype_ != AccessType::Bypass) {
+            ASSERT(param.dtype_.has_value());
+            ASSERT(param.mtype_.has_value());
+            if (param.dtype_->base() != args[i]->dtype().base()) {
                 throw InvalidIO("Cannot pass a " + toString(args[i]->dtype()) +
                                 " Array to the " + std::to_string(j) +
-                                "-th parameter " + f_->params_[j].name_ +
-                                " of type " +
-                                toString(buffer->tensor()->dtype()));
+                                "-th parameter " + param.name_ + " of type " +
+                                toString(*param.dtype_));
             }
-            args_[j] = args[i];
             try {
-                rawArgs_[j] = requestPtr(args[i], dev_, hostDev_,
-                                         buffer->mtype(), buffer->atype());
+                rawArgs_[j] = requestPtr(args[i], dev_, hostDev_, *param.mtype_,
+                                         param.atype_);
             } catch (const InvalidIO &e) {
                 throw InvalidIO("Error passing the " + std::to_string(j) +
-                                "-th parameter " + f_->params_[j].name_ + ": " +
+                                "-th parameter " + param.name_ + ": " +
                                 e.what());
             }
         }
-        if (f_->params_[j].isInClosure() && f_->params_[j].updateClosure_) {
-            *f_->params_[j].closure_ = args_[j];
+        if (param.isInClosure() && param.updateClosure_) {
+            *param.closure_ = args_[j];
         }
         j++;
     }
@@ -390,47 +369,49 @@ void Driver::setArgs(const std::vector<Ref<Array>> &args,
             throw InvalidIO("There is no parameter named " + key);
         }
         auto paramId = name2param_[key];
-        if (auto it = name2buffer_.find(key); it != name2buffer_.end()) {
-            auto &&buffer = it->second;
-            if (buffer->tensor()->dtype().base() != value->dtype().base()) {
+        const auto &param = nativeCode_.params()[paramId];
+        args_[paramId] = value;
+        if (param.atype_ != AccessType::Bypass) {
+            ASSERT(param.dtype_.has_value());
+            ASSERT(param.mtype_.has_value());
+            if (param.dtype_->base() != value->dtype().base()) {
                 throw InvalidIO("Cannot pass a " + toString(value->dtype()) +
                                 " Array to the " +
                                 std::to_string(name2param_[key]) +
                                 "-th parameter " + key + " of type " +
-                                toString(buffer->tensor()->dtype()));
+                                toString(*param.dtype_));
             }
-            args_[paramId] = value;
             try {
-                rawArgs_[paramId] = requestPtr(
-                    value, dev_, hostDev_, buffer->mtype(), buffer->atype());
+                rawArgs_[paramId] = requestPtr(value, dev_, hostDev_,
+                                               *param.mtype_, param.atype_);
             } catch (const InvalidIO &e) {
                 throw InvalidIO("Error passing the " +
                                 std::to_string(name2param_[key]) +
                                 "-th parameter " + key + ": " + e.what());
             }
         }
-        if (f_->params_[paramId].isInClosure()) {
-            if (f_->params_[paramId].updateClosure_) {
-                *f_->params_[paramId].closure_ = value;
+        if (param.isInClosure()) {
+            if (param.updateClosure_) {
+                *param.closure_ = value;
             } else {
                 throw InvalidIO("Enclosed parameter " + key + " cannot be set");
             }
         }
     }
-    for (auto &&[i, rawArg, param] : views::zip(
-             views::ints(0, ranges::unreachable), rawArgs_, f_->params_)) {
-        if (auto it = name2buffer_.find(param.name_);
-            it != name2buffer_.end()) {
-            auto &&buffer = it->second;
+    for (auto &&[i, rawArg, param] :
+         views::zip(views::ints(0, ranges::unreachable), rawArgs_,
+                    nativeCode_.params())) {
+        if (param.atype_ != AccessType::Bypass) {
+            ASSERT(param.mtype_.has_value());
             if (rawArg == nullptr && param.isInClosure()) {
                 if (!param.closure_->isValid()) {
                     throw InvalidIO("Closure variable " + param.name_ +
                                     " is not set");
                 }
                 rawArg = requestPtr(*param.closure_, dev_, hostDev_,
-                                    buffer->mtype(), buffer->atype());
+                                    *param.mtype_, param.atype_);
             }
-            if (rawArg == nullptr && buffer->atype() != AccessType::Bypass) {
+            if (rawArg == nullptr) {
                 throw InvalidIO("The " + std::to_string(i) + "-th parameter " +
                                 param.name_ + " is missing");
             }
@@ -452,23 +433,28 @@ void Driver::sync() { dev_->sync(); }
 
 std::vector<Ref<Array>> Driver::collectReturns() {
     std::vector<Ref<Array>> ret;
-    for (size_t i = 0, n = f_->returns_.size(); i < n; i++) {
-        auto &&[_name, dtype, closure, returnClosure] = f_->returns_[i];
+    for (size_t i = 0, n = nativeCode_.returns().size(); i < n; i++) {
+        auto &&[_name, dtype, closure, returnClosure] =
+            nativeCode_.returns()[i];
         auto &&name = _name;
         Ref<Array> val;
         if (name2param_.count(name)) {
             // Returning an argument
             val = args_.at(name2param_.at(name));
-        } else if (auto it = std::find_if(
-                       f_->returns_.begin(), f_->returns_.begin() + i,
-                       [&](auto &&r) { return r.name_ == name; });
-                   it != f_->returns_.begin() + i) {
+        } else if (auto it =
+                       std::find_if(nativeCode_.returns().begin(),
+                                    nativeCode_.returns().begin() + i,
+                                    [&](auto &&r) { return r.name_ == name; });
+                   it != nativeCode_.returns().begin() + i) {
             // Duplicated return
-            val = ret[it - f_->returns_.begin()];
+            val = ret[it - nativeCode_.returns().begin()];
         } else {
             if (rawRets_[i] != nullptr) {
                 std::vector<size_t> shape(retShapes_[i],
                                           retShapes_[i] + retDims_[i]);
+                // FIXME: We should move from the device described from the
+                // `mtype` (which should be encoded in `NativeCodeRet`), instead
+                // of from `dev_`'s main memory.
                 val = Ref<Array>::make(
                     Array::moveFromRaw(rawRets_[i], shape, dtype, dev_));
                 if (retShapes_[i] != nullptr) {

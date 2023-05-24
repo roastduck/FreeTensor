@@ -333,7 +333,7 @@ def test_inlined_invoke():
 
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ft.Array(x_np)
-    ft.Driver(f, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")
@@ -358,7 +358,7 @@ def test_inlined_invoke_with_returns():
 
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ft.Array(x_np)
-    ft.Driver(f, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")
@@ -396,7 +396,7 @@ def test_input_mutable():
 
     f = ft.optimize(ft.Func("main", ["x", "y"], [], ft.pop_ast()), verbose=1)
     # Suppose modification on x is not optimized out
-    assert "_x += 1" in f.native_code()
+    assert "_x += 1" in f.native_code().code
     x_np = np.array(2, dtype="int32")
     y_np = np.array(0, dtype="int32")
     f(x_np, y_np)
@@ -412,7 +412,7 @@ def test_input_mutable_moved():
 
     f = ft.optimize(ft.Func("main", ["x", "y"], [], ft.pop_ast()), verbose=1)
     # Suppose modification on x is not optimized out
-    assert "_x += 1" in f.native_code()
+    assert "_x += 1" in f.native_code().code
     x_np = np.array(2, dtype="int32")
     y_np = np.array(0, dtype="int32")
     f(ft.move(x_np), y_np)
