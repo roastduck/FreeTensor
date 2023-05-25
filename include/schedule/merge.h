@@ -33,7 +33,6 @@ class MergeFor : public Mutator {
     Stmt visit(const For &op) override;
     Stmt visit(const StmtSeq &op) override;
     Expr visit(const Var &op) override;
-    Stmt visit(const VarDef &op) override;
 };
 
 std::pair<Stmt, ID> merge(const Stmt &ast, const ID &loop1, const ID &loop2);

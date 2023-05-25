@@ -110,17 +110,6 @@ Expr MergeFor::visit(const Var &_op) {
     return op;
 }
 
-Stmt MergeFor::visit(const VarDef &_op) {
-    auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
-    auto op = __op.as<VarDefNode>();
-    if (insideOuter_ && !insideInner_) {
-        return op->body_;
-    } else {
-        return op;
-    }
-}
-
 std::pair<Stmt, ID> merge(const Stmt &_ast, const ID &loop1, const ID &loop2) {
     // Propagate first, because merge will lose some propagating opportunities
     auto ast = tensorPropConst(_ast);
