@@ -80,6 +80,7 @@ class NativeCode {
                   // In this case, one variable should be returned to multiple
                   // positions
     std::string code_;
+    std::string entry_; /// Name of the function to be called
     Ref<Target> target_;
 
   public:
@@ -87,17 +88,20 @@ class NativeCode {
     NativeCode(const std::string &name,
                const std::vector<NativeCodeParam> &params,
                const std::vector<NativeCodeRet> &returns,
-               const std::string &code, const Ref<Target> &target)
+               const std::string &code, const std::string &entry,
+               const Ref<Target> &target)
         : name_(name), params_(params), returns_(returns), code_(code),
-          target_(target) {}
+          entry_(entry), target_(target) {}
 
     static NativeCode fromFunc(const Func &func, const std::string &code,
+                               const std::string &entry,
                                const Ref<Target> &target);
 
     const auto &name() const { return name_; }
     const auto &params() const { return params_; }
     const auto &returns() const { return returns_; }
     const auto &code() const { return code_; }
+    const auto &entry() const { return entry_; }
     const auto &target() const { return target_; }
 };
 
