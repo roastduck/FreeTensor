@@ -356,7 +356,8 @@ template <class Stream> void CodeGenC<Stream>::visit(const Free &op) {
     //      delete[] x_ptr;
     auto &&name = mangle(op->var_);
     this->makeIndent();
-    this->os() << "auto " << name << "_ptr = " << name /*<< ".data_handle();"*/
+    this->os() << "auto " << name
+               << "_ptr = " << name /*<< ".data_handle();"*/ << ";"
                << std::endl;
     this->makeIndent();
     this->os() << name << "_opt.drop();" << std::endl;
