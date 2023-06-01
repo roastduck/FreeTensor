@@ -34,6 +34,12 @@ CodeGenC<Stream>::genMdPtrType(const VarDef &def, bool isConst) {
             return os;
         }
 
+        if (isConst) {
+            os << "const ";
+        }
+        return os << gen(buf->tensor()->dtype()) << "*";
+
+        /*
         bool isRestricted = true;
         if (def->viewOf_.has_value() ||
             !findAllStmt(def, [&](const Stmt &inner) {
@@ -58,7 +64,7 @@ CodeGenC<Stream>::genMdPtrType(const VarDef &def, bool isConst) {
                 os << "dynamic_extent";
             }
         }
-        return os << ">>";
+        return os << ">>";*/
     };
 }
 
@@ -82,7 +88,11 @@ void CodeGenC<Stream>::genMdPtrDef(const VarDef &def,
         return;
     }
 
-    this->os() << genMdPtrType(def, isConst) << "((";
+    this->os() << "((" << genMdPtrType(def, isConst) << ")(";
+    genRawPtr();
+    this->os() << "))";
+
+    /*this->os() << genMdPtrType(def, isConst) << "((";
     if (isConst) {
         this->os() << "const ";
     }
@@ -95,7 +105,7 @@ void CodeGenC<Stream>::genMdPtrDef(const VarDef &def,
             (*this)(dim);
         }
     }
-    this->os() << ")";
+    this->os() << ")";*/
 }
 
 template <class Stream>
@@ -112,13 +122,26 @@ void CodeGenC<Stream>::genScalar(const VarDef &def,
     } else {
         this->os() << mangle(def->name_);
         if (!def->buffer_->tensor()->shape().empty()) {
+            this->os() << "[";
+            Expr expr;
+            for (auto &&[idx, dim] :
+                 views::zip(indices, def->buffer_->tensor()->shape())) {
+                if (expr.isValid()) {
+                    expr = makeAdd(makeMul(expr, dim), idx);
+                } else {
+                    expr = idx;
+                }
+            }
+            (*this)(expr);
+            this->os() << "]";
+
             // TODO: Switch bracket after C++23
-            this->os() << "(";
+            /*this->os() << "(";
             for (auto &&[i, index] : views::enumerate(indices)) {
                 this->os() << (i > 0 ? ", " : "");
                 (*this)(index);
             }
-            this->os() << ")";
+            this->os() << ")";*/
         }
     }
 }
@@ -150,7 +173,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             source = this->def(*source->viewOf_);
         }
         this->os() << "auto &&" << name << " = ";
-        genMdPtrDef(op, mangle(source->name_) + ".data_handle()",
+        genMdPtrDef(op, mangle(source->name_) /*+ ".data_handle()"*/,
                     !isWritable(source->buffer_->atype()));
         this->os() << ";" << std::endl;
 
@@ -333,7 +356,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Free &op) {
     //      delete[] x_ptr;
     auto &&name = mangle(op->var_);
     this->makeIndent();
-    this->os() << "auto " << name << "_ptr = " << name << ".data_handle();"
+    this->os() << "auto " << name << "_ptr = " << name /*<< ".data_handle();"*/
                << std::endl;
     this->makeIndent();
     this->os() << name << "_opt.drop();" << std::endl;
