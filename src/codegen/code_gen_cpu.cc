@@ -215,8 +215,21 @@ void CodeGenCPU::visit(const For &op) {
                 usedAsReduction_.insert(def(r->var_));
                 auto var = mangle(r->var_);
                 makeIndent();
-                os() << "auto &&" << var << "_arrptr = toArrPtr(" << var << ");"
-                     << std::endl;
+
+                auto &&d = def(r->var_);
+                os() << "auto &&" << var << "_arrptr = (("
+                     << gen(d->buffer_->tensor()->dtype()) << "(*)";
+                for (size_t i = 1; i < d->buffer_->tensor()->shape().size();
+                     i++) {
+                    auto &&dim = d->buffer_->tensor()->shape()[i];
+                    ASSERT(dim->nodeType() == ASTNodeType::IntConst);
+                    os() << "[" << dim.as<IntConstNode>()->val_ << "]";
+                }
+                os() << ")(" << var << "));" << std::endl;
+
+                /*os() << "auto &&" << var << "_arrptr = toArrPtr(" << var <<
+                   ");"
+                     << std::endl;*/
             }
         }
         os() << "#pragma omp parallel for";
