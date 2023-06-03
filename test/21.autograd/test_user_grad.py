@@ -108,14 +108,15 @@ def test_use_reduce_sum_for_partial_derivative():
 
     _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y", "z"],
                                    set(),
+                                   reset_provided_grad=False,
                                    user_grads=user_grads)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("dx", (), "float32", "output", "cpu"),
-                    ("dy", (), "float32", "inout", "cpu"),
-                    ("dz", (), "float32", "inout", "cpu")]) as (x, dx, dy, dz):
+                    ("dy", (), "float32", "input", "cpu"),
+                    ("dz", (), "float32", "input", "cpu")]) as (x, dx, dy, dz):
         dx[...] = 2 * dz[...] + dy[...] * ft.intrinsic(
             "cosf(%)", x[...], ret_type="float32")
     std = ft.pop_ast()
@@ -212,12 +213,13 @@ def test_user_grad_on_range_crossing_def():
     ast, user_grads = ft.pop_ast_and_user_grads()
 
     _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["z"], {'Vsin', 'Vcos'},
+                                   reset_provided_grad=False,
                                    user_grads=user_grads)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("dx", (), "float32", "output", "cpu"),
-                    ("dz", (), "float32", "inout", "cpu"),
+                    ("dz", (), "float32", "input", "cpu"),
                     ("sin", (), "float32", "input", "cpu"),
                     ("cos", (), "float32", "input", "cpu")]) as (dx, dz, sin,
                                                                  cos):
@@ -316,7 +318,8 @@ def test_frontend():
 
     _, bwd, _, _ = ft.grad(func, ["x"], [ft.Return()],
                            ft.GradTapeMode.All,
-                           True,
+                           tape_in_closure=True,
+                           reset_provided_grad=False,
                            user_grads=func.user_grads)
     print(bwd)
     bwd = ft.lower(bwd, verbose=1)
@@ -324,7 +327,7 @@ def test_frontend():
     with ft.VarDef([("dx", (4,), "float32", "output", "cpu"),
                     ("sin", (4,), "float32", "input", "cpu"),
                     ("cos", (4,), "float32", "input", "cpu"),
-                    ("dz", (4,), "float32", "inout", "cpu")]) as (dx, sin, cos,
+                    ("dz", (4,), "float32", "input", "cpu")]) as (dx, sin, cos,
                                                                   dz):
         with ft.For("i", 0, 4) as i:
             dx[i] = 8 * dz[i] * cos[i] * sin[i]
@@ -364,7 +367,8 @@ def test_stmt_range_robustness():
 
     _, bwd, _, _ = ft.grad(func, ["x"], [ft.Return()],
                            ft.GradTapeMode.All,
-                           True,
+                           tape_in_closure=True,
+                           reset_provided_grad=False,
                            user_grads=func.user_grads)
     print(bwd)
     bwd = ft.lower(bwd, verbose=1)
@@ -372,7 +376,7 @@ def test_stmt_range_robustness():
     with ft.VarDef([("dx", (4,), "float32", "output", "cpu"),
                     ("sin", (4,), "float32", "input", "cpu"),
                     ("cos", (4,), "float32", "input", "cpu"),
-                    ("dz", (4,), "float32", "inout", "cpu")]) as (dx, sin, cos,
+                    ("dz", (4,), "float32", "input", "cpu")]) as (dx, sin, cos,
                                                                   dz):
         with ft.For("i", 0, 4) as i:
             dx[i] = 8 * dz[i] * cos[i] * sin[i]
@@ -407,7 +411,8 @@ def test_same_mark_version_name_in_different_call_site():
     print(func.user_grads)
     _, bwd, _, _ = ft.grad(func, ["x1", "x2"], [ft.Return()],
                            ft.GradTapeMode.All,
-                           True,
+                           tape_in_closure=True,
+                           reset_provided_grad=False,
                            user_grads=func.user_grads)
     print(bwd)
     bwd = ft.lower(bwd, verbose=1)
@@ -418,7 +423,7 @@ def test_same_mark_version_name_in_different_call_site():
                     ("cos1", (4,), "float32", "input", "cpu"),
                     ("sin2", (4,), "float32", "input", "cpu"),
                     ("cos2", (4,), "float32", "input", "cpu"),
-                    ("dz", (4,), "float32", "inout", "cpu")
+                    ("dz", (4,), "float32", "input", "cpu")
                    ]) as (dx1, dx2, sin1, cos1, sin2, cos2, dz):
         with ft.For("i", 0, 4) as i:
             dx2[i] = 4 * dz[i] * cos2[i] * sin2[i]

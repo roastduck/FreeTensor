@@ -37,7 +37,8 @@ def test_grad():
     @ft.optimize
     @ft.grad(requires=[ft.Parameter(1), ft.Parameter(2)],
              provides=[ft.Return(1)],
-             attach_backward=True)
+             attach_backward=True,
+             reset_provided_grad=False)
     def test(v: ft.JIT, a, b):
         a: ft.Var[(4,), "float32", "input", "cpu"]
         b: ft.Var[(4,), "float32", "input", "cpu"]

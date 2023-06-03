@@ -330,37 +330,18 @@ void *Array::rawInitTo(const Ref<Device> &device) {
 }
 
 void *Array::rawTemporarilyCopiedTo(const Ref<Device> &device) {
-    if (tempPtr_.has_value() && *tempPtr_->device_ != *device) {
+    if (tempPtr_.has_value()) {
         freeFrom(tempPtr_->ptr_, tempPtr_->device_);
         tempPtr_ = std::nullopt;
     }
     if (!tempPtr_.has_value()) {
         tempPtr_ = {{device, allocOn(size_, device), false}};
     }
-    for (auto [d, p, borrowed] : ptrs_) {
-        if (*d == *device) {
-            copyOnSameDevice(tempPtr_->ptr_, p, size_, d);
-            return tempPtr_->ptr_;
-        }
-    }
-    if (device->type() == TargetType::CPU) {
-        for (auto &&[d, p, _] : ptrs_) {
-            copyToCPU(tempPtr_->ptr_, p, size_, d);
-            return tempPtr_->ptr_;
-        }
-        ASSERT(false);
-    } else {
-        for (auto &&[d, p, _] : ptrs_) {
-            if (d->type() == TargetType::CPU) {
-                copyFromCPU(tempPtr_->ptr_, p, size_, device);
-                return tempPtr_->ptr_;
-            }
-        }
-        copyFromCPU(tempPtr_->ptr_,
-                    rawSharedTo(Ref<Device>::make(TargetType::CPU)), size_,
-                    device);
-        return tempPtr_->ptr_;
-    }
+    // We first call `rawSharedTo` to make a internal copy on the detination
+    // target. So if we are repeatly calling `rawTemporarilyCopiedTo` to another
+    // device, we don't always do cross-device copying
+    copyOnSameDevice(tempPtr_->ptr_, rawSharedTo(device), size_, device);
+    return tempPtr_->ptr_;
 }
 
 void Array::makePrivateCopy() {

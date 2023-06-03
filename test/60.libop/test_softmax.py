@@ -81,7 +81,7 @@ def test_grad():
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
 
     y_torch.grad = torch.rand(4, 4, dtype=torch.float32)
-    d_y_arr = ft.array(y_torch.grad)
+    d_y_arr = ft.array(y_torch.grad.clone())
     x_grad_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
     d_x_arr = ft.array(x_grad_torch_ours)
     g(**{provides['y']: d_y_arr, requires['x']: d_x_arr})
