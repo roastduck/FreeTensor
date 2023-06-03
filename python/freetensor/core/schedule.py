@@ -953,6 +953,7 @@ def schedule(ast=None,
             def instantiate_by_only_jit_args(self, *jit_args):
                 return schedule(ast.instantiate_by_only_jit_args(*jit_args),
                                 callback=callback,
+                                backward_callback=backward_callback,
                                 verbose=verbose)
 
         return ScheduleTemplate(ast.params, ast.jit_param_names)
