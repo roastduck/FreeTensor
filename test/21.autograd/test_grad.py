@@ -29,6 +29,40 @@ def test_basic():
         d_x1[()] = d_y[()] * x3[()]
         d_x2[()] = d_y[()] * x3[()]
         d_x3[()] = d_y[()] * (x1[()] + x2[()])
+        d_y[()] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_no_reset_provided_grad():
+    with ft.VarDef([
+        ("x1", (), "float32", "input", "cpu"),
+        ("x2", (), "float32", "input", "cpu"),
+        ("x3", (), "float32", "input", "cpu"),
+        ("y", (), "float32", "output", "cpu"),
+    ]) as (x1, x2, x3, y):
+        ft.MarkLabel("S0")
+        y[()] = (x1[()] + x2[()]) * x3[()]
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
+                                   set(),
+                                   reset_provided_grad=False)
+    print(ast)
+    assert len(ft.find_all_stmt(ast, "$grad{S0}")) > 0
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x1", (), "float32", "input", "cpu"),
+                    ("d_x1", (), "float32", "output", "cpu"),
+                    ("x2", (), "float32", "input", "cpu"),
+                    ("d_x2", (), "float32", "output", "cpu"),
+                    ("x3", (), "float32", "input", "cpu"),
+                    ("d_x3", (), "float32", "output", "cpu"),
+                    ("d_y", (), "float32", "input", "cpu")
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y):
+        d_x1[()] = d_y[()] * x3[()]
+        d_x2[()] = d_y[()] * x3[()]
+        d_x3[()] = d_y[()] * (x1[()] + x2[()])
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -44,14 +78,16 @@ def test_partial_gradient():
         ft.MarkLabel("S0")
         y[()] = (x1[()] + x2[()]) * x3[()]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad_body(ast, ["x1"], ["y"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1"], ["y"],
+                                   set(),
+                                   reset_provided_grad=False)
     print(ast)
     assert len(ft.find_all_stmt(ast, "$grad{S0}")) > 0
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("d_x1", (), "float32", "output", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
-                    ("d_y", (), "float32", "inout", "cpu")]) as (d_x1, x3, d_y):
+                    ("d_y", (), "float32", "input", "cpu")]) as (d_x1, x3, d_y):
         d_x1[()] = d_y[()] * x3[()]
     std = ft.pop_ast()
 
@@ -70,7 +106,9 @@ def test_branching_exprs():
         y2[()] = ft.max(x1[()], x2[()])
         y3[()] = ft.if_then_else(x1[()] > 0, x1[()], x2[()])
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2"], ["y1", "y2", "y3"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2"], ["y1", "y2", "y3"],
+                                   set(),
+                                   reset_provided_grad=False)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -78,9 +116,9 @@ def test_branching_exprs():
                     ("d_x1", (), "float32", "output", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("d_x2", (), "float32", "output", "cpu"),
-                    ("d_y1", (), "float32", "inout", "cpu"),
-                    ("d_y2", (), "float32", "inout", "cpu"),
-                    ("d_y3", (), "float32", "inout", "cpu")
+                    ("d_y1", (), "float32", "input", "cpu"),
+                    ("d_y2", (), "float32", "input", "cpu"),
+                    ("d_y3", (), "float32", "input", "cpu")
                    ]) as (x1, d_x1, x2, d_x2, d_y1, d_y2, d_y3):
         d_x1[()] = ft.if_then_else(x1[()] > 0, d_y3[()], 0) + ft.if_then_else(
             x1[()] >= x2[()], d_y2[()], 0) + ft.if_then_else(
@@ -104,15 +142,17 @@ def test_math_funcs():
         y2[()] = ft.exp(x[()])
         y3[()] = ft.square(x[()])
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y1", "y2", "y3"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y1", "y2", "y3"],
+                                   set(),
+                                   reset_provided_grad=False)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("d_x", (), "float32", "output", "cpu"),
-                    ("d_y1", (), "float32", "inout", "cpu"),
-                    ("d_y2", (), "float32", "inout", "cpu"),
-                    ("d_y3", (), "float32", "inout", "cpu")]) as (x, d_x, d_y1,
+                    ("d_y1", (), "float32", "input", "cpu"),
+                    ("d_y2", (), "float32", "input", "cpu"),
+                    ("d_y3", (), "float32", "input", "cpu")]) as (x, d_x, d_y1,
                                                                   d_y2, d_y3):
         d_x[()] = 2 * d_y3[()] * x[()] + d_y2[()] * ft.exp(x[()]) + d_y1[
             ()] * (0.5 / ft.sqrt(x[()]))
@@ -130,7 +170,9 @@ def test_cast():
     ]) as (x1, x2, x3, y):
         y[()] = ft.cast(x1[()] + x2[()], "float64") * x3[()]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
+                                   set(),
+                                   reset_provided_grad=False)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -140,7 +182,7 @@ def test_cast():
                     ("d_x2", (), "float32", "output", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
                     ("d_x3", (), "float32", "output", "cpu"),
-                    ("d_y", (), "float64", "inout", "cpu")
+                    ("d_y", (), "float64", "input", "cpu")
                    ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y):
         d_x1[()] = ft.cast(d_y[()] * x3[()], "float32")
         d_x2[()] = ft.cast(d_y[()] * x3[()], "float32")
@@ -165,7 +207,8 @@ def test_use_y_for_grad_when_taped():
                         y2[i] = ft.square(t[()])
     ast = ft.pop_ast(verbose=True)
     _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y1", "y2"],
-                                   ["V_t", "V_y1", "V_y2"])
+                                   ["V_t", "V_y1", "V_y2"],
+                                   reset_provided_grad=False)
     print(ast)
     assert len(ft.find_all_stmt(ast, "$grad{L_i}")) > 0
     assert len(ft.find_all_stmt(ast, "$tape{V_t}")) > 0
@@ -174,8 +217,8 @@ def test_use_y_for_grad_when_taped():
     with ft.VarDef([
         ("d_x", (4,), "float32", "output", "cpu"),
         ("y1", (4,), "float32>0", "input", "cpu"),
-        ("d_y1", (4,), "float32", "inout", "cpu"),
-        ("d_y2", (4,), "float32", "inout", "cpu"),
+        ("d_y1", (4,), "float32", "input", "cpu"),
+        ("d_y2", (4,), "float32", "input", "cpu"),
     ]) as (d_x, y1, d_y1, d_y2):
         with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
             with ft.For("i", 3, -1, -1) as i:
@@ -196,7 +239,8 @@ def test_use_taped_y_for_grad():
                 y1[i] = 2 * t[()]
                 y2[i] = 3 * t[()]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y1", "y2"], ["V_t"])
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y1", "y2"], ["V_t"],
+                                   reset_provided_grad=False)
     print(ast)
     assert len(ft.find_all_stmt(ast, "$grad{L_i}")) > 0
     assert len(ft.find_all_stmt(ast, "$tape{V_t}")) > 0
@@ -204,8 +248,8 @@ def test_use_taped_y_for_grad():
 
     with ft.VarDef([
         ("d_x", (4,), "float32", "output", "cpu"),
-        ("d_y1", (4,), "float32", "inout", "cpu"),
-        ("d_y2", (4,), "float32", "inout", "cpu"),
+        ("d_y1", (4,), "float32", "input", "cpu"),
+        ("d_y2", (4,), "float32", "input", "cpu"),
     ]) as (d_x, d_y1, d_y2):
         with ft.VarDef("t.tape", (4,), "float32>0", "input", "cpu") as t:
             with ft.For("i", 3, -1, -1) as i:
@@ -259,7 +303,9 @@ def test_multiple_statements():
             y1[()] = t[()] * x3[()]
             y2[()] = t[()] + x3[()]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y1", "y2"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y1", "y2"],
+                                   set(),
+                                   reset_provided_grad=False)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -269,8 +315,8 @@ def test_multiple_statements():
                     ("d_x2", (), "float32", "output", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
                     ("d_x3", (), "float32", "output", "cpu"),
-                    ("d_y1", (), "float32", "inout", "cpu"),
-                    ("d_y2", (), "float32", "inout", "cpu")
+                    ("d_y1", (), "float32", "input", "cpu"),
+                    ("d_y2", (), "float32", "input", "cpu")
                    ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y1, d_y2):
         with ft.VarDef("d_t", (), "float32", "cache", "cpu") as d_t:
             d_t[()] = d_y2[()] + d_y1[()] * x3[()]
@@ -296,7 +342,9 @@ def test_nested_local_def():
                 y1[()] = u[()] * x1[()]
             y2[()] = t[()] * x2[()]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y1", "y2"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y1", "y2"],
+                                   set(),
+                                   reset_provided_grad=False)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -306,8 +354,8 @@ def test_nested_local_def():
                     ("d_x2", (), "float32", "output", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
                     ("d_x3", (), "float32", "output", "cpu"),
-                    ("d_y1", (), "float32", "inout", "cpu"),
-                    ("d_y2", (), "float32", "inout", "cpu")
+                    ("d_y1", (), "float32", "input", "cpu"),
+                    ("d_y2", (), "float32", "input", "cpu")
                    ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y1, d_y2):
         with ft.VarDef("u", (), "float32", "cache", "cpu") as u:
             u[()] = x1[()] + x2[()]
@@ -609,13 +657,15 @@ def test_recomp_single_stmt():
     ]) as (x, y):
         y[...] = ft.exp(x[...])
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"],
+                                   set(),
+                                   reset_provided_grad=False)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("d_x", (), "float32", "output", "cpu"),
-                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, d_y):
+                    ("d_y", (), "float32", "input", "cpu")]) as (x, d_x, d_y):
         d_x[()] = d_y[()] * ft.exp(x[()])
     std = ft.pop_ast()
 
@@ -636,13 +686,13 @@ def test_multi_versions_in_recomp_1():
             y[pn] = 1. - z
         return y
 
-    _, bwd, _, _ = ft.grad(func, ["x"], ["y"], set())
+    _, bwd, _, _ = ft.grad(func, ["x"], ["y"], set(), reset_provided_grad=False)
     print(bwd)
     bwd = ft.lower(bwd, verbose=1, skip_passes=['make_heap_alloc'])
 
     with ft.VarDef([("x", (1024,), "float32", "input"),
                     ("dx", (1024,), "float32", "output"),
-                    ("dy", (1024,), "float32", "inout")]) as (x, dx, dy):
+                    ("dy", (1024,), "float32", "input")]) as (x, dx, dy):
         with ft.For("i", 0, 1024) as i:
             dx[i] = 0
         with ft.For("pn", 255, -1, -1) as pn:
@@ -722,13 +772,16 @@ def test_recompute_using_another_recomputed_var():
             d[i] = c[i] * c[i] * b[i]
         return d
 
-    _, bwd, _, _ = ft.grad(func, ["a"], ["d"], set(), invert=False)
+    _, bwd, _, _ = ft.grad(func, ["a"], ["d"],
+                           set(),
+                           reset_provided_grad=False,
+                           invert=False)
     print(bwd)
     bwd = ft.lower(bwd, verbose=1)
 
     with ft.VarDef([("a", (10,), "float32", "input", "cpu"),
                     ("a.grad", (10,), "float32", "output", "cpu"),
-                    ("d.grad", (10,), "float32", "inout", "cpu")]) as (a, da,
+                    ("d.grad", (10,), "float32", "input", "cpu")]) as (a, da,
                                                                        dd):
         with ft.VarDef("b", (10,), "float32>=0", "cache", "cpu") as b:
             with ft.For("i", 0, 10) as i:

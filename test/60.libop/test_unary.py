@@ -136,7 +136,7 @@ def test_inplace_grad_of_inplace_func(libop_func, torch_func, require_positive):
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
 
     y_torch.grad = torch.rand(4, 4, dtype=torch.float32)
-    d_y_arr = ft.array(y_torch.grad)
+    d_y_arr = ft.array(y_torch.grad.clone())
     x_grad_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
     d_x_arr = ft.array(x_grad_torch_ours)
     g(**{provides['y']: d_y_arr, requires['x']: d_x_arr})
@@ -189,7 +189,7 @@ def test_inplace_grad_of_out_of_place_func(libop_func, torch_func,
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
 
     y_torch.grad = torch.rand(4, 4, dtype=torch.float32)
-    d_y_arr = ft.array(y_torch.grad)
+    d_y_arr = ft.array(y_torch.grad.clone())
     x_grad_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
     d_x_arr = ft.array(x_grad_torch_ours)
     g(**{provides['y']: d_y_arr, requires['x']: d_x_arr})
@@ -242,7 +242,7 @@ def test_out_of_place_grad_of_out_of_place_func(libop_func, torch_func,
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
 
     y_torch.grad = torch.rand(4, 4, dtype=torch.float32)
-    d_y_arr = ft.array(y_torch.grad)
+    d_y_arr = ft.array(y_torch.grad.clone())
     d_x_arr = g(**{provides[ft.Return()]: d_y_arr})
     x_grad_torch_ours = d_x_arr.torch()
     y_torch.backward(y_torch.grad)

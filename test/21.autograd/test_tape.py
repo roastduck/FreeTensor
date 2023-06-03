@@ -12,7 +12,8 @@ def test_tape_1():
             y[()] = t[()] * x3[()]
     ast = ft.pop_ast(verbose=True)
     forward, backward, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
-                                              ["V_t"])
+                                              ["V_t"],
+                                              reset_provided_grad=False)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -29,7 +30,7 @@ def test_tape_1():
         ("d_x2", (), "float32", "output", "cpu"),
         ("x3", (), "float32", "input", "cpu"),
         ("d_x3", (), "float32", "output", "cpu"),
-        ("d_y", (), "float32", "inout", "cpu"),
+        ("d_y", (), "float32", "input", "cpu"),
     ]) as (d_x1, d_x2, x3, d_x3, d_y):
         with ft.VarDef("t", (), "float32", "input", "cpu") as t:
             with ft.VarDef("d_t", (), "float32", "cache", "cpu") as d_t:
@@ -55,7 +56,8 @@ def test_tape_2():
                 y[i] = t[()] * x3[i]
     ast = ft.pop_ast(verbose=True)
     forward, backward, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
-                                              ["V_t"])
+                                              ["V_t"],
+                                              reset_provided_grad=False)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -71,7 +73,7 @@ def test_tape_2():
                     ("d_x2", (4,), "float32", "output", "cpu"),
                     ("x3", (4,), "float32", "input", "cpu"),
                     ("d_x3", (4,), "float32", "output", "cpu"),
-                    ("d_y", (4,), "float32", "inout", "cpu")
+                    ("d_y", (4,), "float32", "input", "cpu")
                    ]) as (d_x1, d_x2, x3, d_x3, d_y):
         with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
             with ft.For("i", 3, -1, -1) as i:
@@ -138,7 +140,8 @@ def test_tape_4():
                 t[()] = t[()] * x[i] + 1
             y[()] = t[()]
     ast = ft.pop_ast(verbose=True)
-    forward, backward, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ["V_t"])
+    forward, backward, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ["V_t"],
+                                              reset_provided_grad=False)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -152,7 +155,7 @@ def test_tape_4():
 
     with ft.VarDef([("x", (100,), "float32", "input", "cpu"),
                     ("d_x", (100,), "float32", "output", "cpu"),
-                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, d_y):
+                    ("d_y", (), "float32", "input", "cpu")]) as (x, d_x, d_y):
         with ft.VarDef([("t", (101,), "float32", "input", "cpu"),
                         ("d_t", (), "float32", "cache", "cpu")]) as (t, d_t):
             d_t[()] = d_y[()]
@@ -187,7 +190,8 @@ def test_tape_5():
                     y[i] = h[i]
 
     ast = ft.pop_ast(verbose=True)
-    forward, backward, _, _, _ = ft.grad_body(ast, ["u"], ["y"], ["h", "f"])
+    forward, backward, _, _, _ = ft.grad_body(ast, ["u"], ["y"], ["h", "f"],
+                                              reset_provided_grad=False)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -199,7 +203,7 @@ def test_tape_5():
     print("Backward:")
     print(backward)
 
-    with ft.VarDef([("y.grad", (256,), "float32", "inout", "cpu"),
+    with ft.VarDef([("y.grad", (256,), "float32", "input", "cpu"),
                     ("u", (256, 256), "float32", "input", "cpu"),
                     ("u.grad", (256, 256), "float32", "output", "cpu"),
                     ("h.tape", (101, 256), "float32", "input", "cpu")
@@ -247,7 +251,8 @@ def test_tape_6():
 
     ast = ft.pop_ast(verbose=True)
     forward, backward, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
-                                              ["V_t"])
+                                              ["V_t"],
+                                              reset_provided_grad=False)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -264,7 +269,7 @@ def test_tape_6():
         ("d_x2", (4, 2, 4), "float32", "output", "cpu"),
         ("x3", (4, 2, 4), "float32", "input", "cpu"),
         ("d_x3", (4, 2, 4), "float32", "output", "cpu"),
-        ("d_y", (4, 2, 4), "float32", "inout", "cpu"),
+        ("d_y", (4, 2, 4), "float32", "input", "cpu"),
         ("t_tape", (4, 2, 4), "float32", "input", "cpu"),
     ]) as (d_x1, d_x2, x3, d_x3, d_y, t_tape):
         with ft.For("i", 3, -1, -1) as i:
@@ -342,7 +347,8 @@ def test_use_tape_in_cond():
                     y[i] = t[()]
     func = ft.Func("main", ["x1", "x2", "x3", "y"], [], ft.pop_ast())
     print(func)
-    forward, backward, _, _ = ft.grad_(func, ["x1", "x2", "x3"], ["y"], ["V_t"])
+    forward, backward, _, _ = ft.grad_(func, ["x1", "x2", "x3"], ["y"], ["V_t"],
+                                       reset_provided_grad=False)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -358,7 +364,7 @@ def test_use_tape_in_cond():
                     ("d_x2", (4,), "float32", "output", "cpu"),
                     ("x3", (4,), "float32", "input", "cpu"),
                     ("d_x3", (4,), "float32", "output", "cpu"),
-                    ("d_y", (4,), "float32", "inout", "cpu")
+                    ("d_y", (4,), "float32", "input", "cpu")
                    ]) as (d_x1, d_x2, x3, d_x3, d_y):
         with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
             with ft.For("i0", 0, 4) as i:
@@ -395,6 +401,7 @@ def test_use_tape_in_index():
                                        set(["x"]),
                                        set(["y"]),
                                        tapes=["V"],
+                                       reset_provided_grad=False,
                                        verbose=2)
     print("Forward:")
     print(forward)
@@ -410,7 +417,7 @@ def test_use_tape_in_index():
     @ft.transform
     def expected(w, x, w_x_tape, dx, dy):
         dx: ft.Var[(25,), "float32", "output"]
-        dy: ft.Var[(3,), "float32", "inout"]
+        dy: ft.Var[(3,), "float32", "input"]
         w_x_tape: ft.Var[(3,), "int32", "input"]
         for k in range(25):
             dx[k] = 0
@@ -433,7 +440,8 @@ def test_use_a_taped_var_to_recompute_another_var():
             w[...] = z[...] * z[...]
     func = ft.Func("main", ["x", "w"], [], ft.pop_ast())
     print(func)
-    forward, backward, _, _ = ft.grad_(func, ["x"], ["w"], ["V_y"])
+    forward, backward, _, _ = ft.grad_(func, ["x"], ["w"], ["V_y"],
+                                       reset_provided_grad=False)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -444,7 +452,7 @@ def test_use_a_taped_var_to_recompute_another_var():
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("x.grad", (), "float32", "output", "cpu"),
-                    ("w.grad", (), "float32", "inout", "cpu")]) as (x, dx, dw):
+                    ("w.grad", (), "float32", "input", "cpu")]) as (x, dx, dw):
         with ft.VarDef("y", (), "float32>=0", "input", "cpu") as y:
             dx[...] = 0
             with ft.VarDef("z", (), "float32>=0", "cache", "cpu") as z:
@@ -527,6 +535,7 @@ def test_single_version_tape():
         for i in range(9, -1, -1):
             # HERE WE STILL NEED A TAPE
             d_b[i] += 2 * d_c[i] * b_tape[0, i]
+            d_c[i] = 0
         for i in range(9, -1, -1):
             d_a[i] = 2 * a[i] * d_b[i]
             d_b[i] = 0
@@ -549,7 +558,8 @@ def test_tape_mode_all():
                     y[i] = u[()] * t[i]
     ast = ft.pop_ast(verbose=True)
     forward, backward, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
-                                              ft.GradTapeMode.All)
+                                              ft.GradTapeMode.All,
+                                              reset_provided_grad=False)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -565,7 +575,7 @@ def test_tape_mode_all():
         ("d_x1", (4,), "float32", "output", "cpu"),
         ("d_x2", (4,), "float32", "output", "cpu"),
         ("d_x3", (4,), "float32", "output", "cpu"),
-        ("d_y", (4,), "float32", "inout", "cpu"),
+        ("d_y", (4,), "float32", "input", "cpu"),
     ]) as (d_x1, d_x2, d_x3, d_y):
         with ft.VarDef([("t.tape", (4,), "float32", "input", "cpu"),
                         ("u.tape", (4,), "float32", "input", "cpu"),
@@ -600,7 +610,8 @@ def test_tape_mode_nothing():
                     y[i] = u[()] * t[i]
     ast = ft.pop_ast(verbose=True)
     forward, backward, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
-                                              ft.GradTapeMode.Nothing)
+                                              ft.GradTapeMode.Nothing,
+                                              reset_provided_grad=False)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -618,7 +629,7 @@ def test_tape_mode_nothing():
                     ("d_x2", (4,), "float32", "output", "cpu"),
                     ("x3", (4,), "float32", "input", "cpu"),
                     ("d_x3", (4,), "float32", "output", "cpu"),
-                    ("d_y", (4,), "float32", "inout", "cpu")
+                    ("d_y", (4,), "float32", "input", "cpu")
                    ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y):
         with ft.VarDef("d_t", (4,), "float32", "cache", "cpu") as d_t:
             with ft.For("i", 3, -1, -1) as i:
@@ -650,7 +661,8 @@ def test_tape_mode_no_reuse_only():
                     y[i] = u[()] * t[i]
     ast = ft.pop_ast(verbose=True)
     forward, backward, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
-                                              ft.GradTapeMode.NoReuseOnly)
+                                              ft.GradTapeMode.NoReuseOnly,
+                                              reset_provided_grad=False)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -667,7 +679,7 @@ def test_tape_mode_no_reuse_only():
                     ("d_x2", (4,), "float32", "output", "cpu"),
                     ("x3", (4,), "float32", "input", "cpu"),
                     ("d_x3", (4,), "float32", "output", "cpu"),
-                    ("d_y", (4,), "float32", "inout", "cpu")
+                    ("d_y", (4,), "float32", "input", "cpu")
                    ]) as (d_x1, x2, d_x2, x3, d_x3, d_y):
         with ft.VarDef([("t.tape", (4,), "float32", "input", "cpu"),
                         ("d_t", (4,), "float32", "cache", "cpu")]) as (t, d_t):
