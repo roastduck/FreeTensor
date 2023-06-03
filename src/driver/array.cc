@@ -330,7 +330,7 @@ void *Array::rawInitTo(const Ref<Device> &device) {
 }
 
 void *Array::rawTemporarilyCopiedTo(const Ref<Device> &device) {
-    if (tempPtr_.has_value() && *tempPtr_->device_ != *device) {
+    if (tempPtr_.has_value()) {
         freeFrom(tempPtr_->ptr_, tempPtr_->device_);
         tempPtr_ = std::nullopt;
     }
