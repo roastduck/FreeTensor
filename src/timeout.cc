@@ -84,6 +84,14 @@ timeout(const std::function<std::vector<std::byte>()> &func, int seconds) {
             throw;
         }
         close(fd[0]); // Close the read end of the pipe
+        int status;
+        waitpid(pid, &status, 0);
+        // Any `status` is OK, except SIGINT
+        if (WIFSIGNALED(status) && WTERMSIG(status) == SIGINT) {
+            // Interrupted (Ctrl+C). Interrupt FreeTensor as well. Do not
+            // directly raise SIGINT. See the doc of InterruptExcept
+            throw InterruptExcept();
+        }
         return result;
     }
 }

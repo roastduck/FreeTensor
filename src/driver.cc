@@ -78,9 +78,8 @@ struct Command {
                 int status;
                 waitpid(pid, &status, 0);
                 if (WIFSIGNALED(status) && WTERMSIG(status) == SIGINT) {
-                    // Interrupted (Ctrl+C). Interrupt FreeTensor as well
-                    // Do not directly raise SIGINT. See the doc of
-                    // InterruptExcept
+                    // Interrupted (Ctrl+C). Interrupt FreeTensor as well. Do
+                    // not directly raise SIGINT. See the doc of InterruptExcept
                     throw InterruptExcept();
                 }
                 if (status != 0)
