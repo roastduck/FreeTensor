@@ -100,11 +100,13 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
                         try {
                             // Although we have failed to fission `for { A; B }`
                             // to `for { A }; for { B }`, we may also try
-                            // fissioning to `for { B }; for { A }`.
-                            auto newId = fission(thisId, FissionSide::Before,
-                                                 splitter->id(), "",
-                                                 "." + toString(partCnt), true)
-                                             .second.at(thisId);
+                            // fissioning to `for { B }; for { A }`. We will
+                            // continue on further fission attempts in B.
+                            auto newId =
+                                fission(thisId, FissionSide::Before,
+                                        splitter->id(), "." + toString(partCnt),
+                                        "", true)
+                                    .first.at(thisId);
                             fissionFrom[newId] = thisId;
                             partCnt++;
                             commitTransaction();
