@@ -97,7 +97,20 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
                         partCnt++;
                         commitTransaction();
                     } catch (const InvalidSchedule &e) {
-                        abortTransaction();
+                        try {
+                            // Although we have failed to fission `for { A; B }`
+                            // to `for { A }; for { B }`, we may also try
+                            // fissioning to `for { B }; for { A }`.
+                            auto newId = fission(thisId, FissionSide::Before,
+                                                 splitter->id(), "",
+                                                 "." + toString(partCnt), true)
+                                             .second.at(thisId);
+                            fissionFrom[newId] = thisId;
+                            partCnt++;
+                            commitTransaction();
+                        } catch (const InvalidSchedule &e) {
+                            abortTransaction();
+                        }
                     }
                 }
             }

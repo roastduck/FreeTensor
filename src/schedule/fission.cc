@@ -104,7 +104,11 @@ Stmt FissionFor::visit(const For &op) {
                             part1, op->metadata(), op->id());
         markNewId(for0, true);
         markNewId(for1, false);
-        return makeStmtSeq({for0, for1});
+        if (!flip_) {
+            return makeStmtSeq({for0, for1});
+        } else {
+            return makeStmtSeq({for1, for0});
+        }
     }
 }
 
@@ -178,7 +182,7 @@ Stmt FissionFor::visit(const Assert &op) {
 std::pair<Stmt,
           std::pair<std::unordered_map<ID, ID>, std::unordered_map<ID, ID>>>
 fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
-        const std::string &suffix0, const std::string &suffix1) {
+        const std::string &suffix0, const std::string &suffix1, bool flip) {
     if (suffix0.empty() && suffix1.empty())
         throw InvalidSchedule(
             "Cannot preserve ID and Metadata for both first and second parts");
@@ -261,14 +265,26 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
             .direction(disjunct)
             .filterSubAST(loop)
             .filterEarlier([&](const AccessPoint &earlier) {
-                // Reverse dependence: earlier at the second fissioned part
-                return earlier.stmt_->isAncestorOf(leftOfSplitterStmt) ||
-                       leftOfSplitterStmt->isBefore(earlier.stmt_);
+                if (!flip) {
+                    // Reverse dependence: earlier at the second fissioned part
+                    return earlier.stmt_->isAncestorOf(leftOfSplitterStmt) ||
+                           leftOfSplitterStmt->isBefore(earlier.stmt_);
+                } else {
+                    // Reverse dependence: earlier at the first fissioned part
+                    return earlier.stmt_->isAncestorOf(rightOfSplitterStmt) ||
+                           earlier.stmt_->isBefore(rightOfSplitterStmt);
+                }
             })
             .filterLater([&](const AccessPoint &later) {
-                // Reverse dependence: later at the first fissioned part
-                return later.stmt_->isAncestorOf(rightOfSplitterStmt) ||
-                       later.stmt_->isBefore(rightOfSplitterStmt);
+                if (!flip) {
+                    // Reverse dependence: later at the first fissioned part
+                    return later.stmt_->isAncestorOf(rightOfSplitterStmt) ||
+                           later.stmt_->isBefore(rightOfSplitterStmt);
+                } else {
+                    // Reverse dependence: later at the second fissioned part
+                    return later.stmt_->isAncestorOf(leftOfSplitterStmt) ||
+                           leftOfSplitterStmt->isBefore(later.stmt_);
+                }
             })(ast, found);
 
         AddDimToVar adder(toAdd);
@@ -277,7 +293,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
 
     auto before = side == FissionSide::Before ? splitter : ID{};
     auto after = side == FissionSide::After ? splitter : ID{};
-    FissionFor mutator(loop, before, after, suffix0, suffix1);
+    FissionFor mutator(loop, before, after, suffix0, suffix1, flip);
     ast = mutator(ast);
     ast = mergeAndHoistIf(ast);
 
@@ -295,10 +311,12 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
-                  const std::string &suffix0, const std::string &suffix1) {
+                  const std::string &suffix0, const std::string &suffix1,
+                  bool flip) {
     beginTransaction();
-    auto log = appendLog(MAKE_SCHEDULE_LOG(Fission, freetensor::fission, loop,
-                                           side, splitter, suffix0, suffix1));
+    auto log =
+        appendLog(MAKE_SCHEDULE_LOG(Fission, freetensor::fission, loop, side,
+                                    splitter, suffix0, suffix1, flip));
     try {
         auto ret = applyLog(log);
         commitTransaction();

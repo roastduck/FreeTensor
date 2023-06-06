@@ -800,3 +800,34 @@ def test_fission_before_multiple_statements():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_flip():
+    with ft.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z):
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                ft.MarkLabel("S0")
+                y[i, j] = i + j
+                z[i, j] = i * j
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast, verbose=2)
+    map0, map1 = s.fission("L2", ft.FissionSide.After, "S0", flip=True)
+    assert s.find(map0["L2"]) == s.find("$fission.0{L2}")
+    assert s.find(map1["L2"]) == s.find("$fission.1{L2}")
+    ast = ft.lower(s.ast(), verbose=1)
+
+    with ft.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z):
+        with ft.For("i", 0, 4) as i:
+            with ft.For("j", 0, 8) as j:
+                z[i, j] = i * j
+            with ft.For("j", 0, 8) as j:
+                y[i, j] = i + j
+    std = ft.pop_ast()
+
+    assert std.match(ast)

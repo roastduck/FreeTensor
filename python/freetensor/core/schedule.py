@@ -233,7 +233,7 @@ class Schedule(ffi.Schedule):
         """
         return super().permute([self._lookup(l) for l in loops], transform_func)
 
-    def fission(self, loop, side, splitter):
+    def fission(self, loop, side, splitter, flip=False):
         """
         Fission a loop into two loops each containing part of the statements, one
         followed by another
@@ -256,6 +256,10 @@ class Schedule(ffi.Schedule):
         splitter : str (Selector string), ID, Stmt, or list of them
             Where to fission the loop. If multiple statement are selected, fission the
             look before or after all of them
+        flip : bool
+            This is a helper option. If set to true, part 0 will be placed AFTER part 1.
+            This is equivalent to first applying `swap` to the statements of the loop
+            body before applying `fission`.
 
         Raises
         ------
@@ -275,7 +279,10 @@ class Schedule(ffi.Schedule):
             splitter = splitter_list[0]
         else:
             splitter = splitter_list[-1]
-        map1, map2 = super().fission(self._lookup(loop), side, splitter)
+        map1, map2 = super().fission(self._lookup(loop),
+                                     side,
+                                     splitter,
+                                     flip=flip)
         return IDMap(old_ast, map1), IDMap(old_ast, map2)
 
     def fuse(self, loop0, loop1=None, strict=False):

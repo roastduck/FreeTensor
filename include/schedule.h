@@ -337,6 +337,9 @@ class Schedule {
      * @param suffix1 : The suffix in the `op` of metadata of result part 1. If
      * empty, the fissioned part 1 preserves original ID and metadata. Cannot be
      * empty together with `suffix0`.
+     * @param flip : This is a helper option. If set to true, part 0 will be
+     * placed AFTER part 1. This is equivalent to first applying `swap` to the
+     * statements of the loop body before applying `fission`.
      * @throw InvalidSchedule if any dependence cannot be resolved
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
      * loop}). If a loop is removed because it has an empty body, it will not be
@@ -345,7 +348,8 @@ class Schedule {
     std::pair<IDMap, IDMap> fission(const ID &loop, FissionSide side,
                                     const ID &splitter,
                                     const std::string &suffix0 = ".0",
-                                    const std::string &suffix1 = ".1");
+                                    const std::string &suffix1 = ".1",
+                                    bool flip = false);
 
     /**
      * Fuse two directly following loops with the same length into one

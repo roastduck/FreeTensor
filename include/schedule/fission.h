@@ -55,18 +55,22 @@ class FissionFor : public Mutator {
     ID loop_;
     ID before_, after_;
     std::optional<std::string> op0_, op1_;
+    bool flip_;
+
     std::unordered_map<ID, ID> ids0_, ids1_;
     std::unordered_set<std::string> varUses_;
     bool inside_ = false, isPart0_ = true, anyInside_ = false, isAfter_ = false;
 
   public:
     FissionFor(const ID &loop, const ID &before, const ID &after,
-               const std::string &suffix0, const std::string &suffix1)
+               const std::string &suffix0, const std::string &suffix1,
+               bool flip)
         : loop_(loop), before_(before), after_(after),
           op0_(suffix0.empty() ? std::nullopt
                                : std::optional{"fission" + suffix0}),
           op1_(suffix1.empty() ? std::nullopt
-                               : std::optional{"fission" + suffix1}) {}
+                               : std::optional{"fission" + suffix1}),
+          flip_(flip) {}
 
     const std::unordered_map<ID, ID> &ids0() const { return ids0_; }
     const std::unordered_map<ID, ID> &ids1() const { return ids1_; }
@@ -93,7 +97,7 @@ class FissionFor : public Mutator {
 std::pair<Stmt,
           std::pair<std::unordered_map<ID, ID>, std::unordered_map<ID, ID>>>
 fission(const Stmt &ast, const ID &loop, FissionSide side, const ID &splitter,
-        const std::string &suffix0, const std::string &suffix1);
+        const std::string &suffix0, const std::string &suffix1, bool flip);
 
 } // namespace freetensor
 
