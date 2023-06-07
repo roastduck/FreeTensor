@@ -868,16 +868,29 @@ class Schedule(ffi.Schedule):
         """
         super().auto_use_lib(target)
 
-    def auto_fuse(self, target):
+    def auto_swap(self, target):
         """
-        (Experimental) Automatically fuse consecutive loops using some heuristics
+        (Experimental) Automatically swap statements to enable more fission or
+        fusion
 
         Parameters
         ----------
         target : Target
             Target architecture
         """
-        super().auto_fuse(target)
+        super().auto_swap(target)
+
+    def auto_fission_fuse(self, target):
+        """
+        (Experimental) Automatically fuse consecutive loops or vice versa using
+        some heuristics
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super().auto_fission_fuse(target)
 
     def auto_parallelize(self, target):
         """

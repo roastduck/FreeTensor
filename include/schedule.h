@@ -770,6 +770,14 @@ class Schedule {
     void autoReorder(const Ref<Target> &target);
 
     /**
+     * (Experimental) Automatically swap statements to enable more fission or
+     * fusion
+     *
+     * @param target : Target architecture
+     */
+    void autoSwap(const Ref<Target> &target);
+
+    /**
      * (Experimental) Automatically fuse consecutive loops or vice versa using
      * some heuristics
      *
