@@ -2,6 +2,7 @@
 
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <analyze/merge_no_deps_hint.h>
 #include <hash.h>
 #include <pass/flatten_stmt_seq.h>
@@ -221,18 +222,23 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     FuseFor mutator(ast, loop0, loop1, strict);
     ast = mutator(ast);
 
-    auto found = [&](const Dependence &d) {
-        ASSERT(d.dir_.size() == 1);
-        throw InvalidSchedule(toString(d) + " cannot be resolved");
-    };
+    FindDepsDir dir = {{mutator.fused(), DepDirection::Normal}};
+    for (auto outer = findStmt(ast, mutator.fused())->parentStmt();
+         outer.isValid(); outer = outer->parentStmt()) {
+        if (outer->nodeType() == ASTNodeType::For) {
+            dir.emplace_back(outer->id(), DepDirection::Same);
+        }
+    }
     FindDeps()
-        .direction({{{mutator.fused(), DepDirection::Normal}}})
+        .direction({dir})
         .filterEarlier([&](const AccessPoint &earlier) {
             return earlier.stmt_->ancestorById(mutator.afterId()).isValid();
         })
         .filterLater([&](const AccessPoint &later) {
             return later.stmt_->ancestorById(mutator.beforeId()).isValid();
-        })(ast, found);
+        })(ast, [&](const Dependence &d) {
+            throw InvalidSchedule(toString(d) + " cannot be resolved");
+        });
 
     try {
         ast = simplify(ast);

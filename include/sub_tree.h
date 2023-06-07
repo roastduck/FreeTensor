@@ -193,16 +193,32 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
         checkNull();
     }
 
-    SubTree(SubTree &&other) : obj_(std::move(other.obj_)) { checkNull(); }
-    template <NullPolicy OTHER_POLICY>
-    SubTree(SubTree<T, OTHER_POLICY> &&other) : obj_(std::move(other.obj_)) {
+    /**
+     * Move-constructors are called when constructing a SubTree (for example,
+     * when putting a SubTree into a list), so we follow the normal rules of
+     * moving an object. No copying of the AST is performed here.
+     *
+     * @{
+     */
+    SubTree(SubTree &&other)
+        : obj_(std::move(other.obj_)), parent_(other.parent_) {
+        other.parent_ = nullptr;
         checkNull();
     }
+    template <NullPolicy OTHER_POLICY>
+    SubTree(SubTree<T, OTHER_POLICY> &&other)
+        : obj_(std::move(other.obj_)), parent_(other.parent_) {
+        other.parent_ = nullptr;
+        checkNull();
+    }
+    /** @} */
 
     /**
      * For a `SubTree y`, `auto x = y` will result in a deep copy of the entire
      * `SubTree`. We avoid this misuse by making the copy constructor explicit.
      * Please use `Ref<T> x = y` or `auto &&x = y` instead
+     *
+     * @{
      */
     explicit SubTree(const SubTree &other) {
         if (other.obj_.isValid()) {
@@ -223,6 +239,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
         }
         checkNull();
     }
+    /** @} */
 
     SubTree &operator=(SubTree &&other) {
         abandon();
@@ -267,8 +284,10 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
     }
 
     template <class U>
-    requires std::derived_from<T, U>
-    operator Ref<U>() const { return obj_; }
+        requires std::derived_from<T, U>
+    operator Ref<U>() const {
+        return obj_;
+    }
 
     T &operator*() const { return *obj_; }
     T *operator->() const { return obj_.get(); }
@@ -324,29 +343,35 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
         }
     }
 
-    SubTreeList(SubTreeList &&other) {
-        objs_.reserve(other.objs_.size());
-        for (auto &&item : other.objs_) {
-            SubTree<T, POLICY> newItem = ChildOf{parent_};
-            newItem = std::move(item);
-            objs_.emplace_back(std::move(newItem));
-        }
+    /**
+     * Move-constructors are called when constructing a SubTreeList, so we
+     * follow the normal rules of moving an object. No copying of the AST is
+     * performed here.
+     *
+     * @{
+     */
+    SubTreeList(SubTreeList &&other)
+        : objs_(std::move(other.objs_)), parent_(other.parent_) {
+        other.parent_ = nullptr;
     }
     template <NullPolicy OTHER_POLICY>
-    SubTreeList(SubTreeList<T, OTHER_POLICY> &&other) {
+    SubTreeList(SubTreeList<T, OTHER_POLICY> &&other) : parent_(other.parent_) {
         objs_.reserve(other.objs_.size());
         for (auto &&item : other.objs_) {
-            SubTree<T, POLICY> newItem = ChildOf{parent_};
-            newItem = std::move(item);
-            objs_.emplace_back(std::move(newItem));
+            objs_.emplace_back(std::move(item));
         }
+        other.objs_.clear();
+        other.parent_ = nullptr;
     }
+    /** @} */
 
     /**
      * For a `SubTreeList y`, `auto x = y` will result in a deep copy of the
      * entire `SubTreeList`. We avoid this misuse by making the copy constructor
      * explicit. Please use `std::vector<Ref<T>> x = y` or `auto &&x = y`
      * instead
+     *
+     * @{
      */
     explicit SubTreeList(const SubTreeList &other) {
         objs_.reserve(other.objs_.size());
@@ -365,6 +390,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
             objs_.emplace_back(std::move(newItem));
         }
     }
+    /** @} */
 
     SubTreeList &operator=(SubTreeList &&other) {
         objs_.clear();
@@ -422,7 +448,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
     }
 
     template <class U>
-    requires std::derived_from<T, U>
+        requires std::derived_from<T, U>
     operator std::vector<Ref<U>>() const {
         return std::vector<Ref<U>>(objs_.begin(), objs_.end());
     }
