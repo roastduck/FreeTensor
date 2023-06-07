@@ -50,7 +50,7 @@ Stmt BlendPass::visit(const For &op) {
                 envStack_.pop_back();
             } else {
                 ASSERT(!offset_.count(op->iter_));
-                offset_[op->iter_] = std::make_pair(op->begin_, op->step_);
+                offset_[op->iter_] = {op->begin_, op->step_};
                 ret = (*this)(op->body_);
                 offset_.erase(op->iter_);
                 auto len = (*this)(op->len_);

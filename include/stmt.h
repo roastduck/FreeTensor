@@ -113,7 +113,7 @@ Stmt makeVarDef(const std::string &name, Tbuffer &&buffer,
     d->metadata() = metadata;
     d->setId(id);
     d->name_ = name;
-    d->buffer_ = SubTree<Buffer>(buffer);
+    d->buffer_ = std::forward<Tbuffer>(buffer);
     d->viewOf_ = viewOf;
     d->body_ = std::forward<Tbody>(body);
     d->pinned_ = pinned;

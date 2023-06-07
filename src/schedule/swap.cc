@@ -49,16 +49,24 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
                    });
     auto allIn = insides | join("&");
     auto anyIn = insides | join("|");
-    auto ast = hoistSelectedVar(_ast, "(" + anyIn + ")&!(" + allIn + ")");
-    ast = flattenStmtSeq(ast);
+    auto oldAst = hoistSelectedVar(_ast, "(" + anyIn + ")&!(" + allIn + ")");
+    oldAst = flattenStmtSeq(oldAst);
 
     Swap mutator(order);
-    ast = mutator(ast);
+    auto ast = mutator(
+        oldAst); // Don't destory `oldAst`, or `.scope()` will become an orphan
     auto scope = mutator.scope();
     if (!scope.isValid()) {
         throw InvalidSchedule("Statements not found or not consecutive");
     }
 
+    FindDepsDir dir;
+    for (auto outer = scope->parentStmt(); outer.isValid();
+         outer = outer->parentStmt()) {
+        if (outer->nodeType() == ASTNodeType::For) {
+            dir.emplace_back(outer->id(), DepDirection::Same);
+        }
+    }
     auto findParentStmt = [&](const Stmt &stmt) -> Stmt {
         for (auto &&item : order) {
             auto ret = stmt->ancestorById(item);
@@ -68,7 +76,8 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
         }
         return nullptr;
     };
-    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
+    FindDeps().direction({dir}).filter([&](const AccessPoint &later,
+                                           const AccessPoint &earlier) {
         auto s0 = findParentStmt(later.stmt_);
         auto s1 = findParentStmt(earlier.stmt_);
         if (!s0.isValid() || !s1.isValid()) {
@@ -85,11 +94,9 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
         auto new1 = std::find_if(order.begin(), order.end(),
                                  [&](const ID &id) { return id == s1->id(); });
         return (old0 < old1) != (new0 < new1);
-    };
-    auto found = [&](const Dependence &d) {
+    })(ast, [&](const Dependence &d) {
         throw InvalidSchedule(toString(d) + " cannot be resolved");
-    };
-    FindDeps().filter(filter)(ast, found);
+    });
 
     return sinkVar(ast);
 }
