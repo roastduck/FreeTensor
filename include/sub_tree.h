@@ -197,6 +197,8 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
      * Move-constructors are called when constructing a SubTree (for example,
      * when putting a SubTree into a list), so we follow the normal rules of
      * moving an object. No copying of the AST is performed here.
+     *
+     * @{
      */
     SubTree(SubTree &&other)
         : obj_(std::move(other.obj_)), parent_(other.parent_) {
@@ -209,11 +211,14 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
         other.parent_ = nullptr;
         checkNull();
     }
+    /** @} */
 
     /**
      * For a `SubTree y`, `auto x = y` will result in a deep copy of the entire
      * `SubTree`. We avoid this misuse by making the copy constructor explicit.
      * Please use `Ref<T> x = y` or `auto &&x = y` instead
+     *
+     * @{
      */
     explicit SubTree(const SubTree &other) {
         if (other.obj_.isValid()) {
@@ -234,6 +239,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
         }
         checkNull();
     }
+    /** @} */
 
     SubTree &operator=(SubTree &&other) {
         abandon();
@@ -341,6 +347,8 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
      * Move-constructors are called when constructing a SubTreeList, so we
      * follow the normal rules of moving an object. No copying of the AST is
      * performed here.
+     *
+     * @{
      */
     SubTreeList(SubTreeList &&other)
         : objs_(std::move(other.objs_)), parent_(other.parent_) {
@@ -355,12 +363,15 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
         other.objs_.clear();
         other.parent_ = nullptr;
     }
+    /** @} */
 
     /**
      * For a `SubTreeList y`, `auto x = y` will result in a deep copy of the
      * entire `SubTreeList`. We avoid this misuse by making the copy constructor
      * explicit. Please use `std::vector<Ref<T>> x = y` or `auto &&x = y`
      * instead
+     *
+     * @{
      */
     explicit SubTreeList(const SubTreeList &other) {
         objs_.reserve(other.objs_.size());
@@ -379,6 +390,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
             objs_.emplace_back(std::move(newItem));
         }
     }
+    /** @} */
 
     SubTreeList &operator=(SubTreeList &&other) {
         objs_.clear();
