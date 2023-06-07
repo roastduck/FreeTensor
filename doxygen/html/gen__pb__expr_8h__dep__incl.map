@@ -1,8 +1,8 @@
 <map id="include/math/gen_pb_expr.h" name="include/math/gen_pb_expr.h">
-<area shape="rect" id="node1" title=" " alt="" coords="5361,5,5520,47"/>
-<area shape="rect" id="node2" href="$deps_8h.html" title=" " alt="" coords="2627,95,2798,121"/>
-<area shape="rect" id="node31" href="$pb__simplify_8h.html" title=" " alt="" coords="5345,95,5537,121"/>
-<area shape="rect" id="node34" href="$gen__pb__expr_8cc.html" title=" " alt="" coords="5561,95,5744,121"/>
+<area shape="rect" id="node1" title=" " alt="" coords="5581,5,5740,47"/>
+<area shape="rect" id="node2" href="$deps_8h.html" title=" " alt="" coords="2743,95,2914,121"/>
+<area shape="rect" id="node32" href="$pb__simplify_8h.html" title=" " alt="" coords="5565,95,5757,121"/>
+<area shape="rect" id="node35" href="$gen__pb__expr_8cc.html" title=" " alt="" coords="5781,95,5964,121"/>
 <area shape="rect" id="node3" href="$check__not__modified_8cc.html" title=" " alt="" coords="5,169,172,211"/>
 <area shape="rect" id="node4" href="$deps_8cc.html" title=" " alt="" coords="197,177,346,203"/>
 <area shape="rect" id="node5" href="$merge__no__deps__hint_8cc.html" title=" " alt="" coords="370,169,535,211"/>
@@ -20,17 +20,18 @@
 <area shape="rect" id="node17" href="$auto__fission__fuse_8cc.html" title=" " alt="" coords="2620,169,2805,211"/>
 <area shape="rect" id="node18" href="$auto__parallelize_8cc.html" title=" " alt="" coords="2830,177,3059,203"/>
 <area shape="rect" id="node19" href="$auto__reorder_8cc.html" title=" " alt="" coords="3084,177,3291,203"/>
-<area shape="rect" id="node20" href="$blend_8cc.html" title=" " alt="" coords="3315,177,3476,203"/>
-<area shape="rect" id="node21" href="$check__var__cross__parallel_8cc.html" title=" " alt="" coords="3501,169,3666,211"/>
-<area shape="rect" id="node22" href="$fission_8cc.html" title=" " alt="" coords="3691,177,3857,203"/>
-<area shape="rect" id="node23" href="$fuse_8cc.html" title=" " alt="" coords="3881,177,4035,203"/>
-<area shape="rect" id="node24" href="$inlining_8cc.html" title=" " alt="" coords="4059,177,4233,203"/>
-<area shape="rect" id="node25" href="$parallelize_8cc.html" title=" " alt="" coords="4257,177,4451,203"/>
-<area shape="rect" id="node26" href="$permute_8cc.html" title=" " alt="" coords="4475,177,4655,203"/>
-<area shape="rect" id="node27" href="$pluto_8cc.html" title=" " alt="" coords="5267,177,5425,203"/>
-<area shape="rect" id="node28" href="$reorder_8cc.html" title=" " alt="" coords="4679,177,4850,203"/>
-<area shape="rect" id="node29" href="$swap_8cc.html" title=" " alt="" coords="4875,177,5033,203"/>
-<area shape="rect" id="node30" href="$vectorize_8cc.html" title=" " alt="" coords="5057,177,5243,203"/>
-<area shape="rect" id="node32" href="$pb__simplify_8cc.html" title=" " alt="" coords="5450,177,5621,203"/>
-<area shape="rect" id="node33" href="$shrink__for_8cc.html" title=" " alt="" coords="5645,177,5807,203"/>
+<area shape="rect" id="node20" href="$auto__swap_8cc.html" title=" " alt="" coords="3315,177,3510,203"/>
+<area shape="rect" id="node21" href="$blend_8cc.html" title=" " alt="" coords="3535,177,3696,203"/>
+<area shape="rect" id="node22" href="$check__var__cross__parallel_8cc.html" title=" " alt="" coords="3721,169,3886,211"/>
+<area shape="rect" id="node23" href="$fission_8cc.html" title=" " alt="" coords="3911,177,4077,203"/>
+<area shape="rect" id="node24" href="$fuse_8cc.html" title=" " alt="" coords="4101,177,4255,203"/>
+<area shape="rect" id="node25" href="$inlining_8cc.html" title=" " alt="" coords="4279,177,4453,203"/>
+<area shape="rect" id="node26" href="$parallelize_8cc.html" title=" " alt="" coords="4477,177,4671,203"/>
+<area shape="rect" id="node27" href="$permute_8cc.html" title=" " alt="" coords="4695,177,4875,203"/>
+<area shape="rect" id="node28" href="$pluto_8cc.html" title=" " alt="" coords="5487,177,5645,203"/>
+<area shape="rect" id="node29" href="$reorder_8cc.html" title=" " alt="" coords="4899,177,5070,203"/>
+<area shape="rect" id="node30" href="$swap_8cc.html" title=" " alt="" coords="5095,177,5253,203"/>
+<area shape="rect" id="node31" href="$vectorize_8cc.html" title=" " alt="" coords="5277,177,5463,203"/>
+<area shape="rect" id="node33" href="$pb__simplify_8cc.html" title=" " alt="" coords="5670,177,5841,203"/>
+<area shape="rect" id="node34" href="$shrink__for_8cc.html" title=" " alt="" coords="5865,177,6027,203"/>
 </map>

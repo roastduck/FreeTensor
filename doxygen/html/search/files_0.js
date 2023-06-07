@@ -29,6 +29,7 @@ var searchData=
   ['auto_5fparallelize_2ecc_26',['auto_parallelize.cc',['../auto__parallelize_8cc.html',1,'']]],
   ['auto_5freorder_2ecc_27',['auto_reorder.cc',['../auto__reorder_8cc.html',1,'']]],
   ['auto_5fset_5fmem_5ftype_2ecc_28',['auto_set_mem_type.cc',['../auto__set__mem__type_8cc.html',1,'']]],
-  ['auto_5funroll_2ecc_29',['auto_unroll.cc',['../auto__unroll_8cc.html',1,'']]],
-  ['auto_5fuse_5flib_2ecc_30',['auto_use_lib.cc',['../auto__use__lib_8cc.html',1,'']]]
+  ['auto_5fswap_2ecc_29',['auto_swap.cc',['../auto__swap_8cc.html',1,'']]],
+  ['auto_5funroll_2ecc_30',['auto_unroll.cc',['../auto__unroll_8cc.html',1,'']]],
+  ['auto_5fuse_5flib_2ecc_31',['auto_use_lib.cc',['../auto__use__lib_8cc.html',1,'']]]
 ];

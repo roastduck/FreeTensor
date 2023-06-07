@@ -161,6 +161,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:af7018c4446baf1db134a11d112462370"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2d944c1a96e055d5a5491cc086ba70e6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a2d944c1a96e055d5a5491cc086ba70e6">autoReorder</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
 <tr class="separator:a2d944c1a96e055d5a5491cc086ba70e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49494394c6a058a0e0b67d4eedc76587"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a49494394c6a058a0e0b67d4eedc76587">autoSwap</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
+<tr class="separator:a49494394c6a058a0e0b67d4eedc76587"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a7bd97f2a8bfb6b853d959cc7b0636f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a3a7bd97f2a8bfb6b853d959cc7b0636f">autoFissionFuse</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a> &gt; &amp;trace=nullptr)</td></tr>
 <tr class="separator:a3a7bd97f2a8bfb6b853d959cc7b0636f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36968be3b8f0d74c315c3565c5572ba2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a36968be3b8f0d74c315c3565c5572ba2">autoParallelize</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
@@ -525,6 +527,31 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p >(Experimental) Automatically set memory types using some heuristics</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">target</td><td>: <a class="el" href="classfreetensor_1_1Target.html">Target</a> architecture </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a49494394c6a058a0e0b67d4eedc76587" name="a49494394c6a058a0e0b67d4eedc76587"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a49494394c6a058a0e0b67d4eedc76587">&#9670;&nbsp;</a></span>autoSwap()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::Schedule::autoSwap </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>target</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >(Experimental) Automatically swap statements to enable more fission or fusion</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">target</td><td>: <a class="el" href="classfreetensor_1_1Target.html">Target</a> architecture </td></tr>
@@ -2020,6 +2047,7 @@ template&lt;class T &gt; </div>
 <li>src/schedule/<a class="el" href="auto__parallelize_8cc.html">auto_parallelize.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__reorder_8cc.html">auto_reorder.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__set__mem__type_8cc.html">auto_set_mem_type.cc</a></li>
+<li>src/schedule/<a class="el" href="auto__swap_8cc.html">auto_swap.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__unroll_8cc.html">auto_unroll.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__use__lib_8cc.html">auto_use_lib.cc</a></li>
 <li>src/schedule/<a class="el" href="blend_8cc.html">blend.cc</a></li>

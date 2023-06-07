@@ -3,7 +3,7 @@ var searchData=
   ['aborttransaction_0',['abortTransaction',['../classfreetensor_1_1Schedule.html#a63b83f0259f29692a0a587b9f71d0a82',1,'freetensor::Schedule']]],
   ['abs_1',['abs',['../namespacestd.html#ad93c82b5bb8ac9491a923634c8a8615e',1,'std']]],
   ['access_2',['Access',['../structfreetensor_1_1CompAccessBound_1_1Access.html#a715bd53399ad99b8add308c6435dba17',1,'freetensor::CompAccessBound::Access::Access(CompUniqueBounds &amp;unique, const std::vector&lt; Expr &gt; &amp;indices, const std::vector&lt; Expr &gt; &amp;conds, const std::unordered_set&lt; std::string &gt; &amp;names)'],['../structfreetensor_1_1CompAccessBound_1_1Access.html#a1bb0151e2f6d4c03c185bda6f92aa640',1,'freetensor::CompAccessBound::Access::Access(CompUniqueBounds &amp;unique, const std::vector&lt; Expr &gt; &amp;indices, const std::vector&lt; Expr &gt; &amp;conds)']]],
-  ['add_3',['add',['../namespacefreetensor.html#a463667d020807261ff781a6911c07338',1,'freetensor::add(const LowerBound &amp;b1, const LowerBound &amp;b2)'],['../namespacefreetensor.html#ac0bab8fc7ca8d2a3c1655b0dd692de9e',1,'freetensor::add(const UpperBound &amp;b1, const UpperBound &amp;b2)'],['../namespacefreetensor.html#a6b069428f5477c50bf08adc4ea43e463',1,'freetensor::add(const LinearExpr&lt; T &gt; &amp;lhs, const LinearExpr&lt; T &gt; &amp;rhs)']]],
+  ['add_3',['add',['../namespacefreetensor.html#ac0bab8fc7ca8d2a3c1655b0dd692de9e',1,'freetensor::add(const UpperBound &amp;b1, const UpperBound &amp;b2)'],['../namespacefreetensor.html#a463667d020807261ff781a6911c07338',1,'freetensor::add(const LowerBound &amp;b1, const LowerBound &amp;b2)'],['../namespacefreetensor.html#a6b069428f5477c50bf08adc4ea43e463',1,'freetensor::add(const LinearExpr&lt; T &gt; &amp;lhs, const LinearExpr&lt; T &gt; &amp;rhs)']]],
   ['addconstraint_4',['addConstraint',['../classfreetensor_1_1PBBuilder.html#a5d68268b70d7ce88dca5d0a2fb544ce8',1,'freetensor::PBBuilder::addConstraint(const PBBuildExpr &amp;constraint)'],['../classfreetensor_1_1PBBuilder.html#a6a4a510f9e61cbcd027644c46becdbd0',1,'freetensor::PBBuilder::addConstraint(PBBuildExpr &amp;&amp;constraint)']]],
   ['addconstraints_5',['addConstraints',['../classfreetensor_1_1PBBuilder.html#aabdf0000621cb3fb8f7ab70ea3ec58a3',1,'freetensor::PBBuilder']]],
   ['adddimtovar_6',['AddDimToVar',['../classfreetensor_1_1AddDimToVar.html#a28e927d49bdba87eb247cf9488870c0b',1,'freetensor::AddDimToVar']]],
@@ -64,6 +64,7 @@ var searchData=
   ['autoreorder_61',['autoReorder',['../classfreetensor_1_1Schedule.html#a2d944c1a96e055d5a5491cc086ba70e6',1,'freetensor::Schedule']]],
   ['autoschedule_62',['autoSchedule',['../classfreetensor_1_1Schedule.html#aa50f7376da162b5975c8e00d41aeaab9',1,'freetensor::Schedule']]],
   ['autosetmemtype_63',['autoSetMemType',['../classfreetensor_1_1Schedule.html#a11a336810508f2fd8fd9bb1c761a327d',1,'freetensor::Schedule']]],
-  ['autounroll_64',['autoUnroll',['../classfreetensor_1_1Schedule.html#a38ae1948ed53fbe5378905c90feb0d73',1,'freetensor::Schedule']]],
-  ['autouselib_65',['autoUseLib',['../classfreetensor_1_1Schedule.html#af7018c4446baf1db134a11d112462370',1,'freetensor::Schedule']]]
+  ['autoswap_64',['autoSwap',['../classfreetensor_1_1Schedule.html#a49494394c6a058a0e0b67d4eedc76587',1,'freetensor::Schedule']]],
+  ['autounroll_65',['autoUnroll',['../classfreetensor_1_1Schedule.html#a38ae1948ed53fbe5378905c90feb0d73',1,'freetensor::Schedule']]],
+  ['autouselib_66',['autoUseLib',['../classfreetensor_1_1Schedule.html#af7018c4446baf1db134a11d112462370',1,'freetensor::Schedule']]]
 ];
