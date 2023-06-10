@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/comp_transient_bounds.h>
 #include <analyze/symbol_table.h>
 #include <analyze/track_stmt.h>
 #include <autograd/derivative.h>
@@ -11,7 +12,9 @@
 
 namespace freetensor {
 
-class CountScopeLen : public Visitor {
+class CountScopeLen : public CompTransientBounds<SymbolTable<Visitor>> {
+    typedef CompTransientBounds<SymbolTable<Visitor>> BaseClass;
+
     ID def_;
     std::string var_;
     const std::unordered_set<ID> &affectingScopes_; // For IDs
@@ -31,6 +34,7 @@ class CountScopeLen : public Visitor {
     const std::unordered_map<Stmt, Expr> &scopeLen() const { return scopeLen_; }
 
   protected:
+    using BaseClass::visit;
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const VarDef &op) override;
