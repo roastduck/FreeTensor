@@ -29,6 +29,7 @@ def grad_body(stmt: ffi.Stmt,
               requires: Sequence[str],
               provides: Sequence[str],
               tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+              reset_provided_grad: bool = True,
               invert: bool = True,
               user_grads: Sequence[ffi.StmtSetToUserGrad] = []):
     ''' `grad` or `grad_` on a function body (for internal tests only) '''
@@ -37,7 +38,8 @@ def grad_body(stmt: ffi.Stmt,
     prov = set(provides)
     if type(tapes) is not GradTapeMode:
         tapes = {find_stmt(stmt, t).id for t in tapes}
-    return ffi.grad_body(stmt, req, prov, tapes, invert, user_grads)
+    return ffi.grad_body(stmt, req, prov, tapes, reset_provided_grad, invert,
+                         user_grads)
 
 
 @as_decorator
@@ -47,6 +49,7 @@ def _grad_func(func,
                provides: Sequence[Union[str, Parameter, Return]],
                tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
                tape_in_closure: bool = True,
+               reset_provided_grad: bool = True,
                invert: bool = True,
                user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
                attach_backward: bool = False,
@@ -80,6 +83,7 @@ def _grad_func(func,
                     provides=provides,
                     tapes=tapes,
                     tape_in_closure=tape_in_closure,
+                    reset_provided_grad=reset_provided_grad,
                     invert=invert,
                     user_grads=user_grads,
                     attach_backward=attach_backward,
@@ -115,7 +119,7 @@ def _grad_func(func,
     if type(tapes) is not GradTapeMode:
         tapes = {find_stmt(func, t).id for t in tapes}
     fwd, bwd, req_map, prov_map = impl(func, req, prov, tapes, tape_in_closure,
-                                       invert, user_grads)
+                                       reset_provided_grad, invert, user_grads)
 
     # Wrap fwd and bwd (originally ft.ffi.Func with ft.Func)
     fwd = Func(fwd.name, fwd.params, fwd.returns, fwd.body)
@@ -148,6 +152,7 @@ def grad_(func=None,
           provides: Sequence[Union[str, Parameter, Return]] = None,
           tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
           tape_in_closure: bool = True,
+          reset_provided_grad: bool = True,
           invert: bool = True,
           user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
           attach_backward: bool = False,
@@ -199,6 +204,11 @@ def grad_(func=None,
         True to pass taped tensors from the forward function to the backward function in
         implicit I/O parameters, i.e. in closure. False to pass these tensors as
         explicit I/O parameters. Default to True
+    reset_provided_grad : bool
+        If true, reset gradients for all variables in `provides` to 0 after use. This ensures
+        the final result is correct when computing gradients of a program part by part with
+        multiple calls to this function. If false, do not touch the provided gradient, which
+        makes it convenient to run for multiple rounds for timing.
     invert : bool
         If set to true, it can reduce the amount of recomputation or taping required.
         However, this may result in a loss of precision for floating-point numbers. Defaults
@@ -239,6 +249,7 @@ def grad_(func=None,
                       provides=provides,
                       tapes=tapes,
                       tape_in_closure=tape_in_closure,
+                      reset_provided_grad=reset_provided_grad,
                       invert=invert,
                       user_grads=user_grads,
                       attach_backward=attach_backward,
@@ -252,6 +263,7 @@ def grad(func=None,
          provides: Sequence[Union[str, Parameter, Return]] = None,
          tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
          tape_in_closure: bool = True,
+         reset_provided_grad: bool = True,
          invert: bool = True,
          user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
          attach_backward: bool = False,
@@ -304,6 +316,11 @@ def grad(func=None,
         True to pass taped tensors from the forward function to the backward function in
         implicit I/O parameters, i.e. in closure. False to pass these tensors as
         explicit I/O parameters. Default to True
+    reset_provided_grad : bool
+        If true, reset gradients for all variables in `provides` to 0 after use. This ensures
+        the final result is correct when computing gradients of a program part by part with
+        multiple calls to this function. If false, do not touch the provided gradient, which
+        makes it convenient to run for multiple rounds for timing.
     invert : bool
         If set to true, it can reduce the amount of recomputation or taping required.
         However, this may result in a loss of precision for floating-point numbers. Defaults
@@ -343,6 +360,7 @@ def grad(func=None,
                       provides=provides,
                       tapes=tapes,
                       tape_in_closure=tape_in_closure,
+                      reset_provided_grad=reset_provided_grad,
                       invert=invert,
                       user_grads=user_grads,
                       attach_backward=attach_backward,

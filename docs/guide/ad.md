@@ -123,7 +123,8 @@ y_torch = torch.softmax(x, axis=-1)
 assert torch.all(torch.isclose(y_ft, y_torch))
 
 # Check backward result
-y_torch.grad = dzdy = torch.rand(n, dtype=torch.float32)
+dzdy = torch.rand(n, dtype=torch.float32)
+y_torch.grad = dzdy.clone()
 input_grads = test.input_name_to_gradient_name
 output_grads = test.output_name_to_gradient_name
 dzdx_ft = test.backward(**{output_grads[ft.Return()]: dzdy}).torch()
@@ -170,7 +171,8 @@ y_torch = torch.softmax(x, axis=-1)
 assert torch.all(torch.isclose(y_ft, y_torch))
 
 # Check backward result
-y_torch.grad = dzdy = torch.rand(n, dtype=torch.float32)
+dzdy = torch.rand(n, dtype=torch.float32)
+y_torch.grad = dzdy.clone()
 input_grads = test.input_name_to_gradient_name
 output_grads = test.output_name_to_gradient_name
 dzdx_ft = test.backward(**{output_grads[ft.Return()]: dzdy}).torch()
@@ -232,7 +234,8 @@ y_torch = torch.softmax(x, axis=-1)
 assert torch.all(torch.isclose(y_ft, y_torch))
 
 # Check backward result
-y_torch.grad = dzdy = torch.rand(n, n, dtype=torch.float32)
+dzdy = torch.rand(n, n, dtype=torch.float32)
+y_torch.grad = dzdy.clone()
 input_grads = test.input_name_to_gradient_name
 output_grads = test.output_name_to_gradient_name
 dzdx_ft = test.backward(**{output_grads[ft.Return()]: dzdy}).torch()

@@ -29,7 +29,7 @@ static std::string genCUBLASType(DataType dtype) {
 
 std::function<std::ostream &(std::ostream &)>
 CodeGenCUDA::genMdPtrType(const VarDef &def, bool isConst) {
-    auto &&buf = def->buffer_;
+    Ref<Buffer> buf = def->buffer_;
     if (buf->tensor()->shape().empty() &&
         (buf->mtype() == MemType::GPUGlobal ||
          buf->mtype() == MemType::GPUGlobalHeap)) {

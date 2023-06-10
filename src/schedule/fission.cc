@@ -221,17 +221,22 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
 
         auto variants = findLoopVariance(ast);
 
-        // var name -> loop id
         std::vector<FindDepsDir> disjunct;
         for (auto &&inner : affectedLoops) {
-            disjunct.push_back({{inner, DepDirection::Normal}});
+            FindDepsDir dir = {{inner, DepDirection::Normal}};
+            for (auto outer = findStmt(ast, loop)->parentStmt();
+                 outer.isValid(); outer = outer->parentStmt()) {
+                if (outer->nodeType() == ASTNodeType::For) {
+                    dir.emplace_back(outer->id(), DepDirection::Same);
+                }
+            }
+            disjunct.emplace_back(std::move(dir));
         }
         auto isRealWrite = [&](const ID &loop, const VarDef &def) -> bool {
             return isVariant(variants.second, def, loop);
         };
         std::unordered_map<ID, std::vector<ID>> toAdd;
         auto found = [&](const Dependence &d) {
-            ASSERT(d.dir_.size() == 1);
             auto &&id = d.dir_[0].first.id_;
             if (!findStmt(_ast, d.defId())->ancestorById(id).isValid()) {
                 // The variable is NOT a local variable inside the loop being

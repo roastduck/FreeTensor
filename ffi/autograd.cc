@@ -35,9 +35,10 @@ void init_ffi_autograd(py::module_ &m) {
                        std::unordered_map<ID, std::string>> (*)(
                 const Stmt &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &,
-                const std::unordered_set<ID> &, bool,
+                const std::unordered_set<ID> &, bool, bool,
                 const std::vector<StmtSetToUserGrad> &)>(&gradBody),
-        "func"_a, "requires"_a, "provides"_a, "tapes"_a, "invert"_a = true,
+        "func"_a, "requires"_a, "provides"_a, "tapes"_a,
+        "reset_provided_grad"_a = true, "invert"_a = true,
         "user_grads"_a = std::vector<StmtSetToUserGrad>{});
     m.def(
         "grad_",
@@ -46,11 +47,11 @@ void init_ffi_autograd(py::module_ &m) {
                        std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &,
-                const std::unordered_set<ID> &, bool, bool,
+                const std::unordered_set<ID> &, bool, bool, bool,
                 const std::vector<StmtSetToUserGrad> &)>(&gradFuncInplace),
         "stmt"_a, "requires"_a, "provides"_a, "tapes"_a,
-        "tape_in_closure"_a = true, "invert"_a = true,
-        "user_grads"_a = std::vector<StmtSetToUserGrad>{});
+        "tape_in_closure"_a = true, "reset_provided_grad"_a = true,
+        "invert"_a = true, "user_grads"_a = std::vector<StmtSetToUserGrad>{});
     m.def(
         "grad",
         static_cast<
@@ -58,11 +59,11 @@ void init_ffi_autograd(py::module_ &m) {
                        std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &,
-                const std::unordered_set<ID> &, bool, bool,
+                const std::unordered_set<ID> &, bool, bool, bool,
                 const std::vector<StmtSetToUserGrad> &)>(&gradFuncOutOfPlace),
         "stmt"_a, "requires"_a, "provides"_a, "tapes"_a,
-        "tape_in_closure"_a = true, "invert"_a = true,
-        "user_grads"_a = std::vector<StmtSetToUserGrad>{});
+        "tape_in_closure"_a = true, "reset_provided_grad"_a = true,
+        "invert"_a = true, "user_grads"_a = std::vector<StmtSetToUserGrad>{});
 
     m.def(
         "grad_body",
@@ -72,9 +73,10 @@ void init_ffi_autograd(py::module_ &m) {
                        std::unordered_map<ID, std::string>> (*)(
                 const Stmt &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode, bool,
-                const std::vector<StmtSetToUserGrad> &)>(&gradBody),
+                bool, const std::vector<StmtSetToUserGrad> &)>(&gradBody),
         "func"_a, "requires"_a, "provides"_a,
-        "tape_mode"_a = GradTapeMode::NoReuseOnly, "invert"_a = true,
+        "tape_mode"_a = GradTapeMode::NoReuseOnly,
+        "reset_provided_grad"_a = true, "invert"_a = true,
         "user_grads"_a = std::vector<StmtSetToUserGrad>{});
     m.def(
         "grad_",
@@ -83,11 +85,12 @@ void init_ffi_autograd(py::module_ &m) {
                        std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode, bool,
-                bool, const std::vector<StmtSetToUserGrad> &)>(
+                bool, bool, const std::vector<StmtSetToUserGrad> &)>(
             &gradFuncInplace),
         "stmt"_a, "requires"_a, "provides"_a,
         "tape_mode"_a = GradTapeMode::NoReuseOnly, "tape_in_closure"_a = true,
-        "invert"_a = true, "user_grads"_a = std::vector<StmtSetToUserGrad>{});
+        "reset_provided_grad"_a = true, "invert"_a = true,
+        "user_grads"_a = std::vector<StmtSetToUserGrad>{});
     m.def(
         "grad",
         static_cast<
@@ -95,11 +98,12 @@ void init_ffi_autograd(py::module_ &m) {
                        std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode, bool,
-                bool, const std::vector<StmtSetToUserGrad> &)>(
+                bool, bool, const std::vector<StmtSetToUserGrad> &)>(
             &gradFuncOutOfPlace),
         "stmt"_a, "requires"_a, "provides"_a,
         "tape_mode"_a = GradTapeMode::NoReuseOnly, "tape_in_closure"_a = true,
-        "invert"_a = true, "user_grads"_a = std::vector<StmtSetToUserGrad>{});
+        "reset_provided_grad"_a = true, "invert"_a = true,
+        "user_grads"_a = std::vector<StmtSetToUserGrad>{});
 
     py::enum_<OutputIntermediatesStage>(m, "OutputIntermediatesStage")
         .value("Forward", OutputIntermediatesStage::Forward)

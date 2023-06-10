@@ -52,9 +52,15 @@ timeout(const std::function<std::vector<std::byte>()> &func, int seconds) {
         try {
             writeUntilSuccess(fd[1], &size, sizeof(size_t));
             writeUntilSuccess(fd[1], bytes.data(), size);
+        } catch (const std::exception &e) {
+            close(fd[1]);
+            WARNING((std::string) "Exception caught in a sub-process: " +
+                    e.what());
+            exit(EXIT_FAILURE);
         } catch (...) {
             close(fd[1]);
-            throw;
+            WARNING("Exception caught in a sub-process");
+            exit(EXIT_FAILURE);
         }
         close(fd[1]); // Close the write end of the pipe
         exit(EXIT_SUCCESS);
@@ -83,7 +89,16 @@ timeout(const std::function<std::vector<std::byte>()> &func, int seconds) {
             close(fd[0]);
             throw;
         }
-        close(fd[0]); // Close the read end of the pipe
+        close(fd[0]);       // Close the read end of the pipe
+        kill(pid, SIGKILL); // Kill anyway in case the child process cannot exit
+        int status;
+        waitpid(pid, &status, 0);
+        // Any `status` is OK, except SIGINT
+        if (WIFSIGNALED(status) && WTERMSIG(status) == SIGINT) {
+            // Interrupted (Ctrl+C). Interrupt FreeTensor as well. Do not
+            // directly raise SIGINT. See the doc of InterruptExcept
+            throw InterruptExcept();
+        }
         return result;
     }
 }
