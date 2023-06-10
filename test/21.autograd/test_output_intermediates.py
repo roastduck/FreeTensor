@@ -305,3 +305,43 @@ def test_dynamic_loop_range():
                 y[pn % n] += z[()] * z[()]
 
     assert expected.body.match(ast)
+
+
+def test_dynamic_loop_range_relaxed():
+
+    @ft.transform(verbose=1)
+    def func(l, x, y):
+        l: ft.Var[(100,), "int32"]
+        x: ft.Var[(100, 100), "float32"]
+        y: ft.Var[(100,), "float32", "output"]
+        for i in range(100):
+            assert l[i] <= 100
+            for j in range(l[i]):
+                #! label: V_z
+                z = ft.empty((), "float32")
+                z[()] = x[i, j] + 1
+                y[i] += z[()] * z[()]
+
+    ast = ft.output_all_intermediates(func.body, set(["V_z"]))
+    print(ast)
+    ast = ft.lower(ast, skip_passes=['float_simplify'], verbose=1)
+
+    @ft.transform
+    def expected(l, x, y, z_tape):
+        l: ft.Var[(100,), "int32"]
+        x: ft.Var[(100, 100), "float32"]
+        y: ft.Var[(100,), "float32", "output"]
+        for i in range(100):
+            assert l[i] <= 100
+            for j in range(l[i]):
+                z_tape: ft.Var[(10000,), "float32", "output"]
+                #! label: V_z
+                z = ft.empty((), "float32")
+                z[()] = x[i, j] + 1
+                # FIXME: pass/remove_writes should have dedplicated this
+                z_tape[i * 100 + j] = z[()]
+                z_tape[i * 100 + j] = z[()]
+                z_tape[i * 100 + j] = z[()]
+                y[i] += z[()] * z[()]
+
+    assert expected.body.match(ast)
