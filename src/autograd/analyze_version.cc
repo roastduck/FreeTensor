@@ -214,10 +214,9 @@ void AnalyzeVersion::visit(const For &op) {
 
 void AnalyzeVersion::visit(const StmtSeq &op) {
     if (affectingScopes_.count(op->id())) {
-        // Versioning for a `StmtSeq` node is more strict than that for a
-        // `For` node. This means that not only do we check if the `StmtSeq`
-        // node is affected, but we also distinguish between its
-        // sub-statements.
+        // Versioning for a `StmtSeq` node is more strict than that for a `For`
+        // node. This means that not only do we check if the `StmtSeq` node is
+        // affected, but we also distinguish between its sub-statements.
         auto oldOffset = offset_;
         auto lastOffset = offset_;
         for (auto &&stmt : op->stmts_) {
