@@ -201,8 +201,16 @@ Stmt InsertBinaryReduction::visit(const VarDef &_op) {
         //   => p < log_2 len
         //   => p < floor(log_2(len - 1)) + 1
         auto count = makeCeilLog2(l->len_);
-        auto k = makeIntrinsic("1 << (%)", {makeVar("__reduce_p")},
-                               {DataType::Int32, SignDataType::GT0}, false);
+        Expr k;
+        if (count->nodeType() == ASTNodeType::IntConst &&
+            count.as<IntConstNode>()->val_ == 1) {
+            // __reduce_p will always be 0. Manual const fold because we don't
+            // have a node for "1 << x"
+            k = makeIntConst(1);
+        } else {
+            k = makeIntrinsic("1 << (%)", {makeVar("__reduce_p")},
+                              {DataType::Int32, SignDataType::GT0}, false);
+        }
         auto reduceStmt = makeReduceTo(
             op->name_, cat({nth}, indices), r->op_,
             makeLoad(op->name_, cat({makeAdd(nth, k)}, indices), dtype), false);

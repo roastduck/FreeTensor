@@ -119,6 +119,36 @@ def test_parallel_reduction_on_array():
     assert np.array_equal(y_np, y_std)
 
 
+def test_parallel_reduction_trivial_length():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(4, 2), "int32", "input", "gpu/global"]
+        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        #! label: L1
+        for i in range(0, 4):
+            #! label: L2
+            for j in range(0, 2):
+                y[i] = y[i] + x[i, j]
+
+    s = ft.Schedule(test)
+    s.parallelize("L1", "blockIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=2)
+
+    code = ft.codegen(func, target, verbose=1)
+    assert "atomicAdd" not in code.code
+    x_np = np.random.randint(0, 100, (4, 2)).astype("int32")
+    y_np = np.zeros((4,), dtype="int32")
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.sum(x_np, axis=1)
+    assert np.array_equal(y_np, y_std)
+
+
 def test_parallel_reduction_on_multi_dim_array():
 
     @ft.transform
