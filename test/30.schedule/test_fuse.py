@@ -574,3 +574,33 @@ def test_fuse_with_if_find_following_loop():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_potential_name_conflict():
+    with ft.VarDef([("x1", (5,), "int32", "input", "cpu"),
+                    ("x2", (5, 10), "int32", "input", "cpu"),
+                    ("y1", (5,), "int32", "output", "cpu"),
+                    ("y2", (5, 10), "int32", "output")]) as (x1, x2, y1, y2):
+        with ft.For("i", 0, 5, label="L1") as i:
+            y1[i] = x1[i]
+        with ft.For("j", 0, 5, label="L2") as j:
+            with ft.For("i", 0, 10) as i:  # Same name with L1
+                y2[i, j] = x2[i, j]
+
+    ast = ft.pop_ast()
+    s = ft.Schedule(ast)
+    s.fuse("L1", "L2")
+    ast = s.ast()
+    print(ast)
+
+    with ft.VarDef([("x1", (5,), "int32", "input", "cpu"),
+                    ("x2", (5, 10), "int32", "input", "cpu"),
+                    ("y1", (5,), "int32", "output", "cpu"),
+                    ("y2", (5, 10), "int32", "output")]) as (x1, x2, y1, y2):
+        with ft.For("new_i", 0, 5) as new_i:
+            y1[new_i] = x1[new_i]
+            with ft.For("i", 0, 10) as i:
+                y2[i, new_i] = x2[i, new_i]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
