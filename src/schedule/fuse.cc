@@ -1,9 +1,11 @@
 #include <algorithm>
 
+#include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <analyze/merge_no_deps_hint.h>
+#include <analyze/symbol_table.h>
 #include <hash.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/prop_one_time_use.h>
@@ -56,6 +58,43 @@ LoopInScopes findLoopInScopes(const Stmt &stmt, const ID &id,
     return LoopInScopes{nullptr, {}};
 }
 
+class FindNewIterName : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
+
+    ID id0_, id1_;
+    std::string oldName_;
+    std::unordered_set<std::string> usedNames_;
+
+  public:
+    FindNewIterName(const ID &id0, const ID &id1) : id0_(id0), id1_(id1) {}
+
+    std::string getNewName() {
+        for (int i = 1;; i++) {
+            if (auto name = oldName_ + "." + std::to_string(i);
+                !usedNames_.count(name)) {
+                return name;
+            }
+        }
+    }
+
+  protected:
+    void visit(const For &op) {
+        BaseClass::visit(op);
+        if (op->id() == id0_) {
+            // Use the first loop's iterator name as the initial candidate
+            oldName_ = op->iter_;
+        }
+        if (op->id() == id0_ || op->id() == id1_) {
+            for (auto &&name : names()) {
+                usedNames_.emplace(name);
+            }
+            for (auto &&name : allNames(op->body_)) {
+                usedNames_.emplace(name);
+            }
+        }
+    }
+};
+
 } // Anonymous namespace
 
 Expr FuseFor::visit(const Var &_op) {
@@ -63,11 +102,10 @@ Expr FuseFor::visit(const Var &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
     if (inLoop0_ && op->name_ == iter0_) {
-        return makeAdd(makeMul(makeVar(iter0_), step0_), begin0_);
+        return makeAdd(makeMul(makeVar(newIter_), step0_), begin0_);
     }
     if (inLoop1_ && op->name_ == iter1_) {
-        // Yes, use iter0_
-        return makeAdd(makeMul(makeVar(iter0_), step1_), begin1_);
+        return makeAdd(makeMul(makeVar(newIter_), step1_), begin1_);
     }
     return op;
 }
@@ -149,7 +187,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             auto seq = makeStmtSeq({std::move(body0), std::move(body1)});
 
             auto fused =
-                makeFor(iter0_, makeIntConst(0), loop0->end_, makeIntConst(1),
+                makeFor(newIter_, makeIntConst(0), loop0->end_, makeIntConst(1),
                         loop0->end_,
                         ForProperty().withNoDeps(
                             mergeNoDepsHint(root_, loop0->id(), loop1->id())),
@@ -219,7 +257,10 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
 
     CheckFuseAccessible(loop0, loop1).check(ast);
 
-    FuseFor mutator(ast, loop0, loop1, strict);
+    FindNewIterName nameFinder(loop0, loop1);
+    nameFinder(ast);
+
+    FuseFor mutator(ast, loop0, loop1, nameFinder.getNewName(), strict);
     ast = mutator(ast);
 
     FindDepsDir dir = {{mutator.fused(), DepDirection::Normal}};

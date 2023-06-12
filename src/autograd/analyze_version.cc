@@ -1,9 +1,11 @@
 #include <functional>
 
 #include <analyze/all_uses.h>
+#include <analyze/comp_unique_bounds.h>
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <autograd/analyze_version.h>
+#include <container_utils.h>
 #include <pass/const_fold.h>
 
 namespace freetensor {
@@ -49,7 +51,7 @@ class InsertFakeStoreForInputs : public SymbolTable<Mutator> {
 } // Anonymous namespace
 
 void CountScopeLen::visit(const Store &op) {
-    Visitor::visit(op);
+    BaseClass::visit(op);
     if (op->var_ == var_ &&
         (fakeStoreIds_.count(op->id()) || needVersions_.count(op->id()))) {
         scopeLen_[op] = makeIntConst(1);
@@ -57,7 +59,7 @@ void CountScopeLen::visit(const Store &op) {
 }
 
 void CountScopeLen::visit(const ReduceTo &op) {
-    Visitor::visit(op);
+    BaseClass::visit(op);
     if (op->var_ == var_ && needVersions_.count(op->id())) {
         scopeLen_[op] = makeIntConst(1);
     }
@@ -66,10 +68,10 @@ void CountScopeLen::visit(const ReduceTo &op) {
 void CountScopeLen::visit(const VarDef &op) {
     if (op->id() == def_) {
         var_ = op->name_;
-        Visitor::visit(op);
+        BaseClass::visit(op);
         var_.clear();
     } else {
-        Visitor::visit(op);
+        BaseClass::visit(op);
     }
     if (scopeLen_.count(op->body_)) {
         scopeLen_[op] = scopeLen_.at(op->body_);
@@ -77,10 +79,30 @@ void CountScopeLen::visit(const VarDef &op) {
 }
 
 void CountScopeLen::visit(const For &op) {
-    Visitor::visit(op);
+    BaseClass::visit(op);
     if (scopeLen_.count(op->body_)) {
         if (affectingScopes_.count(op->id())) {
-            scopeLen_[op] = makeMul(scopeLen_.at(op->body_), op->len_);
+            Expr len = op->len_;
+            if (!allIters(len).empty()) {
+                // Need to relax
+                CompUniqueBounds bound(*this);
+                auto allowedNames = ranges::to<std::unordered_set>(
+                    defs() |
+                    views::keys); // Names from all `VarDef`s but not `For`s
+                Expr relaxedInnerLen;
+                for (auto &&b : bound.getDefinedUpper(len, allowedNames)) {
+                    relaxedInnerLen = relaxedInnerLen.isValid()
+                                          ? makeMin(relaxedInnerLen, b.expr())
+                                          : b.expr();
+                }
+                if (!relaxedInnerLen.isValid()) {
+                    // Fallback to dynamic tape
+                    ASSERT(false); // Unimplemented
+                } else {
+                    len = relaxedInnerLen;
+                }
+            }
+            scopeLen_[op] = makeMul(scopeLen_.at(op->body_), len);
         } else {
             scopeLen_[op] = scopeLen_.at(op->body_);
         }
@@ -88,7 +110,7 @@ void CountScopeLen::visit(const For &op) {
 }
 
 void CountScopeLen::visit(const StmtSeq &op) {
-    Visitor::visit(op);
+    BaseClass::visit(op);
     Expr len, lastLen;
     for (auto &&stmt : op->stmts_) {
         if (scopeLen_.count(stmt) &&
@@ -112,7 +134,7 @@ void CountScopeLen::visit(const StmtSeq &op) {
 }
 
 void CountScopeLen::visit(const If &op) {
-    Visitor::visit(op);
+    BaseClass::visit(op);
     Expr len;
     if (scopeLen_.count(op->thenCase_)) {
         len = scopeLen_.at(op->thenCase_);
@@ -127,7 +149,7 @@ void CountScopeLen::visit(const If &op) {
 }
 
 void CountScopeLen::visit(const Assert &op) {
-    Visitor::visit(op);
+    BaseClass::visit(op);
     if (scopeLen_.count(op->body_)) {
         scopeLen_[op] = scopeLen_.at(op->body_);
     }

@@ -16,14 +16,16 @@ enum class FindLoopInScopesDirection : int { Front, Back };
 class FuseFor : public Mutator {
     Stmt root_;
     ID id0_, id1_, fused_;
-    std::string iter0_, iter1_;
+    std::string iter0_, iter1_, newIter_;
     ID beforeId_, afterId_;
     Expr begin0_, begin1_, step0_, step1_;
     bool strict_, inLoop0_ = false, inLoop1_ = false;
 
   public:
-    FuseFor(const Stmt &root, const ID &id0, const ID &id1, bool strict)
-        : root_(root), id0_(id0), id1_(id1), strict_(strict) {}
+    FuseFor(const Stmt &root, const ID &id0, const ID &id1,
+            const std::string &newIter, bool strict)
+        : root_(root), id0_(id0), id1_(id1), newIter_(newIter),
+          strict_(strict) {}
 
     const ID &fused() const { return fused_; }
     const ID &beforeId() const { return beforeId_; }
