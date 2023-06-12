@@ -122,7 +122,7 @@ var searchData=
   ['fused_119',['fused',['../classfreetensor_1_1FuseFor.html#ab1d74fb1130998a1f03ce2d558235340',1,'freetensor::FuseFor']]],
   ['fusedid_5f_120',['fusedId_',['../pluto_8cc.html#afe84782242293194b76ba5f0517bf2ff',1,'pluto.cc']]],
   ['fusedloopsvar_5f_121',['fusedLoopsVar_',['../pluto_8cc.html#a0339342c95deaef39a7a6d1f85e7d330',1,'pluto.cc']]],
-  ['fusefor_122',['FuseFor',['../classfreetensor_1_1FuseFor.html',1,'freetensor::FuseFor'],['../classfreetensor_1_1FuseFor.html#a9576725d67e08a71704ec72af4e262cc',1,'freetensor::FuseFor::FuseFor()']]],
+  ['fusefor_122',['FuseFor',['../classfreetensor_1_1FuseFor.html',1,'freetensor::FuseFor'],['../classfreetensor_1_1FuseFor.html#a106dc5226ea61b88df7b54c3eecc7aef',1,'freetensor::FuseFor::FuseFor()']]],
   ['gpu_123',['gpu',['../namespacefreetensor_1_1gpu.html',1,'freetensor']]],
   ['hasstreamoutput_124',['HasStreamOutput',['../conceptfreetensor_1_1HasStreamOutput.html',1,'freetensor']]],
   ['integralexceptbool_125',['IntegralExceptBool',['../conceptfreetensor_1_1IntegralExceptBool.html',1,'freetensor']]],

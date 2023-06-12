@@ -50,5 +50,5 @@ var searchData=
   ['funcret_47',['FuncRet',['../structfreetensor_1_1FuncRet.html#a22fe6d8a83dc5325d72996f698a8510c',1,'freetensor::FuncRet']]],
   ['fuse_48',['fuse',['../classfreetensor_1_1Schedule.html#a2a8d6427f95b978b56357b01406d739c',1,'freetensor::Schedule::fuse(const ID &amp;loop0, bool strict=false)'],['../classfreetensor_1_1Schedule.html#ad4628c70cf4624d39ceef40f517cf783',1,'freetensor::Schedule::fuse(const ID &amp;loop0, const ID &amp;loop1, bool strict=false)'],['../namespacefreetensor.html#ab11e11478ab8ed7d1ceebc5cfe98aa12',1,'freetensor::fuse()']]],
   ['fused_49',['fused',['../classfreetensor_1_1FuseFor.html#ab1d74fb1130998a1f03ce2d558235340',1,'freetensor::FuseFor']]],
-  ['fusefor_50',['FuseFor',['../classfreetensor_1_1FuseFor.html#a9576725d67e08a71704ec72af4e262cc',1,'freetensor::FuseFor']]]
+  ['fusefor_50',['FuseFor',['../classfreetensor_1_1FuseFor.html#a106dc5226ea61b88df7b54c3eecc7aef',1,'freetensor::FuseFor']]]
 ];
