@@ -148,6 +148,7 @@ def test_reduction_better_not_parallelized():
             with ft.For("j", 0, 1000, label="Lj") as j:
                 y[i] += x[i, j]
 
+    print(f"There are {ft.CPU().target().n_cores()} cores")
     ast = ft.pop_ast()
     print(ast)
     s = ft.Schedule(ast)
@@ -167,6 +168,7 @@ def test_reduction_better_parallelized():
             with ft.For("j", 0, 4, label="Lj") as j:
                 y[i] += x[i, j]
 
+    print(f"There are {ft.CPU().target().n_cores()} cores")
     ast = ft.pop_ast()
     print(ast)
     s = ft.Schedule(ast)
