@@ -139,6 +139,9 @@ def test_reduction_unable_to_parallelize():
     assert fnmatch_list(logs, ["parallelize(Li, openmp, *)"])
 
 
+@pytest.mark.skipif(
+    ft.CPU().target().n_cores() < 16 or ft.CPU().target().n_cores() > 1000,
+    reason="This test is designed for systems with typical number of cores")
 def test_reduction_better_not_parallelized():
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "cpu"),
                     ("y", (1000,), "int32", "output", "cpu")]) as (x, y):
@@ -159,6 +162,9 @@ def test_reduction_better_not_parallelized():
         logs, ["parallelize(Linit, openmp, *)", "parallelize(Li, openmp, *)"])
 
 
+@pytest.mark.skipif(
+    ft.CPU().target().n_cores() < 16 or ft.CPU().target().n_cores() > 1000,
+    reason="This test is designed for systems with typical number of cores")
 def test_reduction_better_parallelized():
     with ft.VarDef([("x", (4, 4), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
