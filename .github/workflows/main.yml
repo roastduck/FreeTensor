@@ -80,16 +80,16 @@ jobs:
           git submodule foreach --recursive git clean -ffdx
           git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
-          # Clang will find a GCC release to be "compatible" with it, and link with the libstdc++ from GCC. If the GCC is too old for some features, Clang will disable those features as well. So we need to load a new enough gcc as well, and make Clang aware of it with `--gcc-install-dir`
-          spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@11.3.0 llvm@16.0.0
+          # Clang will find a GCC release to be "compatible" with it, so we need to load a `llvm` built with high enough `gcc`
+          spack load python~debug@3.9.2%gcc@10.2.1 java@11 llvm@16%gcc@12
           source ci-script/prepare-python-environment.sh
           mkdir build
-          CC=clang CXX=clang++ cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF -DCMAKE_CXX_FLAGS="--gcc-install-dir=/home/spack/spack/opt/spack/linux-debian11-zen2/gcc-10.2.1/gcc-11.3.0-ajmxdsg6kru3y7eg73cmvl6i7gxgbp7w/lib/gcc/x86_64-pc-linux-gnu/11.3.0"
+          CC=clang CXX=clang++ cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF
           cd build && ninja
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@11.3.0 llvm@16.0.0
+          spack load python~debug@3.9.2%gcc@10.2.1 java@11 llvm@16%gcc@12
           source ci-script/prepare-python-environment.sh
           # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
           OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p cpu pytest --color=yes test
