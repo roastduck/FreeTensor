@@ -26,7 +26,7 @@ jobs:
           git submodule foreach --recursive git clean -ffdx
           git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.8.0 cudnn@8.7.0.84-11.8 intel-mkl@2020.4.304 java@11 gcc@11.3.0
+          spack load python~debug@3.9.12%gcc@10.2.1 cuda@11.8.0 cudnn@8.7.0.84-11.8 intel-mkl@2020.4.304 java@11 gcc@11.3.0
           source ci-script/prepare-python-environment.sh
           mkdir build
           # We may use a LD_PRELOAD-based proxy in a CI runner, but it crashes PyTorch's CMake script, thus reset LD_PRELOAD here
@@ -35,7 +35,7 @@ jobs:
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.8.0 cudnn@8.7.0.84-11.8 intel-mkl@2020.4.304 java@11 gcc@11.3.0
+          spack load python~debug@3.9.12%gcc@10.2.1 cuda@11.8.0 cudnn@8.7.0.84-11.8 intel-mkl@2020.4.304 java@11 gcc@11.3.0
           source ci-script/prepare-python-environment.sh
           # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
           OMP_PROC_BIND=true LD_LIBRARY_PATH=./install/lib:$LD_LIBRARY_PATH PYTHONPATH=install/lib:python:$PYTHONPATH srun --exclusive -N 1 -p gpu pytest --color=yes test
@@ -53,7 +53,7 @@ jobs:
           git submodule foreach --recursive git clean -ffdx
           git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@12.1.0
+          spack load python~debug@3.9.12%gcc@10.2.1 java@11 gcc@12.1.0
           source ci-script/prepare-python-environment.sh
           mkdir build
           # certain new GCC 12 warnings are not stable and triggered with false-positive right now, so suppress them here with -Wno-*
@@ -62,7 +62,7 @@ jobs:
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@12.1.0
+          spack load python~debug@3.9.12%gcc@10.2.1 java@11 gcc@12.1.0
           source ci-script/prepare-python-environment.sh
           # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
           OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p cpu pytest --color=yes test
@@ -81,7 +81,7 @@ jobs:
           git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
           # Clang will find a GCC release to be "compatible" with it, so we need to load a `llvm` built with high enough `gcc`
-          spack load python~debug@3.9.2%gcc@10.2.1 java@11 llvm@16%gcc@12
+          spack load python~debug@3.9.12%gcc@10.2.1 java@11 llvm@16%gcc@12
           source ci-script/prepare-python-environment.sh
           mkdir build
           CC=clang CXX=clang++ cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF
@@ -89,7 +89,7 @@ jobs:
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 java@11 llvm@16%gcc@12
+          spack load python~debug@3.9.12%gcc@10.2.1 java@11 llvm@16%gcc@12
           source ci-script/prepare-python-environment.sh
           # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
           OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p cpu pytest --color=yes test
