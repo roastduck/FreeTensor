@@ -48,7 +48,7 @@ Expr Parallelize::visit(const Var &op) {
 }
 
 Stmt parallelize(const Stmt &_ast, const ID &loop,
-                 const ParallelScope &parallel) {
+                 const ParallelScope &parallel, bool allowReduction) {
     Parallelize mutator(loop, parallel);
     auto ast = _ast;
     auto oldAst = ast;
@@ -65,7 +65,10 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
         auto found = [&](const Dependence &d) {
             throw InvalidSchedule(toString(d) + " cannot be resolved");
         };
-        FindDeps().direction({findDepsDir}).filterSubAST(loop)(oldAst, found);
+        FindDeps()
+            .direction({findDepsDir})
+            .filterSubAST(loop)
+            .ignoreReductionWAW(allowReduction)(oldAst, found);
     }
 
     {
@@ -94,15 +97,17 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
         FindDeps()
             .direction(
                 {{{NodeIDOrParallelScope(parallel), DepDirection::Different}}})
-            .filter(filter)(ast, found);
+            .filter(filter)
+            .ignoreReductionWAW(allowReduction)(ast, found);
     }
     return ast;
 }
 
-void Schedule::parallelize(const ID &loop, const ParallelScope &parallel) {
+void Schedule::parallelize(const ID &loop, const ParallelScope &parallel,
+                           bool allowReduction) {
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(Parallelize, freetensor::parallelize,
-                                           loop, parallel));
+                                           loop, parallel, allowReduction));
     try {
         applyLog(log);
         commitTransaction();

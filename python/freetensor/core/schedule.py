@@ -669,6 +669,14 @@ class Schedule(ffi.Schedule):
             The loop
         parallel : ParallelScope
             Parallel scope
+        allow_reduction : bool
+            If false, raise InvalidSchedule if this schedule would introduce a
+            parallel reduction
+
+        Raises
+        ------
+        InvalidSchedule
+            if the loop is not found or unable to be parallelized
         """
         super().parallelize(self._lookup(loop), ParallelScope(parallel))
 

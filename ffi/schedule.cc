@@ -120,7 +120,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("var_reorder", &Schedule::varReorder, "vardef"_a, "order"_a)
         .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a)
         .def("inline", &Schedule::inlining, "vardef"_a)
-        .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a)
+        .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a,
+             "allow_reduction"_a = true)
         .def("unroll", &Schedule::unroll, "loop"_a, "immedate"_a = false)
         .def("vectorize", &Schedule::vectorize, "loop"_a)
         .def("separate_tail", &Schedule::separateTail,

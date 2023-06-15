@@ -2,6 +2,7 @@
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <container_utils.h>
+#include <pass/const_fold.h>
 #include <pass/simplify.h>
 #include <schedule.h>
 
@@ -121,6 +122,14 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
 
             // Suppose we can merge n loops at maximum, we try merging and
             // parallelizing n loops first, then try n - 1, n - 2, and so on.
+            // Stop on the first success.
+            //
+            // We first try to parallel with best effort. But after we have
+            // reached enough degree of parallelism, we stop introducing
+            // parallel reductions, and only parallelize truly dependence-free
+            // loops. Since we have already reorder dependence-free loops out of
+            // reduction loops, we can safely stop on the first success without
+            // lossing the possiblily of parallelizing any dependence-free loop.
             bool done = false;
             for (int mergeLevel = maxMergeLevel; mergeLevel > 0; mergeLevel--) {
                 beginTransaction();
@@ -137,9 +146,32 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                         }
                     }
 
+                    bool allowReduction = true;
+                    if (auto _len =
+                            constFold(find(mergedId).as<ForNode>()->len_);
+                        _len->nodeType() == ASTNodeType::IntConst) {
+                        auto len = _len.as<IntConstNode>()->val_;
+                        switch (target->type()) {
+                        case TargetType::CPU:
+                            allowReduction =
+                                (len <= target.as<CPUTarget>()->nCores());
+                            break;
+#ifdef FT_WITH_CUDA
+                        case TargetType::GPU:
+                            allowReduction =
+                                (len <=
+                                 target.as<GPUTarget>()->multiProcessorCount() *
+                                     256); // Magic number consistent with below
+                            break;
+#endif // FT_WITH_CUDA
+                        default:
+                            ASSERT(false);
+                        }
+                    }
+
                     switch (target->type()) {
                     case TargetType::CPU:
-                        parallelize(mergedId, OpenMPScope{});
+                        parallelize(mergedId, OpenMPScope{}, allowReduction);
                         break;
 
 #ifdef FT_WITH_CUDA
@@ -231,6 +263,11 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                                 }
                             }
                         } else {
+                            if (!allowReduction) {
+                                throw InvalidSchedule(
+                                    "Reductions found but allowReduction is "
+                                    "false");
+                            }
                             std::tie(l1, l2) = split(mergedId, maxThreads);
                         }
                         if (parallelizeAmongBlocks && l1.isValid() &&
@@ -241,16 +278,18 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                                 // a constant, a division by this length will be
                                 // introduced, which is not supported by ISL and
                                 // may probably lead to false dependences
-                                parallelize(l1, blockIdxY);
-                                parallelize(l1b, blockIdxX);
+                                parallelize(l1, blockIdxY, allowReduction);
+                                parallelize(l1b, blockIdxX, allowReduction);
                             } else {
-                                parallelize(l1, blockIdxX);
+                                parallelize(l1, blockIdxX, allowReduction);
                             }
                         }
                         if (l2.isValid() && !findAll(l2).empty()) {
-                            parallelize(l2, (!parentIsWarp && !childIsWarp)
-                                                ? threadIdxX
-                                                : threadIdxY);
+                            parallelize(l2,
+                                        (!parentIsWarp && !childIsWarp)
+                                            ? threadIdxX
+                                            : threadIdxY,
+                                        allowReduction);
                         }
                         break;
                     }

@@ -43,6 +43,8 @@ class CPUTarget : public Target {
     TargetType type() const override { return TargetType::CPU; }
     std::string toString() const override { return "CPU"; }
     MemType mainMemType() const override { return MemType::CPU; }
+
+    int nCores() const;
 };
 
 #ifdef FT_WITH_CUDA
