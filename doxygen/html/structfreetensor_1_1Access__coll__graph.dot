@@ -1,0 +1,17 @@
+digraph "freetensor::Access"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node1 [label="freetensor::Access",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node2 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" op_" ];
+  Node2 [label="freetensor::Ref\< ASTNode \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+  Node3 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" stmt_" ];
+  Node3 [label="freetensor::Ref\< StmtNode \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+  Node4 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" def_" ];
+  Node4 [label="freetensor::Ref\< VarDefNode \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+  Node5 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" buffer_" ];
+  Node5 [label="freetensor::Ref\< freetensor\l::Buffer \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+}

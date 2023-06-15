@@ -1,8 +1,0 @@
-<map id="include/schedule/check_loop_order.h" name="include/schedule/check_loop_order.h">
-<area shape="rect" id="node1" title=" " alt="" coords="317,5,490,47"/>
-<area shape="rect" id="node2" href="$schedule_8cc.html" title=" " alt="" coords="5,102,127,129"/>
-<area shape="rect" id="node3" href="$check__loop__order_8cc.html" title=" " alt="" coords="151,95,296,136"/>
-<area shape="rect" id="node4" href="$merge_8cc.html" title=" " alt="" coords="320,102,487,129"/>
-<area shape="rect" id="node5" href="$permute_8cc.html" title=" " alt="" coords="511,102,691,129"/>
-<area shape="rect" id="node6" href="$reorder_8cc.html" title=" " alt="" coords="715,102,886,129"/>
-</map>

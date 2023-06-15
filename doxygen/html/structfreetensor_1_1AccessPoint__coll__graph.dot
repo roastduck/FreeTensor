@@ -1,0 +1,29 @@
+digraph "freetensor::AccessPoint"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node1 [label="freetensor::AccessPoint",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node2 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" op_" ];
+  Node2 [label="freetensor::Ref\< ASTNode \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+  Node3 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" stmt_" ];
+  Node3 [label="freetensor::Ref\< StmtNode \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+  Node4 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" def_" ];
+  Node4 [label="freetensor::Ref\< VarDefNode \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+  Node5 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" buffer_" ];
+  Node5 [label="freetensor::Ref\< freetensor\l::Buffer \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+  Node6 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" iter_" ];
+  Node6 [label="std::vector\< freetensor\l::IterAxis \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node7 -> Node6 [dir="back",color="darkorchid3",style="dashed",label=" elements" ];
+  Node7 [label="freetensor::IterAxis",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$structfreetensor_1_1IterAxis.html",tooltip=" "];
+  Node8 -> Node7 [dir="back",color="darkorchid3",style="dashed",label=" iter_" ];
+  Node8 [label="freetensor::Ref\< ExprNode \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+  Node9 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" access_" ];
+  Node9 [label="std::vector\< freetensor\l::Ref \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node10 -> Node9 [dir="back",color="darkorchid3",style="dashed",label=" elements" ];
+  Node10 [label="freetensor::Ref\< T \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+  Node11 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" conds_" ];
+  Node11 [label="std::vector\< std::pair\l\< freetensor::Ref, freetensor\l::ID \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+}

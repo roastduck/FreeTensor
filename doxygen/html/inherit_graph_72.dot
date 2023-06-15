@@ -1,0 +1,15 @@
+digraph "Graphical Class Hierarchy"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node0 [label="freetensor::RandCondInterface",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1RandCondInterface.html",tooltip=" "];
+  Node0 -> Node1 [dir="back",color="steelblue1",style="solid"];
+  Node1 [label="freetensor::RandCondCRTP\l\< RandCond\< T, std::hash\l\< T \>, std::equal_to\< T \> \> \>",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1RandCondCRTP.html",tooltip=" "];
+  Node0 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="freetensor::RandCondCRTP\l\< Derived \>",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1RandCondCRTP.html",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="steelblue1",style="solid"];
+  Node3 [label="freetensor::RandCond\l\< T, Hasher, Comparator \>",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1RandCond.html",tooltip=" "];
+}

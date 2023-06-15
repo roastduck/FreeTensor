@@ -1,9 +1,0 @@
-<map id="include/codegen/code_gen_c.h" name="include/codegen/code_gen_c.h">
-<area shape="rect" id="node1" title=" " alt="" coords="216,5,379,47"/>
-<area shape="rect" id="node2" href="$code__gen__cpu_8h.html" title=" " alt="" coords="216,95,379,136"/>
-<area shape="rect" id="node5" href="$code__gen__cuda_8h.html" title=" " alt="" coords="29,95,192,136"/>
-<area shape="rect" id="node7" href="$src_2codegen_2detail_2code__gen__c_8h.html" title=" " alt="" coords="403,95,544,136"/>
-<area shape="rect" id="node3" href="$code__gen_8cc.html" title=" " alt="" coords="5,191,189,218"/>
-<area shape="rect" id="node4" href="$code__gen__cpu_8cc.html" title=" " alt="" coords="405,184,571,225"/>
-<area shape="rect" id="node6" href="$code__gen__cuda_8cc.html" title=" " alt="" coords="214,184,381,225"/>
-</map>

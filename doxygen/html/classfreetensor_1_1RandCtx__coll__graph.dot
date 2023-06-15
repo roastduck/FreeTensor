@@ -1,0 +1,26 @@
+digraph "freetensor::RandCtx&lt; RNG &gt;"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node1 [label="freetensor::RandCtx\l\< RNG \>",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node2 -> Node1 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="freetensor::RandCtxImpl",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1RandCtxImpl.html",tooltip=" "];
+  Node3 -> Node2 [dir="back",color="darkorchid3",style="dashed",label=" randVars_" ];
+  Node3 [label="std::unordered_map\l\< freetensor::ProgramPosition\lHelper, std::unordered_map\l\< freetensor::Ref\< freetensor\l::RandCondInterface \>, freetensor\l::Ref\< freetensor::DiscreteRandVar\l \>, freetensor::PtrInvocable\< std\l::hash\< freetensor::RandCondInterface\l \> \>, freetensor::PtrInvocable\< std::\lequal_to\< freetensor::RandCondInterface \> \> \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node4 -> Node3 [dir="back",color="darkorchid3",style="dashed",label=" keys" ];
+  Node4 [label="freetensor::ProgramPosition\lHelper",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ProgramPositionHelper.html",tooltip=" "];
+  Node5 -> Node2 [dir="back",color="darkorchid3",style="dashed",label=" totCnt_" ];
+  Node5 [label="std::unordered_map\l\< freetensor::ProgramPosition\lHelper, freetensor::Ref\<\l std::vector\< int \> \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node4 -> Node5 [dir="back",color="darkorchid3",style="dashed",label=" keys" ];
+  Node6 -> Node5 [dir="back",color="darkorchid3",style="dashed",label=" elements" ];
+  Node6 [label="freetensor::Ref\< std\l::vector\< int \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+  Node7 -> Node2 [dir="back",color="darkorchid3",style="dashed",label=" traces_" ];
+  Node7 [label="std::multimap\< freetensor\l::Ref\< RandTrace \>, std\l::pair\< double, double \>\l, freetensor::PtrInvocable\l\< std::less\< RandTrace \> \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node8 -> Node7 [dir="back",color="darkorchid3",style="dashed",label=" keys" ];
+  Node8 [label="freetensor::Ref\< RandTrace \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+  Node9 -> Node2 [dir="back",color="darkorchid3",style="dashed",label=" lock_" ];
+  Node9 [label="std::mutex",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+}

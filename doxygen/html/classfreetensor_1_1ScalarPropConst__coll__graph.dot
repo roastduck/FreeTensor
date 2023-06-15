@@ -1,0 +1,38 @@
+digraph "freetensor::ScalarPropConst"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node1 [label="freetensor::ScalarPropConst",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node2 -> Node1 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="freetensor::SymbolTable\l\< ConstFold \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SymbolTable.html",tooltip=" "];
+  Node3 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node3 [label="freetensor::ConstFold",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1ConstFold.html",tooltip=" "];
+  Node4 -> Node3 [dir="back",color="steelblue1",style="solid"];
+  Node4 [label="freetensor::Mutator",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Mutator.html",tooltip=" "];
+  Node5 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node5 [label="freetensor::SymbolTableInterface",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SymbolTableInterface.html",tooltip=" "];
+  Node6 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" constants_" ];
+  Node6 [label="std::unordered_map\l\< std::string, std::\lmap\< freetensor::ScalarProp\lConst::ScalarIndices, freetensor\l::Ref \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node7 -> Node6 [dir="back",color="darkorchid3",style="dashed",label=" keys" ];
+  Node7 [label="std::string",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node8 -> Node7 [dir="back",color="steelblue1",style="solid"];
+  Node8 [label="std::basic_string\<\l Char \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node9 -> Node6 [dir="back",color="darkorchid3",style="dashed",label=" elements" ];
+  Node9 [label="std::map\< freetensor\l::ScalarPropConst::ScalarIndices,\l freetensor::Ref \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node10 -> Node9 [dir="back",color="darkorchid3",style="dashed",label=" keys" ];
+  Node10 [label="freetensor::ScalarPropConst\l::ScalarIndices",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ScalarPropConst_1_1ScalarIndices.html",tooltip="Indices to a scalar, includes a sequence of constant offsets."];
+  Node11 -> Node10 [dir="back",color="darkorchid3",style="dashed",label=" offset" ];
+  Node11 [label="std::vector\< freetensor\l::ScalarPropConst::ScalarIndex \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node12 -> Node11 [dir="back",color="darkorchid3",style="dashed",label=" elements" ];
+  Node12 [label="freetensor::ScalarPropConst\l::ScalarIndex",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ScalarPropConst_1_1ScalarIndex.html",tooltip=" "];
+  Node13 -> Node12 [dir="back",color="steelblue1",style="solid"];
+  Node13 [label="std::variant\< int64\l_t, std::string \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node14 -> Node9 [dir="back",color="darkorchid3",style="dashed",label=" elements" ];
+  Node14 [label="freetensor::Ref\< T \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
+  Node15 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" iter_dep_constants_" ];
+  Node15 [label="std::unordered_multimap\l\< std::string, std::pair\l\< std::string, freetensor\l::ScalarPropConst::ScalarIndices \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node7 -> Node15 [dir="back",color="darkorchid3",style="dashed",label=" keys" ];
+}

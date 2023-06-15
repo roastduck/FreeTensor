@@ -1,8 +1,0 @@
-<map id="freetensor::CodeGenCUDA" name="freetensor::CodeGenCUDA">
-<area shape="rect" id="node1" title=" " alt="" coords="84,348,279,375"/>
-<area shape="rect" id="node2" href="$classfreetensor_1_1CodeGenC.html" title=" " alt="" coords="83,259,279,300"/>
-<area shape="rect" id="node3" href="$classfreetensor_1_1CodeGen.html" title=" " alt="" coords="83,169,279,211"/>
-<area shape="rect" id="node4" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="91,80,271,121"/>
-<area shape="rect" id="node5" href="$classfreetensor_1_1Visitor.html" title=" " alt="" coords="5,5,144,32"/>
-<area shape="rect" id="node6" href="$classfreetensor_1_1SymbolTableInterface.html" title=" " alt="" coords="169,5,407,32"/>
-</map>

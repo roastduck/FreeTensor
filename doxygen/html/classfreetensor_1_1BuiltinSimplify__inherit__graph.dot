@@ -1,0 +1,22 @@
+digraph "freetensor::BuiltinSimplify"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  Node1 [label="freetensor::BuiltinSimplify",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node2 -> Node1 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="freetensor::SimplifyPass",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SimplifyPass.html",tooltip=" "];
+  Node3 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node3 [label="freetensor::CompTransient\lBounds\< SymbolTable\< ConstFold \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1CompTransientBounds.html",tooltip=" "];
+  Node4 -> Node3 [dir="back",color="steelblue1",style="solid"];
+  Node4 [label="freetensor::SymbolTable\l\< ConstFold \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SymbolTable.html",tooltip=" "];
+  Node5 -> Node4 [dir="back",color="steelblue1",style="solid"];
+  Node5 [label="freetensor::ConstFold",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1ConstFold.html",tooltip=" "];
+  Node6 -> Node5 [dir="back",color="steelblue1",style="solid"];
+  Node6 [label="freetensor::Mutator",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Mutator.html",tooltip=" "];
+  Node7 -> Node4 [dir="back",color="steelblue1",style="solid"];
+  Node7 [label="freetensor::SymbolTableInterface",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SymbolTableInterface.html",tooltip=" "];
+  Node8 -> Node3 [dir="back",color="steelblue1",style="solid"];
+  Node8 [label="freetensor::CompTransient\lBoundsInterface",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1CompTransientBoundsInterface.html",tooltip=" "];
+}

@@ -1,9 +1,0 @@
-<map id="freetensor::FloatConstNode" name="freetensor::FloatConstNode">
-<area shape="rect" id="node1" title=" " alt="" coords="5,468,207,495"/>
-<area shape="rect" id="node2" href="$classfreetensor_1_1ConstNode.html" title=" " alt="" coords="22,393,190,420"/>
-<area shape="rect" id="node3" href="$classfreetensor_1_1ExprNode.html" title=" " alt="" coords="26,319,186,345"/>
-<area shape="rect" id="node4" href="$classfreetensor_1_1ASTNode.html" title=" " alt="" coords="28,244,184,271"/>
-<area shape="rect" id="node5" href="$classfreetensor_1_1ASTPart.html" title=" " alt="" coords="33,169,179,196"/>
-<area shape="rect" id="node6" href="$classfreetensor_1_1EnableSelf.html" title=" " alt="" coords="23,80,189,121"/>
-<area shape="rect" id="node7" href="$classfreetensor_1_1EnableSelfBase.html" title=" " alt="" coords="7,5,205,32"/>
-</map>

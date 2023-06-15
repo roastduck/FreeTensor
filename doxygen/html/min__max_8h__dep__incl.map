@@ -1,8 +1,0 @@
-<map id="include/math/min_max.h" name="include/math/min_max.h">
-<area shape="rect" id="node1" title=" " alt="" coords="392,5,576,32"/>
-<area shape="rect" id="node2" href="$comp__access__bound_8cc.html" title=" " alt="" coords="5,80,192,121"/>
-<area shape="rect" id="node3" href="$structural__feature_8cc.html" title=" " alt="" coords="216,80,379,121"/>
-<area shape="rect" id="node4" href="$min__max_8cc.html" title=" " alt="" coords="403,87,565,114"/>
-<area shape="rect" id="node5" href="$make__parallel__reduction_8cc.html" title=" " alt="" coords="589,80,760,121"/>
-<area shape="rect" id="node6" href="$shrink__for_8cc.html" title=" " alt="" coords="785,87,946,114"/>
-</map>

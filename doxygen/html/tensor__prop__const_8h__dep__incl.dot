@@ -1,0 +1,20 @@
+digraph "include/pass/tensor_prop_const.h"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  Node1 [label="include/pass/tensor\l_prop_const.h",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="include/lower.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lower_8h.html",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="steelblue1",style="solid"];
+  Node3 [label="src/schedule.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$schedule_8cc.html",tooltip=" "];
+  Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
+  Node4 [label="src/autograd/grad.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$grad_8cc.html",tooltip=" "];
+  Node1 -> Node5 [dir="back",color="steelblue1",style="solid"];
+  Node5 [label="src/pass/tensor_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$tensor__prop__const_8cc.html",tooltip=" "];
+  Node1 -> Node6 [dir="back",color="steelblue1",style="solid"];
+  Node6 [label="src/schedule/fuse.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8cc.html",tooltip=" "];
+  Node1 -> Node7 [dir="back",color="steelblue1",style="solid"];
+  Node7 [label="src/schedule/merge.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$merge_8cc.html",tooltip=" "];
+}

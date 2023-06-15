@@ -1,0 +1,22 @@
+digraph "include/analyze/all_defs.h"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  Node1 [label="include/analyze/all\l_defs.h",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="src/autograd/all_no\l_reuse_defs.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$all__no__reuse__defs_8cc.html",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="steelblue1",style="solid"];
+  Node3 [label="src/autograd/find_tape\l_or_recomp_stmts.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$find__tape__or__recomp__stmts_8cc.html",tooltip=" "];
+  Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
+  Node4 [label="src/autograd/grad.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$grad_8cc.html",tooltip=" "];
+  Node1 -> Node5 [dir="back",color="steelblue1",style="solid"];
+  Node5 [label="src/pass/hoist_var\l_over_stmt_seq.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__var__over__stmt__seq_8cc.html",tooltip=" "];
+  Node1 -> Node6 [dir="back",color="steelblue1",style="solid"];
+  Node6 [label="src/pass/shrink_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__var_8cc.html",tooltip=" "];
+  Node1 -> Node7 [dir="back",color="steelblue1",style="solid"];
+  Node7 [label="src/schedule/auto_set\l_mem_type.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__set__mem__type_8cc.html",tooltip=" "];
+  Node1 -> Node8 [dir="back",color="steelblue1",style="solid"];
+  Node8 [label="src/schedule/auto_use\l_lib.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__use__lib_8cc.html",tooltip=" "];
+}

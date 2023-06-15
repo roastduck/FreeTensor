@@ -1,9 +1,0 @@
-<map id="include/pass/remove_dead_var.h" name="include/pass/remove_dead_var.h">
-<area shape="rect" id="node1" title=" " alt="" coords="334,5,491,47"/>
-<area shape="rect" id="node2" href="$lower_8h.html" title=" " alt="" coords="6,102,126,129"/>
-<area shape="rect" id="node4" href="$grad_8cc.html" title=" " alt="" coords="150,102,305,129"/>
-<area shape="rect" id="node5" href="$remove__dead__var_8cc.html" title=" " alt="" coords="329,95,497,136"/>
-<area shape="rect" id="node6" href="$shrink__var_8cc.html" title=" " alt="" coords="521,102,685,129"/>
-<area shape="rect" id="node7" href="$fuse_8cc.html" title=" " alt="" coords="709,102,863,129"/>
-<area shape="rect" id="node3" href="$schedule_8cc.html" title=" " alt="" coords="5,184,127,211"/>
-</map>

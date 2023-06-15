@@ -1,0 +1,12 @@
+digraph "include/schedule/inlining.h"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  Node1 [label="include/schedule/inlining.h",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="src/schedule.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$schedule_8cc.html",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="steelblue1",style="solid"];
+  Node3 [label="src/schedule/inlining.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$inlining_8cc.html",tooltip=" "];
+}

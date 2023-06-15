@@ -1,8 +1,0 @@
-<map id="freetensor::AssumeNode" name="freetensor::AssumeNode">
-<area shape="rect" id="node1" title=" " alt="" coords="13,393,196,420"/>
-<area shape="rect" id="node2" href="$classfreetensor_1_1StmtNode.html" title=" " alt="" coords="23,319,186,345"/>
-<area shape="rect" id="node3" href="$classfreetensor_1_1ASTNode.html" title=" " alt="" coords="27,244,183,271"/>
-<area shape="rect" id="node4" href="$classfreetensor_1_1ASTPart.html" title=" " alt="" coords="31,169,178,196"/>
-<area shape="rect" id="node5" href="$classfreetensor_1_1EnableSelf.html" title=" " alt="" coords="21,80,188,121"/>
-<area shape="rect" id="node6" href="$classfreetensor_1_1EnableSelfBase.html" title=" " alt="" coords="5,5,204,32"/>
-</map>

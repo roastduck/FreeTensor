@@ -1,0 +1,12 @@
+digraph "include/autograd/dedup_tape_names.h"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  Node1 [label="include/autograd/dedup\l_tape_names.h",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="src/autograd/dedup\l_tape_names.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$dedup__tape__names_8cc.html",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="steelblue1",style="solid"];
+  Node3 [label="src/autograd/grad.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$grad_8cc.html",tooltip=" "];
+}

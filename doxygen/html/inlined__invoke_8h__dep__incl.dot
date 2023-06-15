@@ -1,0 +1,10 @@
+digraph "include/frontend/inlined_invoke.h"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  Node1 [label="include/frontend/inlined\l_invoke.h",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="src/frontend/inlined\l_invoke.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$inlined__invoke_8cc.html",tooltip=" "];
+}
