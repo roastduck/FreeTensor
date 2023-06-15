@@ -1,7 +1,17 @@
+#include <omp.h>
+
 #include <cstring>
 #include <driver/target.h>
 
 namespace freetensor {
+
+int CPUTarget::nCores() const {
+    if (useNativeArch_) {
+        return omp_get_max_threads();
+    } else {
+        ASSERT(false); // Unimplemented
+    }
+}
 
 bool isSameTarget(const Ref<Target> &lhs, const Ref<Target> &rhs) {
     if (lhs.isValid() != rhs.isValid()) {

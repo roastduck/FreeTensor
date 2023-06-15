@@ -624,8 +624,13 @@ class Schedule {
      *
      * @param loop : ID of the loop
      * @param parallel : Parallel scope
+     * @param allowReduction : If false, throw InvalidSchedule if this schedule
+     * would introduce a parallel reduction
+     * @throw InvalidSchedule if the loop is not found or unable to be
+     * parallelized
      */
-    void parallelize(const ID &loop, const ParallelScope &parallel);
+    void parallelize(const ID &loop, const ParallelScope &parallel,
+                     bool allowReduction = true);
 
     /**
      * Unroll a loop
