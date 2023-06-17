@@ -93,7 +93,7 @@ void init_ffi_schedule(py::module_ &m) {
             },
             "loops_id"_a, "transform_func"_a)
         .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,
-             "suffix0"_a = ".0", "suffix1"_a = ".1")
+             "allow_enlarge"_a = true, "suffix0"_a = ".0", "suffix1"_a = ".1")
         .def("fuse",
              static_cast<ID (Schedule::*)(const ID &, const ID &, bool)>(
                  &Schedule::fuse),
@@ -140,6 +140,7 @@ void init_ffi_schedule(py::module_ &m) {
         .def("auto_use_lib", &Schedule::autoUseLib)
         .def("auto_reorder", &Schedule::autoReorder)
         .def("auto_swap", &Schedule::autoSwap)
+        .def("auto_pluto", &Schedule::autoPluto)
         .def("auto_fission_fuse",
              [](Schedule &s, const Ref<Target> &target) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda

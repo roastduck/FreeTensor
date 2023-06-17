@@ -46,10 +46,10 @@ void Schedule::autoUseLib(const Ref<Target> &target) {
                     beginTransaction();
                     try {
                         fission(loop->id(), FissionSide::Before, stmt->id(),
-                                "." + toString(i), "");
+                                true, "." + toString(i), "");
                         auto libStmtId =
                             fission(loop->id(), FissionSide::After, stmt->id(),
-                                    "." + toString(i) + ".lib", "")
+                                    true, "." + toString(i) + ".lib", "")
                                 .first.at(loop->id());
                         asMatMul(libStmtId);
                         commitTransaction();

@@ -256,6 +256,9 @@ class Schedule(ffi.Schedule):
         splitter : str (Selector string), ID, Stmt, or list of them
             Where to fission the loop. If multiple statement are selected, fission the
             look before or after all of them
+        allow_enlarge : bool
+            If True, try to avoid dependence by enlarging some `VarDef` nodes. If False,
+            raise `InvalidSchedule` in such cases.
 
         Raises
         ------
@@ -275,7 +278,8 @@ class Schedule(ffi.Schedule):
             splitter = splitter_list[0]
         else:
             splitter = splitter_list[-1]
-        map1, map2 = super().fission(self._lookup(loop), side, splitter)
+        map1, map2 = super().fission(self._lookup(loop), side, splitter,
+                                     allow_enlarge)
         return IDMap(old_ast, map1), IDMap(old_ast, map2)
 
     def fuse(self, loop0, loop1=None, strict=False):
@@ -887,6 +891,17 @@ class Schedule(ffi.Schedule):
             Target architecture
         """
         super().auto_swap(target)
+
+    def auto_pluto(self, target):
+        """
+        (Experimental) Automatically apply pluto-based schedules
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super().auto_pluto(target)
 
     def auto_fission_fuse(self, target):
         """

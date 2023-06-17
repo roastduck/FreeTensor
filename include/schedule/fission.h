@@ -93,7 +93,8 @@ class FissionFor : public Mutator {
 std::pair<Stmt,
           std::pair<std::unordered_map<ID, ID>, std::unordered_map<ID, ID>>>
 fission(const Stmt &ast, const ID &loop, FissionSide side, const ID &splitter,
-        const std::string &suffix0, const std::string &suffix1);
+        bool allowEnlarge, const std::string &suffix0,
+        const std::string &suffix1);
 
 } // namespace freetensor
 
