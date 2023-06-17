@@ -165,7 +165,7 @@ def test_reduction_better_not_parallelized():
 @pytest.mark.skipif(
     ft.CPU().target().n_cores() < 16 or ft.CPU().target().n_cores() > 1000,
     reason="This test is designed for systems with typical number of cores")
-def test_reduction_better_parallelized():
+def test_reduction_better_parallelized_1():
     with ft.VarDef([("x", (4, 4), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="Linit") as i:
@@ -185,6 +185,26 @@ def test_reduction_better_parallelized():
         'parallelize(Linit, openmp, *)', 'merge(Li, Lj)',
         'parallelize($merge{Li, Lj}, openmp, *)'
     ])
+
+
+@pytest.mark.skipif(
+    ft.CPU().target().n_cores() < 16 or ft.CPU().target().n_cores() > 1000,
+    reason="This test is designed for systems with typical number of cores")
+def test_reduction_better_parallelized_2():
+    with ft.VarDef([("x", (2000,), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[...] = 0
+        with ft.For("i", 0, 2000, label="Li") as i:
+            y[...] += x[i]
+
+    print(f"There are {ft.CPU().target().n_cores()} cores")
+    ast = ft.pop_ast()
+    print(ast)
+    s = ft.Schedule(ast)
+    s.auto_parallelize(ft.CPU())
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert fnmatch_list(logs, ['parallelize(Li, openmp, *)'])
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
