@@ -7,6 +7,7 @@
 #include <math/parse_pb_expr.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/normalize_loops.h>
 #include <pass/pb_simplify.h>
 #include <pass/shrink_for.h>
 #include <pass/sink_var.h>
@@ -964,19 +965,41 @@ class InjectEmptyLoop : public Mutator {
     }
 };
 
+bool isAffectedLoop(const For &loop, const ID &baseLoopId, int nestLevel) {
+    for (Stmt s = loop; s.isValid(); s = s->parentStmt()) {
+        if (s->nodeType() == ASTNodeType::For) {
+            if (s->id() == baseLoopId) {
+                return true;
+            }
+            if (nestLevel > 0 /* not limited */ || --nestLevel == 0) {
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
 } // namespace
 
 std::pair<Stmt, std::pair<ID, int>>
-plutoFuse(const Stmt &ast, const ID &loop0Id, const ID &loop1Id, int nestLevel0,
-          int nestLevel1, int fusableOverlapThreshold, bool doSimplify) {
-    return plutoFuseImpl(flattenStmtSeq(ast), loop0Id, loop1Id, nestLevel0,
-                         nestLevel1, fusableOverlapThreshold, doSimplify);
+plutoFuse(const Stmt &_ast, const ID &loop0Id, const ID &loop1Id,
+          int nestLevel0, int nestLevel1, int fusableOverlapThreshold,
+          bool doSimplify) {
+    auto ast = normalizeLoops(_ast, [&](auto &&l) {
+        return isAffectedLoop(l, loop0Id, nestLevel0) ||
+               isAffectedLoop(l, loop1Id, nestLevel1);
+    });
+    ast = flattenStmtSeq(ast);
+    return plutoFuseImpl(ast, loop0Id, loop1Id, nestLevel0, nestLevel1,
+                         fusableOverlapThreshold, doSimplify);
 }
 
 std::pair<Stmt, std::pair<ID, int>>
 plutoPermute(const Stmt &_ast, const ID &loop, int nestLevel, bool doSimplify) {
+    auto ast = normalizeLoops(
+        _ast, [&](auto &&l) { return isAffectedLoop(l, loop, nestLevel); });
     InjectEmptyLoop injecter(loop);
-    auto ast = injecter(_ast);
+    ast = injecter(_ast);
     return plutoFuseImpl(ast, injecter.emptyLoopId(), loop, nestLevel,
                          nestLevel, 1, doSimplify);
 }
