@@ -65,6 +65,27 @@ def test_pluto_fuse_3():
     print(kernel)
 
 
+def test_pluto_fuse_reversed():
+
+    @ft.transform
+    def kernel(x: ft.Var[(256, 256), "float32", "inout"]):
+        #! label: L0
+        for i in range(255, -1, -1):
+            for j in range(255):
+                x[i, j + 1] += x[i, j]
+        #! label: L1
+        for i in range(255, -1, -1):
+            for j in range(255):
+                x[255 - i, 254 - j] += x[255 - i, 255 - j]
+
+    print(kernel)
+    s = ft.Schedule(kernel)
+    _, parallelism = s.pluto_fuse("L0", "L1")
+    assert parallelism == 1
+    kernel = s.func()
+    print(kernel)
+
+
 def test_pluto_fuse_imbalanced_nest():
 
     @ft.transform
@@ -81,11 +102,10 @@ def test_pluto_fuse_imbalanced_nest():
     @ft.transform
     def kernel_expected(x: ft.Var[(256, 256), "float32", "inout"],
                         c: ft.Var[(256,), "float32", "inout"]):
-        for j in range(1, 256):
-            c[j] = j
+        for j in range(0, 255):
+            c[j + 1] = j + 1
             for i in range(256):
-                # the schedule produces "j + (-1)", just reproduce it
-                x[i, j] *= c[j + -1] + c[j]
+                x[i, j + 1] *= c[j] + c[j + 1]
 
     print(kernel)
     s = ft.Schedule(kernel)
@@ -112,10 +132,10 @@ def test_pluto_fuse_modulo():
     def kernel_expected(x: ft.Var[(256,), "float32", "inout"],
                         xc: ft.Var[(128,), "float32", "output"]):
         #! label: L0
-        for i in range(1, 256):
-            x[i] += x[i + -1]
-            if (1 + i) % 2 == 0:
-                xc[(i + -1) // 2] = x[i]
+        for i in range(0, 255):
+            x[i + 1] += x[i]
+            if i % 2 == 0:
+                xc[i // 2] = x[i + 1]
 
     print(kernel)
     s = ft.Schedule(kernel)
