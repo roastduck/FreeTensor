@@ -136,10 +136,17 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                 try {
                     ID mergedId;
                     auto loop = root;
+                    Expr remainingLen; // length left for outer levels if we
+                                       // don't parallelize this level
                     for (int i = 0; i < mergeLevel; i++) {
                         ID loopId = loop->id();
-                        mergedId = mergedId.isValid() ? merge(mergedId, loopId)
-                                                      : loopId;
+                        if (mergedId.isValid()) {
+                            remainingLen = find(mergedId).as<ForNode>()->len_;
+                            mergedId = merge(mergedId, loopId);
+                        } else {
+                            remainingLen = makeIntConst(1);
+                            mergedId = loopId;
+                        }
                         if (i + 1 < mergeLevel) {
                             loop = find("<For><-(!<For><-)*" + toString(loopId))
                                        .as<ForNode>();
@@ -147,8 +154,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                     }
 
                     bool allowReduction = true;
-                    if (auto _len =
-                            constFold(find(mergedId).as<ForNode>()->len_);
+                    if (auto _len = constFold(remainingLen);
                         _len->nodeType() == ASTNodeType::IntConst) {
                         auto len = _len.as<IntConstNode>()->val_;
                         switch (target->type()) {
