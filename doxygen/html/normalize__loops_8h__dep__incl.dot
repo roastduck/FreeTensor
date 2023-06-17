@@ -7,4 +7,6 @@ digraph "include/pass/normalize_loops.h"
   Node1 [label="include/pass/normalize\l_loops.h",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
   Node1 -> Node2 [dir="back",color="steelblue1",style="solid"];
   Node2 [label="src/pass/normalize\l_loops.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$normalize__loops_8cc.html",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="steelblue1",style="solid"];
+  Node3 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
 }

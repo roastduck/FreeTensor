@@ -93,6 +93,7 @@ digraph "include/analyze/symbol_table.h"
   Node96 [label="include/pass/merge\l_and_hoist_if.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$merge__and__hoist__if_8h.html",tooltip=" "];
   Node1 -> Node98 [dir="back",color="steelblue1",style="solid"];
   Node98 [label="include/pass/normalize\l_loops.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$normalize__loops_8h.html",tooltip=" "];
+  Node98 -> Node9 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node100 [dir="back",color="steelblue1",style="solid"];
   Node100 [label="include/pass/refine\l_sign_data_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$refine__sign__data__type_8h.html",tooltip=" "];
   Node1 -> Node102 [dir="back",color="steelblue1",style="solid"];
