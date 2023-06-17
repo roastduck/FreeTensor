@@ -160,12 +160,12 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                         switch (target->type()) {
                         case TargetType::CPU:
                             allowReduction =
-                                (len <= target.as<CPUTarget>()->nCores());
+                                (len < target.as<CPUTarget>()->nCores());
                             break;
 #ifdef FT_WITH_CUDA
                         case TargetType::GPU:
                             allowReduction =
-                                (len <=
+                                (len <
                                  target.as<GPUTarget>()->multiProcessorCount() *
                                      256); // Magic number consistent with below
                             break;
