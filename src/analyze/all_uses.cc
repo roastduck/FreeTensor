@@ -14,6 +14,8 @@ void AllUses::visit(const Load &op) {
 void AllUses::visit(const Store &op) {
     if (!noRecurseIdx_) {
         Visitor::visit(op);
+    } else {
+        (*this)(op->expr_);
     }
     if (type_ & CHECK_STORE) {
         uses_.insert(op->var_);
@@ -23,6 +25,8 @@ void AllUses::visit(const Store &op) {
 void AllUses::visit(const ReduceTo &op) {
     if (!noRecurseIdx_) {
         Visitor::visit(op);
+    } else {
+        (*this)(op->expr_);
     }
     if (type_ & CHECK_REDUCE) {
         uses_.insert(op->var_);
