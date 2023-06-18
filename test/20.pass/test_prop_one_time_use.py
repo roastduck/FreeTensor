@@ -81,6 +81,24 @@ def test_prop_across_loops():
     assert std.match(ast)
 
 
+def test_prop_out_of_a_loop():
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("t", (4,), "int32", "cache", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, t, y):
+        with ft.For("i", 0, 4) as i:
+            t[i] = x[i] * 2
+        y[...] = t[0] + t[1] + t[2] + t[3]
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[...] = x[0] * 2 + x[1] * 2 + x[2] * 2 + x[3] * 2
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_used_in_many_stmts_no_prop():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
