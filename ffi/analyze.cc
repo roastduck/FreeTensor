@@ -79,21 +79,21 @@ void init_ffi_analyze(py::module_ &m) {
           "func"_a, "selector"_a);
 
     m.def("all_reads",
-          static_cast<std::unordered_set<std::string> (*)(const AST &, bool)>(
-              &allReads),
-          "ast"_a, "no_recurse_idx"_a = false);
+          static_cast<std::unordered_set<std::string> (*)(const AST &, bool,
+                                                          bool)>(&allReads),
+          "ast"_a, "no_recurse_idx"_a = false, "no_recurse_sub_stmt"_a = false);
     m.def("all_writes",
-          static_cast<std::unordered_set<std::string> (*)(const AST &, bool)>(
-              &allWrites),
-          "ast"_a, "no_recurse_idx"_a = false);
+          static_cast<std::unordered_set<std::string> (*)(const AST &, bool,
+                                                          bool)>(&allWrites),
+          "ast"_a, "no_recurse_idx"_a = false, "no_recurse_sub_stmt"_a = false);
     m.def("all_iters",
-          static_cast<std::unordered_set<std::string> (*)(const AST &, bool)>(
-              &allIters),
-          "ast"_a, "no_recurse_idx"_a = false);
+          static_cast<std::unordered_set<std::string> (*)(const AST &, bool,
+                                                          bool)>(&allIters),
+          "ast"_a, "no_recurse_idx"_a = false, "no_recurse_sub_stmt"_a = false);
     m.def("all_names",
-          static_cast<std::unordered_set<std::string> (*)(const AST &, bool)>(
-              &allNames),
-          "ast"_a, "no_recurse_idx"_a = false);
+          static_cast<std::unordered_set<std::string> (*)(const AST &, bool,
+                                                          bool)>(&allNames),
+          "ast"_a, "no_recurse_idx"_a = false, "no_recurse_sub_stmt"_a = false);
 }
 
 } // namespace freetensor

@@ -1,5 +1,5 @@
 #include <analyze/all_defs.h>
-#include <analyze/all_stmts.h>
+#include <analyze/find_stmt.h>
 #include <schedule.h>
 
 namespace freetensor {
@@ -40,8 +40,7 @@ void Schedule::autoUseLib(const Ref<Target> &target) {
                         // do nothing
                     }
                 }
-                auto stmts =
-                    allStmts(loop, {ASTNodeType::Store, ASTNodeType::ReduceTo});
+                auto stmts = findAllStmt(loop, "<Store>|<ReduceTo>");
                 for (auto &&[i, stmt] : views::enumerate(stmts)) {
                     beginTransaction();
                     try {

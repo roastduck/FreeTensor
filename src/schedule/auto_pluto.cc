@@ -1,3 +1,5 @@
+#include <analyze/all_uses.h>
+#include <container_utils.h>
 #include <schedule.h>
 
 namespace freetensor {
@@ -42,16 +44,26 @@ void Schedule::autoPluto(const Ref<Target> &target) {
             }
 
             if (lastSplitter.isValid()) {
-                beginTransaction();
-                try {
-                    auto &&[frontMap, backMap] = fission(
-                        nest->id(), FissionSide::Before, splitter->id(), false);
-                    ID frontLoopId = frontMap.at(nest->id());
-                    ID backLoopId = backMap.at(nest->id());
-                    plutoFuse(frontLoopId, backLoopId);
-                    commitTransaction();
-                } catch (const InvalidSchedule &e) {
-                    abortTransaction();
+                auto &&filterBefore =
+                    parseSelector("<<:" + toString(splitter->id()));
+                auto &&filterAfter =
+                    parseSelector("!(<<:" + toString(splitter->id()) + ")");
+                if (hasIntersect(allWrites(filterBefore, nest->body_),
+                                 allUses(filterAfter, nest->body_)) ||
+                    hasIntersect(allUses(filterBefore, nest->body_),
+                                 allWrites(filterAfter, nest->body_))) {
+                    beginTransaction();
+                    try {
+                        auto &&[frontMap, backMap] =
+                            fission(nest->id(), FissionSide::Before,
+                                    splitter->id(), false);
+                        ID frontLoopId = frontMap.at(nest->id());
+                        ID backLoopId = backMap.at(nest->id());
+                        plutoFuse(frontLoopId, backLoopId);
+                        commitTransaction();
+                    } catch (const InvalidSchedule &e) {
+                        abortTransaction();
+                    }
                 }
             }
 
