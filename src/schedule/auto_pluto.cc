@@ -64,7 +64,7 @@ void Schedule::autoPluto(const Ref<Target> &target) {
                         ID backLoopId = backMap.at(nest->id());
                         plutoFuse(frontLoopId, backLoopId);
                         commitTransaction();
-                        tried.emplace(splitter->id());
+                        tried.emplace(backMap.at(splitter->id()));
                     } catch (const InvalidSchedule &e) {
                         abortTransaction();
                     }
