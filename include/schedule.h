@@ -764,6 +764,13 @@ class Schedule {
                       const Ref<RandTrace> &trace = nullptr);
 
     /**
+     * (Experimental) Automatically inline very-small VarDef nodes
+     *
+     * @param target : Target architecture
+     */
+    void autoInline(const Ref<Target> &target);
+
+    /**
      * (Experimental) Automatically use external libs using some heuristics
      *
      * @param target : Target architecture

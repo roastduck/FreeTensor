@@ -869,6 +869,17 @@ class Schedule(ffi.Schedule):
         """
         super().auto_schedule(target)
 
+    def auto_inline(self, target):
+        """
+        (Experimental) Automatically inline very-small VarDef nodes
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super().auto_inline(target)
+
     def auto_use_lib(self, target):
         """
         (Experimental) Automatically use external libs using some heuristics

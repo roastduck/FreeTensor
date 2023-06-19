@@ -92,6 +92,7 @@ void Schedule::setLogs(const ScheduleLog &logs) {
 
 void Schedule::autoSchedule(const Ref<Target> &target,
                             const Ref<RandTrace> &trace) {
+    autoInline(target);
     autoUseLib(target);
     autoSwap(target);
     autoPluto(target);
