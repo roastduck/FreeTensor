@@ -233,7 +233,7 @@ class Schedule(ffi.Schedule):
         """
         return super().permute([self._lookup(l) for l in loops], transform_func)
 
-    def fission(self, loop, side, splitter, allow_enlarge = True):
+    def fission(self, loop, side, splitter, allow_enlarge=True):
         """
         Fission a loop into two loops each containing part of the statements, one
         followed by another
