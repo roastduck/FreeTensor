@@ -164,6 +164,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a926046480d77aa1e798bed45c78a8898"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa50f7376da162b5975c8e00d41aeaab9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#aa50f7376da162b5975c8e00d41aeaab9">autoSchedule</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a> &gt; &amp;trace=nullptr)</td></tr>
 <tr class="separator:aa50f7376da162b5975c8e00d41aeaab9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a691b9fb3ba9c1f7fe39e2304610e0314"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a691b9fb3ba9c1f7fe39e2304610e0314">autoInline</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
+<tr class="separator:a691b9fb3ba9c1f7fe39e2304610e0314"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af7018c4446baf1db134a11d112462370"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#af7018c4446baf1db134a11d112462370">autoUseLib</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
 <tr class="separator:af7018c4446baf1db134a11d112462370"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2d944c1a96e055d5a5491cc086ba70e6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a2d944c1a96e055d5a5491cc086ba70e6">autoReorder</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
@@ -426,6 +428,31 @@ Public Member Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">target</td><td>: <a class="el" href="classfreetensor_1_1Target.html">Target</a> architecture </td></tr>
     <tr><td class="paramname">trace</td><td>: Random decision tarce </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a691b9fb3ba9c1f7fe39e2304610e0314" name="a691b9fb3ba9c1f7fe39e2304610e0314"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a691b9fb3ba9c1f7fe39e2304610e0314">&#9670;&#160;</a></span>autoInline()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::Schedule::autoInline </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>target</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>(Experimental) Automatically inline very-small VarDef nodes</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">target</td><td>: <a class="el" href="classfreetensor_1_1Target.html">Target</a> architecture </td></tr>
   </table>
   </dd>
 </dl>
@@ -2064,6 +2091,7 @@ template&lt;class T &gt; </div>
 <li>src/<a class="el" href="schedule_8cc.html">schedule.cc</a></li>
 <li>src/schedule/<a class="el" href="as__matmul_8cc.html">as_matmul.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__fission__fuse_8cc.html">auto_fission_fuse.cc</a></li>
+<li>src/schedule/<a class="el" href="auto__inline_8cc.html">auto_inline.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__parallelize_8cc.html">auto_parallelize.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__reorder_8cc.html">auto_reorder.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__set__mem__type_8cc.html">auto_set_mem_type.cc</a></li>

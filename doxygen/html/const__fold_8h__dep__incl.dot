@@ -96,7 +96,9 @@ digraph "include/pass/const_fold.h"
   Node42 [label="src/pass/const_fold.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$const__fold_8cc.html",tooltip=" "];
   Node1 -> Node25 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node8 [dir="back",color="steelblue1",style="solid"];
-  Node1 -> Node30 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node43 [dir="back",color="steelblue1",style="solid"];
-  Node43 [label="src/schedule/auto_set\l_mem_type.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__set__mem__type_8cc.html",tooltip=" "];
+  Node43 [label="src/schedule/auto_inline.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__inline_8cc.html",tooltip=" "];
+  Node1 -> Node30 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node44 [dir="back",color="steelblue1",style="solid"];
+  Node44 [label="src/schedule/auto_set\l_mem_type.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__set__mem__type_8cc.html",tooltip=" "];
 }

@@ -26,10 +26,11 @@ var searchData=
   ['ast_2eh_23',['ast.h',['../ast_8h.html',1,'']]],
   ['ast_5fparser_5fbase_2eh_24',['ast_parser_base.h',['../ast__parser__base_8h.html',1,'']]],
   ['auto_5ffission_5ffuse_2ecc_25',['auto_fission_fuse.cc',['../auto__fission__fuse_8cc.html',1,'']]],
-  ['auto_5fparallelize_2ecc_26',['auto_parallelize.cc',['../auto__parallelize_8cc.html',1,'']]],
-  ['auto_5freorder_2ecc_27',['auto_reorder.cc',['../auto__reorder_8cc.html',1,'']]],
-  ['auto_5fset_5fmem_5ftype_2ecc_28',['auto_set_mem_type.cc',['../auto__set__mem__type_8cc.html',1,'']]],
-  ['auto_5fswap_2ecc_29',['auto_swap.cc',['../auto__swap_8cc.html',1,'']]],
-  ['auto_5funroll_2ecc_30',['auto_unroll.cc',['../auto__unroll_8cc.html',1,'']]],
-  ['auto_5fuse_5flib_2ecc_31',['auto_use_lib.cc',['../auto__use__lib_8cc.html',1,'']]]
+  ['auto_5finline_2ecc_26',['auto_inline.cc',['../auto__inline_8cc.html',1,'']]],
+  ['auto_5fparallelize_2ecc_27',['auto_parallelize.cc',['../auto__parallelize_8cc.html',1,'']]],
+  ['auto_5freorder_2ecc_28',['auto_reorder.cc',['../auto__reorder_8cc.html',1,'']]],
+  ['auto_5fset_5fmem_5ftype_2ecc_29',['auto_set_mem_type.cc',['../auto__set__mem__type_8cc.html',1,'']]],
+  ['auto_5fswap_2ecc_30',['auto_swap.cc',['../auto__swap_8cc.html',1,'']]],
+  ['auto_5funroll_2ecc_31',['auto_unroll.cc',['../auto__unroll_8cc.html',1,'']]],
+  ['auto_5fuse_5flib_2ecc_32',['auto_use_lib.cc',['../auto__use__lib_8cc.html',1,'']]]
 ];
