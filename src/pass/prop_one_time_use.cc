@@ -128,6 +128,9 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
         })
         .ignoreReductionWAW(false)(op, [&](const Dependence &d) {
             PBSet writeIter = range(d.later2EarlierIter_);
+            writeIter = projectOutDims( // Trim paddings
+                writeIter, d.earlier_.iter_.size(),
+                writeIter.nDims() - d.earlier_.iter_.size());
             r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
             w2rMay[d.earlier().as<StmtNode>()].emplace_back(
                 d.later(), toString(writeIter));
