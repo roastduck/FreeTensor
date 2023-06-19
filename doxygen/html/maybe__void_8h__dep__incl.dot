@@ -24,12 +24,9 @@ digraph "include/maybe_void.h"
   Node35 [label="include/pass/use_builtin\l_div.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$use__builtin__div_8h.html",tooltip=" "];
   Node3 -> Node37 [dir="back",color="steelblue1",style="solid"];
   Node37 [label="src/analyze/comp_unique\l_bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8cc.html",tooltip=" "];
-  Node3 -> Node38 [dir="back",color="steelblue1",style="solid"];
-  Node38 [label="src/autograd/analyze\l_version.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$analyze__version_8cc.html",tooltip=" "];
   Node2 -> Node5 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node39 [dir="back",color="steelblue1",style="solid"];
-  Node39 [label="include/autograd/analyze\l_version.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$analyze__version_8h.html",tooltip=" "];
-  Node39 -> Node38 [dir="back",color="steelblue1",style="solid"];
+  Node39 [label="include/autograd/analyze\l_version.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$analyze__version_8h.html",tooltip=" "];
   Node39 -> Node40 [dir="back",color="steelblue1",style="solid"];
   Node40 [label="src/autograd/output\l_intermediates.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$output__intermediates_8cc.html",tooltip=" "];
   Node2 -> Node41 [dir="back",color="steelblue1",style="solid"];
@@ -48,7 +45,6 @@ digraph "include/maybe_void.h"
   Node50 [label="include/analyze/count\l_contig_access_loops.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$count__contig__access__loops_8h.html",tooltip=" "];
   Node44 -> Node52 [dir="back",color="steelblue1",style="solid"];
   Node52 [label="include/analyze/deps.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$deps_8h.html",tooltip=" "];
-  Node52 -> Node38 [dir="back",color="steelblue1",style="solid"];
   Node52 -> Node56 [dir="back",color="steelblue1",style="solid"];
   Node56 [label="src/autograd/find_tape\l_or_recomp_stmts.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$find__tape__or__recomp__stmts_8cc.html",tooltip=" "];
   Node52 -> Node12 [dir="back",color="steelblue1",style="solid"];
@@ -138,4 +134,6 @@ digraph "include/maybe_void.h"
   Node142 -> Node52 [dir="back",color="steelblue1",style="solid"];
   Node142 -> Node73 [dir="back",color="steelblue1",style="solid"];
   Node142 -> Node39 [dir="back",color="steelblue1",style="solid"];
+  Node142 -> Node143 [dir="back",color="steelblue1",style="solid"];
+  Node143 [label="include/schedule/inlining.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$inlining_8h.html",tooltip=" "];
 }

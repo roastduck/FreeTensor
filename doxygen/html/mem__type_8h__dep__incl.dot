@@ -151,7 +151,7 @@ digraph "include/type/mem_type.h"
   Node194 -> Node56 [dir="back",color="steelblue1",style="solid"];
   Node194 -> Node22 [dir="back",color="steelblue1",style="solid"];
   Node194 -> Node136 [dir="back",color="steelblue1",style="solid"];
-  Node2 -> Node214 [dir="back",color="steelblue1",style="solid"];
-  Node214 [label="src/buffer.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$buffer_8cc.html",tooltip=" "];
+  Node2 -> Node215 [dir="back",color="steelblue1",style="solid"];
+  Node215 [label="src/buffer.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$buffer_8cc.html",tooltip=" "];
   Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
 }

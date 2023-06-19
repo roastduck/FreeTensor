@@ -106,7 +106,7 @@ Protected Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;class BaseClass&gt;<br />
 class freetensor::TrackStmt&lt; BaseClass &gt;</div><p>A context for <a class="el" href="classfreetensor_1_1Visitor.html">Visitor</a> or <a class="el" href="classfreetensor_1_1Mutator.html">Mutator</a> that tracks the visiting statements stack</p>
-<p>Inherit this class to use. E.g., inherit <a class="el" href="classfreetensor_1_1TrackStmt.html">TrackStmt&lt;Visitor&gt;</a> or TrackStmt&lt;Mutator&gt;</p>
+<p>Inherit this class to use. E.g., inherit <a class="el" href="classfreetensor_1_1TrackStmt.html">TrackStmt&lt;Visitor&gt;</a> or <a class="el" href="classfreetensor_1_1TrackStmt.html">TrackStmt&lt;Mutator&gt;</a></p>
 <p>This class will automatically maintains the statement stack if the sub-class calls <a class="el" href="classfreetensor_1_1TrackStmt.html#a710cbdbc90c75836b5862c6ad638a003">TrackStmt::visitStmt</a>, which is the suggested usage</p>
 <p>However, in some cases, this is impossible, e.g., when the sub-class needs to recurse into different sub-trees manually. In these cases, the sub-class should explicitly call the pushStmt / popStmt methods </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>

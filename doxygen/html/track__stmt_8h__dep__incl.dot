@@ -111,4 +111,8 @@ digraph "include/analyze/track_stmt.h"
   Node43 -> Node7 [dir="back",color="steelblue1",style="solid"];
   Node43 -> Node44 [dir="back",color="steelblue1",style="solid"];
   Node44 [label="src/autograd/output\l_intermediates.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$output__intermediates_8cc.html",tooltip=" "];
+  Node1 -> Node45 [dir="back",color="steelblue1",style="solid"];
+  Node45 [label="include/schedule/inlining.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$inlining_8h.html",tooltip=" "];
+  Node45 -> Node35 [dir="back",color="steelblue1",style="solid"];
+  Node45 -> Node25 [dir="back",color="steelblue1",style="solid"];
 }

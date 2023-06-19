@@ -138,7 +138,7 @@ digraph "src/schedule.cc"
   Node143 -> Node54 [color="steelblue1",style="solid"];
   Node143 -> Node64 [color="steelblue1",style="solid"];
   Node1 -> Node144 [color="steelblue1",style="solid"];
-  Node144 [label="schedule/inlining.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$inlining_8h.html",tooltip=" "];
+  Node144 [label="schedule/inlining.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$inlining_8h.html",tooltip=" "];
   Node144 -> Node7 [color="steelblue1",style="solid"];
   Node144 -> Node54 [color="steelblue1",style="solid"];
   Node1 -> Node145 [color="steelblue1",style="solid"];
