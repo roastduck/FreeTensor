@@ -1,3 +1,5 @@
+#include <unordered_set>
+
 #include <analyze/all_uses.h>
 #include <container_utils.h>
 #include <schedule.h>
@@ -23,15 +25,16 @@ void Schedule::autoPluto(const Ref<Target> &target) {
     // approach is to try such schedules only if they do not result in larger
     // intermediate tensors that would require additional memory usage.
 
+    std::unordered_set<ID> tried;
     std::function<void(For nest)> tryLoop = [&, this](For nest) {
         Stmt lastSplitter;
         while (true) {
             std::string pattern; // Select the nest splitter in this loop body
             if (!lastSplitter.isValid()) {
-                pattern = "(<For>|<Store>|<ReduceTo>|<Eval>)<-(!<For><-)*" +
-                          toString(nest->id());
+                pattern =
+                    "(<Store>|<ReduceTo>|<Eval>)<<-" + toString(nest->id());
             } else {
-                pattern = "(<For>|<Store>|<ReduceTo>|<Eval>)&(<-(!<For><-)*" +
+                pattern = "(<Store>|<ReduceTo>|<Eval>)&(<<-" +
                           toString(nest->id()) + ")&(:>>" +
                           toString(lastSplitter->id()) + ")";
             }
@@ -43,7 +46,7 @@ void Schedule::autoPluto(const Ref<Target> &target) {
                 break;
             }
 
-            if (lastSplitter.isValid()) {
+            if (lastSplitter.isValid() && !tried.count(splitter->id())) {
                 auto &&filterBefore =
                     parseSelector("<<:" + toString(splitter->id()));
                 auto &&filterAfter =
@@ -61,6 +64,7 @@ void Schedule::autoPluto(const Ref<Target> &target) {
                         ID backLoopId = backMap.at(nest->id());
                         plutoFuse(frontLoopId, backLoopId);
                         commitTransaction();
+                        tried.emplace(splitter->id());
                     } catch (const InvalidSchedule &e) {
                         abortTransaction();
                     }

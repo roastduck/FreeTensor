@@ -33,3 +33,27 @@ def test_fission_then_pluto_fuse():
         'fission(Li, before, S1, *)',
         'pluto_fuse($fission.0{Li}, $fission.1{Li}, *)'
     ])
+
+
+def test_fission_then_pluto_fuse_2d():
+    with ft.VarDef([("x1", (1000, 1000), "int32", "input", "cpu"),
+                    ("x2", (1000, 1000), "int32", "input", "cpu"),
+                    ("y", (1000, 1000), "int32", "inout", "cpu")]) as (x1, x2,
+                                                                       y):
+        with ft.For("i", 0, 999, label="Li") as i:
+            with ft.For("j", 0, 999, label="Lj") as j:
+                ft.MarkLabel("S0")
+                y[i, j] += x1[i, j]
+                ft.MarkLabel("S1")
+                y[i + 1, j + 1] += x2[i, j]
+
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.auto_pluto(ft.CPU())
+    print(s.ast())
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert fnmatch_list(logs, [
+        'fission(Li, before, S1, *)',
+        'pluto_fuse($fission.0{Li}, $fission.1{Li}, *)'
+    ])
