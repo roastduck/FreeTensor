@@ -185,6 +185,7 @@ digraph "src/schedule/set_mem_type.cc"
   Node82 -> Node83 [color="steelblue1",style="solid"];
   Node83 [label="analyze/all_uses.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$all__uses_8h.html",tooltip=" "];
   Node83 -> Node18 [color="steelblue1",style="solid"];
+  Node83 -> Node5 [color="steelblue1",style="solid"];
   Node83 -> Node56 [color="steelblue1",style="solid"];
   Node82 -> Node73 [color="steelblue1",style="solid"];
   Node82 -> Node75 [color="steelblue1",style="solid"];

@@ -37,6 +37,7 @@ digraph "src/autograd/grad.cc"
   Node1 -> Node61 [color="steelblue1",style="solid"];
   Node61 [label="analyze/all_uses.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$all__uses_8h.html",tooltip=" "];
   Node61 -> Node3 [color="steelblue1",style="solid"];
+  Node61 -> Node4 [color="steelblue1",style="solid"];
   Node61 -> Node56 [color="steelblue1",style="solid"];
   Node1 -> Node62 [color="steelblue1",style="solid"];
   Node62 [label="analyze/deps.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$deps_8h.html",tooltip=" "];

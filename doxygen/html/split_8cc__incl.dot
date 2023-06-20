@@ -92,6 +92,7 @@ digraph "src/schedule/split.cc"
   Node61 -> Node62 [color="steelblue1",style="solid"];
   Node62 [label="analyze/all_uses.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$all__uses_8h.html",tooltip=" "];
   Node62 -> Node17 [color="steelblue1",style="solid"];
+  Node62 -> Node2 [color="steelblue1",style="solid"];
   Node62 -> Node55 [color="steelblue1",style="solid"];
   Node61 -> Node63 [color="steelblue1",style="solid"];
   Node63 [label="analyze/analyze_linear.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$analyze__linear_8h.html",tooltip=" "];

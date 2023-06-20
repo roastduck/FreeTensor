@@ -128,8 +128,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aa1a2b69d757e3277d357d76fc06c5c82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a575b7a57ec6518dc5c6cd53bc8d2b8cc"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a575b7a57ec6518dc5c6cd53bc8d2b8cc">permute</a> (const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;loopsId, const std::function&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;(std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;)&gt; &amp;transformFunc)</td></tr>
 <tr class="separator:a575b7a57ec6518dc5c6cd53bc8d2b8cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab6bf5b11f0cb4618d6eedbb58a99e0c3"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1Schedule.html#acf8585443368254e352dbe9e6408978a">IDMap</a>, <a class="el" href="classfreetensor_1_1Schedule.html#acf8585443368254e352dbe9e6408978a">IDMap</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#ab6bf5b11f0cb4618d6eedbb58a99e0c3">fission</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, <a class="el" href="namespacefreetensor.html#a2b0728b023b746c7fb73d4f24a6bb15e">FissionSide</a> side, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;splitter, const std::string &amp;suffix0=&quot;.0&quot;, const std::string &amp;suffix1=&quot;.1&quot;)</td></tr>
-<tr class="separator:ab6bf5b11f0cb4618d6eedbb58a99e0c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c3a08f444cfd3d3561c216ac86d33fd"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1Schedule.html#acf8585443368254e352dbe9e6408978a">IDMap</a>, <a class="el" href="classfreetensor_1_1Schedule.html#acf8585443368254e352dbe9e6408978a">IDMap</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a4c3a08f444cfd3d3561c216ac86d33fd">fission</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, <a class="el" href="namespacefreetensor.html#a2b0728b023b746c7fb73d4f24a6bb15e">FissionSide</a> side, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;splitter, bool allowEnlarge=true, const std::string &amp;suffix0=&quot;.0&quot;, const std::string &amp;suffix1=&quot;.1&quot;)</td></tr>
+<tr class="separator:a4c3a08f444cfd3d3561c216ac86d33fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade01fd2d0d808e2e6f76ee11af33c33d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#ade01fd2d0d808e2e6f76ee11af33c33d">swap</a> (const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;order)</td></tr>
 <tr class="separator:ade01fd2d0d808e2e6f76ee11af33c33d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb236565d0d590d7f4ee357d7b06911d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#adb236565d0d590d7f4ee357d7b06911d">blend</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
@@ -172,6 +172,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a2d944c1a96e055d5a5491cc086ba70e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49494394c6a058a0e0b67d4eedc76587"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a49494394c6a058a0e0b67d4eedc76587">autoSwap</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
 <tr class="separator:a49494394c6a058a0e0b67d4eedc76587"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a14dede285eb0d018cc2502589f565d4b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a14dede285eb0d018cc2502589f565d4b">autoPluto</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
+<tr class="separator:a14dede285eb0d018cc2502589f565d4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a7bd97f2a8bfb6b853d959cc7b0636f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a3a7bd97f2a8bfb6b853d959cc7b0636f">autoFissionFuse</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a> &gt; &amp;trace=nullptr)</td></tr>
 <tr class="separator:a3a7bd97f2a8bfb6b853d959cc7b0636f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36968be3b8f0d74c315c3565c5572ba2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a36968be3b8f0d74c315c3565c5572ba2">autoParallelize</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
@@ -475,6 +477,31 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>(Experimental) Automatically parallelize some loops using some heuristics</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">target</td><td>: <a class="el" href="classfreetensor_1_1Target.html">Target</a> architecture </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a14dede285eb0d018cc2502589f565d4b" name="a14dede285eb0d018cc2502589f565d4b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a14dede285eb0d018cc2502589f565d4b">&#9670;&#160;</a></span>autoPluto()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::Schedule::autoPluto </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>target</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>(Experimental) Automatically apply pluto-based schedules</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">target</td><td>: <a class="el" href="classfreetensor_1_1Target.html">Target</a> architecture </td></tr>
@@ -949,8 +976,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="ab6bf5b11f0cb4618d6eedbb58a99e0c3" name="ab6bf5b11f0cb4618d6eedbb58a99e0c3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab6bf5b11f0cb4618d6eedbb58a99e0c3">&#9670;&#160;</a></span>fission()</h2>
+<a id="a4c3a08f444cfd3d3561c216ac86d33fd" name="a4c3a08f444cfd3d3561c216ac86d33fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4c3a08f444cfd3d3561c216ac86d33fd">&#9670;&#160;</a></span>fission()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -972,6 +999,12 @@ template&lt;class T &gt; </div>
           <td></td>
           <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
           <td class="paramname"><em>splitter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>allowEnlarge</em> = <code>true</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1000,6 +1033,7 @@ template&lt;class T &gt; </div>
     <tr><td class="paramname">loop</td><td>: <a class="el" href="classfreetensor_1_1ID.html">ID</a> of the loop to be fissioned </td></tr>
     <tr><td class="paramname">side</td><td>: If <code>After</code>, <code>splitter</code> is the last statement of the first loop. If <code>Before</code>, <code>splitter</code> is the first statement of the second loop </td></tr>
     <tr><td class="paramname">splitter</td><td>: Where to fission the loop </td></tr>
+    <tr><td class="paramname">allowEnlarge</td><td>: If true, try to avoid dependence by enlarging some <code>VarDef</code> nodes. If false, throw <code><a class="el" href="classfreetensor_1_1InvalidSchedule.html">InvalidSchedule</a></code> in such cases. </td></tr>
     <tr><td class="paramname">suffix0</td><td>: The suffix in the <code>op</code> of metadata of result part 0. If empty, the fissioned part 0 preserves original <a class="el" href="classfreetensor_1_1ID.html">ID</a> and metadata. Cannot be empty together with <code>suffix1</code>. </td></tr>
     <tr><td class="paramname">suffix1</td><td>: The suffix in the <code>op</code> of metadata of result part 1. If empty, the fissioned part 1 preserves original <a class="el" href="classfreetensor_1_1ID.html">ID</a> and metadata. Cannot be empty together with <code>suffix0</code>. </td></tr>
   </table>
@@ -2093,6 +2127,7 @@ template&lt;class T &gt; </div>
 <li>src/schedule/<a class="el" href="auto__fission__fuse_8cc.html">auto_fission_fuse.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__inline_8cc.html">auto_inline.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__parallelize_8cc.html">auto_parallelize.cc</a></li>
+<li>src/schedule/<a class="el" href="auto__pluto_8cc.html">auto_pluto.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__reorder_8cc.html">auto_reorder.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__set__mem__type_8cc.html">auto_set_mem_type.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__swap_8cc.html">auto_swap.cc</a></li>

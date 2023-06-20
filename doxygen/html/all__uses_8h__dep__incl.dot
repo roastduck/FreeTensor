@@ -82,10 +82,8 @@ digraph "include/analyze/all_uses.h"
   Node55 [label="src/math/bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$bounds_8cc.html",tooltip=" "];
   Node54 -> Node17 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node56 [dir="back",color="steelblue1",style="solid"];
-  Node56 [label="include/schedule/set\l_mem_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$set__mem__type_8h.html",tooltip=" "];
+  Node56 [label="include/schedule/set\l_mem_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$set__mem__type_8h.html",tooltip=" "];
   Node56 -> Node5 [dir="back",color="steelblue1",style="solid"];
-  Node56 -> Node57 [dir="back",color="steelblue1",style="solid"];
-  Node57 [label="src/schedule/set_mem\l_type.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$set__mem__type_8cc.html",tooltip=" "];
   Node1 -> Node58 [dir="back",color="steelblue1",style="solid"];
   Node58 [label="src/analyze/all_uses.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$all__uses_8cc.html",tooltip=" "];
   Node1 -> Node59 [dir="back",color="steelblue1",style="solid"];
@@ -126,12 +124,14 @@ digraph "include/analyze/all_uses.h"
   Node72 [label="src/pass/tensor_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$tensor__prop__const_8cc.html",tooltip=" "];
   Node1 -> Node37 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node73 [dir="back",color="steelblue1",style="solid"];
-  Node73 [label="src/schedule/check\l_loop_order.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$check__loop__order_8cc.html",tooltip=" "];
-  Node1 -> Node25 [dir="back",color="steelblue1",style="solid"];
+  Node73 [label="src/schedule/auto_pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__pluto_8cc.html",tooltip=" "];
   Node1 -> Node74 [dir="back",color="steelblue1",style="solid"];
-  Node74 [label="src/schedule/hoist\l_selected_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8cc.html",tooltip=" "];
+  Node74 [label="src/schedule/check\l_loop_order.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$check__loop__order_8cc.html",tooltip=" "];
+  Node1 -> Node25 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node75 [dir="back",color="steelblue1",style="solid"];
+  Node75 [label="src/schedule/hoist\l_selected_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8cc.html",tooltip=" "];
   Node1 -> Node7 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node17 [dir="back",color="steelblue1",style="solid"];
-  Node1 -> Node75 [dir="back",color="steelblue1",style="solid"];
-  Node75 [label="src/schedule/var_reorder.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__reorder_8cc.html",tooltip=" "];
+  Node1 -> Node76 [dir="back",color="steelblue1",style="solid"];
+  Node76 [label="src/schedule/var_reorder.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__reorder_8cc.html",tooltip=" "];
 }
