@@ -178,7 +178,8 @@ Stmt FissionFor::visit(const Assert &op) {
 std::pair<Stmt,
           std::pair<std::unordered_map<ID, ID>, std::unordered_map<ID, ID>>>
 fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
-        const std::string &suffix0, const std::string &suffix1) {
+        bool allowEnlarge, const std::string &suffix0,
+        const std::string &suffix1) {
     if (suffix0.empty() && suffix1.empty())
         throw InvalidSchedule(
             "Cannot preserve ID and Metadata for both first and second parts");
@@ -247,17 +248,21 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
                 // the way like `firstprivate` and `lastprivate` in OpenMP)
                 throw InvalidSchedule(toString(d) + " cannot be resolved");
             }
-            if (!isRealWrite(id, d.def()) &&
-                d.earlier()->nodeType() == ASTNodeType::Load) {
-                return;
-            }
-            if (!isRealWrite(id, d.def()) &&
-                d.later()->nodeType() == ASTNodeType::Load) {
-                return;
-            }
-            if (std::find(toAdd[d.defId()].begin(), toAdd[d.defId()].end(),
-                          id) == toAdd[d.defId()].end()) {
-                toAdd[d.defId()].emplace_back(id);
+            if (allowEnlarge) {
+                if (!isRealWrite(id, d.def()) &&
+                    d.earlier()->nodeType() == ASTNodeType::Load) {
+                    return;
+                }
+                if (!isRealWrite(id, d.def()) &&
+                    d.later()->nodeType() == ASTNodeType::Load) {
+                    return;
+                }
+                if (std::find(toAdd[d.defId()].begin(), toAdd[d.defId()].end(),
+                              id) == toAdd[d.defId()].end()) {
+                    toAdd[d.defId()].emplace_back(id);
+                }
+            } else {
+                throw InvalidSchedule(toString(d) + " cannot be resolved");
             }
         };
         auto leftOfSplitterStmt = findStmt(ast, leftOfSplitter);
@@ -300,10 +305,12 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
-                  const std::string &suffix0, const std::string &suffix1) {
+                  bool allowEnlarge, const std::string &suffix0,
+                  const std::string &suffix1) {
     beginTransaction();
-    auto log = appendLog(MAKE_SCHEDULE_LOG(Fission, freetensor::fission, loop,
-                                           side, splitter, suffix0, suffix1));
+    auto log =
+        appendLog(MAKE_SCHEDULE_LOG(Fission, freetensor::fission, loop, side,
+                                    splitter, allowEnlarge, suffix0, suffix1));
     try {
         auto ret = applyLog(log);
         commitTransaction();

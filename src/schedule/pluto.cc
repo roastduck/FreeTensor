@@ -418,6 +418,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
 
         FindDeps()
             .noProjectOutPrivateAxis(true)
+            .ignoreReductionWAW(false)
             .filterEarlier([&](const AccessPoint &p) {
                 if (p.def_->name_ == FAKE_ACCESS_VAR) {
                     if (handleFakeAccess) {

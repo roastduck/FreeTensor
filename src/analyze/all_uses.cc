@@ -2,6 +2,15 @@
 
 namespace freetensor {
 
+void AllUses::visitStmt(const Stmt &s) {
+    if (!inFirstStmt_ || !noRecurseSubStmt_) {
+        bool oldInFirstStmt = inFirstStmt_;
+        inFirstStmt_ = true;
+        Visitor::visitStmt(s);
+        inFirstStmt_ = oldInFirstStmt;
+    }
+}
+
 void AllUses::visit(const Load &op) {
     if (!noRecurseIdx_) {
         Visitor::visit(op);
@@ -40,31 +49,13 @@ void AllUses::visit(const Var &op) {
     }
 }
 
-std::unordered_set<std::string>
-allUses(const AST &op, AllUses::AllUsesType type, bool noRecurseIdx) {
-    AllUses visitor(type, noRecurseIdx);
+std::unordered_set<std::string> allUses(const AST &op,
+                                        AllUses::AllUsesType type,
+                                        bool noRecurseIdx,
+                                        bool noRecurseSubStmt) {
+    AllUses visitor(type, noRecurseIdx, noRecurseSubStmt);
     visitor(op);
     return visitor.uses();
-}
-
-std::unordered_set<std::string> allReads(const AST &op, bool noRecurseIdx) {
-    return allUses(op, AllUses::CHECK_LOAD, noRecurseIdx);
-}
-
-std::unordered_set<std::string> allWrites(const AST &op, bool noRecurseIdx) {
-    return allUses(op, AllUses::CHECK_STORE | AllUses::CHECK_REDUCE,
-                   noRecurseIdx);
-}
-
-std::unordered_set<std::string> allIters(const AST &op, bool noRecurseIdx) {
-    return allUses(op, AllUses::CHECK_VAR, noRecurseIdx);
-}
-
-std::unordered_set<std::string> allNames(const AST &op, bool noRecurseIdx) {
-    return allUses(op,
-                   AllUses::CHECK_LOAD | AllUses::CHECK_STORE |
-                       AllUses::CHECK_REDUCE | AllUses::CHECK_VAR,
-                   noRecurseIdx);
 }
 
 } // namespace freetensor

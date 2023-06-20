@@ -91,7 +91,7 @@ void Schedule::autoFissionFuse(const Ref<Target> &target,
                     try {
                         auto newId =
                             fission(thisId, FissionSide::Before, splitter->id(),
-                                    "." + toString(partCnt), "")
+                                    true, "." + toString(partCnt), "")
                                 .first.at(thisId);
                         fissionFrom[newId] = thisId;
                         partCnt++;

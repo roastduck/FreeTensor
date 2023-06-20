@@ -331,6 +331,8 @@ class Schedule {
      * @param side : If `After`, `splitter` is the last statement of the first
      * loop. If `Before`, `splitter` is the first statement of the second loop
      * @param splitter : Where to fission the loop
+     * @param allowEnlarge : If true, try to avoid dependence by enlarging some
+     * `VarDef` nodes. If false, throw `InvalidSchedule` in such cases.
      * @param suffix0 : The suffix in the `op` of metadata of result part 0. If
      * empty, the fissioned part 0 preserves original ID and metadata. Cannot be
      * empty together with `suffix1`.
@@ -344,6 +346,7 @@ class Schedule {
      */
     std::pair<IDMap, IDMap> fission(const ID &loop, FissionSide side,
                                     const ID &splitter,
+                                    bool allowEnlarge = true,
                                     const std::string &suffix0 = ".0",
                                     const std::string &suffix1 = ".1");
 
@@ -788,6 +791,13 @@ class Schedule {
      * @param target : Target architecture
      */
     void autoSwap(const Ref<Target> &target);
+
+    /**
+     * (Experimental) Automatically apply pluto-based schedules
+     *
+     * @param target : Target architecture
+     */
+    void autoPluto(const Ref<Target> &target);
 
     /**
      * (Experimental) Automatically fuse consecutive loops or vice versa using
