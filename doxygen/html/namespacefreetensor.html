@@ -1984,8 +1984,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:a02e429b75c6200ee7060d8c0e8403758"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9b570067aa5abf04a28cd49e59b1079a"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9b570067aa5abf04a28cd49e59b1079a">permute</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;loopsId, const std::function&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;(std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;)&gt; &amp;transformFunc)</td></tr>
 <tr class="separator:a9b570067aa5abf04a28cd49e59b1079a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab22463e2fa64c4657d88187bf7a51919"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab22463e2fa64c4657d88187bf7a51919">plutoFuse</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop0, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1, int nestLevel0, int nestLevel1, int fusableOverlapThreshold, bool doSimplify=true)</td></tr>
-<tr class="separator:ab22463e2fa64c4657d88187bf7a51919"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fb14c32ef48e672335332228d23065a"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4fb14c32ef48e672335332228d23065a">plutoFuse</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop0, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1, int nestLevel0, int nestLevel1, int fusableOverlapThreshold, int fusableNonOverlapTolerance, bool doSimplify=true)</td></tr>
+<tr class="separator:a4fb14c32ef48e672335332228d23065a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac7a91123e2aed63075666834d4204366"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac7a91123e2aed63075666834d4204366">plutoPermute</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, int nestLevel, bool doSimplify=true)</td></tr>
 <tr class="separator:ac7a91123e2aed63075666834d4204366"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac95a1c68f35ad6583776c9c563c227d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac95a1c68f35ad6583776c9c563c227d0">reorder</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;order)</td></tr>
@@ -16692,8 +16692,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="ab22463e2fa64c4657d88187bf7a51919" name="ab22463e2fa64c4657d88187bf7a51919"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab22463e2fa64c4657d88187bf7a51919">&#9670;&#160;</a></span>plutoFuse()</h2>
+<a id="a4fb14c32ef48e672335332228d23065a" name="a4fb14c32ef48e672335332228d23065a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fb14c32ef48e672335332228d23065a">&#9670;&#160;</a></span>plutoFuse()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -16733,6 +16733,12 @@ template&lt;typename T &gt; </div>
           <td></td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>fusableOverlapThreshold</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>fusableNonOverlapTolerance</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>

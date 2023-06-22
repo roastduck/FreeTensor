@@ -40,7 +40,7 @@ var searchData=
   ['permute_37',['permute',['../namespacefreetensor.html#a9b570067aa5abf04a28cd49e59b1079a',1,'freetensor::permute()'],['../classfreetensor_1_1Schedule.html#a575b7a57ec6518dc5c6cd53bc8d2b8cc',1,'freetensor::Schedule::permute()']]],
   ['permute_38',['Permute',['../classfreetensor_1_1Permute.html#a2ab944743a5783643b6b9cebb5b38a22',1,'freetensor::Permute']]],
   ['permutedloopsid_39',['permutedLoopsId',['../classfreetensor_1_1Permute.html#a81e961f4f856e3225058fe467da8e2a5',1,'freetensor::Permute']]],
-  ['plutofuse_40',['plutoFuse',['../namespacefreetensor.html#ab22463e2fa64c4657d88187bf7a51919',1,'freetensor::plutoFuse()'],['../classfreetensor_1_1Schedule.html#adc5d03b4fd164ef6a88a2e4774d68934',1,'freetensor::Schedule::plutoFuse()']]],
+  ['plutofuse_40',['plutoFuse',['../namespacefreetensor.html#a4fb14c32ef48e672335332228d23065a',1,'freetensor::plutoFuse()'],['../classfreetensor_1_1Schedule.html#a2aed02b0ed0aca588cf42af07e348438',1,'freetensor::Schedule::plutoFuse()']]],
   ['plutopermute_41',['plutoPermute',['../namespacefreetensor.html#ac7a91123e2aed63075666834d4204366',1,'freetensor::plutoPermute()'],['../classfreetensor_1_1Schedule.html#a926046480d77aa1e798bed45c78a8898',1,'freetensor::Schedule::plutoPermute()']]],
   ['pop_42',['pop',['../classfreetensor_1_1SharedLinkedList.html#ab1379ad59a249f25d573b5b87768999f',1,'freetensor::SharedLinkedList::pop()'],['../classfreetensor_1_1Z3Simplify.html#a29cd97dd96ac7f14ff4eff3dd0a76e1e',1,'freetensor::Z3Simplify::pop()']]],
   ['pop_5fback_43',['pop_back',['../classfreetensor_1_1SubTreeList.html#a19a824d93547d911ab5a25ca3077e695',1,'freetensor::SubTreeList']]],

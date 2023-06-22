@@ -158,8 +158,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a5acb3fd33acc0a8940fc36fe97a9a9da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a37ef938b9a97cc35d911120950648c55"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a37ef938b9a97cc35d911120950648c55">asMatMul</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
 <tr class="separator:a37ef938b9a97cc35d911120950648c55"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adc5d03b4fd164ef6a88a2e4774d68934"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#adc5d03b4fd164ef6a88a2e4774d68934">plutoFuse</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop0, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1, int nestLevel0=0, int nestLevel1=0, int fusableOverlapThreshold=1, bool doSimplify=true)</td></tr>
-<tr class="separator:adc5d03b4fd164ef6a88a2e4774d68934"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2aed02b0ed0aca588cf42af07e348438"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a2aed02b0ed0aca588cf42af07e348438">plutoFuse</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop0, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1, int nestLevel0=0, int nestLevel1=0, int fusableOverlapThreshold=1, int fusableNonOverlapTolerance=4, bool doSimplify=true)</td></tr>
+<tr class="separator:a2aed02b0ed0aca588cf42af07e348438"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a926046480d77aa1e798bed45c78a8898"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a926046480d77aa1e798bed45c78a8898">plutoPermute</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, int nestLevel=0, bool doSimplify=true)</td></tr>
 <tr class="separator:a926046480d77aa1e798bed45c78a8898"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa50f7376da162b5975c8e00d41aeaab9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#aa50f7376da162b5975c8e00d41aeaab9">autoSchedule</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a> &gt; &amp;trace=nullptr)</td></tr>
@@ -1469,8 +1469,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="adc5d03b4fd164ef6a88a2e4774d68934" name="adc5d03b4fd164ef6a88a2e4774d68934"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adc5d03b4fd164ef6a88a2e4774d68934">&#9670;&#160;</a></span>plutoFuse()</h2>
+<a id="a2aed02b0ed0aca588cf42af07e348438" name="a2aed02b0ed0aca588cf42af07e348438"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2aed02b0ed0aca588cf42af07e348438">&#9670;&#160;</a></span>plutoFuse()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1508,6 +1508,12 @@ template&lt;class T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>fusableNonOverlapTolerance</em> = <code>4</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">bool&#160;</td>
           <td class="paramname"><em>doSimplify</em> = <code>true</code>&#160;</td>
         </tr>
@@ -1526,6 +1532,7 @@ template&lt;class T &gt; </div>
     <tr><td class="paramname">nestLevel0</td><td>: The number of nesting levels of loop 0 to be considered, defaults to maximum possible </td></tr>
     <tr><td class="paramname">nestLevel1</td><td>: The number of nesting levels of loop 1 to be considered, defaults to maximum possible </td></tr>
     <tr><td class="paramname">fusableOverlapThreshold</td><td>: The minimum overlapping size of two loops to be regarded fusable. Defaults to 1 </td></tr>
+    <tr><td class="paramname">fusableNonOverlapTolerance</td><td>: The maximum non-overlapping size at either side of two loops to be regarded fusable. Defaults to 4 </td></tr>
     <tr><td class="paramname">doSimplify</td><td>: Whether the result is simplified by the way, defaults to true </td></tr>
   </table>
   </dd>
