@@ -338,7 +338,8 @@ struct PlutoFuse : public Mutator {
 
 std::pair<Stmt, std::pair<ID, int>>
 plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
-              int _nestLevel1, int fusableOverlapThreshold, bool doSimplify) {
+              int _nestLevel1, int fusableOverlapThreshold,
+              int fusableNonOverlapTolerance, bool doSimplify) {
     bool hoisted = false;
     // try with vardef hoisted only if they are not at the same level
     if (findStmt(ast, loop0Id)->parent() != findStmt(ast, loop1Id)->parent()) {
@@ -759,6 +760,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     std::vector<std::vector<int>> c1ParamValue, c1IterValue;
     // start computing permuted dimensions
     int fusedLevel, parallelCount = 0;
+    int hugeNonOverlapFusedLevel = -1, hugeNonOverlapCount = 0;
     bool isParallel = true;
     for (fusedLevel = 0; fusedLevel < std::min(nestLevel0, nestLevel1);
          ++fusedLevel) {
@@ -845,23 +847,68 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             for (int i = 0; i < nestLevel; ++i)
                 result += optimized[coeffBase + nParams + 1 + i] * x[i];
             builder.addOutput(result);
-            return apply(loopSet, builder.build(ctx));
+            auto projectedLoopRange = apply(loopSet, builder.build(ctx));
+            return PBSet(isl_set_remove_divs(projectedLoopRange.move()));
         };
         auto loop0Range = loopSetToRange(loop0Set, nParams + 1, nestLevel0);
         auto loop1Range = loopSetToRange(
             loop1Set, (nParams + 1) * 2 + nestLevel0, nestLevel1);
-        auto overlap = fixDim(universeSet(PBSpace(loop1Range)), 0,
-                              fusableOverlapThreshold);
-        // if the two loops has no overlap on the result axis, they are not
-        // actually fused so we bail out
-        if (intersect(
-                // range of loop 0
-                loop0Range,
-                // ... and range of loop 1 added with the overlap threshold
-                sum(loop1Range, overlap))
-                // ... don't overlap
-                .empty())
-            break;
+
+        // overlap check 1: loop 0 & 1 should actually overlap
+        {
+            auto overlap = fixDim(universeSet(PBSpace(loop1Range)), 0,
+                                  fusableOverlapThreshold);
+            // if the two loops has no overlap on the result axis, they are not
+            // actually fused so we bail out
+            if (intersect(
+                    // range of loop 0
+                    loop0Range,
+                    // ... and range of loop 1 added with the overlap threshold
+                    sum(loop1Range, overlap))
+                    // ... don't overlap
+                    .empty())
+                break;
+        }
+
+        // overlap check 2: There should be no more than 1 dimensions with
+        //                  significant non-overlaped interval. Negative
+        //                  tolerance is disabling this check.
+        if (fusableNonOverlapTolerance >= 0) {
+            bool hugeNonOverlap = false;
+            auto check = [&](const PBSet &aRange, const PBSet &bRange) {
+                if (isl_set_is_bounded(aRange.get())) {
+                    auto aMax = PBVal(isl_set_dim_max_val(aRange.copy(), 0));
+                    ASSERT(aMax.denSi() == 1);
+                    auto offset =
+                        fixDim(universeSet(PBSpace(aRange)), 0,
+                               aMax.numSi() + fusableNonOverlapTolerance);
+                    // $b \cap a + (max(a) + tol) != \emptySet$
+                    // indicates b ends long after a
+                    if (!intersect(bRange, sum(aRange, offset)).empty())
+                        hugeNonOverlap = true;
+                    // $b \cap a - (max(a) + tol) != \emptySet$
+                    // indicates b begins long before a
+                    if (!intersect(bRange, sum(aRange, neg(offset))).empty())
+                        hugeNonOverlap = true;
+                }
+            };
+            check(loop0Range, loop1Range);
+            check(loop1Range, loop0Range);
+            if (hugeNonOverlap) {
+                hugeNonOverlapCount++;
+                // two dimensions violates, the loop fusion is bloating up,
+                // rollback to before first violation and quit
+                if (hugeNonOverlapCount == 2) {
+                    fusedLevel = hugeNonOverlapFusedLevel;
+                    c0ParamValue.resize(fusedLevel);
+                    c0IterValue.resize(fusedLevel);
+                    c1ParamValue.resize(fusedLevel);
+                    c1IterValue.resize(fusedLevel);
+                    break;
+                }
+                hugeNonOverlapFusedLevel = fusedLevel;
+            }
+        }
 
         // save coefficients' values
         c0ParamValue.push_back({
@@ -984,14 +1031,15 @@ bool isAffectedLoop(const For &loop, const ID &baseLoopId, int nestLevel) {
 std::pair<Stmt, std::pair<ID, int>>
 plutoFuse(const Stmt &_ast, const ID &loop0Id, const ID &loop1Id,
           int nestLevel0, int nestLevel1, int fusableOverlapThreshold,
-          bool doSimplify) {
+          int fusableNonOverlapTolerance, bool doSimplify) {
     auto ast = normalizeLoops(_ast, [&](auto &&l) {
         return isAffectedLoop(l, loop0Id, nestLevel0) ||
                isAffectedLoop(l, loop1Id, nestLevel1);
     });
     ast = flattenStmtSeq(ast);
     return plutoFuseImpl(ast, loop0Id, loop1Id, nestLevel0, nestLevel1,
-                         fusableOverlapThreshold, doSimplify);
+                         fusableOverlapThreshold, fusableNonOverlapTolerance,
+                         doSimplify);
 }
 
 std::pair<Stmt, std::pair<ID, int>>
@@ -1001,17 +1049,18 @@ plutoPermute(const Stmt &_ast, const ID &loop, int nestLevel, bool doSimplify) {
     InjectEmptyLoop injecter(loop);
     ast = injecter(_ast);
     return plutoFuseImpl(ast, injecter.emptyLoopId(), loop, nestLevel,
-                         nestLevel, 1, doSimplify);
+                         nestLevel, 1, -1, doSimplify);
 }
 
 std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1,
                                        int nestLevel0, int nestLevel1,
                                        int fusableOverlapThreshold,
+                                       int fusableNonOverlapTolerance,
                                        bool doSimplify) {
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(
         PlutoFuse, freetensor::plutoFuse, loop0, loop1, nestLevel0, nestLevel1,
-        fusableOverlapThreshold, doSimplify));
+        fusableOverlapThreshold, fusableNonOverlapTolerance, doSimplify));
     try {
         auto ret = applyLog(log);
         commitTransaction();
