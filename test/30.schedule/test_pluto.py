@@ -250,7 +250,7 @@ def test_pluto_permute_outer_loop():
 
 
 def test_pluto_fuse_bloat():
-    
+
     @ft.transform
     def kernel(Ls, Lsg, xc, xcg, Yg):
         Ls: ft.Var[(5, 2, 2), "float64"]
