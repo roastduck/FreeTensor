@@ -247,3 +247,30 @@ def test_pluto_permute_outer_loop():
     print(kernel)
     assert parallelism == 1
     assert kernel.body.match(kernel_expected.body)
+
+
+def test_pluto_fuse_bloat():
+    
+    @ft.transform
+    def kernel(Ls, Lsg, xc, xcg, Yg):
+        Ls: ft.Var[(5, 2, 2), "float64"]
+        Lsg: ft.Var[(5, 2, 2), "float64", "inout"]
+        xc: ft.Var[(1000, 5, 2), "float64"]
+        xcg: ft.Var[(1000, 5, 2), "float64", "inout"]
+        Yg: ft.Var[(1000, 5, 2), "float64"]
+        #! label: L1
+        for i in range(999, -1, -1):
+            for j in range(4, -1, -1):
+                for k in range(1, -1, -1):
+                    for p in range(1, -1, -1):
+                        Lsg[j, k, p] += Yg[i, j, k] * xc[i, j, p]
+        #! label: L2
+        for i in range(999, -1, -1):
+            for j in range(4, -1, -1):
+                for k in range(1, -1, -1):
+                    for p in range(1, -1, -1):
+                        xcg[i, j, p] += Yg[i, j, k] * Ls[j, k, p]
+
+    with pytest.raises(ft.InvalidSchedule):
+        s = ft.Schedule(kernel)
+        s.pluto_fuse("L1", "L2")

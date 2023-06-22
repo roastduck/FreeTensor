@@ -729,6 +729,8 @@ class Schedule {
      * considered, defaults to maximum possible
      * @param fusableOverlapThreshold : The minimum overlapping size of two
      * loops to be regarded fusable. Defaults to 1
+     * @param fusableNonOverlapTolerance : The maximum non-overlapping size at
+     * either side of two loops to be regarded fusable. Defaults to 4
      * @param doSimplify : Whether the result is simplified by the way, defaults
      * to true
      * @return std::pair<ID, int> : The ID of fused loop and level of
@@ -737,6 +739,7 @@ class Schedule {
     std::pair<ID, int> plutoFuse(const ID &loop0, const ID &loop1,
                                  int nestLevel0 = 0, int nestLevel1 = 0,
                                  int fusableOverlapThreshold = 1,
+                                 int fusableNonOverlapTolerance = 4,
                                  bool doSimplify = true);
 
     /**
