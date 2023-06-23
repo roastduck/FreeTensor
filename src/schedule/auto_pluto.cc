@@ -1,6 +1,7 @@
 #include <unordered_set>
 
 #include <analyze/all_uses.h>
+#include <analyze/deps.h>
 #include <container_utils.h>
 #include <schedule.h>
 
@@ -53,26 +54,51 @@ void Schedule::autoPluto(const Ref<Target> &target) {
                         (i + 1 < n
                              ? "&(<<:" + toString(splitterIds[i + 1]) + ")"
                              : ""));
-                    if (hasIntersect(allWrites(filterBefore, nest->body_),
-                                     allUses(filterAfter, nest->body_)) ||
-                        hasIntersect(allUses(filterBefore, nest->body_),
-                                     allWrites(filterAfter, nest->body_))) {
-                        try {
-                            auto &&[frontMap, backMap] = fission(
-                                nest->id(), FissionSide::Before, splitterId,
-                                false, "." + std::to_string(parts.size()), "");
-                            ID frontLoopId = frontMap.at(nest->id());
-                            ID backLoopId = backMap.at(nest->id());
-                            if (!parts.empty()) {
-                                parts.pop_back();
-                            }
-                            parts.emplace_back(frontLoopId);
-                            parts.emplace_back(backLoopId);
-                            tried.emplace(backMap.at(splitterId));
-                            nest = find(backLoopId).as<ForNode>();
-                        } catch (const InvalidSchedule &e) {
-                            // Do nothing
+
+                    // Coarse filter: same variable accessed in both parts
+                    if (!hasIntersect(allWrites(filterBefore, nest->body_),
+                                      allUses(filterAfter, nest->body_)) &&
+                        !hasIntersect(allUses(filterBefore, nest->body_),
+                                      allWrites(filterAfter, nest->body_))) {
+                        continue;
+                    }
+
+                    // Fine filter: dependence across the splitter
+                    auto stmtsBefore = findAll(filterBefore);
+                    auto stmtsAfter = findAll(filterAfter);
+                    if (!FindDeps()
+                             // Don't restrict `.direction` to `nest->id()`,
+                             // beaucse inner loops matters
+                             .ignoreReductionWAW(false)
+                             .filter([&](auto &&later, auto &&earlier) {
+                                 return (std::ranges::count(stmtsBefore,
+                                                            later.stmt_) &&
+                                         std::ranges::count(stmtsAfter,
+                                                            earlier.stmt_)) ||
+                                        (std::ranges::count(stmtsAfter,
+                                                            later.stmt_) &&
+                                         std::ranges::count(stmtsBefore,
+                                                            earlier.stmt_));
+                             })
+                             .exists(ast())) {
+                        continue;
+                    }
+
+                    try {
+                        auto &&[frontMap, backMap] = fission(
+                            nest->id(), FissionSide::Before, splitterId, false,
+                            "." + std::to_string(parts.size()), "");
+                        ID frontLoopId = frontMap.at(nest->id());
+                        ID backLoopId = backMap.at(nest->id());
+                        if (!parts.empty()) {
+                            parts.pop_back();
                         }
+                        parts.emplace_back(frontLoopId);
+                        parts.emplace_back(backLoopId);
+                        tried.emplace(backMap.at(splitterId));
+                        nest = find(backLoopId).as<ForNode>();
+                    } catch (const InvalidSchedule &e) {
+                        // Do nothing
                     }
                 }
             }
