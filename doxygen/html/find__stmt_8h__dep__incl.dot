@@ -105,6 +105,7 @@ digraph "include/analyze/find_stmt.h"
   Node83 -> Node78 [dir="back",color="steelblue1",style="solid"];
   Node83 -> Node45 [dir="back",color="steelblue1",style="solid"];
   Node45 [label="src/schedule/auto_parallelize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__parallelize_8cc.html",tooltip=" "];
+  Node83 -> Node79 [dir="back",color="steelblue1",style="solid"];
   Node83 -> Node90 [dir="back",color="steelblue1",style="solid"];
   Node90 [label="src/schedule/fission.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fission_8cc.html",tooltip=" "];
   Node83 -> Node33 [dir="back",color="steelblue1",style="solid"];
