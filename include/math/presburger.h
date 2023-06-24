@@ -713,6 +713,13 @@ template <PBSetRef T> PBSet coefficients(T &&set, int64_t c = 0) {
     return apply(PBSet(isl_set_from_point(cPoint)), PBMap(coefficientsMap));
 }
 
+inline bool isSubset(const PBSet &small, const PBSet &big) {
+    return isl_set_is_subset(small.get(), big.get());
+}
+inline bool isSubset(const PBMap &small, const PBMap &big) {
+    return isl_map_is_subset(small.get(), big.get());
+}
+
 inline bool operator==(const PBSet &lhs, const PBSet &rhs) {
     DEBUG_PROFILE_VERBOSE("equal", "nBasic=" + std::to_string(lhs.nBasic()) +
                                        "," + std::to_string(rhs.nBasic()));

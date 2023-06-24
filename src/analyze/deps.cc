@@ -725,15 +725,22 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
     // `nearest`'s coordinates to get the effective parameter constraints.
     auto effectiveExtConstraint =
         params(intersect(extConstraint, projectOutAllParams(nearest)));
+    // Range/domain of `nearest` is always a subset of the iterating space of
+    // `earlierMap`/`laterMap`, and we want to check whether it is a strict
+    // subset. Since internally eiter `isl_set_is_strict_subset` or
+    // `isl_set_is_equal` is implemented by two `isl_set_is_subset`s (in both
+    // direction), we only need to check one of them:
+    // `isStrictSubset(...nearest, ...earlierMap) => !isSubset(...earlierMap,
+    // ...nearest)`.
     if ((mode_ == FindDepsMode::KillEarlier ||
          mode_ == FindDepsMode::KillBoth) &&
-        intersectParams(domain(earlierMap), effectiveExtConstraint) !=
-            range(nearest)) {
+        !isSubset(intersectParams(domain(earlierMap), effectiveExtConstraint),
+                  range(nearest))) {
         return;
     }
     if ((mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth) &&
-        intersectParams(domain(laterMap), effectiveExtConstraint) !=
-            domain(nearest)) {
+        !isSubset(intersectParams(domain(laterMap), effectiveExtConstraint),
+                  domain(nearest))) {
         return;
     }
 
