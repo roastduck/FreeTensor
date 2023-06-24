@@ -1813,6 +1813,10 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:a9d8b33f83c30b0387756f69023e998df"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
 <tr class="memitem:a9d8b33f83c30b0387756f69023e998df"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9d8b33f83c30b0387756f69023e998df">coefficients</a> (T &amp;&amp;set, int64_t c=0)</td></tr>
 <tr class="separator:a9d8b33f83c30b0387756f69023e998df"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae81551d8bd4e626ba9cd41658ba3348d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae81551d8bd4e626ba9cd41658ba3348d">isSubset</a> (const <a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> &amp;small, const <a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> &amp;big)</td></tr>
+<tr class="separator:ae81551d8bd4e626ba9cd41658ba3348d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58901d6281cd13d3e4d26cd5117a001e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a58901d6281cd13d3e4d26cd5117a001e">isSubset</a> (const <a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> &amp;small, const <a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> &amp;big)</td></tr>
+<tr class="separator:a58901d6281cd13d3e4d26cd5117a001e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb7116b28332c5e953fc318f2e77e48c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afb7116b28332c5e953fc318f2e77e48c">operator==</a> (const <a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> &amp;<a class="el" href="namespacefreetensor.html#a192b70d1972bcd73d5ff58f30fad21a2">lhs</a>, const <a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> &amp;<a class="el" href="namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005">rhs</a>)</td></tr>
 <tr class="separator:afb7116b28332c5e953fc318f2e77e48c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29a0ea44021bb36284780e36a5e4951a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a29a0ea44021bb36284780e36a5e4951a">operator==</a> (const <a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> &amp;<a class="el" href="namespacefreetensor.html#a192b70d1972bcd73d5ff58f30fad21a2">lhs</a>, const <a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> &amp;<a class="el" href="namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005">rhs</a>)</td></tr>
@@ -9528,6 +9532,78 @@ template&lt;PBMapRef T, PBSetRef U&gt; </div>
           <td></td><td></td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a58901d6281cd13d3e4d26cd5117a001e" name="a58901d6281cd13d3e4d26cd5117a001e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58901d6281cd13d3e4d26cd5117a001e">&#9670;&#160;</a></span>isSubset() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isSubset </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> &amp;&#160;</td>
+          <td class="paramname"><em>small</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> &amp;&#160;</td>
+          <td class="paramname"><em>big</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae81551d8bd4e626ba9cd41658ba3348d" name="ae81551d8bd4e626ba9cd41658ba3348d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae81551d8bd4e626ba9cd41658ba3348d">&#9670;&#160;</a></span>isSubset() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::isSubset </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> &amp;&#160;</td>
+          <td class="paramname"><em>small</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> &amp;&#160;</td>
+          <td class="paramname"><em>big</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>
