@@ -711,30 +711,65 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         return;
     }
 
-    // For dependence X->Y or Y->X, we can check for kill-X, which means any
-    // time (any coordinate in iteration space and any external variable of X)
-    // there is X, there is the dependence.
-    //
-    // Here "any time" does not include impossible external varaible
-    // combinations ruled out by `extConstraint`, so we need to intersect with
-    // it before checking.
-    //
-    // Besides, (TODO: prove it) `extConstraint` includes multiple cases, which
-    // can be written as `{[...] -> [...] : coordinates 1 -> params constraints
-    // 1, or coordinates 2 -> params constraints 2, or ...}`. We intersect with
-    // `nearest`'s coordinates to get the effective parameter constraints.
-    auto effectiveExtConstraint =
-        params(intersect(extConstraint, projectOutAllParams(nearest)));
-    if ((mode_ == FindDepsMode::KillEarlier ||
-         mode_ == FindDepsMode::KillBoth) &&
-        intersectParams(domain(earlierMap), effectiveExtConstraint) !=
-            range(nearest)) {
-        return;
-    }
-    if ((mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth) &&
-        intersectParams(domain(laterMap), effectiveExtConstraint) !=
-            domain(nearest)) {
-        return;
+    if (mode_ != FindDepsMode::Dep) {
+        // For dependence X->Y or Y->X, we can check for kill-X, which means any
+        // time (any coordinate in iteration space and any external variable of
+        // X) there is X, there is the dependence.
+        //
+        // Here "any time" does not include impossible external varaible
+        // combinations ruled out by `extConstraint`, so we need to intersect
+        // with it before checking.
+        //
+        // Besides, (TODO: prove it) `extConstraint` includes multiple cases,
+        // which can be written as `{[...] -> [...] : coordinates 1 -> params
+        // constraints 1, or coordinates 2 -> params constraints 2, or ...}`. We
+        // intersect with `nearest`'s coordinates to get the effective parameter
+        // constraints.
+        auto effectiveExtConstraint =
+            params(intersect(extConstraint, projectOutAllParams(nearest)));
+        PBSet realEarlierIter, realLaterIter;
+        if (mode_ == FindDepsMode::KillEarlier ||
+            mode_ == FindDepsMode::KillBoth) {
+            realEarlierIter =
+                intersectParams(domain(earlierMap), effectiveExtConstraint);
+        }
+        if (mode_ == FindDepsMode::KillLater ||
+            mode_ == FindDepsMode::KillBoth) {
+            realLaterIter =
+                intersectParams(domain(laterMap), effectiveExtConstraint);
+        }
+
+        // Range/domain of `nearest` is always a subset of the iterating space
+        // of `earlierMap`/`laterMap`, and we want to check whether it is a
+        // strict subset. Since internally eiter `isl_set_is_strict_subset` or
+        // `isl_set_is_equal` is implemented by two `isl_set_is_subset`s (in
+        // both direction), we only need to check one of them:
+        // `isStrictSubset(...nearest, ...earlierMap) =>
+        // !isSubset(...earlierMap, ...nearest)`.
+
+        // Coarse check (depAll is a superset of nearest)
+        if ((mode_ == FindDepsMode::KillEarlier ||
+             mode_ == FindDepsMode::KillBoth) &&
+            !isSubset(realEarlierIter, range(depAll))) {
+            return;
+        }
+        if ((mode_ == FindDepsMode::KillLater ||
+             mode_ == FindDepsMode::KillBoth) &&
+            !isSubset(realLaterIter, domain(depAll))) {
+            return;
+        }
+
+        // Fine check
+        if ((mode_ == FindDepsMode::KillEarlier ||
+             mode_ == FindDepsMode::KillBoth) &&
+            !isSubset(realEarlierIter, range(nearest))) {
+            return;
+        }
+        if ((mode_ == FindDepsMode::KillLater ||
+             mode_ == FindDepsMode::KillBoth) &&
+            !isSubset(realLaterIter, domain(nearest))) {
+            return;
+        }
     }
 
     for (auto &&item : direction_) {
