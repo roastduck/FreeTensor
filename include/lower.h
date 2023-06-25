@@ -17,6 +17,7 @@
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/make_heap_alloc.h>
 #include <pass/make_parallel_reduction.h>
+#include <pass/make_reduction.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
 #include <pass/prop_one_time_use.h>
@@ -70,6 +71,7 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
 
     T ast = _ast;
     ast = clearMarkVersion(ast);
+    ast = APPLY("make_reduction", makeReduction, ast);
     ast = APPLY("scalar_prop_const", scalarPropConst, ast);
     ast = APPLY("remove_dead_var", removeDeadVar, ast);
     ast = APPLY("prop_one_time_use", propOneTimeUse, ast);
