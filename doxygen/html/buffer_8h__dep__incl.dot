@@ -79,6 +79,7 @@ digraph "include/buffer.h"
   Node56 -> Node145 [dir="back",color="steelblue1",style="solid"];
   Node56 -> Node146 [dir="back",color="steelblue1",style="solid"];
   Node146 [label="include/pass/make_reduction.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$make__reduction_8h.html",tooltip=" "];
+  Node146 -> Node67 [dir="back",color="steelblue1",style="solid"];
   Node56 -> Node147 [dir="back",color="steelblue1",style="solid"];
   Node147 [label="include/pass/merge\l_and_hoist_if.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$merge__and__hoist__if_8h.html",tooltip=" "];
   Node147 -> Node67 [dir="back",color="steelblue1",style="solid"];
