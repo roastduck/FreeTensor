@@ -67,7 +67,7 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
     std::unordered_map<AST, std::vector<std::pair<Stmt, ReplaceInfo>>>
         r2wCandidates;
     std::unordered_map<AST, std::vector<Stmt>> r2wMay;
-    std::unordered_map<Stmt, std::vector<AST>> w2r;
+    std::unordered_set<Stmt> wCandidates;
     std::unordered_map<Stmt,
                        std::vector<std::pair<AST, std::string /* writeIter */>>>
         w2rMay;
@@ -108,11 +108,14 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
                            // which may propagate
                            d.earlier().as<StmtNode>(),
                            ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
-                       w2r[d.earlier().as<StmtNode>()].emplace_back(d.later());
+                       wCandidates.emplace(d.earlier().as<StmtNode>());
                        stmts[d.later()] = d.later_.stmt_;
                    }
                }
            }));
+    if (r2wCandidates.empty()) {
+        return _op;
+    }
 
     // Find other potential dependence that may prevent propagation
     //
@@ -124,7 +127,7 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
         .noProjectOutPrivateAxis(true)
         .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
             return r2wCandidates.count(later.op_) ||
-                   w2r.count(earlier.op_.as<StmtNode>());
+                   wCandidates.count(earlier.op_.as<StmtNode>());
         })
         .ignoreReductionWAW(false)(op, [&](const Dependence &d) {
             PBSet writeIter = range(d.later2EarlierIter_);
