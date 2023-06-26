@@ -1,6 +1,7 @@
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
 #include <analyze/find_stmt.h>
+#include <lazy.h>
 #include <pass/merge_and_hoist_if.h>
 #include <schedule.h>
 #include <schedule/fission.h>
@@ -220,7 +221,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
         }
         ast = hoistSelectedVar(ast, selectCrossing);
 
-        auto variants = findLoopVariance(ast);
+        auto variantVars = LAZY(findLoopVariance(ast).second);
 
         std::vector<FindDepsDir> disjunct;
         for (auto &&inner : affectedLoops) {
@@ -234,7 +235,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
             disjunct.emplace_back(std::move(dir));
         }
         auto isRealWrite = [&](const ID &loop, const VarDef &def) -> bool {
-            return isVariant(variants.second, def, loop);
+            return isVariant(*variantVars, def, loop);
         };
         std::unordered_map<ID, std::vector<ID>> toAdd;
         auto found = [&](const Dependence &d) {
