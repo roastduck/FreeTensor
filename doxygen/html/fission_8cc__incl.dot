@@ -132,6 +132,7 @@ digraph "src/schedule/fission.cc"
   Node2 -> Node53 [color="steelblue1",style="solid"];
   Node1 -> Node10 [color="steelblue1",style="solid"];
   Node1 -> Node63 [color="steelblue1",style="solid"];
+  Node1 -> Node65 [color="steelblue1",style="solid"];
   Node1 -> Node81 [color="steelblue1",style="solid"];
   Node81 [label="pass/merge_and_hoist_if.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$merge__and__hoist__if_8h.html",tooltip=" "];
   Node81 -> Node8 [color="steelblue1",style="solid"];
