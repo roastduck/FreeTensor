@@ -217,6 +217,14 @@ void FindAccessPoint::visit(const If &op) {
     }
 }
 
+void FindAccessPoint::visit(const Assert &op) {
+    (*this)(op->cond_);
+
+    pushCond(op->cond_, op->id());
+    (*this)(op->body_);
+    popCond();
+}
+
 void FindAccessPoint::visit(const Load &op) {
     BaseClass::visit(op);
 
@@ -769,14 +777,14 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         }
         if (noProjectOutPrivateAxis_) {
             found_(Dependence{item, getVar(later->op_), *later, *earlier,
-                              iterDim, res, laterMap, earlierMap, presburger,
-                              *this});
+                              iterDim, res, laterMap, earlierMap, possible,
+                              presburger, *this});
         } else {
             // It will be misleading if we pass Presburger maps to users in
             // this case
             found_(Dependence{item, getVar(later->op_), *later, *earlier,
-                              iterDim, PBMap(), PBMap(), PBMap(), presburger,
-                              *this});
+                              iterDim, PBMap(), PBMap(), PBMap(), PBMap(),
+                              presburger, *this});
         }
     fail:;
     }

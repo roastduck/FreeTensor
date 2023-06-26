@@ -274,3 +274,39 @@ def test_pluto_fuse_bloat():
     with pytest.raises(ft.InvalidSchedule):
         s = ft.Schedule(kernel)
         s.pluto_fuse("L1", "L2")
+
+
+def test_pluto_fuse_external():
+
+    @ft.transform
+    def kernel(N: ft.Var[(), "int64", "input"], x):
+        x: ft.Var[(N, N), "float32", "inout"]
+        assert 0 < N < 2**30
+        for t in range(100):
+            #! label: L0
+            for i in range(N):
+                for j in range(N - 1):
+                    x[i, j + 1] += x[i, j]
+            #! label: L1
+            for i in range(N):
+                for j in range(N - 1):
+                    x[i, N - 2 - j] += x[i, N - 1 - j]
+
+    @ft.transform
+    def kernel_expected(N: ft.Var[(), "int64", "input"], x):
+        x: ft.Var[(N, N), "float32", "inout"]
+        assert 0 < N < 2**30
+        for t in range(100):
+            for i in range(N):
+                for j in range(N - 1):
+                    x[i, j + 1] += x[i, j]
+                for j in range(N - 1):
+                    x[i, N - 2 - j] += x[i, N - 1 - j]
+
+    print(kernel)
+    s = ft.Schedule(kernel)
+    _, parallelism = s.pluto_fuse("L0", "L1")
+    kernel = s.func()
+    print(kernel)
+    assert parallelism == 1
+    assert kernel.body.match(kernel_expected.body)

@@ -466,6 +466,18 @@ PBMap moveDimsOutputToParam(T &&map, unsigned first, unsigned n,
     return isl_map_move_dims(PBRefTake<T>(map), isl_dim_param, target,
                              isl_dim_out, first, n);
 }
+template <PBMapRef T>
+PBMap moveDimsParamToInput(T &&map, unsigned first, unsigned n,
+                           unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_in, target,
+                             isl_dim_param, first, n);
+}
+template <PBMapRef T>
+PBMap moveDimsParamToOutput(T &&map, unsigned first, unsigned n,
+                            unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_out, target,
+                             isl_dim_param, first, n);
+}
 
 template <PBSetRef T> PBSet complement(T &&set) {
     DEBUG_PROFILE("complement");
