@@ -1,4 +1,5 @@
 #include <cmath>
+#include <isl/set.h>
 #include <numeric>
 #include <string>
 #include <vector>
@@ -932,6 +933,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             result += optimized[coeffBase + nParams];
             for (int i = 0; i < nestLevel; ++i)
                 result += optimized[coeffBase + nParams + 1 + i] * x[i];
+            builder.addOutputs(p);
             builder.addOutput(result);
             auto projectedLoopRange = apply(loopSet, builder.build(ctx));
             return PBSet(isl_set_remove_divs(projectedLoopRange.move()));
@@ -942,17 +944,20 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
 
         // overlap check 1: loop 0 & 1 should actually overlap
         {
-            auto overlap = fixDim(universeSet(PBSpace(loop1Range)), 0,
+            auto overlap = fixDim(universeSet(PBSpace(loop1Range)), nParams,
                                   fusableOverlapThreshold);
-            // if the two loops has no overlap on the result axis, they are not
-            // actually fused so we bail out
-            if (intersect(
-                    // range of loop 0
-                    loop0Range,
-                    // ... and range of loop 1 added with the overlap threshold
-                    sum(loop1Range, overlap))
-                    // ... don't overlap
-                    .empty())
+            // if the two loops has no overlap (for any possible parameters) on
+            // the result axis, they are not actually fused so we bail out
+            // "Exist P, R0 and R1 non-empty but R0 intersect R1 empty"
+            auto R0 = loop0Range, R1 = sum(loop1Range, overlap);
+            auto R01 = intersect(R0, R1);
+
+            // project to only params
+            R0 = projectOutDims(std::move(R0), nParams, 1);
+            R1 = projectOutDims(std::move(R1), nParams, 1);
+            R01 = projectOutDims(std::move(R01), nParams, 1);
+
+            if (!intersect(intersect(R0, R1), complement(R01)).empty())
                 break;
         }
 
