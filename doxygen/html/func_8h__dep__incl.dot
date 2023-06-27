@@ -77,6 +77,7 @@ digraph "include/func.h"
   Node130 [label="include/pass/make_heap\l_alloc.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$make__heap__alloc_8h.html",tooltip=" "];
   Node126 -> Node131 [dir="back",color="steelblue1",style="solid"];
   Node131 [label="include/pass/scalar\l_prop_const.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$scalar__prop__const_8h.html",tooltip=" "];
+  Node131 -> Node6 [dir="back",color="steelblue1",style="solid"];
   Node126 -> Node36 [dir="back",color="steelblue1",style="solid"];
   Node36 [label="include/pass/simplify.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$simplify_8h.html",tooltip=" "];
   Node36 -> Node6 [dir="back",color="steelblue1",style="solid"];

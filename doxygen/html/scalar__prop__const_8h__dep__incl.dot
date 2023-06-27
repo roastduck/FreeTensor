@@ -10,7 +10,9 @@ digraph "include/pass/scalar_prop_const.h"
   Node2 -> Node3 [dir="back",color="steelblue1",style="solid"];
   Node3 [label="src/schedule.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$schedule_8cc.html",tooltip=" "];
   Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
-  Node4 [label="src/pass/scalar_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$scalar__prop__const_8cc.html",tooltip=" "];
+  Node4 [label="src/autograd/grad.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$grad_8cc.html",tooltip=" "];
   Node1 -> Node5 [dir="back",color="steelblue1",style="solid"];
-  Node5 [label="src/pass/tensor_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$tensor__prop__const_8cc.html",tooltip=" "];
+  Node5 [label="src/pass/scalar_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$scalar__prop__const_8cc.html",tooltip=" "];
+  Node1 -> Node6 [dir="back",color="steelblue1",style="solid"];
+  Node6 [label="src/pass/tensor_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$tensor__prop__const_8cc.html",tooltip=" "];
 }
