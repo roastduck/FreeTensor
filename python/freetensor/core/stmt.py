@@ -12,7 +12,7 @@ expressions in `expr.py`
 import collections
 from typing import Sequence, Set, Mapping, Tuple, Any, Optional
 
-import freetensor_ffi as ffi
+from .. import ffi
 
 from . import config
 from .context import ctx_stack, StmtRange

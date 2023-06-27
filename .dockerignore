@@ -1,0 +1,25 @@
+/build
+/install
+/site
+/docs/doxygen
+**/__pycache__
+**/*.log
+**/*.csv
+**/.pytest_cache
+
+# I don't know why ANTLR wants to put the generated library at the root path
+# See 3rd-party/antlr/antlr4/runtime/Cpp/runtime/CMakeLists.txt
+/dist
+
+# Error logs
+**/.z3-trace
+
+# Editors
+/.vscode
+**/*.swp
+**/.ycm_extra_conf.py
+**/.idea
+**/cmake-build-debug-remote-host
+
+# No git history
+**/.git

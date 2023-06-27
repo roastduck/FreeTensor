@@ -1,8 +1,8 @@
 from typing import Optional, Callable, Union, Sequence
 import functools
 
-import freetensor_ffi as ffi
-from freetensor_ffi import GradTapeMode
+from .. import ffi
+from ..ffi import GradTapeMode
 
 from .frontend import staged_callable
 from .transform import transform

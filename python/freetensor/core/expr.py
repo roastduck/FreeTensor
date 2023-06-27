@@ -21,7 +21,7 @@ from numbers import Number
 from typing import Sequence, Union
 from dataclasses import dataclass
 
-import freetensor_ffi as ffi
+from .. import ffi
 
 from .context import ctx_stack
 from .meta import is_writable

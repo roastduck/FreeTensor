@@ -5,7 +5,7 @@ import sys
 import inspect
 import functools
 
-import freetensor_ffi as ffi
+from .. import ffi
 from . import config
 from .expr import UndeclaredParam
 from .stmt import VarRef

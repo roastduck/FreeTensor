@@ -10,7 +10,7 @@ from numbers import Number
 from typing import Callable, Dict, List, Sequence, Optional, Any, Union
 from dataclasses import dataclass
 
-import freetensor_ffi as ffi
+from .. import ffi
 
 from .expr import (dtype, mtype, ndim, l_and, l_or, l_not, if_then_else, shape,
                    VarVersionRef)
