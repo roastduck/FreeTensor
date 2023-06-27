@@ -7,10 +7,10 @@ from typing import Optional, Set, Union, Sequence, Callable
 import sys
 import functools
 
-import freetensor_ffi as ffi
+from .. import ffi
 
-from freetensor_ffi import GradTapeMode
-from freetensor_ffi import output_all_intermediates
+from ..ffi import GradTapeMode
+from ..ffi import output_all_intermediates
 
 from .analyze import find_stmt, find_all_stmt
 from .frontend import LifetimeScope, ndim

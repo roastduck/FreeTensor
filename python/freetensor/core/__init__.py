@@ -1,9 +1,9 @@
 import os
 
-import freetensor_ffi as ffi
-from freetensor_ffi import (ASTNodeType, InvalidSchedule, InvalidAutoGrad,
-                            InvalidProgram, DriverError, InvalidIO,
-                            SymbolNotFound, AssertAlwaysFalse, ParserError)
+from .. import ffi
+from ..ffi import (ASTNodeType, InvalidSchedule, InvalidAutoGrad,
+                   InvalidProgram, DriverError, InvalidIO, SymbolNotFound,
+                   AssertAlwaysFalse, ParserError)
 
 from .context import pop_ast, pop_ast_and_user_grads, StmtRange
 from .expr import *

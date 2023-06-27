@@ -7,9 +7,9 @@ import functools
 from collections.abc import Sequence
 from typing import Callable, Union, List, Dict
 
-import freetensor_ffi as ffi
-from freetensor_ffi import (ParallelScope, ID, Selector, FissionSide,
-                            MoveToSide, VarSplitMode)
+from .. import ffi
+from ..ffi import (ParallelScope, ID, Selector, FissionSide, MoveToSide,
+                   VarSplitMode)
 
 from .func import Func
 from .analyze import find_stmt

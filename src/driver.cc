@@ -247,15 +247,16 @@ void Driver::buildAndLoad() {
         addCommand(compiler);
         addArgs(oFile);
         addArgs("-shared");
-        for (auto &&item : Config::backendOpenMP()) {
-            addArgs(item);
-        }
 #ifdef FT_WITH_MKL
         // The order of these libraries are generated with MKL Link Line Advisor
         addArgs("-Wl,--start-group", FT_MKL_LIBMKL_INTEL_LP64,
                 FT_MKL_LIBMKL_GNU_THREAD, FT_MKL_LIBMKL_CORE,
                 "-Wl,--end-group");
 #endif // FT_WITH_MKL
+        for (auto &&item : Config::backendOpenMP()) {
+            // After MKL, required by MKL installed from apt
+            addArgs(item);
+        }
         addArgs("-o", so);
 
         break;
