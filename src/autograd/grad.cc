@@ -20,6 +20,7 @@
 #include <pass/remove_cyclic_assign.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
+#include <pass/scalar_prop_const.h>
 #include <pass/simplify.h>
 #include <pass/tensor_prop_const.h>
 #include <pass/undo_make_reduction.h>
@@ -654,12 +655,13 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     backward = clearMarkVersion(backward);
 
     // We do some basic simplifications here, to reduce burden on auto-schedule
+    backward = scalarPropConst(backward);
+    backward = removeWrites(backward);
     backward = propOneTimeUse(backward);
     backward = simplify(backward);
     backward = tensorPropConst(backward);
     backward = removeCyclicAssign(backward);
     backward = removeDeadVar(backward);
-    backward = removeWrites(backward);
 
     return std::make_tuple(forward, backward, mutator.requireGrads(),
                            mutator.provideGrads(), tapeMap);

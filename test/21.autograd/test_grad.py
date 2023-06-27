@@ -781,28 +781,28 @@ def test_recompute_using_another_recomputed_var():
 
     with ft.VarDef([("a", (10,), "float32", "input", "cpu"),
                     ("a.grad", (10,), "float32", "output", "cpu"),
-                    ("d.grad", (10,), "float32", "input", "cpu")]) as (a, da,
+                    ("b", (10,), "float32>=0", "cache", "cpu"),
+                    ("d.grad", (10,), "float32", "input", "cpu")]) as (a, da, b,
                                                                        dd):
-        with ft.VarDef("b", (10,), "float32>=0", "cache", "cpu") as b:
-            with ft.For("i", 0, 10) as i:
-                b[i] = ft.square(a[i])
-            with ft.VarDef("b.recomp", (1, 10), "float32>=0", "cache",
-                           "cpu") as b_recomp:
-                with ft.VarDef("c", (10,), "float32>=0", "cache", "cpu") as c:
-                    with ft.For("i_1", 0, 10) as i:
-                        b_recomp[0, i] = b[i]
-                        c[i] = ft.square(ft.square(b_recomp[0, i]))
-                        b[i] += 1
-                    with ft.For("i", 9, -1, -1) as i:
-                        gradient_of_bi_in_di = dd[i] * ft.square(c[i])
-                        # USE NEW b HERE
-                        # gradient_of_ci_in_di = 2 * dd[i] * b[i] * c[i]
-                        # USE OLD b_recomp HERE
-                        # dt = (4 * ft.square(b_recomp[0, i]) *
-                        #       gradient_of_ci_in_di * b_recomp[0, i])
-                        dt = (8 * ft.square(b_recomp[0, i]) * dd[i] * b[i] *
-                              c[i] * b_recomp[0, i])
-                        da[i] = 2 * (gradient_of_bi_in_di + dt) * a[i]
+        with ft.For("i", 0, 10) as i:
+            b[i] = ft.square(a[i])
+        with ft.VarDef("b.recomp", (1, 10), "float32>=0", "cache",
+                       "cpu") as b_recomp:
+            with ft.VarDef("c", (10,), "float32>=0", "cache", "cpu") as c:
+                with ft.For("i_1", 0, 10) as i:
+                    b_recomp[0, i] = b[i]
+                    c[i] = ft.square(ft.square(b_recomp[0, i]))
+                    b[i] += 1
+                with ft.For("i", 9, -1, -1) as i:
+                    gradient_of_bi_in_di = dd[i] * ft.square(c[i])
+                    # USE NEW b HERE
+                    # gradient_of_ci_in_di = 2 * dd[i] * b[i] * c[i]
+                    # USE OLD b_recomp HERE
+                    # dt = (4 * ft.square(b_recomp[0, i]) *
+                    #       gradient_of_ci_in_di * b_recomp[0, i])
+                    dt = (8 * ft.square(b_recomp[0, i]) * dd[i] * b[i] * c[i] *
+                          b_recomp[0, i])
+                    da[i] = 2 * (gradient_of_bi_in_di + dt) * a[i]
     std = ft.pop_ast()
 
     assert std.match(bwd.body)

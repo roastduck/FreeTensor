@@ -69,11 +69,41 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
     skipPasses.count(name) ? FIRST_OF(__VA_ARGS__)                             \
                            : maybePrint(name, pass(__VA_ARGS__))
 
+    // NOTE: The following passes enables each other: some optimizations can be
+    // done in pass A only after we do pass B first. Thus the order of the
+    // passes matters. If you found some program that cannot be optimized by the
+    // current order, add it to `test/20.pass/test_lower.py` and adjust the
+    // order.
+    //
+    // We only focus on programs having a real use, because there is no one
+    // order that fits all. A seemingly possible solution is to run all the
+    // passes iteratively until convergence, but the passes are slow and it may
+    // require a number of iterations proportional to the program size to
+    // converge. Such a progam can be
+    //
+    // ```
+    // if (1 == 1) {
+    //   a = 1
+    // }
+    // if (a == 1) {
+    //   b = 1
+    // }
+    // if (b == 1) {
+    //   c = 1
+    // }
+    // ```
+    //
+    // where it needs `simplify` to remove the `if`s, and `prop_const` to fill
+    // the varaible into the `if`s' conditions. We consider it more important to
+    // compile a program than to make it optimal, so we are not going to fully
+    // optimize it.
+
     T ast = _ast;
     ast = clearMarkVersion(ast);
     ast = APPLY("make_reduction", makeReduction, ast);
     ast = APPLY("scalar_prop_const", scalarPropConst, ast);
     ast = APPLY("remove_dead_var", removeDeadVar, ast);
+    ast = APPLY("remove_writes", removeWrites, ast);
     ast = APPLY("prop_one_time_use", propOneTimeUse, ast);
     ast = APPLY("float_simplify", floatSimplify, ast); // After propOneTimeUse
     ast = APPLY("z3_simplify", z3Simplify, ast);
@@ -83,7 +113,6 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
     ast = APPLY("shrink_var", shrinkVar, ast);
     ast = APPLY("merge_and_hoist_if", mergeAndHoistIf, ast);
     ast = APPLY("tensor_prop_const", tensorPropConst, ast);
-    ast = APPLY("remove_writes", removeWrites, ast);
     ast = APPLY("remove_dead_var", removeDeadVar,
                 ast); // After remove_writes and prop_const
     ast = APPLY("remove_cyclic_assign", removeCyclicAssign,
