@@ -2299,6 +2299,8 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:a644182d8d7c73570b9b53f6ff676ecef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afda2eea3e11f8b98daf36bae5bc8e242"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afda2eea3e11f8b98daf36bae5bc8e242">toString</a> (const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op, bool pretty, bool printAllId, bool dtypeInLoad, bool hexFloat=false, bool compact=false)</td></tr>
 <tr class="separator:afda2eea3e11f8b98daf36bae5bc8e242"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a160718b142ebc359d7370732fd87e36f"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a160718b142ebc359d7370732fd87e36f">toString</a> (const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op, bool pretty, bool printAllId, bool dtypeInLoad, bool hexFloat, bool compact, bool printSourceLocation)</td></tr>
+<tr class="separator:a160718b142ebc359d7370732fd87e36f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:aa660083ab40fd852364e7670a4cd5bbe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa660083ab40fd852364e7670a4cd5bbe">renameVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_map&lt; std::string, std::string &gt; &amp;rename)</td></tr>
 <tr class="separator:aa660083ab40fd852364e7670a4cd5bbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -18472,7 +18474,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a472a884dd71c57ad337f27094accba53" name="a472a884dd71c57ad337f27094accba53"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a472a884dd71c57ad337f27094accba53">&#9670;&#160;</a></span>toString() <span class="overload">[1/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a472a884dd71c57ad337f27094accba53">&#9670;&#160;</a></span>toString() <span class="overload">[1/7]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -18491,7 +18493,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="aaf9b31c914b9909427896360cbeab8b4" name="aaf9b31c914b9909427896360cbeab8b4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaf9b31c914b9909427896360cbeab8b4">&#9670;&#160;</a></span>toString() <span class="overload">[2/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aaf9b31c914b9909427896360cbeab8b4">&#9670;&#160;</a></span>toString() <span class="overload">[2/7]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -18519,7 +18521,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a644182d8d7c73570b9b53f6ff676ecef" name="a644182d8d7c73570b9b53f6ff676ecef"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a644182d8d7c73570b9b53f6ff676ecef">&#9670;&#160;</a></span>toString() <span class="overload">[3/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a644182d8d7c73570b9b53f6ff676ecef">&#9670;&#160;</a></span>toString() <span class="overload">[3/7]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -18552,8 +18554,66 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
+<a id="a160718b142ebc359d7370732fd87e36f" name="a160718b142ebc359d7370732fd87e36f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a160718b142ebc359d7370732fd87e36f">&#9670;&#160;</a></span>toString() <span class="overload">[4/7]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string freetensor::toString </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>pretty</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>printAllId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>dtypeInLoad</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>hexFloat</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>compact</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>printSourceLocation</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="afda2eea3e11f8b98daf36bae5bc8e242" name="afda2eea3e11f8b98daf36bae5bc8e242"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afda2eea3e11f8b98daf36bae5bc8e242">&#9670;&#160;</a></span>toString() <span class="overload">[4/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#afda2eea3e11f8b98daf36bae5bc8e242">&#9670;&#160;</a></span>toString() <span class="overload">[5/7]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -18605,7 +18665,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="aaff9e82053dd1ee835ea5c8b58b2abc6" name="aaff9e82053dd1ee835ea5c8b58b2abc6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaff9e82053dd1ee835ea5c8b58b2abc6">&#9670;&#160;</a></span>toString() <span class="overload">[5/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aaff9e82053dd1ee835ea5c8b58b2abc6">&#9670;&#160;</a></span>toString() <span class="overload">[6/7]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -18633,7 +18693,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a2c490189ddd347553322eb51f8e945dc" name="a2c490189ddd347553322eb51f8e945dc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2c490189ddd347553322eb51f8e945dc">&#9670;&#160;</a></span>toString() <span class="overload">[6/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c490189ddd347553322eb51f8e945dc">&#9670;&#160;</a></span>toString() <span class="overload">[7/7]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
