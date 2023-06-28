@@ -28,7 +28,7 @@
 
 namespace freetensor {
 
-Expr ReplaceLoadAtVersion::visit(const LoadAtVersion &_op) {
+Expr InsertUserGrad::visit(const LoadAtVersion &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LoadAtVersion);
     auto op = __op.as<LoadAtVersionNode>();
@@ -50,6 +50,31 @@ Expr ReplaceLoadAtVersion::visit(const LoadAtVersion &_op) {
         return makeLoad(var, op->indices_,
                         symbolTable_.buffer(var)->tensor()->dtype());
     }
+}
+
+Stmt InsertUserGrad::visit(const Store &op) {
+    if (localVarDefNames_.count(op->var_) ||
+        std::ranges::count(views::values(gradNames_), op->var_)) {
+        return Mutator::visit(op);
+    } else {
+        return makeStmtSeq({});
+    }
+}
+
+Stmt InsertUserGrad::visit(const ReduceTo &op) {
+    if (localVarDefNames_.count(op->var_) ||
+        std::ranges::count(views::values(gradNames_), op->var_)) {
+        return Mutator::visit(op);
+    } else {
+        return makeStmtSeq({});
+    }
+}
+
+Stmt InsertUserGrad::visit(const VarDef &op) {
+    localVarDefNames_.emplace(op->name_);
+    auto ret = Mutator::visit(op);
+    localVarDefNames_.erase(op->name_);
+    return ret;
 }
 
 ReplaceBySaved Grad::getReplacer(const Stmt &stmt,
@@ -107,8 +132,8 @@ Stmt Grad::doVisitStmt(const Stmt &s) {
                 } else {
 
                     // 3. Plug in the user-defined backward
-                    ReplaceLoadAtVersion replacer{*this, intermediatesMap_,
-                                                  userVersions_};
+                    InsertUserGrad replacer{*this, intermediatesMap_,
+                                            userVersions_, gradNames_};
                     ret = replacer(bwdBody);
                     userGradInsertPos_ = ID(); // Mark the insertion is done
                 }

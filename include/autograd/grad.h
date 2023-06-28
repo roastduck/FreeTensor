@@ -15,23 +15,31 @@
 
 namespace freetensor {
 
-class ReplaceLoadAtVersion : public Mutator {
+class InsertUserGrad : public Mutator {
     const SymbolTableInterface &symbolTable_;
     const std::unordered_map<ID, std::string> &intermediatesMap_;
     const std::unordered_map<std::string, std::pair<std::string, Expr>>
         &userVersions_;
+    const std::unordered_map<std::string, std::string>
+        &gradNames_; // x -> dy/dx
+
+    std::unordered_set<std::string> localVarDefNames_;
 
   public:
-    ReplaceLoadAtVersion(
+    InsertUserGrad(
         const SymbolTableInterface &symbolTable,
         const std::unordered_map<ID, std::string> &intermediatesMap,
         const std::unordered_map<std::string, std::pair<std::string, Expr>>
-            &userVersions)
+            &userVersions,
+        const std::unordered_map<std::string, std::string> &gradNames)
         : symbolTable_(symbolTable), intermediatesMap_(intermediatesMap),
-          userVersions_(userVersions) {}
+          userVersions_(userVersions), gradNames_(gradNames) {}
 
   protected:
     Expr visit(const LoadAtVersion &op) override;
+    Stmt visit(const Store &op) override;
+    Stmt visit(const ReduceTo &op) override;
+    Stmt visit(const VarDef &op) override;
 };
 
 template <class BaseClass> class RenewIDs : public BaseClass {
