@@ -60,9 +60,8 @@ var searchData=
   ['reorder_57',['Reorder',['../classfreetensor_1_1Reorder.html',1,'freetensor']]],
   ['replacebysaved_58',['ReplaceBySaved',['../classfreetensor_1_1ReplaceBySaved.html',1,'freetensor']]],
   ['replaceiter_59',['ReplaceIter',['../classfreetensor_1_1ReplaceIter.html',1,'freetensor']]],
-  ['replaceloadatversion_60',['ReplaceLoadAtVersion',['../classfreetensor_1_1ReplaceLoadAtVersion.html',1,'freetensor']]],
-  ['replaceuses_61',['ReplaceUses',['../classfreetensor_1_1ReplaceUses.html',1,'freetensor']]],
-  ['rootcallselector_62',['RootCallSelector',['../classfreetensor_1_1RootCallSelector.html',1,'freetensor']]],
-  ['rootnodeselector_63',['RootNodeSelector',['../classfreetensor_1_1RootNodeSelector.html',1,'freetensor']]],
-  ['roundtowards0divnode_64',['RoundTowards0DivNode',['../classfreetensor_1_1RoundTowards0DivNode.html',1,'freetensor']]]
+  ['replaceuses_60',['ReplaceUses',['../classfreetensor_1_1ReplaceUses.html',1,'freetensor']]],
+  ['rootcallselector_61',['RootCallSelector',['../classfreetensor_1_1RootCallSelector.html',1,'freetensor']]],
+  ['rootnodeselector_62',['RootNodeSelector',['../classfreetensor_1_1RootNodeSelector.html',1,'freetensor']]],
+  ['roundtowards0divnode_63',['RoundTowards0DivNode',['../classfreetensor_1_1RoundTowards0DivNode.html',1,'freetensor']]]
 ];

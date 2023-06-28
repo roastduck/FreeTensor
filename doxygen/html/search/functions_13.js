@@ -1,8 +1,8 @@
 var searchData=
 [
   ['tapename_0',['tapeName',['../classfreetensor_1_1AnalyzeVersion.html#ac15b8b5d100616dcc7207fa0e41fba2e',1,'freetensor::AnalyzeVersion']]],
-  ['target_1',['Target',['../classfreetensor_1_1Target.html#ab4218659d0db70a02239d17d037d3be4',1,'freetensor::Target']]],
-  ['target_2',['target',['../classfreetensor_1_1NativeCode.html#a614c224ffb0131b528609e12f2db45bb',1,'freetensor::NativeCode::target()'],['../classfreetensor_1_1Device.html#a7bf383e0fa4b52c457dd4278a45e8f73',1,'freetensor::Device::target()']]],
+  ['target_1',['target',['../classfreetensor_1_1NativeCode.html#a614c224ffb0131b528609e12f2db45bb',1,'freetensor::NativeCode::target()'],['../classfreetensor_1_1Device.html#a7bf383e0fa4b52c457dd4278a45e8f73',1,'freetensor::Device::target()']]],
+  ['target_2',['Target',['../classfreetensor_1_1Target.html#ab4218659d0db70a02239d17d037d3be4',1,'freetensor::Target']]],
   ['tasks_3',['tasks',['../classfreetensor_1_1AnalyzeDeps.html#aa11527c730681f0486e351790797a97f',1,'freetensor::AnalyzeDeps']]],
   ['tensor_4',['tensor',['../classfreetensor_1_1Buffer.html#a9d823b3257c03b33237d3483bada4d5b',1,'freetensor::Buffer::tensor() const'],['../classfreetensor_1_1Buffer.html#a00c8daba5e7927568207a1bbab78b29c',1,'freetensor::Buffer::tensor()']]],
   ['tensorpropconst_5',['tensorPropConst',['../namespacefreetensor.html#a4de12345278ddfb43c21f81f79040162',1,'freetensor']]],

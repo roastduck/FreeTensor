@@ -10,13 +10,14 @@ var searchData=
   ['insertalloc_7',['InsertAlloc',['../classfreetensor_1_1InsertAlloc.html',1,'freetensor']]],
   ['insertfree_8',['InsertFree',['../classfreetensor_1_1InsertFree.html',1,'freetensor']]],
   ['inserttmpeval_9',['InsertTmpEval',['../classfreetensor_1_1InsertTmpEval.html',1,'freetensor']]],
-  ['intconstnode_10',['IntConstNode',['../classfreetensor_1_1IntConstNode.html',1,'freetensor']]],
-  ['interruptexcept_11',['InterruptExcept',['../classfreetensor_1_1InterruptExcept.html',1,'freetensor']]],
-  ['intrinsicnode_12',['IntrinsicNode',['../classfreetensor_1_1IntrinsicNode.html',1,'freetensor']]],
-  ['invalidautograd_13',['InvalidAutoGrad',['../classfreetensor_1_1InvalidAutoGrad.html',1,'freetensor']]],
-  ['invalidio_14',['InvalidIO',['../classfreetensor_1_1InvalidIO.html',1,'freetensor']]],
-  ['invalidprogram_15',['InvalidProgram',['../classfreetensor_1_1InvalidProgram.html',1,'freetensor']]],
-  ['invalidschedule_16',['InvalidSchedule',['../classfreetensor_1_1InvalidSchedule.html',1,'freetensor']]],
-  ['inversioninfo_17',['InversionInfo',['../structfreetensor_1_1InversionInfo.html',1,'freetensor']]],
-  ['iteraxis_18',['IterAxis',['../structfreetensor_1_1IterAxis.html',1,'freetensor']]]
+  ['insertusergrad_10',['InsertUserGrad',['../classfreetensor_1_1InsertUserGrad.html',1,'freetensor']]],
+  ['intconstnode_11',['IntConstNode',['../classfreetensor_1_1IntConstNode.html',1,'freetensor']]],
+  ['interruptexcept_12',['InterruptExcept',['../classfreetensor_1_1InterruptExcept.html',1,'freetensor']]],
+  ['intrinsicnode_13',['IntrinsicNode',['../classfreetensor_1_1IntrinsicNode.html',1,'freetensor']]],
+  ['invalidautograd_14',['InvalidAutoGrad',['../classfreetensor_1_1InvalidAutoGrad.html',1,'freetensor']]],
+  ['invalidio_15',['InvalidIO',['../classfreetensor_1_1InvalidIO.html',1,'freetensor']]],
+  ['invalidprogram_16',['InvalidProgram',['../classfreetensor_1_1InvalidProgram.html',1,'freetensor']]],
+  ['invalidschedule_17',['InvalidSchedule',['../classfreetensor_1_1InvalidSchedule.html',1,'freetensor']]],
+  ['inversioninfo_18',['InversionInfo',['../structfreetensor_1_1InversionInfo.html',1,'freetensor']]],
+  ['iteraxis_19',['IterAxis',['../structfreetensor_1_1IterAxis.html',1,'freetensor']]]
 ];
