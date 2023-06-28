@@ -422,7 +422,7 @@ def test_fuse_metadata():
     assert ast2.match(ast)
 
 
-def test_anonymous_call_site():
+def test_anonymous_call_site_1():
 
     @ft.inline
     def h(y):
@@ -442,6 +442,35 @@ def test_anonymous_call_site():
         #! label: L1
         for i in range(8):
             #! label: g
+            g(y[i])
+
+    txt = ft.dump_ast(f)
+    print(txt)
+    f2 = ft.load_ast(txt)
+    print(f2)
+    assert f2.body.match(f.body)
+
+
+def test_anonymous_call_site_2():
+
+    @ft.inline
+    def h(y):
+        #! label: L3
+        for i in range(8):
+            y[i] = i
+
+    @ft.inline
+    def g(y):
+        #! label: L2
+        for i in range(8):
+            # Anonymous call site 1
+            h(y[i])
+
+    @ft.transform(verbose=True)
+    def f(y: ft.Var[(8, 8, 8), "int32", "output"]):
+        #! label: L1
+        for i in range(8):
+            # Anonymous call site 2
             g(y[i])
 
     txt = ft.dump_ast(f)
