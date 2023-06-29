@@ -9,4 +9,6 @@ digraph "include/autograd/all_no_reuse_defs.h"
   Node2 [label="src/autograd/all_no\l_reuse_defs.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$all__no__reuse__defs_8cc.html",tooltip=" "];
   Node1 -> Node3 [dir="back",color="steelblue1",style="solid"];
   Node3 [label="src/autograd/grad.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$grad_8cc.html",tooltip=" "];
+  Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
+  Node4 [label="src/autograd/tape_strategy.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$tape__strategy_8cc.html",tooltip=" "];
 }

@@ -75,8 +75,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#namespaces">Namespaces</a> &#124;
-<a href="#enum-members">Enumerations</a>  </div>
+<a href="#namespaces">Namespaces</a>  </div>
   <div class="headertitle"><div class="title">grad.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -86,6 +85,7 @@ $(function() {
 <code>#include &lt;<a class="el" href="derivative_8h_source.html">autograd/derivative.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="invert__stmts_8h_source.html">autograd/invert_stmts.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="replace__by__saved_8h_source.html">autograd/replace_by_saved.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="tape__strategy_8h_source.html">autograd/tape_strategy.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="user__grad_8h_source.html">autograd/user_grad.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="func_8h_source.html">func.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="mutator_8h_source.html">mutator.h</a>&gt;</code><br />
@@ -117,30 +117,15 @@ Namespaces</h2></td></tr>
 <tr class="memitem:namespacefreetensor"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html">freetensor</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
-Enumerations</h2></td></tr>
-<tr class="memitem:ac5e2e5369afec7af04958c0ed8b42ed4"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4">freetensor::GradTapeMode</a> : int { <a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ab1c94ca2fbc3e78fc30069c8d0f01680">freetensor::All</a>
-, <a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4af80a4ad87fee7c9fdc19b7769495fdb5">freetensor::Nothing</a>
-, <a class="el" href="namespacefreetensor.html#ac5e2e5369afec7af04958c0ed8b42ed4ae1f4af8d2ac6c06c8f7620e411e561c3">freetensor::NoReuseOnly</a>
- }</td></tr>
-<tr class="separator:ac5e2e5369afec7af04958c0ed8b42ed4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
-<tr class="memitem:a9c910f9d16ba2d7f276e72ea24301199"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Stmt, Stmt, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; ID, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9c910f9d16ba2d7f276e72ea24301199">freetensor::gradBody</a> (const Stmt &amp;op, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; ID &gt; &amp;tapes, bool resetProvidedGrad=true, bool invert=true, const std::vector&lt; StmtSetToUserGrad &gt; &amp;userGrads={})</td></tr>
-<tr class="separator:a9c910f9d16ba2d7f276e72ea24301199"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a87b5fa013b21a0b2b38ac9ceb1a5e2c0"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a87b5fa013b21a0b2b38ac9ceb1a5e2c0">freetensor::gradFuncInplace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; ID &gt; &amp;tapes, bool tapeInClosure=true, bool resetProvidedGrad=true, bool invert=true, const std::vector&lt; StmtSetToUserGrad &gt; &amp;userGrads={})</td></tr>
-<tr class="separator:a87b5fa013b21a0b2b38ac9ceb1a5e2c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45cc68464b76cdec128886f0c789d780"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a45cc68464b76cdec128886f0c789d780">freetensor::gradFuncOutOfPlace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const std::unordered_set&lt; ID &gt; &amp;tapes, bool tapeInClosure=true, bool resetProvidedGrad=true, bool invert=true, const std::vector&lt; StmtSetToUserGrad &gt; &amp;userGrads={})</td></tr>
-<tr class="separator:a45cc68464b76cdec128886f0c789d780"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr><td colspan="2"><div class="groupHeader"></div></td></tr>
-<tr class="memitem:a1977e7d9e0c08879ca6ea7bf6cb54ee1"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Stmt, Stmt, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; ID, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1977e7d9e0c08879ca6ea7bf6cb54ee1">freetensor::gradBody</a> (const Stmt &amp;op, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, GradTapeMode tapeMode=GradTapeMode::NoReuseOnly, bool resetProvidedGrad=true, bool invert=true, const std::vector&lt; StmtSetToUserGrad &gt; &amp;userGrads={})</td></tr>
-<tr class="separator:a1977e7d9e0c08879ca6ea7bf6cb54ee1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab452b8df2d39359a9011899a7bb0a86c"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab452b8df2d39359a9011899a7bb0a86c">freetensor::gradFuncInplace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, GradTapeMode tapeMode=GradTapeMode::NoReuseOnly, bool tapeInClosure=true, bool resetProvidedGrad=true, bool invert=true, const std::vector&lt; StmtSetToUserGrad &gt; &amp;userGrads={})</td></tr>
-<tr class="separator:ab452b8df2d39359a9011899a7bb0a86c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abb7365af38857508ec3b1d89a36aa9fb"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#abb7365af38857508ec3b1d89a36aa9fb">freetensor::gradFuncOutOfPlace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, GradTapeMode tapeMode=GradTapeMode::NoReuseOnly, bool tapeInClosure=true, bool resetProvidedGrad=true, bool invert=true, const std::vector&lt; StmtSetToUserGrad &gt; &amp;userGrads={})</td></tr>
-<tr class="separator:abb7365af38857508ec3b1d89a36aa9fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2158e3701efaccd882d174e8c2cbf706"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Stmt, Stmt, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; ID, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2158e3701efaccd882d174e8c2cbf706">freetensor::gradBody</a> (const Stmt &amp;op, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const TapeStrategy &amp;tapes, bool resetProvidedGrad=true, bool invert=true, const std::vector&lt; StmtSetToUserGrad &gt; &amp;userGrads={})</td></tr>
+<tr class="separator:a2158e3701efaccd882d174e8c2cbf706"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc9e4268214bfeb9a66a59873163f5e6"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adc9e4268214bfeb9a66a59873163f5e6">freetensor::gradFuncInplace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const TapeStrategy &amp;tapes, bool tapeInClosure=true, bool resetProvidedGrad=true, bool invert=true, const std::vector&lt; StmtSetToUserGrad &gt; &amp;userGrads={})</td></tr>
+<tr class="separator:adc9e4268214bfeb9a66a59873163f5e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ea741d60a842a84cb670ce7de94fd81"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; Func, Func, std::unordered_map&lt; std::string, std::string &gt;, std::unordered_map&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1ea741d60a842a84cb670ce7de94fd81">freetensor::gradFuncOutOfPlace</a> (const Func &amp;func, const std::unordered_set&lt; std::string &gt; &amp;_requires, const std::unordered_set&lt; std::string &gt; &amp;provides, const TapeStrategy &amp;tapes, bool tapeInClosure=true, bool resetProvidedGrad=true, bool invert=true, const std::vector&lt; StmtSetToUserGrad &gt; &amp;userGrads={})</td></tr>
+<tr class="separator:a1ea741d60a842a84cb670ce7de94fd81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 <!-- start footer part -->
