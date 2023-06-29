@@ -343,9 +343,18 @@ Stmt lowerParallelReduction(const Stmt &_op) {
             break;
         }
 
-        // 2. Try to make the workspace more inner by `pass/sink_var`
-        op = sinkVar(op, ranges::to<std::unordered_set>(
-                             views::keys(insertWorkspaces.ws2red())));
+        // 2. Try to make the workspace more inner by `pass/sink_var`, but make
+        // sure all participating threads are working so don't sink into some
+        // branches
+        op = sinkVar(op,
+                     ranges::to<std::unordered_set>(
+                         views::keys(insertWorkspaces.ws2red())),
+                     [&](const Stmt &scope) {
+                         // TODO: A more accurate filter that filters only
+                         // variants of the loop representing the collaborative
+                         // threads
+                         return scope->nodeType() != ASTNodeType::If;
+                     });
 
         // 3. Enlarge the workspace to thread-number-fold, and insert the binary
         // reduction algorithm.

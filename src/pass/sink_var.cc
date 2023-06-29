@@ -49,6 +49,10 @@ Stmt SinkVar::visit(const VarDef &_op) {
         op = def;
     }
 
+    if (scopeFilter_ != nullptr && !scopeFilter_(op->body_)) {
+        return ret;
+    }
+
     switch (op->body_->nodeType()) {
     case ASTNodeType::StmtSeq: {
         auto seq = op->body_.as<StmtSeqNode>();
@@ -176,7 +180,8 @@ Stmt SinkVar::visit(const VarDef &_op) {
 }
 
 Stmt sinkVar(const Stmt &_op,
-             const std::optional<std::unordered_set<ID>> &toSink) {
+             const std::optional<std::unordered_set<ID>> &toSink,
+             const std::function<bool(const Stmt &)> &scopeFilter) {
     auto op = _op;
 
     auto variantMap = Lazy([op]() { return findLoopVariance(op).second; });
@@ -214,8 +219,8 @@ Stmt sinkVar(const Stmt &_op,
             needDepAnalysis.clear();
         }
 
-        SinkVar mutator(toSink, deps, analyzedDeps, needDepAnalysis,
-                        variantMap);
+        SinkVar mutator(toSink, deps, analyzedDeps, needDepAnalysis, variantMap,
+                        scopeFilter);
         op = mutator(op);
         if (mutator.isFixPoint()) {
             break;
