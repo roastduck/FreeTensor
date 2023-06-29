@@ -363,7 +363,7 @@ class AnalyzeDeps {
     static std::string makeCond(GenPBExpr &genPBExpr,
                                 const std::vector<std::pair<Expr, ID>> &conds,
                                 RelaxMode relax, GenPBExpr::VarMap &externals,
-                                bool eraseOutsideVarDef, const VarDef &vardef);
+                                bool eraseOutsideVarDef, const AccessPoint &ap);
 
   private:
     PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
