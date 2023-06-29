@@ -23,7 +23,7 @@ Stmt Splitter::visit(const For &_op) {
                 dst1_ = _op->id();
                 found_ = true;
                 auto ret = Mutator::visit(_op);
-                ret->setMetadata(makeMetadata("split.1", _op));
+                ret->metadata() = makeMetadata("split.1", _op);
                 return ret;
             }
             factor = makeIntConst(factor_);
@@ -37,7 +37,7 @@ Stmt Splitter::visit(const For &_op) {
                 dst0_ = _op->id();
                 found_ = true;
                 auto ret = Mutator::visit(_op);
-                ret->setMetadata(makeMetadata("split.0", _op));
+                ret->metadata() = makeMetadata("split.0", _op);
                 return ret;
             }
             nparts = makeIntConst(nparts_);
