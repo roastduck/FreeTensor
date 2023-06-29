@@ -11,7 +11,7 @@ __all__ = [
     'set_default_device', 'default_device'
 ]
 
-import freetensor_ffi as ffi
+from .. import ffi
 
 
 def _import_func(f):

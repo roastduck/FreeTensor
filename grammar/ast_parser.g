@@ -103,7 +103,7 @@ metadata returns [Metadata md]
     | { std::vector<std::string> labels{$LABEL_META.text}; }
       (newLabel=LABEL_META { labels.push_back($newLabel.text); })*
       { Metadata callerMeta; }
-      LARROW_META caller=metadata { callerMeta = $caller.md; }
+      LARROW_META (caller=metadata { callerMeta = $caller.md; })?
       {
         // With caller arrow, but maybe without labels
         $md = makeMetadata(std::move(labels), std::nullopt, callerMeta);

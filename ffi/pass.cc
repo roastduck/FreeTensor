@@ -70,15 +70,15 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Stmt (*)(const Stmt &)>(&scalarPropConst), "stmt"_a);
 
     m.def("sink_var",
-          static_cast<Func (*)(const Func &,
-                               const std::optional<std::unordered_set<ID>> &)>(
-              &sinkVar),
-          "func"_a, "to_sink"_a = std::nullopt);
+          static_cast<Func (*)(
+              const Func &, const std::optional<std::unordered_set<ID>> &,
+              const std::function<bool(const Stmt &)> &)>(&sinkVar),
+          "func"_a, "to_sink"_a = std::nullopt, "scope_filter"_a = nullptr);
     m.def("sink_var",
-          static_cast<Stmt (*)(const Stmt &,
-                               const std::optional<std::unordered_set<ID>> &)>(
-              &sinkVar),
-          "stmt"_a, "to_sink"_a = std::nullopt);
+          static_cast<Stmt (*)(
+              const Stmt &, const std::optional<std::unordered_set<ID>> &,
+              const std::function<bool(const Stmt &)> &)>(&sinkVar),
+          "stmt"_a, "to_sink"_a = std::nullopt, "scope_filter"_a = nullptr);
 
     m.def("shrink_var", static_cast<Func (*)(const Func &)>(&shrinkVar),
           "func"_a);

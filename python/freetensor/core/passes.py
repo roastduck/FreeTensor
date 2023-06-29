@@ -13,36 +13,36 @@ __all__ = [
 from typing import Optional, Sequence, Callable
 import functools
 
-import freetensor_ffi as ffi
+from .. import ffi
 
-from freetensor_ffi import lower
-from freetensor_ffi import scalar_prop_const
-from freetensor_ffi import tensor_prop_const
-from freetensor_ffi import prop_one_time_use
-from freetensor_ffi import simplify
-from freetensor_ffi import pb_simplify
-from freetensor_ffi import z3_simplify
-from freetensor_ffi import sink_var
-from freetensor_ffi import shrink_var
-from freetensor_ffi import shrink_for
-from freetensor_ffi import merge_and_hoist_if
-from freetensor_ffi import make_reduction
-from freetensor_ffi import make_parallel_reduction
-from freetensor_ffi import remove_writes
-from freetensor_ffi import remove_cyclic_assign
-from freetensor_ffi import remove_dead_var
-from freetensor_ffi import make_heap_alloc
-from freetensor_ffi import use_builtin_div
-from freetensor_ffi import hoist_var_over_stmt_seq
-from freetensor_ffi import flatten_stmt_seq
-from freetensor_ffi import cpu_lower_parallel_reduction
-from freetensor_ffi import gpu_lower_parallel_reduction
-from freetensor_ffi import gpu_make_sync
-from freetensor_ffi import gpu_multiplex_buffers
-from freetensor_ffi import gpu_simplex_buffers
-from freetensor_ffi import gpu_normalize_threads
-from freetensor_ffi import gpu_normalize_var_in_kernel
-from freetensor_ffi import gpu_lower_vector
+from ..ffi import lower
+from ..ffi import scalar_prop_const
+from ..ffi import tensor_prop_const
+from ..ffi import prop_one_time_use
+from ..ffi import simplify
+from ..ffi import pb_simplify
+from ..ffi import z3_simplify
+from ..ffi import sink_var
+from ..ffi import shrink_var
+from ..ffi import shrink_for
+from ..ffi import merge_and_hoist_if
+from ..ffi import make_reduction
+from ..ffi import make_parallel_reduction
+from ..ffi import remove_writes
+from ..ffi import remove_cyclic_assign
+from ..ffi import remove_dead_var
+from ..ffi import make_heap_alloc
+from ..ffi import use_builtin_div
+from ..ffi import hoist_var_over_stmt_seq
+from ..ffi import flatten_stmt_seq
+from ..ffi import cpu_lower_parallel_reduction
+from ..ffi import gpu_lower_parallel_reduction
+from ..ffi import gpu_make_sync
+from ..ffi import gpu_multiplex_buffers
+from ..ffi import gpu_simplex_buffers
+from ..ffi import gpu_normalize_threads
+from ..ffi import gpu_normalize_var_in_kernel
+from ..ffi import gpu_lower_vector
 
 from . import config
 from .func import Func

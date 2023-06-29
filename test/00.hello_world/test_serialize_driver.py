@@ -1,5 +1,4 @@
 import freetensor as ft
-import freetensor_ffi as ffi
 import numpy as np
 from freetensor import CPU, GPU, Device
 import pytest

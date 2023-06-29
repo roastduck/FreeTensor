@@ -498,7 +498,7 @@ def test_parallel_reduction_over_multiple_scopes():
     assert np.array_equal(y_np, y_std)
 
 
-def test_parallel_reduction_on_triangular_dim():
+def test_parallel_reduction_on_triangular_dim_1():
 
     @ft.transform
     def test(x, y):
@@ -530,7 +530,44 @@ def test_parallel_reduction_on_triangular_dim():
     assert np.array_equal(y_np, y_std)
 
 
-def test_parallel_reduction_with_inactive_threads():
+def test_parallel_reduction_on_triangular_dim_2():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(64, 64, 64), "int32", "input", "gpu/global"]
+        y: ft.Var[(64, 64), "int32", "output", "gpu/global"]
+        #! label: L1
+        for i in range(0, 64):
+            #! label: L2
+            for j in range(0, i + 1):
+                #! label: L3
+                for k in range(0, i + 1):
+                    y[i, k] += x[i, j, k]
+
+    s = ft.Schedule(test)
+    s.parallelize("L1", "blockIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=1)
+
+    code = ft.codegen(func, target, verbose=1)
+    assert "atomicAdd" not in code.code
+    x_np = np.random.randint(0, 100, (64, 64, 64)).astype("int32")
+    y_np = np.zeros((64, 64), dtype="int32")
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.build_binary(code, device)(x_arr, y_arr)
+    y_np = y_arr.numpy()
+
+    x_triangle = np.array(
+        [[[x_np[i, j, k] if j <= i and k <= i else 0
+           for k in range(64)]
+          for j in range(64)]
+         for i in range(64)])
+    y_std = np.sum(x_triangle, axis=1)
+    assert np.array_equal(y_np, y_std)
+
+
+def test_parallel_reduction_with_inactive_threads_1():
 
     @ft.transform
     def test(x, y):
@@ -558,4 +595,41 @@ def test_parallel_reduction_with_inactive_threads():
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np.reshape(4, 32, 2)[:, :, 0], axis=1)
+    assert np.array_equal(y_np, y_std)
+
+
+def test_parallel_reduction_with_inactive_threads_2():
+
+    @ft.transform
+    def test(x, y, z):
+        x: ft.Var[(4, 8, 8), "int32", "input", "gpu/global"]
+        y: ft.Var[(4, 8), "int32", "output", "gpu/global"]
+        z: ft.Var[(4, 8), "int32", "output", "gpu/global"]
+        #! label: L1
+        for i in range(0, 4):
+            #! label: L2
+            for j in range(0, 8):
+                z[i, j] = x[i, j, 0]  # shrink stopper
+                if j % 2 == 1:
+                    #! label: L3
+                    for k in range(0, 8):
+                        y[i, k] = y[i, k] + x[i, j, k]
+
+    s = ft.Schedule(test)
+    s.parallelize("L1", "blockIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=1)
+
+    code = ft.codegen(func, target, verbose=1)
+    assert "atomicAdd" not in code.code
+    x_np = np.random.randint(0, 100, (4, 8, 8)).astype("int32")
+    y_np = np.zeros((4, 8), dtype="int32")
+    z_np = np.zeros((4, 8), dtype="int32")
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    z_arr = ft.Array(z_np)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr, z=z_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.sum(x_np.reshape(4, 4, 2, 8)[:, :, 1, :], axis=1)
     assert np.array_equal(y_np, y_std)

@@ -455,11 +455,8 @@ def test_use_a_taped_var_to_recompute_another_var():
                     ("w.grad", (), "float32", "input", "cpu")]) as (x, dx, dw):
         with ft.VarDef("y", (), "float32>=0", "input", "cpu") as y:
             dx[...] = 0
-            with ft.VarDef("z", (), "float32>=0", "cache", "cpu") as z:
-                z[...] = 0
-                with ft.If(x[...] > 0):
-                    z[...] = ft.square(y[...])
-                    dx[...] = 8 * y[...] * dw[...] * z[...] * x[...]
+            with ft.If(x[...] > 0):
+                dx[...] = 8 * y[...] * dw[...] * ft.square(y[...]) * x[...]
     std = ft.pop_ast()
 
     assert std.match(backward.body)
@@ -578,9 +575,9 @@ def test_tape_mode_all():
         ("d_y", (4,), "float32", "input", "cpu"),
     ]) as (d_x1, d_x2, d_x3, d_y):
         with ft.VarDef([("t.tape", (4,), "float32", "input", "cpu"),
-                        ("u.tape", (4,), "float32", "input", "cpu"),
-                        ("d_t", (4,), "float32", "cache", "cpu")]) as (t, u,
-                                                                       d_t):
+                        ("d_t", (4,), "float32", "cache", "cpu"),
+                        ("u.tape", (4,), "float32", "input", "cpu")
+                       ]) as (t, d_t, u):
             with ft.For("i", 3, -1, -1) as i:
                 with ft.VarDef("d_u", (), "float32", "cache", "cpu") as d_u:
                     d_u[()] = d_y[i] * t[i]
@@ -721,7 +718,7 @@ def test_inout_tape():
     @ft.transform
     def bwd_std(x_tape: ft.Var[(2,), "float32", "input"],
                 dx: ft.Var[(), "float32", "inout"]):
-        dx[...] *= 2 * x_tape[1] * (2 * x_tape[0])
+        dx[...] *= 4 * x_tape[1] * x_tape[0]
 
     assert bwd_std.body.match(bwd.body)
 

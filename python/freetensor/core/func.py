@@ -2,8 +2,8 @@ __all__ = ['FuncParam', 'FuncRet', 'Func']
 
 from typing import Sequence
 
-import freetensor_ffi as ffi
-from freetensor_ffi import FuncParam, FuncRet
+from .. import ffi
+from ..ffi import FuncParam, FuncRet
 
 from .enable_attach_backward import EnableAttachBackward
 from .frontend import lang_overload
