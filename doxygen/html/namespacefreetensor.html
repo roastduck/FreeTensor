@@ -1952,8 +1952,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:a5c54f4c7a864a4e7051d226cfff73cb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3297bc3ad84b56db521642e9c7f7f2d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3297bc3ad84b56db521642e9c7f7f2d9">simplify</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a3297bc3ad84b56db521642e9c7f7f2d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aefb0e8913603872bf5a6fd93cb742260"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aefb0e8913603872bf5a6fd93cb742260">sinkVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::optional&lt; std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;toSink=std::nullopt)</td></tr>
-<tr class="separator:aefb0e8913603872bf5a6fd93cb742260"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ea9ec8163d64f4273fa2036239d4247"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3ea9ec8163d64f4273fa2036239d4247">sinkVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::optional&lt; std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;toSink=std::nullopt, const std::function&lt; bool(const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;)&gt; &amp;scopeFilter=nullptr)</td></tr>
+<tr class="separator:a3ea9ec8163d64f4273fa2036239d4247"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4de12345278ddfb43c21f81f79040162"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4de12345278ddfb43c21f81f79040162">tensorPropConst</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;subAST=<a class="el" href="classfreetensor_1_1ID.html">ID</a>())</td></tr>
 <tr class="separator:a4de12345278ddfb43c21f81f79040162"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a05409d02d9aa7bb8deead7ccc3ab87cc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a05409d02d9aa7bb8deead7ccc3ab87cc">undoMakeReduction</a> (const <a class="el" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> dtype)</td></tr>
@@ -17503,8 +17503,8 @@ template&lt;class Simplifier &gt; </div>
 
 </div>
 </div>
-<a id="aefb0e8913603872bf5a6fd93cb742260" name="aefb0e8913603872bf5a6fd93cb742260"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aefb0e8913603872bf5a6fd93cb742260">&#9670;&#160;</a></span>sinkVar()</h2>
+<a id="a3ea9ec8163d64f4273fa2036239d4247" name="a3ea9ec8163d64f4273fa2036239d4247"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ea9ec8163d64f4273fa2036239d4247">&#9670;&#160;</a></span>sinkVar()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -17519,7 +17519,13 @@ template&lt;class Simplifier &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::optional&lt; std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>toSink</em> = <code>std::nullopt</code>&#160;</td>
+          <td class="paramname"><em>toSink</em> = <code>std::nullopt</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; bool(const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>scopeFilter</em> = <code>nullptr</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -17533,6 +17539,7 @@ template&lt;class Simplifier &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">toSink</td><td>: If set, sink VarDef nodes in this set only </td></tr>
+    <tr><td class="paramname">scopeFilter</td><td>: If set, only sink into scopes that this filter returns true </td></tr>
   </table>
   </dd>
 </dl>
