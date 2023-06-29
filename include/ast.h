@@ -231,6 +231,7 @@ class StmtNode : public ASTNode {
 
     const Metadata &metadata() const { return metadata_; }
     Metadata &metadata() { return metadata_; }
+    void setMetadata(const Metadata &metadata) { metadata_ = metadata; }
 
     bool isStmt() const override { return true; }
 
