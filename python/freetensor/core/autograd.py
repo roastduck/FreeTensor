@@ -1,5 +1,5 @@
 __all__ = [
-    'GradTapeMode', 'grad_body', 'grad', 'grad_', 'jacrev',
+    'GradTapeMode', 'TapeStrategy', 'grad_body', 'grad', 'grad_', 'jacrev',
     'output_all_intermediates'
 ]
 
@@ -9,7 +9,7 @@ import functools
 
 from .. import ffi
 
-from ..ffi import GradTapeMode
+from ..ffi import GradTapeMode, TapeStrategy
 from ..ffi import output_all_intermediates
 
 from .analyze import find_stmt, find_all_stmt
@@ -36,8 +36,6 @@ def grad_body(stmt: ffi.Stmt,
 
     req = set(requires)
     prov = set(provides)
-    if type(tapes) is not GradTapeMode:
-        tapes = {find_stmt(stmt, t).id for t in tapes}
     return ffi.grad_body(stmt, req, prov, tapes, reset_provided_grad, invert,
                          user_grads)
 
@@ -47,7 +45,8 @@ def _grad_func(func,
                impl,
                requires: Sequence[Union[str, Parameter]],
                provides: Sequence[Union[str, Parameter, Return]],
-               tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+               tapes: Union[Sequence, GradTapeMode,
+                            TapeStrategy] = GradTapeMode.NoReuseOnly,
                tape_in_closure: bool = True,
                reset_provided_grad: bool = True,
                invert: bool = True,
@@ -116,8 +115,6 @@ def _grad_func(func,
             prov.add(p.get_name(func.name, func_return_names))
         else:
             prov.add(p)
-    if type(tapes) is not GradTapeMode:
-        tapes = {find_stmt(func, t).id for t in tapes}
     fwd, bwd, req_map, prov_map = impl(func, req, prov, tapes, tape_in_closure,
                                        reset_provided_grad, invert, user_grads)
 
@@ -150,7 +147,8 @@ def _grad_func(func,
 def grad_(func=None,
           requires: Sequence[Union[str, Parameter]] = None,
           provides: Sequence[Union[str, Parameter, Return]] = None,
-          tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+          tapes: Union[Sequence, GradTapeMode,
+                       TapeStrategy] = GradTapeMode.NoReuseOnly,
           tape_in_closure: bool = True,
           reset_provided_grad: bool = True,
           invert: bool = True,
@@ -192,7 +190,7 @@ def grad_(func=None,
         Name of output variables whose gradients are known. A mutable parameter of a
         function can also be specified with a `Parameter` object by position. A return
         value of a function can also be specified with a `Return` object by position
-    tapes : Union[Sequence, GradTapeMode]
+    tapes : Union[Sequence, GradTapeMode, TapeStrategy]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
         VarDef selectors of them. It can also be a `GradTapeMode`, then it will determine
@@ -261,7 +259,8 @@ def grad_(func=None,
 def grad(func=None,
          requires: Sequence[Union[str, Parameter]] = None,
          provides: Sequence[Union[str, Parameter, Return]] = None,
-         tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+         tapes: Union[Sequence, GradTapeMode,
+                      TapeStrategy] = GradTapeMode.NoReuseOnly,
          tape_in_closure: bool = True,
          reset_provided_grad: bool = True,
          invert: bool = True,
@@ -304,7 +303,7 @@ def grad(func=None,
         Name of output variables whose gradients are known. A mutable parameter of a
         function can also be specified with a `Parameter` object by position. A return
         value of a function can also be specified with a `Return` object by position
-    tapes : Union[Sequence, GradTapeMode]
+    tapes : Union[Sequence, GradTapeMode, TapeStrategy]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
         VarDef selectors of them. It can also be a `GradTapeMode`, then it will determine
@@ -430,7 +429,7 @@ def jacrev_(func=None,
         total number of elements in the specified inputs. This requires all involved inputs
         having the same data type and memory type. In this case, the name of the Jacobian
         tensor will be `"jacrev.flatten"`, and the returned name map will be empty
-    tapes : Union[Sequence, GradTapeMode]
+    tapes : Union[Sequence, GradTapeMode, TapeStrategy]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
         VarDef selectors of them. It can also be a `GradTapeMode`, then it will determine
@@ -692,7 +691,8 @@ def jacrev(func=None,
            inputs: Sequence[Union[str, Parameter]] = None,
            output: Union[str, Parameter, Return] = None,
            flatten: bool = False,
-           tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+           tapes: Union[Sequence, GradTapeMode,
+                        TapeStrategy] = GradTapeMode.NoReuseOnly,
            tape_in_closure: bool = True,
            invert: bool = True,
            user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
@@ -746,7 +746,7 @@ def jacrev(func=None,
         total number of elements in the specified inputs. This requires all involved inputs
         having the same data type and memory type. In this case, the name of the Jacobian
         tensor will be `"jacrev.flatten"`, and the returned name map will be empty
-    tapes : Union[Sequence, GradTapeMode]
+    tapes : Union[Sequence, GradTapeMode, TapeStrategy]
         Intermediate variables that need to be stored from the forward pass and
         reused in the backward pass. This parameter can be a sequence, which contains
         VarDef selectors of them. It can also be a `GradTapeMode`, then it will determine
