@@ -966,20 +966,26 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         //                  tolerance is disabling this check.
         if (fusableNonOverlapTolerance >= 0) {
             bool hugeNonOverlap = false;
-            auto check = [&](const PBSet &aRange, const PBSet &bRange) {
-                if (isl_set_is_bounded(aRange.get())) {
-                    auto aMax = PBVal(isl_set_dim_max_val(aRange.copy(), 0));
-                    ASSERT(aMax.denSi() == 1);
-                    auto offset =
-                        fixDim(universeSet(PBSpace(aRange)), 0,
-                               aMax.numSi() + fusableNonOverlapTolerance);
-                    // $b \cap a + (max(a) + tol) != \emptySet$
-                    // indicates b ends long after a
-                    if (!intersect(bRange, sum(aRange, offset)).empty())
+            auto check = [&, nParams = nParams](const PBSet &_aRange,
+                                                const PBSet &_bRange) {
+                PBSet aRange = isl_set_move_dims(_aRange.copy(), isl_dim_param,
+                                                 0, isl_dim_set, 0, nParams);
+                PBSet bRange = isl_set_move_dims(_bRange.copy(), isl_dim_param,
+                                                 0, isl_dim_set, 0, nParams);
+
+                auto tol = fixDim(universeSet(PBSpace(aRange)), 0,
+                                  fusableNonOverlapTolerance);
+
+                if (isl_set_dim_has_lower_bound(aRange.get(), isl_dim_set, 0)) {
+                    auto lowerInterval = apply(sum(lexmin(aRange), neg(tol)),
+                                               lexGT(PBSpace(aRange)));
+                    if (!intersect(lowerInterval, bRange).empty())
                         hugeNonOverlap = true;
-                    // $b \cap a - (max(a) + tol) != \emptySet$
-                    // indicates b begins long before a
-                    if (!intersect(bRange, sum(aRange, neg(offset))).empty())
+                }
+                if (isl_set_dim_has_upper_bound(aRange.get(), isl_dim_set, 0)) {
+                    auto upperInterval =
+                        apply(sum(lexmax(aRange), tol), lexLT(PBSpace(aRange)));
+                    if (!intersect(upperInterval, bRange).empty())
                         hugeNonOverlap = true;
                 }
             };

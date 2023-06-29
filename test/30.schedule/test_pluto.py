@@ -321,6 +321,7 @@ def test_pluto_fuse_bloat_external():
         xc: ft.Var[(N, 5, 2), "float64"]
         xcg: ft.Var[(N, 5, 2), "float64", "inout"]
         Yg: ft.Var[(N, 5, 2), "float64"]
+        assert 100 < N < 2**30
         #! label: L1
         for i in range(N - 1, -1, -1):
             for j in range(4, -1, -1):
