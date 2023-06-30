@@ -711,11 +711,12 @@ template <PBSetRef T> PBPoint sample(T &&set) {
  * @return PBSet set of valid coefficients for the input set
  */
 template <PBSetRef T> PBSet coefficients(T &&set, int64_t c = 0) {
-    if (isl_set_involves_locals(set.get()))
-        throw InvalidSchedule("Local variables are not permitted in computing "
-                              "dual coefficients.");
-    auto coefficientsMap = isl_map_from_basic_map(
-        isl_basic_set_unwrap(isl_set_coefficients(PBRefTake<T>(set))));
+    // ISL coefficients applies Farkas lemma which disallows intermediate
+    // variables introduced by division/modulo constraints. The best we can do
+    // is to remove such constraints and provide a slightly relaxed bound for
+    // the coefficients, so remove_divs first.
+    auto coefficientsMap = isl_map_from_basic_map(isl_basic_set_unwrap(
+        isl_set_coefficients(isl_set_remove_divs(PBRefTake<T>(set)))));
     auto ctx = isl_map_get_ctx(coefficientsMap);
     auto paramsSpace = isl_space_domain(isl_map_get_space(coefficientsMap));
     auto nParams = isl_space_dim(paramsSpace, isl_dim_set);

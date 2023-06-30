@@ -936,7 +936,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             builder.addOutputs(p);
             builder.addOutput(result);
             auto projectedLoopRange = apply(loopSet, builder.build(ctx));
-            return PBSet(isl_set_remove_divs(projectedLoopRange.move()));
+            return PBSet(projectedLoopRange.move());
         };
         auto loop0Range = loopSetToRange(loop0Set, nParams + 1, nestLevel0);
         auto loop1Range = loopSetToRange(
