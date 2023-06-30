@@ -274,3 +274,68 @@ def test_pluto_fuse_bloat():
     with pytest.raises(ft.InvalidSchedule):
         s = ft.Schedule(kernel)
         s.pluto_fuse("L1", "L2")
+
+
+def test_pluto_fuse_external():
+
+    @ft.transform
+    def kernel(N: ft.Var[(), "int64", "input"], x):
+        x: ft.Var[(N, N), "float32", "inout"]
+        assert 0 < N < 2**30
+        for t in range(100):
+            #! label: L0
+            for i in range(N):
+                for j in range(N - 1):
+                    x[i, j + 1] += x[i, j]
+            #! label: L1
+            for i in range(N):
+                for j in range(N - 1):
+                    x[i, N - 2 - j] += x[i, N - 1 - j]
+
+    @ft.transform
+    def kernel_expected(N: ft.Var[(), "int64", "input"], x):
+        x: ft.Var[(N, N), "float32", "inout"]
+        assert 0 < N < 2**30
+        for t in range(100):
+            for i in range(N):
+                for j in range(N + -1):
+                    x[i, j + 1] += x[i, j]
+                for j in range(N + -1):
+                    x[i, -1 * j + N + -2] += x[i, -1 * j + N + -1]
+
+    print(kernel)
+    s = ft.Schedule(kernel)
+    _, parallelism = s.pluto_fuse("L0", "L1")
+    kernel = s.func()
+    print(kernel)
+    assert parallelism == 1
+    assert kernel.body.match(kernel_expected.body)
+
+
+def test_pluto_fuse_bloat_external():
+
+    @ft.transform
+    def kernel(N: ft.Var[(), "int64", "input"], Ls, Lsg, xc, xcg, Yg):
+        Ls: ft.Var[(5, 2, 2), "float64"]
+        Lsg: ft.Var[(5, 2, 2), "float64", "inout"]
+        xc: ft.Var[(N, 5, 2), "float64"]
+        xcg: ft.Var[(N, 5, 2), "float64", "inout"]
+        Yg: ft.Var[(N, 5, 2), "float64"]
+        assert 100 < N < 2**30
+        #! label: L1
+        for i in range(N - 1, -1, -1):
+            for j in range(4, -1, -1):
+                for k in range(1, -1, -1):
+                    for p in range(1, -1, -1):
+                        Lsg[j, k, p] += Yg[i, j, k] * xc[i, j, p]
+        #! label: L2
+        for i in range(N - 1, -1, -1):
+            for j in range(4, -1, -1):
+                for k in range(1, -1, -1):
+                    for p in range(1, -1, -1):
+                        xcg[i, j, p] += Yg[i, j, k] * Ls[j, k, p]
+
+    with pytest.raises(ft.InvalidSchedule):
+        s = ft.Schedule(kernel)
+        s.pluto_fuse("L1", "L2")
+        print(s.ast())

@@ -201,6 +201,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     void visit(const StmtSeq &op) override;
     void visit(const For &op) override;
     void visit(const If &op) override;
+    void visit(const Assert &op) override;
     void visit(const Store &op) override { visitStoreLike(op); }
     void visit(const ReduceTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
@@ -239,6 +240,8 @@ struct Dependence {
     // reversedly
     PBMap later2EarlierIter_;
     PBMap laterIter2Idx_, earlierIter2Idx_;
+    // not only counting the nearest, but all
+    PBMap later2EarlierIterAllPossible_;
     PBCtx &presburger_;
     AnalyzeDeps &self_;
 
@@ -360,7 +363,7 @@ class AnalyzeDeps {
     static std::string makeCond(GenPBExpr &genPBExpr,
                                 const std::vector<std::pair<Expr, ID>> &conds,
                                 RelaxMode relax, GenPBExpr::VarMap &externals,
-                                bool eraseOutsideVarDef, const VarDef &vardef);
+                                bool eraseOutsideVarDef, const AccessPoint &ap);
 
   private:
     PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,

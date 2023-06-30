@@ -217,6 +217,14 @@ void FindAccessPoint::visit(const If &op) {
     }
 }
 
+void FindAccessPoint::visit(const Assert &op) {
+    (*this)(op->cond_);
+
+    pushCond(op->cond_, op->id());
+    (*this)(op->body_);
+    popCond();
+}
+
 void FindAccessPoint::visit(const Load &op) {
     BaseClass::visit(op);
 
@@ -335,24 +343,64 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                                   const std::vector<std::pair<Expr, ID>> &conds,
                                   RelaxMode relax, GenPBExpr::VarMap &externals,
                                   bool eraseOutsideVarDef,
-                                  const VarDef &vardef) {
-    std::string ret;
+                                  const AccessPoint &ap) {
+    std::vector<std::unordered_set<std::string>> namesInConds;
+    std::unordered_set<std::string> namesInAP;
+    namesInConds.reserve(conds.size());
     for (auto &&[cond, baseStmtId] : conds) {
-        auto &&[str, vars] = genPBExpr.gen(cond);
+        namesInConds.emplace_back(allNames(cond, true));
+    }
+    for (auto &&idx : ap.access_) {
+        for (auto &&name : allNames(idx, true)) {
+            namesInAP.emplace(name);
+        }
+    }
+    for (auto &&iter : ap.iter_) {
+        for (auto &&name : allNames(iter.iter_, true)) {
+            namesInAP.emplace(name);
+        }
+    }
 
-        // If the condition is defined outside of the variable we are analyzing,
-        // and external variables in this condition is not used in any indices,
-        // and if `eraseOutsideVarDef_` is enabled, we can safely ignore this
-        // condition, because all access of this variable will hold the same
-        // condition value
-        if (eraseOutsideVarDef && vardef->ancestorById(baseStmtId).isValid() &&
-            std::find_if(vars.begin(), vars.end(),
-                         [](const std::pair<Expr, std::string> &kv) {
-                             return kv.first->nodeType() == ASTNodeType::Var;
-                         }) == vars.end()) {
+    // If the condition is defined outside of the variable we are analyzing, and
+    // external variables in this condition is not used in any accessing or
+    // iterating coordinates, and if `eraseOutsideVarDef_` is enabled, we can
+    // safely ignore this condition, because all access of this variable will
+    // hold the same condition value
+    std::vector<bool> isRedundants(conds.size(), false);
+    for (auto &&[condItem, namesInCond, isRedundant] :
+         views::zip(conds, namesInConds, isRedundants)) {
+        auto &&[cond, baseStmtId] = condItem;
+        if (eraseOutsideVarDef && ap.def_->ancestorById(baseStmtId).isValid() &&
+            !hasIntersect(namesInCond, namesInAP)) {
+            isRedundant = true;
+        }
+    }
+    bool converged;
+    do {
+        converged = true;
+        for (auto &&[namesInCond, isRedundant] :
+             views::zip(namesInConds, isRedundants)) {
+            if (!isRedundant) {
+                for (auto &&[namesInCond2, isRedundant2] :
+                     views::zip(namesInConds, isRedundants)) {
+                    if (isRedundant2 &&
+                        hasIntersect(namesInCond2, namesInCond)) {
+                        isRedundant2 = false;
+                        converged = false;
+                    }
+                }
+            }
+        }
+    } while (!converged);
+
+    std::string ret;
+    for (auto &&[condItem, isRedundant] : views::zip(conds, isRedundants)) {
+        if (isRedundant) {
             continue;
         }
 
+        auto &&[cond, baseStmtId] = condItem;
+        auto &&[str, vars] = genPBExpr.gen(cond);
         for (auto &&[expr, str] : vars) {
             if (expr->nodeType() != ASTNodeType::Var) {
                 externals[expr] = str;
@@ -363,6 +411,7 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
         }
         ret += str;
     }
+
     return ret;
 }
 
@@ -375,7 +424,7 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
     auto ret = makeIterList(p.iter_, iterDim) + " -> " +
                makeAccList(genPBExpr, p.access_, relax, externals);
     if (auto str = makeCond(genPBExpr, p.conds_, relax, externals,
-                            eraseOutsideVarDef_, p.def_);
+                            eraseOutsideVarDef_, p);
         !str.empty()) {
         ret += ": " + str;
     }
@@ -804,14 +853,14 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         }
         if (noProjectOutPrivateAxis_) {
             found_(Dependence{item, getVar(later->op_), *later, *earlier,
-                              iterDim, res, laterMap, earlierMap, presburger,
-                              *this});
+                              iterDim, res, laterMap, earlierMap, possible,
+                              presburger, *this});
         } else {
             // It will be misleading if we pass Presburger maps to users in
             // this case
             found_(Dependence{item, getVar(later->op_), *later, *earlier,
-                              iterDim, PBMap(), PBMap(), PBMap(), presburger,
-                              *this});
+                              iterDim, PBMap(), PBMap(), PBMap(), PBMap(),
+                              presburger, *this});
         }
     fail:;
     }
