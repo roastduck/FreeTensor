@@ -36,7 +36,7 @@ digraph "freetensor::Dependence"
   Node15 [label="freetensor::Ref\< T \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
   Node16 -> Node6 [dir="back",color="darkorchid3",style="dashed",label=" conds_" ];
   Node16 [label="std::vector\< std::pair\l\< freetensor::Ref, freetensor\l::ID \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
-  Node17 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" earlierIter2Idx_\nlater2EarlierIter\l_\nlaterIter2Idx_" ];
+  Node17 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" earlierIter2Idx_\nlater2EarlierIterAllPossible\l_\nlater2EarlierIter_\nlaterIter2Idx_" ];
   Node17 [label="freetensor::PBMap",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1PBMap.html",tooltip=" "];
   Node18 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" presburger_" ];
   Node18 [label="freetensor::PBCtx",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1PBCtx.html",tooltip=" "];

@@ -22,5 +22,7 @@ digraph "include/serialize/mangle.h"
   Node1 -> Node8 [dir="back",color="steelblue1",style="solid"];
   Node8 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
   Node1 -> Node9 [dir="back",color="steelblue1",style="solid"];
-  Node9 [label="src/serialize/mangle.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mangle_8cc.html",tooltip=" "];
+  Node9 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
+  Node1 -> Node10 [dir="back",color="steelblue1",style="solid"];
+  Node10 [label="src/serialize/mangle.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mangle_8cc.html",tooltip=" "];
 }

@@ -11,6 +11,8 @@ digraph "include/id.h"
   Node3 [label="include/analyze/check\l_all_defined.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$check__all__defined_8h.html",tooltip=" "];
   Node3 -> Node4 [dir="back",color="steelblue1",style="solid"];
   Node4 [label="include/pass/shrink\l_for.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$shrink__for_8h.html",tooltip=" "];
+  Node4 -> Node9 [dir="back",color="steelblue1",style="solid"];
+  Node9 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
   Node3 -> Node10 [dir="back",color="steelblue1",style="solid"];
   Node10 [label="include/schedule/as\l_matmul.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$as__matmul_8h.html",tooltip=" "];
   Node3 -> Node12 [dir="back",color="steelblue1",style="solid"];
@@ -35,6 +37,7 @@ digraph "include/id.h"
   Node21 [label="include/frontend/inlined\l_invoke.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$inlined__invoke_8h.html",tooltip=" "];
   Node19 -> Node24 [dir="back",color="steelblue1",style="solid"];
   Node24 [label="include/math/presburger.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$presburger_8h.html",tooltip=" "];
+  Node24 -> Node9 [dir="back",color="steelblue1",style="solid"];
   Node19 -> Node58 [dir="back",color="steelblue1",style="solid"];
   Node58 [label="include/mutator.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$mutator_8h.html",tooltip=" "];
   Node58 -> Node61 [dir="back",color="steelblue1",style="solid"];
@@ -42,10 +45,6 @@ digraph "include/id.h"
   Node58 -> Node68 [dir="back",color="steelblue1",style="solid"];
   Node68 [label="include/autograd/grad.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$grad_8h.html",tooltip=" "];
   Node58 -> Node21 [dir="back",color="steelblue1",style="solid"];
-  Node58 -> Node89 [dir="back",color="steelblue1",style="solid"];
-  Node89 [label="include/pass/const\l_fold.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$const__fold_8h.html",tooltip=" "];
-  Node89 -> Node20 [dir="back",color="steelblue1",style="solid"];
-  Node89 -> Node16 [dir="back",color="steelblue1",style="solid"];
   Node58 -> Node4 [dir="back",color="steelblue1",style="solid"];
   Node58 -> Node10 [dir="back",color="steelblue1",style="solid"];
   Node58 -> Node162 [dir="back",color="steelblue1",style="solid"];
@@ -59,6 +58,7 @@ digraph "include/id.h"
   Node170 -> Node191 [dir="back",color="steelblue1",style="solid"];
   Node191 [label="include/analyze/find\l_stmt.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$find__stmt_8h.html",tooltip=" "];
   Node191 -> Node15 [dir="back",color="steelblue1",style="solid"];
+  Node191 -> Node9 [dir="back",color="steelblue1",style="solid"];
   Node170 -> Node68 [dir="back",color="steelblue1",style="solid"];
   Node19 -> Node213 [dir="back",color="steelblue1",style="solid"];
   Node213 [label="src/driver.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$driver_8cc.html",tooltip=" "];
@@ -95,7 +95,6 @@ digraph "include/id.h"
   Node229 [label="include/codegen/native\l_code.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$native__code_8h.html",tooltip=" "];
   Node228 -> Node227 [dir="back",color="steelblue1",style="solid"];
   Node228 -> Node21 [dir="back",color="steelblue1",style="solid"];
-  Node228 -> Node89 [dir="back",color="steelblue1",style="solid"];
   Node228 -> Node4 [dir="back",color="steelblue1",style="solid"];
   Node228 -> Node170 [dir="back",color="steelblue1",style="solid"];
   Node220 -> Node234 [dir="back",color="steelblue1",style="solid"];
@@ -127,6 +126,7 @@ digraph "include/id.h"
   Node216 -> Node251 [dir="back",color="steelblue1",style="solid"];
   Node251 [label="include/math/parse\l_pb_expr.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$parse__pb__expr_8h.html",tooltip=" "];
   Node251 -> Node163 [dir="back",color="steelblue1",style="solid"];
+  Node251 -> Node9 [dir="back",color="steelblue1",style="solid"];
   Node216 -> Node58 [dir="back",color="steelblue1",style="solid"];
   Node216 -> Node252 [dir="back",color="steelblue1",style="solid"];
   Node252 [label="include/reduce_op.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$reduce__op_8h.html",tooltip=" "];
@@ -137,11 +137,13 @@ digraph "include/id.h"
   Node254 -> Node228 [dir="back",color="steelblue1",style="solid"];
   Node216 -> Node170 [dir="back",color="steelblue1",style="solid"];
   Node216 -> Node218 [dir="back",color="steelblue1",style="solid"];
+  Node216 -> Node9 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node228 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node235 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node248 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node266 [dir="back",color="steelblue1",style="solid"];
   Node266 [label="include/serialize/load\l_ast.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$load__ast_8h.html",tooltip=" "];
+  Node266 -> Node9 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node220 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node162 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node268 [dir="back",color="steelblue1",style="solid"];

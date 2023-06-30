@@ -23,8 +23,8 @@ digraph "include/expr.h"
   Node30 [label="src/pass/make_parallel\l_reduction.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$make__parallel__reduction_8cc.html",tooltip=" "];
   Node7 -> Node47 [dir="back",color="steelblue1",style="solid"];
   Node47 [label="include/pass/shrink\l_for.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$shrink__for_8h.html",tooltip=" "];
-  Node47 -> Node23 [dir="back",color="steelblue1",style="solid"];
-  Node23 [label="src/pass/shrink_for.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__for_8cc.html",tooltip=" "];
+  Node47 -> Node24 [dir="back",color="steelblue1",style="solid"];
+  Node24 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
   Node6 -> Node157 [dir="back",color="steelblue1",style="solid"];
   Node157 [label="include/frontend/frontend\l_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$frontend__var_8h.html",tooltip=" "];
   Node157 -> Node110 [dir="back",color="steelblue1",style="solid"];
@@ -57,7 +57,6 @@ digraph "include/expr.h"
   Node202 -> Node47 [dir="back",color="steelblue1",style="solid"];
   Node202 -> Node127 [dir="back",color="steelblue1",style="solid"];
   Node127 [label="include/pass/z3_simplify.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$z3__simplify_8h.html",tooltip=" "];
-  Node127 -> Node23 [dir="back",color="steelblue1",style="solid"];
   Node202 -> Node130 [dir="back",color="steelblue1",style="solid"];
   Node202 -> Node204 [dir="back",color="steelblue1",style="solid"];
   Node204 [label="include/schedule/schedule\l_log.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$schedule__log_8h.html",tooltip=" "];
@@ -119,17 +118,17 @@ digraph "include/expr.h"
   Node1 -> Node157 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node202 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node238 [dir="back",color="steelblue1",style="solid"];
-  Node238 [label="include/math/min_max.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$min__max_8h.html",tooltip=" "];
+  Node238 [label="include/math/min_max.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$min__max_8h.html",tooltip=" "];
   Node238 -> Node19 [dir="back",color="steelblue1",style="solid"];
   Node19 [label="src/analyze/comp_access\l_bound.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__access__bound_8cc.html",tooltip=" "];
   Node238 -> Node11 [dir="back",color="steelblue1",style="solid"];
   Node11 [label="src/analyze/structural\l_feature.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structural__feature_8cc.html",tooltip=" "];
   Node238 -> Node210 [dir="back",color="steelblue1",style="solid"];
   Node238 -> Node30 [dir="back",color="steelblue1",style="solid"];
-  Node238 -> Node23 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node239 [dir="back",color="steelblue1",style="solid"];
   Node239 [label="include/math/parse\l_pb_expr.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$parse__pb__expr_8h.html",tooltip=" "];
   Node239 -> Node36 [dir="back",color="steelblue1",style="solid"];
+  Node239 -> Node24 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node215 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node240 [dir="back",color="steelblue1",style="solid"];
   Node240 [label="include/reduce_op.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$reduce__op_8h.html",tooltip=" "];
@@ -140,4 +139,5 @@ digraph "include/expr.h"
   Node242 -> Node213 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node192 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node24 [dir="back",color="steelblue1",style="solid"];
 }
