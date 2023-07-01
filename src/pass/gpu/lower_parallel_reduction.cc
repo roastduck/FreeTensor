@@ -8,7 +8,6 @@
 #include <pass/gpu/normalize_thread_dims.h>
 #include <pass/make_nested_loops.h>
 #include <pass/normalize_loops.h>
-#include <pass/replace_iter.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>

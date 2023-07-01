@@ -56,9 +56,6 @@ class InsertBinaryReduction : public SymbolTable<Mutator> {
     const auto &ws2scope() const { return ws2scope_; }
 
   private:
-    Expr makeCondForNeighborThread(const std::string &thisThreadIter,
-                                   const Expr &neighborThreadIter);
-
     template <class T> T visitMemAcc(const T &_op) {
         auto __op = BaseClass::visit(_op);
         ASSERT(__op->nodeType() == _op->nodeType());
