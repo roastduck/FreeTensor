@@ -46,7 +46,6 @@ class InsertBinaryReduction : public SymbolTable<Mutator> {
     std::unordered_map<ID, ID>
         ws2scope_; // workspace ID -> scope that actually do the computation,
                    // excluding initialization, binary reduction and flushing
-    std::vector<Expr> condStack_;
 
   public:
     InsertBinaryReduction(
@@ -78,7 +77,6 @@ class InsertBinaryReduction : public SymbolTable<Mutator> {
     Stmt visit(const Store &op) override { return visitMemAcc(op); }
     Stmt visit(const ReduceTo &op) override { return visitMemAcc(op); }
     Expr visit(const Load &op) override { return visitMemAcc(op); }
-    Stmt visit(const If &op) override;
 };
 
 class CorrectInterThreadDependence
