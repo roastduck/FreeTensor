@@ -45,7 +45,16 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                 parallelize(l1, threadIdxX);
 
                 try {
-                    // Reorder this scope to as outer as possible
+                    // Reorder this scope to as outer as possible, to make it
+                    // possible to do thread-local reduction (maybe by
+                    // `cache_reduction` in the future), e.g.:
+                    //
+                    // s = 0
+                    // for p.1  --> Original inner loop
+                    //   s.local = 0
+                    //   for p.0
+                    //     s.local += ...
+                    //   s += s.local
                     auto refCntHolder = ast();
                     auto c = find(l1);
                     if (c->parentStmt().isValid()) {
