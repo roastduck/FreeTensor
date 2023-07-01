@@ -1,3 +1,6 @@
+
+#include "range/v3/range/conversion.hpp"
+#include "range/v3/view/transform.hpp"
 #include <algorithm>
 #include <sstream>
 
@@ -5,6 +8,7 @@
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <container_utils.h>
+#include <disjoint_set.h>
 #include <except.h>
 #include <mutator.h>
 #include <omp_utils.h>
@@ -344,6 +348,7 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                                   RelaxMode relax, GenPBExpr::VarMap &externals,
                                   bool eraseOutsideVarDef,
                                   const AccessPoint &ap) {
+#if 0
     std::vector<std::unordered_set<std::string>> namesInConds;
     std::unordered_set<std::string> namesInAP;
     namesInConds.reserve(conds.size());
@@ -392,6 +397,41 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
             }
         }
     } while (!converged);
+#else
+    std::vector<bool> isRedundants(conds.size(), false);
+    if (eraseOutsideVarDef) {
+        auto namesInConds =
+            conds |
+            views::transform([](auto &&x) { return allNames(x.first, true); }) |
+            ranges::to_vector;
+        DisjointSet<std::string> namesConnectivity;
+        for (auto &&names : namesInConds) {
+            std::optional<std::string> first;
+            for (auto &&name : names)
+                if (first.has_value())
+                    namesConnectivity.uni(*first, name);
+                else
+                    first = name;
+        }
+
+        std::unordered_set<std::string> activeRoots;
+        for (auto &&idx : ap.access_)
+            for (auto &&name : allNames(idx, true))
+                activeRoots.insert(namesConnectivity.find(name));
+        for (auto &&iter : ap.iter_)
+            for (auto &&name : allNames(iter.iter_, true))
+                activeRoots.insert(namesConnectivity.find(name));
+
+        for (size_t i = 0; i < conds.size(); ++i) {
+            isRedundants[i] = true;
+            for (auto &&name : namesInConds[i])
+                if (activeRoots.contains(name)) {
+                    isRedundants[i] = false;
+                    break;
+                }
+        }
+    }
+#endif
 
     std::string ret;
     for (auto &&[condItem, isRedundant] : views::zip(conds, isRedundants)) {
