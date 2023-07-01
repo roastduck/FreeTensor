@@ -50,10 +50,13 @@ class RelaxOneLoop : public CompTransientBounds<SymbolTable<Mutator>> {
         if (op->id() == loopId_) {
             CompUniqueBounds bound(*this);
             // Already normalized
+            ASSERT(op->begin_->nodeType() == ASTNodeType::IntConst &&
+                   op->begin_.as<IntConstNode>()->val_ == 0);
             if (auto u = bound.getIntUpper(op->end_); u != LLONG_MAX) {
                 op->body_ = makeIf(makeLT(makeVar(op->iter_), op->end_),
                                    std::move(op->body_));
                 op->end_ = makeIntConst(u);
+                op->len_ = makeIntConst(u);
             } else {
                 throw InvalidProgram("Unable to relax " + toString(op->end_));
             }
