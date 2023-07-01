@@ -216,7 +216,7 @@ void CompAccessBound::visit(const For &op) {
         // Suppose the only access to tensor `t` is `t[i, ...]`, where `i` is a
         // parallel index (e.g. CUDA thread), we cannot shrink `t[i, ...]` to
         // `t[...]` too early before all schedules are done, or we are not able
-        // to schedule a colaborative fetch. This does not apply to OpenMP
+        // to schedule a collaborative fetch. This does not apply to OpenMP
         // threads, because we cannot do a collaborative fetch anyway in OpenMP.
         BaseClass::visit(op);
     } else {

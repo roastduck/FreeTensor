@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/comp_transient_bounds.h>
 #include <analyze/symbol_table.h>
 #include <func.h>
 #include <mutator.h>
@@ -80,8 +81,9 @@ class InsertBinaryReduction : public SymbolTable<Mutator> {
     Stmt visit(const If &op) override;
 };
 
-class CorrectInterThreadDependence : public SymbolTable<Mutator> {
-    typedef SymbolTable<Mutator> BaseClass;
+class CorrectInterThreadDependence
+    : public CompTransientBounds<SymbolTable<Mutator>> {
+    typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
     const std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
         &ws2red_; // workspace ID -> (loop iter name, reduction info)
