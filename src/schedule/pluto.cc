@@ -613,11 +613,12 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                     &paramsConnect);
             }
         auto nAllParams = isl_space_dim(paramsSpace.get(), isl_dim_param);
+        auto root = paramsConnect.find("");
         auto isRedundants =
             views::ints(0, nAllParams) | views::transform([&](auto &&i) {
                 auto &&name =
                     isl_space_get_dim_name(paramsSpace.get(), isl_dim_param, i);
-                return paramsConnect.find(name) != "";
+                return paramsConnect.find(name) != root;
             }) |
             ranges::to_vector;
         auto nNecessaryParams =

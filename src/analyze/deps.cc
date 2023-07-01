@@ -388,10 +388,11 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                     first = name;
         }
 
+        auto root = namesConnectivity.find("");
         for (size_t i = 0; i < conds.size(); ++i) {
             isRedundants[i] = true;
             for (auto &&name : namesInConds[i])
-                if (namesConnectivity.find(name).empty()) {
+                if (namesConnectivity.find(name) == root) {
                     isRedundants[i] = false;
                     break;
                 }
