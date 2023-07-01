@@ -1,7 +1,6 @@
 #ifndef FREE_TENSOR_DISJOINT_SET_H
 #define FREE_TENSOR_DISJOINT_SET_H
 
-#include "stmt.h"
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
