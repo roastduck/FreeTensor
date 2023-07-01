@@ -283,6 +283,30 @@ Stmt CorrectInterThreadDependence::visit(const For &op) {
     if (auto it = loop2ws_.find(op->id()); it != loop2ws_.end()) {
         for (auto &&ws : it->second) {
             VarDef vardef = ws;
+
+            CompUniqueBounds unique(*this);
+            auto &&red = ws2red_.at(ws->id()).second;
+            auto &shape = vardef->buffer_->tensor()->shape();
+            for (auto &&[dim, oldBegin, oldEnd] :
+                 views::zip(shape | views::slice(1ul, shape.size()),
+                            red->begins_, red->ends_)) {
+                for (auto &&name : allNames(dim)) {
+                    if (!names().count(name)) {
+                        Expr newDim;
+                        for (auto &&b : unique.getDefinedUpper(
+                                 makeMin(dim, makeSub(oldEnd, oldBegin)),
+                                 names())) {
+                            newDim = newDim.isValid()
+                                         ? makeMin(std::move(newDim), b.expr())
+                                         : b.expr();
+                        }
+                        ASSERT(newDim.isValid());
+                        dim = std::move(newDim);
+                        break;
+                    }
+                }
+            }
+
             vardef->body_ = ret;
             ret = vardef;
         }
@@ -376,7 +400,7 @@ Stmt lowerParallelReduction(const Stmt &_op) {
 
         // 6. As per our definition of inter-thread dependence, a VarDef defined
         // inside a parallel For is considered thread local to it, while a
-        // VarDef defined outside a parallel For is considered thread by all the
+        // VarDef defined outside a parallel For is considered shared by all the
         // threads. The former will be further lower by
         // pass/gpu/multiplex_buffers. We need to put workspace back to the
         // original place to meet this definition, but this time with a shrinked

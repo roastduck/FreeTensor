@@ -567,6 +567,43 @@ def test_parallel_reduction_on_triangular_dim_2():
     assert np.array_equal(y_np, y_std)
 
 
+def test_parallel_reduction_on_triangular_dim_3():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(64, 8, 8), "int32", "input", "gpu/global"]
+        y: ft.Var[(64, 8), "int32", "output", "gpu/global"]
+        #! label: L1
+        for i in range(0, 64):
+            #! label: L2
+            for j in range(0, 8):
+                #! label: L3
+                for k in range(0, j + 1):
+                    y[j, k] += x[i, j, k]
+
+    s = ft.Schedule(test)
+    s.parallelize("L1", "threadIdx.x")
+    s.parallelize("L2", "blockIdx.x")
+    s.parallelize("L3", "threadIdx.y")
+    func = ft.lower(s.func(), target, verbose=1)
+
+    code = ft.codegen(func, target, verbose=1)
+    assert "atomicAdd" not in code.code
+    x_np = np.random.randint(0, 100, (64, 8, 8)).astype("int32")
+    y_np = np.zeros((8, 8), dtype="int32")
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.build_binary(code, device)(x_arr, y_arr)
+    y_np = y_arr.numpy()
+
+    x_triangle = np.array([[[x_np[i, j, k] if k <= j else 0
+                             for k in range(8)]
+                            for j in range(8)]
+                           for i in range(64)])
+    y_std = np.sum(x_triangle, axis=0)
+    assert np.array_equal(y_np, y_std)
+
+
 def test_parallel_reduction_with_inactive_threads_1():
 
     @ft.transform
