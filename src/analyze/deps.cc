@@ -1,6 +1,4 @@
 
-#include "range/v3/range/conversion.hpp"
-#include "range/v3/view/transform.hpp"
 #include <algorithm>
 #include <sstream>
 
@@ -359,9 +357,30 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
             conds |
             views::transform([](auto &&x) { return allNames(x.first, true); }) |
             ranges::to_vector;
+
         DisjointSet<std::string> namesConnectivity;
-        for (auto &&names : namesInConds) {
+        // add a root for actually used names
+        namesConnectivity.find("");
+        // mark names from both access and loop indices as used
+        for (auto &&idx : ap.access_)
+            for (auto &&name : allNames(idx, true))
+                namesConnectivity.uni("", name);
+        for (auto &&iter : ap.iter_)
+            for (auto &&name : allNames(iter.iter_, true))
+                namesConnectivity.uni("", name);
+
+        // connect by conditions
+        for (auto &&[condItem, names] : views::zip(conds, namesInConds)) {
+            auto &&[_, condId] = condItem;
+
             std::optional<std::string> first;
+
+            // if this condition is not defined outside, treat all its
+            // corresponded names as used
+            if (!ap.def_->ancestorById(condId).isValid())
+                first = "";
+
+            // connect the names occurred
             for (auto &&name : names)
                 if (first.has_value())
                     namesConnectivity.uni(*first, name);
@@ -369,18 +388,10 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                     first = name;
         }
 
-        std::unordered_set<std::string> activeRoots;
-        for (auto &&idx : ap.access_)
-            for (auto &&name : allNames(idx, true))
-                activeRoots.insert(namesConnectivity.find(name));
-        for (auto &&iter : ap.iter_)
-            for (auto &&name : allNames(iter.iter_, true))
-                activeRoots.insert(namesConnectivity.find(name));
-
         for (size_t i = 0; i < conds.size(); ++i) {
             isRedundants[i] = true;
             for (auto &&name : namesInConds[i])
-                if (activeRoots.contains(name)) {
+                if (namesConnectivity.find(name).empty()) {
                     isRedundants[i] = false;
                     break;
                 }
