@@ -348,56 +348,11 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                                   RelaxMode relax, GenPBExpr::VarMap &externals,
                                   bool eraseOutsideVarDef,
                                   const AccessPoint &ap) {
-#if 0
-    std::vector<std::unordered_set<std::string>> namesInConds;
-    std::unordered_set<std::string> namesInAP;
-    namesInConds.reserve(conds.size());
-    for (auto &&[cond, baseStmtId] : conds) {
-        namesInConds.emplace_back(allNames(cond, true));
-    }
-    for (auto &&idx : ap.access_) {
-        for (auto &&name : allNames(idx, true)) {
-            namesInAP.emplace(name);
-        }
-    }
-    for (auto &&iter : ap.iter_) {
-        for (auto &&name : allNames(iter.iter_, true)) {
-            namesInAP.emplace(name);
-        }
-    }
-
     // If the condition is defined outside of the variable we are analyzing, and
     // external variables in this condition is not used in any accessing or
     // iterating coordinates, and if `eraseOutsideVarDef_` is enabled, we can
     // safely ignore this condition, because all access of this variable will
     // hold the same condition value
-    std::vector<bool> isRedundants(conds.size(), false);
-    for (auto &&[condItem, namesInCond, isRedundant] :
-         views::zip(conds, namesInConds, isRedundants)) {
-        auto &&[cond, baseStmtId] = condItem;
-        if (eraseOutsideVarDef && ap.def_->ancestorById(baseStmtId).isValid() &&
-            !hasIntersect(namesInCond, namesInAP)) {
-            isRedundant = true;
-        }
-    }
-    bool converged;
-    do {
-        converged = true;
-        for (auto &&[namesInCond, isRedundant] :
-             views::zip(namesInConds, isRedundants)) {
-            if (!isRedundant) {
-                for (auto &&[namesInCond2, isRedundant2] :
-                     views::zip(namesInConds, isRedundants)) {
-                    if (isRedundant2 &&
-                        hasIntersect(namesInCond2, namesInCond)) {
-                        isRedundant2 = false;
-                        converged = false;
-                    }
-                }
-            }
-        }
-    } while (!converged);
-#else
     std::vector<bool> isRedundants(conds.size(), false);
     if (eraseOutsideVarDef) {
         auto namesInConds =
@@ -431,7 +386,6 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                 }
         }
     }
-#endif
 
     std::string ret;
     for (auto &&[condItem, isRedundant] : views::zip(conds, isRedundants)) {
