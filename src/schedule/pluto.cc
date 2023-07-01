@@ -598,13 +598,9 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                                         std::string name =
                                             isl_constraint_get_dim_name(
                                                 c, isl_dim_param, i);
-                                        if (first.has_value()) {
-                                            std::cout
-                                                << "    paramsConnect.uni("
-                                                << *first << ", " << name << ")"
-                                                << std::endl;
+                                        if (first.has_value())
                                             paramsConnect.uni(*first, name);
-                                        } else
+                                        else
                                             first = name;
                                     }
                                 isl_constraint_free(c);
@@ -621,19 +617,13 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             views::ints(0, nAllParams) | views::transform([&](auto &&i) {
                 auto &&name =
                     isl_space_get_dim_name(paramsSpace.get(), isl_dim_param, i);
-                std::cout << "? " << name << " -> " << paramsConnect.find(name)
-                          << std::endl;
                 return paramsConnect.find(name) != "";
             }) |
             ranges::to_vector;
         auto nNecessaryParams =
             nAllParams - ranges::accumulate(isRedundants, 0);
-        std::cout << nNecessaryParams << " out of " << nAllParams
-                  << " are necessary" << std::endl;
-        std::cout << "   [" << isRedundants << "]" << std::endl;
 
         auto align = [&](PBSet &s) {
-            std::cout << "from " << s;
             s = isl_set_align_params(s.move(), paramsSpace.copy());
             int j = 0;
             for (int i = 0; i < nAllParams; ++i)
@@ -642,7 +632,6 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                 else
                     s = isl_set_move_dims(s.move(), isl_dim_set, j++,
                                           isl_dim_param, 0, 1);
-            std::cout << " to " << s << std::endl;
         };
 
         for (auto &d : {&dep0, &dep1, &dep1to0})
