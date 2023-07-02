@@ -52,8 +52,7 @@ void FindSerialLoopsOverReduce::visit(const ReduceTo &op) {
 }
 
 bool MakeLoopCarriedReduction::needSync(const ReduceTo &op, const ID &loopId) {
-    for (auto &&[i, idx] :
-         views::zip(views::ints(0, ranges::unreachable), op->indices_)) {
+    for (auto &&idx : op->indices_) {
         if (isVariant(variantMap_, {idx, op}, loopId)) {
             return true;
         }
