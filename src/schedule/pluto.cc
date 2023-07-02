@@ -1,9 +1,12 @@
 #include <cmath>
-#include <isl/set.h>
-#include <isl/space_type.h>
 #include <numeric>
 #include <string>
 #include <vector>
+
+#include <isl/constraint.h>
+#include <isl/set.h>
+#include <isl/space_type.h>
+#include <range/v3/numeric/accumulate.hpp>
 
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
@@ -23,9 +26,6 @@
 #include <schedule/pluto.h>
 #include <serialize/load_ast.h>
 #include <serialize/mangle.h>
-
-#include <isl/constraint.h>
-#include <range/v3/numeric/accumulate.hpp>
 
 namespace freetensor {
 
@@ -581,7 +581,6 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                                 auto &paramsConnect =
                                     *static_cast<DisjointSet<std::string> *>(
                                         user);
-                                isl_constraint_dump(c);
                                 std::optional<std::string> first;
                                 // if set dimensions are involved in this
                                 // constraint, all param dimensions involved are
