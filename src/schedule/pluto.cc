@@ -564,7 +564,14 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
 
     // align external params and move to set dimensions
     const auto [nParams, paramExprs] = [&] {
-        auto paramsSpace = spaceSetAlloc(ctx, 0, 0);
+        // preload the outer axes into the parameters space, since it's possible
+        // that no dependence exists to bring them into the space
+        auto paramsSpace = spaceSetAlloc(ctx, outerAxes.size(), 0);
+        for (size_t i = 0; i < outerAxes.size(); ++i)
+            paramsSpace =
+                isl_space_set_dim_name(paramsSpace.move(), isl_dim_param, i,
+                                       ("out_" + std::to_string(i)).c_str());
+
         DisjointSet<std::string> paramsConnect;
         // setup a common root, which represents combination of set dimensions
         paramsConnect.find("");
