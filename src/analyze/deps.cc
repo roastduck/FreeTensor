@@ -30,9 +30,9 @@ void FindAllNoDeps::visit(const For &op) {
     }
 }
 
-FindAccessPoint::FindAccessPoint(const ID &vardef,
+FindAccessPoint::FindAccessPoint(const ID &vardef, DepType depType,
                                  const FindDepsAccFilter &accFilter)
-    : vardef_(vardef), accFilter_(accFilter) {}
+    : vardef_(vardef), depType_(depType), accFilter_(accFilter) {}
 
 void FindAccessPoint::doFind(const Stmt &root) {
     // Push potential StmtSeq scope
@@ -228,6 +228,10 @@ void FindAccessPoint::visit(const Assert &op) {
 
 void FindAccessPoint::visit(const Load &op) {
     BaseClass::visit(op);
+
+    if (!(depType_ & DEP_RAW) && !(depType_ & DEP_WAR)) {
+        return;
+    }
 
     bool isThisVarDef = false;
     VarDef viewOf;
@@ -1296,7 +1300,7 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
     std::vector<FindAccessPoint> finders;
     finders.reserve(defs.size());
     for (auto &&def : defs) {
-        finders.emplace_back(def->id(), accFilter_);
+        finders.emplace_back(def->id(), type_, accFilter_);
     }
     exceptSafeParallelFor<size_t>(
         0, finders.size(), 1, [&](size_t i) { finders[i].doFind(op); },

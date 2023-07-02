@@ -614,7 +614,7 @@ def test_parallel_reduction_with_inactive_threads_1():
         for i in range(0, 4):
             #! label: L2
             for j in range(0, 64):
-                if j % 2 == 0:
+                if j % 3 == 0:
                     y[i] = y[i] + x[i, j]
 
     s = ft.Schedule(test)
@@ -631,7 +631,10 @@ def test_parallel_reduction_with_inactive_threads_1():
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
-    y_std = np.sum(x_np.reshape(4, 32, 2)[:, :, 0], axis=1)
+    y_std = np.sum(
+        [[x_np[i, j] if j % 3 == 0 else 0 for j in range(64)] for i in range(4)
+        ],
+        axis=1)
     assert np.array_equal(y_np, y_std)
 
 
