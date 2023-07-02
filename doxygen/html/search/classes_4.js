@@ -12,6 +12,7 @@ var searchData=
   ['directcallerselector_9',['DirectCallerSelector',['../classfreetensor_1_1DirectCallerSelector.html',1,'freetensor']]],
   ['discreteobservation_10',['DiscreteObservation',['../structfreetensor_1_1DiscreteObservation.html',1,'freetensor']]],
   ['discreterandvar_11',['DiscreteRandVar',['../classfreetensor_1_1DiscreteRandVar.html',1,'freetensor']]],
-  ['driver_12',['Driver',['../classfreetensor_1_1Driver.html',1,'freetensor']]],
-  ['drivererror_13',['DriverError',['../classfreetensor_1_1DriverError.html',1,'freetensor']]]
+  ['disjointset_12',['DisjointSet',['../classfreetensor_1_1DisjointSet.html',1,'freetensor']]],
+  ['driver_13',['Driver',['../classfreetensor_1_1Driver.html',1,'freetensor']]],
+  ['drivererror_14',['DriverError',['../classfreetensor_1_1DriverError.html',1,'freetensor']]]
 ];

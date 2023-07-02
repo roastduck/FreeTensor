@@ -5,11 +5,5 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [label="freetensor::MetadataContent",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1MetadataContent.html",tooltip=" "];
-  Node0 -> Node1 [dir="back",color="steelblue1",style="solid"];
-  Node1 [label="freetensor::AnonymousMetadata\lContent",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1AnonymousMetadataContent.html",tooltip=" "];
-  Node0 -> Node2 [dir="back",color="steelblue1",style="solid"];
-  Node2 [label="freetensor::SourceMetadata\lContent",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SourceMetadataContent.html",tooltip=" "];
-  Node0 -> Node3 [dir="back",color="steelblue1",style="solid"];
-  Node3 [label="freetensor::TransformedMetadata\lContent",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1TransformedMetadataContent.html",tooltip=" "];
+  Node0 [label="freetensor::MemoizedSchedules",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1MemoizedSchedules.html",tooltip=" "];
 }

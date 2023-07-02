@@ -7,4 +7,6 @@ digraph "freetensor::LinearExpr&lt; T &gt;"
   Node1 [label="freetensor::LinearExpr\< T \>",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
   Node2 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" coeff_" ];
   Node2 [label="std::vector\< freetensor\l::Scale\< T \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node3 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" bias_" ];
+  Node3 [label="T",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
 }
