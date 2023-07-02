@@ -1,12 +1,17 @@
 #include <cmath>
-#include <isl/set.h>
 #include <numeric>
 #include <string>
 #include <vector>
 
+#include <isl/constraint.h>
+#include <isl/set.h>
+#include <isl/space_type.h>
+#include <range/v3/numeric/accumulate.hpp>
+
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
+#include <disjoint_set.h>
 #include <expr.h>
 #include <math/parse_pb_expr.h>
 #include <math/presburger.h>
@@ -559,17 +564,81 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
 
     // align external params and move to set dimensions
     const auto [nParams, paramExprs] = [&] {
-        auto paramsSpace = spaceSetAlloc(ctx, 0, 0);
+        // preload the outer axes into the parameters space, since it's possible
+        // that no dependence exists to bring them into the space
+        auto paramsSpace = spaceSetAlloc(ctx, outerAxes.size(), 0);
+        for (size_t i = 0; i < outerAxes.size(); ++i)
+            paramsSpace =
+                isl_space_set_dim_name(paramsSpace.move(), isl_dim_param, i,
+                                       ("out_" + std::to_string(i)).c_str());
+
+        DisjointSet<std::string> paramsConnect;
+        // setup a common root, which represents combination of set dimensions
+        paramsConnect.find("");
         for (auto &d : {&dep0, &dep1, &dep1to0})
-            for (const auto &dd : *d)
+            for (const auto &dd : *d) {
                 paramsSpace = isl_space_align_params(paramsSpace.move(),
                                                      PBSpace(dd).move());
-        auto n = isl_space_dim(paramsSpace.get(), isl_dim_param);
+                isl_set_foreach_basic_set(
+                    dd.get(),
+                    [](isl_basic_set *bset, void *user) {
+                        isl_basic_set_foreach_constraint(
+                            bset,
+                            [](isl_constraint *c, void *user) {
+                                auto &paramsConnect =
+                                    *static_cast<DisjointSet<std::string> *>(
+                                        user);
+                                std::optional<std::string> first;
+                                // if set dimensions are involved in this
+                                // constraint, all param dimensions involved are
+                                // thus necessary, connect them to common root
+                                if (isl_constraint_involves_dims(
+                                        c, isl_dim_set, 0,
+                                        isl_constraint_dim(c, isl_dim_set)))
+                                    first = "";
+                                for (auto i = 0;
+                                     i < isl_constraint_dim(c, isl_dim_param);
+                                     ++i)
+                                    if (isl_constraint_involves_dims(
+                                            c, isl_dim_param, i, 1)) {
+                                        std::string name =
+                                            isl_constraint_get_dim_name(
+                                                c, isl_dim_param, i);
+                                        if (first.has_value())
+                                            paramsConnect.uni(*first, name);
+                                        else
+                                            first = name;
+                                    }
+                                isl_constraint_free(c);
+                                return isl_stat_ok;
+                            },
+                            user);
+                        isl_basic_set_free(bset);
+                        return isl_stat_ok;
+                    },
+                    &paramsConnect);
+            }
+        auto nAllParams = isl_space_dim(paramsSpace.get(), isl_dim_param);
+        auto root = paramsConnect.find("");
+        auto isRedundants =
+            views::ints(0, nAllParams) | views::transform([&](auto &&i) {
+                auto &&name =
+                    isl_space_get_dim_name(paramsSpace.get(), isl_dim_param, i);
+                return paramsConnect.find(name) != root;
+            }) |
+            ranges::to_vector;
+        auto nNecessaryParams =
+            nAllParams - ranges::accumulate(isRedundants, 0);
 
         auto align = [&](PBSet &s) {
-            s = isl_set_move_dims(
-                isl_set_align_params(s.move(), paramsSpace.copy()), isl_dim_set,
-                0, isl_dim_param, 0, n);
+            s = isl_set_align_params(s.move(), paramsSpace.copy());
+            int j = 0;
+            for (int i = 0; i < nAllParams; ++i)
+                if (isRedundants[i])
+                    s = isl_set_project_out(s.move(), isl_dim_param, 0, 1);
+                else
+                    s = isl_set_move_dims(s.move(), isl_dim_set, j++,
+                                          isl_dim_param, 0, 1);
         };
 
         for (auto &d : {&dep0, &dep1, &dep1to0})
@@ -579,19 +648,21 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         align(loop1Set);
 
         std::vector<Expr> params;
-        params.reserve(n);
-        for (size_t i = 0; i < n - outerAxes.size(); ++i) {
-            std::string name =
-                isl_space_get_dim_name(paramsSpace.get(), isl_dim_param, i);
-            auto pos = name.find("__ext__");
-            ASSERT(pos != std::string::npos);
-            params.push_back(
-                loadAST(unmangle(name.substr(0, pos))).as<ExprNode>());
-        }
+        params.reserve(nNecessaryParams);
+        for (size_t i = 0; i < nAllParams - outerAxes.size(); ++i)
+            if (!isRedundants[i]) {
+                std::string name =
+                    isl_space_get_dim_name(paramsSpace.get(), isl_dim_param, i);
+                auto pos = name.find("__ext__");
+                ASSERT(pos != std::string::npos);
+                params.push_back(
+                    loadAST(unmangle(name.substr(0, pos))).as<ExprNode>());
+            }
         for (size_t i = 0; i < outerAxes.size(); ++i)
-            params.push_back(outerAxes[i].iter_);
+            if (!isRedundants[i + nAllParams - outerAxes.size()])
+                params.push_back(outerAxes[i].iter_);
 
-        return std::pair{n, params};
+        return std::pair{nNecessaryParams, params};
     }();
 
     // constraints for bounding and valid coefficients

@@ -5,6 +5,7 @@
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <container_utils.h>
+#include <disjoint_set.h>
 #include <except.h>
 #include <mutator.h>
 #include <omp_utils.h>
@@ -348,54 +349,58 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                                   RelaxMode relax, GenPBExpr::VarMap &externals,
                                   bool eraseOutsideVarDef,
                                   const AccessPoint &ap) {
-    std::vector<std::unordered_set<std::string>> namesInConds;
-    std::unordered_set<std::string> namesInAP;
-    namesInConds.reserve(conds.size());
-    for (auto &&[cond, baseStmtId] : conds) {
-        namesInConds.emplace_back(allNames(cond, true));
-    }
-    for (auto &&idx : ap.access_) {
-        for (auto &&name : allNames(idx, true)) {
-            namesInAP.emplace(name);
-        }
-    }
-    for (auto &&iter : ap.iter_) {
-        for (auto &&name : allNames(iter.iter_, true)) {
-            namesInAP.emplace(name);
-        }
-    }
-
     // If the condition is defined outside of the variable we are analyzing, and
     // external variables in this condition is not used in any accessing or
     // iterating coordinates, and if `eraseOutsideVarDef_` is enabled, we can
     // safely ignore this condition, because all access of this variable will
     // hold the same condition value
     std::vector<bool> isRedundants(conds.size(), false);
-    for (auto &&[condItem, namesInCond, isRedundant] :
-         views::zip(conds, namesInConds, isRedundants)) {
-        auto &&[cond, baseStmtId] = condItem;
-        if (eraseOutsideVarDef && ap.def_->ancestorById(baseStmtId).isValid() &&
-            !hasIntersect(namesInCond, namesInAP)) {
-            isRedundant = true;
+    if (eraseOutsideVarDef) {
+        auto namesInConds =
+            conds |
+            views::transform([](auto &&x) { return allNames(x.first, true); }) |
+            ranges::to_vector;
+
+        DisjointSet<std::string> namesConnectivity;
+        // add a root for actually used names
+        namesConnectivity.find("");
+        // mark names from both access and loop indices as used
+        for (auto &&idx : ap.access_)
+            for (auto &&name : allNames(idx, true))
+                namesConnectivity.uni("", name);
+        for (auto &&iter : ap.iter_)
+            for (auto &&name : allNames(iter.iter_, true))
+                namesConnectivity.uni("", name);
+
+        // connect by conditions
+        for (auto &&[condItem, names] : views::zip(conds, namesInConds)) {
+            auto &&[_, condId] = condItem;
+
+            std::optional<std::string> first;
+
+            // if this condition is not defined outside, treat all its
+            // corresponded names as used
+            if (!ap.def_->ancestorById(condId).isValid())
+                first = "";
+
+            // connect the names occurred
+            for (auto &&name : names)
+                if (first.has_value())
+                    namesConnectivity.uni(*first, name);
+                else
+                    first = name;
+        }
+
+        auto root = namesConnectivity.find("");
+        for (size_t i = 0; i < conds.size(); ++i) {
+            isRedundants[i] = true;
+            for (auto &&name : namesInConds[i])
+                if (namesConnectivity.find(name) == root) {
+                    isRedundants[i] = false;
+                    break;
+                }
         }
     }
-    bool converged;
-    do {
-        converged = true;
-        for (auto &&[namesInCond, isRedundant] :
-             views::zip(namesInConds, isRedundants)) {
-            if (!isRedundant) {
-                for (auto &&[namesInCond2, isRedundant2] :
-                     views::zip(namesInConds, isRedundants)) {
-                    if (isRedundant2 &&
-                        hasIntersect(namesInCond2, namesInCond)) {
-                        isRedundant2 = false;
-                        converged = false;
-                    }
-                }
-            }
-        }
-    } while (!converged);
 
     std::string ret;
     for (auto &&[condItem, isRedundant] : views::zip(conds, isRedundants)) {
