@@ -77,6 +77,12 @@ typedef std::function<bool(const AccessPoint &later,
                            const AccessPoint &earlier)>
     FindDepsFilter;
 
+typedef int DepType;
+const DepType DEP_WAW = 0x1;
+const DepType DEP_WAR = 0x2;
+const DepType DEP_RAW = 0x4;
+const DepType DEP_ALL = DEP_WAW | DEP_WAR | DEP_RAW;
+
 /**
  * Find read and write points
  */
@@ -85,6 +91,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
 
     ID vardef_;
 
+    const DepType depType_;
     const FindDepsAccFilter &accFilter_;
 
     bool lastIsLoad_ =
@@ -131,7 +138,8 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     /** @} */
 
   public:
-    FindAccessPoint(const ID &vardef, const FindDepsAccFilter &accFilter);
+    FindAccessPoint(const ID &vardef, DepType depType,
+                    const FindDepsAccFilter &accFilter);
 
     void doFind(const Stmt &root);
 
@@ -259,12 +267,6 @@ struct Dependence {
 
 typedef SyncFunc<void(const Dependence &)> FindDepsCallback;
 
-typedef int DepType;
-const DepType DEP_WAW = 0x1;
-const DepType DEP_WAR = 0x2;
-const DepType DEP_RAW = 0x4;
-const DepType DEP_ALL = DEP_WAW | DEP_WAR | DEP_RAW;
-
 enum class RelaxMode : int { Possible, Necessary };
 enum class FindDepsMode : int {
     Dep,         // Dependence may happen between `earlier` and `later`
@@ -332,11 +334,13 @@ class AnalyzeDeps {
           noProjectOutPrivateAxis_(noProjectOutPrivateAxis) {
         readsAsEarlier_ =
             ::freetensor::filter(reads, [&](const Ref<AccessPoint> &acc) {
-                return earlierFilter_ == nullptr || earlierFilter_(*acc);
+                return (depType_ & DEP_WAR) &&
+                       (earlierFilter_ == nullptr || earlierFilter_(*acc));
             });
         readsAsLater_ =
             ::freetensor::filter(reads, [&](const Ref<AccessPoint> &acc) {
-                return laterFilter_ == nullptr || laterFilter_(*acc);
+                return (depType_ & DEP_RAW) &&
+                       (laterFilter_ == nullptr || laterFilter_(*acc));
             });
         writesAsEarlier_ =
             ::freetensor::filter(writes, [&](const Ref<AccessPoint> &acc) {
