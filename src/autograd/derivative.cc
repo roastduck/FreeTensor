@@ -221,10 +221,9 @@ void Derivative::visit(const Mul &op) {
 void Derivative::visit(const RealDiv &op) {
     if (auto it = partials_.find(op); it != partials_.end()) {
         setPartial(op->lhs_, makeRealDiv(it->second.mathExpr(), op->rhs_));
-        setPartial(op->rhs_,
-                   makeSub(makeIntConst(0),
-                           makeRealDiv(makeMul(it->second.mathExpr(), op->lhs_),
-                                       makeMul(op->rhs_, op->rhs_))));
+        setPartial(op->rhs_, makeSub(makeIntConst(0),
+                                     makeMul(it->second.mathExpr(),
+                                             makeRealDiv(op, op->rhs_))));
     }
     BaseClass::visit(op);
 }
