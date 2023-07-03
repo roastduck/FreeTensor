@@ -27,7 +27,7 @@ class RemoveDeadVar : public SymbolTable<Mutator> {
     std::unordered_set<std::string> readsAfterward_;
 
     // All writes occured in each statemtns
-    std::unordered_map<Stmt, std::unordered_set<std::string>> writes_;
+    std::unordered_map<ID, std::unordered_set<std::string>> writes_;
 
     std::unordered_set<std::string> writtenToOutput_;
     std::unordered_map<std::string, int> inLoopCnt_;

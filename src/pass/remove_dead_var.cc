@@ -14,15 +14,15 @@ Stmt RemoveAllWrites::visit(const ReduceTo &op) {
 Stmt RemoveDeadVar::visitStmt(const Stmt &s) {
     auto ret = BaseClass::visitStmt(s);
     for (auto &&c : ret->children()) {
-        if (auto it = writes_.find(c); it != writes_.end()) {
+        if (auto it = writes_.find(c->id()); it != writes_.end()) {
             for (auto &&var : it->second) {
                 if (hasDef(var)) { // If still in scope
-                    writes_[ret].emplace(var);
+                    writes_[ret->id()].emplace(var);
                 }
             }
         }
     }
-    if (auto it = writes_.find(ret); it != writes_.end()) {
+    if (auto it = writes_.find(ret->id()); it != writes_.end()) {
         for (auto jt = it->second.begin(); jt != it->second.end();) {
             auto &&var = *jt;
             if (!inLoopCnt_.count(var) && !writtenToOutput_.count(var) &&
@@ -55,7 +55,7 @@ Stmt RemoveDeadVar::visit(const Store &op) {
     destination_ = op->var_;
     auto ret = BaseClass::visit(op);
     destination_.clear();
-    writes_[ret].emplace(op->var_);
+    writes_[ret->id()].emplace(op->var_);
     return ret;
 }
 
@@ -63,7 +63,7 @@ Stmt RemoveDeadVar::visit(const ReduceTo &op) {
     destination_ = op->var_;
     auto ret = BaseClass::visit(op);
     destination_.clear();
-    writes_[ret].emplace(op->var_);
+    writes_[ret->id()].emplace(op->var_);
     return ret;
 }
 
@@ -92,8 +92,8 @@ Stmt RemoveDeadVar::visit(const VarDef &_op) {
     readsAfterward_.erase(op->name_);
 
     if (op->buffer_->atype() == AccessType::InputMutable &&
-        (!writes_.count(op->body_) ||
-         !writes_.at(op->body_).count(op->name_))) {
+        (!writes_.count(op->body_->id()) ||
+         !writes_.at(op->body_->id()).count(op->name_))) {
         op->buffer_->setAtype(AccessType::Input);
     }
 
