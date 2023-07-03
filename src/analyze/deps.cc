@@ -653,8 +653,12 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
     // We only have to add constraint for common loops of both accesses
     auto common = lcaStmt(later->stmt_, earlier->stmt_);
 
-    for (auto &&[expr, strs] : intersect(laterExternals, earlierExternals)) {
-        auto &&[pStr, oStr] = strs;
+    for (auto &&expr : ranges::to<ASTHashSet<Expr>>(views::concat(
+             views::keys(laterExternals), views::keys(earlierExternals)))) {
+        auto &&pStr = mangle(dumpAST(expr, true)) + "__ext__later" +
+                      std::to_string((uint64_t)later->stmt_->id());
+        auto &&oStr = mangle(dumpAST(expr, true)) + "__ext__earlier" +
+                      std::to_string((uint64_t)earlier->stmt_->id());
         auto require = makeExternalEq(presburger, iterDim, pStr, oStr);
         for (auto c = common; c.isValid(); c = c->parentStmt()) {
             if (eraseOutsideVarDef_ && c->id() == later->def_->id()) {
@@ -855,13 +859,13 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         if (noProjectOutPrivateAxis_) {
             found_(Dependence{item, getVar(later->op_), *later, *earlier,
                               iterDim, res, laterMap, earlierMap, possible,
-                              presburger, *this});
+                              extConstraint, presburger, *this});
         } else {
             // It will be misleading if we pass Presburger maps to users in
             // this case
             found_(Dependence{item, getVar(later->op_), *later, *earlier,
                               iterDim, PBMap(), PBMap(), PBMap(), PBMap(),
-                              presburger, *this});
+                              PBMap(), presburger, *this});
         }
     fail:;
     }
@@ -1002,7 +1006,8 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
 
     GenPBExpr::VarMap laterExternals;
     PBMap laterMap =
-        makeAccMap(presburger, *later, iterDim, accDim, laterRelax_, "later",
+        makeAccMap(presburger, *later, iterDim, accDim, laterRelax_,
+                   "later" + std::to_string((uint64_t)later->stmt_->id()),
                    laterExternals, noNeedToBeVars);
     if (laterMap.empty()) {
         return;
@@ -1012,22 +1017,22 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     std::vector<PBMap> earlierMapList(earlierList.size());
     std::vector<GenPBExpr::VarMap> earlierExternalsList(earlierList.size());
     std::vector<PBMap> es2aList(earlierList.size()),
-        extConstraintList(earlierList.size()), depAllList(earlierList.size());
-    PBMap psDepAllUnion;
+        depAllList(earlierList.size());
+    PBMap extConstraint, psDepAllUnion;
     for (auto &&[i, earlier, earlierMap, earlierExternals] :
          views::zip(views::ints(0, ranges::unreachable), earlierList,
                     earlierMapList, earlierExternalsList)) {
-        earlierMap = makeAccMap(presburger, *earlier, iterDim, accDim,
-                                earlierRelax_, "earlier" + std::to_string(i),
-                                earlierExternals, noNeedToBeVars);
+        earlierMap = makeAccMap(
+            presburger, *earlier, iterDim, accDim, earlierRelax_,
+            "earlier" + std::to_string((uint64_t)earlier->stmt_->id()),
+            earlierExternals, noNeedToBeVars);
     }
     projectOutPrivateAxis(presburger, later, earlierList, earlierMapList,
                           iterDim);
-    for (auto &&[i, earlier, earlierMap, earlierExternals, es2a, extConstraint,
-                 depAll] :
+    for (auto &&[i, earlier, earlierMap, earlierExternals, es2a, depAll] :
          views::zip(views::ints(0, ranges::unreachable), earlierList,
                     earlierMapList, earlierExternalsList, es2aList,
-                    extConstraintList, depAllList)) {
+                    depAllList)) {
         if (earlierMap.empty()) {
             continue;
         }
@@ -1036,11 +1041,12 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
 
         depAll = subtract(applyRange(laterMap, reverse(earlierMap)), allEQ);
 
-        // Constarints on dependences. They decide when there are dependence,
+        // Constraints on dependences. They decide when there are dependence,
         // but do not affect the existence of accesses. They should be applied
         // only to `depAll`.
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
+        depAll = coalesce(std::move(depAll));
 
         // Constraints on external variables limit the possibility of certain
         // relations on those variables. If these constraints are violated, it
@@ -1049,12 +1055,13 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         // considered as constraints on the universal set, applied to not only
         // `depAll`, but also `earlierMap` and `laterMap` when checking killing
         // cases.
-        extConstraint = makeExternalVarConstraint(presburger, later, earlier,
-                                                  laterExternals,
-                                                  earlierExternals, iterDim);
-        depAll = intersect(std::move(depAll), extConstraint);
-
-        depAll = coalesce(std::move(depAll));
+        auto extConstraintLocal = makeExternalVarConstraint(
+            presburger, later, earlier, laterExternals, earlierExternals,
+            iterDim);
+        extConstraint = extConstraint.isValid()
+                            ? intersect(std::move(extConstraint),
+                                        std::move(extConstraintLocal))
+                            : std::move(extConstraintLocal);
 
         PBMap psDepAll = applyRange(depAll, std::move(ea2s));
         psDepAllUnion = psDepAllUnion.isValid()
@@ -1064,6 +1071,8 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     if (!psDepAllUnion.isValid()) {
         return;
     }
+    psDepAllUnion =
+        coalesce(intersect(std::move(psDepAllUnion), extConstraint));
 
     PBMap serialLexGT = lexGT(spaceSetAlloc(presburger, 0, iterDim));
     PBMap serialEQ = identity(spaceAlloc(presburger, 0, iterDim, iterDim));
@@ -1077,9 +1086,8 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBMap psNearest = uni(lexmax(std::move(psDep)), std::move(psSelf));
     psNearest = coalesce(std::move(psNearest));
 
-    for (auto &&[earlier, es2a, earlierMap, extConstraint, depAll] :
-         views::zip(earlierList, es2aList, earlierMapList, extConstraintList,
-                    depAllList)) {
+    for (auto &&[earlier, es2a, earlierMap, depAll] :
+         views::zip(earlierList, es2aList, earlierMapList, depAllList)) {
         if (depAll.isValid()) {
             checkAgainstCond(
                 presburger, later, earlier, depAll,
@@ -1110,7 +1118,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     GenPBExpr::VarMap earlierExternals;
     PBMap earlierMap =
         makeAccMap(presburger, *earlier, iterDim, accDim, earlierRelax_,
-                   "earlier", earlierExternals, noNeedToBeVars);
+                   "earlier" + std::to_string((uint64_t)earlier->stmt_->id()),
+                   earlierExternals, noNeedToBeVars);
     if (earlierMap.empty()) {
         return;
     }
@@ -1118,23 +1127,21 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBMap ea2s = reverse(es2a);
     std::vector<PBMap> laterMapList(laterList.size());
     std::vector<GenPBExpr::VarMap> laterExternalsList(laterList.size());
-    std::vector<PBMap> ls2aList(laterList.size()),
-        extConstraintList(laterList.size()), depAllList(laterList.size());
-    PBMap spDepAllUnion;
+    std::vector<PBMap> ls2aList(laterList.size()), depAllList(laterList.size());
+    PBMap extConstraint, spDepAllUnion;
     for (auto &&[i, later, laterMap, laterExternals] :
          views::zip(views::ints(0, ranges::unreachable), laterList,
                     laterMapList, laterExternalsList)) {
-        laterMap = makeAccMap(presburger, *later, iterDim, accDim, laterRelax_,
-                              "later" + std::to_string(i), laterExternals,
-                              noNeedToBeVars);
+        laterMap =
+            makeAccMap(presburger, *later, iterDim, accDim, laterRelax_,
+                       "later" + std::to_string((uint64_t)later->stmt_->id()),
+                       laterExternals, noNeedToBeVars);
     }
     projectOutPrivateAxis(presburger, earlier, laterList, laterMapList,
                           iterDim);
-    for (auto &&[i, later, laterMap, laterExternals, ls2a, extConstraint,
-                 depAll] :
+    for (auto &&[i, later, laterMap, laterExternals, ls2a, depAll] :
          views::zip(views::ints(0, ranges::unreachable), laterList,
-                    laterMapList, laterExternalsList, ls2aList,
-                    extConstraintList, depAllList)) {
+                    laterMapList, laterExternalsList, ls2aList, depAllList)) {
         if (laterMap.empty()) {
             continue;
         }
@@ -1143,11 +1150,12 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
 
         depAll = subtract(applyRange(laterMap, reverse(earlierMap)), allEQ);
 
-        // Constarints on dependences. They decide when there are dependence,
+        // Constraints on dependences. They decide when there are dependence,
         // but do not affect the existence of accesses. They should be applied
         // only to `depAll`.
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
+        depAll = coalesce(std::move(depAll));
 
         // Constraints on external variables limit the possibility of certain
         // relations on those variables. If these constraints are violated, it
@@ -1156,11 +1164,13 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         // considered as constraints on the universal set, applied to not only
         // `depAll`, but also `earlierMap` and `laterMap` when checking killing
         // cases.
-        extConstraint = makeExternalVarConstraint(presburger, later, earlier,
-                                                  laterExternals,
-                                                  earlierExternals, iterDim);
-        depAll = intersect(std::move(depAll), extConstraint);
-        depAll = coalesce(std::move(depAll));
+        auto extConstraintLocal = makeExternalVarConstraint(
+            presburger, later, earlier, laterExternals, earlierExternals,
+            iterDim);
+        extConstraint = extConstraint.isValid()
+                            ? intersect(std::move(extConstraint),
+                                        std::move(extConstraintLocal))
+                            : std::move(extConstraintLocal);
 
         PBMap spDepAll = applyDomain(depAll, std::move(la2s));
         spDepAllUnion = spDepAllUnion.isValid()
@@ -1170,6 +1180,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     if (!spDepAllUnion.isValid()) {
         return;
     }
+    spDepAllUnion =
+        coalesce(intersect(std::move(spDepAllUnion), extConstraint));
 
     PBMap serialLexGT = lexGT(spaceSetAlloc(presburger, 0, iterDim));
     PBMap serialEQ = identity(spaceAlloc(presburger, 0, iterDim, iterDim));
@@ -1184,9 +1196,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         uni(reverse(lexmin(reverse(std::move(spDep)))), std::move(spSelf));
     spNearest = coalesce(std::move(spNearest));
 
-    for (auto &&[later, ls2a, laterMap, extConstraint, depAll] :
-         views::zip(laterList, ls2aList, laterMapList, extConstraintList,
-                    depAllList)) {
+    for (auto &&[later, ls2a, laterMap, depAll] :
+         views::zip(laterList, ls2aList, laterMapList, depAllList)) {
         if (depAll.isValid()) {
             checkAgainstCond(
                 presburger, later, earlier, depAll,

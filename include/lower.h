@@ -103,11 +103,14 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
     ast = APPLY("make_reduction", makeReduction, ast);
     ast = APPLY("scalar_prop_const", scalarPropConst, ast);
     ast = APPLY("remove_dead_var", removeDeadVar, ast);
+    ast = APPLY("simplify", simplify,
+                ast); // first time before propagations for indices
     ast = APPLY("remove_writes", removeWrites, ast);
     ast = APPLY("prop_one_time_use", propOneTimeUse, ast);
     ast = APPLY("float_simplify", floatSimplify, ast); // After propOneTimeUse
     ast = APPLY("z3_simplify", z3Simplify, ast);
-    ast = APPLY("simplify", simplify, ast);
+    ast = APPLY("simplify", simplify,
+                ast); // next time after propagations for propagated values
     ast = APPLY("move_out_first_or_last_iter", moveOutFirstOrLastIter, ast);
     ast = APPLY("sink_var", sinkVar, ast);
     ast = APPLY("shrink_var", shrinkVar, ast);

@@ -681,6 +681,7 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
 
     // We do some basic simplifications here, to reduce burden on auto-schedule
     backward = scalarPropConst(backward);
+    backward = simplify(backward);
     backward = removeWrites(backward);
     backward = propOneTimeUse(backward);
     backward = simplify(backward);

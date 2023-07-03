@@ -250,6 +250,7 @@ struct Dependence {
     PBMap laterIter2Idx_, earlierIter2Idx_;
     // not only counting the nearest, but all
     PBMap later2EarlierIterAllPossible_;
+    PBMap extConstraint_;
     PBCtx &presburger_;
     AnalyzeDeps &self_;
 

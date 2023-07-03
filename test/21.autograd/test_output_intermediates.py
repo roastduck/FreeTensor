@@ -296,11 +296,6 @@ def test_dynamic_loop_range():
                 #! label: V_z
                 z = ft.empty((), "float32")
                 z[()] = x[bn, pn] + 1
-                # FIXME: Apparently there 3 assignments are the same, but pass/remove_writes can't
-                # eliminate 2 of them, because `bn * (n * n)` and `n * n` are recoginized two
-                # different free variables for isl. Consider directly match the expressions
-                z_tape[bn * (n * n) + pn] = z[()]
-                z_tape[bn * (n * n) + pn + 1 - 1] = z[()]
                 z_tape[bn * (n * n) + pn + 1 - 1] = z[()]
                 y[pn % n] += z[()] * z[()]
 
@@ -338,9 +333,6 @@ def test_dynamic_loop_range_relaxed():
                 #! label: V_z
                 z = ft.empty((), "float32")
                 z[()] = x[i, j] + 1
-                # FIXME: pass/remove_writes should have dedplicated this
-                z_tape[i * 100 + j] = z[()]
-                z_tape[i * 100 + j] = z[()]
                 z_tape[i * 100 + j] = z[()]
                 y[i] += z[()] * z[()]
 
