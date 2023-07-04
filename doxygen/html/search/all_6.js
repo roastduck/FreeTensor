@@ -40,12 +40,13 @@ var searchData=
   ['exp_37',['Exp',['../namespacefreetensor.html#afb6113834918f5a1a639e88ffd03b608',1,'freetensor::Exp()'],['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915facad39a154bffb61175f674d6eefaf6d0',1,'freetensor::Exp()']]],
   ['expnode_38',['ExpNode',['../classfreetensor_1_1ExpNode.html',1,'freetensor']]],
   ['expr_39',['Expr',['../namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b',1,'freetensor']]],
-  ['expr_40',['expr',['../classfreetensor_1_1LowerBound.html#a4a87b5029c7960bfb87f865ad37c71fa',1,'freetensor::LowerBound::expr()'],['../classfreetensor_1_1UpperBound.html#ac6c3ae2e0ccd064bfa8603605a3a5006',1,'freetensor::UpperBound::expr()'],['../classfreetensor_1_1StmtOrExprID.html#a49d3d190c3b268552b10ac6b894f81a3',1,'freetensor::StmtOrExprID::expr()']]],
+  ['expr_40',['expr',['../classfreetensor_1_1StmtOrExprID.html#a49d3d190c3b268552b10ac6b894f81a3',1,'freetensor::StmtOrExprID::expr()'],['../classfreetensor_1_1UpperBound.html#ac6c3ae2e0ccd064bfa8603605a3a5006',1,'freetensor::UpperBound::expr()'],['../classfreetensor_1_1LowerBound.html#a4a87b5029c7960bfb87f865ad37c71fa',1,'freetensor::LowerBound::expr()']]],
   ['expr_2ecc_41',['expr.cc',['../expr_8cc.html',1,'']]],
   ['expr_2eh_42',['expr.h',['../expr_8h.html',1,'']]],
   ['expr_5f_43',['expr_',['../classfreetensor_1_1EvalNode.html#aa54c397cbb62d640c0d3ad004a0e8403',1,'freetensor::EvalNode::expr_()'],['../classfreetensor_1_1ReduceToNode.html#ac599b952b4955dfd201d17f962cb81c4',1,'freetensor::ReduceToNode::expr_()'],['../classfreetensor_1_1StoreNode.html#a3de5a0884e4e0ad962b36425a1ea524d',1,'freetensor::StoreNode::expr_()'],['../classfreetensor_1_1CastNode.html#a4066a9439104a90b3690ade1b57c8cde',1,'freetensor::CastNode::expr_()'],['../classfreetensor_1_1UnaryExprNode.html#a5f5e49f8bcf4212b65907d5f8504df8f',1,'freetensor::UnaryExprNode::expr_()'],['../structfreetensor_1_1TransientBound.html#afe849db8c77b759b4e684eb361e5ac37',1,'freetensor::TransientBound::expr_()']]],
   ['exprinfo_44',['exprInfo',['../classfreetensor_1_1FindLoopVariance.html#aa01c53d4bcc2a2378245a8e04dbb74a0',1,'freetensor::FindLoopVariance']]],
   ['exprnode_45',['ExprNode',['../classfreetensor_1_1ExprNode.html',1,'freetensor']]],
   ['exprrettype_46',['ExprRetType',['../classfreetensor_1_1Visitor.html#a9d28e45c80d3c0939f64b4dba016e168',1,'freetensor::Visitor::ExprRetType()'],['../classfreetensor_1_1Mutator.html#af1a3d979a56bd49d9a983019df6f8c18',1,'freetensor::Mutator::ExprRetType()']]],
-  ['extracheck_47',['extraCheck',['../structfreetensor_1_1Dependence.html#ac35aaa0008919ea511d2319262396ab0',1,'freetensor::Dependence']]]
+  ['extconstraint_5f_47',['extConstraint_',['../structfreetensor_1_1Dependence.html#aa5c23e158cfbca289167124004eb8e2d',1,'freetensor::Dependence']]],
+  ['extracheck_48',['extraCheck',['../structfreetensor_1_1Dependence.html#ac35aaa0008919ea511d2319262396ab0',1,'freetensor::Dependence']]]
 ];

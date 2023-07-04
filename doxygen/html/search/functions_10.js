@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['parallelize_0',['Parallelize',['../classfreetensor_1_1Parallelize.html#a4bc01496d920cf43a23060c7156cf49a',1,'freetensor::Parallelize']]],
-  ['parallelize_1',['parallelize',['../namespacefreetensor.html#a02e429b75c6200ee7060d8c0e8403758',1,'freetensor::parallelize()'],['../classfreetensor_1_1Schedule.html#afed97de683ffe2a24b50c167cfc1f273',1,'freetensor::Schedule::parallelize()']]],
+  ['parallelize_0',['parallelize',['../classfreetensor_1_1Schedule.html#afed97de683ffe2a24b50c167cfc1f273',1,'freetensor::Schedule::parallelize()'],['../namespacefreetensor.html#a02e429b75c6200ee7060d8c0e8403758',1,'freetensor::parallelize()']]],
+  ['parallelize_1',['Parallelize',['../classfreetensor_1_1Parallelize.html#a4bc01496d920cf43a23060c7156cf49a',1,'freetensor::Parallelize']]],
   ['params_2',['params',['../classfreetensor_1_1NativeCode.html#a9d61acc9620183d25eeac03453c23bc5',1,'freetensor::NativeCode::params()'],['../namespacefreetensor.html#a3105134553648956815c674a8c2eb931',1,'freetensor::params()']]],
   ['parent_3',['parent',['../classfreetensor_1_1ASTPart.html#aa9e302679b4020751cd4a440e5469892',1,'freetensor::ASTPart']]],
   ['parentast_4',['parentAST',['../classfreetensor_1_1ASTNode.html#aa4d9b037ae93dde7d2dae10998515127',1,'freetensor::ASTNode']]],
