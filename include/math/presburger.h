@@ -753,7 +753,8 @@ template <PBMapRef T> static PBMap dropAllConstraintsNotInvolvingAxes(T &&map) {
     return isl_set_unwrap(dropped.move());
 }
 
-template <PBMapRef T> PBMap fastLexmax(PBCtx &ctx, T &&_map) {
+template <PBMapRef T, PBMapRef U>
+PBMap fastLexmax(PBCtx &ctx, T &&_map, U &&constraint) {
     PBMap map = PBRefTake<T>(_map);
     PBMap relaxed = dropAllConstraintsNotInvolvingAxes(map);
     auto oldErrorMode = isl_options_get_on_error(ctx.get());
@@ -762,14 +763,15 @@ template <PBMapRef T> PBMap fastLexmax(PBCtx &ctx, T &&_map) {
     isl_options_set_on_error(ctx.get(), oldErrorMode);
     if (fastResRaw != nullptr) {
         PBMap fastRes(fastResRaw);
-        if (isSubset(fastRes, map)) {
+        if (isSubset(intersect(fastRes, constraint), map)) {
             return fastRes;
         }
     }
     return lexmax(std::move(map));
 }
 
-template <PBMapRef T> PBMap fastLexmin(PBCtx &ctx, T &&_map) {
+template <PBMapRef T, PBMapRef U>
+PBMap fastLexmin(PBCtx &ctx, T &&_map, U &&constraint) {
     PBMap map = PBRefTake<T>(_map);
     PBMap relaxed = dropAllConstraintsNotInvolvingAxes(map);
     auto oldErrorMode = isl_options_get_on_error(ctx.get());
@@ -778,7 +780,7 @@ template <PBMapRef T> PBMap fastLexmin(PBCtx &ctx, T &&_map) {
     isl_options_set_on_error(ctx.get(), oldErrorMode);
     if (fastResRaw != nullptr) {
         PBMap fastRes(fastResRaw);
-        if (isSubset(fastRes, map)) {
+        if (isSubset(intersect(fastRes, constraint), map)) {
             return fastRes;
         }
     }
