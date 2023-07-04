@@ -231,6 +231,9 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             kill[earlier] =
                 PBSet(presburger, toString(domain(d.earlierIter2Idx_)));
         }
+        kill[earlier] =
+            intersect(std::move(kill[earlier]),
+                      PBSet(presburger, toString(range(d.extConstraint_))));
         overwrites.emplace_back(
             later, earlier,
             PBSet(presburger, toString(range(d.later2EarlierIter_))),
