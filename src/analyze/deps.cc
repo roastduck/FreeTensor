@@ -1062,6 +1062,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
                             ? intersect(std::move(extConstraint),
                                         std::move(extConstraintLocal))
                             : std::move(extConstraintLocal);
+        extConstraint = coalesce(std::move(extConstraint));
 
         PBMap psDepAll = applyRange(depAll, std::move(ea2s));
         psDepAllUnion = psDepAllUnion.isValid()
@@ -1172,6 +1173,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
                             ? intersect(std::move(extConstraint),
                                         std::move(extConstraintLocal))
                             : std::move(extConstraintLocal);
+        extConstraint = coalesce(std::move(extConstraint));
 
         PBMap spDepAll = applyDomain(depAll, std::move(la2s));
         spDepAllUnion = spDepAllUnion.isValid()
