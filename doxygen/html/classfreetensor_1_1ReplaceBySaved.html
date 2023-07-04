@@ -95,8 +95,8 @@ Collaboration diagram for freetensor::ReplaceBySaved:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a01250e14309c363b879e9c69fd014750"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReplaceBySaved.html#a01250e14309c363b879e9c69fd014750">ReplaceBySaved</a> (const <a class="el" href="classfreetensor_1_1SymbolTableInterface.html">SymbolTableInterface</a> &amp;symbolTable, const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt; &amp;intermediatesMap, const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;versions, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;rootStmtID, const <a class="el" href="namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7">Store</a> alreadyStored_=nullptr)</td></tr>
-<tr class="separator:a01250e14309c363b879e9c69fd014750"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8075ffbad9cfc0068b02afc27685e9ff"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReplaceBySaved.html#a8075ffbad9cfc0068b02afc27685e9ff">ReplaceBySaved</a> (const <a class="el" href="classfreetensor_1_1SymbolTableInterface.html">SymbolTableInterface</a> &amp;symbolTable, const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt; &amp;intermediatesMap, const std::unordered_map&lt; <a class="el" href="classfreetensor_1_1StmtOrExprID.html">StmtOrExprID</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;versions, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;rootStmtID, const std::optional&lt; <a class="el" href="classfreetensor_1_1InvertFromStore.html">InvertFromStore</a> &gt; &amp;invertFromStore=std::nullopt)</td></tr>
+<tr class="separator:a8075ffbad9cfc0068b02afc27685e9ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0c4c18f1375bf4cc7ba93e469c22a73"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReplaceBySaved.html#af0c4c18f1375bf4cc7ba93e469c22a73">recomp</a> (const auto &amp;op)</td></tr>
 <tr class="separator:af0c4c18f1375bf4cc7ba93e469c22a73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a80673e86eaa7b801ceae6e135f5f5c16"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ReplaceBySaved.html#a80673e86eaa7b801ceae6e135f5f5c16">grad</a> (const auto &amp;op)</td></tr>
@@ -246,8 +246,8 @@ Additional Inherited Members</h2></td></tr>
 <p>(For gradient and recomputation) For each Load node, if it has a taped or recomputed counterpart, replace it with new Load node that loads the taped or recomputed version. In this case, versions of the Load node is used</p>
 <p>(Only for gradient only) For each sub-expression that matches <code>alreadyStored</code>, it is re-loaded without computation. If the stored variable has a taped or recomputed counterpart, also replace it. In this case, versions of the Store node is used, which is one version later than that of a Load node. This is for gradient only, or otherwise we will "re"-load what we have not even computed </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a01250e14309c363b879e9c69fd014750" name="a01250e14309c363b879e9c69fd014750"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a01250e14309c363b879e9c69fd014750">&#9670;&#160;</a></span>ReplaceBySaved()</h2>
+<a id="a8075ffbad9cfc0068b02afc27685e9ff" name="a8075ffbad9cfc0068b02afc27685e9ff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8075ffbad9cfc0068b02afc27685e9ff">&#9670;&#160;</a></span>ReplaceBySaved()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -282,8 +282,8 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7">Store</a>&#160;</td>
-          <td class="paramname"><em>alreadyStored_</em> = <code>nullptr</code>&#160;</td>
+          <td class="paramtype">const std::optional&lt; <a class="el" href="classfreetensor_1_1InvertFromStore.html">InvertFromStore</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>invertFromStore</em> = <code>std::nullopt</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

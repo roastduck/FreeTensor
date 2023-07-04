@@ -19,5 +19,6 @@ var searchData=
   ['invalidprogram_16',['InvalidProgram',['../classfreetensor_1_1InvalidProgram.html',1,'freetensor']]],
   ['invalidschedule_17',['InvalidSchedule',['../classfreetensor_1_1InvalidSchedule.html',1,'freetensor']]],
   ['inversioninfo_18',['InversionInfo',['../structfreetensor_1_1InversionInfo.html',1,'freetensor']]],
-  ['iteraxis_19',['IterAxis',['../structfreetensor_1_1IterAxis.html',1,'freetensor']]]
+  ['invertfromstore_19',['InvertFromStore',['../classfreetensor_1_1InvertFromStore.html',1,'freetensor']]],
+  ['iteraxis_20',['IterAxis',['../structfreetensor_1_1IterAxis.html',1,'freetensor']]]
 ];

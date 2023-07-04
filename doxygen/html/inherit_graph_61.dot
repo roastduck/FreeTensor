@@ -5,9 +5,5 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [label="freetensor::PBBuilder",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1PBBuilder.html",tooltip=" "];
-  Node0 -> Node1 [dir="back",color="steelblue1",style="solid"];
-  Node1 [label="freetensor::PBMapBuilder",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1PBMapBuilder.html",tooltip=" "];
-  Node0 -> Node2 [dir="back",color="steelblue1",style="solid"];
-  Node2 [label="freetensor::PBSetBuilder",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1PBSetBuilder.html",tooltip=" "];
+  Node0 [label="freetensor::ParallelInfo",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ParallelInfo.html",tooltip=" "];
 }
