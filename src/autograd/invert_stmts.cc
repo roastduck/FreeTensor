@@ -83,6 +83,10 @@ void genCondExpr(PBCtx &presburger, CondInfo *info) {
             anythingTo1(presburger, info->when_.nDims()), info->when_);
         for (auto &&[args, _, factorRange] :
              parsePBFunc(toString(PBFunc(indicator)))) {
+            if (!allReads(factorRange).empty()) {
+                throw ParserError("External variable in recomputing condition "
+                                  "is not yet supported");
+            }
             std::unordered_map<std::string, Expr> islVarToIter;
             for (auto &&[iter, arg] : views::zip(info->iter_, args)) {
                 islVarToIter[arg] = !iter.negStep_
