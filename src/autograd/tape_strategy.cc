@@ -39,18 +39,26 @@ std::unordered_set<ID> TapeStrategy::getIdsToTape(const Stmt &ast) const {
         if (std::holds_alternative<ID>(item)) {
             ret.emplace(std::get<ID>(item));
         } else if (std::holds_alternative<std::string>(item)) {
-            ret.emplace(findStmt(ast, std::get<std::string>(item))->id());
+            for (auto &&s : findAllStmt(ast, std::get<std::string>(item))) {
+                ret.emplace(s->id());
+            }
         } else {
-            ret.emplace(findStmt(ast, std::get<Ref<Selector>>(item))->id());
+            for (auto &&s : findAllStmt(ast, std::get<Ref<Selector>>(item))) {
+                ret.emplace(s->id());
+            }
         }
     }
     for (auto &&item : neverTape_) {
         if (std::holds_alternative<ID>(item)) {
             ret.erase(std::get<ID>(item));
         } else if (std::holds_alternative<std::string>(item)) {
-            ret.erase(findStmt(ast, std::get<std::string>(item))->id());
+            for (auto &&s : findAllStmt(ast, std::get<std::string>(item))) {
+                ret.erase(s->id());
+            }
         } else {
-            ret.erase(findStmt(ast, std::get<Ref<Selector>>(item))->id());
+            for (auto &&s : findAllStmt(ast, std::get<Ref<Selector>>(item))) {
+                ret.erase(s->id());
+            }
         }
     }
     return ret;
