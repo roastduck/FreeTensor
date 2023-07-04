@@ -154,7 +154,7 @@ class InjectFakeAccess : public Mutator {
     }
 };
 
-PBMap combineExternal(PBMap l2e, PBCtx &ctx) {
+PBMap combineExternal(PBMap l2e, PBCtx &ctx, bool isFakeAccess) {
     auto nParams = l2e.nParamDims();
     // combined <-> first met original
     std::map<std::string, std::string> orig2comb;
@@ -180,10 +180,15 @@ PBMap combineExternal(PBMap l2e, PBCtx &ctx) {
     auto eqConstraints = builder.build(ctx);
     eqConstraints = isl_set_move_dims(eqConstraints.move(), isl_dim_param, 0,
                                       isl_dim_set, 0, nParams);
-    if (l2e !=
-        PBMap(isl_map_intersect_params(l2e.copy(), eqConstraints.move())))
+    PBMap constrainedL2e(
+        isl_map_intersect_params(l2e.copy(), eqConstraints.copy()));
+    // Fake access uses AllPossible which doesn't have the corresponding
+    // constraints. Thus we don't check fake accesses and always use the
+    // constrained one.
+    if (!isFakeAccess && l2e != constrainedL2e)
         throw InvalidSchedule("PlutoFuse: External parameter(s) should not "
                               "change between during the fused loops");
+    l2e = constrainedL2e;
 
     for (int i = nParams - 1; i >= 0; --i) {
         std::string orig = isl_map_get_dim_name(l2e.get(), isl_dim_param, i);
@@ -490,7 +495,8 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
 
                     // combine external params from earlier and later, since we
                     // don't expect them to change during the two loops in Pluto
-                    hMap = combineExternal(std::move(hMap), d.presburger_);
+                    hMap = combineExternal(std::move(hMap), d.presburger_,
+                                           d.var_ == FAKE_ACCESS_VAR);
 
                     auto nRealParams = hMap.nParamDims();
 
