@@ -79,7 +79,13 @@ Stmt InsertUserGrad::visit(const VarDef &op) {
 
 ReplaceBySaved Grad::getReplacer(const Stmt &stmt,
                                  const Store &alreadyStored) const {
-    return {*this, intermediatesMap_, versions_, stmt->id(), alreadyStored};
+    if (alreadyStored.isValid()) {
+        return {*this, intermediatesMap_, versions_, stmt->id(),
+                InvertFromStore{alreadyStored, alreadyStored->expr_,
+                                [](const Expr &e) { return e; }}};
+    } else {
+        return {*this, intermediatesMap_, versions_, stmt->id()};
+    }
 }
 
 Stmt Grad::doVisitStmt(const Stmt &s) {
@@ -537,10 +543,13 @@ Stmt Grad::visit(const ReduceTo &op) {
                             makeStore(op->var_, indices, fakeFinalYVal,
                                       op->metadata(), op->id())
                                 .as<StoreNode>();
-                        auto y =
-                            ReplaceBySaved{*this, intermediatesMap_, versions_,
-                                           op->id(), fakeFinalYStore}
-                                .grad(fakeFinalYVal);
+                        auto y = ReplaceBySaved{
+                            *this, intermediatesMap_, versions_, op->id(),
+                            InvertFromStore{
+                                fakeFinalYStore, fakeFinalYStore->expr_,
+                                [](const Expr &e) {
+                                    return e;
+                                }}}.grad(fakeFinalYVal);
                         // dz/dx[i] += x[i] == y ? dz/dy : 0
                         auto dxi = makeReduceTo(
                             oldReduceGrad->var_, oldReduceGrad->indices_,
