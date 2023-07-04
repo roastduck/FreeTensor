@@ -291,6 +291,27 @@ def test_tape_y_to_use_it_for_grad():
     assert std.match(ast)
 
 
+def test_invert_from_y_to_use_it_for_grad():
+    with ft.VarDef("x", (), "float32", "input", "cpu") as x:
+        ft.MarkLabel("V_y")
+        with ft.VarDef("y", (), "float32", "output", "cpu") as y:
+            y[...] = 1. - ft.exp(x[...])
+
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ["V_y"])
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("dx", (), "float32", "output", "cpu"),
+                    ("y", (), "float32", "input", "cpu"),
+                    ("dy", (), "float32", "inout", "cpu")]) as (dx, y, dy):
+        dx[...] = dy[...] * (-1 * (1. - y[...]))
+        dy[...] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_multiple_statements():
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
