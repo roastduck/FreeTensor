@@ -1083,7 +1083,8 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         coalesce(intersect(applyRange(la2s, std::move(ssDep)), psDepAllUnion));
     PBMap psSelf = intersect(applyRange(std::move(la2s), std::move(ssSelf)),
                              std::move(psDepAllUnion));
-    PBMap psNearest = uni(lexmax(std::move(psDep)), std::move(psSelf));
+    PBMap psNearest =
+        uni(fastLexmax(presburger, std::move(psDep)), std::move(psSelf));
     psNearest = coalesce(std::move(psNearest));
 
     for (auto &&[earlier, es2a, earlierMap, depAll] :
@@ -1193,7 +1194,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBMap spSelf = intersect(applyRange(std::move(ssSelf), std::move(es2a)),
                              std::move(spDepAllUnion));
     PBMap spNearest =
-        uni(reverse(lexmin(reverse(std::move(spDep)))), std::move(spSelf));
+        uni(reverse(fastLexmin(presburger, reverse(std::move(spDep)))),
+            std::move(spSelf));
     spNearest = coalesce(std::move(spNearest));
 
     for (auto &&[later, ls2a, laterMap, depAll] :

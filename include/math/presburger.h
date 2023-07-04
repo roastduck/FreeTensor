@@ -745,6 +745,46 @@ inline bool operator==(const PBMap &lhs, const PBMap &rhs) {
     return isl_map_is_equal(lhs.get(), rhs.get());
 }
 
+template <PBMapRef T> static PBMap dropAllConstraintsNotInvolvingAxes(T &&map) {
+    PBSet wrapped = isl_map_wrap(PBRefTake<T>(map));
+    auto n = wrapped.nDims();
+    PBSet dropped = isl_set_drop_constraints_not_involving_dims(
+        wrapped.move(), isl_dim_set, 0, n);
+    return isl_set_unwrap(dropped.move());
+}
+
+template <PBMapRef T> PBMap fastLexmax(PBCtx &ctx, T &&_map) {
+    PBMap map = PBRefTake<T>(_map);
+    PBMap relaxed = dropAllConstraintsNotInvolvingAxes(map);
+    auto oldErrorMode = isl_options_get_on_error(ctx.get());
+    isl_options_set_on_error(ctx.get(), ISL_ON_ERROR_CONTINUE);
+    isl_map *fastResRaw = isl_map_lexmax(relaxed.move()); // null on error
+    isl_options_set_on_error(ctx.get(), oldErrorMode);
+    if (fastResRaw != nullptr) {
+        PBMap fastRes(fastResRaw);
+        if (isSubset(fastRes, map)) {
+            return fastRes;
+        }
+    }
+    return lexmax(std::move(map));
+}
+
+template <PBMapRef T> PBMap fastLexmin(PBCtx &ctx, T &&_map) {
+    PBMap map = PBRefTake<T>(_map);
+    PBMap relaxed = dropAllConstraintsNotInvolvingAxes(map);
+    auto oldErrorMode = isl_options_get_on_error(ctx.get());
+    isl_options_set_on_error(ctx.get(), ISL_ON_ERROR_CONTINUE);
+    isl_map *fastResRaw = isl_map_lexmin(relaxed.move()); // null on error
+    isl_options_set_on_error(ctx.get(), oldErrorMode);
+    if (fastResRaw != nullptr) {
+        PBMap fastRes(fastResRaw);
+        if (isSubset(fastRes, map)) {
+            return fastRes;
+        }
+    }
+    return lexmin(std::move(map));
+}
+
 class PBBuildExpr {
     std::string expr_;
     explicit PBBuildExpr(const std::string &expr) : expr_(expr) {}
