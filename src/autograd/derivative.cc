@@ -149,7 +149,8 @@ void Derivative::visit(const Add &op) {
         setPartial(op->rhs_, it->second.mathExpr());
     }
 
-    if (invertFromStore_.has_value() && allReads(op->rhs_).empty()) {
+    if (invertFromStore_.has_value() && invertFromStore_->match(op) &&
+        allReads(op->rhs_).empty()) {
         auto oldInvertFromStore = invertFromStore_;
         invertFromStore_ = {
             oldInvertFromStore->store(), op->lhs_, [=](const Expr &e) {
@@ -161,7 +162,8 @@ void Derivative::visit(const Add &op) {
         (*this)(op->lhs_);
     }
 
-    if (invertFromStore_.has_value() && allReads(op->lhs_).empty()) {
+    if (invertFromStore_.has_value() && invertFromStore_->match(op) &&
+        allReads(op->lhs_).empty()) {
         auto oldInvertFromStore = invertFromStore_;
         invertFromStore_ = {
             oldInvertFromStore->store(), op->rhs_, [=](const Expr &e) {
@@ -180,7 +182,8 @@ void Derivative::visit(const Sub &op) {
         setPartial(op->rhs_, makeSub(makeIntConst(0), it->second.mathExpr()));
     }
 
-    if (invertFromStore_.has_value() && allReads(op->rhs_).empty()) {
+    if (invertFromStore_.has_value() && invertFromStore_->match(op) &&
+        allReads(op->rhs_).empty()) {
         auto oldInvertFromStore = invertFromStore_;
         invertFromStore_ = {
             oldInvertFromStore->store(), op->lhs_, [=](const Expr &e) {
@@ -192,7 +195,8 @@ void Derivative::visit(const Sub &op) {
         (*this)(op->lhs_);
     }
 
-    if (invertFromStore_.has_value() && allReads(op->lhs_).empty()) {
+    if (invertFromStore_.has_value() && invertFromStore_->match(op) &&
+        allReads(op->lhs_).empty()) {
         auto oldInvertFromStore = invertFromStore_;
         invertFromStore_ = {
             oldInvertFromStore->store(), op->rhs_, [=](const Expr &e) {
@@ -211,8 +215,8 @@ void Derivative::visit(const Mul &op) {
         setPartial(op->rhs_, makeMul(it->second.mathExpr(), op->lhs_));
     }
 
-    if (invertFromStore_.has_value() && allReads(op->rhs_).empty() &&
-        isNE0(op->rhs_->dtype())) {
+    if (invertFromStore_.has_value() && invertFromStore_->match(op) &&
+        allReads(op->rhs_).empty() && isNE0(op->rhs_->dtype())) {
         auto oldInvertFromStore = invertFromStore_;
         invertFromStore_ = {
             oldInvertFromStore->store(), op->lhs_, [=](const Expr &e) {
@@ -224,8 +228,8 @@ void Derivative::visit(const Mul &op) {
         (*this)(op->lhs_);
     }
 
-    if (invertFromStore_.has_value() && allReads(op->lhs_).empty() &&
-        isNE0(op->lhs_->dtype())) {
+    if (invertFromStore_.has_value() && invertFromStore_->match(op) &&
+        allReads(op->lhs_).empty() && isNE0(op->lhs_->dtype())) {
         auto oldInvertFromStore = invertFromStore_;
         invertFromStore_ = {
             oldInvertFromStore->store(), op->rhs_, [=](const Expr &e) {
@@ -246,7 +250,8 @@ void Derivative::visit(const RealDiv &op) {
                                              makeRealDiv(op, op->rhs_))));
     }
 
-    if (invertFromStore_.has_value() && allReads(op->rhs_).empty()) {
+    if (invertFromStore_.has_value() && invertFromStore_->match(op) &&
+        allReads(op->rhs_).empty()) {
         auto oldInvertFromStore = invertFromStore_;
         invertFromStore_ = {
             oldInvertFromStore->store(), op->lhs_, [=](const Expr &e) {
@@ -258,8 +263,8 @@ void Derivative::visit(const RealDiv &op) {
         (*this)(op->lhs_);
     }
 
-    if (invertFromStore_.has_value() && allReads(op->lhs_).empty() &&
-        isNE0(op->dtype())) {
+    if (invertFromStore_.has_value() && invertFromStore_->match(op) &&
+        allReads(op->lhs_).empty() && isNE0(op->dtype())) {
         auto oldInvertFromStore = invertFromStore_;
         invertFromStore_ = {
             oldInvertFromStore->store(), op->rhs_, [=](const Expr &e) {
@@ -313,7 +318,7 @@ void Derivative::visit(const Sqrt &op) {
                                           makeMul(makeIntConst(2), op)));
     }
 
-    if (invertFromStore_.has_value()) {
+    if (invertFromStore_.has_value() && invertFromStore_->match(op)) {
         auto oldInvertFromStore = invertFromStore_;
         invertFromStore_ = {
             oldInvertFromStore->store(), op->expr_, [=](const Expr &e) {
