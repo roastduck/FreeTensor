@@ -506,6 +506,7 @@ def jacrev_(func=None,
         tape_in_closure=tape_in_closure,
         invert=invert,
         user_grads=user_grads,
+        reset_provided_grad=False,
         verbose=verbose,
         _override_func_params=_override_func_params)
 
