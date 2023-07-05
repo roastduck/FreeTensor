@@ -753,38 +753,36 @@ template <PBMapRef T> static PBMap dropAllConstraintsNotInvolvingAxes(T &&map) {
     return isl_set_unwrap(dropped.move());
 }
 
-template <PBMapRef T, PBMapRef U>
-PBMap fastLexmax(PBCtx &ctx, T &&_map, U &&constraint) {
+template <PBMapRef T> PBMap fastLexmax(PBCtx &ctx, T &&_map) {
     PBMap map = PBRefTake<T>(_map);
     PBMap relaxed = dropAllConstraintsNotInvolvingAxes(map);
     auto oldErrorMode = isl_options_get_on_error(ctx.get());
     isl_options_set_on_error(ctx.get(), ISL_ON_ERROR_CONTINUE);
     isl_map *fastResRaw = isl_map_lexmax(relaxed.move()); // null on error
     isl_options_set_on_error(ctx.get(), oldErrorMode);
-    if (fastResRaw != nullptr) {
-        PBMap fastRes(fastResRaw);
-        if (isSubset(intersect(fastRes, constraint), map)) {
-            return fastRes;
-        }
+    if (fastResRaw == nullptr) {
+        return lexmax(std::move(map));
     }
-    return lexmax(std::move(map));
+    PBMap fastRes(fastResRaw);
+    PBMap other = intersectDomain(map, domain(subtract(fastRes, map)));
+    PBMap otherRes = lexmax(std::move(other));
+    return uni(std::move(fastRes), std::move(otherRes));
 }
 
-template <PBMapRef T, PBMapRef U>
-PBMap fastLexmin(PBCtx &ctx, T &&_map, U &&constraint) {
+template <PBMapRef T> PBMap fastLexmin(PBCtx &ctx, T &&_map) {
     PBMap map = PBRefTake<T>(_map);
     PBMap relaxed = dropAllConstraintsNotInvolvingAxes(map);
     auto oldErrorMode = isl_options_get_on_error(ctx.get());
     isl_options_set_on_error(ctx.get(), ISL_ON_ERROR_CONTINUE);
     isl_map *fastResRaw = isl_map_lexmin(relaxed.move()); // null on error
     isl_options_set_on_error(ctx.get(), oldErrorMode);
-    if (fastResRaw != nullptr) {
-        PBMap fastRes(fastResRaw);
-        if (isSubset(intersect(fastRes, constraint), map)) {
-            return fastRes;
-        }
+    if (fastResRaw == nullptr) {
+        return lexmin(std::move(map));
     }
-    return lexmin(std::move(map));
+    PBMap fastRes(fastResRaw);
+    PBMap other = intersectDomain(map, domain(subtract(fastRes, map)));
+    PBMap otherRes = lexmin(std::move(other));
+    return uni(std::move(fastRes), std::move(otherRes));
 }
 
 class PBBuildExpr {
