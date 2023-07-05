@@ -504,6 +504,13 @@ template <PBSetRef T, PBSetRef U> PBSet subtract(T &&lhs, U &&rhs) {
     return isl_set_subtract(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
 }
 
+template <PBMapRef T, PBSetRef U> PBMap subtractDomain(T &&lhs, U &&rhs) {
+    return isl_map_subtract_domain(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+template <PBMapRef T, PBSetRef U> PBMap subtractRange(T &&lhs, U &&rhs) {
+    return isl_map_subtract_range(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
 template <PBMapRef T, PBMapRef U> PBMap intersect(T &&lhs, U &&rhs) {
     DEBUG_PROFILE_VERBOSE("intersect",
                           "nBasic=" + std::to_string(lhs.nBasic()) + "," +
@@ -764,9 +771,11 @@ template <PBMapRef T> PBMap fastLexmax(PBCtx &ctx, T &&_map) {
         return lexmax(std::move(map));
     }
     PBMap fastRes(fastResRaw);
-    PBMap other = intersectDomain(map, domain(subtract(fastRes, map)));
-    PBMap otherRes = lexmax(std::move(other));
-    return uni(std::move(fastRes), std::move(otherRes));
+    PBMap other =
+        coalesce(intersectDomain(map, domain(subtract(fastRes, map))));
+    PBMap otherRes = lexmax(other);
+    return uni(subtractDomain(std::move(fastRes), domain(std::move(other))),
+               std::move(otherRes));
 }
 
 template <PBMapRef T> PBMap fastLexmin(PBCtx &ctx, T &&_map) {
@@ -780,9 +789,11 @@ template <PBMapRef T> PBMap fastLexmin(PBCtx &ctx, T &&_map) {
         return lexmin(std::move(map));
     }
     PBMap fastRes(fastResRaw);
-    PBMap other = intersectDomain(map, domain(subtract(fastRes, map)));
-    PBMap otherRes = lexmin(std::move(other));
-    return uni(std::move(fastRes), std::move(otherRes));
+    PBMap other =
+        coalesce(intersectDomain(map, domain(subtract(fastRes, map))));
+    PBMap otherRes = lexmin(other);
+    return uni(subtractDomain(std::move(fastRes), domain(std::move(other))),
+               std::move(otherRes));
 }
 
 class PBBuildExpr {
