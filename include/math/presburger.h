@@ -771,11 +771,12 @@ template <PBMapRef T> PBMap fastLexmax(PBCtx &ctx, T &&_map) {
         return lexmax(std::move(map));
     }
     PBMap fastRes(fastResRaw);
-    PBMap other =
-        coalesce(intersectDomain(map, domain(subtract(fastRes, map))));
-    PBMap otherRes = lexmax(other);
-    return uni(subtractDomain(std::move(fastRes), domain(std::move(other))),
-               std::move(otherRes));
+    fastRes = intersectDomain(std::move(fastRes), domain(map));
+    if (isSubset(fastRes, map)) {
+        return fastRes;
+    } else {
+        return lexmax(std::move(map));
+    }
 }
 
 template <PBMapRef T> PBMap fastLexmin(PBCtx &ctx, T &&_map) {
@@ -789,11 +790,12 @@ template <PBMapRef T> PBMap fastLexmin(PBCtx &ctx, T &&_map) {
         return lexmin(std::move(map));
     }
     PBMap fastRes(fastResRaw);
-    PBMap other =
-        coalesce(intersectDomain(map, domain(subtract(fastRes, map))));
-    PBMap otherRes = lexmin(other);
-    return uni(subtractDomain(std::move(fastRes), domain(std::move(other))),
-               std::move(otherRes));
+    fastRes = intersectDomain(std::move(fastRes), domain(map));
+    if (isSubset(fastRes, map)) {
+        return fastRes;
+    } else {
+        return lexmin(std::move(map));
+    }
 }
 
 class PBBuildExpr {
