@@ -271,8 +271,10 @@ class StmtNode : public ASTNode {
     /**
      * Previous or next statement in DFS order
      */
-    Ref<StmtNode> prevStmtInDFSOrder() const;
-    Ref<StmtNode> nextStmtInDFSOrder() const;
+    Ref<StmtNode> prevLeafStmtInDFSOrder() const;
+    Ref<StmtNode> nextLeafStmtInDFSOrder() const;
+    Ref<StmtNode> prevStmtInDFSPostOrder() const; // may return child
+    Ref<StmtNode> nextStmtInDFSPreOrder() const;  // may return child
 
     /**
      * Find an ancestor by ID. `this` itself is also considered

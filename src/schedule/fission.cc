@@ -195,13 +195,13 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     ID leftOfSplitter, rightOfSplitter;
     if (side == FissionSide::Before) {
         rightOfSplitter = splitter;
-        if (auto node = splitterNode->prevStmtInDFSOrder();
+        if (auto node = splitterNode->prevLeafStmtInDFSOrder();
             node.isValid() && node->ancestorById(loop).isValid()) {
             leftOfSplitter = node->id();
         }
     } else {
         leftOfSplitter = splitter;
-        if (auto node = splitterNode->nextStmtInDFSOrder();
+        if (auto node = splitterNode->nextLeafStmtInDFSOrder();
             node.isValid() && node->ancestorById(loop).isValid()) {
             rightOfSplitter = node->id();
         }
