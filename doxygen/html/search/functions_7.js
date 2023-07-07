@@ -30,8 +30,8 @@ var searchData=
   ['getupper_27',['getUpper',['../classfreetensor_1_1CompUniqueBounds.html#a2fafcb1d095ef9f3fa7c96c388eaa878',1,'freetensor::CompUniqueBounds']]],
   ['getvarid_28',['getVarId',['../classfreetensor_1_1Z3Simplify.html#aee88484abb8e1ced538b07e43f31af13',1,'freetensor::Z3Simplify']]],
   ['globalsize_29',['globalSize',['../classfreetensor_1_1CodeGenCUDA.html#aa27c16876ae95eb1df98986f2234d4a4',1,'freetensor::CodeGenCUDA']]],
-  ['grad_30',['grad',['../classfreetensor_1_1ReplaceBySaved.html#a80673e86eaa7b801ceae6e135f5f5c16',1,'freetensor::ReplaceBySaved']]],
-  ['grad_31',['Grad',['../classfreetensor_1_1Grad.html#aad2ac5d0fe64620cb588a568088f0515',1,'freetensor::Grad']]],
+  ['grad_30',['Grad',['../classfreetensor_1_1Grad.html#aad2ac5d0fe64620cb588a568088f0515',1,'freetensor::Grad']]],
+  ['grad_31',['grad',['../classfreetensor_1_1ReplaceBySaved.html#a80673e86eaa7b801ceae6e135f5f5c16',1,'freetensor::ReplaceBySaved']]],
   ['gradbody_32',['gradBody',['../namespacefreetensor.html#a2158e3701efaccd882d174e8c2cbf706',1,'freetensor']]],
   ['gradfuncinplace_33',['gradFuncInplace',['../namespacefreetensor.html#adc9e4268214bfeb9a66a59873163f5e6',1,'freetensor']]],
   ['gradfuncoutofplace_34',['gradFuncOutOfPlace',['../namespacefreetensor.html#a1ea741d60a842a84cb670ce7de94fd81',1,'freetensor']]]
