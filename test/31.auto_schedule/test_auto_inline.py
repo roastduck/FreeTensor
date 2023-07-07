@@ -1,5 +1,4 @@
 import freetensor as ft
-import pytest
 
 
 def test_basic():

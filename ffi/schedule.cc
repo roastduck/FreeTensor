@@ -129,7 +129,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("as_matmul", &Schedule::asMatMul)
         .def("pluto_fuse", &Schedule::plutoFuse, "loop0"_a, "loop1"_a,
              "nest_level_0"_a = 0, "nest_level_1"_a = 0,
-             "fusable_overlap_threshold"_a = 1, "fusable_nonoverlap_tolerance"_a = 4, "do_simplify"_a = true)
+             "fusable_overlap_threshold"_a = 1,
+             "fusable_nonoverlap_tolerance"_a = 4, "do_simplify"_a = true)
         .def("pluto_permute", &Schedule::plutoPermute, "loop"_a,
              "nest_level"_a = 0, "do_simplify"_a = true)
         .def("auto_schedule",
@@ -147,6 +148,7 @@ void init_ffi_schedule(py::module_ &m) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda
                  return s.autoFissionFuse(target);
              })
+        .def("auto_mem_layout", &Schedule::autoMemLayout)
         .def("auto_parallelize", &Schedule::autoParallelize)
         .def("auto_set_mem_type", &Schedule::autoSetMemType)
         .def("auto_unroll", &Schedule::autoUnroll)
