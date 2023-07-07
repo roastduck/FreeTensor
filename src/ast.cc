@@ -192,7 +192,7 @@ Stmt StmtNode::nextInCtrlFlow() const {
     return ret;
 }
 
-Stmt StmtNode::prevStmtInDFSOrder() const {
+Stmt StmtNode::prevLeafStmtInDFSOrder() const {
     auto node = self().as<StmtNode>();
     while (true) {
         if (auto &&p = node->prevStmt(); p.isValid()) {
@@ -215,7 +215,7 @@ Stmt StmtNode::prevStmtInDFSOrder() const {
     return node;
 }
 
-Stmt StmtNode::nextStmtInDFSOrder() const {
+Stmt StmtNode::nextLeafStmtInDFSOrder() const {
     auto node = self().as<StmtNode>();
     while (true) {
         if (auto &&p = node->nextStmt(); p.isValid()) {
@@ -233,6 +233,44 @@ Stmt StmtNode::nextStmtInDFSOrder() const {
             node = ch.front();
         } else {
             break;
+        }
+    }
+    return node;
+}
+
+Stmt StmtNode::prevStmtInDFSPostOrder() const {
+    auto node = self().as<StmtNode>();
+    if (auto &&ch = node->children(); !ch.empty()) {
+        return ch.back();
+    }
+    while (true) {
+        if (auto &&p = node->prevStmt(); p.isValid()) {
+            node = p;
+            break;
+        }
+        if (auto &&p = node->parentStmt(); p.isValid()) {
+            node = p;
+        } else {
+            return nullptr;
+        }
+    }
+    return node;
+}
+
+Stmt StmtNode::nextStmtInDFSPreOrder() const {
+    auto node = self().as<StmtNode>();
+    if (auto &&ch = node->children(); !ch.empty()) {
+        return ch.front();
+    }
+    while (true) {
+        if (auto &&p = node->nextStmt(); p.isValid()) {
+            node = p;
+            break;
+        }
+        if (auto &&p = node->parentStmt(); p.isValid()) {
+            node = p;
+        } else {
+            return nullptr;
         }
     }
     return node;
