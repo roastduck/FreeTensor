@@ -262,6 +262,30 @@ def test_gpu_warp_dynamic():
     ])
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_gpu_warp_with_mod():
+    with ft.VarDef([("x", (1000, 800), "int32", "input", "gpu/global"),
+                    ("y", (1000, 2), "int32", "output", "gpu/global")]) as (x,
+                                                                            y):
+        with ft.For("i", 0, 1000, label="Li") as i:
+            y[i, 0] = 0
+            with ft.For("k", 0, 1000, label="Lk") as k:
+                y[i, 0] += x[i, k % 800]
+
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.auto_parallelize(ft.GPU())
+    print(s.ast())
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert fnmatch_list(logs, [
+        "split(Lk, 32, -1, 0)", "parallelize($split.1{Lk}, threadIdx.x, *)",
+        "reorder($split.1{Lk}, $split.0{Lk})", "split(Li, 8, -1, 0)",
+        "parallelize($split.0{Li}, blockIdx.x, *)",
+        "parallelize($split.1{Li}, threadIdx.y, *)"
+    ])
+
+
 def test_outer_loop_too_short():
     with ft.VarDef([("x", (8, 1000), "int32", "input", "cpu"),
                     ("y", (8, 1000), "int32", "output", "cpu"),

@@ -36,6 +36,26 @@ class CountContigAccessLoops : public SymbolTable<Visitor> {
         return ret;
     }
 
+    void countContigVars(std::unordered_map<std::string, int> *cnt,
+                         const Expr &expr) {
+        analyzeLinear_(expr);
+        for (auto &&[k, a] : analyzeLinear_.result().at(expr).coeff_) {
+            if (k != 1 && k != -1) {
+                continue;
+            }
+            switch (a->nodeType()) {
+            case ASTNodeType::Var:
+                (*cnt)[a.template as<VarNode>()->name_] += repeat_;
+                break;
+            case ASTNodeType::Mod:
+            case ASTNodeType::Remainder:
+                countContigVars(cnt, a.as<BinaryExprNode>()->lhs_);
+                break;
+            default:;
+            }
+        }
+    }
+
     template <class T> void visitMemAccess(const T &op) {
         BaseClass::visit(op);
         auto size = getStaticSize(op->var_);
@@ -45,13 +65,10 @@ class CountContigAccessLoops : public SymbolTable<Visitor> {
             return;
         }
         if (!op->indices_.empty()) {
-            Expr idx = op->indices_.back();
-            analyzeLinear_(idx);
-            for (auto &&[k, a] : analyzeLinear_.result().at(idx).coeff_) {
-                if ((k == 1 || k == -1) && a->nodeType() == ASTNodeType::Var) {
-                    auto &&var = a.template as<VarNode>();
-                    counts_[loop(var->name_)->id()].first += repeat_;
-                }
+            std::unordered_map<std::string, int> cnt;
+            countContigVars(&cnt, op->indices_.back());
+            for (auto &&[v, c] : cnt) {
+                counts_[loop(v)->id()].first += c;
             }
         }
     }
