@@ -12,6 +12,7 @@
 #include <random.h>
 #include <schedule/fission.h>
 #include <schedule/memoized_schedules.h>
+#include <schedule/reorder.h>
 #include <schedule/schedule_log.h>
 #include <schedule/var_split.h>
 #include <stmt.h>
@@ -271,10 +272,16 @@ class Schedule {
      * To swap consecutive loops, use `swap` instead
      *
      * @param order : Vector of loop IDs. The requested order of the loops
+     * @param mode : How to deal with imperfectly nested loops.
+     * `PerfectOnly` => throw an exception. `MoveOutImperfect` => do `fission`
+     * in advance to move out statements between the loops, which may enlarge
+     * intermediate tensors. `MoveInImperfect` => move statements between the
+     * loops inwards after adding gurads them them, which may hurt parallelism
      * @throw InvalidSchedule if the input is invalid or there are breaking
      * dependences
      */
-    void reorder(const std::vector<ID> &order);
+    void reorder(const std::vector<ID> &order,
+                 ReorderMode mode = ReorderMode::PerfectOnly);
 
     /**
      * Merge two directly nested loops into one
