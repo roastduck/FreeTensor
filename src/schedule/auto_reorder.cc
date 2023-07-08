@@ -52,7 +52,7 @@ void Schedule::autoReorder(const Ref<Target> &target) {
                 break;
             }
             try {
-                reorder(sorted);
+                reorder(sorted, ReorderMode::MoveOutImperfect);
                 innerMost = sorted.back();
                 break;
             } catch (const InvalidSchedule &e) {
