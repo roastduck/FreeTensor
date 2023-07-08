@@ -109,7 +109,7 @@ digraph "src/schedule/unroll.cc"
   Node67 -> Node52 [color="steelblue1",style="solid"];
   Node66 -> Node52 [color="steelblue1",style="solid"];
   Node65 -> Node69 [color="steelblue1",style="solid"];
-  Node69 [label="analyze/analyze_linear.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$analyze__linear_8h.html",tooltip=" "];
+  Node69 [label="analyze/analyze_linear.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$analyze__linear_8h.html",tooltip=" "];
   Node69 -> Node17 [color="steelblue1",style="solid"];
   Node69 -> Node3 [color="steelblue1",style="solid"];
   Node69 -> Node4 [color="steelblue1",style="solid"];
@@ -119,11 +119,6 @@ digraph "src/schedule/unroll.cc"
   Node70 -> Node4 [color="steelblue1",style="solid"];
   Node70 -> Node44 [color="steelblue1",style="solid"];
   Node70 -> Node11 [color="steelblue1",style="solid"];
-  Node69 -> Node71 [color="steelblue1",style="solid"];
-  Node71 [label="math/linear.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$linear_8h.html",tooltip=" "];
-  Node71 -> Node16 [color="steelblue1",style="solid"];
-  Node71 -> Node66 [color="steelblue1",style="solid"];
-  Node71 -> Node70 [color="steelblue1",style="solid"];
   Node69 -> Node52 [color="steelblue1",style="solid"];
   Node65 -> Node72 [color="steelblue1",style="solid"];
   Node72 [label="analyze/as_dnf.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$as__dnf_8h.html",tooltip=" "];
@@ -142,7 +137,6 @@ digraph "src/schedule/unroll.cc"
   Node73 -> Node16 [color="steelblue1",style="solid"];
   Node73 -> Node17 [color="steelblue1",style="solid"];
   Node73 -> Node4 [color="steelblue1",style="solid"];
-  Node73 -> Node71 [color="steelblue1",style="solid"];
   Node65 -> Node9 [color="steelblue1",style="solid"];
   Node65 -> Node11 [color="steelblue1",style="solid"];
   Node64 -> Node77 [color="steelblue1",style="solid"];
@@ -211,12 +205,17 @@ digraph "src/schedule/unroll.cc"
   Node95 -> Node16 [color="steelblue1",style="solid"];
   Node95 -> Node13 [color="steelblue1",style="solid"];
   Node95 -> Node70 [color="steelblue1",style="solid"];
-  Node81 -> Node95 [color="steelblue1",style="solid"];
   Node81 -> Node97 [color="steelblue1",style="solid"];
-  Node97 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node97 [label="schedule/reorder.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8h.html",tooltip=" "];
+  Node97 -> Node12 [color="steelblue1",style="solid"];
+  Node97 -> Node6 [color="steelblue1",style="solid"];
   Node97 -> Node63 [color="steelblue1",style="solid"];
-  Node81 -> Node11 [color="steelblue1",style="solid"];
-  Node1 -> Node98 [color="steelblue1",style="solid"];
-  Node98 [label="schedule/unroll.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$unroll_8h.html",tooltip=" "];
+  Node81 -> Node95 [color="steelblue1",style="solid"];
+  Node81 -> Node98 [color="steelblue1",style="solid"];
+  Node98 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
   Node98 -> Node63 [color="steelblue1",style="solid"];
+  Node81 -> Node11 [color="steelblue1",style="solid"];
+  Node1 -> Node99 [color="steelblue1",style="solid"];
+  Node99 [label="schedule/unroll.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$unroll_8h.html",tooltip=" "];
+  Node99 -> Node63 [color="steelblue1",style="solid"];
 }

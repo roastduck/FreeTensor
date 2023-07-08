@@ -83,8 +83,6 @@ digraph "src/schedule/blend.cc"
   Node36 -> Node9 [color="steelblue1",style="solid"];
   Node36 -> Node41 [color="steelblue1",style="solid"];
   Node41 [label="range/v3/range.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node36 -> Node42 [color="steelblue1",style="solid"];
-  Node42 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node2 -> Node65 [color="steelblue1",style="solid"];
   Node65 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node65 -> Node3 [color="steelblue1",style="solid"];
@@ -192,15 +190,20 @@ digraph "src/schedule/blend.cc"
   Node110 -> Node4 [color="steelblue1",style="solid"];
   Node110 -> Node5 [color="steelblue1",style="solid"];
   Node110 -> Node31 [color="steelblue1",style="solid"];
-  Node96 -> Node110 [color="steelblue1",style="solid"];
   Node96 -> Node112 [color="steelblue1",style="solid"];
-  Node112 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node112 [label="schedule/reorder.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8h.html",tooltip=" "];
+  Node112 -> Node6 [color="steelblue1",style="solid"];
+  Node112 -> Node9 [color="steelblue1",style="solid"];
   Node112 -> Node92 [color="steelblue1",style="solid"];
-  Node96 -> Node15 [color="steelblue1",style="solid"];
-  Node1 -> Node113 [color="steelblue1",style="solid"];
-  Node113 [label="schedule/blend.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$blend_8h.html",tooltip=" "];
-  Node113 -> Node7 [color="steelblue1",style="solid"];
-  Node113 -> Node10 [color="steelblue1",style="solid"];
+  Node96 -> Node110 [color="steelblue1",style="solid"];
+  Node96 -> Node113 [color="steelblue1",style="solid"];
+  Node113 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
   Node113 -> Node92 [color="steelblue1",style="solid"];
-  Node113 -> Node53 [color="steelblue1",style="solid"];
+  Node96 -> Node15 [color="steelblue1",style="solid"];
+  Node1 -> Node114 [color="steelblue1",style="solid"];
+  Node114 [label="schedule/blend.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$blend_8h.html",tooltip=" "];
+  Node114 -> Node7 [color="steelblue1",style="solid"];
+  Node114 -> Node10 [color="steelblue1",style="solid"];
+  Node114 -> Node92 [color="steelblue1",style="solid"];
+  Node114 -> Node53 [color="steelblue1",style="solid"];
 }

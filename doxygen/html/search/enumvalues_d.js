@@ -1,8 +1,9 @@
 var searchData=
 [
   ['parallelize_0',['Parallelize',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a0fe21b0f94673ecd304a362e81df7454',1,'freetensor']]],
-  ['permute_1',['Permute',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8afa662c6eb71caef475b2b981ce8eccd7',1,'freetensor']]],
-  ['plutofuse_2',['PlutoFuse',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8af35c365032717c98cc64de2c968290f2',1,'freetensor']]],
-  ['plutopermute_3',['PlutoPermute',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8aca17d7402905048e1b4bd8e308338e96',1,'freetensor']]],
-  ['possible_4',['Possible',['../namespacefreetensor.html#a80560a57b432656df642136e27321cada7ed6c322b81093217dd80a7d098736eb',1,'freetensor']]]
+  ['perfectonly_1',['PerfectOnly',['../namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4aa31a1ca629001d28584fc16e31eca6d5',1,'freetensor']]],
+  ['permute_2',['Permute',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8afa662c6eb71caef475b2b981ce8eccd7',1,'freetensor']]],
+  ['plutofuse_3',['PlutoFuse',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8af35c365032717c98cc64de2c968290f2',1,'freetensor']]],
+  ['plutopermute_4',['PlutoPermute',['../namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8aca17d7402905048e1b4bd8e308338e96',1,'freetensor']]],
+  ['possible_5',['Possible',['../namespacefreetensor.html#a80560a57b432656df642136e27321cada7ed6c322b81093217dd80a7d098736eb',1,'freetensor']]]
 ];

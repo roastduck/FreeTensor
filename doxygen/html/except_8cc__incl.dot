@@ -112,11 +112,6 @@ digraph "src/except.cc"
   Node52 -> Node19 [color="steelblue1",style="solid"];
   Node52 -> Node22 [color="steelblue1",style="solid"];
   Node52 -> Node31 [color="steelblue1",style="solid"];
-  Node49 -> Node53 [color="steelblue1",style="solid"];
-  Node53 [label="type/mem_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$mem__type_8h.html",tooltip=" "];
-  Node53 -> Node19 [color="steelblue1",style="solid"];
-  Node53 -> Node22 [color="steelblue1",style="solid"];
-  Node53 -> Node31 [color="steelblue1",style="solid"];
   Node47 -> Node54 [color="steelblue1",style="solid"];
   Node54 [label="driver/array.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$array_8h.html",tooltip=" "];
   Node54 -> Node9 [color="steelblue1",style="solid"];
@@ -145,7 +140,7 @@ digraph "src/except.cc"
   Node65 -> Node47 [color="steelblue1",style="solid"];
   Node65 -> Node58 [color="steelblue1",style="solid"];
   Node45 -> Node66 [color="steelblue1",style="solid"];
-  Node66 [label="codegen/native_code.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$native__code_8h.html",tooltip=" "];
+  Node66 [label="codegen/native_code.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$native__code_8h.html",tooltip=" "];
   Node66 -> Node25 [color="steelblue1",style="solid"];
   Node66 -> Node22 [color="steelblue1",style="solid"];
   Node66 -> Node54 [color="steelblue1",style="solid"];
@@ -158,7 +153,6 @@ digraph "src/except.cc"
   Node66 -> Node47 [color="steelblue1",style="solid"];
   Node66 -> Node52 [color="steelblue1",style="solid"];
   Node66 -> Node34 [color="steelblue1",style="solid"];
-  Node66 -> Node53 [color="steelblue1",style="solid"];
   Node45 -> Node56 [color="steelblue1",style="solid"];
   Node45 -> Node47 [color="steelblue1",style="solid"];
   Node45 -> Node67 [color="steelblue1",style="solid"];
@@ -183,9 +177,13 @@ digraph "src/except.cc"
   Node82 -> Node2 [color="steelblue1",style="solid"];
   Node82 -> Node24 [color="steelblue1",style="solid"];
   Node82 -> Node31 [color="steelblue1",style="solid"];
-  Node45 -> Node82 [color="steelblue1",style="solid"];
   Node45 -> Node85 [color="steelblue1",style="solid"];
-  Node85 [label="schedule/var_split.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node85 [label="schedule/reorder.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$reorder_8h.html",tooltip=" "];
+  Node85 -> Node22 [color="steelblue1",style="solid"];
+  Node85 -> Node9 [color="steelblue1",style="solid"];
+  Node45 -> Node82 [color="steelblue1",style="solid"];
+  Node45 -> Node86 [color="steelblue1",style="solid"];
+  Node86 [label="schedule/var_split.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$var__split_8h.html",tooltip=" "];
   Node45 -> Node58 [color="steelblue1",style="solid"];
   Node1 -> Node58 [color="steelblue1",style="solid"];
 }

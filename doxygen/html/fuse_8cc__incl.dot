@@ -219,13 +219,13 @@ digraph "src/schedule/fuse.cc"
   Node104 -> Node5 [color="steelblue1",style="solid"];
   Node104 -> Node6 [color="steelblue1",style="solid"];
   Node104 -> Node49 [color="steelblue1",style="solid"];
-  Node1 -> Node121 [color="steelblue1",style="solid"];
-  Node121 [label="schedule/fuse.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8h.html",tooltip=" "];
-  Node121 -> Node64 [color="steelblue1",style="solid"];
-  Node121 -> Node56 [color="steelblue1",style="solid"];
   Node1 -> Node122 [color="steelblue1",style="solid"];
-  Node122 [label="schedule/hoist_selected\l_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8h.html",tooltip=" "];
-  Node122 -> Node62 [color="steelblue1",style="solid"];
+  Node122 [label="schedule/fuse.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8h.html",tooltip=" "];
   Node122 -> Node64 [color="steelblue1",style="solid"];
-  Node122 -> Node55 [color="steelblue1",style="solid"];
+  Node122 -> Node56 [color="steelblue1",style="solid"];
+  Node1 -> Node123 [color="steelblue1",style="solid"];
+  Node123 [label="schedule/hoist_selected\l_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8h.html",tooltip=" "];
+  Node123 -> Node62 [color="steelblue1",style="solid"];
+  Node123 -> Node64 [color="steelblue1",style="solid"];
+  Node123 -> Node55 [color="steelblue1",style="solid"];
 }

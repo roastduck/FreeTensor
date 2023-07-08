@@ -73,4 +73,5 @@ digraph "include/schedule/fission.h"
   Node34 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
   Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node17 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node25 [dir="back",color="steelblue1",style="solid"];
 }

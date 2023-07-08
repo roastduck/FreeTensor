@@ -34,8 +34,6 @@ digraph "src/schedule/auto_use_lib.cc"
   Node11 -> Node20 [color="steelblue1",style="solid"];
   Node20 [label="ref.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$ref_8h.html",tooltip=" "];
   Node20 -> Node13 [color="steelblue1",style="solid"];
-  Node11 -> Node28 [color="steelblue1",style="solid"];
-  Node28 [label="serialize/to_string.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$to__string_8h.html",tooltip=" "];
   Node11 -> Node31 [color="steelblue1",style="solid"];
   Node31 [label="type/data_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$data__type_8h.html",tooltip=" "];
   Node31 -> Node32 [color="steelblue1",style="solid"];
@@ -48,7 +46,6 @@ digraph "src/schedule/auto_use_lib.cc"
   Node33 -> Node8 [color="steelblue1",style="solid"];
   Node33 -> Node3 [color="steelblue1",style="solid"];
   Node33 -> Node10 [color="steelblue1",style="solid"];
-  Node31 -> Node28 [color="steelblue1",style="solid"];
   Node5 -> Node40 [color="steelblue1",style="solid"];
   Node40 [label="buffer.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$buffer_8h.html",tooltip=" "];
   Node40 -> Node41 [color="steelblue1",style="solid"];
@@ -63,19 +60,17 @@ digraph "src/schedule/auto_use_lib.cc"
   Node42 -> Node31 [color="steelblue1",style="solid"];
   Node41 -> Node31 [color="steelblue1",style="solid"];
   Node40 -> Node43 [color="steelblue1",style="solid"];
-  Node43 [label="type/access_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$access__type_8h.html",tooltip=" "];
+  Node43 [label="type/access_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$access__type_8h.html",tooltip=" "];
   Node43 -> Node32 [color="steelblue1",style="solid"];
   Node43 -> Node6 [color="steelblue1",style="solid"];
   Node43 -> Node7 [color="steelblue1",style="solid"];
   Node43 -> Node33 [color="steelblue1",style="solid"];
-  Node43 -> Node28 [color="steelblue1",style="solid"];
   Node40 -> Node44 [color="steelblue1",style="solid"];
-  Node44 [label="type/mem_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mem__type_8h.html",tooltip=" "];
+  Node44 [label="type/mem_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$mem__type_8h.html",tooltip=" "];
   Node44 -> Node32 [color="steelblue1",style="solid"];
   Node44 -> Node6 [color="steelblue1",style="solid"];
   Node44 -> Node7 [color="steelblue1",style="solid"];
   Node44 -> Node33 [color="steelblue1",style="solid"];
-  Node44 -> Node28 [color="steelblue1",style="solid"];
   Node5 -> Node45 [color="steelblue1",style="solid"];
   Node45 [label="driver/array.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$array_8h.html",tooltip=" "];
   Node45 -> Node10 [color="steelblue1",style="solid"];
@@ -196,10 +191,14 @@ digraph "src/schedule/auto_use_lib.cc"
   Node80 -> Node3 [color="steelblue1",style="solid"];
   Node80 -> Node42 [color="steelblue1",style="solid"];
   Node80 -> Node49 [color="steelblue1",style="solid"];
-  Node78 -> Node28 [color="steelblue1",style="solid"];
-  Node61 -> Node78 [color="steelblue1",style="solid"];
   Node61 -> Node81 [color="steelblue1",style="solid"];
-  Node81 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node81 [label="schedule/reorder.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8h.html",tooltip=" "];
+  Node81 -> Node7 [color="steelblue1",style="solid"];
+  Node81 -> Node10 [color="steelblue1",style="solid"];
   Node81 -> Node76 [color="steelblue1",style="solid"];
+  Node61 -> Node78 [color="steelblue1",style="solid"];
+  Node61 -> Node82 [color="steelblue1",style="solid"];
+  Node82 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node82 -> Node76 [color="steelblue1",style="solid"];
   Node61 -> Node49 [color="steelblue1",style="solid"];
 }

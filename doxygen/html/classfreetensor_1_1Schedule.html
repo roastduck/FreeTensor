@@ -122,8 +122,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a4d9e820117a0bb7341541f7e338e1e73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a92a8d59c65897666a3380aa5bb887736"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a92a8d59c65897666a3380aa5bb887736">split</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id, int factor=-1, int nparts=-1, int shift=0)</td></tr>
 <tr class="separator:a92a8d59c65897666a3380aa5bb887736"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7152785074bdd363a5eb0091819b9152"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a7152785074bdd363a5eb0091819b9152">reorder</a> (const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;order)</td></tr>
-<tr class="separator:a7152785074bdd363a5eb0091819b9152"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8e63d99a62948e6f8ac3475d620b50b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#ac8e63d99a62948e6f8ac3475d620b50b">reorder</a> (const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;order, <a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4">ReorderMode</a> mode=<a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4aa31a1ca629001d28584fc16e31eca6d5">ReorderMode::PerfectOnly</a>)</td></tr>
+<tr class="separator:ac8e63d99a62948e6f8ac3475d620b50b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa1a2b69d757e3277d357d76fc06c5c82"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1ID.html">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#aa1a2b69d757e3277d357d76fc06c5c82">merge</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop2)</td></tr>
 <tr class="separator:aa1a2b69d757e3277d357d76fc06c5c82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a575b7a57ec6518dc5c6cd53bc8d2b8cc"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a575b7a57ec6518dc5c6cd53bc8d2b8cc">permute</a> (const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;loopsId, const std::function&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;(std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;)&gt; &amp;transformFunc)</td></tr>
@@ -1585,8 +1585,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a7152785074bdd363a5eb0091819b9152" name="a7152785074bdd363a5eb0091819b9152"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7152785074bdd363a5eb0091819b9152">&#9670;&#160;</a></span>reorder()</h2>
+<a id="ac8e63d99a62948e6f8ac3475d620b50b" name="ac8e63d99a62948e6f8ac3475d620b50b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac8e63d99a62948e6f8ac3475d620b50b">&#9670;&#160;</a></span>reorder()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1595,8 +1595,18 @@ template&lt;class T &gt; </div>
           <td class="memname">void freetensor::Schedule::reorder </td>
           <td>(</td>
           <td class="paramtype">const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>order</em></td><td>)</td>
+          <td class="paramname"><em>order</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4">ReorderMode</a>&#160;</td>
+          <td class="paramname"><em>mode</em> = <code><a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4aa31a1ca629001d28584fc16e31eca6d5">ReorderMode::PerfectOnly</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1605,6 +1615,7 @@ template&lt;class T &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">order</td><td>: Vector of loop IDs. The requested order of the loops </td></tr>
+    <tr><td class="paramname">mode</td><td>: How to deal with imperfectly nested loops. <code>PerfectOnly</code> =&gt; throw an exception. <code>MoveOutImperfect</code> =&gt; do <code>fission</code> in advance to move out statements between the loops, which may enlarge intermediate tensors. <code>MoveInImperfect</code> =&gt; move statements between the loops inwards after adding gurads them them, which may hurt parallelism </td></tr>
   </table>
   </dd>
 </dl>

@@ -17,10 +17,8 @@ digraph "src/schedule/auto_unroll.cc"
   Node4 -> Node6 [color="steelblue1",style="solid"];
   Node6 [label="unordered_set",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node4 -> Node7 [color="steelblue1",style="solid"];
-  Node7 [label="maybe_void.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$maybe__void_8h.html",tooltip=" "];
+  Node7 [label="maybe_void.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$maybe__void_8h.html",tooltip=" "];
   Node7 -> Node5 [color="steelblue1",style="solid"];
-  Node7 -> Node8 [color="steelblue1",style="solid"];
-  Node8 [label="variant",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node4 -> Node9 [color="steelblue1",style="solid"];
   Node9 [label="stmt.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$stmt_8h.html",tooltip=" "];
   Node9 -> Node10 [color="steelblue1",style="solid"];
@@ -190,11 +188,15 @@ digraph "src/schedule/auto_unroll.cc"
   Node79 [label="exception",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node78 -> Node15 [color="steelblue1",style="solid"];
   Node78 -> Node53 [color="steelblue1",style="solid"];
-  Node78 -> Node8 [color="steelblue1",style="solid"];
   Node78 -> Node12 [color="steelblue1",style="solid"];
-  Node61 -> Node78 [color="steelblue1",style="solid"];
   Node61 -> Node81 [color="steelblue1",style="solid"];
-  Node81 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node81 [label="schedule/reorder.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8h.html",tooltip=" "];
+  Node81 -> Node10 [color="steelblue1",style="solid"];
+  Node81 -> Node11 [color="steelblue1",style="solid"];
   Node81 -> Node76 [color="steelblue1",style="solid"];
+  Node61 -> Node78 [color="steelblue1",style="solid"];
+  Node61 -> Node82 [color="steelblue1",style="solid"];
+  Node82 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node82 -> Node76 [color="steelblue1",style="solid"];
   Node61 -> Node9 [color="steelblue1",style="solid"];
 }

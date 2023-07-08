@@ -118,8 +118,6 @@ digraph "src/schedule/parallelize.cc"
   Node71 [label="isl/ilp.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node68 -> Node72 [color="steelblue1",style="solid"];
   Node72 [label="isl/map.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node68 -> Node73 [color="steelblue1",style="solid"];
-  Node73 [label="isl/options.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node68 -> Node29 [color="steelblue1",style="solid"];
   Node68 -> Node31 [color="steelblue1",style="solid"];
   Node31 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
@@ -178,14 +176,19 @@ digraph "src/schedule/parallelize.cc"
   Node96 -> Node5 [color="steelblue1",style="solid"];
   Node96 -> Node67 [color="steelblue1",style="solid"];
   Node96 -> Node31 [color="steelblue1",style="solid"];
-  Node81 -> Node96 [color="steelblue1",style="solid"];
   Node81 -> Node98 [color="steelblue1",style="solid"];
-  Node98 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node98 [label="schedule/reorder.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8h.html",tooltip=" "];
+  Node98 -> Node6 [color="steelblue1",style="solid"];
+  Node98 -> Node9 [color="steelblue1",style="solid"];
   Node98 -> Node94 [color="steelblue1",style="solid"];
-  Node81 -> Node15 [color="steelblue1",style="solid"];
-  Node1 -> Node99 [color="steelblue1",style="solid"];
-  Node99 [label="schedule/parallelize.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize_8h.html",tooltip=" "];
-  Node99 -> Node7 [color="steelblue1",style="solid"];
-  Node99 -> Node8 [color="steelblue1",style="solid"];
+  Node81 -> Node96 [color="steelblue1",style="solid"];
+  Node81 -> Node99 [color="steelblue1",style="solid"];
+  Node99 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
   Node99 -> Node94 [color="steelblue1",style="solid"];
+  Node81 -> Node15 [color="steelblue1",style="solid"];
+  Node1 -> Node100 [color="steelblue1",style="solid"];
+  Node100 [label="schedule/parallelize.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize_8h.html",tooltip=" "];
+  Node100 -> Node7 [color="steelblue1",style="solid"];
+  Node100 -> Node8 [color="steelblue1",style="solid"];
+  Node100 -> Node94 [color="steelblue1",style="solid"];
 }

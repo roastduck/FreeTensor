@@ -1117,6 +1117,11 @@ Enumerations</h2></td></tr>
 , <a class="el" href="namespacefreetensor.html#a1f683336cea8089de8a4aebaac3568c3a0557fa923dcee4d0f86b1409f5c2167f">Back</a>
  }</td></tr>
 <tr class="separator:a1f683336cea8089de8a4aebaac3568c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae0ad6e5b36ce5377bb3a16599ff49f4"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4">ReorderMode</a> : int { <a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4aa31a1ca629001d28584fc16e31eca6d5">PerfectOnly</a>
+, <a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4af1ae2fc6418f54e33ee1762082c4cf6f">MoveOutImperfect</a>
+, <a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4a17dc68bac12d264928caeddca0766f49">MoveInImperfect</a>
+ }</td></tr>
+<tr class="separator:aae0ad6e5b36ce5377bb3a16599ff49f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac28eb3e0e6e276ccd7ffbe307afdaae8"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8">ScheduleType</a> : int { <br />
 &#160;&#160;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a8a9e64d86ed12ad40de129bc7f4683b2">Split</a> = 0
 , <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a332c80b1838dc515f5031e09da3b7f3f">Reorder</a>
@@ -2004,8 +2009,10 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:a4fb14c32ef48e672335332228d23065a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac7a91123e2aed63075666834d4204366"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac7a91123e2aed63075666834d4204366">plutoPermute</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, int nestLevel, bool doSimplify=true)</td></tr>
 <tr class="separator:ac7a91123e2aed63075666834d4204366"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac95a1c68f35ad6583776c9c563c227d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac95a1c68f35ad6583776c9c563c227d0">reorder</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;order)</td></tr>
-<tr class="separator:ac95a1c68f35ad6583776c9c563c227d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6516784b6dcf2e8eaeb79a3c8771753"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af6516784b6dcf2e8eaeb79a3c8771753">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4">ReorderMode</a> mode)</td></tr>
+<tr class="separator:af6516784b6dcf2e8eaeb79a3c8771753"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b2e33b42331cad8efdf8f13710d5beb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3b2e33b42331cad8efdf8f13710d5beb">reorder</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;order, <a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4">ReorderMode</a> mode)</td></tr>
+<tr class="separator:a3b2e33b42331cad8efdf8f13710d5beb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1bea8d6925cf272fb06ae26fbb25da60"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1bea8d6925cf272fb06ae26fbb25da60">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8">ScheduleType</a> type)</td></tr>
 <tr class="separator:a1bea8d6925cf272fb06ae26fbb25da60"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d7f8a083d0c7c55da3eeec2d867fce0"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5d7f8a083d0c7c55da3eeec2d867fce0">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="namespacefreetensor.html#a9e4f1b1f6aa3a758be97cca6233b110f">IDMetadataPack</a> &amp;pack)</td></tr>
@@ -4241,6 +4248,33 @@ template&lt;class K &gt; </div>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a80560a57b432656df642136e27321cada7ed6c322b81093217dd80a7d098736eb" name="a80560a57b432656df642136e27321cada7ed6c322b81093217dd80a7d098736eb"></a>Possible&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a80560a57b432656df642136e27321cada5bd00e474b7ae27b8fa2e5cb77bb66f8" name="a80560a57b432656df642136e27321cada5bd00e474b7ae27b8fa2e5cb77bb66f8"></a>Necessary&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<a id="aae0ad6e5b36ce5377bb3a16599ff49f4" name="aae0ad6e5b36ce5377bb3a16599ff49f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aae0ad6e5b36ce5377bb3a16599ff49f4">&#9670;&#160;</a></span>ReorderMode</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4">freetensor::ReorderMode</a> : int</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aae0ad6e5b36ce5377bb3a16599ff49f4aa31a1ca629001d28584fc16e31eca6d5" name="aae0ad6e5b36ce5377bb3a16599ff49f4aa31a1ca629001d28584fc16e31eca6d5"></a>PerfectOnly&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aae0ad6e5b36ce5377bb3a16599ff49f4af1ae2fc6418f54e33ee1762082c4cf6f" name="aae0ad6e5b36ce5377bb3a16599ff49f4af1ae2fc6418f54e33ee1762082c4cf6f"></a>MoveOutImperfect&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aae0ad6e5b36ce5377bb3a16599ff49f4a17dc68bac12d264928caeddca0766f49" name="aae0ad6e5b36ce5377bb3a16599ff49f4a17dc68bac12d264928caeddca0766f49"></a>MoveInImperfect&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -14646,7 +14680,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a5c0f4e93910a9324737e15d1bd575599" name="a5c0f4e93910a9324737e15d1bd575599"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5c0f4e93910a9324737e15d1bd575599">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[1/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c0f4e93910a9324737e15d1bd575599">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[1/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14682,7 +14716,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="ae091398240e204f37128828d143d8678" name="ae091398240e204f37128828d143d8678"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae091398240e204f37128828d143d8678">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[2/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae091398240e204f37128828d143d8678">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[2/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14710,7 +14744,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a17c4e04eec6d47a13148d7f4c82519a1" name="a17c4e04eec6d47a13148d7f4c82519a1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a17c4e04eec6d47a13148d7f4c82519a1">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[3/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a17c4e04eec6d47a13148d7f4c82519a1">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[3/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14746,7 +14780,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a69b12235146ab210071e589e98530649" name="a69b12235146ab210071e589e98530649"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a69b12235146ab210071e589e98530649">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[4/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a69b12235146ab210071e589e98530649">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[4/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14776,7 +14810,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="aad299e88504cc68e98ab17560718072a" name="aad299e88504cc68e98ab17560718072a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aad299e88504cc68e98ab17560718072a">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[5/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aad299e88504cc68e98ab17560718072a">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[5/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14812,7 +14846,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a1b86a8d2db3c5cbb7783684bb8692812" name="a1b86a8d2db3c5cbb7783684bb8692812"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1b86a8d2db3c5cbb7783684bb8692812">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[6/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b86a8d2db3c5cbb7783684bb8692812">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[6/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14848,7 +14882,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a78aba5d40f6ded8ce4f0bf3672d0a987" name="a78aba5d40f6ded8ce4f0bf3672d0a987"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a78aba5d40f6ded8ce4f0bf3672d0a987">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[7/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a78aba5d40f6ded8ce4f0bf3672d0a987">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[7/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14884,7 +14918,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="acaf092cf41556bd1c8a3a070e44f01ad" name="acaf092cf41556bd1c8a3a070e44f01ad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acaf092cf41556bd1c8a3a070e44f01ad">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[8/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#acaf092cf41556bd1c8a3a070e44f01ad">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[8/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14912,7 +14946,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a105559d11b03d08588c4044e66568d96" name="a105559d11b03d08588c4044e66568d96"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a105559d11b03d08588c4044e66568d96">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[9/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a105559d11b03d08588c4044e66568d96">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[9/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14940,7 +14974,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a21f23d616d300e56223f18288bb35a9c" name="a21f23d616d300e56223f18288bb35a9c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a21f23d616d300e56223f18288bb35a9c">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[10/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a21f23d616d300e56223f18288bb35a9c">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[10/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -14968,7 +15002,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a92b3ea9bbdfd15a531b662c4235746a5" name="a92b3ea9bbdfd15a531b662c4235746a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a92b3ea9bbdfd15a531b662c4235746a5">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[11/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a92b3ea9bbdfd15a531b662c4235746a5">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[11/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15004,7 +15038,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a45c869a6c8afbc975f13ed04abbb8824" name="a45c869a6c8afbc975f13ed04abbb8824"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a45c869a6c8afbc975f13ed04abbb8824">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[12/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a45c869a6c8afbc975f13ed04abbb8824">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[12/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15040,7 +15074,7 @@ template&lt;PBSetRef T&gt; </div>
 </div>
 </div>
 <a id="a740d86d2e1729b43db474578c0f9d396" name="a740d86d2e1729b43db474578c0f9d396"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a740d86d2e1729b43db474578c0f9d396">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[13/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a740d86d2e1729b43db474578c0f9d396">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[13/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15071,7 +15105,7 @@ template&lt;typename <a class="el" href="namespacefreetensor.html#ab9c83946ad65f
 </div>
 </div>
 <a id="a23ade70d34d1c74702c827be8c3d61b2" name="a23ade70d34d1c74702c827be8c3d61b2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a23ade70d34d1c74702c827be8c3d61b2">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[14/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a23ade70d34d1c74702c827be8c3d61b2">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[14/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15099,7 +15133,7 @@ template&lt;typename <a class="el" href="namespacefreetensor.html#ab9c83946ad65f
 </div>
 </div>
 <a id="a9c6d810f7b2d6f68a5f3a458081c379f" name="a9c6d810f7b2d6f68a5f3a458081c379f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9c6d810f7b2d6f68a5f3a458081c379f">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[15/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c6d810f7b2d6f68a5f3a458081c379f">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[15/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15127,7 +15161,7 @@ template&lt;typename <a class="el" href="namespacefreetensor.html#ab9c83946ad65f
 </div>
 </div>
 <a id="a74c9bede2fbfda49f084b7b9178bc970" name="a74c9bede2fbfda49f084b7b9178bc970"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a74c9bede2fbfda49f084b7b9178bc970">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[16/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a74c9bede2fbfda49f084b7b9178bc970">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[16/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15155,7 +15189,7 @@ template&lt;typename <a class="el" href="namespacefreetensor.html#ab9c83946ad65f
 </div>
 </div>
 <a id="a5d7f8a083d0c7c55da3eeec2d867fce0" name="a5d7f8a083d0c7c55da3eeec2d867fce0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5d7f8a083d0c7c55da3eeec2d867fce0">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[17/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d7f8a083d0c7c55da3eeec2d867fce0">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[17/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15191,7 +15225,7 @@ template&lt;typename <a class="el" href="namespacefreetensor.html#ab9c83946ad65f
 </div>
 </div>
 <a id="a8da64aa4d9100586983f72d7b94472f8" name="a8da64aa4d9100586983f72d7b94472f8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8da64aa4d9100586983f72d7b94472f8">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[18/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a8da64aa4d9100586983f72d7b94472f8">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[18/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15221,7 +15255,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a72058135cf977f49de104bdd7f6c6a29" name="a72058135cf977f49de104bdd7f6c6a29"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a72058135cf977f49de104bdd7f6c6a29">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[19/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a72058135cf977f49de104bdd7f6c6a29">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[19/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15249,7 +15283,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="ad269ca13d3f43dcb3ff2fd3162b42514" name="ad269ca13d3f43dcb3ff2fd3162b42514"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad269ca13d3f43dcb3ff2fd3162b42514">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[20/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ad269ca13d3f43dcb3ff2fd3162b42514">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[20/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15277,7 +15311,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a28925a7a87f56727ccd076d33a65ce4c" name="a28925a7a87f56727ccd076d33a65ce4c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a28925a7a87f56727ccd076d33a65ce4c">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[21/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a28925a7a87f56727ccd076d33a65ce4c">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[21/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15305,7 +15339,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a114f7b22d112f62b48e7e07cd5dd6b7b" name="a114f7b22d112f62b48e7e07cd5dd6b7b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a114f7b22d112f62b48e7e07cd5dd6b7b">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[22/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a114f7b22d112f62b48e7e07cd5dd6b7b">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[22/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15341,7 +15375,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a1dd9f020873a496a9086f0bc7a2109c6" name="a1dd9f020873a496a9086f0bc7a2109c6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1dd9f020873a496a9086f0bc7a2109c6">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[23/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1dd9f020873a496a9086f0bc7a2109c6">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[23/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15377,7 +15411,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a859a001d13812a82b2c8e464b322f1e2" name="a859a001d13812a82b2c8e464b322f1e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a859a001d13812a82b2c8e464b322f1e2">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[24/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a859a001d13812a82b2c8e464b322f1e2">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[24/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15405,7 +15439,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a74f32bacdd14bdfb33ff5a1441820f91" name="a74f32bacdd14bdfb33ff5a1441820f91"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a74f32bacdd14bdfb33ff5a1441820f91">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[25/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a74f32bacdd14bdfb33ff5a1441820f91">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[25/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15433,7 +15467,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="aa15c76aa912ecddad749982a79d85225" name="aa15c76aa912ecddad749982a79d85225"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa15c76aa912ecddad749982a79d85225">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[26/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aa15c76aa912ecddad749982a79d85225">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[26/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15469,7 +15503,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a511fb253559129c0912ce5a1e6f2bc6f" name="a511fb253559129c0912ce5a1e6f2bc6f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a511fb253559129c0912ce5a1e6f2bc6f">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[27/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a511fb253559129c0912ce5a1e6f2bc6f">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[27/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15505,7 +15539,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a609a6b2acbe04e0a551bb0f60e8200c3" name="a609a6b2acbe04e0a551bb0f60e8200c3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a609a6b2acbe04e0a551bb0f60e8200c3">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[28/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a609a6b2acbe04e0a551bb0f60e8200c3">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[28/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15533,7 +15567,7 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <a id="a5d818b0f9d4666227af367e90fb055d6" name="a5d818b0f9d4666227af367e90fb055d6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5d818b0f9d4666227af367e90fb055d6">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[29/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d818b0f9d4666227af367e90fb055d6">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[29/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15565,7 +15599,7 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 </div>
 </div>
 <a id="a0671d22d7846591238c019c2fc9785a5" name="a0671d22d7846591238c019c2fc9785a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0671d22d7846591238c019c2fc9785a5">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[30/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0671d22d7846591238c019c2fc9785a5">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[30/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15601,7 +15635,7 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 </div>
 </div>
 <a id="a5bcb73ee76b0e1c0a24e1b3010ef883d" name="a5bcb73ee76b0e1c0a24e1b3010ef883d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5bcb73ee76b0e1c0a24e1b3010ef883d">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[31/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5bcb73ee76b0e1c0a24e1b3010ef883d">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[31/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15636,8 +15670,44 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 
 </div>
 </div>
+<a id="af6516784b6dcf2e8eaeb79a3c8771753" name="af6516784b6dcf2e8eaeb79a3c8771753"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af6516784b6dcf2e8eaeb79a3c8771753">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[32/35]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::ostream &amp; freetensor::operator&lt;&lt; </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4">ReorderMode</a>&#160;</td>
+          <td class="paramname"><em>mode</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a1bea8d6925cf272fb06ae26fbb25da60" name="a1bea8d6925cf272fb06ae26fbb25da60"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1bea8d6925cf272fb06ae26fbb25da60">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[32/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1bea8d6925cf272fb06ae26fbb25da60">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[33/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15673,7 +15743,7 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 </div>
 </div>
 <a id="a0c5f10cee22ce0a7332c8e0d7c4dea4f" name="a0c5f10cee22ce0a7332c8e0d7c4dea4f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0c5f10cee22ce0a7332c8e0d7c4dea4f">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[33/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c5f10cee22ce0a7332c8e0d7c4dea4f">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[34/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -15709,7 +15779,7 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 </div>
 </div>
 <a id="a4fce3fc20d5123cfba4a15c1c79c0d0d" name="a4fce3fc20d5123cfba4a15c1c79c0d0d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4fce3fc20d5123cfba4a15c1c79c0d0d">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[34/34]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fce3fc20d5123cfba4a15c1c79c0d0d">&#9670;&#160;</a></span>operator&lt;&lt;() <span class="overload">[35/35]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -17266,8 +17336,8 @@ template&lt;PBMapRef T&gt; </div>
 
 </div>
 </div>
-<a id="ac95a1c68f35ad6583776c9c563c227d0" name="ac95a1c68f35ad6583776c9c563c227d0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac95a1c68f35ad6583776c9c563c227d0">&#9670;&#160;</a></span>reorder()</h2>
+<a id="a3b2e33b42331cad8efdf8f13710d5beb" name="a3b2e33b42331cad8efdf8f13710d5beb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3b2e33b42331cad8efdf8f13710d5beb">&#9670;&#160;</a></span>reorder()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -17282,7 +17352,13 @@ template&lt;PBMapRef T&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>order</em>&#160;</td>
+          <td class="paramname"><em>order</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4">ReorderMode</a>&#160;</td>
+          <td class="paramname"><em>mode</em>&#160;</td>
         </tr>
         <tr>
           <td></td>

@@ -94,10 +94,6 @@ digraph "include/schedule.h"
   Node54 -> Node48 [color="steelblue1",style="solid"];
   Node4 -> Node55 [color="steelblue1",style="solid"];
   Node55 [label="visitor.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$visitor_8h.html",tooltip=" "];
-  Node55 -> Node56 [color="steelblue1",style="solid"];
-  Node56 [label="debug.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$debug_8h.html",tooltip=" "];
-  Node56 -> Node7 [color="steelblue1",style="solid"];
-  Node56 -> Node10 [color="steelblue1",style="solid"];
   Node55 -> Node5 [color="steelblue1",style="solid"];
   Node55 -> Node48 [color="steelblue1",style="solid"];
   Node1 -> Node60 [color="steelblue1",style="solid"];
@@ -137,7 +133,6 @@ digraph "include/schedule.h"
   Node64 -> Node2 [color="steelblue1",style="solid"];
   Node64 -> Node6 [color="steelblue1",style="solid"];
   Node64 -> Node7 [color="steelblue1",style="solid"];
-  Node64 -> Node56 [color="steelblue1",style="solid"];
   Node64 -> Node67 [color="steelblue1",style="solid"];
   Node67 [label="shared_linked_list.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$shared__linked__list_8h.html",tooltip=" "];
   Node67 -> Node2 [color="steelblue1",style="solid"];
@@ -169,7 +164,6 @@ digraph "include/schedule.h"
   Node71 -> Node32 [color="steelblue1",style="solid"];
   Node71 -> Node74 [color="steelblue1",style="solid"];
   Node74 [label="mutator.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$mutator_8h.html",tooltip=" "];
-  Node74 -> Node56 [color="steelblue1",style="solid"];
   Node74 -> Node48 [color="steelblue1",style="solid"];
   Node1 -> Node75 [color="steelblue1",style="solid"];
   Node75 [label="schedule/memoized_schedules.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$memoized__schedules_8h.html",tooltip=" "];
@@ -192,9 +186,14 @@ digraph "include/schedule.h"
   Node78 -> Node48 [color="steelblue1",style="solid"];
   Node76 -> Node27 [color="steelblue1",style="solid"];
   Node76 -> Node67 [color="steelblue1",style="solid"];
-  Node1 -> Node76 [color="steelblue1",style="solid"];
   Node1 -> Node79 [color="steelblue1",style="solid"];
-  Node79 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node79 [label="schedule/reorder.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8h.html",tooltip=" "];
+  Node79 -> Node7 [color="steelblue1",style="solid"];
+  Node79 -> Node9 [color="steelblue1",style="solid"];
   Node79 -> Node74 [color="steelblue1",style="solid"];
+  Node1 -> Node76 [color="steelblue1",style="solid"];
+  Node1 -> Node80 [color="steelblue1",style="solid"];
+  Node80 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node80 -> Node74 [color="steelblue1",style="solid"];
   Node1 -> Node48 [color="steelblue1",style="solid"];
 }

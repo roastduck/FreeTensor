@@ -192,16 +192,15 @@ digraph "src/schedule/auto_inline.cc"
   Node78 -> Node51 [color="steelblue1",style="solid"];
   Node51 [label="variant",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node78 -> Node9 [color="steelblue1",style="solid"];
-  Node78 -> Node80 [color="steelblue1",style="solid"];
-  Node80 [label="hash.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$hash_8h.html",tooltip=" "];
-  Node80 -> Node6 [color="steelblue1",style="solid"];
-  Node80 -> Node17 [color="steelblue1",style="solid"];
-  Node80 -> Node41 [color="steelblue1",style="solid"];
-  Node80 -> Node48 [color="steelblue1",style="solid"];
-  Node59 -> Node78 [color="steelblue1",style="solid"];
   Node59 -> Node81 [color="steelblue1",style="solid"];
-  Node81 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node81 [label="schedule/reorder.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8h.html",tooltip=" "];
+  Node81 -> Node5 [color="steelblue1",style="solid"];
+  Node81 -> Node8 [color="steelblue1",style="solid"];
   Node81 -> Node54 [color="steelblue1",style="solid"];
+  Node59 -> Node78 [color="steelblue1",style="solid"];
+  Node59 -> Node82 [color="steelblue1",style="solid"];
+  Node82 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node82 -> Node54 [color="steelblue1",style="solid"];
   Node59 -> Node48 [color="steelblue1",style="solid"];
   Node1 -> Node62 [color="steelblue1",style="solid"];
 }

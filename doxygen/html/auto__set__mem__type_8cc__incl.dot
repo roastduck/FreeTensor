@@ -164,8 +164,6 @@ digraph "src/schedule/auto_set_mem_type.cc"
   Node71 -> Node11 [color="steelblue1",style="solid"];
   Node71 -> Node5 [color="steelblue1",style="solid"];
   Node71 -> Node35 [color="steelblue1",style="solid"];
-  Node71 -> Node21 [color="steelblue1",style="solid"];
-  Node21 [label="func_utils.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$func__utils_8h.html",tooltip=" "];
   Node69 -> Node79 [color="steelblue1",style="solid"];
   Node79 [label="random.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$random_8h.html",tooltip=" "];
   Node79 -> Node13 [color="steelblue1",style="solid"];
@@ -186,9 +184,14 @@ digraph "src/schedule/auto_set_mem_type.cc"
   Node84 -> Node10 [color="steelblue1",style="solid"];
   Node84 -> Node61 [color="steelblue1",style="solid"];
   Node84 -> Node14 [color="steelblue1",style="solid"];
-  Node69 -> Node84 [color="steelblue1",style="solid"];
   Node69 -> Node87 [color="steelblue1",style="solid"];
-  Node87 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node87 [label="schedule/reorder.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8h.html",tooltip=" "];
+  Node87 -> Node11 [color="steelblue1",style="solid"];
+  Node87 -> Node13 [color="steelblue1",style="solid"];
   Node87 -> Node66 [color="steelblue1",style="solid"];
+  Node69 -> Node84 [color="steelblue1",style="solid"];
+  Node69 -> Node88 [color="steelblue1",style="solid"];
+  Node88 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node88 -> Node66 [color="steelblue1",style="solid"];
   Node69 -> Node51 [color="steelblue1",style="solid"];
 }

@@ -82,8 +82,6 @@ digraph "include/analyze/find_stmt.h"
   Node79 [label="src/pass/sink_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sink__var_8cc.html",tooltip=" "];
   Node11 -> Node80 [dir="back",color="steelblue1",style="solid"];
   Node80 [label="src/pass/tensor_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$tensor__prop__const_8cc.html",tooltip=" "];
-  Node11 -> Node45 [dir="back",color="steelblue1",style="solid"];
-  Node45 [label="src/pass/z3_simplify.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$z3__simplify_8cc.html",tooltip=" "];
   Node11 -> Node34 [dir="back",color="steelblue1",style="solid"];
   Node34 [label="src/schedule/fuse.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8cc.html",tooltip=" "];
   Node11 -> Node83 [dir="back",color="steelblue1",style="solid"];
@@ -110,6 +108,8 @@ digraph "include/analyze/find_stmt.h"
   Node85 -> Node34 [dir="back",color="steelblue1",style="solid"];
   Node85 -> Node18 [dir="back",color="steelblue1",style="solid"];
   Node18 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
+  Node85 -> Node94 [dir="back",color="steelblue1",style="solid"];
+  Node94 [label="src/schedule/reorder.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8cc.html",tooltip=" "];
   Node1 -> Node97 [dir="back",color="steelblue1",style="solid"];
   Node97 [label="include/schedule.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$schedule_8h.html",tooltip=" "];
   Node97 -> Node46 [dir="back",color="steelblue1",style="solid"];
@@ -118,6 +118,7 @@ digraph "include/analyze/find_stmt.h"
   Node97 -> Node92 [dir="back",color="steelblue1",style="solid"];
   Node97 -> Node34 [dir="back",color="steelblue1",style="solid"];
   Node97 -> Node18 [dir="back",color="steelblue1",style="solid"];
+  Node97 -> Node94 [dir="back",color="steelblue1",style="solid"];
   Node97 -> Node49 [dir="back",color="steelblue1",style="solid"];
   Node49 [label="src/schedule/split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$split_8cc.html",tooltip=" "];
   Node1 -> Node67 [dir="back",color="steelblue1",style="solid"];
@@ -145,5 +146,6 @@ digraph "include/analyze/find_stmt.h"
   Node1 -> Node34 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node83 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node18 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node94 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node49 [dir="back",color="steelblue1",style="solid"];
 }

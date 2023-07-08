@@ -76,6 +76,7 @@ $(function() {
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">reorder.h File Reference</div></div>
 </div><!--header-->
@@ -108,10 +109,20 @@ Namespaces</h2></td></tr>
 <tr class="memitem:namespacefreetensor"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html">freetensor</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:aae0ad6e5b36ce5377bb3a16599ff49f4"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4">freetensor::ReorderMode</a> : int { <a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4aa31a1ca629001d28584fc16e31eca6d5">freetensor::PerfectOnly</a>
+, <a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4af1ae2fc6418f54e33ee1762082c4cf6f">freetensor::MoveOutImperfect</a>
+, <a class="el" href="namespacefreetensor.html#aae0ad6e5b36ce5377bb3a16599ff49f4a17dc68bac12d264928caeddca0766f49">freetensor::MoveInImperfect</a>
+ }</td></tr>
+<tr class="separator:aae0ad6e5b36ce5377bb3a16599ff49f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ac95a1c68f35ad6583776c9c563c227d0"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac95a1c68f35ad6583776c9c563c227d0">freetensor::reorder</a> (const Stmt &amp;ast, const std::vector&lt; ID &gt; &amp;order)</td></tr>
-<tr class="separator:ac95a1c68f35ad6583776c9c563c227d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6516784b6dcf2e8eaeb79a3c8771753"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af6516784b6dcf2e8eaeb79a3c8771753">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, ReorderMode mode)</td></tr>
+<tr class="separator:af6516784b6dcf2e8eaeb79a3c8771753"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b2e33b42331cad8efdf8f13710d5beb"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3b2e33b42331cad8efdf8f13710d5beb">freetensor::reorder</a> (const Stmt &amp;ast, const std::vector&lt; ID &gt; &amp;order, ReorderMode mode)</td></tr>
+<tr class="separator:a3b2e33b42331cad8efdf8f13710d5beb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 <!-- start footer part -->
