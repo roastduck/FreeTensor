@@ -207,7 +207,7 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &_dstOrder,
                 // not nesting the inner-most loop, and before the inner-most
                 // loop
                 ast = fission(ast, outerMostId, FissionSide::Before,
-                              innerMostId, true, "imperfect.0", "")
+                              innerMostId, true, ".imperfect.0", "")
                           .first;
             }
             if (!findAllStmt(ast, "(<<-" + toString(outerMostId) + ")&!(->>" +
@@ -218,7 +218,7 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &_dstOrder,
                 // not nesting the inner-most loop, and after the inner-most
                 // loop
                 ast = fission(ast, outerMostId, FissionSide::After, innerMostId,
-                              true, "", "imperfect.1")
+                              true, "", ".imperfect.1")
                           .first;
             }
         } catch (const InvalidSchedule &e) {
