@@ -16,6 +16,10 @@ void init_ffi_schedule(py::module_ &m) {
     py::enum_<VarSplitMode>(m, "VarSplitMode")
         .value("FixedSize", VarSplitMode::FixedSize)
         .value("RelaxedSize", VarSplitMode::RelaxedSize);
+    py::enum_<ReorderMode>(m, "ReorderMode")
+        .value("PerfectOnly", ReorderMode::PerfectOnly)
+        .value("MoveOutImperfect", ReorderMode::MoveOutImperfect)
+        .value("MoveInImperfect", ReorderMode::MoveInImperfect);
 
     py::class_<DiscreteObservation>(m, "DiscreteObservation")
         .def("__str__",
@@ -76,7 +80,8 @@ void init_ffi_schedule(py::module_ &m) {
                              const>(&Schedule::findAtLeastOne))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1, "shift"_a = 0)
-        .def("reorder", &Schedule::reorder, "order"_a)
+        .def("reorder", &Schedule::reorder, "order"_a,
+             "mode"_a = ReorderMode::PerfectOnly)
         .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a)
         .def(
             "permute",
@@ -129,7 +134,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("as_matmul", &Schedule::asMatMul)
         .def("pluto_fuse", &Schedule::plutoFuse, "loop0"_a, "loop1"_a,
              "nest_level_0"_a = 0, "nest_level_1"_a = 0,
-             "fusable_overlap_threshold"_a = 1, "fusable_nonoverlap_tolerance"_a = 4, "do_simplify"_a = true)
+             "fusable_overlap_threshold"_a = 1,
+             "fusable_nonoverlap_tolerance"_a = 4, "do_simplify"_a = true)
         .def("pluto_permute", &Schedule::plutoPermute, "loop"_a,
              "nest_level"_a = 0, "do_simplify"_a = true)
         .def("auto_schedule",

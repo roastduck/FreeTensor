@@ -41,21 +41,29 @@ void Schedule::autoReorder(const Ref<Target> &target) {
             }
         }
 
-        auto sorted = perfectNest;
-        std::stable_sort(sorted.begin(), sorted.end(),
-                         [&](const ID &lhs, const ID &rhs) {
-                             return depLevel[lhs] < depLevel[rhs];
-                         });
-        if (sorted != perfectNest) {
+        ID innerMost = perfectNest.back();
+        while (perfectNest.size() > 1) {
+            auto sorted = perfectNest;
+            std::stable_sort(sorted.begin(), sorted.end(),
+                             [&](const ID &lhs, const ID &rhs) {
+                                 return depLevel[lhs] < depLevel[rhs];
+                             });
+            if (sorted == perfectNest) {
+                break;
+            }
             try {
-                reorder(sorted);
+                reorder(sorted, ReorderMode::MoveOutImperfect);
+                innerMost = sorted.back();
+                break;
             } catch (const InvalidSchedule &e) {
-                // ignore
+                // Retry with one less loop
+                perfectNest.pop_back();
+                innerMost = perfectNest.back();
             }
         }
 
         for (auto &&subNest :
-             findAll("<For><-(!<For><-)*" + toString(nest->id()))) {
+             findAll("<For><-(!<For><-)*" + toString(innerMost))) {
             visitNest(subNest.as<ForNode>());
         }
     };
