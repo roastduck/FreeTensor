@@ -11,11 +11,6 @@ void Schedule::autoMemLayout(const Ref<Target> &target) {
     if (target->type() == TargetType::GPU) {
         for (auto &&_def : findAll("<VarDef>")) {
             auto &&def = _def.as<VarDefNode>();
-            if (isInputting(def->buffer_->atype()) ||
-                isOutputting(def->buffer_->atype())) {
-                continue;
-            }
-
             auto &&shape = def->buffer_->tensor()->shape();
             auto lastLongDimIt =
                 std::find_if(shape.rbegin(), shape.rend(), [&](const Expr &d) {
@@ -36,13 +31,22 @@ void Schedule::autoMemLayout(const Ref<Target> &target) {
                 shape.size() - 1 - (lastLongDimIt - shape.rbegin());
 
             try {
-                varSplit(def->id(), lastLongDim, VarSplitMode::RelaxedSize,
+                auto transformableDefId = def->id();
+                if (isInputting(def->buffer_->atype()) ||
+                    isOutputting(def->buffer_->atype())) {
+                    auto &&[_1, _2, _3, newId] = cache(
+                        def->body_->id(), def->name_, def->buffer_->mtype());
+                    transformableDefId = newId;
+                }
+
+                varSplit(transformableDefId, lastLongDim,
+                         VarSplitMode::RelaxedSize,
                          target.as<GPUTarget>()->warpSize());
                 auto order = ranges::to<std::vector>(
                     views::ints(0, (int)shape.size() + 1));
                 order.erase(order.begin() + lastLongDim + 1);
                 order.emplace_back(lastLongDim + 1);
-                varReorder(def->id(), order);
+                varReorder(transformableDefId, order);
             } catch (const InvalidSchedule &e) {
                 // Ignore
             }
