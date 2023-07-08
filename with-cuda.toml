@@ -1,0 +1,2 @@
+[cmake.options]
+FT_WITH_CUDA = "ON"

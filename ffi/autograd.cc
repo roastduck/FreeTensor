@@ -1,5 +1,6 @@
 #include <autograd/grad.h>
 #include <autograd/output_intermediates.h>
+#include <autograd/tape_strategy.h>
 #include <ffi.h>
 
 namespace freetensor {
@@ -27,43 +28,37 @@ void init_ffi_autograd(py::module_ &m) {
         .value("Nothing", GradTapeMode::Nothing)
         .value("NoReuseOnly", GradTapeMode::NoReuseOnly);
 
-    m.def(
-        "grad_body",
-        static_cast<
-            std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
-                       std::unordered_map<std::string, std::string>,
-                       std::unordered_map<ID, std::string>> (*)(
-                const Stmt &, const std::unordered_set<std::string> &,
-                const std::unordered_set<std::string> &,
-                const std::unordered_set<ID> &, bool, bool,
-                const std::vector<StmtSetToUserGrad> &)>(&gradBody),
-        "func"_a, "requires"_a, "provides"_a, "tapes"_a,
-        "reset_provided_grad"_a = true, "invert"_a = true,
-        "user_grads"_a = std::vector<StmtSetToUserGrad>{});
-    m.def(
-        "grad_",
-        static_cast<
-            std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
-                       std::unordered_map<std::string, std::string>> (*)(
-                const Func &, const std::unordered_set<std::string> &,
-                const std::unordered_set<std::string> &,
-                const std::unordered_set<ID> &, bool, bool, bool,
-                const std::vector<StmtSetToUserGrad> &)>(&gradFuncInplace),
-        "stmt"_a, "requires"_a, "provides"_a, "tapes"_a,
-        "tape_in_closure"_a = true, "reset_provided_grad"_a = true,
-        "invert"_a = true, "user_grads"_a = std::vector<StmtSetToUserGrad>{});
-    m.def(
-        "grad",
-        static_cast<
-            std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
-                       std::unordered_map<std::string, std::string>> (*)(
-                const Func &, const std::unordered_set<std::string> &,
-                const std::unordered_set<std::string> &,
-                const std::unordered_set<ID> &, bool, bool, bool,
-                const std::vector<StmtSetToUserGrad> &)>(&gradFuncOutOfPlace),
-        "stmt"_a, "requires"_a, "provides"_a, "tapes"_a,
-        "tape_in_closure"_a = true, "reset_provided_grad"_a = true,
-        "invert"_a = true, "user_grads"_a = std::vector<StmtSetToUserGrad>{});
+    py::class_<TapeStrategy>(m, "TapeStrategy")
+        .def(py::init<const std::unordered_set<
+                 std::variant<ID, std::string, Ref<Selector>>> &>())
+        .def(py::init<const std::vector<
+                 std::variant<ID, std::string, Ref<Selector>>> &>())
+        .def(py::init<GradTapeMode>())
+        .def("always_tape",
+             static_cast<TapeStrategy (TapeStrategy::*)(
+                 const std::unordered_set<
+                     std::variant<ID, std::string, Ref<Selector>>> &)>(
+                 &TapeStrategy::alwaysTape))
+        .def("always_tape",
+             static_cast<TapeStrategy (TapeStrategy::*)(
+                 const std::vector<std::variant<ID, std::string, Ref<Selector>>>
+                     &)>(&TapeStrategy::alwaysTape))
+        .def("never_tape",
+             static_cast<TapeStrategy (TapeStrategy::*)(
+                 const std::unordered_set<
+                     std::variant<ID, std::string, Ref<Selector>>> &)>(
+                 &TapeStrategy::neverTape))
+        .def("never_tape",
+             static_cast<TapeStrategy (TapeStrategy::*)(
+                 const std::vector<std::variant<ID, std::string, Ref<Selector>>>
+                     &)>(&TapeStrategy::neverTape));
+    py::implicitly_convertible<
+        std::unordered_set<std::variant<ID, std::string, Ref<Selector>>>,
+        TapeStrategy>();
+    py::implicitly_convertible<
+        std::vector<std::variant<ID, std::string, Ref<Selector>>>,
+        TapeStrategy>();
+    py::implicitly_convertible<GradTapeMode, TapeStrategy>();
 
     m.def(
         "grad_body",
@@ -72,23 +67,22 @@ void init_ffi_autograd(py::module_ &m) {
                        std::unordered_map<std::string, std::string>,
                        std::unordered_map<ID, std::string>> (*)(
                 const Stmt &, const std::unordered_set<std::string> &,
-                const std::unordered_set<std::string> &, GradTapeMode, bool,
-                bool, const std::vector<StmtSetToUserGrad> &)>(&gradBody),
+                const std::unordered_set<std::string> &, const TapeStrategy &,
+                bool, bool, const std::vector<StmtSetToUserGrad> &)>(&gradBody),
         "func"_a, "requires"_a, "provides"_a,
-        "tape_mode"_a = GradTapeMode::NoReuseOnly,
-        "reset_provided_grad"_a = true, "invert"_a = true,
-        "user_grads"_a = std::vector<StmtSetToUserGrad>{});
+        "tapes"_a = GradTapeMode::NoReuseOnly, "reset_provided_grad"_a = true,
+        "invert"_a = true, "user_grads"_a = std::vector<StmtSetToUserGrad>{});
     m.def(
         "grad_",
         static_cast<
             std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
                        std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
-                const std::unordered_set<std::string> &, GradTapeMode, bool,
-                bool, bool, const std::vector<StmtSetToUserGrad> &)>(
+                const std::unordered_set<std::string> &, const TapeStrategy &,
+                bool, bool, bool, const std::vector<StmtSetToUserGrad> &)>(
             &gradFuncInplace),
         "stmt"_a, "requires"_a, "provides"_a,
-        "tape_mode"_a = GradTapeMode::NoReuseOnly, "tape_in_closure"_a = true,
+        "tapes"_a = GradTapeMode::NoReuseOnly, "tape_in_closure"_a = true,
         "reset_provided_grad"_a = true, "invert"_a = true,
         "user_grads"_a = std::vector<StmtSetToUserGrad>{});
     m.def(
@@ -97,11 +91,11 @@ void init_ffi_autograd(py::module_ &m) {
             std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
                        std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
-                const std::unordered_set<std::string> &, GradTapeMode, bool,
-                bool, bool, const std::vector<StmtSetToUserGrad> &)>(
+                const std::unordered_set<std::string> &, const TapeStrategy &,
+                bool, bool, bool, const std::vector<StmtSetToUserGrad> &)>(
             &gradFuncOutOfPlace),
         "stmt"_a, "requires"_a, "provides"_a,
-        "tape_mode"_a = GradTapeMode::NoReuseOnly, "tape_in_closure"_a = true,
+        "tapes"_a = GradTapeMode::NoReuseOnly, "tape_in_closure"_a = true,
         "reset_provided_grad"_a = true, "invert"_a = true,
         "user_grads"_a = std::vector<StmtSetToUserGrad>{});
 

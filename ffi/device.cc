@@ -28,7 +28,8 @@ void init_ffi_device(py::module_ &m) {
 
     py::class_<CPUTarget, Ref<CPUTarget>>(m, "CPUTarget", pyTarget)
         .def("set_use_native_arch", &CPUTarget::setUseNativeArch,
-             "use_native_arch"_a = true);
+             "use_native_arch"_a = true)
+        .def("n_cores", &CPUTarget::nCores);
 
 #ifdef FT_WITH_CUDA
     py::class_<GPUTarget, Ref<GPUTarget>>(m, "GPUTarget", pyTarget)

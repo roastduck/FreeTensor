@@ -54,9 +54,9 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
                                        "supported in moveTo");
                         // TODO: Fission IfNode
                     }
-                    auto idMapBefore =
-                        fission(s->id(), FissionSide::After, stmt, ".a", "")
-                            .first;
+                    auto idMapBefore = fission(s->id(), FissionSide::After,
+                                               stmt, true, ".a", "")
+                                           .first;
                     stmtBody = idMapBefore.at(stmt);
                     stmt = idMapBefore.at(s->id());
                 }
@@ -83,9 +83,9 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
                         // TODO: Fission IfNode
                     }
                     // Leave IDs of the other statements unchanged
-                    auto idMapAfter =
-                        fission(s->id(), FissionSide::Before, stmt, "", ".b")
-                            .second;
+                    auto idMapAfter = fission(s->id(), FissionSide::Before,
+                                              stmt, true, "", ".b")
+                                          .second;
                     stmtBody = idMapAfter.at(stmt);
                     stmt = idMapAfter.at(s->id());
                 }

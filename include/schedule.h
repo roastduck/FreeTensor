@@ -331,6 +331,8 @@ class Schedule {
      * @param side : If `After`, `splitter` is the last statement of the first
      * loop. If `Before`, `splitter` is the first statement of the second loop
      * @param splitter : Where to fission the loop
+     * @param allowEnlarge : If true, try to avoid dependence by enlarging some
+     * `VarDef` nodes. If false, throw `InvalidSchedule` in such cases.
      * @param suffix0 : The suffix in the `op` of metadata of result part 0. If
      * empty, the fissioned part 0 preserves original ID and metadata. Cannot be
      * empty together with `suffix1`.
@@ -344,6 +346,7 @@ class Schedule {
      */
     std::pair<IDMap, IDMap> fission(const ID &loop, FissionSide side,
                                     const ID &splitter,
+                                    bool allowEnlarge = true,
                                     const std::string &suffix0 = ".0",
                                     const std::string &suffix1 = ".1");
 
@@ -624,8 +627,13 @@ class Schedule {
      *
      * @param loop : ID of the loop
      * @param parallel : Parallel scope
+     * @param allowReduction : If false, throw InvalidSchedule if this schedule
+     * would introduce a parallel reduction
+     * @throw InvalidSchedule if the loop is not found or unable to be
+     * parallelized
      */
-    void parallelize(const ID &loop, const ParallelScope &parallel);
+    void parallelize(const ID &loop, const ParallelScope &parallel,
+                     bool allowReduction = true);
 
     /**
      * Unroll a loop
@@ -721,6 +729,8 @@ class Schedule {
      * considered, defaults to maximum possible
      * @param fusableOverlapThreshold : The minimum overlapping size of two
      * loops to be regarded fusable. Defaults to 1
+     * @param fusableNonOverlapTolerance : The maximum non-overlapping size at
+     * either side of two loops to be regarded fusable. Defaults to 4
      * @param doSimplify : Whether the result is simplified by the way, defaults
      * to true
      * @return std::pair<ID, int> : The ID of fused loop and level of
@@ -729,6 +739,7 @@ class Schedule {
     std::pair<ID, int> plutoFuse(const ID &loop0, const ID &loop1,
                                  int nestLevel0 = 0, int nestLevel1 = 0,
                                  int fusableOverlapThreshold = 1,
+                                 int fusableNonOverlapTolerance = 4,
                                  bool doSimplify = true);
 
     /**
@@ -756,6 +767,13 @@ class Schedule {
                       const Ref<RandTrace> &trace = nullptr);
 
     /**
+     * (Experimental) Automatically inline very-small VarDef nodes
+     *
+     * @param target : Target architecture
+     */
+    void autoInline(const Ref<Target> &target);
+
+    /**
      * (Experimental) Automatically use external libs using some heuristics
      *
      * @param target : Target architecture
@@ -776,6 +794,13 @@ class Schedule {
      * @param target : Target architecture
      */
     void autoSwap(const Ref<Target> &target);
+
+    /**
+     * (Experimental) Automatically apply pluto-based schedules
+     *
+     * @param target : Target architecture
+     */
+    void autoPluto(const Ref<Target> &target);
 
     /**
      * (Experimental) Automatically fuse consecutive loops or vice versa using

@@ -77,6 +77,12 @@ typedef std::function<bool(const AccessPoint &later,
                            const AccessPoint &earlier)>
     FindDepsFilter;
 
+typedef int DepType;
+const DepType DEP_WAW = 0x1;
+const DepType DEP_WAR = 0x2;
+const DepType DEP_RAW = 0x4;
+const DepType DEP_ALL = DEP_WAW | DEP_WAR | DEP_RAW;
+
 /**
  * Find read and write points
  */
@@ -85,6 +91,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
 
     ID vardef_;
 
+    const DepType depType_;
     const FindDepsAccFilter &accFilter_;
 
     bool lastIsLoad_ =
@@ -131,7 +138,8 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     /** @} */
 
   public:
-    FindAccessPoint(const ID &vardef, const FindDepsAccFilter &accFilter);
+    FindAccessPoint(const ID &vardef, DepType depType,
+                    const FindDepsAccFilter &accFilter);
 
     void doFind(const Stmt &root);
 
@@ -201,6 +209,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     void visit(const StmtSeq &op) override;
     void visit(const For &op) override;
     void visit(const If &op) override;
+    void visit(const Assert &op) override;
     void visit(const Store &op) override { visitStoreLike(op); }
     void visit(const ReduceTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
@@ -239,6 +248,8 @@ struct Dependence {
     // reversedly
     PBMap later2EarlierIter_;
     PBMap laterIter2Idx_, earlierIter2Idx_;
+    // not only counting the nearest, but all
+    PBMap later2EarlierIterAllPossible_;
     PBCtx &presburger_;
     AnalyzeDeps &self_;
 
@@ -255,12 +266,6 @@ struct Dependence {
 };
 
 typedef SyncFunc<void(const Dependence &)> FindDepsCallback;
-
-typedef int DepType;
-const DepType DEP_WAW = 0x1;
-const DepType DEP_WAR = 0x2;
-const DepType DEP_RAW = 0x4;
-const DepType DEP_ALL = DEP_WAW | DEP_WAR | DEP_RAW;
 
 enum class RelaxMode : int { Possible, Necessary };
 enum class FindDepsMode : int {
@@ -329,11 +334,13 @@ class AnalyzeDeps {
           noProjectOutPrivateAxis_(noProjectOutPrivateAxis) {
         readsAsEarlier_ =
             ::freetensor::filter(reads, [&](const Ref<AccessPoint> &acc) {
-                return earlierFilter_ == nullptr || earlierFilter_(*acc);
+                return (depType_ & DEP_WAR) &&
+                       (earlierFilter_ == nullptr || earlierFilter_(*acc));
             });
         readsAsLater_ =
             ::freetensor::filter(reads, [&](const Ref<AccessPoint> &acc) {
-                return laterFilter_ == nullptr || laterFilter_(*acc);
+                return (depType_ & DEP_RAW) &&
+                       (laterFilter_ == nullptr || laterFilter_(*acc));
             });
         writesAsEarlier_ =
             ::freetensor::filter(writes, [&](const Ref<AccessPoint> &acc) {
@@ -360,7 +367,7 @@ class AnalyzeDeps {
     static std::string makeCond(GenPBExpr &genPBExpr,
                                 const std::vector<std::pair<Expr, ID>> &conds,
                                 RelaxMode relax, GenPBExpr::VarMap &externals,
-                                bool eraseOutsideVarDef, const VarDef &vardef);
+                                bool eraseOutsideVarDef, const AccessPoint &ap);
 
   private:
     PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,

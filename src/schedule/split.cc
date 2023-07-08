@@ -1,4 +1,5 @@
 #include <analyze/find_stmt.h>
+#include <pass/const_fold.h>
 #include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/split.h>
@@ -15,10 +16,30 @@ Stmt Splitter::visit(const For &_op) {
 
         if (factor_ != -1) {
             ASSERT(nparts_ == -1);
+            if (auto len = constFold(_op->len_);
+                len->nodeType() == ASTNodeType::IntConst &&
+                len.as<IntConstNode>()->val_ <= factor_) {
+                // Quick path: no need to split then simplify then shrink
+                dst1_ = _op->id();
+                found_ = true;
+                auto ret = Mutator::visit(_op);
+                ret->metadata() = makeMetadata("split.1", _op);
+                return ret;
+            }
             factor = makeIntConst(factor_);
             nparts = makeCeilDiv(shifted_len, factor);
         } else {
             ASSERT(nparts_ != -1);
+            if (auto len = constFold(_op->len_);
+                len->nodeType() == ASTNodeType::IntConst &&
+                len.as<IntConstNode>()->val_ <= nparts_) {
+                // Quick path: no need to split then simplify then shrink
+                dst0_ = _op->id();
+                found_ = true;
+                auto ret = Mutator::visit(_op);
+                ret->metadata() = makeMetadata("split.0", _op);
+                return ret;
+            }
             nparts = makeIntConst(nparts_);
             factor = makeCeilDiv(shifted_len, nparts);
         }

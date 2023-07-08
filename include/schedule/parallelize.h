@@ -31,8 +31,8 @@ class Parallelize : public Mutator {
     Expr visit(const Var &op) override;
 };
 
-Stmt parallelize(const Stmt &ast, const ID &loop,
-                 const ParallelScope &parallel);
+Stmt parallelize(const Stmt &ast, const ID &loop, const ParallelScope &parallel,
+                 bool allowReduction);
 
 } // namespace freetensor
 

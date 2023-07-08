@@ -5,15 +5,74 @@
 #include <sstream>
 
 #include <analyze/check_not_modified.h>
+#include <analyze/comp_transient_bounds.h>
+#include <analyze/comp_unique_bounds.h>
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <pass/const_fold.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/merge_and_hoist_if.h>
+#include <pass/normalize_loops.h>
 
 namespace freetensor {
 
 namespace gpu {
+
+namespace {
+
+class RetryMakeSync : public Error {
+    ID loopId_;
+
+  public:
+    RetryMakeSync(const ID &loopId, const std::string &msg,
+                  std::source_location loc = std::source_location::current())
+        : Error(msg, loc), loopId_(loopId) {}
+
+    const auto &loopId() const { return loopId_; }
+};
+
+class RelaxOneLoop : public CompTransientBounds<SymbolTable<Mutator>> {
+    typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
+
+    ID loopId_;
+
+  public:
+    RelaxOneLoop(const ID &loopId) : loopId_(loopId) {}
+
+  protected:
+    using BaseClass::visit;
+
+    Stmt visit(const For &_op) override {
+        auto __op = BaseClass::visit(_op);
+        ASSERT(_op->nodeType() == ASTNodeType::For);
+        auto op = __op.as<ForNode>();
+
+        if (op->id() == loopId_) {
+            CompUniqueBounds bound(*this);
+            // Already normalized
+            ASSERT(op->begin_->nodeType() == ASTNodeType::IntConst &&
+                   op->begin_.as<IntConstNode>()->val_ == 0);
+            if (auto u = bound.getIntUpper(op->end_); u != LLONG_MAX) {
+                op->body_ = makeIf(makeLT(makeVar(op->iter_), op->end_),
+                                   std::move(op->body_));
+                op->end_ = makeIntConst(u);
+                op->len_ = makeIntConst(u);
+            } else {
+                throw InvalidProgram("Unable to relax " + toString(op->end_));
+            }
+        }
+        return op;
+    }
+};
+
+Stmt relaxOneLoop(const Stmt &_ast, const ID &loopId) {
+    auto ast =
+        normalizeLoops(_ast, [&](auto &&l) { return l->id() == loopId; });
+    ast = RelaxOneLoop{loopId}(ast);
+    return ast;
+}
+
+} // Anonymous namespace
 
 void FindAllThreads::visit(const For &op) {
     if (op->property_->parallel_ == threadIdxX) {
@@ -74,13 +133,15 @@ Stmt CopyParts::visit(const For &_op) {
         if (op->property_->parallel_ == serialScope &&
             (op->begin_->nodeType() != ASTNodeType::IntConst ||
              op->end_->nodeType() != ASTNodeType::IntConst)) {
-            throw InvalidProgram(
-                "Unable to insert a synchronizing statment because it requires "
-                "splitting a dynamic loop " +
-                toString(op->id()) +
-                " into two parts, to avoid synchronizing inside a condition "
-                "of " +
-                toString(cond_));
+            // TODO: Dynamic lengths but evaluated to be the same value in each
+            // blocks should also be accpetable here
+            throw RetryMakeSync(
+                op->id(), "Unable to insert a synchronizing statment because "
+                          "it requires splitting a dynamic loop " +
+                              toString(op->id()) +
+                              " into two parts, to avoid synchronizing inside "
+                              "a condition of " +
+                              toString(cond_) + ".");
         }
     }
     return op;
@@ -344,7 +405,7 @@ Stmt MakeSync::visit(const If &op) {
     return ret;
 }
 
-Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
+static Stmt doMakeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
     auto op = constFold(_op);
 
     auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
@@ -466,6 +527,23 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
     op = mutator(op);
 
     return mergeAndHoistIf(op);
+}
+
+Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
+    auto op = _op;
+    while (true) {
+        try {
+            return doMakeSync(op, target);
+        } catch (const RetryMakeSync &e1) {
+            try {
+                op = relaxOneLoop(op, e1.loopId());
+            } catch (const InvalidProgram &e2) {
+                throw InvalidProgram(
+                    std::string(e1.what()) +
+                    " Tried to relax the loop, but: " + e2.what());
+            }
+        }
+    }
 }
 
 } // namespace gpu

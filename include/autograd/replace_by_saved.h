@@ -1,7 +1,10 @@
 #ifndef FREE_TENSOR_REPLACE_BY_SAVED_H
 #define FREE_TENSOR_REPLACE_BY_SAVED_H
 
+#include <optional>
+
 #include <analyze/symbol_table.h>
+#include <autograd/invert_from_store.h>
 #include <mutator.h>
 
 namespace freetensor {
@@ -26,17 +29,19 @@ class ReplaceBySaved : public Mutator {
     const std::unordered_map<ID, std::string> &intermediatesMap_;
     const std::unordered_map<StmtOrExprID, Expr> &versions_;
     ID rootStmtID_;
-    Store alreadyStored_;
+    std::optional<InvertFromStore> invertFromStore_;
     bool isGrad_ = false;
 
   public:
-    ReplaceBySaved(const SymbolTableInterface &symbolTable,
-                   const std::unordered_map<ID, std::string> &intermediatesMap,
-                   const std::unordered_map<StmtOrExprID, Expr> &versions,
-                   const ID &rootStmtID, const Store alreadyStored_ = nullptr)
+    ReplaceBySaved(
+        const SymbolTableInterface &symbolTable,
+        const std::unordered_map<ID, std::string> &intermediatesMap,
+        const std::unordered_map<StmtOrExprID, Expr> &versions,
+        const ID &rootStmtID,
+        const std::optional<InvertFromStore> &invertFromStore = std::nullopt)
         : symbolTable_(symbolTable), intermediatesMap_(intermediatesMap),
           versions_(versions), rootStmtID_(rootStmtID),
-          alreadyStored_(alreadyStored_) {}
+          invertFromStore_(invertFromStore) {}
 
     // Replace recomputing expressions
     auto recomp(const auto &op) {

@@ -23,7 +23,6 @@ void Schedule::autoSwap(const Ref<Target> &target) {
             // later is above ealier in program order
             return later.stmt_->isBefore(earlier.stmt_);
         })(ast(), [&](const Dependence &d) {
-        logger() << "Found (1) " << d << std::endl;
         // Lower-to-upper (reversed) dependence is found
         candidates.emplace(d.earlier_.stmt_->id(), d.later_.stmt_->id());
     });
@@ -34,7 +33,6 @@ void Schedule::autoSwap(const Ref<Target> &target) {
             return candidates.count(
                 std::make_pair(later.stmt_->id(), earlier.stmt_->id()));
         })(ast(), [&](const Dependence &d) {
-        logger() << "Found (2) " << d << std::endl;
         // Don't swap if there are dependeces in both directions
         candidates.erase(
             std::make_pair(d.later_.stmt_->id(), d.earlier_.stmt_->id()));
@@ -44,7 +42,6 @@ void Schedule::autoSwap(const Ref<Target> &target) {
         try {
             moveTo(laterId, MoveToSide::After, earlierId);
         } catch (const InvalidSchedule &e) {
-            logger() << "error " << e.what() << std::endl;
             try {
                 moveTo(earlierId, MoveToSide::Before, laterId);
             } catch (const InvalidSchedule &e) {

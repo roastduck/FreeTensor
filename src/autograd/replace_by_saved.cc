@@ -4,10 +4,11 @@
 namespace freetensor {
 
 Expr ReplaceBySaved::visitExpr(const Expr &expr) {
-    if (isGrad_ && alreadyStored_.isValid() &&
-        HashComparator{}(expr, alreadyStored_->expr_)) {
-        std::string var = alreadyStored_->var_;
-        std::vector<Expr> indices = alreadyStored_->indices_;
+    if (isGrad_ && invertFromStore_.has_value() &&
+        invertFromStore_->match(expr)) {
+        auto &&alreadyStored = invertFromStore_->store();
+        std::string var = alreadyStored->var_;
+        std::vector<Expr> indices = alreadyStored->indices_;
         auto dtype = symbolTable_.buffer(var)->tensor()->dtype();
         if (intermediatesMap_.count(symbolTable_.def(var)->id()) &&
             versions_.count(rootStmtID_)) {
@@ -15,10 +16,11 @@ Expr ReplaceBySaved::visitExpr(const Expr &expr) {
             if (savedVar != var) {
                 var = savedVar;
                 indices.insert(indices.begin(),
-                               versions_.at(alreadyStored_->id()));
+                               versions_.at(alreadyStored->id()));
             }
         }
-        return makeLoad(var, std::move(indices), dtype); // No recursion
+        return invertFromStore_->invert(
+            makeLoad(var, std::move(indices), dtype)); // No recursion
     }
     return Mutator::visitExpr(expr);
 }

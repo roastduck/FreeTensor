@@ -5,7 +5,7 @@ from pygments import highlight
 from pygments.lexers import CppLexer, CudaLexer
 from pygments.formatters import TerminalFormatter
 
-import freetensor_ffi as ffi
+from .. import ffi
 
 from . import config
 from .func import Func

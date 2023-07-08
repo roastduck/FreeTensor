@@ -1,6 +1,7 @@
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
 #include <analyze/find_stmt.h>
+#include <lazy.h>
 #include <pass/merge_and_hoist_if.h>
 #include <schedule.h>
 #include <schedule/fission.h>
@@ -178,7 +179,8 @@ Stmt FissionFor::visit(const Assert &op) {
 std::pair<Stmt,
           std::pair<std::unordered_map<ID, ID>, std::unordered_map<ID, ID>>>
 fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
-        const std::string &suffix0, const std::string &suffix1) {
+        bool allowEnlarge, const std::string &suffix0,
+        const std::string &suffix1) {
     if (suffix0.empty() && suffix1.empty())
         throw InvalidSchedule(
             "Cannot preserve ID and Metadata for both first and second parts");
@@ -219,7 +221,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
         }
         ast = hoistSelectedVar(ast, selectCrossing);
 
-        auto variants = findLoopVariance(ast);
+        auto variantVars = LAZY(findLoopVariance(ast).second);
 
         std::vector<FindDepsDir> disjunct;
         for (auto &&inner : affectedLoops) {
@@ -233,7 +235,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
             disjunct.emplace_back(std::move(dir));
         }
         auto isRealWrite = [&](const ID &loop, const VarDef &def) -> bool {
-            return isVariant(variants.second, def, loop);
+            return isVariant(*variantVars, def, loop);
         };
         std::unordered_map<ID, std::vector<ID>> toAdd;
         auto found = [&](const Dependence &d) {
@@ -247,17 +249,21 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
                 // the way like `firstprivate` and `lastprivate` in OpenMP)
                 throw InvalidSchedule(toString(d) + " cannot be resolved");
             }
-            if (!isRealWrite(id, d.def()) &&
-                d.earlier()->nodeType() == ASTNodeType::Load) {
-                return;
-            }
-            if (!isRealWrite(id, d.def()) &&
-                d.later()->nodeType() == ASTNodeType::Load) {
-                return;
-            }
-            if (std::find(toAdd[d.defId()].begin(), toAdd[d.defId()].end(),
-                          id) == toAdd[d.defId()].end()) {
-                toAdd[d.defId()].emplace_back(id);
+            if (allowEnlarge) {
+                if (!isRealWrite(id, d.def()) &&
+                    d.earlier()->nodeType() == ASTNodeType::Load) {
+                    return;
+                }
+                if (!isRealWrite(id, d.def()) &&
+                    d.later()->nodeType() == ASTNodeType::Load) {
+                    return;
+                }
+                if (std::find(toAdd[d.defId()].begin(), toAdd[d.defId()].end(),
+                              id) == toAdd[d.defId()].end()) {
+                    toAdd[d.defId()].emplace_back(id);
+                }
+            } else {
+                throw InvalidSchedule(toString(d) + " cannot be resolved");
             }
         };
         auto leftOfSplitterStmt = findStmt(ast, leftOfSplitter);
@@ -300,10 +306,12 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
-                  const std::string &suffix0, const std::string &suffix1) {
+                  bool allowEnlarge, const std::string &suffix0,
+                  const std::string &suffix1) {
     beginTransaction();
-    auto log = appendLog(MAKE_SCHEDULE_LOG(Fission, freetensor::fission, loop,
-                                           side, splitter, suffix0, suffix1));
+    auto log =
+        appendLog(MAKE_SCHEDULE_LOG(Fission, freetensor::fission, loop, side,
+                                    splitter, allowEnlarge, suffix0, suffix1));
     try {
         auto ret = applyLog(log);
         commitTransaction();

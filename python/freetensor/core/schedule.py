@@ -7,9 +7,9 @@ import functools
 from collections.abc import Sequence
 from typing import Callable, Union, List, Dict
 
-import freetensor_ffi as ffi
-from freetensor_ffi import (ParallelScope, ID, Selector, FissionSide,
-                            MoveToSide, VarSplitMode)
+from .. import ffi
+from ..ffi import (ParallelScope, ID, Selector, FissionSide, MoveToSide,
+                   VarSplitMode)
 
 from .func import Func
 from .analyze import find_stmt
@@ -233,7 +233,7 @@ class Schedule(ffi.Schedule):
         """
         return super().permute([self._lookup(l) for l in loops], transform_func)
 
-    def fission(self, loop, side, splitter):
+    def fission(self, loop, side, splitter, allow_enlarge=True):
         """
         Fission a loop into two loops each containing part of the statements, one
         followed by another
@@ -256,6 +256,9 @@ class Schedule(ffi.Schedule):
         splitter : str (Selector string), ID, Stmt, or list of them
             Where to fission the loop. If multiple statement are selected, fission the
             look before or after all of them
+        allow_enlarge : bool
+            If True, try to avoid dependence by enlarging some `VarDef` nodes. If False,
+            raise `InvalidSchedule` in such cases.
 
         Raises
         ------
@@ -275,7 +278,8 @@ class Schedule(ffi.Schedule):
             splitter = splitter_list[0]
         else:
             splitter = splitter_list[-1]
-        map1, map2 = super().fission(self._lookup(loop), side, splitter)
+        map1, map2 = super().fission(self._lookup(loop), side, splitter,
+                                     allow_enlarge)
         return IDMap(old_ast, map1), IDMap(old_ast, map2)
 
     def fuse(self, loop0, loop1=None, strict=False):
@@ -669,6 +673,14 @@ class Schedule(ffi.Schedule):
             The loop
         parallel : ParallelScope
             Parallel scope
+        allow_reduction : bool
+            If false, raise InvalidSchedule if this schedule would introduce a
+            parallel reduction
+
+        Raises
+        ------
+        InvalidSchedule
+            if the loop is not found or unable to be parallelized
         """
         super().parallelize(self._lookup(loop), ParallelScope(parallel))
 
@@ -783,6 +795,7 @@ class Schedule(ffi.Schedule):
                    nest_level_0=0,
                    nest_level_1=0,
                    fusable_overlap_threshold=1,
+                   fusable_nonoverlap_tolerance=4,
                    do_simplify=True):
         """
         Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable
@@ -803,9 +816,12 @@ class Schedule(ffi.Schedule):
         nest_level_1 : int
             The number of nesting levels of loop 1 to be considered, defaults to maximum
             possible
-        fusableOverlapThreshold : int
+        fusable_overlap_threshold : int
             The minimum overlapping size of two loops to be regarded fusable. Defaults
             to 1
+        fusable_nonoverlap_tolerance : int
+            The maximum non-overlapping size at either side of two loops to be regarded
+            fusable. Defaults to 4
         do_simplify : bool
             Whether the result is simplified by the way, defaults to true
 
@@ -821,7 +837,8 @@ class Schedule(ffi.Schedule):
         """
         return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1),
                                   nest_level_0, nest_level_1,
-                                  fusable_overlap_threshold, do_simplify)
+                                  fusable_overlap_threshold,
+                                  fusable_nonoverlap_tolerance, do_simplify)
 
     def pluto_permute(self, loop, nest_level=0, do_simplify=True):
         """
@@ -857,6 +874,17 @@ class Schedule(ffi.Schedule):
         """
         super().auto_schedule(target)
 
+    def auto_inline(self, target):
+        """
+        (Experimental) Automatically inline very-small VarDef nodes
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super().auto_inline(target)
+
     def auto_use_lib(self, target):
         """
         (Experimental) Automatically use external libs using some heuristics
@@ -879,6 +907,17 @@ class Schedule(ffi.Schedule):
             Target architecture
         """
         super().auto_swap(target)
+
+    def auto_pluto(self, target):
+        """
+        (Experimental) Automatically apply pluto-based schedules
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super().auto_pluto(target)
 
     def auto_fission_fuse(self, target):
         """

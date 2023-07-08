@@ -291,6 +291,52 @@ def test_tape_y_to_use_it_for_grad():
     assert std.match(ast)
 
 
+def test_invert_from_y_to_use_it_for_grad():
+    with ft.VarDef("x", (), "float32", "input", "cpu") as x:
+        ft.MarkLabel("V_y")
+        with ft.VarDef("y", (), "float32", "output", "cpu") as y:
+            y[...] = 1. - ft.exp(x[...])
+
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ["V_y"])
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("dx", (), "float32", "output", "cpu"),
+                    ("y", (), "float32", "input", "cpu"),
+                    ("dy", (), "float32", "inout", "cpu")]) as (dx, y, dy):
+        dx[...] = dy[...] * (-1 * (1. - y[...]))
+        dy[...] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_no_invert_from_y_to_use_it_for_grad():
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("a", (), "float32", "input", "cpu")]) as (x, a):
+        ft.MarkLabel("V_y")
+        with ft.VarDef("y", (), "float32", "output", "cpu") as y:
+            # No inversion: Although we can invert `1 / ?`, we can't invert
+            # `? * a` to get there
+            y[...] = 1. / ft.sqrt(x[...]) * a[...]
+
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ["V_y"])
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("dx", (), "float32", "output", "cpu"),
+                    ("a", (), "float32", "input", "cpu"),
+                    ("dy", (), "float32", "inout", "cpu")]) as (x, dx, a, dy):
+        dx[...] = dy[...] * (-0.5 * (a[...] / (x[...] * ft.sqrt(x[...]))))
+        dy[...] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_multiple_statements():
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
@@ -781,28 +827,28 @@ def test_recompute_using_another_recomputed_var():
 
     with ft.VarDef([("a", (10,), "float32", "input", "cpu"),
                     ("a.grad", (10,), "float32", "output", "cpu"),
-                    ("d.grad", (10,), "float32", "input", "cpu")]) as (a, da,
+                    ("b", (10,), "float32>=0", "cache", "cpu"),
+                    ("d.grad", (10,), "float32", "input", "cpu")]) as (a, da, b,
                                                                        dd):
-        with ft.VarDef("b", (10,), "float32>=0", "cache", "cpu") as b:
-            with ft.For("i", 0, 10) as i:
-                b[i] = ft.square(a[i])
-            with ft.VarDef("b.recomp", (1, 10), "float32>=0", "cache",
-                           "cpu") as b_recomp:
-                with ft.VarDef("c", (10,), "float32>=0", "cache", "cpu") as c:
-                    with ft.For("i_1", 0, 10) as i:
-                        b_recomp[0, i] = b[i]
-                        c[i] = ft.square(ft.square(b_recomp[0, i]))
-                        b[i] += 1
-                    with ft.For("i", 9, -1, -1) as i:
-                        gradient_of_bi_in_di = dd[i] * ft.square(c[i])
-                        # USE NEW b HERE
-                        # gradient_of_ci_in_di = 2 * dd[i] * b[i] * c[i]
-                        # USE OLD b_recomp HERE
-                        # dt = (4 * ft.square(b_recomp[0, i]) *
-                        #       gradient_of_ci_in_di * b_recomp[0, i])
-                        dt = (8 * ft.square(b_recomp[0, i]) * dd[i] * b[i] *
-                              c[i] * b_recomp[0, i])
-                        da[i] = 2 * (gradient_of_bi_in_di + dt) * a[i]
+        with ft.For("i", 0, 10) as i:
+            b[i] = ft.square(a[i])
+        with ft.VarDef("b.recomp", (1, 10), "float32>=0", "cache",
+                       "cpu") as b_recomp:
+            with ft.VarDef("c", (10,), "float32>=0", "cache", "cpu") as c:
+                with ft.For("i_1", 0, 10) as i:
+                    b_recomp[0, i] = b[i]
+                    c[i] = ft.square(ft.square(b_recomp[0, i]))
+                    b[i] += 1
+                with ft.For("i", 9, -1, -1) as i:
+                    gradient_of_bi_in_di = dd[i] * ft.square(c[i])
+                    # USE NEW b HERE
+                    # gradient_of_ci_in_di = 2 * dd[i] * b[i] * c[i]
+                    # USE OLD b_recomp HERE
+                    # dt = (4 * ft.square(b_recomp[0, i]) *
+                    #       gradient_of_ci_in_di * b_recomp[0, i])
+                    dt = (8 * ft.square(b_recomp[0, i]) * dd[i] * b[i] * c[i] *
+                          b_recomp[0, i])
+                    da[i] = 2 * (gradient_of_bi_in_di + dt) * a[i]
     std = ft.pop_ast()
 
     assert std.match(bwd.body)

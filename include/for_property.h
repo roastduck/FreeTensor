@@ -11,7 +11,8 @@ namespace freetensor {
 struct ReductionItem : public ASTPart {
     ReduceOp op_;
     std::string var_;
-    SubTreeList<ExprNode> begins_ = ChildOf{this}, ends_ = ChildOf{this};
+    SubTreeList<ExprNode> begins_ = ChildOf{this},
+                          ends_ = ChildOf{this}; /// [begins_, ends_)
 
     void compHash() override;
 };

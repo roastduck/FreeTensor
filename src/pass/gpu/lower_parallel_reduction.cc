@@ -8,7 +8,6 @@
 #include <pass/gpu/normalize_thread_dims.h>
 #include <pass/make_nested_loops.h>
 #include <pass/normalize_loops.h>
-#include <pass/replace_iter.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
@@ -150,19 +149,6 @@ Stmt InsertWorkspaces::visit(const ReduceTo &_op) {
     return op;
 }
 
-Expr InsertBinaryReduction::makeCondForNeighborThread(
-    const std::string &thisThreadIter, const Expr &neighborThreadIter) {
-    Expr ret;
-    for (auto &&cond : condStack_) {
-        if (allIters(cond).count(thisThreadIter)) {
-            ReplaceIter replacer(thisThreadIter, neighborThreadIter);
-            ret =
-                ret.isValid() ? makeLAnd(ret, replacer(cond)) : replacer(cond);
-        }
-    }
-    return ret;
-}
-
 Stmt InsertBinaryReduction::visit(const VarDef &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
@@ -234,11 +220,6 @@ Stmt InsertBinaryReduction::visit(const VarDef &_op) {
         auto cond = makeLAnd(
             makeEQ(makeMod(nth, makeMul(k, makeIntConst(2))), makeIntConst(0)),
             makeLT(makeAdd(nth, k), l->len_));
-        if (auto &&extraCond = makeCondForNeighborThread(
-                l->iter_, makeAdd(makeVar(l->iter_) /* not `nth` */, k));
-            extraCond.isValid()) {
-            cond = makeLAnd(std::move(cond), std::move(extraCond));
-        }
         reduceStmt = makeFor("__reduce_p", makeIntConst(0), count,
                              makeIntConst(1), count, prop,
                              makeIf(std::move(cond), std::move(reduceStmt)));
@@ -249,21 +230,6 @@ Stmt InsertBinaryReduction::visit(const VarDef &_op) {
         shape.insert(shape.begin(), l->len_);
     }
     return op;
-}
-
-Stmt InsertBinaryReduction::visit(const If &op) {
-    auto cond = (*this)(op->cond_);
-    condStack_.emplace_back(op->cond_);
-    auto thenCase = (*this)(op->thenCase_);
-    condStack_.pop_back();
-    Stmt elseCase;
-    if (op->elseCase_.isValid()) {
-        condStack_.emplace_back(makeLNot(op->cond_));
-        elseCase = (*this)(op->elseCase_);
-        condStack_.pop_back();
-    }
-    return makeIf(std::move(cond), std::move(thenCase), std::move(elseCase),
-                  op->metadata(), op->id(), op->debugBlame());
 }
 
 Stmt CorrectInterThreadDependence::visit(const VarDef &_op) {
@@ -283,6 +249,30 @@ Stmt CorrectInterThreadDependence::visit(const For &op) {
     if (auto it = loop2ws_.find(op->id()); it != loop2ws_.end()) {
         for (auto &&ws : it->second) {
             VarDef vardef = ws;
+
+            CompUniqueBounds unique(*this);
+            auto &&red = ws2red_.at(ws->id()).second;
+            auto &shape = vardef->buffer_->tensor()->shape();
+            for (auto &&[dim, oldBegin, oldEnd] :
+                 views::zip(shape | views::slice(1ul, shape.size()),
+                            red->begins_, red->ends_)) {
+                for (auto &&name : allNames(dim)) {
+                    if (!names().count(name)) {
+                        Expr newDim;
+                        for (auto &&b : unique.getDefinedUpper(
+                                 makeMin(dim, makeSub(oldEnd, oldBegin)),
+                                 names())) {
+                            newDim = newDim.isValid()
+                                         ? makeMin(std::move(newDim), b.expr())
+                                         : b.expr();
+                        }
+                        ASSERT(newDim.isValid());
+                        dim = std::move(newDim);
+                        break;
+                    }
+                }
+            }
+
             vardef->body_ = ret;
             ret = vardef;
         }
@@ -343,9 +333,18 @@ Stmt lowerParallelReduction(const Stmt &_op) {
             break;
         }
 
-        // 2. Try to make the workspace more inner by `pass/sink_var`
-        op = sinkVar(op, ranges::to<std::unordered_set>(
-                             views::keys(insertWorkspaces.ws2red())));
+        // 2. Try to make the workspace more inner by `pass/sink_var`, but make
+        // sure all participating threads are working so don't sink into some
+        // branches
+        op = sinkVar(op,
+                     ranges::to<std::unordered_set>(
+                         views::keys(insertWorkspaces.ws2red())),
+                     [&](const Stmt &scope) {
+                         // TODO: A more accurate filter that filters only
+                         // variants of the loop representing the collaborative
+                         // threads
+                         return scope->nodeType() != ASTNodeType::If;
+                     });
 
         // 3. Enlarge the workspace to thread-number-fold, and insert the binary
         // reduction algorithm.
@@ -367,7 +366,7 @@ Stmt lowerParallelReduction(const Stmt &_op) {
 
         // 6. As per our definition of inter-thread dependence, a VarDef defined
         // inside a parallel For is considered thread local to it, while a
-        // VarDef defined outside a parallel For is considered thread by all the
+        // VarDef defined outside a parallel For is considered shared by all the
         // threads. The former will be further lower by
         // pass/gpu/multiplex_buffers. We need to put workspace back to the
         // original place to meet this definition, but this time with a shrinked

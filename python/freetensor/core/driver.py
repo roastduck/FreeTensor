@@ -7,8 +7,8 @@ from typing import Optional, Callable, Sequence
 import functools
 import numpy as np
 
-import freetensor_ffi as ffi
-from freetensor_ffi import TargetType, Target, Device, Array
+from .. import ffi
+from ..ffi import TargetType, Target, Device, Array
 
 from . import config
 from .codegen import NativeCode

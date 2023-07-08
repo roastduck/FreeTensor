@@ -176,6 +176,9 @@ std::string toString(const AST &op, bool pretty, bool printAllId);
 std::string toString(const AST &op, bool pretty, bool printAllId,
                      bool dtypeInLoad, bool hexFloat = false,
                      bool compact = false);
+std::string toString(const AST &op, bool pretty, bool printAllId,
+                     bool dtypeInLoad, bool hexFloat, bool compact,
+                     bool printSourceLocation);
 /** @} */
 
 /**
@@ -183,7 +186,7 @@ std::string toString(const AST &op, bool pretty, bool printAllId,
  */
 inline std::string dumpAST(const AST &op, bool dtypeInLoad = false,
                            bool hexFloat = true) {
-    return toString(op, false, true, dtypeInLoad, hexFloat, true);
+    return toString(op, false, true, dtypeInLoad, hexFloat, true, false);
 }
 
 /**

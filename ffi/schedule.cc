@@ -93,7 +93,7 @@ void init_ffi_schedule(py::module_ &m) {
             },
             "loops_id"_a, "transform_func"_a)
         .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,
-             "suffix0"_a = ".0", "suffix1"_a = ".1")
+             "allow_enlarge"_a = true, "suffix0"_a = ".0", "suffix1"_a = ".1")
         .def("fuse",
              static_cast<ID (Schedule::*)(const ID &, const ID &, bool)>(
                  &Schedule::fuse),
@@ -120,7 +120,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("var_reorder", &Schedule::varReorder, "vardef"_a, "order"_a)
         .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a)
         .def("inline", &Schedule::inlining, "vardef"_a)
-        .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a)
+        .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a,
+             "allow_reduction"_a = true)
         .def("unroll", &Schedule::unroll, "loop"_a, "immedate"_a = false)
         .def("vectorize", &Schedule::vectorize, "loop"_a)
         .def("separate_tail", &Schedule::separateTail,
@@ -128,7 +129,7 @@ void init_ffi_schedule(py::module_ &m) {
         .def("as_matmul", &Schedule::asMatMul)
         .def("pluto_fuse", &Schedule::plutoFuse, "loop0"_a, "loop1"_a,
              "nest_level_0"_a = 0, "nest_level_1"_a = 0,
-             "fusable_overlap_threshold"_a = 1, "do_simplify"_a = true)
+             "fusable_overlap_threshold"_a = 1, "fusable_nonoverlap_tolerance"_a = 4, "do_simplify"_a = true)
         .def("pluto_permute", &Schedule::plutoPermute, "loop"_a,
              "nest_level"_a = 0, "do_simplify"_a = true)
         .def("auto_schedule",
@@ -136,9 +137,11 @@ void init_ffi_schedule(py::module_ &m) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda
                  return s.autoSchedule(target);
              })
+        .def("auto_inline", &Schedule::autoInline)
         .def("auto_use_lib", &Schedule::autoUseLib)
         .def("auto_reorder", &Schedule::autoReorder)
         .def("auto_swap", &Schedule::autoSwap)
+        .def("auto_pluto", &Schedule::autoPluto)
         .def("auto_fission_fuse",
              [](Schedule &s, const Ref<Target> &target) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda

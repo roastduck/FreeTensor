@@ -466,6 +466,18 @@ PBMap moveDimsOutputToParam(T &&map, unsigned first, unsigned n,
     return isl_map_move_dims(PBRefTake<T>(map), isl_dim_param, target,
                              isl_dim_out, first, n);
 }
+template <PBMapRef T>
+PBMap moveDimsParamToInput(T &&map, unsigned first, unsigned n,
+                           unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_in, target,
+                             isl_dim_param, first, n);
+}
+template <PBMapRef T>
+PBMap moveDimsParamToOutput(T &&map, unsigned first, unsigned n,
+                            unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_out, target,
+                             isl_dim_param, first, n);
+}
 
 template <PBSetRef T> PBSet complement(T &&set) {
     DEBUG_PROFILE("complement");
@@ -699,11 +711,12 @@ template <PBSetRef T> PBPoint sample(T &&set) {
  * @return PBSet set of valid coefficients for the input set
  */
 template <PBSetRef T> PBSet coefficients(T &&set, int64_t c = 0) {
-    if (isl_set_involves_locals(set.get()))
-        throw InvalidSchedule("Local variables are not permitted in computing "
-                              "dual coefficients.");
-    auto coefficientsMap = isl_map_from_basic_map(
-        isl_basic_set_unwrap(isl_set_coefficients(PBRefTake<T>(set))));
+    // ISL coefficients applies Farkas lemma which disallows intermediate
+    // variables introduced by division/modulo constraints. The best we can do
+    // is to remove such constraints and provide a slightly relaxed bound for
+    // the coefficients, so remove_divs first.
+    auto coefficientsMap = isl_map_from_basic_map(isl_basic_set_unwrap(
+        isl_set_coefficients(isl_set_remove_divs(PBRefTake<T>(set)))));
     auto ctx = isl_map_get_ctx(coefficientsMap);
     auto paramsSpace = isl_space_domain(isl_map_get_space(coefficientsMap));
     auto nParams = isl_space_dim(paramsSpace, isl_dim_set);
@@ -711,6 +724,13 @@ template <PBSetRef T> PBSet coefficients(T &&set, int64_t c = 0) {
     isl_point_set_coordinate_val(cPoint, isl_dim_set, nParams - 1,
                                  isl_val_int_from_si(ctx, -c));
     return apply(PBSet(isl_set_from_point(cPoint)), PBMap(coefficientsMap));
+}
+
+inline bool isSubset(const PBSet &small, const PBSet &big) {
+    return isl_set_is_subset(small.get(), big.get());
+}
+inline bool isSubset(const PBMap &small, const PBMap &big) {
+    return isl_map_is_subset(small.get(), big.get());
 }
 
 inline bool operator==(const PBSet &lhs, const PBSet &rhs) {

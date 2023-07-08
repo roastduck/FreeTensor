@@ -10,7 +10,7 @@ from typing import List, Sequence, Optional, Callable
 import sys
 import traceback
 
-import freetensor_ffi as ffi
+from .. import ffi
 
 
 class Context:
