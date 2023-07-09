@@ -63,6 +63,8 @@ digraph "include/func.h"
   Node113 [label="include/codegen/code\l_gen_cuda.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$code__gen__cuda_8h.html",tooltip=" "];
   Node1 -> Node114 [dir="back",color="steelblue1",style="solid"];
   Node114 [label="include/codegen/native\l_code.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$native__code_8h.html",tooltip=" "];
+  Node114 -> Node111 [dir="back",color="steelblue1",style="solid"];
+  Node114 -> Node113 [dir="back",color="steelblue1",style="solid"];
   Node114 -> Node98 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node125 [dir="back",color="steelblue1",style="solid"];
   Node125 [label="include/debug/check\l_conflict_id.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$check__conflict__id_8h.html",tooltip=" "];

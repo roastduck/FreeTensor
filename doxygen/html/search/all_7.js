@@ -97,7 +97,7 @@ var searchData=
   ['free_94',['Free',['../namespacefreetensor.html#a0a2d7af969695e7c216587d7431d921b',1,'freetensor::Free()'],['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fab24ce0cd392a5b0b8dedc66c25213594',1,'freetensor::Free()']]],
   ['freenode_95',['FreeNode',['../classfreetensor_1_1FreeNode.html',1,'freetensor']]],
   ['freetensor_96',['freetensor',['../namespacefreetensor.html',1,'']]],
-  ['fromfunc_97',['fromFunc',['../classfreetensor_1_1NativeCode.html#a682cd18bffbcaef745e9ddbb68d17da9',1,'freetensor::NativeCode']]],
+  ['fromfunc_97',['fromFunc',['../classfreetensor_1_1NativeCode.html#a415da377e2bcddf80aafb98a17932186',1,'freetensor::NativeCode']]],
   ['fromsingle_98',['fromSingle',['../classfreetensor_1_1FrontendVarIdx.html#a88f1dc6b0d1ac101112067c22c1e13ba',1,'freetensor::FrontendVarIdx']]],
   ['fromslice_99',['fromSlice',['../classfreetensor_1_1FrontendVarIdx.html#ac41f2d32187a1f77c16e7380283e5d94',1,'freetensor::FrontendVarIdx']]],
   ['front_100',['Front',['../namespacefreetensor.html#a1f683336cea8089de8a4aebaac3568c3a5835bab1ade0060909e31a06af2e2cde',1,'freetensor']]],

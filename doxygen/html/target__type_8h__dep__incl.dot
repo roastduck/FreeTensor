@@ -13,11 +13,15 @@ digraph "include/driver/target_type.h"
   Node4 [label="include/codegen/code\l_gen.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$include_2codegen_2code__gen_8h.html",tooltip=" "];
   Node4 -> Node18 [dir="back",color="steelblue1",style="solid"];
   Node18 [label="src/schedule.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$schedule_8cc.html",tooltip=" "];
+  Node3 -> Node6 [dir="back",color="steelblue1",style="solid"];
+  Node6 [label="include/codegen/code\l_gen_cpu.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$code__gen__cpu_8h.html",tooltip=" "];
+  Node3 -> Node9 [dir="back",color="steelblue1",style="solid"];
+  Node9 [label="include/codegen/code\l_gen_cuda.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$code__gen__cuda_8h.html",tooltip=" "];
   Node3 -> Node19 [dir="back",color="steelblue1",style="solid"];
   Node19 [label="include/driver.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$driver_8h.html",tooltip=" "];
   Node19 -> Node18 [dir="back",color="steelblue1",style="solid"];
   Node3 -> Node21 [dir="back",color="steelblue1",style="solid"];
-  Node21 [label="include/schedule.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$schedule_8h.html",tooltip=" "];
+  Node21 [label="include/schedule.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$schedule_8h.html",tooltip=" "];
   Node21 -> Node22 [dir="back",color="steelblue1",style="solid"];
   Node22 [label="src/except.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$except_8cc.html",tooltip=" "];
   Node21 -> Node18 [dir="back",color="steelblue1",style="solid"];
@@ -79,8 +83,6 @@ digraph "include/driver/target_type.h"
   Node50 [label="src/schedule/var_reorder.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__reorder_8cc.html",tooltip=" "];
   Node21 -> Node51 [dir="back",color="steelblue1",style="solid"];
   Node51 [label="src/schedule/var_split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8cc.html",tooltip=" "];
-  Node21 -> Node52 [dir="back",color="steelblue1",style="solid"];
-  Node52 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
   Node3 -> Node53 [dir="back",color="steelblue1",style="solid"];
   Node53 [label="src/codegen/native\l_code.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$native__code_8cc.html",tooltip=" "];
   Node2 -> Node54 [dir="back",color="steelblue1",style="solid"];
@@ -90,9 +92,7 @@ digraph "include/driver/target_type.h"
   Node55 -> Node3 [dir="back",color="steelblue1",style="solid"];
   Node55 -> Node19 [dir="back",color="steelblue1",style="solid"];
   Node55 -> Node186 [dir="back",color="steelblue1",style="solid"];
-  Node186 [label="include/serialize/load\l_driver.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$load__driver_8h.html",tooltip=" "];
-  Node186 -> Node187 [dir="back",color="steelblue1",style="solid"];
-  Node187 [label="src/serialize/load\l_driver.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$load__driver_8cc.html",tooltip=" "];
+  Node186 [label="include/serialize/load\l_driver.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$load__driver_8h.html",tooltip=" "];
   Node55 -> Node188 [dir="back",color="steelblue1",style="solid"];
   Node188 [label="include/serialize/print\l_driver.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$print__driver_8h.html",tooltip=" "];
   Node54 -> Node186 [dir="back",color="steelblue1",style="solid"];

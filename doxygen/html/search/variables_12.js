@@ -1,8 +1,15 @@
 var searchData=
 [
-  ['unroll_5f_0',['unroll_',['../structfreetensor_1_1ForProperty.html#a4a7615cd6d07436564da290e52c619fa',1,'freetensor::ForProperty']]],
-  ['updateclosure_5f_1',['updateClosure_',['../structfreetensor_1_1NativeCodeParam.html#ad892a8ca17cd3920c20ab005b5962ff5',1,'freetensor::NativeCodeParam::updateClosure_()'],['../structfreetensor_1_1FuncParam.html#a657b414414f85e299eae8b34fd2049d3',1,'freetensor::FuncParam::updateClosure_()']]],
-  ['upper_5f_2',['upper_',['../structfreetensor_1_1AccessBound.html#aec2485f6c89f0a3d7611cb8e865b7b0f',1,'freetensor::AccessBound::upper_()'],['../structfreetensor_1_1CompAccessBound_1_1Access.html#a55814491642c6d160772af15e565fa29',1,'freetensor::CompAccessBound::Access::upper_()'],['../structfreetensor_1_1TransientBound.html#a5d00252a1729bb64a1082ff656b01787',1,'freetensor::TransientBound::upper_()']]],
-  ['usedefs_5f_3',['useDefs_',['../structfreetensor_1_1CodeGenStream.html#af55be0e457ae81a831af6d570f7bfdc7',1,'freetensor::CodeGenStream']]],
-  ['useiters_5f_4',['useIters_',['../structfreetensor_1_1CodeGenStream.html#a3503fcfd50902e05dc58dd3dc65c0e27',1,'freetensor::CodeGenStream']]]
+  ['tapename_5f_0',['tapeName_',['../classfreetensor_1_1LoadAtVersionNode.html#a11b8fea05f83934eb508ecd814240783',1,'freetensor::LoadAtVersionNode::tapeName_()'],['../classfreetensor_1_1MarkVersionNode.html#a192019743691bb2053e88e4fa69195ee',1,'freetensor::MarkVersionNode::tapeName_()']]],
+  ['thencase_5f_1',['thenCase_',['../classfreetensor_1_1IfExprNode.html#a49ad2e383e23bfca4babc2935f830da9',1,'freetensor::IfExprNode::thenCase_()'],['../classfreetensor_1_1IfNode.html#aa7b98994f3f17436e1e6fb61515823fc',1,'freetensor::IfNode::thenCase_()']]],
+  ['threaddim_5f_2',['threadDim_',['../structfreetensor_1_1CodeGenCUDAStream.html#a54fbf910bdd731dc221eaa2fc21e4024',1,'freetensor::CodeGenCUDAStream']]],
+  ['threadidxx_3',['threadIdxX',['../namespacefreetensor.html#ad77ddc8fee2d9f924d5534dfba1d61c5',1,'freetensor']]],
+  ['threadidxy_4',['threadIdxY',['../namespacefreetensor.html#a1bc50ad6c725128a16500945100f3bda',1,'freetensor']]],
+  ['threadidxz_5',['threadIdxZ',['../namespacefreetensor.html#a6a55b505024520e349013b99eb97805b',1,'freetensor']]],
+  ['time_5f_6',['time_',['../structfreetensor_1_1AutoScheduleTuneTrial.html#aef06a3b1b63dd5d0a8d14abbeb033f92',1,'freetensor::AutoScheduleTuneTrial']]],
+  ['tolearn_5f_7',['toLearn_',['../classfreetensor_1_1RandCtxImpl.html#a34a694bf5c009f27b8630849b0f318b8',1,'freetensor::RandCtxImpl']]],
+  ['totcnt_5f_8',['totCnt_',['../classfreetensor_1_1RandCtxImpl.html#ae0ca99d9a7f9f838514df66ec1938cc0',1,'freetensor::RandCtxImpl::totCnt_()'],['../structfreetensor_1_1DiscreteObservation.html#acfd68b35c25390e52fcb6c9e3e86cd2e',1,'freetensor::DiscreteObservation::totCnt_()']]],
+  ['trace_5f_9',['trace_',['../structfreetensor_1_1AutoScheduleTuneTrial.html#a911fdb624e1d7c8dadec5f445abd4a20',1,'freetensor::AutoScheduleTuneTrial']]],
+  ['traces_5f_10',['traces_',['../classfreetensor_1_1RandCtxImpl.html#ae17006673357530a1fe0a976e8770a29',1,'freetensor::RandCtxImpl']]],
+  ['type_5f_11',['type_',['../structfreetensor_1_1ParallelInfo.html#a7c7fd34bbce45bd7d3bf57f3b8ad9ec3',1,'freetensor::ParallelInfo']]]
 ];

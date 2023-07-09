@@ -23,6 +23,8 @@ digraph "include/driver/array.h"
   Node3 -> Node6 [dir="back",color="steelblue1",style="solid"];
   Node3 -> Node17 [dir="back",color="steelblue1",style="solid"];
   Node17 [label="src/schedule.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$schedule_8cc.html",tooltip=" "];
+  Node2 -> Node5 [dir="back",color="steelblue1",style="solid"];
+  Node2 -> Node8 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node18 [dir="back",color="steelblue1",style="solid"];
   Node18 [label="include/driver.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$driver_8h.html",tooltip=" "];
   Node18 -> Node19 [dir="back",color="steelblue1",style="solid"];

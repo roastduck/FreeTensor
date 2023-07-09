@@ -49,14 +49,14 @@ digraph "src/codegen/code_gen_cuda.cc"
   Node61 -> Node8 [color="steelblue1",style="solid"];
   Node61 -> Node3 [color="steelblue1",style="solid"];
   Node61 -> Node62 [color="steelblue1",style="solid"];
-  Node62 [label="codegen/code_gen_c.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$include_2codegen_2code__gen__c_8h.html",tooltip=" "];
+  Node62 [label="codegen/code_gen_c.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$include_2codegen_2code__gen__c_8h.html",tooltip=" "];
   Node62 -> Node13 [color="steelblue1",style="solid"];
   Node13 [label="functional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node62 -> Node8 [color="steelblue1",style="solid"];
   Node62 -> Node3 [color="steelblue1",style="solid"];
   Node62 -> Node10 [color="steelblue1",style="solid"];
   Node62 -> Node63 [color="steelblue1",style="solid"];
-  Node63 [label="codegen/code_gen.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$include_2codegen_2code__gen_8h.html",tooltip=" "];
+  Node63 [label="codegen/code_gen.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$include_2codegen_2code__gen_8h.html",tooltip=" "];
   Node63 -> Node13 [color="steelblue1",style="solid"];
   Node63 -> Node29 [color="steelblue1",style="solid"];
   Node29 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -71,6 +71,10 @@ digraph "src/codegen/code_gen_cuda.cc"
   Node64 -> Node8 [color="steelblue1",style="solid"];
   Node64 -> Node3 [color="steelblue1",style="solid"];
   Node64 -> Node49 [color="steelblue1",style="solid"];
+  Node63 -> Node66 [color="steelblue1",style="solid"];
+  Node66 [label="codegen/native_code.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$native__code_8h.html",tooltip=" "];
+  Node66 -> Node7 [color="steelblue1",style="solid"];
+  Node66 -> Node5 [color="steelblue1",style="solid"];
   Node63 -> Node33 [color="steelblue1",style="solid"];
   Node33 [label="container_utils.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$container__utils_8h.html",tooltip=" "];
   Node33 -> Node34 [color="steelblue1",style="solid"];
@@ -100,9 +104,7 @@ digraph "src/codegen/code_gen_cuda.cc"
   Node27 [label="stdexcept",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node26 -> Node7 [color="steelblue1",style="solid"];
   Node63 -> Node56 [color="steelblue1",style="solid"];
-  Node62 -> Node17 [color="steelblue1",style="solid"];
-  Node17 [label="serialize/stream_utils.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$stream__utils_8h.html",tooltip=" "];
-  Node17 -> Node6 [color="steelblue1",style="solid"];
+  Node61 -> Node66 [color="steelblue1",style="solid"];
   Node61 -> Node5 [color="steelblue1",style="solid"];
   Node1 -> Node67 [color="steelblue1",style="solid"];
   Node67 [label="config.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$config_8h.html",tooltip=" "];

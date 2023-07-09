@@ -38,7 +38,7 @@ var searchData=
   ['fork_35',['fork',['../classfreetensor_1_1Schedule.html#ad29861fd233c49e64fa0df3ef76b9ff0',1,'freetensor::Schedule']]],
   ['forproperty_36',['ForProperty',['../structfreetensor_1_1ForProperty.html#a19a5f62dd2539304c38ad97c185c0305',1,'freetensor::ForProperty']]],
   ['found_37',['found',['../classfreetensor_1_1VarSplit.html#adc8e7caa5d5189616fd6f5e8637de23c',1,'freetensor::VarSplit::found()'],['../classfreetensor_1_1FindAllScopesInside.html#a0e5da52f9362ccf1ab8f00ed7cfc9ae6',1,'freetensor::FindAllScopesInside::found()'],['../classfreetensor_1_1Splitter.html#ade85c6450be16a86d49b0495acf6e65f',1,'freetensor::Splitter::found()'],['../classfreetensor_1_1VarMerge.html#a56e5544d6b51304c2d3fb1c390854f0d',1,'freetensor::VarMerge::found()'],['../classfreetensor_1_1VarReorder.html#a53ef0740264a6fb2ae7e824ea5e1c87d',1,'freetensor::VarReorder::found()']]],
-  ['fromfunc_38',['fromFunc',['../classfreetensor_1_1NativeCode.html#a682cd18bffbcaef745e9ddbb68d17da9',1,'freetensor::NativeCode']]],
+  ['fromfunc_38',['fromFunc',['../classfreetensor_1_1NativeCode.html#a415da377e2bcddf80aafb98a17932186',1,'freetensor::NativeCode']]],
   ['fromsingle_39',['fromSingle',['../classfreetensor_1_1FrontendVarIdx.html#a88f1dc6b0d1ac101112067c22c1e13ba',1,'freetensor::FrontendVarIdx']]],
   ['fromslice_40',['fromSlice',['../classfreetensor_1_1FrontendVarIdx.html#ac41f2d32187a1f77c16e7380283e5d94',1,'freetensor::FrontendVarIdx']]],
   ['front_41',['front',['../classfreetensor_1_1SubTreeList.html#a07326fa714964fd33ed7b87e06bc3f06',1,'freetensor::SubTreeList::front() const'],['../classfreetensor_1_1SubTreeList.html#ab4a8ceea2d077a6f6c6ba52b09e35606',1,'freetensor::SubTreeList::front()']]],
