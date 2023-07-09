@@ -58,8 +58,9 @@ class GPUContext : public Context {
     void *gpuGlobalPool_ = nullptr;
 
   public:
-    GPUContext(uint64_t gpuGlobalPoolSize, bool useUM) {
+    GPUContext(int deviceId, uint64_t gpuGlobalPoolSize, bool useUM) {
         checkCublasError(cublasCreate(&cublas_));
+        runtimeCheckCudaError(cudaSetDevice(deviceId));
         if (gpuGlobalPoolSize > 0) {
             if (!useUM) {
                 runtimeCheckCudaError(
@@ -68,6 +69,9 @@ class GPUContext : public Context {
                 // Please refer to src/driver/array.cc:allocOn for details
                 runtimeCheckCudaError(
                     cudaMallocManaged(&gpuGlobalPool_, gpuGlobalPoolSize));
+                runtimeCheckCudaError(
+                    cudaMemAdvise(gpuGlobalPool_, gpuGlobalPoolSize,
+                                  cudaMemAdviseSetPreferredLocation, deviceId));
                 runtimeCheckCudaError(
                     cudaMemset(gpuGlobalPool_, 0, gpuGlobalPoolSize));
             }

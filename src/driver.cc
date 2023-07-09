@@ -329,7 +329,7 @@ void Driver::buildAndLoad() {
 #ifdef FT_WITH_CUDA
     case TargetType::GPU:
         ctx_ = std::make_unique<GPUContext>(
-            nativeCode_.staticInfo().gpuGlobalPoolSize_,
+            dev_->num(), nativeCode_.staticInfo().gpuGlobalPoolSize_,
             Config::debugCUDAWithUM());
         break;
 #endif // FT_WITH_CUDA
