@@ -1,5 +1,6 @@
 #include <mutex>
 
+#include <analyze/all_side_effect_intrinsics.h>
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <container_utils.h>
@@ -56,7 +57,8 @@ Stmt tensorPropConst(const Stmt &_op, const ID &subAST) {
                         return false;
                     }
                     auto &&expr = earlier.op_.template as<StoreNode>()->expr_;
-                    if (!allReads(expr).empty()) {
+                    if (!allReads(expr).empty() ||
+                        !allSideEffectIntrinsics(expr).empty()) {
                         // Expressions should contain only constants and
                         // iterating vars
                         return false;
