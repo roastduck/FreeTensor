@@ -16,6 +16,10 @@ void init_ffi_schedule(py::module_ &m) {
     py::enum_<VarSplitMode>(m, "VarSplitMode")
         .value("FixedSize", VarSplitMode::FixedSize)
         .value("RelaxedSize", VarSplitMode::RelaxedSize);
+    py::enum_<ReorderMode>(m, "ReorderMode")
+        .value("PerfectOnly", ReorderMode::PerfectOnly)
+        .value("MoveOutImperfect", ReorderMode::MoveOutImperfect)
+        .value("MoveInImperfect", ReorderMode::MoveInImperfect);
 
     py::class_<DiscreteObservation>(m, "DiscreteObservation")
         .def("__str__",
@@ -76,7 +80,8 @@ void init_ffi_schedule(py::module_ &m) {
                              const>(&Schedule::findAtLeastOne))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1, "shift"_a = 0)
-        .def("reorder", &Schedule::reorder, "order"_a)
+        .def("reorder", &Schedule::reorder, "order"_a,
+             "mode"_a = ReorderMode::PerfectOnly)
         .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a)
         .def(
             "permute",

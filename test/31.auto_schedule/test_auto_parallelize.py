@@ -98,7 +98,7 @@ def test_gpu_basic_dynamic():
     print(logs)
     assert fnmatch_list(logs, [
         "merge(Li, Lj)", f"split($merge{{Li, Lj}}, {num_sm}, -1, 0)",
-        "reorder($split.1{$merge{Li, Lj}}, $split.0{$merge{Li, Lj}})",
+        "reorder($split.1{$merge{Li, Lj}}, $split.0{$merge{Li, Lj}}, *)",
         "split($split.0{$merge{Li, Lj}}, 256, -1, 0)",
         "parallelize($split.1{$merge{Li, Lj}}, blockIdx.y, *)",
         "parallelize($split.0{$split.0{$merge{Li, Lj}}}, blockIdx.x, *)",
@@ -225,7 +225,7 @@ def test_gpu_warp_static():
     print(logs)
     assert fnmatch_list(logs, [
         "split(Lk, 32, -1, 0)", "parallelize($split.1{Lk}, threadIdx.x, *)",
-        "reorder($split.1{Lk}, $split.0{Lk})", "split(Li, 8, -1, 0)",
+        "reorder($split.1{Lk}, $split.0{Lk}, *)", "split(Li, 8, -1, 0)",
         "parallelize($split.0{Li}, blockIdx.x, *)",
         "parallelize($split.1{Li}, threadIdx.y, *)"
     ])
@@ -254,8 +254,9 @@ def test_gpu_warp_dynamic():
     print(logs)
     assert fnmatch_list(logs, [
         "split(Lk, 32, -1, 0)", "parallelize($split.1{Lk}, threadIdx.x, *)",
-        "reorder($split.1{Lk}, $split.0{Lk})", f"split(Li, {num_sm}, -1, 0)",
-        "reorder($split.1{Li}, $split.0{Li})", "split($split.0{Li}, 8, -1, 0)",
+        "reorder($split.1{Lk}, $split.0{Lk}, *)", f"split(Li, {num_sm}, -1, 0)",
+        "reorder($split.1{Li}, $split.0{Li}, *)",
+        "split($split.0{Li}, 8, -1, 0)",
         "parallelize($split.1{Li}, blockIdx.y, *)",
         "parallelize($split.0{$split.0{Li}}, blockIdx.x, *)",
         "parallelize($split.1{$split.0{Li}}, threadIdx.y, *)"

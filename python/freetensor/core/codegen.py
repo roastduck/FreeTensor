@@ -90,7 +90,8 @@ def codegen(ast: Func = None,
 
     ret = ffi.code_gen(ast, target)
     ret = NativeCode(ret.name, ret.params, ret.returns, ret.code, ret.entry,
-                     ret.target)  # ffi.NativeCode -> ft.NativeCode
+                     ret.target,
+                     ret.static_info)  # ffi.NativeCode -> ft.NativeCode
     if verbose:
         print(ret, file=sys.stderr)
 

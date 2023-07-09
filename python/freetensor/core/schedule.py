@@ -1,6 +1,6 @@
 __all__ = [
-    'FissionSide', 'MoveToSide', 'VarSplitMode', 'ID', 'IDMap', 'Schedule',
-    'schedule'
+    'FissionSide', 'MoveToSide', 'VarSplitMode', 'ReorderMode', 'ID', 'IDMap',
+    'Schedule', 'schedule'
 ]
 
 import functools
@@ -9,7 +9,7 @@ from typing import Callable, Union, List, Dict
 
 from .. import ffi
 from ..ffi import (ParallelScope, ID, Selector, FissionSide, MoveToSide,
-                   VarSplitMode)
+                   VarSplitMode, ReorderMode)
 
 from .func import Func
 from .analyze import find_stmt
@@ -164,7 +164,7 @@ class Schedule(ffi.Schedule):
             i if i else None
             for i in super().split(self._lookup(node), factor, nparts, shift))
 
-    def reorder(self, order):
+    def reorder(self, order, mode: ReorderMode = ReorderMode.PerfectOnly):
         """
         Reorder directly nested loops
 
@@ -174,13 +174,19 @@ class Schedule(ffi.Schedule):
         ----------
         order : array like of str, ID or Stmt
             Vector of loops. The requested order of the loops
+        mode : ReorderMode
+            How to deal with imperfectly nested loops. `PerfectOnly` => raise an
+            exception. `MoveOutImperfect` => do `fission` in advance to move out
+            statements between the loops, which may enlarge intermediate tensors.
+            `MoveInImperfect` => move statements between the loops inwards after
+            adding gurads them them, which may hurt parallelism
 
         Raises
         ------
         InvalidSchedule
             if the input is invalid or there are breaking dependences
         """
-        super().reorder(list(map(self._lookup, order)))
+        super().reorder(list(map(self._lookup, order)), mode)
 
     def merge(self, loop1, loop2):
         """
