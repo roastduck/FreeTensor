@@ -57,7 +57,8 @@ Stmt tensorPropConst(const Stmt &_op, const ID &subAST) {
                         return false;
                     }
                     auto &&expr = earlier.op_.template as<StoreNode>()->expr_;
-                    if (!allReads(expr).empty()) {
+                    if (!allReads(expr).empty() ||
+                        !allSideEffectIntrinsics(expr).empty()) {
                         // Expressions should contain only constants and
                         // iterating vars
                         return false;
@@ -133,9 +134,6 @@ Stmt tensorPropConst(const Stmt &_op, const ID &subAST) {
             ASSERT(item.second.front().first->nodeType() == ASTNodeType::Store);
             auto &&store = item.second.front().first.as<StoreNode>();
             auto &&repInfo = item.second.front().second;
-
-            if (!allSideEffectIntrinsics(store->expr_).empty())
-                continue;
 
             if (!allIters(store->expr_).empty()) {
                 try {
