@@ -8,6 +8,7 @@ namespace freetensor {
 void Schedule::autoMemLayout(const Ref<Target> &target) {
     // GPU needs the variables' last dimension to have a >=32 length to map to
     // warps
+#ifdef FT_WITH_CUDA
     if (target->type() == TargetType::GPU) {
         for (auto &&_def : findAll("<VarDef>")) {
             auto &&def = _def.as<VarDefNode>();
@@ -52,6 +53,7 @@ void Schedule::autoMemLayout(const Ref<Target> &target) {
             }
         }
     }
+#endif // FT_WITH_CUDA
 }
 
 } // namespace freetensor
