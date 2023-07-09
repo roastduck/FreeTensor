@@ -794,9 +794,26 @@ extern "C" {
 
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
-            std::string s =
-                "void run(void **__params, void **returns, size_t **retShapes, "
-                "size_t *retDims, GPUContext_t ctx) {\n";
+            std::string s;
+
+            // Allocate global memory stack at library loading time
+            // TODO: Support dynamic size, and allocate the dynamic part at run
+            // time
+            auto globalSize = visitor.globalSize();
+            ASSERT(globalSize->nodeType() == ASTNodeType::IntConst);
+            s += "static uint8_t *__glmem = nullptr;\n";
+            s += "__attribute__((constructor)) static void initStack() {\n";
+            s += "  __glmem = (uint8_t*)cudaNew(" +
+                 std::to_string(globalSize.as<IntConstNode>()->val_) +
+                 ", 0);\n";
+            s += "}\n";
+            s += "__attribute__((destructor)) static void deinitStack() {\n";
+            s += "  cudaFreeAsync(__glmem, 0);\n";
+            s += "}\n";
+            s += "\n";
+
+            s += "void run(void **__params, void **returns, size_t "
+                 "**retShapes, size_t *retDims, GPUContext_t ctx) {\n";
             // We copy `__params` to `params`, in order to pass the parameter
             // pack into a kernel
             s += "__ByValArray<void *, " + std::to_string(nParams) +
@@ -812,21 +829,7 @@ extern "C" {
             s += "cudaStream_t __stream = 0;\n";
             s += "\n";
 
-            // Allocate stack for gpu/global
-            auto globalSize = visitor.globalSize();
-            // FIXME: Support non-constant
-            ASSERT(globalSize->nodeType() == ASTNodeType::IntConst);
-            s += "uint8_t *__glmem = (uint8_t*)cudaNew(" +
-                 std::to_string(globalSize.as<IntConstNode>()->val_) +
-                 ", __stream);\n";
-            s += "\n";
-
             s += stream.os_.str();
-            s += "\n";
-
-            // Free stack for gpu/global
-            s += "cudaFreeAsync(__glmem, __stream);\n";
-
             s += "}\n";
             return s;
         } else {
