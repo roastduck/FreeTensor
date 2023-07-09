@@ -378,7 +378,7 @@ void CodeGenCPU::visit(const MatMul &op) {
 #endif
 }
 
-std::string codeGenCPU(const Func &func) {
+NativeCode codeGenCPU(const Func &func, const Ref<Target> &target) {
     CodeGenCPU visitor(func->params_, func->returns_);
     auto &&op = func->body_;
     visitor.beginBlock();
@@ -433,7 +433,7 @@ extern "C" {
         s += "}";
         return s;
     });
-    return header + body + tailer;
+    return NativeCode::fromFunc(func, header + body + tailer, "run", target);
 }
 
 } // namespace freetensor

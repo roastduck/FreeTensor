@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <codegen/code_gen_c.h>
+#include <codegen/native_code.h>
 #include <func.h>
 
 namespace freetensor {
@@ -87,7 +88,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
  *
  * @return : source
  */
-std::string codeGenCUDA(const Func &func);
+NativeCode codeGenCUDA(const Func &func, const Ref<Target> &target);
 
 } // namespace freetensor
 
