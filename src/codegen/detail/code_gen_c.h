@@ -726,7 +726,10 @@ template <class Stream> void CodeGenC<Stream>::visit(const Assert &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Intrinsic &op) {
-    this->os() << "(";
+    bool parentIsEval =
+        op->parent().as<ASTNode>()->nodeType() != ASTNodeType::Eval;
+    if (parentIsEval)
+        this->os() << "(";
     size_t i = 0, j = 0, n = op->format_.length();
     while (j < n) {
         if (op->format_[j] == '%') {
@@ -742,7 +745,8 @@ template <class Stream> void CodeGenC<Stream>::visit(const Intrinsic &op) {
             j++;
         }
     }
-    this->os() << ")";
+    if (parentIsEval)
+        this->os() << ")";
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Eval &op) {
