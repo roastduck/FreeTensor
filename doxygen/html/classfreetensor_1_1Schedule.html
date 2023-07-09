@@ -176,6 +176,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a14dede285eb0d018cc2502589f565d4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a7bd97f2a8bfb6b853d959cc7b0636f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a3a7bd97f2a8bfb6b853d959cc7b0636f">autoFissionFuse</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="namespacefreetensor.html#a30f671564d68303583094f074bd5b6e8">RandTrace</a> &gt; &amp;trace=nullptr)</td></tr>
 <tr class="separator:a3a7bd97f2a8bfb6b853d959cc7b0636f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a616015dfb0c317c5c1e0cf8d3b335666"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a616015dfb0c317c5c1e0cf8d3b335666">autoMemLayout</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
+<tr class="separator:a616015dfb0c317c5c1e0cf8d3b335666"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36968be3b8f0d74c315c3565c5572ba2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a36968be3b8f0d74c315c3565c5572ba2">autoParallelize</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
 <tr class="separator:a36968be3b8f0d74c315c3565c5572ba2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a11a336810508f2fd8fd9bb1c761a327d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a11a336810508f2fd8fd9bb1c761a327d">autoSetMemType</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;target)</td></tr>
@@ -452,6 +454,31 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>(Experimental) Automatically inline very-small VarDef nodes</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">target</td><td>: <a class="el" href="classfreetensor_1_1Target.html">Target</a> architecture </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a616015dfb0c317c5c1e0cf8d3b335666" name="a616015dfb0c317c5c1e0cf8d3b335666"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a616015dfb0c317c5c1e0cf8d3b335666">&#9670;&#160;</a></span>autoMemLayout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::Schedule::autoMemLayout </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Target.html">Target</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>target</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>(Experimental) Automatically adjust memory layout of variables</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">target</td><td>: <a class="el" href="classfreetensor_1_1Target.html">Target</a> architecture </td></tr>
@@ -2144,6 +2171,7 @@ template&lt;class T &gt; </div>
 <li>src/schedule/<a class="el" href="as__matmul_8cc.html">as_matmul.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__fission__fuse_8cc.html">auto_fission_fuse.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__inline_8cc.html">auto_inline.cc</a></li>
+<li>src/schedule/<a class="el" href="auto__mem__layout_8cc.html">auto_mem_layout.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__parallelize_8cc.html">auto_parallelize.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__pluto_8cc.html">auto_pluto.cc</a></li>
 <li>src/schedule/<a class="el" href="auto__reorder_8cc.html">auto_reorder.cc</a></li>
