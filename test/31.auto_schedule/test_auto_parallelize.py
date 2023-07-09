@@ -281,7 +281,7 @@ def test_gpu_warp_with_mod():
     print(logs)
     assert fnmatch_list(logs, [
         "split(Lk, 32, -1, 0)", "parallelize($split.1{Lk}, threadIdx.x, *)",
-        "reorder($split.1{Lk}, $split.0{Lk})", "split(Li, 8, -1, 0)",
+        "reorder($split.1{Lk}, $split.0{Lk}, *)", "split(Li, 8, -1, 0)",
         "parallelize($split.0{Li}, blockIdx.x, *)",
         "parallelize($split.1{Li}, threadIdx.y, *)"
     ])
