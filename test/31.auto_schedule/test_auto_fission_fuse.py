@@ -184,8 +184,8 @@ def test_tune_with_cond():
     with ft.VarDef([("a", (100, 100, 10), "int32", "input", "gpu/global"),
                     ("b", (100, 100, 10), "int32", "inout", "gpu/global"),
                     ("c", (100, 100, 10), "int32", "inout", "gpu/global"),
-                    ("y", (200, 100, 10), "int32", "output", "gpu/global"),
-                    ("z", (200, 100, 10), "int32", "output", "gpu/global")
+                    ("y", (100, 100, 10), "int32", "output", "gpu/global"),
+                    ("z", (100, 100, 10), "int32", "output", "gpu/global")
                    ]) as (a, b, c, y, z):
         # Fusing L1 and L2 leads to poor parallelization, which is not preferred
         with ft.For("i", 0, 100, label="Li1") as i:
@@ -201,11 +201,11 @@ def test_tune_with_cond():
                       k] = c[(i + 1) % 100, j, k] + c[i, j,
                                                       (k + 1) % 10] + a[i, j, k]
         # Fusing L3 and L4 is favorable to reduce kernel launch count
-        with ft.For("i", 0, 200, label="Li3") as i:
+        with ft.For("i", 0, 100, label="Li3") as i:
             with ft.For("j", 0, 100, label="Lj3") as j:
                 with ft.For("k", 0, 10, label="Lk3") as k:
-                    y[i, j, k] = a[i % 100, j, k]
-        with ft.For("i", 0, 200, label="Li4") as i:
+                    y[i, j, k] = a[i, j, k]
+        with ft.For("i", 0, 100, label="Li4") as i:
             with ft.For("j", 0, 100, label="Lj4") as j:
                 with ft.For("k", 0, 10, label="Lk4") as k:
                     z[i, j, k] = y[i, j, k] * y[i, j, k]
@@ -216,8 +216,8 @@ def test_tune_with_cond():
     a = ft.Array(np.random.randint(0, 100, (100, 100, 10)).astype("int32"))
     b = ft.Array(np.zeros((100, 100, 10), dtype="int32"))
     c = ft.Array(np.zeros((100, 100, 10), dtype="int32"))
-    y = ft.Array(np.zeros((200, 100, 10), dtype="int32"))
-    z = ft.Array(np.zeros((200, 100, 10), dtype="int32"))
+    y = ft.Array(np.zeros((100, 100, 10), dtype="int32"))
+    z = ft.Array(np.zeros((100, 100, 10), dtype="int32"))
     trials = s.tune_auto_schedule(10,
                                   1,
                                   ft.GPU(), (a, b, c, y, z),

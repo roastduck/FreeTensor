@@ -153,6 +153,7 @@ void init_ffi_schedule(py::module_ &m) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda
                  return s.autoFissionFuse(target);
              })
+        .def("auto_mem_layout", &Schedule::autoMemLayout)
         .def("auto_parallelize", &Schedule::autoParallelize)
         .def("auto_set_mem_type", &Schedule::autoSetMemType)
         .def("auto_unroll", &Schedule::autoUnroll)

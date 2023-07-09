@@ -820,6 +820,13 @@ class Schedule {
                          const Ref<RandTrace> &trace = nullptr);
 
     /**
+     * (Experimental) Automatically adjust memory layout of variables
+     *
+     * @param target : Target architecture
+     */
+    void autoMemLayout(const Ref<Target> &target);
+
+    /**
      * (Experimental) Automatically parallelize some loops using some heuristics
      *
      * @param target : Target architecture

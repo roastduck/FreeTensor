@@ -937,6 +937,17 @@ class Schedule(ffi.Schedule):
         """
         super().auto_fission_fuse(target)
 
+    def auto_mem_layout(self, target):
+        """
+        (Experimental) Automatically adjust memory layout of variables
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super().auto_mem_layout(target)
+
     def auto_parallelize(self, target):
         """
         (Experimental) Automatically parallelize some loops using some heuristics
