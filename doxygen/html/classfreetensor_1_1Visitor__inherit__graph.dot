@@ -30,8 +30,6 @@ digraph "freetensor::Visitor"
   Node12 [label="freetensor::CodeGen\l\< Stream \>",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$classfreetensor_1_1CodeGen.html",tooltip=" "];
   Node12 -> Node13 [dir="back",color="steelblue1",style="solid"];
   Node13 [label="freetensor::CodeGenC\l\< CodeGenStream \>",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$classfreetensor_1_1CodeGenC.html",tooltip=" "];
-  Node12 -> Node15 [dir="back",color="steelblue1",style="solid"];
-  Node15 [label="freetensor::CodeGenC\l\< CodeGenCUDAStream \>",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$classfreetensor_1_1CodeGenC.html",tooltip=" "];
   Node2 -> Node18 [dir="back",color="steelblue1",style="solid"];
   Node18 [label="freetensor::CountContigAccess\lLoops",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1CountContigAccessLoops.html",tooltip=" "];
   Node2 -> Node19 [dir="back",color="steelblue1",style="solid"];
@@ -95,11 +93,13 @@ digraph "freetensor::Visitor"
   Node1 -> Node50 [dir="back",color="steelblue1",style="solid"];
   Node50 [label="freetensor::FindSerialLoops\lOverReduce",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1FindSerialLoopsOverReduce.html",tooltip=" "];
   Node1 -> Node51 [dir="back",color="steelblue1",style="solid"];
-  Node51 [label="freetensor::FindStmtByFilter",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1FindStmtByFilter.html",tooltip=" "];
+  Node51 [label="freetensor::FindSideEffect\lIntrinsics",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1FindSideEffectIntrinsics.html",tooltip=" "];
   Node1 -> Node52 [dir="back",color="steelblue1",style="solid"];
-  Node52 [label="freetensor::FindStmtById",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1FindStmtById.html",tooltip=" "];
+  Node52 [label="freetensor::FindStmtByFilter",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1FindStmtByFilter.html",tooltip=" "];
   Node1 -> Node53 [dir="back",color="steelblue1",style="solid"];
-  Node53 [label="freetensor::GenPBExpr",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1GenPBExpr.html",tooltip=" "];
+  Node53 [label="freetensor::FindStmtById",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1FindStmtById.html",tooltip=" "];
   Node1 -> Node54 [dir="back",color="steelblue1",style="solid"];
-  Node54 [label="freetensor::MatchVisitor",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1MatchVisitor.html",tooltip=" "];
+  Node54 [label="freetensor::GenPBExpr",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1GenPBExpr.html",tooltip=" "];
+  Node1 -> Node55 [dir="back",color="steelblue1",style="solid"];
+  Node55 [label="freetensor::MatchVisitor",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1MatchVisitor.html",tooltip=" "];
 }

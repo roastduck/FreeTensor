@@ -314,6 +314,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindSerialLoopsOverReduce.html">FindSerialLoopsOverReduce</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindSideEffectIntrinsics.html">FindSideEffectIntrinsics</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindStmtByFilter.html">FindStmtByFilter</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindStmtById.html">FindStmtById</a></td></tr>
@@ -1229,6 +1231,9 @@ Functions</h2></td></tr>
 <tr class="separator:a63e0e1dd057562b9b5bb7a661e9e4df5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a181bd960e0b2af53cd6816e4ab27457f"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a181bd960e0b2af53cd6816e4ab27457f">allDefs</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_set&lt; <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cb">AccessType</a> &gt; &amp;atypes={ <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba324118a6721dd6b8a9b9f4e327df2bf5">AccessType::Input</a>, <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba5ce88c4d66118388a69c6fd4262ca3a1">AccessType::Bypass</a>, <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba29c2c02a361c9d7028472e5d92cd4a54">AccessType::Output</a>, <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cba47a54d9da8952a3980d27488b00a21c1">AccessType::InOut</a>, <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cbad98615dd8be7dd1225e100864f8d645d">AccessType::InputMutable</a>, <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cbaab0cf104f39708eabd07b8cb67e149ba">AccessType::Cache</a>})</td></tr>
 <tr class="separator:a181bd960e0b2af53cd6816e4ab27457f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4c0e5a3a68aa660ff5833aafa8cf343"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:af4c0e5a3a68aa660ff5833aafa8cf343"><td class="memTemplItemLeft" align="right" valign="top">std::unordered_set&lt; <a class="el" href="namespacefreetensor.html#a8e8e00871b5e68f996b300f974e2d9d5">Intrinsic</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af4c0e5a3a68aa660ff5833aafa8cf343">allSideEffectIntrinsics</a> (T &amp;&amp;op)</td></tr>
+<tr class="separator:af4c0e5a3a68aa660ff5833aafa8cf343"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af3cd2c80175823e84d9f3e9555d6be3a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; int64_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af3cd2c80175823e84d9f3e9555d6be3a">linear</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr)</td></tr>
 <tr class="separator:af3cd2c80175823e84d9f3e9555d6be3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af829069b1e3ed28eda73073303915af0"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::pair&lt; <a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; int64_t &gt;, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af829069b1e3ed28eda73073303915af0">linearComp</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr)</td></tr>
@@ -4879,6 +4884,26 @@ template&lt;class T &gt; </div>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="classfreetensor_1_1FrontendVarIdx.html">FrontendVarIdx</a> &amp;&#160;</td>
           <td class="paramname"><em>idx</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af4c0e5a3a68aa660ff5833aafa8cf343" name="af4c0e5a3a68aa660ff5833aafa8cf343"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af4c0e5a3a68aa660ff5833aafa8cf343">&#9670;&#160;</a></span>allSideEffectIntrinsics()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::unordered_set&lt; <a class="el" href="namespacefreetensor.html#a8e8e00871b5e68f996b300f974e2d9d5">Intrinsic</a> &gt; freetensor::allSideEffectIntrinsics </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>op</em></td><td>)</td>
           <td></td>
         </tr>
       </table>

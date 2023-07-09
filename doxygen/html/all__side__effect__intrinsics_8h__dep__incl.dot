@@ -1,0 +1,14 @@
+digraph "include/analyze/all_side_effect_intrinsics.h"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  Node1 [label="include/analyze/all\l_side_effect_intrinsics.h",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="src/analyze/check_not\l_modified.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$check__not__modified_8cc.html",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="steelblue1",style="solid"];
+  Node3 [label="src/pass/scalar_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$scalar__prop__const_8cc.html",tooltip=" "];
+  Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
+  Node4 [label="src/pass/tensor_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$tensor__prop__const_8cc.html",tooltip=" "];
+}
