@@ -1,5 +1,6 @@
 #include <mutex>
 
+#include <analyze/all_side_effect_intrinsics.h>
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <container_utils.h>
@@ -132,6 +133,9 @@ Stmt tensorPropConst(const Stmt &_op, const ID &subAST) {
             ASSERT(item.second.front().first->nodeType() == ASTNodeType::Store);
             auto &&store = item.second.front().first.as<StoreNode>();
             auto &&repInfo = item.second.front().second;
+
+            if (!allSideEffectIntrinsics(store->expr_).empty())
+                continue;
 
             if (!allIters(store->expr_).empty()) {
                 try {

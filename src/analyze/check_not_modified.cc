@@ -1,5 +1,6 @@
 #include <unordered_map>
 
+#include <analyze/all_side_effect_intrinsics.h>
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
@@ -112,6 +113,9 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
     if (usedScopesAt(op, s0, reads) != usedScopesAt(op, s1, reads)) {
         return false;
     }
+
+    if (!allSideEffectIntrinsics(s0Expr).empty())
+        return false;
 
     // First insert temporarily Eval node to the AST, then perform dependence
     // analysis

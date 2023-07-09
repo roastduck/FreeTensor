@@ -3,6 +3,7 @@
 #include <set>
 #include <stack>
 
+#include <analyze/all_side_effect_intrinsics.h>
 #include <analyze/all_uses.h>
 #include <hash.h>
 #include <math/utils.h>
@@ -29,7 +30,8 @@ void ScalarPropConst::gen_constant(const std::string &name,
                                    const std::optional<ScalarIndices> &indices,
                                    const Expr &value) {
     kill_constant(name, indices);
-    if (!indices || !allReads(value).empty())
+    if (!(indices && allReads(value).empty() &&
+          allSideEffectIntrinsics(value).empty()))
         return;
     constants_[name][*indices] = value;
 
