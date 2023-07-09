@@ -815,11 +815,6 @@ extern "C" {
             s += "uint8_t *__glmem = (uint8_t*)ctx->gpuGlobalPool();\n";
 
             s += stream.os_.str();
-            s += "\n";
-
-            // Free stack for gpu/global
-            s += "cudaFreeAsync(__glmem, __stream);\n";
-
             s += "}\n";
             return s;
         } else {

@@ -351,7 +351,6 @@ def test_global_mem():
         func = ft.lower(s.func(), skip_passes=['prop_one_time_use'], verbose=1)
         code = ft.codegen(func, verbose=True)
         assert "__glmem +" in code.code  # offset from memory pool
-        assert "cudaFree" in code.code
         x_np = np.array([1, 2, 3, 4], dtype="int32")
         y_np = np.zeros((4,), dtype="int32")
         x_arr = ft.Array(x_np)
