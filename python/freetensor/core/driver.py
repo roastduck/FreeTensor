@@ -294,8 +294,11 @@ class Driver(EnableAttachBackward, ffi.Driver):
         `self.set_args` first, then `self.time`, and finally `self.collect_returns`
         '''
         self.set_args(*args, **kws)
-        self.run()
-        return self.collect_returns()
+        try:
+            self.run()
+        finally:  # Always collect returns or there will be memory leak
+            ret = self.collect_returns()
+        return ret
 
 
 @as_decorator

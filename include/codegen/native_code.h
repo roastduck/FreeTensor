@@ -69,6 +69,10 @@ struct NativeCodeRet {
 
 std::ostream &operator<<(std::ostream &os, const NativeCodeRet &r);
 
+struct StaticInfo {
+    uint64_t gpuGlobalPoolSize_ = 0;
+};
+
 /**
  * Generated native code with metadata
  */
@@ -82,6 +86,7 @@ class NativeCode {
     std::string code_;
     std::string entry_; /// Name of the function to be called
     Ref<Target> target_;
+    StaticInfo staticInfo_;
 
   public:
     NativeCode() {} // Uninitialized
@@ -89,13 +94,15 @@ class NativeCode {
                const std::vector<NativeCodeParam> &params,
                const std::vector<NativeCodeRet> &returns,
                const std::string &code, const std::string &entry,
-               const Ref<Target> &target)
+               const Ref<Target> &target,
+               const StaticInfo &staticInfo = StaticInfo{})
         : name_(name), params_(params), returns_(returns), code_(code),
-          entry_(entry), target_(target) {}
+          entry_(entry), target_(target), staticInfo_(staticInfo) {}
 
     static NativeCode fromFunc(const Func &func, const std::string &code,
                                const std::string &entry,
-                               const Ref<Target> &target);
+                               const Ref<Target> &target,
+                               const StaticInfo &staticInfo = StaticInfo{});
 
     const auto &name() const { return name_; }
     const auto &params() const { return params_; }
@@ -103,6 +110,7 @@ class NativeCode {
     const auto &code() const { return code_; }
     const auto &entry() const { return entry_; }
     const auto &target() const { return target_; }
+    const auto &staticInfo() const { return staticInfo_; }
 };
 
 } // namespace freetensor
