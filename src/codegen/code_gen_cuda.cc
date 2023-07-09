@@ -772,7 +772,7 @@ void CodeGenCUDA::visit(const MatMul &op) {
     inCublas_ = false;
 }
 
-std::string codeGenCUDA(const Func &func) {
+NativeCode codeGenCUDA(const Func &func, const Ref<Target> &target) {
     auto nParams = func->params_.size();
 
     CodeGenCUDA visitor(func->params_, func->returns_);
@@ -812,14 +812,7 @@ extern "C" {
             s += "cudaStream_t __stream = 0;\n";
             s += "\n";
 
-            // Allocate stack for gpu/global
-            auto globalSize = visitor.globalSize();
-            // FIXME: Support non-constant
-            ASSERT(globalSize->nodeType() == ASTNodeType::IntConst);
-            s += "uint8_t *__glmem = (uint8_t*)cudaNew(" +
-                 std::to_string(globalSize.as<IntConstNode>()->val_) +
-                 ", __stream);\n";
-            s += "\n";
+            s += "uint8_t *__glmem = (uint8_t*)ctx->gpuGlobalPool();\n";
 
             s += stream.os_.str();
             s += "\n";
@@ -892,7 +885,16 @@ extern "C" {
             return os.str();
         }
     });
-    return header + body + tailer;
+
+    // Pre-allocate static gpu/global memory pool
+    // TODO: Support dynamic size and allocate the dynamic part at run time
+    auto globalSize = visitor.globalSize();
+    ASSERT(globalSize->nodeType() == ASTNodeType::IntConst);
+    StaticInfo staticInfo;
+    staticInfo.gpuGlobalPoolSize_ = globalSize.as<IntConstNode>()->val_;
+
+    return NativeCode::fromFunc(func, header + body + tailer, "run", target,
+                                staticInfo);
 }
 
 } // namespace freetensor

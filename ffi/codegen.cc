@@ -34,23 +34,28 @@ void init_ffi_codegen(py::module_ &m) {
         .def("__str__",
              static_cast<std::string (*)(const NativeCodeRet &)>(&toString));
 
+    py::class_<StaticInfo>(m, "StaticInfo");
+
     py::class_<NativeCode>(m, "NativeCode")
         .def(py::init<const std::string &, const std::vector<NativeCodeParam> &,
                       const std::vector<NativeCodeRet> &, const std::string &,
-                      const std::string &, const Ref<Target> &>(),
-             "name"_a, "params"_a, "returns"_a, "code"_a, "entry"_a, "target"_a)
+                      const std::string &, const Ref<Target> &,
+                      const StaticInfo &>(),
+             "name"_a, "params"_a, "returns"_a, "code"_a, "entry"_a, "target"_a,
+             "static_info"_a)
         .def(py::init(&NativeCode::fromFunc), "func"_a, "code"_a, "entry"_a,
-             "target"_a)
+             "target"_a, "static_info"_a)
         .def_property_readonly("name", &NativeCode::name)
         .def_property_readonly("params", &NativeCode::params)
         .def_property_readonly("returns", &NativeCode::returns)
         .def_property_readonly("code", &NativeCode::code)
         .def_property_readonly("entry", &NativeCode::entry)
-        .def_property_readonly("target", &NativeCode::target);
+        .def_property_readonly("target", &NativeCode::target)
+        .def_property_readonly("static_info", &NativeCode::staticInfo);
 
     m.def("code_gen", &codeGen, "func"_a, "target"_a);
-    m.def("code_gen_cpu", &codeGenCPU, "func"_a);
-    m.def("code_gen_cuda", &codeGenCUDA, "func"_a);
+    m.def("code_gen_cpu", &codeGenCPU, "func"_a, "target"_a);
+    m.def("code_gen_cuda", &codeGenCUDA, "func"_a, "target"_a);
 }
 
 } // namespace freetensor

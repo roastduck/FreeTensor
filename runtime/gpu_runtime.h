@@ -18,15 +18,7 @@
 
 #define restrict __restrict__
 
-#define checkCudaError(call)                                                   \
-    {                                                                          \
-        auto err = (call);                                                     \
-        if (cudaSuccess != err) {                                              \
-            fprintf(stderr, "CUDA error in file '%s' in line %i : %s.\n",      \
-                    __FILE__, __LINE__, cudaGetErrorString(err));              \
-            throw std::runtime_error("cuda error");                            \
-        }                                                                      \
-    }
+#define checkCudaError(...) runtimeCheckCudaError(__VA_ARGS__)
 
 inline void *cudaNew(size_t size, cudaStream_t stream) {
     void *ptr = nullptr;
