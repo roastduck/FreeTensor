@@ -779,7 +779,7 @@ class Schedule(ffi.Schedule):
         """
         super().separate_tail(noDuplicateVarDefs)
 
-    def as_matmul(self, loop):
+    def as_matmul(self, loop, allow_var_reorder: bool = False):
         """
         Transform nested loops to be a external call to a matrix multiplication
 
@@ -787,13 +787,15 @@ class Schedule(ffi.Schedule):
         ----------
         loop : str, ID or Stmt
             ID of the loop
+        allow_var_reorder : bool
+            If true, automatically try calling `var_reorder` to eanble `as_matmul`
 
         Raises
         ------
         InvalidSchedule
             if the loop cannot be transformed to be a matrix multiplication
         """
-        super().as_matmul(self._lookup(loop))
+        super().as_matmul(self._lookup(loop), allow_var_reorder)
 
     def pluto_fuse(self,
                    loop0,

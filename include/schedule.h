@@ -716,10 +716,12 @@ class Schedule {
      * Transform nested loops to be a external call to a matrix multiplication
      *
      * @param loop: ID of the loop
+     * @param allowVarReorder : If true, automatically try calling `varReorder`
+     * to eanble `asMatMul`
      * @throw InvalidSchedule if the loop cannot be transformed to be a matrix
      * multiplication
      */
-    void asMatMul(const ID &loop);
+    void asMatMul(const ID &loop, bool allowVarReorder = false);
 
     /**
      * Use Pluto+ algorithm to permute and fuse two loops, with as most

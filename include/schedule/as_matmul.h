@@ -10,8 +10,22 @@
 #include <container_utils.h>
 #include <hash.h>
 #include <mutator.h>
+#include <serialize/to_string.h>
 
 namespace freetensor {
+
+struct NeedVarReorder : Error {
+    ID vardef_;
+    std::vector<int> order_;
+
+    NeedVarReorder(const ID &vardef, const std::vector<int> &order,
+                   const std::string &msg)
+        : Error(msg + ". You may `var_reorder` " + toString(vardef) +
+                " in order [" + toString(order) +
+                "] and retry, or retry with `allowVarReorder=True` for "
+                "automatically reordering"),
+          vardef_(vardef), order_(order) {}
+};
 
 class AsMatMul : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
@@ -108,7 +122,6 @@ class AsMatMul : public SymbolTable<Mutator> {
         Expr lastInDim;
         for (auto &&[thisDimIn, idx, dimLen] : views::zip(
                  dimsIn, acc->indices_, buffer(acc->var_)->tensor()->shape())) {
-            lastDimIn = thisDimIn;
             if (thisDimIn) {
                 if (lastInDim.isValid()) {
                     if (!lastDimIn) {
@@ -125,11 +138,28 @@ class AsMatMul : public SymbolTable<Mutator> {
                                               : (Expr)dimLen;
                 }
             }
+            lastDimIn = thisDimIn;
         }
         len = len.isValid() ? len : makeIntConst(1);
         stride = stride.isValid() ? stride : makeIntConst(1);
         return std::make_pair(len, stride);
     }
+
+    void checkSameOrderOrRetry(const ID &idA, const std::vector<int> &orderA,
+                               const std::vector<bool> &filterA, const ID &idB,
+                               const std::vector<int> &orderB,
+                               const std::vector<bool> &filterB,
+                               const std::string &message);
+    void checkSameOrderNoRetry(const ID &idA, const std::vector<int> &orderA,
+                               const std::vector<bool> &filterA, const ID &idB,
+                               const std::vector<int> &orderB,
+                               const std::vector<bool> &filterB,
+                               const std::string &message);
+
+    void retryReorderingBack(const ID &id, const std::vector<bool> &filter,
+                             const std::string &message);
+    void retryReorderingFront(const ID &id, const std::vector<bool> &filter,
+                              const std::string &message);
 
   protected:
     Stmt visitStmt(const Stmt &op) override;
