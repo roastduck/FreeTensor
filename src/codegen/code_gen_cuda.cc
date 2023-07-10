@@ -138,7 +138,7 @@ void CodeGenCUDA::exprOr1(const std::unordered_map<ParallelScope, Expr> &dict,
 }
 
 void CodeGenCUDA::enterKernel(const Stmt &body) {
-    std::string kernel = "kernel" + std::to_string(nKernel_++);
+    std::string kernel = kernelPrefix_ + "_kernel" + std::to_string(nKernel_++);
     pushStream(kernel);
     sharedStackTop_ = makeIntConst(0);
     auto oldGlobalStackTop = globalStackTop_;
@@ -773,9 +773,10 @@ void CodeGenCUDA::visit(const MatMul &op) {
 }
 
 NativeCode codeGenCUDA(const Func &func, const Ref<Target> &target) {
+    auto prefix = mangle(func->name_);
     auto nParams = func->params_.size();
 
-    CodeGenCUDA visitor(func->params_, func->returns_);
+    CodeGenCUDA visitor(func->params_, func->returns_, prefix);
     auto &&op = func->body_;
     visitor.beginBlock();
     visitor(op);
@@ -795,7 +796,8 @@ extern "C" {
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
             std::string s =
-                "void run(void **__params, void **returns, size_t **retShapes, "
+                "void " + prefix +
+                "_run(void **__params, void **returns, size_t **retShapes, "
                 "size_t *retDims, GPUContext_t ctx) {\n";
             // We copy `__params` to `params`, in order to pass the parameter
             // pack into a kernel
@@ -888,8 +890,8 @@ extern "C" {
     StaticInfo staticInfo;
     staticInfo.gpuGlobalPoolSize_ = globalSize.as<IntConstNode>()->val_;
 
-    return NativeCode::fromFunc(func, header + body + tailer, "run", target,
-                                staticInfo);
+    return NativeCode::fromFunc(func, header + body + tailer, prefix + "_run",
+                                target, staticInfo);
 }
 
 } // namespace freetensor
