@@ -434,19 +434,19 @@ Stmt AsMatMul::visit(const VarDef &op) {
 Stmt asMatMul(const Stmt &ast, const ID &loop) { return AsMatMul(loop)(ast); }
 
 void Schedule::asMatMul(const ID &loop, bool allowVarReorder) {
+    beginTransaction();
     while (true) {
-        beginTransaction();
         auto log =
             appendLog(MAKE_SCHEDULE_LOG(AsMatMul, freetensor::asMatMul, loop));
         try {
             applyLog(log);
-            commitTransaction();
             break;
         } catch (const NeedVarReorder &e) {
             if (allowVarReorder) {
                 try {
                     varReorder(e.vardef_, e.order_);
                 } catch (const InvalidSchedule &e2) {
+                    abortTransaction();
                     throw InvalidSchedule(
                         log, ast(),
                         std::string(e.what()) +
@@ -463,6 +463,7 @@ void Schedule::asMatMul(const ID &loop, bool allowVarReorder) {
             throw InvalidSchedule(log, ast(), e.what());
         }
     }
+    commitTransaction();
 }
 
 } // namespace freetensor
