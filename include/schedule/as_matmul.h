@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_MAKE_MATMUL_H
 #define FREE_TENSOR_MAKE_MATMUL_H
 
+#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -10,7 +11,6 @@
 #include <container_utils.h>
 #include <hash.h>
 #include <mutator.h>
-#include <serialize/to_string.h>
 
 namespace freetensor {
 
@@ -38,10 +38,19 @@ struct NeedVarReorder : Error {
 
     NeedVarReorder(const ID &vardef, const std::vector<int> &order,
                    const std::string &msg)
-        : Error(msg + ". Consider retrying after `var_reorder`ing " +
-                toString(vardef) + " to order [" + toString(order) +
-                "], or retrying with a different `mode` of `as_matmul`"),
-          vardef_(vardef), order_(order) {}
+        : Error(genErrMsg(vardef, order, msg)), vardef_(vardef), order_(order) {
+    }
+
+  private:
+    static std::string genErrMsg(const ID &vardef,
+                                 const std::vector<int> &order,
+                                 const std::string &msg) {
+        std::ostringstream os;
+        os << msg << ". Consider retrying after `var_reorder`ing " << vardef
+           << " to order [" << order
+           << "], or retrying with a different `mode` of `as_matmul`";
+        return os.str();
+    }
 };
 
 class AsMatMul : public SymbolTable<Mutator> {
