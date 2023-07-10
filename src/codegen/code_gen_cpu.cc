@@ -379,6 +379,8 @@ void CodeGenCPU::visit(const MatMul &op) {
 }
 
 NativeCode codeGenCPU(const Func &func, const Ref<Target> &target) {
+    auto entry = mangle(func->name_) + "_run";
+
     CodeGenCPU visitor(func->params_, func->returns_);
     auto &&op = func->body_;
     visitor.beginBlock();
@@ -427,13 +429,14 @@ extern "C" {
         s += "mkl_finalize();\n";
 #endif // FT_WITH_MKL
         s += "}\n";
-        s += "void run(void **params, void **returns, size_t **retShapes, "
-             "size_t *retDims, CPUContext_t ctx) {\n";
+        s += "void " + entry +
+             "(void **params, void **returns, size_t **retShapes, size_t "
+             "*retDims, CPUContext_t ctx) {\n";
         s += stream.os_.str();
         s += "}";
         return s;
     });
-    return NativeCode::fromFunc(func, header + body + tailer, "run", target);
+    return NativeCode::fromFunc(func, header + body + tailer, entry, target);
 }
 
 } // namespace freetensor
