@@ -106,8 +106,8 @@ Public Types</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:af65f31685c53ff4da12c56c12f45648b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenCUDA.html#af65f31685c53ff4da12c56c12f45648b">CodeGenCUDA</a> (const std::vector&lt; <a class="el" href="structfreetensor_1_1FuncParam.html">FuncParam</a> &gt; &amp;<a class="el" href="namespacefreetensor.html#a3105134553648956815c674a8c2eb931">params</a>, const std::vector&lt; <a class="el" href="structfreetensor_1_1FuncRet.html">FuncRet</a> &gt; &amp;returns)</td></tr>
-<tr class="separator:af65f31685c53ff4da12c56c12f45648b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7875aa9c2e47db48add3f5f6d08bfc8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenCUDA.html#ac7875aa9c2e47db48add3f5f6d08bfc8">CodeGenCUDA</a> (const std::vector&lt; <a class="el" href="structfreetensor_1_1FuncParam.html">FuncParam</a> &gt; &amp;<a class="el" href="namespacefreetensor.html#a3105134553648956815c674a8c2eb931">params</a>, const std::vector&lt; <a class="el" href="structfreetensor_1_1FuncRet.html">FuncRet</a> &gt; &amp;returns, const std::string &amp;kernelPrefix)</td></tr>
+<tr class="separator:ac7875aa9c2e47db48add3f5f6d08bfc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0da2c7795e5099fdd3d86fd2c07d40f5"><td class="memItemLeft" align="right" valign="top">std::function&lt; std::ostream &amp;(std::ostream &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenCUDA.html#a0da2c7795e5099fdd3d86fd2c07d40f5">genMdPtrType</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;<a class="el" href="classfreetensor_1_1SymbolTable.html#a822e9e26d00402a13826e2bd1f7d65a2">def</a>, bool isConst=false) override</td></tr>
 <tr class="separator:a0da2c7795e5099fdd3d86fd2c07d40f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acefb0ebad8c207d70c978a4b036ca1c8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CodeGenCUDA.html#acefb0ebad8c207d70c978a4b036ca1c8">genMdPtrDef</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;<a class="el" href="classfreetensor_1_1SymbolTable.html#a822e9e26d00402a13826e2bd1f7d65a2">def</a>, const std::function&lt; void()&gt; &amp;genRawPtr, bool isConst=false) override</td></tr>
@@ -536,8 +536,8 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="af65f31685c53ff4da12c56c12f45648b" name="af65f31685c53ff4da12c56c12f45648b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af65f31685c53ff4da12c56c12f45648b">&#9670;&#160;</a></span>CodeGenCUDA()</h2>
+<a id="ac7875aa9c2e47db48add3f5f6d08bfc8" name="ac7875aa9c2e47db48add3f5f6d08bfc8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7875aa9c2e47db48add3f5f6d08bfc8">&#9670;&#160;</a></span>CodeGenCUDA()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -555,7 +555,13 @@ Additional Inherited Members</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::vector&lt; <a class="el" href="structfreetensor_1_1FuncRet.html">FuncRet</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>returns</em>&#160;</td>
+          <td class="paramname"><em>returns</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>kernelPrefix</em>&#160;</td>
         </tr>
         <tr>
           <td></td>

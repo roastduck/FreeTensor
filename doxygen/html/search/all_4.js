@@ -89,7 +89,7 @@ var searchData=
   ['codegencpu_86',['codeGenCPU',['../namespacefreetensor.html#a5f6ab454df7f7040e270846affb5e427',1,'freetensor']]],
   ['codegencpu_87',['CodeGenCPU',['../classfreetensor_1_1CodeGenCPU.html',1,'freetensor']]],
   ['codegencuda_88',['codeGenCUDA',['../namespacefreetensor.html#a6ead1b38891ce8102c3c5ceee14553d7',1,'freetensor']]],
-  ['codegencuda_89',['CodeGenCUDA',['../classfreetensor_1_1CodeGenCUDA.html#af65f31685c53ff4da12c56c12f45648b',1,'freetensor::CodeGenCUDA::CodeGenCUDA()'],['../classfreetensor_1_1CodeGenCUDA.html',1,'freetensor::CodeGenCUDA']]],
+  ['codegencuda_89',['CodeGenCUDA',['../classfreetensor_1_1CodeGenCUDA.html#ac7875aa9c2e47db48add3f5f6d08bfc8',1,'freetensor::CodeGenCUDA::CodeGenCUDA()'],['../classfreetensor_1_1CodeGenCUDA.html',1,'freetensor::CodeGenCUDA']]],
   ['codegencudastream_90',['CodeGenCUDAStream',['../structfreetensor_1_1CodeGenCUDAStream.html',1,'freetensor']]],
   ['codegenstream_91',['CodeGenStream',['../structfreetensor_1_1CodeGenStream.html#a88bfd7ee5d124ff11a480699d7986aa2',1,'freetensor::CodeGenStream::CodeGenStream()'],['../structfreetensor_1_1CodeGenStream.html',1,'freetensor::CodeGenStream']]],
   ['coeff_5f_92',['coeff_',['../structfreetensor_1_1LinearExpr.html#aa5e8d6f2d1a104790a61e85a4868a1e1',1,'freetensor::LinearExpr']]],

@@ -36,7 +36,7 @@ var searchData=
   ['codegencpu_33',['codeGenCPU',['../namespacefreetensor.html#a5f6ab454df7f7040e270846affb5e427',1,'freetensor']]],
   ['codegencpu_34',['CodeGenCPU',['../classfreetensor_1_1CodeGenCPU.html#ab86304fcab83f42f8f44983219081a5e',1,'freetensor::CodeGenCPU']]],
   ['codegencuda_35',['codeGenCUDA',['../namespacefreetensor.html#a6ead1b38891ce8102c3c5ceee14553d7',1,'freetensor']]],
-  ['codegencuda_36',['CodeGenCUDA',['../classfreetensor_1_1CodeGenCUDA.html#af65f31685c53ff4da12c56c12f45648b',1,'freetensor::CodeGenCUDA']]],
+  ['codegencuda_36',['CodeGenCUDA',['../classfreetensor_1_1CodeGenCUDA.html#ac7875aa9c2e47db48add3f5f6d08bfc8',1,'freetensor::CodeGenCUDA']]],
   ['codegenstream_37',['CodeGenStream',['../structfreetensor_1_1CodeGenStream.html#a88bfd7ee5d124ff11a480699d7986aa2',1,'freetensor::CodeGenStream']]],
   ['coefficients_38',['coefficients',['../namespacefreetensor.html#a9d8b33f83c30b0387756f69023e998df',1,'freetensor']]],
   ['collectreturns_39',['collectReturns',['../classfreetensor_1_1Driver.html#a736d2d159365aca5628ce664f7418579',1,'freetensor::Driver']]],
