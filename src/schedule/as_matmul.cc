@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <optional>
 
+#include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/as_matmul.h>
 
@@ -207,6 +208,7 @@ Stmt AsMatMul::visit(const For &op) {
             ret = makeVarDef(def->name_, def->buffer_, def->viewOf_, ret,
                              def->pinned_, def->metadata(), def->id());
         }
+        done_ = true;
         return ret;
     } else {
         ASSERT(!outerDefs_.count(op->iter_));
@@ -431,7 +433,16 @@ Stmt AsMatMul::visit(const VarDef &op) {
     }
 }
 
-Stmt asMatMul(const Stmt &ast, const ID &loop) { return AsMatMul(loop)(ast); }
+Stmt asMatMul(const Stmt &_ast, const ID &loop) {
+    AsMatMul mutator(loop);
+    auto ast = simplify(_ast); // Simplify confusing loop range and indexing
+                               // from libop. TODO: simplify only needed region
+    ast = mutator(ast);
+    if (!mutator.done()) {
+        throw InvalidSchedule(toString(loop) + " not found");
+    }
+    return ast;
+}
 
 void Schedule::asMatMul(const ID &loop, AsMatMulMode mode) {
     beginTransaction();

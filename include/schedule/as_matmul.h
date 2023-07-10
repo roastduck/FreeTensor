@@ -62,8 +62,12 @@ class AsMatMul : public SymbolTable<Mutator> {
 
     AnalyzeLinear analyzeLinear_;
 
+    bool done_ = false;
+
   public:
     AsMatMul(const ID &loop) : loop_(loop) {}
+
+    bool done() const { return done_; }
 
   private:
     const LinearExpr<int64_t> &analyzeLinear(const Expr &expr);
