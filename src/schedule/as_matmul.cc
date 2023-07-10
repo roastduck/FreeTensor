@@ -433,7 +433,7 @@ Stmt AsMatMul::visit(const VarDef &op) {
 
 Stmt asMatMul(const Stmt &ast, const ID &loop) { return AsMatMul(loop)(ast); }
 
-void Schedule::asMatMul(const ID &loop, bool allowVarReorder) {
+void Schedule::asMatMul(const ID &loop, AsMatMulMode mode) {
     beginTransaction();
     while (true) {
         auto log =
@@ -442,9 +442,15 @@ void Schedule::asMatMul(const ID &loop, bool allowVarReorder) {
             applyLog(log);
             break;
         } catch (const NeedVarReorder &e) {
-            if (allowVarReorder) {
+            if (mode != AsMatMulMode::KeepMemLayout) {
                 try {
-                    varReorder(e.vardef_, e.order_);
+                    ID defId = e.vardef_;
+                    if (mode == AsMatMulMode::TryTranspose) {
+                        auto def = find(defId).as<VarDefNode>();
+                        defId = std::get<3>(cache(def->body_->id(), def->name_,
+                                                  def->buffer_->mtype()));
+                    }
+                    varReorder(defId, e.order_);
                 } catch (const InvalidSchedule &e2) {
                     abortTransaction();
                     throw InvalidSchedule(

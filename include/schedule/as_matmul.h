@@ -14,16 +14,33 @@
 
 namespace freetensor {
 
+enum class AsMatMulMode : int {
+    KeepMemLayout,
+    TryVarReorder,
+    TryTranspose,
+};
+inline std::ostream &operator<<(std::ostream &os, AsMatMulMode mode) {
+    switch (mode) {
+    case AsMatMulMode::KeepMemLayout:
+        return os << "keep_mem_layout";
+    case AsMatMulMode::TryVarReorder:
+        return os << "try_var_reorder";
+    case AsMatMulMode::TryTranspose:
+        return os << "try_transpose";
+    default:
+        ASSERT(false);
+    }
+}
+
 struct NeedVarReorder : Error {
     ID vardef_;
     std::vector<int> order_;
 
     NeedVarReorder(const ID &vardef, const std::vector<int> &order,
                    const std::string &msg)
-        : Error(msg + ". You may `var_reorder` " + toString(vardef) +
-                " in order [" + toString(order) +
-                "] and retry, or retry with `allowVarReorder=True` for "
-                "automatically reordering"),
+        : Error(msg + ". Consider retrying after `var_reorder`ing " +
+                toString(vardef) + " to order [" + toString(order) +
+                "], or retrying with a different `mode` of `as_matmul`"),
           vardef_(vardef), order_(order) {}
 };
 

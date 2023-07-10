@@ -1,6 +1,6 @@
 __all__ = [
-    'FissionSide', 'MoveToSide', 'VarSplitMode', 'ReorderMode', 'ID', 'IDMap',
-    'Schedule', 'schedule'
+    'FissionSide', 'MoveToSide', 'VarSplitMode', 'ReorderMode', 'AsMatMulMode',
+    'ID', 'IDMap', 'Schedule', 'schedule'
 ]
 
 import functools
@@ -9,7 +9,7 @@ from typing import Callable, Union, List, Dict
 
 from .. import ffi
 from ..ffi import (ParallelScope, ID, Selector, FissionSide, MoveToSide,
-                   VarSplitMode, ReorderMode)
+                   VarSplitMode, ReorderMode, AsMatMulMode)
 
 from .func import Func
 from .analyze import find_stmt
@@ -779,7 +779,7 @@ class Schedule(ffi.Schedule):
         """
         super().separate_tail(noDuplicateVarDefs)
 
-    def as_matmul(self, loop, allow_var_reorder: bool = False):
+    def as_matmul(self, loop, mode: AsMatMulMode = AsMatMulMode.KeepMemLayout):
         """
         Transform nested loops to be a external call to a matrix multiplication
 
@@ -789,13 +789,19 @@ class Schedule(ffi.Schedule):
             ID of the loop
         allow_var_reorder : bool
             If true, automatically try calling `var_reorder` to eanble `as_matmul`
+        mode : AsMatMulMode
+            What to do if the memory layout does not meet the requirement from the
+            external library. `KeepMemLayout` => Raise an exception. `TryVarReorder`
+            => try `var_reorder` on some variables, but may affect performance of
+            other use of these variable. `TryTranspose` => try `cache` and then
+            `var_reorder` on some variables, but will incur extra overhead.
 
         Raises
         ------
         InvalidSchedule
             if the loop cannot be transformed to be a matrix multiplication
         """
-        super().as_matmul(self._lookup(loop), allow_var_reorder)
+        super().as_matmul(self._lookup(loop), mode)
 
     def pluto_fuse(self,
                    loop0,

@@ -10,6 +10,7 @@
 #include <func.h>
 #include <probability/rand_ctx.h>
 #include <random.h>
+#include <schedule/as_matmul.h>
 #include <schedule/fission.h>
 #include <schedule/memoized_schedules.h>
 #include <schedule/reorder.h>
@@ -716,12 +717,17 @@ class Schedule {
      * Transform nested loops to be a external call to a matrix multiplication
      *
      * @param loop: ID of the loop
-     * @param allowVarReorder : If true, automatically try calling `varReorder`
-     * to eanble `asMatMul`
+     * @param mode : What to do if the memory layout does not meet the
+     * requirement from the external library. `KeepMemLayout` => Raise an
+     * exception. `TryVarReorder` => try `var_reorder` on some variables, but
+     * may affect performance of other use of these variable. `TryTranspose` =>
+     * try `cache` and then `var_reorder` on some variables, but will incur
+     * extra overhead.
      * @throw InvalidSchedule if the loop cannot be transformed to be a matrix
      * multiplication
      */
-    void asMatMul(const ID &loop, bool allowVarReorder = false);
+    void asMatMul(const ID &loop,
+                  AsMatMulMode mode = AsMatMulMode::KeepMemLayout);
 
     /**
      * Use Pluto+ algorithm to permute and fuse two loops, with as most
