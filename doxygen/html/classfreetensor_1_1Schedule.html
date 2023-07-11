@@ -156,8 +156,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ac1d9ada77583888471a8378d400daf49"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5acb3fd33acc0a8940fc36fe97a9a9da"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a5acb3fd33acc0a8940fc36fe97a9a9da">separateTail</a> (bool noDuplicateVarDefs=false)</td></tr>
 <tr class="separator:a5acb3fd33acc0a8940fc36fe97a9a9da"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a37ef938b9a97cc35d911120950648c55"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a37ef938b9a97cc35d911120950648c55">asMatMul</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
-<tr class="separator:a37ef938b9a97cc35d911120950648c55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a649bd5b4d1108cfbe79d5ebd5facfe17"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a649bd5b4d1108cfbe79d5ebd5facfe17">asMatMul</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, <a class="el" href="namespacefreetensor.html#a178cd3297defa0377402b93245e9149a">AsMatMulMode</a> mode=<a class="el" href="namespacefreetensor.html#a178cd3297defa0377402b93245e9149aaf51f08eac69cbcced96c780853d97655">AsMatMulMode::KeepMemLayout</a>)</td></tr>
+<tr class="separator:a649bd5b4d1108cfbe79d5ebd5facfe17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2aed02b0ed0aca588cf42af07e348438"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a2aed02b0ed0aca588cf42af07e348438">plutoFuse</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop0, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1, int nestLevel0=0, int nestLevel1=0, int fusableOverlapThreshold=1, int fusableNonOverlapTolerance=4, bool doSimplify=true)</td></tr>
 <tr class="separator:a2aed02b0ed0aca588cf42af07e348438"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a926046480d77aa1e798bed45c78a8898"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a926046480d77aa1e798bed45c78a8898">plutoPermute</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, int nestLevel=0, bool doSimplify=true)</td></tr>
@@ -353,8 +353,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a37ef938b9a97cc35d911120950648c55" name="a37ef938b9a97cc35d911120950648c55"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a37ef938b9a97cc35d911120950648c55">&#9670;&#160;</a></span>asMatMul()</h2>
+<a id="a649bd5b4d1108cfbe79d5ebd5facfe17" name="a649bd5b4d1108cfbe79d5ebd5facfe17"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a649bd5b4d1108cfbe79d5ebd5facfe17">&#9670;&#160;</a></span>asMatMul()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -363,8 +363,18 @@ Public Member Functions</h2></td></tr>
           <td class="memname">void freetensor::Schedule::asMatMul </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
-          <td class="paramname"><em>loop</em></td><td>)</td>
+          <td class="paramname"><em>loop</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="namespacefreetensor.html#a178cd3297defa0377402b93245e9149a">AsMatMulMode</a>&#160;</td>
+          <td class="paramname"><em>mode</em> = <code><a class="el" href="namespacefreetensor.html#a178cd3297defa0377402b93245e9149aaf51f08eac69cbcced96c780853d97655">AsMatMulMode::KeepMemLayout</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -372,6 +382,7 @@ Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">loop</td><td><a class="el" href="classfreetensor_1_1ID.html">ID</a> of the loop </td></tr>
+    <tr><td class="paramname">mode</td><td>: What to do if the memory layout does not meet the requirement from the external library. <code>KeepMemLayout</code> =&gt; Raise an exception. <code>TryVarReorder</code> =&gt; try <code>var_reorder</code> on some variables, but may affect performance of other use of these variable. <code>TryTranspose</code> =&gt; try <code>cache</code> and then <code>var_reorder</code> on some variables, but will incur extra overhead. </td></tr>
   </table>
   </dd>
 </dl>

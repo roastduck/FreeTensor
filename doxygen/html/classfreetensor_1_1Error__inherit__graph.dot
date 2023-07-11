@@ -25,9 +25,11 @@ digraph "freetensor::Error"
   Node1 -> Node10 [dir="back",color="steelblue1",style="solid"];
   Node10 [label="freetensor::InvalidSchedule",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1InvalidSchedule.html",tooltip=" "];
   Node1 -> Node11 [dir="back",color="steelblue1",style="solid"];
-  Node11 [label="freetensor::ParserError",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1ParserError.html",tooltip=" "];
+  Node11 [label="freetensor::NeedVarReorder",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$structfreetensor_1_1NeedVarReorder.html",tooltip=" "];
   Node1 -> Node12 [dir="back",color="steelblue1",style="solid"];
-  Node12 [label="freetensor::SymbolNotFound",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SymbolNotFound.html",tooltip=" "];
+  Node12 [label="freetensor::ParserError",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1ParserError.html",tooltip=" "];
   Node1 -> Node13 [dir="back",color="steelblue1",style="solid"];
-  Node13 [label="freetensor::UnexpectedQuery\lResult",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1UnexpectedQueryResult.html",tooltip=" "];
+  Node13 [label="freetensor::SymbolNotFound",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SymbolNotFound.html",tooltip=" "];
+  Node1 -> Node14 [dir="back",color="steelblue1",style="solid"];
+  Node14 [label="freetensor::UnexpectedQuery\lResult",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1UnexpectedQueryResult.html",tooltip=" "];
 }

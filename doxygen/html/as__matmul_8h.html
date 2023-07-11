@@ -76,11 +76,13 @@ $(function() {
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">as_matmul.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;unordered_map&gt;</code><br />
+<div class="textblock"><code>#include &lt;sstream&gt;</code><br />
+<code>#include &lt;unordered_map&gt;</code><br />
 <code>#include &lt;unordered_set&gt;</code><br />
 <code>#include &lt;<a class="el" href="analyze__linear_8h_source.html">analyze/analyze_linear.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="check__all__defined_8h_source.html">analyze/check_all_defined.h</a>&gt;</code><br />
@@ -103,6 +105,8 @@ This graph shows which files directly or indirectly include this file:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1NeedVarReorder.html">freetensor::NeedVarReorder</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1AsMatMul.html">freetensor::AsMatMul</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -111,8 +115,18 @@ Namespaces</h2></td></tr>
 <tr class="memitem:namespacefreetensor"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html">freetensor</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a178cd3297defa0377402b93245e9149a"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a178cd3297defa0377402b93245e9149a">freetensor::AsMatMulMode</a> : int { <a class="el" href="namespacefreetensor.html#a178cd3297defa0377402b93245e9149aaf51f08eac69cbcced96c780853d97655">freetensor::KeepMemLayout</a>
+, <a class="el" href="namespacefreetensor.html#a178cd3297defa0377402b93245e9149aa54d883fd65c8a8a1b2ab682cd33c67b2">freetensor::TryVarReorder</a>
+, <a class="el" href="namespacefreetensor.html#a178cd3297defa0377402b93245e9149aa0b2f480a061e196e200b932ef83cf964">freetensor::TryTranspose</a>
+ }</td></tr>
+<tr class="separator:a178cd3297defa0377402b93245e9149a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a98894d261b82dace923d84d74cf201b5"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a98894d261b82dace923d84d74cf201b5">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, AsMatMulMode mode)</td></tr>
+<tr class="separator:a98894d261b82dace923d84d74cf201b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa8c0717fd776fb2cbea7663ab14f745d"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa8c0717fd776fb2cbea7663ab14f745d">freetensor::asMatMul</a> (const Stmt &amp;ast, const ID &amp;loop)</td></tr>
 <tr class="separator:aa8c0717fd776fb2cbea7663ab14f745d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>

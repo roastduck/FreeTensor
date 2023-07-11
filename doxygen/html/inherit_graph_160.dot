@@ -25,9 +25,11 @@ digraph "Graphical Class Hierarchy"
   Node2 -> Node9 [dir="back",color="steelblue1",style="solid"];
   Node9 [label="freetensor::InvalidSchedule",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1InvalidSchedule.html",tooltip=" "];
   Node2 -> Node10 [dir="back",color="steelblue1",style="solid"];
-  Node10 [label="freetensor::ParserError",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1ParserError.html",tooltip=" "];
+  Node10 [label="freetensor::NeedVarReorder",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structfreetensor_1_1NeedVarReorder.html",tooltip=" "];
   Node2 -> Node11 [dir="back",color="steelblue1",style="solid"];
-  Node11 [label="freetensor::SymbolNotFound",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SymbolNotFound.html",tooltip=" "];
+  Node11 [label="freetensor::ParserError",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1ParserError.html",tooltip=" "];
   Node2 -> Node12 [dir="back",color="steelblue1",style="solid"];
-  Node12 [label="freetensor::UnexpectedQuery\lResult",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1UnexpectedQueryResult.html",tooltip=" "];
+  Node12 [label="freetensor::SymbolNotFound",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SymbolNotFound.html",tooltip=" "];
+  Node2 -> Node13 [dir="back",color="steelblue1",style="solid"];
+  Node13 [label="freetensor::UnexpectedQuery\lResult",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1UnexpectedQueryResult.html",tooltip=" "];
 }

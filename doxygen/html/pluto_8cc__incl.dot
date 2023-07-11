@@ -186,16 +186,16 @@ digraph "src/schedule/pluto.cc"
   Node110 -> Node11 [color="steelblue1",style="solid"];
   Node110 -> Node71 [color="steelblue1",style="solid"];
   Node110 -> Node62 [color="steelblue1",style="solid"];
-  Node1 -> Node128 [color="steelblue1",style="solid"];
-  Node128 [label="schedule/fuse.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8h.html",tooltip=" "];
-  Node128 -> Node56 [color="steelblue1",style="solid"];
-  Node128 -> Node61 [color="steelblue1",style="solid"];
   Node1 -> Node129 [color="steelblue1",style="solid"];
-  Node129 [label="schedule/pluto.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$pluto_8h.html",tooltip=" "];
+  Node129 [label="schedule/fuse.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8h.html",tooltip=" "];
+  Node129 -> Node56 [color="steelblue1",style="solid"];
+  Node129 -> Node61 [color="steelblue1",style="solid"];
   Node1 -> Node130 [color="steelblue1",style="solid"];
-  Node130 [label="serialize/load_ast.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$load__ast_8h.html",tooltip=" "];
-  Node130 -> Node18 [color="steelblue1",style="solid"];
+  Node130 [label="schedule/pluto.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$pluto_8h.html",tooltip=" "];
   Node1 -> Node131 [color="steelblue1",style="solid"];
-  Node131 [label="serialize/mangle.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mangle_8h.html",tooltip=" "];
-  Node131 -> Node4 [color="steelblue1",style="solid"];
+  Node131 [label="serialize/load_ast.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$load__ast_8h.html",tooltip=" "];
+  Node131 -> Node18 [color="steelblue1",style="solid"];
+  Node1 -> Node132 [color="steelblue1",style="solid"];
+  Node132 [label="serialize/mangle.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mangle_8h.html",tooltip=" "];
+  Node132 -> Node4 [color="steelblue1",style="solid"];
 }
