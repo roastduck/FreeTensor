@@ -19,7 +19,7 @@ std::vector<ID> allNoReuseDefs(const Stmt &_op,
             direction.push_back({{scope->id(), DepDirection::Normal}});
         }
         if (!FindDeps()
-                 .type(DEP_WAR)
+                 .type(DEP_WAR | DEP_RAW)
                  .direction(direction)
                  .eraseOutsideVarDef(false)
                  .exists(op)) {
