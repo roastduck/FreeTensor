@@ -34,6 +34,27 @@ def test_static_shape():
     assert torch.all(torch.isclose(y_torch, torch.logsumexp(x_torch, axis=-1)))
 
 
+def test_keepdims():
+    device = ft.CPU()
+
+    @ft.optimize(device=device, verbose=1)
+    def f(x, y):
+        x: ft.Var[(4, 4), "float32", "input", "cpu"]
+        y: ft.Var[(4, 1), "float32", "output", "cpu"]
+        #! label: logsumexp
+        libop.logsumexp_(x, y, axis=-1, keepdims=True)
+
+    x_torch = torch.rand(4, 4, dtype=torch.float32)
+    x_arr = ft.array(x_torch)
+    y_torch = torch.zeros(4, 1, dtype=torch.float32)
+    y_arr = ft.array(y_torch)
+    f(x_arr, y_arr)
+    y_torch = y_arr.torch()
+
+    assert torch.all(
+        torch.isclose(y_torch, torch.logsumexp(x_torch, axis=-1, keepdim=True)))
+
+
 def test_out_of_place():
     device = ft.CPU()
 
