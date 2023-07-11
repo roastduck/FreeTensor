@@ -203,8 +203,10 @@ std::vector<Stmt> findKernelBoundariesInwards(const Stmt &s) {
  */
 Stmt findNewKernelNode(const Stmt &s) {
     Stmt ret = s; // The root of a kernel can be a shared memory VarDef
-    if (auto &&outer = findKernelBoundaryOutwards(s); outer.isValid()) {
-        ret = outer;
+    for (auto p = s->parentStmt(); p.isValid(); p = p->parentStmt()) {
+        if (maybeKernelBoundary(p)) {
+            ret = p;
+        }
     }
     return ret;
 };
