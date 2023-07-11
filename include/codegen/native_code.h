@@ -70,7 +70,7 @@ struct NativeCodeRet {
 std::ostream &operator<<(std::ostream &os, const NativeCodeRet &r);
 
 struct StaticInfo {
-    uint64_t gpuGlobalPoolSize_ = 0;
+    uint64_t gpuGlobalStaticPoolSize_ = 0;
 };
 
 /**

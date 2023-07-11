@@ -38,6 +38,20 @@ inline void *cudaNew(size_t size, cudaStream_t stream) {
     return ptr;
 }
 
+inline void *cudaNewFromPool(size_t size, cudaStream_t stream,
+                             cudaMemPool_t pool) {
+    void *ptr = nullptr;
+    if (size > 0) {
+#ifndef FT_DEBUG_CUDA_WITH_UM
+        checkCudaError(cudaMallocFromPoolAsync(&ptr, size, pool, stream));
+#else
+        // Fallback
+        return cudaNew(size, stream);
+#endif // FT_DEBUG_WITH_UM
+    }
+    return ptr;
+}
+
 template <class T, size_t n> struct __ByValArray {
     T data[n];
     __host__ __device__ const T &operator[](size_t i) const { return data[i]; }
