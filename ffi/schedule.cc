@@ -20,6 +20,10 @@ void init_ffi_schedule(py::module_ &m) {
         .value("PerfectOnly", ReorderMode::PerfectOnly)
         .value("MoveOutImperfect", ReorderMode::MoveOutImperfect)
         .value("MoveInImperfect", ReorderMode::MoveInImperfect);
+    py::enum_<AsMatMulMode>(m, "AsMatMulMode")
+        .value("KeepMemLayout", AsMatMulMode::KeepMemLayout)
+        .value("TryVarReorder", AsMatMulMode::TryVarReorder)
+        .value("TryTranspose", AsMatMulMode::TryTranspose);
 
     py::class_<DiscreteObservation>(m, "DiscreteObservation")
         .def("__str__",
@@ -131,7 +135,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("vectorize", &Schedule::vectorize, "loop"_a)
         .def("separate_tail", &Schedule::separateTail,
              "noDuplicateVarDefs"_a = false)
-        .def("as_matmul", &Schedule::asMatMul)
+        .def("as_matmul", &Schedule::asMatMul, "loop"_a,
+             "mode"_a = AsMatMulMode::KeepMemLayout)
         .def("pluto_fuse", &Schedule::plutoFuse, "loop0"_a, "loop1"_a,
              "nest_level_0"_a = 0, "nest_level_1"_a = 0,
              "fusable_overlap_threshold"_a = 1,
