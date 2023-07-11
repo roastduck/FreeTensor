@@ -72,7 +72,8 @@ void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
     os() << shapePtr << " = " << ndim << " > 0 ? (size_t*)malloc((" << dimPtr
          << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
     makeIndent();
-    // cudaNew is defined in gpu_runtime.h
+    // cudaNew is defined in gpu_runtime.h. This allocation is for return
+    // values, so we don't allocate from our pool
     os() << rawPtr << " = cudaNew(";
     for (auto &&[i, dim] : views::enumerate(tensor->shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
@@ -385,17 +386,18 @@ void CodeGenCUDA::visit(const Alloc &op) {
     ASSERT(buf->mtype() == MemType::GPUGlobalHeap);
 
     // e.g.
-    // x_opt = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 * sizeof(int),
-    // __stream));
+    // x_opt = mdspan_r<int, extents<5, 5>>(cudaNewFromPool(5 * 5 * sizeof(int),
+    // __stream, ctx->gpuGlobalDyanmicPool()));
     makeIndent();
     os() << mangle(op->var_) << "_opt = ";
     genMdPtrDef(vardef, [&]() {
-        os() << "cudaNew(";
+        os() << "cudaNewFromPool(";
         for (auto &&dim : shape) {
             (*this)(dim);
             os() << " * ";
         }
-        os() << "sizeof(" << gen(dtype) << "), __stream)";
+        os() << "sizeof(" << gen(dtype)
+             << "), __stream, ctx->gpuGlobalDynamicPool())";
     });
     os() << ";" << std::endl;
 }
@@ -814,7 +816,7 @@ extern "C" {
             s += "cudaStream_t __stream = 0;\n";
             s += "\n";
 
-            s += "uint8_t *__glmem = (uint8_t*)ctx->gpuGlobalPool();\n";
+            s += "uint8_t *__glmem = (uint8_t*)ctx->gpuGlobalStaticPool();\n";
 
             s += stream.os_.str();
             s += "}\n";
@@ -888,7 +890,7 @@ extern "C" {
     auto globalSize = visitor.globalSize();
     ASSERT(globalSize->nodeType() == ASTNodeType::IntConst);
     StaticInfo staticInfo;
-    staticInfo.gpuGlobalPoolSize_ = globalSize.as<IntConstNode>()->val_;
+    staticInfo.gpuGlobalStaticPoolSize_ = globalSize.as<IntConstNode>()->val_;
 
     return NativeCode::fromFunc(func, header + body + tailer, prefix + "_run",
                                 target, staticInfo);

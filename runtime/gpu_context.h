@@ -55,35 +55,52 @@ inline const char *cublasGetErrorString(cublasStatus_t error) {
 class GPUContext : public Context {
     bool initialized_ = false;
     cublasHandle_t cublas_;
-    void *gpuGlobalPool_ = nullptr;
+    void *gpuGlobalStaticPool_ = nullptr;
+    cudaMemPool_t gpuGlobalDynamicPool_ = nullptr;
 
   public:
-    GPUContext(int deviceId, uint64_t gpuGlobalPoolSize, bool useUM) {
-        checkCublasError(cublasCreate(&cublas_));
+    GPUContext(int deviceId, uint64_t gpuGlobalStaticPoolSize, bool useUM) {
         runtimeCheckCudaError(cudaSetDevice(deviceId));
-        if (gpuGlobalPoolSize > 0) {
+
+        checkCublasError(cublasCreate(&cublas_));
+
+        if (gpuGlobalStaticPoolSize > 0) {
             if (!useUM) {
                 runtimeCheckCudaError(
-                    cudaMalloc(&gpuGlobalPool_, gpuGlobalPoolSize));
+                    cudaMalloc(&gpuGlobalStaticPool_, gpuGlobalStaticPoolSize));
             } else {
                 // Please refer to src/driver/array.cc:allocOn for details
+                runtimeCheckCudaError(cudaMallocManaged(
+                    &gpuGlobalStaticPool_, gpuGlobalStaticPoolSize));
                 runtimeCheckCudaError(
-                    cudaMallocManaged(&gpuGlobalPool_, gpuGlobalPoolSize));
-                runtimeCheckCudaError(
-                    cudaMemAdvise(gpuGlobalPool_, gpuGlobalPoolSize,
+                    cudaMemAdvise(gpuGlobalStaticPool_, gpuGlobalStaticPoolSize,
                                   cudaMemAdviseSetPreferredLocation, deviceId));
-                runtimeCheckCudaError(
-                    cudaMemset(gpuGlobalPool_, 0, gpuGlobalPoolSize));
+                runtimeCheckCudaError(cudaMemset(gpuGlobalStaticPool_, 0,
+                                                 gpuGlobalStaticPoolSize));
             }
         }
+
+        cudaMemPoolProps mem_pool_props = {};
+        mem_pool_props.allocType = cudaMemAllocationTypePinned;
+        mem_pool_props.location.type = cudaMemLocationTypeDevice;
+        mem_pool_props.location.id = deviceId;
+        runtimeCheckCudaError(
+            cudaMemPoolCreate(&gpuGlobalDynamicPool_, &mem_pool_props));
+        uint64_t threshold = UINT64_MAX; // Never actively free to OS, but other
+                                         // process may steal memory
+        runtimeCheckCudaError(cudaMemPoolSetAttribute(
+            gpuGlobalDynamicPool_, cudaMemPoolAttrReleaseThreshold,
+            &threshold));
+
         initialized_ = true;
     }
     ~GPUContext() {
         if (initialized_) {
             cublasDestroy(cublas_);
-            if (gpuGlobalPool_ != nullptr) {
-                cudaFree(gpuGlobalPool_);
+            if (gpuGlobalStaticPool_ != nullptr) {
+                cudaFree(gpuGlobalStaticPool_);
             }
+            cudaMemPoolDestroy(gpuGlobalDynamicPool_);
             initialized_ = false;
         }
     }
@@ -93,19 +110,22 @@ class GPUContext : public Context {
 
     GPUContext(GPUContext &&other)
         : initialized_(other.initialized_), cublas_(other.cublas_),
-          gpuGlobalPool_(other.gpuGlobalPool_) {
+          gpuGlobalStaticPool_(other.gpuGlobalStaticPool_),
+          gpuGlobalDynamicPool_(other.gpuGlobalDynamicPool_) {
         other.initialized_ = false;
     }
     GPUContext &operator=(GPUContext &&other) {
         initialized_ = other.initialized_;
         cublas_ = other.cublas_;
-        gpuGlobalPool_ = other.gpuGlobalPool_;
+        gpuGlobalStaticPool_ = other.gpuGlobalStaticPool_;
+        gpuGlobalDynamicPool_ = other.gpuGlobalDynamicPool_;
         other.initialized_ = false;
         return *this;
     }
 
     cublasHandle_t cublas() const { return cublas_; }
-    void *gpuGlobalPool() const { return gpuGlobalPool_; }
+    void *gpuGlobalStaticPool() const { return gpuGlobalStaticPool_; }
+    cudaMemPool_t gpuGlobalDynamicPool() const { return gpuGlobalDynamicPool_; }
 };
 
 extern "C" typedef GPUContext *GPUContext_t;
