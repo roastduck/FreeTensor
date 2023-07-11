@@ -40,14 +40,14 @@ def logsumexp_(x: core.VarRef,
         #! label: ln
         logged = ln(summation)
         #! label: add
-        add_(logged, squeeze(maxval, [axis]), y)
+        add_(logged, maxval if keepdims else squeeze(maxval, [axis]), y)
 
         exponent_handle = core.push_for_backward(exponent)
         summation_handle = core.push_for_backward(summation)
 
     with core.UserGrad(x, y, stmt_range=rng) as (d_x, d_y):
         d_summation = d_y / summation_handle
-        d_exponent = unsqueeze(d_summation, [axis])
+        d_exponent = d_summation if keepdims else unsqueeze(d_summation, [axis])
         d_x[...] += d_exponent * exponent_handle
 
 
