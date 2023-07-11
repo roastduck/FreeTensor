@@ -362,6 +362,41 @@ def test_global_mem():
     assert np.array_equal(y_np, y_std)
 
 
+def test_global_mem_dynamic():
+
+    @ft.transform
+    def test(n, x, y):
+        n: ft.Var[(), "int32", "input", "byvalue"]
+        x: ft.Var[(n[...],), "int32", "input", "gpu/global"]
+        y: ft.Var[(n[...],), "int32", "output", "gpu/global"]
+        t = ft.empty((n[...],), "int32", "gpu/global")
+        #! label: L1
+        for i in range(0, n[...]):
+            t[i] = x[i] * 2
+        #! label: L2
+        for i in range(0, n[...]):
+            y[i] = t[i] + 1
+
+    with device:
+        s = ft.Schedule(test)
+        s.parallelize("L1", "threadIdx.x")
+        s.parallelize("L2", "threadIdx.x")
+        func = ft.lower(s.func(), skip_passes=['prop_one_time_use'], verbose=1)
+        code = ft.codegen(func, verbose=True)
+        assert "cudaNewFromPool" in code.code
+        n_np = np.array(4, dtype="int32")
+        x_np = np.array([1, 2, 3, 4], dtype="int32")
+        y_np = np.zeros((4,), dtype="int32")
+        n_arr = ft.Array(n_np)
+        x_arr = ft.Array(x_np)
+        y_arr = ft.Array(y_np)
+        ft.build_binary(code)(n=n_arr, x=x_arr, y=y_arr)
+        y_np = y_arr.numpy()
+
+    y_std = np.array([3, 5, 7, 9], dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
 def test_global_mem_in_kernel():
 
     @ft.transform
