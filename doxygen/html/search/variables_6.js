@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['gpuglobalpoolsize_5f_0',['gpuGlobalPoolSize_',['../structfreetensor_1_1StaticInfo.html#a9ad62bd74c554bcc409076de32d6cd66',1,'freetensor::StaticInfo']]]
+  ['gpuglobalstaticpoolsize_5f_0',['gpuGlobalStaticPoolSize_',['../structfreetensor_1_1StaticInfo.html#a3bc8fd4ae564b9383fe9fd1aca990d49',1,'freetensor::StaticInfo']]]
 ];

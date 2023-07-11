@@ -39,7 +39,7 @@ var searchData=
   ['gpu_2eh_36',['gpu.h',['../gpu_8h.html',1,'']]],
   ['gpuglobal_37',['GPUGlobal',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a039a6b51382edf8b7702c0d077e9e9a4',1,'freetensor']]],
   ['gpuglobalheap_38',['GPUGlobalHeap',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a1c4a6df9ec736690a81dd559de98ffc5',1,'freetensor']]],
-  ['gpuglobalpoolsize_5f_39',['gpuGlobalPoolSize_',['../structfreetensor_1_1StaticInfo.html#a9ad62bd74c554bcc409076de32d6cd66',1,'freetensor::StaticInfo']]],
+  ['gpuglobalstaticpoolsize_5f_39',['gpuGlobalStaticPoolSize_',['../structfreetensor_1_1StaticInfo.html#a3bc8fd4ae564b9383fe9fd1aca990d49',1,'freetensor::StaticInfo']]],
   ['gpulocal_40',['GPULocal',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a91aa2e690cf9f0e666c332e671630a5b',1,'freetensor']]],
   ['gpushared_41',['GPUShared',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150ae70f90d745f5615e5bccbf337fcf74b7',1,'freetensor']]],
   ['gpuwarp_42',['GPUWarp',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a6d5c584f79367147f85b676a9bc55b13',1,'freetensor']]],
