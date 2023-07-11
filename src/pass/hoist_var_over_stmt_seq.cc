@@ -9,6 +9,11 @@
 
 namespace freetensor {
 
+static inline bool isInKernelMtype(MemType mtype) {
+    return mtype == MemType::GPULocal || mtype == MemType::GPUWarp ||
+           mtype == MemType::GPUShared;
+}
+
 Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
     auto parentAllWrites = allWrites(op);
 
@@ -30,6 +35,13 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
             if (hasIntersect(parentAllWrites, shapeAllReads)) {
                 goto no_hoist;
             }
+
+            // Don't enlarge GPU kernel, or it will break existing schedules'
+            // plan on GPU resources
+            if (!inKernel_ && isInKernelMtype(def->buffer_->mtype())) {
+                goto no_hoist;
+            }
+
             if (togetherIds_.has_value()) {
                 auto togetherInside = findAllStmt(def, [&](const Stmt &s) {
                     return std::find(togetherIds_->begin(), togetherIds_->end(),
@@ -78,6 +90,26 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
         ret = makeVarDef(def->name_, def->buffer_, def->viewOf_, std::move(ret),
                          def->pinned_, def->metadata(), def->id());
     }
+    return ret;
+}
+
+Stmt HoistVarOverStmtSeq::visit(const VarDef &op) {
+    auto oldInKernel = inKernel_;
+    if (isInKernelMtype(op->buffer_->mtype())) {
+        inKernel_ = true;
+    }
+    auto ret = BaseClass::visit(op);
+    inKernel_ = oldInKernel;
+    return ret;
+}
+
+Stmt HoistVarOverStmtSeq::visit(const For &op) {
+    auto oldInKernel = inKernel_;
+    if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
+        inKernel_ = true;
+    }
+    auto ret = BaseClass::visit(op);
+    inKernel_ = oldInKernel;
     return ret;
 }
 

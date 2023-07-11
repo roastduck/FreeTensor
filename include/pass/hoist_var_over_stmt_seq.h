@@ -16,6 +16,8 @@ class HoistVarOverStmtSeq : public RenameVar {
     std::optional<std::vector<ID>> togetherIds_;
     bool isFixPoint_ = true;
 
+    bool inKernel_ = false;
+
   public:
     HoistVarOverStmtSeq(
         const std::optional<std::vector<ID>> &togetherIds = std::nullopt)
@@ -26,6 +28,8 @@ class HoistVarOverStmtSeq : public RenameVar {
   protected:
     using BaseClass::visit;
     Stmt visit(const StmtSeq &op) override;
+    Stmt visit(const VarDef &op) override;
+    Stmt visit(const For &op) override;
 };
 
 /**
