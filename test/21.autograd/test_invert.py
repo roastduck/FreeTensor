@@ -11,7 +11,7 @@ def test_free_from_recomp():
                 s[...] += w[i]
                 y[...] += s[...] * x[i]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad_body(ast, ["x", "w"], ["y"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x", "w"], ["y"], set(), invert=True)
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -50,7 +50,8 @@ def test_free_from_tape():
                 y[...] += s[...] * x[i]
     ast = ft.pop_ast(verbose=True)
     fwd, bwd, _, _, _ = ft.grad_body(ast, ["x", "w"], ["y"],
-                                     ft.GradTapeMode.All)
+                                     ft.GradTapeMode.All,
+                                     invert=True)
     fwd = ft.lower(fwd, verbose=1)
     bwd = ft.lower(bwd, verbose=1)
 
@@ -75,6 +76,26 @@ def test_free_from_tape():
     assert std.match(bwd)
 
 
+# FIXME
+#def test_free_from_tape_multiple_versions():
+#    with ft.VarDef([("x", (4, 4), "float32", "input", "cpu"),
+#                    ("w", (4, 4), "float32", "input", "cpu"),
+#                    ("y", (4,), "float32", "output", "cpu")]) as (x, w, y):
+#        with ft.For("i", 0, 4) as i:
+#            with ft.VarDef("s", (), "float32", "cache", "cpu") as s:
+#                s[...] = 0
+#                with ft.For("j", 0, 4) as j:
+#                    s[...] += w[i, j]
+#                    y[i] += s[...] * x[i, j]
+#    ast = ft.pop_ast(verbose=True)
+#    fwd, bwd, _, _, _ = ft.grad_body(ast, ["x", "w"], ["y"],
+#                                     ft.GradTapeMode.All, invert=True)
+#    fwd = ft.lower(fwd, verbose=1)
+#    bwd = ft.lower(bwd, verbose=1)
+#
+#    assert False
+
+
 def test_reduce_mul_gt0():
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("w", (4,), "float32>0", "input", "cpu"),
@@ -85,7 +106,9 @@ def test_reduce_mul_gt0():
                 s[...] *= w[i]
                 y[...] += s[...] * x[i]
     ast = ft.pop_ast(verbose=True)
-    fwd, bwd, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ft.GradTapeMode.All)
+    fwd, bwd, _, _, _ = ft.grad_body(ast, ["x"], ["y"],
+                                     ft.GradTapeMode.All,
+                                     invert=True)
     fwd = ft.lower(fwd, verbose=1)
     bwd = ft.lower(bwd, verbose=1)
 
@@ -114,7 +137,9 @@ def test_reduce_mul_may_eq0_no_invert():
                 s[...] *= w[i]
                 y[...] += s[...] * x[i]
     ast = ft.pop_ast(verbose=True)
-    fwd, bwd, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ft.GradTapeMode.All)
+    fwd, bwd, _, _, _ = ft.grad_body(ast, ["x"], ["y"],
+                                     ft.GradTapeMode.All,
+                                     invert=True)
     fwd = ft.lower(fwd, verbose=1)
     bwd = ft.lower(bwd, verbose=1)
 
@@ -137,7 +162,9 @@ def test_reduce_mul_invert_then_grad():
         with ft.For("i", 0, 4) as i:
             y[...] *= x[i]
     ast = ft.pop_ast(verbose=True)
-    fwd, bwd, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ft.GradTapeMode.All)
+    fwd, bwd, _, _, _ = ft.grad_body(ast, ["x"], ["y"],
+                                     ft.GradTapeMode.All,
+                                     invert=True)
     fwd = ft.lower(fwd, verbose=1)
     bwd = ft.lower(bwd, verbose=1)
 
