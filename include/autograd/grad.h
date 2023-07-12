@@ -166,9 +166,9 @@ class Grad : public RenewIDs<SymbolTable<Mutator>> {
  * computing gradients of a program part by part with multiple calls to this
  * function. If false, do not touch the provided gradient, which makes it
  * convenient to run for multiple rounds for timing.
- * @param invert: If set to true, it can reduce the amount of recomputation or
- * taping required. However, this may result in a loss of precision for
- * floating-point numbers. Defaults to true.
+ * @param invert: (Experimental) If set to true, it can reduce the amount of
+ * recomputation or taping required. However, this may result in a loss of
+ * precision for floating-point numbers. Defaults to true.
  * @param userGrads : For custom gradients. Each `StmtSetToUserGrad` item in the
  * list specifies a statement range in the original program, which should be
  * replaced by a backward statement
@@ -189,7 +189,7 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
 gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
          const TapeStrategy &tapes, bool resetProvidedGrad = true,
-         bool invert = true,
+         bool invert = false,
          const std::vector<StmtSetToUserGrad> &userGrads = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -198,7 +198,7 @@ gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
                 const TapeStrategy &tapes, bool tapeInClosure = true,
-                bool resetProvidedGrad = true, bool invert = true,
+                bool resetProvidedGrad = true, bool invert = false,
                 const std::vector<StmtSetToUserGrad> &userGrads = {});
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -207,7 +207,7 @@ gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
                    const TapeStrategy &tapes, bool tapeInClosure = true,
-                   bool resetProvidedGrad = true, bool invert = true,
+                   bool resetProvidedGrad = true, bool invert = false,
                    const std::vector<StmtSetToUserGrad> &userGrads = {});
 /** @} */
 
