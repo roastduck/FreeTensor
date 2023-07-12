@@ -30,7 +30,7 @@ def grad_body(stmt: ffi.Stmt,
               provides: Sequence[str],
               tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
               reset_provided_grad: bool = True,
-              invert: bool = True,
+              invert: bool = False,
               user_grads: Sequence[ffi.StmtSetToUserGrad] = []):
     ''' `grad` or `grad_` on a function body (for internal tests only) '''
 
@@ -49,7 +49,7 @@ def _grad_func(func,
                             TapeStrategy] = GradTapeMode.NoReuseOnly,
                tape_in_closure: bool = True,
                reset_provided_grad: bool = True,
-               invert: bool = True,
+               invert: bool = False,
                user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
                attach_backward: bool = False,
                jit_cache: Callable[Callable, Callable] = functools.cache,
@@ -151,7 +151,7 @@ def grad_(func=None,
                        TapeStrategy] = GradTapeMode.NoReuseOnly,
           tape_in_closure: bool = True,
           reset_provided_grad: bool = True,
-          invert: bool = True,
+          invert: bool = False,
           user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
           attach_backward: bool = False,
           jit_cache: Callable[Callable, Callable] = functools.cache,
@@ -208,9 +208,8 @@ def grad_(func=None,
         multiple calls to this function. If false, do not touch the provided gradient, which
         makes it convenient to run for multiple rounds for timing.
     invert : bool
-        If set to true, it can reduce the amount of recomputation or taping required.
-        However, this may result in a loss of precision for floating-point numbers. Defaults
-        to true.
+        (Experimental) If set to true, it can reduce the amount of recomputation or taping
+        required. However, this may result in a loss of precision for floating-point numbers.
     user_grads : List[ffi.StmtSetToUserGrad]
         For custom gradient. You do not have to explicitly set this parameter unless you
         are manipulating `func` by yourself (not getting it from the Python frontend). See
@@ -263,7 +262,7 @@ def grad(func=None,
                       TapeStrategy] = GradTapeMode.NoReuseOnly,
          tape_in_closure: bool = True,
          reset_provided_grad: bool = True,
-         invert: bool = True,
+         invert: bool = False,
          user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
          attach_backward: bool = False,
          jit_cache: Callable[Callable, Callable] = functools.cache,
@@ -321,8 +320,8 @@ def grad(func=None,
         multiple calls to this function. If false, do not touch the provided gradient, which
         makes it convenient to run for multiple rounds for timing.
     invert : bool
-        If set to true, it can reduce the amount of recomputation or taping required.
-        However, this may result in a loss of precision for floating-point numbers. Defaults
+        (Experimental) If set to true, it can reduce the amount of recomputation or taping
+        required. However, this may result in a loss of precision for floating-point numbers.
     user_grads : List[ffi.StmtSetToUserGrad]
         For custom gradient. You do not have to explicitly set this parameter unless you
         are manipulating `func` by yourself (not getting it from the Python frontend). See
@@ -375,7 +374,7 @@ def jacrev_(func=None,
             flatten: bool = False,
             tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
             tape_in_closure: bool = True,
-            invert: bool = True,
+            invert: bool = False,
             user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
             attach_backward: bool = False,
             jit_cache: Callable[Callable, Callable] = functools.cache,
@@ -442,8 +441,8 @@ def jacrev_(func=None,
         implicit I/O parameters, i.e. in closure. False to pass these tensors as
         explicit I/O parameters. Default to True
     invert: bool
-        If set to true, it can reduce the amount of recomputation or taping required.
-        However, this may result in a loss of precision for floating-point numbers. Defaults
+        (Experimental) If set to true, it can reduce the amount of recomputation or taping
+        required. However, this may result in a loss of precision for floating-point numbers.
     user_grads: List[ffi.StmtSetToUserGrad]
         For custom gradient. You do not have to explicitly set this parameter unless you
         are manipulating `func` by yourself (not getting it from the Python frontend). See
@@ -695,7 +694,7 @@ def jacrev(func=None,
            tapes: Union[Sequence, GradTapeMode,
                         TapeStrategy] = GradTapeMode.NoReuseOnly,
            tape_in_closure: bool = True,
-           invert: bool = True,
+           invert: bool = False,
            user_grads: Optional[Sequence[ffi.StmtSetToUserGrad]] = None,
            attach_backward: bool = False,
            jit_cache: Callable[Callable, Callable] = functools.cache,
@@ -760,8 +759,8 @@ def jacrev(func=None,
         implicit I/O parameters, i.e. in closure. False to pass these tensors as
         explicit I/O parameters. Default to True
     invert: bool
-        If set to true, it can reduce the amount of recomputation or taping required.
-        However, this may result in a loss of precision for floating-point numbers. Defaults
+        (Experimental) If set to true, it can reduce the amount of recomputation or taping
+        required. However, this may result in a loss of precision for floating-point numbers.
     user_grads: List[ffi.StmtSetToUserGrad]
         For custom gradient. You do not have to explicitly set this parameter unless you
         are manipulating `func` by yourself (not getting it from the Python frontend). See

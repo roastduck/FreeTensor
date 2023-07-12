@@ -71,7 +71,7 @@ void init_ffi_autograd(py::module_ &m) {
                 bool, bool, const std::vector<StmtSetToUserGrad> &)>(&gradBody),
         "func"_a, "requires"_a, "provides"_a,
         "tapes"_a = GradTapeMode::NoReuseOnly, "reset_provided_grad"_a = true,
-        "invert"_a = true, "user_grads"_a = std::vector<StmtSetToUserGrad>{});
+        "invert"_a = false, "user_grads"_a = std::vector<StmtSetToUserGrad>{});
     m.def(
         "grad_",
         static_cast<
@@ -83,7 +83,7 @@ void init_ffi_autograd(py::module_ &m) {
             &gradFuncInplace),
         "stmt"_a, "requires"_a, "provides"_a,
         "tapes"_a = GradTapeMode::NoReuseOnly, "tape_in_closure"_a = true,
-        "reset_provided_grad"_a = true, "invert"_a = true,
+        "reset_provided_grad"_a = true, "invert"_a = false,
         "user_grads"_a = std::vector<StmtSetToUserGrad>{});
     m.def(
         "grad",
@@ -96,7 +96,7 @@ void init_ffi_autograd(py::module_ &m) {
             &gradFuncOutOfPlace),
         "stmt"_a, "requires"_a, "provides"_a,
         "tapes"_a = GradTapeMode::NoReuseOnly, "tape_in_closure"_a = true,
-        "reset_provided_grad"_a = true, "invert"_a = true,
+        "reset_provided_grad"_a = true, "invert"_a = false,
         "user_grads"_a = std::vector<StmtSetToUserGrad>{});
 
     py::enum_<OutputIntermediatesStage>(m, "OutputIntermediatesStage")
