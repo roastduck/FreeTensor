@@ -12,10 +12,11 @@ std::vector<ID> allNoReuseDefs(const Stmt &_op,
     for (auto &&[id, name] : allDefs(op, atypes)) {
         std::vector<FindDepsDir> direction;
         // Check for all scopes outer of this variable
-        for (auto &&scope :
-             findAllStmt(op, "(<For>|<StmtSeq>)->" + toString(id))) {
-            // NOTE: If checking each `StmtSeq` is too slow, we can check node
-            // positions in the AST in the `found` callback
+        for (auto &&scope : findAllStmt(op, "<For>->>" + toString(id))) {
+            // TODO: Also check for <StmtSeq> scopes. Currently we don't check
+            // it because analyze/deps merges StmtSeq scopes, which makes us
+            // unable to distinguish StmtSeq out of the VarDef or inside the
+            // VarDef
             direction.push_back({{scope->id(), DepDirection::Normal}});
         }
         if (!FindDeps()
