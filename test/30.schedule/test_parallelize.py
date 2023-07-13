@@ -46,11 +46,28 @@ def test_not_found():
     assert ast_.match(ast)
 
 
-def test_nested_thread_idx():
+def test_nested_thread_idx_1():
     with ft.VarDef("y", (4, 4), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label='L1') as i:
             with ft.For("j", 0, 4, label='L2') as j:
                 y[i, j] = i + j
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.parallelize("L1", "threadIdx.x")
+    ast = s.ast()
+    with pytest.raises(ft.InvalidSchedule):
+        s.parallelize("L2", "threadIdx.x")
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ast)
+
+
+def test_nested_thread_idx_2():
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4, label='L1') as i:
+            with ft.VarDef("t", (), "int32", "cache", "gpu/global") as t:
+                t[...] = i
+                with ft.For("j", 0, 4, label='L2') as j:
+                    y[j] += t[...] + j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.parallelize("L1", "threadIdx.x")
