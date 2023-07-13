@@ -1,34 +1,45 @@
 #include <analyze/deps.h>
+#include <analyze/find_loop_variance.h>
+#include <analyze/find_stmt.h>
+#include <analyze/track_stmt.h>
+#include <lazy.h>
 #include <schedule.h>
 #include <schedule/parallelize.h>
 
 namespace freetensor {
 
-Stmt Parallelize::visit(const For &_op) {
-    auto thisParallel =
-        _op->id() == loop_ ? parallel_ : _op->property_->parallel_;
-    Stmt __op;
-    loopStack_.emplace_back(_op->id());
-    if (std::holds_alternative<CUDAScope>(thisParallel)) {
-        if (para2var_.count(thisParallel)) {
-            auto oldVar = para2var_.at(thisParallel);
-            para2var_[thisParallel] = _op->iter_;
-            hiddenVars_.insert(oldVar);
-            __op = Mutator::visit(_op);
-            hiddenVars_.erase(oldVar);
-            para2var_[thisParallel] = oldVar;
-        } else {
-            para2var_[thisParallel] = _op->iter_;
-            __op = Mutator::visit(_op);
-            para2var_.erase(thisParallel);
-        }
-    } else {
-        __op = Mutator::visit(_op);
-    }
-    loopStack_.pop_back();
+namespace {
 
+class CheckNestedCudaScope : public TrackStmt<Visitor> {
+    typedef TrackStmt<Visitor> BaseClass;
+
+    const LoopVariExprMap &variants_;
+    ID loop1_, loop2_;
+
+  public:
+    CheckNestedCudaScope(const LoopVariExprMap &variants, const ID &loop1,
+                         const ID &loop2)
+        : variants_(variants), loop1_(loop1), loop2_(loop2) {}
+
+  protected:
+    void visitExpr(const Expr &expr) {
+        if (isVariant(variants_, StmtOrExprID{expr, curStmt()}, loop1_) &&
+            isVariant(variants_, StmtOrExprID{expr, curStmt()}, loop2_)) {
+            throw InvalidSchedule(
+                "Nested loop bound to the same CUDA scope is not allowed, "
+                "except when they are invariant");
+        }
+    }
+};
+
+} // Anonymous namespace
+
+Stmt Parallelize::visit(const For &_op) {
+    loopStack_.emplace_back(_op->id());
+    auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
+    loopStack_.pop_back();
 
     if (op->id() == loop_) {
         op->property_->parallel_ = parallel_;
@@ -36,15 +47,6 @@ Stmt Parallelize::visit(const For &_op) {
         done_ = true;
     }
     return op;
-}
-
-Expr Parallelize::visit(const Var &op) {
-    if (hiddenVars_.count(op->name_)) {
-        throw InvalidSchedule("Unable to bind multiple loops, which are used "
-                              "simultaneously, all to " +
-                              toString(parallel_));
-    }
-    return Mutator::visit(op);
 }
 
 Stmt parallelize(const Stmt &_ast, const ID &loop,
@@ -57,23 +59,23 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
         throw InvalidSchedule("Loop " + toString(loop) + " not found");
     }
 
-    {
-        FindDepsDir findDepsDir{{loop, DepDirection::Normal}};
-        for (auto &&outerLoop : mutator.outerLoops()) {
-            findDepsDir.push_back({outerLoop, DepDirection::Same});
-        }
-        auto found = [&](const Dependence &d) {
-            throw InvalidSchedule(toString(d) + " cannot be resolved");
-        };
-        FindDeps()
-            .direction({findDepsDir})
-            .filterSubAST(loop)
-            .ignoreReductionWAW(allowReduction)(oldAst, found);
+    // Make sure there is illegal cross-thread dependence
+    FindDepsDir findDepsDir{{loop, DepDirection::Normal}};
+    for (auto &&outerLoop : mutator.outerLoops()) {
+        findDepsDir.push_back({outerLoop, DepDirection::Same});
     }
+    FindDeps()
+        .direction({findDepsDir})
+        .filterSubAST(loop)
+        .ignoreReductionWAW(allowReduction)(oldAst, [&](const Dependence &d) {
+            throw InvalidSchedule(toString(d) + " cannot be resolved");
+        });
 
-    {
-        auto filter = [&](const AccessPoint &later,
-                          const AccessPoint &earlier) {
+    // Make sure no thread-local variable is used by another thread
+    FindDeps()
+        .direction(
+            {{{NodeIDOrParallelScope(parallel), DepDirection::Different}}})
+        .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
             bool earlierInLoop = earlier.stmt_->ancestorById(loop).isValid();
             bool laterInLoop = later.stmt_->ancestorById(loop).isValid();
             if ((earlierInLoop && !laterInLoop) ||
@@ -89,17 +91,25 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
                 }
             }
             return false;
-        };
-        auto found = [&](const Dependence &d) {
+        })
+        .ignoreReductionWAW(allowReduction)(ast, [&](const Dependence &d) {
             ASSERT(d.dir_.size() == 1);
             throw InvalidSchedule(toString(d) + " cannot be resolved");
-        };
-        FindDeps()
-            .direction(
-                {{{NodeIDOrParallelScope(parallel), DepDirection::Different}}})
-            .filter(filter)
-            .ignoreReductionWAW(allowReduction)(ast, found);
+        });
+
+    // Check illegal cases even in our extended fork-join model. See the
+    // doc-string of schedule/parallelize
+    if (std::holds_alternative<CUDAScope>(parallel)) {
+        auto variants = LAZY(findLoopVariance(ast).first);
+        for (auto &&other :
+             findAllStmt(ast, "(<For><<-" + toString(loop) + ")|(<For>->>" +
+                                  toString(loop) + ")")) {
+            if (other.as<ForNode>()->property_->parallel_ == parallel) {
+                CheckNestedCudaScope{*variants, loop, other->id()}(ast);
+            }
+        }
     }
+
     return ast;
 }
 

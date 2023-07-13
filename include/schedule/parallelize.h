@@ -14,11 +14,6 @@ class Parallelize : public Mutator {
     std::vector<ID> outerLoops_, loopStack_;
     bool done_ = false;
 
-    // Check illegal cases even in our extended fork-join model. See the
-    // doc-string of schedule/parallelize
-    std::unordered_map<ParallelScope, std::string> para2var_;
-    std::unordered_set<std::string> hiddenVars_;
-
   public:
     Parallelize(const ID &loop, const ParallelScope &parallel)
         : loop_(loop), parallel_(parallel) {}
@@ -28,7 +23,6 @@ class Parallelize : public Mutator {
 
   protected:
     Stmt visit(const For &op) override;
-    Expr visit(const Var &op) override;
 };
 
 Stmt parallelize(const Stmt &ast, const ID &loop, const ParallelScope &parallel,
