@@ -108,6 +108,7 @@ digraph "include/analyze/track_stmt.h"
   Node33 -> Node43 [dir="back",color="steelblue1",style="solid"];
   Node43 [label="src/analyze/find_loop\l_variance.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$find__loop__variance_8cc.html",tooltip=" "];
   Node33 -> Node24 [dir="back",color="steelblue1",style="solid"];
+  Node33 -> Node27 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node44 [dir="back",color="steelblue1",style="solid"];
   Node44 [label="include/autograd/analyze\l_version.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$analyze__version_8h.html",tooltip=" "];
   Node44 -> Node7 [dir="back",color="steelblue1",style="solid"];
@@ -117,4 +118,5 @@ digraph "include/analyze/track_stmt.h"
   Node46 [label="include/schedule/inlining.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$inlining_8h.html",tooltip=" "];
   Node46 -> Node36 [dir="back",color="steelblue1",style="solid"];
   Node46 -> Node26 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node27 [dir="back",color="steelblue1",style="solid"];
 }

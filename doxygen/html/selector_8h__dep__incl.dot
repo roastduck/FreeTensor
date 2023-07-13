@@ -64,8 +64,6 @@ digraph "include/selector.h"
   Node92 [label="src/frontend/inlined\l_invoke.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$inlined__invoke_8cc.html",tooltip=" "];
   Node12 -> Node84 [dir="back",color="steelblue1",style="solid"];
   Node84 [label="src/math/bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$bounds_8cc.html",tooltip=" "];
-  Node12 -> Node93 [dir="back",color="steelblue1",style="solid"];
-  Node93 [label="src/pass/annotate_conds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$annotate__conds_8cc.html",tooltip=" "];
   Node12 -> Node8 [dir="back",color="steelblue1",style="solid"];
   Node12 -> Node99 [dir="back",color="steelblue1",style="solid"];
   Node99 [label="src/pass/sink_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sink__var_8cc.html",tooltip=" "];
@@ -90,6 +88,8 @@ digraph "include/selector.h"
   Node103 -> Node34 [dir="back",color="steelblue1",style="solid"];
   Node34 [label="src/schedule/fission.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fission_8cc.html",tooltip=" "];
   Node103 -> Node35 [dir="back",color="steelblue1",style="solid"];
+  Node103 -> Node39 [dir="back",color="steelblue1",style="solid"];
+  Node39 [label="src/schedule/parallelize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize_8cc.html",tooltip=" "];
   Node103 -> Node19 [dir="back",color="steelblue1",style="solid"];
   Node19 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
   Node103 -> Node40 [dir="back",color="steelblue1",style="solid"];
@@ -105,6 +105,7 @@ digraph "include/selector.h"
   Node21 -> Node35 [dir="back",color="steelblue1",style="solid"];
   Node21 -> Node37 [dir="back",color="steelblue1",style="solid"];
   Node37 [label="src/schedule/merge.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$merge_8cc.html",tooltip=" "];
+  Node21 -> Node39 [dir="back",color="steelblue1",style="solid"];
   Node21 -> Node19 [dir="back",color="steelblue1",style="solid"];
   Node21 -> Node40 [dir="back",color="steelblue1",style="solid"];
   Node21 -> Node43 [dir="back",color="steelblue1",style="solid"];
@@ -134,6 +135,7 @@ digraph "include/selector.h"
   Node2 -> Node34 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node35 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node102 [dir="back",color="steelblue1",style="solid"];
+  Node2 -> Node39 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node19 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node40 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node43 [dir="back",color="steelblue1",style="solid"];

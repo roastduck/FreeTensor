@@ -128,6 +128,10 @@ digraph "src/schedule/parallelize.cc"
   Node80 -> Node3 [color="steelblue1",style="solid"];
   Node80 -> Node5 [color="steelblue1",style="solid"];
   Node2 -> Node53 [color="steelblue1",style="solid"];
+  Node1 -> Node10 [color="steelblue1",style="solid"];
+  Node1 -> Node63 [color="steelblue1",style="solid"];
+  Node1 -> Node52 [color="steelblue1",style="solid"];
+  Node1 -> Node65 [color="steelblue1",style="solid"];
   Node1 -> Node81 [color="steelblue1",style="solid"];
   Node81 [label="schedule.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$schedule_8h.html",tooltip=" "];
   Node81 -> Node3 [color="steelblue1",style="solid"];

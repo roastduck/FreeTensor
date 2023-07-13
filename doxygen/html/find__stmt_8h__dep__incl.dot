@@ -80,8 +80,6 @@ digraph "include/analyze/find_stmt.h"
   Node97 [label="src/pass/scalar_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$scalar__prop__const_8cc.html",tooltip=" "];
   Node11 -> Node98 [dir="back",color="steelblue1",style="solid"];
   Node98 [label="src/pass/sink_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sink__var_8cc.html",tooltip=" "];
-  Node11 -> Node99 [dir="back",color="steelblue1",style="solid"];
-  Node99 [label="src/pass/tensor_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$tensor__prop__const_8cc.html",tooltip=" "];
   Node11 -> Node34 [dir="back",color="steelblue1",style="solid"];
   Node34 [label="src/schedule/fuse.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8cc.html",tooltip=" "];
   Node11 -> Node101 [dir="back",color="steelblue1",style="solid"];
@@ -100,12 +98,13 @@ digraph "include/analyze/find_stmt.h"
   Node102 -> Node95 [dir="back",color="steelblue1",style="solid"];
   Node102 -> Node96 [dir="back",color="steelblue1",style="solid"];
   Node102 -> Node98 [dir="back",color="steelblue1",style="solid"];
-  Node102 -> Node99 [dir="back",color="steelblue1",style="solid"];
   Node102 -> Node26 [dir="back",color="steelblue1",style="solid"];
   Node26 [label="src/schedule/auto_parallelize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__parallelize_8cc.html",tooltip=" "];
   Node102 -> Node33 [dir="back",color="steelblue1",style="solid"];
   Node33 [label="src/schedule/fission.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fission_8cc.html",tooltip=" "];
   Node102 -> Node34 [dir="back",color="steelblue1",style="solid"];
+  Node102 -> Node38 [dir="back",color="steelblue1",style="solid"];
+  Node38 [label="src/schedule/parallelize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize_8cc.html",tooltip=" "];
   Node102 -> Node18 [dir="back",color="steelblue1",style="solid"];
   Node18 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
   Node102 -> Node39 [dir="back",color="steelblue1",style="solid"];
@@ -117,6 +116,7 @@ digraph "include/analyze/find_stmt.h"
   Node20 -> Node10 [dir="back",color="steelblue1",style="solid"];
   Node20 -> Node33 [dir="back",color="steelblue1",style="solid"];
   Node20 -> Node34 [dir="back",color="steelblue1",style="solid"];
+  Node20 -> Node38 [dir="back",color="steelblue1",style="solid"];
   Node20 -> Node18 [dir="back",color="steelblue1",style="solid"];
   Node20 -> Node39 [dir="back",color="steelblue1",style="solid"];
   Node20 -> Node42 [dir="back",color="steelblue1",style="solid"];
@@ -145,6 +145,7 @@ digraph "include/analyze/find_stmt.h"
   Node1 -> Node33 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node34 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node101 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node38 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node18 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node39 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node42 [dir="back",color="steelblue1",style="solid"];
