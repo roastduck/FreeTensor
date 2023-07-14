@@ -2,6 +2,7 @@
 #include <pass/tensor_prop_const.h>
 #include <schedule.h>
 #include <schedule/check_loop_order.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/hoist_selected_var.h>
 #include <schedule/merge.h>
 
@@ -111,13 +112,16 @@ Expr MergeFor::visit(const Var &_op) {
 }
 
 std::pair<Stmt, ID> merge(const Stmt &_ast, const ID &loop1, const ID &loop2) {
-    // Propagate first, because merge will lose some propagating opportunities
-    auto ast = tensorPropConst(_ast);
+    checkNotInLib(_ast, loop1);
+    checkNotInLib(_ast, loop2);
 
     CheckLoopOrder checker({loop1, loop2});
-    checker(ast); // Check they are nested
+    checker(_ast); // Check they are nested
     auto &&curOrder = checker.order();
     auto outer = curOrder[0], inner = curOrder[1];
+
+    // Propagate first, because merge will lose some propagating opportunities
+    auto ast = tensorPropConst(_ast, ID(), outer->id());
 
     // Hoist VarDef nodes between `outer` and `inner` to out of `outer`
     ast = hoistSelectedVar(ast, "<<-" + toString(outer->id()) + "&->>" +

@@ -21,7 +21,8 @@ struct ReplaceInfo {
 
 } // namespace
 
-Stmt tensorPropConst(const Stmt &_op, const ID &subAST) {
+Stmt tensorPropConst(const Stmt &_op, const ID &bothInSubAST,
+                     const ID &eitherInSubAST) {
     auto op = _op;
 
     for (int i = 0;; i++) {
@@ -66,8 +67,14 @@ Stmt tensorPropConst(const Stmt &_op, const ID &subAST) {
                     return true;
                 })
                 .noProjectOutPrivateAxis(true);
-        if (subAST.isValid()) {
-            finder = finder.filterSubAST(subAST);
+        if (bothInSubAST.isValid()) {
+            finder = finder.filterSubAST(bothInSubAST);
+        }
+        if (eitherInSubAST.isValid()) {
+            finder = finder.filter([&](const auto &later, const auto &earlier) {
+                return later.stmt_->ancestorById(eitherInSubAST).isValid() ||
+                       earlier.stmt_->ancestorById(eitherInSubAST).isValid();
+            });
         }
         finder(
             op, unsyncFunc([&](const Dependence &d) {

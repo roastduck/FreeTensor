@@ -4,6 +4,7 @@
 #include <analyze/find_stmt.h>
 #include <schedule.h>
 #include <schedule/check_loop_order.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/fission.h>
 #include <schedule/hoist_selected_var.h>
 #include <schedule/reorder.h>
@@ -169,6 +170,10 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &_dstOrder,
              ReorderMode mode) {
     auto ast = _ast;
     auto dstOrder = _dstOrder;
+
+    for (auto &&item : dstOrder) {
+        checkNotInLib(ast, item);
+    }
 
     CheckLoopOrder checker(dstOrder);
     checker(ast);

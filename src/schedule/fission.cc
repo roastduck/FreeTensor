@@ -4,6 +4,7 @@
 #include <lazy.h>
 #include <pass/merge_and_hoist_if.h>
 #include <schedule.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/fission.h>
 #include <schedule/hoist_selected_var.h>
 
@@ -184,6 +185,8 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     if (suffix0.empty() && suffix1.empty())
         throw InvalidSchedule(
             "Cannot preserve ID and Metadata for both first and second parts");
+
+    checkNotInLib(_ast, loop);
 
     Stmt splitterNode;
     try {
