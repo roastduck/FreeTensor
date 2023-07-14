@@ -6,6 +6,7 @@
 #include <pass/flatten_stmt_seq.h>
 #include <pass/sink_var.h>
 #include <schedule.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/hoist_selected_var.h>
 #include <schedule/swap.h>
 #include <selector.h>
@@ -42,6 +43,10 @@ Stmt Swap::visit(const StmtSeq &_op) {
 }
 
 Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
+    for (auto &&item : order) {
+        checkNotInLib(_ast, item);
+    }
+
     // Hoist all VarDef nodes covering any of the statement but not covering
     // some other statements, to cover all statements
     auto insides = order | views::transform([](const ID &id) {

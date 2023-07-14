@@ -1,5 +1,6 @@
 #include <analyze/deps.h>
 #include <schedule.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/vectorize.h>
 
 namespace freetensor {
@@ -16,6 +17,7 @@ Stmt Vectorize::visit(const For &_op) {
 }
 
 Stmt vectorize(const Stmt &_ast, const ID &loop) {
+    checkNotInLib(_ast, loop);
     Vectorize mutator(loop);
     auto ast = mutator(_ast);
     if (!mutator.done()) {

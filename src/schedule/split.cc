@@ -2,6 +2,7 @@
 #include <pass/const_fold.h>
 #include <pass/simplify.h>
 #include <schedule.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/split.h>
 
 namespace freetensor {
@@ -84,6 +85,8 @@ Expr Splitter::visit(const Var &op) {
 
 std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &_ast, const ID &id,
                                          int factor, int nparts, int shift) {
+    checkNotInLib(_ast, id);
+
     Splitter mutator(id, factor, nparts, shift);
     auto ast = mutator(_ast);
     if (!mutator.found()) {

@@ -2,6 +2,7 @@
 #include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/blend.h>
+#include <schedule/check_not_in_lib.h>
 
 namespace freetensor {
 
@@ -163,6 +164,8 @@ Expr BlendPass::visit(const Load &_op) {
 }
 
 Stmt blend(const Stmt &_ast, const ID &loop) {
+    checkNotInLib(_ast, loop);
+
     auto ast =
         simplify(_ast); // Make things like range(n, n + 4) constant ranges
 

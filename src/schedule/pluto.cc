@@ -22,6 +22,7 @@
 #include <pass/shrink_for.h>
 #include <pass/sink_var.h>
 #include <schedule.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/fuse.h>
 #include <schedule/pluto.h>
 #include <serialize/load_ast.h>
@@ -1206,6 +1207,8 @@ std::pair<Stmt, std::pair<ID, int>>
 plutoFuse(const Stmt &_ast, const ID &loop0Id, const ID &loop1Id,
           int nestLevel0, int nestLevel1, int fusableOverlapThreshold,
           int fusableNonOverlapTolerance, bool doSimplify) {
+    checkNotInLib(_ast, loop0Id);
+    checkNotInLib(_ast, loop1Id);
     auto ast = normalizeLoops(_ast, [&](auto &&l) {
         return isAffectedLoop(l, loop0Id, nestLevel0) ||
                isAffectedLoop(l, loop1Id, nestLevel1);
@@ -1218,6 +1221,7 @@ plutoFuse(const Stmt &_ast, const ID &loop0Id, const ID &loop1Id,
 
 std::pair<Stmt, std::pair<ID, int>>
 plutoPermute(const Stmt &_ast, const ID &loop, int nestLevel, bool doSimplify) {
+    checkNotInLib(_ast, loop);
     auto ast = normalizeLoops(
         _ast, [&](auto &&l) { return isAffectedLoop(l, loop, nestLevel); });
     InjectEmptyLoop injecter(loop);

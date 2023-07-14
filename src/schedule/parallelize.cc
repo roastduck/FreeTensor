@@ -4,6 +4,7 @@
 #include <analyze/track_stmt.h>
 #include <lazy.h>
 #include <schedule.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/parallelize.h>
 
 namespace freetensor {
@@ -51,6 +52,8 @@ Stmt Parallelize::visit(const For &_op) {
 
 Stmt parallelize(const Stmt &_ast, const ID &loop,
                  const ParallelScope &parallel, bool allowReduction) {
+    checkNotInLib(_ast, loop);
+
     Parallelize mutator(loop, parallel);
     auto ast = _ast;
     auto oldAst = ast;

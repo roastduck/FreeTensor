@@ -18,6 +18,7 @@ NodeTypeAssume: '<Assume>';
 NodeTypeStore: '<Store>';
 NodeTypeReduceTo: '<ReduceTo>';
 NodeTypeEval: '<Eval>';
+NodeTypeMatMul: '<MatMul>';
 
 ChildArrow: '<-';
 DescendantArrow: '<<-';
