@@ -113,11 +113,15 @@ void init_ffi_pass(py::module_ &m) {
           "stmt"_a, "target"_a);
 
     m.def("tensor_prop_const",
-          static_cast<Func (*)(const Func &, const ID &)>(&tensorPropConst),
-          "func"_a, py::arg_v("sub_ast", ID(), "ID()"));
+          static_cast<Func (*)(const Func &, const ID &, const ID &)>(
+              &tensorPropConst),
+          "func"_a, py::arg_v("both_in_sub_ast", ID(), "ID()"),
+          py::arg_v("either_in_sub_ast", ID(), "ID()"));
     m.def("tensor_prop_const",
-          static_cast<Stmt (*)(const Stmt &, const ID &)>(&tensorPropConst),
-          "stmt"_a, py::arg_v("sub_ast", ID(), "ID()"));
+          static_cast<Stmt (*)(const Stmt &, const ID &, const ID &)>(
+              &tensorPropConst),
+          "stmt"_a, py::arg_v("both_in_sub_ast", ID(), "ID()"),
+          py::arg_v("either_in_sub_ast", ID(), "ID()"));
 
     m.def("prop_one_time_use",
           static_cast<Func (*)(const Func &, const ID &)>(&propOneTimeUse),

@@ -113,6 +113,9 @@ selectorFactor returns[Ref<Selector> s]
 	| NodeTypeEval {
         $s = Ref<NodeTypeSelector>::make(ASTNodeType::Eval);
     }
+	| NodeTypeMatMul {
+        $s = Ref<NodeTypeSelector>::make(ASTNodeType::MatMul);
+    }
     | RootNode {
         $s = Ref<RootNodeSelector>::make();
     }

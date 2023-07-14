@@ -15,6 +15,7 @@
 #include <pass/sink_var.h>
 #include <pass/tensor_prop_const.h>
 #include <schedule.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/fuse.h>
 #include <schedule/hoist_selected_var.h>
 
@@ -248,6 +249,9 @@ void CheckFuseAccessible::check(const Stmt &ast) {
 
 std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
                          bool strict) {
+    checkNotInLib(_ast, loop0);
+    checkNotInLib(_ast, loop1);
+
     // Hoist all VarDef nodes covering one of the loop but not covering the
     // other loop, to cover both loops
     auto ast = hoistSelectedVar(

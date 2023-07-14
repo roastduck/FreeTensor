@@ -6,6 +6,7 @@
 #include <pass/shrink_for.h>
 #include <schedule.h>
 #include <schedule/check_loop_order.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/permute.h>
 #include <serialize/mangle.h>
 
@@ -90,6 +91,10 @@ std::pair<Stmt, std::vector<ID>> permute(
         throw InvalidSchedule("No loop is specified");
 
     auto ast = _ast;
+
+    for (auto &&item : loopsId) {
+        checkNotInLib(ast, item);
+    }
 
     // look for the loops specified
     CheckLoopOrder checker(loopsId);

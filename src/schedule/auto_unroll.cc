@@ -22,7 +22,7 @@ void Schedule::autoUnroll(const Ref<Target> &target) {
         do_unroll:
             try {
                 unroll(loop->id());
-            } catch (InvalidSchedule &e) {
+            } catch (const InvalidSchedule &e) {
                 // do nothing
             }
         }
@@ -35,7 +35,11 @@ void Schedule::autoUnroll(const Ref<Target> &target) {
             !loop->property_->vectorize_ && !loop->property_->unroll_ &&
             loop->len_->nodeType() == ASTNodeType::IntConst &&
             loop->len_.as<IntConstNode>()->val_ <= 4) {
-            unroll(loop->id());
+            try {
+                unroll(loop->id());
+            } catch (const InvalidSchedule &e) {
+                // do nothing
+            }
         }
     }
 }
