@@ -154,9 +154,7 @@ digraph "src/schedule/fuse.cc"
   Node89 -> Node9 [color="steelblue1",style="solid"];
   Node89 -> Node4 [color="steelblue1",style="solid"];
   Node89 -> Node90 [color="steelblue1",style="solid"];
-  Node90 [label="analyze/comp_unique\l_bounds.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8h.html",tooltip=" "];
-  Node90 -> Node15 [color="steelblue1",style="solid"];
-  Node15 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node90 [label="analyze/comp_unique\l_bounds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$comp__unique__bounds_8h.html",tooltip=" "];
   Node90 -> Node4 [color="steelblue1",style="solid"];
   Node90 -> Node91 [color="steelblue1",style="solid"];
   Node91 [label="analyze/comp_transient\l_bounds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$comp__transient__bounds_8h.html",tooltip=" "];
@@ -167,7 +165,6 @@ digraph "src/schedule/fuse.cc"
   Node91 -> Node95 [color="steelblue1",style="solid"];
   Node95 [label="math/bounds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$bounds_8h.html",tooltip=" "];
   Node95 -> Node7 [color="steelblue1",style="solid"];
-  Node95 -> Node15 [color="steelblue1",style="solid"];
   Node95 -> Node4 [color="steelblue1",style="solid"];
   Node91 -> Node63 [color="steelblue1",style="solid"];
   Node91 -> Node49 [color="steelblue1",style="solid"];
@@ -200,8 +197,7 @@ digraph "src/schedule/fuse.cc"
   Node99 -> Node85 [color="steelblue1",style="solid"];
   Node99 -> Node56 [color="steelblue1",style="solid"];
   Node1 -> Node102 [color="steelblue1",style="solid"];
-  Node102 [label="pass/sink_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sink__var_8h.html",tooltip=" "];
-  Node102 -> Node15 [color="steelblue1",style="solid"];
+  Node102 [label="pass/sink_var.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$sink__var_8h.html",tooltip=" "];
   Node102 -> Node4 [color="steelblue1",style="solid"];
   Node102 -> Node11 [color="steelblue1",style="solid"];
   Node102 -> Node66 [color="steelblue1",style="solid"];
@@ -220,12 +216,15 @@ digraph "src/schedule/fuse.cc"
   Node104 -> Node6 [color="steelblue1",style="solid"];
   Node104 -> Node49 [color="steelblue1",style="solid"];
   Node1 -> Node124 [color="steelblue1",style="solid"];
-  Node124 [label="schedule/fuse.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8h.html",tooltip=" "];
-  Node124 -> Node64 [color="steelblue1",style="solid"];
-  Node124 -> Node56 [color="steelblue1",style="solid"];
+  Node124 [label="schedule/check_not\l_in_lib.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$check__not__in__lib_8h.html",tooltip=" "];
+  Node124 -> Node5 [color="steelblue1",style="solid"];
   Node1 -> Node125 [color="steelblue1",style="solid"];
-  Node125 [label="schedule/hoist_selected\l_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8h.html",tooltip=" "];
-  Node125 -> Node62 [color="steelblue1",style="solid"];
+  Node125 [label="schedule/fuse.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8h.html",tooltip=" "];
   Node125 -> Node64 [color="steelblue1",style="solid"];
-  Node125 -> Node55 [color="steelblue1",style="solid"];
+  Node125 -> Node56 [color="steelblue1",style="solid"];
+  Node1 -> Node126 [color="steelblue1",style="solid"];
+  Node126 [label="schedule/hoist_selected\l_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8h.html",tooltip=" "];
+  Node126 -> Node62 [color="steelblue1",style="solid"];
+  Node126 -> Node64 [color="steelblue1",style="solid"];
+  Node126 -> Node55 [color="steelblue1",style="solid"];
 }

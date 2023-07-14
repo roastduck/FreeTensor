@@ -1983,8 +1983,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:a3297bc3ad84b56db521642e9c7f7f2d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ea9ec8163d64f4273fa2036239d4247"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3ea9ec8163d64f4273fa2036239d4247">sinkVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::optional&lt; std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;toSink=std::nullopt, const std::function&lt; bool(const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;)&gt; &amp;scopeFilter=nullptr)</td></tr>
 <tr class="separator:a3ea9ec8163d64f4273fa2036239d4247"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4de12345278ddfb43c21f81f79040162"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4de12345278ddfb43c21f81f79040162">tensorPropConst</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;subAST=<a class="el" href="classfreetensor_1_1ID.html">ID</a>())</td></tr>
-<tr class="separator:a4de12345278ddfb43c21f81f79040162"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e8773382e5c3622f3eff289b0d17ddf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3e8773382e5c3622f3eff289b0d17ddf">tensorPropConst</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;bothInSubAST=<a class="el" href="classfreetensor_1_1ID.html">ID</a>(), const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;eitherInSubAST=<a class="el" href="classfreetensor_1_1ID.html">ID</a>())</td></tr>
+<tr class="separator:a3e8773382e5c3622f3eff289b0d17ddf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a05409d02d9aa7bb8deead7ccc3ab87cc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a05409d02d9aa7bb8deead7ccc3ab87cc">undoMakeReduction</a> (const <a class="el" href="namespacefreetensor.html#a4befcdf08c573ec85080d6e63dabc825">ReduceTo</a> &amp;op, <a class="el" href="classfreetensor_1_1DataType.html">DataType</a> dtype)</td></tr>
 <tr class="separator:a05409d02d9aa7bb8deead7ccc3ab87cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1ade08be2c8f7ad463f0d6996b4b3668"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1ade08be2c8f7ad463f0d6996b4b3668">undoMakeReduction</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
@@ -2005,6 +2005,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:a21baa67a88e67dd41c4e42d5bc2e3795"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ebf410b1b7c1449e07a31c3d0b39de2"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, std::tuple&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="classfreetensor_1_1ID.html">ID</a>, std::string, <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8ebf410b1b7c1449e07a31c3d0b39de2">cacheReduction</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;stmt, const std::string &amp;var, <a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150">MemType</a> mtype)</td></tr>
 <tr class="separator:a8ebf410b1b7c1449e07a31c3d0b39de2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf316ae4563ba2d0987bb24fd73fa85a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#abf316ae4563ba2d0987bb24fd73fa85a">checkNotInLib</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;stmt)</td></tr>
+<tr class="separator:abf316ae4563ba2d0987bb24fd73fa85a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a791a6af3b3f9ee8222e1aa9ffe1ec53d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a791a6af3b3f9ee8222e1aa9ffe1ec53d">checkVarCrossParallel</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def, <a class="el" href="namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150">MemType</a> mtype)</td></tr>
 <tr class="separator:a791a6af3b3f9ee8222e1aa9ffe1ec53d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0671d22d7846591238c019c2fc9785a5"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0671d22d7846591238c019c2fc9785a5">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="namespacefreetensor.html#a2b0728b023b746c7fb73d4f24a6bb15e">FissionSide</a> side)</td></tr>
@@ -3726,7 +3728,7 @@ template&lt;class K &gt; </div>
 <div class="line">output           | YES      | NO        | YES</div>
 <div class="line">input-<span class="keyword">mutable</span>(*) | YES      | YES       | NO</div>
 <div class="line">inout            | YES      | YES       | YES</div>
-<div class="ttc" id="anamespacefreetensor_html_a21baa67a88e67dd41c4e42d5bc2e3795"><div class="ttname"><a href="namespacefreetensor.html#a21baa67a88e67dd41c4e42d5bc2e3795">freetensor::cache</a></div><div class="ttdeci">std::pair&lt; Stmt, std::tuple&lt; ID, ID, std::string, ID &gt; &gt; cache(const Stmt &amp;ast, const ID &amp;stmt, const std::string &amp;var, MemType mtype)</div><div class="ttdef"><b>Definition:</b> cache.cc:263</div></div>
+<div class="ttc" id="anamespacefreetensor_html_a21baa67a88e67dd41c4e42d5bc2e3795"><div class="ttname"><a href="namespacefreetensor.html#a21baa67a88e67dd41c4e42d5bc2e3795">freetensor::cache</a></div><div class="ttdeci">std::pair&lt; Stmt, std::tuple&lt; ID, ID, std::string, ID &gt; &gt; cache(const Stmt &amp;ast, const ID &amp;stmt, const std::string &amp;var, MemType mtype)</div><div class="ttdef"><b>Definition:</b> cache.cc:264</div></div>
 </div><!-- fragment --><p>(*) The written data may or may not be visible to user, depending on whether the <code><a class="el" href="classfreetensor_1_1Array.html">Array</a></code> is <code>move</code>d. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a923130db6aad12a2b5d46dfe001c08cba324118a6721dd6b8a9b9f4e327df2bf5" name="a923130db6aad12a2b5d46dfe001c08cba324118a6721dd6b8a9b9f4e327df2bf5"></a>Input&#160;</td><td class="fielddoc"></td></tr>
@@ -5818,6 +5820,42 @@ template&lt;class T &gt; </div>
           <td></td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="abf316ae4563ba2d0987bb24fd73fa85a" name="abf316ae4563ba2d0987bb24fd73fa85a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abf316ae4563ba2d0987bb24fd73fa85a">&#9670;&#160;</a></span>checkNotInLib()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::checkNotInLib </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>ast</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>stmt</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>
@@ -18468,8 +18506,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a4de12345278ddfb43c21f81f79040162" name="a4de12345278ddfb43c21f81f79040162"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4de12345278ddfb43c21f81f79040162">&#9670;&#160;</a></span>tensorPropConst()</h2>
+<a id="a3e8773382e5c3622f3eff289b0d17ddf" name="a3e8773382e5c3622f3eff289b0d17ddf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e8773382e5c3622f3eff289b0d17ddf">&#9670;&#160;</a></span>tensorPropConst()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -18484,7 +18522,13 @@ template&lt;class T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
-          <td class="paramname"><em>subAST</em> = <code><a class="el" href="classfreetensor_1_1ID.html">ID</a>()</code>&#160;</td>
+          <td class="paramname"><em>bothInSubAST</em> = <code><a class="el" href="classfreetensor_1_1ID.html">ID</a>()</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>eitherInSubAST</em> = <code><a class="el" href="classfreetensor_1_1ID.html">ID</a>()</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -18503,7 +18547,8 @@ template&lt;class T &gt; </div>
 </div><!-- fragment --><p>This version of const propagation is designed for both scalars and tensors. For scalars, it directly invokes scalarPropConst. For tensors, it invokes the Presburger solver</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">subAST</td><td>: If set, only propagate in this sub-tree </td></tr>
+    <tr><td class="paramname">bothInSubAST</td><td>: If set, only propagate if both the source and destination are in this sub-tree </td></tr>
+    <tr><td class="paramname">eitherInSubAST</td><td>: If set, only propagate if either the source and destination is in this sub-tree </td></tr>
   </table>
   </dd>
 </dl>

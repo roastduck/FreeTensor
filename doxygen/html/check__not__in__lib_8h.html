@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.6"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>FreeTensor: src/schedule/fuse.cc File Reference</title>
+<title>FreeTensor: include/schedule/check_not_in_lib.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -69,41 +69,31 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dir_c686e23f548eabcf75bcb8d267ef011f.html">schedule</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_2661e725ffd7f6febd68c8fd282ddddf.html">schedule</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#namespaces">Namespaces</a> &#124;
 <a href="#func-members">Functions</a>  </div>
-  <div class="headertitle"><div class="title">fuse.cc File Reference</div></div>
+  <div class="headertitle"><div class="title">check_not_in_lib.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;algorithm&gt;</code><br />
-<code>#include &lt;<a class="el" href="all__uses_8h_source.html">analyze/all_uses.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="check__not__modified_8h_source.html">analyze/check_not_modified.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="deps_8h_source.html">analyze/deps.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="find__stmt_8h_source.html">analyze/find_stmt.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="merge__no__deps__hint_8h_source.html">analyze/merge_no_deps_hint.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="symbol__table_8h_source.html">analyze/symbol_table.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="hash_8h_source.html">hash.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="flatten__stmt__seq_8h_source.html">pass/flatten_stmt_seq.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="prop__one__time__use_8h_source.html">pass/prop_one_time_use.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="remove__dead__var_8h_source.html">pass/remove_dead_var.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="shrink__var_8h_source.html">pass/shrink_var.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="simplify_8h_source.html">pass/simplify.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="sink__var_8h_source.html">pass/sink_var.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="tensor__prop__const_8h_source.html">pass/tensor_prop_const.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="schedule_8h_source.html">schedule.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="check__not__in__lib_8h_source.html">schedule/check_not_in_lib.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="fuse_8h_source.html">schedule/fuse.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="hoist__selected__var_8h_source.html">schedule/hoist_selected_var.h</a>&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="el" href="find__stmt_8h_source.html">analyze/find_stmt.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="except_8h_source.html">except.h</a>&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
-Include dependency graph for fuse.cc:</div>
+Include dependency graph for check_not_in_lib.h:</div>
 <div class="dyncontent">
-<div class="center"><img src="fuse_8cc__incl.png" border="0" usemap="#asrc_2schedule_2fuse_8cc" alt=""/></div>
+<div class="center"><img src="check__not__in__lib_8h__incl.png" border="0" usemap="#ainclude_2schedule_2check__not__in__lib_8h" alt=""/></div>
 </div>
-</div><table class="memberdecls">
+</div><div class="textblock"><div class="dynheader">
+This graph shows which files directly or indirectly include this file:</div>
+<div class="dyncontent">
+<div class="center"><img src="check__not__in__lib_8h__dep__incl.png" border="0" usemap="#ainclude_2schedule_2check__not__in__lib_8hdep" alt=""/></div>
+</div>
+</div>
+<p><a href="check__not__in__lib_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacefreetensor"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html">freetensor</a></td></tr>
@@ -111,8 +101,8 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ab11e11478ab8ed7d1ceebc5cfe98aa12"><td class="memItemLeft" align="right" valign="top">std::pair&lt; Stmt, ID &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab11e11478ab8ed7d1ceebc5cfe98aa12">freetensor::fuse</a> (const Stmt &amp;ast, const ID &amp;loop0, const ID &amp;loop1, bool strict)</td></tr>
-<tr class="separator:ab11e11478ab8ed7d1ceebc5cfe98aa12"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf316ae4563ba2d0987bb24fd73fa85a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#abf316ae4563ba2d0987bb24fd73fa85a">freetensor::checkNotInLib</a> (const Stmt &amp;ast, const ID &amp;stmt)</td></tr>
+<tr class="separator:abf316ae4563ba2d0987bb24fd73fa85a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 <!-- start footer part -->

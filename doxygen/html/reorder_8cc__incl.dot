@@ -113,8 +113,6 @@ digraph "src/schedule/reorder.cc"
   Node68 -> Node10 [color="steelblue1",style="solid"];
   Node68 -> Node69 [color="steelblue1",style="solid"];
   Node69 [label="isl/aff.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node68 -> Node70 [color="steelblue1",style="solid"];
-  Node70 [label="isl/ctx.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node68 -> Node30 [color="steelblue1",style="solid"];
   Node68 -> Node32 [color="steelblue1",style="solid"];
   Node32 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
@@ -199,11 +197,15 @@ digraph "src/schedule/reorder.cc"
   Node105 -> Node9 [color="steelblue1",style="solid"];
   Node105 -> Node10 [color="steelblue1",style="solid"];
   Node105 -> Node53 [color="steelblue1",style="solid"];
-  Node1 -> Node99 [color="steelblue1",style="solid"];
   Node1 -> Node106 [color="steelblue1",style="solid"];
-  Node106 [label="schedule/hoist_selected\l_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8h.html",tooltip=" "];
-  Node106 -> Node12 [color="steelblue1",style="solid"];
-  Node106 -> Node98 [color="steelblue1",style="solid"];
-  Node106 -> Node64 [color="steelblue1",style="solid"];
+  Node106 [label="schedule/check_not\l_in_lib.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$check__not__in__lib_8h.html",tooltip=" "];
+  Node106 -> Node63 [color="steelblue1",style="solid"];
+  Node106 -> Node30 [color="steelblue1",style="solid"];
+  Node1 -> Node99 [color="steelblue1",style="solid"];
+  Node1 -> Node107 [color="steelblue1",style="solid"];
+  Node107 [label="schedule/hoist_selected\l_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8h.html",tooltip=" "];
+  Node107 -> Node12 [color="steelblue1",style="solid"];
+  Node107 -> Node98 [color="steelblue1",style="solid"];
+  Node107 -> Node64 [color="steelblue1",style="solid"];
   Node1 -> Node103 [color="steelblue1",style="solid"];
 }

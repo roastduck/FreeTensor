@@ -83,17 +83,18 @@ $(function() {
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacefreetensor.html">freetensor</a> {</div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> <a class="code hl_function" href="namespacefreetensor.html#a4de12345278ddfb43c21f81f79040162">tensorPropConst</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, <span class="keyword">const</span> ID &amp;subAST = ID());</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><a class="code hl_define" href="func_8h.html#a3afd99c73eb9353d67141a0c9bbd329c">DEFINE_PASS_FOR_FUNC</a>(<a class="code hl_function" href="namespacefreetensor.html#a4de12345278ddfb43c21f81f79040162">tensorPropConst</a>)</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> <a class="code hl_function" href="namespacefreetensor.html#a3e8773382e5c3622f3eff289b0d17ddf">tensorPropConst</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, <span class="keyword">const</span> ID &amp;bothInSubAST = ID(),</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>                     <span class="keyword">const</span> ID &amp;eitherInSubAST = ID());</div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_PROP_CONST_H</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><a class="code hl_define" href="func_8h.html#a3afd99c73eb9353d67141a0c9bbd329c">DEFINE_PASS_FOR_FUNC</a>(<a class="code hl_function" href="namespacefreetensor.html#a3e8773382e5c3622f3eff289b0d17ddf">tensorPropConst</a>)</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_PROP_CONST_H</span></div>
 <div class="ttc" id="afunc_8h_html"><div class="ttname"><a href="func_8h.html">func.h</a></div></div>
 <div class="ttc" id="afunc_8h_html_a3afd99c73eb9353d67141a0c9bbd329c"><div class="ttname"><a href="func_8h.html#a3afd99c73eb9353d67141a0c9bbd329c">DEFINE_PASS_FOR_FUNC</a></div><div class="ttdeci">#define DEFINE_PASS_FOR_FUNC(pass)</div><div class="ttdef"><b>Definition:</b> func.h:88</div></div>
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
-<div class="ttc" id="anamespacefreetensor_html_a4de12345278ddfb43c21f81f79040162"><div class="ttname"><a href="namespacefreetensor.html#a4de12345278ddfb43c21f81f79040162">freetensor::tensorPropConst</a></div><div class="ttdeci">Stmt tensorPropConst(const Stmt &amp;op, const ID &amp;subAST=ID())</div><div class="ttdef"><b>Definition:</b> tensor_prop_const.cc:24</div></div>
+<div class="ttc" id="anamespacefreetensor_html_a3e8773382e5c3622f3eff289b0d17ddf"><div class="ttname"><a href="namespacefreetensor.html#a3e8773382e5c3622f3eff289b0d17ddf">freetensor::tensorPropConst</a></div><div class="ttdeci">Stmt tensorPropConst(const Stmt &amp;op, const ID &amp;bothInSubAST=ID(), const ID &amp;eitherInSubAST=ID())</div><div class="ttdef"><b>Definition:</b> tensor_prop_const.cc:24</div></div>
 <div class="ttc" id="anamespacefreetensor_html_a8b7e165b3601cc722c7b357347dc6de9"><div class="ttname"><a href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">freetensor::Stmt</a></div><div class="ttdeci">Ref&lt; StmtNode &gt; Stmt</div><div class="ttdef"><b>Definition:</b> ast.h:151</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->

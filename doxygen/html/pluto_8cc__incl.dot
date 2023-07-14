@@ -121,8 +121,6 @@ digraph "src/schedule/pluto.cc"
   Node77 [label="isl/aff.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node76 -> Node78 [color="steelblue1",style="solid"];
   Node78 [label="isl/ctx.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node76 -> Node79 [color="steelblue1",style="solid"];
-  Node79 [label="isl/ilp.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node76 -> Node7 [color="steelblue1",style="solid"];
   Node76 -> Node35 [color="steelblue1",style="solid"];
   Node74 -> Node61 [color="steelblue1",style="solid"];
@@ -187,15 +185,18 @@ digraph "src/schedule/pluto.cc"
   Node110 -> Node71 [color="steelblue1",style="solid"];
   Node110 -> Node62 [color="steelblue1",style="solid"];
   Node1 -> Node129 [color="steelblue1",style="solid"];
-  Node129 [label="schedule/fuse.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8h.html",tooltip=" "];
-  Node129 -> Node56 [color="steelblue1",style="solid"];
-  Node129 -> Node61 [color="steelblue1",style="solid"];
+  Node129 [label="schedule/check_not\l_in_lib.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$check__not__in__lib_8h.html",tooltip=" "];
+  Node129 -> Node71 [color="steelblue1",style="solid"];
   Node1 -> Node130 [color="steelblue1",style="solid"];
-  Node130 [label="schedule/pluto.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$pluto_8h.html",tooltip=" "];
+  Node130 [label="schedule/fuse.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8h.html",tooltip=" "];
+  Node130 -> Node56 [color="steelblue1",style="solid"];
+  Node130 -> Node61 [color="steelblue1",style="solid"];
   Node1 -> Node131 [color="steelblue1",style="solid"];
-  Node131 [label="serialize/load_ast.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$load__ast_8h.html",tooltip=" "];
-  Node131 -> Node18 [color="steelblue1",style="solid"];
+  Node131 [label="schedule/pluto.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$pluto_8h.html",tooltip=" "];
   Node1 -> Node132 [color="steelblue1",style="solid"];
-  Node132 [label="serialize/mangle.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mangle_8h.html",tooltip=" "];
-  Node132 -> Node4 [color="steelblue1",style="solid"];
+  Node132 [label="serialize/load_ast.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$load__ast_8h.html",tooltip=" "];
+  Node132 -> Node18 [color="steelblue1",style="solid"];
+  Node1 -> Node133 [color="steelblue1",style="solid"];
+  Node133 [label="serialize/mangle.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mangle_8h.html",tooltip=" "];
+  Node133 -> Node4 [color="steelblue1",style="solid"];
 }

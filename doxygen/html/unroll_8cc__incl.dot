@@ -96,7 +96,7 @@ digraph "src/schedule/unroll.cc"
   Node64 -> Node3 [color="steelblue1",style="solid"];
   Node64 -> Node4 [color="steelblue1",style="solid"];
   Node64 -> Node65 [color="steelblue1",style="solid"];
-  Node65 [label="analyze/comp_transient\l_bounds.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__transient__bounds_8h.html",tooltip=" "];
+  Node65 [label="analyze/comp_transient\l_bounds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$comp__transient__bounds_8h.html",tooltip=" "];
   Node65 -> Node4 [color="steelblue1",style="solid"];
   Node65 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="analyze/all_uses.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$all__uses_8h.html",tooltip=" "];
@@ -110,12 +110,6 @@ digraph "src/schedule/unroll.cc"
   Node69 [label="analyze/analyze_linear.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$analyze__linear_8h.html",tooltip=" "];
   Node69 -> Node3 [color="steelblue1",style="solid"];
   Node69 -> Node4 [color="steelblue1",style="solid"];
-  Node69 -> Node70 [color="steelblue1",style="solid"];
-  Node70 [label="hash.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$hash_8h.html",tooltip=" "];
-  Node70 -> Node3 [color="steelblue1",style="solid"];
-  Node70 -> Node4 [color="steelblue1",style="solid"];
-  Node70 -> Node44 [color="steelblue1",style="solid"];
-  Node70 -> Node11 [color="steelblue1",style="solid"];
   Node69 -> Node52 [color="steelblue1",style="solid"];
   Node65 -> Node72 [color="steelblue1",style="solid"];
   Node72 [label="analyze/as_dnf.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$as__dnf_8h.html",tooltip=" "];
@@ -128,7 +122,6 @@ digraph "src/schedule/unroll.cc"
   Node35 -> Node4 [color="steelblue1",style="solid"];
   Node35 -> Node6 [color="steelblue1",style="solid"];
   Node35 -> Node28 [color="steelblue1",style="solid"];
-  Node65 -> Node70 [color="steelblue1",style="solid"];
   Node65 -> Node73 [color="steelblue1",style="solid"];
   Node73 [label="math/bounds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$bounds_8h.html",tooltip=" "];
   Node73 -> Node16 [color="steelblue1",style="solid"];
@@ -139,7 +132,6 @@ digraph "src/schedule/unroll.cc"
   Node77 [label="analyze/comp_unique\l_bounds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$comp__unique__bounds_8h.html",tooltip=" "];
   Node77 -> Node4 [color="steelblue1",style="solid"];
   Node77 -> Node65 [color="steelblue1",style="solid"];
-  Node77 -> Node70 [color="steelblue1",style="solid"];
   Node77 -> Node52 [color="steelblue1",style="solid"];
   Node64 -> Node7 [color="steelblue1",style="solid"];
   Node64 -> Node57 [color="steelblue1",style="solid"];
@@ -189,7 +181,6 @@ digraph "src/schedule/unroll.cc"
   Node93 -> Node69 [color="steelblue1",style="solid"];
   Node93 -> Node7 [color="steelblue1",style="solid"];
   Node93 -> Node35 [color="steelblue1",style="solid"];
-  Node93 -> Node70 [color="steelblue1",style="solid"];
   Node93 -> Node63 [color="steelblue1",style="solid"];
   Node81 -> Node95 [color="steelblue1",style="solid"];
   Node95 [label="schedule/fission.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fission_8h.html",tooltip=" "];
@@ -207,7 +198,6 @@ digraph "src/schedule/unroll.cc"
   Node97 [label="schedule/schedule_log.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$schedule__log_8h.html",tooltip=" "];
   Node97 -> Node16 [color="steelblue1",style="solid"];
   Node97 -> Node13 [color="steelblue1",style="solid"];
-  Node97 -> Node70 [color="steelblue1",style="solid"];
   Node81 -> Node99 [color="steelblue1",style="solid"];
   Node99 [label="schedule/reorder.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8h.html",tooltip=" "];
   Node99 -> Node12 [color="steelblue1",style="solid"];
@@ -219,6 +209,10 @@ digraph "src/schedule/unroll.cc"
   Node100 -> Node63 [color="steelblue1",style="solid"];
   Node81 -> Node11 [color="steelblue1",style="solid"];
   Node1 -> Node101 [color="steelblue1",style="solid"];
-  Node101 [label="schedule/unroll.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$unroll_8h.html",tooltip=" "];
-  Node101 -> Node63 [color="steelblue1",style="solid"];
+  Node101 [label="schedule/check_not\l_in_lib.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$check__not__in__lib_8h.html",tooltip=" "];
+  Node101 -> Node67 [color="steelblue1",style="solid"];
+  Node101 -> Node28 [color="steelblue1",style="solid"];
+  Node1 -> Node102 [color="steelblue1",style="solid"];
+  Node102 [label="schedule/unroll.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$unroll_8h.html",tooltip=" "];
+  Node102 -> Node63 [color="steelblue1",style="solid"];
 }

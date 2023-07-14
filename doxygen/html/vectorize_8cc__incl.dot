@@ -114,8 +114,6 @@ digraph "src/schedule/vectorize.cc"
   Node69 [label="isl/aff.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node68 -> Node70 [color="steelblue1",style="solid"];
   Node70 [label="isl/ctx.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node68 -> Node71 [color="steelblue1",style="solid"];
-  Node71 [label="isl/ilp.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node68 -> Node29 [color="steelblue1",style="solid"];
   Node68 -> Node31 [color="steelblue1",style="solid"];
   Node31 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
@@ -194,6 +192,10 @@ digraph "src/schedule/vectorize.cc"
   Node104 -> Node98 [color="steelblue1",style="solid"];
   Node81 -> Node15 [color="steelblue1",style="solid"];
   Node1 -> Node105 [color="steelblue1",style="solid"];
-  Node105 [label="schedule/vectorize.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8h.html",tooltip=" "];
-  Node105 -> Node98 [color="steelblue1",style="solid"];
+  Node105 [label="schedule/check_not\l_in_lib.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$check__not__in__lib_8h.html",tooltip=" "];
+  Node105 -> Node63 [color="steelblue1",style="solid"];
+  Node105 -> Node29 [color="steelblue1",style="solid"];
+  Node1 -> Node106 [color="steelblue1",style="solid"];
+  Node106 [label="schedule/vectorize.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8h.html",tooltip=" "];
+  Node106 -> Node98 [color="steelblue1",style="solid"];
 }

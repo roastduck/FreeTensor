@@ -112,8 +112,6 @@ digraph "src/schedule/fission.cc"
   Node68 -> Node9 [color="steelblue1",style="solid"];
   Node68 -> Node69 [color="steelblue1",style="solid"];
   Node69 [label="isl/aff.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node68 -> Node70 [color="steelblue1",style="solid"];
-  Node70 [label="isl/ctx.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node68 -> Node29 [color="steelblue1",style="solid"];
   Node68 -> Node31 [color="steelblue1",style="solid"];
   Node31 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
@@ -200,10 +198,14 @@ digraph "src/schedule/fission.cc"
   Node105 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
   Node105 -> Node82 [color="steelblue1",style="solid"];
   Node83 -> Node15 [color="steelblue1",style="solid"];
-  Node1 -> Node100 [color="steelblue1",style="solid"];
   Node1 -> Node106 [color="steelblue1",style="solid"];
-  Node106 [label="schedule/hoist_selected\l_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8h.html",tooltip=" "];
-  Node106 -> Node11 [color="steelblue1",style="solid"];
-  Node106 -> Node82 [color="steelblue1",style="solid"];
-  Node106 -> Node64 [color="steelblue1",style="solid"];
+  Node106 [label="schedule/check_not\l_in_lib.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$check__not__in__lib_8h.html",tooltip=" "];
+  Node106 -> Node63 [color="steelblue1",style="solid"];
+  Node106 -> Node29 [color="steelblue1",style="solid"];
+  Node1 -> Node100 [color="steelblue1",style="solid"];
+  Node1 -> Node107 [color="steelblue1",style="solid"];
+  Node107 [label="schedule/hoist_selected\l_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8h.html",tooltip=" "];
+  Node107 -> Node11 [color="steelblue1",style="solid"];
+  Node107 -> Node82 [color="steelblue1",style="solid"];
+  Node107 -> Node64 [color="steelblue1",style="solid"];
 }
