@@ -267,65 +267,82 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                         if (parentIsWarp || childIsWarp) {
                             maxThreads /= target.as<GPUTarget>()->warpSize();
                         }
-                        bool hasDep =
+                        bool isReduction =
                             FindDeps()
                                 .direction(
                                     {{{mergedId, DepDirection::Different}}})
                                 .filterSubAST(mergedId)
                                 .ignoreReductionWAW(false)
                                 .exists(ast());
-                        ID l1, l1b, l2;
-                        if (!hasDep) {
-                            if (auto loopNode = merged.as<ForNode>();
-                                loopNode->len_->nodeType() ==
-                                ASTNodeType::IntConst) {
-                                auto len =
-                                    loopNode->len_.as<IntConstNode>()->val_;
+                        if (!allowReduction && isReduction) {
+                            throw InvalidSchedule(
+                                "Reductions found but allowReduction is false");
+                        }
+                        ID lb, lb2, lt, ls;
+                        if (auto loopNode = merged.as<ForNode>();
+                            loopNode->len_->nodeType() ==
+                            ASTNodeType::IntConst) {
+                            auto len = loopNode->len_.as<IntConstNode>()->val_;
+                            if (!isReduction) {
                                 if (len <= numSM) {
-                                    l1 = mergedId;
+                                    lb = mergedId;
                                 } else if (len <= numSM * maxThreads) {
-                                    std::tie(l1, l2) =
+                                    std::tie(lb, lt) =
                                         split(mergedId, -1, numSM);
                                 } else {
-                                    std::tie(l1, l2) =
+                                    std::tie(lb, lt) =
                                         split(mergedId, maxThreads);
                                 }
                             } else {
-                                // We don't use the `nparts` mode of `split`,
-                                // because it will hinder dependence analysis.
-                                // Instead, we use the `factor` mode and then
-                                // reorder. See the doc string of `split` for
-                                // details
-                                std::tie(l2, l1) = split(mergedId, numSM);
-                                reorder({l1, l2});
-                                if (!findAll(l2).empty()) {
-                                    std::tie(l1b, l2) = split(l2, maxThreads);
+                                if (len <= maxThreads) {
+                                    lt = mergedId;
+                                } else if (len <= numSM * maxThreads) {
+                                    std::tie(lb, lt) =
+                                        split(mergedId, maxThreads);
+                                } else {
+                                    std::tie(lt, ls) =
+                                        split(mergedId, -1, numSM * maxThreads);
+                                    std::tie(lb, lt) = split(lt, maxThreads);
                                 }
                             }
                         } else {
-                            if (!allowReduction) {
-                                throw InvalidSchedule(
-                                    "Reductions found but allowReduction is "
-                                    "false");
+                            // We don't use the `nparts` mode of `split`,
+                            // because it will hinder dependence analysis.
+                            // Instead, we use the `factor` mode and then
+                            // reorder, even the memory access pattern is
+                            // transposed. See the doc string of `split` for
+                            // details
+                            if (!isReduction) {
+                                std::tie(lt, lb) = split(mergedId, numSM);
+                                reorder({lb, lt});
+                                if (!findAll(lt).empty()) {
+                                    std::tie(lb2, lt) = split(lt, maxThreads);
+                                }
+                            } else {
+                                std::tie(ls, lt) =
+                                    split(mergedId, numSM * maxThreads);
+                                reorder({lt, ls});
+                                if (!findAll(lt).empty()) {
+                                    std::tie(lb, lt) = split(lt, maxThreads);
+                                }
                             }
-                            std::tie(l1, l2) = split(mergedId, maxThreads);
                         }
-                        if (parallelizeAmongBlocks && l1.isValid() &&
-                            !findAll(l1).empty()) {
-                            if (l1b.isValid() && !findAll(l1b).empty()) {
-                                // We are unable to fuse `l1` and `l1b` back to
-                                // one loop. Because the length of `l1b` is not
+                        if (parallelizeAmongBlocks && lb.isValid() &&
+                            !findAll(lb).empty()) {
+                            if (lb2.isValid() && !findAll(lb2).empty()) {
+                                // We are unable to fuse `lb` and `lb2` back to
+                                // one loop. Because the length of `lb2` is not
                                 // a constant, a division by this length will be
                                 // introduced, which is not supported by ISL and
                                 // may probably lead to false dependences
-                                parallelize(l1, blockIdxY, allowReduction);
-                                parallelize(l1b, blockIdxX, allowReduction);
+                                parallelize(lb, blockIdxY, allowReduction);
+                                parallelize(lb2, blockIdxX, allowReduction);
                             } else {
-                                parallelize(l1, blockIdxX, allowReduction);
+                                parallelize(lb, blockIdxX, allowReduction);
                             }
                         }
-                        if (l2.isValid() && !findAll(l2).empty()) {
-                            parallelize(l2,
+                        if (lt.isValid() && !findAll(lt).empty()) {
+                            parallelize(lt,
                                         (!parentIsWarp && !childIsWarp)
                                             ? threadIdxX
                                             : threadIdxY,
