@@ -62,7 +62,7 @@ Stmt MakeLoopCarriedReduction::visit(const ReduceTo &_op) {
                      views::ints(0, ranges::unreachable), _op->indices_)) {
                 if (isVariant(variantMap_, {idx, op}, loopId)) {
                     // Use sync
-                    toUseSync_[op->id()] = UseSyncInfo{true};
+                    toUseSync_.emplace(op->id());
                     return op;
                 }
             }
@@ -74,7 +74,7 @@ Stmt MakeLoopCarriedReduction::visit(const ReduceTo &_op) {
                 std::get<CUDAScope>(parallel).level_ == CUDAScope::Block) {
                 // Race-free reduction among thread blocks are impossible. Use
                 // sync
-                toUseSync_[op->id()] = UseSyncInfo{false};
+                toUseSync_.emplace(op->id());
                 return op;
             }
         }
@@ -172,15 +172,9 @@ Stmt MakeLoopCarriedReduction::visit(const For &_op) {
     return op;
 }
 
-bool MakeSyncReduction::canResideInGPULocal(DataType dtype,
-                                            const std::vector<Expr> &shape,
-                                            bool isRandomAccess) const {
+bool MakeSyncReduction::canResideInGPULocal(
+    DataType dtype, const std::vector<Expr> &shape) const {
 #ifdef FT_WITH_CUDA
-    if (isRandomAccess) {
-        // Case 3: Random access
-        return false;
-    }
-
     // GPU registers are 32-bit
     int64_t sizeIn32Bit = 1;
     int64_t sizeInBytes = 1;
@@ -219,17 +213,15 @@ bool MakeSyncReduction::canResideInGPULocal(DataType dtype,
 }
 
 MemType MakeSyncReduction::localMType(MemType mtype, DataType dtype,
-                                      const std::vector<Expr> &shape,
-                                      bool isRandomAccess) const {
+                                      const std::vector<Expr> &shape) const {
     switch (mtype) {
     case MemType::CPU:
         return MemType::CPU;
     case MemType::GPULocal:
     case MemType::GPUShared:
     case MemType::GPUGlobal:
-        return canResideInGPULocal(dtype, shape, isRandomAccess)
-                   ? MemType::GPULocal
-                   : MemType::GPUGlobal;
+        return canResideInGPULocal(dtype, shape) ? MemType::GPULocal
+                                                 : MemType::GPUGlobal;
     default:
         ASSERT(false);
     }
@@ -239,9 +231,7 @@ Stmt MakeSyncReduction::visit(const ReduceTo &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
-    if (auto it = toUseSync_.find(op->id()); it != toUseSync_.end()) {
-        auto isRandomAccess = it->second.isRandomAccess_;
-
+    if (toUseSync_.count(op->id())) {
         // There will be no cross-thread dependences except the reduction we
         // are working on (guranteed by schedule/parallelize). Therefore, We
         // can cache the variable being reduced, so it can be first reduced
@@ -311,13 +301,12 @@ Stmt MakeSyncReduction::visit(const ReduceTo &_op) {
                     op->var_ +=
                         ".sync_cache." + toString(existing.oldNode_->id());
                     op->indices_ = std::move(newCacheIndices);
-                    existing.isRandomAccess_ |= isRandomAccess;
                     goto done;
                 }
             }
             cacheSync_[loopToCache].emplace_back(
                 _op /* use the old name here */, newShape, newTargetIndices,
-                isRandomAccess, preserveDim);
+                preserveDim);
             op->var_ += ".sync_cache." + toString(op->id());
             op->indices_ = std::move(newCacheIndices);
         done:;
@@ -343,7 +332,7 @@ Stmt MakeSyncReduction::visit(const For &_op) {
 
     if (cacheSync_.count(op->id())) {
         Stmt ret = op;
-        for (auto &&[reduce, newShape, targetIndices, isRandomAccess, _] :
+        for (auto &&[reduce, newShape, targetIndices, _] :
              cacheSync_.at(op->id())) {
             auto cacheName =
                 reduce->var_ + ".sync_cache." + toString(reduce->id());
@@ -371,8 +360,8 @@ Stmt MakeSyncReduction::visit(const For &_op) {
                 cacheIndices, views::repeat(makeIntConst(0)), newShape,
                 views::repeat(makeIntConst(1)), newShape,
                 views::repeat(Ref<ForProperty>::make()), flush);
-            auto mtype = localMType(buffer(reduce->var_)->mtype(), dtype,
-                                    newShape, isRandomAccess);
+            auto mtype =
+                localMType(buffer(reduce->var_)->mtype(), dtype, newShape);
             ret = makeVarDef(cacheName,
                              makeBuffer(makeTensor(newShape, dtype),
                                         AccessType::Cache, mtype),

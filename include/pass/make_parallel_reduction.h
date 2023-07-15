@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/comp_transient_bounds.h>
 #include <analyze/find_loop_variance.h>
 #include <analyze/symbol_table.h>
 #include <driver/target.h>
@@ -48,14 +49,6 @@ class FindSerialLoopsOverReduce : public Visitor {
     void visit(const ReduceTo &op) override;
 };
 
-struct UseSyncInfo {
-    // True if there is random access to the being-reduced variable. Note: even
-    // there is no random access, we may also forced to use a synced reduction,
-    // for example: cross-GPU-thread-block reduction can only be done by atomic.
-    // In this case, `isRandomAccess_` is false
-    bool isRandomAccess_;
-};
-
 /**
  * Lower supported parallel reductions to loop-carried reductions, which will be
  * further lowered to specific algorithms like binary reduction or local
@@ -77,11 +70,10 @@ class MakeLoopCarriedReduction
         &toAlter_; // ReduceTo ID -> Racing For ID
     const LoopVariExprMap &variantMap_;
 
-    // ReduceTo ID -> whether randomly accessed. For all reductions in
-    // `toAlter`, we first try to lower them as loop-carried reductions. If
-    // impossible, we then insert them to this map, which is passed to
-    // `MakeSyncReduction`.
-    std::unordered_map<ID, UseSyncInfo> toUseSync_;
+    // ReduceTo IDs. For all reductions in `toAlter`, we first try to lower them
+    // as loop-carried reductions. If impossible, we then insert them to this
+    // map, which is passed to `MakeSyncReduction`.
+    std::unordered_set<ID> toUseSync_;
 
     std::unordered_map<ID, ParallelScope> paraScopes_; // For Id -> parallel
     std::unordered_map<ID, std::vector<ReductionItemFactors>> forReductions_;
@@ -109,7 +101,7 @@ class MakeLoopCarriedReduction
 class MakeSyncReduction : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
-    const std::unordered_map<ID, UseSyncInfo> &toUseSync_;
+    const std::unordered_set<ID> &toUseSync_;
     const std::unordered_map<ID, std::vector<For>>
         &serialOverRed_; // ReduceTo ID -> [For], from inner to outer
     const LoopVariExprMap &variantMap_;
@@ -124,7 +116,6 @@ class MakeSyncReduction : public SymbolTable<Mutator> {
     struct SyncCacheInfo {
         ReduceTo oldNode_;
         std::vector<Expr> newShape_, newTargetIndices_;
-        bool isRandomAccess_;
         std::vector<bool> preserveDim_;
     };
     std::unordered_map<ID,
@@ -156,22 +147,21 @@ class MakeSyncReduction : public SymbolTable<Mutator> {
      * dynamic dimensions make them impossible to unroll. Even we put these
      * variables to local memory, they will still land on DRAM. For the reason
      * mentioned in Case 1a, we prefer global memory over local memory.
-     * 3. Variables being randomly accessed. Randomly access have to be
-     * implemented via indirect access, even we can unroll the loops. Just like
-     * Case 2, we put them to global memory.
+     *
+     * NOTE: We never access local reduction cache randomly, so no need to check
+     * it. We only randomly reduce to the final target.
      *
      * TODO: Move it to an architecture-specific pass
      */
-    bool canResideInGPULocal(DataType dtype, const std::vector<Expr> &shape,
-                             bool isRandomAccess) const;
+    bool canResideInGPULocal(DataType dtype,
+                             const std::vector<Expr> &shape) const;
 
     MemType localMType(MemType mtype, DataType dtype,
-                       const std::vector<Expr> &shape,
-                       bool isRandomAccess) const;
+                       const std::vector<Expr> &shape) const;
 
   public:
     MakeSyncReduction(
-        const std::unordered_map<ID, UseSyncInfo> &toUseSync,
+        const std::unordered_set<ID> &toUseSync,
         const std::unordered_map<ID, std::vector<For>> &serialOverRed,
         const LoopVariExprMap &variantMap, const Ref<Target> &target)
         : toUseSync_(toUseSync), serialOverRed_(serialOverRed),
