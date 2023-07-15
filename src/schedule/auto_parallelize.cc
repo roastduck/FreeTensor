@@ -114,24 +114,28 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
             int maxMergeLevel = 0;
             beginTransaction();
             try {
-                ID mergedId;
-                auto loop = root;
-                while (true) {
-                    ID loopId = loop->id();
+                ID mergedId, loopId = root->id();
+                while (loopId.isValid()) {
+                    ID innerId;
+                    if (auto inners =
+                            findAll("<For><-(!<For><-)*" + toString(loopId));
+                        inners.size() == 1) {
+                        innerId = inners.front()->id();
+                    }
                     if (find(loopId).as<ForNode>()->property_->parallel_ !=
                         serialScope) {
-                        break;
+                        if (innerId.isValid()) {
+                            reorder({innerId, loopId});
+                            loopId = innerId;
+                            continue;
+                        } else {
+                            break;
+                        }
                     }
                     mergedId =
                         mergedId.isValid() ? merge(mergedId, loopId) : loopId;
                     maxMergeLevel++;
-                    if (auto inners =
-                            findAll("<For><-(!<For><-)*" + toString(loopId));
-                        inners.size() == 1) {
-                        loop = inners.front().as<ForNode>();
-                    } else {
-                        break;
-                    }
+                    loopId = innerId;
                 }
             } catch (const InvalidSchedule &e) {
                 // do nothing
@@ -152,12 +156,26 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
             for (int mergeLevel = maxMergeLevel; mergeLevel > 0; mergeLevel--) {
                 beginTransaction();
                 try {
-                    ID mergedId;
-                    auto loop = root;
+                    ID mergedId, loopId = root->id();
                     Expr remainingLen; // length left for outer levels if we
                                        // don't parallelize this level
-                    for (int i = 0; i < mergeLevel; i++) {
-                        ID loopId = loop->id();
+                    for (int i = 0; i < mergeLevel;) {
+                        ID innerId;
+                        if (auto inners = findAll("<For><-(!<For><-)*" +
+                                                  toString(loopId));
+                            inners.size() == 1) {
+                            innerId = inners.front()->id();
+                        }
+                        if (find(loopId).as<ForNode>()->property_->parallel_ !=
+                            serialScope) {
+                            if (innerId.isValid()) {
+                                reorder({innerId, loopId});
+                                loopId = innerId;
+                                continue;
+                            } else {
+                                break;
+                            }
+                        }
                         if (mergedId.isValid()) {
                             remainingLen = find(mergedId).as<ForNode>()->len_;
                             mergedId = merge(mergedId, loopId);
@@ -165,10 +183,8 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                             remainingLen = makeIntConst(1);
                             mergedId = loopId;
                         }
-                        if (i + 1 < mergeLevel) {
-                            loop = find("<For><-(!<For><-)*" + toString(loopId))
-                                       .as<ForNode>();
-                        }
+                        i++;
+                        loopId = innerId;
                     }
 
                     bool allowReduction = true;
