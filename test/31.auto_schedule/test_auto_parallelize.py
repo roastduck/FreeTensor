@@ -29,6 +29,26 @@ def test_cpu_basic():
         logs, ["merge(Li, Lj)", "parallelize($merge{Li, Lj}, openmp, *)"])
 
 
+def test_3_levels():
+    with ft.VarDef([("x", (100, 100, 100), "int32", "input", "cpu"),
+                    ("y", (100, 100, 100), "int32", "output", "cpu")]) as (x,
+                                                                           y):
+        with ft.For("i", 0, 100, label="Li") as i:
+            with ft.For("j", 0, 100, label="Lj") as j:
+                with ft.For("k", 0, 100, label="Lk") as k:
+                    y[i, j, k] = x[i, j, k] + 1
+
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.auto_parallelize(ft.CPU())
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert fnmatch_list(logs, [
+        'merge(Li, Lj)', 'merge($merge{Li, Lj}, Lk)',
+        'parallelize($merge{$merge{Li, Lj}, Lk}, openmp, *)'
+    ])
+
+
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_basic_static_small():
     with ft.VarDef([("x", (10, 10, 2), "int32", "input", "cpu"),
