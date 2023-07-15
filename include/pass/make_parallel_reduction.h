@@ -64,6 +64,7 @@ class MakeLoopCarriedReduction
         std::string var_;
         std::vector<std::vector<std::vector<Expr>>> lower_,
             upper_; // [dim][access][bound]
+        bool syncFlush_;
     };
 
     const std::unordered_map<ID, std::unordered_set<ID>>
@@ -79,6 +80,11 @@ class MakeLoopCarriedReduction
     std::unordered_map<ID, std::vector<ReductionItemFactors>> forReductions_;
     std::unordered_map<ID, std::unordered_set<std::string>>
         scopeDefined_; // For ID -> definitions at that scope
+
+    std::vector<ID> paraLoopStack_;
+
+  private:
+    bool needSync(const ReduceTo &op, const ID &loopId);
 
   public:
     MakeLoopCarriedReduction(

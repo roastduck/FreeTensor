@@ -337,11 +337,11 @@ forProperty returns [Ref<ForProperty> property]
       {
         $property = $prev.property->withParallel($parallelScope.type);
       }
-    | prev=forProperty REDUCTION reduceOp ':' varSlice
+    | prev=forProperty REDUCTION reduceOp ':' varSlice { bool sync = false; } (SYNC { sync = true; })?
       {
         $property = Ref<ForProperty>::make(*$prev.property);
         $property->reductions_.emplace_back(
-            makeReductionItem($reduceOp.op, $varSlice.name, $varSlice.begins, $varSlice.ends));
+            makeReductionItem($reduceOp.op, $varSlice.name, $varSlice.begins, $varSlice.ends, sync));
       }
     ;
 

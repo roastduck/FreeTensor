@@ -631,6 +631,9 @@ void PrintVisitor::visit(const For &op) {
             (*this)(e);
             os() << "]";
         }
+        if (reduction->syncFlush_) {
+            os() << " @!sync";
+        }
         os() << std::endl;
     }
     if (op->property_->unroll_) {

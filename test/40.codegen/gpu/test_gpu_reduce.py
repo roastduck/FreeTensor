@@ -673,3 +673,33 @@ def test_parallel_reduction_with_inactive_threads_2():
 
     y_std = np.sum(x_np.reshape(4, 4, 2, 8)[:, :, 1, :], axis=1)
     assert np.array_equal(y_np, y_std)
+
+
+def test_hybrid_binary_then_atomic():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
+        y: ft.Var[(), "int32", "output", "gpu/global"]
+        #! label: L1
+        for i in range(0, 4):
+            #! label: L2
+            for j in range(0, 64):
+                y[...] += x[i, j]
+
+    s = ft.Schedule(test)
+    s.parallelize("L1", "blockIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ft.lower(s.func(), target, verbose=1)
+
+    code = ft.codegen(func, target, verbose=1)
+    assert "atomicAdd" in code.code  # atomic reduction
+    assert "<<" in code.code  # binary reduction
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
+    y_np = np.array(0, dtype="int32")
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    assert y_np == np.sum(x_np)
