@@ -521,6 +521,7 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+<p>IV. Recurse into sub-loops if failed</p>
 
 </div>
 </div>
@@ -972,10 +973,11 @@ template&lt;class T &gt; </div>
 <p>Find all nodes (maybe non-existing) in the current AST satisfying a given condition</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">filter</td><td>: A callback that returns true for acceptance, or a <code><a class="el" href="classfreetensor_1_1Selector.html">Selector</a></code>, or an <code><a class="el" href="classfreetensor_1_1ID.html">ID</a></code> </td></tr>
+    <tr><td class="paramname">filter</td><td>: A callback that returns true for acceptance, or a <code><a class="el" href="classfreetensor_1_1Selector.html">Selector</a></code>, or an <code><a class="el" href="classfreetensor_1_1ID.html">ID</a></code></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>: All statements satisfying the given condition, in DFS pre order </dd></dl>
 
 </div>
 </div>

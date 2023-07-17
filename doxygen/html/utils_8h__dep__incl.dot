@@ -129,6 +129,7 @@ digraph "include/math/utils.h"
   Node1 -> Node53 [dir="back",color="steelblue1",style="solid"];
   Node53 [label="src/pass/scalar_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$scalar__prop__const_8cc.html",tooltip=" "];
   Node1 -> Node32 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node54 [dir="back",color="steelblue1",style="solid"];
   Node54 [label="src/schedule/auto_set\l_mem_type.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__set__mem__type_8cc.html",tooltip=" "];
 }

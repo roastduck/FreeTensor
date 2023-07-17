@@ -2262,6 +2262,9 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:a21f23d616d300e56223f18288bb35a9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a105559d11b03d08588c4044e66568d96"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a105559d11b03d08588c4044e66568d96">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="structfreetensor_1_1DiscreteObservation.html">DiscreteObservation</a> &amp;obs)</td></tr>
 <tr class="separator:a105559d11b03d08588c4044e66568d96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34383577a13033e5abcaa8b22af0c985"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a34383577a13033e5abcaa8b22af0c985"><td class="memTemplItemLeft" align="right" valign="top">std::optional&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a34383577a13033e5abcaa8b22af0c985">optMul</a> (const std::optional&lt; T &gt; &amp;<a class="el" href="namespacefreetensor.html#a192b70d1972bcd73d5ff58f30fad21a2">lhs</a>, const std::optional&lt; T &gt; &amp;<a class="el" href="namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005">rhs</a>)</td></tr>
+<tr class="separator:a34383577a13033e5abcaa8b22af0c985"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:affd9024564fe030fc074d18560f25e5b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="namespacefreetensor.html#a660e9e5785610a20b03501993142b2d6">FindDepsDir</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#affd9024564fe030fc074d18560f25e5b">notLexLessAfterPermu</a> (const std::vector&lt; <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &gt; &amp;outers, const std::vector&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &amp;permu)</td></tr>
 <tr class="separator:affd9024564fe030fc074d18560f25e5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
@@ -16317,6 +16320,36 @@ template&lt;std::ranges::range Container&gt; </div>
           <td></td>
           <td class="paramtype">const <a class="el" href="structfreetensor_1_1__Join.html">_Join</a> &amp;&#160;</td>
           <td class="paramname"><em>joiner</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a34383577a13033e5abcaa8b22af0c985" name="a34383577a13033e5abcaa8b22af0c985"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a34383577a13033e5abcaa8b22af0c985">&#9670;&#160;</a></span>optMul()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt; T &gt; freetensor::optMul </td>
+          <td>(</td>
+          <td class="paramtype">const std::optional&lt; T &gt; &amp;&#160;</td>
+          <td class="paramname"><em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::optional&lt; T &gt; &amp;&#160;</td>
+          <td class="paramname"><em>rhs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
