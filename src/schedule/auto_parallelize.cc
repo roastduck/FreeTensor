@@ -409,6 +409,8 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                 testScope = blockIdxX;
                 break;
 #endif // FT_WITH_CUDA
+            default:
+                ASSERT(false);
             }
             for (ID id = root->id();;) {
                 if (allCandidates.count(id) &&
@@ -432,7 +434,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
             }
 
             // II. Collect target degree of parallelism
-            int numCPU = 0, numSM = 0, maxThreads = 0;
+            [[maybe_unused]] int numCPU = 0, numSM = 0, maxThreads = 0;
             switch (target->type()) {
             case TargetType::CPU:
                 numCPU = target.as<CPUTarget>()->nCores();
@@ -465,6 +467,8 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                 break;
             }
 #endif // FT_WITH_CUDA
+            default:
+                ASSERT(false);
             }
 
             // III. Do parallelization
@@ -522,6 +526,9 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                 }
                 break;
 #endif // FT_WITH_CUDA
+
+            default:
+                ASSERT(false);
             }
             bool needParRed = true;
             beginTransaction();
@@ -572,6 +579,8 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                     }
                     break;
 #endif // FT_WITH_CUDA
+                default:
+                    ASSERT(false);
                 }
                 parallelizePerfectNest(*this, localAll, scopes, limits,
                                        priority,
