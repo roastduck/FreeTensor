@@ -189,6 +189,8 @@ class Schedule {
      *
      * @param filter : A callback that returns true for acceptance, or a
      * `Selector`, or an `ID`
+     *
+     * @return : All statements satisfying the given condition, in DFS pre order
      */
     template <class T> std::vector<Stmt> findAll(const T &filter) const {
         return findAllStmt(ast(), filter);
