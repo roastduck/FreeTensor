@@ -62,7 +62,7 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
         throw InvalidSchedule("Loop " + toString(loop) + " not found");
     }
 
-    // Make sure there is illegal cross-thread dependence
+    // Make sure there is no illegal cross-thread dependence
     FindDepsDir findDepsDir{{loop, DepDirection::Normal}};
     for (auto &&outerLoop : mutator.outerLoops()) {
         findDepsDir.push_back({outerLoop, DepDirection::Same});
