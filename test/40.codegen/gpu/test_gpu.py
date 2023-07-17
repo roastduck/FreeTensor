@@ -607,7 +607,7 @@ def test_dynamic_thread_dim_2():
             for a in range(cur_start, cur_end):
                 #! label: Loc
                 for oc in range(256):
-                    y[oc] += x[i, oc]
+                    y[oc % 2] += x[i, oc]
 
     s = ft.Schedule(func)
     by, la = s.split("La", factor=4)
