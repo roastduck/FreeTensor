@@ -2,11 +2,305 @@
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <container_utils.h>
+#include <math/utils.h>
 #include <pass/const_fold.h>
 #include <pass/simplify.h>
 #include <schedule.h>
 
 namespace freetensor {
+
+template <typename T>
+std::optional<T> optMul(const std::optional<T> &lhs,
+                        const std::optional<T> &rhs) {
+    if (lhs.has_value() && rhs.has_value()) {
+        return *lhs * *rhs;
+    } else {
+        return std::nullopt;
+    }
+}
+
+static std::pair<std::unordered_set<ID>, std::unordered_set<ID>>
+allParallelizableLoops(const Schedule &s) {
+    std::unordered_set<ID> allCandidates;
+    std::vector<FindDepsDir> direction;
+    for (auto &&loop : s.findAll("<For>")) {
+        if (loop.as<ForNode>()->property_->parallel_ != serialScope) {
+            continue; // Already parallelized
+        }
+        allCandidates.emplace(loop->id());
+        FindDepsDir dirItem{{loop->id(), DepDirection::Normal}};
+        for (auto &&outerLoop : s.findAll("<For>->>" + toString(loop->id()))) {
+            dirItem.push_back({outerLoop->id(), DepDirection::Same});
+        }
+        direction.emplace_back(std::move(dirItem));
+    }
+    FindDeps().direction(direction)(s.ast(), [&](const Dependence &d) {
+        allCandidates.erase(d.dir_[0].first.id_);
+    });
+    auto noRedCandidates = allCandidates;
+    FindDeps().direction(direction).ignoreReductionWAW(false)(
+        s.ast(), [&](const Dependence &d) {
+            noRedCandidates.erase(d.dir_[0].first.id_);
+        });
+    return {allCandidates, noRedCandidates};
+}
+
+static std::optional<int64_t> findStaticLen(const Schedule &s,
+                                            const ID &loopId) {
+    if (auto &&len = constFold(s.find(loopId).as<ForNode>()->len_);
+        len->nodeType() == ASTNodeType::IntConst) {
+        return len.as<IntConstNode>()->val_;
+    } else {
+        return std::nullopt;
+    }
+}
+
+static ID mergeAll(Schedule &s, const auto &loops) {
+    ID mergedId;
+    for (auto &&loopId : loops) {
+        if (!mergedId.isValid()) {
+            mergedId = loopId;
+        } else {
+            if (auto &&middle =
+                    s.findAll("(<For><<-" + toString(mergedId) + ")&(<For>->>" +
+                              toString(loopId) + ")");
+                !middle.empty()) {
+                // Maybe some loops from warp parallelizing, in outer to
+                // inner order. Reorder them all inner
+                std::vector<ID> order = {loopId};
+                for (auto &&item : middle) {
+                    order.emplace_back(item->id());
+                }
+                s.reorder(order);
+            }
+            mergedId = s.merge(mergedId, loopId);
+        }
+    }
+    return mergedId;
+}
+
+static bool testParallelizableAfterMerge(Schedule &s, const auto &loops,
+                                         const ParallelScope &scope) {
+    s.beginTransaction();
+    try {
+        s.parallelize(mergeAll(s, loops), scope);
+    } catch (const InvalidSchedule &e) {
+        s.abortTransaction();
+        return false;
+    }
+    s.abortTransaction();
+    return true;
+}
+
+/**
+ * Try to parallelize a perfect loop nest consisting of loops in `loops`
+ *
+ * Loops are parallelized to different scopes with respect to different
+ * priorities
+ *
+ * Static-lengthed and dynammic-length loops are treated differently:
+ *
+ * - Static-lengthed loops are splitted for each parallel scope separatedly, so
+ * the tile will be aligned with the original loops. The following figure shows
+ * an example, where the dimension rows and columns refer to two loops, and each
+ * number refer to one execution unit (or thread)
+ *
+ * 0000111
+ * 2222333
+ *
+ * - Dynamic-lengthed loops are first merged together before splitted for each
+ * parallel scope. This is a last resort, which may lead to unaligned tiles,
+ * like in the following figure. This unalignment may lead to poor runtime
+ * locality and/or long compiling time for analyzing complex index expressions
+ *
+ * 0000111
+ * 1222233
+ *
+ * We use a greedy algorithm that is guaranteed to work when the number of
+ * scopes is no more than 3, but may fail for more scopes.
+ *
+ * Algorithm:
+ *
+ * 1. Find a scope that all scopes more outer than it are of equal or more
+ * priority, and all scopes more inner than it are of less priority, or vice
+ * versa (always possible when # of scopes <= 3).
+ * 2. Do a `factor` split if the inner loops are prioritized, or a `nparts`
+ * split if the outer ones are prioritized. If all the affected loops have
+ * static length, split only one of them to avoid misalignment. Otherwise, merge
+ * them all first and then split.
+ * 3. Recurse into each side respectively (goto 1).
+ *
+ * @param loops : Loops from outer to inner
+ * @param scopes : Scopes we want to parallelize the loops to. E.g.,
+ * ["blockIdx.x", "threadIdx.y", "threadIdx.x"]. Outer loops prefer left-side
+ * scopes in this list. A scope can be `serialScope` for not parallelizing
+ * @param limits : The maximum length acceptable by each scope in `scopes`.
+ * `nullopt` = no limit. One of the limits should be no limit to absorb exceeded
+ * length
+ * @param priority : Priority of each scope. E.g., if `scopes = ["blockIdx.x",
+ * "threadIdx.y", "threadIdx.x"]`, `priority = [10, 20, 0]`, we fill
+ * `threadIdx.y` to reach its limits first, and then `blockIdx.x`, and then
+ * `threadIdx.x`.
+ */
+static void parallelizePerfectNest(
+    Schedule &s, const std::vector<ID> &loops,
+    const std::vector<ParallelScope> &scopes,
+    const std::vector<std::optional<int64_t>> &limits,
+    const std::vector<int> &priority,
+    const std::function<void(const ParallelScope &,
+                             const std::optional<int64_t> &)> &callback) {
+    ASSERT(!scopes.empty());
+    if (scopes.size() == 1) {
+        if (scopes[0] != serialScope) {
+            s.beginTransaction();
+            try {
+                auto &&mergedId = mergeAll(s, loops);
+                if (mergedId.isValid()) {
+                    s.parallelize(mergedId, scopes[0]);
+                    if (callback != nullptr) {
+                        callback(scopes[0], findStaticLen(s, mergedId));
+                    }
+                }
+                s.commitTransaction();
+            } catch (const InvalidSchedule &e) {
+                s.abortTransaction();
+            }
+        }
+        return;
+    }
+
+    std::vector<std::optional<int64_t>> lengths;
+    lengths.reserve(loops.size());
+    for (auto &&loopId : loops) {
+        lengths.emplace_back(findStaticLen(s, loopId));
+    }
+
+    // Check if we can found a split point where inner parts are prioritized.
+    // Check this before checking outer parts because `factor` is preferred than
+    // `nparts` (see doc for `split`)
+    for (int i = 1, n = scopes.size(); i < n; i++) {
+        if (*std::min_element(priority.begin() + i, priority.end()) >
+            *std::max_element(priority.begin(), priority.begin() + i)) {
+            auto scopesL = ranges::to<std::vector>(scopes | views::take(i));
+            auto limitsL = ranges::to<std::vector>(limits | views::take(i));
+            auto priorityL = ranges::to<std::vector>(priority | views::take(i));
+            auto scopesR = ranges::to<std::vector>(scopes | views::drop(i));
+            auto limitsR = ranges::to<std::vector>(limits | views::drop(i));
+            auto priorityR = ranges::to<std::vector>(priority | views::drop(i));
+
+            auto lim =
+                std::accumulate(limits.begin() + i, limits.end(),
+                                std::optional<int64_t>{1}, optMul<int64_t>);
+            if (!lim.has_value()) {
+                parallelizePerfectNest(s, loops, scopesR, limitsR, priorityR,
+                                       callback);
+                return;
+            }
+            ASSERT(*lim > 0);
+            int m = loops.size(), j = m - 1;
+            while (j >= 0 && lengths[j].has_value() && *lim >= *lengths[j]) {
+                ASSERT(*lengths[j] > 0);
+                *lim = ceilDiv(*lim, *lengths[j--]);
+            }
+            if (j == -1 || lim == 1) {
+                parallelizePerfectNest(
+                    s, ranges::to<std::vector>(loops | views::take(j + 1)),
+                    scopesL, limitsL, priorityL, callback);
+                parallelizePerfectNest(
+                    s, ranges::to<std::vector>(loops | views::drop(j + 1)),
+                    scopesR, limitsR, priorityR, callback);
+            } else if (lengths[j].has_value()) {
+                auto &&[outerId, innerId] = s.split(loops[j], *lim);
+                parallelizePerfectNest(
+                    s,
+                    ranges::to<std::vector>(views::concat(
+                        loops | views::take(j), views::single(outerId))),
+                    scopesL, limitsL, priorityL, callback);
+                parallelizePerfectNest(
+                    s,
+                    ranges::to<std::vector>(views::concat(
+                        views::single(innerId), loops | views::drop(j + 1))),
+                    scopesR, limitsR, priorityR, callback);
+            } else {
+                auto &&[outerId, innerId] =
+                    s.split(mergeAll(s, loops | views::take(j + 1)), *lim);
+                if (!s.findAll(outerId).empty()) { // Maybe null by assertions
+                    parallelizePerfectNest(s, {outerId}, scopesL, limitsL,
+                                           priorityL, callback);
+                }
+                parallelizePerfectNest(
+                    s,
+                    ranges::to<std::vector>(views::concat(
+                        views::single(innerId), loops | views::drop(j + 1))),
+                    scopesR, limitsR, priorityR, callback);
+            }
+            return;
+        }
+    }
+
+    // Check if we can found a split point where outer parts are prioritized.
+    for (int i = 1, n = scopes.size(); i < n; i++) {
+        if (*std::min_element(priority.begin(), priority.begin() + i) >
+            *std::max_element(priority.begin() + i, priority.end())) {
+            auto scopesL = ranges::to<std::vector>(scopes | views::take(i));
+            auto limitsL = ranges::to<std::vector>(limits | views::take(i));
+            auto priorityL = ranges::to<std::vector>(priority | views::take(i));
+            auto scopesR = ranges::to<std::vector>(scopes | views::drop(i));
+            auto limitsR = ranges::to<std::vector>(limits | views::drop(i));
+            auto priorityR = ranges::to<std::vector>(priority | views::drop(i));
+
+            auto lim =
+                std::accumulate(limits.begin(), limits.begin() + i,
+                                std::optional<int64_t>{1}, optMul<int64_t>);
+            if (!lim.has_value()) {
+                parallelizePerfectNest(s, loops, scopesL, limitsL, priorityL,
+                                       callback);
+                return;
+            }
+            ASSERT(*lim > 0);
+            int m = loops.size(), j = 0;
+            while (j < m && lengths[j].has_value() && *lim >= *lengths[j]) {
+                ASSERT(*lengths[j] > 0);
+                *lim = ceilDiv(*lim, *lengths[j++]);
+            }
+            if (j == m || lim == 1) {
+                parallelizePerfectNest(
+                    s, ranges::to<std::vector>(loops | views::take(j)), scopesL,
+                    limitsL, priorityL, callback);
+                parallelizePerfectNest(
+                    s, ranges::to<std::vector>(loops | views::drop(j)), scopesR,
+                    limitsR, priorityR, callback);
+            } else if (lengths[j].has_value()) {
+                auto &&[outerId, innerId] = s.split(loops[j], -1, *lim);
+                parallelizePerfectNest(
+                    s,
+                    ranges::to<std::vector>(views::concat(
+                        loops | views::take(j), views::single(outerId))),
+                    scopesL, limitsL, priorityL, callback);
+                parallelizePerfectNest(
+                    s,
+                    ranges::to<std::vector>(views::concat(
+                        views::single(innerId), loops | views::drop(j + 1))),
+                    scopesR, limitsR, priorityR, callback);
+            } else {
+                auto &&[outerId, innerId] =
+                    s.split(mergeAll(s, loops | views::drop(j)), -1, *lim);
+                parallelizePerfectNest(
+                    s,
+                    ranges::to<std::vector>(views::concat(
+                        loops | views::take(j), views::single(outerId))),
+                    scopesL, limitsL, priorityL, callback);
+                if (!s.findAll(innerId).empty()) { // Maybe null by assertions
+                    parallelizePerfectNest(s, {innerId}, scopesR, limitsR,
+                                           priorityR, callback);
+                }
+            }
+            return;
+        }
+    }
+
+    ERROR("The priority is unsupported by the current greedy algorithm");
+}
 
 void Schedule::autoParallelize(const Ref<Target> &target) {
 #ifdef FT_WITH_CUDA
@@ -89,268 +383,218 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
     }
 #endif // FT_WITH_CUDA
 
+    auto &&[_allCandidates, _noRedCandidates] = allParallelizableLoops(*this);
+    auto &&allCandidates = _allCandidates;
+    auto &&noRedCandidates = _noRedCandidates;
+
     // Try to merge and parallelize as many outer loops as possible
     std::function<void(For, bool, bool)> autoParallelizeOuter =
         [&](For root, bool parentIsWarp, bool parallelizeAmongBlocks) {
-#ifdef FT_WITH_CUDA
-            if (root->property_->parallel_ != serialScope) {
-                parentIsWarp = true;
-                if (findAll("<For><-(!<For><-)*" + toString(root->id()))
-                        .size() > 1) {
-                    // There are multiple loop nests inside one kernel. Don't
-                    // parallelize these inner loops to blocks. Otherwise, there
-                    // might be cross-block dependence inside one kernel, which
-                    // cannot be resolved.
-                    parallelizeAmongBlocks = false;
-                }
-                // We will find out `maxMergeLevel == 0`, and recurse into the
-                // next frame of `autoParallelizeOuter`.
-            }
-#endif // FT_WITH_CUDA
-
-            // Count how many loops we can merge and drop the result. Don't
-            // worry about repeatly doing the same merging, because we have
-            // memoized schedules
-            int maxMergeLevel = 0;
-            beginTransaction();
-            try {
-                ID mergedId, loopId = root->id();
-                while (loopId.isValid()) {
-                    ID innerId;
-                    if (auto inners =
-                            findAll("<For><-(!<For><-)*" + toString(loopId));
-                        inners.size() == 1) {
-                        innerId = inners.front()->id();
-                    }
-                    if (find(loopId).as<ForNode>()->property_->parallel_ !=
-                        serialScope) {
-                        if (innerId.isValid()) {
-                            reorder({innerId, loopId});
-                            loopId = innerId;
-                            continue;
-                        } else {
-                            break;
-                        }
-                    }
-                    mergedId =
-                        mergedId.isValid() ? merge(mergedId, loopId) : loopId;
-                    maxMergeLevel++;
-                    loopId = innerId;
-                }
-            } catch (const InvalidSchedule &e) {
-                // do nothing
-            }
-            abortTransaction();
-
-            // Suppose we can merge n loops at maximum, we try merging and
-            // parallelizing n loops first, then try n - 1, n - 2, and so on.
-            // Stop on the first success.
-            //
             // We first try to parallel with best effort. But after we have
             // reached enough degree of parallelism, we stop introducing
             // parallel reductions, and only parallelize truly dependence-free
             // loops. Since we have already reorder dependence-free loops out of
             // reduction loops, we can safely stop on the first success without
             // lossing the possiblily of parallelizing any dependence-free loop.
-            bool done = false;
-            for (int mergeLevel = maxMergeLevel; mergeLevel > 0; mergeLevel--) {
-                beginTransaction();
-                try {
-                    ID mergedId, loopId = root->id();
-                    Expr remainingLen; // length left for outer levels if we
-                                       // don't parallelize this level
-                    for (int i = 0; i < mergeLevel;) {
-                        ID innerId;
-                        if (auto inners = findAll("<For><-(!<For><-)*" +
-                                                  toString(loopId));
-                            inners.size() == 1) {
-                            innerId = inners.front()->id();
-                        }
-                        if (find(loopId).as<ForNode>()->property_->parallel_ !=
-                            serialScope) {
-                            if (innerId.isValid()) {
-                                reorder({innerId, loopId});
-                                loopId = innerId;
-                                continue;
-                            } else {
-                                break;
-                            }
-                        }
-                        if (mergedId.isValid()) {
-                            remainingLen = find(mergedId).as<ForNode>()->len_;
-                            mergedId = merge(mergedId, loopId);
-                        } else {
-                            remainingLen = makeIntConst(1);
-                            mergedId = loopId;
-                        }
-                        i++;
-                        loopId = innerId;
-                    }
 
-                    bool allowReduction = true;
-                    if (auto _len = constFold(remainingLen);
-                        _len->nodeType() == ASTNodeType::IntConst) {
-                        auto len = _len.as<IntConstNode>()->val_;
-                        switch (target->type()) {
-                        case TargetType::CPU:
-                            allowReduction =
-                                (len < target.as<CPUTarget>()->nCores());
-                            break;
+            // I. Collect paralleliable loops
+            std::vector<ID> localNoRed, localAll;
+            ParallelScope testScope;
+            switch (target->type()) {
+            case TargetType::CPU:
+                testScope = OpenMPScope{};
+                break;
 #ifdef FT_WITH_CUDA
-                        case TargetType::GPU:
-                            allowReduction =
-                                (len <
-                                 target.as<GPUTarget>()->multiProcessorCount() *
-                                     256); // Magic number consistent with below
-                            break;
+            case TargetType::GPU:
+                testScope = blockIdxX;
+                break;
 #endif // FT_WITH_CUDA
-                        default:
-                            ASSERT(false);
-                        }
-                    }
-
-                    switch (target->type()) {
-                    case TargetType::CPU:
-                        parallelize(mergedId, OpenMPScope{}, allowReduction);
-                        break;
-
-#ifdef FT_WITH_CUDA
-                    case TargetType::GPU: {
-                        auto merged = find(mergedId);
-                        auto isParallelLoop = [](const Stmt &s) {
-                            return s->nodeType() == ASTNodeType::For &&
-                                   s.as<ForNode>()->property_->parallel_ !=
-                                       serialScope;
-                        };
-                        bool childIsWarp =
-                            !findAllStmt(merged, isParallelLoop).empty();
-                        // We are parallelizing loops to occupy SMs and cores in
-                        // each SM. Depending on wether there is dependence
-                        // along the loop (only reduction dependence is
-                        // allowed), we have different priority.
-                        //
-                        // If there IS NO dependence, we want to occupy as much
-                        // hardware resouce as possible. As the loop length
-                        // increases, we meet the following requirements in
-                        // order:
-                        //
-                        // 1. If `parallelizeAmongBlocks`, we try to use all SMs
-                        // by increasing the number of blocks, else use only one
-                        // SM (one block).
-                        // 2. Try to use more threads on each SM. But if there
-                        // are too many, scale to more blocks. There extra
-                        // blocks will be queued to run on SMs.
-                        //
-                        // If there IS dependence, we want to put threads near
-                        // each other if there are few threads. We only need to
-                        // meet the following requirement:
-                        //
-                        // 1. Try to allocate threads on one SM (one block).
-                        // Only if the number of threads reaches the limits of
-                        // one block and `parallelizeAmongBlocks` is true, scale
-                        // to more blocks.
-                        //
-                        // When splitting a loop, if the loop length is
-                        // constant, we split it only once, to reduce redundant
-                        // guards, and save time for dependence analysis. If
-                        // not, we split it twice, and merge once
-                        int numSM = 1;
-                        if (parallelizeAmongBlocks) {
-                            numSM =
-                                target.as<GPUTarget>()->multiProcessorCount();
-                        }
-                        int maxThreads =
-                            256; // Can be max thread per block (1024),
-                                 // but our generated kernels are huge,
-                                 // so set it lower to reserve for more
-                                 // registers. TODO: no magic number
-                        if (parentIsWarp || childIsWarp) {
-                            maxThreads /= target.as<GPUTarget>()->warpSize();
-                        }
-                        bool hasDep =
-                            FindDeps()
-                                .direction(
-                                    {{{mergedId, DepDirection::Different}}})
-                                .filterSubAST(mergedId)
-                                .ignoreReductionWAW(false)
-                                .exists(ast());
-                        ID l1, l1b, l2;
-                        if (!hasDep) {
-                            if (auto loopNode = merged.as<ForNode>();
-                                loopNode->len_->nodeType() ==
-                                ASTNodeType::IntConst) {
-                                auto len =
-                                    loopNode->len_.as<IntConstNode>()->val_;
-                                if (len <= numSM) {
-                                    l1 = mergedId;
-                                } else if (len <= numSM * maxThreads) {
-                                    std::tie(l1, l2) =
-                                        split(mergedId, -1, numSM);
-                                } else {
-                                    std::tie(l1, l2) =
-                                        split(mergedId, maxThreads);
-                                }
-                            } else {
-                                // We don't use the `nparts` mode of `split`,
-                                // because it will hinder dependence analysis.
-                                // Instead, we use the `factor` mode and then
-                                // reorder. See the doc string of `split` for
-                                // details
-                                std::tie(l2, l1) = split(mergedId, numSM);
-                                reorder({l1, l2});
-                                if (!findAll(l2).empty()) {
-                                    std::tie(l1b, l2) = split(l2, maxThreads);
-                                }
-                            }
-                        } else {
-                            if (!allowReduction) {
-                                throw InvalidSchedule(
-                                    "Reductions found but allowReduction is "
-                                    "false");
-                            }
-                            std::tie(l1, l2) = split(mergedId, maxThreads);
-                        }
-                        if (parallelizeAmongBlocks && l1.isValid() &&
-                            !findAll(l1).empty()) {
-                            if (l1b.isValid() && !findAll(l1b).empty()) {
-                                // We are unable to fuse `l1` and `l1b` back to
-                                // one loop. Because the length of `l1b` is not
-                                // a constant, a division by this length will be
-                                // introduced, which is not supported by ISL and
-                                // may probably lead to false dependences
-                                parallelize(l1, blockIdxY, allowReduction);
-                                parallelize(l1b, blockIdxX, allowReduction);
-                            } else {
-                                parallelize(l1, blockIdxX, allowReduction);
-                            }
-                        }
-                        if (l2.isValid() && !findAll(l2).empty()) {
-                            parallelize(l2,
-                                        (!parentIsWarp && !childIsWarp)
-                                            ? threadIdxX
-                                            : threadIdxY,
-                                        allowReduction);
-                        }
-                        break;
-                    }
-#endif // FT_WITH_CUDA
-
-                    default:
-                        ASSERT(false);
-                    }
-
-                    done = true;
-                    commitTransaction();
+            default:
+                ASSERT(false);
+            }
+            for (ID id = root->id();;) {
+                if (allCandidates.count(id) &&
+                    testParallelizableAfterMerge(
+                        *this, views::concat(localAll, views::single(id)),
+                        testScope)) {
+                    localAll.emplace_back(id);
+                }
+                if (noRedCandidates.count(id) &&
+                    testParallelizableAfterMerge(
+                        *this, views::concat(localNoRed, views::single(id)),
+                        testScope)) {
+                    localNoRed.emplace_back(id);
+                }
+                if (auto nexts = findAll("<For><-(!<For><-)*" + toString(id));
+                    nexts.size() == 1) {
+                    id = nexts.front()->id();
+                } else {
                     break;
-                } catch (const InvalidSchedule &e) {
-                    abortTransaction();
                 }
             }
 
+            // II. Collect target degree of parallelism
+            [[maybe_unused]] int numCPU = 0, numSM = 0, maxThreads = 0;
+            switch (target->type()) {
+            case TargetType::CPU:
+                numCPU = target.as<CPUTarget>()->nCores();
+                break;
+#ifdef FT_WITH_CUDA
+            case TargetType::GPU: {
+                numSM = target.as<GPUTarget>()->multiProcessorCount();
+                maxThreads =
+                    256; // Can be max thread per block (1024), but our
+                         // generated kernels are huge, so set it lower to
+                         // reserve for more registers. TODO: no magic number
+                if (parentIsWarp &&
+                    findAll("<For><-(!<For><-)*" + toString(root->id()))
+                            .size() > 1) {
+                    // There are multiple loop nests inside one kernel. Don't
+                    // parallelize these inner loops to blocks. Otherwise, there
+                    // might be cross-block dependence inside one kernel, which
+                    // cannot be resolved.
+                    parallelizeAmongBlocks = false;
+                }
+                bool childIsWarp =
+                    !findAllStmt(root, [](const Stmt &s) {
+                         return s->nodeType() == ASTNodeType::For &&
+                                s.as<ForNode>()->property_->parallel_ !=
+                                    serialScope;
+                     }).empty();
+                if (parentIsWarp || childIsWarp) {
+                    maxThreads /= target.as<GPUTarget>()->warpSize();
+                }
+                break;
+            }
+#endif // FT_WITH_CUDA
+            default:
+                ASSERT(false);
+            }
+
+            // III. Do parallelization
+            bool done = false;
+            std::vector<ParallelScope> scopes;
+            std::vector<std::optional<int64_t>> limits;
+            std::vector<int> priority;
+
+            // III a. No reduction
+            switch (target->type()) {
+            case TargetType::CPU:
+                scopes = {OpenMPScope{}};
+                limits = {std::nullopt};
+                priority = {0};
+                break;
+
+#ifdef FT_WITH_CUDA
+            case TargetType::GPU:
+                if (parallelizeAmongBlocks) {
+                    scopes = {
+                        blockIdxY, // Finally use more blocks
+                        blockIdxX, // First occupy all SM
+                        threadIdxY // Next fill each SM (threadIdxX is reserved
+                                   // for warps)
+                    };
+                    limits = {
+                        std::nullopt,
+                        numSM,
+                        maxThreads,
+                    };
+                    priority = {0, 2, 1};
+
+                    // Have a try to see if we don't need blockIdxY for simpler
+                    // code
+                    bool smFull = false;
+                    beginTransaction();
+                    parallelizePerfectNest(
+                        *this, localNoRed, scopes, limits, priority,
+                        [&](const ParallelScope &scope,
+                            const std::optional<int64_t> &len) {
+                            if (scope == blockIdxY && len.has_value()) {
+                                smFull = true;
+                            }
+                        });
+                    abortTransaction();
+                    if (smFull) {
+                        scopes = {blockIdxX, threadIdxY};
+                        limits = {std::nullopt, maxThreads};
+                        priority = {0, 1};
+                    }
+                } else {
+                    scopes = {threadIdxY};
+                    limits = {std::nullopt};
+                    priority = {0};
+                }
+                break;
+#endif // FT_WITH_CUDA
+
+            default:
+                ASSERT(false);
+            }
+            bool needParRed = true;
+            beginTransaction();
+            parallelizePerfectNest(
+                *this, localNoRed, scopes, limits, priority,
+                [&](const ParallelScope &scope,
+                    const std::optional<int64_t> &len) {
+                    done = true;
+                    if (std::holds_alternative<OpenMPScope>(scope) &&
+                        len.has_value() && *len >= numCPU) {
+                        needParRed = false;
+                    }
+#ifdef FT_WITH_CUDA
+                    if ((scope == blockIdxY && len.has_value()) ||
+                        (scope == blockIdxX && len.has_value() &&
+                         *len >= numSM)) {
+                        needParRed = false;
+                    }
+#endif // FT_WITH_CUDA
+                });
+
+            // III b. Reduction
+            if (!needParRed) {
+                commitTransaction();
+            } else {
+                abortTransaction();
+                switch (target->type()) {
+                case TargetType::CPU:
+                    scopes = {OpenMPScope{}, serialScope};
+                    limits = {numCPU, std::nullopt};
+                    priority = {1, 0};
+                    break;
+#ifdef FT_WITH_CUDA
+                case TargetType::GPU:
+                    if (parallelizeAmongBlocks) {
+                        scopes = {
+                            blockIdxZ,   // Next try to use more blocks
+                            threadIdxZ,  // First fill each SM because we pre
+                                         // reducing inside an SM
+                            serialScope, // Finally do serial reduction
+                        };
+                        limits = {numSM, maxThreads, std::nullopt};
+                        priority = {1, 2, 0};
+                    } else {
+                        scopes = {threadIdxZ, serialScope};
+                        limits = {maxThreads, std::nullopt};
+                        priority = {1, 0};
+                    }
+                    break;
+#endif // FT_WITH_CUDA
+                default:
+                    ASSERT(false);
+                }
+                parallelizePerfectNest(*this, localAll, scopes, limits,
+                                       priority,
+                                       [&](auto &&, auto &&) { done = true; });
+            }
+
+            /// IV. Recurse into sub-loops if failed
             if (!done) {
                 for (auto &&subLoop :
                      findAll("<For><-(!<For><-)*" + toString(root->id()))) {
-                    autoParallelizeOuter(subLoop.as<ForNode>(), parentIsWarp,
+                    autoParallelizeOuter(subLoop.as<ForNode>(),
+                                         parentIsWarp ||
+                                             root->property_->parallel_ !=
+                                                 serialScope,
                                          parallelizeAmongBlocks);
                 }
             }
