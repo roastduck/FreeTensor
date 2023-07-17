@@ -13,6 +13,7 @@
 #include <isl/options.h>
 #include <isl/set.h>
 #include <isl/space.h>
+#include <isl/val.h>
 
 #include <debug.h>
 #include <debug/profile.h>

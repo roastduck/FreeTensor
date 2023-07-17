@@ -260,6 +260,7 @@ endif()
 # FIXME: We should install everything to `???/lib/python3.10/dist-packages/freetensor`
 set_target_properties(freetensor freetensor_ffi PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set_target_properties(freetensor_ffi PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE) # Required for PyTorch
+install(DIRECTORY ${ISL_DIR}/install/lib/ DESTINATION lib) # Trailing slash needed
 install(TARGETS freetensor LIBRARY DESTINATION lib)
 if (PY_BUILD_CMAKE_MODULE_NAME) # Install to `???/lib/python3.10/dist-packages/freetensor`
     install(TARGETS freetensor_ffi LIBRARY DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME} COMPONENT python_module)
