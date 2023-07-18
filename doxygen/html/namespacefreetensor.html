@@ -290,8 +290,6 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAccessPoint.html">FindAccessPoint</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAllIfs.html">FindAllIfs</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAllNoDeps.html">FindAllNoDeps</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1FindAllParallel.html">FindAllParallel</a></td></tr>
@@ -738,6 +736,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1UnaryExprNode.html">UnaryExprNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1UnboundNode.html">UnboundNode</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1UndoMakeReduction.html">UndoMakeReduction</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1UnexpectedQueryResult.html">UnexpectedQueryResult</a></td></tr>
@@ -906,6 +906,8 @@ Typedefs</h2></td></tr>
 <tr class="separator:a6ae11b6abeedd07ff8fd109dff1e688e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a649db9a36cd064e6d1102185c07447a1"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1CeilNode.html">CeilNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a649db9a36cd064e6d1102185c07447a1">Ceil</a></td></tr>
 <tr class="separator:a649db9a36cd064e6d1102185c07447a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad246cea9eee3fa4759cdf0a3ecccee20"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1UnboundNode.html">UnboundNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad246cea9eee3fa4759cdf0a3ecccee20">Unbound</a></td></tr>
+<tr class="separator:ad246cea9eee3fa4759cdf0a3ecccee20"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d1ee091a8856c85ddd4400ac04490e9"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1IfExprNode.html">IfExprNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4d1ee091a8856c85ddd4400ac04490e9">IfExpr</a></td></tr>
 <tr class="separator:a4d1ee091a8856c85ddd4400ac04490e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a539a36f725523c1fee5d301a246343bf"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1CastNode.html">CastNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a539a36f725523c1fee5d301a246343bf">Cast</a></td></tr>
@@ -1069,12 +1071,13 @@ Enumerations</h2></td></tr>
 , <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915faf3f6d0343d56ce88ce7958170ed05cb3">Floor</a>
 , <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fab95a01ffffa8fcdd2a9af961937c097c">Ceil</a>
 , <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa8657d89169b0bb2eee53bb1efe8fdf09">IfExpr</a>
+&#160;&#160;<a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915faedac80248b7bf68ccfaa9c78bfb81c32">Unbound</a>
+, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa8657d89169b0bb2eee53bb1efe8fdf09">IfExpr</a>
 , <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa4cd9f3996d60790cd11c04f842ebc43c">Cast</a>
 , <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa8b0f368e62695dc13b998050ea15a2c5">Intrinsic</a>
-, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa8e15aeb38a7c50c440d974cfadb9a42a">MarkVersion</a>
 , <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fae41195428f448a7971141f894e236b2d">LoadAtVersion</a>
+&#160;&#160;<a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa8e15aeb38a7c50c440d974cfadb9a42a">MarkVersion</a>
+, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fae41195428f448a7971141f894e236b2d">LoadAtVersion</a>
 <br />
  }</td></tr>
 <tr class="separator:afc87eee71f05eb84c5799d7f3492915f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1506,6 +1509,9 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 <tr class="memitem:a008da94a0543ea2a50e2c6faf3e28993"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a008da94a0543ea2a50e2c6faf3e28993"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a008da94a0543ea2a50e2c6faf3e28993">makeCeil</a> (T &amp;&amp;expr, std::source_location loc=std::source_location::current())</td></tr>
 <tr class="separator:a008da94a0543ea2a50e2c6faf3e28993"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a2cb76b80ff03609dba05517014154b"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a3a2cb76b80ff03609dba05517014154b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3a2cb76b80ff03609dba05517014154b">makeUnbound</a> (T &amp;&amp;expr, std::source_location loc=std::source_location::current())</td></tr>
+<tr class="separator:a3a2cb76b80ff03609dba05517014154b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4bf33415102ed6d3d622a39511421a26"><td class="memTemplParams" colspan="2">template&lt;class T , class U , class V &gt; </td></tr>
 <tr class="memitem:a4bf33415102ed6d3d622a39511421a26"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4bf33415102ed6d3d622a39511421a26">makeIfExpr</a> (T &amp;&amp;cond, U &amp;&amp;thenCase, V &amp;&amp;elseCase, std::source_location loc=std::source_location::current())</td></tr>
 <tr class="separator:a4bf33415102ed6d3d622a39511421a26"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -3669,6 +3675,20 @@ template&lt;class K &gt; </div>
 
 </div>
 </div>
+<a id="ad246cea9eee3fa4759cdf0a3ecccee20" name="ad246cea9eee3fa4759cdf0a3ecccee20"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad246cea9eee3fa4759cdf0a3ecccee20">&#9670;&#160;</a></span>Unbound</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt;<a class="el" href="classfreetensor_1_1UnboundNode.html">UnboundNode</a>&gt; <a class="el" href="namespacefreetensor.html#ad246cea9eee3fa4759cdf0a3ecccee20">freetensor::Unbound</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a1903ed0ef4fe6b9f2ad7d2e5721bf82f" name="a1903ed0ef4fe6b9f2ad7d2e5721bf82f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1903ed0ef4fe6b9f2ad7d2e5721bf82f">&#9670;&#160;</a></span>Var</h2>
 
@@ -3847,6 +3867,7 @@ template&lt;class K &gt; </div>
 <tr><td class="fieldname"><a id="afc87eee71f05eb84c5799d7f3492915fa1e34af023adeb7d5f484f8eb4b9826b6" name="afc87eee71f05eb84c5799d7f3492915fa1e34af023adeb7d5f484f8eb4b9826b6"></a>Abs&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="afc87eee71f05eb84c5799d7f3492915faf3f6d0343d56ce88ce7958170ed05cb3" name="afc87eee71f05eb84c5799d7f3492915faf3f6d0343d56ce88ce7958170ed05cb3"></a>Floor&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="afc87eee71f05eb84c5799d7f3492915fab95a01ffffa8fcdd2a9af961937c097c" name="afc87eee71f05eb84c5799d7f3492915fab95a01ffffa8fcdd2a9af961937c097c"></a>Ceil&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="afc87eee71f05eb84c5799d7f3492915faedac80248b7bf68ccfaa9c78bfb81c32" name="afc87eee71f05eb84c5799d7f3492915faedac80248b7bf68ccfaa9c78bfb81c32"></a>Unbound&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="afc87eee71f05eb84c5799d7f3492915fa8657d89169b0bb2eee53bb1efe8fdf09" name="afc87eee71f05eb84c5799d7f3492915fa8657d89169b0bb2eee53bb1efe8fdf09"></a>IfExpr&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="afc87eee71f05eb84c5799d7f3492915fa4cd9f3996d60790cd11c04f842ebc43c" name="afc87eee71f05eb84c5799d7f3492915fa4cd9f3996d60790cd11c04f842ebc43c"></a>Cast&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="afc87eee71f05eb84c5799d7f3492915fa8b0f368e62695dc13b998050ea15a2c5" name="afc87eee71f05eb84c5799d7f3492915fa8b0f368e62695dc13b998050ea15a2c5"></a>Intrinsic&#160;</td><td class="fielddoc"></td></tr>
@@ -13713,6 +13734,36 @@ template&lt;class T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>expr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::source_location&#160;</td>
+          <td class="paramname"><em>loc</em> = <code>std::source_location::current()</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3a2cb76b80ff03609dba05517014154b" name="a3a2cb76b80ff03609dba05517014154b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a2cb76b80ff03609dba05517014154b">&#9670;&#160;</a></span>makeUnbound()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> freetensor::makeUnbound </td>
+          <td>(</td>
           <td class="paramtype">T &amp;&amp;&#160;</td>
           <td class="paramname"><em>expr</em>, </td>
         </tr>

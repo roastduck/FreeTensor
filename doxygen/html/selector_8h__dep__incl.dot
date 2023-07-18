@@ -33,6 +33,8 @@ digraph "include/selector.h"
   Node51 [label="src/analyze/comp_unique\l_bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8cc.html",tooltip=" "];
   Node13 -> Node53 [dir="back",color="steelblue1",style="solid"];
   Node53 [label="src/autograd/merge\l_tape_input.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$merge__tape__input_8cc.html",tooltip=" "];
+  Node13 -> Node41 [dir="back",color="steelblue1",style="solid"];
+  Node41 [label="src/schedule/separate\l_tail.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$separate__tail_8cc.html",tooltip=" "];
   Node12 -> Node56 [dir="back",color="steelblue1",style="solid"];
   Node56 [label="include/analyze/comp\l_transient_bounds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$comp__transient__bounds_8h.html",tooltip=" "];
   Node12 -> Node78 [dir="back",color="steelblue1",style="solid"];
@@ -60,8 +62,6 @@ digraph "include/selector.h"
   Node66 [label="src/codegen/code_gen\l_cuda.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$code__gen__cuda_8cc.html",tooltip=" "];
   Node12 -> Node91 [dir="back",color="steelblue1",style="solid"];
   Node91 [label="src/frontend/frontend\l_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$frontend__var_8cc.html",tooltip=" "];
-  Node12 -> Node92 [dir="back",color="steelblue1",style="solid"];
-  Node92 [label="src/frontend/inlined\l_invoke.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$inlined__invoke_8cc.html",tooltip=" "];
   Node12 -> Node8 [dir="back",color="steelblue1",style="solid"];
   Node12 -> Node99 [dir="back",color="steelblue1",style="solid"];
   Node99 [label="src/pass/sink_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sink__var_8cc.html",tooltip=" "];
@@ -69,6 +69,7 @@ digraph "include/selector.h"
   Node35 [label="src/schedule/fuse.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8cc.html",tooltip=" "];
   Node12 -> Node102 [dir="back",color="steelblue1",style="solid"];
   Node102 [label="src/schedule/hoist\l_selected_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8cc.html",tooltip=" "];
+  Node12 -> Node41 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node103 [dir="back",color="steelblue1",style="solid"];
   Node103 [label="include/analyze/deps.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$deps_8h.html",tooltip=" "];
   Node103 -> Node87 [dir="back",color="steelblue1",style="solid"];
@@ -106,6 +107,7 @@ digraph "include/selector.h"
   Node21 -> Node39 [dir="back",color="steelblue1",style="solid"];
   Node21 -> Node19 [dir="back",color="steelblue1",style="solid"];
   Node21 -> Node40 [dir="back",color="steelblue1",style="solid"];
+  Node21 -> Node41 [dir="back",color="steelblue1",style="solid"];
   Node21 -> Node43 [dir="back",color="steelblue1",style="solid"];
   Node43 [label="src/schedule/split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$split_8cc.html",tooltip=" "];
   Node21 -> Node44 [dir="back",color="steelblue1",style="solid"];
@@ -146,6 +148,7 @@ digraph "include/selector.h"
   Node2 -> Node39 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node19 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node40 [dir="back",color="steelblue1",style="solid"];
+  Node2 -> Node41 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node43 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node111 [dir="back",color="steelblue1",style="solid"];
   Node111 [label="include/autograd/tape\l_strategy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$tape__strategy_8h.html",tooltip=" "];

@@ -71,6 +71,7 @@ digraph "include/ast.h"
   Node192 [label="include/analyze/find\l_stmt.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$find__stmt_8h.html",tooltip=" "];
   Node192 -> Node44 [dir="back",color="steelblue1",style="solid"];
   Node192 -> Node8 [dir="back",color="steelblue1",style="solid"];
+  Node192 -> Node32 [dir="back",color="steelblue1",style="solid"];
   Node172 -> Node83 [dir="back",color="steelblue1",style="solid"];
   Node47 -> Node216 [dir="back",color="steelblue1",style="solid"];
   Node216 [label="src/driver.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$driver_8cc.html",tooltip=" "];

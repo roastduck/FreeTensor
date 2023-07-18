@@ -33,6 +33,8 @@ digraph "include/analyze/find_stmt.h"
   Node52 [label="src/autograd/merge\l_tape_input.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$merge__tape__input_8cc.html",tooltip=" "];
   Node12 -> Node54 [dir="back",color="steelblue1",style="solid"];
   Node54 [label="src/pass/merge_and\l_hoist_if.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$merge__and__hoist__if_8cc.html",tooltip=" "];
+  Node12 -> Node40 [dir="back",color="steelblue1",style="solid"];
+  Node40 [label="src/schedule/separate\l_tail.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$separate__tail_8cc.html",tooltip=" "];
   Node11 -> Node55 [dir="back",color="steelblue1",style="solid"];
   Node55 [label="include/analyze/comp\l_transient_bounds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$comp__transient__bounds_8h.html",tooltip=" "];
   Node11 -> Node77 [dir="back",color="steelblue1",style="solid"];
@@ -74,14 +76,13 @@ digraph "include/analyze/find_stmt.h"
   Node11 -> Node54 [dir="back",color="steelblue1",style="solid"];
   Node11 -> Node95 [dir="back",color="steelblue1",style="solid"];
   Node95 [label="src/pass/prop_one_time\l_use.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$prop__one__time__use_8cc.html",tooltip=" "];
-  Node11 -> Node96 [dir="back",color="steelblue1",style="solid"];
-  Node96 [label="src/pass/remove_writes.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$remove__writes_8cc.html",tooltip=" "];
   Node11 -> Node98 [dir="back",color="steelblue1",style="solid"];
   Node98 [label="src/pass/sink_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sink__var_8cc.html",tooltip=" "];
   Node11 -> Node34 [dir="back",color="steelblue1",style="solid"];
   Node34 [label="src/schedule/fuse.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8cc.html",tooltip=" "];
   Node11 -> Node101 [dir="back",color="steelblue1",style="solid"];
   Node101 [label="src/schedule/hoist\l_selected_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8cc.html",tooltip=" "];
+  Node11 -> Node40 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node102 [dir="back",color="steelblue1",style="solid"];
   Node102 [label="include/analyze/deps.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$deps_8h.html",tooltip=" "];
   Node102 -> Node86 [dir="back",color="steelblue1",style="solid"];
@@ -94,7 +95,6 @@ digraph "include/analyze/find_stmt.h"
   Node102 -> Node5 [dir="back",color="steelblue1",style="solid"];
   Node102 -> Node89 [dir="back",color="steelblue1",style="solid"];
   Node102 -> Node95 [dir="back",color="steelblue1",style="solid"];
-  Node102 -> Node96 [dir="back",color="steelblue1",style="solid"];
   Node102 -> Node98 [dir="back",color="steelblue1",style="solid"];
   Node102 -> Node26 [dir="back",color="steelblue1",style="solid"];
   Node26 [label="src/schedule/auto_parallelize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__parallelize_8cc.html",tooltip=" "];
@@ -117,6 +117,7 @@ digraph "include/analyze/find_stmt.h"
   Node20 -> Node38 [dir="back",color="steelblue1",style="solid"];
   Node20 -> Node18 [dir="back",color="steelblue1",style="solid"];
   Node20 -> Node39 [dir="back",color="steelblue1",style="solid"];
+  Node20 -> Node40 [dir="back",color="steelblue1",style="solid"];
   Node20 -> Node42 [dir="back",color="steelblue1",style="solid"];
   Node42 [label="src/schedule/split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$split_8cc.html",tooltip=" "];
   Node1 -> Node106 [dir="back",color="steelblue1",style="solid"];
@@ -154,5 +155,6 @@ digraph "include/analyze/find_stmt.h"
   Node1 -> Node38 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node18 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node39 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node40 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node42 [dir="back",color="steelblue1",style="solid"];
 }

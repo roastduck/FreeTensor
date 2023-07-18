@@ -42,4 +42,6 @@ digraph "freetensor::UnaryExprNode"
   Node18 [label="freetensor::TanNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1TanNode.html",tooltip=" "];
   Node1 -> Node19 [dir="back",color="steelblue1",style="solid"];
   Node19 [label="freetensor::TanhNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1TanhNode.html",tooltip=" "];
+  Node1 -> Node20 [dir="back",color="steelblue1",style="solid"];
+  Node20 [label="freetensor::UnboundNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1UnboundNode.html",tooltip=" "];
 }

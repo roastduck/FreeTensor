@@ -52,8 +52,6 @@ digraph "freetensor::ExprNode"
   Node23 [label="freetensor::LTNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1LTNode.html",tooltip=" "];
   Node17 -> Node24 [dir="back",color="steelblue1",style="solid"];
   Node24 [label="freetensor::ModNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1ModNode.html",tooltip=" "];
-  Node17 -> Node25 [dir="back",color="steelblue1",style="solid"];
-  Node25 [label="freetensor::RealDivNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1RealDivNode.html",tooltip=" "];
   Node1 -> Node29 [dir="back",color="steelblue1",style="solid"];
   Node29 [label="freetensor::CastNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1CastNode.html",tooltip=" "];
   Node1 -> Node30 [dir="back",color="steelblue1",style="solid"];
@@ -100,6 +98,8 @@ digraph "freetensor::ExprNode"
   Node50 [label="freetensor::TanNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1TanNode.html",tooltip=" "];
   Node38 -> Node51 [dir="back",color="steelblue1",style="solid"];
   Node51 [label="freetensor::TanhNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1TanhNode.html",tooltip=" "];
-  Node1 -> Node52 [dir="back",color="steelblue1",style="solid"];
-  Node52 [label="freetensor::VarNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1VarNode.html",tooltip=" "];
+  Node38 -> Node52 [dir="back",color="steelblue1",style="solid"];
+  Node52 [label="freetensor::UnboundNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1UnboundNode.html",tooltip=" "];
+  Node1 -> Node53 [dir="back",color="steelblue1",style="solid"];
+  Node53 [label="freetensor::VarNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1VarNode.html",tooltip=" "];
 }

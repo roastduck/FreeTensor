@@ -81,6 +81,7 @@ digraph "src/schedule/separate_tail.cc"
   Node65 -> Node4 [color="steelblue1",style="solid"];
   Node65 -> Node3 [color="steelblue1",style="solid"];
   Node65 -> Node12 [color="steelblue1",style="solid"];
+  Node1 -> Node5 [color="steelblue1",style="solid"];
   Node1 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="math/bounds.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$bounds_8h.html",tooltip=" "];
   Node66 -> Node7 [color="steelblue1",style="solid"];
