@@ -97,6 +97,16 @@ UNARY_OP(Abs, _abs)
 UNARY_OP(Floor, std::floor)
 UNARY_OP(Ceil, std::ceil)
 
+Expr ConstFold::visit(const Unbound &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Unbound);
+    auto op = __op.as<UnboundNode>();
+    if (op->expr_->isConst()) {
+        return op->expr_;
+    }
+    return op;
+}
+
 Expr ConstFold::visit(const Cast &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Cast);

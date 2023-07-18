@@ -79,6 +79,7 @@ class GenPBExpr : public Visitor {
     void visit(const Min &op) override;
     void visit(const Max &op) override;
     void visit(const IfExpr &op) override;
+    void visit(const Unbound &op) override;
 };
 
 } // namespace freetensor

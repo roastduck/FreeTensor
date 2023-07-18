@@ -472,6 +472,10 @@ expr returns [Expr node]
         } else
             $node = makeCeil($expr.node);
       }
+    | UNBOUND '(' expr ')'
+      {
+        $node = makeUnbound($expr.node);
+      }
     | expr0=expr
       {int ty;} (
         '*' {ty = 1;}

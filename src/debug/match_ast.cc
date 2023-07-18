@@ -484,6 +484,12 @@ void MatchVisitor::visit(const Ceil &op) {
     RECURSE(op->expr_, instance->expr_);
 }
 
+void MatchVisitor::visit(const Unbound &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Unbound);
+    auto instance = instance_.as<UnboundNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
 void MatchVisitor::visit(const IfExpr &op) {
     CHECK(instance_->nodeType() == ASTNodeType::IfExpr);
     auto instance = instance_.as<IfExprNode>();

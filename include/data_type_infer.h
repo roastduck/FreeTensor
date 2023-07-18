@@ -49,6 +49,7 @@ class DataTypeInfer {
     static DataType infer(const AbsNode &op);
     static DataType infer(const FloorNode &op);
     static DataType infer(const CeilNode &op);
+    static DataType infer(const UnboundNode &op);
     static DataType infer(const IfExprNode &op);
     static DataType infer(const CastNode &op);
     static DataType infer(const IntrinsicNode &op);

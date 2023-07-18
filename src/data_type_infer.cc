@@ -475,6 +475,11 @@ DataType DataTypeInfer::infer(const CeilNode &op) {
     return op.expr_->dtype();
 }
 
+DataType DataTypeInfer::infer(const UnboundNode &op) {
+    CHK_TYPE(isBool, op.expr_->dtype(), op);
+    return DataType::Bool;
+}
+
 DataType DataTypeInfer::infer(const IfExprNode &op) {
     CHK_TYPE(isBool, op.cond_->dtype(), op);
     // We can safely upcast both BaseDataType and SignDataType

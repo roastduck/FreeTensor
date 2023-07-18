@@ -11,16 +11,6 @@
 
 namespace freetensor {
 
-class FindAllIfs : public Visitor {
-    std::unordered_set<ID> results_;
-
-  public:
-    const std::unordered_set<ID> &results() const { return results_; }
-
-  protected:
-    void visit(const If &op) override;
-};
-
 class WrapMetadata : public Mutator {
     std::string op_;
 
