@@ -102,6 +102,7 @@ digraph "include/lower.h"
   Node88 [label="pass/make_parallel\l_reduction.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$make__parallel__reduction_8h.html",tooltip=" "];
   Node88 -> Node7 [color="steelblue1",style="solid"];
   Node88 -> Node2 [color="steelblue1",style="solid"];
+  Node88 -> Node73 [color="steelblue1",style="solid"];
   Node88 -> Node89 [color="steelblue1",style="solid"];
   Node89 [label="analyze/find_loop_variance.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$find__loop__variance_8h.html",tooltip=" "];
   Node89 -> Node7 [color="steelblue1",style="solid"];

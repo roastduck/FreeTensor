@@ -106,16 +106,20 @@ digraph "include/math/rational.h"
   Node43 -> Node7 [dir="back",color="steelblue1",style="solid"];
   Node43 -> Node25 [dir="back",color="steelblue1",style="solid"];
   Node14 -> Node44 [dir="back",color="steelblue1",style="solid"];
-  Node44 [label="include/pass/shrink\l_for.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__for_8h.html",tooltip=" "];
+  Node44 [label="include/pass/make_parallel\l_reduction.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$make__parallel__reduction_8h.html",tooltip=" "];
   Node44 -> Node7 [dir="back",color="steelblue1",style="solid"];
-  Node44 -> Node19 [dir="back",color="steelblue1",style="solid"];
-  Node44 -> Node45 [dir="back",color="steelblue1",style="solid"];
-  Node45 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
-  Node44 -> Node20 [dir="back",color="steelblue1",style="solid"];
+  Node44 -> Node26 [dir="back",color="steelblue1",style="solid"];
+  Node14 -> Node45 [dir="back",color="steelblue1",style="solid"];
+  Node45 [label="include/pass/shrink\l_for.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__for_8h.html",tooltip=" "];
+  Node45 -> Node7 [dir="back",color="steelblue1",style="solid"];
+  Node45 -> Node19 [dir="back",color="steelblue1",style="solid"];
+  Node45 -> Node46 [dir="back",color="steelblue1",style="solid"];
+  Node46 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
+  Node45 -> Node20 [dir="back",color="steelblue1",style="solid"];
   Node14 -> Node16 [dir="back",color="steelblue1",style="solid"];
   Node14 -> Node37 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node16 [dir="back",color="steelblue1",style="solid"];
-  Node2 -> Node46 [dir="back",color="steelblue1",style="solid"];
-  Node46 [label="src/math/bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$bounds_8cc.html",tooltip=" "];
+  Node2 -> Node47 [dir="back",color="steelblue1",style="solid"];
+  Node47 [label="src/math/bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$bounds_8cc.html",tooltip=" "];
   Node2 -> Node34 [dir="back",color="steelblue1",style="solid"];
 }

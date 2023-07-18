@@ -96,7 +96,6 @@ Collaboration diagram for freetensor::ReductionItem:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a7f97136f7d18e1d7627c9b6ef87d3bff"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1ReductionItem.html#a7f97136f7d18e1d7627c9b6ef87d3bff">compHash</a> () override</td></tr>
-<tr class="memdesc:a7f97136f7d18e1d7627c9b6ef87d3bff"><td class="mdescLeft">&#160;</td><td class="mdescRight">[begins_, ends_)  <br /></td></tr>
 <tr class="separator:a7f97136f7d18e1d7627c9b6ef87d3bff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1ASTPart"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1ASTPart')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1ASTPart.html">freetensor::ASTPart</a></td></tr>
 <tr class="memitem:a5c9c4de1fdf2f51b42b1356462a946ea inherit pub_methods_classfreetensor_1_1ASTPart"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ASTPart.html#a5c9c4de1fdf2f51b42b1356462a946ea">~ASTPart</a> ()</td></tr>
@@ -139,6 +138,9 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a4068bbfdc545174c7927ce7c20db0e46"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8391624beb371162bcf3d921001114a9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1SubTreeList.html">SubTreeList</a>&lt; <a class="el" href="classfreetensor_1_1ExprNode.html">ExprNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1ReductionItem.html#a8391624beb371162bcf3d921001114a9">ends_</a> = <a class="el" href="structfreetensor_1_1ChildOf.html">ChildOf</a>{this}</td></tr>
 <tr class="separator:a8391624beb371162bcf3d921001114a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4f98d0346ba62c4e83bbb603578d015"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1ReductionItem.html#aa4f98d0346ba62c4e83bbb603578d015">syncFlush_</a></td></tr>
+<tr class="memdesc:aa4f98d0346ba62c4e83bbb603578d015"><td class="mdescLeft">&#160;</td><td class="mdescRight">[begins_, ends_)  <br /></td></tr>
+<tr class="separator:aa4f98d0346ba62c4e83bbb603578d015"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -183,8 +185,7 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>[begins_, ends_) </p>
+<p>Use synced (atomic) reduce to flush to the final destination after parallel reduction. Used when we are reducing over multiple parallel scopes, where some of them are loop-carried reductions and others are random reductions </p>
 
 <p>Implements <a class="el" href="classfreetensor_1_1ASTPart.html#a73f6aa052b61db02ca16ce109960b1cc">freetensor::ASTPart</a>.</p>
 
@@ -230,6 +231,22 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa4f98d0346ba62c4e83bbb603578d015" name="aa4f98d0346ba62c4e83bbb603578d015"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa4f98d0346ba62c4e83bbb603578d015">&#9670;&#160;</a></span>syncFlush_</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::ReductionItem::syncFlush_</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>[begins_, ends_) </p>
 
 </div>
 </div>

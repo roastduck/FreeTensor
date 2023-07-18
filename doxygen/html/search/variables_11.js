@@ -20,5 +20,6 @@ var searchData=
   ['stridea_5f_17',['stridea_',['../classfreetensor_1_1MatMulNode.html#afb5ee412e447e27f97606ada6124e60e',1,'freetensor::MatMulNode']]],
   ['strideb_5f_18',['strideb_',['../classfreetensor_1_1MatMulNode.html#afb12f7051dad0223f6e5fe0a380f6a08',1,'freetensor::MatMulNode']]],
   ['stridec_5f_19',['stridec_',['../classfreetensor_1_1MatMulNode.html#a82efe76eb75e567c400820c805589ba0',1,'freetensor::MatMulNode']]],
-  ['sync_5f_20',['sync_',['../classfreetensor_1_1ReduceToNode.html#af4623c6e0b332069d8a98981056cb31b',1,'freetensor::ReduceToNode']]]
+  ['sync_5f_20',['sync_',['../classfreetensor_1_1ReduceToNode.html#af4623c6e0b332069d8a98981056cb31b',1,'freetensor::ReduceToNode']]],
+  ['syncflush_5f_21',['syncFlush_',['../structfreetensor_1_1ReductionItem.html#aa4f98d0346ba62c4e83bbb603578d015',1,'freetensor::ReductionItem']]]
 ];

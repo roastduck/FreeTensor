@@ -6,6 +6,5 @@ var searchData=
   ['unexpectedqueryresult_3',['UnexpectedQueryResult',['../classfreetensor_1_1UnexpectedQueryResult.html',1,'freetensor']]],
   ['updatedtype_4',['UpdateDType',['../classfreetensor_1_1UpdateDType.html',1,'freetensor']]],
   ['upperbound_5',['UpperBound',['../classfreetensor_1_1UpperBound.html',1,'freetensor']]],
-  ['usebuiltindiv_6',['UseBuiltinDiv',['../classfreetensor_1_1UseBuiltinDiv.html',1,'freetensor']]],
-  ['usesyncinfo_7',['UseSyncInfo',['../structfreetensor_1_1UseSyncInfo.html',1,'freetensor']]]
+  ['usebuiltindiv_6',['UseBuiltinDiv',['../classfreetensor_1_1UseBuiltinDiv.html',1,'freetensor']]]
 ];

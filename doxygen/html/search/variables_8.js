@@ -9,8 +9,7 @@ var searchData=
   ['inv_5f_6',['inv_',['../structfreetensor_1_1InversionInfo.html#a9e5f144c27fa134b440dd5a586043d37',1,'freetensor::InversionInfo']]],
   ['isinfer_5f_7',['isInfer_',['../classfreetensor_1_1RandCtxImpl.html#a828a86527dc9840642d05eac14f5dd84',1,'freetensor::RandCtxImpl']]],
   ['isnode_5f_8',['isNode_',['../structfreetensor_1_1NodeIDOrParallelScope.html#a91180360905949408f590f5995bf0782',1,'freetensor::NodeIDOrParallelScope']]],
-  ['israndomaccess_5f_9',['isRandomAccess_',['../structfreetensor_1_1UseSyncInfo.html#a95feb4229d02e1ba86dbe5e8185b037c',1,'freetensor::UseSyncInfo']]],
-  ['iter_5f_10',['iter_',['../structfreetensor_1_1IterAxis.html#aed2eb36b71bdc7e48dbe48d890e39fa7',1,'freetensor::IterAxis::iter_()'],['../structfreetensor_1_1AccessPoint.html#ace563128de58d365ee834cc5028ceb3f',1,'freetensor::AccessPoint::iter_()'],['../classfreetensor_1_1ForNode.html#ae7a0ab11858f63e444d7e0dfd2e399bf',1,'freetensor::ForNode::iter_()'],['../invert__stmts_8cc.html#a09c6cc7e84d9cce963f88ccd6405c6c9',1,'iter_():&#160;invert_stmts.cc']]],
-  ['iter_5fdep_5fconstants_5f_11',['iter_dep_constants_',['../classfreetensor_1_1ScalarPropConst.html#a9913a60a4547b9ec5801dbea240cd05d',1,'freetensor::ScalarPropConst']]],
-  ['iterdim_5f_12',['iterDim_',['../structfreetensor_1_1Dependence.html#aa04c31fa52b3a59eda0374fb2070464b',1,'freetensor::Dependence']]]
+  ['iter_5f_9',['iter_',['../structfreetensor_1_1AccessPoint.html#ace563128de58d365ee834cc5028ceb3f',1,'freetensor::AccessPoint::iter_()'],['../classfreetensor_1_1ForNode.html#ae7a0ab11858f63e444d7e0dfd2e399bf',1,'freetensor::ForNode::iter_()'],['../structfreetensor_1_1IterAxis.html#aed2eb36b71bdc7e48dbe48d890e39fa7',1,'freetensor::IterAxis::iter_()'],['../invert__stmts_8cc.html#a09c6cc7e84d9cce963f88ccd6405c6c9',1,'iter_():&#160;invert_stmts.cc']]],
+  ['iter_5fdep_5fconstants_5f_10',['iter_dep_constants_',['../classfreetensor_1_1ScalarPropConst.html#a9913a60a4547b9ec5801dbea240cd05d',1,'freetensor::ScalarPropConst']]],
+  ['iterdim_5f_11',['iterDim_',['../structfreetensor_1_1Dependence.html#aa04c31fa52b3a59eda0374fb2070464b',1,'freetensor::Dependence']]]
 ];
