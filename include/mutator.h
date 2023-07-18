@@ -257,6 +257,10 @@ class Mutator {
         return makeCeil((*this)(op->expr_), op->debugBlame());
     }
 
+    virtual Expr visit(const Unbound &op) {
+        return makeUnbound((*this)(op->expr_), op->debugBlame());
+    }
+
     virtual Stmt visit(const For &op) {
         auto begin = (*this)(op->begin_);
         auto end = (*this)(op->end_);

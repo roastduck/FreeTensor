@@ -42,8 +42,8 @@ Stmt NormalizeThreadDims::visit(const For &_op) {
         CompUniqueBounds bound(*this);
 
         if (!isLegalLen(op->begin_)) {
-            op->body_ =
-                makeIf(makeGE(makeVar(op->iter_), op->begin_), op->body_);
+            op->body_ = makeIf(
+                makeUnbound(makeGE(makeVar(op->iter_), op->begin_)), op->body_);
             Expr begin;
             for (auto &&b : bound.getLower(op->begin_)) {
                 if (isLegalLen(b.allNames())) {
@@ -66,7 +66,8 @@ Stmt NormalizeThreadDims::visit(const For &_op) {
             op->begin_ = std::move(begin);
         }
         if (!isLegalLen(op->end_)) {
-            op->body_ = makeIf(makeLT(makeVar(op->iter_), op->end_), op->body_);
+            op->body_ = makeIf(
+                makeUnbound(makeLT(makeVar(op->iter_), op->end_)), op->body_);
             Expr end;
             for (auto &&b : bound.getUpper(op->end_)) {
                 if (isLegalLen(b.allNames())) {

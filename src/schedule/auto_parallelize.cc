@@ -565,15 +565,15 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                 case TargetType::GPU:
                     if (parallelizeAmongBlocks) {
                         scopes = {
-                            blockIdxZ,   // Next try to use more blocks
-                            threadIdxZ,  // First fill each SM because we pre
+                            blockIdxX,   // Next try to use more blocks
+                            threadIdxY,  // First fill each SM because we pre
                                          // reducing inside an SM
                             serialScope, // Finally do serial reduction
                         };
                         limits = {numSM, maxThreads, std::nullopt};
                         priority = {1, 2, 0};
                     } else {
-                        scopes = {threadIdxZ, serialScope};
+                        scopes = {threadIdxY, serialScope};
                         limits = {maxThreads, std::nullopt};
                         priority = {1, 0};
                     }
