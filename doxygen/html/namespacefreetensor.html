@@ -1858,6 +1858,9 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:a591db288f41d9a1f594ec90c5fb2b2f5"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; </td></tr>
 <tr class="memitem:a591db288f41d9a1f594ec90c5fb2b2f5"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a591db288f41d9a1f594ec90c5fb2b2f5">pbFuncWithTimeout</a> (const auto &amp;func, int seconds, const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;ctx, Args &amp;&amp;...args)</td></tr>
 <tr class="separator:a591db288f41d9a1f594ec90c5fb2b2f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff85cca84ef6baa9b9ee1965d9ebd40c"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; </td></tr>
+<tr class="memitem:aff85cca84ef6baa9b9ee1965d9ebd40c"><td class="memTemplItemLeft" align="right" valign="top">std::optional&lt; bool &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aff85cca84ef6baa9b9ee1965d9ebd40c">pbTestWithTimeout</a> (const auto &amp;test, int seconds, Args &amp;&amp;...args)</td></tr>
+<tr class="separator:aff85cca84ef6baa9b9ee1965d9ebd40c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a642e41a3db951b295abd0cb9acf31010"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a642e41a3db951b295abd0cb9acf31010">floorDiv</a> (IntegralExceptBool auto a, IntegralExceptBool auto b)</td></tr>
 <tr class="separator:a642e41a3db951b295abd0cb9acf31010"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a35487170b634f4d6fe6a832639d59730"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a35487170b634f4d6fe6a832639d59730">ceilDiv</a> (IntegralExceptBool auto a, IntegralExceptBool auto b)</td></tr>
@@ -16877,6 +16880,42 @@ template&lt;typename T &gt; </div>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
           <td class="paramname"><em>op</em></td><td>)</td>
           <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aff85cca84ef6baa9b9ee1965d9ebd40c" name="aff85cca84ef6baa9b9ee1965d9ebd40c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aff85cca84ef6baa9b9ee1965d9ebd40c">&#9670;&#160;</a></span>pbTestWithTimeout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class... Args&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt; bool &gt; freetensor::pbTestWithTimeout </td>
+          <td>(</td>
+          <td class="paramtype">const auto &amp;&#160;</td>
+          <td class="paramname"><em>test</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>seconds</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Args &amp;&amp;...&#160;</td>
+          <td class="paramname"><em>args</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
