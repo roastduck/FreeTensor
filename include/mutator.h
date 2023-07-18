@@ -283,8 +283,9 @@ class Mutator {
             for (auto &&item : r->ends_) {
                 ends.emplace_back((*this)(item));
             }
-            property->reductions_.emplace_back(makeReductionItem(
-                r->op_, r->var_, std::move(begins), std::move(ends)));
+            property->reductions_.emplace_back(
+                makeReductionItem(r->op_, r->var_, std::move(begins),
+                                  std::move(ends), r->syncFlush_));
         }
         auto body = (*this)(op->body_);
         return makeFor(op->iter_, std::move(begin), std::move(end),

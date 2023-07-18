@@ -13,18 +13,25 @@ struct ReductionItem : public ASTPart {
     std::string var_;
     SubTreeList<ExprNode> begins_ = ChildOf{this},
                           ends_ = ChildOf{this}; /// [begins_, ends_)
+    bool syncFlush_; /// Use synced (atomic) reduce to flush to the final
+                     /// destination after parallel reduction. Used when we are
+                     /// reducing over multiple parallel scopes, where some of
+                     /// them are loop-carried reductions and others are random
+                     /// reductions
 
     void compHash() override;
 };
 
 template <class Tbegins, class Tends>
 Ref<ReductionItem> makeReductionItem(ReduceOp op, const std::string &var,
-                                     Tbegins &&begins, Tends &&ends) {
+                                     Tbegins &&begins, Tends &&ends,
+                                     bool syncFlush) {
     auto r = Ref<ReductionItem>::make();
     r->op_ = op;
     r->var_ = var;
     r->begins_ = std::forward<Tbegins>(begins);
     r->ends_ = std::forward<Tends>(ends);
+    r->syncFlush_ = syncFlush;
     return r;
 }
 
@@ -70,7 +77,8 @@ struct ForProperty : public ASTPart {
 };
 
 inline Ref<ReductionItem> deepCopy(const Ref<ReductionItem> &r) {
-    return makeReductionItem(r->op_, r->var_, r->begins_, r->ends_);
+    return makeReductionItem(r->op_, r->var_, r->begins_, r->ends_,
+                             r->syncFlush_);
 }
 
 inline Ref<ForProperty> deepCopy(const Ref<ForProperty> &_p) {
