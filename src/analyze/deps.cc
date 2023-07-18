@@ -824,15 +824,25 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         }
 
         // Fine check
-        if ((mode_ == FindDepsMode::KillEarlier ||
-             mode_ == FindDepsMode::KillBoth) &&
-            !isSubset(realEarlierIter, range(nearest))) {
-            return;
+        if (mode_ == FindDepsMode::KillEarlier ||
+            mode_ == FindDepsMode::KillBoth) {
+            if (auto flag = pbTestWithTimeout(
+                    static_cast<bool (*)(const PBSet &, const PBSet &)>(
+                        isSubset),
+                    10, realEarlierIter, range(nearest));
+                !flag.has_value() || !*flag) {
+                return;
+            }
         }
-        if ((mode_ == FindDepsMode::KillLater ||
-             mode_ == FindDepsMode::KillBoth) &&
-            !isSubset(realLaterIter, domain(nearest))) {
-            return;
+        if (mode_ == FindDepsMode::KillLater ||
+            mode_ == FindDepsMode::KillBoth) {
+            if (auto flag = pbTestWithTimeout(
+                    static_cast<bool (*)(const PBSet &, const PBSet &)>(
+                        isSubset),
+                    10, realLaterIter, domain(nearest));
+                !flag.has_value() || !*flag) {
+                return;
+            }
         }
     }
 
