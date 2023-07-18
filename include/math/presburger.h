@@ -963,6 +963,23 @@ auto pbFuncWithTimeout(const auto &func, int seconds, const PBCtx &ctx,
     return result;
 }
 
+template <class... Args>
+std::optional<bool> pbTestWithTimeout(const auto &test, int seconds,
+                                      Args &&...args) {
+    auto bytes = timeout(
+        [&]() {
+            bool flag = test(std::forward<Args>(args)...);
+            std::vector<std::byte> bytes = {(std::byte)flag};
+            return bytes;
+        },
+        seconds);
+    if (bytes.empty()) {
+        return std::nullopt;
+    } else {
+        return (bool)bytes[0];
+    }
+}
+
 } // namespace freetensor
 
 #endif // FREE_TENSOR_PRESBURGER_H
