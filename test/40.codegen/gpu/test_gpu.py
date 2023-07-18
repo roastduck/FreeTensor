@@ -630,7 +630,7 @@ def test_dynamic_thread_dim_2():
                     with ft.For("threadIdx.y", 0,
                                 ft.min(offset[i + 1] + -1 * offset[i],
                                        4)) as ty:
-                        with ft.If(ty < ft.any()):
+                        with ft.If(ft.unbound(ty < ft.any())):
                             ft.Any()
     assert ft.pop_ast().match(func.body)
 
@@ -867,7 +867,7 @@ def test_bounded_length():
     ]) as (a, b):
         with ft.For(".threadIdx.y", 0, 99) as thy:
             with ft.For(".threadIdx.x", 0, 99) as thx:  # i = thx + 1
-                with ft.If(thx >= thy):
+                with ft.If(ft.unbound(thy < thx + 1)):
                     b[thx + 1, thy] = a[thx + 1, thy] + 1
     assert ft.pop_ast().match(func.body)
 

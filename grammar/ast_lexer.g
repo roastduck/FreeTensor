@@ -47,6 +47,7 @@ MARK_VERSION:   '@!mark_version';
 // Special Expr
 FLOOR:      '@!floor';
 CEIL:       '@!ceil';
+UNBOUND:    '@!unbound';
 ROUNDTO0:   '@!towards0';
 MAX:        '@!max';
 MIN:        '@!min';

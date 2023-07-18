@@ -341,6 +341,9 @@ void init_ffi_ast_expr(py::module_ &m) {
     m.def(
         "makeCeil", [](const Expr &_1) { return makeCeil(_1); }, "expr"_a);
     m.def(
+        "makeUnbound", [](const Expr &_1) { return makeUnbound(_1); },
+        "expr"_a);
+    m.def(
         "makeIfExpr",
         [](const Expr &_1, const Expr &_2, const Expr &_3) {
             return makeIfExpr(_1, _2, _3);

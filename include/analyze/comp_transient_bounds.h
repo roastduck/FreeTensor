@@ -73,6 +73,10 @@ class CompTransientBounds : public BaseClass,
         }
 
         for (auto &&cond : dnf.front()) {
+            if (cond->nodeType() == ASTNodeType::Unbound) {
+                continue;
+            }
+
             if (hasIntersect(allReads(cond), bodyAllWrites)) {
                 continue;
             }

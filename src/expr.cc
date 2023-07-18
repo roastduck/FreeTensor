@@ -59,6 +59,7 @@ void TanhNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void AbsNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void FloorNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void CeilNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
+void UnboundNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void IfExprNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void CastNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }
 void IntrinsicNode::inferDType() { dtype_ = DataTypeInfer::infer(*this); }

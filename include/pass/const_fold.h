@@ -162,6 +162,7 @@ class ConstFold : public Mutator {
     Expr visit(const Abs &op) override;
     Expr visit(const Floor &op) override;
     Expr visit(const Ceil &op) override;
+    Expr visit(const Unbound &op) override;
     Expr visit(const Cast &op) override;
     Expr visit(const IfExpr &op) override;
 };

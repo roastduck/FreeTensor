@@ -87,6 +87,7 @@ enum class ASTNodeType : int {
     Abs,
     Floor,
     Ceil,
+    Unbound,
 
     // Other expressions
     IfExpr,

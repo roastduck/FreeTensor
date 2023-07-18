@@ -337,6 +337,20 @@ void GenPBExpr::visit(const IfExpr &op) {
     }
 }
 
+void GenPBExpr::visit(const Unbound &op) {
+    Visitor::visit(op);
+    // Just ignore this node
+    if (auto it = results_.find(op->expr_); it != results_.end()) {
+        results_[op] = it->second;
+    }
+    if (auto it = constants_.find(op->expr_); it != constants_.end()) {
+        constants_[op] = it->second;
+    }
+    if (auto it = vars_.find(op->expr_); it != vars_.end()) {
+        vars_[op] = it->second;
+    }
+}
+
 std::pair<std::string, GenPBExpr::VarMap> GenPBExpr::gen(const Expr &op) {
     (*this)(op);
     if (vars_.count(op)) {
