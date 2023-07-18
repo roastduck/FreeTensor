@@ -227,4 +227,3 @@ size_t hash<freetensor::DataType>::operator()(
 }
 
 } // namespace std
-

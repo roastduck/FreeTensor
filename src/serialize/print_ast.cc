@@ -569,6 +569,14 @@ void PrintVisitor::visit(const Ceil &op) {
     });
 }
 
+void PrintVisitor::visit(const Unbound &op) {
+    precedence_new([&] {
+        os() << "@!unbound(";
+        recur(op->expr_);
+        os() << ")";
+    });
+}
+
 void PrintVisitor::visit(const IfExpr &op) {
     precedence_enclose(Precedence::TRINARY, [&] {
         recur(op->cond_);
