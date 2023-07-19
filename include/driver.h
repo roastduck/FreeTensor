@@ -76,8 +76,8 @@ class Driver {
     Driver(const Driver &) = delete;
     Driver &operator=(const Driver &) = delete;
 
-    Driver(Driver &&) = default;
-    Driver &operator=(Driver &&) = default;
+    Driver(Driver &&) = delete; // If we need it, pay attention to `dlHandle_`
+    Driver &operator=(Driver &&) = delete;
 
     void setArgs(const std::vector<Ref<Array>> &args,
                  const std::unordered_map<std::string, Ref<Array>> &kws = {});
