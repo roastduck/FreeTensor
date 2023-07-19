@@ -458,8 +458,8 @@ void Schedule::asMatMul(const ID &loop, AsMatMulMode mode) {
                     ID defId = e.vardef_;
                     if (mode == AsMatMulMode::TryTranspose) {
                         auto def = find(defId).as<VarDefNode>();
-                        defId = std::get<3>(cache(def->body_->id(), def->name_,
-                                                  def->buffer_->mtype()));
+                        defId = std::get<3>(
+                            cache(loop, def->name_, def->buffer_->mtype()));
                     }
                     varReorder(defId, e.order_);
                 } catch (const InvalidSchedule &e2) {
