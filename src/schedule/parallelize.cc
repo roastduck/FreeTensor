@@ -1,6 +1,7 @@
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
 #include <analyze/find_stmt.h>
+#include <analyze/symbol_table.h>
 #include <analyze/track_stmt.h>
 #include <lazy.h>
 #include <schedule.h>
@@ -11,25 +12,68 @@ namespace freetensor {
 
 namespace {
 
-class CheckNestedCudaScope : public TrackStmt<Visitor> {
-    typedef TrackStmt<Visitor> BaseClass;
+class CheckNestedCudaScope : public SymbolTable<TrackStmt<Visitor>> {
+    typedef SymbolTable<TrackStmt<Visitor>> BaseClass;
 
-    const LoopVariExprMap &variants_;
+    const LoopVariExprMap &variantExprs_;
+    const LoopVariUniqVarMap &variantVars_;
     ID loop1_, loop2_;
+    bool inLoop1_ = false, inLoop2_ = false;
 
   public:
-    CheckNestedCudaScope(const LoopVariExprMap &variants, const ID &loop1,
+    CheckNestedCudaScope(const LoopVariExprMap &variantExprs,
+                         const LoopVariUniqVarMap &variantVars, const ID &loop1,
                          const ID &loop2)
-        : variants_(variants), loop1_(loop1), loop2_(loop2) {}
+        : variantExprs_(variantExprs), variantVars_(variantVars), loop1_(loop1),
+          loop2_(loop2) {}
 
   protected:
+    using BaseClass::visit;
+
     void visitExpr(const Expr &expr) {
-        if (isVariant(variants_, StmtOrExprID{expr, curStmt()}, loop1_) &&
-            isVariant(variants_, StmtOrExprID{expr, curStmt()}, loop2_)) {
+        // No need to recurse
+        if (inLoop1_ && inLoop2_ &&
+            isVariant(variantExprs_, StmtOrExprID{expr, curStmt()}, loop1_) &&
+            isVariant(variantExprs_, StmtOrExprID{expr, curStmt()}, loop2_)) {
             throw InvalidSchedule(
                 "Nested loop bound to the same CUDA scope is not allowed, "
                 "except when they are invariant");
         }
+    }
+
+    void visit(const Store &op) {
+        // No need to recurse
+        if (inLoop1_ && inLoop2_ &&
+            isVariant(variantVars_, def(op->var_)->id(), loop1_) &&
+            isVariant(variantVars_, def(op->var_)->id(), loop2_)) {
+            throw InvalidSchedule(
+                "Nested loop bound to the same CUDA scope is not allowed, "
+                "except when they are invariant");
+        }
+    }
+
+    void visit(const ReduceTo &op) {
+        // No need to recurse
+        if (inLoop1_ && inLoop2_ &&
+            isVariant(variantVars_, def(op->var_)->id(), loop1_) &&
+            isVariant(variantVars_, def(op->var_)->id(), loop2_)) {
+            throw InvalidSchedule(
+                "Nested loop bound to the same CUDA scope is not allowed, "
+                "except when they are invariant");
+        }
+    }
+
+    void visit(const For &op) {
+        bool oldInLoop1 = inLoop1_, oldInLoop2 = inLoop2_;
+        if (op->id() == loop1_) {
+            inLoop1_ = true;
+        }
+        if (op->id() == loop2_) {
+            inLoop2_ = true;
+        }
+        BaseClass::visit(op);
+        inLoop1_ = oldInLoop1;
+        inLoop2_ = oldInLoop2;
     }
 };
 
@@ -103,12 +147,13 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
     // Check illegal cases even in our extended fork-join model. See the
     // doc-string of schedule/parallelize
     if (std::holds_alternative<CUDAScope>(parallel)) {
-        auto variants = LAZY(findLoopVariance(ast).first);
+        auto variants = LAZY(findLoopVariance(ast));
         for (auto &&other :
              findAllStmt(ast, "(<For><<-" + toString(loop) + ")|(<For>->>" +
                                   toString(loop) + ")")) {
             if (other.as<ForNode>()->property_->parallel_ == parallel) {
-                CheckNestedCudaScope{*variants, loop, other->id()}(ast);
+                CheckNestedCudaScope{variants->first, variants->second, loop,
+                                     other->id()}(ast);
             }
         }
     }

@@ -160,6 +160,10 @@ bool isVariant(const LoopVariUniqVarMap &varInfo, const ID &defId,
  * loop-variant, while the second map shows whether a variable is loop-variant.
  * The result should be get by calling `isVariant`
  *
+ * NOTE: `findLoopVariance` currently treat expressions invariant to all their
+ * non-surrounding loops for minimize analyzing overhead, but it is possible to
+ * make this behaviour optional (see FindLoopVariance::visit(const Load &))
+ *
  * `findLoopVariance` runs an iterative algorithm. The variance info is
  * expressed as a semi-lattice:
  *

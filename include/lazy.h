@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <mutex>
+#include <optional>
 #include <type_traits>
 
 namespace freetensor {
@@ -21,6 +22,8 @@ template <typename T> class Lazy {
         }
         return *container_;
     }
+
+    const T *operator->() { return &(this->operator*()); }
 
     template <typename F>
     Lazy(F delayedInit)
