@@ -94,6 +94,8 @@ digraph "src/schedule/reorder.cc"
   Node65 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node65 -> Node4 [color="steelblue1",style="solid"];
   Node65 -> Node6 [color="steelblue1",style="solid"];
+  Node65 -> Node19 [color="steelblue1",style="solid"];
+  Node19 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node65 -> Node13 [color="steelblue1",style="solid"];
   Node3 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];
@@ -111,8 +113,6 @@ digraph "src/schedule/reorder.cc"
   Node68 -> Node7 [color="steelblue1",style="solid"];
   Node68 -> Node9 [color="steelblue1",style="solid"];
   Node68 -> Node10 [color="steelblue1",style="solid"];
-  Node68 -> Node69 [color="steelblue1",style="solid"];
-  Node69 [label="isl/aff.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node68 -> Node30 [color="steelblue1",style="solid"];
   Node68 -> Node32 [color="steelblue1",style="solid"];
   Node32 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
@@ -133,6 +133,7 @@ digraph "src/schedule/reorder.cc"
   Node82 -> Node63 [color="steelblue1",style="solid"];
   Node82 -> Node83 [color="steelblue1",style="solid"];
   Node83 [label="codegen/native_code.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$native__code_8h.html",tooltip=" "];
+  Node83 -> Node19 [color="steelblue1",style="solid"];
   Node83 -> Node7 [color="steelblue1",style="solid"];
   Node83 -> Node61 [color="steelblue1",style="solid"];
   Node61 [label="driver/target.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$target_8h.html",tooltip=" "];

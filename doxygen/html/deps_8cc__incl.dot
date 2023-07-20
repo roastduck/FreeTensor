@@ -108,7 +108,7 @@ digraph "src/analyze/deps.cc"
   Node29 [label="stdexcept",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node28 -> Node9 [color="steelblue1",style="solid"];
   Node61 -> Node66 [color="steelblue1",style="solid"];
-  Node66 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
+  Node66 [label="lazy.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node15 [color="steelblue1",style="solid"];
   Node66 -> Node59 [color="steelblue1",style="solid"];
   Node66 -> Node24 [color="steelblue1",style="solid"];

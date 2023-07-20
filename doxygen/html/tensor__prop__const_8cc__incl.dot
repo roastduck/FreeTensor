@@ -110,6 +110,8 @@ digraph "src/pass/tensor_prop_const.cc"
   Node67 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node67 -> Node10 [color="steelblue1",style="solid"];
   Node67 -> Node2 [color="steelblue1",style="solid"];
+  Node67 -> Node12 [color="steelblue1",style="solid"];
+  Node12 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node67 -> Node21 [color="steelblue1",style="solid"];
   Node62 -> Node68 [color="steelblue1",style="solid"];
   Node68 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];
@@ -134,8 +136,6 @@ digraph "src/pass/tensor_prop_const.cc"
   Node72 [label="isl/ctx.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node70 -> Node73 [color="steelblue1",style="solid"];
   Node73 [label="isl/ilp.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node70 -> Node74 [color="steelblue1",style="solid"];
-  Node74 [label="isl/map.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node70 -> Node6 [color="steelblue1",style="solid"];
   Node70 -> Node25 [color="steelblue1",style="solid"];
   Node70 -> Node27 [color="steelblue1",style="solid"];

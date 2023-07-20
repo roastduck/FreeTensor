@@ -94,7 +94,7 @@ digraph "src/schedule/fuse.cc"
   Node34 -> Node4 [color="steelblue1",style="solid"];
   Node34 -> Node11 [color="steelblue1",style="solid"];
   Node65 -> Node68 [color="steelblue1",style="solid"];
-  Node68 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
+  Node68 [label="lazy.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node68 -> Node14 [color="steelblue1",style="solid"];
   Node68 -> Node59 [color="steelblue1",style="solid"];
   Node68 -> Node23 [color="steelblue1",style="solid"];

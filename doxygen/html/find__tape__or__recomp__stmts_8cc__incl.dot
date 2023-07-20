@@ -63,10 +63,8 @@ digraph "src/autograd/find_tape_or_recomp_stmts.cc"
   Node63 -> Node8 [color="steelblue1",style="solid"];
   Node63 -> Node3 [color="steelblue1",style="solid"];
   Node63 -> Node64 [color="steelblue1",style="solid"];
-  Node64 [label="maybe_void.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$maybe__void_8h.html",tooltip=" "];
+  Node64 [label="maybe_void.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$maybe__void_8h.html",tooltip=" "];
   Node64 -> Node22 [color="steelblue1",style="solid"];
-  Node64 -> Node52 [color="steelblue1",style="solid"];
-  Node52 [label="variant",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node63 -> Node49 [color="steelblue1",style="solid"];
   Node62 -> Node65 [color="steelblue1",style="solid"];
   Node65 [label="analyze/track_stmt.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$track__stmt_8h.html",tooltip=" "];
@@ -106,6 +104,8 @@ digraph "src/autograd/find_tape_or_recomp_stmts.cc"
   Node66 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node13 [color="steelblue1",style="solid"];
   Node66 -> Node59 [color="steelblue1",style="solid"];
+  Node66 -> Node14 [color="steelblue1",style="solid"];
+  Node14 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node66 -> Node22 [color="steelblue1",style="solid"];
   Node61 -> Node67 [color="steelblue1",style="solid"];
   Node67 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];
@@ -165,6 +165,7 @@ digraph "src/autograd/find_tape_or_recomp_stmts.cc"
   Node83 -> Node3 [color="steelblue1",style="solid"];
   Node83 -> Node84 [color="steelblue1",style="solid"];
   Node84 [label="autograd/derivative.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$derivative_8h.html",tooltip=" "];
+  Node84 -> Node14 [color="steelblue1",style="solid"];
   Node84 -> Node8 [color="steelblue1",style="solid"];
   Node84 -> Node3 [color="steelblue1",style="solid"];
   Node84 -> Node63 [color="steelblue1",style="solid"];

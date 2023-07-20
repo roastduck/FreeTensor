@@ -122,6 +122,8 @@ digraph "src/analyze/check_not_modified.cc"
   Node69 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node69 -> Node10 [color="steelblue1",style="solid"];
   Node69 -> Node40 [color="steelblue1",style="solid"];
+  Node69 -> Node12 [color="steelblue1",style="solid"];
+  Node12 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node69 -> Node21 [color="steelblue1",style="solid"];
   Node66 -> Node70 [color="steelblue1",style="solid"];
   Node70 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];
@@ -157,8 +159,6 @@ digraph "src/analyze/check_not_modified.cc"
   Node72 -> Node80 [color="steelblue1",style="solid"];
   Node80 [label="isl/val.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node72 -> Node6 [color="steelblue1",style="solid"];
-  Node72 -> Node81 [color="steelblue1",style="solid"];
-  Node81 [label="debug/profile.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$profile_8h.html",tooltip=" "];
   Node72 -> Node25 [color="steelblue1",style="solid"];
   Node72 -> Node27 [color="steelblue1",style="solid"];
   Node27 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];

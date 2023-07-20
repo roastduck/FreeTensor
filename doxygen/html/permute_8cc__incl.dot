@@ -89,7 +89,7 @@ digraph "src/schedule/permute.cc"
   Node26 -> Node7 [color="steelblue1",style="solid"];
   Node26 -> Node8 [color="steelblue1",style="solid"];
   Node61 -> Node66 [color="steelblue1",style="solid"];
-  Node66 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
+  Node66 [label="lazy.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node2 [color="steelblue1",style="solid"];
   Node66 -> Node59 [color="steelblue1",style="solid"];
   Node66 -> Node22 [color="steelblue1",style="solid"];

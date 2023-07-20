@@ -57,8 +57,6 @@ digraph "src/pass/remove_cyclic_assign.cc"
   Node57 -> Node4 [color="steelblue1",style="solid"];
   Node57 -> Node6 [color="steelblue1",style="solid"];
   Node57 -> Node7 [color="steelblue1",style="solid"];
-  Node57 -> Node58 [color="steelblue1",style="solid"];
-  Node58 [label="utility",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node57 -> Node9 [color="steelblue1",style="solid"];
   Node57 -> Node15 [color="steelblue1",style="solid"];
   Node53 -> Node15 [color="steelblue1",style="solid"];
@@ -102,6 +100,8 @@ digraph "src/pass/remove_cyclic_assign.cc"
   Node65 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node65 -> Node3 [color="steelblue1",style="solid"];
   Node65 -> Node5 [color="steelblue1",style="solid"];
+  Node65 -> Node18 [color="steelblue1",style="solid"];
+  Node18 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node65 -> Node12 [color="steelblue1",style="solid"];
   Node2 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];

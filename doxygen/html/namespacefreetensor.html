@@ -7313,6 +7313,7 @@ template&lt;class T &gt; </div>
 </div><div class="memdoc">
 <p>Check whether an expression or a variable is loop-variant</p>
 <p>This function returns two map. The first map shows whether an expression is loop-variant, while the second map shows whether a variable is loop-variant. The result should be get by calling <code>isVariant</code></p>
+<p>NOTE: <code>findLoopVariance</code> currently treat expressions invariant to all their non-surrounding loops for minimize analyzing overhead, but it is possible to make this behaviour optional (see <a class="el" href="classfreetensor_1_1FindLoopVariance.html#a0c9fb41b236a5495ccc1bf518761dbfa">FindLoopVariance::visit(const Load &amp;)</a>)</p>
 <p><code>findLoopVariance</code> runs an iterative algorithm. The variance info is expressed as a semi-lattice:</p>
 <div class="fragment"><div class="line">Invariant (implemented by inexistence in the resulting map)</div>
 <div class="line">    |</div>

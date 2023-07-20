@@ -100,6 +100,8 @@ digraph "src/autograd/all_no_reuse_defs.cc"
   Node66 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node13 [color="steelblue1",style="solid"];
   Node66 -> Node59 [color="steelblue1",style="solid"];
+  Node66 -> Node14 [color="steelblue1",style="solid"];
+  Node14 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node66 -> Node22 [color="steelblue1",style="solid"];
   Node61 -> Node67 [color="steelblue1",style="solid"];
   Node67 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];
@@ -159,7 +161,6 @@ digraph "src/autograd/all_no_reuse_defs.cc"
   Node1 -> Node84 [color="steelblue1",style="solid"];
   Node84 [label="pass/make_reduction.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$make__reduction_8h.html",tooltip=" "];
   Node84 -> Node14 [color="steelblue1",style="solid"];
-  Node14 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node84 -> Node3 [color="steelblue1",style="solid"];
   Node84 -> Node5 [color="steelblue1",style="solid"];
   Node84 -> Node85 [color="steelblue1",style="solid"];

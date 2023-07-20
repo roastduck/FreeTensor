@@ -42,6 +42,8 @@ digraph "src/schedule/check_var_cross_parallel.cc"
   Node16 [label="ast.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$ast_8h.html",tooltip=" "];
   Node16 -> Node3 [color="steelblue1",style="solid"];
   Node16 -> Node4 [color="steelblue1",style="solid"];
+  Node16 -> Node18 [color="steelblue1",style="solid"];
+  Node18 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node16 -> Node6 [color="steelblue1",style="solid"];
   Node16 -> Node31 [color="steelblue1",style="solid"];
   Node31 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
@@ -49,13 +51,6 @@ digraph "src/schedule/check_var_cross_parallel.cc"
   Node32 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node15 -> Node43 [color="steelblue1",style="solid"];
   Node43 [label="buffer.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$buffer_8h.html",tooltip=" "];
-  Node15 -> Node48 [color="steelblue1",style="solid"];
-  Node48 [label="for_property.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$for__property_8h.html",tooltip=" "];
-  Node48 -> Node45 [color="steelblue1",style="solid"];
-  Node45 [label="expr.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$expr_8h.html",tooltip=" "];
-  Node45 -> Node6 [color="steelblue1",style="solid"];
-  Node45 -> Node9 [color="steelblue1",style="solid"];
-  Node45 -> Node16 [color="steelblue1",style="solid"];
   Node10 -> Node52 [color="steelblue1",style="solid"];
   Node52 [label="analyze/track_stmt.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$track__stmt_8h.html",tooltip=" "];
   Node52 -> Node9 [color="steelblue1",style="solid"];
@@ -68,6 +63,10 @@ digraph "src/schedule/check_var_cross_parallel.cc"
   Node54 -> Node6 [color="steelblue1",style="solid"];
   Node54 -> Node16 [color="steelblue1",style="solid"];
   Node53 -> Node45 [color="steelblue1",style="solid"];
+  Node45 [label="expr.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$expr_8h.html",tooltip=" "];
+  Node45 -> Node6 [color="steelblue1",style="solid"];
+  Node45 -> Node9 [color="steelblue1",style="solid"];
+  Node45 -> Node16 [color="steelblue1",style="solid"];
   Node53 -> Node57 [color="steelblue1",style="solid"];
   Node57 [label="func.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$func_8h.html",tooltip=" "];
   Node57 -> Node4 [color="steelblue1",style="solid"];
@@ -118,6 +117,7 @@ digraph "src/schedule/check_var_cross_parallel.cc"
   Node65 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node65 -> Node3 [color="steelblue1",style="solid"];
   Node65 -> Node5 [color="steelblue1",style="solid"];
+  Node65 -> Node18 [color="steelblue1",style="solid"];
   Node65 -> Node12 [color="steelblue1",style="solid"];
   Node2 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];

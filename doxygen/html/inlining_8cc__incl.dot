@@ -97,6 +97,8 @@ digraph "src/schedule/inlining.cc"
   Node67 [label="lazy.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node67 -> Node14 [color="steelblue1",style="solid"];
   Node67 -> Node53 [color="steelblue1",style="solid"];
+  Node67 -> Node16 [color="steelblue1",style="solid"];
+  Node16 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node62 -> Node68 [color="steelblue1",style="solid"];
   Node68 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];
   Node68 -> Node3 [color="steelblue1",style="solid"];
@@ -136,7 +138,6 @@ digraph "src/schedule/inlining.cc"
   Node1 -> Node85 [color="steelblue1",style="solid"];
   Node85 [label="pass/hoist_var_over\l_stmt_seq.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__var__over__stmt__seq_8h.html",tooltip=" "];
   Node85 -> Node16 [color="steelblue1",style="solid"];
-  Node16 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node85 -> Node3 [color="steelblue1",style="solid"];
   Node85 -> Node56 [color="steelblue1",style="solid"];
   Node85 -> Node50 [color="steelblue1",style="solid"];

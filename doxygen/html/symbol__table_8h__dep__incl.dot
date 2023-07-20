@@ -6,7 +6,7 @@ digraph "include/analyze/symbol_table.h"
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   Node1 [label="include/analyze/symbol\l_table.h",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
   Node1 -> Node2 [dir="back",color="steelblue1",style="solid"];
-  Node2 [label="include/analyze/check\l_not_modified.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$check__not__modified_8h.html",tooltip=" "];
+  Node2 [label="include/analyze/check\l_not_modified.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$check__not__modified_8h.html",tooltip=" "];
   Node2 -> Node3 [dir="back",color="steelblue1",style="solid"];
   Node3 [label="src/analyze/check_not\l_modified.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$check__not__modified_8cc.html",tooltip=" "];
   Node2 -> Node4 [dir="back",color="steelblue1",style="solid"];
@@ -19,8 +19,6 @@ digraph "include/analyze/symbol_table.h"
   Node7 [label="src/schedule/fuse.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8cc.html",tooltip=" "];
   Node2 -> Node8 [dir="back",color="steelblue1",style="solid"];
   Node8 [label="src/schedule/inlining.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$inlining_8cc.html",tooltip=" "];
-  Node2 -> Node9 [dir="back",color="steelblue1",style="solid"];
-  Node9 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
   Node1 -> Node10 [dir="back",color="steelblue1",style="solid"];
   Node10 [label="include/analyze/comp\l_access_bound.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$comp__access__bound_8h.html",tooltip=" "];
   Node10 -> Node11 [dir="back",color="steelblue1",style="solid"];
@@ -38,7 +36,8 @@ digraph "include/analyze/symbol_table.h"
   Node23 -> Node6 [dir="back",color="steelblue1",style="solid"];
   Node23 -> Node7 [dir="back",color="steelblue1",style="solid"];
   Node23 -> Node8 [dir="back",color="steelblue1",style="solid"];
-  Node23 -> Node9 [dir="back",color="steelblue1",style="solid"];
+  Node23 -> Node42 [dir="back",color="steelblue1",style="solid"];
+  Node42 [label="src/schedule/parallelize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize_8cc.html",tooltip=" "];
   Node1 -> Node47 [dir="back",color="steelblue1",style="solid"];
   Node47 [label="include/analyze/find\l_indexing_loops.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$find__indexing__loops_8h.html",tooltip=" "];
   Node1 -> Node50 [dir="back",color="steelblue1",style="solid"];
@@ -49,6 +48,7 @@ digraph "include/analyze/symbol_table.h"
   Node50 -> Node52 [dir="back",color="steelblue1",style="solid"];
   Node52 [label="include/pass/remove\l_writes.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$remove__writes_8h.html",tooltip=" "];
   Node52 -> Node6 [dir="back",color="steelblue1",style="solid"];
+  Node50 -> Node42 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node11 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node58 [dir="back",color="steelblue1",style="solid"];
   Node58 [label="include/autograd/analyze\l_version.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$analyze__version_8h.html",tooltip=" "];
@@ -93,7 +93,6 @@ digraph "include/analyze/symbol_table.h"
   Node97 [label="include/pass/merge\l_and_hoist_if.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$merge__and__hoist__if_8h.html",tooltip=" "];
   Node1 -> Node99 [dir="back",color="steelblue1",style="solid"];
   Node99 [label="include/pass/normalize\l_loops.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$normalize__loops_8h.html",tooltip=" "];
-  Node99 -> Node9 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node101 [dir="back",color="steelblue1",style="solid"];
   Node101 [label="include/pass/refine\l_sign_data_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$refine__sign__data__type_8h.html",tooltip=" "];
   Node1 -> Node103 [dir="back",color="steelblue1",style="solid"];
@@ -104,7 +103,6 @@ digraph "include/analyze/symbol_table.h"
   Node105 [label="include/pass/scalar\l_prop_const.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$scalar__prop__const_8h.html",tooltip=" "];
   Node1 -> Node107 [dir="back",color="steelblue1",style="solid"];
   Node107 [label="include/pass/shrink\l_for.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$shrink__for_8h.html",tooltip=" "];
-  Node107 -> Node9 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node108 [dir="back",color="steelblue1",style="solid"];
   Node108 [label="include/pass/simplify.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$simplify_8h.html",tooltip=" "];
   Node108 -> Node7 [dir="back",color="steelblue1",style="solid"];
@@ -132,4 +130,5 @@ digraph "include/analyze/symbol_table.h"
   Node1 -> Node28 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node59 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node7 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node42 [dir="back",color="steelblue1",style="solid"];
 }

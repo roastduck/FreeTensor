@@ -93,6 +93,8 @@ digraph "src/schedule/parallelize.cc"
   Node65 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node65 -> Node3 [color="steelblue1",style="solid"];
   Node65 -> Node5 [color="steelblue1",style="solid"];
+  Node65 -> Node18 [color="steelblue1",style="solid"];
+  Node18 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node65 -> Node12 [color="steelblue1",style="solid"];
   Node2 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];
@@ -112,8 +114,6 @@ digraph "src/schedule/parallelize.cc"
   Node68 -> Node9 [color="steelblue1",style="solid"];
   Node68 -> Node69 [color="steelblue1",style="solid"];
   Node69 [label="isl/aff.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node68 -> Node70 [color="steelblue1",style="solid"];
-  Node70 [label="isl/ctx.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node68 -> Node29 [color="steelblue1",style="solid"];
   Node68 -> Node31 [color="steelblue1",style="solid"];
   Node31 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
@@ -128,6 +128,7 @@ digraph "src/schedule/parallelize.cc"
   Node2 -> Node53 [color="steelblue1",style="solid"];
   Node1 -> Node10 [color="steelblue1",style="solid"];
   Node1 -> Node63 [color="steelblue1",style="solid"];
+  Node1 -> Node11 [color="steelblue1",style="solid"];
   Node1 -> Node52 [color="steelblue1",style="solid"];
   Node1 -> Node65 [color="steelblue1",style="solid"];
   Node1 -> Node82 [color="steelblue1",style="solid"];
@@ -137,6 +138,7 @@ digraph "src/schedule/parallelize.cc"
   Node82 -> Node63 [color="steelblue1",style="solid"];
   Node82 -> Node83 [color="steelblue1",style="solid"];
   Node83 [label="codegen/native_code.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$native__code_8h.html",tooltip=" "];
+  Node83 -> Node18 [color="steelblue1",style="solid"];
   Node83 -> Node6 [color="steelblue1",style="solid"];
   Node83 -> Node61 [color="steelblue1",style="solid"];
   Node61 [label="driver/target.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$target_8h.html",tooltip=" "];

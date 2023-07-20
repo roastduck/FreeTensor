@@ -105,6 +105,8 @@ digraph "src/pass/sink_var.cc"
   Node66 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node13 [color="steelblue1",style="solid"];
   Node66 -> Node59 [color="steelblue1",style="solid"];
+  Node66 -> Node14 [color="steelblue1",style="solid"];
+  Node14 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node66 -> Node22 [color="steelblue1",style="solid"];
   Node61 -> Node67 [color="steelblue1",style="solid"];
   Node67 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];
@@ -163,7 +165,6 @@ digraph "src/pass/sink_var.cc"
   Node1 -> Node83 [color="steelblue1",style="solid"];
   Node83 [label="pass/sink_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sink__var_8h.html",tooltip=" "];
   Node83 -> Node14 [color="steelblue1",style="solid"];
-  Node14 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node83 -> Node3 [color="steelblue1",style="solid"];
   Node83 -> Node10 [color="steelblue1",style="solid"];
   Node83 -> Node62 [color="steelblue1",style="solid"];

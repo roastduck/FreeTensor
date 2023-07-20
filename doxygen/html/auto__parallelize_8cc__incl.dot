@@ -104,7 +104,7 @@ digraph "src/schedule/auto_parallelize.cc"
   Node39 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node33 -> Node26 [color="steelblue1",style="solid"];
   Node71 -> Node74 [color="steelblue1",style="solid"];
-  Node74 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
+  Node74 [label="lazy.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node74 -> Node13 [color="steelblue1",style="solid"];
   Node74 -> Node63 [color="steelblue1",style="solid"];
   Node74 -> Node22 [color="steelblue1",style="solid"];

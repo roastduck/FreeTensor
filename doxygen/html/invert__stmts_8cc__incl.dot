@@ -106,6 +106,8 @@ digraph "src/autograd/invert_stmts.cc"
   Node66 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node14 [color="steelblue1",style="solid"];
   Node66 -> Node59 [color="steelblue1",style="solid"];
+  Node66 -> Node15 [color="steelblue1",style="solid"];
+  Node15 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node66 -> Node23 [color="steelblue1",style="solid"];
   Node61 -> Node67 [color="steelblue1",style="solid"];
   Node67 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];
@@ -155,7 +157,6 @@ digraph "src/autograd/invert_stmts.cc"
   Node83 -> Node84 [color="steelblue1",style="solid"];
   Node84 [label="autograd/derivative.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$derivative_8h.html",tooltip=" "];
   Node84 -> Node15 [color="steelblue1",style="solid"];
-  Node15 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node84 -> Node9 [color="steelblue1",style="solid"];
   Node84 -> Node4 [color="steelblue1",style="solid"];
   Node84 -> Node63 [color="steelblue1",style="solid"];

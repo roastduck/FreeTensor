@@ -136,6 +136,7 @@ digraph "src/pass/make_parallel_reduction.cc"
   Node77 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node77 -> Node12 [color="steelblue1",style="solid"];
   Node77 -> Node62 [color="steelblue1",style="solid"];
+  Node77 -> Node3 [color="steelblue1",style="solid"];
   Node77 -> Node21 [color="steelblue1",style="solid"];
   Node73 -> Node78 [color="steelblue1",style="solid"];
   Node78 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];

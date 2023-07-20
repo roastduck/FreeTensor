@@ -44,13 +44,13 @@ digraph "src/analyze/merge_no_deps_hint.cc"
   Node17 [label="ast.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$ast_8h.html",tooltip=" "];
   Node17 -> Node4 [color="steelblue1",style="solid"];
   Node17 -> Node5 [color="steelblue1",style="solid"];
+  Node17 -> Node19 [color="steelblue1",style="solid"];
+  Node19 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node17 -> Node7 [color="steelblue1",style="solid"];
   Node17 -> Node32 [color="steelblue1",style="solid"];
   Node32 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
   Node32 -> Node33 [color="steelblue1",style="solid"];
   Node33 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node16 -> Node43 [color="steelblue1",style="solid"];
-  Node43 [label="buffer.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$buffer_8h.html",tooltip=" "];
   Node11 -> Node52 [color="steelblue1",style="solid"];
   Node52 [label="analyze/track_stmt.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$track__stmt_8h.html",tooltip=" "];
   Node52 -> Node10 [color="steelblue1",style="solid"];
@@ -76,7 +76,6 @@ digraph "src/analyze/merge_no_deps_hint.cc"
   Node58 [label="utility",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node57 -> Node10 [color="steelblue1",style="solid"];
   Node57 -> Node17 [color="steelblue1",style="solid"];
-  Node57 -> Node43 [color="steelblue1",style="solid"];
   Node57 -> Node16 [color="steelblue1",style="solid"];
   Node53 -> Node16 [color="steelblue1",style="solid"];
   Node3 -> Node63 [color="steelblue1",style="solid"];
@@ -118,6 +117,7 @@ digraph "src/analyze/merge_no_deps_hint.cc"
   Node65 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node65 -> Node4 [color="steelblue1",style="solid"];
   Node65 -> Node6 [color="steelblue1",style="solid"];
+  Node65 -> Node19 [color="steelblue1",style="solid"];
   Node65 -> Node13 [color="steelblue1",style="solid"];
   Node3 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="math/gen_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8h.html",tooltip=" "];
