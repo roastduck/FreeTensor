@@ -50,7 +50,7 @@ def test_nested_thread_idx_1():
     with ft.VarDef("y", (4, 4), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label='L1') as i:
             with ft.For("j", 0, 4, label='L2') as j:
-                y[i, j] = i + j
+                y[i, j] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.parallelize("L1", "threadIdx.x")

@@ -77,13 +77,12 @@ def test_manual_static():
                             for rx in range(0, kernel):
                                 #! label: Lrc
                                 for rc in range(0, in_channel):
-                                    # TODO: Let y = yy * stride + ry - pad
-                                    # TODO：Let x = xx * stride + rx - pad
-                                    if yy * stride + ry - pad >= 0 and yy * stride + ry - pad < in_size and xx * stride + rx - pad >= 0 and xx * stride + rx - pad < in_size:
+                                    y = yy * stride + ry - pad
+                                    x = xx * stride + rx - pad
+                                    if y >= 0 and y < in_size and x >= 0 and x < in_size:
                                         B[yy, xx, ff,
-                                          nn] += A[yy * stride + ry - pad,
-                                                   xx * stride + rx - pad, rc,
-                                                   nn] * W[ry, rx, rc, ff]
+                                          nn] += A[y, x, rc, nn] * W[ry, rx, rc,
+                                                                     ff]
 
     tile = 8
     num_thread = 8
@@ -91,7 +90,7 @@ def test_manual_static():
     step = 8
     vthread = 2
     hi, wi, fi, ni, ryi, rxi, rci = "Ly", "Lx", "Lf", "Ln", "Lry", "Lrx", "Lrc"
-    s = ft.Schedule(algo)
+    s = ft.Schedule(algo, verbose=1)
 
     bz = s.merge(hi, wi)
     by, fi = s.split(fi, factor=block_factor)
@@ -103,7 +102,6 @@ def test_manual_static():
     s.reorder([bz, by, bx, ty, tx, tyz, txz, fi, ni])
 
     s.move_to("init", ft.MoveToSide.Before, fi)
-    print(s.ast())
     rco, rci = s.split(rci, factor=step)
     s.reorder([rco, ryi, rxi, rci, fi, ni])
 
