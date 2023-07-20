@@ -11,9 +11,25 @@ void Schedule::autoReorder(const Ref<Target> &target) {
         direction.push_back({{loop->id(), DepDirection::Normal}});
     }
 
-    // 0 = No dep
-    // 1 = Reduction
-    // 2 = Others
+    // Sort loops according to levels
+    [[maybe_unused]] int levelNoDep =
+        0; // std::unordered_map automatically initialize values to 0
+    int levelReduction, levelOthers;
+    switch (target->type()) {
+    case TargetType::CPU:
+        // Loop-carried parallel reduction on CPUs is very efficient: just
+        // reduce to core-local accumulators. There will be no more accumulators
+        // than visible cores to the OS. On the contrary, reordering these loops
+        // may lead to inefficient memory layout. Thus we treat reductions the
+        // same is dependence-free loops.
+        levelReduction = 0;
+        levelOthers = 1;
+        break;
+    default:
+        levelReduction = 1;
+        levelOthers = 2;
+    }
+
     std::unordered_map<ID, int> depLevel;
     FindDeps().direction(direction).ignoreReductionWAW(false)(
         ast(), [&](const Dependence &d) {
@@ -21,9 +37,9 @@ void Schedule::autoReorder(const Ref<Target> &target) {
             auto &level = depLevel[d.dir_[0].first.id_];
             if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
                 d.later()->nodeType() == ASTNodeType::ReduceTo) {
-                level = std::max(level, 1);
+                level = std::max(level, levelReduction);
             } else {
-                level = std::max(level, 2);
+                level = std::max(level, levelOthers);
             }
         });
 
