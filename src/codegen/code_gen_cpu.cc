@@ -94,8 +94,8 @@ void CodeGenCPU::visit(const VarDef &op) {
             this->os() << "auto &&" << name << " = ";
             std::string rawPtr;
             if (inParallel_) {
-                rawPtr = "&__threadStack[omp_get_thread_num()][" +
-                         std::to_string(threadStackTop_) + "]";
+                rawPtr =
+                    "&__threadStack[" + std::to_string(threadStackTop_) + "]";
             } else {
                 rawPtr =
                     "&__sharedStack[" + std::to_string(sharedStackTop_) + "]";
@@ -418,7 +418,8 @@ extern "C" {
             s += "static uint8_t *__sharedStack = nullptr;\n";
         }
         if (visitor.threadStackSize() > 0) {
-            s += "static uint8_t **__threadStack = nullptr;\n";
+            s += "static uint8_t *__threadStack = nullptr;\n";
+            s += "#pragma omp threadprivate(__threadStack)\n";
         }
         s += "__attribute__((constructor)) static void initStack() {\n";
         if (visitor.sharedStackSize() > 0) {
@@ -426,9 +427,8 @@ extern "C" {
                  std::to_string(visitor.sharedStackSize()) + "];\n";
         }
         if (visitor.threadStackSize() > 0) {
-            s += "  __threadStack = new uint8_t *[omp_get_max_threads()];\n";
             s += "  #pragma omp parallel\n";
-            s += "  __threadStack[omp_get_thread_num()] = new uint8_t[" +
+            s += "  __threadStack = new uint8_t[" +
                  std::to_string(visitor.threadStackSize()) + "];\n";
         }
         s += "}\n";
@@ -438,7 +438,6 @@ extern "C" {
         }
         if (visitor.threadStackSize() > 0) {
             s += "  #pragma omp parallel\n";
-            s += "  delete[] __threadStack[omp_get_thread_num()];\n";
             s += "  delete[] __threadStack;\n";
         }
 #ifdef FT_WITH_MKL
