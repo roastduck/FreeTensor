@@ -94,8 +94,8 @@ void CodeGenCPU::visit(const VarDef &op) {
             this->os() << "auto &&" << name << " = ";
             std::string rawPtr;
             if (inParallel_) {
-                rawPtr = "&__threadStack[omp_get_thread_num()][" +
-                         std::to_string(threadStackTop_) + "]";
+                rawPtr =
+                    "&__threadStack[" + std::to_string(threadStackTop_) + "]";
             } else {
                 rawPtr =
                     "&__sharedStack[" + std::to_string(sharedStackTop_) + "]";
@@ -414,33 +414,7 @@ extern "C" {
 
     auto body = visitor.toString([&](const CodeGenStream &stream) {
         std::string s;
-        if (visitor.sharedStackSize() > 0) {
-            s += "static uint8_t *__sharedStack = nullptr;\n";
-        }
-        if (visitor.threadStackSize() > 0) {
-            s += "static uint8_t **__threadStack = nullptr;\n";
-        }
-        s += "__attribute__((constructor)) static void initStack() {\n";
-        if (visitor.sharedStackSize() > 0) {
-            s += "  __sharedStack = new uint8_t[" +
-                 std::to_string(visitor.sharedStackSize()) + "];\n";
-        }
-        if (visitor.threadStackSize() > 0) {
-            s += "  __threadStack = new uint8_t *[omp_get_max_threads()];\n";
-            s += "  #pragma omp parallel\n";
-            s += "  __threadStack[omp_get_thread_num()] = new uint8_t[" +
-                 std::to_string(visitor.threadStackSize()) + "];\n";
-        }
-        s += "}\n";
         s += "__attribute__((destructor)) static void deinitStack() {\n";
-        if (visitor.sharedStackSize() > 0) {
-            s += "  delete[] __sharedStack;\n";
-        }
-        if (visitor.threadStackSize() > 0) {
-            s += "  #pragma omp parallel\n";
-            s += "  delete[] __threadStack[omp_get_thread_num()];\n";
-            s += "  delete[] __threadStack;\n";
-        }
 #ifdef FT_WITH_MKL
         s += "mkl_finalize();\n";
 #endif // FT_WITH_MKL
@@ -452,7 +426,20 @@ extern "C" {
         s += "}";
         return s;
     });
-    return NativeCode::fromFunc(func, header + body + tailer, entry, target);
+
+    std::string staticStack;
+    if (visitor.sharedStackSize() > 0) {
+        staticStack += "static uint8_t __sharedStack[" +
+                       std::to_string(visitor.sharedStackSize()) + "];\n";
+    }
+    if (visitor.threadStackSize() > 0) {
+        staticStack += "static uint8_t __threadStack[" +
+                       std::to_string(visitor.threadStackSize()) + "];\n";
+        staticStack += "#pragma omp threadprivate(__threadStack)\n";
+    }
+
+    return NativeCode::fromFunc(func, header + staticStack + body + tailer,
+                                entry, target);
 }
 
 } // namespace freetensor

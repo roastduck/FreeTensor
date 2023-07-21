@@ -398,7 +398,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
             // lossing the possiblily of parallelizing any dependence-free loop.
 
             // I. Collect paralleliable loops
-            std::vector<ID> localNoRed, localAll;
+            std::vector<ID> localNest, localParaNoRed, localParaAll;
             ParallelScope testScope;
             switch (target->type()) {
             case TargetType::CPU:
@@ -413,21 +413,30 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                 ASSERT(false);
             }
             for (ID id = root->id();;) {
-                if (allCandidates.count(id) &&
-                    testParallelizableAfterMerge(
-                        *this, views::concat(localAll, views::single(id)),
-                        testScope)) {
-                    localAll.emplace_back(id);
-                }
-                if (noRedCandidates.count(id) &&
-                    testParallelizableAfterMerge(
-                        *this, views::concat(localNoRed, views::single(id)),
-                        testScope)) {
-                    localNoRed.emplace_back(id);
-                }
+                localNest.emplace_back(id);
                 if (auto nexts = findAll("<For><-(!<For><-)*" + toString(id));
                     nexts.size() == 1) {
                     id = nexts.front()->id();
+                } else {
+                    break;
+                }
+            }
+            for (auto &&id : localNest) {
+                if (allCandidates.count(id) &&
+                    testParallelizableAfterMerge(
+                        *this, views::concat(localParaAll, views::single(id)),
+                        testScope)) {
+                    localParaAll.emplace_back(id);
+                } else {
+                    break;
+                }
+            }
+            for (auto &&id : localNest) {
+                if (noRedCandidates.count(id) &&
+                    testParallelizableAfterMerge(
+                        *this, views::concat(localParaNoRed, views::single(id)),
+                        testScope)) {
+                    localParaNoRed.emplace_back(id);
                 } else {
                     break;
                 }
@@ -506,7 +515,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                     bool smFull = false;
                     beginTransaction();
                     parallelizePerfectNest(
-                        *this, localNoRed, scopes, limits, priority,
+                        *this, localParaNoRed, scopes, limits, priority,
                         [&](const ParallelScope &scope,
                             const std::optional<int64_t> &len) {
                             if (scope == blockIdxY && len.has_value()) {
@@ -533,7 +542,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
             bool needParRed = true;
             beginTransaction();
             parallelizePerfectNest(
-                *this, localNoRed, scopes, limits, priority,
+                *this, localParaNoRed, scopes, limits, priority,
                 [&](const ParallelScope &scope,
                     const std::optional<int64_t> &len) {
                     done = true;
@@ -582,7 +591,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                 default:
                     ASSERT(false);
                 }
-                parallelizePerfectNest(*this, localAll, scopes, limits,
+                parallelizePerfectNest(*this, localParaAll, scopes, limits,
                                        priority,
                                        [&](auto &&, auto &&) { done = true; });
             }
