@@ -16,6 +16,7 @@ class LowerParallelReduction : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
     std::vector<For> loopStack_;
+    std::unordered_set<std::string> needRedirect_;
 
   private:
     std::vector<std::pair<For, int>> reducedBy(const ReduceTo &op);
