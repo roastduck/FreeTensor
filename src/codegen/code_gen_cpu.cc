@@ -414,32 +414,7 @@ extern "C" {
 
     auto body = visitor.toString([&](const CodeGenStream &stream) {
         std::string s;
-        if (visitor.sharedStackSize() > 0) {
-            s += "static uint8_t *__sharedStack = nullptr;\n";
-        }
-        if (visitor.threadStackSize() > 0) {
-            s += "static uint8_t *__threadStack = nullptr;\n";
-            s += "#pragma omp threadprivate(__threadStack)\n";
-        }
-        s += "__attribute__((constructor)) static void initStack() {\n";
-        if (visitor.sharedStackSize() > 0) {
-            s += "  __sharedStack = new uint8_t[" +
-                 std::to_string(visitor.sharedStackSize()) + "];\n";
-        }
-        if (visitor.threadStackSize() > 0) {
-            s += "  #pragma omp parallel\n";
-            s += "  __threadStack = new uint8_t[" +
-                 std::to_string(visitor.threadStackSize()) + "];\n";
-        }
-        s += "}\n";
         s += "__attribute__((destructor)) static void deinitStack() {\n";
-        if (visitor.sharedStackSize() > 0) {
-            s += "  delete[] __sharedStack;\n";
-        }
-        if (visitor.threadStackSize() > 0) {
-            s += "  #pragma omp parallel\n";
-            s += "  delete[] __threadStack;\n";
-        }
 #ifdef FT_WITH_MKL
         s += "mkl_finalize();\n";
 #endif // FT_WITH_MKL
@@ -451,7 +426,20 @@ extern "C" {
         s += "}";
         return s;
     });
-    return NativeCode::fromFunc(func, header + body + tailer, entry, target);
+
+    std::string staticStack;
+    if (visitor.sharedStackSize() > 0) {
+        staticStack += "static uint8_t __sharedStack[" +
+                       std::to_string(visitor.sharedStackSize()) + "];\n";
+    }
+    if (visitor.threadStackSize() > 0) {
+        staticStack += "static uint8_t __threadStack[" +
+                       std::to_string(visitor.threadStackSize()) + "];\n";
+        staticStack += "#pragma omp threadprivate(__threadStack)\n";
+    }
+
+    return NativeCode::fromFunc(func, header + staticStack + body + tailer,
+                                entry, target);
 }
 
 } // namespace freetensor
