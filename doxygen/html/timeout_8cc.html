@@ -75,17 +75,17 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#namespaces">Namespaces</a> &#124;
+<a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">timeout.cc File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;poll.h&gt;</code><br />
+<div class="textblock"><code>#include &lt;mutex&gt;</code><br />
+<code>#include &lt;setjmp.h&gt;</code><br />
 <code>#include &lt;signal.h&gt;</code><br />
-<code>#include &lt;stdio.h&gt;</code><br />
-<code>#include &lt;stdlib.h&gt;</code><br />
-<code>#include &lt;sys/types.h&gt;</code><br />
-<code>#include &lt;sys/wait.h&gt;</code><br />
+<code>#include &lt;time.h&gt;</code><br />
 <code>#include &lt;unistd.h&gt;</code><br />
+<code>#include &lt;<a class="el" href="debug_8h_source.html">debug.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="except_8h_source.html">except.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="timeout_8h_source.html">timeout.h</a>&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
@@ -99,11 +99,31 @@ Namespaces</h2></td></tr>
 <tr class="memitem:namespacefreetensor"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html">freetensor</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:ae12f1fd4293a4e48bf32e08e618cd223"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="timeout_8cc.html#ae12f1fd4293a4e48bf32e08e618cd223">sigev_notify_thread_id</a>&#160;&#160;&#160;_sigev_un._tid</td></tr>
+<tr class="separator:ae12f1fd4293a4e48bf32e08e618cd223"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a706678279e0a8de81abccc6a9825a967"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::byte &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a706678279e0a8de81abccc6a9825a967">freetensor::timeout</a> (const std::function&lt; std::vector&lt; std::byte &gt;()&gt; &amp;func, int seconds)</td></tr>
-<tr class="separator:a706678279e0a8de81abccc6a9825a967"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adaa1a49e7118c85babdee0e413292f3d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adaa1a49e7118c85babdee0e413292f3d">freetensor::timeout</a> (const std::function&lt; void()&gt; &amp;func, int seconds)</td></tr>
+<tr class="separator:adaa1a49e7118c85babdee0e413292f3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="ae12f1fd4293a4e48bf32e08e618cd223" name="ae12f1fd4293a4e48bf32e08e618cd223"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae12f1fd4293a4e48bf32e08e618cd223">&#9670;&#160;</a></span>sigev_notify_thread_id</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define sigev_notify_thread_id&#160;&#160;&#160;_sigev_un._tid</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

@@ -390,15 +390,8 @@ Functions</h2></td></tr>
 <tr class="separator:afb7116b28332c5e953fc318f2e77e48c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29a0ea44021bb36284780e36a5e4951a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a29a0ea44021bb36284780e36a5e4951a">freetensor::operator==</a> (const PBMap &amp;lhs, const PBMap &amp;rhs)</td></tr>
 <tr class="separator:a29a0ea44021bb36284780e36a5e4951a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5ba898e99c8a9db577af5f7b9db0758d"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; </td></tr>
-<tr class="memitem:a5ba898e99c8a9db577af5f7b9db0758d"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5ba898e99c8a9db577af5f7b9db0758d">freetensor::pbFuncSerializedWithTimeout</a> (const auto &amp;func, int seconds, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:a5ba898e99c8a9db577af5f7b9db0758d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a591db288f41d9a1f594ec90c5fb2b2f5"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; </td></tr>
-<tr class="memitem:a591db288f41d9a1f594ec90c5fb2b2f5"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a591db288f41d9a1f594ec90c5fb2b2f5">freetensor::pbFuncWithTimeout</a> (const auto &amp;func, int seconds, const PBCtx &amp;ctx, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:a591db288f41d9a1f594ec90c5fb2b2f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aff85cca84ef6baa9b9ee1965d9ebd40c"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; </td></tr>
-<tr class="memitem:aff85cca84ef6baa9b9ee1965d9ebd40c"><td class="memTemplItemLeft" align="right" valign="top">std::optional&lt; bool &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aff85cca84ef6baa9b9ee1965d9ebd40c">freetensor::pbTestWithTimeout</a> (const auto &amp;test, int seconds, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:aff85cca84ef6baa9b9ee1965d9ebd40c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33f7c12236cca11a99c7404f85431c87"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a33f7c12236cca11a99c7404f85431c87">freetensor::pbFuncWithTimeout</a> (PBCtx &amp;ctx, const auto &amp;func, int seconds, const auto &amp;...args) -&gt; std::optional&lt; decltype(func(args...))&gt;</td></tr>
+<tr class="separator:a33f7c12236cca11a99c7404f85431c87"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="acc866af82975dd6bb9c05cae60b064a7" name="acc866af82975dd6bb9c05cae60b064a7"></a>

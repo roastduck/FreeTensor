@@ -1856,15 +1856,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:afb7116b28332c5e953fc318f2e77e48c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29a0ea44021bb36284780e36a5e4951a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a29a0ea44021bb36284780e36a5e4951a">operator==</a> (const <a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> &amp;<a class="el" href="namespacefreetensor.html#a192b70d1972bcd73d5ff58f30fad21a2">lhs</a>, const <a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> &amp;<a class="el" href="namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005">rhs</a>)</td></tr>
 <tr class="separator:a29a0ea44021bb36284780e36a5e4951a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5ba898e99c8a9db577af5f7b9db0758d"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; </td></tr>
-<tr class="memitem:a5ba898e99c8a9db577af5f7b9db0758d"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5ba898e99c8a9db577af5f7b9db0758d">pbFuncSerializedWithTimeout</a> (const auto &amp;func, int seconds, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:a5ba898e99c8a9db577af5f7b9db0758d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a591db288f41d9a1f594ec90c5fb2b2f5"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; </td></tr>
-<tr class="memitem:a591db288f41d9a1f594ec90c5fb2b2f5"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a591db288f41d9a1f594ec90c5fb2b2f5">pbFuncWithTimeout</a> (const auto &amp;func, int seconds, const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;ctx, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:a591db288f41d9a1f594ec90c5fb2b2f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aff85cca84ef6baa9b9ee1965d9ebd40c"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; </td></tr>
-<tr class="memitem:aff85cca84ef6baa9b9ee1965d9ebd40c"><td class="memTemplItemLeft" align="right" valign="top">std::optional&lt; bool &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aff85cca84ef6baa9b9ee1965d9ebd40c">pbTestWithTimeout</a> (const auto &amp;test, int seconds, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:aff85cca84ef6baa9b9ee1965d9ebd40c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33f7c12236cca11a99c7404f85431c87"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a33f7c12236cca11a99c7404f85431c87">pbFuncWithTimeout</a> (<a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;ctx, const auto &amp;func, int seconds, const auto &amp;...args) -&gt; std::optional&lt; decltype(func(args...))&gt;</td></tr>
+<tr class="separator:a33f7c12236cca11a99c7404f85431c87"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a642e41a3db951b295abd0cb9acf31010"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a642e41a3db951b295abd0cb9acf31010">floorDiv</a> (IntegralExceptBool auto a, IntegralExceptBool auto b)</td></tr>
 <tr class="separator:a642e41a3db951b295abd0cb9acf31010"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a35487170b634f4d6fe6a832639d59730"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a35487170b634f4d6fe6a832639d59730">ceilDiv</a> (IntegralExceptBool auto a, IntegralExceptBool auto b)</td></tr>
@@ -2165,8 +2158,8 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:a67c9e15cd811e9f2c9ac1f8717b177c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a386180ba6a8ac3e4cccbf7edeb1b8e5b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a386180ba6a8ac3e4cccbf7edeb1b8e5b">deepCopy</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt; &amp;t)</td></tr>
 <tr class="separator:a386180ba6a8ac3e4cccbf7edeb1b8e5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a706678279e0a8de81abccc6a9825a967"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::byte &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a706678279e0a8de81abccc6a9825a967">timeout</a> (const std::function&lt; std::vector&lt; std::byte &gt;()&gt; &amp;func, int seconds)</td></tr>
-<tr class="separator:a706678279e0a8de81abccc6a9825a967"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adaa1a49e7118c85babdee0e413292f3d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adaa1a49e7118c85babdee0e413292f3d">timeout</a> (const std::function&lt; void()&gt; &amp;func, int seconds)</td></tr>
+<tr class="separator:adaa1a49e7118c85babdee0e413292f3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c0f4e93910a9324737e15d1bd575599"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5c0f4e93910a9324737e15d1bd575599">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cb">AccessType</a> atype)</td></tr>
 <tr class="separator:a5c0f4e93910a9324737e15d1bd575599"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1442e05e6cde2ae3cda5aa32c79f3e72"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a923130db6aad12a2b5d46dfe001c08cb">AccessType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1442e05e6cde2ae3cda5aa32c79f3e72">parseAType</a> (const std::string &amp;_str)</td></tr>
@@ -16806,78 +16799,40 @@ template&lt;PBSetRef T&gt; </div>
 
 </div>
 </div>
-<a id="a5ba898e99c8a9db577af5f7b9db0758d" name="a5ba898e99c8a9db577af5f7b9db0758d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5ba898e99c8a9db577af5f7b9db0758d">&#9670;&#160;</a></span>pbFuncSerializedWithTimeout()</h2>
+<a id="a33f7c12236cca11a99c7404f85431c87" name="a33f7c12236cca11a99c7404f85431c87"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33f7c12236cca11a99c7404f85431c87">&#9670;&#160;</a></span>pbFuncWithTimeout()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;class... Args&gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">std::string freetensor::pbFuncSerializedWithTimeout </td>
-          <td>(</td>
-          <td class="paramtype">const auto &amp;&#160;</td>
-          <td class="paramname"><em>func</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>seconds</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Args &amp;&amp;...&#160;</td>
-          <td class="paramname"><em>args</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a591db288f41d9a1f594ec90c5fb2b2f5" name="a591db288f41d9a1f594ec90c5fb2b2f5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a591db288f41d9a1f594ec90c5fb2b2f5">&#9670;&#160;</a></span>pbFuncWithTimeout()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class... Args&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">auto freetensor::pbFuncWithTimeout </td>
           <td>(</td>
-          <td class="paramtype">const auto &amp;&#160;</td>
-          <td class="paramname"><em>func</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>seconds</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;&#160;</td>
           <td class="paramname"><em>ctx</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Args &amp;&amp;...&#160;</td>
+          <td class="paramtype">const auto &amp;&#160;</td>
+          <td class="paramname"><em>func</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>seconds</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const auto &amp;...&#160;</td>
           <td class="paramname"><em>args</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td> -&gt; std::optional&lt;decltype(func(args...))&gt; </td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -16936,42 +16891,6 @@ template&lt;typename T &gt; </div>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
           <td class="paramname"><em>op</em></td><td>)</td>
           <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="aff85cca84ef6baa9b9ee1965d9ebd40c" name="aff85cca84ef6baa9b9ee1965d9ebd40c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aff85cca84ef6baa9b9ee1965d9ebd40c">&#9670;&#160;</a></span>pbTestWithTimeout()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class... Args&gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">std::optional&lt; bool &gt; freetensor::pbTestWithTimeout </td>
-          <td>(</td>
-          <td class="paramtype">const auto &amp;&#160;</td>
-          <td class="paramname"><em>test</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>seconds</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Args &amp;&amp;...&#160;</td>
-          <td class="paramname"><em>args</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -18683,16 +18602,16 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a706678279e0a8de81abccc6a9825a967" name="a706678279e0a8de81abccc6a9825a967"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a706678279e0a8de81abccc6a9825a967">&#9670;&#160;</a></span>timeout()</h2>
+<a id="adaa1a49e7118c85babdee0e413292f3d" name="adaa1a49e7118c85babdee0e413292f3d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adaa1a49e7118c85babdee0e413292f3d">&#9670;&#160;</a></span>timeout()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt; std::byte &gt; freetensor::timeout </td>
+          <td class="memname">bool freetensor::timeout </td>
           <td>(</td>
-          <td class="paramtype">const std::function&lt; std::vector&lt; std::byte &gt;()&gt; &amp;&#160;</td>
+          <td class="paramtype">const std::function&lt; void()&gt; &amp;&#160;</td>
           <td class="paramname"><em>func</em>, </td>
         </tr>
         <tr>
@@ -18709,7 +18628,9 @@ template&lt;class T &gt; </div>
       </table>
 </div><div class="memdoc">
 <p>Run a function with timeout</p>
-<p>Fork a new process to run. If success, return a byte-vector result. If timeout, return an empty vector </p>
+<p>If timed out, the internal state of the function is left untouched, so there will be resource leak, and it should be tolerated.</p>
+<p>NOTE: There are other approaches without resource leak but still not preferred: <code>fork</code> + <code>kill</code> with pages copied on write, or <code>fork</code> + <code>exec</code> a stand-alone executable + <code>kill</code> are possible, but both come with too much overhead. Waiting a thread until timeout and left it running is a waste of CPU time.</p>
+<dl class="section return"><dt>Returns</dt><dd>: True if the function successfully returns. False if the time is out </dd></dl>
 
 </div>
 </div>
