@@ -45,15 +45,24 @@ template <class T> T *MOVE_ISL_PTR(T *&ptr) {
 
 class PBCtx {
     isl_ctx *ctx_ = nullptr;
+    bool dontFree_ = false; // Tolerate memory leak
 
   public:
     PBCtx() : ctx_(isl_ctx_alloc()) {
         isl_options_set_on_error(ctx_, ISL_ON_ERROR_ABORT);
     }
-    ~PBCtx() { isl_ctx_free(ctx_); }
+    ~PBCtx() {
+        if (!dontFree_) {
+            isl_ctx_free(ctx_);
+        }
+    }
 
     PBCtx(const PBCtx &other) = delete;
     PBCtx &operator=(const PBCtx &other) = delete;
+    PBCtx(PBCtx &&other) = delete;
+    PBCtx &operator=(PBCtx &&other) = delete;
+
+    void setDontFree(bool flag = true) { dontFree_ = flag; }
 
     isl_ctx *get() const { return GET_ISL_PTR(ctx_); }
 };
@@ -934,49 +943,15 @@ class PBSetBuilder : public PBBuilder {
     PBSet build(const PBCtx &ctx) const;
 };
 
-template <class... Args>
-std::string pbFuncSerializedWithTimeout(const auto &func, int seconds,
-                                        Args &&...args) {
-    auto bytes = timeout(
-        [&]() {
-            auto result = func(std::forward<Args>(args)...);
-            std::string str = toString(result);
-            std::vector<std::byte> bytes((const std::byte *)str.data(),
-                                         (const std::byte *)str.data() +
-                                             str.length());
-            return bytes;
-        },
-        seconds);
-    std::string str((const char *)bytes.data(), bytes.size());
-    return str;
-}
-
-template <class... Args>
-auto pbFuncWithTimeout(const auto &func, int seconds, const PBCtx &ctx,
-                       Args &&...args) {
-    auto str =
-        pbFuncSerializedWithTimeout(func, seconds, std::forward<Args>(args)...);
-    if (str.empty()) {
-        return nullptr;
-    }
-    decltype(func(args...)) result(ctx, str);
-    return result;
-}
-
-template <class... Args>
-std::optional<bool> pbTestWithTimeout(const auto &test, int seconds,
-                                      Args &&...args) {
-    auto bytes = timeout(
-        [&]() {
-            bool flag = test(std::forward<Args>(args)...);
-            std::vector<std::byte> bytes = {(std::byte)flag};
-            return bytes;
-        },
-        seconds);
-    if (bytes.empty()) {
-        return std::nullopt;
+auto pbFuncWithTimeout(PBCtx &ctx, const auto &func, int seconds,
+                       const auto &...args)
+    -> std::optional<decltype(func(args...))> {
+    decltype(func(args...)) ret;
+    if (timeout([&]() { ret = func(args...); }, seconds)) {
+        return ret;
     } else {
-        return (bool)bytes[0];
+        ctx.setDontFree();
+        return std::nullopt;
     }
 }
 
