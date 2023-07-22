@@ -1025,3 +1025,30 @@ def test_reject_dependence_between_blocks():
 }''')
     with pytest.raises(ft.InvalidProgram):
         ft.lower(ast, target, skip_passes=['prop_one_time_use'])
+
+
+def test_dont_reject_false_dependence_between_blocks():
+    ast = ft.load_ast('''
+@input @gpu/global x: float32[4, 4, 4] {
+  @cache @gpu/global t: float32[4, 4, 4] {
+    @output @gpu/global y: float32[4, 4, 4] {
+      for p in 0 : 4 : 1 : 4 {
+        @!parallel : @blockIdx.x
+        for i in 0 : 4 : 1 : 4 {
+          @!parallel : @blockIdx.y
+          for j in 0 : 4 : 1 : 4 {
+            t[p, i, j] = x[p, i, j] * 2
+          }
+          if p > 0 {
+            @!parallel : @blockIdx.y
+            for j_1 in 0 : 4 : 1 : 4 {
+              y[p, i, j_1] = t[p - 1, i, (j_1 + 1) % 4]
+            }
+          }
+        }
+      }
+    }
+  }
+}''')
+    # There shall be no exception
+    ft.lower(ast, target, skip_passes=['prop_one_time_use'], verbose=1)
