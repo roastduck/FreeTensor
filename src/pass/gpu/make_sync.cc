@@ -456,7 +456,19 @@ static Stmt doMakeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
              }
              return false;
          })) {
-        queryBlocks.push_back({{loop->id(), DepDirection::Different}});
+
+        // The block ID is different
+        FindDepsDir queryOneBlock = {{loop->id(), DepDirection::Different}};
+
+        // But in the same kernel invocation
+        for (auto p = loop->parentStmt(); p.isValid(); p = p->parentStmt()) {
+            if (p->nodeType() == ASTNodeType::For &&
+                p.as<ForNode>()->property_->parallel_ == serialScope) {
+                queryOneBlock.push_back({p->id(), DepDirection::Same});
+            }
+        }
+
+        queryBlocks.emplace_back(std::move(queryOneBlock));
     }
     FindDeps()
         .direction(queryBlocks)
