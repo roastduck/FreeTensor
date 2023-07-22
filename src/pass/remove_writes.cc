@@ -243,10 +243,11 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             (!selfDependentReduces.count(d.later().as<StmtNode>()) ||
              sameParent(d.later_.stmt_, d.earlier_.stmt_))) {
             if (d.later2EarlierIter_.isSingleValued()) {
-                if (std::string str = pbFuncSerializedWithTimeout(
+                if (auto f = pbFuncWithTimeout(
+                        d.presburger_,
                         [](const PBMap &map) { return PBFunc(map); }, 10,
                         d.later2EarlierIter_);
-                    !str.empty()) {
+                    f.has_value()) {
                     std::lock_guard _(lock);
                     auto earlier = d.earlier().as<StmtNode>();
                     auto later = d.later().as<StmtNode>();
@@ -258,7 +259,8 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                         later, earlier,
                         PBSet(presburger,
                               toString(range(d.later2EarlierIter_))),
-                        ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
+                        ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
+                                    toString(*f)});
                     suspect.insert(d.def());
                 }
             }
