@@ -166,6 +166,23 @@ Expr SimplifyPass::visit(const Add &_op) {
         return op->lhs_;
     }
 
+    if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Min) {
+        return makeMin(makeAdd(op->lhs_, op->rhs_.as<MinNode>()->lhs_),
+                       makeAdd(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
+    }
+    if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Max) {
+        return makeMax(makeAdd(op->lhs_, op->rhs_.as<MinNode>()->lhs_),
+                       makeAdd(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
+    }
+    if (op->lhs_->nodeType() == ASTNodeType::Min && op->rhs_->isConst()) {
+        return makeMin(makeAdd(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                       makeAdd(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+    }
+    if (op->lhs_->nodeType() == ASTNodeType::Max && op->rhs_->isConst()) {
+        return makeMax(makeAdd(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                       makeAdd(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+    }
+
     return op;
 }
 
@@ -179,6 +196,23 @@ Expr SimplifyPass::visit(const Sub &_op) {
 
     if (equals(op->rhs_, 0)) {
         return op->lhs_;
+    }
+
+    if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Min) {
+        return makeMax(makeSub(op->lhs_, op->rhs_.as<MinNode>()->lhs_),
+                       makeSub(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
+    }
+    if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Max) {
+        return makeMin(makeSub(op->lhs_, op->rhs_.as<MinNode>()->lhs_),
+                       makeSub(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
+    }
+    if (op->lhs_->nodeType() == ASTNodeType::Min && op->rhs_->isConst()) {
+        return makeMin(makeSub(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                       makeSub(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+    }
+    if (op->lhs_->nodeType() == ASTNodeType::Max && op->rhs_->isConst()) {
+        return makeMax(makeSub(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                       makeSub(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
     }
 
     return op;
@@ -205,6 +239,47 @@ Expr SimplifyPass::visit(const Mul &_op) {
         return makeIntConst(0);
     }
 
+    if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Min) {
+        if (isGT0(op->lhs_->dtype())) {
+            return makeMin(makeMul(op->lhs_, op->rhs_.as<MinNode>()->lhs_),
+                           makeMul(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
+        }
+        if (isLT0(op->lhs_->dtype())) {
+            return makeMax(makeMul(op->lhs_, op->rhs_.as<MinNode>()->lhs_),
+                           makeMul(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
+        }
+    }
+    if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Max) {
+        if (isGT0(op->lhs_->dtype())) {
+            return makeMax(makeMul(op->lhs_, op->rhs_.as<MinNode>()->lhs_),
+                           makeMul(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
+        }
+        if (isLT0(op->lhs_->dtype())) {
+            return makeMin(makeMul(op->lhs_, op->rhs_.as<MinNode>()->lhs_),
+                           makeMul(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
+        }
+    }
+    if (op->lhs_->nodeType() == ASTNodeType::Min && op->rhs_->isConst()) {
+        if (isGT0(op->rhs_->dtype())) {
+            return makeMin(makeMul(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                           makeMul(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+        if (isLT0(op->rhs_->dtype())) {
+            return makeMax(makeMul(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                           makeMul(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+    }
+    if (op->lhs_->nodeType() == ASTNodeType::Max && op->rhs_->isConst()) {
+        if (isGT0(op->rhs_->dtype())) {
+            return makeMax(makeMul(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                           makeMul(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+        if (isLT0(op->rhs_->dtype())) {
+            return makeMin(makeMul(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                           makeMul(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+    }
+
     return op;
 }
 
@@ -228,6 +303,32 @@ Expr SimplifyPass::visit(const FloorDiv &_op) {
     if (equals(op->rhs_, -1)) {
         return makeMul(makeIntConst(-1), op->lhs_);
     }
+
+    if (op->lhs_->nodeType() == ASTNodeType::Min && op->rhs_->isConst()) {
+        if (isGT0(op->rhs_->dtype())) {
+            return makeMin(
+                makeFloorDiv(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                makeFloorDiv(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+        if (isLT0(op->rhs_->dtype())) {
+            return makeMax(
+                makeFloorDiv(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                makeFloorDiv(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+    }
+    if (op->lhs_->nodeType() == ASTNodeType::Max && op->rhs_->isConst()) {
+        if (isGT0(op->rhs_->dtype())) {
+            return makeMax(
+                makeFloorDiv(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                makeFloorDiv(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+        if (isLT0(op->rhs_->dtype())) {
+            return makeMin(
+                makeFloorDiv(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                makeFloorDiv(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+    }
+
     return op;
 }
 
@@ -251,6 +352,28 @@ Expr SimplifyPass::visit(const CeilDiv &_op) {
     if (equals(op->rhs_, -1)) {
         return makeMul(makeIntConst(-1), op->lhs_);
     }
+
+    if (op->lhs_->nodeType() == ASTNodeType::Min && op->rhs_->isConst()) {
+        if (isGT0(op->rhs_->dtype())) {
+            return makeMin(makeCeilDiv(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                           makeCeilDiv(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+        if (isLT0(op->rhs_->dtype())) {
+            return makeMax(makeCeilDiv(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                           makeCeilDiv(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+    }
+    if (op->lhs_->nodeType() == ASTNodeType::Max && op->rhs_->isConst()) {
+        if (isGT0(op->rhs_->dtype())) {
+            return makeMax(makeCeilDiv(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                           makeCeilDiv(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+        if (isLT0(op->rhs_->dtype())) {
+            return makeMin(makeCeilDiv(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                           makeCeilDiv(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+    }
+
     return op;
 }
 
@@ -274,6 +397,32 @@ Expr SimplifyPass::visit(const RoundTowards0Div &_op) {
     if (equals(op->rhs_, -1)) {
         return makeMul(makeIntConst(-1), op->lhs_);
     }
+
+    if (op->lhs_->nodeType() == ASTNodeType::Min && op->rhs_->isConst()) {
+        if (isGT0(op->rhs_->dtype())) {
+            return makeMin(
+                makeRoundTowards0Div(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                makeRoundTowards0Div(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+        if (isLT0(op->rhs_->dtype())) {
+            return makeMax(
+                makeRoundTowards0Div(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                makeRoundTowards0Div(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+    }
+    if (op->lhs_->nodeType() == ASTNodeType::Max && op->rhs_->isConst()) {
+        if (isGT0(op->rhs_->dtype())) {
+            return makeMax(
+                makeRoundTowards0Div(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                makeRoundTowards0Div(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+        if (isLT0(op->rhs_->dtype())) {
+            return makeMin(
+                makeRoundTowards0Div(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
+                makeRoundTowards0Div(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        }
+    }
+
     return op;
 }
 
