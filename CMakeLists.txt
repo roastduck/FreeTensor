@@ -9,6 +9,7 @@ option(FT_DEBUG_SANITIZE "Build with GCC sanitizer. Can be set to OFF or a sanit
 option(FT_WITH_CUDA "Build with CUDA (ON / OFF)" ON)
 option(FT_WITH_MKL "Build with MKL (ON / Path to MKL / OFF)" OFF)
 option(FT_WITH_PYTORCH "Build with PyTorch interface" OFF)
+option(FT_COMPILER_PORTABLE "Do not build FreeTensor itself and its dependencies with non-portable instructions" OFF)
 
 set(DEFAULT_BUILD_TYPE "RelWithDebInfo")
 if(NOT CMAKE_BUILD_TYPE)
@@ -40,11 +41,14 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/pybind11)
 
 # ISL
 set(ISL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/isl)
+if (FT_COMPILER_PORTABLE)
+    set(ISL_ENABLE_PORTABLE "--enable-portable-binary")
+endif()
 ExternalProject_add(ISL
     SOURCE_DIR ${ISL_DIR}
     BUILD_IN_SOURCE true
     INSTALL_DIR ${ISL_DIR}/install
-    CONFIGURE_COMMAND ./autogen.sh && ./configure --prefix=${ISL_DIR}/install
+    CONFIGURE_COMMAND ./autogen.sh && ./configure --prefix=${ISL_DIR}/install ${ISL_ENABLE_PORTABLE}
     BUILD_COMMAND make -j
     INSTALL_COMMAND make install
     BUILD_BYPRODUCTS ${ISL_DIR}/install/lib/libisl.so)
@@ -154,6 +158,9 @@ endif()
 # kindly preserves the quotes through escaping. Once expanded by C preprocessor, they
 # become string literals in C/C++ code and we are safe to use them.
 set(CMAKE_CXX_FLAGS "-Wall -Werror ${CMAKE_CXX_FLAGS}")  # Prepend so users can still use "-DCMAKE_CXX_FLAGS" to override flags
+if(NOT FT_COMPILER_PORTABLE)
+    set(CMAKE_CXX_FLAGS "-march=native ${CMAKE_CXX_FLAGS}")
+endif()
 if(FT_WITH_MKL)
     add_definitions(-DFT_WITH_MKL)
     # Libraries are selected by MKL Link Line Advisor

@@ -6,6 +6,7 @@ PYBIND11_MODULE(freetensor_ffi, m) {
     m.doc() = "Interface to FreeTensor's C++ backend";
 
     init_ffi_except(m);
+    init_ffi_mangle(m);
     init_ffi_tensor_types(m);
     init_ffi_device(m);
     init_ffi_array(m);

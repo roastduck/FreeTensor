@@ -109,7 +109,8 @@ def test_gpu_basic_static_large():
 # To make it correct, we need to treat the seemingly 100-length loop with its real
 # length `min(n, 100)`. However, this requires two improvements: 1) Changes to
 # `split`, and more importantly 2) More accurate dependence analysis supporting
-# dynamic divisor.
+# dynamic divisor. A possible workaround is to analyze the dependence of a loop
+# before we split it, and mark it with `no_deps`.
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_basic_dynamic():
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:

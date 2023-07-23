@@ -49,6 +49,7 @@ There are some options to `cmake`:
     The path accepts by CMake should be a raw unescaped path; i.e. `-DFT_WITH_MKL="/some path"` is good since the quotes are resolved by the shell but `-DFT_WITH_MKL=\"/some\ path\"` is not.
 
 - `-DFT_WITH_PYTORCH=ON/OFF`: build with/without PyTorch integration (including copy-free interface from/to PyTorch), requring PyTorch installed on the system (defaults to `OFF`).
+- `-DFT_COMPILER_PORTABLE`: do not build FreeTensor itself and its dependencies with non-portable instructions (defaults to `OFF`).
 - `-DFT_DEBUG_BLAME_AST=ON` (for developers): enables tracing to tell by which pass a specific AST node is modified.
 - `-DFT_DEBUG_PROFILE=ON` (for developers): profiles some heavy functions in the compiler.
 - `-DFT_DEBUG_SANITIZE=<sanitizer_name>` (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).
