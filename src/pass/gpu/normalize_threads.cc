@@ -104,6 +104,7 @@ Stmt NormalizeThreads::doVisitFor(const For &_op) {
 Stmt NormalizeThreads::visit(const For &op) {
     if (!inKernel_ &&
         std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
+        loops_.clear();
         inKernel_ = true;
         auto ret = doVisitFor(op);
         inKernel_ = false;
