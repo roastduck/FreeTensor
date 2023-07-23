@@ -1374,6 +1374,22 @@ std::ostream &operator<<(std::ostream &_os, const Dependence &dep) {
         } else {
             os << scope.parallel_;
         }
+        switch (dir) {
+        case DepDirection::Normal:
+            os << "(->)";
+            break;
+        case DepDirection::Inv:
+            os << "(<-)";
+            break;
+        case DepDirection::Same:
+            os << "(==)";
+            break;
+        case DepDirection::Different:
+            os << "(!=)";
+            break;
+        default:
+            ASSERT(false);
+        }
     }
     std::string str = os.str();
     std::erase(str, '\n');
