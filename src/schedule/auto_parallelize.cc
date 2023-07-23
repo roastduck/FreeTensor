@@ -413,7 +413,10 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                 ASSERT(false);
             }
             for (ID id = root->id();;) {
-                localNest.emplace_back(id);
+                if (find(id).as<ForNode>()->property_->parallel_ ==
+                    serialScope) { // Skip loops bound to warps. Don't break.
+                    localNest.emplace_back(id);
+                }
                 if (auto nexts = findAll("<For><-(!<For><-)*" + toString(id));
                     nexts.size() == 1) {
                     id = nexts.front()->id();
