@@ -93,11 +93,11 @@ Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
     return ret;
 }
 
-struct ModifiedException {};
-
-bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
-                      CheckNotModifiedSide s0Side, const ID &s0,
-                      CheckNotModifiedSide s1Side, const ID &s1) {
+std::optional<bool>
+checkNotModifiedFastPreCheck(const Stmt &op, const Expr &s0Expr,
+                             const Expr &s1Expr, CheckNotModifiedSide s0Side,
+                             const ID &s0, CheckNotModifiedSide s1Side,
+                             const ID &s1) {
     auto names = allUses(s0Expr); // uses of s1 should be the same
     if (names.empty()) {
         return true;
@@ -114,8 +114,30 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         return false;
     }
 
-    if (!allSideEffectIntrinsics(s0Expr).empty())
+    if (!allSideEffectIntrinsics(s0Expr).empty()) {
         return false;
+    }
+
+    return std::nullopt;
+}
+
+std::optional<bool>
+checkNotModifiedFastPreCheck(const Stmt &op, const Expr &expr,
+                             CheckNotModifiedSide s0Side, const ID &s0,
+                             CheckNotModifiedSide s1Side, const ID &s1) {
+    return checkNotModifiedFastPreCheck(op, expr, expr, s0Side, s0, s1Side, s1);
+}
+
+struct ModifiedException {};
+
+bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
+                      CheckNotModifiedSide s0Side, const ID &s0,
+                      CheckNotModifiedSide s1Side, const ID &s1) {
+    if (auto &&flag = checkNotModifiedFastPreCheck(op, s0Expr, s1Expr, s0Side,
+                                                   s0, s1Side, s1);
+        flag.has_value()) {
+        return *flag;
+    }
 
     // First insert temporarily Eval node to the AST, then perform dependence
     // analysis
