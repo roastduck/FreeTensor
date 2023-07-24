@@ -2,7 +2,6 @@
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <container_utils.h>
-#include <math/utils.h>
 #include <pass/const_fold.h>
 #include <pass/simplify.h>
 #include <schedule.h>
@@ -200,7 +199,11 @@ static void parallelizePerfectNest(
             int m = loops.size(), j = m - 1;
             while (j >= 0 && lengths[j].has_value() && *lim >= *lengths[j]) {
                 ASSERT(*lengths[j] > 0);
-                *lim = ceilDiv(*lim, *lengths[j--]);
+                // Use floored div here, so the length to parallelize is
+                // strictly no larger than our limit. This is necessary because
+                // later we check whether some parallel scopes are full, to
+                // decide whether we do a parallel reduction.
+                *lim /= *lengths[j--];
             }
             if (j == -1 || lim == 1) {
                 parallelizePerfectNest(
@@ -261,7 +264,11 @@ static void parallelizePerfectNest(
             int m = loops.size(), j = 0;
             while (j < m && lengths[j].has_value() && *lim >= *lengths[j]) {
                 ASSERT(*lengths[j] > 0);
-                *lim = ceilDiv(*lim, *lengths[j++]);
+                // Use floored div here, so the length to parallelize is
+                // strictly no larger than our limit. This is necessary because
+                // later we check whether some parallel scopes are full, to
+                // decide whether we do a parallel reduction.
+                *lim /= *lengths[j++];
             }
             if (j == m || lim == 1) {
                 parallelizePerfectNest(
