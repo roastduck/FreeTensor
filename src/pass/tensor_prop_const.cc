@@ -2,6 +2,7 @@
 
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <math/parse_pb_expr.h>
 #include <pass/replace_iter.h>
@@ -60,6 +61,14 @@ Stmt tensorPropConst(const Stmt &_op, const ID &bothInSubAST,
                     if (!allReads(expr).empty()) {
                         // Expressions should contain only constants and
                         // iterating vars
+                        return false;
+                    }
+                    return true;
+                })
+                .filterLater([&](const auto &later) {
+                    if (!findAllStmt(op, "<MatMul>->>" +
+                                             toString(later.stmt_->id()))
+                             .empty()) {
                         return false;
                     }
                     return true;
