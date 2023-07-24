@@ -429,7 +429,8 @@ extern "C" {
 
     std::string staticStack;
     if (visitor.sharedStackSize() > 0) {
-        staticStack += "static uint8_t __sharedStack[" +
+        staticStack += "static uint8_t __attribute__((section(\".ldata\")))  "
+                       "__sharedStack[" +
                        std::to_string(visitor.sharedStackSize()) + "];\n";
     }
     if (visitor.threadStackSize() > 0) {
