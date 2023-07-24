@@ -3,6 +3,7 @@
 #include <analyze/all_side_effect_intrinsics.h>
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <math/parse_pb_expr.h>
 #include <pass/replace_iter.h>
@@ -62,6 +63,14 @@ Stmt tensorPropConst(const Stmt &_op, const ID &bothInSubAST,
                         !allSideEffectIntrinsics(expr).empty()) {
                         // Expressions should contain only constants and
                         // iterating vars
+                        return false;
+                    }
+                    return true;
+                })
+                .filterLater([&](const auto &later) {
+                    if (!findAllStmt(op, "<MatMul>->>" +
+                                             toString(later.stmt_->id()))
+                             .empty()) {
                         return false;
                     }
                     return true;
