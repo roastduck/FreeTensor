@@ -149,6 +149,7 @@ digraph "src/pass/tensor_prop_const.cc"
   Node83 -> Node10 [color="steelblue1",style="solid"];
   Node83 -> Node2 [color="steelblue1",style="solid"];
   Node62 -> Node5 [color="steelblue1",style="solid"];
+  Node1 -> Node60 [color="steelblue1",style="solid"];
   Node1 -> Node32 [color="steelblue1",style="solid"];
   Node1 -> Node84 [color="steelblue1",style="solid"];
   Node84 [label="math/parse_pb_expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parse__pb__expr_8h.html",tooltip=" "];
