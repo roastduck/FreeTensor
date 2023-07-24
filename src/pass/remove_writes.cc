@@ -313,6 +313,18 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         .filterLater([&](const auto &later) {
             return later.op_->nodeType() == ASTNodeType::ReduceTo;
         })
+        .filter([&](const auto &later, const auto &earlier) {
+            Expr expr = earlier.op_->nodeType() == ASTNodeType::Store
+                            ? earlier.op_.template as<StoreNode>()->expr_
+                            : earlier.op_.template as<ReduceToNode>()->expr_;
+            if (auto &&flag = checkNotModifiedFastPreCheck(
+                    op, expr, CheckNotModifiedSide::After, earlier.stmt_->id(),
+                    CheckNotModifiedSide::Before, later.stmt_->id());
+                flag.has_value()) {
+                return *flag;
+            }
+            return true;
+        })
         .ignoreReductionWAW(false)
         .noProjectOutPrivateAxis(true)(op, foundOverwriteReduce);
     FindDeps()

@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_CHECK_NOT_MODIFIED
 #define FREE_TENSOR_CHECK_NOT_MODIFIED
 
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -68,6 +69,24 @@ class InsertTmpEval : public Mutator {
   protected:
     Stmt visitStmt(const Stmt &op) override;
 };
+
+/**
+ * Fast preliminary screening of `checkNotModified`
+ *
+ * It can optionally be used before `checkNotModified`. Parameters are the same.
+ *
+ * @{
+ */
+std::optional<bool>
+checkNotModifiedFastPreCheck(const Stmt &op, const Expr &expr,
+                             CheckNotModifiedSide s0Side, const ID &s0,
+                             CheckNotModifiedSide s1Side, const ID &s1);
+std::optional<bool>
+checkNotModifiedFastPreCheck(const Stmt &op, const Expr &s0Expr,
+                             const Expr &s1Expr, CheckNotModifiedSide s0Side,
+                             const ID &s0, CheckNotModifiedSide s1Side,
+                             const ID &s1);
+/** @} */
 
 /**
  * Verify if `expr` evaluates to the same value in the period that AFTER

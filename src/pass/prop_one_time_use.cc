@@ -75,21 +75,31 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
     std::mutex lock;
 
     // Find dependence A->B that always happen for B which may propagate
-    auto finder = FindDeps()
-                      .mode(FindDepsMode::KillLater)
-                      .type(DEP_RAW)
-                      .filterAccess([&](const auto &acc) {
-                          return !isOutputting(acc.def_->buffer_->atype());
-                      })
-                      .filterEarlier([&](const auto &earlier) {
-                          return earlier.op_->nodeType() == ASTNodeType::Store;
-                      })
-                      .filterLater([&](const auto &later) {
-                          // pass/remove_write will deal with it (TODO: Really?
-                          // What if we want to do interleaved prop_one_time_use
-                          // and remove_write?)
-                          return later.op_->nodeType() != ASTNodeType::ReduceTo;
-                      });
+    auto finder =
+        FindDeps()
+            .mode(FindDepsMode::KillLater)
+            .type(DEP_RAW)
+            .filterAccess([&](const auto &acc) {
+                return !isOutputting(acc.def_->buffer_->atype());
+            })
+            .filterEarlier([&](const auto &earlier) {
+                return earlier.op_->nodeType() == ASTNodeType::Store;
+            })
+            .filterLater([&](const auto &later) {
+                // pass/remove_write will deal with it (TODO: Really? What if we
+                // want to do interleaved prop_one_time_use and remove_write?)
+                return later.op_->nodeType() != ASTNodeType::ReduceTo;
+            })
+            .filter([&](const auto &later, const auto &earlier) {
+                if (auto &&flag = checkNotModifiedFastPreCheck(
+                        op, earlier.op_.template as<StoreNode>()->expr_,
+                        CheckNotModifiedSide::Before, earlier.stmt_->id(),
+                        CheckNotModifiedSide::Before, later.stmt_->id());
+                    flag.has_value()) {
+                    return *flag;
+                }
+                return true;
+            });
     if (subAST.isValid()) {
         finder = finder.filterSubAST(subAST);
     }
