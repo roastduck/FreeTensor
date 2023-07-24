@@ -1,5 +1,6 @@
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <hash.h>
 #include <math/parse_pb_expr.h>
@@ -170,6 +171,10 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
         .type(DEP_RAW)
         .filterAccess([&](const auto &acc) { return acc.def_->id() == def; })
         .filterLater([&](const auto &later) {
+            if (!findAllStmt(ast, "<MatMul>->>" + toString(later.stmt_->id()))
+                     .empty()) {
+                return false;
+            }
             return later.op_->nodeType() == ASTNodeType::Load;
         })
         .noProjectOutPrivateAxis(true)(ast, unsyncFunc(found));

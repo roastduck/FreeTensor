@@ -3,6 +3,7 @@
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <math/parse_pb_expr.h>
 #include <pass/hoist_var_over_stmt_seq.h>
@@ -300,6 +301,10 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             return !singleDefId.isValid() || acc.def_->id() == singleDefId;
         })
         .filterLater([&](const auto &later) {
+            if (!findAllStmt(op, "<MatMul>->>" + toString(later.stmt_->id()))
+                     .empty()) {
+                return false;
+            }
             return later.op_->nodeType() == ASTNodeType::Store;
         })
         .ignoreReductionWAW(false)
@@ -311,6 +316,10 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             return !singleDefId.isValid() || acc.def_->id() == singleDefId;
         })
         .filterLater([&](const auto &later) {
+            if (!findAllStmt(op, "<MatMul>->>" + toString(later.stmt_->id()))
+                     .empty()) {
+                return false;
+            }
             return later.op_->nodeType() == ASTNodeType::ReduceTo;
         })
         .filter([&](const auto &later, const auto &earlier) {
