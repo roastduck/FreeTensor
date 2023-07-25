@@ -479,12 +479,13 @@ class UserGradStaged:
 
         # Although we are discarding the gradient `VarDef` scopes, we still need to close
         # them, to restore ctx_stack. After that, we pop out the `VarDef` statement
-        for grad_def in reversed(self.grad_defs):
-            grad_def.__exit__(exc_type, exc_value, traceback)
-        if exc_value is not None:
-            # Do not generate an AST node
-            return False  # Do not suppress the exception
-        ctx_stack.top().stmt_seq.pop()
+        if len(self.ori_vars) > 0:
+            for grad_def in reversed(self.grad_defs):
+                grad_def.__exit__(exc_type, exc_value, traceback)
+            if exc_value is not None:
+                # Do not generate an AST node
+                return False  # Do not suppress the exception
+            ctx_stack.top().stmt_seq.pop()
 
         # Record the body to context
         ctx_stack.user_grads.append(
