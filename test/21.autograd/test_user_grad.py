@@ -336,6 +336,51 @@ def test_frontend():
     assert std.match(bwd.body)
 
 
+def test_frontend_empty_user_grad():
+    # We can use an empty UserGrad to ignore some gradient at all
+
+    @ft.transform(verbose=1)
+    def func(x: ft.Var[(4,), "float32"]):
+        with ft.StmtRange() as rng:
+            sin = ft.unary_op(
+                lambda item: ft.intrinsic("sinf(%)", item, ret_type="float32"),
+                x)
+            cos = ft.unary_op(
+                lambda item: ft.intrinsic("cosf(%)", item, ret_type="float32"),
+                x)
+            y = sin * sin - cos * cos
+        with ft.UserGrad(stmt_range=rng):
+            pass
+        z = y * 2
+        return z
+
+    @ft.transform
+    def stdsrc(x: ft.Var[(4,), "float32"]):
+        sin = ft.unary_op(
+            lambda item: ft.intrinsic("sinf(%)", item, ret_type="float32"), x)
+        cos = ft.unary_op(
+            lambda item: ft.intrinsic("cosf(%)", item, ret_type="float32"), x)
+        y = sin * sin - cos * cos
+        z = y * 2
+        return z
+
+    assert stdsrc.body.match(func.body)
+
+    _, bwd, _, _ = ft.grad(func, ["x"], [ft.Return()],
+                           ft.GradTapeMode.All,
+                           tape_in_closure=True,
+                           reset_provided_grad=False,
+                           user_grads=func.user_grads,
+                           verbose=2)
+
+    bwd = ft.lower(bwd, verbose=1)
+    with ft.VarDef("dx", (4,), "float32==0", "output", "cpu") as dx:
+        with ft.For("i", 0, 4) as i:
+            dx[i] = 0
+    stdbwd = ft.pop_ast()
+    assert stdbwd.match(bwd.body)
+
+
 def test_partial_derivative():
 
     @ft.transform(verbose=2)
