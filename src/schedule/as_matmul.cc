@@ -1,3 +1,4 @@
+#include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/as_matmul.h>
 
@@ -313,7 +314,10 @@ Stmt AsMatMul::visit(const VarDef &op) {
     }
 }
 
-Stmt asMatMul(const Stmt &ast, const ID &loop) { return AsMatMul(loop)(ast); }
+Stmt asMatMul(const Stmt &_ast, const ID &loop) {
+    auto ast = simplify(_ast);
+    return AsMatMul(loop)(ast);
+}
 
 void Schedule::asMatMul(const ID &loop) {
     beginTransaction();

@@ -806,6 +806,10 @@ gradFuncOutOfPlace(const Func &func,
 }
 
 static std::vector<ID> _findTapeDefs(const Stmt &op, GradTapeMode mode) {
+    if (getenv("PAPER_NO_RECOMP")) {
+        mode = GradTapeMode::All;
+    }
+
     switch (mode) {
     case GradTapeMode::All: {
         auto all = allDefs(

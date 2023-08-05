@@ -7,6 +7,10 @@
 namespace freetensor {
 
 void Schedule::autoPluto(const Ref<Target> &target) {
+    if (getenv("PAPER_NO_PUSH_PULL")) {
+        return;
+    }
+
     // Try to transform
     //
     // for i = 0 to n

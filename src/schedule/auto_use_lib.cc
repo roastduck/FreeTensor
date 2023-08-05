@@ -12,6 +12,10 @@ void Schedule::autoUseLib(const Ref<Target> &target) {
         try {
             asMatMul(loop->id());
         } catch (const InvalidSchedule &e) {
+            if (getenv("PAPER_NO_PAR_REDUCE")) {
+                continue;
+            }
+
             // If the loop is marked as preferLibs, we inline all local
             // variables, fission all the statments apart, and try applying to
             // each of them

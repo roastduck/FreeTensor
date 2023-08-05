@@ -5,6 +5,10 @@ namespace freetensor {
 
 void Schedule::autoFissionFuse(const Ref<Target> &target,
                                const Ref<RandTrace> &trace) {
+    if (getenv("PAPER_NO_PAR_REDUCE")) {
+        return;
+    }
+
     RandCondStack conds;
 
     // Random decision on whether to fission or fuse:

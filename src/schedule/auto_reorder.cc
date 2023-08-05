@@ -4,6 +4,10 @@
 namespace freetensor {
 
 void Schedule::autoReorder(const Ref<Target> &target) {
+    if (getenv("PAPER_NO_PUSH_PULL")) {
+        return;
+    }
+
     auto allLoops = findAll("<For>");
     std::vector<FindDepsDir> direction;
     direction.reserve(allLoops.size());

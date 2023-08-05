@@ -49,6 +49,10 @@ Expr Parallelize::visit(const Var &op) {
 
 Stmt parallelize(const Stmt &_ast, const ID &loop,
                  const ParallelScope &parallel, bool allowReduction) {
+    if (getenv("PAPER_NO_PAR_REDUCE")) {
+        allowReduction = false;
+    }
+
     Parallelize mutator(loop, parallel);
     auto ast = _ast;
     auto oldAst = ast;
