@@ -5,7 +5,7 @@ namespace freetensor {
 
 void Schedule::autoFissionFuse(const Ref<Target> &target,
                                const Ref<RandTrace> &trace) {
-    if (getenv("PAPER_NO_PAR_REDUCE")) {
+    if (getenv("PAPER_IS_BWD") && getenv("PAPER_NO_PAR_REDUCE")) {
         return;
     }
 

@@ -7,7 +7,7 @@
 namespace freetensor {
 
 void Schedule::autoPluto(const Ref<Target> &target) {
-    if (getenv("PAPER_NO_PUSH_PULL")) {
+    if (getenv("PAPER_IS_BWD") && getenv("PAPER_NO_PUSH_PULL")) {
         return;
     }
 

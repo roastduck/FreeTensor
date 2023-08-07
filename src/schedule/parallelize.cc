@@ -49,7 +49,7 @@ Expr Parallelize::visit(const Var &op) {
 
 Stmt parallelize(const Stmt &_ast, const ID &loop,
                  const ParallelScope &parallel, bool allowReduction) {
-    if (getenv("PAPER_NO_PAR_REDUCE")) {
+    if (getenv("PAPER_IS_BWD") && getenv("PAPER_NO_PAR_REDUCE")) {
         allowReduction = false;
     }
 

@@ -12,7 +12,7 @@ void Schedule::autoUseLib(const Ref<Target> &target) {
         try {
             asMatMul(loop->id());
         } catch (const InvalidSchedule &e) {
-            if (getenv("PAPER_NO_PAR_REDUCE")) {
+            if (getenv("PAPER_IS_BWD") && getenv("PAPER_NO_PAR_REDUCE")) {
                 continue;
             }
 
