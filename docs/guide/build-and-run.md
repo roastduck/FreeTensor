@@ -15,7 +15,7 @@
 Other Python dependencies:
 
 ```sh
-pip3 install --user numpy sourceinspect astor Pygments
+pip3 install --user numpy sourceinspect astor Pygments z3-solver
 ```
 
 !!! note "Note on Python version"
