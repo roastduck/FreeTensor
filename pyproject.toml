@@ -11,6 +11,7 @@ dependencies = [
     "sourceinspect",
     "astor",
     "Pygments",
+    "z3-solver",
 ]
 
 [project.optional-dependencies]
@@ -24,7 +25,7 @@ doc = [
 ]
 
 [build-system]
-requires = ["py-build-cmake~=0.1.8"]
+requires = ["py-build-cmake~=0.1.8", "z3-solver"]
 build-backend = "py_build_cmake.build"
 
 [tool.py-build-cmake.module] # Where to find the Python module to package

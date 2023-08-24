@@ -25,7 +25,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 # Check whther 3rd-party modules exist
-foreach(MODULE IN ITEMS antlr/antlr4 range-v3 cuda-samples isl pybind11 z3)
+foreach(MODULE IN ITEMS antlr/antlr4 range-v3 cuda-samples isl pybind11)
     file(GLOB RESULT ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/${MODULE}/*)
     list(LENGTH RESULT RES_LEN)
     if(RES_LEN EQUAL 0)
@@ -59,8 +59,11 @@ target_link_libraries(isl::isl INTERFACE ${ISL_DIR}/install/lib/libisl.so)
 add_dependencies(isl::isl ISL)
 
 # Z3
-set(SUBMODULE_DIR_NAME "3rd-party") # Z3 PR #4959
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/z3)
+execute_process(
+    COMMAND "${Python_EXECUTABLE}" -c "import z3; import os; print(os.path.dirname(z3.__file__))"
+    OUTPUT_VARIABLE Z3_PATH)
+string(STRIP "${Z3_PATH}" Z3_PATH)
+message(STATUS "Looking for Z3 in ${Z3_PATH}")
 
 # ANTLR
 # 1. Runtime
@@ -230,13 +233,13 @@ add_library(freetensor SHARED ${SRC})
 add_dependencies(freetensor ISL)
 target_link_libraries(freetensor PUBLIC
     isl::isl
-    libz3 # See 3rd-party/z3/src/CMakeLists.txt
+    ${Z3_PATH}/lib/libz3.so
     antlr4_shared # See 3rd-party/antlr/antlr4/runtime/Cpp/runtime/CMakeLists.txt
     OpenMP::OpenMP_CXX
     ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 target_include_directories(freetensor PUBLIC
     ${CUDA_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/z3/src/api/c++
+    ${Z3_PATH}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/range-v3/include)
 target_include_directories(freetensor PRIVATE ${ANTLR_INCLUDES})
