@@ -12,6 +12,7 @@ dependencies = [
     "astor",
     "Pygments",
     "z3-solver",
+    "setuptools", # Required by z3: https://github.com/Z3Prover/z3/issues/2374
 ]
 
 [project.optional-dependencies]
@@ -25,7 +26,12 @@ doc = [
 ]
 
 [build-system]
-requires = ["py-build-cmake~=0.1.8", "z3-solver"]
+requires = [
+    "py-build-cmake~=0.1.8",
+    "pybind11-stubgen",
+    "z3-solver",
+    "setuptools", # Required by z3: https://github.com/Z3Prover/z3/issues/2374
+]
 build-backend = "py_build_cmake.build"
 
 [tool.py-build-cmake.module] # Where to find the Python module to package

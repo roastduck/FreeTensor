@@ -116,6 +116,23 @@ void init_ffi_config(py::module_ &m) {
           "device"_a);
     m.def("default_device", Config::defaultDevice,
           "Check current default device");
+    m.def(
+        "set_runtime_dir",
+        [](const std::vector<std::string> &paths) {
+            auto pathsFs =
+                paths | views::transform([](const std::string &path) {
+                    return std::filesystem::path(path);
+                });
+            Config::setRuntimeDir({pathsFs.begin(), pathsFs.end()});
+        },
+        "Set serach paths for FreeTensor runtime header files", "paths"_a);
+    m.def(
+        "runtime_dir",
+        []() {
+            auto &&paths = Config::runtimeDir();
+            return std::vector<std::string>(paths.begin(), paths.end());
+        },
+        "Serach paths for FreeTensor runtime header files");
 }
 
 } // namespace freetensor

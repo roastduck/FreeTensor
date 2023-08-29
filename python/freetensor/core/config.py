@@ -69,3 +69,6 @@ default_target = _import_func(ffi.default_target)
 
 set_default_device = _import_func(ffi.set_default_device)
 default_device = _import_func(ffi.default_device)
+
+set_runtime_dir = _import_func(ffi.set_runtime_dir)
+runtime_dir = _import_func(ffi.runtime_dir)
