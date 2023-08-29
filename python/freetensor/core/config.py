@@ -8,7 +8,7 @@ __all__ = [
     'debug_cuda_with_um', 'set_backend_compiler_cxx', 'backend_compiler_cxx',
     'set_backend_compiler_nvcc', 'backend_compiler_nvcc', 'backend_openmp',
     'set_backend_openmp', 'set_default_target', 'default_target',
-    'set_default_device', 'default_device'
+    'set_default_device', 'default_device', 'set_runtime_dir', 'runtime_dir'
 ]
 
 from .. import ffi
