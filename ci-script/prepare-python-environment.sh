@@ -15,4 +15,4 @@ pip3 install --upgrade -r requirements.txt -f https://download.pytorch.org/whl/t
 
 # Uninstall unneeded packages
 # NOTE: `sed` replaces `_` to `-` because they are equivalent in PyPI
-pip3 freeze | sed "s/_/-/g" | grep -v -f <(cat requirements.txt | sed "s/_/-/g") - | xargs --no-run-if-empty pip3 uninstall -y
+pip3 freeze | grep -v "freetensor" | sed "s/_/-/g" | grep -v -f <(cat requirements.txt | sed "s/_/-/g") - | xargs --no-run-if-empty pip3 uninstall -y
