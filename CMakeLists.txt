@@ -61,7 +61,7 @@ add_dependencies(isl::isl ISL)
 # Z3
 execute_process(
     COMMAND "${Python_EXECUTABLE}" -c "import z3; import os; print(os.path.dirname(z3.__file__))"
-    OUTPUT_VARIABLE Z3_PATH)
+    OUTPUT_VARIABLE Z3_PATH COMMAND_ERROR_IS_FATAL ANY)
 string(STRIP "${Z3_PATH}" Z3_PATH)
 message(STATUS "Looking for Z3 in ${Z3_PATH}")
 
@@ -119,7 +119,7 @@ if(FT_WITH_PYTORCH)
     # https://pytorch.org/cppdocs/installing.html
     execute_process(
         COMMAND "${Python_EXECUTABLE}" -c "import torch;print(torch.utils.cmake_prefix_path)"
-        OUTPUT_VARIABLE PYTORCH_CMAKE_PATH)
+        OUTPUT_VARIABLE PYTORCH_CMAKE_PATH COMMAND_ERROR_IS_FATAL ANY)
     string(STRIP "${PYTORCH_CMAKE_PATH}" PYTORCH_CMAKE_PATH)
     message(STATUS "Looking for PyTorch CMake package in ${PYTORCH_CMAKE_PATH}")
     list(PREPEND CMAKE_PREFIX_PATH ${PYTORCH_CMAKE_PATH})
@@ -148,7 +148,7 @@ if(FT_WITH_PYTORCH)
     if(FT_WITH_CUDA)
         execute_process(
             COMMAND "${Python_EXECUTABLE}" -c "import torch;print(torch.version.cuda)"
-            OUTPUT_VARIABLE PYTORCH_CUDA_VERSION)
+            OUTPUT_VARIABLE PYTORCH_CUDA_VERSION COMMAND_ERROR_IS_FATAL ANY)
         string(STRIP "${PYTORCH_CUDA_VERSION}" PYTORCH_CUDA_VERSION)
         if(NOT ${PYTORCH_CUDA_VERSION} STREQUAL ${CUDA_VERSION})
             message(FATAL_ERROR "CUDA version used in PyTorch (${PYTORCH_CUDA_VERSION}) should match CUDA version used in FreeTensor (${CUDA_VERSION})")
@@ -266,17 +266,35 @@ if (PYBIND11_STUBGEN AND NOT FT_DEBUG_SANITIZE)
 endif()
 
 # Install
-# Now we install freetensor_ffi to `???/lib/python3.10/dist-packages/freetensor` but others to CMAKE_INSTALL_PREFIX.
-# FIXME: We should install everything to `???/lib/python3.10/dist-packages/freetensor`
-set_target_properties(freetensor freetensor_ffi PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set_target_properties(freetensor_ffi PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE) # Required for PyTorch
-install(DIRECTORY ${ISL_DIR}/install/lib/ DESTINATION lib) # Trailing slash needed
-install(TARGETS freetensor LIBRARY DESTINATION lib)
 if (PY_BUILD_CMAKE_MODULE_NAME) # Install to `???/lib/python3.10/dist-packages/freetensor`
-    install(TARGETS freetensor_ffi LIBRARY DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME} COMPONENT python_module)
+    # py-build-cmake requires an RPATH relative to $ORIGIN. NOTE: $ORIGIN is a variable of LD, not CMake.
+    set_target_properties(freetensor freetensor_ffi PROPERTIES INSTALL_RPATH "$ORIGIN")
+
+    install(
+        TARGETS freetensor freetensor_ffi antlr4_shared
+        LIBRARY DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME} COMPONENT python_module)
+    install(
+        DIRECTORY ${Z3_PATH}/lib/ # Trailing slash needed
+        DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME} COMPONENT python_module)
+    install(
+        DIRECTORY ${ISL_DIR}/install/lib/ # Trailing slash needed
+        DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME} COMPONENT python_module)
+    install(
+        DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ # Trailing slash needed
+        DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME}/include/freetensor COMPONENT python_module)
+    install(
+        DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ # Trailing slash needed
+        DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME}/share/runtime_include COMPONENT python_module)
+    install(
+        DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/mdspan/ # Trailing slash needed
+        DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME}/share/3rd-party/mdspan COMPONENT python_module)
 else()
-    install(TARGETS freetensor_ffi LIBRARY DESTINATION lib)
+    install(TARGETS freetensor freetensor_ffi LIBRARY DESTINATION lib)
+    # ANTLR will be installed by its own install command
+    # z3 is already installed
+    install(DIRECTORY ${ISL_DIR}/install/lib/ DESTINATION lib) # Trailing slash needed
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include/freetensor) # Trailing slash needed
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ DESTINATION share/runtime_include) # Trailing slash needed
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/mdspan/ DESTINATION share/3rd-party/mdspan) # Trailing slash needed
 endif()
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include/freetensor) # Trailing slash after the source path is needed
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ DESTINATION share/runtime_include)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/mdspan/ DESTINATION share/3rd-party/mdspan)

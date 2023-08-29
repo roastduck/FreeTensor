@@ -1,0 +1,2 @@
+[cmake.options]
+FT_WITH_MKL = "/home/spack/spack/opt/spack/linux-debian11-zen2/gcc-10.2.1/intel-mkl-2020.4.304-py6elz2mzhdgres34nr5e2ta5isfja7k/mkl"

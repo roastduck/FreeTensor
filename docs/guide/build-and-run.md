@@ -12,11 +12,7 @@
 - PyTorch (Optional, see below)
 - Java (= 11, Build-time dependency only)
 
-Other Python dependencies:
-
-```sh
-pip3 install --user numpy sourceinspect astor Pygments z3-solver
-```
+Other Python dependencies can be installed automatically when installing FreeTensor.
 
 !!! note "Note on Python version"
     Because we are analyzing Python AST, which is sensitive to Python version, there may be potential bugs for Python strictly later than 3.8. Please file an issue if something goes wrong
@@ -32,16 +28,22 @@ First, clone this repo. Don't forget there are some submodules.
 git clone --recursive <path/to/this/repo>
 ```
 
-Then, build.
+Then, build and install.
 
 ```sh
-mkdir build
-cd build
-cmake ..
-make -j  # Or use Ninja
+pip3 install .
 ```
 
-There are some options to `cmake`:
+This command will build FreeTensor with minimal dependencies. To build with a larger feature set, append one or more following `-C--local=???.toml` options to the command. Please note that these options requires a new enough `pip`.
+
+- `pip3 install . -C--local=with-cuda.toml`: Build with CUDA.
+- `pip3 install . -C--local=with-mkl.toml`: Build with MKL.
+- `pip3 install . -C--local=with-pytorch.toml`: Build with PyTorch.
+
+!!! note "Note if building with PyTorch"
+    Since there are conflicts with PyTorch as described above, we do not manage PyTorch as a dependency in the Python project, and it should be installed manually before installing FreeTensor. However, this breaks the requirement of `pip` that all dependencies should be declared, so `pip` must be called with `--no-build-isolation`, and this further requires installing the following build-time dependencies manally: `pip3 install py-build-cmake~=0.1.8 pybind11-stubgen z3-solver setuptools`.
+
+The `.toml` files in these options can be found in the root directory of this repository, in which options to CMake are set. The full set of CMake options of FreeTensor are:
 
 - `-DFT_WITH_CUDA=ON/OFF`: build with/without CUDA (defaults to `ON`).
 - `-DFT_WITH_MKL=ON/<path/to/mkl/root>/OFF`: build with MKL (defaults to `OFF`).
@@ -54,7 +56,7 @@ There are some options to `cmake`:
 - `-DFT_DEBUG_PROFILE=ON` (for developers): profiles some heavy functions in the compiler.
 - `-DFT_DEBUG_SANITIZE=<sanitizer_name>` (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).
 
-It will build a shared library with a name like `freetensor_ffi.cpython-37m-x86_64-linux-gnu.so`, which can be used in Python via `import freetensor`.
+You can create your own `.toml` files to set them explicitly.
 
 Alternatively, you can build our docker images by `make -f docker.Makefile <variant>`, where `<variant>` can be:
 
@@ -62,17 +64,7 @@ Alternatively, you can build our docker images by `make -f docker.Makefile <vari
 - `cuda-mkl-dev`, for `-DFT_WITH_CUDA=ON -DFT_WITH_MKL=ON -DFT_WITH_PYTORCH=OFF`, or
 - `cuda-mkl-pytorch-dev`, for `-DFT_WITH_CUDA=ON -DFT_WITH_MKL=ON -DFT_WITH_PYTORCH=ON`.
 
-## Run a Program with FreeTensor
-
-To run any program with FreeTensor, one should add the `python/` and `build/` directory to `PYTHONPATH` first.
-
-E.g. to run a python program `a.py` with FreeTensor in the `build/` directory,
-
-```sh
-PYTHONPATH=../python:../build:$PYTHONPATH python3 a.py
-```
-
-If you are running our docker images, you don't have to set `PYTHONPATH`.
+After installation, simply `import freetensor` to Python to use.
 
 ## Global Configurations
 
@@ -97,13 +89,13 @@ This configurations can also set at runtime in [`ft.config`](../../api/#freetens
 To run the test, first change into the `test/` directory, then
 
 ```sh
-PYTHONPATH=../python:../build:$PYTHONPATH pytest
+pytest
 ```
 
 To run a single test case, specify the test case name, and optionally use `pytest -s` to display the standard output. E.g,
 
 ```sh
-PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 00.hello_world/test_basic.py::test_hello_world
+pytest -s 00.hello_world/test_basic.py::test_hello_world
 ```
 
 !!! note "Debugging (for developers)"
@@ -111,19 +103,19 @@ PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 00.hello_world/test_basic.py
     If using GDB, one should invoke PyTest with `python3 -m`:
 
     ```
-    PYTHONPATH=../python:../build:$PYTHONPATH gdb --args python3 -m pytest
+    gdb --args python3 -m pytest
     ```
 
     If using Valgrind, one should set Python to use the system malloc:
 
     ```
-    PYTHONPATH=../python:../build:$PYTHONPATH PYTHONMALLOC=malloc valgrind python3 -m pytest
+    PYTHONMALLOC=malloc valgrind python3 -m pytest
     ```
 
     Sometimes Valgrind is not enough to detect some errors. An alternative is to use the sanitizer from GCC. For example, if you are using the "address" sanitizer, first set `-DFT_DEBUG_SANITIZE=address` to `cmake`, and then:
 
     ```
-    PYTHONPATH=../python:../build:$PYTHONPATH LD_PRELOAD=`gcc -print-file-name=libasan.so` pytest -s
+    LD_PRELOAD=`gcc -print-file-name=libasan.so` pytest -s
     ```
 
     If you are using another sanitizer, change the string set to `FT_DEBUG_SANITIZE` and the library's name. For example, `-DFT_DEBUG_SANITIZE=undefined` and `libubsan.so`.
@@ -139,15 +131,15 @@ pip3 install --user mkdocs mkdocstrings==0.18.1 "pytkdocs[numpy-style]"
 From the root directory of FreeTensor, run a HTTP server to serve the document (recommended, but without document on C++ interface due to [a limitation](https://github.com/mkdocs/mkdocs/issues/1901)):
 
 ```sh
-PYTHONPATH=./python:./build:$PYTHONPATH mkdocs serve
+mkdocs serve
 ```
 
 Or build and save the pages (with document on C++ interface, requiring Doxygen and Graphviz):
 
 ```sh
-doxygen Doxyfile && PYTHONPATH=./python:./build:$PYTHONPATH mkdocs build
+doxygen Doxyfile && mkdocs build
 ```
 
 !!! note "Publish the documents to GitHub Pages (for developers)"
 
-    `doxygen Doxyfile && PYTHONPATH=./python:./build:$PYTHONPATH mkdocs gh-deploy`
+    `doxygen Doxyfile && mkdocs gh-deploy`
