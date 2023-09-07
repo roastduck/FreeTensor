@@ -1712,6 +1712,9 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:a352051706fe31578e3a3db1e1e9b2980"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:a352051706fe31578e3a3db1e1e9b2980"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a352051706fe31578e3a3db1e1e9b2980">moveDimsParamToOutput</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
 <tr class="separator:a352051706fe31578e3a3db1e1e9b2980"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae0b8e5eaf4d86daeecd31a4a8256c055"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T, PBSetRef U&gt; </td></tr>
+<tr class="memitem:ae0b8e5eaf4d86daeecd31a4a8256c055"><td class="memTemplItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>, <a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae0b8e5eaf4d86daeecd31a4a8256c055">padToSameDims</a> (T &amp;&amp;<a class="el" href="namespacefreetensor.html#a192b70d1972bcd73d5ff58f30fad21a2">lhs</a>, U &amp;&amp;<a class="el" href="namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005">rhs</a>)</td></tr>
+<tr class="separator:ae0b8e5eaf4d86daeecd31a4a8256c055"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8625ab55342e821c0620e7621eb824e4"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
 <tr class="memitem:a8625ab55342e821c0620e7621eb824e4"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8625ab55342e821c0620e7621eb824e4">complement</a> (T &amp;&amp;set)</td></tr>
 <tr class="separator:a8625ab55342e821c0620e7621eb824e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -16641,6 +16644,36 @@ template&lt;typename T &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>: ( The transformed program, Mapping from VarDef IDs of intermediate variables to the name of the new saving tensors, Versions of each memory accesses, Total version counts of each VarDef nodes, Set of all newly inserted statements, Mapping from tape_name to var name and explicit user versions marked via mark_version ) </dd></dl>
+
+</div>
+</div>
+<a id="ae0b8e5eaf4d86daeecd31a4a8256c055" name="ae0b8e5eaf4d86daeecd31a4a8256c055"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae0b8e5eaf4d86daeecd31a4a8256c055">&#9670;&#160;</a></span>padToSameDims()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBSetRef T, PBSetRef U&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::pair&lt; <a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>, <a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> &gt; freetensor::padToSameDims </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">U &amp;&amp;&#160;</td>
+          <td class="paramname"><em>rhs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
