@@ -232,9 +232,12 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             kill[earlier] =
                 PBSet(presburger, toString(domain(d.earlierIter2Idx_)));
         }
+        auto extConstraint =
+            PBSet(presburger, toString(range(d.extConstraint_)));
+        std::tie(kill[earlier], extConstraint) =
+            padToSameDims(std::move(kill[earlier]), std::move(extConstraint));
         kill[earlier] =
-            intersect(std::move(kill[earlier]),
-                      PBSet(presburger, toString(range(d.extConstraint_))));
+            intersect(std::move(kill[earlier]), std::move(extConstraint));
         overwrites.emplace_back(
             later, earlier,
             PBSet(presburger, toString(range(d.later2EarlierIter_))),
@@ -382,8 +385,10 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     //     a = y
     //   else
     //     a = z
-    for (auto &&[later, earlier, thisKill, _] : overwrites) {
-        kill[earlier] = subtract(std::move(kill.at(earlier)), thisKill);
+    for (auto &&[later, earlier, _thisKill, _] : overwrites) {
+        auto &&[oldKill, thisKill] =
+            padToSameDims(std::move(kill.at(earlier)), _thisKill);
+        kill[earlier] = subtract(std::move(oldKill), std::move(thisKill));
     }
     for (auto i = overwrites.begin(); i != overwrites.end();) {
         auto &&[later, earlier, _1, _2] = *i;
