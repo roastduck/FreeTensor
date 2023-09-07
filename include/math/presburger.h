@@ -489,6 +489,14 @@ PBMap moveDimsParamToOutput(T &&map, unsigned first, unsigned n,
                              isl_dim_param, first, n);
 }
 
+template <PBSetRef T, PBSetRef U>
+std::pair<PBSet, PBSet> padToSameDims(T &&lhs, U &&rhs) {
+    auto n = std::max(lhs.nDims(), rhs.nDims());
+    return std::make_pair(
+        insertDims(std::forward<T>(lhs), lhs.nDims(), n - lhs.nDims()),
+        insertDims(std::forward<T>(rhs), rhs.nDims(), n - rhs.nDims()));
+}
+
 template <PBSetRef T> PBSet complement(T &&set) {
     DEBUG_PROFILE("complement");
     return isl_set_complement(PBRefTake<T>(set));
