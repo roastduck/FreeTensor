@@ -127,7 +127,7 @@ def test_type1_many_then_ones():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -198,7 +198,7 @@ def test_type1_repeated_then_one():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (1,), "int32", "output", "cpu") as y:
@@ -236,7 +236,7 @@ def test_type1_write_then_reduce_sub():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
@@ -477,7 +477,7 @@ def test_type1_not_kill_later_store():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:

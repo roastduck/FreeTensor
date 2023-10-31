@@ -1,10 +1,20 @@
 #include <cmath>
 #include <numeric>
+#include <string>
+#include <vector>
+
+#include <isl/constraint.h>
+#include <isl/set.h>
+#include <isl/space_type.h>
+#include <range/v3/numeric/accumulate.hpp>
 
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
+#include <disjoint_set.h>
+#include <expr.h>
 #include <math/parse_pb_expr.h>
+#include <math/presburger.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/normalize_loops.h>
@@ -14,6 +24,8 @@
 #include <schedule.h>
 #include <schedule/fuse.h>
 #include <schedule/pluto.h>
+#include <serialize/load_ast.h>
+#include <serialize/mangle.h>
 
 namespace freetensor {
 
@@ -111,49 +123,78 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
 constexpr const char *FAKE_ACCESS_VAR = "__pluto_fake_access";
 
 class InjectFakeAccess : public Mutator {
-    ID target_;
+    ID outer_, target0_, target1_;
 
   public:
-    InjectFakeAccess(const ID &target) : target_(target) {}
+    InjectFakeAccess(const ID &outer, const ID &target0, const ID &target1)
+        : outer_(outer), target0_(target0), target1_(target1) {}
 
   protected:
     Stmt visit(const For &op) override {
-        if (op->id() != target_)
+        if (op->id() != target0_ && op->id() != target1_)
             return Mutator::visit(op);
 
         auto newBody = makeStmtSeq({
-            makeVarDef(FAKE_ACCESS_VAR,
-                       makeBuffer(makeTensor({}, DataType::Int32),
-                                  AccessType::Cache, MemType::ByValue),
-                       std::nullopt,
-                       makeEval(makeLoad(FAKE_ACCESS_VAR, {}, DataType::Int32)),
-                       false),
+            makeStore(FAKE_ACCESS_VAR, {}, makeIntConst(0)),
             op->body_,
         });
 
         return makeFor(op->iter_, op->begin_, op->end_, op->step_, op->len_,
                        op->property_, newBody, op->metadata(), op->id());
     }
+
+    Stmt visitStmt(const Stmt &op) override {
+        if (op->id() != outer_)
+            return Mutator::visitStmt(op);
+
+        return makeVarDef(FAKE_ACCESS_VAR,
+                          makeBuffer(makeTensor({}, DataType::Int32),
+                                     AccessType::Cache, MemType::ByValue),
+                          std::nullopt, Mutator::visitStmt(op), false);
+    }
 };
 
-PBSet extractLoopSet(const PBCtx &ctx, const AccessPoint &p) {
-    auto iterList = AnalyzeDeps::makeIterList(p.iter_, p.iter_.size());
-    GenPBExpr gen;
-    GenPBExpr::VarMap externals;
-    auto conds = AnalyzeDeps::makeCond(gen, p.conds_, RelaxMode::Possible,
-                                       externals, true, p.def_);
-    if (externals.size() > 0)
-        ERROR("PlutoFuse: external variables currently "
-              "not supported.");
+PBMap combineExternal(PBMap l2e, PBCtx &ctx) {
+    auto nParams = l2e.nParamDims();
+    // combined <-> first met original
+    std::map<std::string, std::string> orig2comb;
+    std::map<std::string, PBBuildExpr> comb2origVar;
+    PBSetBuilder builder;
+    for (int i = 0; i < nParams; ++i) {
+        std::string orig = isl_map_get_dim_name(l2e.get(), isl_dim_param, i);
+        auto origVar = builder.newVar(orig);
+        std::string comb;
+        if (auto pos = orig.find("earlier"); pos != std::string::npos)
+            comb = orig.substr(0, pos);
+        else if (auto pos = orig.find("later"); pos != std::string::npos)
+            comb = orig.substr(0, pos);
+        else
+            ASSERT(false && "FindDeps returns unexpected parameter name");
 
-    PBSet loopSet(ctx, "{ " + iterList + ": " + conds + " }");
+        if (!comb2origVar.contains(comb)) {
+            comb2origVar[comb] = origVar;
+            orig2comb[orig] = comb;
+        } else
+            builder.addConstraint(comb2origVar[comb] == origVar);
+    }
+    auto eqConstraints = builder.build(ctx);
+    eqConstraints = isl_set_move_dims(eqConstraints.move(), isl_dim_param, 0,
+                                      isl_dim_set, 0, nParams);
+    if (l2e !=
+        PBMap(isl_map_intersect_params(l2e.copy(), eqConstraints.move())))
+        throw InvalidSchedule("PlutoFuse: External parameter(s) should not "
+                              "change between during the fused loops");
 
-    // project out constant dims
-    for (int64_t i = p.iter_.size() - 1; i >= 0; --i)
-        if (p.iter_[i].iter_->nodeType() != ASTNodeType::Var)
-            loopSet = projectOutDims(std::move(loopSet), i, 1);
+    for (int i = nParams - 1; i >= 0; --i) {
+        std::string orig = isl_map_get_dim_name(l2e.get(), isl_dim_param, i);
+        if (orig2comb.contains(orig))
+            l2e = isl_map_set_dim_name(l2e.move(), isl_dim_param, i,
+                                       orig2comb[orig].c_str());
+        else
+            l2e = isl_map_remove_dims(l2e.move(), isl_dim_param, i, 1);
+    }
 
-    return loopSet;
+    return l2e;
 }
 
 std::pair<std::vector<IterAxis>, std::vector<IterAxis>>
@@ -203,23 +244,24 @@ struct PermuteInfo {
 
     PermuteInfo(const std::vector<std::vector<int>> &cParamValue,
                 const std::vector<std::vector<int>> &cIterValue,
-                const std::vector<IterAxis> &paramAxes,
+                const std::vector<Expr> &paramExprs,
                 const std::vector<IterAxis> &oldLoopAxes,
                 const std::vector<std::string> &loopVars, const PBCtx &ctx,
                 const PBSet &loopSet) {
-        int nParams = paramAxes.size(), nestLevel = loopVars.size();
+        size_t nParams = paramExprs.size(), nestLevel = loopVars.size();
         ASSERT(oldLoopAxes.size() == loopVars.size());
 
         PBMapBuilder builder;
         auto params = builder.newOutputs(nParams);
         auto newIter = builder.newInputs(nestLevel);
         auto oldIter = builder.newOutputs(nestLevel);
-        for (int i = 0; i < nestLevel; ++i) {
+        for (size_t i = 0; i < nestLevel; ++i) {
+            ASSERT(nParams + 1 == cParamValue[i].size());
             PBBuildExpr iter = 0;
-            for (int j = 0; j < nParams; ++j)
+            for (size_t j = 0; j < nParams; ++j)
                 iter += cParamValue[i][j] * params[j];
             iter += cParamValue[i][nParams];
-            for (int j = 0; j < nestLevel; ++j)
+            for (size_t j = 0; j < nestLevel; ++j)
                 iter += cIterValue[i][j] * oldIter[j];
             builder.addConstraint(iter == newIter[i]);
         }
@@ -232,13 +274,13 @@ struct PermuteInfo {
         ASSERT(func.values_.size() == unsigned(nestLevel));
 
         ReplaceVar renamer;
-        for (int i = 0; i < nParams; ++i)
-            renamer.replaceMap_[func.args_[i]] = paramAxes[i].iter_;
-        for (int i = 0; i < nestLevel; ++i)
+        for (size_t i = 0; i < nParams; ++i)
+            renamer.replaceMap_[func.args_[i]] = paramExprs[i];
+        for (size_t i = 0; i < nestLevel; ++i)
             renamer.replaceMap_[func.args_[nParams + i]] = makeVar(loopVars[i]);
 
         vars_.reserve(nestLevel);
-        for (int i = 0; i < nestLevel; ++i) {
+        for (size_t i = 0; i < nestLevel; ++i) {
             auto rawIter = renamer(func.values_[i]);
             if (oldLoopAxes[i].negStep_)
                 vars_.push_back(makeSub(makeIntConst(0), rawIter));
@@ -338,7 +380,8 @@ struct PlutoFuse : public Mutator {
 
 std::pair<Stmt, std::pair<ID, int>>
 plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
-              int _nestLevel1, int fusableOverlapThreshold, bool doSimplify) {
+              int _nestLevel1, int fusableOverlapThreshold,
+              int fusableNonOverlapTolerance, bool doSimplify) {
     bool hoisted = false;
     // try with vardef hoisted only if they are not at the same level
     if (findStmt(ast, loop0Id)->parent() != findStmt(ast, loop1Id)->parent()) {
@@ -378,9 +421,9 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         countPerfectNest(check.loop1().loop_, _nestLevel1);
 
     // inject fake accesses to extract loop space
-    auto fakeAccessAst = ast;
-    fakeAccessAst = InjectFakeAccess(inner0)(fakeAccessAst);
-    fakeAccessAst = InjectFakeAccess(inner1)(fakeAccessAst);
+    auto fakeAccessAst =
+        InjectFakeAccess(check.loop0().loop_->parent().as<StmtNode>()->id(),
+                         inner0, inner1)(ast);
 
     auto loop0 = findStmt(fakeAccessAst, loop0Id).as<ForNode>();
     auto loop1 = findStmt(fakeAccessAst, loop1Id).as<ForNode>();
@@ -408,7 +451,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         outersSame[0].emplace_back(f->id(), DepDirection::Same);
 
     PBCtx ctx;
-    PBSet loop0Set, loop1Set;
+    std::string loop0SetStr, loop1SetStr;
     std::vector<IterAxis> outerAxes, loop0Axes, loop1Axes;
 
     auto getDeps = [&](const For &l0, int n0, const For &l1, int n1,
@@ -420,50 +463,58 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             .noProjectOutPrivateAxis(true)
             .ignoreReductionWAW(false)
             .filterEarlier([&](const AccessPoint &p) {
-                if (p.def_->name_ == FAKE_ACCESS_VAR) {
-                    if (handleFakeAccess) {
-                        if (p.stmt_->ancestorById(loop0Id).isValid()) {
-                            loop0Set = extractLoopSet(ctx, p);
-                            std::tie(outerAxes, loop0Axes) =
-                                extractVarAxes(p.iter_, loop0);
-                        } else {
-                            ASSERT(p.stmt_->ancestorById(loop1Id).isValid());
-                            loop1Set = extractLoopSet(ctx, p);
-                            loop1Axes = extractVarAxes(p.iter_, loop1).second;
-                        }
-                    }
-                    return false;
-                }
                 return p.stmt_->ancestorById(l0->id()).isValid();
             })
             .filterLater([&](const AccessPoint &p) {
-                if (p.def_->name_ == FAKE_ACCESS_VAR) {
-                    return false;
-                }
                 return p.stmt_->ancestorById(l1->id()).isValid();
             })
             .direction(outersSame)(
                 fakeAccessAst, unsyncFunc([&](const Dependence &d) {
-                    // later to earlier map, but projects out unrelated dims
                     auto hMap = d.later2EarlierIter_;
 
-                    if (hMap.nParamDims() > 0)
-                        throw InvalidSchedule("PlutoFuse: load in loop ranges "
-                                              "currently not supported.");
+                    // We reuse the same transformation for fake access.
+                    // However, the final later2earlier drops all non-nearest
+                    // and lacks information about the full loop sets. As such,
+                    // we use the AllPossible one for it.
+                    if (d.var_ == FAKE_ACCESS_VAR) {
+                        // only process fake access when specified
+                        if (handleFakeAccess) {
+                            hMap = d.later2EarlierIterAllPossible_;
+                            std::tie(outerAxes, loop0Axes) =
+                                extractVarAxes(d.earlier_.iter_, loop0);
+                            loop1Axes =
+                                extractVarAxes(d.later_.iter_, loop1).second;
+                        } else
+                            return;
+                    }
 
-                    // remove inner dims for outer
+                    // combine external params from earlier and later, since we
+                    // don't expect them to change during the two loops in Pluto
+                    hMap = combineExternal(std::move(hMap), d.presburger_);
+
+                    auto nRealParams = hMap.nParamDims();
+
+                    // remove inner dims for earlier
                     auto [pos0, outerDims0] =
                         findIterFromAP(d.earlier_, l0->iter_);
                     pos0 += n0;
                     hMap = projectOutOutputDims(std::move(hMap), pos0,
                                                 hMap.nOutDims() - pos0);
                     pos0 -= n0;
+                    // drop all constant dimensions
                     for (int i = outerDims0.size() - 1; i >= 0;
                          pos0 = outerDims0[i--])
                         hMap = projectOutOutputDims(std::move(hMap),
                                                     outerDims0[i] + 1,
                                                     pos0 - outerDims0[i] - 1);
                     hMap = projectOutOutputDims(std::move(hMap), 0, pos0);
+                    // move outer dimensions to params
+                    hMap = moveDimsOutputToParam(
+                        std::move(hMap), 0, outerDims0.size(), nRealParams);
+                    for (size_t i = 0; i < outerDims0.size(); ++i)
+                        hMap = isl_map_set_dim_name(
+                            hMap.move(), isl_dim_param, nRealParams + i,
+                            ("out_" + std::to_string(i)).c_str());
 
                     // remove inner dims for later
                     auto [pos1, outerDims1] =
@@ -472,12 +523,17 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                     hMap = projectOutInputDims(std::move(hMap), pos1,
                                                hMap.nInDims() - pos1);
                     pos1 -= n1;
-                    for (int i = outerDims1.size() - 1; i >= 0;
-                         pos1 = outerDims1[i--])
-                        hMap = projectOutInputDims(std::move(hMap),
-                                                   outerDims1[i] + 1,
-                                                   pos1 - outerDims1[i] - 1);
+                    // simply drop all outers since we already specified
+                    // outersSame
                     hMap = projectOutInputDims(std::move(hMap), 0, pos1);
+
+                    // if fake access, set the loop sets instead of store deps
+                    if (d.var_ == FAKE_ACCESS_VAR) {
+                        // hMap is later -> earlier, hence loop1 -> loop0.
+                        loop1SetStr = toString(std::move(domain(hMap)));
+                        loop0SetStr = toString(std::move(range(hMap)));
+                        return;
+                    }
 
                     // flatten to set for later coefficients computation;
                     // later dimensions first, so the first half would be
@@ -502,7 +558,112 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     auto dep0 = getDeps(loop0, nestLevel0, loop0, nestLevel0);
     auto dep1 = getDeps(loop1, nestLevel1, loop1, nestLevel1);
     auto dep1to0 = getDeps(loop0, nestLevel0, loop1, nestLevel1, true);
-    const int nParams = outerAxes.size();
+
+    // construct loop sets
+    PBSet loop0Set(ctx, loop0SetStr), loop1Set(ctx, loop1SetStr);
+
+    // align external params and move to set dimensions
+    const auto [nParams, paramExprs] = [&] {
+        // preload the outer axes into the parameters space, since it's possible
+        // that no dependence exists to bring them into the space
+        auto paramsSpace = spaceSetAlloc(ctx, outerAxes.size(), 0);
+        for (size_t i = 0; i < outerAxes.size(); ++i)
+            paramsSpace =
+                isl_space_set_dim_name(paramsSpace.move(), isl_dim_param, i,
+                                       ("out_" + std::to_string(i)).c_str());
+
+        DisjointSet<std::string> paramsConnect;
+        // setup a common root, which represents combination of set dimensions
+        paramsConnect.find("");
+        for (auto &d : {&dep0, &dep1, &dep1to0})
+            for (const auto &dd : *d) {
+                paramsSpace = isl_space_align_params(paramsSpace.move(),
+                                                     PBSpace(dd).move());
+                isl_set_foreach_basic_set(
+                    dd.get(),
+                    [](isl_basic_set *bset, void *user) {
+                        isl_basic_set_foreach_constraint(
+                            bset,
+                            [](isl_constraint *c, void *user) {
+                                auto &paramsConnect =
+                                    *static_cast<DisjointSet<std::string> *>(
+                                        user);
+                                std::optional<std::string> first;
+                                // if set dimensions are involved in this
+                                // constraint, all param dimensions involved are
+                                // thus necessary, connect them to common root
+                                if (isl_constraint_involves_dims(
+                                        c, isl_dim_set, 0,
+                                        isl_constraint_dim(c, isl_dim_set)))
+                                    first = "";
+                                for (auto i = 0;
+                                     i < isl_constraint_dim(c, isl_dim_param);
+                                     ++i)
+                                    if (isl_constraint_involves_dims(
+                                            c, isl_dim_param, i, 1)) {
+                                        std::string name =
+                                            isl_constraint_get_dim_name(
+                                                c, isl_dim_param, i);
+                                        if (first.has_value())
+                                            paramsConnect.uni(*first, name);
+                                        else
+                                            first = name;
+                                    }
+                                isl_constraint_free(c);
+                                return isl_stat_ok;
+                            },
+                            user);
+                        isl_basic_set_free(bset);
+                        return isl_stat_ok;
+                    },
+                    &paramsConnect);
+            }
+        auto nAllParams = isl_space_dim(paramsSpace.get(), isl_dim_param);
+        auto root = paramsConnect.find("");
+        auto isRedundants =
+            views::ints(0, nAllParams) | views::transform([&](auto &&i) {
+                auto &&name =
+                    isl_space_get_dim_name(paramsSpace.get(), isl_dim_param, i);
+                return paramsConnect.find(name) != root;
+            }) |
+            ranges::to_vector;
+        auto nNecessaryParams =
+            nAllParams - ranges::accumulate(isRedundants, 0);
+
+        auto align = [&](PBSet &s) {
+            s = isl_set_align_params(s.move(), paramsSpace.copy());
+            int j = 0;
+            for (int i = 0; i < nAllParams; ++i)
+                if (isRedundants[i])
+                    s = isl_set_project_out(s.move(), isl_dim_param, 0, 1);
+                else
+                    s = isl_set_move_dims(s.move(), isl_dim_set, j++,
+                                          isl_dim_param, 0, 1);
+        };
+
+        for (auto &d : {&dep0, &dep1, &dep1to0})
+            for (auto &dd : *d)
+                align(dd);
+        align(loop0Set);
+        align(loop1Set);
+
+        std::vector<Expr> params;
+        params.reserve(nNecessaryParams);
+        for (size_t i = 0; i < nAllParams - outerAxes.size(); ++i)
+            if (!isRedundants[i]) {
+                std::string name =
+                    isl_space_get_dim_name(paramsSpace.get(), isl_dim_param, i);
+                auto pos = name.find("__ext__");
+                ASSERT(pos != std::string::npos);
+                params.push_back(
+                    loadAST(unmangle(name.substr(0, pos))).as<ExprNode>());
+            }
+        for (size_t i = 0; i < outerAxes.size(); ++i)
+            if (!isRedundants[i + nAllParams - outerAxes.size()])
+                params.push_back(outerAxes[i].iter_);
+
+        return std::pair{nNecessaryParams, params};
+    }();
 
     // constraints for bounding and valid coefficients
     std::vector<PBSet> coeffSets0, coeffSets1, coeffSets1to0;
@@ -519,9 +680,8 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         // ti (target iter) and si (source iter) both on loop 0.
         // this part has no constraint on c1.
         PBMapBuilder builder;
-        auto tp = builder.newInputs(nParams, "tp");
+        auto p = builder.newInputs(nParams, "p");
         auto ti = builder.newInputs(nestLevel0, "ti");
-        auto sp = builder.newInputs(nParams, "sp");
         auto si = builder.newInputs(nestLevel0, "si");
 
         // legality problem:
@@ -538,8 +698,8 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
 
         // bounding problem:
         // c * parameters - (c0 * ti - c0 * si) >= 0
-        // bounds coefficients applied to params, use sp (should have sp===tp)
-        builder.addOutputs(sp);
+        // bounds coefficients applied to params
+        builder.addOutputs(p);
         builder.addOutput(1);
         // loop 0 param coefficients, difference is always 0
         builder.addOutputs(views::repeat_n(0, nParams + 1));
@@ -566,9 +726,8 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         // ti (target iter) and si (source iter) both on loop 1.
         // this part has no constraint on c0.
         PBMapBuilder builder;
-        auto tp = builder.newInputs(nParams, "tp");
+        auto p = builder.newInputs(nParams, "p");
         auto ti = builder.newInputs(nestLevel1, "ti");
-        auto sp = builder.newInputs(nParams, "sp");
         auto si = builder.newInputs(nestLevel1, "si");
 
         // legality problem:
@@ -587,8 +746,8 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
 
         // bounding problem:
         // c * parameters - (c1 * ti - c1 * si) >= 0
-        // bounds coefficients applied to params, use sp (should have sp===tp)
-        builder.addOutputs(sp);
+        // bounds coefficients applied to params
+        builder.addOutputs(p);
         builder.addOutput(1);
         // loop 0 no effect
         builder.addOutputs(views::repeat_n(0, nParams + 1 + nestLevel0));
@@ -616,9 +775,8 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         // i1 = ti (target iter)
         // later first, so p0 and i0 goes first
         PBMapBuilder builder;
-        auto p1 = builder.newInputs(nParams, "p1");
+        auto p = builder.newInputs(nParams, "p");
         auto i1 = builder.newInputs(nestLevel1, "i1");
-        auto p0 = builder.newInputs(nParams, "p0");
         auto i0 = builder.newInputs(nestLevel0, "i0");
 
         auto negate = views::transform([](auto &&x) { return -x; });
@@ -628,11 +786,11 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         // bounds coefficients, no effect
         builder.addOutputs(views::repeat_n(0, nParams + 1));
         // c0
-        builder.addOutputs(p0 | negate);
+        builder.addOutputs(p | negate);
         builder.addOutput(-1);
         builder.addOutputs(i0 | negate);
         // c1
-        builder.addOutputs(p1);
+        builder.addOutputs(p);
         builder.addOutput(1);
         builder.addOutputs(i1);
         auto legalityMap = builder.build(ctx);
@@ -641,14 +799,14 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         // bounding problem:
         // c * parameters - (c1 * i1 - c0 * i0) >= 0
         // bounds coefficients
-        builder.addOutputs(p0);
+        builder.addOutputs(p);
         builder.addOutput(1);
         // c0
-        builder.addOutputs(p0);
+        builder.addOutputs(p);
         builder.addOutput(1);
         builder.addOutputs(i0);
         // c1
-        builder.addOutputs(p1 | negate);
+        builder.addOutputs(p | negate);
         builder.addOutput(-1);
         builder.addOutputs(i1 | negate);
         auto boundingMap = builder.build(ctx);
@@ -759,6 +917,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     std::vector<std::vector<int>> c1ParamValue, c1IterValue;
     // start computing permuted dimensions
     int fusedLevel, parallelCount = 0;
+    int hugeNonOverlapFusedLevel = -1, hugeNonOverlapCount = 0;
     bool isParallel = true;
     for (fusedLevel = 0; fusedLevel < std::min(nestLevel0, nestLevel1);
          ++fusedLevel) {
@@ -833,8 +992,9 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             parallelCount++;
 
         // check and exclude fake fusion
-        auto loopSetToRange = [&](const PBSet &loopSet, int coeffBase,
-                                  int nestLevel) {
+        auto loopSetToRange = [&, nParams = nParams](const PBSet &loopSet,
+                                                     int coeffBase,
+                                                     int nestLevel) {
             PBMapBuilder builder;
             auto p = builder.newInputs(nParams, "p");
             auto x = builder.newInputs(nestLevel, "x");
@@ -844,24 +1004,79 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             result += optimized[coeffBase + nParams];
             for (int i = 0; i < nestLevel; ++i)
                 result += optimized[coeffBase + nParams + 1 + i] * x[i];
+            builder.addOutputs(p);
             builder.addOutput(result);
-            return apply(loopSet, builder.build(ctx));
+            auto projectedLoopRange = apply(loopSet, builder.build(ctx));
+            return PBSet(projectedLoopRange.move());
         };
         auto loop0Range = loopSetToRange(loop0Set, nParams + 1, nestLevel0);
         auto loop1Range = loopSetToRange(
             loop1Set, (nParams + 1) * 2 + nestLevel0, nestLevel1);
-        auto overlap = fixDim(universeSet(PBSpace(loop1Range)), 0,
-                              fusableOverlapThreshold);
-        // if the two loops has no overlap on the result axis, they are not
-        // actually fused so we bail out
-        if (intersect(
-                // range of loop 0
-                loop0Range,
-                // ... and range of loop 1 added with the overlap threshold
-                sum(loop1Range, overlap))
-                // ... don't overlap
-                .empty())
-            break;
+
+        // overlap check 1: loop 0 & 1 should actually overlap
+        {
+            auto overlap = fixDim(universeSet(PBSpace(loop1Range)), nParams,
+                                  fusableOverlapThreshold);
+            // if the two loops has no overlap (for any possible parameters) on
+            // the result axis, they are not actually fused so we bail out
+            // "Exist P, R0 and R1 non-empty but R0 intersect R1 empty"
+            auto R0 = loop0Range, R1 = sum(loop1Range, overlap);
+            auto R01 = intersect(R0, R1);
+
+            // project to only params
+            R0 = projectOutDims(std::move(R0), nParams, 1);
+            R1 = projectOutDims(std::move(R1), nParams, 1);
+            R01 = projectOutDims(std::move(R01), nParams, 1);
+
+            if (!intersect(intersect(R0, R1), complement(R01)).empty())
+                break;
+        }
+
+        // overlap check 2: There should be no more than 1 dimensions with
+        //                  significant non-overlaped interval. Negative
+        //                  tolerance is disabling this check.
+        if (fusableNonOverlapTolerance >= 0) {
+            bool hugeNonOverlap = false;
+            auto check = [&, nParams = nParams](const PBSet &_aRange,
+                                                const PBSet &_bRange) {
+                PBSet aRange = isl_set_move_dims(_aRange.copy(), isl_dim_param,
+                                                 0, isl_dim_set, 0, nParams);
+                PBSet bRange = isl_set_move_dims(_bRange.copy(), isl_dim_param,
+                                                 0, isl_dim_set, 0, nParams);
+
+                auto tol = fixDim(universeSet(PBSpace(aRange)), 0,
+                                  fusableNonOverlapTolerance);
+
+                if (isl_set_dim_has_lower_bound(aRange.get(), isl_dim_set, 0)) {
+                    auto lowerInterval = apply(sum(lexmin(aRange), neg(tol)),
+                                               lexGT(PBSpace(aRange)));
+                    if (!intersect(lowerInterval, bRange).empty())
+                        hugeNonOverlap = true;
+                }
+                if (isl_set_dim_has_upper_bound(aRange.get(), isl_dim_set, 0)) {
+                    auto upperInterval =
+                        apply(sum(lexmax(aRange), tol), lexLT(PBSpace(aRange)));
+                    if (!intersect(upperInterval, bRange).empty())
+                        hugeNonOverlap = true;
+                }
+            };
+            check(loop0Range, loop1Range);
+            check(loop1Range, loop0Range);
+            if (hugeNonOverlap) {
+                hugeNonOverlapCount++;
+                // two dimensions violates, the loop fusion is bloating up,
+                // rollback to before first violation and quit
+                if (hugeNonOverlapCount == 2) {
+                    fusedLevel = hugeNonOverlapFusedLevel;
+                    c0ParamValue.resize(fusedLevel);
+                    c0IterValue.resize(fusedLevel);
+                    c1ParamValue.resize(fusedLevel);
+                    c1IterValue.resize(fusedLevel);
+                    break;
+                }
+                hugeNonOverlapFusedLevel = fusedLevel;
+            }
+        }
 
         // save coefficients' values
         c0ParamValue.push_back({
@@ -910,11 +1125,11 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     for (int i = fusedLevel; i < nestLevel1; ++i)
         remainLoop1Var.push_back("rem1_i" + toString(i));
 
-    PermuteInfo loop0Permute(c0ParamValue, c0IterValue, outerAxes, loop0Axes,
+    PermuteInfo loop0Permute(c0ParamValue, c0IterValue, paramExprs, loop0Axes,
                              views::concat(fusedLoopsVar, remainLoop0Var) |
                                  ranges::to<std::vector>(),
                              ctx, loop0Set);
-    PermuteInfo loop1Permute(c1ParamValue, c1IterValue, outerAxes, loop1Axes,
+    PermuteInfo loop1Permute(c1ParamValue, c1IterValue, paramExprs, loop1Axes,
                              views::concat(fusedLoopsVar, remainLoop1Var) |
                                  ranges::to<std::vector>(),
                              ctx, loop1Set);
@@ -984,14 +1199,15 @@ bool isAffectedLoop(const For &loop, const ID &baseLoopId, int nestLevel) {
 std::pair<Stmt, std::pair<ID, int>>
 plutoFuse(const Stmt &_ast, const ID &loop0Id, const ID &loop1Id,
           int nestLevel0, int nestLevel1, int fusableOverlapThreshold,
-          bool doSimplify) {
+          int fusableNonOverlapTolerance, bool doSimplify) {
     auto ast = normalizeLoops(_ast, [&](auto &&l) {
         return isAffectedLoop(l, loop0Id, nestLevel0) ||
                isAffectedLoop(l, loop1Id, nestLevel1);
     });
     ast = flattenStmtSeq(ast);
     return plutoFuseImpl(ast, loop0Id, loop1Id, nestLevel0, nestLevel1,
-                         fusableOverlapThreshold, doSimplify);
+                         fusableOverlapThreshold, fusableNonOverlapTolerance,
+                         doSimplify);
 }
 
 std::pair<Stmt, std::pair<ID, int>>
@@ -1001,17 +1217,18 @@ plutoPermute(const Stmt &_ast, const ID &loop, int nestLevel, bool doSimplify) {
     InjectEmptyLoop injecter(loop);
     ast = injecter(_ast);
     return plutoFuseImpl(ast, injecter.emptyLoopId(), loop, nestLevel,
-                         nestLevel, 1, doSimplify);
+                         nestLevel, 1, -1, doSimplify);
 }
 
 std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1,
                                        int nestLevel0, int nestLevel1,
                                        int fusableOverlapThreshold,
+                                       int fusableNonOverlapTolerance,
                                        bool doSimplify) {
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(
         PlutoFuse, freetensor::plutoFuse, loop0, loop1, nestLevel0, nestLevel1,
-        fusableOverlapThreshold, doSimplify));
+        fusableOverlapThreshold, fusableNonOverlapTolerance, doSimplify));
     try {
         auto ret = applyLog(log);
         commitTransaction();

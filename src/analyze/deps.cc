@@ -5,6 +5,7 @@
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <container_utils.h>
+#include <disjoint_set.h>
 #include <except.h>
 #include <mutator.h>
 #include <omp_utils.h>
@@ -29,9 +30,9 @@ void FindAllNoDeps::visit(const For &op) {
     }
 }
 
-FindAccessPoint::FindAccessPoint(const ID &vardef,
+FindAccessPoint::FindAccessPoint(const ID &vardef, DepType depType,
                                  const FindDepsAccFilter &accFilter)
-    : vardef_(vardef), accFilter_(accFilter) {}
+    : vardef_(vardef), depType_(depType), accFilter_(accFilter) {}
 
 void FindAccessPoint::doFind(const Stmt &root) {
     // Push potential StmtSeq scope
@@ -217,8 +218,20 @@ void FindAccessPoint::visit(const If &op) {
     }
 }
 
+void FindAccessPoint::visit(const Assert &op) {
+    (*this)(op->cond_);
+
+    pushCond(op->cond_, op->id());
+    (*this)(op->body_);
+    popCond();
+}
+
 void FindAccessPoint::visit(const Load &op) {
     BaseClass::visit(op);
+
+    if (!(depType_ & DEP_RAW) && !(depType_ & DEP_WAR)) {
+        return;
+    }
 
     bool isThisVarDef = false;
     VarDef viewOf;
@@ -335,24 +348,68 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                                   const std::vector<std::pair<Expr, ID>> &conds,
                                   RelaxMode relax, GenPBExpr::VarMap &externals,
                                   bool eraseOutsideVarDef,
-                                  const VarDef &vardef) {
-    std::string ret;
-    for (auto &&[cond, baseStmtId] : conds) {
-        auto &&[str, vars] = genPBExpr.gen(cond);
+                                  const AccessPoint &ap) {
+    // If the condition is defined outside of the variable we are analyzing, and
+    // external variables in this condition is not used in any accessing or
+    // iterating coordinates, and if `eraseOutsideVarDef_` is enabled, we can
+    // safely ignore this condition, because all access of this variable will
+    // hold the same condition value
+    std::vector<bool> isRedundants(conds.size(), false);
+    if (eraseOutsideVarDef) {
+        auto namesInConds =
+            conds |
+            views::transform([](auto &&x) { return allNames(x.first, true); }) |
+            ranges::to_vector;
 
-        // If the condition is defined outside of the variable we are analyzing,
-        // and external variables in this condition is not used in any indices,
-        // and if `eraseOutsideVarDef_` is enabled, we can safely ignore this
-        // condition, because all access of this variable will hold the same
-        // condition value
-        if (eraseOutsideVarDef && vardef->ancestorById(baseStmtId).isValid() &&
-            std::find_if(vars.begin(), vars.end(),
-                         [](const std::pair<Expr, std::string> &kv) {
-                             return kv.first->nodeType() == ASTNodeType::Var;
-                         }) == vars.end()) {
+        DisjointSet<std::string> namesConnectivity;
+        // add a root for actually used names
+        namesConnectivity.find("");
+        // mark names from both access and loop indices as used
+        for (auto &&idx : ap.access_)
+            for (auto &&name : allNames(idx, true))
+                namesConnectivity.uni("", name);
+        for (auto &&iter : ap.iter_)
+            for (auto &&name : allNames(iter.iter_, true))
+                namesConnectivity.uni("", name);
+
+        // connect by conditions
+        for (auto &&[condItem, names] : views::zip(conds, namesInConds)) {
+            auto &&[_, condId] = condItem;
+
+            std::optional<std::string> first;
+
+            // if this condition is not defined outside, treat all its
+            // corresponded names as used
+            if (!ap.def_->ancestorById(condId).isValid())
+                first = "";
+
+            // connect the names occurred
+            for (auto &&name : names)
+                if (first.has_value())
+                    namesConnectivity.uni(*first, name);
+                else
+                    first = name;
+        }
+
+        auto root = namesConnectivity.find("");
+        for (size_t i = 0; i < conds.size(); ++i) {
+            isRedundants[i] = true;
+            for (auto &&name : namesInConds[i])
+                if (namesConnectivity.find(name) == root) {
+                    isRedundants[i] = false;
+                    break;
+                }
+        }
+    }
+
+    std::string ret;
+    for (auto &&[condItem, isRedundant] : views::zip(conds, isRedundants)) {
+        if (isRedundant) {
             continue;
         }
 
+        auto &&[cond, baseStmtId] = condItem;
+        auto &&[str, vars] = genPBExpr.gen(cond);
         for (auto &&[expr, str] : vars) {
             if (expr->nodeType() != ASTNodeType::Var) {
                 externals[expr] = str;
@@ -363,6 +420,7 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
         }
         ret += str;
     }
+
     return ret;
 }
 
@@ -375,7 +433,7 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
     auto ret = makeIterList(p.iter_, iterDim) + " -> " +
                makeAccList(genPBExpr, p.access_, relax, externals);
     if (auto str = makeCond(genPBExpr, p.conds_, relax, externals,
-                            eraseOutsideVarDef_, p.def_);
+                            eraseOutsideVarDef_, p);
         !str.empty()) {
         ret += ": " + str;
     }
@@ -711,30 +769,65 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         return;
     }
 
-    // For dependence X->Y or Y->X, we can check for kill-X, which means any
-    // time (any coordinate in iteration space and any external variable of X)
-    // there is X, there is the dependence.
-    //
-    // Here "any time" does not include impossible external varaible
-    // combinations ruled out by `extConstraint`, so we need to intersect with
-    // it before checking.
-    //
-    // Besides, (TODO: prove it) `extConstraint` includes multiple cases, which
-    // can be written as `{[...] -> [...] : coordinates 1 -> params constraints
-    // 1, or coordinates 2 -> params constraints 2, or ...}`. We intersect with
-    // `nearest`'s coordinates to get the effective parameter constraints.
-    auto effectiveExtConstraint =
-        params(intersect(extConstraint, projectOutAllParams(nearest)));
-    if ((mode_ == FindDepsMode::KillEarlier ||
-         mode_ == FindDepsMode::KillBoth) &&
-        intersectParams(domain(earlierMap), effectiveExtConstraint) !=
-            range(nearest)) {
-        return;
-    }
-    if ((mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth) &&
-        intersectParams(domain(laterMap), effectiveExtConstraint) !=
-            domain(nearest)) {
-        return;
+    if (mode_ != FindDepsMode::Dep) {
+        // For dependence X->Y or Y->X, we can check for kill-X, which means any
+        // time (any coordinate in iteration space and any external variable of
+        // X) there is X, there is the dependence.
+        //
+        // Here "any time" does not include impossible external varaible
+        // combinations ruled out by `extConstraint`, so we need to intersect
+        // with it before checking.
+        //
+        // Besides, (TODO: prove it) `extConstraint` includes multiple cases,
+        // which can be written as `{[...] -> [...] : coordinates 1 -> params
+        // constraints 1, or coordinates 2 -> params constraints 2, or ...}`. We
+        // intersect with `nearest`'s coordinates to get the effective parameter
+        // constraints.
+        auto effectiveExtConstraint =
+            params(intersect(extConstraint, projectOutAllParams(nearest)));
+        PBSet realEarlierIter, realLaterIter;
+        if (mode_ == FindDepsMode::KillEarlier ||
+            mode_ == FindDepsMode::KillBoth) {
+            realEarlierIter =
+                intersectParams(domain(earlierMap), effectiveExtConstraint);
+        }
+        if (mode_ == FindDepsMode::KillLater ||
+            mode_ == FindDepsMode::KillBoth) {
+            realLaterIter =
+                intersectParams(domain(laterMap), effectiveExtConstraint);
+        }
+
+        // Range/domain of `nearest` is always a subset of the iterating space
+        // of `earlierMap`/`laterMap`, and we want to check whether it is a
+        // strict subset. Since internally eiter `isl_set_is_strict_subset` or
+        // `isl_set_is_equal` is implemented by two `isl_set_is_subset`s (in
+        // both direction), we only need to check one of them:
+        // `isStrictSubset(...nearest, ...earlierMap) =>
+        // !isSubset(...earlierMap, ...nearest)`.
+
+        // Coarse check (depAll is a superset of nearest)
+        if ((mode_ == FindDepsMode::KillEarlier ||
+             mode_ == FindDepsMode::KillBoth) &&
+            !isSubset(realEarlierIter, range(depAll))) {
+            return;
+        }
+        if ((mode_ == FindDepsMode::KillLater ||
+             mode_ == FindDepsMode::KillBoth) &&
+            !isSubset(realLaterIter, domain(depAll))) {
+            return;
+        }
+
+        // Fine check
+        if ((mode_ == FindDepsMode::KillEarlier ||
+             mode_ == FindDepsMode::KillBoth) &&
+            !isSubset(realEarlierIter, range(nearest))) {
+            return;
+        }
+        if ((mode_ == FindDepsMode::KillLater ||
+             mode_ == FindDepsMode::KillBoth) &&
+            !isSubset(realLaterIter, domain(nearest))) {
+            return;
+        }
     }
 
     for (auto &&item : direction_) {
@@ -769,14 +862,14 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         }
         if (noProjectOutPrivateAxis_) {
             found_(Dependence{item, getVar(later->op_), *later, *earlier,
-                              iterDim, res, laterMap, earlierMap, presburger,
-                              *this});
+                              iterDim, res, laterMap, earlierMap, possible,
+                              presburger, *this});
         } else {
             // It will be misleading if we pass Presburger maps to users in
             // this case
             found_(Dependence{item, getVar(later->op_), *later, *earlier,
-                              iterDim, PBMap(), PBMap(), PBMap(), presburger,
-                              *this});
+                              iterDim, PBMap(), PBMap(), PBMap(), PBMap(),
+                              presburger, *this});
         }
     fail:;
     }
@@ -1207,7 +1300,7 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
     std::vector<FindAccessPoint> finders;
     finders.reserve(defs.size());
     for (auto &&def : defs) {
-        finders.emplace_back(def->id(), accFilter_);
+        finders.emplace_back(def->id(), type_, accFilter_);
     }
     exceptSafeParallelFor<size_t>(
         0, finders.size(), 1, [&](size_t i) { finders[i].doFind(op); },

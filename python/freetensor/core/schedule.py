@@ -7,9 +7,9 @@ import functools
 from collections.abc import Sequence
 from typing import Callable, Union, List, Dict
 
-import freetensor_ffi as ffi
-from freetensor_ffi import (ParallelScope, ID, Selector, FissionSide,
-                            MoveToSide, VarSplitMode)
+from .. import ffi
+from ..ffi import (ParallelScope, ID, Selector, FissionSide, MoveToSide,
+                   VarSplitMode)
 
 from .func import Func
 from .analyze import find_stmt
@@ -795,6 +795,7 @@ class Schedule(ffi.Schedule):
                    nest_level_0=0,
                    nest_level_1=0,
                    fusable_overlap_threshold=1,
+                   fusable_nonoverlap_tolerance=4,
                    do_simplify=True):
         """
         Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable
@@ -815,9 +816,12 @@ class Schedule(ffi.Schedule):
         nest_level_1 : int
             The number of nesting levels of loop 1 to be considered, defaults to maximum
             possible
-        fusableOverlapThreshold : int
+        fusable_overlap_threshold : int
             The minimum overlapping size of two loops to be regarded fusable. Defaults
             to 1
+        fusable_nonoverlap_tolerance : int
+            The maximum non-overlapping size at either side of two loops to be regarded
+            fusable. Defaults to 4
         do_simplify : bool
             Whether the result is simplified by the way, defaults to true
 
@@ -833,7 +837,8 @@ class Schedule(ffi.Schedule):
         """
         return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1),
                                   nest_level_0, nest_level_1,
-                                  fusable_overlap_threshold, do_simplify)
+                                  fusable_overlap_threshold,
+                                  fusable_nonoverlap_tolerance, do_simplify)
 
     def pluto_permute(self, loop, nest_level=0, do_simplify=True):
         """

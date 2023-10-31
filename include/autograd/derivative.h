@@ -6,6 +6,7 @@
 #include <unordered_set>
 
 #include <analyze/symbol_table.h>
+#include <autograd/invert_from_store.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -42,7 +43,7 @@ class Derivative : public SymbolTable<Visitor> {
         // Additional info to replace `y = f(x)`'s derivative to use `y`. The
         // replacement has to be done lazily, because the version of `y` is
         // different from version of `x`
-        Store rootStore_;
+        std::optional<InvertFromStore> invertFromStore_;
         std::optional<bool> usingStore_;
 
         std::optional<std::unordered_set<std::string>> reads_;
@@ -52,14 +53,14 @@ class Derivative : public SymbolTable<Visitor> {
 
         LazyPartialDerivative(const SymbolTableData &symbolTable,
                               const Expr &mathExpr, const ID &rootStmtID,
-                              const Store &rootStore = nullptr)
+                              const std::optional<InvertFromStore>
+                                  &invertFromStore = std::nullopt)
             : symbolTable_(symbolTable), mathExpr_(mathExpr),
-              rootStmtID_(rootStmtID), rootStore_(rootStore) {}
+              rootStmtID_(rootStmtID), invertFromStore_(invertFromStore) {}
 
         /// += another partial derivative
         void merge(const LazyPartialDerivative &other) {
             ASSERT(other.rootStmtID_ == rootStmtID_);
-            ASSERT(other.rootStore_ == rootStore_);
             mathExpr_ = makeAdd(mathExpr_, other.mathExpr_);
             usingStore_ = std::nullopt;
         }
@@ -136,7 +137,7 @@ class Derivative : public SymbolTable<Visitor> {
     std::unordered_map<StmtOrExprID, LazyFullDerivative> derivatives_;
     std::unordered_map<Expr, LazyPartialDerivative> partials_;
     StmtOrExprID rootExpr_;
-    Store rootStore_;
+    std::optional<InvertFromStore> invertFromStore_;
 
     /**
      * Propagate partial gradient to a sub-expression

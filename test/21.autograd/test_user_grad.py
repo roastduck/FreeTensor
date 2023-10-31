@@ -336,6 +336,39 @@ def test_frontend():
     assert std.match(bwd.body)
 
 
+def test_partial_derivative():
+
+    @ft.transform(verbose=2)
+    def func(x1: ft.Var[(4,), "float32"], x2: ft.Var[(4,), "float32"]):
+        t1 = x1 * 2
+        t2 = x2 * 2
+        with ft.StmtRange() as rng:
+            t1_now = ft.push_for_backward(t1)
+            t2_now = ft.push_for_backward(t2)
+            y = t1 * t2
+        with ft.UserGrad(t1, t2, y, stmt_range=rng) as (dt1, dt2, dy):
+            dt1[...] = dy * t2_now
+            dt2[...] = dy * t1_now
+        return y
+
+    _, bwd, _, _ = ft.grad(func, ["x1"], [ft.Return()],
+                           ft.GradTapeMode.All,
+                           tape_in_closure=True,
+                           reset_provided_grad=False,
+                           user_grads=func.user_grads)
+    print(bwd)
+    bwd = ft.lower(bwd, verbose=1)
+
+    with ft.VarDef([("dx1", (4,), "float32", "output", "cpu"),
+                    ("t2", (4,), "float32", "input", "cpu"),
+                    ("dy", (4,), "float32", "input", "cpu")]) as (dx1, t2, dy):
+        with ft.For("i", 3, -1, -1) as i:
+            dx1[i] = 2 * dy[i] * t2[i]
+    std = ft.pop_ast()
+
+    assert std.match(bwd.body)
+
+
 def test_stmt_range_robustness():
     # If we call StmtRange on some volatile statements, it must still work
 

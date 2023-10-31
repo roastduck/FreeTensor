@@ -256,9 +256,16 @@ if (PYBIND11_STUBGEN AND NOT FT_DEBUG_SANITIZE)
 endif()
 
 # Install
+# Now we install freetensor_ffi to `???/lib/python3.10/dist-packages/freetensor` but others to CMAKE_INSTALL_PREFIX.
+# FIXME: We should install everything to `???/lib/python3.10/dist-packages/freetensor`
+set_target_properties(freetensor freetensor_ffi PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set_target_properties(freetensor_ffi PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE) # Required for PyTorch
 install(TARGETS freetensor LIBRARY DESTINATION lib)
-install(TARGETS freetensor_ffi LIBRARY DESTINATION lib)
+if (PY_BUILD_CMAKE_MODULE_NAME) # Install to `???/lib/python3.10/dist-packages/freetensor`
+    install(TARGETS freetensor_ffi LIBRARY DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME} COMPONENT python_module)
+else()
+    install(TARGETS freetensor_ffi LIBRARY DESTINATION lib)
+endif()
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include/freetensor) # Trailing slash after the source path is needed
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ DESTINATION share/runtime_include)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/mdspan/ DESTINATION share/3rd-party/mdspan)

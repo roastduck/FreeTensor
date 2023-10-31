@@ -1,62 +1,14 @@
+#include <analyze/all_uses.h>
 #include <autograd/derivative.h>
 #include <autograd/replace_by_saved.h>
 #include <hash.h>
 
 namespace freetensor {
 
-namespace {
-
-class HashMatcher : public Visitor {
-    Expr pattern_;
-    bool found_ = false;
-
-  public:
-    HashMatcher(const Expr &pattern) : pattern_(pattern) {}
-
-    bool found() const { return found_; }
-
-  protected:
-    void visitExpr(const Expr &expr) override {
-        if (HashComparator{}(pattern_, expr)) {
-            found_ = true;
-        }
-        if (found_) {
-            return;
-        }
-        Visitor::visitExpr(expr);
-    }
-};
-
-class AllReadsExcludingPattern : public Visitor {
-    Expr pattern_;
-    std::unordered_set<std::string> reads_;
-
-  public:
-    AllReadsExcludingPattern(const Expr &pattern) : pattern_(pattern) {}
-
-    const auto &reads() const { return reads_; }
-
-  protected:
-    void visitExpr(const Expr &expr) override {
-        if (!HashComparator{}(pattern_, expr)) {
-            Visitor::visitExpr(expr);
-        }
-    }
-
-    void visit(const Load &op) override {
-        Visitor::visit(op);
-        reads_.insert(op->var_);
-    }
-};
-
-} // Anonymous namespace
-
 bool Derivative::LazyPartialDerivative::usingStore() {
     if (!usingStore_.has_value()) {
-        if (rootStore_.isValid()) {
-            HashMatcher matcher{rootStore_->expr_};
-            matcher(mathExpr_);
-            usingStore_ = matcher.found();
+        if (invertFromStore_.has_value()) {
+            usingStore_ = invertFromStore_->find(mathExpr_);
         } else {
             usingStore_ = false;
         }
@@ -67,10 +19,11 @@ bool Derivative::LazyPartialDerivative::usingStore() {
 const std::unordered_set<std::string> &
 Derivative::LazyPartialDerivative::reads() {
     if (!reads_.has_value()) {
-        AllReadsExcludingPattern visitor{
-            rootStore_.isValid() ? (Expr)rootStore_->expr_ : nullptr};
-        visitor(mathExpr_);
-        reads_ = visitor.reads();
+        if (invertFromStore_.has_value()) {
+            reads_ = invertFromStore_->allReadsExcludingInversion(mathExpr_);
+        } else {
+            reads_ = allReads(mathExpr_);
+        }
     }
     return *reads_;
 }
@@ -79,7 +32,7 @@ Expr Derivative::LazyPartialDerivative::replaceExpr(
     const std::unordered_map<ID, std::string> &intermediatesMap,
     const std::unordered_map<StmtOrExprID, Expr> &versions, const Expr &expr) {
     return ReplaceBySaved{symbolTable_, intermediatesMap, versions, rootStmtID_,
-                          rootStore_}
+                          invertFromStore_}
         .grad(expr);
 }
 
@@ -156,13 +109,9 @@ std::vector<Stmt> Derivative::LazyFullDerivative::genGrads(
 
 void Derivative::setPartial(const Expr &expr, const Expr &partial) {
     if (isFloat(expr->dtype())) {
-        if (rootStore_.isValid()) {
-            partials_[expr] = LazyPartialDerivative{
-                symbolTableSnapshot(), partial, rootExpr_.stmtId(), rootStore_};
-        } else {
-            partials_[expr] = LazyPartialDerivative{
-                symbolTableSnapshot(), partial, rootExpr_.stmtId()};
-        }
+        partials_[expr] =
+            LazyPartialDerivative{symbolTableSnapshot(), partial,
+                                  rootExpr_.stmtId(), invertFromStore_};
     }
 }
 
@@ -182,9 +131,9 @@ void Derivative::visitExpr(const Expr &expr) {
 }
 
 void Derivative::visit(const Store &op) {
-    rootStore_ = op;
+    invertFromStore_ = {op, op->expr_, [](const Expr &e) { return e; }};
     BaseClass::visit(op);
-    rootStore_ = nullptr;
+    invertFromStore_ = std::nullopt;
 }
 
 void Derivative::visit(const Load &op) {
@@ -199,7 +148,30 @@ void Derivative::visit(const Add &op) {
         setPartial(op->lhs_, it->second.mathExpr());
         setPartial(op->rhs_, it->second.mathExpr());
     }
-    BaseClass::visit(op);
+
+    if (invertFromStore_.has_value() && allReads(op->rhs_).empty()) {
+        auto oldInvertFromStore = invertFromStore_;
+        invertFromStore_ = {
+            oldInvertFromStore->store(), op->lhs_, [=](const Expr &e) {
+                return makeSub(oldInvertFromStore->invert(e), op->rhs_);
+            }};
+        (*this)(op->lhs_);
+        invertFromStore_ = oldInvertFromStore;
+    } else {
+        (*this)(op->lhs_);
+    }
+
+    if (invertFromStore_.has_value() && allReads(op->lhs_).empty()) {
+        auto oldInvertFromStore = invertFromStore_;
+        invertFromStore_ = {
+            oldInvertFromStore->store(), op->rhs_, [=](const Expr &e) {
+                return makeSub(oldInvertFromStore->invert(e), op->lhs_);
+            }};
+        (*this)(op->rhs_);
+        invertFromStore_ = oldInvertFromStore;
+    } else {
+        (*this)(op->rhs_);
+    }
 }
 
 void Derivative::visit(const Sub &op) {
@@ -207,7 +179,30 @@ void Derivative::visit(const Sub &op) {
         setPartial(op->lhs_, it->second.mathExpr());
         setPartial(op->rhs_, makeSub(makeIntConst(0), it->second.mathExpr()));
     }
-    BaseClass::visit(op);
+
+    if (invertFromStore_.has_value() && allReads(op->rhs_).empty()) {
+        auto oldInvertFromStore = invertFromStore_;
+        invertFromStore_ = {
+            oldInvertFromStore->store(), op->lhs_, [=](const Expr &e) {
+                return makeAdd(oldInvertFromStore->invert(e), op->rhs_);
+            }};
+        (*this)(op->lhs_);
+        invertFromStore_ = oldInvertFromStore;
+    } else {
+        (*this)(op->lhs_);
+    }
+
+    if (invertFromStore_.has_value() && allReads(op->lhs_).empty()) {
+        auto oldInvertFromStore = invertFromStore_;
+        invertFromStore_ = {
+            oldInvertFromStore->store(), op->rhs_, [=](const Expr &e) {
+                return makeSub(op->lhs_, oldInvertFromStore->invert(e));
+            }};
+        (*this)(op->rhs_);
+        invertFromStore_ = oldInvertFromStore;
+    } else {
+        (*this)(op->rhs_);
+    }
 }
 
 void Derivative::visit(const Mul &op) {
@@ -215,18 +210,66 @@ void Derivative::visit(const Mul &op) {
         setPartial(op->lhs_, makeMul(it->second.mathExpr(), op->rhs_));
         setPartial(op->rhs_, makeMul(it->second.mathExpr(), op->lhs_));
     }
-    BaseClass::visit(op);
+
+    if (invertFromStore_.has_value() && allReads(op->rhs_).empty() &&
+        isNE0(op->rhs_->dtype())) {
+        auto oldInvertFromStore = invertFromStore_;
+        invertFromStore_ = {
+            oldInvertFromStore->store(), op->lhs_, [=](const Expr &e) {
+                return makeRealDiv(oldInvertFromStore->invert(e), op->rhs_);
+            }};
+        (*this)(op->lhs_);
+        invertFromStore_ = oldInvertFromStore;
+    } else {
+        (*this)(op->lhs_);
+    }
+
+    if (invertFromStore_.has_value() && allReads(op->lhs_).empty() &&
+        isNE0(op->lhs_->dtype())) {
+        auto oldInvertFromStore = invertFromStore_;
+        invertFromStore_ = {
+            oldInvertFromStore->store(), op->rhs_, [=](const Expr &e) {
+                return makeRealDiv(oldInvertFromStore->invert(e), op->lhs_);
+            }};
+        (*this)(op->rhs_);
+        invertFromStore_ = oldInvertFromStore;
+    } else {
+        (*this)(op->rhs_);
+    }
 }
 
 void Derivative::visit(const RealDiv &op) {
     if (auto it = partials_.find(op); it != partials_.end()) {
         setPartial(op->lhs_, makeRealDiv(it->second.mathExpr(), op->rhs_));
-        setPartial(op->rhs_,
-                   makeSub(makeIntConst(0),
-                           makeRealDiv(makeMul(it->second.mathExpr(), op->lhs_),
-                                       makeMul(op->rhs_, op->rhs_))));
+        setPartial(op->rhs_, makeSub(makeIntConst(0),
+                                     makeMul(it->second.mathExpr(),
+                                             makeRealDiv(op, op->rhs_))));
     }
-    BaseClass::visit(op);
+
+    if (invertFromStore_.has_value() && allReads(op->rhs_).empty()) {
+        auto oldInvertFromStore = invertFromStore_;
+        invertFromStore_ = {
+            oldInvertFromStore->store(), op->lhs_, [=](const Expr &e) {
+                return makeMul(oldInvertFromStore->invert(e), op->rhs_);
+            }};
+        (*this)(op->lhs_);
+        invertFromStore_ = oldInvertFromStore;
+    } else {
+        (*this)(op->lhs_);
+    }
+
+    if (invertFromStore_.has_value() && allReads(op->lhs_).empty() &&
+        isNE0(op->dtype())) {
+        auto oldInvertFromStore = invertFromStore_;
+        invertFromStore_ = {
+            oldInvertFromStore->store(), op->rhs_, [=](const Expr &e) {
+                return makeRealDiv(op->lhs_, oldInvertFromStore->invert(e));
+            }};
+        (*this)(op->rhs_);
+        invertFromStore_ = oldInvertFromStore;
+    } else {
+        (*this)(op->rhs_);
+    }
 }
 
 void Derivative::visit(const Min &op) {
@@ -269,13 +312,25 @@ void Derivative::visit(const Sqrt &op) {
         setPartial(op->expr_, makeRealDiv(it->second.mathExpr(),
                                           makeMul(makeIntConst(2), op)));
     }
-    BaseClass::visit(op);
+
+    if (invertFromStore_.has_value()) {
+        auto oldInvertFromStore = invertFromStore_;
+        invertFromStore_ = {
+            oldInvertFromStore->store(), op->expr_, [=](const Expr &e) {
+                return makeSquare(oldInvertFromStore->invert(e));
+            }};
+        (*this)(op->expr_);
+        invertFromStore_ = oldInvertFromStore;
+    } else {
+        (*this)(op->expr_);
+    }
 }
 
 void Derivative::visit(const Exp &op) {
     if (auto it = partials_.find(op); it != partials_.end()) {
         setPartial(op->expr_, makeMul(it->second.mathExpr(), op));
     }
+    // Don't invert exp to ln: It's too heavy
     BaseClass::visit(op);
 }
 
@@ -283,6 +338,7 @@ void Derivative::visit(const Ln &op) {
     if (auto it = partials_.find(op); it != partials_.end()) {
         setPartial(op->expr_, makeRealDiv(it->second.mathExpr(), op->expr_));
     }
+    // Don't invert ln to exp: It's too heavy
     BaseClass::visit(op);
 }
 
@@ -292,6 +348,7 @@ void Derivative::visit(const Square &op) {
                    makeMul(makeIntConst(2),
                            makeMul(it->second.mathExpr(), op->expr_)));
     }
+    // Don't invert squre to sqrt: It's too heavy
     BaseClass::visit(op);
 }
 

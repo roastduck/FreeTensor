@@ -103,6 +103,9 @@ Stmt tensorPropConst(const Stmt &_op, const ID &subAST) {
                     }
                 }
             }));
+        if (r2w.empty()) {
+            break;
+        }
 
         // Find other potential dependence that may prevent propagation
         //

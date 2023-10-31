@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/comp_transient_bounds.h>
 #include <analyze/symbol_table.h>
 #include <func.h>
 #include <mutator.h>
@@ -45,7 +46,6 @@ class InsertBinaryReduction : public SymbolTable<Mutator> {
     std::unordered_map<ID, ID>
         ws2scope_; // workspace ID -> scope that actually do the computation,
                    // excluding initialization, binary reduction and flushing
-    std::vector<Expr> condStack_;
 
   public:
     InsertBinaryReduction(
@@ -56,9 +56,6 @@ class InsertBinaryReduction : public SymbolTable<Mutator> {
     const auto &ws2scope() const { return ws2scope_; }
 
   private:
-    Expr makeCondForNeighborThread(const std::string &thisThreadIter,
-                                   const Expr &neighborThreadIter);
-
     template <class T> T visitMemAcc(const T &_op) {
         auto __op = BaseClass::visit(_op);
         ASSERT(__op->nodeType() == _op->nodeType());
@@ -77,11 +74,11 @@ class InsertBinaryReduction : public SymbolTable<Mutator> {
     Stmt visit(const Store &op) override { return visitMemAcc(op); }
     Stmt visit(const ReduceTo &op) override { return visitMemAcc(op); }
     Expr visit(const Load &op) override { return visitMemAcc(op); }
-    Stmt visit(const If &op) override;
 };
 
-class CorrectInterThreadDependence : public SymbolTable<Mutator> {
-    typedef SymbolTable<Mutator> BaseClass;
+class CorrectInterThreadDependence
+    : public CompTransientBounds<SymbolTable<Mutator>> {
+    typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
     const std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
         &ws2red_; // workspace ID -> (loop iter name, reduction info)

@@ -88,3 +88,20 @@ def test_fission_then_pluto_fuse_2d_4way():
         'pluto_fuse($pluto_fuse.fused.0{$fission.0{Li}, $fission.2{Li}}, $fission.3{Li}, *)',
         'pluto_fuse($pluto_fuse.fused.0{$pluto_fuse.fused.0{$fission.0{Li}, $fission.2{Li}}, $fission.3{Li}}, Li, *)'
     ])
+
+
+def test_dont_try_no_deps():
+    with ft.VarDef([("x1", (1000,), "int32", "input", "cpu"),
+                    ("x2", (1000,), "int32", "input", "cpu"),
+                    ("y", (1000, 2), "int32", "inout", "cpu")]) as (x1, x2, y):
+        with ft.For("i", 0, 1000) as i:
+            y[i, 0] = x1[i]
+            y[i, 1] = x2[i]
+
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.auto_pluto(ft.CPU())
+    print(s.ast())
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert logs == []
