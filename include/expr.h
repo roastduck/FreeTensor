@@ -659,6 +659,33 @@ Expr makeCeil(T &&expr,
     return e;
 }
 
+/**
+ * Explicitly mark a bool expression not to used for boundary analysis and thus
+ * not used for shrinking loops or variables
+ *
+ * This is useful when we want to leave a loop length constatnt or regular, and
+ * guard it with a branch, e.g.:
+ *
+ * ```
+ * for i = 0 to 100
+ *   if unbound(i < x)
+ *     ...
+ * ```
+ */
+class UnboundNode : public UnaryExprNode {
+    void inferDType() override;
+    DEFINE_NODE_TRAIT(Unbound);
+};
+typedef Ref<UnboundNode> Unbound;
+template <class T>
+Expr makeUnbound(T &&expr,
+                 std::source_location loc = std::source_location::current()) {
+    Unbound e = Unbound::make();
+    e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
+    return e;
+}
+
 class IfExprNode : public ExprNode {
   public:
     SubTree<ExprNode> cond_ = ChildOf{this};
@@ -859,6 +886,8 @@ Expr makeUnary(ASTNodeType nodeType, T &&expr,
         return makeFloor(std::forward<T>(expr), loc);
     case ASTNodeType::Ceil:
         return makeCeil(std::forward<T>(expr), loc);
+    case ASTNodeType::Unbound:
+        return makeUnbound(std::forward<T>(expr), loc);
     default:
         ASSERT(false);
     }

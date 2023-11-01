@@ -71,16 +71,22 @@ bool AncestorSelector::matchImpl(const Stmt &stmt) {
 }
 
 bool DirectBeforeSelector::matchImpl(const Stmt &stmt) {
-    if (auto &&next = stmt->nextStmtInDFSOrder(); next.isValid()) {
-        return following_->match(next);
+    if (auto next = stmt->nextLeafStmtInDFSOrder(); next.isValid()) {
+        for (auto p = next; p.isValid() && !p->isAncestorOf(stmt);
+             p = p->parentStmt()) {
+            if (following_->match(p)) {
+                return true;
+            }
+        }
     }
     return false;
 }
 
 bool BeforeSelector::matchImpl(const Stmt &stmt) {
-    for (auto next = stmt->nextStmtInDFSOrder(); next.isValid();
-         next = next->nextStmtInDFSOrder()) {
-        if (following_->match(next)) {
+    for (auto next = stmt->nextStmtInDFSPreOrder(); next.isValid();
+         next = next->nextStmtInDFSPreOrder()) {
+        if (!stmt->isAncestorOf(next) && !next->isAncestorOf(stmt) &&
+            following_->match(next)) {
             return true;
         }
     }
@@ -88,16 +94,22 @@ bool BeforeSelector::matchImpl(const Stmt &stmt) {
 }
 
 bool DirectAfterSelector::matchImpl(const Stmt &stmt) {
-    if (auto &&prev = stmt->prevStmtInDFSOrder(); prev.isValid()) {
-        return leading_->match(prev);
+    if (auto next = stmt->prevLeafStmtInDFSOrder(); next.isValid()) {
+        for (auto p = next; p.isValid() && !p->isAncestorOf(stmt);
+             p = p->parentStmt()) {
+            if (leading_->match(p)) {
+                return true;
+            }
+        }
     }
     return false;
 }
 
 bool AfterSelector::matchImpl(const Stmt &stmt) {
-    for (auto prev = stmt->prevStmtInDFSOrder(); prev.isValid();
-         prev = prev->prevStmtInDFSOrder()) {
-        if (leading_->match(prev)) {
+    for (auto prev = stmt->prevStmtInDFSPostOrder(); prev.isValid();
+         prev = prev->prevStmtInDFSPostOrder()) {
+        if (!stmt->isAncestorOf(prev) && !prev->isAncestorOf(stmt) &&
+            leading_->match(prev)) {
             return true;
         }
     }

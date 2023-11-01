@@ -176,7 +176,7 @@ Stmt InsertBinaryReduction::visit(const VarDef &_op) {
                 [](auto &&x, auto &&y) { return makeAdd(x, y); }, r->begins_,
                 indices)),
             r->op_, makeLoad(op->name_, cat({makeIntConst(0)}, indices), dtype),
-            false);
+            r->syncFlush_);
         flushStmt = makeIf(makeEQ(nth, makeIntConst(0)), flushStmt);
 
         // for (int k = 1; k < len; k <<= 1)

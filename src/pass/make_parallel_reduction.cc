@@ -51,64 +51,95 @@ void FindSerialLoopsOverReduce::visit(const ReduceTo &op) {
     }
 }
 
+bool MakeLoopCarriedReduction::needSync(const ReduceTo &op, const ID &loopId) {
+    for (auto &&[i, idx] :
+         views::zip(views::ints(0, ranges::unreachable), op->indices_)) {
+        if (isVariant(variantMap_, {idx, op}, loopId)) {
+            return true;
+        }
+    }
+    // After the random access check, to make `toUseSync_` correct
+    if (auto &&parallel = paraScopes_.at(loopId);
+        std::holds_alternative<CUDAScope>(parallel) &&
+        std::get<CUDAScope>(parallel).level_ == CUDAScope::Block) {
+        // Race-free reduction among thread blocks are impossible.
+        return true;
+    }
+    return false;
+}
+
 Stmt MakeLoopCarriedReduction::visit(const ReduceTo &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     if (toAlter_.count(op->id())) {
-        // 1. Check whether we have to use synced reduction
-        for (auto &&loopId : toAlter_.at(op->id())) {
-            for (auto &&[i, idx] : views::zip(
-                     views::ints(0, ranges::unreachable), _op->indices_)) {
-                if (isVariant(variantMap_, {idx, op}, loopId)) {
-                    // Use sync
-                    toUseSync_[op->id()] = UseSyncInfo{true};
-                    return op;
+        int needSyncUpTo = -1;
+        for (auto &&[i, loopId] : views::enumerate(paraLoopStack_)) {
+            if (toAlter_.at(op->id()).count(loopId)) {
+                if (needSync(op, loopId)) {
+                    needSyncUpTo = i;
                 }
-            }
-        }
-        for (auto &&loopId : toAlter_.at(op->id())) {
-            // After the random access check, to make `toUseSync_` correct
-            if (auto &&parallel = paraScopes_.at(loopId);
-                std::holds_alternative<CUDAScope>(parallel) &&
-                std::get<CUDAScope>(parallel).level_ == CUDAScope::Block) {
-                // Race-free reduction among thread blocks are impossible. Use
-                // sync
-                toUseSync_[op->id()] = UseSyncInfo{false};
-                return op;
             }
         }
 
-        // 2. Compute range of loop-carried reduction
-        CompUniqueBounds unique(*this);
-        std::unordered_map<ID, std::vector<std::vector<Expr>>> lowerMap,
-            upperMap; // loop ID -> [dim][bound]
-        for (auto &&loopId : toAlter_.at(op->id())) {
-            for (auto &&[i, idx, dim] :
-                 views::zip(views::ints(0, ranges::unreachable), _op->indices_,
-                            buffer(_op->var_)->tensor()->shape())) {
-                std::vector<Expr> dimLowers{makeIntConst(0)}, dimUppers{dim};
-                for (auto &&item :
-                     unique.getDefinedLower(idx, scopeDefined_.at(loopId))) {
-                    dimLowers.emplace_back(item.expr());
-                }
-                for (auto &&item :
-                     unique.getDefinedUpper(idx, scopeDefined_.at(loopId))) {
-                    dimUppers.emplace_back(item.expr());
-                }
-                lowerMap[loopId].emplace_back(std::move(dimLowers));
-                upperMap[loopId].emplace_back(std::move(dimUppers));
+        bool allNeedSync = true;
+        for (auto &&loopId :
+             paraLoopStack_ |
+                 views::slice(needSyncUpTo + 1, (int)paraLoopStack_.size())) {
+            if (toAlter_.at(op->id()).count(loopId)) {
+                allNeedSync = false;
+                break;
             }
         }
-        for (auto &&loopId : toAlter_.at(op->id())) {
-            const auto &lowers = lowerMap[loopId]; // [dim][bound]
-            const auto &uppers = upperMap[loopId]; // [dim][bound]
-            for (auto &[redOp, var, allLowers, allUppers] :
-                 forReductions_[loopId]) {
-                // allLowers, allUppers : [dim][access][bound]
-                if (redOp == op->op_ && var == op->var_) {
-                    ASSERT(allLowers.size() == lowers.size());
-                    ASSERT(allUppers.size() == uppers.size());
+        if (allNeedSync) {
+            toUseSync_.emplace(op->id());
+            return op;
+        }
+
+        CompUniqueBounds unique(*this);
+        for (auto &&loopId :
+             paraLoopStack_ |
+                 views::slice(needSyncUpTo + 1, (int)paraLoopStack_.size())) {
+            if (toAlter_.at(op->id()).count(loopId)) {
+                std::vector<std::vector<Expr>> lowers, uppers; // [dim][bound]
+                for (auto &&[i, idx, dim] : views::zip(
+                         views::ints(0, ranges::unreachable), _op->indices_,
+                         buffer(_op->var_)->tensor()->shape())) {
+                    std::vector<Expr> dimLowers{makeIntConst(0)},
+                        dimUppers{dim};
+                    for (auto &&item : unique.getDefinedLower(
+                             idx, scopeDefined_.at(loopId))) {
+                        dimLowers.emplace_back(item.expr());
+                    }
+                    for (auto &&item : unique.getDefinedUpper(
+                             idx, scopeDefined_.at(loopId))) {
+                        dimUppers.emplace_back(item.expr());
+                    }
+                    lowers.emplace_back(std::move(dimLowers));
+                    uppers.emplace_back(std::move(dimUppers));
+                }
+                for (auto &[redOp, var, allLowers, allUppers, syncFlush] :
+                     forReductions_[loopId]) {
+                    // allLowers, allUppers : [dim][access][bound]
+                    if (redOp == op->op_ && var == op->var_) {
+                        ASSERT(allLowers.size() == lowers.size());
+                        ASSERT(allUppers.size() == uppers.size());
+                        for (auto &&[allLowersItem, lowersItem] :
+                             views::zip(allLowers, lowers)) {
+                            allLowersItem.emplace_back(lowersItem);
+                        }
+                        for (auto &&[allUppersItem, uppersItem] :
+                             views::zip(allUppers, uppers)) {
+                            allUppersItem.emplace_back(uppersItem);
+                        }
+                        syncFlush |= needSyncUpTo >= 0;
+                        goto done;
+                    }
+                }
+                {
+                    std::vector<std::vector<std::vector<Expr>>> allLowers(
+                        lowers.size()),
+                        allUppers(uppers.size());
                     for (auto &&[allLowersItem, lowersItem] :
                          views::zip(allLowers, lowers)) {
                         allLowersItem.emplace_back(lowersItem);
@@ -117,26 +148,12 @@ Stmt MakeLoopCarriedReduction::visit(const ReduceTo &_op) {
                          views::zip(allUppers, uppers)) {
                         allUppersItem.emplace_back(uppersItem);
                     }
-                    goto done;
+                    forReductions_[loopId].emplace_back(ReductionItemFactors{
+                        op->op_, op->var_, std::move(allLowers),
+                        std::move(allUppers), needSyncUpTo >= 0});
                 }
+            done:;
             }
-            {
-                std::vector<std::vector<std::vector<Expr>>> allLowers(
-                    lowers.size()),
-                    allUppers(uppers.size());
-                for (auto &&[allLowersItem, lowersItem] :
-                     views::zip(allLowers, lowers)) {
-                    allLowersItem.emplace_back(lowersItem);
-                }
-                for (auto &&[allUppersItem, uppersItem] :
-                     views::zip(allUppers, uppers)) {
-                    allUppersItem.emplace_back(uppersItem);
-                }
-                forReductions_[loopId].emplace_back(ReductionItemFactors{
-                    op->op_, op->var_, std::move(allLowers),
-                    std::move(allUppers)});
-            }
-        done:;
         }
         return op;
     }
@@ -147,14 +164,16 @@ Stmt MakeLoopCarriedReduction::visit(const For &_op) {
     ASSERT(!paraScopes_.count(_op->id()));
     paraScopes_[_op->id()] = _op->property_->parallel_;
     scopeDefined_[_op->id()] = names();
+    paraLoopStack_.emplace_back(_op->id());
     auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.as<ForNode>();
+    paraLoopStack_.pop_back();
     scopeDefined_.erase(_op->id());
     paraScopes_.erase(_op->id());
 
-    ASSERT(__op->nodeType() == ASTNodeType::For);
-    auto op = __op.as<ForNode>();
     if (forReductions_.count(op->id())) {
-        for (auto &&[redOp, var, allLowers, allUppers] :
+        for (auto &&[redOp, var, allLowers, allUppers, syncFlush] :
              forReductions_.at(op->id())) {
             std::vector<Expr> begins, ends;
             for (auto &&dimLowers : allLowers) {
@@ -165,22 +184,16 @@ Stmt MakeLoopCarriedReduction::visit(const For &_op) {
                     makeAdd(makeMaxMin(dimUppers), makeIntConst(1)));
             }
             op->property_->reductions_.emplace_back(makeReductionItem(
-                redOp, var, std::move(begins), std::move(ends)));
+                redOp, var, std::move(begins), std::move(ends), syncFlush));
         }
     }
 
     return op;
 }
 
-bool MakeSyncReduction::canResideInGPULocal(DataType dtype,
-                                            const std::vector<Expr> &shape,
-                                            bool isRandomAccess) const {
+bool MakeSyncReduction::canResideInGPULocal(
+    DataType dtype, const std::vector<Expr> &shape) const {
 #ifdef FT_WITH_CUDA
-    if (isRandomAccess) {
-        // Case 3: Random access
-        return false;
-    }
-
     // GPU registers are 32-bit
     int64_t sizeIn32Bit = 1;
     int64_t sizeInBytes = 1;
@@ -219,17 +232,15 @@ bool MakeSyncReduction::canResideInGPULocal(DataType dtype,
 }
 
 MemType MakeSyncReduction::localMType(MemType mtype, DataType dtype,
-                                      const std::vector<Expr> &shape,
-                                      bool isRandomAccess) const {
+                                      const std::vector<Expr> &shape) const {
     switch (mtype) {
     case MemType::CPU:
         return MemType::CPU;
     case MemType::GPULocal:
     case MemType::GPUShared:
     case MemType::GPUGlobal:
-        return canResideInGPULocal(dtype, shape, isRandomAccess)
-                   ? MemType::GPULocal
-                   : MemType::GPUGlobal;
+        return canResideInGPULocal(dtype, shape) ? MemType::GPULocal
+                                                 : MemType::GPUGlobal;
     default:
         ASSERT(false);
     }
@@ -239,9 +250,7 @@ Stmt MakeSyncReduction::visit(const ReduceTo &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
-    if (auto it = toUseSync_.find(op->id()); it != toUseSync_.end()) {
-        auto isRandomAccess = it->second.isRandomAccess_;
-
+    if (toUseSync_.count(op->id())) {
         // There will be no cross-thread dependences except the reduction we
         // are working on (guranteed by schedule/parallelize). Therefore, We
         // can cache the variable being reduced, so it can be first reduced
@@ -311,13 +320,12 @@ Stmt MakeSyncReduction::visit(const ReduceTo &_op) {
                     op->var_ +=
                         ".sync_cache." + toString(existing.oldNode_->id());
                     op->indices_ = std::move(newCacheIndices);
-                    existing.isRandomAccess_ |= isRandomAccess;
                     goto done;
                 }
             }
             cacheSync_[loopToCache].emplace_back(
                 _op /* use the old name here */, newShape, newTargetIndices,
-                isRandomAccess, preserveDim);
+                preserveDim);
             op->var_ += ".sync_cache." + toString(op->id());
             op->indices_ = std::move(newCacheIndices);
         done:;
@@ -343,7 +351,7 @@ Stmt MakeSyncReduction::visit(const For &_op) {
 
     if (cacheSync_.count(op->id())) {
         Stmt ret = op;
-        for (auto &&[reduce, newShape, targetIndices, isRandomAccess, _] :
+        for (auto &&[reduce, newShape, targetIndices, _] :
              cacheSync_.at(op->id())) {
             auto cacheName =
                 reduce->var_ + ".sync_cache." + toString(reduce->id());
@@ -371,8 +379,8 @@ Stmt MakeSyncReduction::visit(const For &_op) {
                 cacheIndices, views::repeat(makeIntConst(0)), newShape,
                 views::repeat(makeIntConst(1)), newShape,
                 views::repeat(Ref<ForProperty>::make()), flush);
-            auto mtype = localMType(buffer(reduce->var_)->mtype(), dtype,
-                                    newShape, isRandomAccess);
+            auto mtype =
+                localMType(buffer(reduce->var_)->mtype(), dtype, newShape);
             ret = makeVarDef(cacheName,
                              makeBuffer(makeTensor(newShape, dtype),
                                         AccessType::Cache, mtype),

@@ -10,8 +10,10 @@
 #include <func.h>
 #include <probability/rand_ctx.h>
 #include <random.h>
+#include <schedule/as_matmul.h>
 #include <schedule/fission.h>
 #include <schedule/memoized_schedules.h>
+#include <schedule/reorder.h>
 #include <schedule/schedule_log.h>
 #include <schedule/var_split.h>
 #include <stmt.h>
@@ -187,6 +189,8 @@ class Schedule {
      *
      * @param filter : A callback that returns true for acceptance, or a
      * `Selector`, or an `ID`
+     *
+     * @return : All statements satisfying the given condition, in DFS pre order
      */
     template <class T> std::vector<Stmt> findAll(const T &filter) const {
         return findAllStmt(ast(), filter);
@@ -271,10 +275,16 @@ class Schedule {
      * To swap consecutive loops, use `swap` instead
      *
      * @param order : Vector of loop IDs. The requested order of the loops
+     * @param mode : How to deal with imperfectly nested loops.
+     * `PerfectOnly` => throw an exception. `MoveOutImperfect` => do `fission`
+     * in advance to move out statements between the loops, which may enlarge
+     * intermediate tensors. `MoveInImperfect` => move statements between the
+     * loops inwards after adding gurads them them, which may hurt parallelism
      * @throw InvalidSchedule if the input is invalid or there are breaking
      * dependences
      */
-    void reorder(const std::vector<ID> &order);
+    void reorder(const std::vector<ID> &order,
+                 ReorderMode mode = ReorderMode::PerfectOnly);
 
     /**
      * Merge two directly nested loops into one
@@ -709,10 +719,17 @@ class Schedule {
      * Transform nested loops to be a external call to a matrix multiplication
      *
      * @param loop: ID of the loop
+     * @param mode : What to do if the memory layout does not meet the
+     * requirement from the external library. `KeepMemLayout` => Raise an
+     * exception. `TryVarReorder` => try `var_reorder` on some variables, but
+     * may affect performance of other use of these variable. `TryTranspose` =>
+     * try `cache` and then `var_reorder` on some variables, but will incur
+     * extra overhead.
      * @throw InvalidSchedule if the loop cannot be transformed to be a matrix
      * multiplication
      */
-    void asMatMul(const ID &loop);
+    void asMatMul(const ID &loop,
+                  AsMatMulMode mode = AsMatMulMode::KeepMemLayout);
 
     /**
      * Use Pluto+ algorithm to permute and fuse two loops, with as most
@@ -811,6 +828,13 @@ class Schedule {
      */
     void autoFissionFuse(const Ref<Target> &target,
                          const Ref<RandTrace> &trace = nullptr);
+
+    /**
+     * (Experimental) Automatically adjust memory layout of variables
+     *
+     * @param target : Target architecture
+     */
+    void autoMemLayout(const Ref<Target> &target);
 
     /**
      * (Experimental) Automatically parallelize some loops using some heuristics

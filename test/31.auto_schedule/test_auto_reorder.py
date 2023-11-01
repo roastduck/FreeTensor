@@ -15,7 +15,7 @@ def test_move_loop_with_dependence_inside():
     print(s.ast())
     logs = list(map(str, s.logs()))
     print(logs)
-    assert logs == ["reorder(Lj, Li)"]
+    assert logs == ["reorder(Lj, Li, move_out_imperfect)"]
 
 
 def test_true_dep_is_more_important_than_reduction():
@@ -33,4 +33,4 @@ def test_true_dep_is_more_important_than_reduction():
     print(s.ast())
     logs = list(map(str, s.logs()))
     print(logs)
-    assert logs == ["reorder(Lj, Li)"]
+    assert logs == ["reorder(Lj, Li, move_out_imperfect)"]

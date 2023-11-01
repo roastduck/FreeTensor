@@ -4,6 +4,7 @@
 #include <lazy.h>
 #include <pass/merge_and_hoist_if.h>
 #include <schedule.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/fission.h>
 #include <schedule/hoist_selected_var.h>
 
@@ -185,6 +186,8 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
         throw InvalidSchedule(
             "Cannot preserve ID and Metadata for both first and second parts");
 
+    checkNotInLib(_ast, loop);
+
     Stmt splitterNode;
     try {
         splitterNode = findStmt(_ast, splitter);
@@ -195,13 +198,13 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     ID leftOfSplitter, rightOfSplitter;
     if (side == FissionSide::Before) {
         rightOfSplitter = splitter;
-        if (auto node = splitterNode->prevStmtInDFSOrder();
+        if (auto node = splitterNode->prevLeafStmtInDFSOrder();
             node.isValid() && node->ancestorById(loop).isValid()) {
             leftOfSplitter = node->id();
         }
     } else {
         leftOfSplitter = splitter;
-        if (auto node = splitterNode->nextStmtInDFSOrder();
+        if (auto node = splitterNode->nextLeafStmtInDFSOrder();
             node.isValid() && node->ancestorById(loop).isValid()) {
             rightOfSplitter = node->id();
         }

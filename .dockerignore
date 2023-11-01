@@ -1,5 +1,6 @@
 /build
 /install
+/3rd-party/isl/install
 /site
 /docs/doxygen
 **/__pycache__

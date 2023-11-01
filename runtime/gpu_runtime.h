@@ -18,15 +18,7 @@
 
 #define restrict __restrict__
 
-#define checkCudaError(call)                                                   \
-    {                                                                          \
-        auto err = (call);                                                     \
-        if (cudaSuccess != err) {                                              \
-            fprintf(stderr, "CUDA error in file '%s' in line %i : %s.\n",      \
-                    __FILE__, __LINE__, cudaGetErrorString(err));              \
-            throw std::runtime_error("cuda error");                            \
-        }                                                                      \
-    }
+#define checkCudaError(...) runtimeCheckCudaError(__VA_ARGS__)
 
 inline void *cudaNew(size_t size, cudaStream_t stream) {
     void *ptr = nullptr;
@@ -42,6 +34,20 @@ inline void *cudaNew(size_t size, cudaStream_t stream) {
             ptr, size, cudaMemAdviseSetPreferredLocation, device));
         checkCudaError(cudaMemset(ptr, 0, size));
 #endif // FT_DEBUG_CUDA_WITH_UM
+    }
+    return ptr;
+}
+
+inline void *cudaNewFromPool(size_t size, cudaStream_t stream,
+                             cudaMemPool_t pool) {
+    void *ptr = nullptr;
+    if (size > 0) {
+#ifndef FT_DEBUG_CUDA_WITH_UM
+        checkCudaError(cudaMallocFromPoolAsync(&ptr, size, pool, stream));
+#else
+        // Fallback
+        return cudaNew(size, stream);
+#endif // FT_DEBUG_WITH_UM
     }
     return ptr;
 }

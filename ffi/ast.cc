@@ -63,6 +63,7 @@ void init_ffi_ast(py::module_ &m) {
         .value("Abs", ASTNodeType::Abs)
         .value("Floor", ASTNodeType::Floor)
         .value("Ceil", ASTNodeType::Ceil)
+        .value("Unbound", ASTNodeType::Unbound)
         .value("IfExpr", ASTNodeType::IfExpr)
         .value("Cast", ASTNodeType::Cast)
         .value("For", ASTNodeType::For)
@@ -213,6 +214,7 @@ template <> struct polymorphic_type_hook<freetensor::ASTNode> {
             DISPATCH(Abs);
             DISPATCH(Floor);
             DISPATCH(Ceil);
+            DISPATCH(Unbound);
             DISPATCH(IfExpr);
             DISPATCH(Cast);
             DISPATCH(Intrinsic);
@@ -304,6 +306,7 @@ template <> struct polymorphic_type_hook<freetensor::ExprNode> {
             DISPATCH(Abs);
             DISPATCH(Floor);
             DISPATCH(Ceil);
+            DISPATCH(Unbound);
             DISPATCH(IfExpr);
             DISPATCH(Cast);
             DISPATCH(Intrinsic);

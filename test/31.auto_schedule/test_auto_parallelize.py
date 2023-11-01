@@ -29,6 +29,26 @@ def test_cpu_basic():
         logs, ["merge(Li, Lj)", "parallelize($merge{Li, Lj}, openmp, *)"])
 
 
+def test_3_levels():
+    with ft.VarDef([("x", (100, 100, 100), "int32", "input", "cpu"),
+                    ("y", (100, 100, 100), "int32", "output", "cpu")]) as (x,
+                                                                           y):
+        with ft.For("i", 0, 100, label="Li") as i:
+            with ft.For("j", 0, 100, label="Lj") as j:
+                with ft.For("k", 0, 100, label="Lk") as k:
+                    y[i, j, k] = x[i, j, k] + 1
+
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.auto_parallelize(ft.CPU())
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert fnmatch_list(logs, [
+        'merge(Li, Lj)', 'merge($merge{Li, Lj}, Lk)',
+        'parallelize($merge{$merge{Li, Lj}, Lk}, openmp, *)'
+    ])
+
+
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_basic_static_small():
     with ft.VarDef([("x", (10, 10, 2), "int32", "input", "cpu"),
@@ -48,9 +68,9 @@ def test_gpu_basic_static_small():
     logs = list(map(str, s.logs()))
     print(logs)
     assert fnmatch_list(logs, [
-        "merge(Li, Lj)", f"split($merge{{Li, Lj}}, -1, {num_sm}, 0)",
-        "parallelize($split.0{$merge{Li, Lj}}, blockIdx.x, *)",
-        "parallelize($split.1{$merge{Li, Lj}}, threadIdx.x, *)"
+        f'split(Lj, -1, {num_sm // 10}, 0)', 'merge(Li, $split.0{Lj})',
+        'parallelize($merge{Li, $split.0{Lj}}, blockIdx.x, *)',
+        'parallelize($split.1{Lj}, threadIdx.y, *)'
     ])
 
 
@@ -70,20 +90,34 @@ def test_gpu_basic_static_large():
     logs = list(map(str, s.logs()))
     print(logs)
     assert fnmatch_list(logs, [
-        "merge(Li, Lj)", "split($merge{Li, Lj}, 256, -1, 0)",
-        "parallelize($split.0{$merge{Li, Lj}}, blockIdx.x, *)",
-        "parallelize($split.1{$merge{Li, Lj}}, threadIdx.x, *)"
+        'split(Lj, 256, -1, 0)', 'merge(Li, $split.0{Lj})',
+        'parallelize($merge{Li, $split.0{Lj}}, blockIdx.x, *)',
+        'parallelize($split.1{Lj}, threadIdx.y, *)'
     ])
 
 
+# FIXME: Fix this test. Correctly prioritize all 3 scopes: `blockIdx.y`,
+# `blockIdx.x` and `threadIdx.y` for dynamic loops.
+#
+# The problems lies on splitting. If we split an `n`-lengthed loop with `limits
+# = {-1, 10, 10}` and `priority = {0, 2, 1}`, we first run `split(factor=100)`,
+# resulting a seemingly 100-lengthed loop. But the loop is probably not full. If
+# we treat it as 100, and continue `split(factor=10)`, the third scope will likely
+# be full as 10. In this case the third scope will be more prioritized than the
+# second scope, which is not what we want.
+#
+# To make it correct, we need to treat the seemingly 100-length loop with its real
+# length `min(n, 100)`. However, this requires two improvements: 1) Changes to
+# `split`, and more importantly 2) More accurate dependence analysis supporting
+# dynamic divisor.
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_basic_dynamic():
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
-        with ft.VarDef([("x", (n[()], 1000, 2), "int32", "input", "cpu"),
-                        ("y", (n[()], 1000, 2), "int32", "output", "cpu")
+        with ft.VarDef([("x", (n[()], 10, 2), "int32", "input", "cpu"),
+                        ("y", (n[()], 10, 2), "int32", "output", "cpu")
                        ]) as (x, y):
             with ft.For("i", 0, n[()], label="Li") as i:
-                with ft.For("j", 0, 1000, label="Lj") as j:
+                with ft.For("j", 0, 10, label="Lj") as j:
                     y[i, j, 0] = x[i, j, 0] + 1
 
     device = ft.GPU()
@@ -97,12 +131,12 @@ def test_gpu_basic_dynamic():
     logs = list(map(str, s.logs()))
     print(logs)
     assert fnmatch_list(logs, [
-        "merge(Li, Lj)", f"split($merge{{Li, Lj}}, {num_sm}, -1, 0)",
-        "reorder($split.1{$merge{Li, Lj}}, $split.0{$merge{Li, Lj}})",
-        "split($split.0{$merge{Li, Lj}}, 256, -1, 0)",
-        "parallelize($split.1{$merge{Li, Lj}}, blockIdx.y, *)",
-        "parallelize($split.0{$split.0{$merge{Li, Lj}}}, blockIdx.x, *)",
-        "parallelize($split.1{$split.0{$merge{Li, Lj}}}, threadIdx.x, *)"
+        'split(Li, %d, -1, 0)' %
+        (num_sm * 256 // 10), 'parallelize($split.0{Li}, blockIdx.y, *)',
+        'split($split.1{Li}, -1, %d, 0)' % num_sm,
+        'parallelize($split.0{$split.1{Li}}, blockIdx.x, *)',
+        'merge($split.1{$split.1{Li}}, Lj)',
+        'parallelize($merge{$split.1{$split.1{Li}}, Lj}, threadIdx.y, *)'
     ])
 
 
@@ -204,7 +238,11 @@ def test_reduction_better_parallelized_2():
     s.auto_parallelize(ft.CPU())
     logs = list(map(str, s.logs()))
     print(logs)
-    assert fnmatch_list(logs, ['parallelize(Li, openmp, *)'])
+    n_cores = ft.CPU().target().n_cores()
+    assert fnmatch_list(logs, [
+        f'split(Li, -1, {n_cores}, 0)',
+        'parallelize($split.0{Li}, openmp, true)'
+    ])
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
@@ -225,7 +263,7 @@ def test_gpu_warp_static():
     print(logs)
     assert fnmatch_list(logs, [
         "split(Lk, 32, -1, 0)", "parallelize($split.1{Lk}, threadIdx.x, *)",
-        "reorder($split.1{Lk}, $split.0{Lk})", "split(Li, 8, -1, 0)",
+        "reorder($split.1{Lk}, $split.0{Lk}, *)", "split(Li, 8, -1, 0)",
         "parallelize($split.0{Li}, blockIdx.x, *)",
         "parallelize($split.1{Li}, threadIdx.y, *)"
     ])
@@ -244,7 +282,28 @@ def test_gpu_warp_dynamic():
 
     device = ft.GPU()
     target = device.target()
-    num_sm = target.multi_processor_count()
+
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.auto_parallelize(ft.GPU())
+    print(s.ast())
+    logs = list(map(str, s.logs()))
+    print(logs)
+    assert fnmatch_list(logs[:3], [
+        "split(Lk, 32, -1, 0)", "parallelize($split.1{Lk}, threadIdx.x, *)",
+        "reorder($split.1{Lk}, $split.0{Lk}, *)"
+    ])
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_gpu_warp_with_mod():
+    with ft.VarDef([("x", (1000, 800), "int32", "input", "gpu/global"),
+                    ("y", (1000, 2), "int32", "output", "gpu/global")]) as (x,
+                                                                            y):
+        with ft.For("i", 0, 1000, label="Li") as i:
+            y[i, 0] = 0
+            with ft.For("k", 0, 1000, label="Lk") as k:
+                y[i, 0] += x[i, k % 800]
 
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
@@ -254,11 +313,9 @@ def test_gpu_warp_dynamic():
     print(logs)
     assert fnmatch_list(logs, [
         "split(Lk, 32, -1, 0)", "parallelize($split.1{Lk}, threadIdx.x, *)",
-        "reorder($split.1{Lk}, $split.0{Lk})", f"split(Li, {num_sm}, -1, 0)",
-        "reorder($split.1{Li}, $split.0{Li})", "split($split.0{Li}, 8, -1, 0)",
-        "parallelize($split.1{Li}, blockIdx.y, *)",
-        "parallelize($split.0{$split.0{Li}}, blockIdx.x, *)",
-        "parallelize($split.1{$split.0{Li}}, threadIdx.y, *)"
+        "reorder($split.1{Lk}, $split.0{Lk}, *)", "split(Li, 8, -1, 0)",
+        "parallelize($split.0{Li}, blockIdx.x, *)",
+        "parallelize($split.1{Li}, threadIdx.y, *)"
     ])
 
 

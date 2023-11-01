@@ -219,8 +219,9 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
                 for (auto &&item : r->ends_) {
                     ends.emplace_back((*this)(item));
                 }
-                property->reductions_.emplace_back(makeReductionItem(
-                    r->op_, r->var_, std::move(begins), std::move(ends)));
+                property->reductions_.emplace_back(
+                    makeReductionItem(r->op_, r->var_, std::move(begins),
+                                      std::move(ends), r->syncFlush_));
             }
         }
 

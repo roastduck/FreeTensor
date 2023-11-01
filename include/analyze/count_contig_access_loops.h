@@ -5,6 +5,8 @@
 
 #include <analyze/analyze_linear.h>
 #include <analyze/symbol_table.h>
+#include <math/utils.h>
+#include <pass/const_fold.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -36,6 +38,41 @@ class CountContigAccessLoops : public SymbolTable<Visitor> {
         return ret;
     }
 
+    void countContigVars(std::unordered_map<std::string, int> *cnt,
+                         const Expr &expr, const Expr &modP = nullptr) {
+        analyzeLinear_(expr);
+        for (auto &&[_k, a] : analyzeLinear_.result().at(expr).coeff_) {
+            int64_t k = _k;
+            if (modP.isValid()) {
+                // TODO: Dynamic p: (p - 1) === -1, mod p
+                if (auto _p = constFold(modP);
+                    _p->nodeType() == ASTNodeType::IntConst) {
+                    auto p = _p.as<IntConstNode>()->val_;
+                    if (mod(k, p) == mod(1, p) || mod(k, p) == mod(-1, p)) {
+                        goto ok;
+                    }
+                }
+            }
+            if (k == 1 || k == -1) {
+                goto ok;
+            }
+            continue;
+
+        ok:
+            switch (a->nodeType()) {
+            case ASTNodeType::Var:
+                (*cnt)[a.template as<VarNode>()->name_] += repeat_;
+                break;
+            case ASTNodeType::Mod:
+                // TODO: ASTNodeType::Remainder
+                countContigVars(cnt, a.as<BinaryExprNode>()->lhs_,
+                                a.as<BinaryExprNode>()->rhs_);
+                break;
+            default:;
+            }
+        }
+    }
+
     template <class T> void visitMemAccess(const T &op) {
         BaseClass::visit(op);
         auto size = getStaticSize(op->var_);
@@ -45,13 +82,10 @@ class CountContigAccessLoops : public SymbolTable<Visitor> {
             return;
         }
         if (!op->indices_.empty()) {
-            Expr idx = op->indices_.back();
-            analyzeLinear_(idx);
-            for (auto &&[k, a] : analyzeLinear_.result().at(idx).coeff_) {
-                if ((k == 1 || k == -1) && a->nodeType() == ASTNodeType::Var) {
-                    auto &&var = a.template as<VarNode>();
-                    counts_[loop(var->name_)->id()].first += repeat_;
-                }
+            std::unordered_map<std::string, int> cnt;
+            countContigVars(&cnt, op->indices_.back());
+            for (auto &&[v, c] : cnt) {
+                counts_[loop(v)->id()].first += c;
             }
         }
     }

@@ -72,7 +72,8 @@ void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
     os() << shapePtr << " = " << ndim << " > 0 ? (size_t*)malloc((" << dimPtr
          << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
     makeIndent();
-    // cudaNew is defined in gpu_runtime.h
+    // cudaNew is defined in gpu_runtime.h. This allocation is for return
+    // values, so we don't allocate from our pool
     os() << rawPtr << " = cudaNew(";
     for (auto &&[i, dim] : views::enumerate(tensor->shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
@@ -138,7 +139,7 @@ void CodeGenCUDA::exprOr1(const std::unordered_map<ParallelScope, Expr> &dict,
 }
 
 void CodeGenCUDA::enterKernel(const Stmt &body) {
-    std::string kernel = "kernel" + std::to_string(nKernel_++);
+    std::string kernel = kernelPrefix_ + "_kernel" + std::to_string(nKernel_++);
     pushStream(kernel);
     sharedStackTop_ = makeIntConst(0);
     auto oldGlobalStackTop = globalStackTop_;
@@ -385,17 +386,18 @@ void CodeGenCUDA::visit(const Alloc &op) {
     ASSERT(buf->mtype() == MemType::GPUGlobalHeap);
 
     // e.g.
-    // x_opt = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 * sizeof(int),
-    // __stream));
+    // x_opt = mdspan_r<int, extents<5, 5>>(cudaNewFromPool(5 * 5 * sizeof(int),
+    // __stream, ctx->gpuGlobalDyanmicPool()));
     makeIndent();
     os() << mangle(op->var_) << "_opt = ";
     genMdPtrDef(vardef, [&]() {
-        os() << "cudaNew(";
+        os() << "cudaNewFromPool(";
         for (auto &&dim : shape) {
             (*this)(dim);
             os() << " * ";
         }
-        os() << "sizeof(" << gen(dtype) << "), __stream)";
+        os() << "sizeof(" << gen(dtype)
+             << "), __stream, ctx->gpuGlobalDynamicPool())";
     });
     os() << ";" << std::endl;
 }
@@ -772,10 +774,11 @@ void CodeGenCUDA::visit(const MatMul &op) {
     inCublas_ = false;
 }
 
-std::string codeGenCUDA(const Func &func) {
+NativeCode codeGenCUDA(const Func &func, const Ref<Target> &target) {
+    auto prefix = mangle(func->name_);
     auto nParams = func->params_.size();
 
-    CodeGenCUDA visitor(func->params_, func->returns_);
+    CodeGenCUDA visitor(func->params_, func->returns_, prefix);
     auto &&op = func->body_;
     visitor.beginBlock();
     visitor(op);
@@ -795,7 +798,8 @@ extern "C" {
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
             std::string s =
-                "void run(void **__params, void **returns, size_t **retShapes, "
+                "void " + prefix +
+                "_run(void **__params, void **returns, size_t **retShapes, "
                 "size_t *retDims, GPUContext_t ctx) {\n";
             // We copy `__params` to `params`, in order to pass the parameter
             // pack into a kernel
@@ -812,21 +816,9 @@ extern "C" {
             s += "cudaStream_t __stream = 0;\n";
             s += "\n";
 
-            // Allocate stack for gpu/global
-            auto globalSize = visitor.globalSize();
-            // FIXME: Support non-constant
-            ASSERT(globalSize->nodeType() == ASTNodeType::IntConst);
-            s += "uint8_t *__glmem = (uint8_t*)cudaNew(" +
-                 std::to_string(globalSize.as<IntConstNode>()->val_) +
-                 ", __stream);\n";
-            s += "\n";
+            s += "uint8_t *__glmem = (uint8_t*)ctx->gpuGlobalStaticPool();\n";
 
             s += stream.os_.str();
-            s += "\n";
-
-            // Free stack for gpu/global
-            s += "cudaFreeAsync(__glmem, __stream);\n";
-
             s += "}\n";
             return s;
         } else {
@@ -892,7 +884,16 @@ extern "C" {
             return os.str();
         }
     });
-    return header + body + tailer;
+
+    // Pre-allocate static gpu/global memory pool
+    // TODO: Support dynamic size and allocate the dynamic part at run time
+    auto globalSize = visitor.globalSize();
+    ASSERT(globalSize->nodeType() == ASTNodeType::IntConst);
+    StaticInfo staticInfo;
+    staticInfo.gpuGlobalStaticPoolSize_ = globalSize.as<IntConstNode>()->val_;
+
+    return NativeCode::fromFunc(func, header + body + tailer, prefix + "_run",
+                                target, staticInfo);
 }
 
 } // namespace freetensor

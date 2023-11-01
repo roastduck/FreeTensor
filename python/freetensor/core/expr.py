@@ -10,8 +10,8 @@ __all__ = [
     'truediv', 'floordiv', 'ceildiv', 'round_towards_0_div', 'mod', 'remainder',
     'min', 'max', 'l_and', 'l_or', 'lt', 'le', 'gt', 'ge', 'eq', 'ne', 'l_not',
     'abs', 'sqrt', 'exp', 'ln', 'square', 'sigmoid', 'sin', 'cos', 'tan',
-    'tanh', 'floor', 'ceil', 'if_then_else', 'cast', 'intrinsic', 'any',
-    'load_at_version', 'ndim', 'shape', 'dtype', 'mtype'
+    'tanh', 'floor', 'ceil', 'unbound', 'if_then_else', 'cast', 'intrinsic',
+    'any', 'load_at_version', 'ndim', 'shape', 'dtype', 'mtype'
 ]
 
 import collections
@@ -1211,6 +1211,35 @@ def ceil(expr):
         from .. import libop
         return libop.ceil(expr)
     return ffi.makeCeil(expr)
+
+
+def unbound(expr):
+    '''
+    Explicitly mark a bool expression not to used for boundary analysis and thus
+    not used for shrinking loops or variables
+
+    This is useful when we want to leave a loop length constatnt or regular, and
+    guard it with a branch, e.g.:
+
+    ```
+    for i = 0 to 100
+      if unbound(i < x)
+        ...
+    ```
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The bool expression to mark
+
+    Returns
+    -------
+    VarRef or Number
+        The marked expression
+    '''
+    if isinstance(expr, bool):
+        return expr
+    return ffi.makeUnbound(expr)
 
 
 def if_then_else(cond, then_case, else_case):

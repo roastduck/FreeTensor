@@ -10,7 +10,7 @@ void Schedule::autoUseLib(const Ref<Target> &target) {
         // Suppose the root node is not <For>. It should be <VarDef>
         auto loop = _loop.as<ForNode>();
         try {
-            asMatMul(loop->id());
+            asMatMul(loop->id(), AsMatMulMode::TryTranspose);
         } catch (const InvalidSchedule &e) {
             if (getenv("PAPER_IS_BWD") && getenv("PAPER_NO_PAR_REDUCE")) {
                 continue;
@@ -54,7 +54,7 @@ void Schedule::autoUseLib(const Ref<Target> &target) {
                             fission(loop->id(), FissionSide::After, stmt->id(),
                                     true, "." + toString(i) + ".lib", "")
                                 .first.at(loop->id());
-                        asMatMul(libStmtId);
+                        asMatMul(libStmtId, AsMatMulMode::TryTranspose);
                         commitTransaction();
                     } catch (const InvalidSchedule &e) {
                         abortTransaction();

@@ -1,6 +1,6 @@
 __all__ = [
-    'FissionSide', 'MoveToSide', 'VarSplitMode', 'ID', 'IDMap', 'Schedule',
-    'schedule'
+    'FissionSide', 'MoveToSide', 'VarSplitMode', 'ReorderMode', 'AsMatMulMode',
+    'ID', 'IDMap', 'Schedule', 'schedule'
 ]
 
 import functools
@@ -9,7 +9,7 @@ from typing import Callable, Union, List, Dict
 
 from .. import ffi
 from ..ffi import (ParallelScope, ID, Selector, FissionSide, MoveToSide,
-                   VarSplitMode)
+                   VarSplitMode, ReorderMode, AsMatMulMode)
 
 from .func import Func
 from .analyze import find_stmt
@@ -164,7 +164,7 @@ class Schedule(ffi.Schedule):
             i if i else None
             for i in super().split(self._lookup(node), factor, nparts, shift))
 
-    def reorder(self, order):
+    def reorder(self, order, mode: ReorderMode = ReorderMode.PerfectOnly):
         """
         Reorder directly nested loops
 
@@ -174,13 +174,19 @@ class Schedule(ffi.Schedule):
         ----------
         order : array like of str, ID or Stmt
             Vector of loops. The requested order of the loops
+        mode : ReorderMode
+            How to deal with imperfectly nested loops. `PerfectOnly` => raise an
+            exception. `MoveOutImperfect` => do `fission` in advance to move out
+            statements between the loops, which may enlarge intermediate tensors.
+            `MoveInImperfect` => move statements between the loops inwards after
+            adding gurads them them, which may hurt parallelism
 
         Raises
         ------
         InvalidSchedule
             if the input is invalid or there are breaking dependences
         """
-        super().reorder(list(map(self._lookup, order)))
+        super().reorder(list(map(self._lookup, order)), mode)
 
     def merge(self, loop1, loop2):
         """
@@ -773,7 +779,7 @@ class Schedule(ffi.Schedule):
         """
         super().separate_tail(noDuplicateVarDefs)
 
-    def as_matmul(self, loop):
+    def as_matmul(self, loop, mode: AsMatMulMode = AsMatMulMode.KeepMemLayout):
         """
         Transform nested loops to be a external call to a matrix multiplication
 
@@ -781,13 +787,21 @@ class Schedule(ffi.Schedule):
         ----------
         loop : str, ID or Stmt
             ID of the loop
+        allow_var_reorder : bool
+            If true, automatically try calling `var_reorder` to eanble `as_matmul`
+        mode : AsMatMulMode
+            What to do if the memory layout does not meet the requirement from the
+            external library. `KeepMemLayout` => Raise an exception. `TryVarReorder`
+            => try `var_reorder` on some variables, but may affect performance of
+            other use of these variable. `TryTranspose` => try `cache` and then
+            `var_reorder` on some variables, but will incur extra overhead.
 
         Raises
         ------
         InvalidSchedule
             if the loop cannot be transformed to be a matrix multiplication
         """
-        super().as_matmul(self._lookup(loop))
+        super().as_matmul(self._lookup(loop), mode)
 
     def pluto_fuse(self,
                    loop0,
@@ -930,6 +944,17 @@ class Schedule(ffi.Schedule):
             Target architecture
         """
         super().auto_fission_fuse(target)
+
+    def auto_mem_layout(self, target):
+        """
+        (Experimental) Automatically adjust memory layout of variables
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super().auto_mem_layout(target)
 
     def auto_parallelize(self, target):
         """

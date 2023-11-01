@@ -806,27 +806,47 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         // !isSubset(...earlierMap, ...nearest)`.
 
         // Coarse check (depAll is a superset of nearest)
-        if ((mode_ == FindDepsMode::KillEarlier ||
-             mode_ == FindDepsMode::KillBoth) &&
-            !isSubset(realEarlierIter, range(depAll))) {
-            return;
+        if (mode_ == FindDepsMode::KillEarlier ||
+            mode_ == FindDepsMode::KillBoth) {
+            if (auto flag = pbTestWithTimeout(
+                    static_cast<bool (*)(const PBSet &, const PBSet &)>(
+                        isSubset),
+                    10, realEarlierIter, range(depAll));
+                !flag.has_value() || !*flag) {
+                return;
+            }
         }
-        if ((mode_ == FindDepsMode::KillLater ||
-             mode_ == FindDepsMode::KillBoth) &&
-            !isSubset(realLaterIter, domain(depAll))) {
-            return;
+        if (mode_ == FindDepsMode::KillLater ||
+            mode_ == FindDepsMode::KillBoth) {
+            if (auto flag = pbTestWithTimeout(
+                    static_cast<bool (*)(const PBSet &, const PBSet &)>(
+                        isSubset),
+                    10, realLaterIter, domain(depAll));
+                !flag.has_value() || !*flag) {
+                return;
+            }
         }
 
         // Fine check
-        if ((mode_ == FindDepsMode::KillEarlier ||
-             mode_ == FindDepsMode::KillBoth) &&
-            !isSubset(realEarlierIter, range(nearest))) {
-            return;
+        if (mode_ == FindDepsMode::KillEarlier ||
+            mode_ == FindDepsMode::KillBoth) {
+            if (auto flag = pbTestWithTimeout(
+                    static_cast<bool (*)(const PBSet &, const PBSet &)>(
+                        isSubset),
+                    10, realEarlierIter, range(nearest));
+                !flag.has_value() || !*flag) {
+                return;
+            }
         }
-        if ((mode_ == FindDepsMode::KillLater ||
-             mode_ == FindDepsMode::KillBoth) &&
-            !isSubset(realLaterIter, domain(nearest))) {
-            return;
+        if (mode_ == FindDepsMode::KillLater ||
+            mode_ == FindDepsMode::KillBoth) {
+            if (auto flag = pbTestWithTimeout(
+                    static_cast<bool (*)(const PBSet &, const PBSet &)>(
+                        isSubset),
+                    10, realLaterIter, domain(nearest));
+                !flag.has_value() || !*flag) {
+                return;
+            }
         }
     }
 

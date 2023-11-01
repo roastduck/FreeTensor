@@ -100,6 +100,18 @@ void AsDNF::visit(const GE &op) {
     }
 }
 
+void AsDNF::visit(const Unbound &op) {
+    Visitor::visit(op);
+    results_[op] = results_.at(op->expr_);
+    for (auto &item : results_.at(op)) {
+        for (auto &sub : item) {
+            if (sub->nodeType() != ASTNodeType::Unbound) {
+                sub = makeUnbound(sub);
+            }
+        }
+    }
+}
+
 DNF asDNF(const Expr &expr) {
     AsDNF visitor;
     visitor(expr);

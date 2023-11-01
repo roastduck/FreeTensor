@@ -4,6 +4,7 @@
 #include <analyze/analyze_linear.h>
 #include <analyze/as_dnf.h>
 #include <analyze/check_all_defined.h>
+#include <analyze/find_stmt.h>
 #include <math/bounds.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
@@ -20,11 +21,6 @@ static bool noIntersect(const std::unordered_set<std::string> &set1,
         }
     }
     return true;
-}
-
-void FindAllIfs::visit(const If &op) {
-    Visitor::visit(op);
-    results_.insert(op->id());
 }
 
 Stmt WrapMetadata::visitStmt(const Stmt &op) {
@@ -153,9 +149,10 @@ Stmt SeparateTail::visit(const VarDef &op) {
 Stmt separateTail(const Stmt &_ast, bool noDuplicateVarDefs) {
     auto ast = _ast;
 
-    FindAllIfs finder;
-    finder(ast);
-    auto candidates = finder.results();
+    std::unordered_set<ID> candidates;
+    for (auto &&branch : findAllStmt(ast, "<If>")) {
+        candidates.emplace(branch->id());
+    }
 
     while (!candidates.empty()) {
         SeparateTail mutator(noDuplicateVarDefs, candidates);

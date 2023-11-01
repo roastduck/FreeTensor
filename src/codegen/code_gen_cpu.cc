@@ -219,76 +219,92 @@ void CodeGenCPU::visit(const For &op) {
                      << std::endl;
             }
         }
-        os() << "#pragma omp parallel for";
-        if (collapse > 1) {
-            os() << " collapse(" << collapse << ")";
-        }
-        // As per OpenMP specification, even the loop's length is only 2, it
-        // still synchronizes all the threads in the implicit barrier. Thus we
-        // need to explicitly set `num_threads` here. It will not affect the
-        // semantics as long as we don't use `no_wait`.
-        os() << " num_threads(";
-        (*this)(makeMin(totLen, makeIntrinsic("omp_get_max_threads()", {},
-                                              DataType::Int32, false)));
-        os() << ")";
-        if (!op->property_->reductions_.empty()) {
-            for (size_t i = 1, n = op->property_->reductions_.size(); i < n;
-                 i++) {
-                if (op->property_->reductions_[i]->op_ !=
-                    op->property_->reductions_.front()->op_) {
-                    throw InvalidProgram(
-                        "Reduction operators of each parallel reduction "
-                        "variables should be the same in a single OpenMP loop");
-                }
+
+        auto genPragma = [&](bool isClang) {
+            os() << "#pragma omp parallel for";
+            if (collapse > 1) {
+                os() << " collapse(" << collapse << ")";
             }
-            os() << " reduction(";
-            switch (op->property_->reductions_.front()->op_) {
-            case ReduceOp::Add:
-                os() << "+: ";
-                break;
-            case ReduceOp::Mul:
-                os() << "*: ";
-                break;
-            case ReduceOp::Min:
-                os() << "min: ";
-                break;
-            case ReduceOp::Max:
-                os() << "max: ";
-                break;
-            case ReduceOp::LAnd:
-                os() << "&&: ";
-                break;
-            case ReduceOp::LOr:
-                os() << "||: ";
-                break;
-            default:
-                ASSERT(false);
+            if (isClang) {
+                // [Only for Clang] As per OpenMP specification, even the loop's
+                // length is only 2, it still synchronizes all the threads in
+                // the implicit barrier. Thus we need to explicitly set
+                // `num_threads` here. It will not affect the semantics as long
+                // as we don't use `no_wait`. This is only for Clang because
+                // other OpenMP implementations may restart the thread pool when
+                // changing the number of threads, which introduces a even
+                // higher cost
+                os() << " num_threads(";
+                (*this)(
+                    makeMin(totLen, makeIntrinsic("omp_get_max_threads()", {},
+                                                  DataType::Int32, false)));
+                os() << ")";
             }
-            bool first = true;
-            for (auto &&r : op->property_->reductions_) {
-                if (!first) {
-                    os() << ", ";
-                }
-                first = false;
-                if (!buffer(r->var_)->tensor()->shape().empty()) {
-                    os() << mangle(r->var_) << "_arrptr";
-                    for (auto &&[b, e] : views::zip(r->begins_, r->ends_)) {
-                        os() << "[";
-                        (*this)(b);
-                        os() << ":";
-                        // Note that OpenMP accepts `[begin : length]` rather
-                        // than
-                        // `[begin : end]`
-                        (*this)(makeSub(e, b));
-                        os() << "]";
+            if (!op->property_->reductions_.empty()) {
+                for (size_t i = 1, n = op->property_->reductions_.size(); i < n;
+                     i++) {
+                    if (op->property_->reductions_[i]->op_ !=
+                        op->property_->reductions_.front()->op_) {
+                        throw InvalidProgram(
+                            "Reduction operators of each parallel reduction "
+                            "variables should be the same in a single OpenMP "
+                            "loop");
                     }
-                } else {
-                    os() << mangle(r->var_);
                 }
+                os() << " reduction(";
+                switch (op->property_->reductions_.front()->op_) {
+                case ReduceOp::Add:
+                    os() << "+: ";
+                    break;
+                case ReduceOp::Mul:
+                    os() << "*: ";
+                    break;
+                case ReduceOp::Min:
+                    os() << "min: ";
+                    break;
+                case ReduceOp::Max:
+                    os() << "max: ";
+                    break;
+                case ReduceOp::LAnd:
+                    os() << "&&: ";
+                    break;
+                case ReduceOp::LOr:
+                    os() << "||: ";
+                    break;
+                default:
+                    ASSERT(false);
+                }
+                bool first = true;
+                for (auto &&r : op->property_->reductions_) {
+                    if (!first) {
+                        os() << ", ";
+                    }
+                    first = false;
+                    if (!buffer(r->var_)->tensor()->shape().empty()) {
+                        os() << mangle(r->var_) << "_arrptr";
+                        for (auto &&[b, e] : views::zip(r->begins_, r->ends_)) {
+                            os() << "[";
+                            (*this)(b);
+                            os() << ":";
+                            // Note that OpenMP accepts `[begin : length]`
+                            // rather than `[begin : end]`
+                            (*this)(makeSub(e, b));
+                            os() << "]";
+                        }
+                    } else {
+                        os() << mangle(r->var_);
+                    }
+                }
+                os() << ")";
             }
-            os() << ")";
-        }
-        os() << std::endl;
+            os() << std::endl;
+        };
+        os() << "#ifdef __clang__" << std::endl;
+        genPragma(true);
+        os() << "#else" << std::endl;
+        genPragma(false);
+        os() << "#endif" << std::endl;
+
         bool oldInParallel = inParallel_;
         inParallel_ = true;
         BaseClass::visit(op);
@@ -378,7 +394,9 @@ void CodeGenCPU::visit(const MatMul &op) {
 #endif
 }
 
-std::string codeGenCPU(const Func &func) {
+NativeCode codeGenCPU(const Func &func, const Ref<Target> &target) {
+    auto entry = mangle(func->name_) + "_run";
+
     CodeGenCPU visitor(func->params_, func->returns_);
     auto &&op = func->body_;
     visitor.beginBlock();
@@ -427,13 +445,14 @@ extern "C" {
         s += "mkl_finalize();\n";
 #endif // FT_WITH_MKL
         s += "}\n";
-        s += "void run(void **params, void **returns, size_t **retShapes, "
-             "size_t *retDims, CPUContext_t ctx) {\n";
+        s += "void " + entry +
+             "(void **params, void **returns, size_t **retShapes, size_t "
+             "*retDims, CPUContext_t ctx) {\n";
         s += stream.os_.str();
         s += "}";
         return s;
     });
-    return header + body + tailer;
+    return NativeCode::fromFunc(func, header + body + tailer, entry, target);
 }
 
 } // namespace freetensor

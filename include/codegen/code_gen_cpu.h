@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 #include <codegen/code_gen_c.h>
+#include <codegen/native_code.h>
 #include <func.h>
 
 namespace freetensor {
@@ -47,7 +48,7 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
  *
  * @return : source
  */
-std::string codeGenCPU(const Func &func);
+NativeCode codeGenCPU(const Func &func, const Ref<Target> &target);
 
 } // namespace freetensor
 

@@ -350,13 +350,47 @@ def test_global_mem():
         s.parallelize("L2", "threadIdx.x")
         func = ft.lower(s.func(), skip_passes=['prop_one_time_use'], verbose=1)
         code = ft.codegen(func, verbose=True)
-        assert "cudaNew" in code.code  # cudaNew is our wrapper over cudaMalloc
-        assert "cudaFree" in code.code
+        assert "__glmem +" in code.code  # offset from memory pool
         x_np = np.array([1, 2, 3, 4], dtype="int32")
         y_np = np.zeros((4,), dtype="int32")
         x_arr = ft.Array(x_np)
         y_arr = ft.Array(y_np)
         ft.build_binary(code)(x=x_arr, y=y_arr)
+        y_np = y_arr.numpy()
+
+    y_std = np.array([3, 5, 7, 9], dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
+def test_global_mem_dynamic():
+
+    @ft.transform
+    def test(n, x, y):
+        n: ft.Var[(), "int32", "input", "byvalue"]
+        x: ft.Var[(n[...],), "int32", "input", "gpu/global"]
+        y: ft.Var[(n[...],), "int32", "output", "gpu/global"]
+        t = ft.empty((n[...],), "int32", "gpu/global")
+        #! label: L1
+        for i in range(0, n[...]):
+            t[i] = x[i] * 2
+        #! label: L2
+        for i in range(0, n[...]):
+            y[i] = t[i] + 1
+
+    with device:
+        s = ft.Schedule(test)
+        s.parallelize("L1", "threadIdx.x")
+        s.parallelize("L2", "threadIdx.x")
+        func = ft.lower(s.func(), skip_passes=['prop_one_time_use'], verbose=1)
+        code = ft.codegen(func, verbose=True)
+        assert "cudaNewFromPool" in code.code
+        n_np = np.array(4, dtype="int32")
+        x_np = np.array([1, 2, 3, 4], dtype="int32")
+        y_np = np.zeros((4,), dtype="int32")
+        n_arr = ft.Array(n_np)
+        x_arr = ft.Array(x_np)
+        y_arr = ft.Array(y_np)
+        ft.build_binary(code)(n=n_arr, x=x_arr, y=y_arr)
         y_np = y_arr.numpy()
 
     y_std = np.array([3, 5, 7, 9], dtype="int32")
@@ -573,7 +607,7 @@ def test_dynamic_thread_dim_2():
             for a in range(cur_start, cur_end):
                 #! label: Loc
                 for oc in range(256):
-                    y[oc] += x[i, oc]
+                    y[oc % 2] += x[i, oc]
 
     s = ft.Schedule(func)
     by, la = s.split("La", factor=4)
@@ -596,7 +630,7 @@ def test_dynamic_thread_dim_2():
                     with ft.For("threadIdx.y", 0,
                                 ft.min(offset[i + 1] + -1 * offset[i],
                                        4)) as ty:
-                        with ft.If(ty < ft.any()):
+                        with ft.If(ft.unbound(ty < ft.any())):
                             ft.Any()
     assert ft.pop_ast().match(func.body)
 
@@ -833,7 +867,7 @@ def test_bounded_length():
     ]) as (a, b):
         with ft.For(".threadIdx.y", 0, 99) as thy:
             with ft.For(".threadIdx.x", 0, 99) as thx:  # i = thx + 1
-                with ft.If(thx >= thy):
+                with ft.If(ft.unbound(thy < thx + 1)):
                     b[thx + 1, thy] = a[thx + 1, thy] + 1
     assert ft.pop_ast().match(func.body)
 

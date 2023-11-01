@@ -204,7 +204,7 @@ def test_tune_with_cond():
         with ft.For("i", 0, 100, label="Li3") as i:
             with ft.For("j", 0, 100, label="Lj3") as j:
                 with ft.For("k", 0, 10, label="Lk3") as k:
-                    y[i, j, k] = a[i, j, k] * i
+                    y[i, j, k] = a[i, j, k]
         with ft.For("i", 0, 100, label="Li4") as i:
             with ft.For("j", 0, 100, label="Lj4") as j:
                 with ft.For("k", 0, 10, label="Lk4") as k:

@@ -2,6 +2,7 @@
 #include <pass/const_fold.h>
 #include <pass/simplify.h>
 #include <schedule.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/split.h>
 
 namespace freetensor {
@@ -11,7 +12,7 @@ Stmt Splitter::visit(const For &_op) {
         auto iter0 = _op->iter_ + ".0";
         auto iter1 = _op->iter_ + ".1";
         auto shift = makeIntConst(shift_);
-        auto shifted_len = makeAdd(_op->len_, shift);
+        auto shiftedLen = makeAdd(_op->len_, shift);
         Expr factor, nparts;
 
         if (factor_ != -1) {
@@ -27,7 +28,7 @@ Stmt Splitter::visit(const For &_op) {
                 return ret;
             }
             factor = makeIntConst(factor_);
-            nparts = makeCeilDiv(shifted_len, factor);
+            nparts = makeCeilDiv(shiftedLen, factor);
         } else {
             ASSERT(nparts_ != -1);
             if (auto len = constFold(_op->len_);
@@ -41,7 +42,7 @@ Stmt Splitter::visit(const For &_op) {
                 return ret;
             }
             nparts = makeIntConst(nparts_);
-            factor = makeCeilDiv(shifted_len, nparts);
+            factor = makeCeilDiv(shiftedLen, nparts);
         }
 
         auto nthIter = makeAdd(makeMul(makeVar(iter0), factor), makeVar(iter1));
@@ -57,7 +58,7 @@ Stmt Splitter::visit(const For &_op) {
         auto &&op = __op.as<ForNode>();
 
         auto body = makeIf(
-            makeLAnd(makeGE(nthIter, shift), makeLT(nthIter, shifted_len)),
+            makeLAnd(makeGE(nthIter, shift), makeLT(nthIter, shiftedLen)),
             op->body_);
         auto inner =
             makeFor(iter1, makeIntConst(0), factor, makeIntConst(1), factor,
@@ -84,6 +85,8 @@ Expr Splitter::visit(const Var &op) {
 
 std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &_ast, const ID &id,
                                          int factor, int nparts, int shift) {
+    checkNotInLib(_ast, id);
+
     Splitter mutator(id, factor, nparts, shift);
     auto ast = mutator(_ast);
     if (!mutator.found()) {

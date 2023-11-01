@@ -174,8 +174,9 @@ void FindLoopVariance::visit(const Load &op) {
 
     ::freetensor::copyInfo(varInfo_, op->var_, exprInfo_, {op, curStmt()});
 
-    // varInfo_[op->var_] may contain info of non-surrounding loops, set them to
-    // Invariant
+    // NOTE: We currently treat expressions invariant to all their
+    // non-surrounding loops for minimize analyzing overhead. Make the following
+    // code optional if you need to analyze such expression out of some loops
     if (auto i = exprInfo_.find({op, curStmt()}); i != exprInfo_.end()) {
         for (auto j = i->second.begin(); j != i->second.end();) {
             if (std::find(loopStack_.begin(), loopStack_.end(), j->first) ==

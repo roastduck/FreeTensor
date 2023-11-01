@@ -312,6 +312,31 @@ def test_invert_from_y_to_use_it_for_grad():
     assert std.match(ast)
 
 
+def test_no_invert_from_y_to_use_it_for_grad():
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("a", (), "float32", "input", "cpu")]) as (x, a):
+        ft.MarkLabel("V_y")
+        with ft.VarDef("y", (), "float32", "output", "cpu") as y:
+            # No inversion: Although we can invert `1 / ?`, we can't invert
+            # `? * a` to get there
+            y[...] = 1. / ft.sqrt(x[...]) * a[...]
+
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ["V_y"])
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("dx", (), "float32", "output", "cpu"),
+                    ("a", (), "float32", "input", "cpu"),
+                    ("dy", (), "float32", "inout", "cpu")]) as (x, dx, a, dy):
+        dx[...] = dy[...] * (-0.5 * (a[...] / (x[...] * ft.sqrt(x[...]))))
+        dy[...] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_multiple_statements():
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
