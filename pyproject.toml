@@ -28,7 +28,7 @@ doc = [
 [build-system]
 requires = [
     "py-build-cmake~=0.1.8",
-    "pybind11-stubgen",
+    # We can't use pybind11-stubgen here. It will break CMake's incremental compilation
     "z3-solver",
     "setuptools", # Required by z3: https://github.com/Z3Prover/z3/issues/2374
 ]
