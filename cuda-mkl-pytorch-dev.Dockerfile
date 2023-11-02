@@ -24,8 +24,4 @@ RUN PY_BUILD_CMAKE_VERBOSE=1 python3 -m pip install --no-build-isolation \
     -C--local=with-mkl.toml \
     -C--local=with-pytorch.toml
 
-# `pip3 install` only installs `freetensor_ffi`. We also need other stuffs installed.
-# (FIXME: install everything using `pip3 install` and properly set the paths)
-RUN cmake --install build/cp310-cp310-linux_x86_64
-
 WORKDIR /workspace

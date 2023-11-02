@@ -41,7 +41,7 @@ This command will build FreeTensor with minimal dependencies. To build with a la
 - `pip3 install . -C--local=with-pytorch.toml`: Build with PyTorch.
 
 !!! note "Note if building with PyTorch"
-    Since there are conflicts with PyTorch as described above, we do not manage PyTorch as a dependency in the Python project, and it should be installed manually before installing FreeTensor. However, this breaks the requirement of `pip` that all dependencies should be declared, so `pip` must be called with `--no-build-isolation`, and this further requires installing the following build-time dependencies manally: `pip3 install py-build-cmake~=0.1.8 pybind11-stubgen z3-solver setuptools`.
+    Since there are conflicts with PyTorch as described above, we do not manage PyTorch as a dependency in the Python project, and it should be installed manually before installing FreeTensor. However, this breaks the requirement of `pip` that all dependencies should be declared, so `pip` must be called with `--no-build-isolation`, and this further requires installing the following build-time dependencies manally: `pip3 install py-build-cmake~=0.1.8 z3-solver setuptools`.
 
 The `.toml` files in these options can be found in the root directory of this repository, in which options to CMake are set. The full set of CMake options of FreeTensor are:
 
@@ -51,7 +51,7 @@ The `.toml` files in these options can be found in the root directory of this re
     The path accepts by CMake should be a raw unescaped path; i.e. `-DFT_WITH_MKL="/some path"` is good since the quotes are resolved by the shell but `-DFT_WITH_MKL=\"/some\ path\"` is not.
 
 - `-DFT_WITH_PYTORCH=ON/OFF`: build with/without PyTorch integration (including copy-free interface from/to PyTorch), requring PyTorch installed on the system (defaults to `OFF`).
-- `-DFT_COMPILER_PORTABLE`: do not build FreeTensor itself and its dependencies with non-portable instructions (defaults to `OFF`).
+- `-DFT_COMPILER_PORTABLE=ON`: do not build FreeTensor itself and its dependencies with non-portable instructions (defaults to `OFF`).
 - `-DFT_DEBUG_BLAME_AST=ON` (for developers): enables tracing to tell by which pass a specific AST node is modified.
 - `-DFT_DEBUG_PROFILE=ON` (for developers): profiles some heavy functions in the compiler.
 - `-DFT_DEBUG_SANITIZE=<sanitizer_name>` (for developers): build with GCC sanitizer (set it to a sanitizer name to use, e.g. address).

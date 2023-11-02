@@ -254,6 +254,7 @@ target_link_libraries(freetensor_ffi PRIVATE freetensor ${AS_NEEDED_FLAG} ${TORC
 target_include_directories(freetensor_ffi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ffi)
 
 # Pybind11 stubgen
+# FIXME: We support only pybind11-stubgen<=0.16.2. We should check the version here or upgrade to the latest.
 find_program(PYBIND11_STUBGEN pybind11-stubgen)
 if (PYBIND11_STUBGEN AND NOT FT_DEBUG_SANITIZE)
     # Disable stubgen when building with a sanitizer, beacuse using such a library from Python requires preloading libasan.so
