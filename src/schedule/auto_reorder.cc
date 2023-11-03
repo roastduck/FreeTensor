@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <analyze/deps.h>
 #include <pass/const_fold.h>
 #include <schedule.h>
@@ -94,7 +96,11 @@ void Schedule::autoReorder(const Ref<Target> &target) {
                 if (parDgr == -1 || parDgr >= enoughParDgr) {
                     break;
                 }
-                std::swap(sorted[i], sorted[best]);
+                if (best > i) {
+                    // Use std::rotate to keep the sort stable
+                    std::rotate(sorted.begin() + i, sorted.begin() + best,
+                                sorted.begin() + best + 1);
+                }
                 if (parDgr != -1) {
                     if (auto l = constLen.find(bestId); l != constLen.end()) {
                         parDgr = parDgr * l->second;
