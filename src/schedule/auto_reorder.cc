@@ -38,9 +38,8 @@ void Schedule::autoReorder(const Ref<Target> &target) {
     // for schedule/auto_parallelize. Reordering inner loops may lead to
     // inefficient memory layout, so we keep them.
     //
-    // This is done by a selection sort. We select as many dependence-free
-    // loops as possible, and select dependence-free loops plus reduction
-    // loops up to a total length limit, and no other loops.
+    // This is done by a selection sort. We select loops up to a total length
+    // limit, and then break the selection sort.
     int enoughParDgr;
     switch (target->type()) {
     case TargetType::CPU:
