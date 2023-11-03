@@ -44,12 +44,14 @@ void Schedule::autoReorder(const Ref<Target> &target) {
     case TargetType::CPU:
         enoughParDgr = target.as<CPUTarget>()->nCores();
         break;
+#ifdef FT_WITH_CUDA
     case TargetType::GPU: {
         int numSM = target.as<GPUTarget>()->multiProcessorCount();
         int maxThreads = 256; // Sync this number with auto_parallelize
         enoughParDgr = numSM * maxThreads;
         break;
     }
+#endif // FT_WITH_CUDA
     default:
         ASSERT(false);
     }
