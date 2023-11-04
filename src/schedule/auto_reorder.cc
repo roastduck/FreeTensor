@@ -1,4 +1,7 @@
+#include <algorithm>
+
 #include <analyze/deps.h>
+#include <pass/const_fold.h>
 #include <schedule.h>
 
 namespace freetensor {
@@ -15,9 +18,12 @@ void Schedule::autoReorder(const Ref<Target> &target) {
         direction.push_back({{loop->id(), DepDirection::Normal}});
     }
 
-    // 0 = No dep
-    // 1 = Reduction
-    // 2 = Others
+    // Sort loops according to levels
+    [[maybe_unused]] int levelNoDep =
+        0; // std::unordered_map automatically initialize values to 0
+    int levelReduction = 1;
+    int levelOthers = 2;
+
     std::unordered_map<ID, int> depLevel;
     FindDeps().direction(direction).ignoreReductionWAW(false)(
         ast(), [&](const Dependence &d) {
@@ -25,21 +31,50 @@ void Schedule::autoReorder(const Ref<Target> &target) {
             auto &level = depLevel[d.dir_[0].first.id_];
             if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
                 d.later()->nodeType() == ASTNodeType::ReduceTo) {
-                level = std::max(level, 1);
+                level = std::max(level, levelReduction);
             } else {
-                level = std::max(level, 2);
+                level = std::max(level, levelOthers);
             }
         });
+
+    // schedule/auto_reorder focuses on improving parallelizability, so we
+    // only reorder parallelizable loops out, and make them parallelizable
+    // for schedule/auto_parallelize. Reordering inner loops may lead to
+    // inefficient memory layout, so we keep them.
+    //
+    // This is done by a selection sort. We select loops up to a total length
+    // limit, and then break the selection sort.
+    int enoughParDgr;
+    switch (target->type()) {
+    case TargetType::CPU:
+        enoughParDgr = target.as<CPUTarget>()->nCores();
+        break;
+#ifdef FT_WITH_CUDA
+    case TargetType::GPU: {
+        int numSM = target.as<GPUTarget>()->multiProcessorCount();
+        int maxThreads = 256; // Sync this number with auto_parallelize
+        enoughParDgr = numSM * maxThreads;
+        break;
+    }
+#endif // FT_WITH_CUDA
+    default:
+        ASSERT(false);
+    }
 
     std::function<void(For nest)> visitNest = [&, this](For nest) {
         // Currently we only reorder loops in a perfect loop nest
         std::vector<ID> perfectNest = {nest->id()};
+        std::unordered_map<ID, int64_t> constLen;
         while (true) {
             if (auto inners =
                     findAll("<For><-(!<For><-)*" + toString(nest->id()));
                 inners.size() == 1) {
                 nest = inners.front().as<ForNode>();
                 perfectNest.emplace_back(nest->id());
+                if (auto l = constFold(nest->len_);
+                    l->nodeType() == ASTNodeType::IntConst) {
+                    constLen[nest->id()] = l.as<IntConstNode>()->val_;
+                }
             } else {
                 break;
             }
@@ -47,11 +82,37 @@ void Schedule::autoReorder(const Ref<Target> &target) {
 
         ID innerMost = perfectNest.back();
         while (perfectNest.size() > 1) {
+            // Selection sort
             auto sorted = perfectNest;
-            std::stable_sort(sorted.begin(), sorted.end(),
-                             [&](const ID &lhs, const ID &rhs) {
-                                 return depLevel[lhs] < depLevel[rhs];
-                             });
+            int64_t parDgr = 1; // -1 = dynamic length
+            for (size_t i = 0, n = perfectNest.size(); i < n; i++) {
+                size_t best = i;
+                auto bestId = sorted[i];
+                for (size_t j = i + 1; j < n; j++) {
+                    if (depLevel[sorted[j]] < depLevel[bestId]) {
+                        best = j, bestId = sorted[j];
+                    }
+                }
+                if (depLevel[bestId] >= levelOthers) {
+                    break;
+                }
+                if (parDgr == -1 || parDgr >= enoughParDgr) {
+                    break;
+                }
+                if (best > i) {
+                    // Use std::rotate to keep the sort stable
+                    std::rotate(sorted.begin() + i, sorted.begin() + best,
+                                sorted.begin() + best + 1);
+                }
+                if (parDgr != -1) {
+                    if (auto l = constLen.find(bestId); l != constLen.end()) {
+                        parDgr = parDgr * l->second;
+                    } else {
+                        parDgr = -1;
+                    }
+                }
+            }
+
             if (sorted == perfectNest) {
                 break;
             }

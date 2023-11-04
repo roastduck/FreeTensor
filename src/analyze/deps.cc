@@ -808,7 +808,8 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         // Coarse check (depAll is a superset of nearest)
         if (mode_ == FindDepsMode::KillEarlier ||
             mode_ == FindDepsMode::KillBoth) {
-            if (auto flag = pbTestWithTimeout(
+            if (auto flag = pbFuncWithTimeout(
+                    presburger,
                     static_cast<bool (*)(const PBSet &, const PBSet &)>(
                         isSubset),
                     10, realEarlierIter, range(depAll));
@@ -818,7 +819,8 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         }
         if (mode_ == FindDepsMode::KillLater ||
             mode_ == FindDepsMode::KillBoth) {
-            if (auto flag = pbTestWithTimeout(
+            if (auto flag = pbFuncWithTimeout(
+                    presburger,
                     static_cast<bool (*)(const PBSet &, const PBSet &)>(
                         isSubset),
                     10, realLaterIter, domain(depAll));
@@ -830,7 +832,8 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         // Fine check
         if (mode_ == FindDepsMode::KillEarlier ||
             mode_ == FindDepsMode::KillBoth) {
-            if (auto flag = pbTestWithTimeout(
+            if (auto flag = pbFuncWithTimeout(
+                    presburger,
                     static_cast<bool (*)(const PBSet &, const PBSet &)>(
                         isSubset),
                     10, realEarlierIter, range(nearest));
@@ -840,7 +843,8 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         }
         if (mode_ == FindDepsMode::KillLater ||
             mode_ == FindDepsMode::KillBoth) {
-            if (auto flag = pbTestWithTimeout(
+            if (auto flag = pbFuncWithTimeout(
+                    presburger,
                     static_cast<bool (*)(const PBSet &, const PBSet &)>(
                         isSubset),
                     10, realLaterIter, domain(nearest));
@@ -1386,6 +1390,22 @@ std::ostream &operator<<(std::ostream &_os, const Dependence &dep) {
             os << scope.id_;
         } else {
             os << scope.parallel_;
+        }
+        switch (dir) {
+        case DepDirection::Normal:
+            os << "(->)";
+            break;
+        case DepDirection::Inv:
+            os << "(<-)";
+            break;
+        case DepDirection::Same:
+            os << "(==)";
+            break;
+        case DepDirection::Different:
+            os << "(!=)";
+            break;
+        default:
+            ASSERT(false);
         }
     }
     std::string str = os.str();

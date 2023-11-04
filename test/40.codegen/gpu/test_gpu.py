@@ -747,8 +747,8 @@ def test_dynamic_shared_memory_size():
         ]) as (x, y):
             with ft.For(".threadIdx.y", 0, 4) as i:
                 with ft.Assert(n <= 256):
-                    with ft.VarDef("t", (4, ft.max(n - 1, 0) + 1), "int32",
-                                   "cache", "gpu/shared") as t:
+                    with ft.VarDef("t", (4, ft.max(n, 1)), "int32", "cache",
+                                   "gpu/shared") as t:
                         with ft.For("j", 0, n) as j:
                             t[i, j] = x[i, j] * 2
                         with ft.For("j", 0, n) as j:

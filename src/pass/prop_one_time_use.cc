@@ -3,6 +3,7 @@
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <math/parse_pb_expr.h>
 #include <pass/hoist_var_over_stmt_seq.h>
@@ -85,6 +86,11 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
                           return earlier.op_->nodeType() == ASTNodeType::Store;
                       })
                       .filterLater([&](const auto &later) {
+                          if (!findAllStmt(op, "<MatMul>->>" +
+                                                   toString(later.stmt_->id()))
+                                   .empty()) {
+                              return false;
+                          }
                           // pass/remove_write will deal with it (TODO: Really?
                           // What if we want to do interleaved prop_one_time_use
                           // and remove_write?)
@@ -98,16 +104,18 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
                    // Check before converting into PBFunc. In prop_one_time_use,
                    // we not only need `singleValued`, but also `bijective`, to
                    // ensure it is really used "one time"
-                   if (std::string str = pbFuncSerializedWithTimeout(
+                   if (auto f = pbFuncWithTimeout(
+                           d.presburger_,
                            [](const PBMap &map) { return PBFunc(map); }, 10,
                            d.later2EarlierIter_);
-                       !str.empty()) {
+                       f.has_value()) {
                        std::lock_guard _(lock);
                        r2wCandidates[d.later()].emplace_back(
                            // Find dependence A->B that always happen for B
                            // which may propagate
                            d.earlier().as<StmtNode>(),
-                           ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
+                           ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
+                                       toString(*f)});
                        wCandidates.emplace(d.earlier().as<StmtNode>());
                        stmts[d.later()] = d.later_.stmt_;
                    }

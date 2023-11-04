@@ -9,9 +9,6 @@
 [submodule "3rd-party/isl"]
     path = 3rd-party/isl
     url = git://repo.or.cz/isl.git
-[submodule "3rd-party/z3"]
-    path = 3rd-party/z3
-    url = ../../Z3Prover/z3.git
 [submodule "3rd-party/cuda-samples"]
     path = 3rd-party/cuda-samples
     url = ../../NVIDIA/cuda-samples.git

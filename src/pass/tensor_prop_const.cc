@@ -2,6 +2,7 @@
 
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <math/parse_pb_expr.h>
 #include <pass/replace_iter.h>
@@ -64,6 +65,14 @@ Stmt tensorPropConst(const Stmt &_op, const ID &bothInSubAST,
                     }
                     return true;
                 })
+                .filterLater([&](const auto &later) {
+                    if (!findAllStmt(op, "<MatMul>->>" +
+                                             toString(later.stmt_->id()))
+                             .empty()) {
+                        return false;
+                    }
+                    return true;
+                })
                 .noProjectOutPrivateAxis(true);
         if (bothInSubAST.isValid()) {
             finder = finder.filterSubAST(bothInSubAST);
@@ -74,42 +83,44 @@ Stmt tensorPropConst(const Stmt &_op, const ID &bothInSubAST,
                        earlier.stmt_->ancestorById(eitherInSubAST).isValid();
             });
         }
-        finder(
-            op, unsyncFunc([&](const Dependence &d) {
-                auto &&expr = d.earlier().as<StoreNode>()->expr_;
-                auto &&iters = allIters(expr);
-                auto common = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
-                auto dep = d.later2EarlierIter_;
-                for (auto &&iter : iters) {
-                    for (auto c = common; c.isValid(); c = c->parentStmt()) {
-                        if (c->nodeType() == ASTNodeType::For) {
-                            if (auto &&f = c.as<ForNode>(); f->iter_ == iter) {
-                                dep = d.extraCheck(dep, f->id(),
-                                                   DepDirection::Same);
-                                if (dep != d.later2EarlierIter_) {
-                                    // Iterating variable in different
-                                    // iterations
-                                    return;
-                                }
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (d.later2EarlierIter_
-                        .isSingleValued()) { // Check before converting into
-                                             // PBFunc
-                    if (std::string str = pbFuncSerializedWithTimeout(
-                            [](const PBMap &map) { return PBFunc(map); }, 10,
-                            d.later2EarlierIter_);
-                        !str.empty()) {
-                        std::lock_guard _(lock);
-                        r2w[d.later()].emplace_back(
-                            d.earlier().as<StmtNode>(),
-                            ReplaceInfo{d.earlier_.iter_, d.later_.iter_, str});
-                    }
-                }
-            }));
+        finder(op, unsyncFunc([&](const Dependence &d) {
+                   auto &&expr = d.earlier().as<StoreNode>()->expr_;
+                   auto &&iters = allIters(expr);
+                   auto common = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
+                   auto dep = d.later2EarlierIter_;
+                   for (auto &&iter : iters) {
+                       for (auto c = common; c.isValid(); c = c->parentStmt()) {
+                           if (c->nodeType() == ASTNodeType::For) {
+                               if (auto &&f = c.as<ForNode>();
+                                   f->iter_ == iter) {
+                                   dep = d.extraCheck(dep, f->id(),
+                                                      DepDirection::Same);
+                                   if (dep != d.later2EarlierIter_) {
+                                       // Iterating variable in different
+                                       // iterations
+                                       return;
+                                   }
+                                   break;
+                               }
+                           }
+                       }
+                   }
+                   if (d.later2EarlierIter_
+                           .isSingleValued()) { // Check before converting into
+                                                // PBFunc
+                       if (auto f = pbFuncWithTimeout(
+                               d.presburger_,
+                               [](const PBMap &map) { return PBFunc(map); }, 10,
+                               d.later2EarlierIter_);
+                           f.has_value()) {
+                           std::lock_guard _(lock);
+                           r2w[d.later()].emplace_back(
+                               d.earlier().as<StmtNode>(),
+                               ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
+                                           toString(*f)});
+                       }
+                   }
+               }));
         if (r2w.empty()) {
             break;
         }

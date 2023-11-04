@@ -71,8 +71,8 @@ def test_multiple_bounds():
                     ("y1", (10, 5), "int32", "output", "cpu"),
                     ("y2", (10, 5), "int32", "output", "cpu")]) as (x, y1, y2):
         with ft.For("i", 0, 10) as i:
-            with ft.VarDef("b", (ft.max(ft.min(i - 1, 4), 0) + 1,), "int32",
-                           "cache", "cpu") as b:
+            with ft.VarDef("b", (ft.max(ft.min(i, 5), 1),), "int32", "cache",
+                           "cpu") as b:
                 with ft.For("j", 0, ft.any()) as j:
                     b[j] = x[i, j] * 2
                 with ft.For("j", 0, 5) as j:

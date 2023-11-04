@@ -11,6 +11,8 @@ dependencies = [
     "sourceinspect",
     "astor",
     "Pygments",
+    "z3-solver",
+    "setuptools", # Required by z3: https://github.com/Z3Prover/z3/issues/2374
 ]
 
 [project.optional-dependencies]
@@ -24,7 +26,12 @@ doc = [
 ]
 
 [build-system]
-requires = ["py-build-cmake~=0.1.8"]
+requires = [
+    "py-build-cmake~=0.1.8",
+    # We can't use pybind11-stubgen here. It will break CMake's incremental compilation
+    "z3-solver",
+    "setuptools", # Required by z3: https://github.com/Z3Prover/z3/issues/2374
+]
 build-backend = "py_build_cmake.build"
 
 [tool.py-build-cmake.module] # Where to find the Python module to package
@@ -46,3 +53,4 @@ build_path = "build"
 FT_WITH_CUDA = "OFF"
 FT_WITH_MKL = "OFF"
 FT_WITH_PYTORCH = "OFF"
+FT_COMPILER_PORTABLE = "ON"

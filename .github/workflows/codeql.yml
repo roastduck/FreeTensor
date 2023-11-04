@@ -33,7 +33,8 @@ jobs:
         if: ${{ matrix.language == 'cpp' }}
         run: |
           sudo apt-get update
-          sudo apt-get install --yes g++-11 libgmp-dev ninja-build
+          sudo apt-get install --yes g++-11 libgmp-dev ninja-build python3-pip
+          sudo pip3 install z3-solver
 
       - name: Configure (cpp)
         if: ${{ matrix.language == 'cpp' }}
