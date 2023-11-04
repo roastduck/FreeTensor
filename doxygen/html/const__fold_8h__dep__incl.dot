@@ -110,6 +110,8 @@ digraph "include/pass/const_fold.h"
   Node47 [label="src/schedule/auto_mem\l_layout.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__mem__layout_8cc.html",tooltip=" "];
   Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node48 [dir="back",color="steelblue1",style="solid"];
-  Node48 [label="src/schedule/auto_set\l_mem_type.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__set__mem__type_8cc.html",tooltip=" "];
+  Node48 [label="src/schedule/auto_reorder.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__reorder_8cc.html",tooltip=" "];
+  Node1 -> Node49 [dir="back",color="steelblue1",style="solid"];
+  Node49 [label="src/schedule/auto_set\l_mem_type.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__set__mem__type_8cc.html",tooltip=" "];
   Node1 -> Node39 [dir="back",color="steelblue1",style="solid"];
 }
