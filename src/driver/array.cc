@@ -40,7 +40,6 @@ static uint8_t *allocOn(size_t size, const Ref<Device> &device) {
             // Allocate traditional device memory. The performance is optimized
             // for well-scheduled computation, but debugging access from CPU to
             // GPU buffers is prohibitively slow
-
             checkCudaError(cudaSetDevice(device->num()));
             checkCudaError(cudaMalloc(&ptr, size));
         } else {
@@ -85,7 +84,15 @@ static void freeFrom(uint8_t *&ptr, const Ref<Device> &device) {
             break;
 #ifdef FT_WITH_CUDA
         case TargetType::GPU:
-            cudaFree(ptr);
+            // Unlike `cudaMemcpy`, `cudaFree` does not synchronize the device
+            // when the buffer to free was allocated by `cudaMallocAsync`
+            // (https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1ga042655cbbf3408f01061652a075e094).
+            // The buffer to free may be being used by our generated code, at
+            // any stream, or at host. If used by a stream, we need to
+            // synchronize it before freeing. Our generated code make the
+            // default stream (stream 0) synchronize with all other streams, so
+            // synchronize with only stream 0 here is sufficient.
+            cudaFreeAsync(ptr, 0);
             ptr = nullptr;
             break;
 #endif // FT_WITH_CUDA

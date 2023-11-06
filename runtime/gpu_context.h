@@ -60,6 +60,11 @@ class GPUContext : public Context {
 
   public:
     GPUContext(int deviceId, uint64_t gpuGlobalStaticPoolSize, bool useUM) {
+        // Wait for any unfinished cudaFreeAsync. This seems unnecessary
+        // according to CUDA's document, but our tests need it. (TODO:
+        // Remove it)
+        runtimeCheckCudaError(cudaDeviceSynchronize());
+
         runtimeCheckCudaError(cudaSetDevice(deviceId));
 
         checkCublasError(cublasCreate(&cublas_));
