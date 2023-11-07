@@ -51,6 +51,15 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
 
     void enterKernel(const Stmt &body);
 
+    /**
+     * Try to even put serial statments into a kernel to reduce kernel launch
+     * overhead
+     *
+     * This is only applied to statements with a minimal semantic set that does
+     * not rely on host features
+     */
+    bool canRunInKernel(const Stmt &stmt);
+
   protected:
     void genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
                   const std::string &shapePtr,

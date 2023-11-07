@@ -1,4 +1,5 @@
 #include <analyze/all_uses.h>
+#include <analyze/find_stmt.h>
 #include <codegen/code_gen_cuda.h>
 #include <config.h>
 #include <container_utils.h>
@@ -195,6 +196,33 @@ void CodeGenCUDA::enterKernel(const Stmt &body) {
         makeIndent();
         os() << "checkCudaError(cudaStreamSynchronize(__stream));" << std::endl;
     }
+}
+
+bool CodeGenCUDA::canRunInKernel(const Stmt &stmt) {
+    if (!findAllStmt(
+             stmt,
+             "!(<For>|<If>|<Assert>|<Assume>|<StmtSeq>|<Store>|<ReduceTo>)")
+             .empty()) {
+        // No VarDef here, because memory are more likely to be wasted
+        // (allocated in a more conservative way) inside a kernel due to lack of
+        // synchronization
+
+        // TODO: If we are going to implement hybrid CPU-GPU parallelization, we
+        // also need to reject any OpenMP scope here
+
+        return false;
+    }
+
+    for (auto &&var : allUses(stmt)) {
+        auto mtype = buffer(var)->mtype();
+        if (mtype != MemType::GPULocal && mtype != MemType::GPUWarp &&
+            mtype != MemType::GPUShared && mtype != MemType::GPUGlobal &&
+            mtype != MemType::GPUGlobalHeap) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void CodeGenCUDA::visitStmt(const Stmt &stmt) {
@@ -535,8 +563,16 @@ void CodeGenCUDA::visit(const For &op) {
     if (op->property_->parallel_ == serialScope) {
         if (op->property_->unroll_) {
             os() << "#pragma unroll " << op->len_ << std::endl;
+            CodeGenC::visit(op);
+        } else if (!inKernel()) {
+            if (canRunInKernel(op)) {
+                enterKernel(op);
+            } else {
+                CodeGenC::visit(op);
+            }
+        } else {
+            CodeGenC::visit(op);
         }
-        CodeGenC::visit(op);
     } else if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
         if (!inKernel()) {
             enterKernel(op);
