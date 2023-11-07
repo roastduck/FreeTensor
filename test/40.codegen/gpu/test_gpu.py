@@ -1145,6 +1145,42 @@ def test_access_gpu_from_cpu_for_debugging():
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "gpu/global"]
         y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        y[0] = x[1] + 1
+        y[1] = x[2] + 1
+        y[2] = x[3] + 1
+        y[3] = x[0] + 1
+
+    with ft.VarDef([
+        ("x", (4,), "int32", "input", "gpu/global"),
+        ("y", (4,), "int32", "output", "gpu/global"),
+    ]) as (x, y):
+        y[0] = x[1] + 1
+        y[1] = x[2] + 1
+        y[2] = x[3] + 1
+        y[3] = x[0] + 1
+    assert ft.pop_ast().match(test.body)
+
+    s = ft.Schedule(test)
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "kernel" not in code.code
+    x_np = np.array([1, 2, 3, 4], dtype="int32")
+    y_np = np.zeros((4,), dtype="int32")
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.array([3, 4, 5, 2], dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
+def test_try_to_put_serial_loop_also_in_kernel():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(4,), "int32", "input", "gpu/global"]
+        y: ft.Var[(4,), "int32", "output", "gpu/global"]
         #! label: L1
         for i in range(0, 4):
             y[i] = x[i] + 1
@@ -1160,6 +1196,7 @@ def test_access_gpu_from_cpu_for_debugging():
     s = ft.Schedule(test)
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
+    assert "kernel" in code.code
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np)
@@ -1180,9 +1217,7 @@ def test_error_invalid_mtype_out_of_kernel():
         def test(x, y):
             x: ft.Var[(4,), "int32", "input", "gpu/local"]
             y: ft.Var[(4,), "int32", "output", "gpu/local"]
-            #! label: L1
-            for i in range(0, 4):
-                y[i] = x[i] + 1
+            y[0] = x[1] + 1
 
         with pytest.raises(ft.InvalidProgram):
             ft.codegen(test)
