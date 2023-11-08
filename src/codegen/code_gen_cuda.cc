@@ -206,11 +206,18 @@ bool CodeGenCUDA::canRunInKernel(const Stmt &stmt) {
         // No VarDef here, because memory are more likely to be wasted
         // (allocated in a more conservative way) inside a kernel due to lack of
         // synchronization
-
-        // TODO: If we are going to implement hybrid CPU-GPU parallelization, we
-        // also need to reject any OpenMP scope here
-
         return false;
+    }
+
+    for (auto &&_loop : findAllStmt(stmt, "<For>")) {
+        auto &&loop = _loop.as<ForNode>();
+        // If some inner loops is already parallelized, we can't safely extend
+        // the kernel scope, otherwise a barrier at the end of each kernel
+        // launch is ignored. This branch also reject OpenMP scopes for (maybe
+        // future) hybrid CPU-GPU parallelization.
+        if (loop->property_->parallel_ != serialScope) {
+            return false;
+        }
     }
 
     for (auto &&var : allUses(stmt)) {
