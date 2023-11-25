@@ -558,6 +558,10 @@ Stmt Z3Simplify::visit(const For &op) {
                    op->metadata(), op->id(), op->debugBlame());
 }
 
+Stmt Z3Simplify::visit(const Eval &op) {
+    return deepCopy(op);
+}
+
 Stmt Z3SimplifyWithSymbolTable::visit(const VarDef &op) {
     pushDef(op);
     auto ret = Z3Simplify::visit(op);

@@ -101,6 +101,7 @@ class Z3Simplify : public Mutator {
     Stmt visit(const Assert &op) override;
     Stmt visit(const Assume &op) override;
     Stmt visit(const For &op) override;
+    Stmt visit(const Eval &op) override;
 };
 
 class Z3SimplifyWithSymbolTable : public Z3Simplify,
