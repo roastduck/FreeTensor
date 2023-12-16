@@ -555,7 +555,13 @@ expr returns [Expr node]
         (COMMA SIDE_EFFECT { hasSideEffect = true; } )?
         ')'
       {
-        $node = makeIntrinsic(slice($String.text, 1, -1), std::move(params), $dtype.type, hasSideEffect);
+        std::string format = slice($String.text, 1, -1);
+        size_t pos = 0;
+        while ((pos = format.find("\\\"", pos)) != std::string::npos) {
+            format.replace(pos, 2, "\"");
+            pos += 1;
+        }
+        $node = makeIntrinsic(format, std::move(params), $dtype.type, hasSideEffect);
       }
     | LOAD_AT_VERSION '(' tapeName=var COMMA indices COMMA dtype ')'
       {
