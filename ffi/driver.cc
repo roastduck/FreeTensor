@@ -14,10 +14,11 @@ using namespace pybind11::literals;
 void init_ffi_driver(py::module_ &m) {
     py::class_<Driver, Ref<Driver>>(m, "Driver")
         .def(py::init<const NativeCode &, const Ref<Device> &,
+                      const std::vector<std::string> &,
                       const std::vector<std::string> &, bool>())
         .def(py::init<const NativeCode &, const Ref<Device> &,
                       const Ref<Device> &, const std::vector<std::string> &,
-                      bool>())
+                      const std::vector<std::string> &, bool>())
         .def("set_args",
              static_cast<void (Driver::*)(
                  const std::vector<Ref<Array>> &,

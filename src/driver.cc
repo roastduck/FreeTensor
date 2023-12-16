@@ -149,13 +149,14 @@ static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
 
 Driver::Driver(const NativeCode &nativeCode, const Ref<Device> &dev,
                const Ref<Device> &hostDev,
-               const std::vector<std::string> &cxxFlags, bool verbose)
+               const std::vector<std::string> &cxxFlags,
+               const std::vector<std::string> &linkFlags, bool verbose)
     : nativeCode_(nativeCode), args_(nativeCode.params().size(), nullptr),
       rawArgs_(nativeCode.params().size(), nullptr),
       rawRets_(nativeCode.returns().size(), nullptr),
       retShapes_(nativeCode.returns().size(), nullptr),
       retDims_(nativeCode.returns().size(), 0), dev_(dev), hostDev_(hostDev),
-      cxxFlags_(cxxFlags), verbose_(verbose) {
+      cxxFlags_(cxxFlags), linkFlags_(linkFlags), verbose_(verbose) {
     auto nParams = nativeCode.params().size();
     name2param_.reserve(nParams);
     for (auto &&[i, param] : views::enumerate(nativeCode_.params())) {
@@ -257,6 +258,9 @@ void Driver::buildAndLoad() {
             // After MKL, required by MKL installed from apt
             addArgs(item);
         }
+        for (auto &&extra : linkFlags_) {
+            addArgs(extra);
+        }
         addArgs("-o", so);
 
         break;
@@ -286,6 +290,9 @@ void Driver::buildAndLoad() {
             addArgs("-DFT_DEBUG_CUDA_WITH_UM");
         }
         for (auto &&extra : cxxFlags_) {
+            addArgs(extra);
+        }
+        for (auto &&extra : linkFlags_) {
             addArgs(extra);
         }
         break;

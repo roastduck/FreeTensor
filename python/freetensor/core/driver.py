@@ -197,6 +197,7 @@ class Driver(EnableAttachBackward, ffi.Driver):
                  device: Optional[Device] = None,
                  host_device: Optional[Device] = None,
                  cxx_flags: Sequence[str] = [],
+                 link_flags: Sequence[str] = [],
                  verbose: bool = False):
         '''
         Compile a program using a backend compiler and load it into memory
@@ -220,10 +221,10 @@ class Driver(EnableAttachBackward, ffi.Driver):
             device = config.default_device()
         if host_device is None:
             super(Driver, self).__init__(native_code, device, cxx_flags,
-                                         verbose)
+                                         link_flags, verbose)
         else:
             super(Driver, self).__init__(native_code, device, host_device,
-                                         cxx_flags, verbose)
+                                         cxx_flags, link_flags, verbose)
 
         # When we pass numpy or pytorch tensors to `set_args`, they are
         # converted to `Array` objects by reference. In `Array`'s FFI, we
@@ -307,6 +308,7 @@ def build_binary(code: Optional[NativeCode] = None,
                  host_device: Optional[Device] = None,
                  jit_cache: Callable[Callable, Callable] = functools.cache,
                  cxx_flags: Sequence[str] = [],
+                 link_flags: Sequence[str] = [],
                  verbose: bool = False):
     '''
     Compile a program using a backend compiler and load it into memory
@@ -402,7 +404,7 @@ def build_binary(code: Optional[NativeCode] = None,
         raise ffi.DriverError(
             f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"
         )
-    ret = Driver(code, device, host_device, cxx_flags, verbose)
+    ret = Driver(code, device, host_device, cxx_flags, link_flags, verbose)
 
     if code.has_backward():
         ret.attach_backward(
@@ -411,6 +413,7 @@ def build_binary(code: Optional[NativeCode] = None,
                          host_device=host_device,
                          jit_cache=jit_cache,
                          cxx_flags=cxx_flags,
+                         link_flags=link_flags,
                          verbose=verbose), code.input_name_to_gradient_name,
             code.output_name_to_gradient_name)
     return ret
