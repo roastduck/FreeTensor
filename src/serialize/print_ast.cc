@@ -710,7 +710,14 @@ void PrintVisitor::visit(const Assume &op) {
 }
 
 void PrintVisitor::visit(const Intrinsic &op) {
-    os() << "@!intrinsic(\"" << op->format_ << "\" -> "
+    // replace " in op->format_ with \"
+    std::string format = op->format_;
+    size_t pos = 0;
+    while ((pos = format.find('"', pos)) != std::string::npos) {
+        format.replace(pos, 1, "\\\"");
+        pos += 2;
+    }
+    os() << "@!intrinsic(\"" << format << "\" -> "
          << prettyDType(op->retType_);
     for (auto &&param : op->params_) {
         os() << "," << SPACE;
