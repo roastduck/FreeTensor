@@ -33,7 +33,7 @@ class Driver {
 
     std::unique_ptr<Context> ctx_;
 
-    std::vector<std::string> cxxFlags_;
+    std::vector<std::string> cxxFlags_, linkFlags_;
 
     bool verbose_ = false;
 
@@ -53,14 +53,17 @@ class Driver {
      */
     Driver(const NativeCode &nativeCode, const Ref<Device> &device,
            const Ref<Device> &hostDevice,
-           const std::vector<std::string> &cxxFlags = {}, bool verbose = false);
+           const std::vector<std::string> &cxxFlags = {},
+           const std::vector<std::string> &linkFlags = {},
+           bool verbose = false);
     Driver(const NativeCode &nativeCode, const Ref<Device> &device,
-           const std::vector<std::string> &cxxFlags = {}, bool verbose = false)
+           const std::vector<std::string> &cxxFlags = {},
+           const std::vector<std::string> &linkFlags = {}, bool verbose = false)
         : Driver(nativeCode, device,
                  device->type() == TargetType::CPU
                      ? device
                      : Ref<Device>::make(TargetType::CPU),
-                 cxxFlags, verbose) {}
+                 cxxFlags, linkFlags, verbose) {}
     /** @} */
 
     ~Driver() {
