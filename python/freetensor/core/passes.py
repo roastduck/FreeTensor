@@ -7,7 +7,8 @@ __all__ = [
     'hoist_var_over_stmt_seq', 'flatten_stmt_seq',
     'cpu_lower_parallel_reduction', 'gpu_lower_parallel_reduction',
     'gpu_make_sync', 'gpu_multiplex_buffers', 'gpu_simplex_buffers',
-    'gpu_normalize_threads', 'gpu_normalize_var_in_kernel', 'gpu_lower_vector'
+    'gpu_normalize_threads', 'gpu_normalize_var_in_kernel', 'gpu_lower_vector',
+    'normalize_loops'
 ]
 
 from typing import Optional, Sequence, Callable
@@ -28,6 +29,7 @@ from ..ffi import shrink_for
 from ..ffi import merge_and_hoist_if
 from ..ffi import make_reduction
 from ..ffi import make_parallel_reduction
+from ..ffi import normalize_loops
 from ..ffi import remove_writes
 from ..ffi import remove_cyclic_assign
 from ..ffi import remove_dead_var

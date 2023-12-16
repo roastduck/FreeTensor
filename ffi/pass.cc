@@ -15,6 +15,7 @@
 #include <pass/make_reduction.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
+#include <pass/normalize_loops.h>
 #include <pass/pb_simplify.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_cyclic_assign.h>
@@ -167,6 +168,17 @@ void init_ffi_pass(py::module_ &m) {
                                const std::optional<std::vector<ID>> &)>(
               &hoistVarOverStmtSeq),
           "stmt"_a, "together_ids"_a = std::nullopt);
+
+    m.def("normalize_loops",
+          static_cast<Func (*)(const Func &,
+                               const std::function<bool(const For &)> &)>(
+              &normalizeLoops),
+          "func"_a, "filter"_a = nullptr);
+    m.def("normalize_loops",
+          static_cast<Stmt (*)(const Stmt &,
+                               const std::function<bool(const For &)> &)>(
+              &normalizeLoops),
+          "stmt"_a, "filter"_a = nullptr);
 
     // CPU
     m.def("cpu_lower_parallel_reduction",

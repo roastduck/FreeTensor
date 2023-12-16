@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <analyze/symbol_table.h>
+#include <func.h>
 #include <mutator.h>
 
 namespace freetensor {
@@ -32,6 +33,8 @@ class NormalizeLoops : public SymbolTable<Mutator> {
  */
 Stmt normalizeLoops(const Stmt &op,
                     const std::function<bool(const For &)> &filter = nullptr);
+
+DEFINE_PASS_FOR_FUNC(normalizeLoops)
 
 } // namespace freetensor
 
