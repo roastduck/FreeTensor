@@ -420,7 +420,7 @@ extern "C" {
 #endif // FT_WITH_MKL
         s += "}\n";
         s += "void " + entry +
-             "(void **params, void **returns, size_t **retShapes, size_t "
+             "(void *__restrict__ *params, void *__restrict__ *returns, size_t **retShapes, size_t "
              "*retDims, CPUContext_t ctx) {\n";
         s += stream.os_.str();
         s += "}";
