@@ -268,6 +268,9 @@ void Driver::buildAndLoad() {
         addCommand(Config::backendCompilerNVCC().front());
         for (auto &&path : Config::runtimeDir()) {
             addArgs("-I" + (std::string)path);
+            // CUTLASS requires include path. It cannot be included via relative
+            // path.
+            addArgs("-I" + (std::string)path + "/../3rd-party/cutlass/include");
         }
         addArgs("-std=c++17", "-shared", "-Xcompiler", "-fPIC,-Wall,-O3",
                 "--expt-relaxed-constexpr" /* required by mdspan */);
@@ -279,6 +282,8 @@ void Driver::buildAndLoad() {
         auto cc = dev_->target().as<GPUTarget>()->computeCapability();
         addArgs("-arch",
                 "sm_" + std::to_string(cc.first) + std::to_string(cc.second));
+        addArgs("-DFT_CUTLASS_ARCH=cutlass::arch::Sm" +
+                std::to_string(cc.first) + std::to_string(cc.second));
         if (Config::debugBinary()) {
             addArgs("-g");
         }

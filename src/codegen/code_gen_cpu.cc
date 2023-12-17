@@ -324,21 +324,6 @@ void CodeGenCPU::visit(const For &op) {
 }
 
 void CodeGenCPU::visit(const MatMul &op) {
-#ifdef FT_WITH_MKL
-    makeIndent();
-    if (inParallel_) {
-        os() << "mkl_set_num_threads_local(1);" << std::endl;
-        // TODO: set it to max(1, cpu_count / outer_threads_count)
-    } else {
-        os() << "mkl_set_num_threads_local(0); // 0 == reset" << std::endl;
-    }
-
-    auto d = op->c_->dtype();
-    if (op->a_->dtype() != d || op->b_->dtype() != d) {
-        throw InvalidProgram(
-            "MKL requires all matrices have the same data type");
-    }
-
     bool transA = !op->aIsRowMajor_, transB = !op->bIsRowMajor_;
     Expr a = op->a_, b = op->b_, c = op->c_;
     Expr m = op->m_, k = op->k_, n = op->n_;
@@ -354,44 +339,68 @@ void CodeGenCPU::visit(const MatMul &op) {
         std::swap(n, m);
     }
 
-    makeIndent();
-    os() << "cblas_" << genMKLTypeMark(d)
-         << "gemm_batch_strided(CblasRowMajor, "
-         << (transA ? "CblasTrans" : "CblasNoTrans") << ", "
-         << (transB ? "CblasTrans" : "CblasNoTrans") << ", ";
-    (*this)(m);
-    os() << ", ";
-    (*this)(n);
-    os() << ", ";
-    (*this)(k);
-    os() << ", ";
-    (*this)(op->alpha_);
-    os() << ", &";
-    (*this)(a);
-    os() << ", ";
-    (*this)(lda);
-    os() << ", ";
-    (*this)(stridea);
-    os() << ", &";
-    (*this)(b);
-    os() << ", ";
-    (*this)(ldb);
-    os() << ", ";
-    (*this)(strideb);
-    os() << ", ";
-    (*this)(op->beta_);
-    os() << ", &";
-    (*this)(c);
-    os() << ", ";
-    (*this)(ldc);
-    os() << ", ";
-    (*this)(stridec);
-    os() << ", ";
-    (*this)(op->batchSize_);
-    os() << ");" << std::endl;
+    switch (op->backend_) {
+    case MatMulBackend::Mkl: {
+#ifdef FT_WITH_MKL
+        makeIndent();
+        if (inParallel_) {
+            os() << "mkl_set_num_threads_local(1);" << std::endl;
+            // TODO: set it to max(1, cpu_count / outer_threads_count)
+        } else {
+            os() << "mkl_set_num_threads_local(0); // 0 == reset" << std::endl;
+        }
+
+        auto d = op->c_->dtype();
+        if (op->a_->dtype() != d || op->b_->dtype() != d) {
+            throw InvalidProgram(
+                "MKL requires all matrices have the same data type");
+        }
+
+        makeIndent();
+        os() << "cblas_" << genMKLTypeMark(d)
+             << "gemm_batch_strided(CblasRowMajor, "
+             << (transA ? "CblasTrans" : "CblasNoTrans") << ", "
+             << (transB ? "CblasTrans" : "CblasNoTrans") << ", ";
+        (*this)(m);
+        os() << ", ";
+        (*this)(n);
+        os() << ", ";
+        (*this)(k);
+        os() << ", ";
+        (*this)(op->alpha_);
+        os() << ", &";
+        (*this)(a);
+        os() << ", ";
+        (*this)(lda);
+        os() << ", ";
+        (*this)(stridea);
+        os() << ", &";
+        (*this)(b);
+        os() << ", ";
+        (*this)(ldb);
+        os() << ", ";
+        (*this)(strideb);
+        os() << ", ";
+        (*this)(op->beta_);
+        os() << ", &";
+        (*this)(c);
+        os() << ", ";
+        (*this)(ldc);
+        os() << ", ";
+        (*this)(stridec);
+        os() << ", ";
+        (*this)(op->batchSize_);
+        os() << ");" << std::endl;
 #else
-    ERROR("Configuring with MKL is needed");
+        ERROR("Configuring with MKL is needed");
 #endif
+        break;
+    }
+    default:
+        throw InvalidProgram("MatMul backend " +
+                             freetensor::toString(op->backend_) +
+                             " is not supported for CPU");
+    }
 }
 
 NativeCode codeGenCPU(const Func &func, const Ref<Target> &target) {

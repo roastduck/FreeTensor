@@ -57,6 +57,7 @@ class AsMatMul : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
     ID loop_;
+    MatMulBackend backend_;
 
     int nestCnt_ = 0;
     std::unordered_map<std::string, int> iterMap_; // iter var -> nest cnt
@@ -74,7 +75,8 @@ class AsMatMul : public SymbolTable<Mutator> {
     bool done_ = false;
 
   public:
-    AsMatMul(const ID &loop) : loop_(loop) {}
+    AsMatMul(const ID &loop, MatMulBackend backend)
+        : loop_(loop), backend_(backend) {}
 
     bool done() const { return done_; }
 
@@ -199,7 +201,7 @@ class AsMatMul : public SymbolTable<Mutator> {
     Stmt visit(const VarDef &op) override;
 };
 
-Stmt asMatMul(const Stmt &ast, const ID &loop);
+Stmt asMatMul(const Stmt &ast, const ID &loop, MatMulBackend backend);
 
 } // namespace freetensor
 

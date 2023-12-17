@@ -457,10 +457,50 @@ Stmt makeEval(T &&expr, const Metadata &metadata = nullptr, const ID &id = {},
 }
 
 /**
+ * Backend library of MatMul nodes
+ */
+enum class MatMulBackend : size_t {
+    Mkl = 0,
+    Cublas,
+    Cutlass,
+    // ----------------------------
+    NumBackends
+};
+
+constexpr std::array matMulBackendNames = {
+    "mkl",
+    "cublas",
+    "cutlass",
+};
+static_assert(baseDataTypeNames.size() == (size_t)BaseDataType::NumTypes);
+
+inline std::ostream &operator<<(std::ostream &os, MatMulBackend backend) {
+    return os << matMulBackendNames.at((size_t)backend);
+}
+
+inline MatMulBackend parseMatMulBackend(const std::string &_str) {
+    auto &&str = tolower(_str);
+    for (auto &&[i, s] : views::enumerate(matMulBackendNames)) {
+        if (s == str) {
+            return (MatMulBackend)i;
+        }
+    }
+    std::string msg = "Unrecognized MatMul backend \"" + _str +
+                      "\". Candidates are (case-insensitive): ";
+    for (auto &&[i, s] : views::enumerate(matMulBackendNames)) {
+        msg += (i > 0 ? ", " : "");
+        msg += s;
+    }
+    ERROR(msg);
+}
+
+/**
  * External call to a batched GEMM
  */
 class MatMulNode : public StmtNode {
   public:
+    MatMulBackend backend_;
+
     // c_ = alpha_ * a_ * b_ + beta_ * c_
     // a_ is an m_ * k_ matrix
     // b_ is a k_ * n_ matrix
@@ -489,9 +529,9 @@ class MatMulNode : public StmtNode {
 };
 typedef Ref<MatMulNode> MatMul;
 inline Stmt
-makeMatMul(const Expr &a, const Expr &b, const Expr &c, const Expr &alpha,
-           const Expr &beta, const Expr &m, const Expr &k, const Expr &n,
-           const Expr &lda, const Expr &ldb, const Expr &ldc,
+makeMatMul(MatMulBackend backend, const Expr &a, const Expr &b, const Expr &c,
+           const Expr &alpha, const Expr &beta, const Expr &m, const Expr &k,
+           const Expr &n, const Expr &lda, const Expr &ldb, const Expr &ldc,
            const Expr &stridea, const Expr &strideb, const Expr &stridec,
            const Expr &batchSize, bool aIsRowMajor, bool bIsRowMajor,
            bool cIsRowMajor, const Stmt &equivalent,
@@ -500,6 +540,7 @@ makeMatMul(const Expr &a, const Expr &b, const Expr &c, const Expr &alpha,
     MatMul s = MatMul::make();
     s->metadata() = metadata;
     s->setId(id);
+    s->backend_ = backend;
     s->a_ = a;
     s->b_ = b;
     s->c_ = c;

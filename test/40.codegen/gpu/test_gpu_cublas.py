@@ -24,7 +24,7 @@ def test_basic():
                     c[i, j] += a[i, k] * b[k, j]
 
     s = ft.Schedule(test)
-    s.as_matmul("L1")
+    s.as_matmul("L1", ft.AsMatMulMode.KeepMemLayout, target, "cublas")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
     assert "cublas" in code.code

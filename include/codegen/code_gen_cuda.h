@@ -20,19 +20,21 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     typedef CodeGenCUDAStream Stream;
 
   private:
+    Ref<GPUTarget> target_;
     std::string kernelPrefix_;
     int nKernel_ = 0;
     Expr sharedStackTop_ = makeIntConst(0);
     Expr globalStackTop_ = makeIntConst(0);
     Expr globalSize_ = makeIntConst(0);
     std::unordered_set<Stmt> streamScopes_;
-    bool inCublas_ = false;
+    bool inMatmul_ = false;
 
   public:
     CodeGenCUDA(const std::vector<FuncParam> &params,
                 const std::vector<FuncRet> &returns,
-                const std::string &kernelPrefix)
-        : CodeGenC(params, returns), kernelPrefix_(kernelPrefix) {}
+                const Ref<GPUTarget> &target, const std::string &kernelPrefix)
+        : CodeGenC(params, returns), target_(target),
+          kernelPrefix_(kernelPrefix) {}
 
     using CodeGenC<CodeGenCUDAStream>::genMdPtrType;
     using CodeGenC<CodeGenCUDAStream>::genMdPtrDef;

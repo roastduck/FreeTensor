@@ -28,6 +28,16 @@ static std::string genCUBLASType(DataType dtype) {
     }
 }
 
+static bool canUseTensorCore(const Ref<GPUTarget> &target, DataType dtypeA,
+                             DataType dtypeB, DataType dtypeC) {
+    // TODO: fp16 is supported after sm70
+    if (target->computeCapability().first >= 8 && dtypeA == DataType::Float64 &&
+        dtypeB == DataType::Float64 && dtypeC == DataType::Float64) {
+        return true;
+    }
+    return false;
+}
+
 std::function<std::ostream &(std::ostream &)>
 CodeGenCUDA::genMdPtrType(const VarDef &def, bool isConst) {
     Ref<Buffer> buf = def->buffer_;
@@ -127,7 +137,7 @@ void CodeGenCUDA::genScalar(const VarDef &def,
 }
 
 bool CodeGenCUDA::inKernel() const {
-    return streamStack_.back().name_ != "default" || inCublas_;
+    return streamStack_.back().name_ != "default" || inMatmul_;
 }
 
 void CodeGenCUDA::exprOr1(const std::unordered_map<ParallelScope, Expr> &dict,
@@ -751,77 +761,151 @@ void CodeGenCUDA::visit(const VarDef &op) {
 }
 
 void CodeGenCUDA::visit(const MatMul &op) {
-    if (inKernel()) {
-        throw InvalidProgram("External call to a matrix multiplication from "
-                             "inside a CUDA kernel is not supported");
-    }
+    bool thisOpInKernel = inKernel();
+    inMatmul_ = true;
 
-    inCublas_ = true;
-
-    bool transA = !op->aIsRowMajor_, transB = !op->bIsRowMajor_;
+    bool transA = !op->aIsRowMajor_, transB = !op->bIsRowMajor_,
+         transC = !op->cIsRowMajor_;
     Expr a = op->a_, b = op->b_, c = op->c_;
     Expr m = op->m_, k = op->k_, n = op->n_;
     Expr lda = op->lda_, ldb = op->ldb_, ldc = op->ldc_;
     Expr stridea = op->stridea_, strideb = op->strideb_, stridec = op->stridec_;
-    if (op->cIsRowMajor_) {
-        transA = !transA;
-        transB = !transB;
-        std::swap(transA, transB);
-        std::swap(a, b);
-        std::swap(lda, ldb);
-        std::swap(stridea, strideb);
-        std::swap(n, m);
+
+    switch (op->backend_) {
+    case MatMulBackend::Cublas: {
+        if (thisOpInKernel) {
+            throw InvalidProgram("External call to a matrix multiplication "
+                                 "implemented by cuBLAS from inside a CUDA "
+                                 "kernel is not supported");
+        }
+
+        if (op->cIsRowMajor_) {
+            transA = !transA;
+            transB = !transB;
+            transC = false;
+            std::swap(transA, transB);
+            std::swap(a, b);
+            std::swap(lda, ldb);
+            std::swap(stridea, strideb);
+            std::swap(n, m);
+        }
+
+        makeIndent();
+        beginBlock();
+        makeIndent();
+        os() << gen(op->c_->dtype()) << " cublasAlpha = ";
+        (*this)(op->alpha_);
+        os() << ", cublasBeta = ";
+        (*this)(op->beta_);
+        os() << ";" << std::endl;
+        makeIndent();
+        os() << "cublasGemmStridedBatchedEx(ctx->cublas(), "
+             << (transA ? "CUBLAS_OP_N" : "CUBLAS_OP_T") << ", "
+             << (transB ? "CUBLAS_OP_N" : "CUBLAS_OP_T") << ", ";
+        (*this)(m);
+        os() << ", ";
+        (*this)(n);
+        os() << ", ";
+        (*this)(k);
+        os() << ", &cublasAlpha, &";
+        (*this)(a);
+        os() << ", " << genCUBLASType(op->a_->dtype()) << ", ";
+        (*this)(lda);
+        os() << ", ";
+        (*this)(stridea);
+        os() << ", &";
+        (*this)(b);
+        os() << ", " << genCUBLASType(op->b_->dtype()) << ", ";
+        (*this)(ldb);
+        os() << ", ";
+        (*this)(strideb);
+        os() << ", &cublasBeta, &";
+        (*this)(c);
+        os() << ", " << genCUBLASType(op->c_->dtype()) << ", ";
+        (*this)(ldc);
+        os() << ", ";
+        (*this)(stridec);
+        os() << ", ";
+        (*this)(op->batchSize_);
+        os() << ", " << genCUBLASType(op->c_->dtype())
+             << ", CUBLAS_GEMM_DEFAULT);" << std::endl;
+        endBlock();
+        break;
     }
 
-    makeIndent();
-    beginBlock();
-    makeIndent();
-    os() << gen(op->c_->dtype()) << " cublasAlpha = ";
-    (*this)(op->alpha_);
-    os() << ", cublasBeta = ";
-    (*this)(op->beta_);
-    os() << ";" << std::endl;
-    makeIndent();
-    os() << "cublasGemmStridedBatchedEx(ctx->cublas(), "
-         << (transA ? "CUBLAS_OP_N" : "CUBLAS_OP_T") << ", "
-         << (transB ? "CUBLAS_OP_N" : "CUBLAS_OP_T") << ", ";
-    (*this)(m);
-    os() << ", ";
-    (*this)(n);
-    os() << ", ";
-    (*this)(k);
-    os() << ", &cublasAlpha, &";
-    (*this)(a);
-    os() << ", " << genCUBLASType(op->a_->dtype()) << ", ";
-    (*this)(lda);
-    os() << ", ";
-    (*this)(stridea);
-    os() << ", &";
-    (*this)(b);
-    os() << ", " << genCUBLASType(op->b_->dtype()) << ", ";
-    (*this)(ldb);
-    os() << ", ";
-    (*this)(strideb);
-    os() << ", &cublasBeta, &";
-    (*this)(c);
-    os() << ", " << genCUBLASType(op->c_->dtype()) << ", ";
-    (*this)(ldc);
-    os() << ", ";
-    (*this)(stridec);
-    os() << ", ";
-    (*this)(op->batchSize_);
-    os() << ", " << genCUBLASType(op->c_->dtype()) << ", CUBLAS_GEMM_DEFAULT);"
-         << std::endl;
-    endBlock();
+    case MatMulBackend::Cutlass: {
+        if (thisOpInKernel) {
+            throw InvalidProgram("External call to a matrix multiplication "
+                                 "implemented by CUTLASS from inside a CUDA "
+                                 "kernel is not supported");
+        }
 
-    inCublas_ = false;
+        makeIndent();
+        os() << "cutlass::gemm::device::Gemm<" << gen(op->a_->dtype()) << ", "
+             << (transA ? "cutlass::layout::ColumnMajor"
+                        : "cutlass::layout::RowMajor")
+             << ", " << gen(op->b_->dtype()) << ", "
+             << (transB ? "cutlass::layout::ColumnMajor"
+                        : "cutlass::layout::RowMajor")
+             << ", " << gen(op->c_->dtype()) << ", "
+             << (transC ? "cutlass::layout::ColumnMajor"
+                        : "cutlass::layout::RowMajor")
+             << ", " << gen(op->c_->dtype()) // TODO: accumulator type
+             << ", "
+             << (canUseTensorCore(target_, op->a_->dtype(), op->b_->dtype(),
+                                  op->c_->dtype())
+                     ? "cutlass::arch::OpClassTensorOp"
+                     : "cutlass::arch::OpClassSimt")
+             << ", FT_CUTLASS_ARCH> gemm;" << std::endl;
+        makeIndent();
+        os() << "checkCutlassError(gemm({{";
+        (*this)(m);
+        os() << ", ";
+        (*this)(n);
+        os() << ", ";
+        (*this)(k);
+        os() << "}, {&";
+        (*this)(a);
+        os() << ", ";
+        (*this)(lda);
+        os() << "}, {&";
+        (*this)(b);
+        os() << ", ";
+        (*this)(ldb);
+        os() << "}, {&";
+        (*this)(c);
+        os() << ", ";
+        (*this)(ldc);
+        os() << "}, {&";
+        (*this)(c);
+        os() << ", ";
+        (*this)(ldc);
+        os() << "}, {";
+        (*this)(op->alpha_);
+        os() << ", ";
+        (*this)(op->beta_);
+        os() << "}}, nullptr, __stream));" << std::endl;
+        break;
+    }
+
+    default:
+        inMatmul_ = false;
+        throw InvalidProgram("MatMul backend " +
+                             freetensor::toString(op->backend_) +
+                             " is not supported for GPU");
+    }
+
+    inMatmul_ = false;
 }
 
-NativeCode codeGenCUDA(const Func &func, const Ref<Target> &target) {
+NativeCode codeGenCUDA(const Func &func, const Ref<Target> &_target) {
+    ASSERT(_target->type() == TargetType::GPU);
+    auto target = _target.as<GPUTarget>();
+
     auto prefix = mangle(func->name_);
     auto nParams = func->params_.size();
 
-    CodeGenCUDA visitor(func->params_, func->returns_, prefix);
+    CodeGenCUDA visitor(func->params_, func->returns_, target, prefix);
     auto &&op = func->body_;
     visitor.beginBlock();
     visitor(op);

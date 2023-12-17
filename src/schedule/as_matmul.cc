@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <optional>
 
+#include <config.h>
 #include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/as_matmul.h>
@@ -201,9 +202,9 @@ Stmt AsMatMul::visit(const For &op) {
         } else {
             beta = makeIntConst(1);
         }
-        ret = makeMatMul(a_, b_, c_, alpha, beta, m_, k_, n_, lda_, ldb_, ldc_,
-                         stridea_, strideb_, stridec_, batchSize_, aIsRowMajor_,
-                         bIsRowMajor_, cIsRowMajor_, ret);
+        ret = makeMatMul(backend_, a_, b_, c_, alpha, beta, m_, k_, n_, lda_,
+                         ldb_, ldc_, stridea_, strideb_, stridec_, batchSize_,
+                         aIsRowMajor_, bIsRowMajor_, cIsRowMajor_, ret);
         for (auto &&def : innerDefs_) {
             ret = makeVarDef(def->name_, def->buffer_, def->viewOf_, ret,
                              def->pinned_, def->metadata(), def->id());
@@ -433,8 +434,8 @@ Stmt AsMatMul::visit(const VarDef &op) {
     }
 }
 
-Stmt asMatMul(const Stmt &_ast, const ID &loop) {
-    AsMatMul mutator(loop);
+Stmt asMatMul(const Stmt &_ast, const ID &loop, MatMulBackend backend) {
+    AsMatMul mutator(loop, backend);
     auto ast = simplify(_ast); // Simplify confusing loop range and indexing
                                // from libop. TODO: simplify only needed region
     ast = mutator(ast);
@@ -444,11 +445,12 @@ Stmt asMatMul(const Stmt &_ast, const ID &loop) {
     return ast;
 }
 
-void Schedule::asMatMul(const ID &loop, AsMatMulMode mode) {
+void Schedule::asMatMul(const ID &loop, AsMatMulMode mode,
+                        const Ref<Target> &target, MatMulBackend backend) {
     beginTransaction();
     while (true) {
-        auto log =
-            appendLog(MAKE_SCHEDULE_LOG(AsMatMul, freetensor::asMatMul, loop));
+        auto log = appendLog(
+            MAKE_SCHEDULE_LOG(AsMatMul, freetensor::asMatMul, loop, backend));
         try {
             applyLog(log);
             break;
@@ -481,6 +483,25 @@ void Schedule::asMatMul(const ID &loop, AsMatMulMode mode) {
         }
     }
     commitTransaction();
+}
+
+void Schedule::asMatMul(const ID &loop, AsMatMulMode mode,
+                        const Ref<Target> &target) {
+    switch (target->type()) {
+    case TargetType::CPU:
+        asMatMul(loop, mode, target, MatMulBackend::Mkl);
+        break;
+    case TargetType::GPU:
+        asMatMul(loop, mode, target, MatMulBackend::Cutlass);
+        break;
+    default:
+        throw InvalidSchedule(ast(), "No default MatMul backend for target " +
+                                         toString(target));
+    }
+}
+
+void Schedule::asMatMul(const ID &loop, AsMatMulMode mode) {
+    asMatMul(loop, mode, Config::defaultTarget());
 }
 
 } // namespace freetensor

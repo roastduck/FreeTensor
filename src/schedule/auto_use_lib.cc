@@ -10,7 +10,7 @@ void Schedule::autoUseLib(const Ref<Target> &target) {
         // Suppose the root node is not <For>. It should be <VarDef>
         auto loop = _loop.as<ForNode>();
         try {
-            asMatMul(loop->id(), AsMatMulMode::TryTranspose);
+            asMatMul(loop->id(), AsMatMulMode::TryTranspose, target);
         } catch (const InvalidSchedule &e) {
             // If the loop is marked as preferLibs, we inline all local
             // variables, fission all the statments apart, and try applying to
@@ -50,7 +50,7 @@ void Schedule::autoUseLib(const Ref<Target> &target) {
                             fission(loop->id(), FissionSide::After, stmt->id(),
                                     true, "." + toString(i) + ".lib", "")
                                 .first.at(loop->id());
-                        asMatMul(libStmtId, AsMatMulMode::TryTranspose);
+                        asMatMul(libStmtId, AsMatMulMode::TryTranspose, target);
                         commitTransaction();
                     } catch (const InvalidSchedule &e) {
                         abortTransaction();

@@ -725,9 +725,16 @@ class Schedule {
      * may affect performance of other use of these variable. `TryTranspose` =>
      * try `cache` and then `var_reorder` on some variables, but will incur
      * extra overhead.
+     * @param target : Hardware target. If omitted, use the default target in
+     * Config, or the target set by `with` scopes.
+     * @param backend : Backend library. Defaults to `Mkl` for CPU targets,
+     * `Cublas` for GPU targets.
      * @throw InvalidSchedule if the loop cannot be transformed to be a matrix
      * multiplication
      */
+    void asMatMul(const ID &loop, AsMatMulMode mode, const Ref<Target> &target,
+                  MatMulBackend backend);
+    void asMatMul(const ID &loop, AsMatMulMode mode, const Ref<Target> &target);
     void asMatMul(const ID &loop,
                   AsMatMulMode mode = AsMatMulMode::KeepMemLayout);
 
