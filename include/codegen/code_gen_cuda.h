@@ -1,6 +1,8 @@
 #ifndef FREE_TENSOR_CODE_GEN_CUDA_H
 #define FREE_TENSOR_CODE_GEN_CUDA_H
 
+#ifdef FT_WITH_CUDA
+
 #include <unordered_map>
 #include <unordered_set>
 
@@ -104,5 +106,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
 NativeCode codeGenCUDA(const Func &func, const Ref<Target> &target);
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA
 
 #endif // FREE_TENSOR_CODE_GEN_CUDA_H

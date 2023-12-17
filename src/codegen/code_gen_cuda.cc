@@ -1,3 +1,5 @@
+#ifdef FT_WITH_CUDA
+
 #include <analyze/all_uses.h>
 #include <analyze/find_stmt.h>
 #include <codegen/code_gen_cuda.h>
@@ -1024,3 +1026,5 @@ extern "C" {
 }
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA
