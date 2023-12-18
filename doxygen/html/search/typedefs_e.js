@@ -11,6 +11,5 @@ var searchData=
   ['stmtrettype_8',['StmtRetType',['../classfreetensor_1_1Mutator.html#aef5cb3c76c36da35abf1a2ea364684a0',1,'freetensor::Mutator::StmtRetType()'],['../classfreetensor_1_1Visitor.html#ac691148816dc27aaa03c2e573cec3988',1,'freetensor::Visitor::StmtRetType()']]],
   ['stmtseq_9',['StmtSeq',['../namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96',1,'freetensor']]],
   ['store_10',['Store',['../namespacefreetensor.html#a3d6ac0eb5f07907688e0e682bba891f7',1,'freetensor']]],
-  ['stream_11',['Stream',['../classfreetensor_1_1CodeGenCUDA.html#ac8844db877fe431d991e0235f2d0a8d9',1,'freetensor::CodeGenCUDA']]],
-  ['sub_12',['Sub',['../namespacefreetensor.html#a4c9954091da2fafce78fc6ab6023038e',1,'freetensor']]]
+  ['sub_11',['Sub',['../namespacefreetensor.html#a4c9954091da2fafce78fc6ab6023038e',1,'freetensor']]]
 ];

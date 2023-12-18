@@ -7,6 +7,4 @@ digraph "include/codegen/code_gen_cuda.h"
   Node1 [label="include/codegen/code\l_gen_cuda.h",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
   Node1 -> Node2 [dir="back",color="steelblue1",style="solid"];
   Node2 [label="src/codegen/code_gen.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$code__gen_8cc.html",tooltip=" "];
-  Node1 -> Node3 [dir="back",color="steelblue1",style="solid"];
-  Node3 [label="src/codegen/code_gen\l_cuda.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$code__gen__cuda_8cc.html",tooltip=" "];
 }

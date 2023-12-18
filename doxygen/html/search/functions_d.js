@@ -51,7 +51,7 @@ var searchData=
   ['makelor_48',['makeLOr',['../namespacefreetensor.html#a90c989003f22c135f1256417b42d37c4',1,'freetensor']]],
   ['makelt_49',['makeLT',['../namespacefreetensor.html#a259772a52a9308f1b660f8be720dbfdf',1,'freetensor']]],
   ['makemarkversion_50',['makeMarkVersion',['../namespacefreetensor.html#aa106c604eb53be4f5777d5dbc91df4ef',1,'freetensor']]],
-  ['makematmul_51',['makeMatMul',['../namespacefreetensor.html#aae8c6a752f2a51926a0bbf4660505474',1,'freetensor']]],
+  ['makematmul_51',['makeMatMul',['../namespacefreetensor.html#a35a2be77e5b97b13edf14b58ec53db83',1,'freetensor']]],
   ['makemax_52',['makeMax',['../namespacefreetensor.html#afff27d413e98de65b3aa7ae29bad628c',1,'freetensor']]],
   ['makemaxmin_53',['makeMaxMin',['../namespacefreetensor.html#ac01fbb51827243e01be6ccc23cfc7ce9',1,'freetensor']]],
   ['makemetadata_54',['makeMetadata',['../namespacefreetensor.html#ad0d43a8e3bd264c3da6ca600e1c4404a',1,'freetensor::makeMetadata(const ID &amp;id={})'],['../namespacefreetensor.html#ae4960a91b31a53be2efc1b0635670b52',1,'freetensor::makeMetadata(const std::vector&lt; std::string &gt; &amp;labels, const std::optional&lt; std::pair&lt; std::string, int &gt; &gt; &amp;location, const Metadata &amp;callerMetadata)'],['../namespacefreetensor.html#aff12e2fd78bdd756cc0a12b987d09613',1,'freetensor::makeMetadata(const std::string &amp;op, const std::vector&lt; Metadata &gt; &amp;sources)'],['../namespacefreetensor.html#a1cc202aea944bbb70b14b33a3ffd93f7',1,'freetensor::makeMetadata(const std::string &amp;op, Srcs &amp;&amp;...sourceStmts)']]],

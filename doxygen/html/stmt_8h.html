@@ -77,7 +77,9 @@ $(function() {
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">stmt.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -167,6 +169,15 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a34bc3bfabf090bdeab9a192ebe5e48ba"><td class="memItemLeft" align="right" valign="top">typedef Ref&lt; MarkVersionNode &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a34bc3bfabf090bdeab9a192ebe5e48ba">freetensor::MarkVersion</a></td></tr>
 <tr class="separator:a34bc3bfabf090bdeab9a192ebe5e48ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a5dd63b387e5c735ae0253d59b55fcf3e"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3e">freetensor::MatMulBackend</a> : size_t { <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea08797202751e7c607276dacf426f08bf">freetensor::Mkl</a> = 0
+, <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ead49c5405e85df5104c4fa7bb5aa6857b">freetensor::Cublas</a>
+, <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea00b6b70a6b6f0d1ae23c31dbeef3b3bc">freetensor::Cutlass</a>
+, <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea6b5bb2cc14edd3e3a1b68aeef69b74b8">freetensor::NumBackends</a>
+ }</td></tr>
+<tr class="separator:a5dd63b387e5c735ae0253d59b55fcf3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a7ea4d13a965fbd47b0205ddc698f1b80"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7ea4d13a965fbd47b0205ddc698f1b80">freetensor::makeAny</a> (std::source_location loc=std::source_location::current())</td></tr>
@@ -213,10 +224,19 @@ Functions</h2></td></tr>
 <tr class="memitem:a281d3034ebed2515c8245f1b23a2ac6f"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a281d3034ebed2515c8245f1b23a2ac6f"><td class="memTemplItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a281d3034ebed2515c8245f1b23a2ac6f">freetensor::makeEval</a> (T &amp;&amp;expr, const Metadata &amp;metadata=nullptr, const ID &amp;id={}, std::source_location loc=std::source_location::current())</td></tr>
 <tr class="separator:a281d3034ebed2515c8245f1b23a2ac6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae8c6a752f2a51926a0bbf4660505474"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aae8c6a752f2a51926a0bbf4660505474">freetensor::makeMatMul</a> (const Expr &amp;a, const Expr &amp;b, const Expr &amp;c, const Expr &amp;alpha, const Expr &amp;beta, const Expr &amp;m, const Expr &amp;k, const Expr &amp;<a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, const Expr &amp;lda, const Expr &amp;ldb, const Expr &amp;ldc, const Expr &amp;stridea, const Expr &amp;strideb, const Expr &amp;stridec, const Expr &amp;batchSize, bool aIsRowMajor, bool bIsRowMajor, bool cIsRowMajor, const Stmt &amp;equivalent, const Metadata &amp;metadata=nullptr, const ID &amp;id={}, std::source_location loc=std::source_location::current())</td></tr>
-<tr class="separator:aae8c6a752f2a51926a0bbf4660505474"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a583db4bd7dd11870992fe58be17e80eb"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a583db4bd7dd11870992fe58be17e80eb">freetensor::operator&lt;&lt;</a> (std::ostream &amp;os, MatMulBackend backend)</td></tr>
+<tr class="separator:a583db4bd7dd11870992fe58be17e80eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7720b3ead9944080e84174b403669d0"><td class="memItemLeft" align="right" valign="top">MatMulBackend&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad7720b3ead9944080e84174b403669d0">freetensor::parseMatMulBackend</a> (const std::string &amp;_str)</td></tr>
+<tr class="separator:ad7720b3ead9944080e84174b403669d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35a2be77e5b97b13edf14b58ec53db83"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a35a2be77e5b97b13edf14b58ec53db83">freetensor::makeMatMul</a> (MatMulBackend backend, const Expr &amp;a, const Expr &amp;b, const Expr &amp;c, const Expr &amp;alpha, const Expr &amp;beta, const Expr &amp;m, const Expr &amp;k, const Expr &amp;<a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, const Expr &amp;lda, const Expr &amp;ldb, const Expr &amp;ldc, const Expr &amp;stridea, const Expr &amp;strideb, const Expr &amp;stridec, const Expr &amp;batchSize, bool aIsRowMajor, bool bIsRowMajor, bool cIsRowMajor, const Stmt &amp;equivalent, const Metadata &amp;metadata=nullptr, const ID &amp;id={}, std::source_location loc=std::source_location::current())</td></tr>
+<tr class="separator:a35a2be77e5b97b13edf14b58ec53db83"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa106c604eb53be4f5777d5dbc91df4ef"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa106c604eb53be4f5777d5dbc91df4ef">freetensor::makeMarkVersion</a> (const std::string &amp;tapeName, const std::string &amp;var, const Metadata &amp;metadata=nullptr, const ID &amp;id={}, std::source_location loc=std::source_location::current())</td></tr>
 <tr class="separator:aa106c604eb53be4f5777d5dbc91df4ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a6f724f8bab7a08070132e67158e67755"><td class="memItemLeft" align="right" valign="top">constexpr std::array&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6f724f8bab7a08070132e67158e67755">freetensor::matMulBackendNames</a></td></tr>
+<tr class="separator:a6f724f8bab7a08070132e67158e67755"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 <!-- start footer part -->
